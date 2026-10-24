@@ -128,8 +128,22 @@ function serve() {
   await s.page.waitForTimeout(200);
   let docs = await s.docsNow();
   check(docs['roles/sam.peters@example.com'] && docs['roles/sam.peters@example.com'].role === 'rosters' && docs['roles/sam.peters@example.com'].personId === 'p19', 'giving Sam “Roster coordinator” access writes the access list');
-  await s.go('people/p/p27'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
+  await s.go('people/p/p27'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]');
+  check(await s.page.isVisible('#pf-err') && (await s.page.textContent('#pf-err')).includes('marital'), 'marital status must be chosen for adults');
+  await s.page.selectOption('#pf-marital', 'Not known'); await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
   docs = await s.docsNow(); check(!docs['roles/ruth.daniels@example.com'], 'choosing “No access” removes their sign-in');
+  check(docs['details/p27'].maritalStatus === 'Not known' && !docs['people/p27'].maritalStatus, 'marital status is kept with the private details (not the contact card)');
+  // Record a death: Johan (married to Elsa, on the Door team)
+  await s.go('people/p/p23'); await s.page.click('[data-act="people:death"]');
+  check(await s.page.isVisible('.dd-sp[value="p24"]'), 'offers to change the spouse to Widowed');
+  await s.page.click('[data-act="people:savedeath"]'); await s.page.waitForTimeout(300);
+  docs = await s.docsNow();
+  const futureJohan = Object.keys(docs).filter(k => k.startsWith('assignments/') && docs[k].personId === 'p23' && (docs['services/' + docs[k].serviceId] || {}).date >= new Date().toISOString().slice(0, 10));
+  check(docs['people/p23'].active === false && docs['people/p23'].category === 'Deceased' && docs['details/p23'].deceasedAt && docs['details/p23'].deathTidied, 'recording a death keeps them on the records as Deceased');
+  check(docs['details/p24'].maritalStatus === 'Widowed', 'spouse’s marital status becomes Widowed');
+  check(!docs['roles/johan.vandermerwe@example.com'] && !docs['directory/p23'], 'they can’t sign in and leave the directory');
+  check(!Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p23') && futureJohan.length === 0, 'they come off teams and future rosters');
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && /Recorded the death/.test(docs[k].action)), 'the death is in the audit log');
   await s.go('leave/approvals'); await s.page.click('[data-act="leave:decide"][data-d="Approved"]'); await s.page.waitForTimeout(200);
   docs = await s.docsNow(); const approved = Object.keys(docs).filter(k => k.startsWith('leaveRequests/') && docs[k].status === 'Approved' && docs[k].decidedOn);
   check(approved.length === 1 && docs['away/' + approved[0].split('/')[1]], 'approving leave saves it and marks the dates as away');
@@ -152,6 +166,12 @@ function serve() {
   for (const pur of ['Church records', 'Church directory']) await s.page.check(`.cf-p[data-p="${pur}"]`);
   await s.page.click('[data-act="people:saveconsent"]'); await s.page.waitForTimeout(300);
   docs = await s.docsNow(); check(!!docs['directory/p27'] && docs['directory/p27'].mobile && !docs['directory/p27'].email, 'directory consent adds name and phone (not email) to the directory');
+  // A Pastor records a death: Thabo (married to Ayanda)
+  await s.go('people/p/p21'); await s.page.click('[data-act="people:death"]'); await s.page.fill('#dd-note', 'Family would like a visit.'); await s.page.click('[data-act="people:savedeath"]'); await s.page.waitForTimeout(300);
+  docs = await s.docsNow();
+  check(docs['people/p21'].category === 'Deceased' && docs['details/p22'].maritalStatus === 'Widowed' && !docs['directory/p21'] && docs['notes/p21'], 'a Pastor can record a death (with a pastoral note); the directory follows');
+  check(!docs['details/p21'].deathTidied, 'rosters and sign-in are left for the Administrator to finish');
+  await s.go('home'); check((await s.text()).includes('Care for the family of Thabo Nkosi'), 'Pastors get “care for the family” on their to-do list');
   await finish(s);
 
   /* ---------- Children's ministry ---------- */
@@ -184,6 +204,12 @@ function serve() {
   check(dirText.includes('Clare Jacobs') && !dirText.includes('Megan Smith') && !dirText.includes('Ruth Daniels') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
   docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
+  await s.go('rosters/away'); await s.page.click('[data-act="rosters:addaway"]');
+  const ticks = await s.page.$$('.aw-d'); await ticks[1].check(); await ticks[3].check();
+  await s.page.click('[data-act="rosters:awayrange"]'); await s.page.fill('.aw-range .aw-f', '2027-07-01'); await s.page.dispatchEvent('.aw-range .aw-f', 'change'); await s.page.fill('.aw-range .aw-t', '2027-07-14');
+  await s.page.click('[data-act="rosters:saveaway"]'); await s.page.waitForTimeout(250);
+  docs = await s.docsNow(); const myAway = Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14');
+  check(myAway.length === 3 && myAway.some(k => docs[k].from === '2027-07-01' && docs[k].to === '2027-07-14'), 'can add several away dates at once (2 service days + a holiday)');
   await s.go('rosters/mine'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.page.waitForTimeout(200);
   docs = await s.docsNow(); check(docs['assignments/kTim'].status === 'accepted', 'can accept a serving turn');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Church directory"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.page.waitForTimeout(300);

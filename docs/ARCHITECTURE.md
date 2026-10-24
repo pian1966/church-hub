@@ -41,7 +41,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
   | Document | Holds | Read by |
   | --- | --- | --- |
   | `people/{id}` | name, family, category, email, mobile, active, app role (display copy) | Admin, Pastor, Roster coordinator, Children's ministry; the person |
-  | `details/{id}` | birthday, key dates, staff details, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
+  | `details/{id}` | birthday, marital status, key dates, staff details, date of death, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
   | `medical/{id}` | children's allergies and medical notes | **Children's ministry only** |
   | `notes/{personId}` | pastoral notes (`entries` list) | **Pastors only** |
   | `directory/{id}` | name and mobile of adults with *Church directory* consent | everyone signed in |
@@ -59,7 +59,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | Collection | Holds |
 | --- | --- |
 | `settings` | church name, modules on/off, Information Officer, retention period, privacy notice |
-| `people` | name, contact, family, category, staff details (leave category, start date, working days), key dates, child medical notes (special personal information), Elvanto ID |
+| `people` | name, contact, family, category, marital status (adults), staff details (leave category, start date, working days), key dates, date of death, child medical notes (special personal information), Elvanto ID |
 | `families` | family name |
 | `consents` | per person and purpose: given/withdrawn, date, how, recorded by, guardian for children |
 | `notes` | pastoral notes (restricted) |
@@ -84,6 +84,15 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | No access | kept on the church records, can't sign in |
 
 Leave approval follows Leave Manager: Administrators approve.
+
+## When someone dies
+Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,
+and "change spouse to Widowed" for a married spouse in the same family). The person stays on the records as category *Deceased*
+(`deceasedAt`, key dates "Died" / "Funeral"), leaves the directory, and is skipped by the roster engine (not active).
+Administrators then finish it (automatically if they recorded it, otherwise from their to-do list): off future rosters, teams,
+serving groups and away dates; future leave cancelled; sign-in removed. Past serving and leave stay. Pastors get
+"Care for the family of …" on their to-do list for 8 weeks. "Recorded by mistake?" undoes it (teams and rosters must be re-added).
+Later phases must leave deceased people out of messages, birthday reminders and anniversaries.
 
 ## Leave Manager inside the Hub
 The Leave module uses `LeaveCore` (the same rules file as Leave Manager), so balances, pro-rata, carry-over, public holidays

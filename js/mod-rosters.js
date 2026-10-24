@@ -213,7 +213,7 @@
     var n = 0; orderedPositions().forEach(function (p) { n += Math.max(0, p.needed - S.find('assignments', function (a) { return a.serviceId === s.id && a.positionId === p.id && a.status !== 'declined'; }).length); });
     return { s: s, n: n };
   }
-  H.register({
+  var MOD; H.register(MOD = {
     id: 'rosters', name: 'Rosters', desc: 'Who serves when – families kept together', icon: H.ICON.rosters, tint: '#2F6FB3',
     stat: function (u) {
       if (manager()) { var g = nextGaps(); return g ? (g.n ? g.n + ' gap' + (g.n === 1 ? '' : 's') + ' on ' + H.fmt(g.s.date) : 'All filled for ' + H.fmt(g.s.date)) : 'No services planned'; }
@@ -279,19 +279,45 @@
       delgroup: function (el) { if (!H.confirmBtn(el, 'Click again to delete')) return; S.remove('groups', el.dataset.id, 'Deleted serving group'); H.closeModal(); H.render(); },
       addaway: function () {
         var me = H.user(), people = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
-        H.modal(H.dialogHead('Add away dates', 'They won’t be rostered on these days.') + '<div class="dlg-body">' +
+        // Upcoming service days in the next 3 months, one tick box per day (several services on one day = one box)
+        var days = [], end = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), 92));
+        upcoming().forEach(function (sv) { if (sv.date <= end && days.indexOf(sv.date) < 0) days.push(sv.date); });
+        H.modal(H.dialogHead('Add away dates', 'Tick every day you can’t serve, and/or add longer stretches. You won’t be rostered on them.') + '<div class="dlg-body">' +
           (manager() ? '<label class="field">Who<select id="aw-p">' + people.map(function (p) { return '<option value="' + p.id + '"' + (p.id === me.id ? ' selected' : '') + '>' + esc(H.name(p)) + '</option>'; }).join('') + '</select></label>' : '<input type="hidden" id="aw-p" value="' + me.id + '">') +
-          '<div class="two"><label class="field">From<input type="date" id="aw-f" value="' + H.today() + '"></label><label class="field">To<input type="date" id="aw-t" value="' + H.today() + '"></label></div>' +
-          '<label class="field">Reason <small>(optional, others don’t see it)</small><input id="aw-r" placeholder="e.g. holiday"></label><p id="aw-err" class="note bad" hidden></p></div>' +
+          (days.length ? '<fieldset class="field" style="border:0;padding:0;margin:0 0 12px"><legend style="margin-bottom:6px">Service days <small>(tick all that apply)</small></legend><div class="aw-days">' +
+            days.map(function (d) { return '<label class="check aw-day"><input type="checkbox" class="aw-d" value="' + d + '"><span>' + esc(H.fmt(d, LeaveCore.parse(d).getFullYear() !== new Date().getFullYear())) + '</span></label>'; }).join('') + '</div></fieldset>' : '') +
+          '<p style="margin:4px 0 6px"><b>Longer stretches</b> <small class="muted">(e.g. a holiday)</small></p><div id="aw-ranges"></div>' +
+          '<button class="btn small" type="button" data-act="rosters:awayrange">' + H.icon(H.ICON.plus, 16) + 'Add a stretch</button>' +
+          '<label class="field" style="margin-top:12px">Reason <small>(optional, only the roster team sees it)</small><input id="aw-r" placeholder="e.g. holiday"></label><p id="aw-err" class="note bad" hidden></p></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="rosters:saveaway">Save</button></div>', 'Away dates');
-        var f = document.getElementById('aw-f'), t = document.getElementById('aw-t');
+        if (!days.length) MOD.actions.awayrange();
+      },
+      awayrange: function () {
+        var box = document.getElementById('aw-ranges'), row = document.createElement('div');
+        row.className = 'two aw-range';
+        row.innerHTML = '<label class="field">From<input type="date" class="aw-f"></label><label class="field">To<input type="date" class="aw-t"></label>';
+        box.appendChild(row);
+        var f = row.querySelector('.aw-f'), t = row.querySelector('.aw-t');
         f.addEventListener('change', function () { if (!t.value || t.value < f.value) t.value = f.value; });
+        f.focus();
       },
       saveaway: function () {
-        var f = document.getElementById('aw-f').value, t = document.getElementById('aw-t').value || f;
-        if (!f || t < f) { var e = document.getElementById('aw-err'); e.textContent = 'Choose a first and last day.'; e.hidden = false; return; }
-        S.put('blockouts', { personId: document.getElementById('aw-p').value, from: f, to: t, reason: 'Away' + (document.getElementById('aw-r').value.trim() ? ': ' + document.getElementById('aw-r').value.trim() : '') }, 'Added away dates');
-        H.closeModal(); H.render(); H.toast('Saved – no rostering on those days');
+        var err = document.getElementById('aw-err'), who = document.getElementById('aw-p').value, out = [], bad = false;
+        document.querySelectorAll('.aw-d:checked').forEach(function (b) { out.push([b.value, b.value]); });
+        document.querySelectorAll('.aw-range').forEach(function (r) {
+          var f = r.querySelector('.aw-f').value, t = r.querySelector('.aw-t').value || f;
+          if (!f && !r.querySelector('.aw-t').value) return;            // empty row: ignore
+          if (!f || t < f) bad = true; else out.push([f, t]);
+        });
+        if (bad) { err.textContent = 'Each stretch needs a first day, and the last day can’t be before it.'; err.hidden = false; return; }
+        if (!out.length) { err.textContent = 'Tick at least one day, or add a stretch.'; err.hidden = false; return; }
+        var r = document.getElementById('aw-r').value.trim(), reason = 'Away' + (r ? ': ' + r : '');
+        out.forEach(function (x) {
+          if (S.find('blockouts', function (b) { return b.personId === who && b.from <= x[0] && b.to >= x[1]; }).length) return;   // already covered
+          S.put('blockouts', { personId: who, from: x[0], to: x[1], reason: reason });
+        });
+        S.audit('Added ' + out.length + ' away date' + (out.length === 1 ? '' : 's') + ' for ' + H.name(person(who)), 'blockouts');
+        H.closeModal(); H.render(); H.toast(out.length + ' away date' + (out.length === 1 ? '' : 's') + ' saved – no rostering on those days');
       },
       delaway: function (el) { S.remove('blockouts', el.dataset.id, 'Removed away dates'); H.render(); },
       newteam: function () { var n = prompt('Name of the new team (e.g. Prayer)'); if (n && n.trim()) { S.put('teams', { name: n.trim() }, 'Created team ' + n.trim()); H.render(); } },

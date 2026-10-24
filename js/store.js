@@ -362,7 +362,8 @@ var Store = (function () {
       var email = (p.email || '').trim().toLowerCase(), was = prev ? (prev.email || '').trim().toLowerCase() : '';
       var r = p.appRole && p.appRole !== 'none' && p.active !== false ? p.appRole : '';
       var wasR = prev && prev.appRole && prev.appRole !== 'none' && prev.active !== false ? prev.appRole : '';
-      if (was && (was !== email || !r) && wasR) del('roles/' + was);
+      // Remove sign-in when the email changes or access ends – also if someone else (e.g. a Pastor recording a death) changed the record first.
+      if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) del('roles/' + was);
       if (email && r && (email !== was || r !== wasR || !prev)) write('roles/' + email, { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() });
     }
     function putNotes(pid) {

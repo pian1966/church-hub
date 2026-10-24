@@ -3,7 +3,11 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store;
   var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos', 'Children’s medical notes'];
-  var CATS = ['Member', 'Visitor', 'Staff', 'Former member'];
+  var CATS = ['Member', 'Visitor', 'Staff', 'Former member', 'Deceased'];
+  var MARITAL = ['Single', 'Engaged', 'Married', 'Separated', 'Divorced', 'Widowed', 'Not known'];
+  var CARE_WEEKS = 8;                         // pastors see "care for the family" on their to-do list this long after a death
+  function canRecordDeath() { return H.can('*') || H.can('people.edit'); }
+  function deceased(p) { return !!(p && p.deceasedAt); }
   var state = { q: '', f: 'all', audited: '' };
 
   function canSeeAll() { return H.can('people.view') || H.can('*'); }
@@ -60,11 +64,18 @@
       if (seeMedical && p.medical) S.audit('Viewed children’s medical notes of ' + H.name(p), 'people/' + id);
     }
     var tags = '<span class="tag grey">' + esc(p.staff ? p.staff.category : p.category) + '</span>' + (child ? ' <span class="tag" style="--c:#0E7490">Child' + (age(p) !== '' ? ', ' + age(p) : '') + '</span>' : '') +
-      (p.source === 'elvanto' ? ' <span class="tag" style="--c:#7C3AED">From Elvanto</span>' : '');
+      (p.source === 'elvanto' ? ' <span class="tag" style="--c:#7C3AED">From Elvanto</span>' : '') +
+      (deceased(p) ? ' <span class="tag grey">Died ' + esc(H.fmt(p.deceasedAt, true)) + '</span>' : '');
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a>' +
       '<div class="page-head"><div class="row">' + H.avatar(p, 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div></div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">Edit details</button>' : '') +
-      (H.can('*') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + 'Export their data</button>' : '') + '</div></div>';
+      (H.can('*') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + 'Export their data</button>' : '') +
+      (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">Record a death</button>' : '') + '</div></div>';
+    if (deceased(p) && canRecordDeath()) {
+      html += '<div class="note info" style="margin-bottom:16px"><b>' + esc(p.firstName) + ' died on ' + esc(H.fmt(p.deceasedAt, true)) + '.</b> ' + (p.deathTidied ? 'They are no longer on rosters or teams, in the directory or able to sign in, and won’t receive messages.' : 'They are out of the directory and won’t receive messages.') +
+        (p.deathTidied ? '' : H.can('*') ? ' <button class="btn small" data-act="people:tidydeath" data-id="' + p.id + '">Finish: take off rosters, teams, leave and sign-in</button>' : ' The church office will finish taking them off rosters and sign-in.') +
+        ' <button class="link" data-act="people:undodeath" data-id="' + p.id + '">Recorded by mistake?</button></div>';
+    }
 
     html += '<div class="grid2">';
     // Contact
@@ -73,6 +84,7 @@
       (!child ? '<dt>Email</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>' : '<span class="muted">—</span>') + '</dd>' +
         '<dt>Mobile</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">—</span>') + '</dd>' : '') +
       (full && p.birthDate ? '<dt>Birthday</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>' : '') +
+      (full && !child ? '<dt>Marital status</dt><dd>' + (p.maritalStatus ? esc(p.maritalStatus) : '<span class="muted">Not recorded</span>') + '</dd>' : '') +
       (full ? (p.keyDates || []).map(function (k) { return '<dt>' + esc(k.label) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>'; }).join('') : '') +
       (p.staff && full ? '<dt>Staff</dt><dd>' + esc(p.staff.category) + ', since ' + esc(H.fmt(p.staff.start, true)) + ' · <a href="#/leave">Leave</a></dd>' : '') +
       (H.can('*') ? '<dt>App access</dt><dd>' + esc((H.ROLES[p.appRole] || H.ROLES.member).label) + '</dd>' : '') +
@@ -145,12 +157,15 @@
       (!me || admin ? '<div class="two"><label class="field">Birthday <small>(optional)</small><input id="pf-birth" type="date" value="' + esc(p.birthDate || '') + '"></label>' +
         '<label class="field">Category<select id="pf-cat">' + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two"><label class="field">Family<select id="pf-fam"><option value="">No family</option>' + fams.map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(f.name) + '</option>'; }).join('') + '<option value="__new">+ New family…</option></select></label>' +
-        '<label class="field">In the family as<select id="pf-frole"><option value="adult"' + (p.familyRole !== 'child' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' : '') +
+        '<label class="field">In the family as<select id="pf-frole"><option value="adult"' + (p.familyRole !== 'child' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
+        '<label class="field" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">Mark as left</button>' : '') +
       '<button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:save">' + (isNew ? 'Add person' : 'Save') + '</button></div>';
     H.modal(html, isNew ? 'Add a person' : 'Edit person');
+    var fr = document.getElementById('pf-frole'), mf = document.getElementById('pf-marital-f');
+    if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; });
   }
 
   function consentDialog(p) {
@@ -167,6 +182,26 @@
         (child ? '<label class="field">Given by (parent/guardian)<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
       '<p class="hint">' + esc(Store.settings().privacyNotice) + '</p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:saveconsent" data-id="' + p.id + '">Save</button></div>', 'Consent');
+  }
+
+  /** After a death (Administrators): off future rosters, teams, serving groups and away dates; future leave cancelled;
+   *  sign-in removed (app access set to none). Past serving and leave stay, for the church's records. */
+  function tidyDeath(id) {
+    var p = S.get('people', id); if (!p) return;
+    var d = p.deceasedAt || H.today(), n = 0;
+    S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === id && (!s || s.date >= d); }).forEach(function (a) { S.remove('assignments', a.id); n++; });
+    S.find('skills', function (k) { return k.personId === id; }).forEach(function (k) { S.remove('skills', k.id); });
+    S.find('blockouts', function (b) { return b.personId === id && b.to >= d; }).forEach(function (b) { S.remove('blockouts', b.id); });
+    S.list('groups').slice().forEach(function (g) {
+      if (g.memberIds.indexOf(id) < 0) return;
+      g = JSON.parse(JSON.stringify(g)); g.memberIds = g.memberIds.filter(function (m) { return m !== id; });
+      if (g.memberIds.length < 2) S.remove('groups', g.id); else S.put('groups', g);
+    });
+    var lv = S.leave(), cancelled = 0;
+    if (lv) lv.requests.forEach(function (r) { if (r.staffId === id && r.end >= d && (r.status === 'Pending' || r.status === 'Approved') && !r.synthetic) { r.status = 'Cancelled'; r.cancelledBy = H.name(H.user()); cancelled++; } });
+    if (cancelled) S.saveLeave();
+    p = JSON.parse(JSON.stringify(p)); p.appRole = 'none'; p.deathTidied = H.today();
+    S.put('people', p, 'Took ' + H.name(p) + ' off rosters (' + n + ' turns), teams and sign-in after their death');
   }
 
   function exportPerson(p) {
@@ -186,8 +221,18 @@
     stat: function () { return canBasic() ? S.find('people', function (p) { return p.active !== false; }).length + ' people · ' + S.list('families').length + ' families' : 'Church directory'; },
     todos: function (u) {
       if (!H.can('*') && !H.can('people.view')) return [];
-      var missing = S.find('people', function (p) { return p.active !== false && !hasConsent(p.id, 'Church records'); });
-      return missing.length ? [{ text: missing.length + ' ' + (missing.length === 1 ? 'person has' : 'people have') + ' no recorded consent', href: '#/people/p/' + missing[0].id, tag: 'POPIA' }] : [];
+      var out = [], missing = S.find('people', function (p) { return p.active !== false && !hasConsent(p.id, 'Church records'); });
+      if (missing.length) out.push({ text: missing.length + ' ' + (missing.length === 1 ? 'person has' : 'people have') + ' no recorded consent', href: '#/people/p/' + missing[0].id, tag: 'POPIA' });
+      var noMarital = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; });
+      if (noMarital.length) out.push({ text: noMarital.length + ' adult' + (noMarital.length === 1 ? ' has' : 's have') + ' no marital status', href: '#/people/p/' + noMarital[0].id });
+      var since = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), -7 * CARE_WEEKS));
+      if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
+        out.push({ text: 'Care for the family of ' + H.name(p) + ' (died ' + H.fmt(p.deceasedAt) + ')', href: '#/people/p/' + p.id, tag: 'Pastoral' });
+      });
+      if (H.can('*')) S.find('people', function (p) { return deceased(p) && !p.deathTidied; }).forEach(function (p) {
+        out.push({ text: 'Finish recording the death of ' + H.name(p) + ': rosters and sign-in', href: '#/people/p/' + p.id });
+      });
+      return out;
     },
     render: function (p) {
       if (p[0] === 'p') return renderPerson(p[1]);
@@ -214,6 +259,11 @@
         if (g('pf-birth') !== null) p.birthDate = g('pf-birth');
         if (g('pf-cat') !== null) p.category = g('pf-cat');
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
+        if (g('pf-marital') !== null) {
+          if (p.familyRole === 'child') delete p.maritalStatus;
+          else if (!g('pf-marital')) { err.textContent = 'Please choose a marital status (or “Not known”).'; err.hidden = false; return; }
+          else p.maritalStatus = g('pf-marital');
+        }
         if (g('pf-role') !== null) p.appRole = g('pf-role');
         if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = 'To give someone access to Church Hub, add their email address – that’s how they sign in.'; err.hidden = false; return; }
         var fam = g('pf-fam');
@@ -236,6 +286,41 @@
             (box.checked ? 'Consent given: ' : 'Consent withdrawn: ') + pur + ' for ' + H.name(p));
         });
         H.closeModal(); H.render(); H.toast('Consent saved');
+      },
+      death: function (el) {
+        var p = S.get('people', el.dataset.id);
+        var spouses = p.familyId ? members(p.familyId).filter(function (m) { return m.id !== p.id && m.familyRole !== 'child' && m.maritalStatus === 'Married'; }) : [];
+        H.modal(H.dialogHead('Record the death of ' + H.name(p), 'They stay on the church records, but come off rosters, teams, the directory and messages, and can no longer sign in.') +
+          '<div class="dlg-body"><div class="two"><label class="field">Date of death<input type="date" id="dd-date" value="' + H.today() + '" max="' + H.today() + '"></label>' +
+          '<label class="field">Funeral or memorial <small>(optional)</small><input type="date" id="dd-funeral"></label></div>' +
+          spouses.map(function (s) { return '<label class="check"><input type="checkbox" class="dd-sp" value="' + s.id + '" checked><span>Change ' + esc(H.name(s)) + '’s marital status to <b>Widowed</b></span></label>'; }).join('') +
+          (H.can('notes') ? '<label class="field">Pastoral note <small>(optional, only pastors see it)</small><textarea id="dd-note" rows="2" placeholder="e.g. Family would like a visit next week"></textarea></label>' : '') +
+          '<p id="dd-err" class="note bad" hidden></p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savedeath" data-id="' + p.id + '">Record</button></div>', 'Record a death');
+      },
+      savedeath: function (el) {
+        var d = document.getElementById('dd-date').value, fun = document.getElementById('dd-funeral').value, err = document.getElementById('dd-err');
+        if (!d || d > H.today()) { err.textContent = 'Please choose the date they died.'; err.hidden = false; return; }
+        var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id))), name = H.name(p);
+        p.active = false; p.category = 'Deceased'; p.deceasedAt = d; p.appRole = 'none';
+        p.keyDates = (p.keyDates || []).filter(function (k) { return k.label !== 'Died' && k.label !== 'Funeral'; }).concat([{ label: 'Died', date: d }]).concat(fun ? [{ label: 'Funeral', date: fun }] : []);
+        S.put('people', p, 'Recorded the death of ' + name);
+        document.querySelectorAll('.dd-sp:checked').forEach(function (b) {
+          var s = JSON.parse(JSON.stringify(S.get('people', b.value))); s.maritalStatus = 'Widowed'; S.put('people', s, 'Marital status changed to Widowed: ' + H.name(s));
+        });
+        var note = document.getElementById('dd-note');
+        if (note && note.value.trim()) S.put('notes', { personId: p.id, text: note.value.trim(), by: H.name(H.user()), at: H.today() }, 'Added a pastoral note');
+        if (H.can('*')) tidyDeath(p.id);
+        H.closeModal(); H.render(); H.toast('Recorded. ' + (H.can('*') ? 'Taken off rosters and sign-in.' : 'The church office will finish taking them off rosters and sign-in.'));
+      },
+      tidydeath: function (el) { tidyDeath(el.dataset.id); H.render(); H.toast('Taken off rosters, teams, leave and sign-in'); },
+      undodeath: function (el) {
+        if (!H.confirmBtn(el, 'Click again: undo the death record')) return;
+        var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id)));
+        p.active = true; p.category = p.staff ? 'Staff' : 'Member'; delete p.deceasedAt; delete p.deathTidied;
+        p.keyDates = (p.keyDates || []).filter(function (k) { return k.label !== 'Died' && k.label !== 'Funeral'; });
+        S.put('people', p, 'Undid the death record of ' + H.name(p));
+        H.render(); H.toast('Undone. Give them app access, teams and roster turns again if needed.');
       },
       medical: function (el) {
         var p = S.get('people', el.dataset.id), m = p.medical || {};

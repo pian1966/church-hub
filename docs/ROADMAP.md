@@ -21,12 +21,15 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   - Lessons: Firebase console rejects curly quotes in rules (fixed); GitHub Pages needs the repository public; `pian1966.github.io` must be an authorised domain
 - 🟡 Church to do: tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
 - ⬜ Confirm step 8 (key restricted to the website) is done
+- ✅ Added 25 Oct 2026: several away dates at once (tick service days and/or add holiday stretches); marital status for adults
+  (required when editing; imported from Elvanto's "Marital Status" column; to-do for adults without one); **Record a death**
+  (see ARCHITECTURE.md "When someone dies"). No change to the security rules – nothing to re-publish.
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)
 - ⬜ Trial with 2–3 staff and made-up people; Information Officer approves privacy notice (mention sign-in accounts are held by Google outside SA) and accepts Google's data processing terms
 - ⬜ Then: import real people from Elvanto (Import) and give access
 
 ## Phase 2 – People and pastoral care
-Members see their own family (and give consent for their children), smart lists, follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
+Members see their own family (and give consent for their children), smart lists (leave out people who have died), follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
 
 ## Phase 3 – Rostering and services (complete)
 Accept/decline by email and app, swap requests, reminders, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).
@@ -35,7 +38,7 @@ Accept/decline by email and app, swap requests, reminders, sign-up sheets, run s
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.
 
 ## Phase 5 – Communication and calendar
-Email (consent-aware, with opt-out), SMS via a South African provider, app notifications, church calendar and website embeds.
+Email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
 
 ## Phase 6 – Member app and extras
 Church Center-style member app, Android build, Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.

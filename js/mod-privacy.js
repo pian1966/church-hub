@@ -57,7 +57,7 @@
     var stale = S.find('people', function (p) { return p.active !== false && (p.updatedAt || p.createdAt || '9') < cutoff && !S.find('assignments', function (a) { return a.personId === p.id; }).length; });
     var row = function (p, why) { return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc(why) + '</small></span><a class="btn small" href="#/people/p/' + p.id + '">Open</a><button class="btn small" data-act="privacy:erase" data-id="' + p.id + '">Delete their information</button></div>'; };
     return head() + tabs('retention') + '<p class="muted">POPIA says information should not be kept longer than needed. Review these people: delete their information, or keep them if they’re still connected.</p>' +
-      '<section class="block"><h2>People who have left</h2>' + (left.length ? '<div class="list">' + left.map(function (p) { return row(p, 'Marked as left ' + (p.archivedAt ? H.fmt(p.archivedAt, true) : '')); }).join('') + '</div>' : '<p class="empty">No one has been marked as left.</p>') + '</section>' +
+      '<section class="block"><h2>People who have left or died</h2>' + (left.length ? '<div class="list">' + left.map(function (p) { return row(p, p.deceasedAt ? 'Died ' + H.fmt(p.deceasedAt, true) : 'Marked as left ' + (p.archivedAt ? H.fmt(p.archivedAt, true) : '')); }).join('') + '</div>' : '<p class="empty">No one has been marked as left.</p>') + '</section>' +
       '<section class="block"><h2>No activity for ' + months + ' months</h2>' + (stale.length ? '<div class="list">' + stale.map(function (p) { return row(p, 'Last updated ' + (p.updatedAt || '').slice(0, 10)); }).join('') + '</div>' : '<p class="empty">No one is overdue for review.</p>') + '</section>';
   }
 

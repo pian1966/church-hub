@@ -61,6 +61,12 @@ function makeSampleData() {
   });
   people.filter(function (p) { return p.id === 'p12'; })[0].medical = { allergies: 'Nuts (carries an EpiPen)', notes: '' };
   people.filter(function (p) { return p.id === 'p13'; })[0].medical = { allergies: '', notes: 'Asthma pump in bag' };
+  // Marital status (adults): couples in a family are married; two left blank so the to-do list shows it
+  people.forEach(function (p) {
+    if (p.familyRole === 'child' || p.id === 'p26' || p.id === 'p27') return;
+    var adults = people.filter(function (q) { return p.familyId && q.familyId === p.familyId && q.familyRole === 'adult'; }).length;
+    p.maritalStatus = adults === 2 ? 'Married' : p.id === 'p25' ? 'Widowed' : p.id === 'p02' ? 'Married' : 'Single';
+  });
 
   var consents = [];
   people.forEach(function (p, i) {

@@ -13,7 +13,8 @@
     ['birthDate', 'Birthday', /birth/i],
     ['family', 'Family (ID or name)', /family\s*(id|name)?$/i],
     ['relationship', 'Family relationship', /relationship|family\s*role/i],
-    ['category', 'Category', /categor|status|member\s*type/i]
+    ['maritalStatus', 'Marital status', /marital/i],
+    ['category', 'Category', /categor|^status$|member\s*type/i]
   ];
   var st = { rows: null, head: null, map: {}, fileName: '', done: null };
 
@@ -102,12 +103,12 @@
     },
     actions: {
       sample: function () {
-        load('elvanto-people-sample.csv', 'Person ID,First Name,Last Name,Preferred Name,Email,Mobile,Birthday,Family ID,Family Relationship,Category\n' +
-          'E-101,Brian,Fourie,,brian.fourie@example.com,083 111 2222,1975-03-12,FAM-9,Primary Contact,Member\n' +
-          'E-102,Karen,Fourie,,karen.fourie@example.com,083 111 3333,1978-07-01,FAM-9,Spouse,Member\n' +
-          'E-103,Mia,Fourie,,,,12/05/2014,FAM-9,Child,Member\n' +
-          'E-104,"Sipho","Mahlangu",Sips,sipho.m@example.com,072 555 1234,,,,Visitor\n' +
-          'E-105,Jason,Naidoo,,jason.naidoo@example.com,082 000 1370,,FAM-2,Primary Contact,Visitor\n');
+        load('elvanto-people-sample.csv', 'Person ID,First Name,Last Name,Preferred Name,Email,Mobile,Birthday,Family ID,Family Relationship,Marital Status,Category\n' +
+          'E-101,Brian,Fourie,,brian.fourie@example.com,083 111 2222,1975-03-12,FAM-9,Primary Contact,Married,Member\n' +
+          'E-102,Karen,Fourie,,karen.fourie@example.com,083 111 3333,1978-07-01,FAM-9,Spouse,Married,Member\n' +
+          'E-103,Mia,Fourie,,,,12/05/2014,FAM-9,Child,,Member\n' +
+          'E-104,"Sipho","Mahlangu",Sips,sipho.m@example.com,072 555 1234,,,,Single,Visitor\n' +
+          'E-105,Jason,Naidoo,,jason.naidoo@example.com,082 000 1370,,FAM-2,Primary Contact,Married,Visitor\n');
       },
       again: function () { st = { rows: null, head: null, map: {}, fileName: '', done: null }; H.render(); },
       go: function () {
@@ -126,6 +127,7 @@
           var p = matchExisting(r), isNew = !p;
           p = p ? JSON.parse(JSON.stringify(p)) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'elvanto' };
           ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'birthDate'].forEach(function (k) { if (r[k]) p[k] = r[k]; });
+          if (r.maritalStatus && !r.child) p.maritalStatus = (['Single', 'Engaged', 'Married', 'Separated', 'Divorced', 'Widowed'].filter(function (m) { return m.toLowerCase() === r.maritalStatus.toLowerCase(); })[0]) || 'Not known';
           if (!p.mobile && r.phone) p.mobile = r.phone;
           if (r.id) p.elvantoId = r.id;
           if (fid) p.familyId = fid;

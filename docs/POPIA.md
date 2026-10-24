@@ -21,6 +21,14 @@ This is a design checklist, not legal advice – the church's Information Office
 | **Security safeguards** (s19–22) | Sign-in with Google or an email link (no passwords to leak); only email addresses on the church's **access list** get in. Role-based access (Administrator, Pastor, Roster coordinator, Children's ministry, Member) is enforced by the **database security rules** (`firestore.rules`), not just the screens, and tested automatically. **Children's medical notes: Children's ministry only. Pastoral notes: Pastors only** – not even Administrators can read them; they can only delete them when someone asks to be deleted. Every view of these notes, every change and every sign-in is in the **audit log**, which nobody can edit. The church directory holds only name and phone of adults who agreed. A **breach register** records security compromises and whether the Information Regulator and the people affected were notified (s22). Church data is stored in South Africa (Firestore, Johannesburg). |
 | **Data subject participation** (s23–25) | A **requests register** for access, correction, deletion and objection, with due dates. One click **exports everything held about a person**; **delete** removes their details and keeps only anonymous statistics. |
 
+## Marital status and people who have died
+- **Marital status** (adults) is ordinary personal information, kept for pastoral care. It is stored with birthdays in the
+  private details (Administrators, Pastors and the person themselves), not in the directory.
+- **After a death**: POPIA protects information about *living* people, but details of someone who died usually also say something
+  about their living family, so Church Hub keeps the same protection. The person stays on the records (marked Deceased),
+  leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
+  died") so the church can decide when to delete their details.
+
 ## Other POPIA points covered
 - **Direct marketing by email/SMS (s69):** only to people with consent for that channel; every message will include an opt-out (Phase 5).
 - **Cross-border transfers (s72):** the church's data (Firestore) is stored in Johannesburg. **Sign-in accounts** (the email addresses of people given access, and their Google name) are kept by Firebase Authentication on Google's global servers – the privacy notice should say so. Any other overseas service (e.g. an SMS gateway) is also listed in the privacy notice.

@@ -17,7 +17,10 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   - security rules (`firestore.rules`) per role: medical notes Children's ministry only, pastoral notes Pastors only (Administrators can't read either), members only their own information and the opt-in directory, staff leave private (others see dates only)
   - Children's ministry can now edit medical notes (needs guardian consent first); "No access" option for people who shouldn't sign in
   - tests: rules against Google's emulator, the app in a browser as every role (demo and live), all run on GitHub after every push
-- 🟡 **Church to do** (`docs/FIREBASE-SETUP.md`): create the Firebase project with the church's Google account (Johannesburg), paste the four settings into `js/firebase-config.js`, publish the rules, restrict the key, first sign-in
+- ✅ Church set up Firebase (25 Oct 2026): project `church-hub-7ec02`, Firestore in Johannesburg, rules published, first Administrator signed in and set up the church
+  - Lessons: Firebase console rejects curly quotes in rules (fixed); GitHub Pages needs the repository public; `pian1966.github.io` must be an authorised domain
+- 🟡 Church to do: tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
+- ⬜ Confirm step 8 (key restricted to the website) is done
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)
 - ⬜ Trial with 2–3 staff and made-up people; Information Officer approves privacy notice (mention sign-in accounts are held by Google outside SA) and accepts Google's data processing terms
 - ⬜ Then: import real people from Elvanto (Import) and give access

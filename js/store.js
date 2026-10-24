@@ -415,6 +415,7 @@ var Store = (function () {
       var set = function (path, data) { batch.set(doc(path), clean(data)); };
       if (info.churchName) {
         var st = copy(t.settings); st.demo = false; st.churchName = info.churchName;
+        st.informationOfficer = { name: '', email: '', phone: '', deputy: '', registered: false };   // no demo placeholders
         st.privacyNotice = st.privacyNotice.replace(/Christ Church Howick/g, info.churchName) +
           ' Sign-in accounts (your email address) are managed by Google, which may store them outside South Africa.';
         set('settings/church', st);

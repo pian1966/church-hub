@@ -1,7 +1,7 @@
 rules_version = '2';
 
-// Church Hub – who may read and write what (POPIA "security safeguards", s19).
-// Paste this whole file into Firebase console → Firestore Database → Rules → Publish.
+// Church Hub - who may read and write what (POPIA "security safeguards", s19).
+// Paste this whole file into Firebase console > Firestore Database > Rules > Publish.
 // Tested by tests/rules.test.mjs (runs automatically on GitHub after every change).
 //
 // How access works:
@@ -29,7 +29,7 @@ service cloud.firestore {
     function mine(personId) { return anyone() && me() != '' && personId == me(); }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
 
-    // ---------- access list (Administrators manage it from People → Edit details) ----------
+    // ---------- access list (Administrators manage it from People > Edit details) ----------
     match /roles/{email} {
       allow read: if signedIn() && (email == request.auth.token.email.lower() || admin());
       allow create, update: if admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member'];
@@ -81,7 +81,7 @@ service cloud.firestore {
     // Consent register. Members record their own choices; Children's ministry sees medical and photo consent.
     match /consents/{id} {
       allow read: if isRole(['admin', 'pastor']) || mine(resource.data.personId)
-        || (isRole(['kids']) && resource.data.purpose in ['Children’s medical notes', 'Photos']);
+        || (isRole(['kids']) && resource.data.purpose.matches('Children.s medical notes|Photos'));
       allow create: if isRole(['admin', 'pastor'])
         || (mine(request.resource.data.personId) && request.resource.data.method == 'Changed in the app');
       allow update: if isRole(['admin', 'pastor'])

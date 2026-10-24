@@ -69,10 +69,11 @@ function serve() {
     page.on('pageerror', e => errs.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errs.push(m.text()); });
     await page.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());
-    await page.goto(BASE); await page.selectOption('#si-any', id); await page.click('[data-act="hub:signinany"]');
-    for (const r of ROUTES) { await page.goto(BASE + '#/' + r); await page.waitForTimeout(20); }
-    await page.goto(BASE + '#/people/p/p12'); const t12 = await page.textContent('main');
-    await page.goto(BASE + '#/people/p/p10'); const t10 = await page.textContent('main');
+    const DEMO = BASE + '?demo';                       // the demo address works even when Firebase is set up
+    await page.goto(DEMO); await page.selectOption('#si-any', id); await page.click('[data-act="hub:signinany"]');
+    for (const r of ROUTES) { await page.goto(DEMO + '#/' + r); await page.waitForTimeout(20); }
+    await page.goto(DEMO + '#/people/p/p12'); const t12 = await page.textContent('main');
+    await page.goto(DEMO + '#/people/p/p10'); const t10 = await page.textContent('main');
     check(!!(await page.$('.demo')) && t12.includes('Nuts') === (who === 'kids') && t10.includes('Moved from Durban') === (who === 'pastor'), 'demo as ' + who + ': restricted notes shown only to the right role');
     check(errs.length === 0, 'demo as ' + who + ': no errors on ' + ROUTES.length + ' screens' + (errs.length ? ': ' + errs.slice(0, 2).join(' | ') : ''));
     await context.close();

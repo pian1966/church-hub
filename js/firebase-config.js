@@ -10,8 +10,8 @@
  * The demo stays available at the same address with ?demo on the end.
  */
 window.CHURCH_HUB_FIREBASE = window.CHURCH_HUB_FIREBASE || {
-  apiKey: '',
-  authDomain: '',
-  projectId: '',
-  appId: ''
+  apiKey: 'AIzaSyCPCZik5WqMbIKYkewNHfLMtFwaGhAk-So',
+  authDomain: 'church-hub-7ec02.firebaseapp.com',
+  projectId: 'church-hub-7ec02',
+  appId: '1:659353710254:web:dd14380a312ad037ccc73f'
 };

@@ -76,6 +76,7 @@
   /** Delete someone's personal information, keeping only anonymous numbers (e.g. how many served). */
   function erase(p) {
     var name = H.name(p);
+    S.purge(p.id);                                   // medical and pastoral notes, even though Administrators can't read them
     S.find('consents', function (c) { return c.personId === p.id; }).forEach(function (c) { S.remove('consents', c.id); });
     S.find('notes', function (n) { return n.personId === p.id; }).forEach(function (n) { S.remove('notes', n.id); });
     S.find('skills', function (k) { return k.personId === p.id; }).forEach(function (k) { S.remove('skills', k.id); });

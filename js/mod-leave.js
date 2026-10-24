@@ -69,7 +69,7 @@
     var list = d.requests.filter(function (r) { return (r.status === 'Approved' || (isLeaveAdmin() && r.status === 'Pending')) && r.end >= t && r.start <= end; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
     return '<section class="block"><h2>Away in the next 6 weeks</h2>' + (list.length ? '<div class="list">' + list.map(function (r) {
       var st = C.staffById(d, r.staffId), tp = typeOf(d, r.type);
-      return '<div class="item"><span class="dot" style="--c:' + esc(tp.colour) + '"></span><span class="grow"><b>' + esc(st ? st.name : '?') + '</b><small>' + esc(range(r)) + (isLeaveAdmin() ? ' · ' + esc(tp.name) : '') + '</small></span>' + (r.status === 'Pending' ? pill('Pending') : '') + '</div>';
+      return '<div class="item"><span class="dot" style="--c:' + esc(tp.colour) + '"></span><span class="grow"><b>' + esc(st ? st.name : (H.name(S.get('people', r.staffId)) || 'A staff member')) + '</b><small>' + esc(range(r)) + (isLeaveAdmin() ? ' · ' + esc(tp.name) : '') + '</small></span>' + (r.status === 'Pending' ? pill('Pending') : '') + '</div>';
     }).join('') + '</div>' : '<p class="empty">No one is away.</p>') + '<p class="hint">Approved leave also stops people being rostered on those days.</p></section>';
   }
 

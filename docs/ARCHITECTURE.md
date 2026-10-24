@@ -14,17 +14,46 @@ It is built in phases; each phase is usable on its own. **Read this file first i
 ```
 index.html                the single page app (no build step)
 css/hub.css               design tokens + components
-js/store.js               data layer: Store.get/put/remove/audit – today localStorage (demo), later Firebase
+js/firebase-config.js     the church's Firebase project (empty = demo mode)
+js/store.js               data layer: Store.get/put/remove/audit – demo (this browser) or live (Firestore)
 js/roster.js              RosterCore: the rostering engine (pure functions, unit-tested)
 js/leave-core.js          LeaveCore: Leave Manager's leave rules (copy of leave-manager/assets/core.js – keep in step)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers
 js/mod-*.js               one file per module: people, rosters, leave, privacy, import, settings
-tests/*.test.js           node unit tests (run: node tests/roster.test.js)
+firestore.rules           database security rules: who may read/write what (POPIA)
+tests/roster.test.js      rostering engine          tests/rules.test.mjs  security rules (Firestore emulator)
+tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js)
+.github/workflows/tests.yml  runs all of these on GitHub after every push
 ```
 
 ### Data layer contract
 Reads are synchronous from an in-memory copy (`Store.list('people')`); writes (`Store.put`, `Store.remove`) update the copy immediately and persist in the background.
-This is exactly how Firebase/Firestore works with its offline cache, so moving from the demo store to the real database changes only `store.js`.
+Modules never know which mode they are in (apart from `Store.isLive()` for sign-in wording).
+
+**Demo mode** (no Firebase settings, or `?demo` in the address): made-up people from `sample.js`, saved in this browser.
+
+**Live mode**: Firebase Authentication (Google or email link) and Firestore in Johannesburg. Setup: `docs/FIREBASE-SETUP.md`.
+- *Access list* `roles/{email}` = `{ role, personId }`. Only Administrators write it, from People → Edit details → App access
+  (`No access` deletes it). The first Administrator is added by hand in the console, then Church Hub asks them to set up the church.
+- *One person, several documents*, because security rules protect whole documents, not fields. `store.js` splits on save and
+  joins on load, so modules still see one person object:
+
+  | Document | Holds | Read by |
+  | --- | --- | --- |
+  | `people/{id}` | name, family, category, email, mobile, active, app role (display copy) | Admin, Pastor, Roster coordinator, Children's ministry; the person |
+  | `details/{id}` | birthday, key dates, staff details, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
+  | `medical/{id}` | children's allergies and medical notes | **Children's ministry only** |
+  | `notes/{personId}` | pastoral notes (`entries` list) | **Pastors only** |
+  | `directory/{id}` | name and mobile of adults with *Church directory* consent | everyone signed in |
+- *Leave*: `leave/config` (types, levels, rules, holidays, `autoApprove`), `leaveRequests/{id}`, `leaveAdjustments/{id}`.
+  `away/{id}` holds approved leave as dates only, so rosters and "Who's away" work without showing anyone's leave type or reason.
+- Everything else is one document per item (`families`, `consents`, `teams`, `positions`, `skills`, `services`,
+  `assignments`, `groups`, `blockouts`, `dsr`, `breaches`, `audit`, `settings/church`).
+- Each role only subscribes to what `firestore.rules` lets it read (`plan()` in `store.js`), so nothing is refused.
+  **When changing who sees what, change `firestore.rules`, `plan()` in `store.js`, the POLICY copy in `tests/fake-firebase.js`
+  and the tests together.**
+- Saves are written in the background; if the database refuses one, the person sees a plain-English message.
+  Changes made by others appear automatically (unless the person is typing or has a dialog open).
 
 ### Collections
 | Collection | Holds |
@@ -44,14 +73,15 @@ This is exactly how Firebase/Firestore works with its offline cache, so moving f
 | `breaches` | security-compromise register (POPIA s22) |
 | `audit` | who viewed or changed sensitive information, and when |
 
-### Roles (enforced in the UI now; in database security rules once on Firebase)
+### Roles (enforced in the screens and by the database security rules, `firestore.rules`)
 | Role | Can |
 | --- | --- |
-| Administrator | everything, including Privacy and Settings |
-| Pastor | people, families, pastoral notes |
-| Roster coordinator | rosters; people's names and contact details only |
-| Children's ministry | children, guardians and medical notes |
-| Member | own details, own serving, own leave (if staff) |
+| Administrator | everything, including Privacy, Import and Settings – **except reading pastoral and medical notes** (can delete them for a deletion request) |
+| Pastor | people, families, birthdays, consent, pastoral notes |
+| Roster coordinator | rosters, teams, away dates; people's names and contact details only |
+| Children's ministry | children (incl. birthdays), guardians, medical notes, medical/photo consent |
+| Member | own details (can correct name and contact), own consent, own serving and away dates, own leave (if staff); the church directory |
+| No access | kept on the church records, can't sign in |
 
 Leave approval follows Leave Manager: Administrators approve.
 

@@ -1,0 +1,164 @@
+rules_version = '2';
+
+// Church Hub – who may read and write what (POPIA "security safeguards", s19).
+// Paste this whole file into Firebase console → Firestore Database → Rules → Publish.
+// Tested by tests/rules.test.mjs (runs automatically on GitHub after every change).
+//
+// How access works:
+// - People sign in with Google or an email link. Their email address must be verified.
+// - roles/{email} says what they may do: admin, pastor, rosters, kids or member, and which person record is theirs.
+//   Only Administrators can change roles. No roles document = no access at all.
+// - Medical notes (children) are for Children's ministry only. Pastoral notes are for Pastors only.
+//   Administrators cannot read either; they can only delete them when someone asks to be deleted (POPIA s24).
+// - Members see their own details, their own serving and leave, and the church directory
+//   (only people who agreed to be in it).
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- who is asking ----------
+    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    function roleRef() { return /databases/$(database)/documents/roles/$(request.auth.token.email.lower()); }
+    function hasRole() { return signedIn() && exists(roleRef()); }
+    function access() { return get(roleRef()).data; }
+    function isRole(list) { return hasRole() && access().role in list; }
+    function admin() { return isRole(['admin']); }
+    function staff() { return isRole(['admin', 'pastor', 'rosters', 'kids']); }
+    function anyone() { return isRole(['admin', 'pastor', 'rosters', 'kids', 'member']); }
+    function me() { return access().get('personId', ''); }
+    function mine(personId) { return anyone() && me() != '' && personId == me(); }
+    function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+
+    // ---------- access list (Administrators manage it from People → Edit details) ----------
+    match /roles/{email} {
+      allow read: if signedIn() && (email == request.auth.token.email.lower() || admin());
+      allow create, update: if admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member'];
+      allow delete: if admin();
+    }
+
+    // ---------- church settings ----------
+    match /settings/{doc} {
+      allow read: if anyone();
+      allow write: if admin();
+    }
+
+    // ---------- people ----------
+    // Name, family and contact details. Members may correct their own name and contact details.
+    match /people/{id} {
+      allow read: if staff() || mine(id);
+      allow create: if isRole(['admin', 'pastor']);
+      allow update: if isRole(['admin', 'pastor'])
+        || (mine(id) && onlyChanges(['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'updatedAt']));
+      allow delete: if admin();
+    }
+    // Birthday, key dates, staff details. Children's ministry sees children's details only.
+    match /details/{id} {
+      allow read: if isRole(['admin', 'pastor']) || mine(id)
+        || (isRole(['kids']) && resource.data.familyRole == 'child');
+      allow write: if isRole(['admin', 'pastor']);
+    }
+    // Children's medical notes and allergies (special personal information): Children's ministry only.
+    match /medical/{id} {
+      allow read, create, update: if isRole(['kids']);
+      allow delete: if isRole(['kids', 'admin']);
+    }
+    // Pastoral notes, one document per person: Pastors only.
+    match /notes/{personId} {
+      allow read, create, update: if isRole(['pastor']);
+      allow delete: if isRole(['pastor', 'admin']);
+    }
+    // Church directory: name and phone of adults who agreed to be listed. Everyone signed in can read it.
+    match /directory/{id} {
+      allow read: if anyone();
+      allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile']);
+      allow delete: if isRole(['admin', 'pastor']) || mine(id);
+    }
+    match /families/{id} {
+      allow read: if staff();
+      allow write: if isRole(['admin', 'pastor']);
+    }
+    // Consent register. Members record their own choices; Children's ministry sees medical and photo consent.
+    match /consents/{id} {
+      allow read: if isRole(['admin', 'pastor']) || mine(resource.data.personId)
+        || (isRole(['kids']) && resource.data.purpose in ['Children’s medical notes', 'Photos']);
+      allow create: if isRole(['admin', 'pastor'])
+        || (mine(request.resource.data.personId) && request.resource.data.method == 'Changed in the app');
+      allow update: if isRole(['admin', 'pastor'])
+        || (mine(resource.data.personId) && onlyChanges(['withdrawnAt', 'updatedAt']));
+      allow delete: if admin();
+    }
+
+    // ---------- rosters ----------
+    match /teams/{id} { allow read: if anyone(); allow write: if isRole(['admin', 'rosters']); }
+    match /positions/{id} { allow read: if anyone(); allow write: if isRole(['admin', 'rosters']); }
+    match /services/{id} { allow read: if anyone(); allow write: if isRole(['admin', 'rosters']); }
+    match /skills/{id} {
+      allow read: if staff() || mine(resource.data.personId);
+      allow write: if isRole(['admin', 'rosters']);
+    }
+    // Members can accept or decline their own turns, nothing else.
+    match /assignments/{id} {
+      allow read: if staff() || mine(resource.data.personId);
+      allow create, delete: if isRole(['admin', 'rosters']);
+      allow update: if isRole(['admin', 'rosters'])
+        || (mine(resource.data.personId) && onlyChanges(['status', 'updatedAt'])
+            && request.resource.data.status in ['accepted', 'declined']);
+    }
+    // Serve together / keep apart. Members may set up groups they are part of.
+    match /groups/{id} {
+      allow read: if staff() || (mine(me()) && me() in resource.data.memberIds);
+      allow create: if isRole(['admin', 'rosters']) || (mine(me()) && me() in request.resource.data.memberIds);
+      allow update: if isRole(['admin', 'rosters'])
+        || (mine(me()) && me() in resource.data.memberIds && me() in request.resource.data.memberIds);
+      allow delete: if isRole(['admin', 'rosters']) || (mine(me()) && me() in resource.data.memberIds);
+    }
+    // Away dates people enter themselves.
+    match /blockouts/{id} {
+      allow read: if staff() || mine(resource.data.personId);
+      allow create, update: if isRole(['admin', 'rosters']) || mine(request.resource.data.personId);
+      allow delete: if isRole(['admin', 'rosters']) || mine(resource.data.personId);
+    }
+    // Approved leave as plain dates (no leave type or reason), so rosters can skip people who are away.
+    match /away/{id} {
+      allow read: if anyone();
+      allow create, update: if admin()
+        || (mine(request.resource.data.personId) && request.resource.data.keys().hasOnly(['personId', 'from', 'to']));
+      allow delete: if admin() || mine(resource.data.personId);
+    }
+
+    // ---------- leave (same rules as Leave Manager) ----------
+    match /leave/{doc} {
+      allow read: if anyone();
+      allow write: if admin();
+    }
+    // Staff see and request their own leave; only Administrators approve.
+    match /leaveRequests/{id} {
+      allow read: if admin() || mine(resource.data.staffId);
+      allow create: if admin() || (mine(request.resource.data.staffId) && (
+        request.resource.data.status == 'Pending'
+        || (request.resource.data.status == 'Approved'
+            && request.resource.data.type in get(/databases/$(database)/documents/leave/config).data.autoApprove)));
+      allow update: if admin()
+        || (mine(resource.data.staffId) && request.resource.data.status == 'Cancelled'
+            && onlyChanges(['status', 'cancelledBy']));
+      allow delete: if admin();
+    }
+    match /leaveAdjustments/{id} {
+      allow read: if admin() || mine(resource.data.staffId);
+      allow write: if admin();
+    }
+
+    // ---------- POPIA registers (Administrators only) ----------
+    match /dsr/{id} { allow read, write: if admin(); }
+    match /breaches/{id} { allow read, write: if admin(); }
+    // Audit log: everyone signed in can add an entry about themselves; only Administrators read it; nobody changes it.
+    match /audit/{id} {
+      allow read: if admin();
+      allow create: if anyone()
+        && request.resource.data.byEmail == request.auth.token.email.lower()
+        && request.resource.data.ts == request.time;
+      allow update, delete: if false;
+    }
+  }
+}

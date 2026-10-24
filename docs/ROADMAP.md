@@ -2,7 +2,7 @@
 
 Status key: ✅ done · 🟡 in progress · ⬜ planned
 
-## Phase 1 – Foundation (demo with sample data) 🟡 – demo done, database connection next
+## Phase 1 – Foundation 🟡 – everything built; waiting for the church to create its Firebase project
 - ✅ Architecture, data model, POPIA design (`ARCHITECTURE.md`, `POPIA.md`)
 - ✅ Rostering engine: together (must/prefer), keep apart, away dates and leave, fair turns, reasons (`js/roster.js`, tested)
 - ✅ App shell: sign-in as a role, Home with app cards and to-do list, modules on/off
@@ -11,10 +11,19 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ Leave (Leave Manager built in, same rules): balances, request with balance box, approvals; approved leave blocks rostering
 - ✅ Privacy: Information Officer, consent overview, requests register, export/delete a person, retention review, breach register, audit log
 - ✅ Import from Elvanto (People CSV)
-- ⬜ Connect to Firebase (church account, Johannesburg) with sign-in and security rules
+- ✅ Firebase connection built (session of 24 Oct 2026):
+  - `store.js` saves to Firestore when `js/firebase-config.js` is filled in; the demo still works (and stays at `?demo`)
+  - sign-in with Google or an email link; access list by email, managed from People → App access; first-Administrator setup screen
+  - security rules (`firestore.rules`) per role: medical notes Children's ministry only, pastoral notes Pastors only (Administrators can't read either), members only their own information and the opt-in directory, staff leave private (others see dates only)
+  - Children's ministry can now edit medical notes (needs guardian consent first); "No access" option for people who shouldn't sign in
+  - tests: rules against Google's emulator, the app in a browser as every role (demo and live), all run on GitHub after every push
+- 🟡 **Church to do** (`docs/FIREBASE-SETUP.md`): create the Firebase project with the church's Google account (Johannesburg), paste the four settings into `js/firebase-config.js`, publish the rules, restrict the key, first sign-in
+- ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)
+- ⬜ Trial with 2–3 staff and made-up people; Information Officer approves privacy notice (mention sign-in accounts are held by Google outside SA) and accepts Google's data processing terms
+- ⬜ Then: import real people from Elvanto (Import) and give access
 
 ## Phase 2 – People and pastoral care
-Smart lists, follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
+Members see their own family (and give consent for their children), smart lists, follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
 
 ## Phase 3 – Rostering and services (complete)
 Accept/decline by email and app, swap requests, reminders, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).

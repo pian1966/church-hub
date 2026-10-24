@@ -21,7 +21,7 @@
   function visiblePeople() {
     var all = S.find('people', function (p) { return p.active !== false; });
     if (canBasic()) return H.can('children') || canSeeAll() ? all : all.filter(function (p) { return p.familyRole !== 'child'; });
-    return all.filter(function (p) { return isMe(p) || (p.familyRole !== 'child' && hasConsent(p.id, 'Church directory')); });
+    return all.filter(function (p) { return isMe(p) || (p.familyRole !== 'child' && (p.inDirectory || hasConsent(p.id, 'Church directory'))); });
   }
 
   /* ---------- list ---------- */
@@ -52,8 +52,8 @@
     var p = S.get('people', id), me = isMe(p);
     if (!p || (!canBasic() && !me && visiblePeople().indexOf(p) < 0)) return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><p class="empty">This person isn’t available to you.</p>';
     var full = canSeeAll() || me, fam = familyOf(p), child = p.familyRole === 'child';
-    var seeMedical = child && (H.can('medical') || H.can('*'));
-    var seeNotes = H.can('notes') || H.can('*');
+    var seeMedical = child && H.can('medical');     // Children's ministry only (POPIA: special personal information)
+    var seeNotes = H.can('notes');                   // Pastors only
     if (state.audited !== id && (seeMedical && p.medical || seeNotes)) {     // POPIA: log who viewed restricted information
       state.audited = id;
       if (seeNotes) S.audit('Viewed pastoral notes of ' + H.name(p), 'people/' + id);
@@ -96,7 +96,8 @@
     if (seeMedical) {
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">Medical and allergies</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + 'Children’s ministry only</span></div>' +
         (p.medical && (p.medical.allergies || p.medical.notes) ? '<dl class="kv" style="margin-top:12px">' + (p.medical.allergies ? '<dt>Allergies</dt><dd><span class="tag bad">' + esc(p.medical.allergies) + '</span></dd>' : '') + (p.medical.notes ? '<dt>Notes</dt><dd>' + esc(p.medical.notes) + '</dd>' : '') + '</dl>' : '<p class="muted">None recorded.</p>') +
-        (hasConsent(p.id, 'Children’s medical notes') ? '' : '<p class="note warn" style="margin-top:10px">No guardian consent for medical notes yet.</p>') + '</section>';
+        (hasConsent(p.id, 'Children’s medical notes') ? '' : '<p class="note warn" style="margin-top:10px">No guardian consent for medical notes yet.</p>') +
+        '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:medical" data-id="' + p.id + '">Edit medical notes</button></div></section>';
     }
     // Pastoral notes
     if (seeNotes && !me) {
@@ -131,7 +132,7 @@
 
   /* ---------- edit dialogs ---------- */
   function editDialog(p) {
-    var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: 'Visitor', familyId: '', familyRole: 'adult', appRole: 'member' };
+    var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: 'Visitor', familyId: '', familyRole: 'adult', appRole: Store.defaultRole() };
     var admin = H.can('*'), me = isMe(p);
     var fams = S.list('families');
     var html = H.dialogHead(isNew ? 'Add a person' : 'Edit ' + H.name(p), isNew ? 'Only add what the church needs. Ask for consent when you add someone.' : '') +
@@ -145,7 +146,7 @@
         '<label class="field">Category<select id="pf-cat">' + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two"><label class="field">Family<select id="pf-fam"><option value="">No family</option>' + fams.map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(f.name) + '</option>'; }).join('') + '<option value="__new">+ New family…</option></select></label>' +
         '<label class="field">In the family as<select id="pf-frole"><option value="adult"' + (p.familyRole !== 'child' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' : '') +
-      (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.</small></label>' : '') +
+      (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">Mark as left</button>' : '') +
       '<button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:save">' + (isNew ? 'Add person' : 'Save') + '</button></div>';
@@ -172,7 +173,8 @@
     var pick = function (c) { return S.find(c, function (x) { return x.personId === p.id || (x.memberIds && x.memberIds.indexOf(p.id) >= 0); }); };
     var lv = Store.leave();
     var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (POPIA section 23).',
-      person: p, family: familyOf(p), consents: pick('consents'), pastoralNotes: pick('notes'), serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts') },
+      restricted: H.can('notes') && H.can('medical') ? '' : 'Pastoral notes and children’s medical notes are kept separately and only Pastors / Children’s ministry can read them. Ask them to add these if the request covers them.',
+      person: p, family: familyOf(p), consents: pick('consents'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts') },
       leave: lv ? lv.requests.filter(function (r) { return r.staffId === p.id; }) : [], auditEntries: S.find('audit', function (a) { return a.target === 'people/' + p.id; }) };
     S.audit('Exported all data held about ' + H.name(p), 'people/' + p.id);
     H.download('church-hub-' + (p.firstName + '-' + p.lastName).toLowerCase().replace(/\W+/g, '-') + '.json', JSON.stringify(data, null, 2));
@@ -205,7 +207,7 @@
       save: function () {
         var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : null; };
         var err = document.getElementById('pf-err'), id = g('pf-id');
-        var p = id ? JSON.parse(JSON.stringify(S.get('people', id))) : { active: true, appRole: 'member', keyDates: [], source: 'manual' };
+        var p = id ? JSON.parse(JSON.stringify(S.get('people', id))) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'manual' };
         if (!g('pf-first') || !g('pf-last')) { err.textContent = 'Please enter a first and last name.'; err.hidden = false; return; }
         if (g('pf-email') && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g('pf-email'))) { err.textContent = 'That email address doesn’t look right.'; err.hidden = false; return; }
         p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref'); p.email = g('pf-email'); p.mobile = g('pf-mobile');
@@ -213,6 +215,7 @@
         if (g('pf-cat') !== null) p.category = g('pf-cat');
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
         if (g('pf-role') !== null) p.appRole = g('pf-role');
+        if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = 'To give someone access to Church Hub, add their email address – that’s how they sign in.'; err.hidden = false; return; }
         var fam = g('pf-fam');
         if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family' }, 'Created family ' + p.lastName); fam = f.id; }
         if (fam !== null) p.familyId = fam;
@@ -233,6 +236,22 @@
             (box.checked ? 'Consent given: ' : 'Consent withdrawn: ') + pur + ' for ' + H.name(p));
         });
         H.closeModal(); H.render(); H.toast('Consent saved');
+      },
+      medical: function (el) {
+        var p = S.get('people', el.dataset.id), m = p.medical || {};
+        H.modal(H.dialogHead('Medical notes for ' + H.name(p), 'Only Children’s ministry can see these. Keep it to what leaders need for safety.') +
+          '<div class="dlg-body"><label class="field">Allergies<input id="md-a" value="' + esc(m.allergies || '') + '" placeholder="e.g. Nuts (carries an EpiPen)"></label>' +
+          '<label class="field">Other notes<textarea id="md-n" rows="3" placeholder="e.g. Asthma pump in bag">' + esc(m.notes || '') + '</textarea></label><p id="md-err" class="note bad" hidden></p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savemedical" data-id="' + p.id + '">Save</button></div>', 'Medical notes');
+      },
+      savemedical: function (el) {
+        var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id))), a = document.getElementById('md-a').value.trim(), n = document.getElementById('md-n').value.trim();
+        if ((a || n) && !hasConsent(p.id, 'Children’s medical notes')) {
+          var e = document.getElementById('md-err'); e.textContent = 'A parent or guardian must agree first (POPIA). Ask a Pastor or the church office to record their consent on ' + p.firstName + '’s profile.'; e.hidden = false; return;
+        }
+        if (a || n) p.medical = { allergies: a, notes: n }; else delete p.medical;
+        S.put('people', p, 'Updated children’s medical notes of ' + H.name(p));
+        H.closeModal(); H.render(); H.toast('Medical notes saved');
       },
       note: function (el) {
         var t = document.getElementById('pn-text').value.trim(); if (!t) return;

@@ -124,7 +124,7 @@
             fid = famIds[r.family];
           }
           var p = matchExisting(r), isNew = !p;
-          p = p ? JSON.parse(JSON.stringify(p)) : { active: true, appRole: 'member', keyDates: [], source: 'elvanto' };
+          p = p ? JSON.parse(JSON.stringify(p)) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'elvanto' };
           ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'birthDate'].forEach(function (k) { if (r[k]) p[k] = r[k]; });
           if (!p.mobile && r.phone) p.mobile = r.phone;
           if (r.id) p.elvantoId = r.id;

@@ -13,16 +13,20 @@ var Hub = (function () {
 
   /* ---------- roles and permissions (UI now; database security rules when on Firebase) ---------- */
   var ROLES = {
-    admin: { label: 'Administrator', perms: ['*'] },
+    admin: { label: 'Administrator', perms: ['*'] },          // everything except the two restricted kinds of notes below
     pastor: { label: 'Pastor', perms: ['people.view', 'people.edit', 'notes', 'children', 'rosters.view'] },
     rosters: { label: 'Roster coordinator', perms: ['people.basic', 'rosters.manage', 'rosters.view'] },
     kids: { label: 'Children’s ministry', perms: ['people.basic', 'children', 'medical', 'rosters.view'] },
-    member: { label: 'Member', perms: [] }
+    member: { label: 'Member', perms: [] },
+    none: { label: 'No access (can’t sign in)', perms: [] }
   };
+  /** POPIA: children's medical notes are for Children's ministry only and pastoral notes for Pastors only –
+   *  not even Administrators see them (the database rules enforce the same). */
+  var RESTRICTED = ['medical', 'notes'];
   function can(perm) {
     if (!user) return false;
     var p = (ROLES[user.appRole] || ROLES.member).perms;
-    return p.indexOf('*') >= 0 || p.indexOf(perm) >= 0;
+    return p.indexOf(perm) >= 0 || (p.indexOf('*') >= 0 && RESTRICTED.indexOf(perm) < 0);
   }
 
   /* ---------- helpers ---------- */
@@ -122,7 +126,51 @@ var Hub = (function () {
       }).join('') + '</div></section>';
   }
 
+  /* ---------- live sign-in (Firebase) ---------- */
+  var live = { stage: 'loading' };
+  function liveCard(inner) {
+    return '<div class="signin"><div class="signin-card">' +
+      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>Church Hub</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
+      inner + '</div></div>';
+  }
+  function renderLive() {
+    var st = live, html;
+    if (st.stage === 'loading') html = '<h1>Church Hub</h1><p class="lead">' + (st.email ? 'Signing you in…' : 'Loading…') + '</p>';
+    else if (st.stage === 'error') html = '<h1>Something went wrong</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="location.reload()">Try again</button>';
+    else if (st.stage === 'linkSent') html = '<h1>Check your email</h1><p class="lead">We sent a sign-in link to <b>' + esc(st.email) + '</b>. Open it on this device to sign in. It may take a minute, and could land in your spam folder.</p><button class="btn" data-act="hub:restart">Use a different way</button>';
+    else if (st.stage === 'needEmail') html = '<h1>Confirm your email</h1><p class="lead">For your safety, type the email address you asked the sign-in link for.</p>' +
+      '<form id="si-form" novalidate><label class="field">Email<input id="si-email" type="email" autocomplete="email" required></label><p id="si-err" class="note bad" hidden></p><button class="btn primary" data-act="hub:finishlink">Sign in</button></form>';
+    else if (st.stage === 'noAccess') html = '<h1>No access yet</h1><p class="lead">' + ({
+      unverified: 'Your email address (' + esc(st.email) + ') hasn’t been verified. Sign in with Google or an email link instead.',
+      notReady: 'Church Hub hasn’t been set up yet. Please try again later.',
+      noPerson: 'You have access, but your person record is missing. Please ask the church office.'
+    }[st.reason] || 'You are signed in as <b>' + esc(st.email) + '</b>, but this email address hasn’t been given access to Church Hub. Ask the church office to add it, or sign out and use another account.') + '</p>' +
+      '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + 'Sign out</button>';
+    else if (st.stage === 'setup') html = '<h1>' + (st.needChurch ? 'Set up Church Hub' : 'Welcome') + '</h1><p class="lead">' + (st.needChurch ? 'You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).' : 'Please add your name to finish setting up your access.') + '</p>' +
+      '<form id="su-form" novalidate>' + (st.needChurch ? '<label class="field">Church name<input id="su-church" value="Christ Church Howick"></label>' : '') +
+      '<div class="two"><label class="field">Your first name<input id="su-first" autocomplete="given-name"></label><label class="field">Last name<input id="su-last" autocomplete="family-name"></label></div>' +
+      '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + (st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">Sign out</button>';
+    else html = '<h1>Sign in</h1><p class="lead">For church staff, leaders and members who have been given access.</p>' + (st.message ? '<p class="note bad">' + esc(st.message) + '</p>' : '') +
+      '<button class="btn primary big-btn" data-act="hub:google">' + icon('M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5c-.2 1.2-.9 2.2-1.9 2.8v2.4h3.1c1.8-1.7 2.8-4.1 2.8-6.9zM12 21c2.6 0 4.7-.9 6.3-2.3l-3.1-2.4c-.9.6-2 .9-3.2.9-2.5 0-4.6-1.7-5.3-3.9H3.5v2.4C5.1 18.9 8.3 21 12 21zM6.7 13.3a5.4 5.4 0 0 1 0-3.4V7.5H3.5a9 9 0 0 0 0 8.2zM12 6.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9 9 0 0 0 3.5 7.5l3.2 2.4C7.4 8.2 9.5 6.6 12 6.6z', 18) + 'Sign in with Google</button>' +
+      '<p class="muted" style="text-align:center;margin:14px 0 6px">or get a sign-in link by email</p>' +
+      '<form id="si-form" novalidate><label class="field"><span class="sr">Email</span><input id="si-email" type="email" placeholder="you@example.com" autocomplete="email"></label><p id="si-err" class="note bad" hidden></p>' +
+      '<button class="btn" data-act="hub:sendlink">Email me a link</button></form>' +
+      '<p class="fine">' + esc(((Store.settings() || {}).privacyNotice || 'The church keeps your information secure and stores it in South Africa').split('.')[0]) + '. Want to look around first? <a href="?demo">Try the demo with made-up people</a>.</p>';
+    root.innerHTML = liveCard(html);
+    var f = root.querySelector('input'); if (f) f.focus();
+  }
+  function onLiveState(st) {
+    live = st;
+    if (st.stage === 'ready') {
+      user = st.person; Store.setUser(user);
+      Store.audit('Signed in', 'people/' + user.id);
+      if (!location.hash || location.hash === '#') location.hash = '#/home';
+      render();
+    } else { user = null; Store.setUser(null); renderLive(); }
+  }
+
   function renderSignIn() {
+    if (Store.isLive()) return renderLive();
     var s = Store.settings();
     var people = Store.list('people').filter(function (p) { return p.familyRole !== 'child' && p.active !== false; });
     var byRole = {};
@@ -169,7 +217,36 @@ var Hub = (function () {
   var hubActions = {
     signin: function (el) { var p = Store.get('people', el.dataset.id); user = p; Store.setUser(p); try { sessionStorage.setItem('hub_user', p.id); } catch (e) {} Store.audit('Signed in (demo)', 'people/' + p.id); go('home'); render(); },
     signinany: function () { hubActions.signin({ dataset: { id: document.getElementById('si-any').value } }); },
-    signout: function () { user = null; Store.setUser(null); try { sessionStorage.removeItem('hub_user'); } catch (e) {} location.hash = ''; render(); },
+    signout: function () {
+      if (user) Store.audit('Signed out', 'people/' + user.id);
+      user = null; Store.setUser(null); try { sessionStorage.removeItem('hub_user'); } catch (e) {}
+      if (Store.isLive()) { closeModal(); Store.live.signOut(); history.replaceState(null, '', location.pathname + location.search); return; }
+      location.hash = ''; render();
+    },
+    google: function () {
+      Store.live.google().catch(function (e) { live = { stage: 'signedOut', message: 'Google sign-in didn’t work (' + ((e && e.code) || 'error') + '). Try again, or use the email link.' }; renderLive(); });
+    },
+    sendlink: function (el, ev) {
+      if (ev) ev.preventDefault();
+      var email = document.getElementById('si-email').value.trim(), errEl = document.getElementById('si-err');
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { errEl.textContent = 'Please type your email address.'; errEl.hidden = false; return; }
+      el.disabled = true;
+      Store.live.emailLink(email).then(function () { live = { stage: 'linkSent', email: email }; renderLive(); })
+        .catch(function () { el.disabled = false; errEl.textContent = 'We couldn’t send the link. Check the address and try again.'; errEl.hidden = false; });
+    },
+    finishlink: function (el, ev) {
+      if (ev) ev.preventDefault();
+      var email = document.getElementById('si-email').value.trim(); if (!email) return;
+      live = { stage: 'loading', email: email }; renderLive(); Store.live.finishEmailLink(email);
+    },
+    restart: function () { live = { stage: 'signedOut' }; renderLive(); },
+    setup: function (el) {
+      var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, errEl = document.getElementById('su-err');
+      if (!v('su-first') || !v('su-last') || (live.needChurch && !v('su-church'))) { errEl.textContent = 'Please fill in every box.'; errEl.hidden = false; return; }
+      el.disabled = true;
+      Store.live.setup({ churchName: live.needChurch ? v('su-church') : '', firstName: v('su-first'), lastName: v('su-last') }, makeSampleData)
+        .catch(function (e) { el.disabled = false; errEl.textContent = 'Setting up didn’t work (' + ((e && e.code) || 'error') + '). Check the rules were published (setup guide, step 7).'; errEl.hidden = false; });
+    },
     reset: function () { if (confirmBtn(this)) { Store.reset(makeSampleData); user = Store.get('people', user.id) || null; render(); toast('Demo data reset'); } },
     menu: function () {
       modal(dialogHead('All apps') + '<div class="cards in-dialog">' + [{ id: 'home', name: 'Home', icon: ICON.home, tint: '#6B625A', desc: 'Your to-do list' }].concat(enabled()).map(function (m) {
@@ -202,12 +279,30 @@ var Hub = (function () {
 
   function start() {
     root = document.getElementById('app');
-    Store.load(makeSampleData);
-    try { var id = sessionStorage.getItem('hub_user'); if (id) { user = Store.get('people', id); Store.setUser(user); } } catch (e) {}
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
-    window.addEventListener('hashchange', function () { closeModal(); render(); var m = document.getElementById('main'); if (m) m.focus({ preventScroll: true }); window.scrollTo(0, 0); });
+    document.addEventListener('submit', function (ev) {      // Enter in a form = its button
+      ev.preventDefault();
+      if (ev.submitter && ev.submitter.dataset && ev.submitter.dataset.act) return;    // the button's own click already ran
+      var b = ev.target.querySelector('[data-act]'); if (b) b.click();
+    });
+    window.addEventListener('hashchange', function () { if (!user) return; closeModal(); render(); var m = document.getElementById('main'); if (m) m.focus({ preventScroll: true }); window.scrollTo(0, 0); });
     Store.onChange(function () { if (user) user = Store.get('people', user.id) || user; });
+    Store.onError(function (msg) { toast(msg, true); });
+    if (Store.isLive()) {
+      // Someone else changed something: refresh the screen, unless this person is typing or has a dialog open.
+      Store.onRemoteChange(function () {
+        if (!user) return;
+        user = Store.get('people', user.id) || user;
+        var a = document.activeElement;
+        if (document.querySelector('#modal .overlay') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+        render();
+      });
+      Store.live.boot(onLiveState);
+      return;
+    }
+    Store.load(makeSampleData);
+    try { var id = sessionStorage.getItem('hub_user'); if (id) { user = Store.get('people', id); Store.setUser(user); } } catch (e) {}
     render();
   }
 

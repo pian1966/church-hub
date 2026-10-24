@@ -1,0 +1,21 @@
+# Runs Church Hub's tests on GitHub after every push: rostering rules, the database security rules
+# (against Google's Firestore emulator) and the app in a browser as every role. Made-up people only.
+name: Tests
+on: [push, pull_request]
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - name: Rostering rules
+        run: node tests/roster.test.js
+      - name: Install test tools
+        run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13 playwright@1
+      - name: Database security rules (firestore.rules)
+        run: npx firebase emulators:exec --only firestore --project demo-church-hub "node tests/rules.test.mjs"
+      - name: App in a browser, every role (demo and live)
+        run: npx playwright install --with-deps chromium && node tests/app.test.js

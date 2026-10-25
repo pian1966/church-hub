@@ -17,11 +17,14 @@ css/hub.css               design tokens + components
 js/firebase-config.js     the church's Firebase project (empty = demo mode)
 js/store.js               data layer: Store.get/put/remove/audit – demo (this browser) or live (Firestore)
 js/roster.js              RosterCore: the rostering engine (pure functions, unit-tested)
-js/leave-core.js          LeaveCore: Leave Manager's leave rules (copy of leave-manager/assets/core.js – keep in step)
+js/leave-core.js          LeaveCore: Leave Manager's leave rules (copy of leave-manager/assets/core.js – keep in step until Leave Manager is retired)
+js/leave-import.js        LeaveImport: reads a Leave Manager sheet (Excel or CSV tabs) and plans the import (pure, tested)
+js/xlsx-lite.js           XlsxLite: small built-in .xlsx reader (zip + XML; no outside library)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers
 js/mod-*.js               one file per module: people, rosters, leave, privacy, import, settings
 firestore.rules           database security rules: who may read/write what (POPIA)
-tests/roster.test.js      rostering engine          tests/rules.test.mjs  security rules (Firestore emulator)
+tests/roster.test.js      rostering engine          tests/leave-import.test.js  Leave Manager import (made-up sheet in tests/fixtures)
+          tests/rules.test.mjs  security rules (Firestore emulator)
 tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js)
 .github/workflows/tests.yml  runs all of these on GitHub after every push
 ```
@@ -100,7 +103,13 @@ in Edit details. Leave → Settings (Administrators) edits `leave/config`: the s
 working days and allowances), leave types and holidays as Leave Manager's sheet tabs (`church: true` marks a church closure).
 The Leave module uses `LeaveCore` (the same rules file as Leave Manager), so balances, pro-rata, carry-over, public holidays
 and Sunday-holiday handling behave identically. Approved leave automatically makes a person unavailable for rosters.
-Until the Hub is live, the existing Leave Manager keeps running; at switch-over its sheet data is imported.
+**Import → From Leave Manager** (Administrators) moves the Leave Manager Google Sheet into Firebase: the Administrator downloads
+the sheet as Excel (or its tabs as CSV) and chooses the file; it is read in the browser (never uploaded anywhere else).
+Tabs are recognised by their headings; the Staff tab's PINs are dropped on reading; History isn't needed. Staff are matched to
+people by email, then name (the Administrator can change each match, add someone as a new person without app access, or leave
+them out). Requests keep their Leave Manager IDs and adjustments get stable IDs, so running it again updates instead of
+doubling – run it once to trial and again at switch-over. The preview shows each person's balances, which match Leave Manager's
+(tested for every staff member, year and leave type). After switch-over Leave Manager is retired and Firebase is the only home for leave.
 
 ## Elvanto import
 Phase 1: Elvanto's People export (CSV) → column mapping → preview → import people and families, de-duplicated by email/name.

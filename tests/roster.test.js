@@ -6,7 +6,7 @@ const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if 
 const people = [
   ['p1', 'Jason', 'Naidoo'], ['p2', 'Priya', 'Naidoo'], ['p3', 'Aisha', 'Naidoo'],
   ['p4', 'Sam', 'Peters'], ['p5', 'Lerato', 'Khumalo'], ['p6', 'Megan', 'Smith'],
-  ['p7', 'Thabo', 'Nkosi'], ['p8', 'Zandile', 'Shabalala'], ['p9', 'Kerin', 'Verster'], ['p10', 'Myra', 'Glover']
+  ['p7', 'Thabo', 'Nkosi'], ['p8', 'Lindiwe', 'Sithole'], ['p9', 'Ruth', 'Daniels'], ['p10', 'Faith', 'Adams']
 ].map(([id, f, l]) => ({ id, firstName: f, lastName: l, active: true }));
 const positions = [
   { id: 'door', teamId: 'welcome', name: 'Door', needed: 2 },
@@ -53,6 +53,11 @@ console.log('Prefer-together friends: together when possible, alone if not');
   const at = (sid, p) => r.assignments.some(a => a.serviceId === sid && a.personId === p);
   const togetherWeeks = services.filter(s => at(s.id, 'p4') && at(s.id, 'p5')).length;
   ok(togetherWeeks >= 1, `served together on ${togetherWeeks} Sunday(s)`);
+  // Must not depend on alphabetical order: rename everyone else and try again
+  const renamed = d.people.map(p => (p.id === 'p4' || p.id === 'p5') ? p : Object.assign({}, p, { firstName: 'A' + p.firstName }));
+  const r2 = R.autoFill(Object.assign({}, d, { people: renamed }), services.map(s => s.id));
+  const at2 = (sid, p) => r2.assignments.some(a => a.serviceId === sid && a.personId === p);
+  ok(services.filter(s => at2(s.id, 'p4') && at2(s.id, 'p5')).length >= 1, 'still served together when other names sort first');
   ok(!at('s2', 'p5'), 'Lerato not rostered on her blockout date');
   ok(services.every(s => !(at(s.id, 'p4') ^ at(s.id, 'p5')) || s.id === 's2' || true), 'checked');
 }
@@ -60,11 +65,11 @@ console.log('Prefer-together friends: together when possible, alone if not');
 console.log('Keep apart');
 {
   const d = base();
-  d.groups = [{ id: 'g3', name: 'Megan & Myra (childcare)', kind: 'apart', strength: 'must', memberIds: ['p6', 'p10'] }];
+  d.groups = [{ id: 'g3', name: 'Megan & Faith (childcare)', kind: 'apart', strength: 'must', memberIds: ['p6', 'p10'] }];
   const r = R.autoFill(d, services.map(s => s.id));
   services.forEach(s => {
     const here = r.assignments.filter(a => a.serviceId === s.id).map(a => a.personId);
-    ok(!(here.includes('p6') && here.includes('p10')), `${s.date}: Megan and Myra not together`);
+    ok(!(here.includes('p6') && here.includes('p10')), `${s.date}: Megan and Faith not together`);
   });
 }
 
@@ -73,7 +78,7 @@ console.log('Away and fairness');
   const d = base();
   d.away = [{ personId: 'p9', from: '2026-11-01', to: '2026-11-08', reason: 'On leave' }];
   const r = R.autoFill(d, services.map(s => s.id));
-  ok(!r.assignments.some(a => a.personId === 'p9' && (a.serviceId === 's0' || a.serviceId === 's1')), 'Kerin not rostered during leave');
+  ok(!r.assignments.some(a => a.personId === 'p9' && (a.serviceId === 's0' || a.serviceId === 's1')), 'Ruth not rostered during leave');
   const counts = {}; r.assignments.forEach(a => counts[a.personId] = (counts[a.personId] || 0) + 1);
   const doorPeople = ['p1', 'p3', 'p4', 'p5', 'p10'].map(p => counts[p] || 0);
   ok(Math.max(...doorPeople) - Math.min(...doorPeople) <= 2, 'door turns spread fairly: ' + JSON.stringify(counts));

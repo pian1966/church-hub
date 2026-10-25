@@ -138,7 +138,7 @@ var RosterCore = (function () {
             .map(function (k) { return k.personId; })
             .filter(function (pid) { return !blocker(svc, pid, pos.id); })
             .sort(function (a, b) { return (score(svc, a, pos.id) - score(svc, b, pos.id)) || (fullName(people[a]) < fullName(people[b]) ? -1 : 1); });
-          var done = false;
+          var done = false, alone = [];
           for (var i = 0; i < cands.length && !done; i++) {
             var pid = cands[i], tg = groupsOf(data, pid, 'together');
             if (!tg.length) { add(svc, pid, pos.id, reasonFor(svc, pid)); done = true; break; }
@@ -146,11 +146,13 @@ var RosterCore = (function () {
             if (placed.ok) {
               placed.plan.forEach(function (x) { add(svc, x.personId, x.positionId, 'Serving together: ' + g.name); });
               done = true;
-            } else if (g.strength !== 'must') {
-              add(svc, pid, pos.id, reasonFor(svc, pid) + ' (couldn’t place “' + g.name + '” together this time)');
-              done = true;
-            }
-            // must-group that can't all serve: skip this person and try the next candidate
+            } else if (g.strength !== 'must') alone.push({ pid: pid, g: g });
+            // "Prefer together" that can't be placed together now: only serve alone if no one else can (tried below).
+            // "Must together" that can't all serve: skip this person.
+          }
+          if (!done && alone.length) {
+            add(svc, alone[0].pid, pos.id, reasonFor(svc, alone[0].pid) + ' (couldn’t place “' + alone[0].g.name + '” together this time)');
+            done = true;
           }
           if (!done) {
             var why = (data.skills || []).filter(function (k) { return k.positionId === pos.id; }).map(function (k) {

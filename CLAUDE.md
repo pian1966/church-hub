@@ -4,6 +4,7 @@
 - Read `docs/ARCHITECTURE.md`, `docs/POPIA.md` and `docs/ROADMAP.md` before changing anything; update ROADMAP.md at the end of each session.
 - New features are modules (`js/mod-*.js`) registered with `Hub.register`. Data goes through `Store` only, never localStorage directly.
 - Rostering rules live in `js/roster.js` and must stay pure and tested: run `node tests/roster.test.js` before committing.
+  The Leave Manager import (`js/leave-import.js`) likewise: `node tests/leave-import.test.js`. Test data is made up (`tests/fixtures`).
 - Who sees what is enforced by `firestore.rules`. Changing access means changing, together: `firestore.rules`, `plan()` in `js/store.js`,
   the POLICY copy in `tests/fake-firebase.js`, and `tests/rules.test.mjs` / `tests/app.test.js`. Run `node tests/app.test.js` (needs Playwright);
   GitHub runs everything, including the rules against the Firestore emulator, on every push. Tell the church to re-publish the rules (FIREBASE-SETUP.md step 7).

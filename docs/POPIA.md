@@ -29,6 +29,12 @@ This is a design checklist, not legal advice – the church's Information Office
   leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
   died") so the church can decide when to delete their details.
 
+## Moving data in from Elvanto and Leave Manager
+The download from Elvanto or Leave Manager holds personal information (leave reasons can include health). It is read in the
+Administrator's browser and saved straight into the church's database in Johannesburg – never sent to GitHub, Claude or anyone else.
+Leave Manager PINs are dropped on reading. Keep the download on the church computer and delete it once imported. Once Leave
+Manager is retired, its Google Sheet should be archived (read-only) or deleted under the church's retention period.
+
 ## Other POPIA points covered
 - **Direct marketing by email/SMS (s69):** only to people with consent for that channel; every message will include an opt-out (Phase 5).
 - **Cross-border transfers (s72):** the church's data (Firestore) is stored in Johannesburg. **Sign-in accounts** (the email addresses of people given access, and their Google name) are kept by Firebase Authentication on Google's global servers – the privacy notice should say so. Any other overseas service (e.g. an SMS gateway) is also listed in the privacy notice.

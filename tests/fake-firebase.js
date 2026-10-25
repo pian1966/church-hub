@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   var docs = {}, listeners = [], authCbs = [], currentUser = null;
-  var F = window.__fake = { docs: docs, denied: [], sentLinks: [], nextUser: null,
+  var F = window.__fake = { docs: docs, denied: [], sentLinks: [], nextUser: null, pending: 0,
     seed: function (all) { Object.keys(all).forEach(function (k) { docs[k] = JSON.parse(JSON.stringify(all[k])); }); },
     setUser: function (u) { currentUser = u; } };
 
@@ -124,8 +124,10 @@
   }
   function listen(l) { listeners.push(l); setTimeout(function () { if (!l.off) deliver(l); }, 0); return function () { l.off = true; }; }
   function apply(ops) {
+    F.pending++;
     return new Promise(function (res, rej) {
       setTimeout(function () {
+        setTimeout(function () { F.pending--; }, 0);
         for (var i = 0; i < ops.length; i++) {
           var o = ops[i], before = docs[o.path], after = o.data ? JSON.parse(JSON.stringify(o.data, function (k, v) { return v && v.__serverTs ? { __serverTs: true } : v; })) : null;
           var op = !o.data ? 'delete' : before === undefined ? 'create' : 'update';

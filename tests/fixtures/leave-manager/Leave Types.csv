@@ -1,0 +1,8 @@
+Code,Name,Colour,Deducts Balance,Half Days,Pro Rata,Needs Approval,Counted In,Allowed Days,Accumulates,Carry Over Max,Per Term Max,Max Balance,Use By (next year),In Use
+PSL,Pastoral Staff Leave,#2F80C0,TRUE,TRUE,TRUE,TRUE,Days,,FALSE,0,0,0,1 Feb,TRUE
+SSL,Support Staff Leave,#3A86A8,TRUE,TRUE,TRUE,TRUE,Days,,FALSE,0,0,0,1 Feb,TRUE
+CSL,Cleaning Staff Leave,#4C9A6A,TRUE,TRUE,TRUE,TRUE,Days,,FALSE,0,0,0,1 Feb,TRUE
+SL,Sick Leave,#D1495B,TRUE,TRUE,FALSE,TRUE,Days,,FALSE,0,0,0,,TRUE
+WO,Weekend Off (Fri–Sun),#E09F3E,TRUE,FALSE,FALSE,TRUE,Weekends,"Fri, Sat, Sun",FALSE,0,1,0,,TRUE
+WA,Working Away from Office,#2A9D8F,TRUE,TRUE,FALSE,TRUE,Days,,FALSE,0,0,0,,TRUE
+UL,Unpaid Leave,#64748B,FALSE,TRUE,FALSE,TRUE,Days,,FALSE,0,0,0,,TRUE

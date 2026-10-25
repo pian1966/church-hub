@@ -13,6 +13,8 @@ jobs:
         with: { distribution: temurin, java-version: 21 }
       - name: Rostering rules
         run: node tests/roster.test.js
+      - name: Leave Manager import
+        run: node tests/leave-import.test.js
       - name: Install test tools
         run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13 playwright@1
       - name: Database security rules (firestore.rules)

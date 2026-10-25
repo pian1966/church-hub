@@ -29,7 +29,10 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   allowances; kinds of leave: name, needs approval, in use, add new; public holidays per year and church closures)
 - ✅ Added 25 Oct 2026: families named after their adults automatically (tells apart families with the same surname; follows marriages, moves and deaths); People → Families → Rename for an own name
 - ⬜ Church: fill in Leave → Settings (terms, allowances) and mark staff; try Leave alongside the old Leave Manager
-- ⬜ Leave Manager switch-over: import its sheet data (past and booked leave, adjustments/carry-over) – then retire the old app
+- ✅ Added 25 Oct 2026: **Import → From Leave Manager** – the Leave Manager Google Sheet (Excel download or CSV tabs) into Firebase:
+  requests, carry-over adjustments, settings, staff details; staff matching with a preview of balances; safe to run again; PINs dropped.
+  Built-in Excel reader (no outside library). Roster engine fix: friends who prefer to serve together no longer depend on name order.
+- ⬜ Church: trial the Leave Manager import, compare balances, then re-import at switch-over and retire Leave Manager (archive the sheet)
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)
 - ⬜ Trial with 2–3 staff and made-up people; Information Officer approves privacy notice (mention sign-in accounts are held by Google outside SA) and accepts Google's data processing terms
 - ⬜ Then: import real people from Elvanto (Import) and give access

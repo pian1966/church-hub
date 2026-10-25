@@ -1,0 +1,8 @@
+Key,Value,What it does
+CompanyName,Example Church (made up),Name shown in the app
+LeaveYearStartMonth,1,Month the leave year starts
+OpenDays,"Mon, Wed, Thu, Fri, Sat, Sun",Days the church is open
+ProRata,TRUE,Pro-rata for new staff
+AllowNegative,FALSE,Allow going over
+FirstLeaveYear,2025,First leave year
+StandInID,S2,Stand-in

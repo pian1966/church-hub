@@ -95,11 +95,13 @@ function serve() {
     const docsNow = () => page.evaluate(() => window.__fake.docs);
     const denied = () => page.evaluate(() => window.__fake.denied);
     const go = async r => { await page.goto(BASE + '#/' + r); await page.waitForTimeout(40); };
+    // Wait until every save has reached the (stand-in) database – robust on slow computers
+    const settle = async () => { await page.waitForTimeout(60); await page.waitForFunction(() => window.__fake.pending === 0, null, { timeout: 10000 }); await page.waitForTimeout(60); };
     const text = async () => (await page.textContent('main')) || '';
-    return { page, errs, ready, docsNow, denied, go, text, close: () => context.close() };
+    return { page, errs, ready, docsNow, denied, go, text, settle, close: () => context.close() };
   }
   const ROUTES = ['home', 'people', 'people/families', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away',
-    'leave', 'leave/approvals', 'leave/team', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'settings'];
+    'leave', 'leave/approvals', 'leave/team', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'import/leave', 'settings'];
   async function tour(s, who) {
     for (const r of ROUTES) await s.go(r);
     await s.go('people/p/p12'); const t12 = await s.text();
@@ -108,7 +110,7 @@ function serve() {
     check(t10.includes('Moved from Durban') === (who === 'pastor'), 'pastoral notes only for Pastors');
   }
   async function finish(s) {
-    await s.page.waitForTimeout(400);
+    await s.settle();
     const d = await s.denied();
     check(d.length === 0, 'nothing refused by the security rules' + (d.length ? ': ' + d.slice(0, 4).join(' | ') : ''));
     check(s.errs.length === 0, 'no errors' + (s.errs.length ? ': ' + s.errs.slice(0, 3).join(' | ') : ''));
@@ -125,12 +127,12 @@ function serve() {
   check(!(await s.page.$('.demo')), 'no demo banner when live');
   await tour(s, 'admin');
   await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-role', 'rosters'); await s.page.click('[data-act="people:save"]');
-  await s.page.waitForTimeout(200);
+  await s.settle();
   let docs = await s.docsNow();
   check(docs['roles/sam.peters@example.com'] && docs['roles/sam.peters@example.com'].role === 'rosters' && docs['roles/sam.peters@example.com'].personId === 'p19', 'giving Sam “Roster coordinator” access writes the access list');
   await s.go('people/p/p27'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]');
   check(await s.page.isVisible('#pf-err') && (await s.page.textContent('#pf-err')).includes('marital'), 'marital status must be chosen for adults');
-  await s.page.selectOption('#pf-marital', 'Not known'); await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
+  await s.page.selectOption('#pf-marital', 'Not known'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['roles/ruth.daniels@example.com'], 'choosing “No access” removes their sign-in');
   check(docs['details/p27'].maritalStatus === 'Not known' && !docs['people/p27'].maritalStatus, 'marital status is kept with the private details (not the contact card)');
   // Staff details: make Sam a Support Staff member
@@ -138,7 +140,7 @@ function serve() {
   check((await s.page.textContent('#pf-err')).includes('staff category'), 'staff need a category and start date');
   await s.page.selectOption('#pf-scat', 'Support Staff'); await s.page.fill('#pf-sstart', '2026-07-01');
   await s.page.uncheck('#pf-sw-same'); await s.page.check('.pf-sw[value="Mon"]'); await s.page.check('.pf-sw[value="Tue"]');
-  await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
+  await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['details/p19'].staff && docs['details/p19'].staff.category === 'Support Staff' && docs['details/p19'].staff.workDays === 'Mon, Tue' && docs['people/p19'].category === 'Staff', 'Administrator can mark someone as staff (category, start date, own working days)');
   await s.go('leave/team'); check((await s.text()).includes('Sam Peters'), 'new staff member appears in Leave team balances');
@@ -147,21 +149,21 @@ function serve() {
   await s.page.click('[data-act="leave:addterm"]');
   const tr = (await s.page.$$('.ls-term')).pop();
   await (await tr.$('.ls-tn')).fill('Term 1 2027'); await (await tr.$('.ls-ts')).fill('2027-01-14'); await (await tr.$('.ls-te')).fill('2027-03-27');
-  await s.page.click('[data-act="leave:saveterms"]'); await s.page.waitForTimeout(150);
+  await s.page.click('[data-act="leave:saveterms"]'); await s.settle();
   docs = await s.docsNow(); check(docs['leave/config'].terms.some(t => t.name === 'Term 1 2027' && t.end === '2027-03-27'), 'school terms can be added');
   const supportRow = await s.page.$('#ls-levels tbody tr:has-text("Support Staff")');
-  await (await supportRow.$('.ls-ent[data-code="SSL"]')).fill('22'); await s.page.click('[data-act="leave:savelevels"]'); await s.page.waitForTimeout(150);
+  await (await supportRow.$('.ls-ent[data-code="SSL"]')).fill('22'); await s.page.click('[data-act="leave:savelevels"]'); await s.settle();
   docs = await s.docsNow(); check(docs['leave/config'].levels.find(l => l.level === 'Support Staff').ent.SSL === 22, 'allowances per category can be changed');
-  const yy = new Date().getFullYear() + 2; await s.page.click(`[data-act="leave:addsa"][data-y="${yy}"]`); await s.page.waitForTimeout(150);
-  await s.page.fill('#ls-hd', yy + '-12-28'); await s.page.fill('#ls-hn', 'Office closed'); await s.page.click('[data-act="leave:addhol"]'); await s.page.waitForTimeout(150);
+  const yy = new Date().getFullYear() + 2; await s.page.click(`[data-act="leave:addsa"][data-y="${yy}"]`); await s.settle();
+  await s.page.fill('#ls-hd', yy + '-12-28'); await s.page.fill('#ls-hn', 'Office closed'); await s.page.click('[data-act="leave:addhol"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['leave/config'].holidays.some(h => h.date === yy + '-12-25') && docs['leave/config'].holidays.some(h => h.name === 'Office closed'), 'public holidays for another year and church closures can be added');
-  await s.page.uncheck('.ls-tappr[data-i="7"]'); await s.page.click('[data-act="leave:savetypes"]'); await s.page.waitForTimeout(150);
+  await s.page.uncheck('.ls-tappr[data-i="7"]'); await s.page.click('[data-act="leave:savetypes"]'); await s.settle();
   docs = await s.docsNow(); check(docs['leave/config'].autoApprove.includes('UL'), 'a kind of leave can be set to not need approval');
   // Record a death: Johan (married to Elsa, on the Door team)
   await s.go('people/p/p23'); await s.page.click('[data-act="people:death"]');
   check(await s.page.isVisible('.dd-sp[value="p24"]'), 'offers to change the spouse to Widowed');
-  await s.page.click('[data-act="people:savedeath"]'); await s.page.waitForTimeout(300);
+  await s.page.click('[data-act="people:savedeath"]'); await s.settle();
   docs = await s.docsNow();
   const futureJohan = Object.keys(docs).filter(k => k.startsWith('assignments/') && docs[k].personId === 'p23' && (docs['services/' + docs[k].serviceId] || {}).date >= new Date().toISOString().slice(0, 10));
   check(docs['people/p23'].active === false && docs['people/p23'].category === 'Deceased' && docs['details/p23'].deceasedAt && docs['details/p23'].deathTidied, 'recording a death keeps them on the records as Deceased');
@@ -173,17 +175,17 @@ function serve() {
   await s.go('people/families'); let famText = await s.text();
   check(famText.includes('Tim & Clare Jacobs') && famText.includes('Jason & Priya Naidoo') && famText.includes('Thandi Mokoena'), 'families are named after their adults');
   check(famText.includes('Elsa van der Merwe') && !famText.includes('Johan & Elsa'), 'a family’s name follows a death by itself');
-  await s.page.click('[data-act="people:renamefam"][data-id="f2"]'); await s.page.fill('#rf-name', 'The Jacobs household'); await s.page.click('[data-act="people:saverename"]'); await s.page.waitForTimeout(150);
+  await s.page.click('[data-act="people:renamefam"][data-id="f2"]'); await s.page.fill('#rf-name', 'The Jacobs household'); await s.page.click('[data-act="people:saverename"]'); await s.settle();
   docs = await s.docsNow(); famText = await s.text();
   check(docs['families/f2'].custom === true && famText.includes('The Jacobs household'), 'a family can be given its own name');
-  await s.page.click('[data-act="people:renamefam"][data-id="f2"]'); await s.page.check('input[name="rf-mode"][value="auto"]'); await s.page.click('[data-act="people:saverename"]'); await s.page.waitForTimeout(150);
+  await s.page.click('[data-act="people:renamefam"][data-id="f2"]'); await s.page.check('input[name="rf-mode"][value="auto"]'); await s.page.click('[data-act="people:saverename"]'); await s.settle();
   check((await s.text()).includes('Tim & Clare Jacobs'), 'and switched back to being named after its adults');
   await s.go('people/p/p14'); check((await s.text()).includes('Tim & Clare Jacobs'), 'profiles show the family name');
-  await s.go('leave/approvals'); await s.page.click('[data-act="leave:decide"][data-d="Approved"]'); await s.page.waitForTimeout(200);
+  await s.go('leave/approvals'); await s.page.click('[data-act="leave:decide"][data-d="Approved"]'); await s.settle();
   docs = await s.docsNow(); const approved = Object.keys(docs).filter(k => k.startsWith('leaveRequests/') && docs[k].status === 'Approved' && docs[k].decidedOn);
   check(approved.length === 1 && docs['away/' + approved[0].split('/')[1]], 'approving leave saves it and marks the dates as away');
   await s.page.evaluate(() => { const p = Store.get('people', 'p10'); p.active = false; Store.put('people', p); });
-  await s.go('privacy/retention'); await s.page.click('[data-act="privacy:erase"][data-id="p10"]'); await s.page.click('[data-act="privacy:erase"][data-id="p10"]'); await s.page.waitForTimeout(300);
+  await s.go('privacy/retention'); await s.page.click('[data-act="privacy:erase"][data-id="p10"]'); await s.page.click('[data-act="privacy:erase"][data-id="p10"]'); await s.settle();
   docs = await s.docsNow();
   if (docs['notes/p10'] || docs['directory/p10'] || docs['people/p10'].firstName !== 'Deleted' || docs['roles/jason.naidoo@example.com']) console.log('    debug:', JSON.stringify({ n: docs['notes/p10'], d: docs['directory/p10'], p: docs['people/p10'], r: docs['roles/jason.naidoo@example.com'] }));
   check(!docs['notes/p10'] && !docs['directory/p10'] && docs['people/p10'].firstName === 'Deleted' && !docs['roles/jason.naidoo@example.com'], 'deleting Jason removes his pastoral notes, directory entry and sign-in (Admin can’t read the notes)');
@@ -191,18 +193,66 @@ function serve() {
   await s.go('privacy/audit'); check((await s.text()).includes('Signed in'), 'audit log shows sign-ins');
   await finish(s);
 
+  /* ---------- Leave Manager import ---------- */
+  console.log('Leave Manager import (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs());
+  await s.go('import/leave');
+  const fixDir = path.join(__dirname, 'fixtures', 'leave-manager');
+  await s.page.setInputFiles('#lm-file', fs.readdirSync(fixDir).map(f => path.join(fixDir, f)));
+  await s.page.waitForSelector('.lm-who', { timeout: 5000 }).catch(() => {});
+  const choice = async id => s.page.$eval(`.lm-who[data-id="${id}"]`, el => el.value).catch(() => null);
+  check(await choice('S1') === 'p02' && await choice('S3') === 'p06' && await choice('S4') === '__new', 'staff matched (Thandi by email, Lerato by name); Nomsa offered as a new person');
+  const prev = await s.text();
+  check(prev.includes('Balances after importing') && prev.includes('Leave requests'), 'shows a preview with balances before importing');
+  check(!(await s.page.content()).includes('1234'), 'PINs from the Staff tab never reach the page');
+  await s.page.click('[data-act="import:lgo"]'); await s.page.click('[data-act="import:lgo"]'); await s.settle();
+  docs = await s.docsNow();
+  const nomsa = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].firstName === 'Nomsa');
+  check((await s.text()).includes('Imported') && docs['leaveRequests/L260110-AAAA'] && docs['leaveRequests/L260110-AAAA'].staffId === 'p02', 'requests imported for the right Church Hub person');
+  check(nomsa && docs[nomsa].appRole === 'none' && docs['details/' + nomsa.split('/')[1]].staff.category === 'Cleaning Staff' && docs['leaveRequests/L260801-EEEE'].staffId === nomsa.split('/')[1], 'Nomsa added as a staff member without app access, with her leave');
+  check(docs['away/L260301-BBBB'] && !docs['away/L261020-DDDD'] && !docs['away/L260815-FFFF'], 'approved leave blocks rostering; waiting and cancelled leave don’t');
+  check(docs['leave/config'].terms.length === 4 && docs['leave/config'].types.length === 7 && docs['details/p06'].staff.workDays === 'Mon, Wed, Thu', 'settings, terms and staff details taken from the sheet');
+  check(Object.keys(docs).filter(k => k.startsWith('leaveAdjustments/')).length === 2, 'carried-over days (adjustments) imported');
+  const before = Object.keys(docs).filter(k => k.startsWith('leaveRequests/')).length;
+  await s.page.click('[data-act="import:lagain"]');
+  await s.page.setInputFiles('#lm-file', fs.readdirSync(fixDir).map(f => path.join(fixDir, f)));
+  await s.page.waitForSelector('.lm-who', { timeout: 5000 }).catch(() => {});
+  check(await choice('S4') !== '__new', 'second time, Nomsa is matched to the person added the first time');
+  await s.page.click('[data-act="import:lgo"]'); await s.page.click('[data-act="import:lgo"]'); await s.settle();
+  docs = await s.docsNow();
+  check(Object.keys(docs).filter(k => k.startsWith('leaveRequests/')).length === before && Object.keys(docs).filter(k => k.startsWith('people/') && docs[k].firstName === 'Nomsa').length === 1, 'importing again doesn’t double anything');
+  await s.go('leave/team'); check((await s.text()).includes('Nomsa Zungu'), 'imported staff appear in Leave team balances');
+  await finish(s);
+
+  for (const xl of ['leave-manager.xlsx', 'leave-manager-plain.xlsx']) {
+    console.log('Leave Manager import from an Excel download (' + xl + '):');
+    s = await session('linda.pillay@example.com', seedDocs());
+    await s.go('import/leave');
+    await s.page.setInputFiles('#lm-file', path.join(__dirname, 'fixtures', xl));
+    await s.page.waitForSelector('.lm-who', { timeout: 5000 }).catch(() => {});
+    const ch = async id => s.page.$eval(`.lm-who[data-id="${id}"]`, el => el.value).catch(() => null);
+    check(await ch('S1') === 'p02' && await ch('S4') === '__new', 'Excel file read: every tab found, staff matched');
+    await s.page.click('[data-act="import:lgo"]'); await s.page.click('[data-act="import:lgo"]'); await s.settle();
+    docs = await s.docsNow();
+    const reqs = Object.keys(docs).filter(k => k.startsWith('leaveRequests/L26'));
+    check(reqs.length === 6 && docs['leaveRequests/L260110-AAAA'].start === '2026-01-12' && docs['leaveRequests/L260110-AAAA'].end === '2026-01-16', 'all 6 requests with the right dates (Excel day numbers converted)');
+    check(docs['leave/config'].terms[0].start === '2026-01-14' && docs['leave/config'].types.find(t => t.code === 'PSL').deducts === true && docs['details/p06'].staff.start === '2024-03-01', 'dates, TRUE/FALSE and start dates read correctly');
+    check(Object.keys(docs).filter(k => k.startsWith('leaveAdjustments/')).length === 2, 'adjustments read');
+    await finish(s);
+  }
+
   /* ---------- Pastor ---------- */
   console.log('Pastor (Thandi):');
   s = await session('thandi.mokoena@example.com', seedDocs());
   await tour(s, 'pastor');
-  await s.go('people/p/p10'); await s.page.fill('#pn-text', 'Visited at home.'); await s.page.click('[data-act="people:note"]'); await s.page.waitForTimeout(200);
+  await s.go('people/p/p10'); await s.page.fill('#pn-text', 'Visited at home.'); await s.page.click('[data-act="people:note"]'); await s.settle();
   docs = await s.docsNow(); check(docs['notes/p10'] && docs['notes/p10'].entries.length === 2, 'adding a pastoral note saves it');
   await s.go('people/p/p27'); await s.page.click('[data-act="people:consent"]');
   for (const pur of ['Church records', 'Church directory']) await s.page.check(`.cf-p[data-p="${pur}"]`);
-  await s.page.click('[data-act="people:saveconsent"]'); await s.page.waitForTimeout(300);
+  await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
   docs = await s.docsNow(); check(!!docs['directory/p27'] && docs['directory/p27'].mobile && !docs['directory/p27'].email, 'directory consent adds name and phone (not email) to the directory');
   // A Pastor records a death: Thabo (married to Ayanda)
-  await s.go('people/p/p21'); await s.page.click('[data-act="people:death"]'); await s.page.fill('#dd-note', 'Family would like a visit.'); await s.page.click('[data-act="people:savedeath"]'); await s.page.waitForTimeout(300);
+  await s.go('people/p/p21'); await s.page.click('[data-act="people:death"]'); await s.page.fill('#dd-note', 'Family would like a visit.'); await s.page.click('[data-act="people:savedeath"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['people/p21'].category === 'Deceased' && docs['details/p22'].maritalStatus === 'Widowed' && !docs['directory/p21'] && docs['notes/p21'], 'a Pastor can record a death (with a pastoral note); the directory follows');
   check(!docs['details/p21'].deathTidied, 'rosters and sign-in are left for the Administrator to finish');
@@ -214,7 +264,7 @@ function serve() {
   s = await session('grace.ndlovu@example.com', seedDocs());
   await tour(s, 'kids');
   await s.go('people'); check((await s.text()).includes('Aisha'), 'sees the children');
-  await s.go('people/p/p12'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Nuts and bee stings'); await s.page.click('[data-act="people:savemedical"]'); await s.page.waitForTimeout(200);
+  await s.go('people/p/p12'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Nuts and bee stings'); await s.page.click('[data-act="people:savemedical"]'); await s.settle();
   docs = await s.docsNow(); check(docs['medical/p12'] && docs['medical/p12'].allergies === 'Nuts and bee stings', 'editing medical notes saves them');
   await s.go('people/p/p16'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Penicillin'); await s.page.click('[data-act="people:savemedical"]');
   check(await s.page.isVisible('#md-err'), 'can’t add medical notes without a guardian’s consent'); await s.page.click('[data-act="hub:close"]');
@@ -227,7 +277,7 @@ function serve() {
   await tour(s, 'rosters');
   check(await s.page.evaluate(() => !Store.find('consents', () => true).some(c => c.personId !== 'p05')), 'can’t see other people’s consent records');
   await s.page.evaluate(() => Store.put('assignments', { serviceId: Store.list('services')[5].id, positionId: 'door', personId: 'p20', status: 'pending', source: 'manual' }, 'Added to roster'));
-  await s.page.waitForTimeout(200); docs = await s.docsNow();
+  await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('assignments/') && docs[k].personId === 'p20' && docs[k].status === 'pending' && docs[k].source === 'manual'), 'adding someone to the roster saves it');
   await finish(s);
 
@@ -237,17 +287,17 @@ function serve() {
   await tour(s, 'member');
   await s.go('people'); const dirText = await s.text();
   check(dirText.includes('Clare Jacobs') && !dirText.includes('Megan Smith') && !dirText.includes('Ruth Daniels') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
-  await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
   await s.go('rosters/away'); await s.page.click('[data-act="rosters:addaway"]');
   const ticks = await s.page.$$('.aw-d'); await ticks[1].check(); await ticks[3].check();
   await s.page.click('[data-act="rosters:awayrange"]'); await s.page.fill('.aw-range .aw-f', '2027-07-01'); await s.page.dispatchEvent('.aw-range .aw-f', 'change'); await s.page.fill('.aw-range .aw-t', '2027-07-14');
-  await s.page.click('[data-act="rosters:saveaway"]'); await s.page.waitForTimeout(250);
+  await s.page.click('[data-act="rosters:saveaway"]'); await s.settle();
   docs = await s.docsNow(); const myAway = Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14');
   check(myAway.length === 3 && myAway.some(k => docs[k].from === '2027-07-01' && docs[k].to === '2027-07-14'), 'can add several away dates at once (2 service days + a holiday)');
-  await s.go('rosters/mine'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.page.waitForTimeout(200);
+  await s.go('rosters/mine'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.settle();
   docs = await s.docsNow(); check(docs['assignments/kTim'].status === 'accepted', 'can accept a serving turn');
-  await s.go('people/p/p14'); await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Church directory"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.page.waitForTimeout(300);
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Church directory"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['directory/p14'], 'withdrawing directory consent removes them from the directory');
   check(await s.page.evaluate(() => Store.list('people').every(p => !p.birthDate || p.id === 'p14')), 'can’t see anyone else’s private details');
   await finish(s);
@@ -258,10 +308,10 @@ function serve() {
   await s.go('leave'); await s.page.click('[data-act="leave:request"]'); await s.page.selectOption('#lf-type', 'SSL');
   const day = await s.page.evaluate(() => { let d = LeaveCore.addDays(LeaveCore.parse(Hub.today()), 45); while (d.getDay() !== 3) d = LeaveCore.addDays(d, 1); return LeaveCore.iso(d); });
   await s.page.fill('#lf-start', day); await s.page.dispatchEvent('#lf-start', 'change'); await s.page.fill('#lf-note', 'Dentist');
-  await s.page.click('[data-act="leave:send"]'); await s.page.waitForTimeout(250);
+  await s.page.click('[data-act="leave:send"]'); await s.settle();
   docs = await s.docsNow(); const mine = Object.keys(docs).filter(k => k.startsWith('leaveRequests/') && docs[k].staffId === 'p06' && docs[k].start === day);
   check(mine.length === 1 && docs[mine[0]].status === 'Pending', 'requesting leave saves it as waiting for approval');
-  await s.go('leave'); await s.page.click(`[data-act="leave:cancel"][data-id="${mine[0].split('/')[1]}"]`); await s.page.click(`[data-act="leave:cancel"][data-id="${mine[0].split('/')[1]}"]`); await s.page.waitForTimeout(250);
+  await s.go('leave'); await s.page.click(`[data-act="leave:cancel"][data-id="${mine[0].split('/')[1]}"]`); await s.page.click(`[data-act="leave:cancel"][data-id="${mine[0].split('/')[1]}"]`); await s.settle();
   docs = await s.docsNow(); check(docs[mine[0]].status === 'Cancelled', 'can cancel own leave');
   await s.go('leave/away'); check((await s.text()).includes('Thandi'), '“Who’s away” shows colleagues’ approved leave');
   check(await s.page.evaluate(() => Store.leave().requests.every(r => r.staffId === 'p06' || (!r.reason && !r.type))), 'but not the type of leave or the reason');
@@ -278,13 +328,13 @@ function serve() {
   s = await session('', seedDocs());
   const card = await s.page.textContent('.signin-card');
   check(card.includes('Sign in with Google') && card.includes('Email me a link') && card.includes('Try the demo'), 'offers Google, email link and the demo');
-  await s.page.fill('#si-email', 'tim.jacobs@example.com'); await s.page.click('[data-act="hub:sendlink"]'); await s.page.waitForTimeout(100);
+  await s.page.fill('#si-email', 'tim.jacobs@example.com'); await s.page.click('[data-act="hub:sendlink"]'); await s.settle();
   check((await s.page.textContent('.signin-card')).includes('Check your email'), 'email link: asks them to check their email');
   await s.page.click('[data-act="hub:restart"]');
   await s.page.evaluate(() => { window.__fake.nextUser = { email: 'Tim.Jacobs@example.com', emailVerified: true }; });
   await s.page.click('[data-act="hub:google"]'); await s.page.waitForSelector('.app', { timeout: 5000 }).catch(() => {});
   check(!!(await s.page.$('.app')), 'Google sign-in works (email in any capitals)');
-  await s.page.click('.side [data-act="hub:signout"]'); await s.page.waitForTimeout(150);
+  await s.page.click('.side [data-act="hub:signout"]'); await s.settle();
   check((await s.page.textContent('.signin-card')).includes('Sign in with Google'), 'signing out returns to the sign-in screen');
   await finish(s);
 

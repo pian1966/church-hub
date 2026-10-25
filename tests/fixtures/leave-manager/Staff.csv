@@ -1,0 +1,6 @@
+ID,Name,Email,Category,Working Days,Role,Manager Email,Start Date,PIN,Colour,Active
+S1,Thandi Mokoena,thandi.mokoena@example.com,Pastoral Staff,,Staff,,2018-02-01,1234,,TRUE
+S2,Sipho Dlamini,sipho.dlamini@example.com,Support Staff,,Staff,,2022-02-01,u:9f8e,,TRUE
+S3,Lerato Khumalo,lerato.k@example.org,Support Staff,"Mon, Wed, Thu",Staff,,2024-03-01,5555,,TRUE
+S4,Nomsa Zungu,nomsa.zungu@example.com,Cleaning Staff,,Staff,,2025-07-01,4321,,TRUE
+S5,Linda Pillay,linda.pillay@example.com,Administrator,,Administrator,,2020-01-06,1111,,TRUE

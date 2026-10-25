@@ -159,13 +159,32 @@
         '<div class="two"><label class="field">Family<select id="pf-fam"><option value="">No family</option>' + fams.map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(f.name) + '</option>'; }).join('') + '<option value="__new">+ New family…</option></select></label>' +
         '<label class="field">In the family as<select id="pf-frole"><option value="adult"' + (p.familyRole !== 'child' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
         '<label class="field" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' : '') +
+      (admin ? staffFields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">Mark as left</button>' : '') +
       '<button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:save">' + (isNew ? 'Add person' : 'Save') + '</button></div>';
     H.modal(html, isNew ? 'Add a person' : 'Edit person');
+    var sb = document.getElementById('pf-staff'), sf = document.getElementById('pf-staff-f');
+    if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
+    var sameBox = document.getElementById('pf-sw-same');
+    if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
     var fr = document.getElementById('pf-frole'), mf = document.getElementById('pf-marital-f');
     if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; });
+  }
+
+  /** Staff details for Leave (Administrators only): category (sets allowances and working days), start date (pro-rata), own working days. */
+  function staffFields(p) {
+    var lv = S.leave() || { levels: [] }, st = p.staff || {}, DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    var mine = st.workDays ? st.workDays.split(/\s*,\s*/) : [];
+    return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-staff"' + (p.staff ? ' checked' : '') + '><span><b>Church staff member</b><br><span class="muted small">Shows them in Leave, with the allowances of their staff category.</span></span></label>' +
+      '<div id="pf-staff-f"' + (p.staff ? '' : ' hidden') + ' style="margin-top:10px"><div class="two"><label class="field">Staff category<select id="pf-scat"><option value="">Choose…</option>' +
+      lv.levels.map(function (l) { return '<option value="' + esc(l.level) + '"' + (st.category === l.level ? ' selected' : '') + '>' + esc(l.label || l.level) + '</option>'; }).join('') + '</select><small>Change categories under Leave → Settings.</small></label>' +
+      '<label class="field">Started at the church<input type="date" id="pf-sstart" value="' + esc(st.start || '') + '"><small>Used to work out a first year’s allowance.</small></label></div>' +
+      '<label class="check"><input type="checkbox" id="pf-sw-same"' + (mine.length ? '' : ' checked') + '><span>Works the same days as their category</span></label>' +
+      '<div id="pf-sw-days" class="row" style="flex-wrap:wrap;gap:4px 14px"' + (mine.length ? '' : ' hidden') + '>' + DAYS.map(function (d) {
+        return '<label class="check" style="margin:0"><input type="checkbox" class="pf-sw" value="' + d + '"' + (mine.indexOf(d) >= 0 ? ' checked' : '') + '><span>' + d + '</span></label>';
+      }).join('') + '</div></div></fieldset>';
   }
 
   function consentDialog(p) {
@@ -265,6 +284,20 @@
           else p.maritalStatus = g('pf-marital');
         }
         if (g('pf-role') !== null) p.appRole = g('pf-role');
+        var sbox = document.getElementById('pf-staff');
+        if (sbox) {
+          if (sbox.checked) {
+            if (!g('pf-scat') || !g('pf-sstart')) { err.textContent = 'For staff, choose their staff category and the date they started working at the church.'; err.hidden = false; return; }
+            var same = document.getElementById('pf-sw-same').checked, days = [];
+            document.querySelectorAll('.pf-sw:checked').forEach(function (b) { days.push(b.value); });
+            if (!same && !days.length) { err.textContent = 'Tick the days they work, or “Same as their category”.'; err.hidden = false; return; }
+            p.staff = { category: g('pf-scat'), start: g('pf-sstart'), workDays: same ? '' : days.join(', ') };
+            p.category = 'Staff';
+          } else if (p.staff) {
+            delete p.staff;
+            if (p.category === 'Staff') p.category = 'Member';
+          }
+        }
         if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = 'To give someone access to Church Hub, add their email address – that’s how they sign in.'; err.hidden = false; return; }
         var fam = g('pf-fam');
         if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family' }, 'Created family ' + p.lastName); fam = f.id; }

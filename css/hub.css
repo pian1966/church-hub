@@ -185,3 +185,13 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .field .check input, .check input[type=checkbox], .check input[type=radio] { width: 20px; height: 20px; min-height: 0; padding: 0; margin-top: 2px; }
 .aw-days { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 2px 10px; max-height: 240px; overflow: auto; }
 .aw-day { margin: 0; padding: 6px 0; }
+.daybox { display: inline-flex; flex-wrap: wrap; gap: 3px; margin: 4px 0; }
+.daybox label { position: relative; cursor: pointer; }
+.daybox input { position: absolute; opacity: 0; inset: 0; }
+.daybox span { display: inline-grid; place-items: center; width: 34px; height: 30px; border: 1px solid #D6CDC4; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--ink); }
+.daybox input:checked + span { background: var(--accent); border-color: var(--accent); color: #fff; }
+.daybox input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ls-term { padding: 10px 0; border-bottom: 1px solid #EEE7E0; }
+.ls-term-dates { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; align-items: end; }
+#ls-levels .daybox { flex-wrap: nowrap; }
+#ls-levels td { vertical-align: middle; }

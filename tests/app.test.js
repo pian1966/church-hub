@@ -99,7 +99,7 @@ function serve() {
     return { page, errs, ready, docsNow, denied, go, text, close: () => context.close() };
   }
   const ROUTES = ['home', 'people', 'people/families', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away',
-    'leave', 'leave/approvals', 'leave/team', 'leave/away', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'settings'];
+    'leave', 'leave/approvals', 'leave/team', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'settings'];
   async function tour(s, who) {
     for (const r of ROUTES) await s.go(r);
     await s.go('people/p/p12'); const t12 = await s.text();
@@ -133,6 +133,31 @@ function serve() {
   await s.page.selectOption('#pf-marital', 'Not known'); await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
   docs = await s.docsNow(); check(!docs['roles/ruth.daniels@example.com'], 'choosing “No access” removes their sign-in');
   check(docs['details/p27'].maritalStatus === 'Not known' && !docs['people/p27'].maritalStatus, 'marital status is kept with the private details (not the contact card)');
+  // Staff details: make Sam a Support Staff member
+  await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await s.page.check('#pf-staff'); await s.page.click('[data-act="people:save"]');
+  check((await s.page.textContent('#pf-err')).includes('staff category'), 'staff need a category and start date');
+  await s.page.selectOption('#pf-scat', 'Support Staff'); await s.page.fill('#pf-sstart', '2026-07-01');
+  await s.page.uncheck('#pf-sw-same'); await s.page.check('.pf-sw[value="Mon"]'); await s.page.check('.pf-sw[value="Tue"]');
+  await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(200);
+  docs = await s.docsNow();
+  check(docs['details/p19'].staff && docs['details/p19'].staff.category === 'Support Staff' && docs['details/p19'].staff.workDays === 'Mon, Tue' && docs['people/p19'].category === 'Staff', 'Administrator can mark someone as staff (category, start date, own working days)');
+  await s.go('leave/team'); check((await s.text()).includes('Sam Peters'), 'new staff member appears in Leave team balances');
+  // Leave settings
+  await s.go('leave/settings');
+  await s.page.click('[data-act="leave:addterm"]');
+  const tr = (await s.page.$$('.ls-term')).pop();
+  await (await tr.$('.ls-tn')).fill('Term 1 2027'); await (await tr.$('.ls-ts')).fill('2027-01-14'); await (await tr.$('.ls-te')).fill('2027-03-27');
+  await s.page.click('[data-act="leave:saveterms"]'); await s.page.waitForTimeout(150);
+  docs = await s.docsNow(); check(docs['leave/config'].terms.some(t => t.name === 'Term 1 2027' && t.end === '2027-03-27'), 'school terms can be added');
+  const supportRow = await s.page.$('#ls-levels tbody tr:has-text("Support Staff")');
+  await (await supportRow.$('.ls-ent[data-code="SSL"]')).fill('22'); await s.page.click('[data-act="leave:savelevels"]'); await s.page.waitForTimeout(150);
+  docs = await s.docsNow(); check(docs['leave/config'].levels.find(l => l.level === 'Support Staff').ent.SSL === 22, 'allowances per category can be changed');
+  const yy = new Date().getFullYear() + 2; await s.page.click(`[data-act="leave:addsa"][data-y="${yy}"]`); await s.page.waitForTimeout(150);
+  await s.page.fill('#ls-hd', yy + '-12-28'); await s.page.fill('#ls-hn', 'Office closed'); await s.page.click('[data-act="leave:addhol"]'); await s.page.waitForTimeout(150);
+  docs = await s.docsNow();
+  check(docs['leave/config'].holidays.some(h => h.date === yy + '-12-25') && docs['leave/config'].holidays.some(h => h.name === 'Office closed'), 'public holidays for another year and church closures can be added');
+  await s.page.uncheck('.ls-tappr[data-i="7"]'); await s.page.click('[data-act="leave:savetypes"]'); await s.page.waitForTimeout(150);
+  docs = await s.docsNow(); check(docs['leave/config'].autoApprove.includes('UL'), 'a kind of leave can be set to not need approval');
   // Record a death: Johan (married to Elsa, on the Door team)
   await s.go('people/p/p23'); await s.page.click('[data-act="people:death"]');
   check(await s.page.isVisible('.dd-sp[value="p24"]'), 'offers to change the spouse to Widowed');

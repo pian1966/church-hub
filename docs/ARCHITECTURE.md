@@ -95,6 +95,9 @@ serving groups and away dates; future leave cancelled; sign-in removed. Past ser
 Later phases must leave deceased people out of messages, birthday reminders and anniversaries.
 
 ## Leave Manager inside the Hub
+Staff are people with a `staff` object (`category`, `start`, `workDays` – empty means "same as the category"), set by Administrators
+in Edit details. Leave → Settings (Administrators) edits `leave/config`: the same settings, school terms, categories (levels with
+working days and allowances), leave types and holidays as Leave Manager's sheet tabs (`church: true` marks a church closure).
 The Leave module uses `LeaveCore` (the same rules file as Leave Manager), so balances, pro-rata, carry-over, public holidays
 and Sunday-holiday handling behave identically. Approved leave automatically makes a person unavailable for rosters.
 Until the Hub is live, the existing Leave Manager keeps running; at switch-over its sheet data is imported.

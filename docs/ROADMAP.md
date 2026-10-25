@@ -24,6 +24,11 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ Added 25 Oct 2026: several away dates at once (tick service days and/or add holiday stretches); marital status for adults
   (required when editing; imported from Elvanto's "Marital Status" column; to-do for adults without one); **Record a death**
   (see ARCHITECTURE.md "When someone dies"). No change to the security rules – nothing to re-publish.
+- ✅ Added 25 Oct 2026 – Leave usable live: Administrators mark people as staff (Edit details → Church staff member: category,
+  start date, own working days); **Leave → Settings** (leave year, open days, pro-rata, going over; school terms; categories and
+  allowances; kinds of leave: name, needs approval, in use, add new; public holidays per year and church closures)
+- ⬜ Church: fill in Leave → Settings (terms, allowances) and mark staff; try Leave alongside the old Leave Manager
+- ⬜ Leave Manager switch-over: import its sheet data (past and booked leave, adjustments/carry-over) – then retire the old app
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)
 - ⬜ Trial with 2–3 staff and made-up people; Information Officer approves privacy notice (mention sign-in accounts are held by Google outside SA) and accepts Google's data processing terms
 - ⬜ Then: import real people from Elvanto (Import) and give access

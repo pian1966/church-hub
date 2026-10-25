@@ -2,7 +2,7 @@
 
 Status key: ✅ done · 🟡 in progress · ⬜ planned
 
-## Phase 1 – Foundation 🟡 – everything built; waiting for the church to create its Firebase project
+## Phase 1 – Foundation 🟡 – built and live (pre-release v0.1.0, 25 Oct 2026); church trial and Leave Manager import next
 - ✅ Architecture, data model, POPIA design (`ARCHITECTURE.md`, `POPIA.md`)
 - ✅ Rostering engine: together (must/prefer), keep apart, away dates and leave, fair turns, reasons (`js/roster.js`, tested)
 - ✅ App shell: sign-in as a role, Home with app cards and to-do list, modules on/off

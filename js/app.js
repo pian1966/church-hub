@@ -40,6 +40,23 @@ var Hub = (function () {
   }
   function today() { return LeaveCore.iso(new Date()); }
   function name(p) { return p ? ((p.preferredName || p.firstName) + ' ' + p.lastName) : ''; }
+  /** A family's name: its own name if one was given (custom), otherwise its adults, e.g. "Tim & Clare Jacobs",
+   *  "Thandi Mokoena & Sipho Dlamini" or "Megan Smith". It follows changes (marriage, moving out, death) by itself. */
+  function familyName(f) {
+    if (!f) return '';
+    if (f.custom && f.name) return f.name;
+    var adults = Store.find('people', function (p) { return p.familyId === f.id && p.familyRole !== 'child' && p.active !== false; })
+      .sort(function (a, b) { return (a.createdAt || '') < (b.createdAt || '') ? -1 : (a.createdAt || '') > (b.createdAt || '') ? 1 : (a.id < b.id ? -1 : 1); });
+    if (!adults.length) return f.name || 'Family';
+    var bySurname = [];
+    adults.forEach(function (p) {
+      var g = bySurname.filter(function (x) { return x.last === p.lastName; })[0];
+      if (!g) bySurname.push(g = { last: p.lastName, firsts: [] });
+      g.firsts.push(p.preferredName || p.firstName);
+    });
+    var join = function (a) { return a.length < 2 ? a.join('') : a.slice(0, -1).join(', ') + ' & ' + a[a.length - 1]; };
+    return join(bySurname.map(function (g) { return join(g.firsts) + ' ' + g.last; }));
+  }
   function initials(p) { return p ? ((p.preferredName || p.firstName || '?')[0] + (p.lastName || '')[0]).toUpperCase() : '?'; }
   var AV = ['#E8590C', '#2F6FB3', '#0F766E', '#7C3AED', '#B0527A', '#4C9A6A', '#A16207', '#0E7490'];
   function avatar(p, size) {
@@ -307,6 +324,6 @@ var Hub = (function () {
   }
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    esc: esc, fmt: fmt, today: today, name: name, avatar: avatar, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
+    esc: esc, fmt: fmt, today: today, name: name, familyName: familyName, avatar: avatar, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
     dialogHead: dialogHead, toast: toast, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW };
 })();

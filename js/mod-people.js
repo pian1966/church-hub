@@ -47,7 +47,7 @@
         if (p.familyRole === 'child') tags += '<span class="tag" style="--c:#0E7490">Child' + (age(p) !== '' ? ', ' + age(p) : '') + '</span>';
         else tags += '<span class="tag grey">' + esc(p.staff ? p.staff.category : p.category) + '</span>';
         if (canSeeAll() && !hasConsent(p.id, 'Church records')) tags += ' <span class="tag bad">No consent</span>';
-        return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc([fam ? fam.name : '', canBasic() || isMe(p) ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
+        return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc([fam ? H.familyName(fam) : '', canBasic() || isMe(p) ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
       }).join('') + '</div>' : '<p class="empty">No one matches. Try another name, or clear the search.</p>');
   }
 
@@ -91,7 +91,7 @@
       '</dl></section>';
     // Family
     if (fam && (canBasic() || me)) {
-      html += '<section class="panel"><h2>' + esc(fam.name) + '</h2><div class="list">' + members(fam.id).map(function (m) {
+      html += '<section class="panel"><h2>' + esc(H.familyName(fam)) + '</h2><div class="list">' + members(fam.id).map(function (m) {
         return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (age(m) !== '' ? ', ' + age(m) : '') : 'Adult') + '</small></span></a>';
       }).join('') + '</div>' + (H.can('rosters.manage') || H.can('*') ? '<p class="hint">Want them to serve together? <a href="#/rosters/together">Set up a serving group</a>.</p>' : '') + '</section>';
     }
@@ -133,12 +133,14 @@
 
   /* ---------- families ---------- */
   function renderFamilies() {
-    var fams = S.list('families').slice().sort(function (a, b) { return a.name.localeCompare(b.name); });
-    return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Families</h1><p class="lead">Households linked together. Children are always linked to a parent or guardian, who gives consent for them.</p></div>' +
+    var surname = function (f) { var n = H.familyName(f).split(' '); return n[n.length - 1] + ' ' + n.join(' '); };
+    var fams = S.list('families').slice().sort(function (a, b) { return surname(a).localeCompare(surname(b)); });
+    return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Families</h1><p class="lead">Households linked together, named after their adults (e.g. “Tim & Clare Jacobs”). Children are always linked to a parent or guardian, who gives consent for them.</p></div>' +
       '<button class="btn primary" data-act="people:newfam">' + H.icon(H.ICON.plus, 18) + 'New family</button></div>' +
       '<div class="grid2">' + fams.map(function (f) {
         var ms = members(f.id);
-        return '<section class="panel"><h2>' + esc(f.name) + '</h2>' + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this family yet.</p>') + '</section>';
+        return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + esc(H.familyName(f)) + '</h2><button class="btn small" data-act="people:renamefam" data-id="' + f.id + '">Rename</button></div>' +
+          (f.custom ? '<p class="hint" style="margin:2px 0 8px">Own name</p>' : '<p class="hint" style="margin:2px 0 8px">Named after its adults</p>') + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this family yet.</p>') + '</section>';
       }).join('') + '</div>';
   }
 
@@ -156,7 +158,7 @@
       '<label class="field">Mobile<input id="pf-mobile" type="tel" value="' + esc(p.mobile || '') + '" autocomplete="tel"></label></div>' +
       (!me || admin ? '<div class="two"><label class="field">Birthday <small>(optional)</small><input id="pf-birth" type="date" value="' + esc(p.birthDate || '') + '"></label>' +
         '<label class="field">Category<select id="pf-cat">' + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
-        '<div class="two"><label class="field">Family<select id="pf-fam"><option value="">No family</option>' + fams.map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(f.name) + '</option>'; }).join('') + '<option value="__new">+ New family…</option></select></label>' +
+        '<div class="two"><label class="field">Family<select id="pf-fam"><option value="">No family</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New family…</option></select></label>' +
         '<label class="field">In the family as<select id="pf-frole"><option value="adult"' + (p.familyRole !== 'child' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
         '<label class="field" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' : '') +
       (admin ? staffFields(p) : '') +
@@ -300,7 +302,7 @@
         }
         if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = 'To give someone access to Church Hub, add their email address – that’s how they sign in.'; err.hidden = false; return; }
         var fam = g('pf-fam');
-        if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family' }, 'Created family ' + p.lastName); fam = f.id; }
+        if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family', custom: false }, 'Created a family for ' + p.firstName + ' ' + p.lastName); fam = f.id; }
         if (fam !== null) p.familyId = fam;
         if (p.familyRole === 'child' && !p.familyId) { err.textContent = 'Children must be linked to a family, so a parent or guardian can give consent.'; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
@@ -377,9 +379,26 @@
         H.render(); H.toast('Note saved');
       },
       newfam: function () {
-        H.modal(H.dialogHead('New family') + '<div class="dlg-body"><label class="field">Family name<input id="nf-name" placeholder="e.g. Naidoo family"></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savefam">Create</button></div>', 'New family');
+        H.modal(H.dialogHead('New family', 'Then add people to it (Edit details → Family).') + '<div class="dlg-body"><label class="field">Surname<input id="nf-name" placeholder="e.g. Naidoo"><small>Once adults are added, the family is named after them automatically (e.g. “Jason & Priya Naidoo”).</small></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savefam">Create</button></div>', 'New family');
       },
-      savefam: function () { var n = document.getElementById('nf-name').value.trim(); if (!n) return; S.put('families', { name: /family$/i.test(n) ? n : n + ' family' }, 'Created family ' + n); H.closeModal(); H.render(); },
+      savefam: function () { var n = document.getElementById('nf-name').value.trim(); if (!n) return; n = n.replace(/\s*family$/i, ''); S.put('families', { name: n + ' family', custom: false }, 'Created family ' + n); H.closeModal(); H.render(); },
+      renamefam: function (el) {
+        var f = S.get('families', el.dataset.id);
+        H.modal(H.dialogHead('Rename ' + H.familyName(f)) + '<div class="dlg-body">' +
+          '<label class="check"><input type="radio" name="rf-mode" value="auto"' + (f.custom ? '' : ' checked') + '><span><b>Name after the adults</b> <span class="muted">(recommended, updates itself)</span></span></label>' +
+          '<label class="check"><input type="radio" name="rf-mode" value="own"' + (f.custom ? ' checked' : '') + '><span><b>Use this name</b></span></label>' +
+          '<label class="field"><span class="sr">Family name</span><input id="rf-name" value="' + esc(f.custom ? f.name : '') + '" placeholder="e.g. The Jacobs household"></label></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:saverename" data-id="' + f.id + '">Save</button></div>', 'Rename family');
+        var inp = document.getElementById('rf-name');
+        inp.addEventListener('input', function () { document.querySelector('input[name="rf-mode"][value="own"]').checked = true; });
+      },
+      saverename: function (el) {
+        var f = JSON.parse(JSON.stringify(S.get('families', el.dataset.id))), own = document.querySelector('input[name="rf-mode"]:checked').value === 'own', n = document.getElementById('rf-name').value.trim();
+        if (own && !n) { H.toast('Type the name, or choose “Name after the adults”', true); return; }
+        if (own) { f.name = n; f.custom = true; } else { f.custom = false; }
+        S.put('families', f, 'Renamed a family: ' + (own ? n : 'named after its adults'));
+        H.closeModal(); H.render(); H.toast('Saved – shown as ' + H.familyName(f));
+      },
       archive: function (el) {
         if (!H.confirmBtn(el, 'Click again: mark as left')) return;
         var p = S.get('people', el.dataset.id); p.active = false; p.category = 'Former member'; p.archivedAt = H.today();

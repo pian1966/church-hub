@@ -164,7 +164,7 @@
       (g.kind === 'together' ? '<fieldset class="field" style="border:0;padding:0;margin:0 0 14px"><legend style="margin-bottom:6px">How important is it?</legend>' +
         '<label class="check"><input type="radio" name="gr-str" value="must"' + (g.strength === 'must' ? ' checked' : '') + '><span><b>Always together</b><br><span class="muted small">If one can’t serve, none of them are rostered that week.</span></span></label>' +
         '<label class="check"><input type="radio" name="gr-str" value="prefer"' + (g.strength !== 'must' ? ' checked' : '') + '><span><b>Together when possible</b><br><span class="muted small">Otherwise they can be rostered separately.</span></span></label></fieldset>' : '') +
-      (manager() && fams.length ? '<label class="field">Quick add a family<select id="gr-fam"><option value="">Choose a family…</option>' + fams.map(function (f) { return '<option value="' + f.id + '">' + esc(f.name) + '</option>'; }).join('') + '</select></label>' : '') +
+      (manager() && fams.length ? '<label class="field">Quick add a family<select id="gr-fam"><option value="">Choose a family…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '">' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' : '') +
       '<fieldset class="field" style="border:0;padding:0;margin:0"><legend style="margin-bottom:6px">Who</legend><div style="max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:4px 12px">' +
       people.map(function (p) { return '<label class="check"><input type="checkbox" class="gr-m" value="' + p.id + '"' + (g.memberIds.indexOf(p.id) >= 0 ? ' checked' : '') + '>' + esc(H.name(p)) + (p.familyRole === 'child' ? ' <span class="muted small">(teen)</span>' : '') + '</label>'; }).join('') + '</div></fieldset>' +
       '<label class="field" style="margin-top:14px">Note <small>(optional)</small><input id="gr-note" value="' + esc(g.note || '') + '" placeholder="Why – helps whoever does the roster"></label><p id="gr-err" class="note bad" hidden></p></div>' +
@@ -173,7 +173,7 @@
     if (famSel) famSel.addEventListener('change', function () {
       var ids = S.find('people', function (p) { return p.familyId === famSel.value; }).map(function (p) { return p.id; });
       document.querySelectorAll('.gr-m').forEach(function (b) { if (ids.indexOf(b.value) >= 0) b.checked = true; });
-      var nm = document.getElementById('gr-name'); if (!nm.value) nm.value = (S.get('families', famSel.value) || {}).name || '';
+      var nm = document.getElementById('gr-name'); if (!nm.value) nm.value = H.familyName(S.get('families', famSel.value));
     });
   }
 

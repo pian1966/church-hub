@@ -27,6 +27,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ Added 25 Oct 2026 – Leave usable live: Administrators mark people as staff (Edit details → Church staff member: category,
   start date, own working days); **Leave → Settings** (leave year, open days, pro-rata, going over; school terms; categories and
   allowances; kinds of leave: name, needs approval, in use, add new; public holidays per year and church closures)
+- ✅ Added 25 Oct 2026: families named after their adults automatically (tells apart families with the same surname; follows marriages, moves and deaths); People → Families → Rename for an own name
 - ⬜ Church: fill in Leave → Settings (terms, allowances) and mark staff; try Leave alongside the old Leave Manager
 - ⬜ Leave Manager switch-over: import its sheet data (past and booked leave, adjustments/carry-over) – then retire the old app
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)

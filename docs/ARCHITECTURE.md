@@ -60,7 +60,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | --- | --- |
 | `settings` | church name, modules on/off, Information Officer, retention period, privacy notice |
 | `people` | name, contact, family, category, marital status (adults), staff details (leave category, start date, working days), key dates, date of death, child medical notes (special personal information), Elvanto ID |
-| `families` | family name |
+| `families` | `name` + `custom`. Shown via `Hub.familyName()`: named after its active adults ("Tim & Clare Jacobs", "Thandi Mokoena & Sipho Dlamini") unless `custom` is true; no "head of household" |
 | `consents` | per person and purpose: given/withdrawn, date, how, recorded by, guardian for children |
 | `notes` | pastoral notes (restricted) |
 | `teams`, `positions`, `skills` | who can serve where, and how often they'd like to |

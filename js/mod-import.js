@@ -119,7 +119,7 @@
           if (r.family) {
             if (!famIds[r.family]) {
               var ex = S.find('families', function (f) { return f.elvantoId === r.family || f.name === r.family; })[0];
-              if (!ex) { ex = S.put('families', { name: (/^[A-Z]+-?\d+$/i.test(r.family) ? r.lastName : r.family.replace(/ family$/i, '')) + ' family', elvantoId: r.family }); out.families++; }
+              if (!ex) { ex = S.put('families', { name: (/^[A-Z]+-?\d+$/i.test(r.family) ? r.lastName : r.family.replace(/ family$/i, '')) + ' family', custom: false, elvantoId: r.family }); out.families++; }
               famIds[r.family] = ex.id;
             }
             fid = famIds[r.family];

@@ -169,6 +169,16 @@ function serve() {
   check(!docs['roles/johan.vandermerwe@example.com'] && !docs['directory/p23'], 'they can’t sign in and leave the directory');
   check(!Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p23') && futureJohan.length === 0, 'they come off teams and future rosters');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /Recorded the death/.test(docs[k].action)), 'the death is in the audit log');
+  // Family names: named after the adults, follow changes, can be given an own name
+  await s.go('people/families'); let famText = await s.text();
+  check(famText.includes('Tim & Clare Jacobs') && famText.includes('Jason & Priya Naidoo') && famText.includes('Thandi Mokoena'), 'families are named after their adults');
+  check(famText.includes('Elsa van der Merwe') && !famText.includes('Johan & Elsa'), 'a family’s name follows a death by itself');
+  await s.page.click('[data-act="people:renamefam"][data-id="f2"]'); await s.page.fill('#rf-name', 'The Jacobs household'); await s.page.click('[data-act="people:saverename"]'); await s.page.waitForTimeout(150);
+  docs = await s.docsNow(); famText = await s.text();
+  check(docs['families/f2'].custom === true && famText.includes('The Jacobs household'), 'a family can be given its own name');
+  await s.page.click('[data-act="people:renamefam"][data-id="f2"]'); await s.page.check('input[name="rf-mode"][value="auto"]'); await s.page.click('[data-act="people:saverename"]'); await s.page.waitForTimeout(150);
+  check((await s.text()).includes('Tim & Clare Jacobs'), 'and switched back to being named after its adults');
+  await s.go('people/p/p14'); check((await s.text()).includes('Tim & Clare Jacobs'), 'profiles show the family name');
   await s.go('leave/approvals'); await s.page.click('[data-act="leave:decide"][data-d="Approved"]'); await s.page.waitForTimeout(200);
   docs = await s.docsNow(); const approved = Object.keys(docs).filter(k => k.startsWith('leaveRequests/') && docs[k].status === 'Approved' && docs[k].decidedOn);
   check(approved.length === 1 && docs['away/' + approved[0].split('/')[1]], 'approving leave saves it and marks the dates as away');

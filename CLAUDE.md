@@ -6,6 +6,8 @@
 - Rostering rules live in `js/roster.js` and must stay pure and tested: run `node tests/roster.test.js` before committing.
   The Leave Manager import (`js/leave-import.js`) and Elvanto import (`js/elvanto-import.js`) likewise: `node tests/leave-import.test.js`,
   `node tests/elvanto-import.test.js`. Test data is made up (`tests/fixtures`); never add a real export to the repository.
+- Elvanto updates for approved leave: `js/elvanto-sync.js` (`node tests/elvanto-sync.test.js`) and the robot `robot/robot.js`
+  (`node tests/robot.test.js`). The robot's log is public: never print names, dates or emails.
 - Who sees what is enforced by `firestore.rules`. Changing access means changing, together: `firestore.rules`, `plan()` in `js/store.js`,
   the POLICY copy in `tests/fake-firebase.js`, and `tests/rules.test.mjs` / `tests/app.test.js`. Run `node tests/app.test.js` (needs Playwright);
   GitHub runs everything, including the rules against the Firestore emulator, on every push. Tell the church to re-publish the rules (FIREBASE-SETUP.md step 7).

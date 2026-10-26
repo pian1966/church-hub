@@ -21,6 +21,8 @@ js/leave-core.js          LeaveCore: Leave Manager's leave rules (copy of leave-
 js/leave-import.js        LeaveImport: reads a Leave Manager sheet (Excel or CSV tabs) and plans the import (pure, tested)
 js/xlsx-lite.js           XlsxLite: small built-in .xlsx reader (zip + XML; no outside library)
 js/elvanto-import.js      ElvantoImport: reads an Elvanto People export and plans the import (pure, tested)
+js/elvanto-sync.js        ElvantoSync: when a leave change needs an Elvanto "Unavailable Volunteers" update (pure, tested)
+robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers
 js/mod-*.js               one file per module: people, rosters, leave, privacy, import, settings
 firestore.rules           database security rules: who may read/write what (POPIA)
@@ -97,6 +99,16 @@ Administrators then finish it (automatically if they recorded it, otherwise from
 serving groups and away dates; future leave cancelled; sign-in removed. Past serving and leave stay. Pastors get
 "Care for the family of …" on their to-do list for 8 weeks. "Recorded by mistake?" undoes it (teams and rosters must be re-added).
 Later phases must leave deceased people out of messages, birthday reminders and anniversaries.
+
+## Approved leave in Elvanto (Unavailable Volunteers)
+As in Leave Manager: `Store.saveLeave` tells `onLeaveChange` listeners which requests changed; the Leave module asks
+`ElvantoSync.job()` whether Elvanto needs updating and writes `elvantoSync/{requestId}` = { personId, name, start, end,
+want: Unavailable|Removed, have, haveNote, status: Waiting|Done|Failed|Check, note } – only when switched on
+(`settings.elvanto.on`, Leave → Elvanto). Imports are `quiet` (Leave Manager already put its leave in Elvanto); such leave,
+if changed later, is found in Elvanto by its note "Leave Manager ‹id›". The robot (`robot/robot.js`, `.github/workflows/elvanto-robot.yml`)
+signs in to Church Hub as its own user – `roles/{email}` = { role: 'robot', uid } – which the rules let read only church settings
+and the Elvanto list, and report results (status, note, have, doneAt) and `robotStatus/elvanto`. Its Elvanto steps are Leave
+Manager's robot's. Results and problems show under Leave → Elvanto and on Home (failed, check by hand, waiting > 2 hours).
 
 ## Leave Manager inside the Hub
 Staff are people with a `staff` object (`category`, `start`, `workDays` – empty means "same as the category"), set by Administrators

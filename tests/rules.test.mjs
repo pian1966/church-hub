@@ -51,6 +51,9 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('away/L2', { personId: 'p02', from: '2027-01-06', to: '2027-01-06' });
   await set('dsr/d1', { personId: 'p15', kind: 'Access' });
   await set('audit/a1', { action: 'Test', byEmail: 'linda@example.com' });
+  await set('roles/robot@example.com', { role: 'robot', uid: 'robot-uid', name: 'Elvanto robot' });
+  await set('elvantoSync/L1', { personId: 'p05', name: 'A p05', start: '2027-01-06', end: '2027-01-06', want: 'Unavailable', have: '', haveNote: '', status: 'Waiting', note: '' });
+  await set('elvantoSync/L9', { personId: 'p15', name: 'A p15', start: '2027-02-01', end: '2027-02-02', want: 'Unavailable', have: '', haveNote: '', status: 'Done', note: '' });
 });
 
 const as = role => { const [email, pid] = USERS[role]; return env.authenticatedContext('uid-' + role, { email, email_verified: true }).firestore(); };
@@ -58,6 +61,9 @@ const db = { admin: as('admin'), pastor: as('pastor'), kids: as('kids'), rosters
 const stranger = env.authenticatedContext('uid-x', { email: 'stranger@example.com', email_verified: true }).firestore();
 const unverified = env.authenticatedContext('uid-u', { email: 'tim@example.com', email_verified: false }).firestore();
 const nobody = env.unauthenticatedContext().firestore();
+// The robot signs in with a password, so its email isn't verified; its access entry names its account ID
+const robotDb = env.authenticatedContext('robot-uid', { email: 'robot@example.com', email_verified: false }).firestore();
+const impostor = env.authenticatedContext('someone-else', { email: 'robot@example.com', email_verified: false }).firestore();
 const ts = () => firebase.firestore.FieldValue.serverTimestamp();
 
 let passed = 0, failed = 0;
@@ -192,6 +198,36 @@ await t('staff request leave for themselves as waiting; only Administrators appr
   await can(db.rosters.doc('leaveRequests/L3').update({ status: 'Cancelled', cancelledBy: 'Sipho' }));
   await can(db.admin.doc('leaveRequests/L1').update({ status: 'Approved', decidedBy: 'Linda' }));
   await cannot(db.member.doc('leave/config').set({ types: [] }));
+});
+
+console.log('Elvanto robot');
+await t('the robot reads the Elvanto list and church settings, and nothing else', async () => {
+  await can(list(robotDb.collection('elvantoSync'))); await can(read(robotDb, 'settings/church'));
+  for (const p of ['people/p15', 'details/p15', 'directory/p15', 'leaveRequests/L1', 'notes/p15', 'medical/p12', 'roles/linda@example.com', 'away/L2']) await cannot(read(robotDb, p));
+});
+await t('the robot reports results but can’t change who or when', async () => {
+  await can(robotDb.doc('elvantoSync/L1').update({ status: 'Done', note: 'Added.', have: '2027-01-06 to 2027-01-06', doneAt: '2026-10-26T10:00:00Z' }));
+  await cannot(robotDb.doc('elvantoSync/L1').update({ start: '2020-01-01' }));
+  await cannot(robotDb.doc('elvantoSync/L1').update({ personId: 'p01' }));
+  await cannot(robotDb.doc('elvantoSync/L2').set({ personId: 'p01', status: 'Waiting' }));
+  await can(robotDb.doc('robotStatus/elvanto').set({ lastRun: '2026-10-26T10:00:00Z', done: 1 }));
+});
+await t('another account using the robot’s email gets nothing', async () => {
+  await cannot(list(impostor.collection('elvantoSync'))); await cannot(read(impostor, 'settings/church'));
+});
+await t('only Administrators give the robot its sign-in', async () => {
+  await cannot(db.pastor.doc('roles/robot2@example.com').set({ role: 'robot', uid: 'x' }));
+  await can(db.admin.doc('roles/robot2@example.com').set({ role: 'robot', uid: 'x' }));
+});
+await t('Elvanto list: Administrators see all; staff see and queue only their own', async () => {
+  await can(list(db.admin.collection('elvantoSync'))); await cannot(list(db.rosters.collection('elvantoSync')));
+  await can(list(db.rosters.collection('elvantoSync').where('personId', '==', 'p05')));
+  await can(db.rosters.doc('elvantoSync/L1').update({ want: 'Removed', status: 'Waiting', note: 'Cancelled' }));
+  await cannot(db.rosters.doc('elvantoSync/L1').update({ have: '' }));
+  await cannot(db.rosters.doc('elvantoSync/L9').update({ want: 'Removed', status: 'Waiting' }));
+  await can(db.rosters.doc('elvantoSync/L7').set({ personId: 'p05', name: 'A p05', start: '2027-03-01', end: '2027-03-01', want: 'Unavailable', have: '', haveNote: '', status: 'Waiting', note: '' }));
+  await cannot(db.rosters.doc('elvantoSync/L8').set({ personId: 'p05', status: 'Done' }));
+  await cannot(read(db.member, 'robotStatus/elvanto')); await can(read(db.admin, 'robotStatus/elvanto'));
 });
 
 console.log('POPIA registers and settings');

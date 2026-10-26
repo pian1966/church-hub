@@ -163,7 +163,7 @@
       }
     });
     var n = LI.applyLeave(S.leave(), pl, map, lst.opt.settings);
-    S.saveLeave('Imported leave from Leave Manager (' + lst.files.join(', ') + '): ' + n.added + ' added, ' + n.updated + ' updated, ' + n.adjustments + ' adjustments' + (lst.opt.settings ? ', settings replaced' : ''));
+    S.saveLeave('Imported leave from Leave Manager (' + lst.files.join(', ') + '): ' + n.added + ' added, ' + n.updated + ' updated, ' + n.adjustments + ' adjustments' + (lst.opt.settings ? ', settings replaced' : ''), { quiet: true });   // Leave Manager already put its approved leave into Elvanto
     n.newPeople = newPeople; lst.done = n; lst.tables = null; H.render(); H.toast('Leave imported');
   }
 

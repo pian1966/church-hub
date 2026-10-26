@@ -312,7 +312,8 @@ var Hub = (function () {
         if (!user) return;
         user = Store.get('people', user.id) || user;
         var a = document.activeElement;
-        if (document.querySelector('#modal .overlay') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+        // Not while a dialog is open, someone is typing, or a "click again to confirm" button is waiting for its second click
+        if (document.querySelector('#modal .overlay') || document.querySelector('[data-sure]') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
         render();
       });
       Store.live.boot(onLiveState);

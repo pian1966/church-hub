@@ -28,17 +28,23 @@ service cloud.firestore {
     function me() { return access().get('personId', ''); }
     function mine(personId) { return anyone() && me() != '' && personId == me(); }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    // The Elvanto robot (GitHub Actions) signs in with its own account. Its access-list entry names its account ID (uid),
+    // so nobody else can use that email address. It can only read church settings and work on the Elvanto list.
+    function robot() {
+      return request.auth != null && request.auth.token.email != null && exists(roleRef())
+        && access().role == 'robot' && access().get('uid', '') == request.auth.uid;
+    }
 
     // ---------- access list (Administrators manage it from People > Edit details) ----------
     match /roles/{email} {
       allow read: if signedIn() && (email == request.auth.token.email.lower() || admin());
-      allow create, update: if admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member'];
+      allow create, update: if admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'];
       allow delete: if admin();
     }
 
     // ---------- church settings ----------
     match /settings/{doc} {
-      allow read: if anyone();
+      allow read: if anyone() || robot();
       allow write: if admin();
     }
 
@@ -147,6 +153,25 @@ service cloud.firestore {
     match /leaveAdjustments/{id} {
       allow read: if admin() || mine(resource.data.staffId);
       allow write: if admin();
+    }
+
+    // ---------- Elvanto: approved leave as Unavailable Volunteers (names and dates only) ----------
+    // Administrators manage the list; staff add entries for their own leave (e.g. cancelling approved leave);
+    // the robot reads it and reports what it did.
+    match /elvantoSync/{id} {
+      allow read: if admin() || robot() || mine(resource.data.personId);
+      allow create: if admin()
+        || (mine(request.resource.data.personId) && request.resource.data.status == 'Waiting'
+            && request.resource.data.keys().hasOnly(['personId', 'name', 'start', 'end', 'want', 'have', 'haveNote', 'status', 'note', 'createdAt', 'updatedAt']));
+      allow update: if admin()
+        || (mine(resource.data.personId) && request.resource.data.personId == resource.data.personId && request.resource.data.status == 'Waiting'
+            && onlyChanges(['name', 'start', 'end', 'want', 'status', 'note', 'updatedAt']))
+        || (robot() && onlyChanges(['status', 'note', 'have', 'haveNote', 'doneAt']));
+      allow delete: if admin();
+    }
+    match /robotStatus/{id} {
+      allow read: if admin();
+      allow write: if robot();
     }
 
     // ---------- POPIA registers (Administrators only) ----------

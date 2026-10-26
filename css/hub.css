@@ -212,3 +212,4 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .simple th.lt { white-space: normal; min-width: 72px; max-width: 120px; font-size: 12.5px; line-height: 1.25; vertical-align: bottom; text-align: center; }
 .simple td.lt { text-align: center; }
 .simple thead th { vertical-align: bottom; }
+.grid2 > .panel + .panel { margin-top: 0; }   /* the grid gap spaces them */

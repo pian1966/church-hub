@@ -15,7 +15,8 @@
   var ANY = ['admin', 'pastor', 'rosters', 'kids', 'member'], STAFF = ['admin', 'pastor', 'rosters', 'kids'];
   function ctx() {
     var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
-    return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', me: r && r.personId ? r.personId : '' };
+    return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', me: r && r.personId ? r.personId : '',
+      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid) };
   }
   function is(c, list) { return c.signedIn && !!c.role && list.indexOf(c.role) >= 0; }
   function mine(c, pid) { return is(c, ANY) && c.me !== '' && pid === c.me; }
@@ -27,8 +28,17 @@
   var KIDS_CONSENTS = ['Children’s medical notes', 'Photos'];
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || is(c, ['admin'])); },
-      write: function (c, op, id, b, a) { return is(c, ['admin']) && (op === 'delete' || ANY.indexOf(a.role) >= 0); } },
-    settings: { read: function (c) { return is(c, ANY); }, write: function (c) { return is(c, ['admin']); } },
+      write: function (c, op, id, b, a) { return is(c, ['admin']) && (op === 'delete' || ANY.concat(['robot']).indexOf(a.role) >= 0); } },
+    settings: { read: function (c) { return is(c, ANY) || c.robot; }, write: function (c) { return is(c, ['admin']); } },
+    elvantoSync: { read: function (c, id, d) { return is(c, ['admin']) || c.robot || (!!d && mine(c, d.personId)); },
+      write: function (c, op, id, b, a) {
+        if (is(c, ['admin'])) return true;
+        if (op === 'delete') return false;
+        if (op === 'create') return mine(c, a.personId) && a.status === 'Waiting' && onlyKeys(a, ['personId', 'name', 'start', 'end', 'want', 'have', 'haveNote', 'status', 'note', 'createdAt', 'updatedAt']);
+        if (mine(c, b.personId) && a.personId === b.personId && a.status === 'Waiting' && onlyChanges(b, a, ['name', 'start', 'end', 'want', 'status', 'note', 'updatedAt'])) return true;
+        return c.robot && onlyChanges(b, a, ['status', 'note', 'have', 'haveNote', 'doneAt']);
+      } },
+    robotStatus: { read: function (c) { return is(c, ['admin']); }, write: function (c) { return c.robot; } },
     people: { read: function (c, id) { return is(c, STAFF) || mine(c, id); },
       write: function (c, op, id, b, a) {
         if (op === 'delete') return is(c, ['admin']);

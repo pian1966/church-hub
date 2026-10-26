@@ -1,0 +1,6 @@
+{
+  "name": "church-hub-elvanto-robot",
+  "private": true,
+  "description": "Puts leave approved in Church Hub into Elvanto's Unavailable Volunteers list (adapted from Leave Manager's robot).",
+  "dependencies": { "playwright": "1.48.2" }
+}

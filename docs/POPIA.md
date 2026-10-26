@@ -29,6 +29,12 @@ This is a design checklist, not legal advice – the church's Information Office
   leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
   died") so the church can decide when to delete their details.
 
+## Approved leave in Elvanto
+When switched on, the name and dates of approved leave (never the kind of leave or the reason) go to Elvanto's Unavailable
+Volunteers list, as Leave Manager did. The robot that does it runs on GitHub's computers (outside South Africa) for a few
+minutes at a time and keeps nothing; its log never shows names or dates. Its Church Hub sign-in can only see that list.
+The privacy notice should mention Elvanto and GitHub as operators.
+
 ## Moving data in from Elvanto and Leave Manager
 The download from Elvanto or Leave Manager holds personal information (leave reasons can include health). It is read in the
 Administrator's browser and saved straight into the church's database in Johannesburg – never sent to GitHub, Claude or anyone else.

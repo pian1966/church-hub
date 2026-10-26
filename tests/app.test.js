@@ -42,6 +42,12 @@ function seedDocs(opts) {
   // a turn for Tim (member) to accept
   const future = d.services.filter(s => s.date > new Date().toISOString().slice(0, 10)).sort((a, b) => a.date < b.date ? -1 : 1)[1];
   put('assignments/kTim', { serviceId: future.id, positionId: 'door', personId: 'p14', status: 'pending', source: 'manual' });
+  if (opts && opts.elvanto) {   // Elvanto updating switched on; Lerato's approved leave (L103) already in Elvanto; the robot's sign-in
+    out['settings/church'].elvanto = { on: true, url: 'https://example.elvanto.eu', robotEmail: 'robot@example.com' };
+    const l = d.leave.requests.find(r => r.id === 'L103');
+    put('elvantoSync/L103', { personId: 'p06', name: 'Lerato Khumalo', start: l.start, end: l.end, want: 'Unavailable', have: l.start + ' to ' + l.end, haveNote: 'Church Hub L103', status: 'Done', note: 'Added.', createdAt: '2026-10-01 08:00', updatedAt: '2026-10-01 08:15' });
+    put('roles/robot@example.com', { role: 'robot', uid: 'R1', name: 'Elvanto robot' });
+  }
   return opts && opts.empty ? { 'roles/first.admin@example.com': { role: 'admin' } } : out;
 }
 
@@ -342,7 +348,53 @@ function serve() {
   check(await s.page.evaluate(() => Store.list('people').every(p => !p.birthDate || p.id === 'p14')), 'can’t see anyone else’s private details');
   await finish(s);
 
-  /* ---------- Staff member asking for leave ---------- */
+  /* ---------- Elvanto: approved leave → Unavailable Volunteers ---------- */
+  console.log('Elvanto updates (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs());
+  await s.go('leave/elvanto');
+  check((await s.text()).includes('Unavailable Volunteers'), 'Leave → Elvanto explains what happens');
+  await s.page.click('[data-act="leave:approvals"]').catch(() => {});
+  await s.go('leave/approvals'); await s.page.click('[data-act="leave:decide"][data-d="Approved"]'); await s.settle();
+  docs = await s.docsNow();
+  check(!Object.keys(docs).some(k => k.startsWith('elvantoSync/')), 'while switched off, nothing is sent to Elvanto (Leave Manager still does it)');
+  await s.go('leave/elvanto');
+  await s.page.check('#el-on'); await s.page.fill('#el-url', 'https://example.elvanto.eu/'); await s.page.fill('#el-remail', 'Robot@Example.com'); await s.page.fill('#el-ruid', 'R1');
+  await s.page.click('[data-act="leave:elsave"]'); await s.settle();
+  docs = await s.docsNow();
+  check(docs['settings/church'].elvanto.on === true && docs['settings/church'].elvanto.url === 'https://example.elvanto.eu' && docs['roles/robot@example.com'].role === 'robot' && docs['roles/robot@example.com'].uid === 'R1', 'switching on saves the address and gives the robot its limited sign-in');
+  await s.go('leave/approvals'); await s.page.click('[data-act="leave:decide"][data-d="Approved"]'); await s.settle();
+  docs = await s.docsNow();
+  const ej = Object.keys(docs).filter(k => k.startsWith('elvantoSync/')).map(k => docs[k]);
+  check(ej.length === 1 && ej[0].want === 'Unavailable' && ej[0].status === 'Waiting' && ej[0].name && !('reason' in ej[0]) && !('type' in ej[0]), 'approving leave queues it for Elvanto (name and dates only – no kind of leave or reason)');
+  await s.go('leave/elvanto'); check((await s.text()).includes('Waiting for the robot'), 'the entry shows as waiting for the robot');
+  await finish(s);
+
+  console.log('Elvanto updates (staff member cancelling, and the robot):');
+  s = await session('lerato.khumalo@example.com', seedDocs({ elvanto: true }));
+  await s.go('leave'); await s.page.click('[data-act="leave:cancel"][data-id="L103"]'); await s.page.click('[data-act="leave:cancel"][data-id="L103"]'); await s.settle();
+  docs = await s.docsNow();
+  check(docs['leaveRequests/L103'].status === 'Cancelled' && docs['elvantoSync/L103'].want === 'Removed' && docs['elvantoSync/L103'].status === 'Waiting' && docs['elvantoSync/L103'].have, 'cancelling approved leave asks the robot to remove it from Elvanto');
+  await finish(s);
+  // The robot's access, through the same rules – in a page where the app itself isn't signed in
+  s = await session('', seedDocs({ elvanto: true }));
+  const robotTry = await s.page.evaluate(async () => {
+    window.__fake.setUser({ email: 'robot@example.com', uid: 'R1', emailVerified: false });
+    const fs = firebase.firestore(), res = {};
+    res.readList = await new Promise(r => { const u = fs.collection('elvantoSync').onSnapshot(sn => { u(); r(sn.docs.length); }, () => r(-1)); });
+    res.readSettings = await fs.doc('settings/church').get().then(d => !!d.data().elvanto, () => false);
+    res.readPeople = await fs.doc('people/p06').get().then(() => true, () => false);
+    const cur = (await fs.doc('elvantoSync/L103').get()).data();
+    res.update = await fs.doc('elvantoSync/L103').set(Object.assign({}, cur, { status: 'Done', note: 'Added.' })).then(() => true, () => false);
+    res.changeDates = await fs.doc('elvantoSync/L103').set(Object.assign({}, cur, { start: '2020-01-01' })).then(() => true, () => false);
+    window.__fake.setUser({ email: 'robot@example.com', uid: 'IMPOSTOR', emailVerified: false });
+    res.impostor = await fs.doc('settings/church').get().then(() => true, () => false);
+    window.__fake.denied.length = 0;   // the refusals above were expected
+    return res;
+  });
+  check(robotTry.readList === 1 && robotTry.readSettings && robotTry.update, 'the robot can read the Elvanto list and church settings, and report what it did');
+  check(!robotTry.readPeople && !robotTry.changeDates && !robotTry.impostor, 'but can’t read people, change dates, or be used by another account with its email');
+  await finish(s);
+
   console.log('Staff member (Lerato):');
   s = await session('lerato.khumalo@example.com', seedDocs());
   await s.go('leave'); await s.page.click('[data-act="leave:request"]'); await s.page.selectOption('#lf-type', 'SSL');

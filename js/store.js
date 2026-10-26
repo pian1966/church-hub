@@ -18,8 +18,9 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit'];
-  var listeners = [], remoteListeners = [], errorListeners = [], user = null;
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus'];
+  var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
+  var leaveSnap = {};   // each leave request as last saved, to tell what changed
 
   var cfg = (typeof window !== 'undefined' && window.CHURCH_HUB_FIREBASE) || {};
   var LIVE = !!(cfg.apiKey && cfg.projectId) && !/[?&]demo(=|&|$)/.test(location.search);
@@ -43,9 +44,11 @@ var Store = (function () {
     try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
     if (!db || !db.version) { db = sampleFactory(); save(); }
     COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; });
+    snapLeave();
     return db;
   }
-  function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); save(); changed(); }
+  function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; }); snapLeave(); save(); changed(); }
+  function snapLeave() { leaveSnap = {}; ((db && db.leave && db.leave.requests) || []).forEach(function (r) { if (!r.synthetic) leaveSnap[r.id] = JSON.stringify(r); }); }
 
   function list(c) { return (db && db[c]) || []; }
   function get(c, id) { return list(c).filter(function (x) { return x.id === id; })[0] || null; }
@@ -91,7 +94,21 @@ var Store = (function () {
     save(); changed();
   }
   function leave() { return db.leave; }
-  function saveLeave(auditText) { if (LIVE) Live.saveLeave(); if (auditText) audit(auditText, 'leave'); save(); changed(); }
+  /** Save leave. Tells onLeaveChange listeners which requests changed (e.g. to update Elvanto), unless opts.quiet (imports). */
+  function saveLeave(auditText, opts) {
+    var changes = [];
+    ((db.leave && db.leave.requests) || []).forEach(function (r) {
+      if (r.synthetic) return;
+      var j = JSON.stringify(r), before = leaveSnap[r.id];
+      if (j === before) return;
+      changes.push({ prev: before ? JSON.parse(before) : null, now: copy(r) });
+      leaveSnap[r.id] = j;
+    });
+    if (LIVE) Live.saveLeave();
+    if (auditText) audit(auditText, 'leave');
+    if (changes.length && !(opts && opts.quiet)) leaveHooks.forEach(function (fn) { try { fn(changes); } catch (e) { console.error(e); } });
+    save(); changed();
+  }
   function setUser(u) { user = u; }
   function onChange(fn) { listeners.push(fn); }
   function changed() { listeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
@@ -237,6 +254,8 @@ var Store = (function () {
       }
       if (r === 'kids') add('medical', coll('medical'));
       if (r === 'pastor') add('notes', coll('notes'));
+      if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); }
+      else add('elvantoSync', own('elvantoSync'));
       if (r === 'admin') {
         ['dsr', 'breaches'].forEach(function (c) { add(c, coll(c)); });
         add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', coll('leaveAdjustments'));
@@ -302,7 +321,7 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus'].forEach(function (c) { db[c] = arr(c); });
       var cons = merged('consents', 'consentsMe', 'consentsMed', 'consentsPhotos');
       db.consents = Object.keys(cons).map(function (id) { var o = copy(cons[id]); o.id = id; return o; });
       db.notes = [];
@@ -324,6 +343,7 @@ var Store = (function () {
         });
       }
       db.leave = Object.assign(cfgDoc, { requests: requests, adjustments: adjustments });
+      snapLeave();
     }
 
     /* ---------- writing: only the pieces that changed, only where this role may write ---------- */
@@ -435,7 +455,14 @@ var Store = (function () {
       return batch.commit().then(function () { session.personId = pid; stop(); subscribe(); });
     }
 
-    return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, signOut: signOut, setup: setup,
+    /** The Elvanto robot's sign-in (Administrators): roles/{email} = { role: 'robot', uid } – it can only use the Elvanto list. */
+    function setRobot(email, uid, oldEmail) {
+      email = String(email || '').trim().toLowerCase(); oldEmail = String(oldEmail || '').trim().toLowerCase();
+      if (oldEmail && oldEmail !== email) del('roles/' + oldEmail);
+      if (email && uid) return write('roles/' + email, { role: 'robot', uid: String(uid).trim(), name: 'Elvanto robot' });
+      return Promise.resolve();
+    }
+    return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, signOut: signOut, setup: setup, setRobot: setRobot,
       put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write,
       session: function () { return session; } };
   })();
@@ -444,6 +471,8 @@ var Store = (function () {
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
     onRemoteChange: function (fn) { remoteListeners.push(fn); }, onError: function (fn) { errorListeners.push(fn); },
+    onLeaveChange: function (fn) { leaveHooks.push(fn); },
+    setRobot: function (email, uid, oldEmail) { return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
     live: { boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, signOut: Live.signOut,
       setup: Live.setup, session: Live.session } };
 })();

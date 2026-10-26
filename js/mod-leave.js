@@ -24,7 +24,7 @@
     if (takesLeave(d)) t.push(['', 'My leave']);
     if (isLeaveAdmin()) { t.push(['approvals', 'Approvals']); t.push(['team', 'Team balances']); }
     t.push(['away', 'Who’s away']);
-    if (isLeaveAdmin()) t.push(['settings', 'Settings']);
+    if (isLeaveAdmin()) { t.push(['settings', 'Settings']); t.push(['elvanto', 'Elvanto']); }
     return t.length > 1 ? '<nav class="seg" aria-label="Leave" style="margin-bottom:18px">' + t.map(function (x) { return '<a href="#/leave' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === active ? 'on' : '') + '">' + x[1] + '</a>'; }).join('') + '</nav>' : '';
   }
 
@@ -78,6 +78,45 @@
       var st = C.staffById(d, r.staffId), tp = typeOf(d, r.type);
       return '<div class="item"><span class="dot" style="--c:' + esc(tp.colour) + '"></span><span class="grow"><b>' + esc(st ? st.name : (H.name(S.get('people', r.staffId)) || 'A staff member')) + '</b><small>' + esc(range(r)) + (isLeaveAdmin() ? ' · ' + esc(tp.name) : '') + '</small></span>' + (r.status === 'Pending' ? pill('Pending') : '') + '</div>';
     }).join('') + '</div>' : '<p class="empty">No one is away.</p>') + '<p class="hint">Approved leave also stops people being rostered on those days.</p></section>';
+  }
+
+  /* ---------- Elvanto: approved leave → Unavailable Volunteers (as Leave Manager did) ---------- */
+  function elvSettings() { return (S.settings() && S.settings().elvanto) || {}; }
+  function personName(id) { var p = S.get('people', id); return p ? ((p.preferredName || p.firstName) + ' ' + p.lastName).trim() : ''; }
+  // Whenever leave is approved, changed or cancelled (by anyone), queue the Elvanto update – once switched on.
+  S.onLeaveChange(function (changes) {
+    if (!elvSettings().on) return;
+    changes.forEach(function (c) {
+      var ex = S.get('elvantoSync', c.now.id), doc = ElvantoSync.job(c.prev, c.now, ex, { name: personName(c.now.staffId), today: H.today() });
+      if (doc) S.put('elvantoSync', Object.assign(ex ? JSON.parse(JSON.stringify(ex)) : {}, doc));   // keep the robot's own fields
+    });
+  });
+  function utcLocal(s) { if (!s) return ''; var d = new Date(String(s).replace(' ', 'T') + (/Z$|[+-]\d\d:?\d\d$/.test(s) ? '' : 'Z')); return isNaN(d) ? s : H.fmt(LeaveCore.iso(d)) + ' ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
+  function renderElvanto(d) {
+    var el = elvSettings(), list = S.list('elvantoSync').slice(), rs = S.get('robotStatus', 'elvanto') || {};
+    var order = { Failed: 0, Check: 1, Waiting: 2, Done: 3 };
+    list.sort(function (a, b) { return (order[a.status] - order[b.status]) || (a.start < b.start ? 1 : -1); });
+    var probs = ElvantoSync.problems(list, Date.now());
+    var h = '<p class="muted" style="margin-top:0">Approved leave goes into Elvanto’s <b>Unavailable Volunteers</b> list, so nobody is rostered in Elvanto while they’re away. Elvanto can’t be updated directly, so a robot logs into Elvanto every 15 minutes and does it, like Leave Manager’s robot. Each entry has the note “Church Hub &lt;request ID&gt;”.</p>';
+    h += '<div class="grid2"><section class="panel"><h2>Settings</h2>' +
+      '<label class="check"><input type="checkbox" id="el-on"' + (el.on ? ' checked' : '') + '><span><b>Keep Elvanto up to date</b><br><span class="muted small">Switch on when you stop using Leave Manager (switch Leave Manager’s robot off at the same time), so entries aren’t made twice.</span></span></label>' +
+      '<label class="field">Elvanto web address<input id="el-url" value="' + esc(el.url || '') + '" placeholder="https://yourchurch.elvanto.eu"></label>' +
+      '<label class="field">Robot’s Church Hub sign-in (email)<input id="el-remail" value="' + esc(el.robotEmail || '') + '" placeholder="e.g. robot@yourchurch.org"><small>The account you created for the robot in Firebase (see the setup guide).</small></label>' +
+      '<label class="field">Robot’s account ID (User UID)<input id="el-ruid" placeholder="' + (el.robotEmail ? 'Saved – type a new one to change it' : 'Copy it from Firebase → Authentication → Users') + '"></label>' +
+      '<button class="btn small primary" data-act="leave:elsave">Save</button></section>' +
+      '<section class="panel"><h2>Robot</h2>' + (rs.lastRun ? '<p style="margin-top:0">Last ran <b>' + esc(utcLocal(rs.lastRun)) + '</b>' + (rs.done != null ? ' · ' + rs.done + ' done' : '') + '.</p>' : '<p class="muted" style="margin-top:0">The robot hasn’t run yet.</p>') +
+      (rs.fatal ? '<p class="note bad">It couldn’t finish: ' + esc(rs.fatal) + '</p>' : '') +
+      (el.url ? '<p><a href="' + esc(rs.listUrl || el.url) + '" target="_blank" rel="noopener">Open Elvanto</a> → People → Volunteers → Unavailable Volunteers</p>' : '') +
+      '<p class="hint">Change leave in Church Hub, not in Elvanto – otherwise the robot can’t keep it up to date.</p></section></div>';
+    h += '<section class="block"><h2>Entries' + (probs.length ? ' <span class="tag bad">' + probs.length + ' to check</span>' : '') + '</h2>' + (list.length ? '<div class="list">' + list.slice(0, 200).map(function (e) {
+      var tag = { Waiting: 'warn', Done: 'ok', Failed: 'bad', Check: 'bad' }[e.status] || 'grey';
+      return '<div class="item" style="align-items:flex-start;flex-wrap:wrap"><span class="grow" style="min-width:220px"><b>' + esc(e.name || personName(e.personId)) + ' · ' + esc(range({ start: e.start, end: e.end })) + '</b>' +
+        '<small>Should be: ' + esc(e.want === 'Unavailable' ? 'unavailable' : 'removed') + ' · In Elvanto: ' + esc(e.have || 'nothing') + '</small><small>' + esc(e.note || '') + (e.updatedAt ? ' · ' + esc(utcLocal(e.updatedAt)) : '') + '</small></span>' +
+        '<span class="tag ' + tag + '">' + esc(e.status === 'Waiting' ? 'Waiting for the robot' : e.status === 'Check' ? 'Check by hand' : e.status) + '</span>' +
+        (e.status !== 'Waiting' ? '<button class="btn small" data-act="leave:elretry" data-id="' + e.id + '">Try again</button>' : '') +
+        (e.status !== 'Done' ? '<button class="btn small" data-act="leave:eldone" data-id="' + e.id + '">Done by hand</button>' : '') + '</div>';
+    }).join('') + '</div>' : '<p class="empty">Nothing yet. Once switched on, approved, changed and cancelled leave appears here.</p>') + '</section>';
+    return h;
   }
 
   /* ---------- one staff member in detail (Administrators) ---------- */
@@ -257,17 +296,36 @@
     },
     todos: function () {
       var d = data(); if (!isLeaveAdmin()) return [];
-      var n = d.requests.filter(function (r) { return r.status === 'Pending'; }).length;
-      return n ? [{ text: 'Approve or decline ' + n + ' leave request' + (n === 1 ? '' : 's'), href: '#/leave/approvals' }] : [];
+      var n = d.requests.filter(function (r) { return r.status === 'Pending'; }).length, out = [];
+      if (n) out.push({ text: 'Approve or decline ' + n + ' leave request' + (n === 1 ? '' : 's'), href: '#/leave/approvals' });
+      var probs = ElvantoSync.problems(S.list('elvantoSync'), Date.now());
+      if (probs.length) out.push({ text: probs.length + ' Elvanto update' + (probs.length === 1 ? '' : 's') + ' to check', href: '#/leave/elvanto', tag: 'Elvanto' });
+      return out;
     },
     render: function (p) {
       var d = data(), v = p[0] || (takesLeave(d) ? '' : isLeaveAdmin() ? 'approvals' : 'away');
       if (v === 'staff' && isLeaveAdmin()) return renderStaff(d, p[1], p[2]);
-      var body = v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && isLeaveAdmin() ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);
+      var body = v === 'elvanto' && isLeaveAdmin() ? renderElvanto(d) : v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && isLeaveAdmin() ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);
       return '<div class="page-head"><div><h1>Leave</h1><p class="lead">Staff leave with the same rules as Leave Manager: only working days count, public holidays are free, and approved leave keeps people off the roster.</p></div>' +
         (takesLeave(d) || isLeaveAdmin() ? '<button class="btn primary" data-act="leave:request">' + H.icon(H.ICON.plus, 18) + (takesLeave(d) ? 'Request leave' : 'Book leave') + '</button>' : '') + '</div>' + tabs(d, v) + body;
     },
     actions: {
+      elsave: function () {
+        var old = elvSettings(), on = document.getElementById('el-on').checked, url = document.getElementById('el-url').value.trim().replace(/\/+$/, '');
+        var email = document.getElementById('el-remail').value.trim().toLowerCase(), uid = document.getElementById('el-ruid').value.trim();
+        if (on && !/^https:\/\/[\w.-]+\.elvanto\.[a-z.]+$/i.test(url)) { H.toast('Type your Elvanto web address, e.g. https://yourchurch.elvanto.eu', true); return; }
+        if (email && email !== old.robotEmail && !uid) { H.toast('Also paste the robot’s account ID (User UID) from Firebase', true); return; }
+        if (uid || (old.robotEmail && old.robotEmail !== email)) S.setRobot(email, uid, old.robotEmail);
+        S.setSettings({ elvanto: { on: on, url: url, robotEmail: email } }, (on && !old.on ? 'Switched on' : !on && old.on ? 'Switched off' : 'Changed') + ' keeping Elvanto up to date');
+        H.render(); H.toast('Saved');
+      },
+      elretry: function (el) { var e = JSON.parse(JSON.stringify(S.get('elvantoSync', el.dataset.id))); e.status = 'Waiting'; e.note = 'Trying again – the robot will do it on its next run.'; S.put('elvantoSync', e, 'Asked the Elvanto robot to try again'); H.render(); },
+      eldone: function (el) {
+        if (!H.confirmBtn(el, 'Click again: done in Elvanto')) return;
+        var e = JSON.parse(JSON.stringify(S.get('elvantoSync', el.dataset.id)));
+        e.status = 'Done'; e.have = e.want === 'Unavailable' ? e.start + ' to ' + e.end : ''; e.note = 'Done by hand by ' + H.name(H.user()) + '.';
+        S.put('elvantoSync', e, 'Marked an Elvanto update as done by hand'); H.render();
+      },
       addadj: function (el) {
         var days = Number(document.getElementById('adj-d').value), note = document.getElementById('adj-n').value.trim(), t = document.getElementById('adj-t').value;
         if (!t || !days) { H.toast('Choose the kind of leave and the number of days (use − to take days off)', true); return; }

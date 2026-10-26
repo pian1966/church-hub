@@ -1,0 +1,29 @@
+Photo,Full Name,ID Number (Numeric),Email Address,Cellphone Number,Landline Home Phone Number,People Category,Status,Member ID,First Name,Preferred Name,Last Name,Archived,Deceased,Gender,Date of Birth,Marital Status,Notes,Email Preferences,Last Login Date,Primary & Spouse Full Names,Family Member Names,Family Member Names & Relationships,Family Relationship,Security Code,Date Deceased
+,Brian Fourie,7503125000000,fourie.family@example.com,083 111 2222,,CCH_OFFICIAL_Member_Partner,Active,aaaa-0001,Brian,,Fourie,No,No,Male,"12 March, 1975",Married,Made-up note,Yes,2026-01-01,Brian & Karen Fourie,"Karen
+Mia
+Leo","Karen, Spouse
+Mia, Daughter
+Leo, Son",Primary,X1,
+,Karen Fourie,7807015000000,fourie.family@example.com,083 111 3333,,CCH_OFFICIAL_Member_Partner,Active,aaaa-0002,Karen,,Fourie,No,No,Female,"1 July, 1978",Married,,Yes,,Brian & Karen Fourie,"Brian
+Mia
+Leo","Brian, Spouse
+Mia, Daughter
+Leo, Son",Spouse,X2,
+,Mia Fourie,,fourie.family@example.com,,,CCH NON Member_Partner,Active,aaaa-0003,Mia,,Fourie,No,No,Female,"12 May, 2014",,,No,,Brian & Karen Fourie,"Brian
+Karen
+Leo","Brian, Father
+Karen, Mother
+Leo, Brother",Child,X3,
+,Leo Fourie,,,,,CCH NON Member_Partner,Active,aaaa-0004,Leo,,Fourie,No,No,Male,,,,No,,Brian & Karen Fourie,"Brian
+Karen
+Mia","Brian, Father
+Karen, Mother
+Mia, Sister",Child,X4,
+,Anna Fourie,,anna.f@example.com,082 222 1111,,CCH NON Member_Partner,Active,aaaa-0005,Anna,,Fourie,No,No,Female,"3 April, 2000",Single,,Yes,,Brian & Karen Fourie,"Brian
+Karen",,Child,X5,
+,Sipho Mahlangu,,sipho.m@example.com,072 555 1234,,CCH NON Member_Partner,Active,aaaa-0006,Sipho,Sips,Mahlangu,No,No,Male,4 June,Single,,Yes,,Sipho Mahlangu,Sipho,,,X6,
+,Grace Molefe,,,,033 000 1111,Visiting Preacher_Guest,Active,aaaa-0007,Grace,,Molefe,No,No,Female,,Partner,,No,,Grace Molefe,Grace,,,X7,
+,Old Member,,old.member@example.com,,,Legacy,Active,aaaa-0008,Old,,Member,Yes,No,,,Widowed,,No,,Old Member,Old,,,X8,
+,Peter Late,,,,,CCH_OFFICIAL_Member_Partner,Active,aaaa-0009,Peter,,Late,No,Yes,Male,"9 September, 1940",Married,,No,,Peter Late,Peter,,,X9,"2 February, 2026"
+,Jason Naidoo,,jason.naidoo@example.com,082 000 1370,,CCH_OFFICIAL_Member_Partner,Active,aaaa-0010,Jason,,Naidoo,No,No,Male,,Married,,Yes,,Jason & Priya Naidoo,Priya,"Priya, Spouse",Primary,X10,
+,Priya Naidoo,,jason.naidoo@example.com,,,CCH_OFFICIAL_Member_Partner,Active,aaaa-0011,Priya,,Naidoo,No,No,Female,,Married,,Yes,,Jason & Priya Naidoo,Jason,"Jason, Spouse",Spouse,X11,

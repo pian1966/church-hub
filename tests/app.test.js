@@ -108,6 +108,9 @@ function serve() {
     await s.go('people/p/p10'); const t10 = await s.text();
     check(t12.includes('Nuts') === (who === 'kids'), 'medical notes only for Children’s ministry');
     check(t10.includes('Moved from Durban') === (who === 'pastor'), 'pastoral notes only for Pastors');
+    await s.go('people'); const pt = await s.text();
+    check(pt.includes('Church at a glance') === (who === 'admin'), '“Church at a glance” statistics only for Administrators');
+    if (who === 'admin') check(/Age groups[\s\S]*Marital status[\s\S]*Consent \(POPIA\)[\s\S]*Serving/.test(pt), 'statistics show age groups, marital status, consent and serving');
   }
   async function finish(s) {
     await s.settle();
@@ -191,6 +194,37 @@ function serve() {
   check(!docs['notes/p10'] && !docs['directory/p10'] && docs['people/p10'].firstName === 'Deleted' && !docs['roles/jason.naidoo@example.com'], 'deleting Jason removes his pastoral notes, directory entry and sign-in (Admin can’t read the notes)');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].byEmail === 'linda.pillay@example.com' && /Deleted the personal information/.test(docs[k].action)), 'the deletion is in the audit log');
   await s.go('privacy/audit'); check((await s.text()).includes('Signed in'), 'audit log shows sign-ins');
+  await finish(s);
+
+  /* ---------- Elvanto import ---------- */
+  console.log('Elvanto import (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs());
+  const elv = path.join(__dirname, 'fixtures', 'elvanto-people.csv');
+  const importElvanto = async () => {
+    await s.go('import'); if (await s.page.$('[data-act="import:again"]')) await s.page.click('[data-act="import:again"]');
+    await s.page.setInputFiles('#im-file', elv); await s.page.waitForSelector('.im-cat', { timeout: 5000 }).catch(() => {});
+    await s.page.click('[data-act="import:go"]'); await s.page.click('[data-act="import:go"]'); await s.settle();
+  };
+  
+  await s.go('import'); await s.page.setInputFiles('#im-file', elv); await s.page.waitForSelector('.im-cat', { timeout: 5000 }).catch(() => {});
+  const prevE = await s.text();
+  check(/New people\s*9/.test(prevE) && /Already here \(updated\)\s*2/.test(prevE) && /Families\s*2/.test(prevE) && prevE.includes('shared by more than one person'), 'preview: 9 new; Jason (same email and name) and Priya (same name) already here, updated; 2 families; shared emails explained');
+  check(await s.page.$eval('.im-cat[data-c="CCH NON Member_Partner"]', e => e.value) === 'Attender', 'Elvanto categories matched (non-members → Attender), changeable');
+  await s.page.click('[data-act="import:go"]'); await s.page.click('[data-act="import:go"]'); await s.settle();
+  docs = await s.docsNow();
+  const elvP = () => Object.keys(docs).filter(k => k.startsWith('people/') && /^aaaa-/.test((docs['details/' + k.split('/')[1]] || {}).elvantoId || '')).map(k => Object.assign({ id: k.split('/')[1] }, docs[k], docs['details/' + k.split('/')[1]] || {}));
+  let ep = elvP(); const pe = n => ep.find(x => x.firstName === n); 
+  check(ep.length === 11 && pe('Karen') && pe('Mia') && pe('Leo'), 'all 11 people imported – none merged by a shared email');
+  check(pe('Brian').familyRole === 'adult' && pe('Mia').familyRole === 'child' && pe('Brian').familyId && pe('Brian').familyId === pe('Leo').familyId, 'parents are adults, children are children, family linked');
+  check(pe('Brian').elvantoId === 'aaaa-0001' && pe('Sipho').birthDay === '06-04' && pe('Sipho').category === 'Attender' && pe('Peter').category === 'Deceased', 'Elvanto ID, day-month birthday, category and deceased kept');
+  check(!JSON.stringify(docs).includes('7503125000000') && !JSON.stringify(docs).includes('Made-up note'), 'ID numbers and notes never stored');
+  await importElvanto(); docs = await s.docsNow(); ep = elvP();
+  check(ep.length === 11, 'importing the same file again updates – no doubles');
+  await s.go('import'); if (await s.page.$('[data-act="import:again"]')) await s.page.click('[data-act="import:again"]'); await s.page.click('[data-act="import:unimport"]'); await s.page.click('[data-act="import:unimport"]'); await s.settle();
+  docs = await s.docsNow(); ep = elvP();
+  check(ep.length === 2 && pe('Jason') && pe('Priya') && !pe('Brian'), '“Remove everyone brought in from Elvanto” removes those it added (Jason and Priya were already here, so they stay)');
+  await importElvanto(); docs = await s.docsNow();
+  check(elvP().length === 11, 'and the file imports cleanly again');
   await finish(s);
 
   /* ---------- Leave Manager import ---------- */
@@ -306,7 +340,8 @@ function serve() {
   console.log('Staff member (Lerato):');
   s = await session('lerato.khumalo@example.com', seedDocs());
   await s.go('leave'); await s.page.click('[data-act="leave:request"]'); await s.page.selectOption('#lf-type', 'SSL');
-  const day = await s.page.evaluate(() => { let d = LeaveCore.addDays(LeaveCore.parse(Hub.today()), 45); while (d.getDay() !== 3) d = LeaveCore.addDays(d, 1); return LeaveCore.iso(d); });
+  // A Wednesday about six weeks ahead that isn't a public holiday (the test must not depend on today's date)
+  const day = await s.page.evaluate(() => { const hol = {}; (Store.leave().holidays || []).forEach(h => { hol[h.date] = 1; }); let d = LeaveCore.addDays(LeaveCore.parse(Hub.today()), 45); while (d.getDay() !== 3 || hol[LeaveCore.iso(d)]) d = LeaveCore.addDays(d, 1); return LeaveCore.iso(d); });
   await s.page.fill('#lf-start', day); await s.page.dispatchEvent('#lf-start', 'change'); await s.page.fill('#lf-note', 'Dentist');
   await s.page.click('[data-act="leave:send"]'); await s.settle();
   docs = await s.docsNow(); const mine = Object.keys(docs).filter(k => k.startsWith('leaveRequests/') && docs[k].staffId === 'p06' && docs[k].start === day);

@@ -32,6 +32,12 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ Added 25 Oct 2026: **Import → From Leave Manager** – the Leave Manager Google Sheet (Excel download or CSV tabs) into Firebase:
   requests, carry-over adjustments, settings, staff details; staff matching with a preview of balances; safe to run again; PINs dropped.
   Built-in Excel reader (no outside library). Roster engine fix: friends who prefer to serve together no longer depend on name order.
+- ✅ Added 26 Oct 2026: **Church at a glance** on People (Administrators only): totals, age groups, members/visitors/staff, marital status, family size, consent coverage, serving – numbers only, no names
+- ✅ Fixed 26 Oct 2026 – Elvanto import with the church's real export layout: people sharing an email were merged (92 lost),
+  adults with children were marked as children, no families (no Family ID column), categories flattened, Elvanto ID not read.
+  Now: Member ID, Primary & Spouse names as family key, Family Relationship, category mapping (new **Attender** category),
+  marital status "Partner", birthdays without a year, Archived/Deceased; "Remove everyone brought in from Elvanto" to start again. Tested.
+- ⬜ Church: remove the first Elvanto import (Import page), re-export (fewer columns), import again and check
 - ⬜ Church: trial the Leave Manager import, compare balances, then re-import at switch-over and retire Leave Manager (archive the sheet)
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)
 - ⬜ Trial with 2–3 staff and made-up people; Information Officer approves privacy notice (mention sign-in accounts are held by Google outside SA) and accepts Google's data processing terms

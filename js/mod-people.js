@@ -3,12 +3,12 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store;
   var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos', 'Children’s medical notes'];
-  var CATS = ['Member', 'Visitor', 'Staff', 'Former member', 'Deceased'];
-  var MARITAL = ['Single', 'Engaged', 'Married', 'Separated', 'Divorced', 'Widowed', 'Not known'];
+  var CATS = ['Member', 'Attender', 'Visitor', 'Staff', 'Former member', 'Deceased'];
+  var MARITAL = ['Single', 'Engaged', 'Married', 'Partner', 'Separated', 'Divorced', 'Widowed', 'Not known'];
   var CARE_WEEKS = 8;                         // pastors see "care for the family" on their to-do list this long after a death
   function canRecordDeath() { return H.can('*') || H.can('people.edit'); }
   function deceased(p) { return !!(p && p.deceasedAt); }
-  var state = { q: '', f: 'all', audited: '' };
+  var state = { q: '', f: 'all', audited: '', statsOpen: true };
 
   function canSeeAll() { return H.can('people.view') || H.can('*'); }
   function canBasic() { return canSeeAll() || H.can('people.basic'); }
@@ -28,10 +28,71 @@
     return all.filter(function (p) { return isMe(p) || (p.familyRole !== 'child' && (p.inDirectory || hasConsent(p.id, 'Church directory'))); });
   }
 
+  /* ---------- church at a glance (Administrators): numbers only, no names ---------- */
+  var AGE_BANDS = [[0, 5, '0–5'], [6, 12, '6–12'], [13, 17, '13–17'], [18, 29, '18–29'], [30, 44, '30–44'], [45, 59, '45–59'], [60, 74, '60–74'], [75, 200, '75+']];
+  function pct(n, of) { return of ? Math.round(n / of * 100) : 0; }
+  /** One bar per row: label, bar (length = share of the largest), number and share written out. */
+  function bars(title, rows, total, note) {
+    var max = Math.max.apply(null, rows.map(function (r) { return r[1]; }).concat([1]));
+    return '<section class="panel glance"><h3>' + esc(title) + '</h3><div class="sbars" role="table" aria-label="' + esc(title) + '">' + rows.map(function (r) {
+      var w = Math.round(r[1] / max * 100), tip = r[0] + ': ' + r[1] + (total ? ' (' + pct(r[1], total) + '%)' : '');
+      return '<div class="sbar" role="row" title="' + esc(tip) + '"><span role="cell" class="sbar-l">' + esc(r[0]) + '</span><span role="cell" class="sbar-t" aria-hidden="true"><i style="width:' + (r[1] ? Math.max(w, 2) : 0) + '%"></i></span>' +
+        '<span role="cell" class="sbar-v">' + r[1] + (total ? ' <small>' + pct(r[1], total) + '%</small>' : '') + '</span></div>';
+    }).join('') + '</div>' + (note ? '<p class="hint">' + note + '</p>' : '') + '</section>';
+  }
+  function renderStats() {
+    var t = H.today(), yearAgo = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(t), -365)), weeks8 = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(t), -56));
+    var all = S.find('people', function (p) { return p.firstName !== 'Deleted'; }), act = all.filter(function (p) { return p.active !== false; });
+    var adults = act.filter(function (p) { return p.familyRole !== 'child'; }), kids = act.filter(function (p) { return p.familyRole === 'child'; });
+    var count = function (list, fn) { return list.filter(fn).length; };
+    // families with at least one active person
+    var famSize = {}; act.forEach(function (p) { if (p.familyId) famSize[p.familyId] = (famSize[p.familyId] || 0) + 1; });
+    var fams = Object.keys(famSize), withKids = fams.filter(function (f) { return kids.some(function (k) { return k.familyId === f; }); }).length;
+    var newPeople = count(act, function (p) { return (p.createdAt || '').slice(0, 10) >= yearAgo; });
+    var left = count(all, function (p) { return p.active === false && !p.deceasedAt && (p.archivedAt || '') >= yearAgo; }), died = count(all, function (p) { return (p.deceasedAt || '') >= yearAgo; });
+    // ages
+    var ages = AGE_BANDS.map(function (b) { return [b[2], 0]; }), noAge = 0;
+    act.forEach(function (p) { var a = age(p); if (a === '') { noAge++; return; } AGE_BANDS.forEach(function (b, i) { if (a >= b[0] && a <= b[1]) ages[i][1]++; }); });
+    var withAge = act.length - noAge;
+    // categories, marital status
+    var cats = ['Member', 'Attender', 'Visitor', 'Staff'].map(function (c) { return [c, count(act, function (p) { return p.category === c; })]; });
+    var mar = MARITAL.map(function (m) { return [m, count(adults, function (p) { return p.maritalStatus === m; })]; }).filter(function (r) { return r[1] || r[0] === 'Married' || r[0] === 'Single'; });
+    mar.push(['Not recorded', count(adults, function (p) { return !p.maritalStatus; })]);
+    // family sizes
+    var sizes = [['1 person', 0], ['2', 0], ['3', 0], ['4', 0], ['5 or more', 0]];
+    fams.forEach(function (f) { var n = famSize[f]; sizes[Math.min(n, 5) - 1][1]++; });
+    var single = count(adults, function (p) { return !p.familyId; });
+    // consent (POPIA)
+    var cons = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos'].map(function (pur) {
+      var who = pur === 'Church records' || pur === 'Photos' ? act : adults;
+      return [pur, count(who, function (p) { return hasConsent(p.id, pur); }), who.length];
+    });
+    // serving
+    var onTeam = {}; S.list('skills').forEach(function (k) { onTeam[k.personId] = 1; });
+    var served = {}; S.list('assignments').forEach(function (a) { var sv = S.get('services', a.serviceId); if (sv && sv.date >= weeks8 && sv.date <= t && a.status !== 'declined') served[a.personId] = 1; });
+    var serving = [['On a serving team', count(adults, function (p) { return onTeam[p.id]; })], ['Served in the last 8 weeks', count(adults, function (p) { return served[p.id]; })], ['Not on a team', count(adults, function (p) { return !onTeam[p.id]; })]];
+
+    var tile = function (label, n, sub) { return '<div class="stat"><span>' + esc(label) + '</span><b>' + n + '</b>' + (sub ? '<span>' + esc(sub) + '</span>' : '') + '</div>'; };
+    return '<details class="glance-wrap" id="pp-stats"' + (state.statsOpen ? ' open' : '') + '><summary><b>Church at a glance</b> <span class="muted small">· Administrators only · numbers, no names</span></summary>' +
+      '<div class="stats" style="margin-top:12px">' + tile('People', act.length, adults.length + ' adults · ' + kids.length + ' children') + tile('Families', fams.length, withKids + ' with children') +
+      tile('Added in the last 12 months', newPeople, '') + tile('Left or died (12 months)', left + died, left + ' left · ' + died + ' died') + '</div>' +
+      '<div class="glance-grid">' +
+      bars('Age groups', ages, withAge, noAge ? noAge + ' ' + (noAge === 1 ? 'person has' : 'people have') + ' no birthday recorded and aren’t counted here.' : '') +
+      bars('Members, attenders, visitors and staff', cats, act.length) +
+      bars('Marital status (adults)', mar, adults.length) +
+      bars('Family size', sizes, fams.length, single ? single + ' adult' + (single === 1 ? ' isn’t' : 's aren’t') + ' linked to a family.' : '') +
+      '<section class="panel glance"><h3>Consent (POPIA)</h3><div class="sbars">' + cons.map(function (c) {
+        var w = pct(c[1], c[2]);
+        return '<div class="sbar" title="' + esc(c[0] + ': ' + c[1] + ' of ' + c[2] + ' (' + w + '%)') + '"><span class="sbar-l">' + esc(c[0]) + '</span><span class="sbar-t" aria-hidden="true"><i style="width:' + w + '%"></i></span><span class="sbar-v">' + w + '% <small>' + c[1] + '/' + c[2] + '</small></span></div>';
+      }).join('') + '</div><p class="hint">Share of people who agreed. Email, SMS and directory: adults only.</p></section>' +
+      bars('Serving (adults)', serving, adults.length) +
+      '</div><p class="hint" style="margin:4px 0 18px">Active people only. Counts update as records change.</p></details>';
+  }
+
   /* ---------- list ---------- */
   function renderList() {
     var list = visiblePeople(), q = state.q.trim().toLowerCase();
-    var filters = [['all', 'Everyone'], ['Member', 'Members'], ['Visitor', 'Visitors'], ['Staff', 'Staff'], ['child', 'Children']];
+    var filters = [['all', 'Everyone'], ['Member', 'Members'], ['Attender', 'Attenders'], ['Visitor', 'Visitors'], ['Staff', 'Staff'], ['child', 'Children']];
     if (!canBasic()) filters = [['all', 'Directory']];
     var shown = list.filter(function (p) {
       if (state.f === 'child' ? p.familyRole !== 'child' : (state.f !== 'all' && p.category !== state.f)) return false;
@@ -39,6 +100,7 @@
     }).sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
     return '<div class="page-head"><div><h1>People</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: members, visitors, staff and children.' : 'Church members who agreed to be in the directory.') + '</p></div>' +
       '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Families</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">My details</a>') + '</div></div>' +
+      (H.can('*') ? renderStats() : '') +
       '<div class="row" style="margin-bottom:14px"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search people</span><input id="pp-q" type="search" placeholder="Search by name, email or phone" value="' + esc(state.q) + '"></label>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="Show">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' : '') + '</div>' +
       '<p class="muted small" id="pp-count">' + shown.length + ' ' + (shown.length === 1 ? 'person' : 'people') + '</p>' +
@@ -84,6 +146,7 @@
       (!child ? '<dt>Email</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>' : '<span class="muted">—</span>') + '</dd>' +
         '<dt>Mobile</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">—</span>') + '</dd>' : '') +
       (full && p.birthDate ? '<dt>Birthday</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>' : '') +
+      (full && !p.birthDate && p.birthDay ? '<dt>Birthday</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.MON[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">(year not known)</span></dd>' : '') +
       (full && !child ? '<dt>Marital status</dt><dd>' + (p.maritalStatus ? esc(p.maritalStatus) : '<span class="muted">Not recorded</span>') + '</dd>' : '') +
       (full ? (p.keyDates || []).map(function (k) { return '<dt>' + esc(k.label) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>'; }).join('') : '') +
       (p.staff && full ? '<dt>Staff</dt><dd>' + esc(p.staff.category) + ', since ' + esc(H.fmt(p.staff.start, true)) + ' · <a href="#/leave">Leave</a></dd>' : '') +
@@ -261,6 +324,8 @@
       return renderList();
     },
     after: function () {
+      var st = document.getElementById('pp-stats');
+      if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
       var q = document.getElementById('pp-q');
       if (q) q.addEventListener('input', function () { state.q = q.value; var pos = q.selectionStart; H.render(); var n = document.getElementById('pp-q'); n.focus(); n.setSelectionRange(pos, pos); });
     },

@@ -20,6 +20,7 @@ js/roster.js              RosterCore: the rostering engine (pure functions, unit
 js/leave-core.js          LeaveCore: Leave Manager's leave rules (copy of leave-manager/assets/core.js – keep in step until Leave Manager is retired)
 js/leave-import.js        LeaveImport: reads a Leave Manager sheet (Excel or CSV tabs) and plans the import (pure, tested)
 js/xlsx-lite.js           XlsxLite: small built-in .xlsx reader (zip + XML; no outside library)
+js/elvanto-import.js      ElvantoImport: reads an Elvanto People export and plans the import (pure, tested)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers
 js/mod-*.js               one file per module: people, rosters, leave, privacy, import, settings
 firestore.rules           database security rules: who may read/write what (POPIA)
@@ -112,7 +113,15 @@ doubling – run it once to trial and again at switch-over. The preview shows ea
 (tested for every staff member, year and leave type). After switch-over Leave Manager is retired and Firebase is the only home for leave.
 
 ## Elvanto import
-Phase 1: Elvanto's People export (CSV) → column mapping → preview → import people and families, de-duplicated by email/name.
+Phase 1: Elvanto's People export (CSV) → column mapping → category mapping → preview → import people and families.
+- Only these columns are read: Member ID (Elvanto's person reference), names, Email Address, Cellphone/Landline, Date of Birth,
+  Family Relationship, Primary & Spouse Full Names (family key when there is no Family ID), Marital Status, People Category,
+  Archived, Deceased, Date Deceased. ID numbers, notes, giving, security codes etc. are never read.
+- Matching: Elvanto ID → same email AND same first name (families share emails) → same full name for someone not yet linked to
+  Elvanto. No person is matched twice in one import, so two rows always stay two people. Re-importing updates, never doubles.
+- Children: under 18 by birthday; without a birthday, a relationship of Child/Son/Daughter. Birthdays without a year are kept as
+  `birthDay` ("MM-DD"). Elvanto categories are mapped by the Administrator (non-members default to the Attender category).
+- "Remove everyone brought in from Elvanto" (Import page) clears a bad import, keeping people with app access, staff details or the current user.
 Later: direct import through the Elvanto API (server side, with the church's API key), including groups and departments.
 
 ## Hosting (target)

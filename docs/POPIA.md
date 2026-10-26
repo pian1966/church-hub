@@ -32,7 +32,8 @@ This is a design checklist, not legal advice – the church's Information Office
 ## Moving data in from Elvanto and Leave Manager
 The download from Elvanto or Leave Manager holds personal information (leave reasons can include health). It is read in the
 Administrator's browser and saved straight into the church's database in Johannesburg – never sent to GitHub, Claude or anyone else.
-Leave Manager PINs are dropped on reading. Keep the download on the church computer and delete it once imported. Once Leave
+Leave Manager PINs are dropped on reading. From an Elvanto export only the columns listed in ARCHITECTURE.md are read – ID numbers,
+notes, giving and security codes are ignored – but it is safer to leave those columns out of the export altogether. Keep the download on the church computer and delete it once imported. Once Leave
 Manager is retired, its Google Sheet should be archived (read-only) or deleted under the church's retention period.
 
 ## Other POPIA points covered

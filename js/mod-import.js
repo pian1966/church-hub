@@ -1,65 +1,13 @@
-/* Church Hub – Import from Elvanto (People export as CSV). Later: direct import through the Elvanto API (server side). */
+/* Church Hub – Import: people from Elvanto (People export as CSV; rules in js/elvanto-import.js) and leave from Leave Manager (js/leave-import.js). */
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store;
-  var FIELDS = [
-    ['id', 'Elvanto ID', /^(person\s*)?id$|elvanto/i],
-    ['firstName', 'First name *', /^first|given/i],
-    ['lastName', 'Last name *', /^last|surname|family name$/i],
-    ['preferredName', 'Known as', /prefer|nick/i],
-    ['email', 'Email', /e-?mail/i],
-    ['mobile', 'Mobile', /mobile|cell/i],
-    ['phone', 'Other phone', /^(home\s*)?phone|telephone/i],
-    ['birthDate', 'Birthday', /birth/i],
-    ['family', 'Family (ID or name)', /family\s*(id|name)?$/i],
-    ['relationship', 'Family relationship', /relationship|family\s*role/i],
-    ['maritalStatus', 'Marital status', /marital/i],
-    ['category', 'Category', /categor|^status$|member\s*type/i]
-  ];
-  var st = { rows: null, head: null, map: {}, fileName: '', done: null };
-
-  /** CSV with quotes, commas and line breaks inside quotes. */
-  function parseCSV(text) {
-    var rows = [], row = [], cell = '', q = false;
-    text = text.replace(/^﻿/, '');
-    for (var i = 0; i < text.length; i++) {
-      var c = text[i];
-      if (q) { if (c === '"') { if (text[i + 1] === '"') { cell += '"'; i++; } else q = false; } else cell += c; }
-      else if (c === '"') q = true;
-      else if (c === ',') { row.push(cell); cell = ''; }
-      else if (c === '\n' || c === '\r') { if (c === '\r' && text[i + 1] === '\n') i++; row.push(cell); cell = ''; if (row.some(function (x) { return x.trim(); })) rows.push(row); row = []; }
-      else cell += c;
-    }
-    row.push(cell); if (row.some(function (x) { return x.trim(); })) rows.push(row);
-    return rows;
-  }
-  function guess(head) {
-    var m = {};
-    FIELDS.forEach(function (f) { var i = head.findIndex(function (h) { return f[2].test(h.trim()); }); if (i >= 0 && Object.keys(m).map(function (k) { return m[k]; }).indexOf(i) < 0) m[f[0]] = i; });
-    return m;
-  }
-  function toISO(v) {
-    v = String(v || '').trim(); if (!v) return '';
-    var m;
-    if ((m = /^(\d{4})-(\d{1,2})-(\d{1,2})/.exec(v))) return m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2);
-    if ((m = /^(\d{1,2})[\/.](\d{1,2})[\/.](\d{4})$/.exec(v))) return m[3] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[1]).slice(-2);   // dd/mm/yyyy (South African)
-    var d = new Date(v); return isNaN(d) ? '' : LeaveCore.iso(new Date(d.getFullYear(), d.getMonth(), d.getDate(), 12));
-  }
-  function records() {
-    return st.rows.map(function (r) {
-      var o = {}; FIELDS.forEach(function (f) { o[f[0]] = st.map[f[0]] != null && st.map[f[0]] !== '' ? String(r[st.map[f[0]]] || '').trim() : ''; });
-      o.birthDate = toISO(o.birthDate);
-      var age = o.birthDate ? (new Date().getFullYear() - +o.birthDate.slice(0, 4)) : 99;
-      o.child = /child|son|daughter/i.test(o.relationship) || age < 18;
-      return o;
-    }).filter(function (o) { return o.firstName || o.lastName; });
-  }
-  function matchExisting(o) {
-    return S.find('people', function (p) {
-      return (o.id && p.elvantoId === o.id) || (o.email && p.email && p.email.toLowerCase() === o.email.toLowerCase()) ||
-        (!o.email && (p.firstName + ' ' + p.lastName).toLowerCase() === (o.firstName + ' ' + o.lastName).toLowerCase());
-    })[0];
-  }
+  var E = ElvantoImport;
+  var st = { rows: null, head: null, map: {}, fileName: '', done: null, cats: {} };
+  function recs() { return E.records(st.rows, st.map, H.today()); }
+  /** A short, stable family reference from Elvanto's family key (which may be names). */
+  function famRef(key) { var h = 5381; for (var i = 0; i < key.length; i++) h = ((h * 33) ^ key.charCodeAt(i)) >>> 0; return /^[\w-]{1,40}$/.test(key) && !/\s/.test(key) ? key : 'EF-' + h.toString(36); }
+  function fromElvanto() { return S.find('people', function (p) { return p.source === 'elvanto' && p.firstName !== 'Deleted'; }); }
 
   function tabs(active) {
     return '<nav class="seg" aria-label="Import from" style="margin-bottom:18px"><a href="#/import" class="' + (active === 'elvanto' ? 'on' : '') + '">From Elvanto</a><a href="#/import/leave" class="' + (active === 'leave' ? 'on' : '') + '">From Leave Manager</a></nav>';
@@ -67,34 +15,42 @@
 
   function render() {
     var h = '<div class="page-head"><div><h1>Import from Elvanto</h1><p class="lead">Bring your people and families across from Elvanto. Nothing is changed in Elvanto.</p></div></div>' + tabs('elvanto');
+    var already = fromElvanto().length;
     if (st.done) {
-      return h + '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
+      h += '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
+      return h;
     }
     if (!st.rows) {
-      return h + '<div class="grid2"><section class="panel"><h2>1. Export from Elvanto</h2><ol style="margin:0;padding-left:20px;line-height:1.7"><li>In Elvanto, open <b>People</b>.</li><li>Select everyone, then choose <b>Export</b> (as a CSV file).</li><li>Include name, email, mobile, birthday, family and family relationship.</li></ol>' +
-        '<p class="hint">Keep the file safe and delete it once imported – it contains personal information.</p></section>' +
+      return h + '<div class="grid2"><section class="panel"><h2>1. Export from Elvanto</h2><ol style="margin:0;padding-left:20px;line-height:1.7"><li>In Elvanto, open <b>People</b> and clear the filters so everyone is listed.</li><li>Choose <b>Export</b> → <b>CSV</b>.</li></ol>' +
+        '<p class="hint">Church Hub reads only: Member ID, names, Email Address, Cellphone Number, Date of Birth, Family Relationship, Primary &amp; Spouse Full Names, Marital Status, People Category, Archived and Deceased. Everything else in the file (ID numbers, notes, giving, addresses…) is ignored – but it’s safer to leave those columns out of the export.</p>' +
+        '<p class="hint">Keep the file on the church computer and delete it once imported – it contains personal information.</p></section>' +
         '<section class="panel"><h2>2. Choose the file</h2><label class="field">Elvanto export (.csv)<input type="file" id="im-file" accept=".csv,text/csv"></label><p class="hint">Or <button class="link" data-act="import:sample">try it with a made-up sample file</button>.</p></section></div>' +
-        '<section class="panel" style="margin-top:16px"><h2>Coming later: direct import</h2><p class="muted" style="margin:0">Once Church Hub runs on its own secure server, it can read Elvanto directly with your API key (groups, departments and families too), without a file.</p></section>';
+        (already ? '<section class="panel" style="margin-top:16px"><h2>Start again</h2><p style="margin-top:0">' + already + ' ' + (already === 1 ? 'person was' : 'people were') + ' brought in from Elvanto. If an import went wrong, remove them and import again. People who have been given app access, are staff, or are you, are kept.</p>' +
+          '<button class="btn" data-act="import:unimport">Remove everyone brought in from Elvanto</button></section>' : '');
     }
-    var recs = records(), adds = 0, ups = 0, kids = recs.filter(function (r) { return r.child; }).length;
-    recs.forEach(function (r) { if (matchExisting(r)) ups++; else adds++; });
-    var fams = {}; recs.forEach(function (r) { if (r.family) fams[r.family] = 1; });
+    var r = recs(), pl = E.plan(r, S.list('people'));
+    Object.keys(pl.categories).forEach(function (c) { if (!st.cats[c]) st.cats[c] = E.guessCategory(c); });
     h += '<div class="note info">File: <b>' + esc(st.fileName) + '</b> – ' + st.rows.length + ' rows. Check the matching below, then import.</div>';
-    h += '<div class="grid2"><section class="panel"><h2>Match the columns</h2>' + FIELDS.map(function (f) {
+    h += '<div class="grid2"><section class="panel"><h2>Match the columns</h2>' + E.FIELDS.map(function (f) {
       return '<label class="field">' + esc(f[1]) + '<select class="im-map" data-f="' + f[0] + '"><option value="">— not in the file —</option>' + st.head.map(function (c, i) { return '<option value="' + i + '"' + (st.map[f[0]] === i ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
-    }).join('') + '</section>' +
-      '<section class="panel"><h2>What will happen</h2><div class="stats"><div class="stat"><span>New people</span><b>' + adds + '</b></div><div class="stat"><span>Already here (updated)</span><b>' + ups + '</b></div><div class="stat"><span>Children</span><b>' + kids + '</b></div><div class="stat"><span>Families</span><b>' + Object.keys(fams).length + '</b></div></div>' +
-      '<div class="table-wrap"><table class="simple"><thead><tr><th>Name</th><th>Email</th><th>Family</th></tr></thead><tbody>' + recs.slice(0, 8).map(function (r) { return '<tr><td>' + esc(r.firstName + ' ' + r.lastName) + (r.child ? ' <span class="tag" style="--c:#0E7490">Child</span>' : '') + '</td><td>' + esc(r.email) + '</td><td>' + esc(r.family) + '</td></tr>'; }).join('') + '</tbody></table></div>' +
-      (recs.length > 8 ? '<p class="hint">…and ' + (recs.length - 8) + ' more.</p>' : '') +
-      '<label class="check" style="margin-top:10px"><input type="checkbox" id="im-consent"><span>Elvanto records show these people agreed to the church keeping their details. <span class="muted small">Only tick if that’s true – otherwise you’ll be reminded to ask them (POPIA).</span></span></label>' +
-      '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="import:go"' + (st.map.firstName == null || st.map.lastName == null ? ' disabled' : '') + '>Import ' + recs.length + ' people</button><button class="btn" data-act="import:again">Start again</button></div></section></div>';
+    }).join('') + '</section><div>' +
+      '<section class="panel"><h2>What will happen</h2><div class="stats"><div class="stat"><span>New people</span><b>' + pl.added + '</b></div><div class="stat"><span>Already here (updated)</span><b>' + pl.updated + '</b></div><div class="stat"><span>Children</span><b>' + pl.children + '</b></div><div class="stat"><span>Families</span><b>' + pl.families + '</b></div></div>' +
+      (pl.sharedEmails ? '<p class="hint">' + pl.sharedEmails + ' email address' + (pl.sharedEmails === 1 ? ' is' : 'es are') + ' shared by more than one person (e.g. a couple). They stay separate people.</p>' : '') +
+      '<div class="table-wrap"><table class="simple"><thead><tr><th>Name</th><th>Email</th><th>In Church Hub</th></tr></thead><tbody>' + pl.items.slice(0, 8).map(function (x) {
+        var o = x.rec; return '<tr><td>' + esc(o.firstName + ' ' + o.lastName) + (o.child ? ' <span class="tag" style="--c:#0E7490">Child</span>' : '') + '</td><td>' + esc(o.email) + '</td><td>' + (x.personId ? 'Update (matched by ' + esc(x.how) + ')' : 'New') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' + (r.length > 8 ? '<p class="hint">…and ' + (r.length - 8) + ' more.</p>' : '') + '</section>' +
+      '<section class="panel"><h2>Categories</h2><p class="hint" style="margin-top:0">What each Elvanto category becomes in Church Hub.</p>' + Object.keys(pl.categories).map(function (c) {
+        return '<label class="field">' + esc(c || '(no category)') + ' <small>(' + pl.categories[c] + ')</small><select class="im-cat" data-c="' + esc(c) + '">' + E.CATEGORIES.map(function (x) { return '<option' + (st.cats[c] === x ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label>';
+      }).join('') + '</section>' +
+      '<section class="panel"><label class="check"><input type="checkbox" id="im-consent"><span>Elvanto records show these people agreed to the church keeping their details. <span class="muted small">Only tick if that’s true – otherwise you’ll be reminded to ask them (POPIA).</span></span></label>' +
+      '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="import:go"' + (st.map.firstName == null || st.map.lastName == null ? ' disabled' : '') + '>Import ' + r.length + ' people</button><button class="btn" data-act="import:again">Start again</button></div></section></div></div>';
     return h;
   }
 
   function load(name, text) {
-    var rows = parseCSV(text);
+    var rows = E.parseCSV(text);
     if (rows.length < 2) { H.toast('That file has no rows to import', true); return; }
-    st.head = rows[0]; st.rows = rows.slice(1); st.map = guess(st.head); st.fileName = name; st.done = null; H.render();
+    st.head = rows[0]; st.rows = rows.slice(1); st.map = E.guess(st.head); st.fileName = name; st.done = null; st.cats = {}; H.render();
   }
 
   /* ================= Leave Manager (its Google Sheet, downloaded) ================= */
@@ -222,6 +178,7 @@
       var f = document.getElementById('im-file');
       if (f) f.addEventListener('change', function () { var file = f.files[0]; if (!file) return; var rd = new FileReader(); rd.onload = function () { load(file.name, rd.result); }; rd.readAsText(file); });
       document.querySelectorAll('.im-map').forEach(function (s) { s.addEventListener('change', function () { st.map[s.dataset.f] = s.value === '' ? null : +s.value; H.render(); }); });
+      document.querySelectorAll('.im-cat').forEach(function (s) { s.addEventListener('change', function () { st.cats[s.dataset.c] = s.value; }); });
     },
     actions: {
       lgo: function (el) { if (!H.confirmBtn(el, 'Click again to import')) return; applyLeaveImport(); },
@@ -233,43 +190,56 @@
           .catch(function () { H.toast('Couldn’t load the made-up sheet', true); });
       },
       sample: function () {
-        load('elvanto-people-sample.csv', 'Person ID,First Name,Last Name,Preferred Name,Email,Mobile,Birthday,Family ID,Family Relationship,Marital Status,Category\n' +
-          'E-101,Brian,Fourie,,brian.fourie@example.com,083 111 2222,1975-03-12,FAM-9,Primary Contact,Married,Member\n' +
-          'E-102,Karen,Fourie,,karen.fourie@example.com,083 111 3333,1978-07-01,FAM-9,Spouse,Married,Member\n' +
-          'E-103,Mia,Fourie,,,,12/05/2014,FAM-9,Child,,Member\n' +
-          'E-104,"Sipho","Mahlangu",Sips,sipho.m@example.com,072 555 1234,,,,Single,Visitor\n' +
-          'E-105,Jason,Naidoo,,jason.naidoo@example.com,082 000 1370,,FAM-2,Primary Contact,Married,Visitor\n');
+        load('elvanto-people-sample.csv', 'Member ID,First Name,Last Name,Preferred Name,Email Address,Cellphone Number,Date of Birth,Primary & Spouse Full Names,Family Relationship,Marital Status,People Category,Archived,Deceased\n' +
+          'e101,Brian,Fourie,,fourie.family@example.com,083 111 2222,"12 March, 1975",Brian & Karen Fourie,Primary,Married,Member,No,No\n' +
+          'e102,Karen,Fourie,,fourie.family@example.com,083 111 3333,"1 July, 1978",Brian & Karen Fourie,Spouse,Married,Member,No,No\n' +
+          'e103,Mia,Fourie,,fourie.family@example.com,,"12 May, 2014",Brian & Karen Fourie,Child,,Member,No,No\n' +
+          'e104,Sipho,Mahlangu,Sips,sipho.m@example.com,072 555 1234,4 June,Sipho Mahlangu,,Single,Regular attender,No,No\n' +
+          'e105,Jason,Naidoo,,jason.naidoo@example.com,082 000 1370,,Jason & Priya Naidoo,Primary,Married,Visitor,No,No\n');
       },
-      again: function () { st = { rows: null, head: null, map: {}, fileName: '', done: null }; H.render(); },
-      go: function () {
-        var recs = records(), famIds = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0 };
-        var consent = document.getElementById('im-consent').checked;
-        recs.forEach(function (r) {
-          var fid = '';
-          if (r.family) {
-            if (!famIds[r.family]) {
-              var ex = S.find('families', function (f) { return f.elvantoId === r.family || f.name === r.family; })[0];
-              if (!ex) { ex = S.put('families', { name: (/^[A-Z]+-?\d+$/i.test(r.family) ? r.lastName : r.family.replace(/ family$/i, '')) + ' family', custom: false, elvantoId: r.family }); out.families++; }
-              famIds[r.family] = ex.id;
+      again: function () { st = { rows: null, head: null, map: {}, fileName: '', done: null, cats: {} }; H.render(); },
+      go: function (el) {
+        if (!H.confirmBtn(el, 'Click again to import')) return;
+        var r = recs(), pl = E.plan(r, S.list('people')), famIds = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0 };
+        var consent = document.getElementById('im-consent').checked, today = H.today();
+        pl.items.forEach(function (x) {
+          var o = x.rec, fid = '';
+          if (o.family) {
+            var ref = famRef(o.family);
+            if (!famIds[ref]) {
+              var ex = S.find('families', function (f) { return f.elvantoId === ref; })[0];
+              if (!ex) { ex = S.put('families', { name: o.lastName + ' family', custom: false, elvantoId: ref }); out.families++; }
+              famIds[ref] = ex.id;
             }
-            fid = famIds[r.family];
+            fid = famIds[ref];
           }
-          var p = matchExisting(r), isNew = !p;
-          p = p ? JSON.parse(JSON.stringify(p)) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'elvanto' };
-          ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'birthDate'].forEach(function (k) { if (r[k]) p[k] = r[k]; });
-          if (r.maritalStatus && !r.child) p.maritalStatus = (['Single', 'Engaged', 'Married', 'Separated', 'Divorced', 'Widowed'].filter(function (m) { return m.toLowerCase() === r.maritalStatus.toLowerCase(); })[0]) || 'Not known';
-          if (!p.mobile && r.phone) p.mobile = r.phone;
-          if (r.id) p.elvantoId = r.id;
-          if (fid) p.familyId = fid;
-          p.familyRole = r.child ? 'child' : 'adult';
-          if (r.category) p.category = /visit/i.test(r.category) ? 'Visitor' : /staff/i.test(r.category) ? 'Staff' : 'Member'; else p.category = p.category || 'Member';
+          var p = E.toPerson(o, x.personId ? S.get('people', x.personId) : null, st.cats, fid, today);
+          if (!x.personId) p.appRole = Store.defaultRole();
           S.put('people', p);
-          if (consent && !PeopleHelpers.hasConsent(p.id, 'Church records')) S.put('consents', { personId: p.id, purpose: 'Church records', given: true, date: H.today(), method: 'Carried over from Elvanto', recordedBy: H.name(H.user()), guardianId: '' });
+          if (consent && !PeopleHelpers.hasConsent(p.id, 'Church records')) S.put('consents', { personId: p.id, purpose: 'Church records', given: true, date: today, method: 'Carried over from Elvanto', recordedBy: H.name(H.user()), guardianId: '' });
           if (!PeopleHelpers.hasConsent(p.id, 'Church records')) out.noConsent++;
-          if (isNew) out.added++; else out.updated++;
+          if (x.personId) out.updated++; else out.added++;
         });
-        S.audit('Imported ' + recs.length + ' people from Elvanto (' + st.fileName + ')', 'people');
+        S.audit('Imported ' + r.length + ' people from Elvanto (' + st.fileName + '): ' + out.added + ' added, ' + out.updated + ' updated', 'people');
         st.done = out; st.rows = null; H.render(); H.toast('Import finished');
+      },
+      unimport: function (el) {
+        var me = H.user(), all = fromElvanto();
+        var keep = all.filter(function (p) { return p.id === me.id || p.staff || ['admin', 'pastor', 'rosters', 'kids'].indexOf(p.appRole) >= 0; });
+        var go = all.filter(function (p) { return keep.indexOf(p) < 0; });
+        if (!H.confirmBtn(el, 'Click again: remove ' + go.length + ' people')) return;
+        go.forEach(function (p) {
+          S.find('consents', function (c) { return c.personId === p.id; }).forEach(function (c) { S.remove('consents', c.id); });
+          ['skills', 'blockouts'].forEach(function (c) { S.find(c, function (x) { return x.personId === p.id; }).forEach(function (x) { S.remove(c, x.id); }); });
+          S.find('assignments', function (a) { return a.personId === p.id; }).forEach(function (a) { S.remove('assignments', a.id); });
+          S.purge(p.id);
+          S.remove('people', p.id);
+        });
+        var gone = {}; go.forEach(function (p) { gone[p.id] = 1; });
+        S.list('groups').slice().forEach(function (g) { if (g.memberIds.some(function (m) { return gone[m]; })) { var left = g.memberIds.filter(function (m) { return !gone[m]; }); if (left.length < 2) S.remove('groups', g.id); else { g = JSON.parse(JSON.stringify(g)); g.memberIds = left; S.put('groups', g); } } });
+        S.find('families', function (f) { return f.elvantoId && !S.find('people', function (p) { return p.familyId === f.id; }).length; }).forEach(function (f) { S.remove('families', f.id); });
+        S.audit('Removed ' + go.length + ' people brought in from Elvanto, to import again' + (keep.length ? ' (kept ' + keep.length + ' with app access or staff details)' : ''), 'people');
+        H.render(); H.toast(go.length + ' removed' + (keep.length ? ', ' + keep.length + ' kept' : '') + ' – now import the file again');
       }
     }
   });

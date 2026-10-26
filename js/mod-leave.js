@@ -56,13 +56,17 @@
   }
 
   function renderTeam(d) {
-    var y = C.lyOf(H.today(), C.ctx(d).S), types = d.types.filter(function (t) { return t.deducts; });
+    var y = C.lyOf(H.today(), C.ctx(d).S);
     var staff = d.staff.filter(function (s) { return C.tracksLeave(s) && s.active; });
-    return '<section class="block"><h2>Days left in ' + esc(C.lyLabel(y, C.ctx(d).S)) + '</h2><div class="panel table-wrap"><table class="simple"><thead><tr><th>Staff</th>' + types.map(function (t) { return '<th>' + esc(t.code) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    var bal = {}; staff.forEach(function (s) { bal[s.id] = C.balances(d, s.id, y); });
+    // Only kinds of leave that someone in the list has an allowance for
+    var types = d.types.filter(function (t) { return t.deducts && staff.some(function (s) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); });
+    return '<section class="block"><h2>Days left in ' + esc(C.lyLabel(y, C.ctx(d).S)) + '</h2><div class="panel table-wrap"><table class="simple"><thead><tr><th>Staff</th>' + types.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       staff.map(function (s) {
-        var b = C.balances(d, s.id, y);
+        var b = bal[s.id];
         return '<tr><td><b>' + esc(s.name) + '</b><br><span class="muted small">' + esc(s.level) + '</span></td>' + types.map(function (t) { var x = b[t.code]; return '<td>' + (x && x.entitled != null ? C.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';
-      }).join('') + '</tbody></table></div><p class="hint">' + types.map(function (t) { return esc(t.code + ' = ' + t.name); }).join(' · ') + '</p></section>';
+      }).join('') + '</tbody></table></div>' +
+      (staff.some(function (s) { return !types.some(function (t) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); }) ? '<p class="hint">A dash in every column means that person’s staff category has no allowances yet – set them under Leave → Settings.</p>' : '') + '</section>';
   }
 
   function renderAway(d) {
@@ -104,12 +108,12 @@
 
     // Categories and allowances
     html += '<section class="panel" style="grid-column:1/-1"><h2>Staff categories and allowances</h2><p class="hint" style="margin-top:0">Days per leave year for each category. Leave a box empty if that category doesn’t get that kind of leave. The “Administrator” category manages leave but doesn’t take it here.</p>' +
-      '<div class="table-wrap"><table class="simple" id="ls-levels"><thead><tr><th>Category</th><th>Working days</th>' + ded.map(function (t) { return '<th title="' + esc(t.name) + '">' + esc(t.code) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="simple" id="ls-levels"><thead><tr><th>Category</th><th>Working days</th>' + ded.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
       lv.levels.map(function (l, i) {
         return '<tr data-i="' + i + '"><td><b>' + esc(l.label || l.level) + '</b><br><span class="muted small">' + (staffCount[l.level] || 0) + ' staff</span></td><td>' + dayBoxes('ls-wd', l.workDays) + '</td>' +
           ded.map(function (t) { var v = l.ent[t.code]; return '<td><input class="ls-ent" data-code="' + t.code + '" type="number" min="0" step="0.5" style="width:64px" value="' + (v == null ? '' : v) + '" aria-label="' + esc(t.name + ' for ' + l.level) + '"></td>'; }).join('') +
           '<td>' + (staffCount[l.level] ? '' : '<button class="icon-btn ghost" data-act="leave:dellevel" data-i="' + i + '" aria-label="Remove category ' + esc(l.level) + '">' + H.icon(H.ICON.trash, 18) + '</button>') + '</td></tr>';
-      }).join('') + '</tbody></table></div><p class="hint">' + ded.map(function (t) { return esc(t.code + ' = ' + t.name); }).join(' · ') + '</p>' +
+      }).join('') + '</tbody></table></div>' +
       '<div class="btns"><button class="btn small" data-act="leave:addlevel">' + H.icon(H.ICON.plus, 16) + 'Add a category</button><button class="btn small primary" data-act="leave:savelevels">Save categories</button></div></section>';
 
     // Leave types

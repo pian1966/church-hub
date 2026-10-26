@@ -93,7 +93,7 @@
         (lst.busy ? '<p class="muted">Reading…</p>' : '') + '<p class="hint">Or <button class="link" data-act="import:lsample">try it with a made-up Leave Manager sheet</button>.</p></section></div>';
     }
     var pl = currentPlan(), pv = previewData(pl), lv = pv.data, kinds = Object.keys(lst.tables);
-    var y = LeaveCore.lyOf(H.today(), LeaveCore.ctx(lv).S), ded = (lv.types || []).filter(function (t) { return t.deducts && t.active !== false; });
+    var y = LeaveCore.lyOf(H.today(), LeaveCore.ctx(lv).S), ded = (lv.types || []).filter(function (t) { return t.deducts && t.active !== false && lv.staff.some(function (st) { var x = LeaveCore.balances(lv, st.id, y)[t.code]; return x && x.entitled != null; }); });
     var status = {}; pl.requests.forEach(function (r) { status[r.status] = (status[r.status] || 0) + 1; });
     h += '<div class="note info">Read: <b>' + esc(lst.files.join(', ')) + '</b> – found ' + kinds.map(function (k) { return esc(KIND_NAMES[k] || k); }).join(', ') + '.</div>';
     if (pl.missing.length) h += '<p class="note bad">The ' + pl.missing.map(function (k) { return KIND_NAMES[k]; }).join(' and ') + ' tab' + (pl.missing.length > 1 ? 's are' : ' is') + ' missing. Download the whole sheet as Excel, or include those CSV files.</p>';
@@ -115,7 +115,7 @@
       '<p class="hint">Leave already in Church Hub stays. Running this again later updates what was brought in, without doubling it.</p>' +
       '<div class="btns"><button class="btn primary" data-act="import:lgo"' + (pl.missing.length ? ' disabled' : '') + '>Import leave</button><button class="btn" data-act="import:lagain">Start again</button></div></section>' +
       '<section class="panel"><h2>Balances after importing (' + esc(LeaveCore.lyLabel(y, LeaveCore.ctx(lv).S)) + ')</h2><p class="hint" style="margin-top:0">Compare these with <b>Team</b> in Leave Manager – they should be the same, apart from any leave already booked in Church Hub itself.</p><div class="table-wrap"><table class="simple"><thead><tr><th>Staff</th>' +
-      ded.map(function (t) { return '<th title="' + esc(t.name) + '">' + esc(t.code) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      ded.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       lv.staff.filter(function (st) { return LeaveCore.tracksLeave({ level: st.level }); }).map(function (st) {
         var b = LeaveCore.balances(lv, st.id, y);
         return '<tr><td>' + esc(st.name) + '</td>' + ded.map(function (t) { var x = b[t.code]; return '<td>' + (x && x.entitled != null ? LeaveCore.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';

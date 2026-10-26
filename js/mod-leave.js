@@ -64,7 +64,7 @@
     return '<section class="block"><h2>Days left in ' + esc(C.lyLabel(y, C.ctx(d).S)) + '</h2><div class="panel table-wrap"><table class="simple"><thead><tr><th>Staff</th>' + types.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       staff.map(function (s) {
         var b = bal[s.id];
-        return '<tr><td><b>' + esc(s.name) + '</b><br><span class="muted small">' + esc(s.level) + '</span></td>' + types.map(function (t) { var x = b[t.code]; return '<td>' + (x && x.entitled != null ? C.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';
+        return '<tr><td><b>' + esc(s.name) + '</b><br><span class="muted small">' + esc(s.level) + '</span></td>' + types.map(function (t) { var x = b[t.code]; return '<td class="lt">' + (x && x.entitled != null ? C.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';
       }).join('') + '</tbody></table></div>' +
       (staff.some(function (s) { return !types.some(function (t) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); }) ? '<p class="hint">A dash in every column means that person’s staff category has no allowances yet – set them under Leave → Settings.</p>' : '') + '</section>';
   }
@@ -111,7 +111,7 @@
       '<div class="table-wrap"><table class="simple" id="ls-levels"><thead><tr><th>Category</th><th>Working days</th>' + ded.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
       lv.levels.map(function (l, i) {
         return '<tr data-i="' + i + '"><td><b>' + esc(l.label || l.level) + '</b><br><span class="muted small">' + (staffCount[l.level] || 0) + ' staff</span></td><td>' + dayBoxes('ls-wd', l.workDays) + '</td>' +
-          ded.map(function (t) { var v = l.ent[t.code]; return '<td><input class="ls-ent" data-code="' + t.code + '" type="number" min="0" step="0.5" style="width:64px" value="' + (v == null ? '' : v) + '" aria-label="' + esc(t.name + ' for ' + l.level) + '"></td>'; }).join('') +
+          ded.map(function (t) { var v = l.ent[t.code]; return '<td class="lt"><input class="ls-ent" data-code="' + t.code + '" type="number" min="0" step="0.5" style="width:64px" value="' + (v == null ? '' : v) + '" aria-label="' + esc(t.name + ' for ' + l.level) + '"></td>'; }).join('') +
           '<td>' + (staffCount[l.level] ? '' : '<button class="icon-btn ghost" data-act="leave:dellevel" data-i="' + i + '" aria-label="Remove category ' + esc(l.level) + '">' + H.icon(H.ICON.trash, 18) + '</button>') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
       '<div class="btns"><button class="btn small" data-act="leave:addlevel">' + H.icon(H.ICON.plus, 16) + 'Add a category</button><button class="btn small primary" data-act="leave:savelevels">Save categories</button></div></section>';

@@ -118,7 +118,7 @@
       ded.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       lv.staff.filter(function (st) { return LeaveCore.tracksLeave({ level: st.level }); }).map(function (st) {
         var b = LeaveCore.balances(lv, st.id, y);
-        return '<tr><td>' + esc(st.name) + '</td>' + ded.map(function (t) { var x = b[t.code]; return '<td>' + (x && x.entitled != null ? LeaveCore.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';
+        return '<tr><td>' + esc(st.name) + '</td>' + ded.map(function (t) { var x = b[t.code]; return '<td class="lt">' + (x && x.entitled != null ? LeaveCore.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';
       }).join('') + '</tbody></table></div></section></div>';
     return h;
   }

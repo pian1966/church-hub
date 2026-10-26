@@ -209,4 +209,6 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .sbar-v small { color: var(--muted); font-weight: 400; }
 @media (max-width: 480px) { .glance-grid { grid-template-columns: 1fr; } }
 .glance-grid > .glance { margin: 0; }
-.simple th.lt { white-space: normal; min-width: 72px; max-width: 120px; font-size: 12.5px; line-height: 1.25; vertical-align: bottom; }
+.simple th.lt { white-space: normal; min-width: 72px; max-width: 120px; font-size: 12.5px; line-height: 1.25; vertical-align: bottom; text-align: center; }
+.simple td.lt { text-align: center; }
+.simple thead th { vertical-align: bottom; }

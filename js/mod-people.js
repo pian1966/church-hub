@@ -149,7 +149,7 @@
       (full && !p.birthDate && p.birthDay ? '<dt>Birthday</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.MON[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">(year not known)</span></dd>' : '') +
       (full && !child ? '<dt>Marital status</dt><dd>' + (p.maritalStatus ? esc(p.maritalStatus) : '<span class="muted">Not recorded</span>') + '</dd>' : '') +
       (full ? (p.keyDates || []).map(function (k) { return '<dt>' + esc(k.label) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>'; }).join('') : '') +
-      (p.staff && full ? '<dt>Staff</dt><dd>' + esc(p.staff.category) + ', since ' + esc(H.fmt(p.staff.start, true)) + ' · <a href="#/leave">Leave</a></dd>' : '') +
+      (p.staff && full ? '<dt>Staff</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', since ' + esc(H.fmt(p.staff.start, true)) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">Leave</a></dd>' : '') +
       (H.can('*') ? '<dt>App access</dt><dd>' + esc((H.ROLES[p.appRole] || H.ROLES.member).label) + '</dd>' : '') +
       '</dl></section>';
     // Family

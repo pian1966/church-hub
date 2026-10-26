@@ -101,7 +101,7 @@ function serve() {
     return { page, errs, ready, docsNow, denied, go, text, settle, close: () => context.close() };
   }
   const ROUTES = ['home', 'people', 'people/families', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away',
-    'leave', 'leave/approvals', 'leave/team', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'import/leave', 'settings'];
+    'leave', 'leave/approvals', 'leave/team', 'leave/staff/p02', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'import/leave', 'settings'];
   async function tour(s, who) {
     for (const r of ROUTES) await s.go(r);
     await s.go('people/p/p12'); const t12 = await s.text();
@@ -256,6 +256,12 @@ function serve() {
   docs = await s.docsNow();
   check(Object.keys(docs).filter(k => k.startsWith('leaveRequests/')).length === before && Object.keys(docs).filter(k => k.startsWith('people/') && docs[k].firstName === 'Nomsa').length === 1, 'importing again doesn’t double anything');
   await s.go('leave/team'); check((await s.text()).includes('Nomsa Zungu'), 'imported staff appear in Leave team balances');
+  await s.go('leave/staff/p02/2026'); const tp = await s.text();
+  check(tp.includes('Thandi Mokoena') && tp.includes('Allowance') && tp.includes('Family holiday') && tp.includes('from Leave Manager') && tp.includes('Carried over from 2025'), 'per-person leave page: balances, every request (with reason) and adjustments');
+  await s.page.selectOption('#adj-t', 'PSL'); await s.page.fill('#adj-d', '2'); await s.page.fill('#adj-n', 'Worked Easter weekend'); await s.page.click('[data-act="leave:addadj"]'); await s.settle();
+  docs = await s.docsNow();
+  check(Object.keys(docs).some(k => k.startsWith('leaveAdjustments/') && docs[k].note === 'Worked Easter weekend' && docs[k].staffId === 'p02' && docs[k].days === 2), 'Administrator can add an adjustment');
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].action === 'Viewed the leave of Thandi Mokoena'), 'viewing someone’s leave is in the audit log');
   await finish(s);
 
   for (const xl of ['leave-manager.xlsx', 'leave-manager-plain.xlsx']) {

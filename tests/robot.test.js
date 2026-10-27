@@ -34,12 +34,12 @@ const srv = http.createServer((req, res) => {
     if (req.headers.authorization !== 'Bearer TOKEN') return send(403, { error: { message: 'PERMISSION_DENIED' } });
     const m = u.pathname.match(/\/documents\/?(.*)$/), p = m ? decodeURIComponent(m[1]) : '';
     if (u.pathname.endsWith(':runQuery')) {
-      if (changeDuringRun) { changeDuringRun(); changeDuringRun = null; }
       const rows = Object.keys(DB).filter(k => k.startsWith('elvantoSync/') && DB[k].data.status === 'Waiting').map(k => ({ document: docJSON(k) }));
       return send(200, rows.length ? rows : [{ readTime: 'x' }]);
     }
     if (req.method === 'GET') return DB[p] ? send(200, docJSON(p)) : send(404, { error: { message: 'NOT_FOUND' } });
     if (req.method === 'PATCH') {
+      if (changeDuringRun && p.startsWith('elvantoSync/')) { changeDuringRun(); changeDuringRun = null; }   // someone changes the leave just before the robot reports back
       const since = u.searchParams.get('currentDocument.updateTime');
       if (since && (!DB[p] || DB[p].updateTime !== since)) return send(400, { error: { message: 'FAILED_PRECONDITION' } });
       const fields = JSON.parse(body).fields, cur = DB[p] ? DB[p].data : {};
@@ -85,7 +85,7 @@ srv.listen(0, '127.0.0.1', async () => {
 
     console.log('Leave changed while the robot was working');
     reset(true);
-    changeDuringRun = () => setTimeout(() => { DB['elvantoSync/LA'].data.end = '2026-11-06'; DB['elvantoSync/LA'].updateTime = stamp(); }, 0);
+    changeDuringRun = () => { DB['elvantoSync/LA'].data.end = '2026-11-06'; DB['elvantoSync/LA'].updateTime = stamp(); };
     r = await runRobot('run');
     ok(DB['elvantoSync/LA'].data.status === 'Waiting' && DB['elvantoSync/LA'].data.end === '2026-11-06', 'its result isn’t written over the change – the entry stays waiting for the next run');
   } finally {

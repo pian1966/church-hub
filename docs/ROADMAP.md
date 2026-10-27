@@ -69,7 +69,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   - Home-screen icons and `manifest.webmanifest` (iPhone: Safari → Add to Home Screen)
   - New rules – **re-publish them**. Tests: rules, app (member, coordinator, pastor, app sign-in), languages.
 - ⬜ Church: Android app setup (docs/ANDROID.md): signing key secret, build, optional Google sign-in (Web client ID), re-publish rules, try it, send the link
-- ⬜ Check the first **Build Android app** run on GitHub is green (it couldn't be compiled in the Claude session – Google's Android downloads are blocked there)
+- ✅ 27 Oct 2026: Android test build and all tests (incl. the rules against Google's emulator) green on GitHub for pull request #1
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n.js – one line per text); then decide whether to translate
   staff screens too
 - ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)

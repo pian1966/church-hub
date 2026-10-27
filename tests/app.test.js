@@ -111,7 +111,7 @@ function serve() {
     const text = async () => (await page.textContent('main')) || '';
     return { page, errs, ready, docsNow, denied, go, text, settle, close: () => context.close() };
   }
-  const ROUTES = ['home', 'people', 'people/families', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away',
+  const ROUTES = ['home', 'people', 'people/families', 'people/search', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away',
     'leave', 'leave/approvals', 'leave/team', 'leave/staff/p02', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'import/leave', 'settings'];
   async function tour(s, who) {
     for (const r of ROUTES) await s.go(r);
@@ -253,6 +253,45 @@ function serve() {
   await finish(s);
   s = await session('tim.jacobs@example.com', seedDocs());
   check(await s.page.evaluate(() => Store.list('noCollect').length === 0 && Store.list('guardians').every(l => l.adultId === 'p14') && Store.list('guardians').length === 1), 'a parent (member) sees only the link naming them, never collection restrictions');
+  await finish(s);
+
+  console.log('People: statistics hidden at first, advanced search:');
+  s = await session('linda.pillay@example.com', seedDocs());
+  await s.go('people');
+  check(!!(await s.page.$('#pp-stats')) && !(await s.page.$('#pp-stats[open]')), '“Church at a glance” is closed until opened');
+  await s.page.click('#pp-stats > summary'); check(!!(await s.page.$('#pp-stats[open]')), 'opens with a click');
+  await s.page.click('a[href="#/people/search"]'); await s.page.waitForSelector('#adv');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'category'); await s.page.selectOption('.adv-v[data-i="0"]', 'Partner');
+  await s.page.click('[data-act="people:advadd"][data-i="0"]');
+  await s.page.selectOption('.adv-field[data-i="1"]', 'adultChild'); await s.page.selectOption('.adv-v[data-i="1"]', 'Child');
+  await s.page.click('[data-act="people:advrun"]');
+  let want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.category === 'Partner' && p.familyRole === 'child').map(p => p.id).sort().join());
+  let got = await s.page.$$eval('.adv-table tbody a', as => as.map(a => a.getAttribute('href').split('/').pop()).sort().join());
+  check(want && got === want, 'all of: Partner AND child finds exactly the right people');
+  await s.page.selectOption('#adv-match', 'any'); await s.page.click('[data-act="people:advrun"]');
+  want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && (p.category === 'Partner' || p.familyRole === 'child')).length);
+  check((await s.page.$$('.adv-table tbody tr')).length === want, 'any of: Partner OR child');
+  await s.page.selectOption('#adv-match', 'logic'); await s.page.fill('#adv-logic', '1 AND NOT 2'); await s.page.press('#adv-logic', 'Enter');
+  want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.category === 'Partner' && p.familyRole !== 'child').length);
+  check((await s.page.$$('.adv-table tbody tr')).length === want, 'your own logic: 1 AND NOT 2');
+  await s.page.fill('#adv-logic', '1 AND 3'); await s.page.click('[data-act="people:advrun"]');
+  check((await s.text()).includes('There is no filter 3'), 'a mistake in the logic is explained in plain English');
+  await s.page.fill('#adv-logic', '1 OR 2'); await s.page.selectOption('#adv-addcol', 'birthday'); await s.page.click('[data-act="people:advrun"]');
+  check((await s.page.$$eval('.adv-table th', th => th.map(x => x.textContent))).some(x => x.includes('Birthday')), 'a column can be added');
+  const [dl] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="people:advcsv"]')]);
+  check(/people-search-.*\.csv/.test(dl.suggestedFilename()), 'results download as a CSV file');
+  await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && /Downloaded an advanced search/.test(docs[k].text || docs[k].what || JSON.stringify(docs[k]))), 'downloading search results is in the audit log');
+  check(await s.page.$$eval('.adv-field[data-i="0"] option', o => ['marital', 'consents', 'access', 'status'].every(k => o.some(x => x.value === k))), 'Administrators can search marital status, consent, app access and status');
+  await finish(s);
+  s = await session('sipho.dlamini@example.com', seedDocs());
+  await s.go('people/search');
+  check(await s.page.$$eval('.adv-field[data-i="0"] option', o => { const v = o.map(x => x.value); return v.includes('positions') && v.includes('lastServed') && !['birthDate', 'birthday', 'age', 'marital', 'consents', 'guardians', 'access', 'status'].some(k => v.includes(k)); }),
+    'a Roster coordinator searches names, contact and serving – not birthdays, marital status, consent or children’s adults');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', seedDocs());
+  await s.go('people'); check(!(await s.page.$('a[href="#/people/search"]')), 'members have no advanced search button');
+  await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
   await finish(s);
 
   console.log('Upgrading existing data (first Administrator sign-in):');

@@ -39,6 +39,11 @@ This is a design checklist, not legal advice – the church's Information Office
 - Members can see which children they are linked to, nothing about other adults' links.
 - Links made automatically are marked unconfirmed until someone checks them with the family.
 
+## Advanced search and downloads
+Advanced search only offers the details a role may already see, and never medical notes, pastoral notes or collection
+restrictions. Downloading results (CSV) is recorded in the audit log with how many people and which columns. Downloads
+should stay on church computers and be deleted once used.
+
 ## Approved leave in Elvanto
 When switched on, the name and dates of approved leave (never the kind of leave or the reason) go to Elvanto's Unavailable
 Volunteers list, as Leave Manager did. The robot that does it runs on GitHub's computers (outside South Africa) for a few

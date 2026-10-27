@@ -53,7 +53,7 @@ function makeSampleData() {
       email: r[4] === 'child' ? '' : (r[1] + '.' + r[2].replace(/ /g, '')).toLowerCase() + '@example.com',
       mobile: r[4] === 'child' ? '' : '082 000 ' + String(1000 + i * 37).slice(-4),
       birthDate: r[4] === 'child' ? (r[6] || 2015) + '-0' + (1 + (i % 9)) + '-1' + (i % 9) : '',
-      keyDates: [], active: true, appRole: staff ? r[9] : 'member', source: 'sample'
+      keyDates: [], active: true, appRole: staff ? r[9] : 'member', source: 'sample', createdAt: off(-(P.length - i) * 25) + ' 09:00'
     };
     if (staff) p.staff = { category: r[6], start: (yr - r[7]) + '-02-01', workDays: '' };
     if (r[0] === 'p10') p.keyDates = [{ label: 'First visit', date: off(-20) }];

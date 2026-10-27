@@ -111,6 +111,18 @@ households). Pure rules in `js/households.js`, tested in `tests/households.test.
   categories Member → Partner and Visitor → Visiting Minister and linked existing children to their household adults (unconfirmed).
   The *Member* access level (role) keeps its name.
 
+## Advanced search (People → Advanced search)
+Like Elvanto's: filters (field, how to compare, value; + and −), Match *all* / *any* / *your own logic* ("(1 AND 2) OR NOT 3",
+AND before OR), columns to show (Name first, reorder, add), results sortable by column, Download (CSV). Pure rules in
+`js/people-search.js` (`tests/people-search.test.js`): text, choice, list, number, date (in the last/next N days–years,
+between…), birthday-style dates (next N days, in a month) and yes/no. The People module offers only fields the role may see:
+names, contact, household, category and date added for everyone with people access; serving (positions, teams, last/next
+serving) with rosters access; birthdays and age for Administrators, Pastors and Children's ministry; marital status, consent,
+status, staff for Administrators and Pastors; parents/guardians for Children's ministry; app access for Administrators.
+Medical and pastoral notes and collection restrictions are never searchable. People who left or died are only included when
+searching on Status or Date of death. Downloads are audit-logged. Searches aren't saved yet (Phase 2: smart lists).
+Members have no advanced search. "Church at a glance" (Administrators) is closed until opened.
+
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,
 and "change spouse to Widowed" for a married spouse in the same family). The person stays on the records as category *Deceased*

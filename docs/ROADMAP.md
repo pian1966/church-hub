@@ -49,6 +49,9 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   to-dos for unconfirmed links and children with nobody who can consent; Elvanto import links children to their parents
   (unconfirmed). **Search by family** on People and Families. Categories renamed: **Member → Partner, Visitor → Visiting Minister**
   (existing data updated automatically on the first Administrator sign-in). New rules – **re-publish them**.
+- ✅ 27 Oct 2026: **Advanced search** on People, as in Elvanto (filters, match all/any/own logic, columns, sort, CSV download –
+  audit-logged; each role searches only what it may see). "Church at a glance" now closed until opened. No rule changes.
+- ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out
 - ⬜ Church: set up the robot (docs/ELVANTO-ROBOT.md steps 1–5; **re-publish the rules**), switch over with step 6

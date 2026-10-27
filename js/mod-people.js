@@ -12,7 +12,8 @@
   var CARE_WEEKS = 8;                         // pastors see "care for the family" on their to-do list this long after a death
   function canRecordDeath() { return H.can('*') || H.can('people.edit'); }
   function deceased(p) { return !!(p && p.deceasedAt); }
-  var state = { q: '', f: 'all', audited: '', statsOpen: true, fq: '', ncAudited: '' };
+  var state = { q: '', f: 'all', audited: '', statsOpen: false, fq: '', ncAudited: '', adv: null };
+  state.adv = emptyAdv();
 
   function canSeeAll() { return H.can('people.view') || H.can('*'); }
   function canBasic() { return canSeeAll() || H.can('people.basic'); }
@@ -104,7 +105,7 @@
       return !q || (H.name(p) + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
     return '<div class="page-head"><div><h1>People</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : 'People who agreed to be in the church directory.') + '</p></div>' +
-      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Families</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">My details</a>') + '</div></div>' +
+      '<div class="btns">' + (canBasic() ? '<a class="btn" href="#/people/search">' + H.icon(H.ICON.search, 18) + 'Advanced search</a>' : '') + (canSeeAll() ? '<a class="btn" href="#/people/families">Families</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">My details</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
       '<div class="row" style="margin-bottom:14px"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search people</span><input id="pp-q" type="search" placeholder="Search by name, family, email or phone" value="' + esc(state.q) + '"></label>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="Show">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' : '') + '</div>' +
@@ -300,6 +301,180 @@
   }
 
   /* ---------- edit dialogs ---------- */
+  /* ---------- advanced search (like Elvanto's People → Advanced Search); rules in js/people-search.js ---------- */
+  var PS = PeopleSearch;
+  function emptyAdv() { return { match: 'all', logic: '', filters: [{ field: 'name', op: 'has', value: '' }], cols: ['household', 'mobile', 'email', 'category'], ran: false, sort: 'name', dir: 1 }; }
+  function servingInfo() {
+    var pos = {}, teams = {}, out = {}, t = H.today();
+    S.list('teams').forEach(function (x) { teams[x.id] = x.name; });
+    S.list('positions').forEach(function (x) { pos[x.id] = x; });
+    var o = function (id) { return out[id] || (out[id] = { pos: [], teams: [], last: '', next: '' }); };
+    S.list('skills').forEach(function (k) {
+      var x = pos[k.positionId]; if (!x) return; var r = o(k.personId);
+      if (r.pos.indexOf(x.name) < 0) r.pos.push(x.name);
+      if (teams[x.teamId] && r.teams.indexOf(teams[x.teamId]) < 0) r.teams.push(teams[x.teamId]);
+    });
+    S.list('assignments').forEach(function (a) {
+      var sv = a.status === 'declined' ? null : S.get('services', a.serviceId); if (!sv) return; var r = o(a.personId);
+      if (sv.date <= t) { if (sv.date > r.last) r.last = sv.date; } else if (!r.next || sv.date < r.next) r.next = sv.date;
+    });
+    return out;
+  }
+  function keyDate(p, re) { var k = (p.keyDates || []).filter(function (x) { return re.test(x.label || ''); })[0]; return k ? k.date : ''; }
+  function uniq(a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }).sort(function (x, y) { return String(x).localeCompare(String(y)); }); }
+  /** What this person may search on, and how to read it. Only what their role may see – never medical or pastoral notes. */
+  function searchFields() {
+    var all = canSeeAll(), roster = H.can('*') || H.can('rosters.view'), kids = canChildren(), birth = all || H.can('children');
+    var serve = roster ? servingInfo() : {}, sv = function (p) { return serve[p.id] || { pos: [], teams: [], last: '', next: '' }; };
+    var F = [], add = function (ok, group, key, label, type, get, options) { if (ok) F.push({ group: group, key: key, label: label, type: type, get: get, options: options }); };
+    add(true, 'Name and contact', 'name', 'Name', 'text', function (p) { return H.name(p); });
+    add(true, 'Name and contact', 'firstName', 'First name', 'text', function (p) { return p.firstName; });
+    add(true, 'Name and contact', 'lastName', 'Last name', 'text', function (p) { return p.lastName; });
+    add(true, 'Name and contact', 'preferredName', 'Preferred name', 'text', function (p) { return p.preferredName; });
+    add(true, 'Name and contact', 'email', 'Email', 'text', function (p) { return p.email; });
+    add(true, 'Name and contact', 'mobile', 'Mobile', 'text', function (p) { return p.mobile; });
+    add(true, 'Church', 'household', 'Family (household)', 'list', function (p) { return householdNames(p); }, uniq(S.list('families').map(function (f) { return H.familyName(f); })));
+    add(true, 'Church', 'category', 'Category', 'choice', function (p) { return p.category; }, CATS);
+    add(true, 'Church', 'adultChild', 'Adult or child', 'choice', function (p) { return p.familyRole === 'child' ? 'Child' : 'Adult'; }, ['Adult', 'Child']);
+    add(true, 'Church', 'added', 'Date added', 'date', function (p) { return p.createdAt; });
+    add(true, 'Church', 'fromElvanto', 'Brought in from Elvanto', 'yesno', function (p) { return p.source === 'elvanto'; });
+    add(all, 'Church', 'status', 'Status', 'choice', function (p) { return p.deceasedAt ? 'Deceased' : p.active === false ? 'Left' : 'Active'; }, ['Active', 'Left', 'Deceased']);
+    add(all, 'Church', 'died', 'Date of death', 'date', function (p) { return p.deceasedAt; });
+    add(birth, 'Personal', 'birthDate', 'Date of birth', 'date', function (p) { return p.birthDate; });
+    add(birth, 'Personal', 'birthday', 'Birthday', 'anniv', function (p) { return p.birthDate || p.birthDay; });
+    add(birth, 'Personal', 'age', 'Age', 'number', function (p) { return age(p); });
+    add(all, 'Personal', 'marital', 'Marital status', 'choice', function (p) { return p.familyRole === 'child' ? '' : p.maritalStatus; }, MARITAL);
+    add(all, 'Personal', 'wedding', 'Wedding anniversary', 'anniv', function (p) { return keyDate(p, /wedding/i); });
+    add(roster, 'Serving', 'positions', 'Serving position', 'list', function (p) { return sv(p).pos; }, uniq(S.list('positions').map(function (x) { return x.name; })));
+    add(roster, 'Serving', 'teams', 'Serving team', 'list', function (p) { return sv(p).teams; }, uniq(S.list('teams').map(function (x) { return x.name; })));
+    add(roster, 'Serving', 'lastServed', 'Last served', 'date', function (p) { return sv(p).last; });
+    add(roster, 'Serving', 'nextServing', 'Next serving', 'date', function (p) { return sv(p).next; });
+    add(kids, 'Children', 'guardians', 'Parents and guardians', 'list', function (p) { return links(p.id).map(linkName); });
+    add(kids, 'Children', 'consenter', 'Has a parent or guardian who can give consent', 'yesno', function (p) { return p.familyRole === 'child' && HS.consentAdults(p.id, S.list('guardians')).length > 0; });
+    add(all, 'Privacy', 'consents', 'Consent given for', 'list', function (p) { return PURPOSES.filter(function (x) { return hasConsent(p.id, x); }); }, PURPOSES);
+    add(all, 'Privacy', 'directory', 'In the church directory', 'yesno', function (p) { return hasConsent(p.id, 'Church directory'); });
+    add(H.can('*'), 'Privacy', 'access', 'App access', 'choice', function (p) { return (H.ROLES[p.appRole || 'member'] || {}).label; }, Object.keys(H.ROLES).map(function (r) { return H.ROLES[r].label; }));
+    add(all, 'Staff', 'staff', 'Church staff member', 'yesno', function (p) { return !!p.staff; });
+    add(all, 'Staff', 'staffCategory', 'Staff category', 'text', function (p) { return p.staff ? p.staff.category : ''; });
+    add(all, 'Staff', 'staffStart', 'Started working', 'date', function (p) { return p.staff ? p.staff.start : ''; });
+    return F;
+  }
+  function advShow(f, v) {
+    if (v == null || v === '' || (Array.isArray(v) && !v.length)) return '';
+    if (Array.isArray(v)) return v.join(', ');
+    if (f.type === 'yesno') return v ? 'Yes' : 'No';
+    if (f.type === 'date') return H.fmt(String(v).slice(0, 10), true);
+    if (f.type === 'anniv') { var m = PS.md(v); return m ? (+m.slice(3)) + ' ' + H.MON[+m.slice(0, 2) - 1] : ''; }
+    return String(v);
+  }
+  function advRun(F) {
+    var A = state.adv, byKey = {}; F.forEach(function (f) { byKey[f.key] = f; });
+    var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; });
+    var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted'; }) : visiblePeople();
+    if (!usesStatus) people = people.filter(function (p) { return p.active !== false; });
+    var recs = people.map(function (p) { var v = {}; F.forEach(function (f) { v[f.key] = f.get(p); }); return { id: p.id, p: p, values: v }; });
+    var r = PS.run(recs, A, byKey, H.today());
+    if (r.error) return r;
+    var hit = {}; r.ids.forEach(function (id) { hit[id] = 1; });
+    var rows = recs.filter(function (x) { return hit[x.id]; }), k = byKey[A.sort] ? A.sort : 'name';
+    rows.sort(function (a, b) {
+      if (k === 'name') return A.dir * (a.p.lastName + ' ' + a.p.firstName).localeCompare(b.p.lastName + ' ' + b.p.firstName);
+      var c = PS.compare(a.values[k], b.values[k]); if (!c) return (a.p.lastName + a.p.firstName).localeCompare(b.p.lastName + b.p.firstName);
+      var ea = a.values[k] === '' || a.values[k] == null || (Array.isArray(a.values[k]) && !a.values[k].length), eb = b.values[k] === '' || b.values[k] == null || (Array.isArray(b.values[k]) && !b.values[k].length);
+      return ea || eb ? c : A.dir * c;   // empty values stay at the bottom either way
+    });
+    return { rows: rows, byKey: byKey };
+  }
+  function valueBox(f, def, i) {
+    var kind = PS.valueKind(def.type, f.op), ia = ' class="adv-v" data-i="' + i + '"';
+    var one = function (k, v) {
+      var lab = ' aria-label="' + esc('Filter ' + (i + 1) + (k === 'value2' ? ' second value' : ' value')) + '"';
+      if (def.options && (def.type === 'choice' || def.type === 'list')) return '<select' + ia + ' data-k="' + k + '"' + lab + '><option value="">Choose…</option>' + def.options.map(function (o) { return '<option' + (String(v) === String(o) ? ' selected' : '') + '>' + esc(o) + '</option>'; }).join('') + '</select>';
+      var type = def.type === 'number' ? 'number' : def.type === 'date' || def.type === 'anniv' ? 'date' : 'text';
+      return '<input type="' + type + '"' + ia + ' data-k="' + k + '"' + lab + ' value="' + esc(v || '') + '"' + (type === 'number' ? ' min="0" inputmode="numeric"' : '') + '>';
+    };
+    if (kind === 'none') return '<span class="adv-none muted small">No value needed</span>';
+    if (kind === 'two') return '<span class="adv-two">' + one('value', f.value) + '<span class="muted">and</span>' + one('value2', f.value2) + '</span>';
+    if (kind === 'month') return '<select' + ia + ' data-k="value" aria-label="Month"><option value="">Choose a month…</option>' + PS.MONTHS.map(function (m, j) { return '<option value="' + (j + 1) + '"' + (String(f.value) === String(j + 1) ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select>';
+    if (kind === 'span') return '<span class="adv-two"><input type="number" min="0" inputmode="numeric"' + ia + ' data-k="value" aria-label="How many" value="' + esc(f.value || '') + '">' +
+      '<select' + ia + ' data-k="unit" aria-label="Days, weeks, months or years">' + PS.UNITS.map(function (u) { return '<option value="' + u[0] + '"' + ((f.unit || 'days') === u[0] ? ' selected' : '') + '>' + u[1] + '</option>'; }).join('') + '</select></span>';
+    return one('value', f.value);
+  }
+  function renderSearch() {
+    var crumb = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a>';
+    if (!canBasic()) return crumb + '<p class="empty">Advanced search isn’t available to you.</p>';
+    var A = state.adv, F = searchFields(), byKey = {}, groups = [];
+    F.forEach(function (f) { byKey[f.key] = f; if (groups.indexOf(f.group) < 0) groups.push(f.group); });
+    A.cols = A.cols.filter(function (k) { return byKey[k] && k !== 'name'; });
+    var fieldSelect = function (f, i) {
+      return '<select class="adv-field" data-i="' + i + '" aria-label="Filter ' + (i + 1) + ': search on">' + (byKey[f.field] ? '' : '<option value="">Choose…</option>') + groups.map(function (g) {
+        return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g; }).map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
+      }).join('') + '</select>';
+    };
+    var word = A.match === 'any' ? 'OR' : 'AND', logicNote = '';
+    if (A.match === 'logic' && A.logic.trim()) { var pl = PS.parseLogic(A.logic, A.filters.length); if (!pl.error && pl.unused.length) logicNote = '<p class="hint">Not used in your logic: filter ' + pl.unused.join(', ') + '.</p>'; }
+    var html = crumb + '<div class="page-head"><div><h1>Advanced search</h1><p class="lead">Find people by any mix of details, as in Elvanto. You can only search on what your role may see.</p></div></div>' +
+      '<div id="adv"><section class="panel"><h2>Filters</h2>' +
+      '<label class="field" style="max-width:420px">Match<select id="adv-match">' + [['all', 'All of the following filters'], ['any', 'Any of the following filters'], ['logic', 'Advanced: your own logic']].map(function (m) {
+        return '<option value="' + m[0] + '"' + (A.match === m[0] ? ' selected' : '') + '>' + m[1] + '</option>'; }).join('') + '</select></label>' +
+      (A.match === 'logic' ? '<label class="field">Your own logic<input id="adv-logic" value="' + esc(A.logic) + '" placeholder="e.g. (1 AND 2) OR (3 AND 4)" autocomplete="off"><small>Use the filter numbers with AND, OR, NOT and brackets. AND is worked out before OR, so use brackets to be clear.</small></label>' + logicNote : '') +
+      (A.filters.length ? '<div class="adv-rows">' + A.filters.map(function (f, i) {
+        var def = byKey[f.field];
+        var ops = def ? PS.opsFor(def.type) : [];
+        return (i && A.match !== 'logic' ? '<div class="adv-join"><span>' + word + '</span></div>' : '') +
+          '<div class="adv-row">' + (A.match === 'logic' ? '<span class="adv-n">' + (i + 1) + '.</span>' : '') + fieldSelect(f, i) +
+          '<select class="adv-op" data-i="' + i + '" aria-label="Filter ' + (i + 1) + ': how to compare"' + (def ? '' : ' disabled') + '>' + ops.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === f.op ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
+          (def ? valueBox(f, def, i) : '<span></span>') +
+          '<span class="adv-btns"><button class="icon-btn ok" data-act="people:advadd" data-i="' + i + '" aria-label="Add a filter after filter ' + (i + 1) + '" title="Add a filter">' + H.icon(H.ICON.plus, 18) + '</button>' +
+          '<button class="icon-btn bad" data-act="people:advdel" data-i="' + i + '" aria-label="Remove filter ' + (i + 1) + '" title="Remove this filter"><span aria-hidden="true" style="font-size:20px;line-height:1">−</span></button></span></div>';
+      }).join('') + '</div>' : '<p class="muted">No filters: Search finds everyone. <button class="btn small" data-act="people:advadd" data-i="-1">' + H.icon(H.ICON.plus, 16) + 'Add a filter</button></p>') +
+      '</section>' +
+      '<section class="panel"><h2>Columns to show</h2><p class="hint" style="margin-top:0">Name always comes first. Use the arrows to change the order.</p><div class="adv-cols">' +
+      '<span class="adv-col fixed">Name</span>' + A.cols.map(function (k, i) {
+        return '<span class="adv-col">' + esc(byKey[k].label) +
+          '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="-1"' + (i ? '' : ' disabled') + ' aria-label="Move ' + esc(byKey[k].label) + ' left">‹</button>' +
+          '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="1"' + (i < A.cols.length - 1 ? '' : ' disabled') + ' aria-label="Move ' + esc(byKey[k].label) + ' right">›</button>' +
+          '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="0" aria-label="Remove column ' + esc(byKey[k].label) + '">' + H.icon(H.ICON.x, 14) + '</button></span>';
+      }).join('') + '</div>' +
+      '<label class="field" style="max-width:320px;margin-top:12px">Add a column<select id="adv-addcol"><option value="">Choose…</option>' + groups.map(function (g) {
+        return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g && x.key !== 'name' && A.cols.indexOf(x.key) < 0; }).map(function (x) { return '<option value="' + x.key + '">' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
+      }).join('') + '</select></label></section>' +
+      '<div class="btns" style="margin:4px 0 18px"><button class="btn primary" data-act="people:advrun">' + H.icon(H.ICON.search, 18) + 'Search</button><button class="btn" data-act="people:advreset">Start again</button></div></div>';
+    if (!A.ran) return html;
+    var r = advRun(F);
+    if (r.error) return html + '<p class="note bad" role="alert" id="adv-result">' + esc(r.error) + '</p>';
+    var cols = ['name'].concat(A.cols), what = A.filters.map(function (f, i) { return (A.match === 'logic' ? (i + 1) + '. ' : '') + PS.describe(f, byKey[f.field], function (v) { return advShow({ type: byKey[f.field].type === 'anniv' ? 'anniv' : byKey[f.field].type === 'date' ? 'date' : 'text' }, v); }); });
+    return html + '<section class="panel" id="adv-result"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h2 style="margin:0">' + r.rows.length + ' ' + (r.rows.length === 1 ? 'person' : 'people') + ' found</h2>' +
+      (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + 'Download (CSV)</button>' : '') + '</div>' +
+      '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · and ' : A.match === 'any' ? ' · or ' : ' · ')) + (A.match === 'logic' ? ' · Logic: ' + esc(A.logic) : '') : 'Everyone') +
+      (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; }) ? '' : ' · people who have left or died are left out unless you search on Status') + '</p>' +
+      (r.rows.length ? '<div class="table-wrap"><table class="simple adv-table"><thead><tr>' + cols.map(function (k) {
+        var on = (A.sort || 'name') === k;
+        return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';
+      }).join('') + '</tr></thead><tbody>' + r.rows.map(function (x) {
+        return '<tr>' + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + esc(H.name(x.p)) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (POPIA).</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
+  }
+  function advCsv() {
+    var F = searchFields(), r = advRun(F); if (r.error) return;
+    var cols = ['name'].concat(state.adv.cols);
+    var raw = function (f, v) { if (Array.isArray(v)) return v.join('; '); if (f.type === 'yesno') return v ? 'Yes' : 'No'; if (f.type === 'date') return String(v || '').slice(0, 10); if (f.type === 'anniv') return advShow(f, v); return v == null ? '' : v; };
+    var rows = [cols.map(function (k) { return r.byKey[k].label; })].concat(r.rows.map(function (x) { return cols.map(function (k) { return k === 'name' ? H.name(x.p) : raw(r.byKey[k], x.values[k]); }); }));
+    var text = rows.map(function (row) { return row.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n');
+    S.audit('Downloaded an advanced search: ' + r.rows.length + ' people (' + cols.map(function (k) { return r.byKey[k].label; }).join(', ') + ')', 'people');
+    H.download('people-search-' + H.today() + '.csv', text, 'text/csv');
+  }
+  function advSync(el) {   // keep what is typed in the state, so a refresh never loses it
+    var A = state.adv, i = +el.dataset.i, f = A.filters[i];
+    if (el.classList.contains('adv-v') && f) { f[el.dataset.k] = el.value; return false; }
+    if (el.classList.contains('adv-field') && f) { f.field = el.value; var d = searchFields().filter(function (x) { return x.key === el.value; })[0]; f.op = d ? PS.opsFor(d.type)[0][0] : ''; f.value = f.value2 = ''; f.unit = 'days'; return true; }
+    if (el.classList.contains('adv-op') && f) { var k1 = PS.valueKind('', f.op); f.op = el.value; if (PS.valueKind('', f.op) !== k1) { f.value = f.value2 = ''; } f.unit = f.unit || 'days'; return true; }
+    if (el.id === 'adv-match') { A.match = el.value; return true; }
+    if (el.id === 'adv-logic') { A.logic = el.value; return false; }
+    if (el.id === 'adv-addcol' && el.value) { A.cols.push(el.value); return true; }
+    return false;
+  }
+
   function editDialog(p) {
     var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: 'Attender', familyId: '', familyRole: 'adult', appRole: Store.defaultRole() };
     var admin = H.can('*'), me = isMe(p);
@@ -435,6 +610,7 @@
     render: function (p) {
       if (p[0] === 'p') return renderPerson(p[1]);
       if (p[0] === 'families') return renderFamilies();
+      if (p[0] === 'search') return renderSearch();
       return renderList();
     },
     after: function () {
@@ -442,11 +618,36 @@
       if (fq) fq.addEventListener('input', function () { state.fq = fq.value; var pos = fq.selectionStart; H.render(); var n = document.getElementById('fm-q'); n.focus(); n.setSelectionRange(pos, pos); });
       var st = document.getElementById('pp-stats');
       if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
+      var adv = document.getElementById('adv');
+      if (adv) {
+        var onEdit = function (ev) {
+          var t = ev.target; if (!advSync(t)) return;
+          H.render();   // the choices changed: show the right boxes, and keep the place
+          var b = t.id ? document.getElementById(t.id) : document.querySelector('.' + t.classList[0] + '[data-i="' + t.dataset.i + '"]');
+          if (b) b.focus();
+        };
+        adv.addEventListener('input', function (ev) { if (ev.target.tagName !== 'SELECT') advSync(ev.target); });
+        adv.addEventListener('change', onEdit);
+        var lg = document.getElementById('adv-logic');
+        if (lg) lg.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); state.adv.ran = true; H.render(); } });
+      }
       var q = document.getElementById('pp-q');
       if (q) q.addEventListener('input', function () { state.q = q.value; var pos = q.selectionStart; H.render(); var n = document.getElementById('pp-q'); n.focus(); n.setSelectionRange(pos, pos); });
     },
     actions: {
       filter: function (el) { state.f = el.dataset.f; H.render(); },
+      advadd: function (el) { var i = +el.dataset.i, prev = state.adv.filters[i]; state.adv.filters.splice(i + 1, 0, { field: prev ? prev.field : 'name', op: prev ? prev.op : 'has', value: '', value2: '', unit: 'days' }); H.render(); var s2 = document.querySelectorAll('.adv-field')[i + 1]; if (s2) s2.focus(); },
+      advdel: function (el) { state.adv.filters.splice(+el.dataset.i, 1); H.render(); },
+      advcol: function (el) {
+        var c = state.adv.cols, i = c.indexOf(el.dataset.k), m = +el.dataset.m;
+        if (i < 0) return;
+        if (!m) c.splice(i, 1); else if (c[i + m]) { c[i] = c[i + m]; c[i + m] = el.dataset.k; }
+        H.render();
+      },
+      advrun: function () { state.adv.ran = true; H.render(); var r = document.getElementById('adv-result'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); },
+      advreset: function () { state.adv = emptyAdv(); H.render(); },
+      advsort: function (el) { var A = state.adv; if (A.sort === el.dataset.k) A.dir = -A.dir; else { A.sort = el.dataset.k; A.dir = 1; } H.render(); },
+      advcsv: function () { advCsv(); },
       add: function () { editDialog(null); },
       edit: function (el) { editDialog(S.get('people', el.dataset.id)); },
       consent: function (el) { consentDialog(S.get('people', el.dataset.id)); },

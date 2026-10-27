@@ -25,6 +25,9 @@
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
   function members(fid) { return S.find('people', function (p) { return HS.inHousehold(p, fid) && p.active !== false; }); }
   function householdNames(p) { return HS.householdsOf(p).map(function (h) { return H.familyName(S.get('families', h)); }).filter(Boolean); }
+  /** Whole years from a yyyy-mm-dd date to today ('' if no date or in the future). */
+  function yearsSince(d) { if (!d || !/^\d{4}-\d\d-\d\d/.test(d)) return ''; var b = LeaveCore.parse(d.slice(0, 10)), t = new Date(); var a = t.getFullYear() - b.getFullYear(); if (t < new Date(t.getFullYear(), b.getMonth(), b.getDate())) a--; return a < 0 ? '' : a; }
+  var WEDDING = /wedding|anniversary|married/i;
   function age(p) { if (!p.birthDate) return ''; var b = LeaveCore.parse(p.birthDate), t = new Date(); var a = t.getFullYear() - b.getFullYear(); if (t < new Date(t.getFullYear(), b.getMonth(), b.getDate())) a--; return a; }
 
   /** Who may this user see in the directory? Members only see people who agreed to be in the church directory. */
@@ -152,10 +155,14 @@
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>' : '<span class="muted">—</span>') + '</dd>' +
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">—</span>') + '</dd>' : '') +
-      ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>' : '') +
+      ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
-      (full ? (p.keyDates || []).map(function (k) { return '<dt>' + esc(k.label) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>'; }).join('') : '') +
+      (full ? (p.keyDates || []).map(function (k) {
+        if (!WEDDING.test(k.label || '')) return '<dt>' + esc(k.label) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>';
+        var n = yearsSince(k.date);     // years married: only while still married (not after a death or divorce)
+        return '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('{n} year married', '{n} years married', n)) + '</span>' : '') + '</dd>';
+      }).join('') : '') +
       (p.staff && full ? '<dt>' + T('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
       (H.can('*') ? '<dt>App access</dt><dd>' + esc((H.ROLES[p.appRole] || H.ROLES.member).label) + '</dd>' : '') +
       '</dl></section>';
@@ -491,7 +498,8 @@
         '<label class="field">Category<select id="pf-cat">' + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two"><label class="field">Household<select id="pf-fam"><option value="">Not in a household</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New household…</option></select></label>' +
         '<label class="field">In the household as<select id="pf-frole"><option value="adult"' + (p.familyRole !== 'child' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
-        '<label class="field" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' : '') +
+        '<label class="field" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
+        '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary <small>(optional)</small><input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small>The date they married. Shown with the number of years.</small></label>' : '') +
       (admin ? staffFields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
@@ -503,7 +511,8 @@
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
     var fr = document.getElementById('pf-frole'), mf = document.getElementById('pf-marital-f');
-    if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; });
+    var wf = document.getElementById('pf-wed-f');
+    if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; if (wf) wf.hidden = fr.value === 'child'; });
   }
 
   /** Staff details for Leave (Administrators only): category (sets allowances and working days), start date (pro-rata), own working days. */
@@ -661,6 +670,11 @@
         if (g('pf-email') && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g('pf-email'))) { err.textContent = T('That email address doesn’t look right.'); err.hidden = false; return; }
         p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref'); p.email = g('pf-email'); p.mobile = g('pf-mobile');
         if (g('pf-birth') !== null) p.birthDate = g('pf-birth');
+        if (g('pf-wed') !== null) {
+          if (g('pf-wed') > H.today()) { err.textContent = 'The wedding anniversary can’t be in the future.'; err.hidden = false; return; }
+          p.keyDates = (p.keyDates || []).filter(function (k) { return !WEDDING.test(k.label || ''); });
+          if (g('pf-wed') && g('pf-frole') !== 'child') p.keyDates.push({ label: 'Wedding anniversary', date: g('pf-wed') });
+        }
         if (g('pf-cat') !== null) p.category = g('pf-cat');
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
         if (g('pf-marital') !== null) {

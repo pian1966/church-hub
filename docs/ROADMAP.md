@@ -54,6 +54,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ 27 Oct 2026: **Languages** – English, Afrikaans, isiZulu, isiXhosa for the screens members use (picker in the menu and on
   sign-in, remembered per device; dates too). Screens now say **Household** consistently (Households page, Edit details,
   search). Email-link errors now show Firebase's reason. Advanced search moved to a link under the search box.
+- ✅ 27 Oct 2026: profile shows **age** under the birthday; **wedding anniversary** (Edit details) with years married underneath (while married)
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n.js – one line per text); then decide whether to translate
   staff screens too
 - ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)

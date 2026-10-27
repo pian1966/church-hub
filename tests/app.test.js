@@ -195,6 +195,15 @@ function serve() {
   await s.page.click('[data-act="people:renamefam"][data-id="f2"]'); await s.page.check('input[name="rf-mode"][value="auto"]'); await s.page.click('[data-act="people:saverename"]'); await s.settle();
   check((await s.text()).includes('Tim & Clare Jacobs'), 'and switched back to being named after its adults');
   await s.go('people/p/p14'); check((await s.text()).includes('Tim & Clare Jacobs'), 'profiles show the family name');
+  {
+    const y = new Date().getFullYear() - 12, wed = y + '-01-01';
+    await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-birth', (y - 20) + '-01-01'); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', wed);
+    await s.page.click('[data-act="people:save"]'); await s.settle();
+    const tw = await s.text();
+    check(/Age 32/.test(tw) && /Wedding anniversary/.test(tw) && /12 years married/.test(tw), 'profile shows age under the birthday, and the wedding anniversary with years married');
+    const dd = await s.docsNow(); const kd = (dd['details/p14'] || dd['people/p14'] || {}).keyDates || [];
+    check(kd.filter(k => /wedding/i.test(k.label)).length === 1 && kd.some(k => k.date === wed), 'the anniversary is saved once, as a key date');
+  }
   await s.go('leave/approvals'); await s.page.click('[data-act="leave:decide"][data-d="Approved"]'); await s.settle();
   docs = await s.docsNow(); const approved = Object.keys(docs).filter(k => k.startsWith('leaveRequests/') && docs[k].status === 'Approved' && docs[k].decidedOn);
   check(approved.length === 1 && docs['away/' + approved[0].split('/')[1]], 'approving leave saves it and marks the dates as away');

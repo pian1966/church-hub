@@ -44,6 +44,9 @@ Advanced search only offers the details a role may already see, and never medica
 restrictions. Downloading results (CSV) is recorded in the audit log with how many people and which columns. Downloads
 should stay on church computers and be deleted once used.
 
+## Leave reasons
+The kind of leave and its reason (which can be about health) are shown only to the staff member and Administrators – on Leave and on Rosters → Away dates. Everyone else, including roster coordinators, sees only "On leave" and the dates; the database never sends them more.
+
 ## Approved leave in Elvanto
 When switched on, the name and dates of approved leave (never the kind of leave or the reason) go to Elvanto's Unavailable
 Volunteers list, as Leave Manager did. The robot that does it runs on GitHub's computers (outside South Africa) for a few

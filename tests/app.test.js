@@ -313,6 +313,19 @@ function serve() {
   await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
   await finish(s);
 
+  console.log('Away dates – kind of leave and reason:');
+  {
+    const docs0 = seedDocs(), today = new Date().toISOString().slice(0, 10);
+    const lr = Object.keys(docs0).filter(k => k.startsWith('leaveRequests/')).map(k => docs0[k]).filter(r => r.status === 'Approved' && r.end >= today && r.reason && r.staffId !== 'p05')[0];
+    s = await session('linda.pillay@example.com', seedDocs()); await s.go('rosters/away');
+    check(!!lr && (await s.text()).includes(lr.reason), 'Administrators see the reason for leave on Away dates');
+    await finish(s);
+    s = await session('sipho.dlamini@example.com', seedDocs()); await s.go('rosters/away');
+    const ts = await s.text();
+    check(ts.includes('On leave') && !ts.includes(lr.reason), 'a Roster coordinator sees only “On leave” – never the reason');
+    await finish(s);
+  }
+
   console.log('Languages:');
   s = await session('tim.jacobs@example.com', seedDocs());
   await s.page.selectOption('.side-lang .lang-sel', 'zu'); await s.page.waitForTimeout(80);

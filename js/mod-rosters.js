@@ -14,7 +14,15 @@
   function awayList() {
     var out = S.list('blockouts').map(function (b) { return { personId: b.personId, from: b.from, to: b.to || b.from, reason: b.reason || 'Away', id: b.id, kind: 'blockout' }; });
     var lv = S.leave();
-    if (lv) lv.requests.forEach(function (r) { if (r.status === 'Approved') out.push({ personId: r.staffId, from: r.start, to: r.end, reason: 'On leave', kind: 'leave' }); });
+    // The kind of leave and its reason only for the person themselves and Administrators (reasons can be about health – POPIA);
+    // everyone else sees "On leave". (Live, other roles don't even receive them: see Store.rebuildLeave.)
+    var me = H.user(), full = function (r) { return H.can('*') || (me && r.staffId === me.id); };
+    if (lv) lv.requests.forEach(function (r) {
+      if (r.status !== 'Approved') return;
+      var t = full(r) && r.type ? (lv.types.filter(function (x) { return x.code === r.type; })[0] || { name: r.type }).name : '';
+      var why = full(r) ? String(r.reason || '').trim() : '';
+      out.push({ personId: r.staffId, from: r.start, to: r.end, reason: 'On leave' + (t || why ? ': ' + [t, why].filter(Boolean).join(' – ') : ''), kind: 'leave' });
+    });
     return out;
   }
   function engineData(extra) {

@@ -196,11 +196,21 @@ function serve() {
   check((await s.text()).includes('Tim & Clare Jacobs'), 'and switched back to being named after its adults');
   await s.go('people/p/p14'); check((await s.text()).includes('Tim & Clare Jacobs'), 'profiles show the family name');
   {
+    await s.go('people/p/p25'); await s.page.click('[data-act="people:edit"]');
+    check((await s.page.getAttribute('#pf-email', 'placeholder')).includes('unknown') && !!(await s.page.$('#pf-email-f.req')) && !!(await s.page.$('#pf-mobile-f.req')), 'email and mobile are shaded as must-fill, with a grey hint to type “unknown”');
+    await s.page.fill('#pf-email', ''); await s.page.click('[data-act="people:save"]');
+    check((await s.page.textContent('#pf-err')).includes('email address, or type'), 'an adult can’t be saved without an email (or “unknown”)');
+    await s.page.fill('#pf-email', 'Unknown'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]'); await s.settle();
+    const d25 = await s.docsNow();
+    check(d25['people/p25'].email === '' && (d25['details/p25'] || {}).emailUnknown === true, '“unknown” is saved as not known, never as the word');
+    check((await s.text()).includes('Not known'), 'the profile shows “Not known”');
+  }
+  {
     const y = new Date().getFullYear() - 12, wed = y + '-01-01';
-    await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-birth', (y - 20) + '-01-01'); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', wed);
+    await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-birth', (y - 20) + '-01-01'); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', wed);
     await s.page.click('[data-act="people:save"]'); await s.settle();
     const tw = await s.text();
-    check(/Age 32/.test(tw) && /Wedding anniversary/.test(tw) && /12 years married/.test(tw), 'profile shows age under the birthday, and the wedding anniversary with years married');
+    check(/Age 32/.test(tw) && /Wedding anniversary/.test(tw) && /Married 12 years/.test(tw), 'profile shows age under the birthday, and the wedding anniversary with years married');
     const dd = await s.docsNow(); const kd = (dd['details/p14'] || dd['people/p14'] || {}).keyDates || [];
     check(kd.filter(k => /wedding/i.test(k.label)).length === 1 && kd.some(k => k.date === wed), 'the anniversary is saved once, as a key date');
   }

@@ -153,15 +153,15 @@
     // Contact (left out when there's nothing this person may see, e.g. a young child for Children's ministry)
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
-      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>' : '<span class="muted">—</span>') + '</dd>' +
-        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">—</span>') + '</dd>' : '') +
+      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
+        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (full ? (p.keyDates || []).map(function (k) {
         if (!WEDDING.test(k.label || '')) return '<dt>' + esc(k.label) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>';
         var n = yearsSince(k.date);     // years married: only while still married (not after a death or divorce)
-        return '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('{n} year married', '{n} years married', n)) + '</span>' : '') + '</dd>';
+        return '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('Married {n} year', 'Married {n} years', n)) + '</span>' : '') + '</dd>';
       }).join('') : '') +
       (p.staff && full ? '<dt>' + T('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
       (H.can('*') ? '<dt>App access</dt><dd>' + esc((H.ROLES[p.appRole] || H.ROLES.member).label) + '</dd>' : '') +
@@ -492,8 +492,8 @@
       '<div class="two"><label class="field req">' + T('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
       '<label class="field req">' + T('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
       '<label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
-      '<div class="two"><label class="field">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || '') + '" autocomplete="email"></label>' +
-      '<label class="field">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || '') + '" autocomplete="tel"></label></div>' +
+      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label>' +
+      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label></div>' +
       (!me || admin ? '<div class="two"><label class="field">Birthday<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field">Category<select id="pf-cat">' + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two"><label class="field' + (p.familyRole === 'child' ? ' req' : '') + '" id="pf-fam-f">Household<select id="pf-fam"><option value="">Not in a household</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New household…</option></select></label>' +
@@ -512,13 +512,15 @@
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
     var fr = document.getElementById('pf-frole'), mf = document.getElementById('pf-marital-f');
     var wf = document.getElementById('pf-wed-f'), ff = document.getElementById('pf-fam-f');
-    if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; if (wf) wf.hidden = fr.value === 'child'; if (ff) ff.classList.toggle('req', fr.value === 'child'); H.markRequired(); });
+    if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; if (wf) wf.hidden = fr.value === 'child'; if (ff) ff.classList.toggle('req', fr.value === 'child');
+      ['pf-email-f', 'pf-mobile-f'].forEach(function (id) { var x = document.getElementById(id); if (x) x.classList.toggle('req', fr.value !== 'child'); });
+      H.markRequired(); });
     // Age and years married, worked out as the dates are typed
     var bi = document.getElementById('pf-birth'), wi = document.getElementById('pf-wed'), mi = document.getElementById('pf-marital');
     var live = function () {
       var bn = document.getElementById('pf-birth-n'), wn = document.getElementById('pf-wed-n');
       if (bn && bi) { var a = yearsSince(bi.value); bn.textContent = a === '' ? '' : T('Age {n}', { n: a }); }
-      if (wn && wi) { var y = yearsSince(wi.value); wn.textContent = y === '' ? 'The date they married.' : y < 1 ? 'Married less than a year' + (mi && mi.value && mi.value !== 'Married' ? ' (marital status: ' + mi.value + ')' : '') : TN('{n} year married', '{n} years married', y) + (mi && mi.value && mi.value !== 'Married' ? ' (marital status: ' + mi.value + ')' : ''); }
+      if (wn && wi) { var y = yearsSince(wi.value); wn.textContent = y === '' ? 'The date they married.' : y < 1 ? 'Married less than a year' + (mi && mi.value && mi.value !== 'Married' ? ' (marital status: ' + mi.value + ')' : '') : TN('Married {n} year', 'Married {n} years', y) + (mi && mi.value && mi.value !== 'Married' ? ' (marital status: ' + mi.value + ')' : ''); }
     };
     [bi, wi, mi].forEach(function (x) { if (x) { x.addEventListener('input', live); x.addEventListener('change', live); } });
     live();
@@ -676,8 +678,18 @@
         var err = document.getElementById('pf-err'), id = g('pf-id');
         var p = id ? JSON.parse(JSON.stringify(S.get('people', id))) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'manual' };
         if (!g('pf-first') || !g('pf-last')) { err.textContent = T('Please enter a first and last name.'); err.hidden = false; return; }
-        if (g('pf-email') && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(g('pf-email'))) { err.textContent = T('That email address doesn’t look right.'); err.hidden = false; return; }
-        p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref'); p.email = g('pf-email'); p.mobile = g('pf-mobile');
+        // Email and mobile must be filled in for adults: the real one, or "unknown" (saved as not known, never as the word)
+        var isChild = (g('pf-frole') !== null ? g('pf-frole') : p.familyRole) === 'child';
+        var unknown = function (v) { v = (v || '').trim().toLowerCase(); return v === 'unknown' || v === T('unknown').toLowerCase() || v === 'not known'; };
+        var em = g('pf-email'), mo = g('pf-mobile');
+        if (!isChild && !em) { err.textContent = T('Please fill in the email address, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
+        if (!isChild && !mo) { err.textContent = T('Please fill in the mobile number, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
+        if (em && !unknown(em) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { err.textContent = T('That email address doesn’t look right.'); err.hidden = false; return; }
+        if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { err.textContent = T('That mobile number doesn’t look right.'); err.hidden = false; return; }
+        p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref');
+        p.email = unknown(em) ? '' : em; p.mobile = unknown(mo) ? '' : mo;
+        if (unknown(em)) p.emailUnknown = true; else delete p.emailUnknown;
+        if (unknown(mo)) p.mobileUnknown = true; else delete p.mobileUnknown;
         if (g('pf-birth') !== null) p.birthDate = g('pf-birth');
         if (g('pf-wed') !== null) {
           if (g('pf-wed') > H.today()) { err.textContent = 'The wedding anniversary can’t be in the future.'; err.hidden = false; return; }

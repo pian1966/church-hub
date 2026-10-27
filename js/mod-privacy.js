@@ -77,6 +77,8 @@
   function erase(p) {
     var name = H.name(p);
     S.purge(p.id);                                   // medical and pastoral notes, even though Administrators can't read them
+    S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }).forEach(function (l) { S.remove('guardians', l.id); });
+    S.find('noCollect', function (x) { return x.childId === p.id || x.personId === p.id; }).forEach(function (x) { S.remove('noCollect', x.id); });
     S.find('consents', function (c) { return c.personId === p.id; }).forEach(function (c) { S.remove('consents', c.id); });
     S.find('notes', function (n) { return n.personId === p.id; }).forEach(function (n) { S.remove('notes', n.id); });
     S.find('skills', function (k) { return k.personId === p.id; }).forEach(function (k) { S.remove('skills', k.id); });

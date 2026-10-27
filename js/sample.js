@@ -10,7 +10,7 @@ function makeSampleData() {
   var sundays = []; for (var i = -2; i < 8; i++) sundays.push(iso(C.addDays(sun, i * 7)));
 
   var fam = [
-    ['f1', 'Naidoo'], ['f2', 'Jacobs'], ['f3', 'Smith'], ['f4', 'Botha'], ['f5', 'Nkosi'], ['f6', 'van der Merwe'], ['f7', 'Mokoena']
+    ['f1', 'Naidoo'], ['f2', 'Jacobs'], ['f3', 'Smith'], ['f4', 'Botha'], ['f5', 'Nkosi'], ['f6', 'van der Merwe'], ['f7', 'Mokoena'], ['f8', 'Mokoena']
   ].map(function (f) { return { id: f[0], name: f[1] + ' family' }; });
 
   // id, first, last, family, role, category, email?, mobile?, birth, staff [category, startYearsAgo, workDays?], role in app
@@ -42,13 +42,14 @@ function makeSampleData() {
     ['p25', 'Faith', 'Adams', '', 'adult', 'member'],
     ['p26', 'Bongani', 'Mthembu', '', 'adult', 'member'],
     ['p27', 'Ruth', 'Daniels', '', 'adult', 'member'],
-    ['p28', 'Noah', 'Mokoena', 'f7', 'child', 'member', 2016]
+    ['p28', 'Noah', 'Mokoena', 'f7', 'child', 'member', 2016],
+    ['p29', 'Musa', 'Mokoena', 'f8', 'adult', 'member']          // Noah's father: separated, Noah lives in both homes
   ];
   var people = P.map(function (r, i) {
     var staff = r[5] === 'staff';
     var p = {
       id: r[0], firstName: r[1], lastName: r[2], preferredName: '', familyId: r[3], familyRole: r[4],
-      category: staff ? 'Staff' : r[5] === 'visitor' ? 'Visitor' : 'Member',
+      category: staff ? 'Staff' : r[5] === 'visitor' ? 'Attender' : 'Partner',
       email: r[4] === 'child' ? '' : (r[1] + '.' + r[2].replace(/ /g, '')).toLowerCase() + '@example.com',
       mobile: r[4] === 'child' ? '' : '082 000 ' + String(1000 + i * 37).slice(-4),
       birthDate: r[4] === 'child' ? (r[6] || 2015) + '-0' + (1 + (i % 9)) + '-1' + (i % 9) : '',
@@ -68,9 +69,24 @@ function makeSampleData() {
     p.maritalStatus = adults === 2 ? 'Married' : p.id === 'p25' ? 'Widowed' : p.id === 'p02' ? 'Married' : 'Single';
   });
 
+  // Noah lives with his mother Thandi (f7) and his father Musa (f8)
+  people.filter(function (p) { return p.id === 'p28'; })[0].householdIds = ['f8'];
+  people.filter(function (p) { return p.id === 'p29'; })[0].maritalStatus = 'Separated';
+  people.filter(function (p) { return p.id === 'p02'; })[0].maritalStatus = 'Separated';
+  // Adults responsible for each child (who may consent, gets messages, may collect)
+  var G = function (id, childId, adultId, rel, extra) { return Object.assign({ id: id, childId: childId, adultId: adultId, relationship: rel, canConsent: true, primary: true, mayCollect: true, confirmed: true }, extra || {}); };
+  var guardians = [
+    G('g1', 'p12', 'p10', 'Father'), G('g2', 'p12', 'p11', 'Mother'), G('g3', 'p13', 'p10', 'Father'), G('g4', 'p13', 'p11', 'Mother'),
+    G('g5', 'p16', 'p14', 'Father'), G('g6', 'p16', 'p15', 'Mother'),
+    G('g7', 'p28', 'p02', 'Mother'), G('g8', 'p28', 'p29', 'Father'),
+    G('g9', 'p12', '', 'Trusted collector', { name: 'Granny Naidoo (made up)', phone: '031 000 0000', canConsent: false, primary: false })
+  ];
+  var noCollect = [{ id: 'nc1', childId: 'p13', personId: '', name: 'J. Example (made up)', note: 'Made-up example: a court order – call Jason or Priya.' }];
+
   var consents = [];
   people.forEach(function (p, i) {
-    var guardian = p.familyRole === 'child' ? people.filter(function (q) { return q.familyId === p.familyId && q.familyRole === 'adult'; })[0] : null;
+    var gl = p.familyRole === 'child' ? guardians.filter(function (g) { return g.childId === p.id && g.canConsent; })[0] : null;
+    var guardian = gl ? { id: gl.adultId } : null;
     if (p.id === 'p27') return;                         // no consent yet: shows on the to-do list
     var add = function (purpose, given) { consents.push({ id: 'c' + p.id + purpose.replace(/\W/g, ''), personId: p.id, purpose: purpose, given: given, date: off(-200 + i), method: i % 2 ? 'Paper connect card' : 'Online form', recordedBy: 'Linda Pillay', guardianId: guardian ? guardian.id : '' }); };
     add('Church records', true);
@@ -158,14 +174,14 @@ function makeSampleData() {
   return {
     version: 1,
     settings: {
-      churchName: 'Christ Church Howick', demo: true,
+      churchName: 'Christ Church Howick', demo: true, dataVersion: 2,
       modules: { people: true, rosters: true, leave: true, privacy: true, import: true, settings: true },
       informationOfficer: { name: '[Information Officer]', email: '[email]', phone: '[phone]', registered: false, deputy: '' },
       retentionMonths: 24,
       privacyNotice: 'Christ Church Howick collects your personal information to keep church records, care for you, organise serving rosters and keep in touch. We only use it for these purposes, keep it secure, and store it in South Africa. You may ask to see, correct or delete your information at any time by contacting our Information Officer.'
     },
     people: people, families: fam, consents: consents, notes: notes, teams: teams, positions: positions, skills: skills,
-    services: services, assignments: assignments, groups: groups, blockouts: blockouts,
+    services: services, assignments: assignments, groups: groups, blockouts: blockouts, guardians: guardians, noCollect: noCollect,
     dsr: [{ id: 'd1', personId: 'p23', kind: 'Access', received: off(-6), due: off(24), status: 'Open', notes: 'Asked for a copy of everything we hold.' }],
     breaches: [], audit: [], leave: leave
   };

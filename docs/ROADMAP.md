@@ -43,6 +43,14 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   switch-over, Elvanto address, robot sign-in, entries and their status, try again / done by hand, to-dos); robot on GitHub
   every 15 minutes with its own limited Church Hub sign-in; Leave Manager's existing entries found by their note. Tested
   (rules, app, robot with stand-in servers). Also: "click again to confirm" no longer undone by background refreshes.
+- ✅ 27 Oct 2026: **households, parents, guardians and collection** (Planning Center + ChurchSuite approach): a child can live in
+  several households; parents/guardians/collectors per child with can give consent / primary contact / may collect; **Not allowed
+  to collect** (restricted, logged); consent for children only from adults who can give it; "Responsible for" on adults; Home
+  to-dos for unconfirmed links and children with nobody who can consent; Elvanto import links children to their parents
+  (unconfirmed). **Search by family** on People and Families. Categories renamed: **Member → Partner, Visitor → Visiting Minister**
+  (existing data updated automatically on the first Administrator sign-in). New rules – **re-publish them**.
+- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
+- ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out
 - ⬜ Church: set up the robot (docs/ELVANTO-ROBOT.md steps 1–5; **re-publish the rules**), switch over with step 6
 - ⬜ Later: Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)
 - ⬜ Church: remove the first Elvanto import (Import page), re-export (fewer columns), import again and check

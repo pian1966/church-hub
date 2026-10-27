@@ -19,7 +19,7 @@ function sampleData() {
   vm.runInContext(src + '\nthis.makeSampleData = makeSampleData;', ctx);
   return ctx.makeSampleData();
 }
-const CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole', 'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt'];
+const CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole', 'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt'];
 function seedDocs(opts) {
   const d = JSON.parse(JSON.stringify(sampleData())), out = {}, put = (p, v) => { out[p] = JSON.parse(JSON.stringify(v)); };
   const strip = o => { const c = Object.assign({}, o); delete c.id; return c; };
@@ -38,10 +38,15 @@ function seedDocs(opts) {
   });
   const notes = {}; d.notes.forEach(n => { (notes[n.personId] = notes[n.personId] || []).push(strip(n)); });
   Object.keys(notes).forEach(pid => put('notes/' + pid, { entries: notes[pid].map(n => { delete n.personId; return n; }) }));
-  ['families', 'consents', 'teams', 'positions', 'skills', 'services', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches'].forEach(c => d[c].forEach(x => put(c + '/' + x.id, strip(x))));
+  ['families', 'consents', 'teams', 'positions', 'skills', 'services', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'guardians', 'noCollect'].forEach(c => d[c].forEach(x => put(c + '/' + x.id, strip(x))));
   // a turn for Tim (member) to accept
   const future = d.services.filter(s => s.date > new Date().toISOString().slice(0, 10)).sort((a, b) => a.date < b.date ? -1 : 1)[1];
   put('assignments/kTim', { serviceId: future.id, positionId: 'door', personId: 'p14', status: 'pending', source: 'manual' });
+  if (opts && opts.legacy) {   // data from before households and the new category names
+    delete out['settings/church'].dataVersion;
+    Object.keys(out).filter(k => k.startsWith('guardians/')).forEach(k => delete out[k]);
+    Object.keys(out).filter(k => k.startsWith('people/')).forEach(k => { if (out[k].category === 'Partner') out[k].category = 'Member'; if (out[k].category === 'Attender') out[k].category = 'Visitor'; });
+  }
   if (opts && opts.elvanto) {   // Elvanto updating switched on; Lerato's approved leave (L103) already in Elvanto; the robot's sign-in
     out['settings/church'].elvanto = { on: true, url: 'https://example.elvanto.eu', robotEmail: 'robot@example.com' };
     const l = d.leave.requests.find(r => r.id === 'L103');
@@ -200,6 +205,63 @@ function serve() {
   check(!docs['notes/p10'] && !docs['directory/p10'] && docs['people/p10'].firstName === 'Deleted' && !docs['roles/jason.naidoo@example.com'], 'deleting Jason removes his pastoral notes, directory entry and sign-in (Admin can’t read the notes)');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].byEmail === 'linda.pillay@example.com' && /Deleted the personal information/.test(docs[k].action)), 'the deletion is in the audit log');
   await s.go('privacy/audit'); check((await s.text()).includes('Signed in'), 'audit log shows sign-ins');
+  await finish(s);
+
+  /* ---------- Households, parents and guardians, collection ---------- */
+  console.log('Children’s ministry – parents, guardians and collection:');
+  s = await session('grace.ndlovu@example.com', seedDocs());
+  await s.go('people/p/p12'); let t = await s.text();
+  check(t.includes('Parents, guardians and collection') && t.includes('Jason Naidoo') && t.includes('Granny Naidoo') && t.includes('Trusted collector'), 'a child’s parents and a trusted collector (not in Church Hub) are shown');
+  await s.go('people/p/p13'); t = await s.text();
+  check(t.includes('Not allowed to collect') && t.includes('J. Example') && t.includes('court order'), 'collection restrictions are shown on the child');
+  await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].action === 'Viewed collection restrictions for Ravi Naidoo'), 'viewing a collection restriction is logged');
+  await s.go('people/p/p16'); await s.page.click('[data-act="people:link"][data-child="p16"]');
+  await s.page.selectOption('#gl-who', 'p24'); await s.page.selectOption('#gl-rel', 'Step-parent');
+  check(!(await s.page.isChecked('#gl-consent')) && await s.page.isChecked('#gl-collect'), 'a step-parent can collect but can’t give consent by default');
+  await s.page.click('[data-act="people:linksave"]'); await s.settle();
+  await s.page.click('[data-act="people:nc"][data-child="p16"]'); await s.page.fill('#nc-name', 'Made-up Person'); await s.page.fill('#nc-note', 'Court order'); await s.page.click('[data-act="people:ncsave"]'); await s.settle();
+  docs = await s.docsNow();
+  check(Object.keys(docs).some(k => k.startsWith('guardians/') && docs[k].childId === 'p16' && docs[k].adultId === 'p24' && docs[k].relationship === 'Step-parent' && docs[k].confirmed) &&
+    Object.keys(docs).some(k => k.startsWith('noCollect/') && docs[k].childId === 'p16' && docs[k].name === 'Made-up Person'), 'Children’s ministry can add a responsible adult and a collection restriction');
+  await finish(s);
+
+  console.log('Pastor – consent, households and search by family:');
+  s = await session('thandi.mokoena@example.com', seedDocs());
+  await s.go('people/p/p28'); t = await s.text();
+  check(t.includes('Lives in 2 households') && t.includes('Musa Mokoena'), 'a child of separated parents shows both homes');
+  await s.page.click('[data-act="people:consent"][data-id="p28"]');
+  const givers = await s.page.$$eval('#cf-guardian option', os => os.map(o => o.textContent));
+  check(givers.length === 2 && givers.includes('Thandi Mokoena') && givers.includes('Musa Mokoena'), 'consent for a child can only come from the parents or guardians who can give consent');
+  await s.page.click('[data-act="hub:close"]');
+  await s.go('people/p/p16'); await s.page.click('[data-act="people:addhome"][data-id="p16"]'); await s.page.selectOption('#hm-f', 'f3'); await s.page.click('[data-act="people:savehome"]'); await s.settle();
+  docs = await s.docsNow(); check(JSON.stringify(docs['people/p16'].householdIds) === '["f3"]', 'a child can be added to another household');
+  await s.go('people'); await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(100); t = await s.text();
+  check(t.includes('Tim Jacobs') && t.includes('Clare Jacobs') && t.includes('Liam Jacobs'), 'People search finds everyone in a family by the family’s name');
+  await s.page.fill('#pp-q', 'musa'); await s.page.waitForTimeout(100); t = await s.text();
+  check(t.includes('Noah Mokoena'), 'searching a parent’s name also finds the children who live with them');
+  await s.go('people/families'); await s.page.fill('#fm-q', 'Liam'); await s.page.waitForTimeout(100); t = await s.text();
+  check(t.includes('Tim & Clare Jacobs') && !t.includes('Naidoo'), 'Families page: search by family or anyone in it');
+  await s.go('people'); t = await s.text();
+  check(t.includes('Partners') && t.includes('Visiting ministers') && !/\bMembers\b/.test(t), 'categories are called Partner, Attender, Visiting Minister');
+  await finish(s);
+
+  console.log('Roster coordinator and member – no access to children’s responsible adults:');
+  s = await session('sipho.dlamini@example.com', seedDocs());
+  await s.go('people/p/p13'); t = await s.text();
+  check(!t.includes('Parents, guardians and collection') && await s.page.evaluate(() => Store.list('guardians').length === 0 && Store.list('noCollect').length === 0), 'a Roster coordinator sees no parents/guardians list or collection restrictions');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', seedDocs());
+  check(await s.page.evaluate(() => Store.list('noCollect').length === 0 && Store.list('guardians').every(l => l.adultId === 'p14') && Store.list('guardians').length === 1), 'a parent (member) sees only the link naming them, never collection restrictions');
+  await finish(s);
+
+  console.log('Upgrading existing data (first Administrator sign-in):');
+  s = await session('linda.pillay@example.com', seedDocs({ legacy: true }));
+  await s.settle(); docs = await s.docsNow();
+  const gl = Object.keys(docs).filter(k => k.startsWith('guardians/')).map(k => docs[k]);
+  check(docs['settings/church'].dataVersion === 2 && !Object.keys(docs).some(k => k.startsWith('people/') && /^(Member|Visitor)$/.test(docs[k].category)), 'categories renamed to Partner / Visiting Minister (once)');
+  check(gl.length > 0 && gl.every(l => !l.confirmed) && gl.some(l => l.childId === 'p28' && l.adultId === 'p29'), 'children linked to the adults of every home they live in, to be confirmed');
+  await s.go('home'); check((await s.text()).includes('Confirm the parents and guardians of'), 'Home asks someone to confirm them');
   await finish(s);
 
   /* ---------- Elvanto import ---------- */

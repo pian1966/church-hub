@@ -65,8 +65,10 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | Collection | Holds |
 | --- | --- |
 | `settings` | church name, modules on/off, Information Officer, retention period, privacy notice |
-| `people` | name, contact, family, category, marital status (adults), staff details (leave category, start date, working days), key dates, date of death, child medical notes (special personal information), Elvanto ID |
-| `families` | `name` + `custom`. Shown via `Hub.familyName()`: named after its active adults ("Tim & Clare Jacobs", "Thandi Mokoena & Sipho Dlamini") unless `custom` is true; no "head of household" |
+| `people` | name, contact, household(s), category (Partner, Attender, Visiting Minister, Staff, Former member, Deceased), marital status (adults), staff details (leave category, start date, working days), key dates, date of death, child medical notes (special personal information), Elvanto ID |
+| `families` | households: `name` + `custom`. Shown via `Hub.familyName()`: named after its active adults ("Tim & Clare Jacobs", "Thandi Mokoena & Sipho Dlamini") unless `custom` is true; no "head of household". A person's main household is `familyId`; extra households (children of separated parents) are `householdIds` |
+| `guardians` | the adults responsible for a child, independent of households: { childId, adultId \| name + phone, relationship, canConsent, primary, mayCollect, confirmed } (`js/households.js`) |
+| `noCollect` | people **not allowed to collect** a child (e.g. a court order): { childId, personId \| name, note } – restricted, every view logged |
 | `consents` | per person and purpose: given/withdrawn, date, how, recorded by, guardian for children |
 | `notes` | pastoral notes (restricted) |
 | `teams`, `positions`, `skills` | who can serve where, and how often they'd like to |
@@ -91,12 +93,30 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 
 Leave approval follows Leave Manager: Administrators approve.
 
+## Households and responsible adults
+Modelled on Planning Center (a child can live in several households) and ChurchSuite (responsible adults are separate from
+households). Pure rules in `js/households.js`, tested in `tests/households.test.js`.
+- **Household** = where someone lives (`families`). A child can be in more than one (`householdIds`); People → profile →
+  "Also lives in another household". Search on People finds people by household name too ("search by family").
+- **Parents, guardians and collection** (on a child's profile; Administrators, Pastors and Children's ministry): each link has
+  a relationship (Mother, Father, Parent, Step-parent, Legal guardian, Foster carer, Grandparent, Other relative, Trusted
+  collector) and three ticks: *can give consent* (POPIA s35: a parent or legal guardian), *primary contact*, *may collect*.
+  A collector who isn't in Church Hub is a name + phone. Consent for a child can only be recorded from an adult who can consent.
+  Adults see a "Responsible for" list; members can read only their own links.
+- **Not allowed to collect**: listed on the child's profile with a red bar; viewing it is audit-logged. Adding someone clears
+  their "may collect".
+- Links made automatically (on upgrade, from households, or from Elvanto's Primary/Spouse) start **unconfirmed**; Home shows a
+  to-do until a person checks them, and for children with nobody who can give consent.
+- **Upgrades**: modules may have `upgrade()`, run for Administrators after sign-in. `settings.dataVersion` 2 renamed the
+  categories Member → Partner and Visitor → Visiting Minister and linked existing children to their household adults (unconfirmed).
+  The *Member* access level (role) keeps its name.
+
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,
 and "change spouse to Widowed" for a married spouse in the same family). The person stays on the records as category *Deceased*
 (`deceasedAt`, key dates "Died" / "Funeral"), leaves the directory, and is skipped by the roster engine (not active).
 Administrators then finish it (automatically if they recorded it, otherwise from their to-do list): off future rosters, teams,
-serving groups and away dates; future leave cancelled; sign-in removed. Past serving and leave stay. Pastors get
+serving groups and away dates; future leave cancelled; sign-in removed; their parent/guardian links and collection restrictions removed. Past serving and leave stay. Pastors get
 "Care for the family of …" on their to-do list for 8 weeks. "Recorded by mistake?" undoes it (teams and rosters must be re-added).
 Later phases must leave deceased people out of messages, birthday reminders and anniversaries.
 

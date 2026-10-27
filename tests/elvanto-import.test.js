@@ -29,8 +29,8 @@ ok(pl.added === 11 && pl.updated === 0, 'everyone added – nobody merged, thoug
 ok(pl.families === 2 && pl.sharedEmails === 2, '2 families; 2 shared email addresses reported');
 
 console.log('Categories');
-ok(E.guessCategory('CCH NON Member_Partner') === 'Attender' && E.guessCategory('CCH_OFFICIAL_Member_Partner') === 'Member', 'non-members → Attender, official members → Member');
-ok(E.guessCategory('Visiting Preacher_Guest') === 'Visitor' && E.guessCategory('Legacy') === 'Former member', 'guests → Visitor, legacy → Former member');
+ok(E.guessCategory('CCH NON Member_Partner') === 'Attender' && E.guessCategory('CCH_OFFICIAL_Member_Partner') === 'Partner', 'non-members → Attender, official members/partners → Partner');
+ok(E.guessCategory('Visiting Preacher_Guest') === 'Visiting Minister' && E.guessCategory('Legacy') === 'Former member', 'visiting preachers → Visiting Minister, legacy → Former member');
 
 console.log('Making the people');
 const p = E.toPerson(by('Peter'), null, {}, '', '2026-10-26');
@@ -50,6 +50,13 @@ ok(fix.items.find(x => x.rec.firstName === 'Mia').personId === 'x1' && fix.items
 
 ok(E.plan(recs, [{ id: 'h1', firstName: 'Priya', lastName: 'Naidoo', email: 'priya.own@example.com' }]).items.find(x => x.rec.firstName === 'Priya').personId === 'h1', 'someone added by hand with their own email is matched by name');
 ok(E.plan(recs, [{ id: 'h2', firstName: 'Priya', lastName: 'Naidoo', email: 'x@example.com', elvantoId: 'other' }]).items.find(x => x.rec.firstName === 'Priya').personId === null, 'but not someone already linked to a different Elvanto person');
+
+console.log('Parents from Elvanto families');
+const ids = {}; recs.forEach((r, i) => { ids[r.row] = 'p' + i; });
+const gl = E.guardianLinks(recs, ids), idOf = n => ids[by(n).row];
+ok(gl.filter(l => l.childId === idOf('Mia')).map(l => l.adultId).sort().join() === [idOf('Brian'), idOf('Karen')].sort().join(), 'Mia’s parents: the Primary and the Spouse of her Elvanto family');
+ok(gl.every(l => l.canConsent && l.mayCollect && !l.confirmed), 'they may consent and collect – to be confirmed by a person');
+ok(!gl.some(l => l.childId === idOf('Anna')), 'a grown-up “Child” gets no parents linked');
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll Elvanto import tests passed');
 process.exit(fails ? 1 : 0);

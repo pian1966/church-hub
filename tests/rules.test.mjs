@@ -51,6 +51,9 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('away/L2', { personId: 'p02', from: '2027-01-06', to: '2027-01-06' });
   await set('dsr/d1', { personId: 'p15', kind: 'Access' });
   await set('audit/a1', { action: 'Test', byEmail: 'linda@example.com' });
+  await set('guardians/g1', { childId: 'p12', adultId: 'p14', relationship: 'Father', canConsent: true, primary: true, mayCollect: true, confirmed: true });
+  await set('guardians/g2', { childId: 'p12', adultId: 'p15', relationship: 'Mother', canConsent: true, primary: true, mayCollect: true, confirmed: true });
+  await set('noCollect/n1', { childId: 'p12', personId: '', name: 'Made-up Person', note: 'Court order' });
   await set('roles/robot@example.com', { role: 'robot', uid: 'robot-uid', name: 'Elvanto robot' });
   await set('elvantoSync/L1', { personId: 'p05', name: 'A p05', start: '2027-01-06', end: '2027-01-06', want: 'Unavailable', have: '', haveNote: '', status: 'Waiting', note: '' });
   await set('elvantoSync/L9', { personId: 'p15', name: 'A p15', start: '2027-02-01', end: '2027-02-02', want: 'Unavailable', have: '', haveNote: '', status: 'Done', note: '' });
@@ -198,6 +201,21 @@ await t('staff request leave for themselves as waiting; only Administrators appr
   await can(db.rosters.doc('leaveRequests/L3').update({ status: 'Cancelled', cancelledBy: 'Sipho' }));
   await can(db.admin.doc('leaveRequests/L1').update({ status: 'Approved', decidedBy: 'Linda' }));
   await cannot(db.member.doc('leave/config').set({ types: [] }));
+});
+
+console.log('Parents, guardians and collection');
+await t('responsible adults: Admin, Pastor and Children’s ministry; an adult sees only the links naming them', async () => {
+  for (const r of ['admin', 'pastor', 'kids']) await can(list(db[r].collection('guardians')));
+  await cannot(list(db.rosters.collection('guardians'))); await cannot(list(db.member.collection('guardians')));
+  await can(list(db.member.collection('guardians').where('adultId', '==', 'p14'))); await cannot(read(db.member, 'guardians/g2'));
+  await can(db.kids.doc('guardians/g3').set({ childId: 'p12', adultId: 'p01', relationship: 'Grandparent', canConsent: false, primary: false, mayCollect: true, confirmed: true }));
+  await cannot(db.member.doc('guardians/g4').set({ childId: 'p12', adultId: 'p14', relationship: 'Father', canConsent: true }));
+  await cannot(db.rosters.doc('guardians/g1').update({ mayCollect: false }));
+});
+await t('not allowed to collect: Admin, Pastor and Children’s ministry only – never the parents themselves', async () => {
+  await only('noCollect/n1', ['admin', 'pastor', 'kids']);
+  await can(db.kids.doc('noCollect/n2').set({ childId: 'p12', personId: 'p05', name: '', note: 'x' }));
+  await cannot(db.member.doc('noCollect/n3').set({ childId: 'p12', name: 'x' })); await cannot(list(robotDb.collection('noCollect')));
 });
 
 console.log('Elvanto robot');

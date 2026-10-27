@@ -17,7 +17,7 @@
     var h = '<div class="page-head"><div><h1>Import from Elvanto</h1><p class="lead">Bring your people and families across from Elvanto. Nothing is changed in Elvanto.</p></div></div>' + tabs('elvanto');
     var already = fromElvanto().length;
     if (st.done) {
-      h += '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
+      h += '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.links ? ' ' + st.done.links + ' children linked to their parents – please confirm them (see Home).' : '') + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
       return h;
     }
     if (!st.rows) {
@@ -195,12 +195,12 @@
           'e102,Karen,Fourie,,fourie.family@example.com,083 111 3333,"1 July, 1978",Brian & Karen Fourie,Spouse,Married,Member,No,No\n' +
           'e103,Mia,Fourie,,fourie.family@example.com,,"12 May, 2014",Brian & Karen Fourie,Child,,Member,No,No\n' +
           'e104,Sipho,Mahlangu,Sips,sipho.m@example.com,072 555 1234,4 June,Sipho Mahlangu,,Single,Regular attender,No,No\n' +
-          'e105,Jason,Naidoo,,jason.naidoo@example.com,082 000 1370,,Jason & Priya Naidoo,Primary,Married,Visitor,No,No\n');
+          'e105,Jason,Naidoo,,jason.naidoo@example.com,082 000 1370,,Jason & Priya Naidoo,Primary,Married,Visiting Preacher,No,No\n');
       },
       again: function () { st = { rows: null, head: null, map: {}, fileName: '', done: null, cats: {} }; H.render(); },
       go: function (el) {
         if (!H.confirmBtn(el, 'Click again to import')) return;
-        var r = recs(), pl = E.plan(r, S.list('people')), famIds = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0 };
+        var r = recs(), pl = E.plan(r, S.list('people')), famIds = {}, ids = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0, links: 0 };
         var consent = document.getElementById('im-consent').checked, today = H.today();
         pl.items.forEach(function (x) {
           var o = x.rec, fid = '';
@@ -219,6 +219,11 @@
           if (consent && !PeopleHelpers.hasConsent(p.id, 'Church records')) S.put('consents', { personId: p.id, purpose: 'Church records', given: true, date: today, method: 'Carried over from Elvanto', recordedBy: H.name(H.user()), guardianId: '' });
           if (!PeopleHelpers.hasConsent(p.id, 'Church records')) out.noConsent++;
           if (x.personId) out.updated++; else out.added++;
+          ids[o.row] = p.id;
+        });
+        // Children's parents from Elvanto's family relationships (unconfirmed, so someone checks them)
+        E.guardianLinks(r, ids).forEach(function (l) {
+          if (!S.find('guardians', function (g) { return g.childId === l.childId && g.adultId === l.adultId; }).length) { S.put('guardians', l); out.links++; }
         });
         S.audit('Imported ' + r.length + ' people from Elvanto (' + st.fileName + '): ' + out.added + ' added, ' + out.updated + ' updated', 'people');
         st.done = out; st.rows = null; H.render(); H.toast('Import finished');
@@ -233,6 +238,8 @@
           ['skills', 'blockouts'].forEach(function (c) { S.find(c, function (x) { return x.personId === p.id; }).forEach(function (x) { S.remove(c, x.id); }); });
           S.find('assignments', function (a) { return a.personId === p.id; }).forEach(function (a) { S.remove('assignments', a.id); });
           S.purge(p.id);
+          S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }).forEach(function (l) { S.remove('guardians', l.id); });
+          S.find('noCollect', function (x) { return x.childId === p.id || x.personId === p.id; }).forEach(function (x) { S.remove('noCollect', x.id); });
           S.remove('people', p.id);
         });
         var gone = {}; go.forEach(function (p) { gone[p.id] = 1; });

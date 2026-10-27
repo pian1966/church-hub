@@ -3,12 +3,16 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store;
   var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos', 'Children’s medical notes'];
-  var CATS = ['Member', 'Attender', 'Visitor', 'Staff', 'Former member', 'Deceased'];
+  var CATS = ['Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member', 'Deceased'];
+  var HS = Households;
+  function canChildren() { return H.can('*') || H.can('children'); }       // Administrators, Pastors, Children's ministry
+  function links(childId) { return HS.linksOf(childId, S.list('guardians')); }
+  function linkName(l) { var a = l.adultId ? S.get('people', l.adultId) : null; return a ? H.name(a) : (l.name || 'Someone'); }
   var MARITAL = ['Single', 'Engaged', 'Married', 'Partner', 'Separated', 'Divorced', 'Widowed', 'Not known'];
   var CARE_WEEKS = 8;                         // pastors see "care for the family" on their to-do list this long after a death
   function canRecordDeath() { return H.can('*') || H.can('people.edit'); }
   function deceased(p) { return !!(p && p.deceasedAt); }
-  var state = { q: '', f: 'all', audited: '', statsOpen: true };
+  var state = { q: '', f: 'all', audited: '', statsOpen: true, fq: '', ncAudited: '' };
 
   function canSeeAll() { return H.can('people.view') || H.can('*'); }
   function canBasic() { return canSeeAll() || H.can('people.basic'); }
@@ -18,7 +22,8 @@
   }
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
-  function members(fid) { return S.find('people', function (p) { return p.familyId === fid && p.active !== false; }); }
+  function members(fid) { return S.find('people', function (p) { return HS.inHousehold(p, fid) && p.active !== false; }); }
+  function householdNames(p) { return HS.householdsOf(p).map(function (h) { return H.familyName(S.get('families', h)); }).filter(Boolean); }
   function age(p) { if (!p.birthDate) return ''; var b = LeaveCore.parse(p.birthDate), t = new Date(); var a = t.getFullYear() - b.getFullYear(); if (t < new Date(t.getFullYear(), b.getMonth(), b.getDate())) a--; return a; }
 
   /** Who may this user see in the directory? Members only see people who agreed to be in the church directory. */
@@ -55,7 +60,7 @@
     act.forEach(function (p) { var a = age(p); if (a === '') { noAge++; return; } AGE_BANDS.forEach(function (b, i) { if (a >= b[0] && a <= b[1]) ages[i][1]++; }); });
     var withAge = act.length - noAge;
     // categories, marital status
-    var cats = ['Member', 'Attender', 'Visitor', 'Staff'].map(function (c) { return [c, count(act, function (p) { return p.category === c; })]; });
+    var cats = ['Partner', 'Attender', 'Visiting Minister', 'Staff'].map(function (c) { return [c, count(act, function (p) { return p.category === c; })]; });
     var mar = MARITAL.map(function (m) { return [m, count(adults, function (p) { return p.maritalStatus === m; })]; }).filter(function (r) { return r[1] || r[0] === 'Married' || r[0] === 'Single'; });
     mar.push(['Not recorded', count(adults, function (p) { return !p.maritalStatus; })]);
     // family sizes
@@ -78,7 +83,7 @@
       tile('Added in the last 12 months', newPeople, '') + tile('Left or died (12 months)', left + died, left + ' left · ' + died + ' died') + '</div>' +
       '<div class="glance-grid">' +
       bars('Age groups', ages, withAge, noAge ? noAge + ' ' + (noAge === 1 ? 'person has' : 'people have') + ' no birthday recorded and aren’t counted here.' : '') +
-      bars('Members, attenders, visitors and staff', cats, act.length) +
+      bars('Partners, attenders, visiting ministers and staff', cats, act.length) +
       bars('Marital status (adults)', mar, adults.length) +
       bars('Family size', sizes, fams.length, single ? single + ' adult' + (single === 1 ? ' isn’t' : 's aren’t') + ' linked to a family.' : '') +
       '<section class="panel glance"><h3>Consent (POPIA)</h3><div class="sbars">' + cons.map(function (c) {
@@ -92,16 +97,16 @@
   /* ---------- list ---------- */
   function renderList() {
     var list = visiblePeople(), q = state.q.trim().toLowerCase();
-    var filters = [['all', 'Everyone'], ['Member', 'Members'], ['Attender', 'Attenders'], ['Visitor', 'Visitors'], ['Staff', 'Staff'], ['child', 'Children']];
+    var filters = [['all', 'Everyone'], ['Partner', 'Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
     if (!canBasic()) filters = [['all', 'Directory']];
     var shown = list.filter(function (p) {
       if (state.f === 'child' ? p.familyRole !== 'child' : (state.f !== 'all' && p.category !== state.f)) return false;
-      return !q || (H.name(p) + ' ' + p.email + ' ' + (p.mobile || '')).toLowerCase().indexOf(q) >= 0;
+      return !q || (H.name(p) + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
-    return '<div class="page-head"><div><h1>People</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: members, visitors, staff and children.' : 'Church members who agreed to be in the directory.') + '</p></div>' +
+    return '<div class="page-head"><div><h1>People</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : 'People who agreed to be in the church directory.') + '</p></div>' +
       '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Families</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">My details</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
-      '<div class="row" style="margin-bottom:14px"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search people</span><input id="pp-q" type="search" placeholder="Search by name, email or phone" value="' + esc(state.q) + '"></label>' +
+      '<div class="row" style="margin-bottom:14px"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search people</span><input id="pp-q" type="search" placeholder="Search by name, family, email or phone" value="' + esc(state.q) + '"></label>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="Show">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' : '') + '</div>' +
       '<p class="muted small" id="pp-count">' + shown.length + ' ' + (shown.length === 1 ? 'person' : 'people') + '</p>' +
       (shown.length ? '<div class="list">' + shown.map(function (p) {
@@ -109,7 +114,7 @@
         if (p.familyRole === 'child') tags += '<span class="tag" style="--c:#0E7490">Child' + (age(p) !== '' ? ', ' + age(p) : '') + '</span>';
         else tags += '<span class="tag grey">' + esc(p.staff ? p.staff.category : p.category) + '</span>';
         if (canSeeAll() && !hasConsent(p.id, 'Church records')) tags += ' <span class="tag bad">No consent</span>';
-        return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc([fam ? H.familyName(fam) : '', canBasic() || isMe(p) ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
+        return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', canBasic() || isMe(p) ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
       }).join('') + '</div>' : '<p class="empty">No one matches. Try another name, or clear the search.</p>');
   }
 
@@ -140,23 +145,41 @@
     }
 
     html += '<div class="grid2">';
-    // Contact
-    html += '<section class="panel"><h2>Contact and details</h2><dl class="kv">' +
+    // Contact (left out when there's nothing this person may see, e.g. a young child for Children's ministry)
+    var contact = '<section class="panel"><h2>Contact and details</h2><dl class="kv">' +
       (p.preferredName ? '<dt>Known as</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (!child ? '<dt>Email</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>' : '<span class="muted">—</span>') + '</dd>' +
         '<dt>Mobile</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">—</span>') + '</dd>' : '') +
-      (full && p.birthDate ? '<dt>Birthday</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>' : '') +
+      ((full || (child && canChildren())) && p.birthDate ? '<dt>Birthday</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>Birthday</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.MON[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">(year not known)</span></dd>' : '') +
       (full && !child ? '<dt>Marital status</dt><dd>' + (p.maritalStatus ? esc(p.maritalStatus) : '<span class="muted">Not recorded</span>') + '</dd>' : '') +
       (full ? (p.keyDates || []).map(function (k) { return '<dt>' + esc(k.label) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>'; }).join('') : '') +
       (p.staff && full ? '<dt>Staff</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', since ' + esc(H.fmt(p.staff.start, true)) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">Leave</a></dd>' : '') +
       (H.can('*') ? '<dt>App access</dt><dd>' + esc((H.ROLES[p.appRole] || H.ROLES.member).label) + '</dd>' : '') +
       '</dl></section>';
-    // Family
-    if (fam && (canBasic() || me)) {
-      html += '<section class="panel"><h2>' + esc(H.familyName(fam)) + '</h2><div class="list">' + members(fam.id).map(function (m) {
-        return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (age(m) !== '' ? ', ' + age(m) : '') : 'Adult') + '</small></span></a>';
-      }).join('') + '</div>' + (H.can('rosters.manage') || H.can('*') ? '<p class="hint">Want them to serve together? <a href="#/rosters/together">Set up a serving group</a>.</p>' : '') + '</section>';
+    if (/<dt>/.test(contact)) html += contact;
+    // Households (where they live) – a child can live in more than one
+    var hs = HS.householdsOf(p), canEditHomes = H.can('*') || H.can('people.edit');
+    if ((canBasic() || me) && (hs.length || canEditHomes)) {
+      html += '<section class="panel"><h2>' + (hs.length > 1 ? 'Lives in ' + hs.length + ' households' : 'Household') + '</h2>' + hs.map(function (hid, i) {
+        var f = S.get('families', hid); if (!f) return '';
+        return '<div style="margin-top:' + (i ? 14 : 0) + 'px"><div class="row"><b class="grow">' + esc(H.familyName(f)) + (i === 0 && hs.length > 1 ? ' <span class="muted small">(main)</span>' : '') + '</b>' +
+          (i > 0 && canEditHomes ? '<button class="btn small" data-act="people:unhome" data-id="' + p.id + '" data-f="' + hid + '">Remove</button>' : '') + '</div><div class="list" style="margin-top:6px">' +
+          members(hid).filter(function (m) { return m.id !== p.id; }).map(function (m) {
+            return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (age(m) !== '' ? ', ' + age(m) : '') : 'Adult') + '</small></span></a>';
+          }).join('') + '</div></div>';
+      }).join('') + (!hs.length ? '<p class="muted" style="margin-top:0">Not in a household yet – choose one under Edit details.</p>' : '') +
+        (canEditHomes && hs.length ? '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:addhome" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 16) + 'Also lives in another household</button></div>' : '') +
+        (H.can('rosters.manage') || H.can('*') ? '<p class="hint">Want them to serve together? <a href="#/rosters/together">Set up a serving group</a>.</p>' : '') + '</section>';
+    }
+    // Adults responsible for a child, and who may not collect them (Administrators, Pastors, Children's ministry)
+    if (child && canChildren()) html += guardiansPanel(p);
+    if (!child && canChildren()) {
+      var resp = HS.childrenOf(p.id, S.list('guardians'));
+      if (resp.length) html += '<section class="panel"><h2>Responsible for</h2><div class="list">' + resp.map(function (l) {
+        var c = S.get('people', l.childId); if (!c) return '';
+        return '<a class="item" href="#/people/p/' + c.id + '">' + H.avatar(c, 32) + '<span class="grow"><b>' + esc(H.name(c)) + '</b><small>' + esc(l.relationship + (l.canConsent ? ' · can give consent' : '') + (l.mayCollect ? ' · may collect' : '')) + '</small></span></a>';
+      }).join('') + '</div></section>';
     }
     // Consent (POPIA)
     if (full) {
@@ -194,22 +217,91 @@
     return html;
   }
 
+  /* ---------- parents, guardians and collection (children) ---------- */
+  function guardiansPanel(p) {
+    var ls = links(p.id).sort(function (a, b) { return (b.canConsent - a.canConsent) || (b.primary - a.primary); });
+    var nc = S.find('noCollect', function (x) { return x.childId === p.id; });
+    if (nc.length && state.ncAudited !== p.id) { state.ncAudited = p.id; S.audit('Viewed collection restrictions for ' + H.name(p), 'people/' + p.id); }
+    var tag = function (on, text) { return on ? ' <span class="tag ok">' + text + '</span>' : ''; };
+    return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">Parents, guardians and collection</h2>' + H.icon(H.ICON.lock, 16) + '</div>' +
+      '<p class="hint" style="margin:4px 0 10px">Who is responsible for ' + esc(p.firstName) + ', who gives consent, who hears from the church, and who may collect ' + esc(p.firstName) + '.</p>' +
+      (ls.length ? '<div class="list">' + ls.map(function (l) {
+        var a = l.adultId ? S.get('people', l.adultId) : null;
+        return '<div class="item" style="flex-wrap:wrap">' + (a ? H.avatar(a, 32) : '') + '<span class="grow" style="min-width:160px"><b>' + (a ? '<a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a>' : esc(l.name || '')) + '</b><small>' + esc(l.relationship + (a ? '' : (l.phone ? ' · ' + l.phone : '') + ' · not in Church Hub')) + '</small>' +
+          '<span>' + tag(l.canConsent, 'Can give consent') + tag(l.primary, 'Primary contact') + tag(l.mayCollect, 'May collect') + (l.confirmed ? '' : ' <span class="tag warn">Please confirm</span>') + '</span></span>' +
+          '<button class="btn small" data-act="people:link" data-child="' + p.id + '" data-id="' + l.id + '">Edit</button></div>';
+      }).join('') + '</div>' : '<p class="note warn" style="margin:0">No parent or guardian recorded yet.</p>') +
+      (ls.some(function (l) { return !l.confirmed; }) ? '<p class="hint">These were linked automatically from the household. Check each one and click Edit → Save to confirm.</p>' : '') +
+      '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:link" data-child="' + p.id + '">' + H.icon(H.ICON.plus, 16) + 'Add a parent, guardian or collector</button></div>' +
+      '<h3 style="margin:18px 0 6px;font-size:15px;color:var(--bad)">Not allowed to collect</h3>' +
+      (nc.length ? '<div class="list">' + nc.map(function (x) {
+        var who = x.personId ? S.get('people', x.personId) : null;
+        return '<div class="item" style="border-left:4px solid var(--bad)"><span class="grow"><b>' + esc(who ? H.name(who) : x.name) + '</b><small>' + esc(x.note || '') + '</small></span><button class="btn small" data-act="people:ncdel" data-id="' + x.id + '">Remove</button></div>';
+      }).join('') + '</div>' : '<p class="muted" style="margin:0">No one.</p>') +
+      '<div class="btns" style="margin-top:8px"><button class="btn small" data-act="people:nc" data-child="' + p.id + '">Add someone who may not collect</button></div>' +
+      '<p class="hint">Only Administrators, Pastors and Children’s ministry see this. Viewing a collection restriction is logged.</p></section>';
+  }
+  function adultOptions(sel, exceptId) {
+    return S.find('people', function (x) { return x.familyRole !== 'child' && x.active !== false && x.id !== exceptId; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); })
+      .map(function (x) { return '<option value="' + x.id + '"' + (x.id === sel ? ' selected' : '') + '>' + esc(H.name(x)) + '</option>'; }).join('');
+  }
+  function linkDialog(childId, linkId) {
+    var c = S.get('people', childId), l = linkId ? S.get('guardians', linkId) : null, isNew = !l;
+    l = l || Object.assign({ childId: childId, adultId: '', name: '', phone: '', relationship: 'Mother' }, HS.defaultsFor('Mother'));
+    var outside = !l.adultId && !!l.name;
+    H.modal(H.dialogHead(isNew ? 'Add a parent, guardian or collector' : 'Edit ' + linkName(l), 'For ' + H.name(c)) + '<div class="dlg-body">' +
+      '<label class="field">Who<select id="gl-who"><option value="">Choose…</option><option value="__out"' + (outside ? ' selected' : '') + '>Someone not in Church Hub…</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
+      '<div id="gl-out" class="two"' + (outside ? '' : ' hidden') + '><label class="field">Name<input id="gl-name" value="' + esc(l.name || '') + '"></label><label class="field">Phone<input id="gl-phone" type="tel" value="' + esc(l.phone || '') + '"></label></div>' +
+      '<label class="field">Relationship to ' + esc(c.firstName) + '<select id="gl-rel">' + HS.RELATIONSHIPS.map(function (r) { return '<option' + (l.relationship === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
+      '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>Can give consent</b><br><span class="muted small">A parent or legal guardian (POPIA). Not step-parents, grandparents or collectors unless they are legal guardians.</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="gl-primary"' + (l.primary ? ' checked' : '') + '><span><b>Primary contact</b><br><span class="muted small">Gets messages from the church about ' + esc(c.firstName) + '.</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="gl-collect"' + (l.mayCollect ? ' checked' : '') + '><span><b>May collect ' + esc(c.firstName) + '</b><br><span class="muted small">Can sign ' + esc(c.firstName) + ' out of children’s church.</span></span></label>' +
+      '<p id="gl-err" class="note bad" hidden></p></div><div class="dlg-foot">' + (isNew ? '' : '<button class="btn" style="margin-right:auto" data-act="people:linkdel" data-id="' + l.id + '">Remove</button>') +
+      '<button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:linksave" data-child="' + childId + '" data-id="' + (l.id || '') + '">' + (isNew ? 'Add' : 'Save') + '</button></div>', 'Parent or guardian');
+    var who = document.getElementById('gl-who'), rel = document.getElementById('gl-rel');
+    who.addEventListener('change', function () { document.getElementById('gl-out').hidden = who.value !== '__out'; });
+    rel.addEventListener('change', function () { var d = HS.defaultsFor(rel.value); document.getElementById('gl-consent').checked = d.canConsent; document.getElementById('gl-primary').checked = d.primary; document.getElementById('gl-collect').checked = d.mayCollect; });
+  }
+  function ncDialog(childId) {
+    var c = S.get('people', childId);
+    H.modal(H.dialogHead('Not allowed to collect ' + c.firstName, 'Children’s ministry will see an alert. Keep the note short and factual.') + '<div class="dlg-body">' +
+      '<label class="field">Who<select id="nc-who"><option value="__out">Someone not in Church Hub…</option>' + adultOptions('', childId) + '</select></label>' +
+      '<label class="field" id="nc-name-f">Name<input id="nc-name"></label>' +
+      '<label class="field">Note <small>(e.g. “Court order – call Karen”)</small><input id="nc-note"></label><p id="nc-err" class="note bad" hidden></p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary danger" data-act="people:ncsave" data-child="' + childId + '">Save</button></div>', 'Not allowed to collect');
+    var who = document.getElementById('nc-who');
+    who.addEventListener('change', function () { document.getElementById('nc-name-f').hidden = who.value !== '__out'; });
+  }
+  function homeDialog(pid) {
+    var p = S.get('people', pid), hs = HS.householdsOf(p);
+    var fams = S.list('families').filter(function (f) { return hs.indexOf(f.id) < 0; }).sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); });
+    H.modal(H.dialogHead('Another household for ' + p.firstName, 'For example, the other parent’s home.') + '<div class="dlg-body"><label class="field">Household<select id="hm-f">' +
+      fams.map(function (f) { return '<option value="' + f.id + '">' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savehome" data-id="' + pid + '">Add</button></div>', 'Another household');
+  }
+
   /* ---------- families ---------- */
   function renderFamilies() {
     var surname = function (f) { var n = H.familyName(f).split(' '); return n[n.length - 1] + ' ' + n.join(' '); };
-    var fams = S.list('families').slice().sort(function (a, b) { return surname(a).localeCompare(surname(b)); });
-    return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Families</h1><p class="lead">Households linked together, named after their adults (e.g. “Tim & Clare Jacobs”). Children are always linked to a parent or guardian, who gives consent for them.</p></div>' +
+    var fq = state.fq.trim().toLowerCase();
+    var fams = S.list('families').filter(function (f) {
+      return !fq || (H.familyName(f) + ' ' + members(f.id).map(function (m) { return H.name(m); }).join(' ')).toLowerCase().indexOf(fq) >= 0;
+    }).sort(function (a, b) { return surname(a).localeCompare(surname(b)); });
+    return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Families</h1><p class="lead">Households – who lives together – named after their adults (e.g. “Tim & Clare Jacobs”). A child can live in more than one. Who is responsible for a child is recorded on the child’s profile.</p></div>' +
       '<button class="btn primary" data-act="people:newfam">' + H.icon(H.ICON.plus, 18) + 'New family</button></div>' +
+      '<label class="search" style="margin-bottom:14px">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search families</span><input id="fm-q" type="search" placeholder="Search by family or anyone in it" value="' + esc(state.fq) + '"></label>' +
+      '<p class="muted small">' + fams.length + ' ' + (fams.length === 1 ? 'family' : 'families') + '</p>' +
+      (fams.length ? '' : '<p class="empty">No family matches. Try another name.</p>') +
       '<div class="grid2">' + fams.map(function (f) {
         var ms = members(f.id);
         return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + esc(H.familyName(f)) + '</h2><button class="btn small" data-act="people:renamefam" data-id="' + f.id + '">Rename</button></div>' +
-          (f.custom ? '<p class="hint" style="margin:2px 0 8px">Own name</p>' : '<p class="hint" style="margin:2px 0 8px">Named after its adults</p>') + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this family yet.</p>') + '</section>';
+          (f.custom ? '<p class="hint" style="margin:2px 0 8px">Own name</p>' : '<p class="hint" style="margin:2px 0 8px">Named after its adults</p>') + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (HS.householdsOf(m).length > 1 ? ' · lives in ' + HS.householdsOf(m).length + ' households' : '') : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this family yet.</p>') + '</section>';
       }).join('') + '</div>';
   }
 
   /* ---------- edit dialogs ---------- */
   function editDialog(p) {
-    var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: 'Visitor', familyId: '', familyRole: 'adult', appRole: Store.defaultRole() };
+    var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: 'Attender', familyId: '', familyRole: 'adult', appRole: Store.defaultRole() };
     var admin = H.can('*'), me = isMe(p);
     var fams = S.list('families');
     var html = H.dialogHead(isNew ? 'Add a person' : 'Edit ' + H.name(p), isNew ? 'Only add what the church needs. Ask for consent when you add someone.' : '') +
@@ -254,7 +346,11 @@
 
   function consentDialog(p) {
     var child = p.familyRole === 'child', me = isMe(p);
-    var guardians = child ? members(p.familyId).filter(function (m) { return m.familyRole === 'adult'; }) : [];
+    var guardians = child ? HS.consentAdults(p.id, S.list('guardians')).map(function (l) { return S.get('people', l.adultId); }).filter(Boolean) : [];
+    if (child && !me && !guardians.length) {
+      H.modal(H.dialogHead('Consent for ' + H.name(p)) + '<div class="dlg-body"><p class="note warn" style="margin:0">No parent or guardian who can give consent is recorded for ' + esc(p.firstName) + '. Under POPIA a parent or legal guardian gives consent for a child.</p><p>Add them under <b>Parents, guardians and collection</b> on ' + esc(p.firstName) + '’s profile, then record consent.</p></div><div class="dlg-foot"><button class="btn primary" data-act="hub:close">OK</button></div>', 'Consent');
+      return;
+    }
     var purposes = PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; });
     H.modal(H.dialogHead(me ? 'My privacy choices' : 'Consent for ' + H.name(p), 'Tick what ' + (me ? 'you agree' : 'they agree') + ' to. Unticking withdraws consent from today.') +
       '<div class="dlg-body">' + purposes.map(function (pur, i) {
@@ -263,7 +359,7 @@
           'Church directory': 'Name and phone visible to other members.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur]) + '</span></span></label>';
       }).join('') +
       (!me ? '<div class="two" style="margin-top:8px"><label class="field">How it was given<select id="cf-method"><option>Paper connect card</option><option>Online form</option><option>In person (verbal)</option><option>Email</option></select></label>' +
-        (child ? '<label class="field">Given by (parent/guardian)<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
+        (child ? '<label class="field">Given by (parent or guardian)<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
       '<p class="hint">' + esc(Store.settings().privacyNotice) + '</p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:saveconsent" data-id="' + p.id + '">Save</button></div>', 'Consent');
   }
@@ -284,6 +380,8 @@
     var lv = S.leave(), cancelled = 0;
     if (lv) lv.requests.forEach(function (r) { if (r.staffId === id && r.end >= d && (r.status === 'Pending' || r.status === 'Approved') && !r.synthetic) { r.status = 'Cancelled'; r.cancelledBy = H.name(H.user()); cancelled++; } });
     if (cancelled) S.saveLeave();
+    S.find('guardians', function (l) { return l.adultId === id; }).forEach(function (l) { S.remove('guardians', l.id); });
+    S.find('noCollect', function (x) { return x.personId === id; }).forEach(function (x) { S.remove('noCollect', x.id); });
     p = JSON.parse(JSON.stringify(p)); p.appRole = 'none'; p.deathTidied = H.today();
     S.put('people', p, 'Took ' + H.name(p) + ' off rosters (' + n + ' turns), teams and sign-in after their death');
   }
@@ -293,7 +391,8 @@
     var lv = Store.leave();
     var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (POPIA section 23).',
       restricted: H.can('notes') && H.can('medical') ? '' : 'Pastoral notes and children’s medical notes are kept separately and only Pastors / Children’s ministry can read them. Ask them to add these if the request covers them.',
-      person: p, family: familyOf(p), consents: pick('consents'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts') },
+      person: p, family: familyOf(p), households: HS.householdsOf(p).map(function (h) { return S.get('families', h); }),
+      responsibleAdults: S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }), consents: pick('consents'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts') },
       leave: lv ? lv.requests.filter(function (r) { return r.staffId === p.id; }) : [], auditEntries: S.find('audit', function (a) { return a.target === 'people/' + p.id; }) };
     S.audit('Exported all data held about ' + H.name(p), 'people/' + p.id);
     H.download('church-hub-' + (p.firstName + '-' + p.lastName).toLowerCase().replace(/\W+/g, '-') + '.json', JSON.stringify(data, null, 2));
@@ -304,10 +403,16 @@
     id: 'people', name: 'People', desc: 'Directory, families and consent', icon: H.ICON.people, tint: '#7C3AED',
     stat: function () { return canBasic() ? S.find('people', function (p) { return p.active !== false; }).length + ' people · ' + S.list('families').length + ' families' : 'Church directory'; },
     todos: function (u) {
-      if (!H.can('*') && !H.can('people.view')) return [];
-      var out = [], missing = S.find('people', function (p) { return p.active !== false && !hasConsent(p.id, 'Church records'); });
+      if (!H.can('*') && !H.can('people.view') && !canChildren()) return [];
+      var all = H.can('*') || H.can('people.view');
+      var out = [], missing = all ? S.find('people', function (p) { return p.active !== false && !hasConsent(p.id, 'Church records'); }) : [];
       if (missing.length) out.push({ text: missing.length + ' ' + (missing.length === 1 ? 'person has' : 'people have') + ' no recorded consent', href: '#/people/p/' + missing[0].id, tag: 'POPIA' });
-      var noMarital = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; });
+      if (canChildren()) {
+        var nd = HS.needs(S.list('people'), S.list('guardians'));
+        if (nd.noConsenter.length) out.push({ text: nd.noConsenter.length + ' ' + (nd.noConsenter.length === 1 ? 'child has' : 'children have') + ' no parent or guardian who can give consent', href: '#/people/p/' + nd.noConsenter[0].id, tag: 'Children' });
+        if (nd.unconfirmed.length) out.push({ text: 'Confirm the parents and guardians of ' + nd.unconfirmed.length + ' ' + (nd.unconfirmed.length === 1 ? 'child' : 'children'), href: '#/people/p/' + nd.unconfirmed[0].id, tag: 'Children' });
+      }
+      var noMarital = all ? S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; }) : [];
       if (noMarital.length) out.push({ text: noMarital.length + ' adult' + (noMarital.length === 1 ? ' has' : 's have') + ' no marital status', href: '#/people/p/' + noMarital[0].id });
       var since = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), -7 * CARE_WEEKS));
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
@@ -318,12 +423,23 @@
       });
       return out;
     },
+    /** Once, when an Administrator signs in: new category names, and children linked to their household's adults (to confirm). */
+    upgrade: function () {
+      var st = S.settings(); if (!st || (st.dataVersion || 1) >= 2) return;
+      var renamed = 0, linked = 0, MAP = { Member: 'Partner', Visitor: 'Visiting Minister' };
+      S.list('people').slice().forEach(function (p) { if (MAP[p.category]) { p = JSON.parse(JSON.stringify(p)); p.category = MAP[p.category]; S.put('people', p); renamed++; } });
+      HS.suggestedLinks(S.list('people'), S.list('guardians')).forEach(function (l) { S.put('guardians', l); linked++; });
+      S.setSettings({ dataVersion: 2 }, 'Upgraded people: ' + renamed + ' renamed to Partner / Visiting Minister; ' + linked + ' parent/guardian links made from households (to confirm)');
+      if (linked) setTimeout(function () { H.toast('Children are now linked to the adults in their household – please confirm them (see Home)'); }, 400);
+    },
     render: function (p) {
       if (p[0] === 'p') return renderPerson(p[1]);
       if (p[0] === 'families') return renderFamilies();
       return renderList();
     },
     after: function () {
+      var fq = document.getElementById('fm-q');
+      if (fq) fq.addEventListener('input', function () { state.fq = fq.value; var pos = fq.selectionStart; H.render(); var n = document.getElementById('fm-q'); n.focus(); n.setSelectionRange(pos, pos); });
       var st = document.getElementById('pp-stats');
       if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
       var q = document.getElementById('pp-q');
@@ -362,7 +478,7 @@
             p.category = 'Staff';
           } else if (p.staff) {
             delete p.staff;
-            if (p.category === 'Staff') p.category = 'Member';
+            if (p.category === 'Staff') p.category = 'Partner';
           }
         }
         if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = 'To give someone access to Church Hub, add their email address – that’s how they sign in.'; err.hidden = false; return; }
@@ -417,10 +533,55 @@
       undodeath: function (el) {
         if (!H.confirmBtn(el, 'Click again: undo the death record')) return;
         var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id)));
-        p.active = true; p.category = p.staff ? 'Staff' : 'Member'; delete p.deceasedAt; delete p.deathTidied;
+        p.active = true; p.category = p.staff ? 'Staff' : 'Partner'; delete p.deceasedAt; delete p.deathTidied;
         p.keyDates = (p.keyDates || []).filter(function (k) { return k.label !== 'Died' && k.label !== 'Funeral'; });
         S.put('people', p, 'Undid the death record of ' + H.name(p));
         H.render(); H.toast('Undone. Give them app access, teams and roster turns again if needed.');
+      },
+      addhome: function (el) { homeDialog(el.dataset.id); },
+      savehome: function (el) {
+        var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id))), f = document.getElementById('hm-f').value; if (!f) return;
+        p.householdIds = (p.householdIds || []).concat([f]);
+        S.put('people', p, H.name(p) + ' also lives in ' + H.familyName(S.get('families', f))); H.closeModal(); H.render(); H.toast('Added');
+      },
+      unhome: function (el) {
+        if (!H.confirmBtn(el, 'Click again to remove')) return;
+        var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id)));
+        p.householdIds = (p.householdIds || []).filter(function (h) { return h !== el.dataset.f; });
+        S.put('people', p, H.name(p) + ' no longer lives in another household'); H.render();
+      },
+      link: function (el) { linkDialog(el.dataset.child, el.dataset.id); },
+      linksave: function (el) {
+        var who = document.getElementById('gl-who').value, err = document.getElementById('gl-err'), name = document.getElementById('gl-name').value.trim();
+        if (!who || (who === '__out' && !name)) { err.textContent = 'Choose the person, or type the name of someone not in Church Hub.'; err.hidden = false; return; }
+        var childId = el.dataset.child, id = el.dataset.id;
+        if (who !== '__out' && links(childId).some(function (l) { return l.adultId === who && l.id !== id; })) { err.textContent = 'That person is already listed for this child.'; err.hidden = false; return; }
+        var l = id ? JSON.parse(JSON.stringify(S.get('guardians', id))) : { childId: childId };
+        l.adultId = who === '__out' ? '' : who; l.name = who === '__out' ? name : ''; l.phone = who === '__out' ? document.getElementById('gl-phone').value.trim() : '';
+        l.relationship = document.getElementById('gl-rel').value; l.canConsent = document.getElementById('gl-consent').checked;
+        l.primary = document.getElementById('gl-primary').checked; l.mayCollect = document.getElementById('gl-collect').checked; l.confirmed = true;
+        S.put('guardians', l, (id ? 'Updated ' : 'Added ') + l.relationship.toLowerCase() + ' of ' + H.name(S.get('people', childId)));
+        H.closeModal(); H.render(); H.toast('Saved');
+      },
+      linkdel: function (el) {
+        if (!H.confirmBtn(el, 'Click again to remove')) return;
+        var l = S.get('guardians', el.dataset.id);
+        S.remove('guardians', l.id, 'Removed ' + linkName(l) + ' as ' + l.relationship.toLowerCase() + ' of ' + H.name(S.get('people', l.childId))); H.closeModal(); H.render();
+      },
+      nc: function (el) { ncDialog(el.dataset.child); },
+      ncsave: function (el) {
+        var who = document.getElementById('nc-who').value, name = document.getElementById('nc-name').value.trim(), note = document.getElementById('nc-note').value.trim(), err = document.getElementById('nc-err');
+        if (who === '__out' && !name) { err.textContent = 'Type their name, or choose them from the list.'; err.hidden = false; return; }
+        var childId = el.dataset.child;
+        S.put('noCollect', { childId: childId, personId: who === '__out' ? '' : who, name: who === '__out' ? name : '', note: note }, 'Added a collection restriction for ' + H.name(S.get('people', childId)));
+        // Someone who may not collect can't also be listed as allowed to collect
+        if (who !== '__out') links(childId).filter(function (l) { return l.adultId === who && l.mayCollect; }).forEach(function (l) { l = JSON.parse(JSON.stringify(l)); l.mayCollect = false; S.put('guardians', l); });
+        H.closeModal(); H.render(); H.toast('Saved – Children’s ministry will see an alert');
+      },
+      ncdel: function (el) {
+        if (!H.confirmBtn(el, 'Click again to remove')) return;
+        var x = S.get('noCollect', el.dataset.id);
+        S.remove('noCollect', x.id, 'Removed a collection restriction for ' + H.name(S.get('people', x.childId))); H.render();
       },
       medical: function (el) {
         var p = S.get('people', el.dataset.id), m = p.medical || {};

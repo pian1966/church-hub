@@ -18,7 +18,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
 
@@ -122,7 +122,7 @@ var Store = (function () {
     var SDK = ['app', 'auth', 'firestore'].map(function (m) { return 'https://www.gstatic.com/firebasejs/' + VERSION + '/firebase-' + m + '-compat.js'; });
     var EMAIL_KEY = 'church_hub_signin_email';
     // Fields that live in people/{id}; everything else (except medical) goes to details/{id}.
-    var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
+    var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
       'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt'];
     var DIRECTORY = 'Church directory';
     var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false;
@@ -253,6 +253,9 @@ var Store = (function () {
         }
       }
       if (r === 'kids') add('medical', coll('medical'));
+      // Responsible adults and collection restrictions: Administrators, Pastors, Children's ministry; others only links to themselves
+      if (is('admin', 'pastor', 'kids')) { add('guardians', coll('guardians')); add('noCollect', coll('noCollect')); }
+      else add('guardians', fs.collection('guardians').where('adultId', '==', me));
       if (r === 'pastor') add('notes', coll('notes'));
       if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); }
       else add('elvantoSync', own('elvantoSync'));
@@ -321,7 +324,7 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect'].forEach(function (c) { db[c] = arr(c); });
       var cons = merged('consents', 'consentsMe', 'consentsMed', 'consentsPhotos');
       db.consents = Object.keys(cons).map(function (id) { var o = copy(cons[id]); o.id = id; return o; });
       db.notes = [];

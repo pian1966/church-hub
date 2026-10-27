@@ -83,6 +83,8 @@ var Hub = (function () {
 
   /* ---------- modules ---------- */
   function register(m) { modules.push(m); }
+  /** One-off data upgrades (module.upgrade), run when an Administrator signs in. */
+  function runUpgrades() { if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
   function enabled() {
     var on = (Store.settings().modules || {});
     return modules.filter(function (m) { return on[m.id] !== false && (!m.roles || m.roles.indexOf(user.appRole) >= 0 || can('*')); });
@@ -181,6 +183,7 @@ var Hub = (function () {
     if (st.stage === 'ready') {
       user = st.person; Store.setUser(user);
       Store.audit('Signed in', 'people/' + user.id);
+      runUpgrades();
       if (!location.hash || location.hash === '#') location.hash = '#/home';
       render();
     } else { user = null; Store.setUser(null); renderLive(); }
@@ -232,7 +235,7 @@ var Hub = (function () {
 
   /* ---------- events ---------- */
   var hubActions = {
-    signin: function (el) { var p = Store.get('people', el.dataset.id); user = p; Store.setUser(p); try { sessionStorage.setItem('hub_user', p.id); } catch (e) {} Store.audit('Signed in (demo)', 'people/' + p.id); go('home'); render(); },
+    signin: function (el) { var p = Store.get('people', el.dataset.id); user = p; Store.setUser(p); try { sessionStorage.setItem('hub_user', p.id); } catch (e) {} Store.audit('Signed in (demo)', 'people/' + p.id); runUpgrades(); go('home'); render(); },
     signinany: function () { hubActions.signin({ dataset: { id: document.getElementById('si-any').value } }); },
     signout: function () {
       if (user) Store.audit('Signed out', 'people/' + user.id);
@@ -321,6 +324,7 @@ var Hub = (function () {
     }
     Store.load(makeSampleData);
     try { var id = sessionStorage.getItem('hub_user'); if (id) { user = Store.get('people', id); Store.setUser(user); } } catch (e) {}
+    if (user) runUpgrades();
     render();
   }
 

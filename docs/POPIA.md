@@ -29,6 +29,16 @@ This is a design checklist, not legal advice – the church's Information Office
   leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
   died") so the church can decide when to delete their details.
 
+## Children: who gives consent and who may collect
+- POPIA s35 needs consent for a child from a "competent person" – a parent or legal guardian. Church Hub records, per child,
+  which adults **can give consent**; consent for a child can only be recorded from one of them. Step-parents, grandparents and
+  collectors can't, unless they are legal guardians.
+- **Not allowed to collect** entries (e.g. a court order) can reveal a family's private circumstances. Only Administrators,
+  Pastors and Children's ministry can see them (database rules), and every view is in the audit log. Keep the note short and
+  factual ("court order – call the mother"); never store the court papers.
+- Members can see which children they are linked to, nothing about other adults' links.
+- Links made automatically are marked unconfirmed until someone checks them with the family.
+
 ## Approved leave in Elvanto
 When switched on, the name and dates of approved leave (never the kind of leave or the reason) go to Elvanto's Unavailable
 Volunteers list, as Leave Manager did. The robot that does it runs on GitHub's computers (outside South Africa) for a few

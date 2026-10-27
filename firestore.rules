@@ -73,6 +73,16 @@ service cloud.firestore {
       allow read, create, update: if isRole(['pastor']);
       allow delete: if isRole(['pastor', 'admin']);
     }
+    // Adults responsible for a child (parents, guardians, carers, trusted collectors): who may consent, gets messages, may collect.
+    // Administrators, Pastors and Children's ministry manage them; an adult may see the links that name them.
+    match /guardians/{id} {
+      allow read: if isRole(['admin', 'pastor', 'kids']) || mine(resource.data.adultId);
+      allow write: if isRole(['admin', 'pastor', 'kids']);
+    }
+    // Not allowed to collect a child (e.g. a court order): restricted, views are logged by the app.
+    match /noCollect/{id} {
+      allow read, write: if isRole(['admin', 'pastor', 'kids']);
+    }
     // Church directory: name and phone of adults who agreed to be listed. Everyone signed in can read it.
     match /directory/{id} {
       allow read: if anyone();

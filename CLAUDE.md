@@ -6,6 +6,7 @@
 - Rostering rules live in `js/roster.js` and must stay pure and tested: run `node tests/roster.test.js` before committing.
   The Leave Manager import (`js/leave-import.js`) and Elvanto import (`js/elvanto-import.js`) likewise: `node tests/leave-import.test.js`,
   `node tests/elvanto-import.test.js`. Test data is made up (`tests/fixtures`); never add a real export to the repository.
+- Households and guardians rules: `js/households.js` (`node tests/households.test.js`).
 - Elvanto updates for approved leave: `js/elvanto-sync.js` (`node tests/elvanto-sync.test.js`) and the robot `robot/robot.js`
   (`node tests/robot.test.js`). The robot's log is public: never print names, dates or emails.
 - Who sees what is enforced by `firestore.rules`. Changing access means changing, together: `firestore.rules`, `plan()` in `js/store.js`,

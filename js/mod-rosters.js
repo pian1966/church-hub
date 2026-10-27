@@ -129,6 +129,7 @@
   /* ---------- teams ---------- */
   function renderTeams() {
     var html = head('Teams', 'Who can serve in each position, and how often they’d like to.', '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + 'New team</button>') + tabs('teams');
+    html += renderOffers();
     html += '<div class="grid2">' + S.list('teams').map(function (t) {
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
       return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
@@ -141,6 +142,27 @@
       }).join('') + '<button class="btn small" data-act="rosters:newpos" data-t="' + t.id + '">' + H.icon(H.ICON.plus, 16) + 'Add a position</button></section>';
     }).join('') + '</div>';
     return html;
+  }
+
+  /* ---------- offers to serve (from Me → Serving) ---------- */
+  function waitingOffers() { return S.find('serveOffers', function (o) { return o.status === 'waiting'; }).sort(function (a, b) { return (a.createdAt || '') < (b.createdAt || '') ? -1 : 1; }); }
+  function freqName(f) { return (FREQ.filter(function (x) { return x[0] === f; })[0] || ['', 'Now and then'])[1].toLowerCase(); }
+  function offerText(o) {
+    var po = pos(o.positionId), where = po ? po.name + ' (' + ((team(po.teamId) || {}).name || '') + ')' : 'a position that has been removed';
+    var k = S.find('skills', function (x) { return x.personId === o.personId && x.positionId === o.positionId; })[0];
+    if (o.kind === 'stop') return 'would like to stop serving on ' + where;
+    if (o.kind === 'change') return 'would like to serve on ' + where + ' ' + freqName(o.frequency) + (k ? ' (now ' + freqName(k.frequency) + ')' : '');
+    return 'offers to help on ' + where + ', ' + freqName(o.frequency);
+  }
+  function renderOffers() {
+    var list = waitingOffers();
+    if (!list.length) return '';
+    return '<section class="panel" style="margin-bottom:16px"><h2>Offers to serve <span class="tag warn">' + list.length + '</span></h2>' +
+      '<p class="hint" style="margin-top:0">People asked from their own “Me” page. Yes updates the team straight away; Not now sends them a short reply.</p><div class="list">' + list.map(function (o) {
+        var p = person(o.personId);
+        return '<div class="item offer-item">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p) || 'Someone') + '</b><small>' + esc(offerText(o)) + (o.note ? ' · “' + esc(o.note) + '”' : '') + ' · ' + esc(H.fmt((o.createdAt || '').slice(0, 10))) + '</small></span>' +
+          '<span class="btns"><button class="btn small" data-act="rosters:offerno" data-id="' + esc(o.id) + '">Not now</button><button class="btn small ok" data-act="rosters:offeryes" data-id="' + esc(o.id) + '">Yes</button></span></div>';
+      }).join('') + '</div></section>';
   }
 
   /* ---------- serving together / apart ---------- */
@@ -233,6 +255,7 @@
     todos: function (u) {
       var out = [], mine = S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === u.id && a.status === 'pending' && s && s.date >= H.today(); });
       if (mine.length) out.push({ text: TN('Reply to {n} serving request', 'Reply to {n} serving requests', mine.length), href: '#/rosters/mine' });
+      if (manager()) { var w = waitingOffers().length; if (w) out.push({ text: w + (w === 1 ? ' person has' : ' people have') + ' offered to serve – answer them', href: '#/rosters/teams' }); }
       if (manager()) { var g = nextGaps(); if (g && g.n) out.push({ text: 'Fill ' + g.n + ' gap' + (g.n === 1 ? '' : 's') + ' on the roster for ' + H.fmt(g.s.date), href: '#/rosters' }); }
       return out;
     },
@@ -340,6 +363,27 @@
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="rosters:savemember" data-p="' + po.id + '">Add</button></div>', 'Add team member');
       },
       savemember: function (el) { S.put('skills', { personId: document.getElementById('am-p').value, positionId: el.dataset.p, frequency: document.getElementById('am-f').value }, 'Added to a team'); H.closeModal(); H.render(); },
+      offeryes: function (el) {
+        var o = S.get('serveOffers', el.dataset.id); if (!o) return;
+        var who = H.name(person(o.personId)), text = offerText(o);
+        var have = S.find('skills', function (k) { return k.personId === o.personId && k.positionId === o.positionId; });
+        if (o.kind === 'stop') have.forEach(function (k) { S.remove('skills', k.id); });
+        else if (have.length) { var k = have[0]; k.frequency = o.frequency || k.frequency; S.put('skills', k); }
+        else if (pos(o.positionId)) S.put('skills', { personId: o.personId, positionId: o.positionId, frequency: o.frequency || 'fortnightly' });
+        S.remove('serveOffers', o.id, 'Said yes: ' + who + ' ' + text);
+        H.render(); H.toast(o.kind === 'stop' ? who + ' is off that team now' : who + ' is on the team – they can now be rostered');
+      },
+      offerno: function (el) {
+        var o = S.get('serveOffers', el.dataset.id); if (!o) return;
+        H.modal(H.dialogHead('Not now', H.name(person(o.personId)) + ' ' + offerText(o)) + '<div class="dlg-body"><label class="field">A short reply for them (they will see it)<textarea id="of-reply" rows="2" maxlength="200" placeholder="e.g. The team is full for now – we’ll ask you in the new year"></textarea></label></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="rosters:offernosend" data-id="' + esc(o.id) + '">Send</button></div>', 'Not now');
+      },
+      offernosend: function (el) {
+        var o = S.get('serveOffers', el.dataset.id); if (!o) return H.closeModal();
+        o.status = 'declined'; o.reply = document.getElementById('of-reply').value.trim().slice(0, 200);
+        S.put('serveOffers', o, 'Said not now: ' + H.name(person(o.personId)) + ' ' + offerText(o));
+        H.closeModal(); H.render(); H.toast('Reply sent');
+      },
       unskill: function (el) { S.remove('skills', el.dataset.id, 'Removed from a team'); H.render(); }
     }
   });

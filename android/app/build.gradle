@@ -1,0 +1,55 @@
+plugins {
+    id 'com.android.application'
+}
+
+// Version comes from the GitHub build number, so every new build installs over the last one.
+def buildNo = (System.getenv('GITHUB_RUN_NUMBER') ?: '1') as Integer
+def ks = System.getenv('KEYSTORE_FILE')
+
+android {
+    namespace 'org.christchurchhowick.churchhub'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId 'org.christchurchhowick.churchhub'
+        minSdk 26
+        targetSdk 34
+        versionCode buildNo
+        versionName "1.0." + buildNo
+        // The web address the app opens. Change it here if the site ever moves.
+        buildConfigField 'String', 'APP_URL', '"https://pian1966.github.io/church-hub/"'
+    }
+
+    buildFeatures { buildConfig true }
+
+    signingConfigs {
+        release {
+            if (ks) {
+                storeFile file(ks)
+                storePassword System.getenv('KEYSTORE_PASSWORD')
+                // The same signing key as the Leave Manager app (repository secret ANDROID_KEYSTORE), see docs/ANDROID.md
+                keyAlias 'leavemanager'
+                keyPassword System.getenv('KEYSTORE_PASSWORD')
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            signingConfig ks ? signingConfigs.release : signingConfigs.debug
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_17
+        targetCompatibility JavaVersion.VERSION_17
+    }
+}
+
+dependencies {
+    // Android's built-in "Sign in with Google" (Credential Manager)
+    implementation 'androidx.credentials:credentials:1.3.0'
+    implementation 'androidx.credentials:credentials-play-services-auth:1.3.0'
+    implementation 'com.google.android.libraries.identity.googleid:googleid:1.1.1'
+}

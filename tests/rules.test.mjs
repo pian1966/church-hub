@@ -46,6 +46,7 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('groups/g1', { memberIds: ['p14', 'p15'], kind: 'together' });
   await set('groups/g2', { memberIds: ['p15', 'p01'], kind: 'apart' });
   await set('blockouts/b15', { personId: 'p15', from: '2026-01-01', to: '2026-01-01' });
+  await set('serveOffers/o15', { personId: 'p15', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'waiting' });
   await set('leaveRequests/L1', { staffId: 'p05', type: 'SSL', status: 'Approved', start: '2027-01-06', end: '2027-01-06', reason: 'Wedding' });
   await set('leaveRequests/L2', { staffId: 'p02', type: 'SL', status: 'Approved', start: '2027-01-06', end: '2027-01-06', reason: 'Flu' });
   await set('away/L2', { personId: 'p02', from: '2027-01-06', to: '2027-01-06' });
@@ -181,6 +182,25 @@ await t('away dates: members add their own only', async () => {
   await can(db.member.doc('blockouts/b14').set({ personId: 'p14', from: '2027-02-01', to: '2027-02-01' }));
   await cannot(db.member.doc('blockouts/b16').set({ personId: 'p15', from: '2027-02-01', to: '2027-02-01' }));
   await cannot(read(db.member, 'blockouts/b15'));
+});
+await t('offers to serve: members ask for themselves; only roster coordinators and Administrators answer', async () => {
+  const offer = { personId: 'p14', positionId: 'tea', kind: 'join', frequency: 'monthly', note: 'After the service', status: 'waiting', createdAt: 'x', updatedAt: 'x' };
+  await can(db.member.doc('serveOffers/o14').set(offer));
+  await can(list(db.member.collection('serveOffers').where('personId', '==', 'p14')));
+  await cannot(list(db.member.collection('serveOffers')));
+  await cannot(read(db.member, 'serveOffers/o15'));
+  await cannot(db.member.doc('serveOffers/o16').set(Object.assign({}, offer, { personId: 'p15' })));          // not for someone else
+  await cannot(db.member.doc('serveOffers/o17').set(Object.assign({}, offer, { status: 'declined' })));       // can't answer their own
+  await cannot(db.member.doc('serveOffers/o18').set(Object.assign({}, offer, { kind: 'boss' })));
+  await cannot(db.member.doc('serveOffers/o19').set(Object.assign({}, offer, { reply: 'yes' })));            // only the listed fields
+  await cannot(db.member.doc('serveOffers/o14').update({ status: 'declined' }));
+  await can(db.pastor.doc('serveOffers/o20').set(Object.assign({}, offer, { personId: 'p02' })));            // staff offer for themselves too
+  await cannot(list(db.pastor.collection('serveOffers')));
+  await can(list(db.rosters.collection('serveOffers')));
+  await can(db.rosters.doc('serveOffers/o15').update({ status: 'declined', reply: 'Team is full' }));
+  await can(read(db.member, 'serveOffers/o14')); await can(db.member.doc('serveOffers/o14').delete());       // withdraw
+  await cannot(db.member.doc('serveOffers/o15').delete());
+  await cannot(db.member.doc('skills/k14').set({ personId: 'p14', positionId: 'tea' }));                     // the team itself stays the coordinator's
 });
 
 console.log('Leave');

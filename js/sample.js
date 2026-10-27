@@ -117,6 +117,8 @@ function makeSampleData() {
     { id: 'g3', name: 'Sam & Kavi', kind: 'together', strength: 'prefer', memberIds: ['p19', 'p20'], note: 'Friends who like to serve on the door together.' },
     { id: 'g4', name: 'Megan & David Smith', kind: 'apart', strength: 'must', memberIds: ['p17', 'p18'], note: 'One stays with the baby.' }
   ];
+  // An offer to serve, waiting for the roster coordinator (Rosters → Teams)
+  var serveOffers = [{ id: 'so1', personId: 'p15', positionId: 'tea', kind: 'join', frequency: 'monthly', note: 'Happy to help after the service.', status: 'waiting', createdAt: '2026-10-20 09:00' }];
   var services = sundays.map(function (d, i) { return { id: 'sv' + i, date: d, time: '09:30', name: 'Morning service' }; });
   var A = function (sv, pos, person, status) { return { id: 'as' + sv + pos + person, serviceId: sv, positionId: pos, personId: person, status: status, source: 'manual' }; };
   var assignments = [
@@ -181,7 +183,7 @@ function makeSampleData() {
       privacyNotice: 'Christ Church Howick collects your personal information to keep church records, care for you, organise serving rosters and keep in touch. We only use it for these purposes, keep it secure, and store it in South Africa. You may ask to see, correct or delete your information at any time by contacting our Information Officer.'
     },
     people: people, families: fam, consents: consents, notes: notes, teams: teams, positions: positions, skills: skills,
-    services: services, assignments: assignments, groups: groups, blockouts: blockouts, guardians: guardians, noCollect: noCollect,
+    services: services, assignments: assignments, groups: groups, blockouts: blockouts, serveOffers: serveOffers, guardians: guardians, noCollect: noCollect,
     dsr: [{ id: 'd1', personId: 'p23', kind: 'Access', received: off(-6), due: off(24), status: 'Open', notes: 'Asked for a copy of everything we hold.' }],
     breaches: [], audit: [], leave: leave
   };

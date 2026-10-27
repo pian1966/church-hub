@@ -13,5 +13,8 @@ window.CHURCH_HUB_FIREBASE = window.CHURCH_HUB_FIREBASE || {
   apiKey: 'AIzaSyCPCZik5WqMbIKYkewNHfLMtFwaGhAk-So',
   authDomain: 'church-hub-7ec02.firebaseapp.com',
   projectId: 'church-hub-7ec02',
-  appId: '1:659353710254:web:dd14380a312ad037ccc73f'
+  appId: '1:659353710254:web:dd14380a312ad037ccc73f',
+  // For "Sign in with Google" in the Android app: the project's Web client ID (docs/ANDROID.md, step 3).
+  // Empty = the app offers only the email link. This is not a password either.
+  googleWebClientId: ''
 };

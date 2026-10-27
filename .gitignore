@@ -1,3 +1,9 @@
 node_modules/
 .firebase/
 *-debug.log
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.jks
+*.keystore

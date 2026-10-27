@@ -18,7 +18,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
 
@@ -177,6 +177,9 @@ var Store = (function () {
       });
     }
     function google() {
+      // In the Android app, Google's sign-in window can't open inside the app: Android's own account picker gives a
+      // Google ID token instead (window.ChurchHubApp, see android/), which Firebase accepts for this project.
+      if (inApp()) return appGoogle();
       var provider = new fb.auth.GoogleAuthProvider();
       provider.setCustomParameters({ prompt: 'select_account' });
       return auth.signInWithPopup(provider).catch(function (e) {
@@ -184,12 +187,28 @@ var Store = (function () {
         if (e && e.code !== 'auth/popup-closed-by-user' && e.code !== 'auth/cancelled-popup-request') throw e;
       });
     }
+    function inApp() { return typeof window !== 'undefined' && !!(window.ChurchHubApp && window.ChurchHubApp.googleSignIn); }
+    function appGoogle() {
+      var clientId = cfg.googleWebClientId || '';
+      if (!clientId) return Promise.reject({ code: 'app/not-set-up', message: 'Sign in with Google isn’t set up in the app yet' });
+      return new Promise(function (resolve, reject) {
+        window.churchHubGoogle = function (idToken) {
+          auth.signInWithCredential(fb.auth.GoogleAuthProvider.credential(idToken)).then(resolve, reject);
+        };
+        window.churchHubGoogleError = function (msg) { reject({ code: 'app/google', message: msg }); };
+        window.churchHubGoogleCancel = function () { resolve(); };
+        window.ChurchHubApp.googleSignIn(clientId);
+      });
+    }
+    /** Is this a sign-in link from the email? (Used when someone pastes the link into the app.) */
+    function isEmailLink(link) { try { return !!(auth && auth.isSignInWithEmailLink(link)); } catch (e) { return false; } }
     function emailLink(email) {
       return auth.sendSignInLinkToEmail(email, { url: location.origin + location.pathname, handleCodeInApp: true })
         .then(function () { try { localStorage.setItem(EMAIL_KEY, email); } catch (x) {} });
     }
-    function finishEmailLink(email) {
-      return auth.signInWithEmailLink(email, location.href).then(function () {
+    function pendingEmail() { try { return localStorage.getItem(EMAIL_KEY) || ''; } catch (x) { return ''; } }
+    function finishEmailLink(email, link) {
+      return auth.signInWithEmailLink(email, link || location.href).then(function () {
         try { localStorage.removeItem(EMAIL_KEY); } catch (x) {}
         history.replaceState(null, '', location.pathname + location.hash);
       }).catch(function (e) {
@@ -242,6 +261,8 @@ var Store = (function () {
         ['skills', 'assignments', 'blockouts'].forEach(function (c) { add(c, own(c)); });
         add('groups', coll('groups').where('memberIds', 'array-contains', me));
       }
+      // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
+      add('serveOffers', is('admin', 'rosters') ? coll('serveOffers') : own('serveOffers'));
       if (is('admin', 'pastor')) { add('details', coll('details')); add('consents', coll('consents')); }
       else {
         add('detailsMe', doc('details/' + me));
@@ -324,7 +345,7 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers'].forEach(function (c) { db[c] = arr(c); });
       var cons = merged('consents', 'consentsMe', 'consentsMed', 'consentsPhotos');
       db.consents = Object.keys(cons).map(function (id) { var o = copy(cons[id]); o.id = id; return o; });
       db.notes = [];
@@ -465,7 +486,7 @@ var Store = (function () {
       if (email && uid) return write('roles/' + email, { role: 'robot', uid: String(uid).trim(), name: 'Elvanto robot' });
       return Promise.resolve();
     }
-    return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, signOut: signOut, setup: setup, setRobot: setRobot,
+    return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write,
       session: function () { return session; } };
   })();
@@ -480,6 +501,6 @@ var Store = (function () {
     onRemoteChange: function (fn) { remoteListeners.push(fn); }, onError: function (fn) { errorListeners.push(fn); },
     onLeaveChange: function (fn) { leaveHooks.push(fn); },
     setRobot: function (email, uid, oldEmail) { return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
-    live: { boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, signOut: Live.signOut,
+    live: { boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
       setup: Live.setup, session: Live.session } };
 })();

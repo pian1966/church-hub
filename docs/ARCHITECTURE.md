@@ -8,7 +8,7 @@ It is built in phases; each phase is usable on its own. **Read this file first i
 2. **Apps as cards.** Each area (People, Rosters, Leave, Privacy…) is a *module* that registers itself and appears as a card on Home. Modules can be switched on or off in Settings. New features = new modules, without touching the others.
 3. **POPIA by design.** Privacy rules are part of the data model, not an add-on (see `POPIA.md`).
 4. **Explainable rostering.** No random rostering. Families and friends who want to serve together are kept together; people who must not serve at the same time are kept apart; every suggestion says why.
-5. **Phone first, works on a computer.** One web app, installable on phones; the Android app is the same wrapper as Leave Manager.
+5. **Phone first, works on a computer.** One web app, installable on phones; the Android app is the same wrapper as Leave Manager (`android/`, `docs/ANDROID.md`).
 
 ## Layers
 ```
@@ -24,7 +24,9 @@ js/elvanto-import.js      ElvantoImport: reads an Elvanto People export and plan
 js/elvanto-sync.js        ElvantoSync: when a leave change needs an Elvanto "Unavailable Volunteers" update (pure, tested)
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers
-js/mod-*.js               one file per module: people, rosters, leave, privacy, import, settings
+js/mod-*.js               one file per module: me, people, rosters, leave, privacy, import, settings
+android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
+manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
 firestore.rules           database security rules: who may read/write what (POPIA)
 tests/roster.test.js      rostering engine          tests/leave-import.test.js  Leave Manager import (made-up sheet in tests/fixtures)
           tests/rules.test.mjs  security rules (Firestore emulator)
@@ -76,6 +78,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `assignments` | person × position × service, status pending/accepted/declined, why |
 | `groups` | serve **together** (must/prefer) or keep **apart** |
 | `blockouts` | away dates people enter themselves |
+| `serveOffers` | a person's request to join a position, serve more/less often, or stop: { personId, positionId, kind join\|change\|stop, frequency, note, status waiting\|declined, reply }. The person creates and withdraws their own; Administrators and Roster coordinators answer (Yes changes `skills` and deletes the offer; Not now sets `declined` + `reply`) |
 | `leave` | Leave Manager data in LeaveCore format (types, categories, requests, holidays, terms, adjustments, rules) |
 | `dsr` | POPIA data-subject requests (access, correction, deletion, objection) |
 | `breaches` | security-compromise register (POPIA s22) |
@@ -88,10 +91,25 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | Pastor | people, families, birthdays, consent, pastoral notes |
 | Roster coordinator | rosters, teams, away dates; people's names and contact details only |
 | Children's ministry | children (incl. birthdays), guardians, medical notes, medical/photo consent |
-| Member | own details (can correct name and contact), own consent, own serving and away dates, own leave (if staff); the church directory |
+| Member | own details (can correct name and contact), own consent, own serving and away dates, offers to serve, own leave (if staff); the church directory |
 | No access | kept on the church records, can't sign in |
 
 Leave approval follows Leave Manager: Administrators approve.
+
+## Me (members' own page) and the Android app
+`js/mod-me.js` – **Me**, for everyone: *My details* (contact details they may change, what the office keeps, consent,
+language, sign out), *Days away* (their blockouts and approved leave; warns about roster turns on those days) and
+*Serving* (turns to accept, where they serve, offers to serve). It reuses the People and Rosters actions (`people:edit`,
+`people:consent`, `rosters:addaway`, `rosters:delaway`, `rosters:reply`), so the rules stay in one place. On phones the
+tab bar shows Me first for members (staff get their working areas first).
+**Offers to serve** go to `serveOffers` (see Collections); roster coordinators answer them at the top of Rosters → Teams,
+with a Home to-do. A declined offer shows the reply under the position until the person taps OK.
+**Android app** (`android/`, built by `.github/workflows/build-android.yml`, setup in `docs/ANDROID.md`): a WebView
+showing the website, same as Leave Manager's app and signed with the same key. It adds `window.ChurchHubApp`; when present,
+`Store.live.google()` asks Android's account picker for a Google ID token and signs in with
+`signInWithCredential` (needs `googleWebClientId` in `firebase-config.js`), and after "Email me a link" the person pastes
+the link from the email (Google's sign-in pop-up and email links can't open inside an app). Members open on `#/me`;
+`window.churchHubBack()` lets the back button close a dialog first.
 
 ## Households and responsible adults
 Modelled on Planning Center (a child can live in several households) and ChurchSuite (responsible adults are separate from

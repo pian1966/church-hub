@@ -44,6 +44,18 @@ Advanced search only offers the details a role may already see, and never medica
 restrictions. Downloading results (CSV) is recorded in the audit log with how many people and which columns. Downloads
 should stay on church computers and be deleted once used.
 
+## Offers to serve
+When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, their optional note and the
+roster coordinator's reply. Purpose: planning rosters; basis: the person asked themselves. Only the person, Roster
+coordinators and Administrators can see it (database rules). Yes moves it onto the team list and deletes the offer;
+the person can withdraw it at any time; it is included in "export everything held about a person" and removed when
+someone is deleted or dies.
+
+## The Android app
+The app shows the church's website; it stores no church information on the phone except the sign-in (as a browser
+does) and the chosen language. Android's "Sign in with Google" is handled by Google on the phone. The app is downloaded
+from GitHub (not the Play Store). Remind people to sign out (Me → My details) before giving a phone to someone else.
+
 ## Leave reasons
 The kind of leave and its reason (which can be about health) are shown only to the staff member and Administrators – on Leave and on Rosters → Away dates. Everyone else, including roster coordinators, sees only "On leave" and the dates; the database never sends them more.
 

@@ -59,6 +59,17 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ 27 Oct 2026: email and mobile must be filled in for adults – type “unknown” if not known (saved as “Not known”, never as the word); “Married N years” wording
 - ✅ 27 Oct 2026: Away dates shows the kind of leave and its reason – only to the person and Administrators (roster coordinators still see “On leave”)
 - ✅ 27 Oct 2026: Category, Household and “In the household as” must be filled in (new people start on “Choose…”; someone living alone gets “+ New household”)
+- ✅ 27 Oct 2026: **Android app and "Me"** – members manage their own details, days away and where they'd like to serve:
+  - **Me** (new module, first in the phone tab bar for members): *My details* (change name/known as/email/mobile; see what the
+    office keeps; consent; language; sign out), *Days away* (add/remove; warns about roster turns on those days), *Serving*
+    (accept/decline turns; where I serve; **offer to help**, serve more/less often, or stop)
+  - **Offers to serve** (new `serveOffers`): roster coordinators answer under Rosters → Teams (Yes / Not now with a reply), Home to-do
+  - **Android app** (`android/`, same wrapper and signing key as Leave Manager): native Google sign-in, paste-the-email-link
+    sign-in, back button, file choosing, offline screen; GitHub builds `ChurchHub.apk` (fixed "android" release)
+  - Home-screen icons and `manifest.webmanifest` (iPhone: Safari → Add to Home Screen)
+  - New rules – **re-publish them**. Tests: rules, app (member, coordinator, pastor, app sign-in), languages.
+- ⬜ Church: Android app setup (docs/ANDROID.md): signing key secret, build, optional Google sign-in (Web client ID), re-publish rules, try it, send the link
+- ✅ 27 Oct 2026: Android test build and all tests (incl. the rules against Google's emulator) green on GitHub for pull request #1
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n.js – one line per text); then decide whether to translate
   staff screens too
 - ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
@@ -86,7 +97,7 @@ Groups and attendance, kids check-in on a tablet with medical alerts and leader 
 Email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
 
 ## Phase 6 – Member app and extras
-Church Center-style member app, Android build, Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
+Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
 
 ## Working method
 One phase per fresh chat in the Claude Project "Church Hub", with the repository attached. Update this file at the end of each session.

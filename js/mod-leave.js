@@ -167,7 +167,7 @@
     h += '<section class="block"><h2>Adjustments in ' + esc(C.lyLabel(y, S)) + '</h2><p class="muted" style="margin-top:0">Extra days or corrections (e.g. days carried over by agreement, or a public holiday worked).</p>' +
       (adj.length ? '<div class="list">' + adj.map(function (a) { var t = typeOf(d, a.type); return '<div class="item"><span class="grow"><b>' + (a.days > 0 ? '+' : '') + C.fmtDays(a.days) + ' ' + esc(t.name) + '</b><small>' + esc(a.note || '') + '</small></span></div>'; }).join('') + '</div>' : '') +
       '<div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:10px"><label class="field" style="margin:0">Kind of leave<select id="adj-t">' + d.types.filter(function (t) { return t.deducts && C.offered(d, st, t); }).map(function (t) { return '<option value="' + t.code + '">' + esc(t.name) + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field" style="margin:0">Days (+ or −)<input id="adj-d" type="number" step="0.5" style="width:100px"></label><label class="field grow" style="margin:0">Why<input id="adj-n" placeholder="e.g. Carried over by agreement"></label>' +
+      '<label class="field req" style="margin:0">Days (+ or −)<input id="adj-d" type="number" step="0.5" style="width:100px"></label><label class="field grow" style="margin:0">Why<input id="adj-n" placeholder="e.g. Carried over by agreement"></label>' +
       '<button class="btn" data-act="leave:addadj" data-id="' + id + '" data-y="' + y + '">Add adjustment</button></div></section>';
     return h;
   }
@@ -225,7 +225,7 @@
       (missing.length ? '<p class="note warn">' + missing.map(function (yy) { return '<button class="btn small" data-act="leave:addsa" data-y="' + yy + '">Add South African public holidays for ' + yy + '</button>'; }).join(' ') + '</p>' : '') +
       '<div class="list" style="max-height:320px;overflow:auto">' + hol.map(function (h) {
         return '<div class="item"><span class="grow"><b>' + esc(H.fmt(h.date, true)) + '</b><small>' + esc(h.name) + '</small></span><button class="icon-btn ghost" data-act="leave:delhol" data-date="' + h.date + '" aria-label="Remove ' + esc(h.name) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
-      }).join('') + '</div><div class="two" style="margin-top:10px"><label class="field">Date<input type="date" id="ls-hd"></label><label class="field">Name<input id="ls-hn" placeholder="e.g. Office closed – Christmas week"></label></div>' +
+      }).join('') + '</div><div class="two" style="margin-top:10px"><label class="field req">Date<input type="date" id="ls-hd"></label><label class="field req">Name<input id="ls-hn" placeholder="e.g. Office closed – Christmas week"></label></div>' +
       '<button class="btn small" data-act="leave:addhol">Add this day</button>' +
       (lv.holidays.some(function (h) { return +h.date.slice(0, 4) === y + 2 && !h.church; }) ? '' : ' <button class="link" data-act="leave:addsa" data-y="' + (y + 2) + '">Add public holidays for ' + (y + 2) + '</button>') +
       '</section>';
@@ -245,9 +245,9 @@
     var who = people.filter(function (s) { return s.id === (whoId || me.id); })[0] || people[0];
     H.modal(H.dialogHead(admin && who.id !== me.id ? 'Book leave' : T('Request leave'), T('Only your working days are counted.')) + '<form class="dlg-body" id="lf" novalidate>' +
       (people.length > 1 ? '<label class="field">For<select id="lf-who">' + people.map(function (s) { return '<option value="' + s.id + '"' + (s.id === who.id ? ' selected' : '') + '>' + esc(s.name) + (s.id === me.id ? ' (you)' : '') + '</option>'; }).join('') + '</select></label>' : '<input type="hidden" id="lf-who" value="' + who.id + '">') +
-      '<label class="field">' + T('Type of leave') + '<select id="lf-type"></select></label><div id="lf-bal"></div>' +
-      '<div class="two"><label class="field">' + T('First day') + '<input type="date" id="lf-start"></label><label class="field">' + T('Last day') + '<input type="date" id="lf-end"></label></div>' +
-      '<label class="field">' + T('Note for the Administrator') + (admin ? ' <small>' + T('(optional)') + '</small>' : '') + '<textarea id="lf-note" rows="2" placeholder="' + T('What is the leave for?') + '"></textarea></label>' +
+      '<label class="field req">' + T('Type of leave') + '<select id="lf-type"></select></label><div id="lf-bal"></div>' +
+      '<div class="two"><label class="field req">' + T('First day') + '<input type="date" id="lf-start"></label><label class="field req">' + T('Last day') + '<input type="date" id="lf-end"></label></div>' +
+      '<label class="field' + (admin ? '' : ' req') + '">' + T('Note for the Administrator') + '<textarea id="lf-note" rows="2" placeholder="' + T('What is the leave for?') + '"></textarea></label>' +
       '<div id="lf-sum" class="note info" hidden></div><div id="lf-err" class="note bad" hidden></div></form>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" id="lf-go" data-act="leave:send">' + T('Send request') + '</button></div>', T('Request leave'));
     var $ = function (id) { return document.getElementById(id); };
@@ -405,7 +405,7 @@
         S.saveLeave('Changed kinds of leave'); H.render(); H.toast('Saved');
       },
       addtype: function () {
-        H.modal(H.dialogHead('Add a kind of leave') + '<div class="dlg-body"><label class="field">Name<input id="nt-n" placeholder="e.g. Study Leave"></label>' +
+        H.modal(H.dialogHead('Add a kind of leave') + '<div class="dlg-body"><label class="field req">Name<input id="nt-n" placeholder="e.g. Study Leave"></label>' +
           '<label class="check"><input type="checkbox" id="nt-d" checked><span>Uses an allowance (days per year, set per category)</span></label>' +
           '<label class="check"><input type="checkbox" id="nt-h" checked><span>Half days allowed</span></label></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="leave:savetype">Add</button></div>', 'Add a kind of leave');

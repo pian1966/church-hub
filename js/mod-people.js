@@ -259,9 +259,9 @@
     l = l || Object.assign({ childId: childId, adultId: '', name: '', phone: '', relationship: 'Mother' }, HS.defaultsFor('Mother'));
     var outside = !l.adultId && !!l.name;
     H.modal(H.dialogHead(isNew ? 'Add a parent, guardian or collector' : 'Edit ' + linkName(l), 'For ' + H.name(c)) + '<div class="dlg-body">' +
-      '<label class="field">Who<select id="gl-who"><option value="">Choose…</option><option value="__out"' + (outside ? ' selected' : '') + '>Someone not in Church Hub…</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
-      '<div id="gl-out" class="two"' + (outside ? '' : ' hidden') + '><label class="field">Name<input id="gl-name" value="' + esc(l.name || '') + '"></label><label class="field">Phone<input id="gl-phone" type="tel" value="' + esc(l.phone || '') + '"></label></div>' +
-      '<label class="field">Relationship to ' + esc(c.firstName) + '<select id="gl-rel">' + HS.RELATIONSHIPS.map(function (r) { return '<option' + (l.relationship === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
+      '<label class="field req">Who<select id="gl-who"><option value="">Choose…</option><option value="__out"' + (outside ? ' selected' : '') + '>Someone not in Church Hub…</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
+      '<div id="gl-out" class="two"' + (outside ? '' : ' hidden') + '><label class="field req">Name<input id="gl-name" value="' + esc(l.name || '') + '"></label><label class="field">Phone<input id="gl-phone" type="tel" value="' + esc(l.phone || '') + '"></label></div>' +
+      '<label class="field req">Relationship to ' + esc(c.firstName) + '<select id="gl-rel">' + HS.RELATIONSHIPS.map(function (r) { return '<option' + (l.relationship === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
       '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>Can give consent</b><br><span class="muted small">A parent or legal guardian (POPIA). Not step-parents, grandparents or collectors unless they are legal guardians.</span></span></label>' +
       '<label class="check"><input type="checkbox" id="gl-primary"' + (l.primary ? ' checked' : '') + '><span><b>Primary contact</b><br><span class="muted small">Gets messages from the church about ' + esc(c.firstName) + '.</span></span></label>' +
       '<label class="check"><input type="checkbox" id="gl-collect"' + (l.mayCollect ? ' checked' : '') + '><span><b>May collect ' + esc(c.firstName) + '</b><br><span class="muted small">Can sign ' + esc(c.firstName) + ' out of children’s church.</span></span></label>' +
@@ -274,8 +274,8 @@
   function ncDialog(childId) {
     var c = S.get('people', childId);
     H.modal(H.dialogHead('Not allowed to collect ' + c.firstName, 'Children’s ministry will see an alert. Keep the note short and factual.') + '<div class="dlg-body">' +
-      '<label class="field">Who<select id="nc-who"><option value="__out">Someone not in Church Hub…</option>' + adultOptions('', childId) + '</select></label>' +
-      '<label class="field" id="nc-name-f">Name<input id="nc-name"></label>' +
+      '<label class="field req">Who<select id="nc-who"><option value="__out">Someone not in Church Hub…</option>' + adultOptions('', childId) + '</select></label>' +
+      '<label class="field req" id="nc-name-f">Name<input id="nc-name"></label>' +
       '<label class="field">Note <small>(e.g. “Court order – call Karen”)</small><input id="nc-note"></label><p id="nc-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary danger" data-act="people:ncsave" data-child="' + childId + '">Save</button></div>', 'Not allowed to collect');
     var who = document.getElementById('nc-who');
@@ -284,7 +284,7 @@
   function homeDialog(pid) {
     var p = S.get('people', pid), hs = HS.householdsOf(p);
     var fams = S.list('families').filter(function (f) { return hs.indexOf(f.id) < 0; }).sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); });
-    H.modal(H.dialogHead('Another household for ' + p.firstName, 'For example, the other parent’s home.') + '<div class="dlg-body"><label class="field">Household<select id="hm-f">' +
+    H.modal(H.dialogHead('Another household for ' + p.firstName, 'For example, the other parent’s home.') + '<div class="dlg-body"><label class="field req">Household<select id="hm-f">' +
       fams.map(function (f) { return '<option value="' + f.id + '">' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savehome" data-id="' + pid + '">Add</button></div>', 'Another household');
   }
@@ -489,17 +489,17 @@
     var fams = S.list('families');
     var html = H.dialogHead(isNew ? 'Add a person' : T('Edit {name}', { name: H.name(p) }), isNew ? 'Only add what the church needs. Ask for consent when you add someone.' : '') +
       '<form id="pf" class="dlg-body" novalidate><input type="hidden" id="pf-id" value="' + esc(p.id || '') + '">' +
-      '<div class="two"><label class="field">' + T('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
-      '<label class="field">' + T('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
-      '<label class="field">' + T('Known as') + ' <small>' + T('(optional)') + '</small><input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
+      '<div class="two"><label class="field req">' + T('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
+      '<label class="field req">' + T('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
+      '<label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
       '<div class="two"><label class="field">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || '') + '" autocomplete="email"></label>' +
       '<label class="field">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || '') + '" autocomplete="tel"></label></div>' +
-      (!me || admin ? '<div class="two"><label class="field">Birthday <small>(optional)</small><input id="pf-birth" type="date" value="' + esc(p.birthDate || '') + '"></label>' +
+      (!me || admin ? '<div class="two"><label class="field">Birthday<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field">Category<select id="pf-cat">' + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
-        '<div class="two"><label class="field">Household<select id="pf-fam"><option value="">Not in a household</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New household…</option></select></label>' +
+        '<div class="two"><label class="field' + (p.familyRole === 'child' ? ' req' : '') + '" id="pf-fam-f">Household<select id="pf-fam"><option value="">Not in a household</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New household…</option></select></label>' +
         '<label class="field">In the household as<select id="pf-frole"><option value="adult"' + (p.familyRole !== 'child' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
-        '<label class="field" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
-        '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary <small>(optional)</small><input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small>The date they married. Shown with the number of years.</small></label>' : '') +
+        '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
+        '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
       (admin ? staffFields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
@@ -511,8 +511,17 @@
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
     var fr = document.getElementById('pf-frole'), mf = document.getElementById('pf-marital-f');
-    var wf = document.getElementById('pf-wed-f');
-    if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; if (wf) wf.hidden = fr.value === 'child'; });
+    var wf = document.getElementById('pf-wed-f'), ff = document.getElementById('pf-fam-f');
+    if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; if (wf) wf.hidden = fr.value === 'child'; if (ff) ff.classList.toggle('req', fr.value === 'child'); H.markRequired(); });
+    // Age and years married, worked out as the dates are typed
+    var bi = document.getElementById('pf-birth'), wi = document.getElementById('pf-wed'), mi = document.getElementById('pf-marital');
+    var live = function () {
+      var bn = document.getElementById('pf-birth-n'), wn = document.getElementById('pf-wed-n');
+      if (bn && bi) { var a = yearsSince(bi.value); bn.textContent = a === '' ? '' : T('Age {n}', { n: a }); }
+      if (wn && wi) { var y = yearsSince(wi.value); wn.textContent = y === '' ? 'The date they married.' : y < 1 ? 'Married less than a year' + (mi && mi.value && mi.value !== 'Married' ? ' (marital status: ' + mi.value + ')' : '') : TN('{n} year married', '{n} years married', y) + (mi && mi.value && mi.value !== 'Married' ? ' (marital status: ' + mi.value + ')' : ''); }
+    };
+    [bi, wi, mi].forEach(function (x) { if (x) { x.addEventListener('input', live); x.addEventListener('change', live); } });
+    live();
   }
 
   /** Staff details for Leave (Administrators only): category (sets allowances and working days), start date (pro-rata), own working days. */
@@ -520,9 +529,9 @@
     var lv = S.leave() || { levels: [] }, st = p.staff || {}, DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     var mine = st.workDays ? st.workDays.split(/\s*,\s*/) : [];
     return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-staff"' + (p.staff ? ' checked' : '') + '><span><b>Church staff member</b><br><span class="muted small">Shows them in Leave, with the allowances of their staff category.</span></span></label>' +
-      '<div id="pf-staff-f"' + (p.staff ? '' : ' hidden') + ' style="margin-top:10px"><div class="two"><label class="field">Staff category<select id="pf-scat"><option value="">Choose…</option>' +
+      '<div id="pf-staff-f"' + (p.staff ? '' : ' hidden') + ' style="margin-top:10px"><div class="two"><label class="field req">Staff category<select id="pf-scat"><option value="">Choose…</option>' +
       lv.levels.map(function (l) { return '<option value="' + esc(l.level) + '"' + (st.category === l.level ? ' selected' : '') + '>' + esc(l.label || l.level) + '</option>'; }).join('') + '</select><small>Change categories under Leave → Settings.</small></label>' +
-      '<label class="field">Started at the church<input type="date" id="pf-sstart" value="' + esc(st.start || '') + '"><small>Used to work out a first year’s allowance.</small></label></div>' +
+      '<label class="field req">Started at the church<input type="date" id="pf-sstart" value="' + esc(st.start || '') + '"><small>Used to work out a first year’s allowance.</small></label></div>' +
       '<label class="check"><input type="checkbox" id="pf-sw-same"' + (mine.length ? '' : ' checked') + '><span>Works the same days as their category</span></label>' +
       '<div id="pf-sw-days" class="row" style="flex-wrap:wrap;gap:4px 14px"' + (mine.length ? '' : ' hidden') + '>' + DAYS.map(function (d) {
         return '<label class="check" style="margin:0"><input type="checkbox" class="pf-sw" value="' + d + '"' + (mine.indexOf(d) >= 0 ? ' checked' : '') + '><span>' + d + '</span></label>';
@@ -544,7 +553,7 @@
           'Church directory': 'Name and phone visible to other members.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
       }).join('') +
       (!me ? '<div class="two" style="margin-top:8px"><label class="field">How it was given<select id="cf-method"><option>Paper connect card</option><option>Online form</option><option>In person (verbal)</option><option>Email</option></select></label>' +
-        (child ? '<label class="field">Given by (parent or guardian)<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
+        (child ? '<label class="field req">Given by (parent or guardian)<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
       '<p class="hint">' + esc(Store.settings().privacyNotice) + '</p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:saveconsent" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Consent'));
   }
@@ -723,10 +732,10 @@
         var p = S.get('people', el.dataset.id);
         var spouses = p.familyId ? members(p.familyId).filter(function (m) { return m.id !== p.id && m.familyRole !== 'child' && m.maritalStatus === 'Married'; }) : [];
         H.modal(H.dialogHead('Record the death of ' + H.name(p), 'They stay on the church records, but come off rosters, teams, the directory and messages, and can no longer sign in.') +
-          '<div class="dlg-body"><div class="two"><label class="field">Date of death<input type="date" id="dd-date" value="' + H.today() + '" max="' + H.today() + '"></label>' +
-          '<label class="field">Funeral or memorial <small>(optional)</small><input type="date" id="dd-funeral"></label></div>' +
+          '<div class="dlg-body"><div class="two"><label class="field req">Date of death<input type="date" id="dd-date" value="' + H.today() + '" max="' + H.today() + '"></label>' +
+          '<label class="field">Funeral or memorial<input type="date" id="dd-funeral"></label></div>' +
           spouses.map(function (s) { return '<label class="check"><input type="checkbox" class="dd-sp" value="' + s.id + '" checked><span>Change ' + esc(H.name(s)) + '’s marital status to <b>Widowed</b></span></label>'; }).join('') +
-          (H.can('notes') ? '<label class="field">Pastoral note <small>(optional, only pastors see it)</small><textarea id="dd-note" rows="2" placeholder="e.g. Family would like a visit next week"></textarea></label>' : '') +
+          (H.can('notes') ? '<label class="field">Pastoral note<textarea id="dd-note" rows="2" placeholder="e.g. Family would like a visit next week"></textarea><small>Only pastors see it.</small></label>' : '') +
           '<p id="dd-err" class="note bad" hidden></p></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savedeath" data-id="' + p.id + '">Record</button></div>', 'Record a death');
       },
@@ -821,7 +830,7 @@
         H.render(); H.toast('Note saved');
       },
       newfam: function () {
-        H.modal(H.dialogHead('New household', 'Then add people to it (Edit details → Household).') + '<div class="dlg-body"><label class="field">Surname<input id="nf-name" placeholder="e.g. Naidoo"><small>Once adults are added, the household is named after them automatically (e.g. “Jason & Priya Naidoo”).</small></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savefam">Create</button></div>', 'New household');
+        H.modal(H.dialogHead('New household', 'Then add people to it (Edit details → Household).') + '<div class="dlg-body"><label class="field req">Surname<input id="nf-name" placeholder="e.g. Naidoo"><small>Once adults are added, the household is named after them automatically (e.g. “Jason & Priya Naidoo”).</small></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savefam">Create</button></div>', 'New household');
       },
       savefam: function () { var n = document.getElementById('nf-name').value.trim(); if (!n) return; n = n.replace(/\s*family$/i, ''); S.put('families', { name: n + ' family', custom: false }, 'Created household ' + n); H.closeModal(); H.render(); },
       renamefam: function (el) {

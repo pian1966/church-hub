@@ -102,8 +102,8 @@
     actions: {
       io: function () {
         var io = S.settings().informationOfficer;
-        H.modal(H.dialogHead('Information Officer', 'The person responsible for POPIA at the church.') + '<div class="dlg-body"><label class="field">Name<input id="io-n" value="' + esc(io.name) + '"></label><div class="two"><label class="field">Email<input id="io-e" type="email" value="' + esc(io.email) + '"></label><label class="field">Phone<input id="io-p" value="' + esc(io.phone) + '"></label></div>' +
-          '<label class="field">Deputy <small>(optional)</small><input id="io-d" value="' + esc(io.deputy || '') + '"></label><label class="check"><input type="checkbox" id="io-r"' + (io.registered ? ' checked' : '') + '>Registered with the Information Regulator</label></div>' +
+        H.modal(H.dialogHead('Information Officer', 'The person responsible for POPIA at the church.') + '<div class="dlg-body"><label class="field req">Name<input id="io-n" value="' + esc(io.name) + '"></label><div class="two"><label class="field req">Email<input id="io-e" type="email" value="' + esc(io.email) + '"></label><label class="field">Phone<input id="io-p" value="' + esc(io.phone) + '"></label></div>' +
+          '<label class="field">Deputy<input id="io-d" value="' + esc(io.deputy || '') + '"></label><label class="check"><input type="checkbox" id="io-r"' + (io.registered ? ' checked' : '') + '>Registered with the Information Regulator</label></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="privacy:saveio">Save</button></div>', 'Information Officer');
       },
       saveio: function () {
@@ -115,8 +115,8 @@
       ret: function () { S.setSettings({ retentionMonths: +document.getElementById('pv-ret').value }, 'Changed the retention period'); H.toast('Saved'); H.render(); },
       newreq: function () {
         var people = S.find('people', function (p) { return p.firstName !== 'Deleted'; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
-        H.modal(H.dialogHead('Log a request') + '<div class="dlg-body"><label class="field">From<select id="rq-p">' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + '</option>'; }).join('') + '</select></label>' +
-          '<label class="field">They asked for<select id="rq-k">' + KINDS.map(function (k) { return '<option>' + esc(k) + '</option>'; }).join('') + '</select></label><label class="field">Received<input type="date" id="rq-d" value="' + H.today() + '"></label><label class="field">Notes <small>(optional)</small><input id="rq-n"></label></div>' +
+        H.modal(H.dialogHead('Log a request') + '<div class="dlg-body"><label class="field req">From<select id="rq-p">' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + '</option>'; }).join('') + '</select></label>' +
+          '<label class="field req">They asked for<select id="rq-k">' + KINDS.map(function (k) { return '<option>' + esc(k) + '</option>'; }).join('') + '</select></label><label class="field req">Received<input type="date" id="rq-d" value="' + H.today() + '"></label><label class="field">Notes<input id="rq-n"></label></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="privacy:savereq">Save</button></div>', 'Log a request');
       },
       savereq: function () {
@@ -131,7 +131,7 @@
         var p = S.get('people', el.dataset.id); erase(p); H.render(); H.toast('Their personal information has been deleted');
       },
       newbreach: function () {
-        H.modal(H.dialogHead('Record an incident', 'What happened to whose information.') + '<div class="dlg-body"><label class="field">Date<input type="date" id="br-d" value="' + H.today() + '"></label><label class="field">What happened<textarea id="br-w" rows="3" placeholder="e.g. A printed roster with phone numbers was left at the coffee shop"></textarea></label>' +
+        H.modal(H.dialogHead('Record an incident', 'What happened to whose information.') + '<div class="dlg-body"><label class="field req">Date<input type="date" id="br-d" value="' + H.today() + '"></label><label class="field req">What happened<textarea id="br-w" rows="3" placeholder="e.g. A printed roster with phone numbers was left at the coffee shop"></textarea></label>' +
           '<div class="two"><label class="field">People affected<input id="br-a" placeholder="e.g. 14 volunteers"></label><label class="field">Regulator told on<input type="date" id="br-r"></label></div><label class="field">People affected told on<input type="date" id="br-t"></label></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="privacy:savebreach">Save</button></div>', 'Record an incident');
       },

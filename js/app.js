@@ -104,7 +104,7 @@ var Hub = (function () {
     var body = mod ? mod.render(p.slice(1)) : renderHome();
     root.innerHTML = shell(mod, body);
     if (mod && mod.after) mod.after(p.slice(1));
-    langWire();
+    langWire(); markRequired();
     var h = root.querySelector('main h1'); if (h) document.title = h.textContent + ' · Church Hub';
   }
 
@@ -168,8 +168,8 @@ var Hub = (function () {
     }[st.reason] || T('You are signed in as {email}, but this email address hasn’t been given access to Church Hub. Ask the church office to add it, or sign out and use another account.', { email: '<b>' + esc(st.email) + '</b>' })) + '</p>' +
       '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button>';
     else if (st.stage === 'setup') html = '<h1>' + (st.needChurch ? 'Set up Church Hub' : 'Welcome') + '</h1><p class="lead">' + (st.needChurch ? 'You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).' : 'Please add your name to finish setting up your access.') + '</p>' +
-      '<form id="su-form" novalidate>' + (st.needChurch ? '<label class="field">Church name<input id="su-church" value="Christ Church Howick"></label>' : '') +
-      '<div class="two"><label class="field">Your first name<input id="su-first" autocomplete="given-name"></label><label class="field">Last name<input id="su-last" autocomplete="family-name"></label></div>' +
+      '<form id="su-form" novalidate>' + reqKey() + (st.needChurch ? '<label class="field req">Church name<input id="su-church" value="Christ Church Howick"></label>' : '') +
+      '<div class="two"><label class="field req">Your first name<input id="su-first" autocomplete="given-name"></label><label class="field req">Last name<input id="su-last" autocomplete="family-name"></label></div>' +
       '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + (st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">Sign out</button>';
     else html = '<h1>' + T('Sign in') + '</h1><p class="lead">' + T('For church staff, leaders and members who have been given access.') + '</p>' + (st.message ? '<p class="note bad">' + esc(st.message) + '</p>' : '') +
       '<button class="btn primary big-btn" data-act="hub:google">' + icon('M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5c-.2 1.2-.9 2.2-1.9 2.8v2.4h3.1c1.8-1.7 2.8-4.1 2.8-6.9zM12 21c2.6 0 4.7-.9 6.3-2.3l-3.1-2.4c-.9.6-2 .9-3.2.9-2.5 0-4.6-1.7-5.3-3.9H3.5v2.4C5.1 18.9 8.3 21 12 21zM6.7 13.3a5.4 5.4 0 0 1 0-3.4V7.5H3.5a9 9 0 0 0 0 8.2zM12 6.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9 9 0 0 0 3.5 7.5l3.2 2.4C7.4 8.2 9.5 6.6 12 6.6z', 18) + T('Sign in with Google') + '</button>' +
@@ -221,7 +221,17 @@ var Hub = (function () {
     lastFocus = document.activeElement;
     var m = document.getElementById('modal');
     m.innerHTML = '<div class="overlay" data-act="hub:overlay"><div class="dialog' + (wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' + html + '</div></div>';
+    var body = m.querySelector('.dlg-body');
+    if (body && body.querySelector('.field.req')) body.insertAdjacentHTML('afterbegin', reqKey());
+    markRequired();
     var f = m.querySelector('input:not([type=hidden]), select, textarea, button:not(.x)'); if (f) f.focus();
+  }
+  /** Boxes that must be filled in are shaded (class "field req"); a short key explains the shading. */
+  function reqKey() { return '<p class="req-key"><span class="req-swatch" aria-hidden="true"></span>' + T('Shaded boxes must be filled in.') + '</p>'; }
+  function markRequired() {
+    document.querySelectorAll('.field input, .field select, .field textarea').forEach(function (x) {
+      if (x.closest('.field.req')) x.setAttribute('aria-required', 'true'); else x.removeAttribute('aria-required');
+    });
   }
   function closeModal() { document.getElementById('modal').innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
   function dialogHead(title, sub) { return '<header class="dlg-h"><div><h2>' + esc(title) + '</h2>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div><button class="icon-btn ghost x" data-act="hub:close" aria-label="' + T('Close') + '">' + icon(ICON.x) + '</button></header>'; }
@@ -354,5 +364,5 @@ var Hub = (function () {
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, familyName: familyName, avatar: avatar, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
-    dialogHead: dialogHead, toast: toast, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
+    dialogHead: dialogHead, toast: toast, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
 })();

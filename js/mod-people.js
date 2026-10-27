@@ -105,9 +105,10 @@
       return !q || (H.name(p) + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
     return '<div class="page-head"><div><h1>People</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : 'People who agreed to be in the church directory.') + '</p></div>' +
-      '<div class="btns">' + (canBasic() ? '<a class="btn" href="#/people/search">' + H.icon(H.ICON.search, 18) + 'Advanced search</a>' : '') + (canSeeAll() ? '<a class="btn" href="#/people/families">Families</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">My details</a>') + '</div></div>' +
+      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Families</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">My details</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
-      '<div class="row" style="margin-bottom:14px"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search people</span><input id="pp-q" type="search" placeholder="Search by name, family, email or phone" value="' + esc(state.q) + '"></label>' +
+      '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search people</span><input id="pp-q" type="search" placeholder="Search by name, family, email or phone" value="' + esc(state.q) + '"></label>' +
+        (canBasic() ? '<a class="adv-link" href="#/people/search">Advanced search</a>' : '') + '</div>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="Show">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' : '') + '</div>' +
       '<p class="muted small" id="pp-count">' + shown.length + ' ' + (shown.length === 1 ? 'person' : 'people') + '</p>' +
       (shown.length ? '<div class="list">' + shown.map(function (p) {

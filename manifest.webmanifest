@@ -1,0 +1,17 @@
+{
+  "name": "Church Hub",
+  "short_name": "Church Hub",
+  "description": "Your details, days away and serving at church.",
+  "id": "./",
+  "start_url": "./#/me",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#F6F4F1",
+  "theme_color": "#231E1A",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

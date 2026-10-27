@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   var docs = {}, listeners = [], authCbs = [], currentUser = null;
-  var F = window.__fake = { docs: docs, denied: [], sentLinks: [], nextUser: null, pending: 0,
+  var F = window.__fake = { docs: docs, denied: [], sentLinks: [], credentials: [], linkSignIns: [], nextUser: null, pending: 0,
     seed: function (all) { Object.keys(all).forEach(function (k) { docs[k] = JSON.parse(JSON.stringify(all[k])); }); },
     setUser: function (u) { currentUser = u; } };
 
@@ -71,6 +71,13 @@
         if (is(c, ['admin', 'rosters'])) return true;
         if (!mine(c, c.me)) return false;
         return (op === 'create' || b.memberIds.indexOf(c.me) >= 0) && (op === 'delete' || a.memberIds.indexOf(c.me) >= 0);
+      } },
+    serveOffers: { read: function (c, id, d) { return is(c, ['admin', 'rosters']) || (!!d && mine(c, d.personId)); },
+      write: function (c, op, id, b, a) {
+        if (is(c, ['admin', 'rosters'])) return true;
+        if (op === 'delete') return mine(c, b.personId);
+        return op === 'create' && mine(c, a.personId) && a.status === 'waiting' && ['join', 'change', 'stop'].indexOf(a.kind) >= 0
+          && onlyKeys(a, ['personId', 'positionId', 'kind', 'frequency', 'note', 'status', 'createdAt', 'updatedAt']);
       } },
     blockouts: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) { return is(c, ['admin', 'rosters']) || mine(c, op === 'delete' ? b.personId : a.personId); } },
@@ -159,15 +166,17 @@
     batch: function () { var ops = []; return { set: function (ref, data) { ops.push({ path: ref.path, data: data }); }, commit: function () { return apply(ops); } }; } };
   function notifyAuth() { authCbs.forEach(function (cb) { setTimeout(function () { cb(currentUser); }, 0); }); }
   var auth = {
-    isSignInWithEmailLink: function () { return false; },
+    isSignInWithEmailLink: function (link) { return /[?&]mode=signIn(&|$)/.test(link || '') && /[?&]oobCode=/.test(link || ''); },
+    signInWithCredential: function (cred) { F.credentials.push(cred && cred.idToken); currentUser = F.nextUser; notifyAuth(); return Promise.resolve({ user: currentUser }); },
     onAuthStateChanged: function (cb) { authCbs.push(cb); setTimeout(function () { cb(currentUser); }, 0); return function () {}; },
     signInWithPopup: function () { currentUser = F.nextUser; notifyAuth(); return Promise.resolve({ user: currentUser }); },
     signInWithRedirect: function () { return auth.signInWithPopup(); },
     sendSignInLinkToEmail: function (email) { F.sentLinks.push(email); return Promise.resolve(); },
-    signInWithEmailLink: function () { return Promise.resolve(); },
+    signInWithEmailLink: function (email, link) { F.linkSignIns.push([email, link]); if (F.nextUser) { currentUser = F.nextUser; notifyAuth(); } return Promise.resolve(); },
     signOut: function () { currentUser = null; notifyAuth(); return Promise.resolve(); }
   };
   function GoogleAuthProvider() {} GoogleAuthProvider.prototype.setCustomParameters = function () {};
+  GoogleAuthProvider.credential = function (idToken) { return { providerId: 'google.com', idToken: idToken }; };
   var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; } };
   var authFn = function () { return auth; }; authFn.GoogleAuthProvider = GoogleAuthProvider;
   window.firebase = { apps: [], initializeApp: function (c) { this.apps.push(c); return {}; }, auth: authFn, firestore: firestoreFn };

@@ -129,6 +129,16 @@ service cloud.firestore {
         || (mine(me()) && me() in resource.data.memberIds && me() in request.resource.data.memberIds);
       allow delete: if isRole(['admin', 'rosters']) || (mine(me()) && me() in resource.data.memberIds);
     }
+    // Offers to serve: a person asks to join a position, change how often, or stop; the roster coordinator answers.
+    match /serveOffers/{id} {
+      allow read: if isRole(['admin', 'rosters']) || mine(resource.data.personId);
+      allow create: if isRole(['admin', 'rosters'])
+        || (mine(request.resource.data.personId) && request.resource.data.status == 'waiting'
+            && request.resource.data.kind in ['join', 'change', 'stop']
+            && request.resource.data.keys().hasOnly(['personId', 'positionId', 'kind', 'frequency', 'note', 'status', 'createdAt', 'updatedAt']));
+      allow update: if isRole(['admin', 'rosters']);
+      allow delete: if isRole(['admin', 'rosters']) || mine(resource.data.personId);
+    }
     // Away dates people enter themselves.
     match /blockouts/{id} {
       allow read: if staff() || mine(resource.data.personId);

@@ -38,7 +38,7 @@ function seedDocs(opts) {
   });
   const notes = {}; d.notes.forEach(n => { (notes[n.personId] = notes[n.personId] || []).push(strip(n)); });
   Object.keys(notes).forEach(pid => put('notes/' + pid, { entries: notes[pid].map(n => { delete n.personId; return n; }) }));
-  ['families', 'consents', 'teams', 'positions', 'skills', 'services', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'guardians', 'noCollect'].forEach(c => d[c].forEach(x => put(c + '/' + x.id, strip(x))));
+  ['families', 'consents', 'teams', 'positions', 'skills', 'services', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'guardians', 'noCollect', 'serveOffers'].forEach(c => d[c].forEach(x => put(c + '/' + x.id, strip(x))));
   // a turn for Tim (member) to accept
   const future = d.services.filter(s => s.date > new Date().toISOString().slice(0, 10)).sort((a, b) => a.date < b.date ? -1 : 1)[1];
   put('assignments/kTim', { serviceId: future.id, positionId: 'door', personId: 'p14', status: 'pending', source: 'manual' });
@@ -90,17 +90,19 @@ function serve() {
     await context.close();
   }
 
-  async function session(email, docs) {
+  async function session(email, docs, opts) {
     const context = await browser.newContext(), page = await context.newPage(), errs = [];
     page.on('pageerror', e => errs.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errs.push(m.text()); });
     await page.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());       // no internet: fonts, Firebase CDN
-    await page.addInitScript(([fakeSrc, seed, mail]) => {
-      window.CHURCH_HUB_FIREBASE = { apiKey: 'test-only', projectId: 'demo-church-hub', authDomain: 'localhost', appId: 'test' };
+    await page.addInitScript(([fakeSrc, seed, mail, app]) => {
+      window.CHURCH_HUB_FIREBASE = { apiKey: 'test-only', projectId: 'demo-church-hub', authDomain: 'localhost', appId: 'test', googleWebClientId: app && app.clientId || '' };
+      // Stand-in for the Android app's bridge (android/…/MainActivity.java): Android's account picker returns a Google ID token
+      if (app) window.ChurchHubApp = { version: () => '1.0.7', retry: () => {}, googleSignIn: id => { window.__appGoogle = id; setTimeout(() => window.churchHubGoogle('id-token-for-' + id), 0); } };
       (0, eval)(fakeSrc);
       window.__fake.seed(seed);
       if (mail) window.__fake.setUser({ email: mail, emailVerified: true });
-    }, [fake, docs, email]);
+    }, [fake, docs, email, (opts && opts.app) || null]);
     await page.goto(BASE);
     const ready = await page.waitForSelector('.app, .signin-card h1', { timeout: 8000 });
     const docsNow = () => page.evaluate(() => window.__fake.docs);
@@ -111,7 +113,7 @@ function serve() {
     const text = async () => (await page.textContent('main')) || '';
     return { page, errs, ready, docsNow, denied, go, text, settle, close: () => context.close() };
   }
-  const ROUTES = ['home', 'people', 'people/families', 'people/search', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away',
+  const ROUTES = ['home', 'people', 'people/families', 'people/search', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away', 'me', 'me/away', 'me/serve',
     'leave', 'leave/approvals', 'leave/team', 'leave/staff/p02', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'import/leave', 'settings'];
   // Household is compulsory: people in the test data who have none get "+ New household" when edited
   async function fillHome(s) { const f = await s.page.$('#pf-fam'); if (f && (await f.evaluate(e => e.value)) === '') await s.page.selectOption('#pf-fam', '__new'); }
@@ -494,12 +496,24 @@ function serve() {
 
   /* ---------- Roster coordinator ---------- */
   console.log('Roster coordinator (Sipho):');
-  s = await session('sipho.dlamini@example.com', seedDocs());
+  const offersSeed = seedDocs();
+  offersSeed['serveOffers/soTim1'] = { personId: 'p14', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'waiting', createdAt: '2026-10-21 10:00' };
+  offersSeed['serveOffers/soTim2'] = { personId: 'p14', positionId: 'sound', kind: 'change', frequency: 'weekly', note: '', status: 'waiting', createdAt: '2026-10-22 10:00' };
+  s = await session('sipho.dlamini@example.com', offersSeed);
   await tour(s, 'rosters');
   check(await s.page.evaluate(() => !Store.find('consents', () => true).some(c => c.personId !== 'p05')), 'can’t see other people’s consent records');
   await s.page.evaluate(() => Store.put('assignments', { serviceId: Store.list('services')[5].id, positionId: 'door', personId: 'p20', status: 'pending', source: 'manual' }, 'Added to roster'));
   await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('assignments/') && docs[k].personId === 'p20' && docs[k].status === 'pending' && docs[k].source === 'manual'), 'adding someone to the roster saves it');
+  await s.go('home'); check((await s.text()).includes('offered to serve'), 'Home: a to-do to answer offers to serve');
+  await s.go('rosters/teams'); t = await s.text();
+  check(t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
+  await s.page.click('[data-act="rosters:offeryes"][data-id="so1"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['serveOffers/so1'] && Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p15' && docs[k].positionId === 'tea' && docs[k].frequency === 'monthly'), 'Yes puts them on the team, as often as they asked, and clears the offer');
+  await s.page.click('[data-act="rosters:offeryes"][data-id="soTim2"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['skills/kp14sound'].frequency === 'weekly', 'Yes to “serve more often” changes how often');
+  await s.page.click('[data-act="rosters:offerno"][data-id="soTim1"]'); await s.page.fill('#of-reply', 'The door team is full until January'); await s.page.click('[data-act="rosters:offernosend"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['serveOffers/soTim1'].status === 'declined' && docs['serveOffers/soTim1'].reply === 'The door team is full until January' && !Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p14' && docs[k].positionId === 'door'), 'Not now sends a short reply and leaves the team as it was');
   await finish(s);
 
   /* ---------- Member ---------- */
@@ -521,6 +535,43 @@ function serve() {
   await s.go('people/p/p14'); await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Church directory"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['directory/p14'], 'withdrawing directory consent removes them from the directory');
   check(await s.page.evaluate(() => Store.list('people').every(p => !p.birthDate || p.id === 'p14')), 'can’t see anyone else’s private details');
+  // Me: details, days away, serving
+  await s.go('me'); t = await s.text();
+  check(t.includes('Contact details') && t.includes('082 999 0000') && t.includes('Kept by the church office') && t.includes('Married'), 'Me shows their contact details and what the church office keeps');
+  check(!!(await s.page.$('.tabbar a[href="#/me"]')), 'Me is in the phone tab bar');
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-pref', 'Timmy'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['people/p14'].preferredName === 'Timmy' && (await s.text()).includes('Timmy'), 'Me → Change my details saves (known as)');
+  await s.go('me/away'); t = await s.text();
+  check(t.includes('14 Jul 2027') && (await s.page.$$('[data-act="rosters:delaway"]')).length === 3, 'Days away lists their own away dates');
+  await s.page.click('[data-act="rosters:delaway"]'); await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14').length === 2, 'they can remove a day away');
+  await s.go('me/serve'); t = await s.text();
+  check(t.includes('Sound desk') && t.includes('Every 2 weeks') && t.includes('Where would you like to help?') && t.includes('Tea & coffee'), 'Serving shows where they serve and where they could help');
+  await s.page.click('[data-act="me:offer"][data-p="tea"]'); await s.page.check('input[name=mo-f][value=monthly]'); await s.page.fill('#mo-note', 'After the 9:30'); await s.page.click('[data-act="me:send"]'); await s.settle();
+  docs = await s.docsNow(); let offs = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14');
+  check(offs.length === 1 && docs[offs[0]].kind === 'join' && docs[offs[0]].positionId === 'tea' && docs[offs[0]].frequency === 'monthly' && docs[offs[0]].note === 'After the 9:30' && docs[offs[0]].status === 'waiting', 'offering to help saves an offer for the roster coordinator');
+  check((await s.text()).includes('Waiting for the roster coordinator'), 'the offer shows as waiting');
+  await s.page.click('[data-act="me:change"][data-p="sound"]'); await s.page.check('input[name=mo-f][value=stop]'); await s.page.click('[data-act="me:send"]'); await s.settle();
+  docs = await s.docsNow(); offs = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14');
+  check(offs.some(k => docs[k].kind === 'stop' && docs[k].positionId === 'sound') && docs['skills/kp14sound'], 'asking to stop is a request – the team is unchanged until the coordinator says yes');
+  await s.page.click('[data-act="me:withdraw"]'); await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14').length === 1, 'they can withdraw an offer');
+  check(await s.page.evaluate(() => Store.list('serveOffers').every(o => o.personId === 'p14')), 'they see only their own offers');
+  await finish(s);
+
+  console.log('Member: an answer from the roster coordinator');
+  const answered = seedDocs(); answered['serveOffers/soA'] = { personId: 'p14', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'declined', reply: 'The door team is full until January' };
+  s = await session('tim.jacobs@example.com', answered);
+  await s.go('home'); check((await s.text()).includes('The roster coordinator answered 1 of your serving offers'), 'Home tells them the roster coordinator answered');
+  await s.go('me/serve'); t = await s.text(); check(t.includes('Not now') && t.includes('The door team is full until January'), 'they see the reply under the position');
+  await s.page.click('[data-act="me:withdraw"][data-id="soA"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['serveOffers/soA'], 'OK clears the answer');
+  await finish(s);
+
+  console.log('Pastor offering to serve (staff, not a roster coordinator):');
+  s = await session('thandi.mokoena@example.com', seedDocs());
+  await s.go('me/serve'); await s.page.click('[data-act="me:offer"][data-p="door"]'); await s.page.click('[data-act="me:send"]'); await s.settle();
+  docs = await s.docsNow(); check(Object.keys(docs).some(k => k.startsWith('serveOffers/') && docs[k].personId === 'p02' && docs[k].positionId === 'door'), 'a Pastor can offer to serve too');
   await finish(s);
 
   /* ---------- Elvanto: approved leave → Unavailable Volunteers ---------- */
@@ -604,6 +655,29 @@ function serve() {
   check(!!(await s.page.$('.app')), 'Google sign-in works (email in any capitals)');
   await s.page.click('.side [data-act="hub:signout"]'); await s.settle();
   check((await s.page.textContent('.signin-card')).includes('Sign in with Google'), 'signing out returns to the sign-in screen');
+  await finish(s);
+
+  console.log('In the Android app:');
+  s = await session('', seedDocs(), { app: { clientId: 'web-client.apps.googleusercontent.com' } });
+  await s.page.evaluate(() => { window.__fake.nextUser = { email: 'tim.jacobs@example.com', emailVerified: true }; });
+  await s.page.click('[data-act="hub:google"]'); await s.page.waitForSelector('.app', { timeout: 5000 }).catch(() => {});
+  check(await s.page.evaluate(() => window.__appGoogle === 'web-client.apps.googleusercontent.com' && window.__fake.credentials[0] === 'id-token-for-web-client.apps.googleusercontent.com'), 'Sign in with Google uses Android’s account picker and gives Firebase its ID token');
+  check(!!(await s.page.$('.app')) && (await s.page.evaluate(() => location.hash)) === '#/me', 'members open on Me in the app');
+  t = await s.text(); check(t.includes('Church Hub app, version 1.0.7'), 'Me shows the app version');
+  await s.page.click('[data-act="people:consent"]'); check(await s.page.evaluate(() => window.churchHubBack() === true && !document.querySelector('#modal .overlay')), 'the back button closes an open window first');
+  check(await s.page.evaluate(() => window.churchHubBack() === false), '…then lets the app go back a page');
+  await finish(s);
+
+  s = await session('', seedDocs(), { app: {} });
+  check(!(await s.page.$('[data-act="hub:google"]')), 'app without a Google client ID: only the email link is offered');
+  await s.page.fill('#si-email', 'tim.jacobs@example.com'); await s.page.click('[data-act="hub:sendlink"]'); await s.settle();
+  check(!!(await s.page.$('#si-link')) && (await s.page.textContent('.signin-card')).includes('Press and hold the sign-in link'), 'after sending the link, the app explains how to paste it');
+  await s.page.fill('#si-link', 'https://example.com/not-a-link'); await s.page.click('[data-act="hub:pastelink"]');
+  check(await s.page.isVisible('#si-err'), 'a wrong link is refused with an explanation');
+  await s.page.evaluate(() => { window.__fake.nextUser = { email: 'tim.jacobs@example.com', emailVerified: true }; });
+  const link = 'https://church-hub.firebaseapp.com/__/auth/action?apiKey=x&mode=signIn&oobCode=abc&continueUrl=x';
+  await s.page.fill('#si-link', link); await s.page.click('[data-act="hub:pastelink"]'); await s.page.waitForSelector('.app', { timeout: 5000 }).catch(() => {});
+  check(!!(await s.page.$('.app')) && await s.page.evaluate(l => JSON.stringify(window.__fake.linkSignIns[0]) === JSON.stringify(['tim.jacobs@example.com', l]), link), 'pasting the link from the email signs them in');
   await finish(s);
 
   /* ---------- First Administrator on an empty database ---------- */

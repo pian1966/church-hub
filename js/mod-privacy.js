@@ -83,6 +83,7 @@
     S.find('notes', function (n) { return n.personId === p.id; }).forEach(function (n) { S.remove('notes', n.id); });
     S.find('skills', function (k) { return k.personId === p.id; }).forEach(function (k) { S.remove('skills', k.id); });
     S.find('blockouts', function (b) { return b.personId === p.id; }).forEach(function (b) { S.remove('blockouts', b.id); });
+    S.find('serveOffers', function (o) { return o.personId === p.id; }).forEach(function (o) { S.remove('serveOffers', o.id); });
     S.list('groups').forEach(function (g) { if (g.memberIds.indexOf(p.id) >= 0) { g.memberIds = g.memberIds.filter(function (m) { return m !== p.id; }); if (g.memberIds.length < 2) S.remove('groups', g.id); else S.put('groups', g); } });
     S.put('people', { id: p.id, firstName: 'Deleted', lastName: 'person', active: false, appRole: 'member', familyRole: p.familyRole, category: 'Deleted', deletedAt: H.today(), staff: p.staff ? { category: p.staff.category, start: p.staff.start } : undefined },
       'Deleted the personal information of ' + name + ' (kept anonymous serving and leave statistics)');

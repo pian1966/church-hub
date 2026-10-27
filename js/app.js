@@ -82,6 +82,9 @@ var Hub = (function () {
     menu: 'M4 6h16M4 12h16M4 18h16', download: 'M12 3v12M7 10l5 5 5-5M4 21h16', trash: 'M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15', sparkle: 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z'
   };
 
+  /** Running inside the Church Hub Android app (android/), which adds window.ChurchHubApp. */
+  function inApp() { return !!(window.ChurchHubApp && window.ChurchHubApp.googleSignIn); }
+
   /* ---------- modules ---------- */
   function register(m) { modules.push(m); }
   /** One-off data upgrades (module.upgrade), run when an Administrator signs in. */
@@ -116,7 +119,10 @@ var Hub = (function () {
   }
   function shell(mod, body) {
     var active = mod ? mod.id : 'home', s = Store.settings();
-    var tabs = ['home'].concat(enabled().filter(function (m) { return ['people', 'rosters', 'leave'].indexOf(m.id) >= 0; }).map(function (m) { return m.id; })).slice(0, 4);
+    // Phone tab bar: members get "Me" (their details, days away, serving) first; staff get their working areas first.
+    var order = can('people.basic') || can('people.view') || can('*') ? ['people', 'rosters', 'leave', 'me'] : ['me', 'people', 'rosters', 'leave'];
+    var on = enabled().map(function (m) { return m.id; });
+    var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>Church Hub</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '</div>' +
@@ -158,6 +164,10 @@ var Hub = (function () {
     var st = live, html;
     if (st.stage === 'loading') html = '<h1>Church Hub</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
     else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="location.reload()">' + T('Try again') + '</button>';
+    else if (st.stage === 'linkSent' && inApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
+      '<ol class="steps"><li>' + T('Open the email on this phone.') + '</li><li>' + T('Press and hold the sign-in link, then choose Copy link.') + '</li><li>' + T('Come back here, paste it in the box and tap Sign in.') + '</li></ol>' +
+      '<form id="si-form" novalidate><label class="field">' + T('Sign-in link') + '<input id="si-link" type="url" inputmode="url" autocomplete="off" placeholder="https://…"></label><p id="si-err" class="note bad" hidden></p>' +
+      '<button class="btn primary" data-act="hub:pastelink">' + T('Sign in') + '</button> <button class="btn" type="button" data-act="hub:restart">' + T('Use a different way') + '</button></form>';
     else if (st.stage === 'linkSent') html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p><button class="btn" data-act="hub:restart">' + T('Use a different way') + '</button>';
     else if (st.stage === 'needEmail') html = '<h1>' + T('Confirm your email') + '</h1><p class="lead">' + T('For your safety, type the email address you asked the sign-in link for.') + '</p>' +
       '<form id="si-form" novalidate><label class="field">' + T('Email') + '<input id="si-email" type="email" autocomplete="email" required></label><p id="si-err" class="note bad" hidden></p><button class="btn primary" data-act="hub:finishlink">' + T('Sign in') + '</button></form>';
@@ -172,10 +182,11 @@ var Hub = (function () {
       '<div class="two"><label class="field req">Your first name<input id="su-first" autocomplete="given-name"></label><label class="field req">Last name<input id="su-last" autocomplete="family-name"></label></div>' +
       '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + (st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">Sign out</button>';
     else html = '<h1>' + T('Sign in') + '</h1><p class="lead">' + T('For church staff, leaders and members who have been given access.') + '</p>' + (st.message ? '<p class="note bad">' + esc(st.message) + '</p>' : '') +
-      '<button class="btn primary big-btn" data-act="hub:google">' + icon('M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5c-.2 1.2-.9 2.2-1.9 2.8v2.4h3.1c1.8-1.7 2.8-4.1 2.8-6.9zM12 21c2.6 0 4.7-.9 6.3-2.3l-3.1-2.4c-.9.6-2 .9-3.2.9-2.5 0-4.6-1.7-5.3-3.9H3.5v2.4C5.1 18.9 8.3 21 12 21zM6.7 13.3a5.4 5.4 0 0 1 0-3.4V7.5H3.5a9 9 0 0 0 0 8.2zM12 6.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9 9 0 0 0 3.5 7.5l3.2 2.4C7.4 8.2 9.5 6.6 12 6.6z', 18) + T('Sign in with Google') + '</button>' +
-      '<p class="muted" style="text-align:center;margin:14px 0 6px">' + T('or get a sign-in link by email') + '</p>' +
+      (inApp() && !(window.CHURCH_HUB_FIREBASE || {}).googleWebClientId ? '' : '<button class="btn primary big-btn" data-act="hub:google">' + icon('M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5c-.2 1.2-.9 2.2-1.9 2.8v2.4h3.1c1.8-1.7 2.8-4.1 2.8-6.9zM12 21c2.6 0 4.7-.9 6.3-2.3l-3.1-2.4c-.9.6-2 .9-3.2.9-2.5 0-4.6-1.7-5.3-3.9H3.5v2.4C5.1 18.9 8.3 21 12 21zM6.7 13.3a5.4 5.4 0 0 1 0-3.4V7.5H3.5a9 9 0 0 0 0 8.2zM12 6.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9 9 0 0 0 3.5 7.5l3.2 2.4C7.4 8.2 9.5 6.6 12 6.6z', 18) + T('Sign in with Google') + '</button>' +
+      '<p class="muted" style="text-align:center;margin:14px 0 6px">' + T('or get a sign-in link by email') + '</p>') +
       '<form id="si-form" novalidate><label class="field"><span class="sr">' + T('Email') + '</span><input id="si-email" type="email" placeholder="you@example.com" autocomplete="email"></label><p id="si-err" class="note bad" hidden></p>' +
       '<button class="btn" data-act="hub:sendlink">' + T('Email me a link') + '</button></form>' +
+      (inApp() && Store.live.pendingEmail() ? '<p style="margin:10px 0 0"><button class="link" data-act="hub:havelink">' + T('I already have a sign-in link') + '</button></p>' : '') +
       '<p class="fine">' + esc(((Store.settings() || {}).privacyNotice || 'The church keeps your information secure and stores it in South Africa').split('.')[0]) + '. ' + T('Want to look around first?') + ' <a href="?demo">' + T('Try the demo with made-up people') + '</a>.</p>';
     root.innerHTML = liveCard(html);
     var f = root.querySelector('input'); if (f) f.focus();
@@ -187,7 +198,7 @@ var Hub = (function () {
       user = st.person; Store.setUser(user);
       Store.audit('Signed in', 'people/' + user.id);
       runUpgrades();
-      if (!location.hash || location.hash === '#') location.hash = '#/home';
+      if (!location.hash || location.hash === '#') location.hash = inApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
       render();
     } else { user = null; Store.setUser(null); renderLive(); }
   }
@@ -258,7 +269,19 @@ var Hub = (function () {
       location.hash = ''; render();
     },
     google: function () {
-      Store.live.google().catch(function (e) { live = { stage: 'signedOut', message: T('Google sign-in didn’t work ({code}). Try again, or use the email link.', { code: (e && e.code) || 'error' }) }; renderLive(); });
+      Store.live.google().catch(function (e) {
+        var code = (e && e.code) || 'error';
+        live = { stage: 'signedOut', message: code === 'app/not-set-up' ? T('Sign in with Google isn’t set up in the app yet. Please use the email link.')
+          : code === 'app/google' && e.message ? e.message : T('Google sign-in didn’t work ({code}). Try again, or use the email link.', { code: code }) };
+        renderLive();
+      });
+    },
+    pastelink: function (el, ev) {
+      if (ev) ev.preventDefault();
+      var link = document.getElementById('si-link').value.trim(), errEl = document.getElementById('si-err');
+      if (!Store.live.isEmailLink(link)) { errEl.textContent = T('That doesn’t look like the sign-in link from the email. Copy the whole link and try again.'); errEl.hidden = false; return; }
+      var email = live.email || Store.live.pendingEmail();
+      live = { stage: 'loading', email: email }; renderLive(); Store.live.finishEmailLink(email, link);
     },
     sendlink: function (el, ev) {
       if (ev) ev.preventDefault();
@@ -281,6 +304,7 @@ var Hub = (function () {
       live = { stage: 'loading', email: email }; renderLive(); Store.live.finishEmailLink(email);
     },
     restart: function () { live = { stage: 'signedOut' }; renderLive(); },
+    havelink: function () { live = { stage: 'linkSent', email: Store.live.pendingEmail() }; renderLive(); },
     setup: function (el) {
       var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, errEl = document.getElementById('su-err');
       if (!v('su-first') || !v('su-last') || (live.needChurch && !v('su-church'))) { errEl.textContent = 'Please fill in every box.'; errEl.hidden = false; return; }
@@ -330,8 +354,12 @@ var Hub = (function () {
   }
   function onKey(ev) { if (ev.key === 'Escape' && document.querySelector('#modal .overlay')) closeModal(); }
 
+  /** The Android back button: close an open window first (true = handled); otherwise the app goes back a page. */
+  window.churchHubBack = function () { if (document.querySelector('#modal .overlay')) { closeModal(); return true; } return false; };
+
   function start() {
     root = document.getElementById('app');
+    if (inApp()) document.documentElement.classList.add('in-app');
     I18n.set(Store.pref('lang') || 'en');
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);

@@ -105,7 +105,7 @@ tab bar shows Me first for members (staff get their working areas first).
 **Offers to serve** go to `serveOffers` (see Collections); roster coordinators answer them at the top of Rosters → Teams,
 with a Home to-do. A declined offer shows the reply under the position until the person taps OK.
 **Android app** (`android/`, built by `.github/workflows/build-android.yml`, setup in `docs/ANDROID.md`): a WebView
-showing the website, same as Leave Manager's app and signed with the same key. It adds `window.ChurchHubApp`; when present,
+showing the website, built like Leave Manager's app (its own signing key). It adds `window.ChurchHubApp`; when present,
 `Store.live.google()` asks Android's account picker for a Google ID token and signs in with
 `signInWithCredential` (needs `googleWebClientId` in `firebase-config.js`), and after "Email me a link" the person pastes
 the link from the email (Google's sign-in pop-up and email links can't open inside an app). Members open on `#/me`;

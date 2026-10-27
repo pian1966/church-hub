@@ -64,11 +64,11 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
     office keeps; consent; language; sign out), *Days away* (add/remove; warns about roster turns on those days), *Serving*
     (accept/decline turns; where I serve; **offer to help**, serve more/less often, or stop)
   - **Offers to serve** (new `serveOffers`): roster coordinators answer under Rosters → Teams (Yes / Not now with a reply), Home to-do
-  - **Android app** (`android/`, same wrapper and signing key as Leave Manager): native Google sign-in, paste-the-email-link
+  - **Android app** (`android/`, same wrapper as Leave Manager, its own signing key): native Google sign-in, paste-the-email-link
     sign-in, back button, file choosing, offline screen; GitHub builds `ChurchHub.apk` (fixed "android" release)
   - Home-screen icons and `manifest.webmanifest` (iPhone: Safari → Add to Home Screen)
   - New rules – **re-publish them**. Tests: rules, app (member, coordinator, pastor, app sign-in), languages.
-- ⬜ Church: Android app setup (docs/ANDROID.md): signing key secret, build, optional Google sign-in (Web client ID), re-publish rules, try it, send the link
+- ⬜ Church: Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), re-publish rules, try it, send the link
 - ✅ 27 Oct 2026: Android test build and all tests (incl. the rules against Google's emulator) green on GitHub for pull request #1
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n.js – one line per text); then decide whether to translate
   staff screens too

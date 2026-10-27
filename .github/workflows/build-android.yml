@@ -4,8 +4,8 @@ name: Build Android app
 # download it from: https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk
 #
 # The app shows the live website, so it only needs rebuilding when something in android/ changes.
-# One-time setup (docs/ANDROID.md): add the repository secret ANDROID_KEYSTORE – the same signing key as the
-# Leave Manager app. Without it the build still runs as a check, but nothing is published.
+# One-time setup (docs/ANDROID.md): add the repository secret ANDROID_KEYSTORE – Church Hub's own signing key
+# (ChurchHub-ANDROID_KEYSTORE.txt). Without it the build still runs as a check, but nothing is published.
 
 on:
   push:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Build the app
         env:
-          KEYSTORE_PASSWORD: leave-manager-signing   # the Leave Manager key's password (same key)
+          KEYSTORE_PASSWORD: church-hub-signing   # the key file itself (the secret) is what must stay private
         run: |
           set +e
           gradle -p android assembleRelease --no-daemon --console=plain > build.log 2>&1

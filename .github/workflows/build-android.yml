@@ -13,6 +13,10 @@ on:
     paths:
       - 'android/**'
       - '.github/workflows/build-android.yml'
+  pull_request:            # test build only – nothing is published from a pull request
+    paths:
+      - 'android/**'
+      - '.github/workflows/build-android.yml'
   workflow_dispatch:
 
 permissions:
@@ -71,7 +75,7 @@ jobs:
           ls -la out
 
       - name: Keep the test build
-        if: steps.key.outputs.signed != 'true'
+        if: steps.key.outputs.signed != 'true' || github.event_name == 'pull_request'
         uses: actions/upload-artifact@v4
         with:
           name: ChurchHub-test-build
@@ -79,7 +83,7 @@ jobs:
           retention-days: 7
 
       - name: Publish on the Releases page
-        if: steps.key.outputs.signed == 'true'
+        if: steps.key.outputs.signed == 'true' && github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |

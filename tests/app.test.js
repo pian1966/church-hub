@@ -319,6 +319,16 @@ function serve() {
   await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
   await finish(s);
 
+  console.log('Wedding anniversary on the profile:');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p15');
+  await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
+  check(/Wedding anniversary\s*Not recorded/.test(await s.text()), 'a married person without a date shows “Wedding anniversary: Not recorded”');
+  await s.page.click('button.link[data-focus="pf-wed"]');
+  check(await s.page.evaluate(() => document.activeElement && document.activeElement.id === 'pf-wed'), '“Add” opens Edit details at the anniversary box');
+  await s.page.fill('#pf-wed', '2000-06-10'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  check(/Wedding anniversary\s*\S+ 10 Jun 2000\s*Married \d+ years/.test(await s.text()), 'then it shows the date and years married');
+  await finish(s);
+
   console.log('Adding a person:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
   await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Test'); await s.page.fill('#pf-last', 'Person');

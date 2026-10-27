@@ -134,6 +134,7 @@ var I18n = (function () {
     ['Mobile', 'Selfoon', 'Iselula', 'Iselfowuni'],
     ['Birthday', 'Verjaarsdag', 'Usuku lokuzalwa', 'Usuku lokuzalwa'],
     ['Age {n}', 'Ouderdom {n}', 'Iminyaka engu-{n}', 'Iminyaka eyi-{n}'],
+    ['Add', 'Voeg by', 'Engeza', 'Yongeza'],
     ['Wedding anniversary', 'Huweliksherdenking', 'Usuku lomshado', 'Isikhumbuzo somtshato'],
     ['Married {n} year', 'Getroud {n} jaar', 'Ushade unyaka o-{n}', 'Utshate unyaka o-{n}'],
     ['Married {n} years', 'Getroud {n} jaar', 'Ushade iminyaka engu-{n}', 'Utshate iminyaka eyi-{n}'],

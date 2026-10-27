@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store;
-  var MODS = [['people', 'People', 'Directory, families and consent'], ['rosters', 'Rosters', 'Serving rosters, teams and serving together'], ['leave', 'Leave', 'Staff leave (Leave Manager built in)'],
+  var MODS = [['people', 'People', 'Directory, households and consent'], ['rosters', 'Rosters', 'Serving rosters, teams and serving together'], ['leave', 'Leave', 'Staff leave (Leave Manager built in)'],
     ['privacy', 'Privacy', 'POPIA tools'], ['import', 'Import', 'Bring data across from Elvanto']];
 
   function render() {
@@ -15,7 +15,7 @@
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(m[1]) + '</b><br><span class="muted small">' + esc(m[2]) + '</span></span></label>';
       }).join('') + '<p class="hint">More apps (groups, check-in, messages, calendar) arrive in later phases.</p></section>' +
       '<section class="panel"><h2>Who can see what</h2><div class="table-wrap"><table class="simple"><thead><tr><th>Access</th><th>Can</th><th>People</th></tr></thead><tbody>' +
-      [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, families, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']].map(function (r) {
+      [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']].map(function (r) {
         return '<tr><td><b>' + esc(H.ROLES[r[0]].label) + '</b></td><td>' + esc(r[1]) + '</td><td>' + (byRole[r[0]] || []).length + '</td></tr>';
       }).join('') + '</tbody></table></div><p class="hint">Change someone’s access from their profile (People → Edit details).</p></section>' +
       '<section class="panel"><h2>Services that need a roster</h2>' + (svcs.length ? '<div class="list">' + svcs.slice(0, 6).map(function (s) { return '<div class="item"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + '</b><small>' + esc(s.time + ' · ' + s.name) + '</small></span><button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="Remove this service">' + H.icon(H.ICON.trash, 18) + '</button></div>'; }).join('') + '</div>' + (svcs.length > 6 ? '<p class="hint">…and ' + (svcs.length - 6) + ' more.</p>' : '') : '<p class="muted">None planned.</p>') +

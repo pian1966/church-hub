@@ -250,3 +250,16 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .pp-searchcol .search { width: 100%; }
 .adv-link { font-size: 13.5px; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; padding: 4px 2px; }
 .adv-link:hover { text-decoration-thickness: 2px; }
+
+/* Language picker (sidebar, menu, sign-in) */
+.lang-pick { display: inline-flex; align-items: center; gap: 6px; position: relative; }
+.lang-pick svg { position: absolute; left: 10px; pointer-events: none; opacity: .75; }
+.lang-sel { appearance: none; -webkit-appearance: none; font: inherit; font-size: 13.5px; min-height: 36px; padding: 6px 28px 6px 32px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236B625A' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; color: var(--ink); cursor: pointer; }
+.side-lang { padding: 10px 6px 0; }
+.side-lang .lang-pick { width: 100%; }
+.side-lang .lang-sel { width: 100%; background-color: transparent; color: var(--side-ink); border-color: #3A322C; }
+.side-lang .lang-sel option { color: #222; }
+.signin-lang { display: flex; justify-content: flex-end; margin: -6px 0 6px; }
+
+.signin-card { position: relative; }
+.signin-lang { position: absolute; top: 22px; right: 22px; margin: 0; }

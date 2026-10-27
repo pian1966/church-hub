@@ -111,6 +111,19 @@ households). Pure rules in `js/households.js`, tested in `tests/households.test.
   categories Member → Partner and Visitor → Visiting Minister and linked existing children to their household adults (unconfirmed).
   The *Member* access level (role) keeps its name.
 
+## Languages
+English, Afrikaans, isiZulu and isiXhosa for the screens members use (sign-in, Home, menus, the directory and my details,
+consent, My serving, serving together, away dates, my leave). Code wraps English text in `T('…')` / `TN(one, many, n)`;
+`js/i18n.js` holds one line per text with all four languages, plus month and day names for dates. `tests/i18n.test.js`
+finds every `T('…')` in the code and fails if a language is missing or a {part} is lost. The choice is kept per device
+(`Store.pref('lang')`), so it also works on the sign-in screen. Administrator-only screens stay English for now, as do the
+church's own words (categories, teams, services, kinds of leave, privacy notice) and the shared leave rules' messages.
+The isiZulu and isiXhosa were drafted by AI and need checking by fluent speakers.
+
+## Wording: household (not "family")
+The screens say **household** for a `families` record (who lives together – Elvanto's "family"); "family" is used only in
+its everyday sense (serve with family, care for the family of someone who died). The collection and code keep the name `families`.
+
 ## Advanced search (People → Advanced search)
 Like Elvanto's: filters (field, how to compare, value; + and −), Match *all* / *any* / *your own logic* ("(1 AND 2) OR NOT 3",
 AND before OR), columns to show (Name first, reorder, add), results sortable by column, Download (CSV). Pure rules in

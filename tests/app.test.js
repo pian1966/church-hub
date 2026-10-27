@@ -241,7 +241,7 @@ function serve() {
   await s.page.fill('#pp-q', 'musa'); await s.page.waitForTimeout(100); t = await s.text();
   check(t.includes('Noah Mokoena'), 'searching a parent’s name also finds the children who live with them');
   await s.go('people/families'); await s.page.fill('#fm-q', 'Liam'); await s.page.waitForTimeout(100); t = await s.text();
-  check(t.includes('Tim & Clare Jacobs') && !t.includes('Naidoo'), 'Families page: search by family or anyone in it');
+  check(t.includes('Tim & Clare Jacobs') && !t.includes('Naidoo'), 'Households page: search by household or anyone in it');
   await s.go('people'); t = await s.text();
   check(t.includes('Partners') && t.includes('Visiting ministers') && !/\bMembers\b/.test(t), 'categories are called Partner, Attender, Visiting Minister');
   await finish(s);
@@ -294,6 +294,19 @@ function serve() {
   await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
   await finish(s);
 
+  console.log('Languages:');
+  s = await session('tim.jacobs@example.com', seedDocs());
+  await s.page.selectOption('.side-lang .lang-sel', 'zu'); await s.page.waitForTimeout(80);
+  check((await s.page.textContent('.side nav')).includes('Abantu') && (await s.page.getAttribute('html', 'lang')) === 'zu', 'a member can switch the screens to isiZulu');
+  await s.go('rosters/mine'); check((await s.text()).includes('Ukukhonza kwami'), 'My serving in isiZulu');
+  await s.page.reload(); await s.page.waitForSelector('.app');
+  check((await s.page.textContent('.side nav')).includes('Abantu'), 'the language is remembered on this device');
+  await s.page.selectOption('.side-lang .lang-sel', 'af'); await s.go('people/p/p14');
+  check((await s.text()).includes('Kontak en besonderhede') && (await s.text()).includes('Toestemming'), 'my details in Afrikaans');
+  await s.page.selectOption('.side-lang .lang-sel', 'en'); await s.page.waitForTimeout(80);
+  check((await s.page.textContent('.side nav')).includes('People'), 'back to English');
+  await finish(s);
+
   console.log('Upgrading existing data (first Administrator sign-in):');
   s = await session('linda.pillay@example.com', seedDocs({ legacy: true }));
   await s.settle(); docs = await s.docsNow();
@@ -315,7 +328,7 @@ function serve() {
   
   await s.go('import'); await s.page.setInputFiles('#im-file', elv); await s.page.waitForSelector('.im-cat', { timeout: 5000 }).catch(() => {});
   const prevE = await s.text();
-  check(/New people\s*9/.test(prevE) && /Already here \(updated\)\s*2/.test(prevE) && /Families\s*2/.test(prevE) && prevE.includes('shared by more than one person'), 'preview: 9 new; Jason (same email and name) and Priya (same name) already here, updated; 2 families; shared emails explained');
+  check(/New people\s*9/.test(prevE) && /Already here \(updated\)\s*2/.test(prevE) && /Households\s*2/.test(prevE) && prevE.includes('shared by more than one person'), 'preview: 9 new; Jason (same email and name) and Priya (same name) already here, updated; 2 families; shared emails explained');
   check(await s.page.$eval('.im-cat[data-c="CCH NON Member_Partner"]', e => e.value) === 'Attender', 'Elvanto categories matched (non-members → Attender), changeable');
   await s.page.click('[data-act="import:go"]'); await s.page.click('[data-act="import:go"]'); await s.settle();
   docs = await s.docsNow();

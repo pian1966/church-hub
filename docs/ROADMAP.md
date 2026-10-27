@@ -51,6 +51,12 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   (existing data updated automatically on the first Administrator sign-in). New rules – **re-publish them**.
 - ✅ 27 Oct 2026: **Advanced search** on People, as in Elvanto (filters, match all/any/own logic, columns, sort, CSV download –
   audit-logged; each role searches only what it may see). "Church at a glance" now closed until opened. No rule changes.
+- ✅ 27 Oct 2026: **Languages** – English, Afrikaans, isiZulu, isiXhosa for the screens members use (picker in the menu and on
+  sign-in, remembered per device; dates too). Screens now say **Household** consistently (Households page, Edit details,
+  search). Email-link errors now show Firebase's reason. Advanced search moved to a link under the search box.
+- ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n.js – one line per text); then decide whether to translate
+  staff screens too
+- ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

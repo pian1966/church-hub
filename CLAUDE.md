@@ -8,6 +8,8 @@
   `node tests/elvanto-import.test.js`. Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Households and guardians rules: `js/households.js` (`node tests/households.test.js`); advanced people search: `js/people-search.js`
   (`node tests/people-search.test.js`) – only offer fields a role may see, never medical/pastoral notes or collection restrictions.
+- Member-facing text goes through `T('…')` with a line in `js/i18n.js` for all four languages (`node tests/i18n.test.js`).
+  Say "household" on screens for a `families` record.
 - Elvanto updates for approved leave: `js/elvanto-sync.js` (`node tests/elvanto-sync.test.js`) and the robot `robot/robot.js`
   (`node tests/robot.test.js`). The robot's log is public: never print names, dates or emails.
 - Who sees what is enforced by `firestore.rules`. Changing access means changing, together: `firestore.rules`, `plan()` in `js/store.js`,

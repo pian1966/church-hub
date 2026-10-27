@@ -14,7 +14,7 @@
   }
 
   function render() {
-    var h = '<div class="page-head"><div><h1>Import from Elvanto</h1><p class="lead">Bring your people and families across from Elvanto. Nothing is changed in Elvanto.</p></div></div>' + tabs('elvanto');
+    var h = '<div class="page-head"><div><h1>Import from Elvanto</h1><p class="lead">Bring your people and households (Elvanto’s “families”) across from Elvanto. Nothing is changed in Elvanto.</p></div></div>' + tabs('elvanto');
     var already = fromElvanto().length;
     if (st.done) {
       h += '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.links ? ' ' + st.done.links + ' children linked to their parents – please confirm them (see Home).' : '') + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
@@ -34,7 +34,7 @@
     h += '<div class="grid2"><section class="panel"><h2>Match the columns</h2>' + E.FIELDS.map(function (f) {
       return '<label class="field">' + esc(f[1]) + '<select class="im-map" data-f="' + f[0] + '"><option value="">— not in the file —</option>' + st.head.map(function (c, i) { return '<option value="' + i + '"' + (st.map[f[0]] === i ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
     }).join('') + '</section><div>' +
-      '<section class="panel"><h2>What will happen</h2><div class="stats"><div class="stat"><span>New people</span><b>' + pl.added + '</b></div><div class="stat"><span>Already here (updated)</span><b>' + pl.updated + '</b></div><div class="stat"><span>Children</span><b>' + pl.children + '</b></div><div class="stat"><span>Families</span><b>' + pl.families + '</b></div></div>' +
+      '<section class="panel"><h2>What will happen</h2><div class="stats"><div class="stat"><span>New people</span><b>' + pl.added + '</b></div><div class="stat"><span>Already here (updated)</span><b>' + pl.updated + '</b></div><div class="stat"><span>Children</span><b>' + pl.children + '</b></div><div class="stat"><span>Households</span><b>' + pl.families + '</b></div></div>' +
       (pl.sharedEmails ? '<p class="hint">' + pl.sharedEmails + ' email address' + (pl.sharedEmails === 1 ? ' is' : 'es are') + ' shared by more than one person (e.g. a couple). They stay separate people.</p>' : '') +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>Name</th><th>Email</th><th>In Church Hub</th></tr></thead><tbody>' + pl.items.slice(0, 8).map(function (x) {
         var o = x.rec; return '<tr><td>' + esc(o.firstName + ' ' + o.lastName) + (o.child ? ' <span class="tag" style="--c:#0E7490">Child</span>' : '') + '</td><td>' + esc(o.email) + '</td><td>' + (x.personId ? 'Update (matched by ' + esc(x.how) + ')' : 'New') + '</td></tr>';

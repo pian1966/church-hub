@@ -112,6 +112,9 @@ People added without access stay on the church records but can't sign in.
 | "Setting up didn't work" | The security rules aren't published – do step 7. |
 | Google sign-in window closes straight away | Check step 3 (Google enabled, `pian1966.github.io` authorised) and step 8 (both website lines). |
 | The email link doesn't arrive | Check the spam folder; check step 3 point 3. |
+| "We couldn't send the link" with `(auth/operation-not-allowed)` | Email links aren't switched on: Authentication → Sign-in method → Email/Password → switch on **both** Email/Password and Email link (passwordless sign-in) → Save. |
+| "...isn't allowed from this web address" (`auth/unauthorized-continue-uri` or `unauthorized-domain`) | Authentication → Settings → Authorised domains → add `pian1966.github.io`. |
+| "We couldn't send the link" with another code | Check step 8: if the key is limited to certain APIs, **Identity Toolkit API** must be on its list. Tell Claude the code in brackets. |
 | Still the demo, not "Sign in" | Step 6 isn't saved yet, or the browser kept the old page: wait two minutes and refresh. |
 
 ## Before real church information goes in

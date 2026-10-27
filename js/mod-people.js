@@ -153,7 +153,7 @@
     // Contact (left out when there's nothing this person may see, e.g. a young child for Children's ministry)
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
-      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
+      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
@@ -463,7 +463,7 @@
         var on = (A.sort || 'name') === k;
         return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';
       }).join('') + '</tr></thead><tbody>' + r.rows.map(function (x) {
-        return '<tr>' + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + esc(H.name(x.p)) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
+        return '<tr>' + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + esc(H.name(x.p)) + '</a></td>' : k === 'email' && x.values.email ? '<td><a href="mailto:' + esc(x.values.email) + '" target="_blank" rel="noopener">' + esc(x.values.email) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
       }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (POPIA).</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
   }
   function advCsv() {

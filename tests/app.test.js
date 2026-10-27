@@ -329,6 +329,10 @@ function serve() {
   check(/Wedding anniversary\s*\S+ 10 Jun 2000\s*Married \d+ years/.test(await s.text()), 'then it shows the date and years married');
   await finish(s);
 
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p14');
+  check(await s.page.$eval('a[href^="mailto:"]', a => a.target === '_blank'), 'email links open in a new tab or window');
+  await finish(s);
+
   console.log('Adding a person:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
   await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Test'); await s.page.fill('#pf-last', 'Person');

@@ -58,6 +58,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ 27 Oct 2026: forms shade the boxes that must be filled in (key at the top; no more “(optional)”); Edit details shows age and years married as dates are typed
 - ✅ 27 Oct 2026: email and mobile must be filled in for adults – type “unknown” if not known (saved as “Not known”, never as the word); “Married N years” wording
 - ✅ 27 Oct 2026: Away dates shows the kind of leave and its reason – only to the person and Administrators (roster coordinators still see “On leave”)
+- ✅ 27 Oct 2026: Category, Household and “In the household as” must be filled in (new people start on “Choose…”; someone living alone gets “+ New household”)
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n.js – one line per text); then decide whether to translate
   staff screens too
 - ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)

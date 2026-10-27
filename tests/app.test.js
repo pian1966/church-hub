@@ -113,6 +113,8 @@ function serve() {
   }
   const ROUTES = ['home', 'people', 'people/families', 'people/search', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away',
     'leave', 'leave/approvals', 'leave/team', 'leave/staff/p02', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'import/leave', 'settings'];
+  // Household is compulsory: people in the test data who have none get "+ New household" when edited
+  async function fillHome(s) { const f = await s.page.$('#pf-fam'); if (f && (await f.evaluate(e => e.value)) === '') await s.page.selectOption('#pf-fam', '__new'); }
   async function tour(s, who) {
     for (const r of ROUTES) await s.go(r);
     await s.go('people/p/p12'); const t12 = await s.text();
@@ -140,17 +142,17 @@ function serve() {
   check(!!(await s.page.$('.app')), 'signs in and sees the app');
   check(!(await s.page.$('.demo')), 'no demo banner when live');
   await tour(s, 'admin');
-  await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-role', 'rosters'); await s.page.click('[data-act="people:save"]');
+  await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-role', 'rosters'); await s.page.click('[data-act="people:save"]');
   await s.settle();
   let docs = await s.docsNow();
   check(docs['roles/sam.peters@example.com'] && docs['roles/sam.peters@example.com'].role === 'rosters' && docs['roles/sam.peters@example.com'].personId === 'p19', 'giving Sam “Roster coordinator” access writes the access list');
-  await s.go('people/p/p27'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]');
+  await s.go('people/p/p27'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]');
   check(await s.page.isVisible('#pf-err') && (await s.page.textContent('#pf-err')).includes('marital'), 'marital status must be chosen for adults');
   await s.page.selectOption('#pf-marital', 'Not known'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['roles/ruth.daniels@example.com'], 'choosing “No access” removes their sign-in');
   check(docs['details/p27'].maritalStatus === 'Not known' && !docs['people/p27'].maritalStatus, 'marital status is kept with the private details (not the contact card)');
   // Staff details: make Sam a Support Staff member
-  await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await s.page.check('#pf-staff'); await s.page.click('[data-act="people:save"]');
+  await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.check('#pf-staff'); await s.page.click('[data-act="people:save"]');
   check((await s.page.textContent('#pf-err')).includes('staff category'), 'staff need a category and start date');
   await s.page.selectOption('#pf-scat', 'Support Staff'); await s.page.fill('#pf-sstart', '2026-07-01');
   await s.page.uncheck('#pf-sw-same'); await s.page.check('.pf-sw[value="Mon"]'); await s.page.check('.pf-sw[value="Tue"]');
@@ -197,6 +199,10 @@ function serve() {
   await s.go('people/p/p14'); check((await s.text()).includes('Tim & Clare Jacobs'), 'profiles show the family name');
   {
     await s.go('people/p/p25'); await s.page.click('[data-act="people:edit"]');
+    check(!!(await s.page.$('label.req #pf-cat')) && !!(await s.page.$('label.req #pf-fam')) && !!(await s.page.$('label.req #pf-frole')), 'category, household and “in the household as” are shaded as must-fill');
+    await s.page.click('[data-act="people:save"]');
+    check((await s.page.textContent('#pf-err')).includes('choose their household'), 'someone can’t be saved without a household');
+    await fillHome(s);
     check((await s.page.getAttribute('#pf-email', 'placeholder')).includes('unknown') && !!(await s.page.$('#pf-email-f.req')) && !!(await s.page.$('#pf-mobile-f.req')), 'email and mobile are shaded as must-fill, with a grey hint to type “unknown”');
     await s.page.fill('#pf-email', ''); await s.page.click('[data-act="people:save"]');
     check((await s.page.textContent('#pf-err')).includes('email address, or type'), 'an adult can’t be saved without an email (or “unknown”)');
@@ -207,7 +213,7 @@ function serve() {
   }
   {
     const y = new Date().getFullYear() - 12, wed = y + '-01-01';
-    await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-birth', (y - 20) + '-01-01'); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', wed);
+    await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-birth', (y - 20) + '-01-01'); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', wed);
     await s.page.click('[data-act="people:save"]'); await s.settle();
     const tw = await s.text();
     check(/Age 32/.test(tw) && /Wedding anniversary/.test(tw) && /Married 12 years/.test(tw), 'profile shows age under the birthday, and the wedding anniversary with years married');
@@ -311,6 +317,15 @@ function serve() {
   s = await session('tim.jacobs@example.com', seedDocs());
   await s.go('people'); check(!(await s.page.$('a[href="#/people/search"]')), 'members have no advanced search button');
   await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
+  await finish(s);
+
+  console.log('Adding a person:');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
+  await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Test'); await s.page.fill('#pf-last', 'Person');
+  check((await s.page.$eval('#pf-cat', e => e.value)) === '' && (await s.page.$eval('#pf-frole', e => e.value)) === '', 'a new person starts with Category and “in the household as” on Choose…');
+  await s.page.click('[data-act="people:save"]'); check((await s.page.textContent('#pf-err')).includes('choose a category'), 'category must be chosen');
+  await s.page.selectOption('#pf-cat', 'Attender'); await s.page.selectOption('#pf-fam', '__new'); await s.page.click('[data-act="people:save"]');
+  check((await s.page.textContent('#pf-err')).includes('adult or a child'), '“in the household as” must be chosen');
   await finish(s);
 
   console.log('Away dates – kind of leave and reason:');
@@ -479,7 +494,7 @@ function serve() {
   await tour(s, 'member');
   await s.go('people'); const dirText = await s.text();
   check(dirText.includes('Clare Jacobs') && !dirText.includes('Megan Smith') && !dirText.includes('Ruth Daniels') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
-  await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
   await s.go('rosters/away'); await s.page.click('[data-act="rosters:addaway"]');
   const ticks = await s.page.$$('.aw-d'); await ticks[1].check(); await ticks[3].check();

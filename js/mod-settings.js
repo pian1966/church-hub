@@ -5,6 +5,14 @@
   var MODS = [['people', 'People', 'Directory, households and consent'], ['rosters', 'Rosters', 'Serving rosters, teams and serving together'], ['leave', 'Leave', 'Staff leave (Leave Manager built in)'],
     ['privacy', 'Privacy', 'POPIA tools'], ['import', 'Import', 'Bring data across from Elvanto']];
 
+  /** The number of people with an access level; point at it (or tap it) to see who they are. Long lists (e.g. "No access") stay a number. */
+  function whoHas(ps, role) {
+    if (!ps.length || ps.length > 40) return String(ps.length);
+    ps = ps.slice().sort(function (a, b) { return (a.lastName + ' ' + a.firstName).localeCompare(b.lastName + ' ' + b.firstName); });
+    return '<details class="who" data-role="' + role + '"><summary title="' + esc(ps.map(H.name).join(', ')) + '">' + ps.length + '</summary><div class="who-list">' +
+      ps.map(function (p) { return '<a href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>'; }).join('') + '</div></details>';
+  }
+
   function render() {
     var st = S.settings(), on = st.modules || {};
     var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
@@ -16,7 +24,7 @@
       }).join('') + '<p class="hint">More apps (groups, check-in, messages, calendar) arrive in later phases.</p></section>' +
       '<section class="panel"><h2>Who can see what</h2><div class="table-wrap"><table class="simple"><thead><tr><th>Access</th><th>Can</th><th>People</th></tr></thead><tbody>' +
       [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']].map(function (r) {
-        return '<tr><td><b>' + esc(H.ROLES[r[0]].label) + '</b></td><td>' + esc(r[1]) + '</td><td>' + (byRole[r[0]] || []).length + '</td></tr>';
+        return '<tr><td><b>' + esc(H.ROLES[r[0]].label) + '</b></td><td>' + esc(r[1]) + '</td><td>' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>';
       }).join('') + '</tbody></table></div><p class="hint">Change someone’s access from their profile (People → Edit details).</p></section>' +
       '<section class="panel"><h2>Services that need a roster</h2>' + (svcs.length ? '<div class="list">' + svcs.slice(0, 6).map(function (s) { return '<div class="item"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + '</b><small>' + esc(s.time + ' · ' + s.name) + '</small></span><button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="Remove this service">' + H.icon(H.ICON.trash, 18) + '</button></div>'; }).join('') + '</div>' + (svcs.length > 6 ? '<p class="hint">…and ' + (svcs.length - 6) + ' more.</p>' : '') : '<p class="muted">None planned.</p>') +
       '<div class="two" style="margin-top:12px"><label class="field">Every<select id="sv-day">' + H.DOW.map(function (d, i) { return '<option value="' + i + '"' + (i === 0 ? ' selected' : '') + '>' + ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'][i] + '</option>'; }).join('') + '</select></label><label class="field req">Time<input id="sv-time" type="time" value="09:30"></label></div>' +

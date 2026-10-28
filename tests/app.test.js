@@ -19,6 +19,8 @@ function sampleData() {
   vm.runInContext(src + '\nthis.makeSampleData = makeSampleData;', ctx);
   return ctx.makeSampleData();
 }
+// A small made-up picture (8 × 6 pixels, orange) for photo uploads
+const PNG = { name: 'face.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGM4UaGBFTEMpAQA5jNDgbfBAhwAAAAASUVORK5CYII=', 'base64') };
 const CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole', 'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt'];
 function seedDocs(opts) {
   const d = JSON.parse(JSON.stringify(sampleData())), out = {}, put = (p, v) => { out[p] = JSON.parse(JSON.stringify(v)); };
@@ -351,6 +353,20 @@ function serve() {
   await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /Downloaded an advanced search/.test(docs[k].text || docs[k].what || JSON.stringify(docs[k]))), 'downloading search results is in the audit log');
   check(await s.page.$$eval('.adv-field[data-i="0"] option', o => ['marital', 'consents', 'access', 'status'].every(k => o.some(x => x.value === k))), 'Administrators can search marital status, consent, app access and status');
+  await s.page.evaluate(() => { const p = Store.get('people', 'p05'); p.deceasedAt = '2019-03-04'; p.active = false; p.category = 'Deceased'; });
+  await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'diedYear');
+  await s.page.fill('input.adv-v[data-i="0"]', '2019'); await s.page.click('[data-act="people:advrun"]');
+  names = await s.page.$$eval('.adv-table tbody td:first-child a', as => as.map(a => a.textContent));
+  const p05 = await s.page.evaluate(() => Store.get('people', 'p05').lastName);
+  check(names.length === 1 && names[0].includes(p05), 'Advanced search: Year of death finds who died that year: ' + names.join(' | '));
+  await s.page.evaluate(() => { const p = Store.get('people', 'p05'); delete p.deceasedAt; p.active = true; p.category = 'Staff'; });
+  await s.go('settings');
+  const pastors = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.appRole === 'pastor' && p.familyRole !== 'child').map(p => p.lastName));
+  const tip = await s.page.getAttribute('.who[data-role="pastor"] summary', 'title');
+  await s.page.click('.who[data-role="pastor"] summary');
+  const shown = await s.page.textContent('.who[data-role="pastor"] .who-list');
+  check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
   await finish(s);
   s = await session('sipho.dlamini@example.com', seedDocs());
   await s.go('people/search');
@@ -534,6 +550,8 @@ function serve() {
   /* ---------- Elvanto import ---------- */
   console.log('Elvanto import (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs());
+  const elvPics = [];   // stand-in for Elvanto's picture server
+  await s.page.route(/^https:\/\/files\.elvanto\.eu\//, r => { elvPics.push(r.request().url()); r.fulfill({ status: 200, contentType: 'image/png', body: PNG.buffer, headers: { 'access-control-allow-origin': '*' } }); });
   const elv = path.join(__dirname, 'fixtures', 'elvanto-people.csv');
   const importElvanto = async () => {
     await s.go('import'); if (await s.page.$('[data-act="import:again"]')) await s.page.click('[data-act="import:again"]');
@@ -553,6 +571,10 @@ function serve() {
   check(pe('Brian').familyRole === 'adult' && pe('Mia').familyRole === 'child' && pe('Brian').familyId && pe('Brian').familyId === pe('Leo').familyId, 'parents are adults, children are children, family linked');
   check(pe('Brian').elvantoId === 'aaaa-0001' && pe('Sipho').birthDay === '06-04' && pe('Sipho').category === 'Attender' && pe('Peter').category === 'Deceased', 'Elvanto ID, day-month birthday, category and deceased kept');
   check(!JSON.stringify(docs).includes('7503125000000') && !JSON.stringify(docs).includes('Made-up note'), 'ID numbers and notes never stored');
+  await s.page.waitForSelector('#im-pics.ok', { timeout: 10000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
+  check(docs['people/' + pe('Brian').id].photo && /^data:image\/jpeg/.test((docs['photos/' + pe('Brian').id] || {}).data || '') && (await s.text()).includes('1 brought in from Elvanto'), 'the photo is brought in from Elvanto');
+  check(elvPics.length === 1 && !elvPics[0].includes('_thumb_'), 'the full-size picture is used, not the small copy');
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && /Imported 1 photos from Elvanto/.test(docs[k].action)), 'photo import is in the history log');
   await importElvanto(); docs = await s.docsNow(); ep = elvP();
   check(ep.length === 11, 'importing the same file again updates – no doubles');
   await s.go('import'); if (await s.page.$('[data-act="import:again"]')) await s.page.click('[data-act="import:again"]'); await s.page.click('[data-act="import:unimport"]'); await s.page.click('[data-act="import:unimport"]'); await s.settle();
@@ -641,6 +663,9 @@ function serve() {
   await s.go('people'); check((await s.text()).includes('Aisha'), 'sees the children');
   await s.go('people/p/p12'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Nuts and bee stings'); await s.page.click('[data-act="people:savemedical"]'); await s.settle();
   docs = await s.docsNow(); check(docs['medical/p12'] && docs['medical/p12'].allergies === 'Nuts and bee stings', 'editing medical notes saves them');
+  await s.go('people/p/p12'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['photos/p12'] && docs['people/p12'].photo, 'Children’s ministry can add a child’s photo');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:photo"]')), 'but not an adult’s');
   await s.go('people/p/p16'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Penicillin'); await s.page.click('[data-act="people:savemedical"]');
   check(await s.page.isVisible('#md-err'), 'can’t add medical notes without a guardian’s consent'); await s.page.click('[data-act="hub:close"]');
   check(await s.page.evaluate(() => Store.get('people', 'p02').birthDate === undefined && Store.get('people', 'p12').birthDate !== ''), 'sees children’s birthdays but not adults’ details');
@@ -676,6 +701,13 @@ function serve() {
   check(dirText.includes('Jacobs, Clare') && !dirText.includes('Smith, Megan') && !dirText.includes('Daniels, Ruth') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
+  await s.go('people/p/p14'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle();
+  docs = await s.docsNow();
+  check(/^data:image\/jpeg;base64,/.test((docs['photos/p14'] || {}).data || '') && docs['people/p14'].photo && docs['directory/p14'].photo === docs['people/p14'].photo, 'a member can add their own photo (made small, and the directory knows there is one)');
+  check(await s.page.$('.page-head .av.pic') !== null, 'their photo shows on their page');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:photo"]')), 'a member can’t add photos of other people');
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:nophoto"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['photos/p14'] && !docs['people/p14'].photo, 'and can remove it');
   await s.go('rosters/away'); await s.page.click('[data-act="rosters:addaway"]');
   const ticks = await s.page.$$('.aw-d'); await ticks[1].check(); await ticks[3].check();
   await s.page.click('[data-act="rosters:awayrange"]'); await s.page.fill('.aw-range .aw-f', '2027-07-01'); await s.page.dispatchEvent('.aw-range .aw-f', 'change'); await s.page.fill('.aw-range .aw-t', '2027-07-14');

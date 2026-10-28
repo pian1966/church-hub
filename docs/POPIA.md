@@ -29,6 +29,13 @@ This is a design checklist, not legal advice – the church's Information Office
   leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
   died") so the church can decide when to delete their details.
 
+## Photos of people
+- **Purpose:** recognising people (welcome team, children's check-in, the members' directory). Lawful basis: the church records consent (the church chose not to ask a separate photo consent). The existing "Photos" consent is about photos taken at church events, not these.
+- **Kept small and apart:** each photo is cut to a 320 × 320 picture (about 20–40 KB) and stored in its own place (`photos/{person}`), fetched only when it is shown.
+- **Who sees them:** adults – staff, the person, and members when the adult agreed to be in the directory. Children – Administrators, Pastors and Children's ministry only (members, roster coordinators and the child's parents don't see them in the app).
+- **From Elvanto:** the import downloads each person's picture from Elvanto's own address (only for people without a photo), makes it small and stores it the same way; the count is in the audit log.
+- **Who adds them:** Administrators and Pastors; Children's ministry for children; adults their own. Adding, changing and removing a photo is in the audit log. Deleting a person deletes their photo.
+
 ## Children: who gives consent and who may collect
 - POPIA s35 needs consent for a child from a "competent person" – a parent or legal guardian. Church Hub records, per child,
   which adults **can give consent**; consent for a child can only be recorded from one of them. Step-parents, grandparents and

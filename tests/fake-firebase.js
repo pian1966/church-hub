@@ -26,6 +26,7 @@
   }
   function onlyKeys(a, keys) { return Object.keys(a || {}).every(function (k) { return keys.indexOf(k) >= 0; }); }
   var KIDS_CONSENTS = ['Children’s medical notes', 'Photos'];
+  function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || is(c, ['admin'])); },
       write: function (c, op, id, b, a) { return is(c, ['admin']) && (op === 'delete' || ANY.concat(['robot']).indexOf(a.role) >= 0); } },
@@ -44,14 +45,20 @@
     people: { read: function (c, id) { return is(c, STAFF) || mine(c, id); },
       write: function (c, op, id, b, a) {
         if (op === 'delete') return is(c, ['admin']);
-        return is(c, ['admin', 'pastor']) || (op === 'update' && mine(c, id) && onlyChanges(b, a, ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'updatedAt']));
+        return is(c, ['admin', 'pastor']) || (op === 'update' && mine(c, id) && onlyChanges(b, a, ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'updatedAt']))
+          || (op === 'update' && is(c, ['kids']) && b.familyRole === 'child' && onlyChanges(b, a, ['photo', 'updatedAt']));
       } },
     details: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || mine(c, id) || (is(c, ['kids']) && !!d && d.familyRole === 'child'); },
       write: function (c) { return is(c, ['admin', 'pastor']); } },
     medical: { read: function (c) { return is(c, ['kids']); }, write: function (c, op) { return is(c, op === 'delete' ? ['kids', 'admin'] : ['kids']); } },
     notes: { read: function (c) { return is(c, ['pastor']); }, write: function (c, op) { return is(c, op === 'delete' ? ['pastor', 'admin'] : ['pastor']); } },
     directory: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile'])); } },
+      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'photo'])); } },
+    photos: { read: function (c, id) { return child(id) ? is(c, ['admin', 'pastor', 'kids']) : is(c, STAFF) || mine(c, id) || (is(c, ANY) && docs['directory/' + id] !== undefined); },
+      write: function (c, op, id, b, a) {
+        var who = is(c, ['admin', 'pastor']) || (child(id) ? is(c, ['kids']) : mine(c, id));
+        return who && (op === 'delete' || (onlyKeys(a, ['data', 'updatedAt']) && typeof a.data === 'string' && a.data.length < 200000));
+      } },
     families: { read: function (c) { return is(c, STAFF); }, write: function (c) { return is(c, ['admin', 'pastor']); } },
     consents: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (!!d && mine(c, d.personId)) || (is(c, ['kids']) && !!d && KIDS_CONSENTS.indexOf(d.purpose) >= 0); },
       write: function (c, op, id, b, a) {

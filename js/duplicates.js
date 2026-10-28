@@ -190,7 +190,7 @@ var Duplicates = (function () {
   /* ---------- fixing a duplicate: one record is kept, the other is retired ---------- */
   // Never copied from the retired record: who it is, its history, access and status.
   var KEEP_OWN = { id: 1, createdAt: 1, updatedAt: 1, active: 1, archivedAt: 1, deletedAt: 1, mergedInto: 1, appRole: 1, notSame: 1,
-    medical: 1, source: 1, householdIds: 1, familyId: 1, keyDates: 1, category: 1, firstName: 1 };
+    medical: 1, source: 1, householdIds: 1, familyId: 1, keyDates: 1, category: 1, firstName: 1, photo: 1 };   // a photo belongs to its own record
   function blank(v) { return v == null || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length); }
   function show(v, k) { return k === 'mobile' ? phone(v) || String(v) : k === 'email' ? email(v) || String(v) : typeof v === 'object' ? JSON.stringify(v) : String(v).trim(); }
   /**

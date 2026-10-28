@@ -40,6 +40,11 @@ ok(dr[0].firstName === 'Mike' && dr[0].deceasedDate === '2024-08-22', 'importing
 ok(dr[1].firstName === 'Sandy' && dr[1].deceasedDate === '2025-02-15', 'a date of death in its own column wins');
 ok(dr[2].firstName === '2020-01-01-Club', 'names of people who are alive are never changed');
 
+console.log('Photos');
+ok(E.photoLink('https://files.elvanto.eu/8JVU1O8Q/members/3a66_thumb_1597927419.jpeg') === 'https://files.elvanto.eu/8JVU1O8Q/members/3a66_1597927419.jpeg', 'Elvanto photo link → the full-size picture (not the small “_thumb” copy)');
+ok(E.photoLink('https://evil.example.com/x.jpeg') === '' && E.photoLink('http://files.elvanto.eu/a.jpeg') === '' && E.photoLink('') === '', 'only Elvanto’s own secure addresses are used');
+ok(by('Brian').photo === 'https://files.elvanto.eu/TEST0001/members/aaaa-0001_1600000000.jpeg' && by('Brian').photoThumb.includes('_thumb_') && !by('Karen').photo, 'the Photo column is read');
+
 console.log('Making the people');
 const p = E.toPerson(by('Peter'), null, {}, '', '2026-10-26');
 ok(p.active === false && p.category === 'Deceased' && p.deceasedAt === '2026-02-02', 'Deceased in Elvanto → recorded as died, with the date');

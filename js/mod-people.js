@@ -198,6 +198,12 @@
       (mine || !c.confirmed ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
   }
 
+  /* ---------- photos: Administrators and Pastors for anyone, Children's ministry for children, adults their own ---------- */
+  function canPhoto(p) {
+    if (!p || p.mergedInto) return false;
+    if (H.can('*') || H.can('people.edit')) return true;
+    return p.familyRole === 'child' ? H.can('medical') : isMe(p);
+  }
   /** Administrators: go straight to a staff member's leave, or set it up if they're marked Staff but not yet in Leave. */
   function leaveButton(p) {
     var leaveOn = ((S.settings() || {}).modules || {}).leave !== false;
@@ -223,8 +229,11 @@
       (p.source === 'elvanto' ? ' <span class="tag" style="--c:#7C3AED">From Elvanto</span>' : '') +
       (deceased(p) ? ' <span class="tag grey">Died ' + esc(H.fmt(p.deceasedAt, true)) + '</span>' : '');
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
-      '<div class="page-head"><div class="row">' + H.avatar(p, 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div></div></div>' +
+      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div></div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +
+      (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
+        (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +
+        '<input type="file" id="pp-photo" data-id="' + p.id + '" accept="image/*" hidden>' : '') +
       leaveButton(p) +
       (H.can('*') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + 'Export their data</button>' : '') +
       (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">Record a death</button>' : '') + '</div></div>';
@@ -603,6 +612,7 @@
     add(true, 'Church', 'fromElvanto', 'Brought in from Elvanto', 'yesno', function (p) { return p.source === 'elvanto'; });
     add(all, 'Church', 'status', 'Status', 'choice', function (p) { return p.deceasedAt ? 'Deceased' : p.active === false ? 'Left' : 'Active'; }, ['Active', 'Left', 'Deceased']);
     add(all, 'Church', 'died', 'Date of death', 'date', function (p) { return p.deceasedAt; });
+    add(all, 'Church', 'diedYear', 'Year of death', 'number', function (p) { return p.deceasedAt ? Number(p.deceasedAt.slice(0, 4)) : ''; });
     add(birth, 'Personal', 'birthDate', 'Date of birth', 'date', function (p) { return p.birthDate; });
     add(birth, 'Personal', 'birthday', 'Birthday', 'anniv', function (p) { return p.birthDate || p.birthDay; });
     add(birth, 'Personal', 'age', 'Age', 'number', function (p) { return age(p); });
@@ -632,7 +642,7 @@
   }
   function advRun(F) {
     var A = state.adv, byKey = {}; F.forEach(function (f) { byKey[f.key] = f; });
-    var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; });
+    var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; });
     var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted'; }) : visiblePeople();
     if (!usesStatus) people = people.filter(function (p) { return p.active !== false; });
     var recs = people.map(function (p) { var v = {}, al = {}; F.forEach(function (f) { v[f.key] = f.get(p); if (f.alts) al[f.key] = f.alts(p); }); return { id: p.id, p: p, values: v, alts: al }; });
@@ -711,7 +721,7 @@
       (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + 'Download (CSV)</button>' : '') + '</div>' +
       (r.rows.length > 1 ? '<div style="margin-top:8px">' + sortSwitch() + '</div>' : '') +
       '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · and ' : A.match === 'any' ? ' · or ' : ' · ')) + (A.match === 'logic' ? ' · Logic: ' + esc(A.logic) : '') : 'Everyone') +
-      (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; }) ? '' : ' · people who have left or died are left out unless you search on Status') + '</p>' +
+      (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; }) ? '' : ' · people who have left or died are left out unless you search on Status') + '</p>' +
       (r.rows.length ? '<div class="table-wrap"><table class="simple adv-table"><thead><tr>' + cols.map(function (k) {
         var on = (A.sort || 'name') === k;
         return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';
@@ -925,11 +935,23 @@
         var lg = document.getElementById('adv-logic');
         if (lg) lg.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); state.adv.ran = true; H.render(); } });
       }
+      var pf = document.getElementById('pp-photo');
+      if (pf) pf.addEventListener('change', function () {
+        var p = S.get('people', pf.dataset.id), f = pf.files && pf.files[0]; if (!p || !f) return;
+        H.shrinkPhoto(f).then(function (data) {
+          return S.setPhoto(p.id, data, (p.photo ? 'Changed the photo of ' : 'Added a photo of ') + H.name(p)).then(function () { H.render(); H.toast(T('Photo saved')); });
+        }).catch(function () { H.toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.')); });
+      });
       var q = document.getElementById('pp-q');
       if (q) q.addEventListener('input', function () { state.q = q.value; var pos = q.selectionStart; H.render(); var n = document.getElementById('pp-q'); n.focus(); n.setSelectionRange(pos, pos); });
     },
     actions: {
       filter: function (el) { state.f = el.dataset.f; H.render(); },
+      photo: function () { var f = document.getElementById('pp-photo'); if (f) f.click(); },
+      nophoto: function (el) {
+        var p = S.get('people', el.dataset.id); if (!p) return;
+        S.setPhoto(p.id, null, 'Removed the photo of ' + H.name(p)).then(function () { H.render(); H.toast(T('Photo removed')); });
+      },
       sort: function (el) { state.sort = el.dataset.k; Store.pref('peopleSort', state.sort); if (state.adv) { state.adv.sort = 'name'; state.adv.dir = 1; } H.render(); },
       advadd: function (el) { var i = +el.dataset.i, prev = state.adv.filters[i]; state.adv.filters.splice(i + 1, 0, { field: prev ? prev.field : 'name', op: prev ? prev.op : 'has', value: '', value2: '', unit: 'days' }); H.render(); var s2 = document.querySelectorAll('.adv-field')[i + 1]; if (s2) s2.focus(); },
       advdel: function (el) { state.adv.filters.splice(+el.dataset.i, 1); H.render(); },

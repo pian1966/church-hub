@@ -1480,6 +1480,8 @@
         if (!v && !fd.blank) { err.textContent = 'Choose the new value.'; err.hidden = false; return; }
         var ids = Object.keys(state.adv.sel || {}), items = [], skipped = 0;
         if (!H.confirmBtn(el, 'Click again to change ' + ids.length + (ids.length === 1 ? ' person' : ' people'))) return;
+        H.closeModal();
+        H.busy('Changing ' + ids.length + (ids.length === 1 ? ' person' : ' people') + '…', function () {
         ids.forEach(function (id) {
           var p = S.get('people', id); if (!p) return;
           if (fd.adults && p.familyRole === 'child') { skipped++; return; }
@@ -1491,10 +1493,12 @@
         });
         S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (Advanced search)', 'people');
         state.bulkUndo = { key: fd.key, label: fd.label, value: v, items: items, skipped: skipped };
-        state.adv.sel = {}; H.closeModal(); H.render(); H.toast(items.length + (items.length === 1 ? ' person' : ' people') + ' changed');
+        state.adv.sel = {}; H.render(); H.toast(items.length + (items.length === 1 ? ' person' : ' people') + ' changed');
+        });
       },
       bulkundo: function () {
         var u = state.bulkUndo; if (!u || !canBulk()) return;
+        H.busy('Undoing…', function () {
         u.items.forEach(function (it) {
           var p = S.get('people', it.id); if (!p) return;
           var q = JSON.parse(JSON.stringify(p)); if (it.had) q[u.key] = it.before; else delete q[u.key];
@@ -1502,6 +1506,7 @@
         });
         S.audit('Undid changing ' + u.label.toLowerCase() + ' for ' + u.items.length + ' people', 'people');
         state.bulkUndo = null; H.render(); H.toast('Undone');
+        });
       },
       savevolunteer: function (el) {
         var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err');

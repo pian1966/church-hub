@@ -514,12 +514,15 @@ var Store = (function () {
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
+      whenSaved: function (ms) { return fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, ms || 60000); })]) : Promise.resolve(); },
       session: function () { return session; } };
   })();
 
   return { load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    whenSaved: function (ms) { return LIVE ? Live.whenSaved(ms) : Promise.resolve(); },
     /** Photos are kept apart from the person (photos/{id}) and fetched only when shown; the person's card says which version there is. */
     photo: function (pid) {
       if (LIVE) return Live.photoGet(pid);

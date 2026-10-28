@@ -123,7 +123,7 @@ function serve() {
     const denied = () => page.evaluate(() => window.__fake.denied);
     const go = async r => { await page.goto(BASE + '#/' + r); await page.waitForTimeout(40); };
     // Wait until every save has reached the (stand-in) database – robust on slow computers
-    const settle = async () => { await page.waitForTimeout(60); await page.waitForFunction(() => window.__fake.pending === 0, null, { timeout: 10000 }); await page.waitForTimeout(60); };
+    const settle = async () => { await page.waitForTimeout(60); await page.waitForFunction(() => window.__fake.pending === 0 && !document.querySelector('#busy:not([hidden])'), null, { timeout: 15000 }); await page.waitForTimeout(60); };
     const text = async () => (await page.textContent('main')) || '';
     return { page, errs, ready, docsNow, denied, go, text, settle, close: () => context.close() };
   }
@@ -452,6 +452,7 @@ function serve() {
   check(ticked.filter(id => !kidsT.includes(id)).every(id => docs['details/' + id].maritalStatus === 'Widowed') && kidsT.every(id => !docs['details/' + id].maritalStatus) && kidsT.length > 0,
     'one change for everyone ticked (marital status → Widowed); children are left out');
   check((await s.text()).includes('Changed Marital status to Widowed') && Object.keys(docs).some(k => k.startsWith('audit/') && /at once/.test(docs[k].action)), 'it says what changed and it’s in the history log');
+  check(await s.page.evaluate(() => { const b = document.getElementById('busy'); return !!b && b.hidden && !!b.querySelector('.busy-cross'); }), 'a turning cross showed while it worked, and has gone again');
   await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
   check(docs['details/p14'].maritalStatus === 'Married' && docs['details/p15'].maritalStatus === 'Married', 'Undo puts everyone back');
   await s.go('settings');

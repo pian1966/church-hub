@@ -278,10 +278,12 @@
     actions: {
       setupdepts: function () {
         var add = Serving.missing(S.list('teams'), S.list('positions'));
+        H.busy('Adding the departments…', function () {
         add.teams.forEach(function (t) { S.put('teams', t); });
         add.positions.forEach(function (p) { S.put('positions', p); });
         S.audit('Set up the church’s departments: ' + add.teams.length + ' departments and ' + add.positions.length + ' positions added', 'teams');
         H.render(); H.toast('Departments and positions added');
+        });
       },
       move: function (el) { state.start += +el.dataset.d; state.preview = null; H.render(); },
       autofill: function () {

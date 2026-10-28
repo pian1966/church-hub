@@ -864,17 +864,62 @@
     var r = advRun(F);
     if (r.error) return html + '<p class="note bad" role="alert" id="adv-result">' + esc(r.error) + '</p>';
     var cols = ['name'].concat(A.cols), what = A.filters.map(function (f, i) { return (A.match === 'logic' ? (i + 1) + '. ' : '') + PS.describe(f, byKey[f.field], function (v) { return advShow({ type: byKey[f.field].type === 'anniv' ? 'anniv' : byKey[f.field].type === 'date' ? 'date' : 'text' }, v); }); });
-    return html + '<section class="panel" id="adv-result"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h2 style="margin:0">' + r.rows.length + ' ' + (r.rows.length === 1 ? 'person' : 'people') + ' found</h2>' +
-      (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + 'Download (CSV)</button>' : '') + '</div>' +
+    var bulk = canBulk(), sel = A.sel || (A.sel = {}), ids = r.rows.map(function (x) { return x.id; });
+    Object.keys(sel).forEach(function (id) { if (ids.indexOf(id) < 0) delete sel[id]; });   // only people in these results can stay ticked
+    var nSel = Object.keys(sel).length;
+    return html + '<section class="panel" id="adv-result">' + bulkUndoNote() + '<div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h2 style="margin:0">' + r.rows.length + ' ' + (r.rows.length === 1 ? 'person' : 'people') + ' found</h2>' +
+      '<div class="btns">' + (bulk && r.rows.length ? '<button class="btn small' + (nSel ? ' primary' : '') + '" data-act="people:bulk"' + (nSel ? '' : ' disabled') + ' id="adv-bulk">Change ' + (nSel ? nSel + ' selected' : 'selected') + '…</button>' : '') +
+      (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + 'Download (CSV)</button>' : '') + '</div></div>' +
       (r.rows.length > 1 ? '<div style="margin-top:8px">' + sortSwitch() + '</div>' : '') +
       '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · and ' : A.match === 'any' ? ' · or ' : ' · ')) + (A.match === 'logic' ? ' · Logic: ' + esc(A.logic) : '') : 'Everyone') +
       (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; }) ? '' : ' · people who have left or died are left out unless you search on Status') + '</p>' +
-      (r.rows.length ? '<div class="table-wrap"><table class="simple adv-table"><thead><tr>' + cols.map(function (k) {
+      (r.rows.length ? '<div class="table-wrap"><table class="simple adv-table"><thead><tr>' +
+        (bulk ? '<th class="sel"><input type="checkbox" id="adv-selall" aria-label="Tick everyone found"' + (nSel && nSel === ids.length ? ' checked' : '') + '></th>' : '') + cols.map(function (k) {
         var on = (A.sort || 'name') === k;
         return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';
       }).join('') + '</tr></thead><tbody>' + r.rows.map(function (x) {
-        return '<tr>' + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + listName(x.p) + '</a></td>' : k === 'email' && x.values.email ? '<td><a href="mailto:' + esc(x.values.email) + '" target="_blank" rel="noopener">' + esc(x.values.email) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
+        return '<tr>' + (bulk ? '<td class="sel"><input type="checkbox" class="adv-sel" value="' + x.id + '" aria-label="Tick ' + esc(H.name(x.p)) + '"' + (sel[x.id] ? ' checked' : '') + '></td>' : '') + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + listName(x.p) + '</a></td>' : k === 'email' && x.values.email ? '<td><a href="mailto:' + esc(x.values.email) + '" target="_blank" rel="noopener">' + esc(x.values.email) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
       }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (POPIA).</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
+  }
+  /* ---------- changing many people at once (Administrators): tick people in the results, then one field for all of them ---------- */
+  function canBulk() { return H.can('*'); }
+  /** What can be changed for many people at once. Things with their own steps (a death, sign-in access, households) can't. */
+  function bulkFields() {
+    return [
+      { key: 'maritalStatus', label: 'Marital status', options: MARITAL, adults: true },
+      { key: 'category', label: 'Category', options: CATS.filter(function (c) { return c !== 'Deceased'; }) },
+      { key: 'gender', label: 'Gender', options: GENDERS, blank: 'Not recorded' },
+      { key: 'partnerSince', label: 'Date accepted as Church Partner', date: true },
+      { key: 'partnerUpdated', label: 'Partnership last updated', date: true }
+    ];
+  }
+  function bulkUndoNote() {
+    var u = state.bulkUndo; if (!u) return '';
+    return '<div class="note ok" role="status" style="margin-bottom:12px">Changed <b>' + esc(u.label) + '</b> to <b>' + esc(u.value || 'nothing') + '</b> for ' + u.items.length + (u.items.length === 1 ? ' person' : ' people') +
+      (u.skipped ? ' (' + u.skipped + ' left out: ' + (u.key === 'category' ? 'people who have died' : 'children') + ')' : '') + '. <button class="link" data-act="people:bulkundo">Undo</button></div>';
+  }
+  function bulkDialog() {
+    var ids = Object.keys(state.adv.sel || {}), F = bulkFields(), f = F[0];
+    if (!ids.length) return;
+    var valueBox = function (fd) {
+      return fd.date ? '<input type="date" id="bk-v" max="' + H.today() + '">' :
+        '<select id="bk-v">' + (fd.blank ? '<option value="">' + esc(fd.blank) + '</option>' : '<option value="">Choose…</option>') + fd.options.map(function (o) { return '<option>' + esc(o) + '</option>'; }).join('') + '</select>';
+    };
+    H.modal(H.dialogHead('Change ' + ids.length + (ids.length === 1 ? ' person' : ' people'), 'The same change for everyone you ticked. You can undo it straight after.') + '<div class="dlg-body">' +
+      '<div class="two"><label class="field req">What to change<select id="bk-f">' + F.map(function (x) { return '<option value="' + x.key + '">' + esc(x.label) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="field req" id="bk-v-f">New value' + valueBox(f) + '</label></div>' +
+      '<p class="hint" id="bk-note">' + (f.adults ? 'Children are left out: they have no marital status.' : '') + '</p>' +
+      '<details><summary class="small">Who will change (' + ids.length + ')</summary><p class="small muted" style="margin:6px 0 0">' + esc(ids.map(function (id) { return H.name(S.get('people', id)); }).join(', ')) + '</p></details>' +
+      '<p id="bk-err" class="note bad" hidden></p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:bulksave">Change ' + ids.length + (ids.length === 1 ? ' person' : ' people') + '</button></div>', 'Change many people');
+    var fs = document.getElementById('bk-f');
+    fs.addEventListener('change', function () {
+      var fd = F.filter(function (x) { return x.key === fs.value; })[0], box = document.getElementById('bk-v-f');
+      box.innerHTML = 'New value' + valueBox(fd); box.classList.toggle('req', !fd.blank);
+      document.getElementById('bk-note').textContent = fd.adults ? 'Children are left out: they have no marital status.' : '';
+      H.markRequired();
+    });
+    H.markRequired();
   }
   function advCsv() {
     var F = searchFields(), r = advRun(F); if (r.error) return;
@@ -1124,6 +1169,16 @@
       if (fq) fq.addEventListener('input', function () { state.fq = fq.value; var pos = fq.selectionStart; H.render(); var n = document.getElementById('fm-q'); n.focus(); n.setSelectionRange(pos, pos); });
       var st = document.getElementById('pp-stats');
       if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
+      var res = document.getElementById('adv-result');
+      if (res && state.adv) res.addEventListener('change', function (ev) {
+        var t = ev.target, sel = state.adv.sel || (state.adv.sel = {});
+        if (t.id === 'adv-selall') document.querySelectorAll('.adv-sel').forEach(function (b) { b.checked = t.checked; if (t.checked) sel[b.value] = 1; else delete sel[b.value]; });
+        else if (t.classList.contains('adv-sel')) { if (t.checked) sel[t.value] = 1; else delete sel[t.value]; }
+        else return;
+        var n = Object.keys(sel).length, b = document.getElementById('adv-bulk');
+        if (b) { b.disabled = !n; b.classList.toggle('primary', !!n); b.textContent = 'Change ' + (n ? n + ' selected' : 'selected') + '…'; }
+        var all = document.getElementById('adv-selall'); if (all) all.checked = n && n === document.querySelectorAll('.adv-sel').length;
+      });
       var adv = document.getElementById('adv');
       if (adv) {
         var onEdit = function (ev) {
@@ -1418,6 +1473,36 @@
       fixkeep: function (el) { fixDialog(el.dataset.a, el.dataset.b, el.dataset.keep); },
       fixdo: function (el) { doFix(el.dataset.keep, el.dataset.drop); },
       volunteer: function (el) { volunteerDialog(S.get('people', el.dataset.id)); },
+      bulk: function () { if (canBulk()) bulkDialog(); },
+      bulksave: function (el) {
+        if (!canBulk()) return;
+        var fd = bulkFields().filter(function (x) { return x.key === document.getElementById('bk-f').value; })[0], v = document.getElementById('bk-v').value, err = document.getElementById('bk-err');
+        if (!v && !fd.blank) { err.textContent = 'Choose the new value.'; err.hidden = false; return; }
+        var ids = Object.keys(state.adv.sel || {}), items = [], skipped = 0;
+        if (!H.confirmBtn(el, 'Click again to change ' + ids.length + (ids.length === 1 ? ' person' : ' people'))) return;
+        ids.forEach(function (id) {
+          var p = S.get('people', id); if (!p) return;
+          if (fd.adults && p.familyRole === 'child') { skipped++; return; }
+          if (fd.key === 'category' && (deceased(p) || p.category === 'Deceased')) { skipped++; return; }   // a death is undone on their own page, not here
+          if ((p[fd.key] || '') === v) return;
+          items.push({ id: id, had: p.hasOwnProperty(fd.key), before: p[fd.key] });
+          var q = JSON.parse(JSON.stringify(p)); if (v) q[fd.key] = v; else delete q[fd.key];
+          S.put('people', q, 'Changed ' + fd.label.toLowerCase() + ' of ' + H.name(q) + ' to ' + (v || 'nothing') + ' (changing many people at once)');
+        });
+        S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (Advanced search)', 'people');
+        state.bulkUndo = { key: fd.key, label: fd.label, value: v, items: items, skipped: skipped };
+        state.adv.sel = {}; H.closeModal(); H.render(); H.toast(items.length + (items.length === 1 ? ' person' : ' people') + ' changed');
+      },
+      bulkundo: function () {
+        var u = state.bulkUndo; if (!u || !canBulk()) return;
+        u.items.forEach(function (it) {
+          var p = S.get('people', it.id); if (!p) return;
+          var q = JSON.parse(JSON.stringify(p)); if (it.had) q[u.key] = it.before; else delete q[u.key];
+          S.put('people', q, 'Undid: ' + u.label.toLowerCase() + ' of ' + H.name(q) + ' back to ' + (it.had ? it.before : 'nothing'));
+        });
+        S.audit('Undid changing ' + u.label.toLowerCase() + ' for ' + u.items.length + ' people', 'people');
+        state.bulkUndo = null; H.render(); H.toast('Undone');
+      },
       savevolunteer: function (el) {
         var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err');
         var yes = (document.querySelector('input[name="vol"]:checked') || {}).value === 'yes';

@@ -550,6 +550,8 @@ function serve() {
   /* ---------- Elvanto import ---------- */
   console.log('Elvanto import (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs());
+  const elvPics = [];   // stand-in for Elvanto's picture server
+  await s.page.route(/^https:\/\/files\.elvanto\.eu\//, r => { elvPics.push(r.request().url()); r.fulfill({ status: 200, contentType: 'image/png', body: PNG.buffer, headers: { 'access-control-allow-origin': '*' } }); });
   const elv = path.join(__dirname, 'fixtures', 'elvanto-people.csv');
   const importElvanto = async () => {
     await s.go('import'); if (await s.page.$('[data-act="import:again"]')) await s.page.click('[data-act="import:again"]');
@@ -569,6 +571,10 @@ function serve() {
   check(pe('Brian').familyRole === 'adult' && pe('Mia').familyRole === 'child' && pe('Brian').familyId && pe('Brian').familyId === pe('Leo').familyId, 'parents are adults, children are children, family linked');
   check(pe('Brian').elvantoId === 'aaaa-0001' && pe('Sipho').birthDay === '06-04' && pe('Sipho').category === 'Attender' && pe('Peter').category === 'Deceased', 'Elvanto ID, day-month birthday, category and deceased kept');
   check(!JSON.stringify(docs).includes('7503125000000') && !JSON.stringify(docs).includes('Made-up note'), 'ID numbers and notes never stored');
+  await s.page.waitForSelector('#im-pics.ok', { timeout: 10000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
+  check(docs['people/' + pe('Brian').id].photo && /^data:image\/jpeg/.test((docs['photos/' + pe('Brian').id] || {}).data || '') && (await s.text()).includes('1 brought in from Elvanto'), 'the photo is brought in from Elvanto');
+  check(elvPics.length === 1 && !elvPics[0].includes('_thumb_'), 'the full-size picture is used, not the small copy');
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && /Imported 1 photos from Elvanto/.test(docs[k].action)), 'photo import is in the history log');
   await importElvanto(); docs = await s.docsNow(); ep = elvP();
   check(ep.length === 11, 'importing the same file again updates – no doubles');
   await s.go('import'); if (await s.page.$('[data-act="import:again"]')) await s.page.click('[data-act="import:again"]'); await s.page.click('[data-act="import:unimport"]'); await s.page.click('[data-act="import:unimport"]'); await s.settle();

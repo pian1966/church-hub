@@ -24,8 +24,15 @@ var ElvantoImport = (function () {
     ['category', 'Category', ['People Category', 'Category'], /categor|member\s*type/i],
     ['archived', 'Archived', ['Archived'], /^archived$/i],
     ['deceased', 'Deceased', ['Deceased'], /^deceased$/i],
-    ['deceasedDate', 'Date deceased', ['Date Deceased'], /deceased\s*date|date\s*deceased/i]
+    ['deceasedDate', 'Date deceased', ['Date Deceased'], /deceased\s*date|date\s*deceased/i],
+    ['photo', 'Photo', ['Photo'], /^(photo|picture|image)$/i]
   ];
+  /** Elvanto's link to someone's photo, for the full-size picture (not the small "_thumb" copy). Only Elvanto's own addresses. */
+  function photoLink(v) {
+    var s = String(v || '').trim();
+    if (!/^https:\/\/([a-z0-9-]+\.)*elvanto\.(com|eu|net|com\.au|co\.uk)\/\S+\.(jpe?g|png|gif|webp)(\?\S*)?$/i.test(s)) return '';
+    return s.replace(/_thumb(_\d+\.[a-z]+)/i, '$1');
+  }
   var NEVER = /id\s*number|passport|security|giving|notes?$|password|username/i;   // never read these, whatever they look like
   var CATEGORIES = ['Church Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member'];
   var MARITAL = ['Single', 'Engaged', 'Married', 'Partner', 'Separated', 'Divorced', 'Widowed'];
@@ -106,6 +113,8 @@ var ElvantoImport = (function () {
       o.birthDay = toISO(o.birthDate) ? '' : monthDay(o.birthDate);
       o.birthDate = toISO(o.birthDate);
       o.deceasedDate = toISO(o.deceasedDate);
+      o.photoThumb = /_thumb_\d+\./i.test(o.photo) ? photoLink(o.photo) && o.photo.trim() : '';   // Elvanto's small copy, if the big one is missing
+      o.photo = photoLink(o.photo);
       o.archived = yes(o.archived); o.deceased = yes(o.deceased);
       if (o.deceased) ['firstName', 'preferredName', 'lastName'].forEach(function (k) {   // "2024-08-22-Mike": the date they died, then the name
         var dn = datedName(o[k]); if (dn && (dn.name || k !== 'firstName' || o.lastName)) { o[k] = dn.name; if (!o.deceasedDate) o.deceasedDate = dn.date; }
@@ -206,6 +215,6 @@ var ElvantoImport = (function () {
     return out;
   }
 
-  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
+  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, photoLink: photoLink, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
 })();
 if (typeof module !== 'undefined') module.exports = ElvantoImport;

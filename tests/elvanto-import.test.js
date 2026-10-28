@@ -32,6 +32,14 @@ console.log('Categories');
 ok(E.guessCategory('CCH NON Member_Partner') === 'Attender' && E.guessCategory('CCH_OFFICIAL_Member_Partner') === 'Church Partner', 'non-members → Attender, official members/partners → Church Partner');
 ok(E.guessCategory('Visiting Preacher_Guest') === 'Visiting Minister' && E.guessCategory('Legacy') === 'Former member', 'visiting preachers → Visiting Minister, legacy → Former member');
 
+console.log('Dates of death typed in front of a name');
+ok(JSON.stringify(E.datedName('2024-08-22-Mike')) === '{"date":"2024-08-22","name":"Mike"}' && E.datedName('2025-02-14- Sandy').name === 'Sandy', '“2024-08-22-Mike” and “2025-02-14- Sandy” → the date and the name');
+ok(E.datedName('2024-8-2 Mike').date === '2024-08-02' && E.datedName('Mike') === null && E.datedName('2024-02-30-Mike') === null && E.datedName('1990 Club') === null, 'other spacings work; plain names and impossible dates are left alone');
+const dr = E.records([['First Name', 'Last Name', 'Deceased', 'Date Deceased'], ['2024-08-22-Mike', 'Andrew', 'Yes', ''], ['2025-02-14- Sandy', 'Baggott', 'Yes', '2025-02-15'], ['2020-01-01-Club', 'Member', 'No', '']].slice(1), { firstName: 0, lastName: 1, deceased: 2, deceasedDate: 3 }, '2026-10-28');
+ok(dr[0].firstName === 'Mike' && dr[0].deceasedDate === '2024-08-22', 'importing: the date moves out of the name of someone who died');
+ok(dr[1].firstName === 'Sandy' && dr[1].deceasedDate === '2025-02-15', 'a date of death in its own column wins');
+ok(dr[2].firstName === '2020-01-01-Club', 'names of people who are alive are never changed');
+
 console.log('Making the people');
 const p = E.toPerson(by('Peter'), null, {}, '', '2026-10-26');
 ok(p.active === false && p.category === 'Deceased' && p.deceasedAt === '2026-02-02', 'Deceased in Elvanto → recorded as died, with the date');

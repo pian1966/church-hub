@@ -107,6 +107,9 @@ var ElvantoImport = (function () {
       o.birthDate = toISO(o.birthDate);
       o.deceasedDate = toISO(o.deceasedDate);
       o.archived = yes(o.archived); o.deceased = yes(o.deceased);
+      if (o.deceased) ['firstName', 'preferredName', 'lastName'].forEach(function (k) {   // "2024-08-22-Mike": the date they died, then the name
+        var dn = datedName(o[k]); if (dn && (dn.name || k !== 'firstName' || o.lastName)) { o[k] = dn.name; if (!o.deceasedDate) o.deceasedDate = dn.date; }
+      });
       var age = ageOn(o.birthDate, today);
       // A child: under 18 when the birthday is known; otherwise "Child"/"Son"/"Daughter" as their own relationship.
       o.child = age !== null ? age < 18 : /^(child|son|daughter|grandchild|grandson|granddaughter)$/i.test(o.relationship);
@@ -156,6 +159,18 @@ var ElvantoImport = (function () {
     };
   }
 
+  /**
+   * A date typed in front of a name, as the church did in Elvanto for people who died: "2024-08-22-Mike" or "2025-02-14- Sandy"
+   * → { date: '2024-08-22', name: 'Mike' }. Null when the name doesn't start with a real date.
+   */
+  function datedName(v) {
+    var m = /^\s*(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})\s*[-\u2013\u2014:,]?\s*(.*)$/.exec(String(v || ''));
+    if (!m) return null;
+    var d = m[1] + '-' + ('0' + m[2]).slice(-2) + '-' + ('0' + m[3]).slice(-2), t = new Date(d + 'T00:00:00Z');
+    if (isNaN(t) || t.toISOString().slice(0, 10) !== d) return null;
+    return { date: d, name: m[4].trim() };
+  }
+
   /** A record → the fields to store on a person (existing person `p` updated, or a new one). */
   function toPerson(o, p, catMap, familyId, today) {
     p = p ? JSON.parse(JSON.stringify(p)) : { active: true, keyDates: [], source: 'elvanto' };
@@ -191,6 +206,6 @@ var ElvantoImport = (function () {
     return out;
   }
 
-  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
+  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
 })();
 if (typeof module !== 'undefined') module.exports = ElvantoImport;

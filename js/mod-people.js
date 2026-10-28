@@ -98,6 +98,26 @@
       '</div><p class="hint" style="margin:4px 0 18px">Active people only. Counts update as records change.</p></details>';
   }
 
+  /** People who died, with the date typed in front of their name ("2024-08-22-Mike Andrew"): the name is tidied and the date
+   *  becomes the date they died – unless a different date of death was already recorded on purpose (not just the import day). */
+  function tidyDeathDates() {
+    var E = window.ElvantoImport, n = 0;
+    if (!E || !E.datedName) return 0;
+    S.list('people').slice().forEach(function (p) {
+      if (!(deceased(p) || p.category === 'Deceased')) return;
+      var q = null, date = '';
+      ['firstName', 'preferredName', 'lastName'].forEach(function (k) {
+        var dn = E.datedName(p[k]); if (!dn || (!dn.name && k === 'firstName' && !p.lastName)) return;
+        q = q || JSON.parse(JSON.stringify(p)); q[k] = dn.name; date = date || dn.date;
+      });
+      if (!q) return;
+      if (!q.firstName && q.lastName) { var parts = q.lastName.split(' '); if (parts.length > 1) { q.firstName = parts.shift(); q.lastName = parts.join(' '); } }
+      if (!q.deceasedAt || q.deceasedAt === (q.createdAt || '').slice(0, 10) || q.deceasedAt >= date) q.deceasedAt = date;
+      S.put('people', q); n++;
+    });
+    return n;
+  }
+
   /* ---------- list ---------- */
   // How the list is ordered: by first name, by the name they're known as, or by surname. Remembered on this device.
   function cmp(x, y) { return String(x || '').localeCompare(String(y || ''), undefined, { sensitivity: 'base' }); }
@@ -869,13 +889,15 @@
       return out;
     },
     /** Once, when an Administrator signs in: new category names ("Church Partner", so it isn't mixed up with a partner in a couple),
+     *  dates of death that were typed in front of a name in Elvanto ("2024-08-22-Mike") moved to the date they died,
      *  and (from before version 2) children linked to their household's adults, to confirm. */
     upgrade: function () {
       var st = S.settings(), v = st ? st.dataVersion || 1 : 3; if (v >= 3) return;
       var renamed = 0, linked = 0, MAP = { Member: 'Church Partner', Partner: 'Church Partner', Visitor: 'Visiting Minister' };
       S.list('people').slice().forEach(function (p) { if (MAP[p.category]) { p = JSON.parse(JSON.stringify(p)); p.category = MAP[p.category]; S.put('people', p); renamed++; } });
+      var dated = tidyDeathDates();
       if (v < 2) HS.suggestedLinks(S.list('people'), S.list('guardians')).forEach(function (l) { S.put('guardians', l); linked++; });
-      S.setSettings({ dataVersion: 3 }, 'Upgraded people: ' + renamed + ' renamed to Church Partner / Visiting Minister' + (v < 2 ? '; ' + linked + ' parent/guardian links made from households (to confirm)' : ''));
+      S.setSettings({ dataVersion: 3 }, 'Upgraded people: ' + renamed + ' renamed to Church Partner / Visiting Minister; ' + dated + ' dates of death moved out of names into the date they died' + (v < 2 ? '; ' + linked + ' parent/guardian links made from households (to confirm)' : ''));
       if (linked) setTimeout(function () { H.toast('Children are now linked to the adults in their household – please confirm them (see Home)'); }, 400);
     },
     render: function (p) {

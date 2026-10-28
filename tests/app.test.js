@@ -51,6 +51,12 @@ function seedDocs(opts) {
     out['settings/church'].dataVersion = 2;
     Object.keys(out).filter(k => k.startsWith('people/')).forEach(k => { if (out[k].category === 'Church Partner') out[k].category = 'Partner'; });
     out['details/p17'] = Object.assign({}, out['details/p17'], { maritalStatus: 'Partner' });   // a partner in a couple: not a category
+    // Died, imported from Elvanto with the date of death typed in front of the name; the import put the import day as the date
+    Object.assign(out['people/p23'], { firstName: '2024-08-22-Johan', category: 'Deceased', active: false, createdAt: '2026-10-26 09:00' });
+    out['details/p23'] = Object.assign({}, out['details/p23'], { deceasedAt: '2026-10-26' });
+    Object.assign(out['people/p21'], { firstName: '2023-05-01 Thabo', category: 'Deceased', active: false });
+    out['details/p21'] = Object.assign({}, out['details/p21'], { deceasedAt: '2023-04-30' });   // recorded on purpose: kept
+    out['people/p14'].firstName = '2020-01-01-Tim';   // alive: left alone
   }
   if (opts && opts.elvanto) {   // Elvanto updating switched on; Lerato's approved leave (L103) already in Elvanto; the robot's sign-in
     out['settings/church'].elvanto = { on: true, url: 'https://example.elvanto.eu', robotEmail: 'robot@example.com' };
@@ -519,6 +525,10 @@ function serve() {
   check(docs['settings/church'].dataVersion === 3 && cp > 0 && !Object.keys(docs).some(k => k.startsWith('people/') && docs[k].category === 'Partner'), 'every Partner becomes a Church Partner');
   check(!Object.keys(docs).some(k => k.startsWith('guardians/') && !docs[k].confirmed && !seedDocs()[k]), 'no guardian links are suggested again');
   check(docs['details/p17'].maritalStatus === 'Partner', 'marital status “Partner” (in a couple) is left alone');
+  check(docs['people/p23'].firstName === 'Johan' && docs['details/p23'].deceasedAt === '2024-08-22', '“2024-08-22-Johan” becomes Johan, died 22 Aug 2024 (instead of the import day)');
+  check(docs['people/p21'].firstName === 'Thabo' && docs['details/p21'].deceasedAt === '2023-04-30', 'a date of death already recorded on purpose is kept');
+  check(docs['people/p14'].firstName === '2020-01-01-Tim', 'names of people who are alive are never changed');
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && /2 dates of death moved/.test(docs[k].action)), 'the history log says how many names were tidied');
   await finish(s);
 
   /* ---------- Elvanto import ---------- */

@@ -230,7 +230,10 @@ function serve() {
   await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-email', ''); await s.page.fill('#pf-mobile', '');
   const reqs = await s.page.$$eval('#pf .field.req input, #pf .field.req select', els => els.map(e => e.id));
   await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
-  check(reqs.join() === 'pf-first,pf-last' && !(await s.page.$('#pf')) && !docs['people/p23'].email, 'for someone who has died only first and last name must be filled in: ' + reqs.join());
+  check(reqs.join() === 'pf-first,pf-last,pf-died' && !(await s.page.$('#pf')) && !docs['people/p23'].email, 'for someone who has died only first and last name (and the date they died) must be filled in: ' + reqs.join());
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-died', '2026-01-15'); await s.page.fill('#pf-funeral', '2026-01-22'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p23'].deceasedAt === '2026-01-15' && docs['details/p23'].keyDates.some(k => k.label === 'Funeral' && k.date === '2026-01-22') && docs['details/p23'].keyDates.filter(k => k.label === 'Died').length === 1 && (await s.text()).includes('15 Jan 2026'),
+    'the date of death (and funeral) can be corrected in Edit details');
   // Staff can be Church Partners too
   await s.go('people/p/p02'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-cat', 'Church Partner'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); tt = await s.text();

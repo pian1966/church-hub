@@ -138,6 +138,13 @@ finds every `T('…')` in the code and fails if a language is missing or a {part
 church's own words (categories, teams, services, kinds of leave, privacy notice) and the shared leave rules' messages.
 The isiZulu and isiXhosa were drafted by AI and need checking by fluent speakers.
 
+## Couples (spouses and partners)
+Nobody stores "who is married to whom": `Households.couples()` (`js/households.js`, tested) works it out from each household's
+living adults – shared marital status (Married = spouses, Partner = partners; one may still be unrecorded), same anniversary,
+surname, and age (a big age gap means parent and grown-up child). Households → "Couples to check" (Administrators and Pastors,
+as marital status is private) offers one tap to copy a spouse's wedding anniversary (never for partners) and record a missing
+marital status; each change is audited. "Not a couple" is kept on the household (`families.notCouples`: ["id1|id2"]).
+
 ## Wording: household (not "family")
 The screens say **household** for a `families` record (who lives together – Elvanto's "family"); "family" is used only in
 its everyday sense (serve with family, care for the family of someone who died). The collection and code keep the name `families`.

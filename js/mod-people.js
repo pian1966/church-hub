@@ -123,6 +123,15 @@
       }).join('') + '</div>' : '<p class="empty">' + T('No one matches. Try another name, or clear the search.') + '</p>');
   }
 
+  /** Administrators: go straight to a staff member's leave, or set it up if they're marked Staff but not yet in Leave. */
+  function leaveButton(p) {
+    var leaveOn = ((S.settings() || {}).modules || {}).leave !== false;
+    if (!H.can('*') || !leaveOn || deceased(p) || p.active === false) return '';
+    if (p.staff) return '<a class="btn" href="#/leave/staff/' + p.id + '">' + T('Leave') + '</a>';
+    if (p.category === 'Staff') return '<button class="btn" data-act="people:edit" data-id="' + p.id + '" data-focus="pf-staff">Set up leave</button>';
+    return '';
+  }
+
   /* ---------- profile ---------- */
   function renderPerson(id) {
     var p = S.get('people', id), me = isMe(p);
@@ -141,6 +150,7 @@
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
       '<div class="page-head"><div class="row">' + H.avatar(p, 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div></div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +
+      leaveButton(p) +
       (H.can('*') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + 'Export their data</button>' : '') +
       (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">Record a death</button>' : '') + '</div></div>';
     if (deceased(p) && canRecordDeath()) {

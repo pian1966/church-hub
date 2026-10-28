@@ -34,6 +34,7 @@
   function lateSpouse(p) {
     if (!p || p.familyRole === 'child') return null;
     if (p.lateSpouseId) return S.get('people', p.lateSpouseId);
+    if (p.lateSpouseSet) return null;   // an Administrator chose "nobody" or someone not in Church Hub
     if (p.maritalStatus !== 'Widowed' || deceased(p)) return null;
     var dead = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && (deceased(x) || x.category === 'Deceased') && !x.mergedInto && HS.householdsOf(p).some(function (h) { return HS.inHousehold(x, h); }); });
     return dead.length === 1 ? dead[0] : null;
@@ -287,7 +288,8 @@
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (!child ? coupleLine(p) : '') +
       (!child && lateSpouse(p) ? '<dt>' + T('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +
-        (lateSpouse(p).deceasedAt ? '<span class="kv-sub">' + esc(T('Died {date}', { date: H.fmt(lateSpouse(p).deceasedAt, true) })) + '</span>' : '') + '</dd>' : '') +
+        (lateSpouse(p).deceasedAt ? '<span class="kv-sub">' + esc(T('Died {date}', { date: H.fmt(lateSpouse(p).deceasedAt, true) })) + '</span>' : '') + '</dd>' :
+        !child && p.lateSpouseName ? '<dt>' + T('Late spouse') + '</dt><dd>' + esc(T('Was married to {name}', { name: p.lateSpouseName })) + '</dd>' : '') +
       (H.can('*') || me ? '<dt>' + T('ID number') + '</dt><dd id="pp-idn"><button class="link" data-act="people:showid" data-id="' + p.id + '">' + T('Show') + '</button>' +
         (H.can('*') ? ' · <button class="link" data-act="people:editid" data-id="' + p.id + '">' + T('Change') + '</button>' : '') + '<span class="kv-sub">' + (me && !H.can('*') ? T('Only you and the church Administrators can see it.') : 'Administrators only · views are logged') + '</span></dd>' : '') +
       (!child && survivingSpouses(p).length ? '<dt>' + T('Spouse') + '</dt><dd>' + survivingSpouses(p).map(function (s) { return T('Was married to {name}', { name: '<a href="#/people/p/' + s.id + '">' + esc(H.name(s)) + '</a>' }); }).join('<br>') + '</dd>' : '') +
@@ -811,6 +813,7 @@
         '<div class="two"><label class="field req" id="pf-fam-f">Household<select id="pf-fam"><option value="">Choose…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New household…</option></select></label>' +
         '<label class="field req">In the household as<select id="pf-frole">' + (p.familyRole ? '' : '<option value="" selected>Choose…</option>') + '<option value="adult"' + (p.familyRole === 'adult' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
         '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
+        (admin ? lateSpouseField(p) : '') +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
       (admin ? staffFields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
@@ -831,6 +834,9 @@
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
+    var lt = document.getElementById('pf-late'), ltf = document.getElementById('pf-late-f'), mar = document.getElementById('pf-marital');
+    if (lt) lt.addEventListener('change', function () { document.getElementById('pf-late-n-f').hidden = lt.value !== '__out'; });
+    if (mar && ltf) mar.addEventListener('change', function () { if (mar.value === 'Widowed') ltf.hidden = false; });
     var fr = document.getElementById('pf-frole'), mf = document.getElementById('pf-marital-f');
     var wf = document.getElementById('pf-wed-f'), ff = document.getElementById('pf-fam-f');
     if (fr && mf) fr.addEventListener('change', function () { mf.hidden = fr.value === 'child'; if (wf) wf.hidden = fr.value === 'child'; 
@@ -845,6 +851,19 @@
     };
     [bi, wi, mi].forEach(function (x) { if (x) { x.addEventListener('input', live); x.addEventListener('change', live); } });
     live();
+  }
+
+  /** Administrators: who a widow or widower was married to – someone in Church Hub who has died, or a name. */
+  function lateSpouseField(p) {
+    var cur = lateSpouse(p), show = p.familyRole !== 'child' && (p.maritalStatus === 'Widowed' || cur || p.lateSpouseName);
+    var dead = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && !x.mergedInto && (deceased(x) || x.category === 'Deceased'); })
+      .sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
+    if (cur && dead.indexOf(cur) < 0) dead.unshift(cur);
+    var sel = cur ? cur.id : p.lateSpouseName ? '__out' : '';
+    return '<div id="pf-late-f"' + (show ? '' : ' hidden') + '><label class="field">Late spouse<select id="pf-late"><option value="">Nobody recorded</option>' +
+      dead.map(function (x) { return '<option value="' + x.id + '"' + (sel === x.id ? ' selected' : '') + '>' + esc(x.lastName + ', ' + (x.preferredName || x.firstName)) + (x.deceasedAt ? ' (died ' + esc(H.fmt(x.deceasedAt, true)) + ')' : '') + '</option>'; }).join('') +
+      '<option value="__out"' + (sel === '__out' ? ' selected' : '') + '>Someone not in Church Hub…</option></select><small>Who they were married to. Shown on their record as “Was married to …”.</small></label>' +
+      '<label class="field" id="pf-late-n-f"' + (sel === '__out' ? '' : ' hidden') + '>Their name<input id="pf-late-n" value="' + esc(p.lateSpouseName || '') + '"></label></div>';
   }
 
   /** Staff details for Leave (Administrators only): category (sets allowances and working days), start date (pro-rata), own working days. */
@@ -1062,6 +1081,13 @@
           else if (!g('pf-marital') && !dead) { err.textContent = 'Please choose a marital status (or “Not known”).'; err.hidden = false; return; }
           else if (!g('pf-marital')) delete p.maritalStatus;
           else p.maritalStatus = g('pf-marital');
+        }
+        if (g('pf-late') !== null) {
+          var was = lateSpouse(S.get('people', p.id) || p), wasName = p.lateSpouseName || '';
+          var lv = g('pf-late'), ln = g('pf-late-n') || '';
+          if (lv === '__out' && !ln) { err.textContent = 'Type the name of their late spouse, or choose “Nobody recorded”.'; err.hidden = false; return; }
+          if (lv && lv !== '__out') { p.lateSpouseId = lv; delete p.lateSpouseName; delete p.lateSpouseSet; }
+          else { delete p.lateSpouseId; if (lv === '__out') p.lateSpouseName = ln; else delete p.lateSpouseName; if (lv || was || wasName || p.maritalStatus === 'Widowed') p.lateSpouseSet = true; }
         }
         if (g('pf-role') !== null) p.appRole = g('pf-role');
         var sbox = document.getElementById('pf-staff');

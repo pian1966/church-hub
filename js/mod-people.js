@@ -603,6 +603,7 @@
     add(true, 'Church', 'fromElvanto', 'Brought in from Elvanto', 'yesno', function (p) { return p.source === 'elvanto'; });
     add(all, 'Church', 'status', 'Status', 'choice', function (p) { return p.deceasedAt ? 'Deceased' : p.active === false ? 'Left' : 'Active'; }, ['Active', 'Left', 'Deceased']);
     add(all, 'Church', 'died', 'Date of death', 'date', function (p) { return p.deceasedAt; });
+    add(all, 'Church', 'diedYear', 'Year of death', 'number', function (p) { return p.deceasedAt ? Number(p.deceasedAt.slice(0, 4)) : ''; });
     add(birth, 'Personal', 'birthDate', 'Date of birth', 'date', function (p) { return p.birthDate; });
     add(birth, 'Personal', 'birthday', 'Birthday', 'anniv', function (p) { return p.birthDate || p.birthDay; });
     add(birth, 'Personal', 'age', 'Age', 'number', function (p) { return age(p); });
@@ -632,7 +633,7 @@
   }
   function advRun(F) {
     var A = state.adv, byKey = {}; F.forEach(function (f) { byKey[f.key] = f; });
-    var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; });
+    var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; });
     var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted'; }) : visiblePeople();
     if (!usesStatus) people = people.filter(function (p) { return p.active !== false; });
     var recs = people.map(function (p) { var v = {}, al = {}; F.forEach(function (f) { v[f.key] = f.get(p); if (f.alts) al[f.key] = f.alts(p); }); return { id: p.id, p: p, values: v, alts: al }; });
@@ -711,7 +712,7 @@
       (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + 'Download (CSV)</button>' : '') + '</div>' +
       (r.rows.length > 1 ? '<div style="margin-top:8px">' + sortSwitch() + '</div>' : '') +
       '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · and ' : A.match === 'any' ? ' · or ' : ' · ')) + (A.match === 'logic' ? ' · Logic: ' + esc(A.logic) : '') : 'Everyone') +
-      (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; }) ? '' : ' · people who have left or died are left out unless you search on Status') + '</p>' +
+      (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; }) ? '' : ' · people who have left or died are left out unless you search on Status') + '</p>' +
       (r.rows.length ? '<div class="table-wrap"><table class="simple adv-table"><thead><tr>' + cols.map(function (k) {
         var on = (A.sort || 'name') === k;
         return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';

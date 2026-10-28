@@ -290,3 +290,7 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 @media (max-width: 700px) { .me-tabs { display: flex; } .me-tabs a { flex: 1; justify-content: center; } }
 .offer-item { flex-wrap: wrap; } .offer-item .grow { flex: 1 1 60%; min-width: 0; }
 @media (max-width: 700px) { .offer-item .btns { width: 100%; justify-content: flex-end; } }
+/* Settings → Who can see what: the number opens the list of names */
+.who summary { cursor: pointer; color: var(--accent-ink); text-decoration: underline dotted; text-underline-offset: 3px; list-style: none; }
+.who summary::-webkit-details-marker { display: none; }
+.who-list { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; font-size: 13.5px; white-space: nowrap; }

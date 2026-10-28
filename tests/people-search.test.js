@@ -35,6 +35,7 @@ check(run([F('first', 'has', 'ar')]) === 'c', 'contains');
 check(run([F('first', 'starts', 'b')]) === 'b', 'starts with');
 check(run([F('first', 'nhas', 'a')]) === 'bd', 'does not contain');
 check(run([F('cat', 'eq', 'Partner')]) === 'ac', 'choice is');
+check(run([F('first', 'has', 'ann')]) === 'a' && run([F('first', 'has', 'an n')]) === 'a' && run([F('first', 'has', 'ann x')]) === '', 'contains: every word typed must appear (“an n”), in any order');
 check(run([F('cat', 'ne', 'Partner')]) === 'bd', 'choice is not');
 
 console.log('Lists, numbers, yes/no');

@@ -41,6 +41,11 @@ var Hub = (function () {
   }
   function today() { return LeaveCore.iso(new Date()); }
   function name(p) { return p ? ((p.preferredName || p.firstName) + ' ' + p.lastName) : ''; }
+  /** Search: every word typed appears somewhere, in any order – "andr pi" finds Andrew Pike, "pike and" too. */
+  function matches(text, query) {
+    var t = String(text || '').toLowerCase();
+    return String(query || '').toLowerCase().trim().split(/\s+/).filter(Boolean).every(function (w) { return t.indexOf(w) >= 0; });
+  }
   /** Every way to write someone's name, for searching: "Douglas Pike" and, if different, what they're known as ("Doug Pike"). */
   function names(p) {
     if (!p) return [];
@@ -86,6 +91,55 @@ var Hub = (function () {
         ok(cv.toDataURL('image/jpeg', 0.82));
       };
       img.onerror = function () { URL.revokeObjectURL(url); fail(new Error('could not read')); };
+      img.src = url;
+    });
+  }
+  /**
+   * Choose the part of a picture to keep, e.g. one face in a group photo: drag to move, zoom with the slider (or the mouse
+   * wheel). The circle shows how it will look. → a small square JPEG (320 × 320), or nothing if they cancel.
+   */
+  function cropPhoto(file) {
+    return new Promise(function (ok, fail) {
+      if (!file || !/^image\//.test(file.type)) return fail(new Error('not a picture'));
+      var url = URL.createObjectURL(file), img = new Image();
+      img.onerror = function () { URL.revokeObjectURL(url); fail(new Error('could not read')); };
+      img.onload = function () {
+        var W = img.naturalWidth, Hh = img.naturalHeight, V = 600, base = V / Math.min(W, Hh), z = 1, cx = W / 2, cy = Hh / 2, done = false;
+        modal(dialogHead(T('Choose the face'), T('Drag the photo and zoom in until the face fills the circle.')) + '<div class="dlg-body">' +
+          '<div class="crop"><canvas id="crop-c" width="' + V + '" height="' + V + '" aria-label="' + esc(T('Photo to crop')) + '"></canvas><div class="crop-ring" aria-hidden="true"></div></div>' +
+          '<div class="crop-zoom"><button type="button" class="icon-btn" id="crop-out" aria-label="' + esc(T('Zoom out')) + '">−</button>' +
+          '<input type="range" id="crop-z" min="1" max="8" step="0.01" value="1" aria-label="' + esc(T('Zoom')) + '">' +
+          '<button type="button" class="icon-btn" id="crop-in" aria-label="' + esc(T('Zoom in')) + '">+</button></div></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" id="crop-ok">' + T('Use this photo') + '</button></div>', T('Choose the face'));
+        var c = document.getElementById('crop-c'), ctx = c.getContext('2d'), zr = document.getElementById('crop-z');
+        var clamp = function () { var half = V / 2 / (base * z); cx = Math.min(Math.max(cx, half), W - half); cy = Math.min(Math.max(cy, half), Hh - half); };
+        var draw = function () { clamp(); var s = base * z; ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, V, V); ctx.drawImage(img, V / 2 - cx * s, V / 2 - cy * s, W * s, Hh * s); };
+        var zoomTo = function (nz) { z = Math.min(8, Math.max(1, nz)); zr.value = z; draw(); };
+        zr.addEventListener('input', function () { zoomTo(+zr.value); });
+        document.getElementById('crop-in').addEventListener('click', function () { zoomTo(z * 1.25); });
+        document.getElementById('crop-out').addEventListener('click', function () { zoomTo(z / 1.25); });
+        c.addEventListener('wheel', function (e) { e.preventDefault(); zoomTo(z * (e.deltaY < 0 ? 1.1 : 1 / 1.1)); }, { passive: false });
+        var drag = null;
+        c.addEventListener('pointerdown', function (e) { drag = { x: e.clientX, y: e.clientY }; c.setPointerCapture(e.pointerId); });
+        c.addEventListener('pointermove', function (e) {
+          if (!drag) return;
+          var k = V / c.getBoundingClientRect().width / (base * z);
+          cx -= (e.clientX - drag.x) * k; cy -= (e.clientY - drag.y) * k; drag = { x: e.clientX, y: e.clientY }; draw();
+        });
+        c.addEventListener('pointerup', function () { drag = null; });
+        c.addEventListener('keydown', function (e) {   // arrow keys move the photo, + and − zoom
+          var step = 20 / (base * z), m = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+          if (m) { e.preventDefault(); cx += m[0]; cy += m[1]; draw(); } else if (e.key === '+' || e.key === '=') zoomTo(z * 1.25); else if (e.key === '-') zoomTo(z / 1.25);
+        });
+        c.tabIndex = 0;
+        document.getElementById('crop-ok').addEventListener('click', function () {
+          if (done) return; done = true;
+          var N = 320, out = document.createElement('canvas'), s = base * z * N / V; out.width = N; out.height = N;
+          var o = out.getContext('2d'); o.fillStyle = '#fff'; o.fillRect(0, 0, N, N); o.drawImage(img, N / 2 - cx * s, N / 2 - cy * s, W * s, Hh * s);
+          URL.revokeObjectURL(url); closeModal(); ok(out.toDataURL('image/jpeg', 0.82));
+        });
+        draw();
+      };
       img.src = url;
     });
   }
@@ -474,6 +528,6 @@ var Hub = (function () {
   }
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
-    dialogHead: dialogHead, toast: toast, busy: busy, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
+    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
+    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
 })();

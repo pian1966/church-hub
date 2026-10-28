@@ -978,6 +978,8 @@
         '<label class="field req">In the household as<select id="pf-frole">' + (p.familyRole ? '' : '<option value="" selected>Choose…</option>') + '<option value="adult"' + (p.familyRole === 'adult' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
         '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
         (admin ? lateSpouseField(p) : '') +
+        (!isNew && canRecordDeath() && (deceased(p) || p.category === 'Deceased') ? '<div class="two"><label class="field req">Date of death<input type="date" id="pf-died" max="' + H.today() + '" value="' + esc(p.deceasedAt || '') + '"></label>' +
+          '<label class="field">Funeral or memorial<input type="date" id="pf-funeral" value="' + esc(keyDate(p, /^funeral$/i)) + '"></label></div>' : '') +
         '<fieldset class="panel" style="padding:10px 12px;margin:6px 0 14px"><legend class="field-l" style="padding:0 4px">' + T('Home address') + '</legend>' +
           '<label class="field">' + T('Street address') + '<input id="pf-street" value="' + esc((p.address || {}).street || '') + '" autocomplete="address-line1"></label>' +
           '<label class="field">' + T('Address line 2') + '<input id="pf-street2" value="' + esc((p.address || {}).street2 || '') + '" autocomplete="address-line2"></label>' +
@@ -993,7 +995,7 @@
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:save">' + (isNew ? 'Add person' : T('Save')) + '</button></div>';
     H.modal(html, isNew ? 'Add a person' : T('Edit details'));
     if (!isNew && (deceased(p) || p.category === 'Deceased')) {   // someone who has died: only first and last name must be filled in
-      document.querySelectorAll('#pf .field.req').forEach(function (f) { if (!f.querySelector('#pf-first, #pf-last')) f.classList.remove('req'); });
+      document.querySelectorAll('#pf .field.req').forEach(function (f) { if (!f.querySelector('#pf-first, #pf-last, #pf-died')) f.classList.remove('req'); });
       H.markRequired();
     }
     var dupT = null;
@@ -1275,6 +1277,12 @@
           if (g('pf-wed') && g('pf-frole') !== 'child') p.keyDates.push({ label: 'Wedding anniversary', date: g('pf-wed') });
         }
         if (g('pf-cat') !== null) p.category = g('pf-cat');
+        if (g('pf-died') !== null) {   // correcting the date someone died (and the funeral)
+          var dd = g('pf-died'), fu = g('pf-funeral');
+          if (!dd || dd > H.today()) { err.textContent = 'Please choose the date they died.'; err.hidden = false; return; }
+          p.deceasedAt = dd;
+          p.keyDates = (p.keyDates || []).filter(function (k) { return k.label !== 'Died' && k.label !== 'Funeral'; }).concat([{ label: 'Died', date: dd }]).concat(fu ? [{ label: 'Funeral', date: fu }] : []);
+        }
         if (g('pf-gender') !== null) { if (g('pf-gender')) p.gender = g('pf-gender'); else delete p.gender; }
         if (g('pf-middle') !== null) { if (g('pf-middle')) p.middleName = g('pf-middle'); else delete p.middleName; }
         if (g('pf-street') !== null) {

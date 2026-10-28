@@ -136,7 +136,7 @@
     var add = window.Serving ? Serving.missing(S.list('teams'), S.list('positions')) : { teams: [], positions: [] };
     if (add.positions.length && (H.can('*') || H.can('rosters.manage'))) html += '<div class="note info" style="margin-bottom:16px"><b>Set up the church’s departments.</b> Adds ' +
       (add.teams.length ? add.teams.length + ' department' + (add.teams.length === 1 ? '' : 's') + ' and ' : '') + add.positions.length + ' position' + (add.positions.length === 1 ? '' : 's') +
-      ' as in Elvanto (Operational, Extra Slot, Hospitality, Music, Teens, Children, Creche), each marked with the services it runs at. Nothing here is changed or removed. ' +
+      ' as in Elvanto (Operational, Extra Slot, Hospitality, Music, Teens, Children, Creche, Memorial Service), each marked with the services it runs at. Nothing here is changed or removed. ' +
       '<button class="btn small primary" data-act="rosters:setupdepts">Add them</button></div>';
     html += '<div class="grid2">' + S.list('teams').map(function (t) {
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });

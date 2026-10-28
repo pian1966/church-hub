@@ -9,6 +9,7 @@
   function links(childId) { return HS.linksOf(childId, S.list('guardians')); }
   function linkName(l) { var a = l.adultId ? S.get('people', l.adultId) : null; return a ? H.name(a) : (l.name || 'Someone'); }
   var GENDERS = ['Female', 'Male'];
+  var PROVINCES = ['KwaZulu-Natal', 'Gauteng', 'Western Cape', 'Eastern Cape', 'Free State', 'Mpumalanga', 'Limpopo', 'North West', 'Northern Cape'];
   // What someone would like to receive, kept in the consent register (POPIA: when and how they chose it). Adults only.
   var RECEIVE = [
     ['Weekly Church Notices (via Email)', 'The weekly notices by email.'],
@@ -35,6 +36,11 @@
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
   /** The category, plus "Staff" when they work for the church – a Church Partner can be on the staff too. */
+  /** A home address as lines to show ("1 Main Road", "Howick 3290", "KwaZulu-Natal"); South Africa isn't repeated. */
+  function addressLines(p) {
+    var a = p && p.address; if (!a) return [];
+    return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !/^south africa$/i.test(a.country) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
+  }
   function catTags(p) {
     var t = '<span class="tag grey">' + esc(p.category || '') + '</span>';
     if (!p.staff) return t;
@@ -283,8 +289,8 @@
       (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">Record a death</button>' : '') + '</div></div>';
     if (p.mergedInto && S.get('people', p.mergedInto)) html += '<div class="note info" style="margin-bottom:16px">This was a duplicate record. It was merged into <a href="#/people/p/' + p.mergedInto + '">' + esc(H.name(S.get('people', p.mergedInto))) + '</a> and is kept only for the church’s records.</div>';
     if (deceased(p) && canRecordDeath()) {
-      html += '<div class="note info" style="margin-bottom:16px"><b>' + esc(p.firstName) + ' died on ' + esc(H.fmt(p.deceasedAt, true)) + '.</b> ' + (p.deathTidied ? 'They are no longer on rosters or teams, in the directory or able to sign in, and won’t receive messages.' : 'They are out of the directory and won’t receive messages.') +
-        (p.deathTidied ? '' : H.can('*') ? ' <button class="btn small" data-act="people:tidydeath" data-id="' + p.id + '">Finish: take off rosters, teams, leave and sign-in</button>' : ' The church office will finish taking them off rosters and sign-in.') +
+      html += '<div class="note info" style="margin-bottom:16px"><b>' + esc(p.firstName) + ' died on ' + esc(H.fmt(p.deceasedAt, true)) + '.</b> ' + (!needsTidy(p) ? 'They are no longer on rosters or teams, in the directory or able to sign in, and won’t receive messages.' : 'They are out of the directory and won’t receive messages.') +
+        (!needsTidy(p) ? '' : H.can('*') ? ' <button class="btn small" data-act="people:tidydeath" data-id="' + p.id + '">Finish: take off rosters, teams, leave and sign-in</button>' : ' The church office will finish taking them off rosters and sign-in.') +
         ' <button class="link" data-act="people:undodeath" data-id="' + p.id + '">Recorded by mistake?</button></div>';
     }
 
@@ -292,6 +298,8 @@
     // Contact (left out when there's nothing this person may see, e.g. a young child for Children's ministry)
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
+      (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
+      (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + '</dd>' : '') +
       (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
@@ -299,7 +307,7 @@
       ((full || (child && canChildren())) ? '<dt>' + T('Gender') + '</dt><dd>' + (p.gender ? esc(T(p.gender)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (full && (p.category === 'Church Partner' || p.partnerSince || p.partnerUpdated) ? '<dt>Church Partner</dt><dd>' +
         (p.partnerSince ? esc(T('Accepted {date}', { date: H.fmt(p.partnerSince, true) })) : '<span class="muted">' + T('Date accepted not recorded') + '</span>') +
-        (p.partnerUpdated ? '<span class="kv-sub">' + esc(T('Partnership last updated {date}', { date: H.fmt(p.partnerUpdated, true) })) + '</span>' : '') + '</dd>' : '') +
+        (p.partnerUpdated ? '<span class="kv-sub">' + esc(T('Partnership last updated {date}', { date: /^\d{4}$/.test(p.partnerUpdated) ? p.partnerUpdated : H.fmt(p.partnerUpdated, true) })) + '</span>' : '') + '</dd>' : '') +
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (!child ? coupleLine(p) : '') +
       (!child && lateSpouse(p) ? '<dt>' + T('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +
@@ -749,6 +757,9 @@
     add(birth, 'Personal', 'birthday', 'Birthday', 'anniv', function (p) { return p.birthDate || p.birthDay; });
     add(birth, 'Personal', 'age', 'Age', 'number', function (p) { return age(p); });
     add(all, 'Personal', 'gender', 'Gender', 'choice', function (p) { return p.gender || ''; }, GENDERS);
+    add(all, 'Personal', 'middleName', 'Middle name', 'text', function (p) { return p.middleName || ''; });
+    add(all, 'Name and contact', 'town', 'Town or city', 'text', function (p) { return (p.address || {}).city || ''; });
+    add(all, 'Name and contact', 'address', 'Home address', 'text', function (p) { return addressLines(p).join(', '); });
     add(all, 'Church', 'partnerSince', 'Date accepted as Church Partner', 'date', function (p) { return p.partnerSince || ''; });
     add(all, 'Church', 'partnerUpdated', 'Partnership last updated', 'date', function (p) { return p.partnerUpdated || ''; });
     add(all, 'Personal', 'marital', 'Marital status', 'choice', function (p) { return p.familyRole === 'child' ? '' : p.maritalStatus; }, MARITAL);
@@ -894,18 +905,27 @@
       '<div class="two"><label class="field req">' + T('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
       '<label class="field req">' + T('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
-      '<label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
+      '<div class="two"><label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
+      (!me || admin ? '<label class="field">' + T('Middle name') + '<input id="pf-middle" value="' + esc(p.middleName || '') + '" autocomplete="additional-name"></label>' : '') + '</div>' +
       '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label>' +
       '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label></div>' +
       (!me || admin ? '<div class="two"><label class="field">Birthday<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field req">Category<select id="pf-cat">' + (p.category ? '' : '<option value="" selected>Choose…</option>') + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two" id="pf-partner-f"' + (p.category === 'Church Partner' ? '' : ' hidden') + '><label class="field">Date accepted as Church Partner<input id="pf-psince" type="date" max="' + H.today() + '" value="' + esc(p.partnerSince || '') + '"></label>' +
-        '<label class="field">Partnership last updated<input id="pf-pupd" type="date" max="' + H.today() + '" value="' + esc(p.partnerUpdated || '') + '"></label></div>' +
+        '<label class="field">Partnership last updated<input id="pf-pupd" type="date" max="' + H.today() + '" value="' + esc(/^\d{4}$/.test(p.partnerUpdated || '') ? '' : p.partnerUpdated || '') + '">' +
+          (/^\d{4}$/.test(p.partnerUpdated || '') ? '<small>Elvanto only says ' + esc(p.partnerUpdated) + '. Leave empty to keep that, or choose the date.</small>' : '') + '</label></div>' +
         '<label class="field">Gender<select id="pf-gender"><option value="">Not recorded</option>' + GENDERS.map(function (g) { return '<option' + (p.gender === g ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select></label>' +
-        '<div class="two"><label class="field req" id="pf-fam-f">Household<select id="pf-fam"><option value="">Choose…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New household…</option></select></label>' +
+        '<div class="two"><label class="field req" id="pf-fam-f">Household<select id="pf-fam"><option value="">Choose…</option><option value="__new">+ New household…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field req">In the household as<select id="pf-frole">' + (p.familyRole ? '' : '<option value="" selected>Choose…</option>') + '<option value="adult"' + (p.familyRole === 'adult' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
         '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
         (admin ? lateSpouseField(p) : '') +
+        '<fieldset class="panel" style="padding:10px 12px;margin:6px 0 14px"><legend class="field-l" style="padding:0 4px">' + T('Home address') + '</legend>' +
+          '<label class="field">' + T('Street address') + '<input id="pf-street" value="' + esc((p.address || {}).street || '') + '" autocomplete="address-line1"></label>' +
+          '<label class="field">' + T('Address line 2') + '<input id="pf-street2" value="' + esc((p.address || {}).street2 || '') + '" autocomplete="address-line2"></label>' +
+          '<div class="two"><label class="field">' + T('Town or city') + '<input id="pf-city" value="' + esc((p.address || {}).city || '') + '" autocomplete="address-level2"></label>' +
+          '<label class="field">' + T('Postcode') + '<input id="pf-postcode" value="' + esc((p.address || {}).postcode || '') + '" inputmode="numeric" autocomplete="postal-code"></label></div>' +
+          '<div class="two"><label class="field">' + T('Province') + '<input id="pf-province" list="pf-provinces" value="' + esc((p.address || {}).province || '') + '"><datalist id="pf-provinces">' + PROVINCES.map(function (x) { return '<option value="' + x + '">'; }).join('') + '</datalist></label>' +
+          '<label class="field">' + T('Country') + '<input id="pf-country" value="' + esc((p.address || {}).country || (p.address ? '' : 'South Africa')) + '" autocomplete="country-name"></label></div></fieldset>' +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
       (admin ? staffFields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
@@ -999,6 +1019,18 @@
 
   /** After a death (Administrators): off future rosters, teams, serving groups and away dates; future leave cancelled;
    *  sign-in removed (app access set to none). Past serving and leave stay, for the church's records. */
+  /** After a death: is anything still to undo (future turns, teams, offers, groups, leave, links to children, sign-in)?
+   *  People who died before they came into Church Hub (e.g. from Elvanto) usually have nothing, so they aren't a to-do. */
+  function needsTidy(p) {
+    if (!p || !deceased(p) || p.deathTidied) return false;
+    var id = p.id, d = p.deceasedAt || H.today(), lv = S.leave();
+    return (p.appRole && p.appRole !== 'none') ||
+      S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === id && (!s || s.date >= d); }).length > 0 ||
+      S.find('skills', function (k) { return k.personId === id; }).length > 0 || S.find('serveOffers', function (o) { return o.personId === id; }).length > 0 ||
+      S.find('blockouts', function (b) { return b.personId === id && b.to >= d; }).length > 0 || S.find('groups', function (g) { return g.memberIds.indexOf(id) >= 0; }).length > 0 ||
+      S.find('guardians', function (l) { return l.adultId === id; }).length > 0 || S.find('noCollect', function (x) { return x.personId === id; }).length > 0 ||
+      !!(lv && lv.requests.some(function (r) { return r.staffId === id && r.end >= d && (r.status === 'Pending' || r.status === 'Approved') && !r.synthetic; }));
+  }
   function tidyDeath(id) {
     var p = S.get('people', id); if (!p) return;
     var d = p.deceasedAt || H.today(), n = 0;
@@ -1058,7 +1090,7 @@
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
         out.push({ text: 'Care for the family of ' + H.name(p) + ' (died ' + H.fmt(p.deceasedAt) + ')', href: '#/people/p/' + p.id, tag: 'Pastoral' });
       });
-      if (H.can('*')) S.find('people', function (p) { return deceased(p) && !p.deathTidied; }).forEach(function (p) {
+      if (H.can('*')) S.find('people', needsTidy).forEach(function (p) {
         out.push({ text: 'Finish recording the death of ' + H.name(p) + ': rosters and sign-in', href: '#/people/p/' + p.id });
       });
       return out;
@@ -1174,11 +1206,16 @@
         }
         if (g('pf-cat') !== null) p.category = g('pf-cat');
         if (g('pf-gender') !== null) { if (g('pf-gender')) p.gender = g('pf-gender'); else delete p.gender; }
+        if (g('pf-middle') !== null) { if (g('pf-middle')) p.middleName = g('pf-middle'); else delete p.middleName; }
+        if (g('pf-street') !== null) {
+          var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') };
+          if (ad.street || ad.street2 || ad.city || ad.postcode) p.address = ad; else delete p.address;
+        }
         if (g('pf-psince') !== null) {
           var ps = g('pf-psince'), pu = g('pf-pupd');
           if (ps && pu && pu < ps) { err.textContent = 'The partnership can’t be updated before the date they were accepted.'; err.hidden = false; return; }
           if (ps) p.partnerSince = ps; else delete p.partnerSince;
-          if (pu) p.partnerUpdated = pu; else delete p.partnerUpdated;
+          if (pu) p.partnerUpdated = pu; else if (!/^\d{4}$/.test(p.partnerUpdated || '')) delete p.partnerUpdated;   // keep a year from Elvanto
         }
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
         if (g('pf-marital') !== null) {

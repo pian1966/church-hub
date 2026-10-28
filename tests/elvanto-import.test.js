@@ -54,6 +54,22 @@ ok(by('Brian').idNumber === '7503125000000' && by('Brian').notes === 'Made-up no
 ok(by('Brian').gender === 'Male' && E.toPerson(by('Brian'), null, {}, '', '2026-10-26').gender === 'Male', 'Gender is read');
 ok(col('gender') === 'Gender', 'the Gender column is found');
 
+console.log('More from Elvanto: dates, choices, volunteering, address');
+ok(E.monthDay('09-12') === '09-12' && E.monthDay('12-31') === '12-31' && E.monthDay('13-01') === '', 'birthdays without a year as Elvanto writes them (“09-12”, month first)');
+ok(JSON.stringify(E.receiveChoices('Weekly Church Notices (via Email), Missionary updates (via\nWhatsApp), "Who is Jesus" - A two minute WhatsApp message from Richard Sturdee, focussing on the person and work of our Lord')) ===
+  JSON.stringify(['“Who is Jesus” (via WhatsApp)', 'Weekly Church Notices (via Email)', 'Missionary updates (via WhatsApp)']), 'Checklist of what to receive → the same choices as Church Hub’s (the comma in “Who is Jesus” is fine)');
+ok(!E.receiveChoices('Special things or people to pray for (via Email)').includes('Special things or people to pray for (via WhatsApp)'), 'email and WhatsApp aren’t mixed up');
+ok(JSON.stringify(E.positionsOf('8:00 Reading, 10:00 Communion -\nLeading, Memorial Teas')) === JSON.stringify([{ time: '08:00', name: 'Reading' }, { time: '10:00', name: 'Communion - Leading' }, { time: '', name: 'Memorial Teas' }]), 'Department Positions → service and position (wrapped lines joined)');
+ok(E.province('KZn') === 'KwaZulu-Natal' && E.province('KwaZulu-Natal') === 'KwaZulu-Natal' && E.province('California') === 'California', 'provinces tidied (KZN → KwaZulu-Natal)');
+{
+  const head = ['First Name', 'Last Name', 'Date Added', 'Middle Name', 'Anniversary', 'Membership Date', 'Membership last renewed on:', 'Home Address', 'Home City', 'Province', 'Home Country', 'Marital Status'];
+  const mm = E.guess(head), rr = E.records([['Ann', 'Ash', '2014-05-06 10:11:12', 'Mary', '1990-03-04', '2015-01-01', '2026', '1 Main Rd', 'Howick', 'KZN', 'South Africa', 'Married'], ['Bob', 'Bee', '2014-05-06 10:11:12', '', '', '', '', '', '', 'KZN', 'South Africa', '']], mm, '2026-10-28');
+  const pa = E.toPerson(rr[0], { id: 'x', createdAt: '2026-10-26 09:00', keyDates: [] }, {}, '', '2026-10-28');
+  ok(pa.createdAt === '2014-05-06 10:11' && pa.middleName === 'Mary' && pa.keyDates.some(k => k.label === 'Wedding anniversary' && k.date === '1990-03-04'), 'Date Added becomes when they were added (not the import day); middle name; wedding anniversary');
+  ok(pa.partnerSince === '2015-01-01' && pa.partnerUpdated === '2026' && pa.address.street === '1 Main Rd' && pa.address.province === 'KwaZulu-Natal', 'Church Partner dates (renewal year only) and home address');
+  ok(!E.toPerson(rr[1], null, {}, '', '2026-10-28').address, 'a province and country on their own aren’t an address');
+}
+
 console.log('Making the people');
 const p = E.toPerson(by('Peter'), null, {}, '', '2026-10-26');
 ok(p.active === false && p.category === 'Deceased' && p.deceasedAt === '2026-02-02', 'Deceased in Elvanto → recorded as died, with the date');

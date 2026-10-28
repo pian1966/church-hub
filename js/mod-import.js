@@ -31,6 +31,27 @@
     };
     next(0);
   }
+  /** Elvanto's department positions ("10:00 Reading") → this person's serving, with the services they serve at.
+   *  Adds to what they already have; never takes anything away. */
+  function servingFrom(pid, list, out) {
+    var want = {};
+    list.forEach(function (x) {
+      var pos = Serving.findPosition(x.name, S.list('positions'));
+      if (!pos) { out.unknown[x.name] = 1; return; }
+      var w = want[pos.id] = want[pos.id] || {};
+      if (/^\d\d:\d\d$/.test(x.time)) w[x.time] = 1;
+    });
+    Object.keys(want).forEach(function (posId) {
+      var times = Object.keys(want[posId]).sort(), k = S.find('skills', function (s) { return s.personId === pid && s.positionId === posId; })[0];
+      if (k) {
+        if (!k.times || !k.times.length) return;   // already serves at any service
+        var u = k.times.concat(times).filter(function (t, i, a) { return a.indexOf(t) === i; }).sort();
+        if (u.length === k.times.length) return;
+        k = JSON.parse(JSON.stringify(k)); k.times = u.length >= Serving.TIMES.length ? [] : u;
+      } else k = { personId: pid, positionId: posId, frequency: 'fortnightly', times: times.length >= Serving.TIMES.length ? [] : times };
+      S.put('skills', k); out.serving++;
+    });
+  }
   function recs() { return E.records(st.rows, st.map, H.today()); }
   /** A short, stable family reference from Elvanto's family key (which may be names). */
   function famRef(key) { var h = 5381; for (var i = 0; i < key.length; i++) h = ((h * 33) ^ key.charCodeAt(i)) >>> 0; return /^[\w-]{1,40}$/.test(key) && !/\s/.test(key) ? key : 'EF-' + h.toString(36); }
@@ -44,12 +65,13 @@
     var h = '<div class="page-head"><div><h1>Import from Elvanto</h1><p class="lead">Bring your people and households (Elvanto’s “families”) across from Elvanto. Nothing is changed in Elvanto.</p></div></div>' + tabs('elvanto');
     var already = fromElvanto().length;
     if (st.done) {
-      h += photoNote() + '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.links ? ' ' + st.done.links + ' children linked to their parents – please confirm them (see Home).' : '') + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
+      h += photoNote() + '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.serving ? ' ' + st.done.serving + ' volunteering positions.' : '') + (st.done.receive ? ' ' + st.done.receive + ' “would like to receive” choices.' : '') +
+        (st.done.unknown && st.done.unknown.length ? ' Positions Church Hub doesn’t have (left out): ' + esc(st.done.unknown.join(', ')) + '.' : '') + (st.done.links ? ' ' + st.done.links + ' children linked to their parents – please confirm them (see Home).' : '') + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
       return h;
     }
     if (!st.rows) {
       return h + '<div class="grid2"><section class="panel"><h2>1. Export from Elvanto</h2><ol style="margin:0;padding-left:20px;line-height:1.7"><li>In Elvanto, open <b>People</b> and clear the filters so everyone is listed.</li><li>Choose <b>Export</b> → <b>CSV</b>.</li></ol>' +
-        '<p class="hint">Church Hub reads only: Member ID, names, Email Address, Cellphone Number, Date of Birth, Family Relationship, Primary &amp; Spouse Full Names, Marital Status, People Category, Archived, Deceased, Photo (the picture is downloaded from Elvanto and made small), ID Number (seen by Administrators only), Gender and Notes (kept as church office notes, for Administrators and Pastors). Everything else in the file (giving, addresses…) is ignored – but it’s safer to leave those columns out of the export.</p>' +
+        '<p class="hint">Church Hub reads only: <b>Member ID</b> (please include it – it stops people being doubled when you import again), Date Added, names (with Middle Name), Email Address, Cellphone Number, Date of Birth, Gender, Family Relationship, Primary &amp; Spouse Full Names, Marital Status, Anniversary, People Category, Membership Date and Membership last renewed on, Archived, Deceased, <b>Photo</b> (downloaded from Elvanto and made small), ID Number (Administrators only), Notes (church office notes), Checklist of what to receive, Department Positions (volunteering) and the home address. Everything else (groups, giving, security codes…) is ignored – but it’s safer to leave those columns out of the export.</p>' +
         '<p class="hint">Keep the file on the church computer and delete it once imported – it contains personal information.</p></section>' +
         '<section class="panel"><h2>2. Choose the file</h2><label class="field">Elvanto export (.csv)<input type="file" id="im-file" accept=".csv,text/csv"></label><p class="hint">Or <button class="link" data-act="import:sample">try it with a made-up sample file</button>.</p></section></div>' +
         (already ? '<section class="panel" style="margin-top:16px"><h2>Start again</h2><p style="margin-top:0">' + already + ' ' + (already === 1 ? 'person was' : 'people were') + ' brought in from Elvanto. If an import went wrong, remove them and import again. People who have been given app access, are staff, or are you, are kept.</p>' +
@@ -227,7 +249,15 @@
       again: function () { st = { rows: null, head: null, map: {}, fileName: '', done: null, cats: {} }; H.render(); },
       go: function (el) {
         if (!H.confirmBtn(el, 'Click again to import')) return;
-        var r = recs(), pl = E.plan(r, S.list('people')), famIds = {}, ids = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0, links: 0, ids: 0, notes: 0 };
+        var r = recs(), pl = E.plan(r, S.list('people')), famIds = {}, ids = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0, links: 0, ids: 0, notes: 0, receive: 0, serving: 0, unknown: {} };
+        // Volunteering needs the church's departments and positions: add any that are missing first
+        if (r.some(function (o) { return o.positions && o.positions.length; }) && window.Serving) {
+          var addD = Serving.missing(S.list('teams'), S.list('positions'));
+          if (addD.positions.length) {
+            addD.teams.forEach(function (t) { S.put('teams', t); }); addD.positions.forEach(function (x) { S.put('positions', x); });
+            S.audit('Set up the church’s departments for the Elvanto import: ' + addD.teams.length + ' departments and ' + addD.positions.length + ' positions added', 'teams');
+          }
+        }
         var consent = document.getElementById('im-consent').checked, today = H.today(), photoQueue = [];
         pl.items.forEach(function (x) {
           var o = x.rec, fid = '';
@@ -252,12 +282,19 @@
           if (o.notes && !S.find('officeNotes', function (n) { return n.personId === p.id && n.text === o.notes; }).length) {
             S.put('officeNotes', { personId: p.id, text: o.notes, by: 'Elvanto', at: today }); out.notes++;
           }
+          (o.receive || []).forEach(function (pur) {   // what they'd like to receive, into the consent register
+            if (PeopleHelpers.consentFor(p.id, pur)) return;
+            S.put('consents', { personId: p.id, purpose: pur, given: true, date: today, method: 'Carried over from Elvanto', recordedBy: H.name(H.user()), guardianId: '' }); out.receive++;
+          });
+          servingFrom(p.id, o.positions || [], out);
         });
         // Children's parents from Elvanto's family relationships (unconfirmed, so someone checks them)
         E.guardianLinks(r, ids).forEach(function (l) {
           if (!S.find('guardians', function (g) { return g.childId === l.childId && g.adultId === l.adultId; }).length) { S.put('guardians', l); out.links++; }
         });
-        S.audit('Imported ' + r.length + ' people from Elvanto (' + st.fileName + '): ' + out.added + ' added, ' + out.updated + ' updated' + (out.ids ? ', ' + out.ids + ' ID numbers' : '') + (out.notes ? ', ' + out.notes + ' notes' : ''), 'people');
+        S.audit('Imported ' + r.length + ' people from Elvanto (' + st.fileName + '): ' + out.added + ' added, ' + out.updated + ' updated' + (out.ids ? ', ' + out.ids + ' ID numbers' : '') + (out.notes ? ', ' + out.notes + ' notes' : '') +
+          (out.receive ? ', ' + out.receive + ' “would like to receive” choices' : '') + (out.serving ? ', ' + out.serving + ' volunteering positions' : ''), 'people');
+        out.unknown = Object.keys(out.unknown);
         st.done = out; st.rows = null; pics = null; H.render(); H.toast('Import finished');
         if (photoQueue.length) { fetchPhotos(photoQueue); H.render(); }
       },

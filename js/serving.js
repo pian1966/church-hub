@@ -6,7 +6,7 @@
 var Serving = (function () {
   'use strict';
   var TIMES = [['08:00', '8am'], ['10:00', '10am'], ['17:00', '5pm']];
-  var ALL = ['08:00', '10:00', '17:00'], EIGHT = ['08:00'], TEN = ['10:00'];
+  var ALL = ['08:00', '10:00', '17:00'], EIGHT = ['08:00'], TEN = ['10:00'], MEMORIAL = ['memorial'];   // memorial and funeral teas: not a Sunday service
   // [department id, department, [position id, position, people needed, services (all when left out)]]
   var DEPARTMENTS = [
     ['dept-operational', 'Operational', [['pos-host', 'Host', 1], ['pos-preaching', 'Preaching', 1], ['pos-reading', 'Reading', 1], ['pos-prayer', 'Prayer', 1]]],
@@ -18,8 +18,11 @@ var Serving = (function () {
       ['pos-sound', 'Sound Desk', 1], ['pos-streaming', 'Online Streaming', 1, TEN]]],
     ['dept-teens', 'Teens', [['pos-teens-teacher', 'Teens’ Church Teacher', 1, EIGHT], ['pos-teens-assistant', 'Teens’ Church Assistant', 1, EIGHT]]],
     ['dept-children', 'Children', [['pos-children-teacher', 'Children’s Church Teacher', 1, EIGHT], ['pos-children-assistant', 'Children’s Church Assistant', 1, EIGHT]]],
-    ['dept-creche', 'Creche', [['pos-creche', 'Creche Duty', 1, EIGHT]]]
+    ['dept-creche', 'Creche', [['pos-creche', 'Creche Duty', 1, EIGHT]]],
+    ['dept-memorial', 'Memorial Service', [['pos-memorial-teas', 'Memorial Teas', 2, MEMORIAL]]]
   ];
+  // Elvanto's names that differ from Church Hub's
+  var ALIASES = { guitarists: 'guitar', vocal: 'singers', vocals: 'singers', welcoming: 'welcoming & service assistant', servers: 'servers (collection & communion)', 'memorial duties': 'memorial teas' };
   function norm(s) { return String(s || '').trim().toLowerCase().replace(/[’']/g, '').replace(/[–-]/g, ' ').replace(/\s+/g, ' '); }
   /**
    * What to add so the church's departments and positions are all there: teams and positions missing by name are added;
@@ -38,7 +41,12 @@ var Serving = (function () {
     });
     return out;
   }
-  function timeLabel(t) { var x = TIMES.filter(function (y) { return y[0] === t; })[0]; return x ? x[1] : t; }
-  return { TIMES: TIMES, DEPARTMENTS: DEPARTMENTS, missing: missing, timeLabel: timeLabel };
+  function timeLabel(t) { if (t === 'memorial') return 'memorial and funeral teas'; var x = TIMES.filter(function (y) { return y[0] === t; })[0]; return x ? x[1] : t; }
+  /** A position by name as Elvanto writes it ("Guitarists", "Communion - Leading") among Church Hub's positions. */
+  function findPosition(name, positions) {
+    var n = norm(name); n = norm(ALIASES[n] || n);
+    return (positions || []).filter(function (x) { return norm(x.name) === n; })[0] || null;
+  }
+  return { TIMES: TIMES, DEPARTMENTS: DEPARTMENTS, missing: missing, timeLabel: timeLabel, findPosition: findPosition };
 })();
 if (typeof module !== 'undefined') module.exports = Serving;

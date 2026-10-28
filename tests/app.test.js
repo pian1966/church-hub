@@ -253,14 +253,22 @@ function serve() {
   await s.page.selectOption('#pf-gender', 'Female'); await s.page.fill('#pf-psince', '2015-03-01'); await s.page.fill('#pf-pupd', '2024-02-11');
   await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   check(docs['details/p15'].gender === 'Female' && docs['details/p15'].partnerSince === '2015-03-01' && docs['details/p15'].partnerUpdated === '2024-02-11' && tt.includes('Accepted') && tt.includes('Partnership last updated'), 'gender and the Church Partner dates are saved and shown');
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-middle', 'Anne'); await s.page.fill('#pf-street', '12 Main Road'); await s.page.fill('#pf-city', 'Howick'); await s.page.fill('#pf-postcode', '3290'); await s.page.fill('#pf-province', 'KwaZulu-Natal');
+  await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p15'].middleName === 'Anne' && docs['details/p15'].address.city === 'Howick' && tt.includes('12 Main Road') && tt.includes('Howick 3290') && !tt.includes('South Africa') && !JSON.stringify(docs['people/p15']).includes('Main Road'), 'middle name and home address saved with the private details and shown');
+  await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p15'))); p.partnerUpdated = '2026'; Store.put('people', p); }); await s.settle();
+  await s.go('people'); await s.go('people/p/p15'); const yrT = await s.text(); check(yrT.includes('Partnership last updated 2026'), 'a renewal year from Elvanto shows as the year: ' + (yrT.match(/Accepted.{0,80}/) || [yrT.slice(yrT.indexOf('Gender'), yrT.indexOf('Gender') + 200)])[0]);
+  await s.page.click('[data-act="people:edit"]'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p15'].partnerUpdated === '2026', 'saving without a date keeps the year from Elvanto');
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-cat', 'Attender');
   check(await s.page.isHidden('#pf-partner-f'), 'the partnership dates only show for Church Partners');
+  check((await s.page.$$eval('#pf-fam option', o => o.map(x => x.value)))[1] === '__new', '“+ New household…” is at the top of the list');
   await s.page.click('[data-act="hub:close"]');
   // Departments and positions, then volunteering
   await s.go('rosters/teams'); await s.page.click('[data-act="rosters:setupdepts"]'); await s.settle(); docs = await s.docsNow();
   const posDocs = Object.keys(docs).filter(k => k.startsWith('positions/pos-'));
-  check(docs['teams/dept-operational'] && docs['teams/dept-music'] && docs['teams/dept-creche'] && posDocs.length === 25 && JSON.stringify(docs['positions/pos-creche'].times) === '["08:00"]' && docs['positions/pos-host'].times.length === 3,
-    'Rosters → Teams adds the church’s 7 departments and 25 positions (Creche Duty only at 8:00): ' + posDocs.length);
+  check(docs['teams/dept-operational'] && docs['teams/dept-music'] && docs['teams/dept-creche'] && posDocs.length === 26 && docs['teams/dept-memorial'] && JSON.stringify(docs['positions/pos-creche'].times) === '["08:00"]' && docs['positions/pos-host'].times.length === 3,
+    'Rosters → Teams adds the church’s 8 departments and 26 positions (Creche Duty only at 8:00): ' + posDocs.length);
   check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
   check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && (await s.text()).includes('8am only'), 'once added, the offer goes, and 8am-only positions say so');
   await s.go('people/p/p15'); await s.page.click('[data-act="people:volunteer"]');
@@ -616,6 +624,9 @@ function serve() {
   check(docs['people/p14'].firstName === '2020-01-01-Tim', 'names of people who are alive are never changed');
   check(docs['people/p19'].lastName === 'Peters' && docs['idNumbers/p19'] && docs['idNumbers/p19'].value === '5710210087085', 'an ID number typed into a name becomes their ID number (Administrators only)');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /2 dates of death moved/.test(docs[k].action)), 'the history log says how many names were tidied');
+  await s.page.evaluate(() => Store.put('people', { firstName: 'Old', lastName: 'Record', familyRole: 'adult', category: 'Deceased', active: false, deceasedAt: '2019-01-01', appRole: 'none', keyDates: [] }));
+  await s.settle(); await s.go('home'); const homeT = await s.text();
+  check(homeT.includes('Finish recording the death of Johan') && !homeT.includes('Finish recording the death of Old Record'), 'Home only asks to finish a death record when there’s something to undo (not for people who died long ago)');
   await finish(s);
 
   /* ---------- Elvanto import ---------- */

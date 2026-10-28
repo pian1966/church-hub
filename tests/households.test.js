@@ -28,5 +28,59 @@ const nd = HS.needs(people, links);
 ok(nd.noConsenter.map(c => c.id).join() === 'lone' && nd.unconfirmed.map(c => c.id).join() === 'kid', 'to-dos: a child with nobody to consent; links still to confirm');
 ok(HS.defaultsFor('Step-parent').canConsent === false && HS.defaultsFor('Legal guardian').canConsent === true && HS.defaultsFor('Trusted collector').mayCollect, 'sensible defaults per relationship');
 
+console.log('Couples and wedding anniversaries');
+{
+  const W = d => [{ label: 'Wedding anniversary', date: d }];
+  const P = [
+    // h1: a married couple; only Karen has the anniversary
+    { id: 'brian', firstName: 'Brian', lastName: 'Fourie', familyId: 'h1', familyRole: 'adult', maritalStatus: 'Married', birthDate: '1975-03-12' },
+    { id: 'karen', firstName: 'Karen', lastName: 'Fourie', familyId: 'h1', familyRole: 'adult', maritalStatus: 'Married', birthDate: '1978-07-01', keyDates: W('2001-04-21') },
+    { id: 'kidf', firstName: 'Mia', lastName: 'Fourie', familyId: 'h1', familyRole: 'child' },
+    // h2: grandparents plus their married son and his wife (wife has a different surname)
+    { id: 'gpa', lastName: 'Smith', familyId: 'h2', familyRole: 'adult', maritalStatus: 'Married', birthDate: '1950-01-01', keyDates: W('1972-06-10') },
+    { id: 'gma', lastName: 'Smith', familyId: 'h2', familyRole: 'adult', maritalStatus: 'Married', birthDate: '1952-01-01' },
+    { id: 'son', lastName: 'Smith', familyId: 'h2', familyRole: 'adult', maritalStatus: 'Married', birthDate: '1980-01-01', keyDates: W('2010-02-14') },
+    { id: 'dil', lastName: 'Jones', familyId: 'h2', familyRole: 'adult', maritalStatus: 'Married', birthDate: '1982-01-01', keyDates: W('2010-02-14') },
+    // h3: married, partner's status not recorded, same surname
+    { id: 'tom', lastName: 'Nkosi', familyId: 'h3', familyRole: 'adult', maritalStatus: 'Married', keyDates: W('2015-09-05') },
+    { id: 'zan', lastName: 'Nkosi', familyId: 'h3', familyRole: 'adult', maritalStatus: '' },
+    // h4: married woman living with her single brother – not a couple
+    { id: 'sis', lastName: 'Botha', familyId: 'h4', familyRole: 'adult', maritalStatus: 'Married', keyDates: W('2012-01-01') },
+    { id: 'bro', lastName: 'Botha', familyId: 'h4', familyRole: 'adult', maritalStatus: 'Single' },
+    // h5: both married with different dates; h6: a widow whose husband died
+    { id: 'x1', lastName: 'Zulu', familyId: 'h5', familyRole: 'adult', maritalStatus: 'Married', keyDates: W('2000-01-01') },
+    { id: 'x2', lastName: 'Zulu', familyId: 'h5', familyRole: 'adult', maritalStatus: 'Married', keyDates: W('2000-01-02') },
+    { id: 'w1', lastName: 'Pike', familyId: 'h6', familyRole: 'adult', maritalStatus: 'Married', keyDates: W('1990-01-01') },
+    { id: 'w2', lastName: 'Pike', familyId: 'h6', familyRole: 'adult', maritalStatus: 'Married', deceasedAt: '2026-01-01' },
+    // h7: partners (one not recorded yet); h8: one Married, one Partner - not paired
+    { id: 'pa', lastName: 'Dube', familyId: 'h7', familyRole: 'adult', maritalStatus: 'Partner', keyDates: W('2019-05-05') },
+    { id: 'pb', lastName: 'Dube', familyId: 'h7', familyRole: 'adult', maritalStatus: 'Not known' },
+    { id: 'm1', lastName: 'Shah', familyId: 'h8', familyRole: 'adult', maritalStatus: 'Married' },
+    { id: 'm2', lastName: 'Shah', familyId: 'h8', familyRole: 'adult', maritalStatus: 'Partner' }
+  ];
+  const F = ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'h7', 'h8'].map(id => ({ id }));
+  const cs = HS.couples(P, F), find = (a, b) => cs.filter(c => [c.a, c.b].sort().join() === [a, b].sort().join())[0];
+  const fk = find('brian', 'karen');
+  ok(fk && fk.sure && fk.copy && fk.copy.from === 'karen' && fk.copy.to === 'brian' && fk.copy.date === '2001-04-21', 'the only two adults: a sure couple, and Karen’s anniversary is suggested for Brian');
+  ok(find('son', 'dil') && find('gpa', 'gma') && !find('son', 'gma') && !find('gpa', 'son'), 'several married adults: paired by the same anniversary, surname and age (not parent with son)');
+  ok(find('gpa', 'gma').copy.to === 'gma' && !find('gpa', 'gma').sure && !find('son', 'dil').copy, 'grandparents: copy to Granny (a likely couple); son and wife already match');
+  const nk = find('tom', 'zan');
+  ok(nk && nk.kind === 'spouse' && nk.mark.id === 'zan' && nk.mark.status === 'Married' && nk.copy.to === 'zan', 'partner with no marital status: suggest marking them married and copying the date');
+  ok(!find('sis', 'bro'), 'a married person and their single brother are not a couple');
+  ok(find('x1', 'x2') && find('x1', 'x2').differ && !find('x1', 'x2').copy, 'different anniversaries are flagged, nothing copied');
+  ok(!cs.some(c => c.a === 'w2' || c.b === 'w2'), 'someone who has died is never suggested');
+  const pd = find('pa', 'pb');
+  ok(pd && pd.kind === 'partner' && !pd.copy && !pd.differ && pd.mark.id === 'pb' && pd.mark.status === 'Partner', 'partners: suggested as partners, no anniversary copied');
+  ok(!find('m1', 'm2'), 'one Married and one Partner are not paired (statuses disagree)');
+  ok(find('brian', 'karen').kind === 'spouse', 'married couples are spouses');
+  const F2 = F.map(f => f.id === 'h1' ? { id: 'h1', notCouples: [HS.pairKey('karen', 'brian')] } : f);
+  ok(!HS.couples(P, F2).some(c => c.a === 'brian' || c.b === 'brian'), '“not a couple” is remembered');
+  ok(HS.couplesToCheck(P, F).some(c => c.a === 'son' || c.b === 'son'), 'to check: couples not yet confirmed, even with nothing to fix');
+  const F3 = F.map(f => f.id === 'h2' ? { id: 'h2', couples: [HS.pairKey('son', 'dil'), HS.pairKey('gpa', 'gma')] } : f);
+  const c3 = HS.couples(P, F3), sd = c3.find(c => [c.a, c.b].sort().join() === 'dil,son');
+  ok(sd.confirmed && sd.sure && !HS.couplesToCheck(P, F3).some(c => c.a === 'son' || c.b === 'son'), 'a confirmed couple is certain and drops off the list');
+  ok(HS.couplesToCheck(P, F3).some(c => [c.a, c.b].sort().join() === 'gma,gpa'), '…unless there’s still something to fix (Granny’s anniversary)');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');
 process.exit(fails ? 1 : 0);

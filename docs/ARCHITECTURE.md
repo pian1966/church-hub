@@ -138,6 +138,28 @@ finds every `T('…')` in the code and fails if a language is missing or a {part
 church's own words (categories, teams, services, kinds of leave, privacy notice) and the shared leave rules' messages.
 The isiZulu and isiXhosa were drafted by AI and need checking by fluent speakers.
 
+## Couples (spouses and partners)
+Who is married to whom isn't typed in: `Households.couples()` (`js/households.js`, tested) works it out from each household's
+living adults – a shared marital status (Married = spouses, Partner = partners; one may still be unrecorded), the same anniversary,
+surname, and age (a big age gap means parent and grown-up child). Households → "Couples to confirm" (Administrators and Pastors,
+as marital status is private) confirms a couple with one tap, which also records a missing marital status and copies a spouse's
+wedding anniversary (never for partners); each change is audited. Confirmed couples are kept on the household
+(`families.couples`: ["id1|id2"]), and "Not a couple" likewise (`families.notCouples`).
+
+## Duplicates
+`js/duplicates.js` (pure, `tests/duplicates.test.js`) scores two records: first name (exact, "known as", short forms such as
+Doug/Douglas, typing slips, initials), surname (exact, slips, part of a double-barrelled name), swapped names, email (Gmail dots
+and +labels ignored), mobile (+27 = 0), birthday and Elvanto ID. Contact details only count with a matching first name, because
+households share them; different birthdays, different Elvanto IDs, or an adult and a child mean different people.
+70+ = probably the same person, 45+ = possibly. People → Find duplicates is for Administrators and Pastors (both may change
+people). The Add / Edit window warns as names are typed; a match of 70+ can't be saved unless they tick "I've checked: this is a
+different person". That, and "Not the same person", is kept on both people (`notSame: [ids]`, in their private details).
+**Same person: fix…** keeps one record (`Duplicates.mergeFields`: gaps filled, nothing overwritten, differences listed), moves
+consents, parent/guardian links, not-allowed-to-collect entries and (for Pastors) pastoral notes, and for Administrators also
+serving positions, roster turns, away dates, serving offers, together/apart groups and leave. The other record is retired
+(`active: false`, `mergedInto`), kept for the records and left out of lists and searches. A Pastor is asked to get an
+Administrator when the other record has rosters, leave or sign-in access, which only Administrators may change.
+
 ## Wording: household (not "family")
 The screens say **household** for a `families` record (who lives together – Elvanto's "family"); "family" is used only in
 its everyday sense (serve with family, care for the family of someone who died). The collection and code keep the name `families`.

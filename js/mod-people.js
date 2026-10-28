@@ -23,6 +23,22 @@
   }
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
+  /** The category, plus "Staff" when they work for the church – a Church Partner can be on the staff too. */
+  function catTags(p) {
+    var t = '<span class="tag grey">' + esc(p.category || '') + '</span>';
+    if (!p.staff) return t;
+    return p.category === 'Staff' ? '<span class="tag grey">' + esc(p.staff.category || 'Staff') + '</span>' : t + ' <span class="tag grey">' + esc('Staff' + (p.staff.category ? ' · ' + p.staff.category : '')) + '</span>';
+  }
+  /** Someone who died while married to this person: recorded when the death was recorded, or (for older records) the one
+   *  person who has died in their household when they are widowed. */
+  function lateSpouse(p) {
+    if (!p || p.familyRole === 'child') return null;
+    if (p.lateSpouseId) return S.get('people', p.lateSpouseId);
+    if (p.maritalStatus !== 'Widowed' || deceased(p)) return null;
+    var dead = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && (deceased(x) || x.category === 'Deceased') && !x.mergedInto && HS.householdsOf(p).some(function (h) { return HS.inHousehold(x, h); }); });
+    return dead.length === 1 ? dead[0] : null;
+  }
+  function survivingSpouses(p) { return deceased(p) || p.category === 'Deceased' ? S.find('people', function (x) { var l = x.id !== p.id && !x.mergedInto && lateSpouse(x); return l && l.id === p.id; }) : []; }
   function members(fid) { return S.find('people', function (p) { return HS.inHousehold(p, fid) && p.active !== false; }); }
   function householdNames(p) { return HS.householdsOf(p).map(function (h) { return H.familyName(S.get('families', h)); }).filter(Boolean); }
   /** Whole years from a yyyy-mm-dd date to today ('' if no date or in the future). */
@@ -118,6 +134,22 @@
     return n;
   }
 
+  /** ID numbers typed into a name ("5710210087085 Thomson"): taken out of the name (and a household's own name) and kept as the
+   *  person's ID number, which only Administrators see. Runs once, when an Administrator signs in. */
+  function tidyIdNames() {
+    var E = window.ElvantoImport, n = 0;
+    if (!E || !E.idInName || !H.can('*')) return 0;
+    S.list('people').slice().forEach(function (p) {
+      var q = null, id = '';
+      ['firstName', 'preferredName', 'lastName'].forEach(function (k) { var m = E.idInName(p[k]); if (m) { q = q || JSON.parse(JSON.stringify(p)); q[k] = m.name; id = id || m.id; } });
+      if (!q) return;
+      if (!q.firstName && q.preferredName) q.firstName = q.preferredName;
+      Store.setIdNumber(p.id, id); S.put('people', q); n++;
+    });
+    S.list('families').slice().forEach(function (f) { var m = f.custom && E.idInName(f.name); if (m) { f = JSON.parse(JSON.stringify(f)); f.name = m.name; S.put('families', f); } });
+    return n;
+  }
+
   /* ---------- list ---------- */
   // How the list is ordered: by first name, by the name they're known as, or by surname. Remembered on this device.
   function cmp(x, y) { return String(x || '').localeCompare(String(y || ''), undefined, { sensitivity: 'base' }); }
@@ -146,7 +178,7 @@
     var dead = state.f === 'deceased', q = state.q.trim().toLowerCase();
     var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto; }) : visiblePeople();
     var shown = list.filter(function (p) {
-      if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : (state.f !== 'all' && p.category !== state.f))) return false;
+      if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
       return !q || (H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : T('People who agreed to be in the church directory.')) + '</p></div>' +
@@ -161,7 +193,7 @@
         var fam = familyOf(p), tags = '';
         if (p.familyRole === 'child') tags += '<span class="tag" style="--c:#0E7490">' + T('Child') + (age(p) !== '' ? ', ' + age(p) : '') + '</span>';
         else if (dead) tags += '<span class="tag grey">' + esc(p.deceasedAt ? 'Died ' + H.fmt(p.deceasedAt, true) : 'Deceased') + '</span>';
-        else tags += '<span class="tag grey">' + esc(p.staff ? p.staff.category : p.category) + '</span>';
+        else tags += catTags(p);
         if (canSeeAll() && !hasConsent(p.id, 'Church records')) tags += ' <span class="tag bad">No consent</span>';
         return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + listName(p) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', canBasic() || isMe(p) ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
       }).join('') + '</div>' : '<p class="empty">' + T('No one matches. Try another name, or clear the search.') + '</p>');
@@ -225,7 +257,7 @@
       if (seeNotes) S.audit('Viewed pastoral notes of ' + H.name(p), 'people/' + id);
       if (seeMedical && p.medical) S.audit('Viewed children’s medical notes of ' + H.name(p), 'people/' + id);
     }
-    var tags = '<span class="tag grey">' + esc(p.staff ? p.staff.category : p.category) + '</span>' + (child ? ' <span class="tag" style="--c:#0E7490">' + T('Child') + (age(p) !== '' ? ', ' + age(p) : '') + '</span>' : '') +
+    var tags = catTags(p) + (child ? ' <span class="tag" style="--c:#0E7490">' + T('Child') + (age(p) !== '' ? ', ' + age(p) : '') + '</span>' : '') +
       (p.source === 'elvanto' ? ' <span class="tag" style="--c:#7C3AED">From Elvanto</span>' : '') +
       (deceased(p) ? ' <span class="tag grey">Died ' + esc(H.fmt(p.deceasedAt, true)) + '</span>' : '');
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
@@ -254,6 +286,11 @@
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (!child ? coupleLine(p) : '') +
+      (!child && lateSpouse(p) ? '<dt>' + T('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +
+        (lateSpouse(p).deceasedAt ? '<span class="kv-sub">' + esc(T('Died {date}', { date: H.fmt(lateSpouse(p).deceasedAt, true) })) + '</span>' : '') + '</dd>' : '') +
+      (H.can('*') || me ? '<dt>' + T('ID number') + '</dt><dd id="pp-idn"><button class="link" data-act="people:showid" data-id="' + p.id + '">' + T('Show') + '</button>' +
+        (H.can('*') ? ' · <button class="link" data-act="people:editid" data-id="' + p.id + '">' + T('Change') + '</button>' : '') + '<span class="kv-sub">' + (me && !H.can('*') ? T('Only you and the church Administrators can see it.') : 'Administrators only · views are logged') + '</span></dd>' : '') +
+      (!child && survivingSpouses(p).length ? '<dt>' + T('Spouse') + '</dt><dd>' + survivingSpouses(p).map(function (s) { return T('Was married to {name}', { name: '<a href="#/people/p/' + s.id + '">' + esc(H.name(s)) + '</a>' }); }).join('<br>') + '</dd>' : '') +
       // Wedding anniversary straight after marital status: the date, or "Not recorded" with an Add link, for anyone ever married
       (full && !child && !keyDate(p, WEDDING) && /^(Married|Separated|Divorced|Widowed)$/.test(p.maritalStatus || '') ? '<dt>' + T('Wedding anniversary') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' +
         ((!me || H.can('*')) && (full || H.can('people.edit')) ? ' · <button class="link" data-act="people:edit" data-id="' + p.id + '" data-focus="pf-wed">' + T('Add') + '</button>' : '') + '</dd>' : '') +
@@ -304,6 +341,14 @@
         (p.medical && (p.medical.allergies || p.medical.notes) ? '<dl class="kv" style="margin-top:12px">' + (p.medical.allergies ? '<dt>Allergies</dt><dd><span class="tag bad">' + esc(p.medical.allergies) + '</span></dd>' : '') + (p.medical.notes ? '<dt>Notes</dt><dd>' + esc(p.medical.notes) + '</dd>' : '') + '</dl>' : '<p class="muted">None recorded.</p>') +
         (hasConsent(p.id, 'Children’s medical notes') ? '' : '<p class="note warn" style="margin-top:10px">No guardian consent for medical notes yet.</p>') +
         '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:medical" data-id="' + p.id + '">Edit medical notes</button></div></section>';
+    }
+    // Church office notes (Administrators and Pastors), e.g. the notes brought across from Elvanto
+    if ((H.can('*') || H.can('people.edit')) && !me) {
+      var onotes = S.find('officeNotes', function (n) { return n.personId === p.id; });
+      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">Church office notes</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + 'Administrators and Pastors</span></div>' +
+        (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line">' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? 'From Elvanto' : n.by) + ', ' + H.fmt(n.at, true)) +
+          ' · <button class="link" data-act="people:delonote" data-id="' + n.id + '">Delete</button></p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
+        '<label class="field" style="margin-top:12px">Add a note<textarea id="on-text" rows="2" placeholder="Administrators and Pastors can see this. Pastoral matters go in pastoral notes."></textarea></label><button class="btn small" data-act="people:onote" data-id="' + p.id + '">Save note</button></section>';
     }
     // Pastoral notes
     if (seeNotes && !me) {
@@ -773,6 +818,10 @@
       '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">Mark as left</button>' : '') +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:save">' + (isNew ? 'Add person' : T('Save')) + '</button></div>';
     H.modal(html, isNew ? 'Add a person' : T('Edit details'));
+    if (!isNew && (deceased(p) || p.category === 'Deceased')) {   // someone who has died: only first and last name must be filled in
+      document.querySelectorAll('#pf .field.req').forEach(function (f) { if (!f.querySelector('#pf-first, #pf-last')) f.classList.remove('req'); });
+      H.markRequired();
+    }
     var dupT = null;
     ['pf-first', 'pf-last', 'pf-pref', 'pf-email', 'pf-mobile', 'pf-birth', 'pf-frole'].forEach(function (id) {
       var e = document.getElementById(id); if (e) e.addEventListener(e.tagName === 'SELECT' || e.type === 'date' ? 'change' : 'input', function () { clearTimeout(dupT); dupT = setTimeout(dupWarn, 250); });
@@ -902,12 +951,16 @@
      *  dates of death that were typed in front of a name in Elvanto ("2024-08-22-Mike") moved to the date they died,
      *  and (from before version 2) children linked to their household's adults, to confirm. */
     upgrade: function () {
-      var st = S.settings(), v = st ? st.dataVersion || 1 : 3; if (v >= 3) return;
-      var renamed = 0, linked = 0, MAP = { Member: 'Church Partner', Partner: 'Church Partner', Visitor: 'Visiting Minister' };
-      S.list('people').slice().forEach(function (p) { if (MAP[p.category]) { p = JSON.parse(JSON.stringify(p)); p.category = MAP[p.category]; S.put('people', p); renamed++; } });
-      var dated = tidyDeathDates();
-      if (v < 2) HS.suggestedLinks(S.list('people'), S.list('guardians')).forEach(function (l) { S.put('guardians', l); linked++; });
-      S.setSettings({ dataVersion: 3 }, 'Upgraded people: ' + renamed + ' renamed to Church Partner / Visiting Minister; ' + dated + ' dates of death moved out of names into the date they died' + (v < 2 ? '; ' + linked + ' parent/guardian links made from households (to confirm)' : ''));
+      var st = S.settings(), v = st ? st.dataVersion || 1 : 4; if (v >= 4) return;
+      var say = [], linked = 0;
+      if (v < 3) {
+        var renamed = 0, MAP = { Member: 'Church Partner', Partner: 'Church Partner', Visitor: 'Visiting Minister' };
+        S.list('people').slice().forEach(function (p) { if (MAP[p.category]) { p = JSON.parse(JSON.stringify(p)); p.category = MAP[p.category]; S.put('people', p); renamed++; } });
+        say.push(renamed + ' renamed to Church Partner / Visiting Minister', tidyDeathDates() + ' dates of death moved out of names into the date they died');
+        if (v < 2) { HS.suggestedLinks(S.list('people'), S.list('guardians')).forEach(function (l) { S.put('guardians', l); linked++; }); say.push(linked + ' parent/guardian links made from households (to confirm)'); }
+      }
+      say.push(tidyIdNames() + ' ID numbers moved out of names (Administrators only)');
+      S.setSettings({ dataVersion: 4 }, 'Upgraded people: ' + say.join('; '));
       if (linked) setTimeout(function () { H.toast('Children are now linked to the adults in their household – please confirm them (see Home)'); }, 400);
     },
     render: function (p) {
@@ -974,15 +1027,16 @@
         var err = document.getElementById('pf-err'), id = g('pf-id');
         var p = id ? JSON.parse(JSON.stringify(S.get('people', id))) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'manual' };
         if (!g('pf-first') || !g('pf-last')) { err.textContent = T('Please enter a first and last name.'); err.hidden = false; return; }
-        var need = function (v, msg) { if (v === '') { err.textContent = msg; err.hidden = false; return true; } return false; };
+        var dead = !!id && (deceased(p) || p.category === 'Deceased');   // someone who has died: only their name is needed
+        var need = function (v, msg) { if (v === '' && !dead) { err.textContent = msg; err.hidden = false; return true; } return false; };
         if (need(g('pf-cat'), 'Please choose a category.') || need(g('pf-fam'), 'Please choose their household – or “+ New household…” if they live on their own.') ||
           need(g('pf-frole'), 'Please choose whether they are an adult or a child in the household.')) return;
         // Email and mobile must be filled in for adults: the real one, or "unknown" (saved as not known, never as the word)
         var isChild = (g('pf-frole') !== null ? g('pf-frole') : p.familyRole) === 'child';
         var unknown = function (v) { v = (v || '').trim().toLowerCase(); return v === 'unknown' || v === T('unknown').toLowerCase() || v === 'not known'; };
         var em = g('pf-email'), mo = g('pf-mobile');
-        if (!isChild && !em) { err.textContent = T('Please fill in the email address, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
-        if (!isChild && !mo) { err.textContent = T('Please fill in the mobile number, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
+        if (!isChild && !em && !dead) { err.textContent = T('Please fill in the email address, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
+        if (!isChild && !mo && !dead) { err.textContent = T('Please fill in the mobile number, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
         if (em && !unknown(em) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { err.textContent = T('That email address doesn’t look right.'); err.hidden = false; return; }
         if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { err.textContent = T('That mobile number doesn’t look right.'); err.hidden = false; return; }
         // Duplicates: very likely matches can't be saved, unless an Administrator has checked it's a different person
@@ -1005,7 +1059,8 @@
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
         if (g('pf-marital') !== null) {
           if (p.familyRole === 'child') delete p.maritalStatus;
-          else if (!g('pf-marital')) { err.textContent = 'Please choose a marital status (or “Not known”).'; err.hidden = false; return; }
+          else if (!g('pf-marital') && !dead) { err.textContent = 'Please choose a marital status (or “Not known”).'; err.hidden = false; return; }
+          else if (!g('pf-marital')) delete p.maritalStatus;
           else p.maritalStatus = g('pf-marital');
         }
         if (g('pf-role') !== null) p.appRole = g('pf-role');
@@ -1017,7 +1072,7 @@
             document.querySelectorAll('.pf-sw:checked').forEach(function (b) { days.push(b.value); });
             if (!same && !days.length) { err.textContent = 'Tick the days they work, or “Same as their category”.'; err.hidden = false; return; }
             p.staff = { category: g('pf-scat'), start: g('pf-sstart'), workDays: same ? '' : days.join(', ') };
-            p.category = 'Staff';
+            if (!p.category) p.category = 'Staff';   // staff keep their category: a Church Partner can work for the church too
           } else if (p.staff) {
             delete p.staff;
             if (p.category === 'Staff') p.category = 'Church Partner';
@@ -1027,7 +1082,7 @@
         var fam = g('pf-fam');
         if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family', custom: false }, 'Created a household for ' + p.firstName + ' ' + p.lastName); fam = f.id; }
         if (fam !== null) p.familyId = fam;
-        if (p.familyRole === 'child' && !p.familyId) { err.textContent = 'Children must be in a household, so the church knows who they live with.'; err.hidden = false; return; }
+        if (p.familyRole === 'child' && !p.familyId && !dead) { err.textContent = 'Children must be in a household, so the church knows who they live with.'; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
         dups.forEach(function (m) { markNotSame(p.id, m.id); });
         H.closeModal();
@@ -1065,7 +1120,7 @@
         p.keyDates = (p.keyDates || []).filter(function (k) { return k.label !== 'Died' && k.label !== 'Funeral'; }).concat([{ label: 'Died', date: d }]).concat(fun ? [{ label: 'Funeral', date: fun }] : []);
         S.put('people', p, 'Recorded the death of ' + name);
         document.querySelectorAll('.dd-sp:checked').forEach(function (b) {
-          var s = JSON.parse(JSON.stringify(S.get('people', b.value))); s.maritalStatus = 'Widowed'; S.put('people', s, 'Marital status changed to Widowed: ' + H.name(s));
+          var s = JSON.parse(JSON.stringify(S.get('people', b.value))); s.maritalStatus = 'Widowed'; s.lateSpouseId = p.id; S.put('people', s, 'Marital status changed to Widowed: ' + H.name(s));
         });
         var note = document.getElementById('dd-note');
         if (note && note.value.trim()) S.put('notes', { personId: p.id, text: note.value.trim(), by: H.name(H.user()), at: H.today() }, 'Added a pastoral note');
@@ -1141,6 +1196,40 @@
         if (a || n) p.medical = { allergies: a, notes: n }; else delete p.medical;
         S.put('people', p, 'Updated children’s medical notes of ' + H.name(p));
         H.closeModal(); H.render(); H.toast('Medical notes saved');
+      },
+      onote: function (el) {
+        var t = document.getElementById('on-text').value.trim(); if (!t) return;
+        var p = S.get('people', el.dataset.id);
+        S.put('officeNotes', { personId: p.id, text: t, by: H.name(H.user()), at: H.today() }, 'Added a church office note for ' + H.name(p));
+        H.render(); H.toast('Note saved');
+      },
+      delonote: function (el) {
+        if (!H.confirmBtn(el, 'Click again to delete')) return;
+        var n = S.get('officeNotes', el.dataset.id); if (!n) return;
+        S.remove('officeNotes', n.id, 'Deleted a church office note for ' + H.name(S.get('people', n.personId)));
+        H.render(); H.toast('Note deleted');
+      },
+      showid: function (el) {
+        var p = S.get('people', el.dataset.id), box = document.getElementById('pp-idn');
+        Store.idNumber(p.id).then(function (v) {
+          if (!isMe(p)) S.audit('Viewed the ID number of ' + H.name(p), 'people/' + p.id);
+          state.idShown = { id: p.id, value: v };
+          var b = box && box.querySelector('[data-act="people:showid"]'); if (b) b.outerHTML = '<b class="idn">' + esc(v || T('Not recorded')) + '</b>';
+        }, function () { H.toast('Couldn’t load the ID number', true); });
+      },
+      editid: function (el) {
+        var p = S.get('people', el.dataset.id), known = state.idShown && state.idShown.id === p.id ? state.idShown.value : '';
+        H.modal(H.dialogHead('ID number of ' + H.name(p), 'Administrators only. Keep it only if the church still needs it (POPIA).') + '<div class="dlg-body">' +
+          '<label class="field">ID number<input id="idn-v" inputmode="numeric" autocomplete="off" value="' + esc(known) + '" placeholder="' + (known ? '' : 'Leave empty to keep the current one') + '"><small>South African ID numbers have 13 digits. Passport numbers are fine too.</small></label>' +
+          '<label class="check"><input type="checkbox" id="idn-del"><span>Remove the ID number</span></label><p id="idn-err" class="note bad" hidden></p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:saveid" data-id="' + p.id + '">Save</button></div>', 'ID number');
+      },
+      saveid: function (el) {
+        var p = S.get('people', el.dataset.id), v = document.getElementById('idn-v').value.replace(/[\s-]/g, ''), del = document.getElementById('idn-del').checked, err = document.getElementById('idn-err');
+        if (!del && !v) { H.closeModal(); return; }
+        if (!del && !/^[A-Za-z0-9]{5,20}$/.test(v)) { err.textContent = 'That doesn’t look like an ID or passport number.'; err.hidden = false; return; }
+        Store.setIdNumber(p.id, del ? '' : v, (del ? 'Removed the ID number of ' : 'Changed the ID number of ') + H.name(p));
+        state.idShown = null; H.closeModal(); H.render(); H.toast(del ? 'ID number removed' : 'ID number saved');
       },
       note: function (el) {
         var t = document.getElementById('pn-text').value.trim(); if (!t) return;

@@ -11,6 +11,7 @@
  *   people/{id}     name, family and contact details          details/{id}  birthday, key dates, staff details
  *   medical/{id}    children's medical notes (kids only)      directory/{id} name + phone, only with directory consent
  *   notes/{personId} pastoral notes for one person (pastors only)
+ *   officeNotes/{personId} church office notes (Administrators and Pastors)   idNumbers/{personId} ID number (Administrators only)
  * Leave is stored as leave/config + leaveRequests + leaveAdjustments, plus away/{id} (approved dates only, for rosters).
  * Store puts these back together, so the modules see exactly the same shapes as in the demo.
  */
@@ -18,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
 
@@ -74,6 +75,8 @@ var Store = (function () {
    *  Works even for an Administrator, who cannot read these notes. */
   function purge(personId) {
     db.notes = list('notes').filter(function (n) { return n.personId !== personId; });
+    db.officeNotes = list('officeNotes').filter(function (n) { return n.personId !== personId; });
+    if (db.idNumbers) db.idNumbers = db.idNumbers.filter(function (x) { return x.id !== personId; });
     var p = get('people', personId); if (p) delete p.medical;
     if (LIVE) Live.purge(personId);
     save();
@@ -290,6 +293,7 @@ var Store = (function () {
       if (is('admin', 'pastor', 'kids')) { add('guardians', coll('guardians')); add('noCollect', coll('noCollect')); }
       else add('guardians', fs.collection('guardians').where('adultId', '==', me));
       if (r === 'pastor') add('notes', coll('notes'));
+      if (is('admin', 'pastor')) add('officeNotes', coll('officeNotes'));
       if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); }
       else add('elvantoSync', own('elvantoSync'));
       if (r === 'admin') {
@@ -362,6 +366,8 @@ var Store = (function () {
       db.consents = Object.keys(cons).map(function (id) { var o = copy(cons[id]); o.id = id; return o; });
       db.notes = [];
       Object.keys(raw.notes || {}).forEach(function (pid) { (raw.notes[pid].entries || []).forEach(function (n) { db.notes.push(Object.assign({}, n, { personId: pid })); }); });
+      db.officeNotes = [];
+      Object.keys(raw.officeNotes || {}).forEach(function (pid) { (raw.officeNotes[pid].entries || []).forEach(function (n) { db.officeNotes.push(Object.assign({}, n, { personId: pid })); }); });
       if (raw.audit) db.audit = arr('audit').sort(function (a, b) { return a.at < b.at ? 1 : -1; });
       rebuildLeave();
     }
@@ -423,22 +429,26 @@ var Store = (function () {
       if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) del('roles/' + was);
       if (email && r && (email !== was || r !== wasR || !prev)) write('roles/' + email, { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() });
     }
-    function putNotes(pid) {
-      var entries = find('notes', function (n) { return n.personId === pid; }).map(function (n) { var e = copy(n); delete e.personId; return e; });
-      if (entries.length) write('notes/' + pid, { entries: entries }); else del('notes/' + pid);
+    function putNotes(pid, c) {   // pastoral notes or church office notes: one document per person holding all their notes
+      c = c || 'notes';
+      var entries = find(c, function (n) { return n.personId === pid; }).map(function (n) { var e = copy(n); delete e.personId; return e; });
+      if (entries.length) write(c + '/' + pid, { entries: entries }); else del(c + '/' + pid);
     }
     function put(c, obj, prev) {
       if (c === 'people') return putPerson(obj);
-      if (c === 'notes') return putNotes(obj.personId);
+      if (c === 'notes' || c === 'officeNotes') return putNotes(obj.personId, c);
       write(c + '/' + obj.id, obj);
       if (c === 'consents' && obj.purpose === DIRECTORY) syncDirectory(obj.personId);
     }
     function remove(c, prev) {
-      if (c === 'notes') return putNotes(prev.personId);
-      if (c === 'people') { ['people', 'details', 'directory', 'photos'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
+      if (c === 'notes' || c === 'officeNotes') return putNotes(prev.personId, c);
+      if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       del(c + '/' + prev.id);
     }
-    function purge(pid) { ['medical', 'notes', 'directory', 'photos'].forEach(function (x) { if (is('admin') || (x !== 'directory' && x !== 'photos')) del(x + '/' + pid); }); }
+    function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
+    /** ID numbers: Administrators (and the person themself) only, fetched one at a time when someone asks to see one. */
+    function idGet(pid) { return doc('idNumbers/' + pid).get().then(function (s) { return s.exists ? (s.data().value || '') : ''; }); }
+    function idSet(pid, v) { return v ? write('idNumbers/' + pid, { value: v, updatedAt: now() }) : del('idNumbers/' + pid); }
     /** A person's photo (a small JPEG as a data: address), fetched only when it is shown. '' when there is none or it may not be seen. */
     function photoGet(pid) { return doc('photos/' + pid).get().then(function (s) { return s.exists ? (s.data().data || '') : ''; }, function () { return ''; }); }
     function photoSet(pid, data) { return data ? write('photos/' + pid, { data: data, updatedAt: now() }) : del('photos/' + pid); }
@@ -503,7 +513,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet,
+      put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
       session: function () { return session; } };
   })();
 
@@ -514,6 +524,17 @@ var Store = (function () {
     photo: function (pid) {
       if (LIVE) return Live.photoGet(pid);
       var x = ((db && db.photos) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.data : '');
+    },
+    /** A person's ID number (Administrators only; the person may see their own). Kept apart, never loaded with the rest. */
+    idNumber: function (pid) {
+      if (LIVE) return Live.idGet(pid);
+      var x = ((db && db.idNumbers) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.value : '');
+    },
+    setIdNumber: function (pid, v, auditText) {
+      v = String(v || '').replace(/\s+/g, '');
+      if (!LIVE) { db.idNumbers = (db.idNumbers || []).filter(function (o) { return o.id !== pid; }); if (v) db.idNumbers.push({ id: pid, value: v }); save(); }
+      if (auditText) audit(auditText, 'people/' + pid);
+      return LIVE ? Live.idSet(pid, v) : Promise.resolve();
     },
     setPhoto: function (pid, data, auditText) {
       var p = get('people', pid); if (!p) return Promise.resolve();

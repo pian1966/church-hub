@@ -134,6 +134,22 @@ await t('Roster coordinators and Children’s ministry can’t change people', a
   await cannot(db.rosters.doc('people/p15').update({ mobile: '1' })); await cannot(db.kids.doc('people/p12').update({ lastName: 'x' }));
   await can(db.pastor.doc('people/p15').update({ mobile: '084' }));
 });
+console.log('Church office notes and ID numbers');
+await t('church office notes: Administrators and Pastors only', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { const d = ctx.firestore(); await d.doc('officeNotes/p15').set({ entries: [{ id: 'o1', text: 'From Elvanto', by: 'Elvanto', at: '2026-01-01' }] }); await d.doc('idNumbers/p15').set({ value: '8001015009087', updatedAt: 'x' }); await d.doc('idNumbers/p14').set({ value: '8101015009086', updatedAt: 'x' }); });
+  await only('officeNotes/p15', ['admin', 'pastor']);
+  await can(db.pastor.doc('officeNotes/p15').set({ entries: [] })); await cannot(db.kids.doc('officeNotes/p15').set({ entries: [] }));
+});
+await t('ID numbers: Administrators only; a person may see their own but not change it', async () => {
+  await only('idNumbers/p15', ['admin']);
+  await can(read(db.member, 'idNumbers/p14'));
+  await cannot(db.member.doc('idNumbers/p14').set({ value: '1', updatedAt: 'y' }));
+  await cannot(db.pastor.doc('idNumbers/p15').set({ value: '1', updatedAt: 'y' }));
+  await can(db.admin.doc('idNumbers/p15').set({ value: '8001015009087', updatedAt: 'y' }));
+  await cannot(db.admin.doc('idNumbers/p15').set({ value: '8001015009087', updatedAt: 'y', note: 'x' }));
+  await cannot(list(db.pastor.collection('idNumbers')));
+});
+
 console.log('Photos');
 await t('adults’ photos: staff and the person; members only when the adult is in the directory', async () => {
   await env.withSecurityRulesDisabled(async ctx => { const d = ctx.firestore(); await d.doc('photos/p15').set({ data: 'data:image/jpeg;base64,AAA', updatedAt: 'x' }); await d.doc('photos/p01').set({ data: 'data:image/jpeg;base64,AAA', updatedAt: 'x' }); await d.doc('photos/p12').set({ data: 'data:image/jpeg;base64,AAA', updatedAt: 'x' }); });

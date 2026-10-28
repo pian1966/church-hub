@@ -11,7 +11,8 @@ ok(col('id') === 'Member ID', 'Elvanto’s person reference: Member ID');
 ok(col('relationship') === 'Family Relationship', 'relationship from “Family Relationship”, not “Family Member Names & Relationships”');
 ok(col('family') === 'Primary & Spouse Full Names', 'families from “Primary & Spouse Full Names” (no Family ID in this export)');
 ok(col('lastName') === 'Last Name' && col('email') === 'Email Address' && col('category') === 'People Category', 'names, email and category');
-ok(!Object.values(m).some(i => /ID Number|Security|Notes|Gender/.test(head[i])), 'ID numbers, security codes, notes and gender are never read');
+ok(!Object.values(m).some(i => /Security|Gender/.test(head[i])), 'security codes and gender are never read');
+ok(col('idNumber') === 'ID Number (Numeric)' && col('notes') === 'Notes' && col('id') === 'Member ID', 'ID Number and Notes are read (and not mixed up with the Member ID)');
 
 console.log('Reading the people');
 const recs = E.records(rows.slice(1), m, '2026-10-26'), by = n => recs.find(r => r.firstName === n);
@@ -44,6 +45,11 @@ console.log('Photos');
 ok(E.photoLink('https://files.elvanto.eu/8JVU1O8Q/members/3a66_thumb_1597927419.jpeg') === 'https://files.elvanto.eu/8JVU1O8Q/members/3a66_1597927419.jpeg', 'Elvanto photo link → the full-size picture (not the small “_thumb” copy)');
 ok(E.photoLink('https://evil.example.com/x.jpeg') === '' && E.photoLink('http://files.elvanto.eu/a.jpeg') === '' && E.photoLink('') === '', 'only Elvanto’s own secure addresses are used');
 ok(by('Brian').photo === 'https://files.elvanto.eu/TEST0001/members/aaaa-0001_1600000000.jpeg' && by('Brian').photoThumb.includes('_thumb_') && !by('Karen').photo, 'the Photo column is read');
+
+console.log('ID numbers and notes');
+ok(E.idNumber('750312 5000 000') === '7503125000000' && E.idNumber('112345678901') === '0112345678901' && E.idNumber('5.71021E+12') === '' && E.idNumber('') === '', 'ID numbers: spaces gone, a lost leading 0 put back, spreadsheet-mangled ones left out');
+ok(JSON.stringify(E.idInName('5710210087085 Thomson')) === '{"id":"5710210087085","name":"Thomson"}' && E.idInName('Thomson') === null && E.idInName('Room 101') === null, 'a 13-digit ID number typed into a name is found');
+ok(by('Brian').idNumber === '7503125000000' && by('Brian').notes === 'Made-up note', 'the ID Number and Notes columns are read');
 
 console.log('Making the people');
 const p = E.toPerson(by('Peter'), null, {}, '', '2026-10-26');

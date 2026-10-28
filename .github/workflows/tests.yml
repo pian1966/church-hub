@@ -25,6 +25,8 @@ jobs:
         run: node tests/i18n.test.js
       - name: Advanced people search
         run: node tests/people-search.test.js
+      - name: Finding duplicates
+        run: node tests/duplicates.test.js
       - name: Install test tools
         run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13 playwright@1
       - name: Database security rules (firestore.rules)

@@ -108,7 +108,7 @@
       return !q || (H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : T('People who agreed to be in the church directory.')) + '</p></div>' +
-      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
+      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a>' + (H.can('*') ? '<a class="btn" href="#/people/duplicates">Find duplicates</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
       '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + T('Search by name, household, email or phone') + '" value="' + esc(state.q) + '"></label>' +
         (canBasic() ? '<a class="adv-link" href="#/people/search">Advanced search</a>' : '') + '</div>' +
@@ -321,6 +321,54 @@
       }).join('') + '</div>';
   }
 
+  /* ---------- duplicates (Administrators): rules in js/duplicates.js ---------- */
+  var DUP = Duplicates;
+  function notDup() { return (S.settings() || {}).notDuplicates || []; }
+  function dupPeople() { return S.find('people', function (p) { return p.firstName !== 'Deleted'; }); }
+  function dupCard(p) {
+    var hs = householdNames(p), bits = [hs.length ? 'Household: ' + hs.join(', ') : '', p.category || '', p.familyRole === 'child' ? 'Child' : '',
+      p.email ? p.email : '', p.mobile ? p.mobile : '', p.birthDate ? 'Born ' + H.fmt(p.birthDate, true) : '', p.elvantoId ? 'From Elvanto' : '',
+      p.active === false ? 'Marked as left' : '', p.createdAt ? 'Added ' + H.fmt(p.createdAt.slice(0, 10), true) : ''].filter(Boolean);
+    return '<a class="item" href="#/people/p/' + p.id + '" style="align-items:flex-start">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + (p.preferredName && p.preferredName !== p.firstName ? ' <span class="muted">(' + esc(p.firstName) + ')</span>' : '') + '</b><small>' + esc(bits.join(' · ')) + '</small></span></a>';
+  }
+  var DUPWORD = { certain: 'Certainly the same person', likely: 'Probably the same person', possible: 'Possibly the same person' };
+  function renderDuplicates() {
+    var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a>';
+    if (!H.can('*')) return back + '<p class="empty">Finding duplicates is for Administrators.</p>';
+    var found = DUP.find(dupPeople(), notDup());
+    return back + '<div class="page-head"><div><h1>Find duplicates</h1><p class="lead">People who may have been entered twice. Church Hub compares names (including short forms like Doug and Douglas, “known as”, typing slips, swapped and maiden names), email, mobile, birthday and Elvanto ID. Families sharing an email or phone are not counted as duplicates.</p></div></div>' +
+      (found.length ? '<p class="muted small">' + found.length + (found.length === 1 ? ' pair' : ' pairs') + ' to check, most likely first. Open each to compare, then keep the right one and mark the other as left (or delete it under Privacy).</p>' : '<p class="empty">No duplicates found.</p>') +
+      found.map(function (d) {
+        var a = S.get('people', d.a), b = S.get('people', d.b);
+        return '<section class="panel" style="margin-bottom:12px"><div class="row" style="flex-wrap:wrap;gap:8px"><h2 class="grow" style="margin:0;font-size:1rem">' + esc(DUPWORD[d.level]) + '</h2><span class="tag ' + (d.level === 'possible' ? 'grey' : 'warn') + '">' + (d.level === 'possible' ? 'Check' : 'Likely') + '</span></div>' +
+          '<p class="hint" style="margin:6px 0 0">' + esc(d.reasons.join(' · ')) + '</p>' +
+          '<div class="list" style="margin:10px 0">' + dupCard(a) + dupCard(b) + '</div>' +
+          '<div class="btns"><button class="btn small" data-act="people:notdup" data-a="' + d.a + '" data-b="' + d.b + '">Not the same person</button></div></section>';
+      }).join('');
+  }
+  /** Live warning in the Add / Edit window: who this may already be. Blocks saving for very likely duplicates. */
+  function typedPerson() {
+    var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, un = function (v) { return /^(unknown|not known)$/i.test(v) || v.toLowerCase() === T('unknown').toLowerCase() ? '' : v; };
+    var fr = document.getElementById('pf-frole');
+    return { id: g('pf-id'), firstName: g('pf-first'), lastName: g('pf-last'), preferredName: g('pf-pref'), email: un(g('pf-email')), mobile: un(g('pf-mobile')),
+      birthDate: g('pf-birth'), familyRole: fr ? fr.value : '' };
+  }
+  function dupMatches() { if (!canSeeAll()) return []; var t = typedPerson(); if (!t.firstName || !t.lastName) return []; var ex = t.id ? S.get('people', t.id) : null; if (ex && ex.elvantoId) t.elvantoId = ex.elvantoId; return DUP.matches(t, dupPeople(), notDup()); }
+  function dupWarn() {
+    var box = document.getElementById('pf-dup'); if (!box) return;
+    var ms = dupMatches().slice(0, 3), stop = ms.some(function (m) { return m.score >= 70; });
+    box.hidden = !ms.length;
+    if (!ms.length) { box.innerHTML = ''; return; }
+    var keep = document.getElementById('pf-dup-ok'), was = keep && keep.checked;
+    box.className = 'note ' + (stop ? 'bad' : 'warn');
+    box.innerHTML = '<b>' + 'This may be someone already in Church Hub:' + '</b>' + ms.map(function (m) {
+      var q = S.get('people', m.id), hs = householdNames(q);
+      return '<span style="display:block;margin-top:6px"><a href="#/people/p/' + q.id + '" data-act="hub:close">' + esc(H.name(q)) + '</a>' + (hs.length ? ' · ' + esc(hs[0]) : '') + ' <span class="muted small">(' + esc(m.reasons.join(', ')) + ')</span></span>';
+    }).join('') +
+      (stop ? (H.can('*') ? '<label class="check" style="margin-top:8px"><input type="checkbox" id="pf-dup-ok"' + (was ? ' checked' : '') + '><span>' + 'I’ve checked: this is a different person' + '</span></label>'
+        : '<span style="display:block;margin-top:6px">' + 'To avoid duplicates this can’t be saved. If it really is a different person, ask an Administrator.' + '</span>') : '');
+  }
+
   /* ---------- edit dialogs ---------- */
   /* ---------- advanced search (like Elvanto's People → Advanced Search); rules in js/people-search.js ---------- */
   var PS = PeopleSearch;
@@ -504,6 +552,7 @@
       '<form id="pf" class="dlg-body" novalidate><input type="hidden" id="pf-id" value="' + esc(p.id || '') + '">' +
       '<div class="two"><label class="field req">' + T('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
       '<label class="field req">' + T('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
+      '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
       '<label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
       '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label>' +
       '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label></div>' +
@@ -519,6 +568,11 @@
       '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">Mark as left</button>' : '') +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:save">' + (isNew ? 'Add person' : T('Save')) + '</button></div>';
     H.modal(html, isNew ? 'Add a person' : T('Edit details'));
+    var dupT = null;
+    ['pf-first', 'pf-last', 'pf-pref', 'pf-email', 'pf-mobile', 'pf-birth', 'pf-frole'].forEach(function (id) {
+      var e = document.getElementById(id); if (e) e.addEventListener(e.tagName === 'SELECT' || e.type === 'date' ? 'change' : 'input', function () { clearTimeout(dupT); dupT = setTimeout(dupWarn, 250); });
+    });
+    if (p.id) dupWarn();
     var sb = document.getElementById('pf-staff'), sf = document.getElementById('pf-staff-f');
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
@@ -623,6 +677,10 @@
         if (nd.unconfirmed.length) out.push({ text: 'Confirm the parents and guardians of ' + nd.unconfirmed.length + ' ' + (nd.unconfirmed.length === 1 ? 'child' : 'children'), href: '#/people/p/' + nd.unconfirmed[0].id, tag: 'Children' });
       }
       var noMarital = all ? S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; }) : [];
+      if (H.can('*')) {
+        var dupN = DUP.find(dupPeople(), notDup()).filter(function (d) { return d.level !== 'possible'; }).length;
+        if (dupN) out.push({ text: dupN + (dupN === 1 ? ' person looks' : ' people look') + ' entered twice', href: '#/people/duplicates' });
+      }
       if (noMarital.length) out.push({ text: noMarital.length + ' adult' + (noMarital.length === 1 ? ' has' : 's have') + ' no marital status', href: '#/people/p/' + noMarital[0].id });
       var since = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), -7 * CARE_WEEKS));
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
@@ -646,6 +704,7 @@
       if (p[0] === 'p') return renderPerson(p[1]);
       if (p[0] === 'families') return renderFamilies();
       if (p[0] === 'search') return renderSearch();
+      if (p[0] === 'duplicates') return renderDuplicates();
       return renderList();
     },
     after: function () {
@@ -703,6 +762,12 @@
         if (!isChild && !mo) { err.textContent = T('Please fill in the mobile number, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
         if (em && !unknown(em) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { err.textContent = T('That email address doesn’t look right.'); err.hidden = false; return; }
         if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { err.textContent = T('That mobile number doesn’t look right.'); err.hidden = false; return; }
+        // Duplicates: very likely matches can't be saved, unless an Administrator has checked it's a different person
+        var dups = dupMatches().filter(function (m) { return m.score >= 70; }), dupOk = document.getElementById('pf-dup-ok');
+        if (dups.length && !(H.can('*') && dupOk && dupOk.checked)) {
+          dupWarn(); err.textContent = H.can('*') ? 'This looks like someone already in Church Hub. Open them instead, or tick “I’ve checked: this is a different person”.' : 'This looks like someone already in Church Hub, so it can’t be saved. Open them instead, or ask an Administrator.';
+          err.hidden = false; return;
+        }
         p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref');
         p.email = unknown(em) ? '' : em; p.mobile = unknown(mo) ? '' : mo;
         if (unknown(em)) p.emailUnknown = true; else delete p.emailUnknown;
@@ -741,6 +806,8 @@
         if (fam !== null) p.familyId = fam;
         if (p.familyRole === 'child' && !p.familyId) { err.textContent = 'Children must be in a household, so the church knows who they live with.'; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
+        if (dups.length) S.setSettings({ notDuplicates: notDup().concat(dups.map(function (m) { return DUP.pair(p.id, m.id); })) },
+          'Checked ' + p.firstName + ' ' + p.lastName + ' is not the same person as ' + dups.map(function (m) { return H.name(S.get('people', m.id)); }).join(', '));
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();
         H.toast(id ? T('Saved') : 'Added – now record their consent');
@@ -862,6 +929,12 @@
         H.modal(H.dialogHead('New household', 'Then add people to it (Edit details → Household).') + '<div class="dlg-body"><label class="field req">Surname<input id="nf-name" placeholder="e.g. Naidoo"><small>Once adults are added, the household is named after them automatically (e.g. “Jason & Priya Naidoo”).</small></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savefam">Create</button></div>', 'New household');
       },
       savefam: function () { var n = document.getElementById('nf-name').value.trim(); if (!n) return; n = n.replace(/\s*family$/i, ''); S.put('families', { name: n + ' family', custom: false }, 'Created household ' + n); H.closeModal(); H.render(); },
+      notdup: function (el) {
+        if (!H.can('*')) return;
+        var a = S.get('people', el.dataset.a), b = S.get('people', el.dataset.b);
+        S.setSettings({ notDuplicates: notDup().concat([DUP.pair(el.dataset.a, el.dataset.b)]) }, 'Not the same person: ' + H.name(a) + ' and ' + H.name(b));
+        H.render(); H.toast('Won’t be suggested again');
+      },
       renamefam: function (el) {
         var f = S.get('families', el.dataset.id);
         H.modal(H.dialogHead('Rename ' + H.familyName(f)) + '<div class="dlg-body">' +

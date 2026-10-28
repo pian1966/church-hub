@@ -362,6 +362,36 @@ function serve() {
   check((await s.page.textContent('#pf-err')).includes('adult or a child'), '“in the household as” must be chosen');
   await finish(s);
 
+  console.log('Duplicates (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
+  check(!!(await s.page.$('a[href="#/people/duplicates"]')), 'People has a Find duplicates button for Administrators');
+  const timMobile = (await s.docsNow())['people/p14'].mobile;
+  await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Timothy'); await s.page.fill('#pf-last', 'Jacobs'); await s.page.fill('#pf-mobile', timMobile);
+  await s.page.waitForTimeout(400);
+  check(await s.page.isVisible('#pf-dup') && (await s.page.textContent('#pf-dup')).includes('Tim Jacobs'), 'typing Timothy Jacobs with Tim’s mobile warns straight away');
+  await s.page.selectOption('#pf-cat', 'Attender'); await s.page.selectOption('#pf-fam', '__new'); await s.page.selectOption('#pf-frole', 'adult');
+  await s.page.fill('#pf-email', 'unknown'); if (await s.page.$('#pf-marital')) await s.page.selectOption('#pf-marital', 'Married');
+  const nBefore = Object.keys(await s.docsNow()).filter(k => k.startsWith('people/')).length;
+  await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(100);
+  check((await s.page.textContent('#pf-err')).includes('already in Church Hub') && Object.keys(await s.docsNow()).filter(k => k.startsWith('people/')).length === nBefore, 'a very likely duplicate can’t be saved');
+  await s.page.check('#pf-dup-ok'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  const newId = Object.keys(docs).filter(k => k.startsWith('people/') && docs[k].firstName === 'Timothy').map(k => k.slice(7))[0];
+  check(!!newId && (docs['settings/church'].notDuplicates || []).includes([newId, 'p14'].sort().join('|')), 'an Administrator can confirm it’s a different person; that is remembered');
+  await s.go('people/duplicates'); t = await s.text();
+  check(t.includes('Find duplicates') && !t.includes('Timothy Jacobs'), 'the confirmed pair isn’t suggested as a duplicate');
+  await s.page.evaluate(() => { Store.put('people', { firstName: 'Clare', lastName: 'Jacobs', email: Store.get('people', 'p15').email, mobile: '', familyId: '', familyRole: 'adult', category: 'Attender', active: true, keyDates: [] }); });
+  await s.go('people'); await s.go('people/duplicates'); t = await s.text();
+  check(t.includes('Probably the same person') && t.includes('Same email address'), 'Find duplicates lists a second Clare Jacobs with the reasons');
+  await s.page.click('[data-act="people:notdup"]'); await s.settle();
+  check(!(await s.text()).includes('Probably the same person') && (await s.docsNow())['settings/church'].notDuplicates.length === 2, '“Not the same person” removes it and is remembered');
+  await finish(s);
+  s = await session('thandi.mokoena@example.com', seedDocs()); await s.go('people');
+  check(!(await s.page.$('a[href="#/people/duplicates"]')), 'Pastors have no Find duplicates button');
+  await s.go('people/duplicates'); check((await s.text()).includes('for Administrators'), '…and can’t open it');
+  await s.go('people'); await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Tim'); await s.page.fill('#pf-last', 'Jacobs'); await s.page.fill('#pf-mobile', timMobile); await s.page.waitForTimeout(400);
+  check((await s.page.textContent('#pf-dup')).includes('ask an Administrator') && !(await s.page.$('#pf-dup-ok')), 'a Pastor is stopped from adding a duplicate and can’t override it');
+  await finish(s);
+
   console.log('Away dates – kind of leave and reason:');
   {
     const docs0 = seedDocs(), today = new Date().toISOString().slice(0, 10);

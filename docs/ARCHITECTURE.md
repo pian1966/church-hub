@@ -138,6 +138,16 @@ finds every `T('…')` in the code and fails if a language is missing or a {part
 church's own words (categories, teams, services, kinds of leave, privacy notice) and the shared leave rules' messages.
 The isiZulu and isiXhosa were drafted by AI and need checking by fluent speakers.
 
+## Duplicates
+`js/duplicates.js` (pure, `tests/duplicates.test.js`) scores two records: first name (exact, "known as", short forms such as
+Doug/Douglas, typing slips, initials), surname (exact, slips, part of a double-barrelled name), swapped names, email (Gmail dots
+and +labels ignored), mobile (+27 = 0), birthday and Elvanto ID. Contact details only count with a matching first name, because
+households share them; different birthdays, different Elvanto IDs, or an adult and a child mean different people.
+70+ = probably the same person, 45+ = possibly. People → Find duplicates is for Administrators. The Add / Edit window warns
+as names are typed (Administrators and Pastors); a match of 70+ can't be saved unless an Administrator ticks "I've checked:
+this is a different person". Pairs confirmed as different people are kept in `settings.notDuplicates` (["id1|id2"]), so only
+Administrators can record them (settings rules).
+
 ## Wording: household (not "family")
 The screens say **household** for a `families` record (who lives together – Elvanto's "family"); "family" is used only in
 its everyday sense (serve with family, care for the family of someone who died). The collection and code keep the name `families`.

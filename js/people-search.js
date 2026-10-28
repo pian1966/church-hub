@@ -11,6 +11,8 @@
  */
 var PeopleSearch = (function () {
   'use strict';
+  /** The words someone typed, e.g. "andr pi" → ['andr', 'pi']. */
+  function words(q) { return String(q || '').trim().split(/\s+/).filter(Boolean); }
   var OPS = {
     text: [['eq', 'Equals'], ['ne', 'Does not equal'], ['has', 'Contains'], ['nhas', 'Does not contain'], ['starts', 'Starts with'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
     choice: [['eq', 'Is'], ['ne', 'Is not'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
@@ -75,8 +77,8 @@ var PeopleSearch = (function () {
       var s = low(Array.isArray(v) ? v.join(', ') : v);
       if (f.op === 'eq') return s === want;
       if (f.op === 'ne') return s !== want;
-      if (f.op === 'has') return s.indexOf(want) >= 0;
-      if (f.op === 'nhas') return s.indexOf(want) < 0;
+      if (f.op === 'has') return words(want).every(function (w) { return s.indexOf(w) >= 0; });   // "andr pi" finds Andrew Pike
+      if (f.op === 'nhas') return !words(want).every(function (w) { return s.indexOf(w) >= 0; });
       if (f.op === 'starts') return s.indexOf(want) === 0;
       return false;
     }

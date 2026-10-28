@@ -197,7 +197,7 @@
     var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto; }) : visiblePeople();
     var shown = list.filter(function (p) {
       if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
-      return !q || (H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
+      return !q || H.matches(H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : ''), q);   // name, contact or family; "andr pi" finds Andrew Pike
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : T('People who agreed to be in the church directory.')) + '</p></div>' +
       '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">Find duplicates</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">Late spouses' + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
@@ -300,8 +300,8 @@
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
       (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + '</dd>' : '') +
-      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
-        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +
+      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
+        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
       ((full || (child && canChildren())) ? '<dt>' + T('Gender') + '</dt><dd>' + (p.gender ? esc(T(p.gender)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
@@ -510,7 +510,7 @@
     var surname = function (f) { var n = H.familyName(f).split(' '); return n[n.length - 1] + ' ' + n.join(' '); };
     var fq = state.fq.trim().toLowerCase(), cps = allCouples();
     var fams = S.list('families').filter(function (f) {
-      return !fq || (H.familyName(f) + ' ' + members(f.id).map(function (m) { return H.names(m).join(' | '); }).join(' | ')).toLowerCase().indexOf(fq) >= 0;
+      return !fq || H.matches(H.familyName(f) + ' ' + members(f.id).map(function (m) { return H.names(m).join(' | '); }).join(' | '), fq);
     }).sort(function (a, b) { return surname(a).localeCompare(surname(b)); });
     return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Households</h1><p class="lead">A household is the people who live together – what Elvanto calls a “family”. Each is named after its adults (e.g. “Tim & Clare Jacobs”). A child of separated parents can be in two households. Parents, guardians and who may collect a child are recorded on the child’s profile.</p></div>' +
       '<button class="btn primary" data-act="people:newfam">' + H.icon(H.ICON.plus, 18) + 'New household</button></div>' +
@@ -896,9 +896,9 @@
       { key: 'gender', label: 'Gender', options: GENDERS, blank: 'Not recorded', keys: ['gender'], set: plain('gender') },
       { key: 'partnerSince', label: 'Date accepted as Church Partner', date: true, keys: ['partnerSince'], set: plain('partnerSince') },
       { key: 'partnerUpdated', label: 'Partnership last updated', date: true, keys: ['partnerUpdated'], set: plain('partnerUpdated') },
-      { key: 'email', label: 'Email (where it’s missing)', options: ['Not known'], keys: ['emailUnknown'], set: function (q) { q.emailUnknown = true; },
+      { key: 'email', label: 'Email (where it’s missing)', options: ['Unknown'], keys: ['emailUnknown'], set: function (q) { q.emailUnknown = true; },
         skip: function (p) { return p.email ? 'already have an email address' : p.familyRole === 'child' ? 'children' : ''; }, note: 'Only for adults with no email address. Anyone who has one is left alone.' },
-      { key: 'mobile', label: 'Mobile (where it’s missing)', options: ['Not known'], keys: ['mobileUnknown'], set: function (q) { q.mobileUnknown = true; },
+      { key: 'mobile', label: 'Mobile (where it’s missing)', options: ['Unknown'], keys: ['mobileUnknown'], set: function (q) { q.mobileUnknown = true; },
         skip: function (p) { return p.mobile ? 'already have a mobile number' : p.familyRole === 'child' ? 'children' : ''; }, note: 'Only for adults with no mobile number. Anyone who has one is left alone.' },
       { key: 'household', label: 'Household (where it’s missing)', options: ['+ New household for each person'], keys: ['familyId'],
         skip: function (p) { return (p.familyId || (p.householdIds || []).length) ? 'already in a household' : ''; },
@@ -1209,7 +1209,8 @@
       var pf = document.getElementById('pp-photo');
       if (pf) pf.addEventListener('change', function () {
         var p = S.get('people', pf.dataset.id), f = pf.files && pf.files[0]; if (!p || !f) return;
-        H.shrinkPhoto(f).then(function (data) {
+        pf.value = '';   // the same file can be chosen again
+        H.cropPhoto(f).then(function (data) {
           return S.setPhoto(p.id, data, (p.photo ? 'Changed the photo of ' : 'Added a photo of ') + H.name(p)).then(function () { H.render(); H.toast(T('Photo saved')); });
         }).catch(function () { H.toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.')); });
       });

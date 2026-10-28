@@ -82,5 +82,34 @@ console.log('Couples and wedding anniversaries');
   ok(HS.couplesToCheck(P, F3).some(c => [c.a, c.b].sort().join() === 'gma,gpa'), '…unless there’s still something to fix (Granny’s anniversary)');
 }
 
+console.log('Late spouses: who a widow or widower was probably married to');
+{
+  const W = d => [{ label: 'Wedding anniversary', date: d }];
+  const P = [
+    { id: 'elsa', firstName: 'Elsa', lastName: 'van der Merwe', familyRole: 'adult', familyId: 'h1', maritalStatus: 'Widowed', birthDate: '1950-03-01', keyDates: W('1975-06-07') },
+    { id: 'johan', firstName: 'Johan', lastName: 'van der Merwe', familyRole: 'adult', familyId: 'h1', maritalStatus: 'Married', birthDate: '1948-01-01', deceasedAt: '2026-02-02', keyDates: W('1975-06-07') },
+    { id: 'ruth', firstName: 'Ruth', lastName: 'Smith', familyRole: 'adult', familyId: 'h2', maritalStatus: 'Widowed', email: 'smiths@example.com', birthDate: '1945-01-01' },
+    { id: 'bob', firstName: 'Bob', lastName: 'Smith', familyRole: 'adult', familyId: '', email: 'SMITHS@example.com', deceasedAt: '2019-05-05' },
+    { id: 'tom', firstName: 'Tom', lastName: 'Smith', familyRole: 'adult', familyId: '', birthDate: '1990-01-01', deceasedAt: '2021-01-01' },
+    { id: 'ann', firstName: 'Ann', lastName: 'Jones', familyRole: 'adult', familyId: 'h3', maritalStatus: 'Married', deceasedAt: '2024-01-01', mobile: '082 111 2222' },
+    { id: 'ben', firstName: 'Ben', lastName: 'Jones', familyRole: 'adult', familyId: '', maritalStatus: 'Married', deceasedAt: '2020-01-01', mobile: '+27 82 111 2222' },
+    { id: 'kid', firstName: 'Kid', lastName: 'Smith', familyRole: 'child', familyId: 'h2', deceasedAt: '2010-01-01' },
+    { id: 'lone', firstName: 'Lone', lastName: 'Ndlovu', familyRole: 'adult', familyId: 'h9', maritalStatus: 'Widowed' }
+  ];
+  const dead = p => !!p.deceasedAt;
+  const s = HS.lateSpouseSuggestions(P, dead), pair = (a, b) => s.find(x => x.a === a && x.b === b);
+  ok(pair('elsa', 'johan') && pair('elsa', 'johan').reasons.includes('same household') && pair('elsa', 'johan').reasons.includes('same wedding date'), 'a widow is matched with the husband in her household with the same wedding date');
+  ok(pair('ruth', 'bob') && pair('ruth', 'bob').reasons.join() === 'same email,same surname', 'a widow matched by a shared email and surname (not to the much younger Tom Smith)');
+  ok(!s.some(x => x.b === 'tom'), 'someone 45 years younger isn’t suggested');
+  ok(s.some(x => [x.a, x.b].sort().join() === 'ann,ben' && x.bothDied), 'two people who have both died can be suggested (same phone and surname)');
+  ok(!s.some(x => x.b === 'kid' || x.a === 'kid') && !s.some(x => x.a === 'lone'), 'children never; no suggestion without enough clues');
+  ok(s.every(x => s.filter(y => [y.a, y.b].includes(x.a) || [y.a, y.b].includes(x.b)).length === 1), 'each person in at most one suggestion');
+  const P2 = P.map(p => p.id === 'elsa' ? Object.assign({}, p, { notLateSpouse: ['johan'] }) : p.id === 'ruth' ? Object.assign({}, p, { lateSpouseSet: true }) : p);
+  const s2 = HS.lateSpouseSuggestions(P2, dead);
+  ok(!s2.some(x => x.a === 'elsa' && x.b === 'johan') && !s2.some(x => x.a === 'ruth'), '“not a couple” and people an Administrator already settled are left out');
+  const P3 = P.map(p => p.id === 'elsa' ? Object.assign({}, p, { lateSpouseId: 'johan' }) : p);
+  ok(!HS.lateSpouseSuggestions(P3, dead).some(x => x.b === 'johan'), 'someone already named as a late spouse isn’t suggested again');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');
 process.exit(fails ? 1 : 0);

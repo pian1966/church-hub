@@ -39,7 +39,7 @@
     var dead = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && (deceased(x) || x.category === 'Deceased') && !x.mergedInto && HS.householdsOf(p).some(function (h) { return HS.inHousehold(x, h); }); });
     return dead.length === 1 ? dead[0] : null;
   }
-  function survivingSpouses(p) { return deceased(p) || p.category === 'Deceased' ? S.find('people', function (x) { var l = x.id !== p.id && !x.mergedInto && lateSpouse(x); return l && l.id === p.id; }) : []; }
+  function survivingSpouses(p) { return deceased(p) || p.category === 'Deceased' ? S.find('people', function (x) { var l = x.id !== p.id && x.id !== p.lateSpouseId && !x.mergedInto && lateSpouse(x); return l && l.id === p.id; }) : []; }
   function members(fid) { return S.find('people', function (p) { return HS.inHousehold(p, fid) && p.active !== false; }); }
   function householdNames(p) { return HS.householdsOf(p).map(function (h) { return H.familyName(S.get('families', h)); }).filter(Boolean); }
   /** Whole years from a yyyy-mm-dd date to today ('' if no date or in the future). */
@@ -183,7 +183,7 @@
       return !q || (H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : T('People who agreed to be in the church directory.')) + '</p></div>' +
-      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">Find duplicates</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
+      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">Find duplicates</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">Late spouses' + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
       '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + T('Search by name, household, email or phone') + '" value="' + esc(state.q) + '"></label>' +
         (canBasic() ? '<a class="adv-link" href="#/people/search">Advanced search</a>' : '') + '</div>' +
@@ -476,6 +476,29 @@
     return '<a class="item" href="#/people/p/' + p.id + '" style="align-items:flex-start">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + (p.preferredName && p.preferredName !== p.firstName ? ' <span class="muted">(' + esc(p.firstName) + ')</span>' : '') + '</b><small>' + esc(bits.join(' · ')) + '</small></span></a>';
   }
   var DUPWORD = { certain: 'Certainly the same person', likely: 'Probably the same person', possible: 'Possibly the same person' };
+  /* ---------- late spouses: suggestions for Administrators (rules in js/households.js) ---------- */
+  function isDead(p) { return deceased(p) || p.category === 'Deceased'; }
+  function lateSuggestions() { return H.can('*') ? HS.lateSpouseSuggestions(S.list('people'), isDead) : []; }
+  function renderLate() {
+    var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a>';
+    if (!H.can('*')) return back + '<p class="empty">This is for Administrators.</p>';
+    var sug = lateSuggestions();
+    var open = S.find('people', function (p) { return p.familyRole !== 'child' && !p.mergedInto && p.maritalStatus === 'Widowed' && !isDead(p) && !lateSpouse(p) && !p.lateSpouseName && !sug.some(function (x) { return x.a === p.id; }); });
+    var died = function (p) { return p.deceasedAt ? 'died ' + H.fmt(p.deceasedAt, true) : 'has died'; };
+    var card = function (p, note) { return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc(note) + '</small></span></a>'; };
+    return back + '<div class="page-head"><div><h1>Late spouses</h1><p class="lead">Widows and widowers – and people who have died – who were probably married to someone who has died. Church Hub compares households, wedding dates, email addresses, phone numbers, surnames and ages. Please check each one: these are only suggestions.</p></div></div>' +
+      (sug.length ? '<p class="muted small">' + sug.length + (sug.length === 1 ? ' suggestion' : ' suggestions') + ', most likely first.</p>' : '<p class="empty">No suggestions. Everyone Church Hub could match has been checked.</p>') +
+      sug.map(function (x) {
+        var a = S.get('people', x.a), b = S.get('people', x.b);
+        return '<section class="panel" style="margin-bottom:12px"><div class="row" style="flex-wrap:wrap;gap:8px"><h2 class="grow" style="margin:0;font-size:1rem">' + (x.bothDied ? 'Probably married to each other' : 'Probably married') + '</h2><span class="tag ' + (x.score >= 80 ? 'ok' : 'grey') + '">' + (x.score >= 80 ? 'Likely' : 'Possible') + '</span></div>' +
+          '<p class="hint" style="margin:6px 0 0">' + esc(x.reasons.join(' · ')) + '</p>' +
+          '<div class="list" style="margin:10px 0">' + card(a, x.bothDied ? (a.maritalStatus || '') + ' · ' + died(a) : 'Widowed') + card(b, died(b)) + '</div>' +
+          '<div class="btns"><button class="btn small primary" data-act="people:lateyes" data-a="' + x.a + '" data-b="' + x.b + '">Yes, they were married</button><button class="btn small" data-act="people:lateno" data-a="' + x.a + '" data-b="' + x.b + '">Not a couple</button></div></section>';
+      }).join('') +
+      (open.length ? '<section class="panel" style="margin-top:16px"><h2>Widowed, no match found (' + open.length + ')</h2><p class="hint" style="margin-top:0">Open each one and use <b>Edit details → Late spouse</b> to choose someone, or type the name of someone who isn’t in Church Hub.</p><div class="list">' +
+        open.sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); }).map(function (p) { return card(p, 'Widowed'); }).join('') + '</div></section>' : '');
+  }
+
   function renderDuplicates() {
     var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a>';
     if (!canDup()) return back + '<p class="empty">Finding duplicates is for Administrators and Pastors.</p>';
@@ -987,6 +1010,7 @@
       if (p[0] === 'families') return renderFamilies();
       if (p[0] === 'search') return renderSearch();
       if (p[0] === 'duplicates') return renderDuplicates();
+      if (p[0] === 'late') return renderLate();
       return renderList();
     },
     after: function () {
@@ -1274,6 +1298,18 @@
       fixdup: function (el) { fixDialog(el.dataset.a, el.dataset.b, el.dataset.keep || ''); },
       fixkeep: function (el) { fixDialog(el.dataset.a, el.dataset.b, el.dataset.keep); },
       fixdo: function (el) { doFix(el.dataset.keep, el.dataset.drop); },
+      lateyes: function (el) {
+        var a = JSON.parse(JSON.stringify(S.get('people', el.dataset.a))), b = S.get('people', el.dataset.b);
+        a.lateSpouseId = b.id; delete a.lateSpouseName; delete a.lateSpouseSet;
+        S.put('people', a, 'Late spouse: ' + H.name(a) + ' was married to ' + H.name(b));
+        H.render(); H.toast('Saved: ' + H.name(a) + ' was married to ' + H.name(b));
+      },
+      lateno: function (el) {
+        var a = JSON.parse(JSON.stringify(S.get('people', el.dataset.a))), b = S.get('people', el.dataset.b);
+        a.notLateSpouse = (a.notLateSpouse || []).concat([b.id]);
+        S.put('people', a, 'Not a couple: ' + H.name(a) + ' and ' + H.name(b) + ' (late spouse suggestion)');
+        H.render(); H.toast('Got it – that suggestion won’t come back');
+      },
       couplefix: function (el) {
         var key = HS.pairKey(el.dataset.a, el.dataset.b), c = HS.couples(S.list('people'), S.list('families')).filter(function (x) { return HS.pairKey(x.a, x.b) === key; })[0];
         if (!c || !canCouples()) return;

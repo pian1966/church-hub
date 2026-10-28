@@ -115,12 +115,58 @@ var Households = (function () {
     return out;
   }
   /** Couples to check: not yet confirmed by a person, or with an anniversary to copy, dates that differ, or a marital status to record. */
+  /**
+   * Who a widow or widower (or someone who has died) was probably married to, among the people who have died.
+   * Clues, each worth points: same household (40), same wedding date (40), shared email (30), shared mobile (25),
+   * same surname (25), born within 15 years of each other (10); born more than 25 years apart takes 30 off.
+   * Only pairs with at least 50 points; each person in at most one suggestion (best first). People an Administrator
+   * already settled (lateSpouseId / lateSpouseSet) and pairs marked "not a couple" (notLateSpouse) are left out.
+   *   people: everyone (with details), dead(p) → true when p has died.
+   *   → [{ a: survivor id, b: deceased id, score, reasons: [...], bothDied }]
+   */
+  function lateSpouseSuggestions(people, dead) {
+    var norm = function (s) { return String(s || '').trim().toLowerCase(); };
+    var digits = function (s) { return String(s || '').replace(/\D/g, '').slice(-9); };
+    var adults = (people || []).filter(function (p) { return p.familyRole !== 'child' && !p.mergedInto && p.firstName !== 'Deleted'; });
+    var linked = {};   // deceased people already named as someone's late spouse
+    adults.forEach(function (p) { if (p.lateSpouseId) linked[p.lateSpouseId] = 1; });
+    var survivors = adults.filter(function (p) {
+      if (p.lateSpouseId || p.lateSpouseSet) return false;
+      return p.maritalStatus === 'Widowed' || (dead(p) && (p.maritalStatus === 'Married' || p.maritalStatus === 'Widowed'));
+    });
+    var gone = adults.filter(function (p) { return dead(p) && !linked[p.id] && !p.lateSpouseId; });
+    var cand = [];
+    survivors.forEach(function (a) {
+      gone.forEach(function (b) {
+        if (a.id === b.id || (a.notLateSpouse || []).indexOf(b.id) >= 0 || (b.notLateSpouse || []).indexOf(a.id) >= 0) return;
+        if (dead(a) && a.maritalStatus === 'Widowed' && b.maritalStatus === 'Widowed') return;   // both widowed: each lost someone else
+        var score = 0, why = [];
+        if (householdsOf(a).some(function (h) { return inHousehold(b, h); })) { score += 40; why.push('same household'); }
+        var wa = weddingOf(a), wb = weddingOf(b);
+        if (wa && wa === wb) { score += 40; why.push('same wedding date'); }
+        if (norm(a.email) && norm(a.email) === norm(b.email)) { score += 30; why.push('same email'); }
+        if (digits(a.mobile).length >= 9 && digits(a.mobile) === digits(b.mobile)) { score += 25; why.push('same phone number'); }
+        if (norm(a.lastName) && norm(a.lastName) === norm(b.lastName)) { score += 25; why.push('same surname'); }
+        var ya = yearOf(a.birthDate), yb = yearOf(b.birthDate);
+        if (ya && yb) { var gap = Math.abs(ya - yb); if (gap <= 15) { score += 10; why.push('similar age'); } else if (gap > 25) { score -= 30; why.push(gap + ' years apart in age'); } }
+        if (score >= 50) cand.push({ a: a.id, b: b.id, score: score, reasons: why.filter(function (r) { return !/apart/.test(r); }), bothDied: dead(a) });
+      });
+    });
+    cand.sort(function (x, y) { return y.score - x.score || (x.a + x.b < y.a + y.b ? -1 : 1); });
+    var used = {}, out = [];
+    cand.forEach(function (c) {
+      if (used[c.a] || used[c.b]) return;
+      used[c.a] = used[c.b] = 1; out.push(c);
+    });
+    return out;
+  }
+
   function couplesToCheck(people, families) {
     return couples(people, families).filter(function (c) { return !c.confirmed || c.copy || c.differ || c.mark; });
   }
 
   return { RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
     consentAdults: consentAdults, childrenOf: childrenOf, defaultsFor: defaultsFor, suggestedLinks: suggestedLinks, needs: needs,
-    couples: couples, couplesToCheck: couplesToCheck, pairKey: pairKey, weddingOf: weddingOf };
+    couples: couples, couplesToCheck: couplesToCheck, pairKey: pairKey, weddingOf: weddingOf, lateSpouseSuggestions: lateSpouseSuggestions };
 })();
 if (typeof module !== 'undefined') module.exports = Households;

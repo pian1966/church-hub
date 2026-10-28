@@ -27,7 +27,8 @@ var ElvantoImport = (function () {
     ['deceasedDate', 'Date deceased', ['Date Deceased'], /deceased\s*date|date\s*deceased/i],
     ['photo', 'Photo', ['Photo'], /^(photo|picture|image)$/i],
     ['idNumber', 'ID number', ['ID Number (Numeric)', 'ID Number'], /^id\s*(number|no\.?)\b/i],
-    ['notes', 'Notes', ['Notes'], /^notes?$/i]
+    ['notes', 'Notes', ['Notes'], /^notes?$/i],
+    ['gender', 'Gender', ['Gender'], /^(gender|sex)$/i]
   ];
   /** An ID number as typed: spaces gone. Elvanto's "numeric" column drops a leading 0 (people born 2000–2009), so 12 digits get it back.
    *  Spreadsheet-mangled numbers ("5.71021E+12") can't be recovered and are left out. */
@@ -132,6 +133,7 @@ var ElvantoImport = (function () {
       o.idNumber = idNumber(o.idNumber);
       ['firstName', 'preferredName', 'lastName'].forEach(function (k) { var m = idInName(o[k]); if (m) { o[k] = m.name; if (!o.idNumber) o.idNumber = m.id; } });
       o.notes = String(o.notes || '').trim();
+      o.gender = /^(f|female|woman|vrou|vroulik)$/i.test(o.gender) ? 'Female' : /^(m|male|man|manlik)$/i.test(o.gender) ? 'Male' : '';
       o.archived = yes(o.archived); o.deceased = yes(o.deceased);
       if (o.deceased) ['firstName', 'preferredName', 'lastName'].forEach(function (k) {   // "2024-08-22-Mike": the date they died, then the name
         var dn = datedName(o[k]); if (dn && (dn.name || k !== 'firstName' || o.lastName)) { o[k] = dn.name; if (!o.deceasedDate) o.deceasedDate = dn.date; }
@@ -207,6 +209,7 @@ var ElvantoImport = (function () {
     if (familyId) p.familyId = familyId;
     p.familyRole = o.child ? 'child' : 'adult';
     if (o.child) delete p.maritalStatus; else if (o.marital) p.maritalStatus = o.marital;
+    if (o.gender) p.gender = o.gender;
     if (!p.staff) p.category = (catMap && catMap[o.category]) || guessCategory(o.category);
     if (o.deceased) { p.active = false; p.category = 'Deceased'; p.deceasedAt = o.deceasedDate || p.deceasedAt || today || ''; p.appRole = 'none'; }
     else if (o.archived) { p.active = false; p.category = 'Former member'; }

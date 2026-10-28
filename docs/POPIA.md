@@ -29,6 +29,12 @@ This is a design checklist, not legal advice – the church's Information Office
   leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
   died") so the church can decide when to delete their details.
 
+## Gender, Church Partner dates, volunteering and what people would like to receive
+- **Gender** (Female / Male / not recorded): ordinary personal information, kept with the private details (Administrators, Pastors, the person; Children's ministry for children). Read from Elvanto's Gender column.
+- **Date accepted as Church Partner** and **Partnership last updated**: private details, Administrators and Pastors (and the person).
+- **Volunteering** is kept as their serving (Rosters positions, with the services they serve at), so rostering uses it; Administrators and roster coordinators change it.
+- **Would like to receive** (Weekly Church Notices by email; prayer needs and missionary updates by WhatsApp or email; "Who is Jesus" on WhatsApp) is in the **consent register**, so it records when and how each choice was made and can be withdrawn (POPIA s11, s69 for electronic messages). A choice never ticked isn't recorded as a "no". Members change their own under **Change my choices**.
+
 ## ID numbers
 - **Purpose (as the church gave it):** telling apart people with the same name; they were also collected during covid. POPIA s10 (minimality) and s14 (keep no longer than needed): the covid reason has ended, so the church should decide whether it still needs ID numbers at all – a date of birth usually tells people apart. Delete them if not.
 - **Where:** `idNumbers/{person}`, apart from everything else; never loaded with the person, only when an Administrator taps **Show**. Every view and change is in the audit log.

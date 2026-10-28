@@ -33,6 +33,8 @@
     var t = S.list('teams').map(function (x) { return x.id; });
     return S.list('positions').slice().sort(function (a, b) { return t.indexOf(a.teamId) - t.indexOf(b.teamId); });
   }
+  /** A position only runs at some services (e.g. Creche Duty at 8:00): elsewhere its cell is shown as not needed. */
+  function runsAt(p, s) { return !(p.times && p.times.length && s.time && p.times.indexOf(s.time) < 0); }
   function narrow() { return window.innerWidth < 700; }
   function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; }); }
   function inView() {
@@ -78,7 +80,8 @@
           var tg = R.groupsOf(engineData(), a.personId, 'together').length ? H.icon(H.ICON.link, 14) : '';
           return '<button class="chip ' + cls + '" data-act="rosters:slot" data-id="' + esc(a.id) + '" title="' + esc(a.reason || (isAway ? isAway : a.status)) + '">' + esc(H.name(who)) + '<span class="tg">' + tg + '</span></button>';
         }).join('');
-        for (var i = live; i < p.needed; i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ Add someone</button>';
+        if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">Not at ' + esc(Serving.timeLabel(s.time)) + '</span></td>';
+        for (var i = live; i < p.needed && runsAt(p, s); i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ Add someone</button>';
         return '<td><div class="slot">' + cells + '</div></td>';
       }).join('') + '</tr>';
     });
@@ -130,11 +133,16 @@
   function renderTeams() {
     var html = head('Teams', 'Who can serve in each position, and how often they’d like to.', '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + 'New team</button>') + tabs('teams');
     html += renderOffers();
+    var add = window.Serving ? Serving.missing(S.list('teams'), S.list('positions')) : { teams: [], positions: [] };
+    if (add.positions.length && (H.can('*') || H.can('rosters.manage'))) html += '<div class="note info" style="margin-bottom:16px"><b>Set up the church’s departments.</b> Adds ' +
+      (add.teams.length ? add.teams.length + ' department' + (add.teams.length === 1 ? '' : 's') + ' and ' : '') + add.positions.length + ' position' + (add.positions.length === 1 ? '' : 's') +
+      ' as in Elvanto (Operational, Extra Slot, Hospitality, Music, Teens, Children, Creche), each marked with the services it runs at. Nothing here is changed or removed. ' +
+      '<button class="btn small primary" data-act="rosters:setupdepts">Add them</button></div>';
     html += '<div class="grid2">' + S.list('teams').map(function (t) {
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
       return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; });
-        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + p.needed + ' per service</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + 'Add</button></div>' +
+        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + p.needed + ' per service' + (p.times && p.times.length && p.times.length < Serving.TIMES.length ? ' · ' + esc(p.times.map(Serving.timeLabel).join(', ') + ' only') : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + 'Add</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
             return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc((FREQ.filter(function (f) { return f[0] === k.frequency; })[0] || ['', k.frequency])[1]) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="Remove ' + esc(H.name(pp)) + ' from ' + esc(p.name) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
@@ -242,7 +250,7 @@
   /* ---------- module ---------- */
   function nextGaps() {
     var s = upcoming()[0]; if (!s) return null;
-    var n = 0; orderedPositions().forEach(function (p) { n += Math.max(0, p.needed - S.find('assignments', function (a) { return a.serviceId === s.id && a.positionId === p.id && a.status !== 'declined'; }).length); });
+    var n = 0; orderedPositions().forEach(function (p) { if (runsAt(p, s)) n += Math.max(0, p.needed - S.find('assignments', function (a) { return a.serviceId === s.id && a.positionId === p.id && a.status !== 'declined'; }).length); });
     return { s: s, n: n };
   }
   var MOD; H.register(MOD = {
@@ -268,6 +276,13 @@
       return renderMatrix();
     },
     actions: {
+      setupdepts: function () {
+        var add = Serving.missing(S.list('teams'), S.list('positions'));
+        add.teams.forEach(function (t) { S.put('teams', t); });
+        add.positions.forEach(function (p) { S.put('positions', p); });
+        S.audit('Set up the church’s departments: ' + add.teams.length + ' departments and ' + add.positions.length + ' positions added', 'teams');
+        H.render(); H.toast('Departments and positions added');
+      },
       move: function (el) { state.start += +el.dataset.d; state.preview = null; H.render(); },
       autofill: function () {
         var ids = inView().filter(function (s) { return s.date >= H.today(); }).map(function (s) { return s.id; });

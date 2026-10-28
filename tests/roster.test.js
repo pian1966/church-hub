@@ -99,5 +99,18 @@ console.log('Declines respected, and check() flags problems');
   ok(c.some(x => /kept apart/.test(x.text)), 'flags a keep-apart clash');
 }
 
+console.log('Service times: positions that run at one service, volunteers who serve at some services');
+{
+  const P = [{ id: 'a', firstName: 'Ann', lastName: 'A' }, { id: 'b', firstName: 'Ben', lastName: 'B' }, { id: 'c', firstName: 'Cat', lastName: 'C' }];
+  const pos = [{ id: 'creche', teamId: 't', name: 'Creche Duty', needed: 1, times: ['08:00'] }, { id: 'sound', teamId: 't', name: 'Sound Desk', needed: 1 }];
+  const sk = [{ personId: 'a', positionId: 'creche', frequency: 'weekly' }, { personId: 'b', positionId: 'sound', frequency: 'weekly', times: ['10:00'] },
+    { personId: 'c', positionId: 'sound', frequency: 'weekly', times: ['08:00', '17:00'] }];
+  const sv = [{ id: 'e', date: '2026-11-01', time: '08:00' }, { id: 't', date: '2026-11-01', time: '10:00' }, { id: 'f', date: '2026-11-01', time: '17:00' }];
+  const r = R.autoFill({ people: P, positions: pos, skills: sk, services: sv, assignments: [], groups: [], away: [] }, sv.map(s => s.id));
+  const at = (svc, p) => r.assignments.filter(x => x.serviceId === svc && x.positionId === p).map(x => x.personId).join();
+  ok(at('e', 'creche') === 'a' && at('t', 'creche') === '' && at('f', 'creche') === '' && !r.gaps.some(g => g.positionId === 'creche' && g.serviceId !== 'e'), 'Creche Duty only at the 8:00 service – no gaps reported at 10:00 or 17:00');
+  ok(at('t', 'sound') === 'b' && at('e', 'sound') === 'c' && at('f', 'sound') === 'c', 'volunteers are only rostered at the services they serve at');
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

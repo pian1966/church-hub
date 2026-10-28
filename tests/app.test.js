@@ -217,7 +217,14 @@ function serve() {
   check(tt.includes('Was married to Johan van der Merwe') && docs['details/p24'].lateSpouseId === 'p23' && !docs['details/p24'].lateSpouseName, '… or choose someone in Church Hub who has died');
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   tt = await s.text(); check(!tt.includes('Late spouse'), '… or nobody');
-  await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', 'p23'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  // Late spouse suggestions: clear Elsa's, and Church Hub should suggest Johan again (same household and surname)
+  await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
+  await s.page.evaluate(() => { const e = Store.get('people', 'p24'); delete e.lateSpouseSet; });
+  await s.go('people'); check((await s.page.textContent('a[href="#/people/late"]')).includes('1'), 'People shows how many late spouse suggestions there are');
+  await s.go('people/late'); tt = await s.text();
+  check(tt.includes('Elsa van der Merwe') && tt.includes('Johan van der Merwe') && tt.includes('same household') && tt.includes('same surname'), 'Late spouses suggests Elsa was married to Johan, with the clues');
+  await s.page.click('[data-act="people:lateyes"][data-a="p24"][data-b="p23"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p24'].lateSpouseId === 'p23' && !(await s.text()).includes('Probably married'), '“Yes, they were married” records it and the suggestion goes');
   await s.go('people/p/p23');
   await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-email', ''); await s.page.fill('#pf-mobile', '');
   const reqs = await s.page.$$eval('#pf .field.req input, #pf .field.req select', els => els.map(e => e.id));
@@ -689,6 +696,7 @@ function serve() {
   await s.go('people/p/p10'); t = await s.text();
   check(t.includes('Church office notes') && !t.includes('ID number'), 'Pastors see church office notes but not ID numbers');
   await s.page.click('[data-act="people:edit"]'); check(!(await s.page.$('#pf-late')), 'only Administrators change who someone was married to'); await s.page.click('[data-act="hub:close"]');
+  await s.go('people'); check(!(await s.page.$('a[href="#/people/late"]')), 'Late spouses is for Administrators');
   await s.go('people/p/p27'); await s.page.click('[data-act="people:consent"]');
   for (const pur of ['Church records', 'Church directory']) await s.page.check(`.cf-p[data-p="${pur}"]`);
   await s.page.click('[data-act="people:saveconsent"]'); await s.settle();

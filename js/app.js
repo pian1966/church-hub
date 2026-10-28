@@ -291,6 +291,25 @@ var Hub = (function () {
   function closeModal() { document.getElementById('modal').innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
   function dialogHead(title, sub) { return '<header class="dlg-h"><div><h2>' + esc(title) + '</h2>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div><button class="icon-btn ghost x" data-act="hub:close" aria-label="' + T('Close') + '">' + icon(ICON.x) + '</button></header>'; }
   var toastTimer = null;
+  /**
+   * Long jobs (an import, changing many people): a turning cross over the page until the work is done and saved.
+   * The work runs a moment later, so the cross is on screen first. Returns a promise.
+   */
+  function busy(msg, work) {
+    var el = document.getElementById('busy');
+    if (!el) { el = document.createElement('div'); el.id = 'busy'; el.className = 'busy'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); document.body.appendChild(el); }
+    el.innerHTML = '<div class="busy-box"><svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="19" y="4" width="10" height="40" rx="2.5"/><rect x="8" y="14" width="32" height="10" rx="2.5"/></svg>' +
+      '<p>' + esc(msg || T('Working…')) + '</p><p class="small">' + T('Please keep this page open.') + '</p></div>';
+    el.hidden = false; document.body.classList.add('is-busy');
+    var done = function () { el.hidden = true; document.body.classList.remove('is-busy'); };
+    return new Promise(function (ok, fail) {
+      requestAnimationFrame(function () { setTimeout(function () {
+        var out;
+        try { out = work(); } catch (e) { done(); console.error(e); toast(T('Something went wrong. Please try again.'), true); return fail(e); }
+        Promise.resolve(out).then(function () { return Store.whenSaved(); }).then(function (v) { done(); ok(v); }, function (e) { done(); fail(e); });
+      }, 30); });
+    });
+  }
   function toast(msg, bad) {
     var t = document.getElementById('toast');
     t.textContent = msg; t.className = 'toast show' + (bad ? ' bad' : '');
@@ -456,5 +475,5 @@ var Hub = (function () {
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
-    dialogHead: dialogHead, toast: toast, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
+    dialogHead: dialogHead, toast: toast, busy: busy, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
 })();

@@ -884,19 +884,33 @@
   /* ---------- changing many people at once (Administrators): tick people in the results, then one field for all of them ---------- */
   function canBulk() { return H.can('*'); }
   /** What can be changed for many people at once. Things with their own steps (a death, sign-in access, households) can't. */
+  /** What can be changed for many people at once. Each says which people it leaves alone (skip) and how it changes a person (set). */
   function bulkFields() {
+    var dead = function (p) { return deceased(p) || p.category === 'Deceased'; };
+    var plain = function (key) { return function (q, v) { if (v) q[key] = v; else delete q[key]; }; };
     return [
-      { key: 'maritalStatus', label: 'Marital status', options: MARITAL, adults: true },
-      { key: 'category', label: 'Category', options: CATS.filter(function (c) { return c !== 'Deceased'; }) },
-      { key: 'gender', label: 'Gender', options: GENDERS, blank: 'Not recorded' },
-      { key: 'partnerSince', label: 'Date accepted as Church Partner', date: true },
-      { key: 'partnerUpdated', label: 'Partnership last updated', date: true }
+      { key: 'maritalStatus', label: 'Marital status', options: MARITAL, keys: ['maritalStatus'], set: plain('maritalStatus'),
+        skip: function (p) { return p.familyRole === 'child' && 'children'; }, note: 'Children are left out: they have no marital status.' },
+      { key: 'category', label: 'Category', options: CATS.filter(function (c) { return c !== 'Deceased'; }), keys: ['category'], set: plain('category'),
+        skip: function (p) { return dead(p) && 'people who have died'; } },
+      { key: 'gender', label: 'Gender', options: GENDERS, blank: 'Not recorded', keys: ['gender'], set: plain('gender') },
+      { key: 'partnerSince', label: 'Date accepted as Church Partner', date: true, keys: ['partnerSince'], set: plain('partnerSince') },
+      { key: 'partnerUpdated', label: 'Partnership last updated', date: true, keys: ['partnerUpdated'], set: plain('partnerUpdated') },
+      { key: 'email', label: 'Email (where it’s missing)', options: ['Not known'], keys: ['emailUnknown'], set: function (q) { q.emailUnknown = true; },
+        skip: function (p) { return p.email ? 'already have an email address' : p.familyRole === 'child' ? 'children' : ''; }, note: 'Only for adults with no email address. Anyone who has one is left alone.' },
+      { key: 'mobile', label: 'Mobile (where it’s missing)', options: ['Not known'], keys: ['mobileUnknown'], set: function (q) { q.mobileUnknown = true; },
+        skip: function (p) { return p.mobile ? 'already have a mobile number' : p.familyRole === 'child' ? 'children' : ''; }, note: 'Only for adults with no mobile number. Anyone who has one is left alone.' },
+      { key: 'household', label: 'Household (where it’s missing)', options: ['+ New household for each person'], keys: ['familyId'],
+        skip: function (p) { return (p.familyId || (p.householdIds || []).length) ? 'already in a household' : ''; },
+        set: function (q, v, made) { var f = S.put('families', { name: q.lastName + ' family', custom: false }); made.push(f.id); q.familyId = f.id; if (!q.familyRole) q.familyRole = 'adult'; },
+        note: 'Each person with no household gets one of their own, named after their surname. People who live together can be moved into one household afterwards.' }
     ];
   }
   function bulkUndoNote() {
     var u = state.bulkUndo; if (!u) return '';
+    var why = Object.keys(u.skipped || {}).map(function (k) { return u.skipped[k] + ' ' + k; });
     return '<div class="note ok" role="status" style="margin-bottom:12px">Changed <b>' + esc(u.label) + '</b> to <b>' + esc(u.value || 'nothing') + '</b> for ' + u.items.length + (u.items.length === 1 ? ' person' : ' people') +
-      (u.skipped ? ' (' + u.skipped + ' left out: ' + (u.key === 'category' ? 'people who have died' : 'children') + ')' : '') + '. <button class="link" data-act="people:bulkundo">Undo</button></div>';
+      (why.length ? ' (left out: ' + esc(why.join(', ')) + ')' : '') + '. <button class="link" data-act="people:bulkundo">Undo</button></div>';
   }
   function bulkDialog() {
     var ids = Object.keys(state.adv.sel || {}), F = bulkFields(), f = F[0];
@@ -908,7 +922,7 @@
     H.modal(H.dialogHead('Change ' + ids.length + (ids.length === 1 ? ' person' : ' people'), 'The same change for everyone you ticked. You can undo it straight after.') + '<div class="dlg-body">' +
       '<div class="two"><label class="field req">What to change<select id="bk-f">' + F.map(function (x) { return '<option value="' + x.key + '">' + esc(x.label) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field req" id="bk-v-f">New value' + valueBox(f) + '</label></div>' +
-      '<p class="hint" id="bk-note">' + (f.adults ? 'Children are left out: they have no marital status.' : '') + '</p>' +
+      '<p class="hint" id="bk-note">' + esc(f.note || '') + '</p>' +
       '<details><summary class="small">Who will change (' + ids.length + ')</summary><p class="small muted" style="margin:6px 0 0">' + esc(ids.map(function (id) { return H.name(S.get('people', id)); }).join(', ')) + '</p></details>' +
       '<p id="bk-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:bulksave">Change ' + ids.length + (ids.length === 1 ? ' person' : ' people') + '</button></div>', 'Change many people');
@@ -916,7 +930,7 @@
     fs.addEventListener('change', function () {
       var fd = F.filter(function (x) { return x.key === fs.value; })[0], box = document.getElementById('bk-v-f');
       box.innerHTML = 'New value' + valueBox(fd); box.classList.toggle('req', !fd.blank);
-      document.getElementById('bk-note').textContent = fd.adults ? 'Children are left out: they have no marital status.' : '';
+      document.getElementById('bk-note').textContent = fd.note || '';
       H.markRequired();
     });
     H.markRequired();
@@ -1478,30 +1492,37 @@
         if (!canBulk()) return;
         var fd = bulkFields().filter(function (x) { return x.key === document.getElementById('bk-f').value; })[0], v = document.getElementById('bk-v').value, err = document.getElementById('bk-err');
         if (!v && !fd.blank) { err.textContent = 'Choose the new value.'; err.hidden = false; return; }
-        var ids = Object.keys(state.adv.sel || {}), items = [], skipped = 0;
+        var ids = Object.keys(state.adv.sel || {}), items = [], skipped = {}, made = [];
         if (!H.confirmBtn(el, 'Click again to change ' + ids.length + (ids.length === 1 ? ' person' : ' people'))) return;
-        ids.forEach(function (id) {
-          var p = S.get('people', id); if (!p) return;
-          if (fd.adults && p.familyRole === 'child') { skipped++; return; }
-          if (fd.key === 'category' && (deceased(p) || p.category === 'Deceased')) { skipped++; return; }   // a death is undone on their own page, not here
-          if ((p[fd.key] || '') === v) return;
-          items.push({ id: id, had: p.hasOwnProperty(fd.key), before: p[fd.key] });
-          var q = JSON.parse(JSON.stringify(p)); if (v) q[fd.key] = v; else delete q[fd.key];
-          S.put('people', q, 'Changed ' + fd.label.toLowerCase() + ' of ' + H.name(q) + ' to ' + (v || 'nothing') + ' (changing many people at once)');
+        H.closeModal();
+        H.busy('Changing ' + ids.length + (ids.length === 1 ? ' person' : ' people') + '…', function () {
+          ids.forEach(function (id) {
+            var p = S.get('people', id); if (!p) return;
+            var why = fd.skip && fd.skip(p); if (why) { skipped[why] = (skipped[why] || 0) + 1; return; }
+            var before = {}; fd.keys.forEach(function (k) { before[k] = p.hasOwnProperty(k) ? { v: p[k] } : null; });
+            var q = JSON.parse(JSON.stringify(p)); fd.set(q, v, made);
+            if (fd.keys.every(function (k) { return JSON.stringify(q[k]) === JSON.stringify(p[k]); })) return;   // nothing to change
+            items.push({ id: id, before: before });
+            S.put('people', q, 'Changed ' + fd.label.toLowerCase() + ' of ' + H.name(q) + ' to ' + (v || 'nothing') + ' (changing many people at once)');
+          });
+          S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (Advanced search)' + (made.length ? '; ' + made.length + ' households created' : ''), 'people');
+          state.bulkUndo = { key: fd.key, keys: fd.keys, label: fd.label, value: v, items: items, skipped: skipped, made: made };
+          state.adv.sel = {}; H.render(); H.toast(items.length + (items.length === 1 ? ' person' : ' people') + ' changed');
         });
-        S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (Advanced search)', 'people');
-        state.bulkUndo = { key: fd.key, label: fd.label, value: v, items: items, skipped: skipped };
-        state.adv.sel = {}; H.closeModal(); H.render(); H.toast(items.length + (items.length === 1 ? ' person' : ' people') + ' changed');
       },
       bulkundo: function () {
         var u = state.bulkUndo; if (!u || !canBulk()) return;
-        u.items.forEach(function (it) {
-          var p = S.get('people', it.id); if (!p) return;
-          var q = JSON.parse(JSON.stringify(p)); if (it.had) q[u.key] = it.before; else delete q[u.key];
-          S.put('people', q, 'Undid: ' + u.label.toLowerCase() + ' of ' + H.name(q) + ' back to ' + (it.had ? it.before : 'nothing'));
+        H.busy('Undoing…', function () {
+          u.items.forEach(function (it) {
+            var p = S.get('people', it.id); if (!p) return;
+            var q = JSON.parse(JSON.stringify(p));
+            u.keys.forEach(function (k) { if (it.before[k]) q[k] = it.before[k].v; else delete q[k]; });
+            S.put('people', q, 'Undid: ' + u.label.toLowerCase() + ' of ' + H.name(q));
+          });
+          (u.made || []).forEach(function (fid) { if (!S.find('people', function (p) { return p.familyId === fid || (p.householdIds || []).indexOf(fid) >= 0; }).length) S.remove('families', fid); });
+          S.audit('Undid changing ' + u.label.toLowerCase() + ' for ' + u.items.length + ' people', 'people');
+          state.bulkUndo = null; H.render(); H.toast('Undone');
         });
-        S.audit('Undid changing ' + u.label.toLowerCase() + ' for ' + u.items.length + ' people', 'people');
-        state.bulkUndo = null; H.render(); H.toast('Undone');
       },
       savevolunteer: function (el) {
         var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err');

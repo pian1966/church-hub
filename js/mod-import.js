@@ -9,7 +9,7 @@
   function photoNote() {
     if (!pics || !pics.todo) return '';
     return '<div class="note ' + (pics.running ? 'info' : 'ok') + '" id="im-pics" role="status">' + (pics.running
-      ? 'Bringing in photos from Elvanto: ' + (pics.done + pics.failed) + ' of ' + pics.todo + '. Please keep this page open.'
+      ? '<svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="19" y="4" width="10" height="40" rx="2.5"/><rect x="8" y="14" width="32" height="10" rx="2.5"/></svg>Bringing in photos from Elvanto: ' + (pics.done + pics.failed) + ' of ' + pics.todo + '. Please keep this page open.'
       : '<b>Photos:</b> ' + pics.done + ' brought in from Elvanto' + (pics.failed ? ', ' + pics.failed + ' couldn’t be downloaded (they can be added by hand on each person’s page)' : '') + '.') + '</div>';
   }
   function fetchPhotos(queue) {
@@ -230,7 +230,7 @@
       document.querySelectorAll('.im-cat').forEach(function (s) { s.addEventListener('change', function () { st.cats[s.dataset.c] = s.value; }); });
     },
     actions: {
-      lgo: function (el) { if (!H.confirmBtn(el, 'Click again to import')) return; applyLeaveImport(); },
+      lgo: function (el) { if (!H.confirmBtn(el, 'Click again to import')) return; H.busy('Importing from Leave Manager…', applyLeaveImport); },
       lagain: function () { lst = { tables: null, files: [], choice: {}, opt: { settings: true, details: true }, done: null, busy: false }; H.render(); },
       lsample: function () {
         var names = ['Staff', 'Requests', 'Adjustments', 'Categories', 'Leave Types', 'School Terms', 'Public Holidays', 'Settings'];
@@ -249,6 +249,7 @@
       again: function () { st = { rows: null, head: null, map: {}, fileName: '', done: null, cats: {} }; H.render(); },
       go: function (el) {
         if (!H.confirmBtn(el, 'Click again to import')) return;
+        H.busy('Importing people from Elvanto…', function () {
         var r = recs(), pl = E.plan(r, S.list('people')), famIds = {}, ids = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0, links: 0, ids: 0, notes: 0, receive: 0, serving: 0, unknown: {} };
         // Volunteering needs the church's departments and positions: add any that are missing first
         if (r.some(function (o) { return o.positions && o.positions.length; }) && window.Serving) {
@@ -297,12 +298,14 @@
         out.unknown = Object.keys(out.unknown);
         st.done = out; st.rows = null; pics = null; H.render(); H.toast('Import finished');
         if (photoQueue.length) { fetchPhotos(photoQueue); H.render(); }
+        });
       },
       unimport: function (el) {
         var me = H.user(), all = fromElvanto();
         var keep = all.filter(function (p) { return p.id === me.id || p.staff || ['admin', 'pastor', 'rosters', 'kids'].indexOf(p.appRole) >= 0; });
         var go = all.filter(function (p) { return keep.indexOf(p) < 0; });
         if (!H.confirmBtn(el, 'Click again: remove ' + go.length + ' people')) return;
+        H.busy('Removing ' + go.length + ' people…', function () {
         go.forEach(function (p) {
           S.find('consents', function (c) { return c.personId === p.id; }).forEach(function (c) { S.remove('consents', c.id); });
           ['skills', 'blockouts', 'serveOffers'].forEach(function (c) { S.find(c, function (x) { return x.personId === p.id; }).forEach(function (x) { S.remove(c, x.id); }); });
@@ -317,6 +320,7 @@
         S.find('families', function (f) { return f.elvantoId && !S.find('people', function (p) { return p.familyId === f.id; }).length; }).forEach(function (f) { S.remove('families', f.id); });
         S.audit('Removed ' + go.length + ' people brought in from Elvanto, to import again' + (keep.length ? ' (kept ' + keep.length + ' with app access or staff details)' : ''), 'people');
         H.render(); H.toast(go.length + ' removed' + (keep.length ? ', ' + keep.length + ' kept' : '') + ' – now import the file again');
+        });
       }
     }
   });

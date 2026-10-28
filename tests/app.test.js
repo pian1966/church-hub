@@ -387,6 +387,20 @@ function serve() {
   check((await s.page.textContent('#pf-err')).includes('adult or a child'), '“in the household as” must be chosen');
   await finish(s);
 
+  console.log('Checking before leaving:');
+  {
+    const asks = async (sess) => { let seen = ''; sess.page.once('dialog', d => { seen = d.type(); d.dismiss().catch(() => {}); });
+      await sess.page.click('h1'); await sess.page.close({ runBeforeUnload: true }); await new Promise(r => setTimeout(r, 400)); return seen === 'beforeunload'; };
+    s = await session('linda.pillay@example.com', seedDocs()); check(await asks(s), 'signed in on a computer: closing the tab asks first'); await s.close();
+    s = await session('', seedDocs()); check(!(await asks(s)), 'on the sign-in screen it doesn’t ask'); await s.close();
+    s = await session('tim.jacobs@example.com', seedDocs(), { app: {} });
+    check(!(await asks(s)), 'in the Android app the browser question is off (the app asks itself)');
+    s = await session('tim.jacobs@example.com', seedDocs(), { app: {} });
+    const words = await s.page.evaluate(() => { I18n.set('af'); return JSON.parse(window.churchHubLeaveText()); });
+    check(words[0] === 'Verlaat Church Hub?' && words[3] === 'Maak Church Hub toe', 'the Android question is in the chosen language');
+    await s.close();
+  }
+
   console.log('Duplicates (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
   check(!!(await s.page.$('a[href="#/people/duplicates"]')), 'People has a Find duplicates button for Administrators');

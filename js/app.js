@@ -170,7 +170,7 @@ var Hub = (function () {
   function renderLive() {
     var st = live, html;
     if (st.stage === 'loading') html = '<h1>Church Hub</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
-    else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="location.reload()">' + T('Try again') + '</button>';
+    else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
     else if (st.stage === 'linkSent' && inApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       '<ol class="steps"><li>' + T('Open the email on this phone.') + '</li><li>' + T('Press and hold the sign-in link, then choose Copy link.') + '</li><li>' + T('Come back here, paste it in the box and tap Sign in.') + '</li></ol>' +
       '<form id="si-form" novalidate><label class="field">' + T('Sign-in link') + '<input id="si-link" type="url" inputmode="url" autocomplete="off" placeholder="https://…"></label><p id="si-err" class="note bad" hidden></p>' +
@@ -363,6 +363,25 @@ var Hub = (function () {
 
   /** The Android back button: close an open window first (true = handled); otherwise the app goes back a page. */
   window.churchHubBack = function () { if (document.querySelector('#modal .overlay')) { closeModal(); return true; } return false; };
+  /** The Android app asks "Leave Church Hub?" in the chosen language before the back button closes it. */
+  window.churchHubReload = function () { leaveOk = Date.now(); location.reload(); };
+  window.churchHubLeaveText = function () { return JSON.stringify([T('Leave Church Hub?'), T('Are you sure you want to close Church Hub?'), T('Stay'), T('Close Church Hub')]); };
+
+  /* ---------- On a computer or phone browser: check before closing the tab or window while signed in ---------- */
+  // Browsers show their own wording ("Leave site?"); a page can't change it. Not in the Android app, which asks itself.
+  // Email, phone and WhatsApp links open another app without leaving, so they don't ask.
+  var leaveOk = 0;
+  function watchLeaving() {
+    if (inApp()) return;
+    document.addEventListener('click', function (ev) {
+      var a = ev.target.closest && ev.target.closest('a[href]');
+      if (a && /^(mailto|tel|sms|whatsapp):/i.test(a.getAttribute('href') || '')) leaveOk = Date.now();
+    }, true);
+    window.addEventListener('beforeunload', function (ev) {
+      if (!user || Date.now() - leaveOk < 2000) return;
+      ev.preventDefault(); ev.returnValue = '';
+    });
+  }
 
   function start() {
     root = document.getElementById('app');
@@ -370,6 +389,7 @@ var Hub = (function () {
     I18n.set(Store.pref('lang') || 'en');
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
+    watchLeaving();
     document.addEventListener('submit', function (ev) {      // Enter in a form = its button
       ev.preventDefault();
       if (ev.submitter && ev.submitter.dataset && ev.submitter.dataset.act) return;    // the button's own click already ran

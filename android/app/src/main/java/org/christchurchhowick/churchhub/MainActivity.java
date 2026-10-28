@@ -1,6 +1,7 @@
 package org.christchurchhowick.churchhub;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Intent;
 import android.net.Uri;
@@ -30,7 +31,9 @@ import androidx.credentials.exceptions.NoCredentialException;
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONTokener;
 
 /**
  * Church Hub for Android.
@@ -108,7 +111,28 @@ public class MainActivity extends Activity {
         web.evaluateJavascript("(window.churchHubBack && window.churchHubBack()) ? 'y' : 'n'", result -> {
             if (result != null && result.contains("y")) return;
             if (web.canGoBack()) web.goBack();
-            else MainActivity.super.onBackPressed();
+            else confirmLeave();
+        });
+    }
+
+    /** Before the back button closes the app: "Leave Church Hub?", in the language chosen in Church Hub (js/app.js). */
+    private void confirmLeave() {
+        web.evaluateJavascript("window.churchHubLeaveText ? window.churchHubLeaveText() : ''", result -> {
+            String[] t = { "Leave Church Hub?", "Are you sure you want to close Church Hub?", "Stay", "Close Church Hub" };
+            try {
+                Object v = new JSONTokener(result).nextValue();
+                if (v instanceof String && !((String) v).isEmpty()) {
+                    JSONArray a = new JSONArray((String) v);
+                    for (int i = 0; i < t.length && i < a.length(); i++) t[i] = a.getString(i);
+                }
+            } catch (Exception ignored) { /* page not loaded: use English */ }
+            if (isFinishing()) return;
+            new AlertDialog.Builder(this)
+                .setTitle(t[0])
+                .setMessage(t[1])
+                .setNegativeButton(t[2], null)
+                .setPositiveButton(t[3], (dialog, which) -> finish())
+                .show();
         });
     }
 

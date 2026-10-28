@@ -99,6 +99,7 @@ The serving offers need the newest rules, so repeat **[FIREBASE-SETUP.md](FIREBA
 
 - **Do people need to update the app?** Almost never – new features come through the website. If the `android`
   folder changes, GitHub builds a new version; installing it over the old one keeps people signed in.
+  Version history worth an update: **28 Oct 2026** – the back button asks "Leave Church Hub?" before closing the app.
 - **Is the key restricted to the website (FIREBASE-SETUP step 8) a problem?** No – the app opens the church's
   website address, so the restriction still matches.
 - **Can we put it in the Google Play Store later?** Yes: the same app can be uploaded with a Google Play developer

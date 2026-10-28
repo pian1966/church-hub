@@ -105,7 +105,7 @@
     if (!canBasic()) filters = [['all', T('Directory')]];
     var shown = list.filter(function (p) {
       if (state.f === 'child' ? p.familyRole !== 'child' : (state.f !== 'all' && p.category !== state.f)) return false;
-      return !q || (H.name(p) + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
+      return !q || (H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : T('People who agreed to be in the church directory.')) + '</p></div>' +
       '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a><button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
@@ -297,7 +297,7 @@
     var surname = function (f) { var n = H.familyName(f).split(' '); return n[n.length - 1] + ' ' + n.join(' '); };
     var fq = state.fq.trim().toLowerCase();
     var fams = S.list('families').filter(function (f) {
-      return !fq || (H.familyName(f) + ' ' + members(f.id).map(function (m) { return H.name(m); }).join(' ')).toLowerCase().indexOf(fq) >= 0;
+      return !fq || (H.familyName(f) + ' ' + members(f.id).map(function (m) { return H.names(m).join(' | '); }).join(' | ')).toLowerCase().indexOf(fq) >= 0;
     }).sort(function (a, b) { return surname(a).localeCompare(surname(b)); });
     return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Households</h1><p class="lead">A household is the people who live together – what Elvanto calls a “family”. Each is named after its adults (e.g. “Tim & Clare Jacobs”). A child of separated parents can be in two households. Parents, guardians and who may collect a child are recorded on the child’s profile.</p></div>' +
       '<button class="btn primary" data-act="people:newfam">' + H.icon(H.ICON.plus, 18) + 'New household</button></div>' +
@@ -337,9 +337,9 @@
   function searchFields() {
     var all = canSeeAll(), roster = H.can('*') || H.can('rosters.view'), kids = canChildren(), birth = all || H.can('children');
     var serve = roster ? servingInfo() : {}, sv = function (p) { return serve[p.id] || { pos: [], teams: [], last: '', next: '' }; };
-    var F = [], add = function (ok, group, key, label, type, get, options) { if (ok) F.push({ group: group, key: key, label: label, type: type, get: get, options: options }); };
-    add(true, 'Name and contact', 'name', 'Name', 'text', function (p) { return H.name(p); });
-    add(true, 'Name and contact', 'firstName', 'First name', 'text', function (p) { return p.firstName; });
+    var F = [], add = function (ok, group, key, label, type, get, options, alts) { if (ok) F.push({ group: group, key: key, label: label, type: type, get: get, options: options, alts: alts }); };
+    add(true, 'Name and contact', 'name', 'Name', 'text', function (p) { return H.name(p); }, null, function (p) { return H.names(p); });   // also finds Douglas when known as Doug
+    add(true, 'Name and contact', 'firstName', 'First name', 'text', function (p) { return p.firstName; }, null, function (p) { return p.preferredName ? [p.preferredName] : []; });
     add(true, 'Name and contact', 'lastName', 'Last name', 'text', function (p) { return p.lastName; });
     add(true, 'Name and contact', 'preferredName', 'Preferred name', 'text', function (p) { return p.preferredName; });
     add(true, 'Name and contact', 'email', 'Email', 'text', function (p) { return p.email; });
@@ -383,7 +383,7 @@
     var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; });
     var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted'; }) : visiblePeople();
     if (!usesStatus) people = people.filter(function (p) { return p.active !== false; });
-    var recs = people.map(function (p) { var v = {}; F.forEach(function (f) { v[f.key] = f.get(p); }); return { id: p.id, p: p, values: v }; });
+    var recs = people.map(function (p) { var v = {}, al = {}; F.forEach(function (f) { v[f.key] = f.get(p); if (f.alts) al[f.key] = f.alts(p); }); return { id: p.id, p: p, values: v, alts: al }; });
     var r = PS.run(recs, A, byKey, H.today());
     if (r.error) return r;
     var hit = {}; r.ids.forEach(function (id) { hit[id] = 1; });

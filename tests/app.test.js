@@ -265,6 +265,14 @@ function serve() {
   docs = await s.docsNow(); check(JSON.stringify(docs['people/p16'].householdIds) === '["f3"]', 'a child can be added to another household');
   await s.go('people'); await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(100); t = await s.text();
   check(t.includes('Tim Jacobs') && t.includes('Clare Jacobs') && t.includes('Liam Jacobs'), 'People search finds everyone in a family by the family’s name');
+  await s.page.evaluate(() => { Store.get('people', 'p14').preferredName = 'TJ'; });   // Tim Jacobs, known as TJ
+  await s.go('people'); await s.page.fill('#pp-q', 'tim jacobs'); await s.page.waitForTimeout(100); const t1 = await s.text();
+  await s.page.fill('#pp-q', 'tj'); await s.page.waitForTimeout(100); const t2 = await s.text();
+  check(t1.includes('TJ Jacobs') && t2.includes('TJ Jacobs'), 'People search finds someone by first name and by what they are known as');
+  await s.go('people/families'); await s.page.fill('#fm-q', 'Tim'); await s.page.waitForTimeout(100);
+  check((await s.text()).includes('Jacobs'), 'Households search also finds someone by first name when they have a known-as name');
+  await s.page.evaluate(() => { Store.get('people', 'p14').preferredName = ''; });
+  await s.go('people');
   await s.page.fill('#pp-q', 'musa'); await s.page.waitForTimeout(100); t = await s.text();
   check(t.includes('Noah Mokoena'), 'searching a parent’s name also finds the children who live with them');
   await s.go('people/families'); await s.page.fill('#fm-q', 'Liam'); await s.page.waitForTimeout(100); t = await s.text();

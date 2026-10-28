@@ -182,6 +182,7 @@ var PeopleSearch = (function () {
 
   /**
    * Run a search. search: { match: 'all'|'any'|'logic', logic, filters }. fields: { key: { type } }.
+   * A record may give other ways to write a value in alts: { key: [...] } (e.g. what someone is known as).
    * Returns { ids } (matching record ids, in the records' order) or { error }.
    */
   function run(records, search, fields, today) {
@@ -191,7 +192,13 @@ var PeopleSearch = (function () {
     if (search.match === 'logic') { var pl = parseLogic(search.logic, fs.length); if (pl.error) return { error: pl.error }; tree = pl.tree; }
     var ids = (records || []).filter(function (r) {
       if (!fs.length) return true;
-      var hits = fs.map(function (f) { return test(fields[f.field].type, f, r.values[f.field], today); });
+      var hits = fs.map(function (f) {
+        var t = fields[f.field].type, one = test(t, f, r.values[f.field], today), alts = (r.alts && r.alts[f.field]) || [];
+        if (!alts.length || f.op === 'empty' || f.op === 'nempty') return one;
+        // Other ways to write the same value (e.g. "known as"): any of them may match; "does not" means none of them does
+        var each = alts.map(function (a) { return test(t, f, a, today); });
+        return f.op === 'ne' || f.op === 'nhas' ? one && each.every(Boolean) : one || each.some(Boolean);
+      });
       if (tree) return evalTree(tree, hits);
       return search.match === 'any' ? hits.some(Boolean) : hits.every(Boolean);
     }).map(function (r) { return r.id; });

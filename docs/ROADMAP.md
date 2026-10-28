@@ -14,6 +14,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ Firebase connection built (session of 24 Oct 2026):
   - `store.js` saves to Firestore when `js/firebase-config.js` is filled in; the demo still works (and stays at `?demo`)
   - sign-in with Google or an email link; access list by email, managed from People → App access; first-Administrator setup screen
+  - Fixed (28 Oct 2026): name searches (People, Households, advanced search) also check the first name and "known as", so Douglas finds Doug Pike
   - Fixed (28 Oct 2026): an email link opened in a different browser (e.g. tapped in Gmail) showed the plain sign-in screen; it now asks "Confirm your email"
   - security rules (`firestore.rules`) per role: medical notes Children's ministry only, pastoral notes Pastors only (Administrators can't read either), members only their own information and the opt-in directory, staff leave private (others see dates only)
   - Children's ministry can now edit medical notes (needs guardian consent first); "No access" option for people who shouldn't sign in

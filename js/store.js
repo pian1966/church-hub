@@ -171,9 +171,16 @@ var Store = (function () {
         auth = fb.auth(); fs = fb.firestore();
         if (auth.isSignInWithEmailLink(location.href)) {
           var email = ''; try { email = localStorage.getItem(EMAIL_KEY) || ''; } catch (x) {}
-          if (!email) onState({ stage: 'needEmail' }); else finishEmailLink(email);
+          // Opened somewhere that doesn't remember the address (e.g. Gmail's own browser): ask for it.
+          if (!email) { linkStage = 'needEmail'; onState({ stage: 'needEmail' }); } else finishEmailLink(email);
         }
-        auth.onAuthStateChanged(function (u) { stop(); if (u) startSession(u); else onState({ stage: 'signedOut' }); });
+        // "Not signed in yet" must not replace the "Confirm your email" question, or the screen of a link still being checked.
+        auth.onAuthStateChanged(function (u) {
+          stop();
+          if (u) startSession(u);
+          else if (linkStage === 'needEmail') onState({ stage: 'needEmail' });
+          else if (!linkStage) onState({ stage: 'signedOut' });
+        });
       });
     }
     function google() {
@@ -207,11 +214,16 @@ var Store = (function () {
         .then(function () { try { localStorage.setItem(EMAIL_KEY, email); } catch (x) {} });
     }
     function pendingEmail() { try { return localStorage.getItem(EMAIL_KEY) || ''; } catch (x) { return ''; } }
+    var linkStage = '';   // '' | 'needEmail' (waiting for them to type it) | 'checking' (sign-in link being checked)
     function finishEmailLink(email, link) {
+      linkStage = 'checking';
       return auth.signInWithEmailLink(email, link || location.href).then(function () {
+        linkStage = '';
         try { localStorage.removeItem(EMAIL_KEY); } catch (x) {}
         history.replaceState(null, '', location.pathname + location.hash);
       }).catch(function (e) {
+        linkStage = '';
+        history.replaceState(null, '', location.pathname + location.hash);
         onState({ stage: 'signedOut', message: e && e.code === 'auth/invalid-action-code' ? 'That sign-in link has expired or was already used. Ask for a new one.' : 'That sign-in link didn’t work. Please ask for a new one.' });
       });
     }

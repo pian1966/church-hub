@@ -657,6 +657,15 @@ function serve() {
   check((await s.page.textContent('.signin-card')).includes('Sign in with Google'), 'signing out returns to the sign-in screen');
   await finish(s);
 
+  console.log('Email link opened in a different browser (e.g. tapped in Gmail):');
+  s = await session('', seedDocs());
+  await s.page.goto(BASE + '?apiKey=x&mode=signIn&oobCode=abc'); await s.page.waitForSelector('.signin-card h1'); await s.page.waitForTimeout(300);
+  check((await s.page.textContent('.signin-card')).includes('Confirm your email'), 'asks them to confirm their email (and the question stays on screen)');
+  await s.page.evaluate(() => { window.__fake.nextUser = { email: 'tim.jacobs@example.com', emailVerified: true }; });
+  await s.page.fill('#si-email', 'tim.jacobs@example.com'); await s.page.click('[data-act="hub:finishlink"]'); await s.page.waitForSelector('.app', { timeout: 5000 }).catch(() => {});
+  check(!!(await s.page.$('.app')) && await s.page.evaluate(() => window.__fake.linkSignIns[0][0] === 'tim.jacobs@example.com'), 'typing the email signs them in');
+  await finish(s);
+
   console.log('In the Android app:');
   s = await session('', seedDocs(), { app: { clientId: 'web-client.apps.googleusercontent.com' } });
   await s.page.evaluate(() => { window.__fake.nextUser = { email: 'tim.jacobs@example.com', emailVerified: true }; });

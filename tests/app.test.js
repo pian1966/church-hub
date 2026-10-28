@@ -417,10 +417,10 @@ function serve() {
   want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.category === 'Church Partner' && p.familyRole !== 'child').length);
   check((await s.page.$$('.adv-table tbody tr')).length === want, 'your own logic: 1 AND NOT 2');
   await s.page.click('[data-act="people:sort"][data-k="first"]');
-  let names = await s.page.$$eval('.adv-table tbody td:first-child a', as => as.map(a => a.textContent));
+  let names = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.textContent));
   check(names.length > 1 && names.every((n, i) => !i || names[i - 1].localeCompare(n, undefined, { sensitivity: 'base' }) <= 0) && !names[0].includes(','), 'Advanced search results can be sorted by first name: ' + names.slice(0, 3).join(' | '));
   await s.page.click('[data-act="people:sort"][data-k="last"]');
-  names = await s.page.$$eval('.adv-table tbody td:first-child a', as => as.map(a => a.textContent));
+  names = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.textContent));
   check(names.every(n => n.includes(', ')), 'and by surname, shown as “Surname, Name”');
   await s.page.fill('#adv-logic', '1 AND 3'); await s.page.click('[data-act="people:advrun"]');
   check((await s.text()).includes('There is no filter 3'), 'a mistake in the logic is explained in plain English');
@@ -435,10 +435,25 @@ function serve() {
   await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.selectOption('.adv-field[data-i="0"]', 'diedYear');
   await s.page.fill('input.adv-v[data-i="0"]', '2019'); await s.page.click('[data-act="people:advrun"]');
-  names = await s.page.$$eval('.adv-table tbody td:first-child a', as => as.map(a => a.textContent));
+  names = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.textContent));
   const p05 = await s.page.evaluate(() => Store.get('people', 'p05').lastName);
   check(names.length === 1 && names[0].includes(p05), 'Advanced search: Year of death finds who died that year: ' + names.join(' | '));
   await s.page.evaluate(() => { const p = Store.get('people', 'p05'); delete p.deceasedAt; p.active = true; p.category = 'Staff'; });
+  // Changing many people at once
+  await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
+  await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]');
+  check(await s.page.isDisabled('#adv-bulk'), 'Change selected… waits until someone is ticked');
+  await s.page.check('#adv-selall');
+  const ticked = await s.page.$$eval('.adv-sel:checked', b => b.map(x => x.value));
+  check(ticked.length >= 3 && (await s.page.textContent('#adv-bulk')).includes(ticked.length + ' selected'), 'tick everyone found: ' + ticked.length);
+  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'maritalStatus'); await s.page.selectOption('#bk-v', 'Widowed');
+  await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
+  const kidsT = await s.page.evaluate(ids => ids.filter(id => Store.get('people', id).familyRole === 'child'), ticked);
+  check(ticked.filter(id => !kidsT.includes(id)).every(id => docs['details/' + id].maritalStatus === 'Widowed') && kidsT.every(id => !docs['details/' + id].maritalStatus) && kidsT.length > 0,
+    'one change for everyone ticked (marital status → Widowed); children are left out');
+  check((await s.text()).includes('Changed Marital status to Widowed') && Object.keys(docs).some(k => k.startsWith('audit/') && /at once/.test(docs[k].action)), 'it says what changed and it’s in the history log');
+  await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p14'].maritalStatus === 'Married' && docs['details/p15'].maritalStatus === 'Married', 'Undo puts everyone back');
   await s.go('settings');
   const pastors = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.appRole === 'pastor' && p.familyRole !== 'child').map(p => p.lastName));
   const tip = await s.page.getAttribute('.who[data-role="pastor"] summary', 'title');
@@ -732,6 +747,7 @@ function serve() {
   check(t.includes('Church office notes') && !t.includes('ID number'), 'Pastors see church office notes but not ID numbers');
   await s.page.click('[data-act="people:edit"]'); check(!(await s.page.$('#pf-late')), 'only Administrators change who someone was married to'); await s.page.click('[data-act="hub:close"]');
   await s.go('people'); check(!(await s.page.$('a[href="#/people/late"]')), 'Late spouses is for Administrators');
+  await s.go('people/search'); await s.page.click('[data-act="people:advrun"]'); check(!(await s.page.$('.adv-sel')), 'only Administrators change many people at once');
   await s.go('people/p/p27'); await s.page.click('[data-act="people:consent"]');
   for (const pur of ['Church records', 'Church directory']) await s.page.check(`.cf-p[data-p="${pur}"]`);
   await s.page.click('[data-act="people:saveconsent"]'); await s.settle();

@@ -301,3 +301,6 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .field-l { display: block; font-weight: 600; font-size: 14px; margin: 0 0 6px; padding: 0; }
 fieldset { border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
 .vol-dept { border: 1px solid var(--line, #E7E1DA) !important; }
+/* Advanced search: tick boxes for changing many people at once */
+.adv-table th.sel, .adv-table td.sel { width: 36px; text-align: center; padding-left: 6px; padding-right: 6px; }
+.adv-table td.sel input, .adv-table th.sel input { width: 18px; height: 18px; cursor: pointer; }

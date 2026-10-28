@@ -343,6 +343,16 @@ function serve() {
   check(await s.page.$eval('a[href^="mailto:"]', a => a.target === '_blank'), 'email links open in a new tab or window');
   await finish(s);
 
+  console.log('Administrator: leave from a staff member’s page:');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p06');
+  await s.page.click('.page-head a.btn[href="#/leave/staff/p06"]'); await s.page.waitForTimeout(100);
+  check((await s.page.evaluate(() => location.hash)) === '#/leave/staff/p06' && (await s.text()).includes('Lerato'), 'a staff member’s page has a Leave button that opens their leave');
+  await s.go('people/p/p14'); check(!(await s.page.$('.page-head a.btn[href^="#/leave/"]')), 'no Leave button for someone who isn’t staff');
+  await s.page.evaluate(() => { Store.get('people', 'p14').category = 'Staff'; }); await s.go('people/p/p15'); await s.go('people/p/p14');
+  await s.page.click('.page-head [data-focus="pf-staff"]');
+  check(!!(await s.page.$('#pf-staff')) && await s.page.evaluate(() => document.activeElement && document.activeElement.id === 'pf-staff'), 'marked Staff but not in Leave yet: Set up leave opens the staff details');
+  await finish(s);
+
   console.log('Adding a person:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
   await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Test'); await s.page.fill('#pf-last', 'Person');

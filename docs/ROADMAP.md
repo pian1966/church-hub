@@ -14,8 +14,8 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ Firebase connection built (session of 24 Oct 2026):
   - `store.js` saves to Firestore when `js/firebase-config.js` is filled in; the demo still works (and stays at `?demo`)
   - sign-in with Google or an email link; access list by email, managed from People → App access; first-Administrator setup screen
-  - 28 Oct 2026: duplicates – People → Find duplicates (Administrators), a warning while adding or editing someone, and very likely duplicates can't be saved (only an Administrator can confirm "a different person")
-  - 28 Oct 2026: couples (spouses and partners) worked out from each household; Households → "Couples to check" copies a spouse's wedding anniversary (partners get none) and records a missing marital status, with "Not a couple"
+  - 28 Oct 2026: duplicates – People → Find duplicates (Administrators and Pastors) with "Same person: fix…" to merge two records, a warning while adding or editing someone, and very likely duplicates can't be saved unless confirmed as a different person
+  - 28 Oct 2026: couples (spouses and partners) worked out from each household; Households → "Couples to confirm" (Administrators and Pastors) confirms them, copies a spouse's wedding anniversary (partners get none) and records a missing marital status; "Not a couple" to dismiss
   - 28 Oct 2026: Administrators get a Leave button on a staff member's page (or "Set up leave" if they're marked Staff but not yet in Leave)
   - Fixed (28 Oct 2026): name searches (People, Households, advanced search) also check the first name and "known as", so Douglas finds Doug Pike
   - Fixed (28 Oct 2026): an email link opened in a different browser (e.g. tapped in Gmail) showed the plain sign-in screen; it now asks "Confirm your email"

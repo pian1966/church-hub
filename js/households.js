@@ -69,8 +69,9 @@ var Households = (function () {
    *    but then only with the same surname or the same anniversary.
    *  - Scored: same anniversary date +4, same surname +2, both with the status +1, different anniversary dates -2,
    *    more than 25 years apart in age -4 (a parent and a married son or daughter). Best pairs first, each person once.
-   *  - A pair the church said is "not a couple" (families.notCouples: ["id1|id2"]) is never suggested again.
-   * Returns [{ familyId, a, b, kind: 'spouse'|'partner', sure, copy: { from, to, date } | null, differ, mark: { id, status } | null }]:
+   *  - A pair the church said is "not a couple" (families.notCouples: ["id1|id2"]) is never suggested again;
+   *    a pair a person confirmed (families.couples: ["id1|id2"]) is shown as certain.
+   * Returns [{ familyId, a, b, kind: 'spouse'|'partner', sure, confirmed, copy: { from, to, date } | null, differ, mark: { id, status } | null }]:
    *   sure - the only two adults in the household who could be a couple;
    *   copy - spouses only: one has a wedding anniversary and the other doesn't (partners have no anniversary);
    *   differ - spouses who both have one, but different; mark - the other's marital status isn't recorded.
@@ -78,7 +79,7 @@ var Households = (function () {
   function couples(people, families) {
     var out = [], seen = {}, KIND = { Married: 'spouse', Partner: 'partner' };
     (families || []).forEach(function (f) {
-      var no = {}; (f.notCouples || []).forEach(function (k) { no[k] = 1; });
+      var no = {}, yes = {}; (f.notCouples || []).forEach(function (k) { no[k] = 1; }); (f.couples || []).forEach(function (k) { yes[k] = 1; });
       var adults = (people || []).filter(function (p) {
         return p.familyRole !== 'child' && p.active !== false && !p.deceasedAt && inHousehold(p, f.id) && !seen[p.id];
       });
@@ -93,7 +94,7 @@ var Households = (function () {
         var both = sa === status && sb === status;
         var sameName = !!a.lastName && (a.lastName || '').trim().toLowerCase() === (b.lastName || '').trim().toLowerCase();
         if (!both && !sameName && !(wa && wa === wb)) continue;
-        var score = (wa && wa === wb ? 4 : 0) + (sameName ? 2 : 0) + (both ? 1 : 0) - (wa && wb && wa !== wb ? 2 : 0);
+        var score = (wa && wa === wb ? 4 : 0) + (sameName ? 2 : 0) + (both ? 1 : 0) - (wa && wb && wa !== wb ? 2 : 0) + (yes[pairKey(a.id, b.id)] ? 20 : 0);
         var ya = yearOf(a.birthDate), yb = yearOf(b.birthDate);
         if (ya && yb && Math.abs(ya - yb) > 25) score -= 4;
         if (score > 0) pairs.push({ a: a, b: b, score: score, status: status, wa: wa, wb: wb });
@@ -104,7 +105,8 @@ var Households = (function () {
         if (used[x.a.id] || used[x.b.id]) return;
         used[x.a.id] = used[x.b.id] = seen[x.a.id] = seen[x.b.id] = 1;
         var other = x.a.maritalStatus !== x.status ? x.a : x.b.maritalStatus !== x.status ? x.b : null;
-        out.push({ familyId: f.id, a: x.a.id, b: x.b.id, kind: KIND[x.status], sure: able.length === 2 && adults.length === 2,
+        var ok = !!yes[pairKey(x.a.id, x.b.id)];
+        out.push({ familyId: f.id, a: x.a.id, b: x.b.id, kind: KIND[x.status], confirmed: ok, sure: ok || (able.length === 2 && adults.length === 2),
           copy: x.wa && !x.wb ? { from: x.a.id, to: x.b.id, date: x.wa } : x.wb && !x.wa ? { from: x.b.id, to: x.a.id, date: x.wb } : null,
           differ: !!(x.wa && x.wb && x.wa !== x.wb),
           mark: other ? { id: other.id, status: x.status } : null });
@@ -112,9 +114,9 @@ var Households = (function () {
     });
     return out;
   }
-  /** Couples with something to do: an anniversary to copy, dates that differ, or a marital status to record. */
+  /** Couples to check: not yet confirmed by a person, or with an anniversary to copy, dates that differ, or a marital status to record. */
   function couplesToCheck(people, families) {
-    return couples(people, families).filter(function (c) { return c.copy || c.differ || c.mark; });
+    return couples(people, families).filter(function (c) { return !c.confirmed || c.copy || c.differ || c.mark; });
   }
 
   return { RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,

@@ -75,7 +75,11 @@ console.log('Couples and wedding anniversaries');
   ok(find('brian', 'karen').kind === 'spouse', 'married couples are spouses');
   const F2 = F.map(f => f.id === 'h1' ? { id: 'h1', notCouples: [HS.pairKey('karen', 'brian')] } : f);
   ok(!HS.couples(P, F2).some(c => c.a === 'brian' || c.b === 'brian'), '“not a couple” is remembered');
-  ok(HS.couplesToCheck(P, F).every(c => c.copy || c.differ || c.mark) && !HS.couplesToCheck(P, F).some(c => c.a === 'son' || c.b === 'son'), 'to check: only couples with something to do');
+  ok(HS.couplesToCheck(P, F).some(c => c.a === 'son' || c.b === 'son'), 'to check: couples not yet confirmed, even with nothing to fix');
+  const F3 = F.map(f => f.id === 'h2' ? { id: 'h2', couples: [HS.pairKey('son', 'dil'), HS.pairKey('gpa', 'gma')] } : f);
+  const c3 = HS.couples(P, F3), sd = c3.find(c => [c.a, c.b].sort().join() === 'dil,son');
+  ok(sd.confirmed && sd.sure && !HS.couplesToCheck(P, F3).some(c => c.a === 'son' || c.b === 'son'), 'a confirmed couple is certain and drops off the list');
+  ok(HS.couplesToCheck(P, F3).some(c => [c.a, c.b].sort().join() === 'gma,gpa'), '…unless there’s still something to fix (Granny’s anniversary)');
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');

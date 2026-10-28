@@ -147,7 +147,7 @@ var Duplicates = (function () {
    */
   function find(people, ignore) {
     var skip = {}; (ignore || []).forEach(function (k) { skip[k] = 1; });
-    var list = (people || []).filter(function (p) { return p && p.firstName !== 'Deleted' && !p.deletedAt; });
+    var list = (people || []).filter(function (p) { return p && p.firstName !== 'Deleted' && !p.deletedAt && !p.mergedInto; });
     // Compare only people who share something cheap to check, so it stays fast with thousands of people.
     var buckets = {}, put = function (k, p) { if (k) (buckets[k] = buckets[k] || []).push(p); };
     list.forEach(function (p) {
@@ -181,12 +181,56 @@ var Duplicates = (function () {
    */
   function matches(person, people, ignore) {
     var skip = {}; (ignore || []).forEach(function (k) { skip[k] = 1; });
-    return (people || []).filter(function (q) { return q.id !== person.id && q.firstName !== 'Deleted' && !q.deletedAt && !(person.id && skip[pair(person.id, q.id)]); })
+    return (people || []).filter(function (q) { return q.id !== person.id && q.firstName !== 'Deleted' && !q.deletedAt && !q.mergedInto && !(person.id && skip[pair(person.id, q.id)]); })
       .map(function (q) { var c = compare(person, q); return { id: q.id, score: c.score, level: level(c.score), reasons: c.reasons }; })
       .filter(function (m) { return m.level; })
       .sort(function (x, y) { return y.score - x.score; });
   }
 
-  return { compare: compare, find: find, matches: matches, level: level, pair: pair, phone: phone, email: email, plain: plain };
+  /* ---------- fixing a duplicate: one record is kept, the other is retired ---------- */
+  // Never copied from the retired record: who it is, its history, access and status.
+  var KEEP_OWN = { id: 1, createdAt: 1, updatedAt: 1, active: 1, archivedAt: 1, deletedAt: 1, mergedInto: 1, appRole: 1, notSame: 1,
+    medical: 1, source: 1, householdIds: 1, familyId: 1, keyDates: 1, category: 1, firstName: 1 };
+  function blank(v) { return v == null || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).length); }
+  function show(v, k) { return k === 'mobile' ? phone(v) || String(v) : k === 'email' ? email(v) || String(v) : typeof v === 'object' ? JSON.stringify(v) : String(v).trim(); }
+  /**
+   * The kept record after a merge: its own details, with gaps filled from the retired one. Nothing it already has is overwritten.
+   * Returns { person, filled: [field], differs: [{ field, value }] } – differs lists what the retired record had that wasn't copied.
+   */
+  function mergeFields(keep, drop) {
+    var p = JSON.parse(JSON.stringify(keep)), filled = [], differs = [];
+    Object.keys(drop).forEach(function (k) {
+      if (KEEP_OWN[k] || blank(drop[k])) return;
+      if (blank(p[k])) { p[k] = JSON.parse(JSON.stringify(drop[k])); filled.push(k); }
+      else if (show(p[k], k).toLowerCase() !== show(drop[k], k).toLowerCase()) differs.push({ field: k, value: drop[k] });
+    });
+    // First names: Doug and Douglas become "Douglas", known as "Doug". Any other difference is only listed.
+    var fk = plain(keep.firstName), fd = plain(drop.firstName);
+    if (fd && fk && fd !== fk) {
+      var related = sameGroup(fk, fd) || fk.indexOf(fd) === 0 || fd.indexOf(fk) === 0;
+      if (related && !keep.preferredName) {
+        var long = fd.length > fk.length ? drop.firstName : keep.firstName, short = long === drop.firstName ? keep.firstName : drop.firstName;
+        p.firstName = long; p.preferredName = short; if (long !== keep.firstName) filled.push('firstName'); filled.push('preferredName');
+      } else differs.push({ field: 'firstName', value: drop.firstName });
+    }
+    if (!p.familyId && drop.familyId) { p.familyId = drop.familyId; filled.push('familyId'); }
+    var hs = (keep.householdIds || []).concat([drop.familyId]).concat(drop.householdIds || []).filter(function (h, i, a) { return h && a.indexOf(h) === i && h !== p.familyId; });
+    if (hs.length) p.householdIds = hs;
+    var labels = {}; (keep.keyDates || []).forEach(function (k) { labels[(k.label || '').toLowerCase()] = 1; });
+    var extra = (drop.keyDates || []).filter(function (k) { return !labels[(k.label || '').toLowerCase()]; });
+    if (extra.length) { p.keyDates = (keep.keyDates || []).concat(JSON.parse(JSON.stringify(extra))); filled.push('keyDates'); }
+    if (drop.createdAt && (!keep.createdAt || drop.createdAt < keep.createdAt)) p.createdAt = drop.createdAt;      // known since the earlier date
+    p.notSame = (keep.notSame || []).concat(drop.notSame || []).filter(function (x, i, a) { return x !== keep.id && x !== drop.id && a.indexOf(x) === i; });
+    if (!p.notSame.length) delete p.notSame;
+    return { person: p, filled: filled, differs: differs };
+  }
+  /** "Not the same person" pairs, from what's recorded on each person (notSame: [other ids]). */
+  function ignored(people) {
+    var out = []; (people || []).forEach(function (p) { (p.notSame || []).forEach(function (o) { out.push(pair(p.id, o)); }); });
+    return out;
+  }
+
+  return { compare: compare, find: find, matches: matches, level: level, pair: pair, phone: phone, email: email, plain: plain,
+    mergeFields: mergeFields, ignored: ignored };
 })();
 if (typeof module !== 'undefined') module.exports = Duplicates;

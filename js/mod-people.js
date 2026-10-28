@@ -108,7 +108,7 @@
       return !q || (H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : T('People who agreed to be in the church directory.')) + '</p></div>' +
-      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a>' + (H.can('*') ? '<a class="btn" href="#/people/duplicates">Find duplicates</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
+      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">Households</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">Find duplicates</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + 'Add person</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
       '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + T('Search by name, household, email or phone') + '" value="' + esc(state.q) + '"></label>' +
         (canBasic() ? '<a class="adv-link" href="#/people/search">Advanced search</a>' : '') + '</div>' +
@@ -137,19 +137,21 @@
     if (c.mark) { lines.push(esc(first(c.mark.id)) + '’s marital status isn’t recorded.'); did.push('mark ' + first(c.mark.id) + ' as ' + (c.mark.status === 'Married' ? 'married' : 'a partner')); }
     if (c.differ) lines.push('Their wedding anniversaries differ: ' + esc(H.fmt(wedOf(c.a), true)) + ' and ' + esc(H.fmt(wedOf(c.b), true)) + '. Open each person to correct the wrong one.');
     var who = []; if (c.copy) who.push(first(c.copy.to)); if (c.mark && who.indexOf(first(c.mark.id)) < 0) who.push(first(c.mark.id));
-    var fix = did.length ? '<button class="btn small primary" style="white-space:normal" data-act="people:couplefix" data-a="' + c.a + '" data-b="' + c.b + '" title="' + esc(did.join(' and ')) + '">Yes, update ' + esc(who.join(' and ')) + '</button>' : '';
+    var label = did.length ? 'Yes, ' + (c.kind === 'spouse' ? 'married' : 'partners') + ': update ' + who.join(' and ') : c.kind === 'spouse' ? 'Yes, married to each other' : 'Yes, partners';
+    var fix = did.length || !c.confirmed ? '<button class="btn small primary" style="white-space:normal" data-act="people:couplefix" data-a="' + c.a + '" data-b="' + c.b + '"' + (did.length ? ' title="' + esc(did.join(' and ')) + '"' : '') + '>' + esc(label) + '</button>' : '';
     return { lines: lines, fix: fix };
   }
   function wedOf(id) { var q = S.get('people', id); return q ? keyDate(q, WEDDING) : ''; }
-  function coupleWord(c) { return c.kind === 'spouse' ? (c.sure ? 'Married to each other' : 'Probably married to each other') : (c.sure ? 'Partners' : 'Probably partners'); }
+  function coupleWord(c) { return c.confirmed ? (c.kind === 'spouse' ? 'Married (confirmed)' : 'Partners (confirmed)') : c.kind === 'spouse' ? (c.sure ? 'Looks married to each other' : 'Probably married to each other') : (c.sure ? 'Look like partners' : 'Probably partners'); }
 
   /** Person page: "Spouse" or "Partner", going by their household, with any suggested change for this person. */
   function coupleLine(p) {
     var c = coupleOf(p.id); if (!c) return '';
     var o = S.get('people', c.a === p.id ? c.b : c.a), t = coupleTodo(c), mine = (c.copy && c.copy.to === p.id) || (c.mark && c.mark.id === p.id) || c.differ;
+    if (!mine) t.lines = [];
     return '<dt>' + (c.kind === 'spouse' ? 'Spouse' : 'Partner') + '</dt><dd><a href="#/people/p/' + o.id + '">' + esc(H.name(o)) + '</a>' +
-      '<span class="kv-sub">' + (c.sure ? 'Going by their household' : 'Probably – going by their household') + '</span>' +
-      (mine ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
+      (c.confirmed ? '' : '<span class="kv-sub">' + (c.sure ? 'Going by their household – not confirmed yet' : 'Probably – going by their household') + '</span>') +
+      (mine || !c.confirmed ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
   }
 
   /** Administrators: go straight to a staff member's leave, or set it up if they're marked Staff but not yet in Leave. */
@@ -182,6 +184,7 @@
       leaveButton(p) +
       (H.can('*') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + 'Export their data</button>' : '') +
       (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">Record a death</button>' : '') + '</div></div>';
+    if (p.mergedInto && S.get('people', p.mergedInto)) html += '<div class="note info" style="margin-bottom:16px">This was a duplicate record. It was merged into <a href="#/people/p/' + p.mergedInto + '">' + esc(H.name(S.get('people', p.mergedInto))) + '</a> and is kept only for the church’s records.</div>';
     if (deceased(p) && canRecordDeath()) {
       html += '<div class="note info" style="margin-bottom:16px"><b>' + esc(p.firstName) + ' died on ' + esc(H.fmt(p.deceasedAt, true)) + '.</b> ' + (p.deathTidied ? 'They are no longer on rosters or teams, in the directory or able to sign in, and won’t receive messages.' : 'They are out of the directory and won’t receive messages.') +
         (p.deathTidied ? '' : H.can('*') ? ' <button class="btn small" data-act="people:tidydeath" data-id="' + p.id + '">Finish: take off rosters, teams, leave and sign-in</button>' : ' The church office will finish taking them off rosters and sign-in.') +
@@ -342,21 +345,30 @@
     return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Households</h1><p class="lead">A household is the people who live together – what Elvanto calls a “family”. Each is named after its adults (e.g. “Tim & Clare Jacobs”). A child of separated parents can be in two households. Parents, guardians and who may collect a child are recorded on the child’s profile.</p></div>' +
       '<button class="btn primary" data-act="people:newfam">' + H.icon(H.ICON.plus, 18) + 'New household</button></div>' +
       '<label class="search" style="margin-bottom:14px">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search households</span><input id="fm-q" type="search" placeholder="Search by household or anyone in it" value="' + esc(state.fq) + '"></label>' +
-      couplesPanel() +
+      couplesPanel(fq ? fams.map(function (f) { return f.id; }) : null) +
       '<p class="muted small">' + fams.length + ' ' + (fams.length === 1 ? 'household' : 'households') + '</p>' +
       (fams.length ? '' : '<p class="empty">No household matches. Try another name.</p>') +
       '<div class="grid2">' + fams.map(function (f) {
         var ms = members(f.id);
         return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + esc(H.familyName(f)) + '</h2><button class="btn small" data-act="people:renamefam" data-id="' + f.id + '">Rename</button></div>' +
           (f.custom ? '<p class="hint" style="margin:2px 0 8px">Own name</p>' : '<p class="hint" style="margin:2px 0 8px">Named after its adults</p>') +
-          cps.filter(function (c) { return c.familyId === f.id; }).map(function (c) { return '<p class="small" style="margin:0 0 8px">' + H.icon(H.ICON.people, 14) + ' ' + esc((c.kind === 'spouse' ? 'Spouses' : 'Partners') + ': ' + H.name(S.get('people', c.a)) + ' & ' + H.name(S.get('people', c.b))) + (c.sure ? '' : ' <span class="muted">(probably)</span>') + '</p>'; }).join('') + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (HS.householdsOf(m).length > 1 ? ' · lives in ' + HS.householdsOf(m).length + ' households' : '') : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this household yet.</p>') + '</section>';
+          cps.filter(function (c) { return c.familyId === f.id; }).map(function (c) { return '<p class="small" style="margin:0 0 8px">' + H.icon(H.ICON.people, 14) + ' ' + esc((c.kind === 'spouse' ? 'Spouses' : 'Partners') + ': ' + H.name(S.get('people', c.a)) + ' & ' + H.name(S.get('people', c.b))) + (c.confirmed ? '' : ' <span class="muted">(' + (c.sure ? 'to confirm' : 'probably') + ')</span>') + '</p>'; }).join('') + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (HS.householdsOf(m).length > 1 ? ' · lives in ' + HS.householdsOf(m).length + ' households' : '') : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this household yet.</p>') + '</section>';
       }).join('') + '</div>';
   }
 
   /* ---------- duplicates (Administrators): rules in js/duplicates.js ---------- */
   var DUP = Duplicates;
-  function notDup() { return (S.settings() || {}).notDuplicates || []; }
-  function dupPeople() { return S.find('people', function (p) { return p.firstName !== 'Deleted'; }); }
+  // Administrators and Pastors (both may change people's details). "Not the same person" is kept on both people (notSame).
+  function canDup() { return canSeeAll() && (H.can('*') || H.can('people.edit')); }
+  function dupPeople() { return S.find('people', function (p) { return p.firstName !== 'Deleted' && !p.mergedInto; }); }
+  function notDup() { return DUP.ignored(S.list('people')); }
+  function markNotSame(aId, bId) {
+    [[aId, bId], [bId, aId]].forEach(function (x) {
+      var q = S.get('people', x[0]); if (!q || (q.notSame || []).indexOf(x[1]) >= 0) return;
+      q = JSON.parse(JSON.stringify(q)); q.notSame = (q.notSame || []).concat([x[1]]); S.put('people', q);
+    });
+    S.audit('Not the same person: ' + H.name(S.get('people', aId)) + ' and ' + H.name(S.get('people', bId)), 'people/' + aId);
+  }
   function dupCard(p) {
     var hs = householdNames(p), bits = [hs.length ? 'Household: ' + hs.join(', ') : '', p.category || '', p.familyRole === 'child' ? 'Child' : '',
       p.email ? p.email : '', p.mobile ? p.mobile : '', p.birthDate ? 'Born ' + H.fmt(p.birthDate, true) : '', p.elvantoId ? 'From Elvanto' : '',
@@ -366,18 +378,111 @@
   var DUPWORD = { certain: 'Certainly the same person', likely: 'Probably the same person', possible: 'Possibly the same person' };
   function renderDuplicates() {
     var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a>';
-    if (!H.can('*')) return back + '<p class="empty">Finding duplicates is for Administrators.</p>';
+    if (!canDup()) return back + '<p class="empty">Finding duplicates is for Administrators and Pastors.</p>';
     var found = DUP.find(dupPeople(), notDup());
     return back + '<div class="page-head"><div><h1>Find duplicates</h1><p class="lead">People who may have been entered twice. Church Hub compares names (including short forms like Doug and Douglas, “known as”, typing slips, swapped and maiden names), email, mobile, birthday and Elvanto ID. Families sharing an email or phone are not counted as duplicates.</p></div></div>' +
-      (found.length ? '<p class="muted small">' + found.length + (found.length === 1 ? ' pair' : ' pairs') + ' to check, most likely first. Open each to compare, then keep the right one and mark the other as left (or delete it under Privacy).</p>' : '<p class="empty">No duplicates found.</p>') +
+      (found.length ? '<p class="muted small">' + found.length + (found.length === 1 ? ' pair' : ' pairs') + ' to check, most likely first. Open each to compare. <b>Same person: fix…</b> keeps one record, fills in what it’s missing from the other and moves consents, guardians and serving across.</p>' : '<p class="empty">No duplicates found.</p>') +
       found.map(function (d) {
         var a = S.get('people', d.a), b = S.get('people', d.b);
         return '<section class="panel" style="margin-bottom:12px"><div class="row" style="flex-wrap:wrap;gap:8px"><h2 class="grow" style="margin:0;font-size:1rem">' + esc(DUPWORD[d.level]) + '</h2><span class="tag ' + (d.level === 'possible' ? 'grey' : 'warn') + '">' + (d.level === 'possible' ? 'Check' : 'Likely') + '</span></div>' +
           '<p class="hint" style="margin:6px 0 0">' + esc(d.reasons.join(' · ')) + '</p>' +
           '<div class="list" style="margin:10px 0">' + dupCard(a) + dupCard(b) + '</div>' +
-          '<div class="btns"><button class="btn small" data-act="people:notdup" data-a="' + d.a + '" data-b="' + d.b + '">Not the same person</button></div></section>';
+          '<div class="btns"><button class="btn small primary" data-act="people:fixdup" data-a="' + d.a + '" data-b="' + d.b + '">Same person: fix…</button><button class="btn small" data-act="people:notdup" data-a="' + d.a + '" data-b="' + d.b + '">Not the same person</button></div></section>';
       }).join('');
   }
+  /* Fixing a duplicate: keep one record, fill its gaps from the other, move what points at the other, retire the other. */
+  var FIELD_NAMES = { email: 'Email', mobile: 'Mobile', birthDate: 'Birthday', maritalStatus: 'Marital status', preferredName: 'Known as',
+    firstName: 'First name', lastName: 'Last name', elvantoId: 'Elvanto link', staff: 'Staff details', familyId: 'Household', keyDates: 'Key dates',
+    familyRole: 'Adult or child', directory: 'Directory', emailUnknown: 'Email not known', mobileUnknown: 'Mobile not known' };
+  function fieldName(k) { return FIELD_NAMES[k] || k; }
+  function refsOf(id) {
+    var by = function (c) { return S.find(c, function (x) { return x.personId === id; }); }, lv = S.leave();
+    return {
+      consents: by('consents'), guardians: S.find('guardians', function (l) { return l.childId === id || l.adultId === id; }),
+      noCollect: S.find('noCollect', function (x) { return x.childId === id || x.personId === id; }), notes: H.can('notes') ? by('notes') : [],
+      // Only Administrators may change these (rosters and leave)
+      skills: by('skills'), assignments: by('assignments'), blockouts: by('blockouts'), serveOffers: by('serveOffers'),
+      groups: S.find('groups', function (g) { return (g.memberIds || []).indexOf(id) >= 0; }),
+      leave: lv ? (lv.requests || []).filter(function (r) { return r.staffId === id; }).concat((lv.adjustments || []).filter(function (a) { return a.staffId === id; })) : []
+    };
+  }
+  // Sign-in access lives on the access list, which only Administrators change. (The demo gives everyone "Member", with no real list.)
+  function hasAccess(p) { return !!p.appRole && p.appRole !== 'none' && (Store.isLive() || p.appRole !== 'member'); }
+  /** What only an Administrator can move, in words (empty for Administrators). */
+  function adminOnly(drop, r) {
+    if (H.can('*')) return [];
+    var out = [];
+    if (r.assignments.length || r.skills.length || r.blockouts.length || r.serveOffers.length || r.groups.length) out.push('rosters and serving');
+    if (r.leave.length || drop.staff) out.push('staff leave');
+    if (hasAccess(drop)) out.push('sign-in access');
+    return out;
+  }
+  function chooseKeep(a, b) {
+    var filled = function (p) { return Object.keys(p).filter(function (k) { return p[k] !== '' && p[k] != null; }).length; };
+    if (a.elvantoId && !b.elvantoId) return a; if (b.elvantoId && !a.elvantoId) return b;
+    if (hasAccess(a) !== hasAccess(b)) return hasAccess(a) ? a : b;
+    if (filled(a) !== filled(b)) return filled(a) > filled(b) ? a : b;
+    return (a.createdAt || '') <= (b.createdAt || '') ? a : b;
+  }
+  function fixDialog(aId, bId, keepId) {
+    if (!canDup()) return;
+    var a = S.get('people', aId), b = S.get('people', bId); if (!a || !b) return;
+    var keep = keepId ? S.get('people', keepId) : chooseKeep(a, b), drop = keep.id === a.id ? b : a;
+    var m = DUP.mergeFields(keep, drop), r = refsOf(drop.id), blocked = adminOnly(drop, r);
+    var count = function (n, one, many) { return n ? n + ' ' + (n === 1 ? one : many) : ''; };
+    var moving = [count(r.consents.length, 'consent', 'consents'), count(r.guardians.length + r.noCollect.length, 'parent / guardian link', 'parent / guardian links'),
+      count(r.notes.length, 'pastoral note', 'pastoral notes'), count(r.assignments.length, 'roster turn', 'roster turns'), count(r.skills.length, 'serving position', 'serving positions'),
+      count(r.blockouts.length + r.serveOffers.length, 'away date or serving offer', 'away dates or serving offers'), count(r.groups.length, 'serve together / apart group', 'serve together / apart groups'),
+      count(r.leave.length, 'leave record', 'leave records')].filter(Boolean);
+    var pick = function (p) { return '<button class="btn small' + (p.id === keep.id ? ' primary' : '') + '" data-act="people:fixkeep" data-a="' + aId + '" data-b="' + bId + '" data-keep="' + p.id + '" aria-pressed="' + (p.id === keep.id) + '">Keep ' + esc(H.name(p)) + (p.createdAt ? ' (added ' + esc(H.fmt(p.createdAt.slice(0, 10), true)) + ')' : '') + '</button>'; };
+    var html = H.dialogHead('Fix a duplicate', 'Keep one record. The other is kept for the records but taken out of lists and searches.') + '<div class="dlg-body">' +
+      '<p style="margin:0 0 6px"><b>Which record should stay?</b></p><div class="btns" style="margin-bottom:12px">' + pick(a) + pick(b) + '</div>' +
+      '<p class="small" style="margin:0 0 4px"><b>After fixing:</b></p><div class="list" style="margin-bottom:12px">' + dupCard(m.person).replace(/<a class="item" href="[^"]*"/, '<div class="item"').replace(/<\/a>$/, '</div>') + '</div>' +
+      '<p class="small" style="margin:0 0 6px"><b>Filled in from the other record:</b> ' + (m.filled.length ? esc(m.filled.filter(function (k, i, x) { return x.indexOf(k) === i; }).map(fieldName).join(', ')) : 'nothing – it has nothing extra') + '</p>' +
+      (m.differs.length ? '<p class="small" style="margin:0 0 6px"><b>Different on the other record, not copied:</b> ' + esc(m.differs.map(function (d) { return fieldName(d.field) + ' ' + (typeof d.value === 'object' ? '' : '“' + d.value + '”'); }).join(', ')) + '. Edit the kept record afterwards if one of these is the right one.</p>' : '') +
+      '<p class="small" style="margin:0 0 6px"><b>Moved across:</b> ' + (moving.length ? esc(moving.join(', ')) : 'nothing') + '.</p>' +
+      (!H.can('notes') ? '<p class="hint" style="margin:0 0 6px">Pastoral notes stay with the old record (only Pastors can read them).</p>' : '') +
+      (drop.familyRole === 'child' ? '<p class="hint" style="margin:0 0 6px">Children’s medical notes stay with the old record – ask Children’s ministry to check them.</p>' : '') +
+      (blocked.length ? '<p class="note bad">The other record has ' + esc(blocked.join(' and ')) + ', which only an Administrator can move. Please ask an Administrator to fix this duplicate.</p>' : '') +
+      '</div><div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button>' +
+      (blocked.length ? '' : '<button class="btn primary" data-act="people:fixdo" data-keep="' + keep.id + '" data-drop="' + drop.id + '">Fix: keep ' + esc(H.name(keep)) + '</button>') + '</div>';
+    H.modal(html, 'Fix a duplicate');
+  }
+  function doFix(keepId, dropId) {
+    var keep = S.get('people', keepId), drop = S.get('people', dropId);
+    if (!canDup() || !keep || !drop || keepId === dropId) return;
+    var r = refsOf(dropId); if (adminOnly(drop, r).length) return;
+    var m = DUP.mergeFields(keep, drop), kept = m.person, dn = H.name(drop), kn = H.name(keep);
+    if (H.can('*') && !hasAccess(keep) && hasAccess(drop)) kept.appRole = drop.appRole;     // they could sign in before: they still can
+    // Retire the other record first (so its sign-in entry is removed before the kept record's is written)
+    var d = JSON.parse(JSON.stringify(drop)); d.active = false; d.mergedInto = keepId; d.archivedAt = H.today(); if (H.can('*')) d.appRole = 'none';
+    S.put('people', d, 'Duplicate: ' + dn + ' merged into ' + kn + ' (kept for the records)');
+    S.put('people', kept, 'Duplicate: kept ' + H.name(kept) + ', filled in ' + (m.filled.length ? m.filled.map(fieldName).join(', ') : 'nothing') + ' from the other record');
+    var swap = function (v) { return v === dropId ? keepId : v; }, clone = function (x) { return JSON.parse(JSON.stringify(x)); };
+    r.consents.forEach(function (c) { c = clone(c); c.personId = keepId; S.put('consents', c); });
+    r.guardians.forEach(function (l) {
+      var n = clone(l); n.childId = swap(n.childId); n.adultId = swap(n.adultId);
+      var twin = S.find('guardians', function (o) { return o.id !== l.id && o.childId === n.childId && o.adultId === n.adultId; })[0];
+      if (twin || n.childId === n.adultId) S.remove('guardians', l.id); else S.put('guardians', n);
+    });
+    r.noCollect.forEach(function (x) { x = clone(x); x.childId = swap(x.childId); if (x.personId) x.personId = swap(x.personId); S.put('noCollect', x); });
+    r.notes.forEach(function (n) { var c = clone(n); S.remove('notes', n.id); c.personId = keepId; S.put('notes', c); });
+    if (H.can('*')) {
+      r.skills.forEach(function (k) { if (S.find('skills', function (o) { return o.personId === keepId && o.positionId === k.positionId; }).length) S.remove('skills', k.id); else { k = clone(k); k.personId = keepId; S.put('skills', k); } });
+      r.assignments.forEach(function (a) {
+        if (S.find('assignments', function (o) { return o.personId === keepId && o.serviceId === a.serviceId && o.positionId === a.positionId; }).length) S.remove('assignments', a.id);
+        else { a = clone(a); a.personId = keepId; S.put('assignments', a); }
+      });
+      ['blockouts', 'serveOffers'].forEach(function (c) { r[c].forEach(function (x) { x = clone(x); x.personId = keepId; S.put(c, x); }); });
+      r.groups.forEach(function (g) {
+        g = clone(g); g.memberIds = g.memberIds.map(swap).filter(function (x, i, a) { return a.indexOf(x) === i; });
+        if (g.memberIds.length < 2) S.remove('groups', g.id); else S.put('groups', g);
+      });
+      if (r.leave.length) { r.leave.forEach(function (x) { x.staffId = keepId; }); S.saveLeave('Duplicate: leave of ' + dn + ' moved to ' + kn); }
+    }
+    H.closeModal(); H.go('people/p/' + keepId); H.toast('Fixed: one record for ' + H.name(kept));
+  }
+
   /** Live warning in the Add / Edit window: who this may already be. Blocks saving for very likely duplicates. */
   function typedPerson() {
     var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, un = function (v) { return /^(unknown|not known)$/i.test(v) || v.toLowerCase() === T('unknown').toLowerCase() ? '' : v; };
@@ -397,15 +502,15 @@
       var q = S.get('people', m.id), hs = householdNames(q);
       return '<span style="display:block;margin-top:6px"><a href="#/people/p/' + q.id + '" data-act="hub:close">' + esc(H.name(q)) + '</a>' + (hs.length ? ' · ' + esc(hs[0]) : '') + ' <span class="muted small">(' + esc(m.reasons.join(', ')) + ')</span></span>';
     }).join('') +
-      (stop ? (H.can('*') ? '<label class="check" style="margin-top:8px"><input type="checkbox" id="pf-dup-ok"' + (was ? ' checked' : '') + '><span>' + 'I’ve checked: this is a different person' + '</span></label>'
+      (stop ? (canDup() ? '<label class="check" style="margin-top:8px"><input type="checkbox" id="pf-dup-ok"' + (was ? ' checked' : '') + '><span>' + 'I’ve checked: this is a different person' + '</span></label>'
         : '<span style="display:block;margin-top:6px">' + 'To avoid duplicates this can’t be saved. If it really is a different person, ask an Administrator.' + '</span>') : '');
   }
 
   /** Households page: couples with an anniversary to copy, a marital status to record, or anniversaries that differ. */
-  function couplesPanel() {
-    var list = couplesToCheck(); if (!list.length) return '';
-    return '<section class="panel" id="couples" style="margin-bottom:16px"><h2 style="margin:0 0 4px">Couples to check</h2>' +
-      '<p class="hint" style="margin:0 0 10px">Worked out from who lives together, their marital status, surname, age and anniversary. Partners don’t get an anniversary. Nothing changes until you say yes.</p>' +
+  function couplesPanel(only) {
+    var list = couplesToCheck().filter(function (c) { return !only || only.indexOf(c.familyId) >= 0; }); if (!list.length) return '';
+    return '<section class="panel" id="couples" style="margin-bottom:16px"><h2 style="margin:0 0 4px">Couples to confirm</h2>' +
+      '<p class="hint" style="margin:0 0 10px">Worked out from who lives together, their marital status, surname, age and anniversary. Confirming fills in a missing marital status and copies a spouse’s wedding anniversary (partners don’t get one). Nothing changes until you say yes.</p>' +
       '<div class="list">' + list.map(function (c) {
         var t = coupleTodo(c), a = S.get('people', c.a), b = S.get('people', c.b);
         return '<div class="item" style="align-items:flex-start;flex-wrap:wrap;gap:8px"><span class="grow" style="min-width:220px"><b><a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a> & <a href="#/people/p/' + b.id + '">' + esc(H.name(b)) + '</a></b>' +
@@ -722,12 +827,12 @@
         if (nd.unconfirmed.length) out.push({ text: 'Confirm the parents and guardians of ' + nd.unconfirmed.length + ' ' + (nd.unconfirmed.length === 1 ? 'child' : 'children'), href: '#/people/p/' + nd.unconfirmed[0].id, tag: 'Children' });
       }
       var noMarital = all ? S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; }) : [];
-      if (H.can('*')) {
+      if (canDup()) {
         var dupN = DUP.find(dupPeople(), notDup()).filter(function (d) { return d.level !== 'possible'; }).length;
         if (dupN) out.push({ text: dupN + (dupN === 1 ? ' person looks' : ' people look') + ' entered twice', href: '#/people/duplicates' });
       }
       var cpl = couplesToCheck();
-      if (cpl.length) out.push({ text: cpl.length + (cpl.length === 1 ? ' couple' : ' couples') + ' to check: wedding anniversary or marital status', href: '#/people/families' });
+      if (cpl.length) out.push({ text: cpl.length + (cpl.length === 1 ? ' couple' : ' couples') + ' to confirm (spouses or partners)', href: '#/people/families' });
       if (noMarital.length) out.push({ text: noMarital.length + ' adult' + (noMarital.length === 1 ? ' has' : 's have') + ' no marital status', href: '#/people/p/' + noMarital[0].id });
       var since = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), -7 * CARE_WEEKS));
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
@@ -811,8 +916,8 @@
         if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { err.textContent = T('That mobile number doesn’t look right.'); err.hidden = false; return; }
         // Duplicates: very likely matches can't be saved, unless an Administrator has checked it's a different person
         var dups = dupMatches().filter(function (m) { return m.score >= 70; }), dupOk = document.getElementById('pf-dup-ok');
-        if (dups.length && !(H.can('*') && dupOk && dupOk.checked)) {
-          dupWarn(); err.textContent = H.can('*') ? 'This looks like someone already in Church Hub. Open them instead, or tick “I’ve checked: this is a different person”.' : 'This looks like someone already in Church Hub, so it can’t be saved. Open them instead, or ask an Administrator.';
+        if (dups.length && !(canDup() && dupOk && dupOk.checked)) {
+          dupWarn(); err.textContent = canDup() ? 'This looks like someone already in Church Hub. Open them instead, or tick “I’ve checked: this is a different person”.' : 'This looks like someone already in Church Hub, so it can’t be saved. Open them instead, or ask an Administrator.';
           err.hidden = false; return;
         }
         p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref');
@@ -853,8 +958,7 @@
         if (fam !== null) p.familyId = fam;
         if (p.familyRole === 'child' && !p.familyId) { err.textContent = 'Children must be in a household, so the church knows who they live with.'; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
-        if (dups.length) S.setSettings({ notDuplicates: notDup().concat(dups.map(function (m) { return DUP.pair(p.id, m.id); })) },
-          'Checked ' + p.firstName + ' ' + p.lastName + ' is not the same person as ' + dups.map(function (m) { return H.name(S.get('people', m.id)); }).join(', '));
+        dups.forEach(function (m) { markNotSame(p.id, m.id); });
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();
         H.toast(id ? T('Saved') : 'Added – now record their consent');
@@ -977,14 +1081,18 @@
       },
       savefam: function () { var n = document.getElementById('nf-name').value.trim(); if (!n) return; n = n.replace(/\s*family$/i, ''); S.put('families', { name: n + ' family', custom: false }, 'Created household ' + n); H.closeModal(); H.render(); },
       notdup: function (el) {
-        if (!H.can('*')) return;
-        var a = S.get('people', el.dataset.a), b = S.get('people', el.dataset.b);
-        S.setSettings({ notDuplicates: notDup().concat([DUP.pair(el.dataset.a, el.dataset.b)]) }, 'Not the same person: ' + H.name(a) + ' and ' + H.name(b));
+        if (!canDup()) return;
+        markNotSame(el.dataset.a, el.dataset.b);
         H.render(); H.toast('Won’t be suggested again');
       },
+      fixdup: function (el) { fixDialog(el.dataset.a, el.dataset.b, el.dataset.keep || ''); },
+      fixkeep: function (el) { fixDialog(el.dataset.a, el.dataset.b, el.dataset.keep); },
+      fixdo: function (el) { doFix(el.dataset.keep, el.dataset.drop); },
       couplefix: function (el) {
         var key = HS.pairKey(el.dataset.a, el.dataset.b), c = HS.couples(S.list('people'), S.list('families')).filter(function (x) { return HS.pairKey(x.a, x.b) === key; })[0];
         if (!c || !canCouples()) return;
+        var f = JSON.parse(JSON.stringify(S.get('families', c.familyId)));
+        if ((f.couples || []).indexOf(key) < 0) { f.couples = (f.couples || []).concat([key]); S.put('families', f, 'Confirmed ' + (c.kind === 'spouse' ? 'spouses' : 'partners') + ': ' + H.name(S.get('people', c.a)) + ' and ' + H.name(S.get('people', c.b))); }
         var ids = []; if (c.copy) ids.push(c.copy.to); if (c.mark && ids.indexOf(c.mark.id) < 0) ids.push(c.mark.id);
         ids.forEach(function (id) {
           var q = JSON.parse(JSON.stringify(S.get('people', id))), what = [];
@@ -995,7 +1103,7 @@
           }
           S.put('people', q, 'Couple: ' + what.join(', ') + ' for ' + H.name(q));
         });
-        H.render(); H.toast('Updated');
+        H.render(); H.toast(c.kind === 'spouse' ? 'Confirmed as married' : 'Confirmed as partners');
       },
       notcouple: function (el) {
         var f = S.get('families', el.dataset.f); if (!f || !canCouples()) return;

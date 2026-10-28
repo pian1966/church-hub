@@ -51,5 +51,26 @@ ok(m[0] && m[0].id === 'p2' && m.some(x => x.id === 'p1') && !m.some(x => x.id =
 ok(!D.matches({ id: 'p1', firstName: 'Douglas', lastName: 'Pike', mobile: '0825551234' }, people).some(x => x.id === 'p1'), 'editing someone doesn’t match them with themselves');
 ok(!D.matches({ id: 'p1', firstName: 'Douglas', lastName: 'Pike' }, people, ['p1|p2']).some(x => x.id === 'p2'), 'pairs marked “not the same person” are not warned about again');
 
+console.log('Fixing a duplicate');
+{
+  const keep = { id: 'k', firstName: 'Doug', lastName: 'Pike', email: 'doug@x.com', mobile: '', category: 'Partner', createdAt: '2025-03-01', familyId: 'f1',
+    keyDates: [{ label: 'Baptised', date: '2001-01-01' }], appRole: 'member' };
+  const drop = { id: 'd', firstName: 'Douglas', lastName: 'Pike', email: 'dpike@work.com', mobile: '082 555 1234', birthDate: '1970-02-03', category: 'Attender',
+    createdAt: '2019-06-01', familyId: 'f2', householdIds: ['f3'], keyDates: [{ label: 'Wedding anniversary', date: '1995-05-05' }, { label: 'baptised', date: '1999-09-09' }],
+    elvantoId: 'e9', appRole: 'admin', medical: { allergies: 'x' }, notSame: ['z'] };
+  const m = D.mergeFields(keep, drop), p = m.person;
+  ok(p.firstName === 'Douglas' && p.preferredName === 'Doug', 'Doug + Douglas: first name Douglas, known as Doug');
+  ok(p.mobile === '082 555 1234' && p.birthDate === '1970-02-03' && p.elvantoId === 'e9', 'gaps filled from the other record (mobile, birthday, Elvanto ID)');
+  ok(p.email === 'doug@x.com' && m.differs.some(d => d.field === 'email' && d.value === 'dpike@work.com'), 'nothing overwritten: a different email is listed, not copied');
+  ok(p.familyId === 'f1' && p.householdIds.join() === 'f2,f3', 'kept household stays; the other’s households are added as extra homes');
+  ok(p.keyDates.length === 2 && p.keyDates.some(k => /Wedding/.test(k.label)) && p.keyDates.find(k => k.label === 'Baptised').date === '2001-01-01', 'key dates: added if missing, never replaced');
+  ok(p.category === 'Partner' && p.appRole === 'member' && !p.medical, 'category and app access stay; medical notes aren’t touched');
+  ok(p.createdAt === '2019-06-01' && p.notSame.join() === 'z', 'known since the earlier date; “not the same person” carried over');
+  ok(D.mergeFields({ id: 'k', firstName: 'Anna', lastName: 'X' }, { id: 'd', firstName: 'Hanna', lastName: 'X' }).differs.some(d => d.field === 'firstName'), 'unrelated first names: listed, not changed');
+  ok(!D.mergeFields({ id: 'k', firstName: 'A', lastName: 'B', mobile: '082 555 1234', email: 'A.B@gmail.com' }, { id: 'd', firstName: 'A', lastName: 'B', mobile: '+27825551234', email: 'ab@gmail.com' }).differs.length, 'the same mobile or email written differently isn’t called different');
+  ok(D.ignored([{ id: 'a', notSame: ['b'] }, { id: 'b', notSame: ['a'] }]).every(k => k === 'a|b'), '“not the same person” is read from the people themselves');
+  ok(!D.find([{ id: 'a', firstName: 'Ann', lastName: 'Lee', mobile: '0821112222' }, { id: 'b', firstName: 'Ann', lastName: 'Lee', mobile: '0821112222', mergedInto: 'a' }]).length, 'a retired (merged) record is never suggested again');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll duplicate tests passed');
 process.exit(fails ? 1 : 0);

@@ -11,7 +11,7 @@ ok(col('id') === 'Member ID', 'Elvanto’s person reference: Member ID');
 ok(col('relationship') === 'Family Relationship', 'relationship from “Family Relationship”, not “Family Member Names & Relationships”');
 ok(col('family') === 'Primary & Spouse Full Names', 'families from “Primary & Spouse Full Names” (no Family ID in this export)');
 ok(col('lastName') === 'Last Name' && col('email') === 'Email Address' && col('category') === 'People Category', 'names, email and category');
-ok(!Object.values(m).some(i => /Security|Gender/.test(head[i])), 'security codes and gender are never read');
+ok(!Object.values(m).some(i => /Security/.test(head[i])), 'security codes are never read');
 ok(col('idNumber') === 'ID Number (Numeric)' && col('notes') === 'Notes' && col('id') === 'Member ID', 'ID Number and Notes are read (and not mixed up with the Member ID)');
 
 console.log('Reading the people');
@@ -50,6 +50,25 @@ console.log('ID numbers and notes');
 ok(E.idNumber('750312 5000 000') === '7503125000000' && E.idNumber('112345678901') === '0112345678901' && E.idNumber('5.71021E+12') === '' && E.idNumber('') === '', 'ID numbers: spaces gone, a lost leading 0 put back, spreadsheet-mangled ones left out');
 ok(JSON.stringify(E.idInName('5710210087085 Thomson')) === '{"id":"5710210087085","name":"Thomson"}' && E.idInName('Thomson') === null && E.idInName('Room 101') === null, 'a 13-digit ID number typed into a name is found');
 ok(by('Brian').idNumber === '7503125000000' && by('Brian').notes === 'Made-up note', 'the ID Number and Notes columns are read');
+
+ok(by('Brian').gender === 'Male' && E.toPerson(by('Brian'), null, {}, '', '2026-10-26').gender === 'Male', 'Gender is read');
+ok(col('gender') === 'Gender', 'the Gender column is found');
+
+console.log('More from Elvanto: dates, choices, volunteering, address');
+ok(E.monthDay('09-12') === '09-12' && E.monthDay('12-31') === '12-31' && E.monthDay('13-01') === '', 'birthdays without a year as Elvanto writes them (“09-12”, month first)');
+ok(JSON.stringify(E.receiveChoices('Weekly Church Notices (via Email), Missionary updates (via\nWhatsApp), "Who is Jesus" - A two minute WhatsApp message from Richard Sturdee, focussing on the person and work of our Lord')) ===
+  JSON.stringify(['“Who is Jesus” (via WhatsApp)', 'Weekly Church Notices (via Email)', 'Missionary updates (via WhatsApp)']), 'Checklist of what to receive → the same choices as Church Hub’s (the comma in “Who is Jesus” is fine)');
+ok(!E.receiveChoices('Special things or people to pray for (via Email)').includes('Special things or people to pray for (via WhatsApp)'), 'email and WhatsApp aren’t mixed up');
+ok(JSON.stringify(E.positionsOf('8:00 Reading, 10:00 Communion -\nLeading, Memorial Teas')) === JSON.stringify([{ time: '08:00', name: 'Reading' }, { time: '10:00', name: 'Communion - Leading' }, { time: '', name: 'Memorial Teas' }]), 'Department Positions → service and position (wrapped lines joined)');
+ok(E.province('KZn') === 'KwaZulu-Natal' && E.province('KwaZulu-Natal') === 'KwaZulu-Natal' && E.province('California') === 'California', 'provinces tidied (KZN → KwaZulu-Natal)');
+{
+  const head = ['First Name', 'Last Name', 'Date Added', 'Middle Name', 'Anniversary', 'Membership Date', 'Membership last renewed on:', 'Home Address', 'Home City', 'Province', 'Home Country', 'Marital Status'];
+  const mm = E.guess(head), rr = E.records([['Ann', 'Ash', '2014-05-06 10:11:12', 'Mary', '1990-03-04', '2015-01-01', '2026', '1 Main Rd', 'Howick', 'KZN', 'South Africa', 'Married'], ['Bob', 'Bee', '2014-05-06 10:11:12', '', '', '', '', '', '', 'KZN', 'South Africa', '']], mm, '2026-10-28');
+  const pa = E.toPerson(rr[0], { id: 'x', createdAt: '2026-10-26 09:00', keyDates: [] }, {}, '', '2026-10-28');
+  ok(pa.createdAt === '2014-05-06 10:11' && pa.middleName === 'Mary' && pa.keyDates.some(k => k.label === 'Wedding anniversary' && k.date === '1990-03-04'), 'Date Added becomes when they were added (not the import day); middle name; wedding anniversary');
+  ok(pa.partnerSince === '2015-01-01' && pa.partnerUpdated === '2026' && pa.address.street === '1 Main Rd' && pa.address.province === 'KwaZulu-Natal', 'Church Partner dates (renewal year only) and home address');
+  ok(!E.toPerson(rr[1], null, {}, '', '2026-10-28').address, 'a province and country on their own aren’t an address');
+}
 
 console.log('Making the people');
 const p = E.toPerson(by('Peter'), null, {}, '', '2026-10-26');

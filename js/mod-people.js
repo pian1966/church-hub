@@ -8,6 +8,18 @@
   function canChildren() { return H.can('*') || H.can('children'); }       // Administrators, Pastors, Children's ministry
   function links(childId) { return HS.linksOf(childId, S.list('guardians')); }
   function linkName(l) { var a = l.adultId ? S.get('people', l.adultId) : null; return a ? H.name(a) : (l.name || 'Someone'); }
+  var GENDERS = ['Female', 'Male'];
+  var PROVINCES = ['KwaZulu-Natal', 'Gauteng', 'Western Cape', 'Eastern Cape', 'Free State', 'Mpumalanga', 'Limpopo', 'North West', 'Northern Cape'];
+  // What someone would like to receive, kept in the consent register (POPIA: when and how they chose it). Adults only.
+  var RECEIVE = [
+    ['Weekly Church Notices (via Email)', 'The weekly notices by email.'],
+    ['Special things or people to pray for (via WhatsApp)', 'Prayer needs, sent on WhatsApp.'],
+    ['Special things or people to pray for (via Email)', 'Prayer needs, sent by email.'],
+    ['Missionary updates (via WhatsApp)', 'News from the church’s missionaries, on WhatsApp.'],
+    ['Missionary updates (via Email)', 'News from the church’s missionaries, by email.'],
+    ['“Who is Jesus” (via WhatsApp)', 'A two minute WhatsApp message from Richard Sturdee, focussing on the person and work of our Lord Jesus Christ.']
+  ];
+  var RECEIVE_P = RECEIVE.map(function (r) { return r[0]; });
   var MARITAL = ['Single', 'Engaged', 'Married', 'Partner', 'Separated', 'Divorced', 'Widowed', 'Not known'];
   var CARE_WEEKS = 8;                         // pastors see "care for the family" on their to-do list this long after a death
   function canRecordDeath() { return H.can('*') || H.can('people.edit'); }
@@ -24,6 +36,11 @@
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
   /** The category, plus "Staff" when they work for the church – a Church Partner can be on the staff too. */
+  /** A home address as lines to show ("1 Main Road", "Howick 3290", "KwaZulu-Natal"); South Africa isn't repeated. */
+  function addressLines(p) {
+    var a = p && p.address; if (!a) return [];
+    return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !/^south africa$/i.test(a.country) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
+  }
   function catTags(p) {
     var t = '<span class="tag grey">' + esc(p.category || '') + '</span>';
     if (!p.staff) return t;
@@ -272,8 +289,8 @@
       (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">Record a death</button>' : '') + '</div></div>';
     if (p.mergedInto && S.get('people', p.mergedInto)) html += '<div class="note info" style="margin-bottom:16px">This was a duplicate record. It was merged into <a href="#/people/p/' + p.mergedInto + '">' + esc(H.name(S.get('people', p.mergedInto))) + '</a> and is kept only for the church’s records.</div>';
     if (deceased(p) && canRecordDeath()) {
-      html += '<div class="note info" style="margin-bottom:16px"><b>' + esc(p.firstName) + ' died on ' + esc(H.fmt(p.deceasedAt, true)) + '.</b> ' + (p.deathTidied ? 'They are no longer on rosters or teams, in the directory or able to sign in, and won’t receive messages.' : 'They are out of the directory and won’t receive messages.') +
-        (p.deathTidied ? '' : H.can('*') ? ' <button class="btn small" data-act="people:tidydeath" data-id="' + p.id + '">Finish: take off rosters, teams, leave and sign-in</button>' : ' The church office will finish taking them off rosters and sign-in.') +
+      html += '<div class="note info" style="margin-bottom:16px"><b>' + esc(p.firstName) + ' died on ' + esc(H.fmt(p.deceasedAt, true)) + '.</b> ' + (!needsTidy(p) ? 'They are no longer on rosters or teams, in the directory or able to sign in, and won’t receive messages.' : 'They are out of the directory and won’t receive messages.') +
+        (!needsTidy(p) ? '' : H.can('*') ? ' <button class="btn small" data-act="people:tidydeath" data-id="' + p.id + '">Finish: take off rosters, teams, leave and sign-in</button>' : ' The church office will finish taking them off rosters and sign-in.') +
         ' <button class="link" data-act="people:undodeath" data-id="' + p.id + '">Recorded by mistake?</button></div>';
     }
 
@@ -281,10 +298,16 @@
     // Contact (left out when there's nothing this person may see, e.g. a young child for Children's ministry)
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
+      (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
+      (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + '</dd>' : '') +
       (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
+      ((full || (child && canChildren())) ? '<dt>' + T('Gender') + '</dt><dd>' + (p.gender ? esc(T(p.gender)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
+      (full && (p.category === 'Church Partner' || p.partnerSince || p.partnerUpdated) ? '<dt>Church Partner</dt><dd>' +
+        (p.partnerSince ? esc(T('Accepted {date}', { date: H.fmt(p.partnerSince, true) })) : '<span class="muted">' + T('Date accepted not recorded') + '</span>') +
+        (p.partnerUpdated ? '<span class="kv-sub">' + esc(T('Partnership last updated {date}', { date: /^\d{4}$/.test(p.partnerUpdated) ? p.partnerUpdated : H.fmt(p.partnerUpdated, true) })) + '</span>' : '') + '</dd>' : '') +
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (!child ? coupleLine(p) : '') +
       (!child && lateSpouse(p) ? '<dt>' + T('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +
@@ -335,7 +358,13 @@
           var c = consentFor(p.id, pur);
           return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b><small>' + (c ? esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) }) + ' · ' + T(c.method) + (c.guardianId ? ' · ' + T('by {name}', { name: H.name(S.get('people', c.guardianId)) }) : '')) : T('Not asked yet')) + '</small></span>' +
             (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag bad">' + T('Missing') + '</span>') + '</div>';
-        }).join('') + '</div><div class="btns" style="margin-top:12px"><button class="btn small" data-act="people:consent" data-id="' + p.id + '">' + (me ? T('Change my choices') : 'Record consent') + '</button></div></section>';
+        }).join('') + '</div>' +
+        (child ? '' : '<h3 style="margin:16px 0 6px;font-size:.95rem">' + T('Would like to receive') + '</h3><div class="list">' + RECEIVE_P.map(function (pur) {
+          var c = consentFor(p.id, pur);
+          return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b>' + (c ? '<small>' + esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) })) + '</small>' : '') + '</span>' +
+            (c && c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : c ? '<span class="tag grey">' + T('No') + '</span>' : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
+        }).join('') + '</div>') +
+        '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="people:consent" data-id="' + p.id + '">' + (me ? T('Change my choices') : 'Record consent') + '</button></div></section>';
     }
     // Medical (children)
     if (seeMedical) {
@@ -359,17 +388,58 @@
         (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0">' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
         '<label class="field" style="margin-top:12px">Add a note<textarea id="pn-text" rows="2" placeholder="Only pastors can see this"></textarea></label><button class="btn small" data-act="people:note" data-id="' + p.id + '">Save note</button></section>';
     }
-    // Serving
-    if (!child) {
-      var sk = S.find('skills', function (k) { return k.personId === p.id; }), pos = {};
-      S.list('positions').forEach(function (x) { pos[x.id] = x; });
-      var gr = S.find('groups', function (g) { return g.memberIds.indexOf(p.id) >= 0; });
-      html += '<section class="panel"><h2>' + T('Serving') + '</h2>' + (sk.length ? '<p style="margin:0 0 8px">' + sk.map(function (k) { return '<span class="tag" style="--c:#2F6FB3">' + esc((pos[k.positionId] || {}).name) + ' · ' + esc(T(k.frequency)) + '</span>'; }).join(' ') + '</p>' : '<p class="muted">' + T('Not on any team yet.') + '</p>') +
-        gr.map(function (g) { var names = esc(g.memberIds.filter(function (m) { return m !== p.id; }).map(function (m) { return H.name(S.get('people', m)); }).join(', ')); return '<p class="hint">' + H.icon(g.kind === 'together' ? H.ICON.link : H.ICON.split, 14) + ' ' + T(g.kind === 'together' ? 'Serves together with {names}' : 'Kept apart from {names}', { names: names }) + ' (' + esc(T(g.strength === 'must' ? 'always' : 'when possible')) + ')</p>'; }).join('') +
-        '<div class="btns" style="margin-top:10px"><a class="btn small" href="#/rosters/' + (me ? 'mine' : 'teams') + '">' + (me ? T('My serving') : 'Teams') + '</a></div></section>';
-    }
+    // Volunteering: services, departments and positions (Rosters teams and positions); roster coordinators and Administrators change it
+    html += volunteerPanel(p, me);
     html += '</div>';
     return html;
+  }
+
+  /* ---------- volunteering ---------- */
+  function canVolunteer() { return H.can('*') || H.can('rosters.manage'); }
+  /** Services someone serves at: from their serving (empty = any service). */
+  function serveTimes(sk) {
+    var t = {}, any = false;
+    sk.forEach(function (k) { if (k.times && k.times.length) k.times.forEach(function (x) { t[x] = 1; }); else any = true; });
+    return any || !sk.length ? Serving.TIMES.map(function (x) { return x[0]; }) : Serving.TIMES.map(function (x) { return x[0]; }).filter(function (x) { return t[x]; });
+  }
+  function volunteerPanel(p, me) {
+    var sk = S.find('skills', function (k) { return k.personId === p.id; }), pos = {};
+    S.list('positions').forEach(function (x) { pos[x.id] = x; });
+    var gr = S.find('groups', function (g) { return g.memberIds.indexOf(p.id) >= 0; });
+    var byTeam = {}; sk.forEach(function (k) { var x = pos[k.positionId]; if (x) (byTeam[x.teamId] = byTeam[x.teamId] || []).push(x.name + (k.frequency ? ' · ' + T(k.frequency) : '')); });
+    var teams = S.list('teams').filter(function (t) { return byTeam[t.id]; });
+    if (!sk.length && !canVolunteer() && !me) return '';
+    return '<section class="panel"><h2>' + T('Volunteering') + '</h2><dl class="kv">' +
+      '<dt>' + T('Volunteer') + '</dt><dd>' + (sk.length ? T('Yes') : T('No')) + '</dd>' +
+      (sk.length ? '<dt>' + T('Services') + '</dt><dd>' + esc(serveTimes(sk).map(Serving.timeLabel).join(', ')) + '</dd>' +
+        teams.map(function (t) { return '<dt>' + esc(t.name) + '</dt><dd>' + esc(byTeam[t.id].join(', ')) + '</dd>'; }).join('') : '') + '</dl>' +
+      gr.map(function (g) { var names = esc(g.memberIds.filter(function (m) { return m !== p.id; }).map(function (m) { return H.name(S.get('people', m)); }).join(', ')); return '<p class="hint">' + H.icon(g.kind === 'together' ? H.ICON.link : H.ICON.split, 14) + ' ' + T(g.kind === 'together' ? 'Serves together with {names}' : 'Kept apart from {names}', { names: names }) + ' (' + esc(T(g.strength === 'must' ? 'always' : 'when possible')) + ')</p>'; }).join('') +
+      '<div class="btns" style="margin-top:10px">' + (canVolunteer() ? '<button class="btn small" data-act="people:volunteer" data-id="' + p.id + '">Edit volunteering</button>' : '') +
+      (me ? '<a class="btn small" href="#/rosters/mine">' + T('My serving') + '</a>' : canVolunteer() ? '<a class="btn small" href="#/rosters/teams">Teams</a>' : '') + '</div></section>';
+  }
+  function volunteerDialog(p) {
+    var sk = S.find('skills', function (k) { return k.personId === p.id; }), mine = {}; sk.forEach(function (k) { mine[k.positionId] = k; });
+    var teams = S.list('teams'), times = serveTimes(sk);
+    var body = !teams.length ? '<p class="note warn">There are no departments yet. Set them up under <a href="#/rosters/teams" data-act="hub:close">Rosters → Teams</a> first.</p>' :
+      '<fieldset class="vol-yes"><legend class="field-l">Volunteer</legend><label class="check" style="display:inline-flex;margin-right:16px"><input type="radio" name="vol" value="yes"' + (sk.length ? ' checked' : '') + '><span>Yes</span></label>' +
+        '<label class="check" style="display:inline-flex"><input type="radio" name="vol" value="no"' + (sk.length ? '' : ' checked') + '><span>No</span></label></fieldset>' +
+      '<div id="vol-f"' + (sk.length ? '' : ' hidden') + '><fieldset><legend class="field-l">Services</legend><div class="row" style="gap:4px 16px;flex-wrap:wrap">' +
+        Serving.TIMES.map(function (t) { return '<label class="check" style="margin:0"><input type="checkbox" class="vol-t" value="' + t[0] + '"' + (sk.length && times.indexOf(t[0]) >= 0 ? ' checked' : '') + '><span>' + t[1] + '</span></label>'; }).join('') + '</div></fieldset>' +
+        '<p class="field-l" style="margin:14px 0 4px">Departments and positions</p>' +
+        teams.map(function (t) {
+          var ps = S.find('positions', function (x) { return x.teamId === t.id; }), on = ps.some(function (x) { return mine[x.id]; });
+          return '<fieldset class="panel vol-dept" style="padding:10px 12px;margin:0 0 8px"><label class="check" style="margin:0"><input type="checkbox" class="vol-d" data-t="' + t.id + '"' + (on ? ' checked' : '') + '><span><b>' + esc(t.name) + '</b></span></label>' +
+            '<div class="vol-ps" data-t="' + t.id + '"' + (on ? '' : ' hidden') + ' style="margin:6px 0 0 28px">' + ps.map(function (x) {
+              var only = x.times && x.times.length && x.times.length < Serving.TIMES.length ? ' <span class="muted small">(' + esc(x.times.map(Serving.timeLabel).join(', ')) + ' only)</span>' : '';
+              return '<label class="check" style="margin:2px 0"><input type="checkbox" class="vol-p" value="' + x.id + '"' + (mine[x.id] ? ' checked' : '') + '><span>' + esc(x.name) + only + '</span></label>';
+            }).join('') + '</div></fieldset>';
+        }).join('') +
+        '<label class="field" style="margin-top:8px">How often (for new positions)<select id="vol-freq"><option value="weekly">' + T('weekly') + '</option><option value="fortnightly" selected>' + T('fortnightly') + '</option><option value="monthly">' + T('monthly') + '</option><option value="occasional">' + T('occasional') + '</option></select></label></div>' +
+      '<p id="vol-err" class="note bad" hidden></p>';
+    H.modal(H.dialogHead('Volunteering: ' + H.name(p), 'Which services they serve at, and in which departments and positions. Rostering uses this.') + '<div class="dlg-body">' + body + '</div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' + (teams.length ? '<button class="btn primary" data-act="people:savevolunteer" data-id="' + p.id + '">' + T('Save') + '</button>' : '') + '</div>', 'Volunteering');
+    document.querySelectorAll('input[name="vol"]').forEach(function (r) { r.addEventListener('change', function () { document.getElementById('vol-f').hidden = r.value !== 'yes' || !r.checked; }); });
+    document.querySelectorAll('.vol-d').forEach(function (d) { d.addEventListener('change', function () { document.querySelector('.vol-ps[data-t="' + d.dataset.t + '"]').hidden = !d.checked; }); });
   }
 
   /* ---------- parents, guardians and collection (children) ---------- */
@@ -686,6 +756,12 @@
     add(birth, 'Personal', 'birthDate', 'Date of birth', 'date', function (p) { return p.birthDate; });
     add(birth, 'Personal', 'birthday', 'Birthday', 'anniv', function (p) { return p.birthDate || p.birthDay; });
     add(birth, 'Personal', 'age', 'Age', 'number', function (p) { return age(p); });
+    add(all, 'Personal', 'gender', 'Gender', 'choice', function (p) { return p.gender || ''; }, GENDERS);
+    add(all, 'Personal', 'middleName', 'Middle name', 'text', function (p) { return p.middleName || ''; });
+    add(all, 'Name and contact', 'town', 'Town or city', 'text', function (p) { return (p.address || {}).city || ''; });
+    add(all, 'Name and contact', 'address', 'Home address', 'text', function (p) { return addressLines(p).join(', '); });
+    add(all, 'Church', 'partnerSince', 'Date accepted as Church Partner', 'date', function (p) { return p.partnerSince || ''; });
+    add(all, 'Church', 'partnerUpdated', 'Partnership last updated', 'date', function (p) { return p.partnerUpdated || ''; });
     add(all, 'Personal', 'marital', 'Marital status', 'choice', function (p) { return p.familyRole === 'child' ? '' : p.maritalStatus; }, MARITAL);
     add(all, 'Personal', 'wedding', 'Wedding anniversary', 'anniv', function (p) { return keyDate(p, /wedding/i); });
     add(roster, 'Serving', 'positions', 'Serving position', 'list', function (p) { return sv(p).pos; }, uniq(S.list('positions').map(function (x) { return x.name; })));
@@ -695,6 +771,7 @@
     add(kids, 'Children', 'guardians', 'Parents and guardians', 'list', function (p) { return links(p.id).map(linkName); });
     add(kids, 'Children', 'consenter', 'Has a parent or guardian who can give consent', 'yesno', function (p) { return p.familyRole === 'child' && HS.consentAdults(p.id, S.list('guardians')).length > 0; });
     add(all, 'Privacy', 'consents', 'Consent given for', 'list', function (p) { return PURPOSES.filter(function (x) { return hasConsent(p.id, x); }); }, PURPOSES);
+    add(all, 'Privacy', 'receive', 'Would like to receive', 'list', function (p) { return RECEIVE_P.filter(function (x) { return hasConsent(p.id, x); }); }, RECEIVE_P);
     add(all, 'Privacy', 'directory', 'In the church directory', 'yesno', function (p) { return hasConsent(p.id, 'Church directory'); });
     add(H.can('*'), 'Privacy', 'access', 'App access', 'choice', function (p) { return (H.ROLES[p.appRole || 'member'] || {}).label; }, Object.keys(H.ROLES).map(function (r) { return H.ROLES[r].label; }));
     add(all, 'Staff', 'staff', 'Church staff member', 'yesno', function (p) { return !!p.staff; });
@@ -828,15 +905,27 @@
       '<div class="two"><label class="field req">' + T('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
       '<label class="field req">' + T('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
-      '<label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
+      '<div class="two"><label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
+      (!me || admin ? '<label class="field">' + T('Middle name') + '<input id="pf-middle" value="' + esc(p.middleName || '') + '" autocomplete="additional-name"></label>' : '') + '</div>' +
       '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label>' +
       '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label></div>' +
       (!me || admin ? '<div class="two"><label class="field">Birthday<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field req">Category<select id="pf-cat">' + (p.category ? '' : '<option value="" selected>Choose…</option>') + CATS.map(function (c) { return '<option' + (p.category === c ? ' selected' : '') + '>' + c + '</option>'; }).join('') + '</select></label></div>' +
-        '<div class="two"><label class="field req" id="pf-fam-f">Household<select id="pf-fam"><option value="">Choose…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '<option value="__new">+ New household…</option></select></label>' +
+        '<div class="two" id="pf-partner-f"' + (p.category === 'Church Partner' ? '' : ' hidden') + '><label class="field">Date accepted as Church Partner<input id="pf-psince" type="date" max="' + H.today() + '" value="' + esc(p.partnerSince || '') + '"></label>' +
+        '<label class="field">Partnership last updated<input id="pf-pupd" type="date" max="' + H.today() + '" value="' + esc(/^\d{4}$/.test(p.partnerUpdated || '') ? '' : p.partnerUpdated || '') + '">' +
+          (/^\d{4}$/.test(p.partnerUpdated || '') ? '<small>Elvanto only says ' + esc(p.partnerUpdated) + '. Leave empty to keep that, or choose the date.</small>' : '') + '</label></div>' +
+        '<label class="field">Gender<select id="pf-gender"><option value="">Not recorded</option>' + GENDERS.map(function (g) { return '<option' + (p.gender === g ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select></label>' +
+        '<div class="two"><label class="field req" id="pf-fam-f">Household<select id="pf-fam"><option value="">Choose…</option><option value="__new">+ New household…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field req">In the household as<select id="pf-frole">' + (p.familyRole ? '' : '<option value="" selected>Choose…</option>') + '<option value="adult"' + (p.familyRole === 'adult' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
         '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
         (admin ? lateSpouseField(p) : '') +
+        '<fieldset class="panel" style="padding:10px 12px;margin:6px 0 14px"><legend class="field-l" style="padding:0 4px">' + T('Home address') + '</legend>' +
+          '<label class="field">' + T('Street address') + '<input id="pf-street" value="' + esc((p.address || {}).street || '') + '" autocomplete="address-line1"></label>' +
+          '<label class="field">' + T('Address line 2') + '<input id="pf-street2" value="' + esc((p.address || {}).street2 || '') + '" autocomplete="address-line2"></label>' +
+          '<div class="two"><label class="field">' + T('Town or city') + '<input id="pf-city" value="' + esc((p.address || {}).city || '') + '" autocomplete="address-level2"></label>' +
+          '<label class="field">' + T('Postcode') + '<input id="pf-postcode" value="' + esc((p.address || {}).postcode || '') + '" inputmode="numeric" autocomplete="postal-code"></label></div>' +
+          '<div class="two"><label class="field">' + T('Province') + '<input id="pf-province" list="pf-provinces" value="' + esc((p.address || {}).province || '') + '"><datalist id="pf-provinces">' + PROVINCES.map(function (x) { return '<option value="' + x + '">'; }).join('') + '</datalist></label>' +
+          '<label class="field">' + T('Country') + '<input id="pf-country" value="' + esc((p.address || {}).country || (p.address ? '' : 'South Africa')) + '" autocomplete="country-name"></label></div></fieldset>' +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
       (admin ? staffFields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
@@ -857,6 +946,8 @@
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
+    var pc = document.getElementById('pf-cat'), pcf = document.getElementById('pf-partner-f');
+    if (pc && pcf) pc.addEventListener('change', function () { pcf.hidden = pc.value !== 'Church Partner'; });
     var lt = document.getElementById('pf-late'), ltf = document.getElementById('pf-late-f'), mar = document.getElementById('pf-marital');
     if (lt) lt.addEventListener('change', function () { document.getElementById('pf-late-n-f').hidden = lt.value !== '__out'; });
     if (mar && ltf) mar.addEventListener('change', function () { if (mar.value === 'Widowed') ltf.hidden = false; });
@@ -917,6 +1008,9 @@
           'Church records': 'Keep their details on the church database.', 'Email': 'Church news and information by email.', 'SMS': 'Reminders and urgent news by SMS.',
           'Church directory': 'Name and phone visible to other members.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
       }).join('') +
+      (child ? '' : '<p class="field-l" style="margin:14px 0 4px">' + T('Would like to receive') + '</p>' + RECEIVE.map(function (r) {
+        return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(r[0]) + '"' + (hasConsent(p.id, r[0]) ? ' checked' : '') + '><span><b>' + esc(T(r[0])) + '</b><br><span class="muted small">' + esc(T(r[1])) + '</span></span></label>';
+      }).join('')) +
       (!me ? '<div class="two" style="margin-top:8px"><label class="field">How it was given<select id="cf-method"><option>Paper connect card</option><option>Online form</option><option>In person (verbal)</option><option>Email</option></select></label>' +
         (child ? '<label class="field req">Given by (parent or guardian)<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
       '<p class="hint">' + esc(Store.settings().privacyNotice) + '</p></div>' +
@@ -925,6 +1019,18 @@
 
   /** After a death (Administrators): off future rosters, teams, serving groups and away dates; future leave cancelled;
    *  sign-in removed (app access set to none). Past serving and leave stay, for the church's records. */
+  /** After a death: is anything still to undo (future turns, teams, offers, groups, leave, links to children, sign-in)?
+   *  People who died before they came into Church Hub (e.g. from Elvanto) usually have nothing, so they aren't a to-do. */
+  function needsTidy(p) {
+    if (!p || !deceased(p) || p.deathTidied) return false;
+    var id = p.id, d = p.deceasedAt || H.today(), lv = S.leave();
+    return (p.appRole && p.appRole !== 'none') ||
+      S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === id && (!s || s.date >= d); }).length > 0 ||
+      S.find('skills', function (k) { return k.personId === id; }).length > 0 || S.find('serveOffers', function (o) { return o.personId === id; }).length > 0 ||
+      S.find('blockouts', function (b) { return b.personId === id && b.to >= d; }).length > 0 || S.find('groups', function (g) { return g.memberIds.indexOf(id) >= 0; }).length > 0 ||
+      S.find('guardians', function (l) { return l.adultId === id; }).length > 0 || S.find('noCollect', function (x) { return x.personId === id; }).length > 0 ||
+      !!(lv && lv.requests.some(function (r) { return r.staffId === id && r.end >= d && (r.status === 'Pending' || r.status === 'Approved') && !r.synthetic; }));
+  }
   function tidyDeath(id) {
     var p = S.get('people', id); if (!p) return;
     var d = p.deceasedAt || H.today(), n = 0;
@@ -984,7 +1090,7 @@
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
         out.push({ text: 'Care for the family of ' + H.name(p) + ' (died ' + H.fmt(p.deceasedAt) + ')', href: '#/people/p/' + p.id, tag: 'Pastoral' });
       });
-      if (H.can('*')) S.find('people', function (p) { return deceased(p) && !p.deathTidied; }).forEach(function (p) {
+      if (H.can('*')) S.find('people', needsTidy).forEach(function (p) {
         out.push({ text: 'Finish recording the death of ' + H.name(p) + ': rosters and sign-in', href: '#/people/p/' + p.id });
       });
       return out;
@@ -1099,6 +1205,18 @@
           if (g('pf-wed') && g('pf-frole') !== 'child') p.keyDates.push({ label: 'Wedding anniversary', date: g('pf-wed') });
         }
         if (g('pf-cat') !== null) p.category = g('pf-cat');
+        if (g('pf-gender') !== null) { if (g('pf-gender')) p.gender = g('pf-gender'); else delete p.gender; }
+        if (g('pf-middle') !== null) { if (g('pf-middle')) p.middleName = g('pf-middle'); else delete p.middleName; }
+        if (g('pf-street') !== null) {
+          var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') };
+          if (ad.street || ad.street2 || ad.city || ad.postcode) p.address = ad; else delete p.address;
+        }
+        if (g('pf-psince') !== null) {
+          var ps = g('pf-psince'), pu = g('pf-pupd');
+          if (ps && pu && pu < ps) { err.textContent = 'The partnership can’t be updated before the date they were accepted.'; err.hidden = false; return; }
+          if (ps) p.partnerSince = ps; else delete p.partnerSince;
+          if (pu) p.partnerUpdated = pu; else if (!/^\d{4}$/.test(p.partnerUpdated || '')) delete p.partnerUpdated;   // keep a year from Elvanto
+        }
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
         if (g('pf-marital') !== null) {
           if (p.familyRole === 'child') delete p.maritalStatus;
@@ -1145,6 +1263,7 @@
         document.querySelectorAll('.cf-p').forEach(function (box) {
           var pur = box.dataset.p, had = hasConsent(p.id, pur);
           if (box.checked === had && consentFor(p.id, pur)) return;
+          if (!box.checked && !consentFor(p.id, pur) && RECEIVE_P.indexOf(pur) >= 0) return;   // a "would like to receive" never chosen: nothing to record
           var old = consentFor(p.id, pur); if (old) { old.withdrawnAt = H.today(); S.put('consents', old); }
           S.put('consents', { personId: p.id, purpose: pur, given: box.checked, date: H.today(), method: me ? 'Changed in the app' : method.value, recordedBy: H.name(H.user()), guardianId: guardian ? guardian.value : '' },
             (box.checked ? 'Consent given: ' : 'Consent withdrawn: ') + pur + ' for ' + H.name(p));
@@ -1298,6 +1417,27 @@
       fixdup: function (el) { fixDialog(el.dataset.a, el.dataset.b, el.dataset.keep || ''); },
       fixkeep: function (el) { fixDialog(el.dataset.a, el.dataset.b, el.dataset.keep); },
       fixdo: function (el) { doFix(el.dataset.keep, el.dataset.drop); },
+      volunteer: function (el) { volunteerDialog(S.get('people', el.dataset.id)); },
+      savevolunteer: function (el) {
+        var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err');
+        var yes = (document.querySelector('input[name="vol"]:checked') || {}).value === 'yes';
+        var times = [].map.call(document.querySelectorAll('.vol-t:checked'), function (x) { return x.value; });
+        var want = [].filter.call(document.querySelectorAll('.vol-p:checked'), function (x) { return !x.closest('.vol-ps').hidden; }).map(function (x) { return x.value; });
+        if (yes && !times.length) { err.textContent = 'Tick at least one service they serve at.'; err.hidden = false; return; }
+        if (yes && !want.length) { err.textContent = 'Tick at least one department and position.'; err.hidden = false; return; }
+        if (!yes) want = [];
+        var sk = S.find('skills', function (k) { return k.personId === p.id; }), freq = document.getElementById('vol-freq') ? document.getElementById('vol-freq').value : 'fortnightly';
+        var allTimes = times.length === Serving.TIMES.length ? [] : times;   // every service: no restriction
+        sk.forEach(function (k) { if (want.indexOf(k.positionId) < 0) S.remove('skills', k.id); });
+        want.forEach(function (pid) {
+          var k = sk.filter(function (x) { return x.positionId === pid; })[0];
+          k = k ? JSON.parse(JSON.stringify(k)) : { personId: p.id, positionId: pid, frequency: freq };
+          k.times = allTimes; S.put('skills', k);
+        });
+        var names = want.map(function (id) { return (S.get('positions', id) || {}).name; });
+        S.audit(yes ? 'Volunteering for ' + H.name(p) + ': ' + times.map(Serving.timeLabel).join(', ') + ' – ' + names.join(', ') : 'Not volunteering: ' + H.name(p), 'people/' + p.id);
+        H.closeModal(); H.render(); H.toast(T('Saved'));
+      },
       lateyes: function (el) {
         var a = JSON.parse(JSON.stringify(S.get('people', el.dataset.a))), b = S.get('people', el.dataset.b);
         a.lateSpouseId = b.id; delete a.lateSpouseName; delete a.lateSpouseSet;

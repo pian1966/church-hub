@@ -27,8 +27,51 @@ var ElvantoImport = (function () {
     ['deceasedDate', 'Date deceased', ['Date Deceased'], /deceased\s*date|date\s*deceased/i],
     ['photo', 'Photo', ['Photo'], /^(photo|picture|image)$/i],
     ['idNumber', 'ID number', ['ID Number (Numeric)', 'ID Number'], /^id\s*(number|no\.?)\b/i],
-    ['notes', 'Notes', ['Notes'], /^notes?$/i]
+    ['notes', 'Notes', ['Notes'], /^notes?$/i],
+    ['gender', 'Gender', ['Gender'], /^(gender|sex)$/i],
+    ['dateAdded', 'Date added to Elvanto', ['Date Added'], /^date\s*added$/i],
+    ['middleName', 'Middle name', ['Middle Name'], /^middle\s*name$/i],
+    ['anniversary', 'Wedding anniversary', ['Anniversary'], /^(wedding\s*)?anniversary$/i],
+    ['partnerSince', 'Date accepted as Church Partner', ['Membership Date'], /^member(ship)?\s*date$/i],
+    ['partnerUpdated', 'Partnership last updated', ['Membership last renewed on:'], /^member(ship)?\s*(last\s*)?renewed/i],
+    ['receive', 'What they’d like to receive', ['Checklist of what to receive'], /what\s*to\s*receive/i],
+    ['positions', 'Volunteering (department positions)', ['Department Positions'], /^department\s*positions$/i],
+    ['street', 'Home address', ['Home Address'], /^home\s*address$/i],
+    ['street2', 'Home address line 2', ['Home Address Line 2'], /^home\s*address\s*line\s*2$/i],
+    ['city', 'Town or city', ['Home City'], /^home\s*city$/i],
+    ['postcode', 'Postcode', ['Home Postcode'], /^home\s*post(al)?\s*code$/i],
+    ['province', 'Province', ['Province'], /^(home\s*)?(province|state)$/i],
+    ['country', 'Country', ['Home Country'], /^home\s*country$/i]
   ];
+  /** What someone ticked in Elvanto's "Checklist of what to receive" → Church Hub's choices (as in the consent register). */
+  var RECEIVE = [
+    [/who\s*is\s*jesus/i, '“Who is Jesus” (via WhatsApp)'],
+    [/weekly\s*church\s*notices/i, 'Weekly Church Notices (via Email)'],
+    [/pray[^,]*whatsapp/i, 'Special things or people to pray for (via WhatsApp)'],
+    [/pray[^,]*e-?mail/i, 'Special things or people to pray for (via Email)'],
+    [/missionary[^,]*whatsapp/i, 'Missionary updates (via WhatsApp)'],
+    [/missionary[^,]*e-?mail/i, 'Missionary updates (via Email)']
+  ];
+  function receiveChoices(v) {
+    var s = String(v || '').replace(/\s+/g, ' ').replace(/"who is jesus"[^,]*(,[^,]*lord[^,]*)?/i, 'Who is Jesus');   // its description has a comma in it
+    return RECEIVE.filter(function (r) { return s.split(/\s*,\s*/).some(function (x) { return r[0].test(x); }); }).map(function (r) { return r[1]; });
+  }
+  /** Elvanto's "Department Positions" ("8:00 Reading, 10:00 Communion -\nLeading, Memorial Teas") → [{ time: '08:00', name: 'Reading' }, …].
+   *  Long cells wrap onto new lines, so line breaks are just spaces. A position without a time is for memorial and funeral teas. */
+  function positionsOf(v) {
+    return String(v || '').replace(/\s+/g, ' ').split(/\s*,\s*/).map(function (x) {
+      var m = /^(\d{1,2}):(\d{2})\s+(.+)$/.exec(x.trim());
+      return m ? { time: pad(+m[1]) + ':' + m[2], name: m[3].trim() } : x.trim() ? { time: '', name: x.trim() } : null;
+    }).filter(Boolean);
+  }
+  /** Province as people type it ("KZN", "KZn") → the full name. */
+  function province(v) {
+    var s = String(v || '').trim(), k = s.toLowerCase().replace(/[^a-z]/g, '');
+    var P = { kzn: 'KwaZulu-Natal', kwazulunatal: 'KwaZulu-Natal', gp: 'Gauteng', gauteng: 'Gauteng', wc: 'Western Cape', westerncape: 'Western Cape', ec: 'Eastern Cape', easterncape: 'Eastern Cape',
+      fs: 'Free State', freestate: 'Free State', mp: 'Mpumalanga', mpumalanga: 'Mpumalanga', lp: 'Limpopo', limpopo: 'Limpopo', nw: 'North West', northwest: 'North West', nc: 'Northern Cape', northerncape: 'Northern Cape' };
+    return P[k] || s;
+  }
+
   /** An ID number as typed: spaces gone. Elvanto's "numeric" column drops a leading 0 (people born 2000–2009), so 12 digits get it back.
    *  Spreadsheet-mangled numbers ("5.71021E+12") can't be recovered and are left out. */
   function idNumber(v) {
@@ -90,9 +133,10 @@ var ElvantoImport = (function () {
     if ((m = /^([A-Za-z]+)\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})$/.exec(s)) && MONTHS[m[1].slice(0, 3).toLowerCase()]) return m[3] + '-' + pad(MONTHS[m[1].slice(0, 3).toLowerCase()]) + '-' + pad(+m[2]);
     return '';
   }
-  /** A birthday without a year ("12 September") → "09-12", so the day can still be remembered. */
+  /** A birthday without a year ("12 September", or Elvanto's "09-12", month first) → "09-12", so the day can still be remembered. */
   function monthDay(v) {
     var s = String(v || '').trim(), m;
+    if ((m = /^(\d{1,2})-(\d{1,2})$/.exec(s)) && +m[1] >= 1 && +m[1] <= 12 && +m[2] >= 1 && +m[2] <= 31) return pad(+m[1]) + '-' + pad(+m[2]);
     if ((m = /^(\d{1,2})(?:st|nd|rd|th)?\s+([A-Za-z]+)\.?$/.exec(s)) && MONTHS[m[2].slice(0, 3).toLowerCase()]) return pad(MONTHS[m[2].slice(0, 3).toLowerCase()]) + '-' + pad(+m[1]);
     if ((m = /^([A-Za-z]+)\.?\s+(\d{1,2})(?:st|nd|rd|th)?$/.exec(s)) && MONTHS[m[1].slice(0, 3).toLowerCase()]) return pad(MONTHS[m[1].slice(0, 3).toLowerCase()]) + '-' + pad(+m[2]);
     return '';
@@ -132,6 +176,16 @@ var ElvantoImport = (function () {
       o.idNumber = idNumber(o.idNumber);
       ['firstName', 'preferredName', 'lastName'].forEach(function (k) { var m = idInName(o[k]); if (m) { o[k] = m.name; if (!o.idNumber) o.idNumber = m.id; } });
       o.notes = String(o.notes || '').trim();
+      o.gender = /^(f|female|woman|vrou|vroulik)$/i.test(o.gender) ? 'Female' : /^(m|male|man|manlik)$/i.test(o.gender) ? 'Male' : '';
+      var da = /^(\d{4}-\d{2}-\d{2})[ T](\d{2}:\d{2})/.exec(o.dateAdded || '');
+      o.dateAdded = da ? da[1] + ' ' + da[2] : toISO(o.dateAdded) ? toISO(o.dateAdded) + ' 00:00' : '';
+      o.anniversary = toISO(o.anniversary);
+      o.partnerSince = toISO(o.partnerSince);
+      o.partnerUpdated = /^\d{4}$/.test(String(o.partnerUpdated || '').trim()) ? String(o.partnerUpdated).trim() : toISO(o.partnerUpdated);
+      o.receive = receiveChoices(o.receive);
+      o.positions = positionsOf(o.positions);
+      o.address = { street: o.street, street2: o.street2, city: o.city, postcode: o.postcode, province: province(o.province), country: o.country };
+      if (!o.address.street && !o.address.street2 && !o.address.city && !o.address.postcode) o.address = null;   // a province or country on its own isn't an address
       o.archived = yes(o.archived); o.deceased = yes(o.deceased);
       if (o.deceased) ['firstName', 'preferredName', 'lastName'].forEach(function (k) {   // "2024-08-22-Mike": the date they died, then the name
         var dn = datedName(o[k]); if (dn && (dn.name || k !== 'firstName' || o.lastName)) { o[k] = dn.name; if (!o.deceasedDate) o.deceasedDate = dn.date; }
@@ -207,6 +261,13 @@ var ElvantoImport = (function () {
     if (familyId) p.familyId = familyId;
     p.familyRole = o.child ? 'child' : 'adult';
     if (o.child) delete p.maritalStatus; else if (o.marital) p.maritalStatus = o.marital;
+    if (o.gender) p.gender = o.gender;
+    if (o.middleName) p.middleName = o.middleName;
+    if (o.dateAdded && (!p.createdAt || o.dateAdded < p.createdAt)) p.createdAt = o.dateAdded;   // when they were first added (in Elvanto)
+    if (o.anniversary && !o.child) { p.keyDates = (p.keyDates || []).filter(function (k) { return !/wedding|anniversary/i.test(k.label || ''); }).concat([{ label: 'Wedding anniversary', date: o.anniversary }]); }
+    if (o.partnerSince) p.partnerSince = o.partnerSince;
+    if (o.partnerUpdated && (!p.partnerUpdated || String(o.partnerUpdated) > String(p.partnerUpdated).slice(0, o.partnerUpdated.length))) p.partnerUpdated = o.partnerUpdated;
+    if (o.address) p.address = o.address;
     if (!p.staff) p.category = (catMap && catMap[o.category]) || guessCategory(o.category);
     if (o.deceased) { p.active = false; p.category = 'Deceased'; p.deceasedAt = o.deceasedDate || p.deceasedAt || today || ''; p.appRole = 'none'; }
     else if (o.archived) { p.active = false; p.category = 'Former member'; }
@@ -232,6 +293,6 @@ var ElvantoImport = (function () {
     return out;
   }
 
-  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, photoLink: photoLink, idNumber: idNumber, idInName: idInName, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
+  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, photoLink: photoLink, idNumber: idNumber, idInName: idInName, receiveChoices: receiveChoices, positionsOf: positionsOf, province: province, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
 })();
 if (typeof module !== 'undefined') module.exports = ElvantoImport;

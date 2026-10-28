@@ -248,6 +248,38 @@ function serve() {
   // Church office notes
   await s.page.fill('#on-text', 'Moved to Durban in 2019.'); await s.page.click('[data-act="people:onote"]'); await s.settle(); docs = await s.docsNow();
   check(docs['officeNotes/p15'] && docs['officeNotes/p15'].entries[0].text === 'Moved to Durban in 2019.' && (await s.text()).includes('Moved to Durban in 2019.'), 'Administrators can add church office notes');
+  // Gender and Church Partner dates
+  await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-cat', 'Church Partner');
+  await s.page.selectOption('#pf-gender', 'Female'); await s.page.fill('#pf-psince', '2015-03-01'); await s.page.fill('#pf-pupd', '2024-02-11');
+  await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p15'].gender === 'Female' && docs['details/p15'].partnerSince === '2015-03-01' && docs['details/p15'].partnerUpdated === '2024-02-11' && tt.includes('Accepted') && tt.includes('Partnership last updated'), 'gender and the Church Partner dates are saved and shown');
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-middle', 'Anne'); await s.page.fill('#pf-street', '12 Main Road'); await s.page.fill('#pf-city', 'Howick'); await s.page.fill('#pf-postcode', '3290'); await s.page.fill('#pf-province', 'KwaZulu-Natal');
+  await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p15'].middleName === 'Anne' && docs['details/p15'].address.city === 'Howick' && tt.includes('12 Main Road') && tt.includes('Howick 3290') && !tt.includes('South Africa') && !JSON.stringify(docs['people/p15']).includes('Main Road'), 'middle name and home address saved with the private details and shown');
+  await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p15'))); p.partnerUpdated = '2026'; Store.put('people', p); }); await s.settle();
+  await s.go('people'); await s.go('people/p/p15'); const yrT = await s.text(); check(yrT.includes('Partnership last updated 2026'), 'a renewal year from Elvanto shows as the year: ' + (yrT.match(/Accepted.{0,80}/) || [yrT.slice(yrT.indexOf('Gender'), yrT.indexOf('Gender') + 200)])[0]);
+  await s.page.click('[data-act="people:edit"]'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p15'].partnerUpdated === '2026', 'saving without a date keeps the year from Elvanto');
+  await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-cat', 'Attender');
+  check(await s.page.isHidden('#pf-partner-f'), 'the partnership dates only show for Church Partners');
+  check((await s.page.$$eval('#pf-fam option', o => o.map(x => x.value)))[1] === '__new', '“+ New household…” is at the top of the list');
+  await s.page.click('[data-act="hub:close"]');
+  // Departments and positions, then volunteering
+  await s.go('rosters/teams'); await s.page.click('[data-act="rosters:setupdepts"]'); await s.settle(); docs = await s.docsNow();
+  const posDocs = Object.keys(docs).filter(k => k.startsWith('positions/pos-'));
+  check(docs['teams/dept-operational'] && docs['teams/dept-music'] && docs['teams/dept-creche'] && posDocs.length === 26 && docs['teams/dept-memorial'] && JSON.stringify(docs['positions/pos-creche'].times) === '["08:00"]' && docs['positions/pos-host'].times.length === 3,
+    'Rosters → Teams adds the church’s 8 departments and 26 positions (Creche Duty only at 8:00): ' + posDocs.length);
+  check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
+  check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && (await s.text()).includes('8am only'), 'once added, the offer goes, and 8am-only positions say so');
+  await s.go('people/p/p15'); await s.page.click('[data-act="people:volunteer"]');
+  await s.page.check('input[name="vol"][value="yes"]'); await s.page.check('.vol-t[value="08:00"]'); await s.page.check('.vol-t[value="10:00"]'); await s.page.uncheck('.vol-t[value="17:00"]');
+  await s.page.check('.vol-d[data-t="dept-music"]'); await s.page.check('.vol-p[value="pos-sound"]'); await s.page.check('.vol-p[value="pos-drums"]');
+  await s.page.click('[data-act="people:savevolunteer"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  const vsk = Object.keys(docs).filter(k => k.startsWith('skills/') && docs[k].personId === 'p15').map(k => docs[k]);
+  check(vsk.some(k => k.positionId === 'pos-sound' && JSON.stringify(k.times) === '["08:00","10:00"]') && vsk.some(k => k.positionId === 'pos-drums') && tt.includes('8am, 10am') && tt.includes('Sound Desk'),
+    'volunteering: services, department and positions are saved as their serving, and shown');
+  await s.page.click('[data-act="people:volunteer"]'); await s.page.check('input[name="vol"][value="no"]'); await s.page.click('[data-act="people:savevolunteer"]'); await s.settle(); docs = await s.docsNow();
+  check(!Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p15') && (await s.text()).includes('Volunteer'), '“No” takes them off all positions (an offer to serve they made stays)');
   await s.go('people'); let tDead = await s.text();
   check(!tDead.includes('Merwe, Johan'), 'someone who has died is not in the Everyone list');
   await s.page.click('[data-act="people:filter"][data-f="deceased"]'); tDead = await s.text();
@@ -592,6 +624,9 @@ function serve() {
   check(docs['people/p14'].firstName === '2020-01-01-Tim', 'names of people who are alive are never changed');
   check(docs['people/p19'].lastName === 'Peters' && docs['idNumbers/p19'] && docs['idNumbers/p19'].value === '5710210087085', 'an ID number typed into a name becomes their ID number (Administrators only)');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /2 dates of death moved/.test(docs[k].action)), 'the history log says how many names were tidied');
+  await s.page.evaluate(() => Store.put('people', { firstName: 'Old', lastName: 'Record', familyRole: 'adult', category: 'Deceased', active: false, deceasedAt: '2019-01-01', appRole: 'none', keyDates: [] }));
+  await s.settle(); await s.go('home'); const homeT = await s.text();
+  check(homeT.includes('Finish recording the death of Johan') && !homeT.includes('Finish recording the death of Old Record'), 'Home only asks to finish a death record when there’s something to undo (not for people who died long ago)');
   await finish(s);
 
   /* ---------- Elvanto import ---------- */
@@ -773,6 +808,12 @@ function serve() {
   docs = await s.docsNow(); check(docs['assignments/kTim'].status === 'accepted', 'can accept a serving turn');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Church directory"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['directory/p14'], 'withdrawing directory consent removes them from the directory');
+  const consentsBefore = Object.keys(docs).filter(k => k.startsWith('consents/')).length;
+  await s.page.click('[data-act="people:consent"]'); await s.page.check('.cf-p[data-p="Missionary updates (via WhatsApp)"]'); await s.page.check('.cf-p[data-p="“Who is Jesus” (via WhatsApp)"]');
+  await s.page.click('[data-act="people:saveconsent"]'); await s.settle(); docs = await s.docsNow();
+  const chosen = Object.values(docs).filter(d => d.personId === 'p14' && /via/.test(d.purpose || ''));
+  check(chosen.length === 2 && chosen.every(c => c.given && c.method === 'Changed in the app') && (await s.text()).includes('Would like to receive'), 'a member can choose what they’d like to receive (Missionary updates on WhatsApp, “Who is Jesus”)');
+  check(Object.keys(docs).filter(k => k.startsWith('consents/')).length === consentsBefore + 2, 'choices they didn’t tick aren’t recorded as a “no”');
   check(await s.page.evaluate(() => Store.list('people').every(p => !p.birthDate || p.id === 'p14')), 'can’t see anyone else’s private details');
   // Me: details, days away, serving
   await s.go('me'); t = await s.text();

@@ -12,8 +12,10 @@
  *
  * Data (all plain objects, ISO dates 'yyyy-mm-dd'):
  *   people:       [{ id, firstName, lastName, active }]
- *   positions:    [{ id, teamId, name, needed }]                  needed = people per service
- *   skills:       [{ personId, positionId, frequency }]            frequency: 'weekly' | 'fortnightly' | 'monthly' | 'occasional'
+ *   positions:    [{ id, teamId, name, needed, times }]           needed = people per service; times = the services it runs at
+ *                                                                  (e.g. ['08:00']; empty or missing = every service)
+ *   skills:       [{ personId, positionId, frequency, times }]     frequency: 'weekly' | 'fortnightly' | 'monthly' | 'occasional';
+ *                                                                  times = the services they serve at (empty or missing = any)
  *   services:     [{ id, date, time, name }]
  *   assignments:  [{ id, serviceId, positionId, personId, status, source }]  status: pending | accepted | declined
  *   groups:       [{ id, name, kind: 'together'|'apart', strength: 'must'|'prefer', memberIds: [] }]
@@ -28,6 +30,9 @@ var RosterCore = (function () {
   function daysBetween(a, b) { return Math.round((parse(b) - parse(a)) / 86400000); }
   function byId(list) { var m = {}; (list || []).forEach(function (x) { m[x.id] = x; }); return m; }
   function fullName(p) { return p ? (p.firstName + ' ' + p.lastName).trim() : ''; }
+
+  /** Does this position run at this service? Positions without times run at every service. */
+  function runsAt(pos, svc) { return !(pos.times && pos.times.length && svc.time && pos.times.indexOf(svc.time) < 0); }
 
   /** Is this person away (leave or blockout) on this date? Returns the reason or ''. */
   function awayReason(data, personId, date) {
@@ -80,6 +85,8 @@ var RosterCore = (function () {
       var p = people[personId];
       if (!p || p.active === false) return 'not active';
       if (!skillFor(personId, positionId)) return 'not on this team';
+      var kt = skillFor(personId, positionId).times;
+      if (kt && kt.length && svc.time && kt.indexOf(svc.time) < 0) return 'serves at other services';
       var away = awayReason(data, personId, svc.date); if (away) return away;
       if (servingAt(svc.id, personId)) return 'already serving at this service';
       if (declined(svc.id, personId)) return 'said no to this service';
@@ -113,6 +120,7 @@ var RosterCore = (function () {
         var m = others[i], best = null;
         if (servingAt(svc.id, m)) continue;                 // already there: counts as together
         positions.forEach(function (pos) {
+          if (!runsAt(pos, svc)) return;
           var open = (pos.needed || 1) - filled(svc.id, pos.id) - (taken[pos.id] || 0);
           if (open <= 0 || blocker(svc, m, pos.id)) return;
           var sc = score(svc, m, pos.id);
@@ -132,6 +140,7 @@ var RosterCore = (function () {
 
     services.forEach(function (svc) {
       positions.forEach(function (pos) {
+        if (!runsAt(pos, svc)) return;   // e.g. Creche Duty only at the 8:00 service
         var guard = 0;
         while (filled(svc.id, pos.id) < (pos.needed || 1) && guard++ < 50) {
           var cands = (data.skills || []).filter(function (k) { return k.positionId === pos.id; })

@@ -455,6 +455,21 @@ function serve() {
   check(await s.page.evaluate(() => { const b = document.getElementById('busy'); return !!b && b.hidden && !!b.querySelector('.busy-cross'); }), 'a turning cross showed while it worked, and has gone again');
   await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
   check(docs['details/p14'].maritalStatus === 'Married' && docs['details/p15'].maritalStatus === 'Married', 'Undo puts everyone back');
+  // Missing email → "not known"; no household → a new one each
+  await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p15'))); p.email = ''; delete p.emailUnknown; Store.put('people', p);
+    const q = JSON.parse(JSON.stringify(Store.get('people', 'p19'))); q.familyId = ''; q.householdIds = []; Store.put('people', q); }); await s.settle();
+  await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
+  await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'email'); await s.page.selectOption('#bk-v', 'Not known');
+  await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check((docs['details/p15'] || {}).emailUnknown === true && !(docs['details/p14'] || {}).emailUnknown && docs['people/p14'].email && tt.includes('already have an email address'), 'missing email → “not known” for those without one; anyone with an email is left alone');
+  await s.page.fill('input.adv-v[data-i="0"]', 'Peters'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'household'); await s.page.selectOption('#bk-v', { index: 1 });
+  await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
+  const newFam = docs['people/p19'].familyId;
+  check(newFam && docs['families/' + newFam] && docs['families/' + newFam].name === 'Peters family', 'no household → “+ New household” for each person, named after their surname');
+  await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['people/p19'].familyId && !docs['families/' + newFam], 'Undo takes them out again and removes the new household');
   await s.go('settings');
   const pastors = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.appRole === 'pastor' && p.familyRole !== 'child').map(p => p.lastName));
   const tip = await s.page.getAttribute('.who[data-role="pastor"] summary', 'title');

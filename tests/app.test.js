@@ -19,6 +19,8 @@ function sampleData() {
   vm.runInContext(src + '\nthis.makeSampleData = makeSampleData;', ctx);
   return ctx.makeSampleData();
 }
+// A small made-up picture (8 × 6 pixels, orange) for photo uploads
+const PNG = { name: 'face.png', mimeType: 'image/png', buffer: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAgAAAAGCAIAAABxZ0isAAAAEUlEQVR4nGM4UaGBFTEMpAQA5jNDgbfBAhwAAAAASUVORK5CYII=', 'base64') };
 const CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole', 'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt'];
 function seedDocs(opts) {
   const d = JSON.parse(JSON.stringify(sampleData())), out = {}, put = (p, v) => { out[p] = JSON.parse(JSON.stringify(v)); };
@@ -655,6 +657,9 @@ function serve() {
   await s.go('people'); check((await s.text()).includes('Aisha'), 'sees the children');
   await s.go('people/p/p12'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Nuts and bee stings'); await s.page.click('[data-act="people:savemedical"]'); await s.settle();
   docs = await s.docsNow(); check(docs['medical/p12'] && docs['medical/p12'].allergies === 'Nuts and bee stings', 'editing medical notes saves them');
+  await s.go('people/p/p12'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['photos/p12'] && docs['people/p12'].photo, 'Children’s ministry can add a child’s photo');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:photo"]')), 'but not an adult’s');
   await s.go('people/p/p16'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Penicillin'); await s.page.click('[data-act="people:savemedical"]');
   check(await s.page.isVisible('#md-err'), 'can’t add medical notes without a guardian’s consent'); await s.page.click('[data-act="hub:close"]');
   check(await s.page.evaluate(() => Store.get('people', 'p02').birthDate === undefined && Store.get('people', 'p12').birthDate !== ''), 'sees children’s birthdays but not adults’ details');
@@ -690,6 +695,13 @@ function serve() {
   check(dirText.includes('Jacobs, Clare') && !dirText.includes('Smith, Megan') && !dirText.includes('Daniels, Ruth') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
+  await s.go('people/p/p14'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle();
+  docs = await s.docsNow();
+  check(/^data:image\/jpeg;base64,/.test((docs['photos/p14'] || {}).data || '') && docs['people/p14'].photo && docs['directory/p14'].photo === docs['people/p14'].photo, 'a member can add their own photo (made small, and the directory knows there is one)');
+  check(await s.page.$('.page-head .av.pic') !== null, 'their photo shows on their page');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:photo"]')), 'a member can’t add photos of other people');
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:nophoto"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['photos/p14'] && !docs['people/p14'].photo, 'and can remove it');
   await s.go('rosters/away'); await s.page.click('[data-act="rosters:addaway"]');
   const ticks = await s.page.$$('.aw-d'); await ticks[1].check(); await ticks[3].check();
   await s.page.click('[data-act="rosters:awayrange"]'); await s.page.fill('.aw-range .aw-f', '2027-07-01'); await s.page.dispatchEvent('.aw-range .aw-f', 'change'); await s.page.fill('.aw-range .aw-t', '2027-07-14');

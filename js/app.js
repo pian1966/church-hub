@@ -69,7 +69,27 @@ var Hub = (function () {
   var AV = ['#E8590C', '#2F6FB3', '#0F766E', '#7C3AED', '#B0527A', '#4C9A6A', '#A16207', '#0E7490'];
   function avatar(p, size) {
     var c = AV[(p && p.id ? p.id.charCodeAt(p.id.length - 1) : 0) % AV.length];
-    return '<span class="av" style="--c:' + c + (size ? ';--s:' + size + 'px' : '') + '" aria-hidden="true">' + esc(initials(p)) + '</span>';
+    var ph = p && p.photo ? ' data-photo="' + esc(p.id) + '" data-v="' + esc(p.photo) + '"' : '';
+    return '<span class="av' + (ph && photoCache[p.id + '|' + p.photo] ? ' pic' : '') + '"' + ph + ' style="--c:' + c + (size ? ';--s:' + size + 'px' : '') +
+      (ph && photoCache[p.id + '|' + p.photo] ? ';background-image:url(' + photoCache[p.id + '|' + p.photo] + ')' : '') + '" aria-hidden="true">' + esc(initials(p)) + '</span>';
+  }
+  /* Photos are fetched only when their circle comes into view, then kept for this visit (key: person + version). */
+  var photoCache = {}, photoAsked = {}, photoSeen = null;
+  function showPhoto(el) {
+    var id = el.getAttribute('data-photo'), key = id + '|' + el.getAttribute('data-v');
+    var paint = function () { var d = photoCache[key]; if (d) { el.style.backgroundImage = 'url(' + d + ')'; el.classList.add('pic'); } };
+    if (key in photoCache) return paint();
+    (photoAsked[key] = photoAsked[key] || Store.photo(id).then(function (d) { photoCache[key] = /^data:image\/(jpeg|png|webp);base64,/.test(d || '') ? d : ''; })).then(function () {
+      document.querySelectorAll('.av[data-photo="' + id + '"]').forEach(function (x) { if (x.getAttribute('data-v') === el.getAttribute('data-v')) { var d = photoCache[key]; if (d) { x.style.backgroundImage = 'url(' + d + ')'; x.classList.add('pic'); } } });
+    });
+  }
+  function loadPhotos() {
+    var els = document.querySelectorAll('.av[data-photo]:not(.pic)');
+    if (!els.length) return;
+    if (!('IntersectionObserver' in window)) return els.forEach(showPhoto);
+    if (photoSeen) photoSeen.disconnect();
+    photoSeen = new IntersectionObserver(function (es) { es.forEach(function (e) { if (e.isIntersecting) { photoSeen.unobserve(e.target); showPhoto(e.target); } }); }, { rootMargin: '200px' });
+    els.forEach(function (el) { photoSeen.observe(el); });
   }
   function icon(path, size) {
     return '<svg width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + path + '"></path></svg>';
@@ -114,6 +134,7 @@ var Hub = (function () {
     var body = mod ? mod.render(p.slice(1)) : renderHome();
     root.innerHTML = shell(mod, body);
     if (mod && mod.after) mod.after(p.slice(1));
+    loadPhotos();
     langWire(); markRequired();
     var h = root.querySelector('main h1'); if (h) document.title = h.textContent + ' · Church Hub';
   }

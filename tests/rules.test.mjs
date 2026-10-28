@@ -134,6 +134,26 @@ await t('Roster coordinators and Children’s ministry can’t change people', a
   await cannot(db.rosters.doc('people/p15').update({ mobile: '1' })); await cannot(db.kids.doc('people/p12').update({ lastName: 'x' }));
   await can(db.pastor.doc('people/p15').update({ mobile: '084' }));
 });
+console.log('Photos');
+await t('adults’ photos: staff and the person; members only when the adult is in the directory', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { const d = ctx.firestore(); await d.doc('photos/p15').set({ data: 'data:image/jpeg;base64,AAA', updatedAt: 'x' }); await d.doc('photos/p01').set({ data: 'data:image/jpeg;base64,AAA', updatedAt: 'x' }); await d.doc('photos/p12').set({ data: 'data:image/jpeg;base64,AAA', updatedAt: 'x' }); });
+  await only('photos/p15', ['admin', 'pastor', 'kids', 'rosters', 'member']);   // p15 is in the directory
+  await only('photos/p01', ['admin', 'pastor', 'kids', 'rosters']);             // p01 isn't
+  await cannot(read(stranger, 'photos/p15')); await cannot(read(nobody, 'photos/p15'));
+});
+await t('children’s photos: Administrators, Pastors and Children’s ministry only', () => only('photos/p12', ['admin', 'pastor', 'kids']));
+await t('who may add photos: Administrators and Pastors; Children’s ministry for children; adults their own', async () => {
+  const pic = { data: 'data:image/jpeg;base64,BBB', updatedAt: 'y' };
+  await can(db.member.doc('photos/p14').set(pic)); await cannot(db.member.doc('photos/p15').set(pic));
+  await can(db.kids.doc('photos/p12').set(pic)); await cannot(db.kids.doc('photos/p15').set(pic));
+  await can(db.pastor.doc('photos/p15').set(pic)); await cannot(db.rosters.doc('photos/p15').set(pic));
+  await cannot(db.admin.doc('photos/p15').set({ data: 'x'.repeat(200001), updatedAt: 'y' }));
+  await cannot(db.admin.doc('photos/p15').set({ data: 'x', updatedAt: 'y', note: 'extra' }));
+  await can(db.member.doc('people/p14').update({ photo: 'y' }));
+  await can(db.kids.doc('people/p12').update({ photo: 'y' })); await cannot(db.kids.doc('people/p12').update({ lastName: 'X' }));
+  await cannot(db.kids.doc('people/p15').update({ photo: 'y' }));
+  await can(db.member.doc('photos/p14').delete()); await cannot(db.member.doc('photos/p15').delete());
+});
 await t('directory: everyone signed in can read; it holds only name and phone', async () => {
   for (const r of roles) await can(list(db[r].collection('directory')));
   await can(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', preferredName: '', mobile: '082' }));

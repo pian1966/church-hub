@@ -54,7 +54,8 @@ service cloud.firestore {
       allow read: if staff() || mine(id);
       allow create: if isRole(['admin', 'pastor']);
       allow update: if isRole(['admin', 'pastor'])
-        || (mine(id) && onlyChanges(['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'updatedAt']));
+        || (mine(id) && onlyChanges(['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'updatedAt']))
+        || (isRole(['kids']) && resource.data.familyRole == 'child' && onlyChanges(['photo', 'updatedAt']));
       allow delete: if admin();
     }
     // Birthday, key dates, staff details. Children's ministry sees children's details only.
@@ -83,12 +84,24 @@ service cloud.firestore {
     match /noCollect/{id} {
       allow read, write: if isRole(['admin', 'pastor', 'kids']);
     }
-    // Church directory: name and phone of adults who agreed to be listed. Everyone signed in can read it.
+    // Church directory: name, phone and whether there is a photo, for adults who agreed to be listed. Everyone signed in can read it.
     match /directory/{id} {
       allow read: if anyone();
       allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
-        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile']);
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'photo']);
       allow delete: if isRole(['admin', 'pastor']) || mine(id);
+    }
+    // Photos, one small picture per person. Adults: staff, the person, and members when the adult is in the directory.
+    // Children: Administrators, Pastors and Children's ministry only. Administrators and Pastors add photos; Children's
+    // ministry for children; anyone for themselves (adults).
+    function isChild(id) { return get(/databases/$(database)/documents/people/$(id)).data.get('familyRole', '') == 'child'; }
+    match /photos/{id} {
+      allow read: if isChild(id) ? isRole(['admin', 'pastor', 'kids'])
+        : (staff() || mine(id) || (anyone() && exists(/databases/$(database)/documents/directory/$(id))));
+      allow create, update: if request.resource.data.keys().hasOnly(['data', 'updatedAt'])
+        && request.resource.data.data is string && request.resource.data.data.size() < 200000
+        && (isRole(['admin', 'pastor']) || (isChild(id) ? isRole(['kids']) : mine(id)));
+      allow delete: if isRole(['admin', 'pastor']) || (isChild(id) ? isRole(['kids']) : mine(id));
     }
     match /families/{id} {
       allow read: if staff();

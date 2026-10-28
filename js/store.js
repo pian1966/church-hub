@@ -123,7 +123,7 @@ var Store = (function () {
     var EMAIL_KEY = 'church_hub_signin_email';
     // Fields that live in people/{id}; everything else (except medical) goes to details/{id}.
     var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
-      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt'];
+      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo'];
     var DIRECTORY = 'Church directory';
     var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false;
     var savedLeave = { requests: {}, adjustments: {}, config: '' }, remoteTimer = null;
@@ -398,7 +398,7 @@ var Store = (function () {
       // Compare with what the database holds (screens often change the record in place before saving it).
       var a = split(p), was = { card: known('people/' + p.id), det: known('details/' + p.id), med: known('medical/' + p.id) }, mine = p.id === session.personId;
       if (session.role === 'admin' && mine && p.appRole !== 'admin') { p.appRole = 'admin'; a.card.appRole = 'admin'; err({}, 'remove your own Administrator access – ask another Administrator'); }
-      if (!same(a.card, was.card) && (is('admin', 'pastor') || mine)) write('people/' + p.id, a.card);
+      if (!same(a.card, was.card) && (is('admin', 'pastor') || mine || (is('kids') && p.familyRole === 'child'))) write('people/' + p.id, a.card);   // Children's ministry: a child's photo
       if (!same(a.det, was.det) && is('admin', 'pastor')) write('details/' + p.id, a.det);
       if (!same(a.med, was.med) && is('kids')) { if (a.med) write('medical/' + p.id, a.med); else del('medical/' + p.id); }
       syncDirectory(p.id);
@@ -410,6 +410,7 @@ var Store = (function () {
       var p = get('people', pid), latest = find('consents', function (c) { return c.personId === pid && c.purpose === DIRECTORY && !c.withdrawnAt; })
         .sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0];
       var want = p && p.familyRole !== 'child' && p.active !== false && latest && latest.given ? { firstName: p.firstName || '', lastName: p.lastName || '', preferredName: p.preferredName || '', mobile: p.mobile || '' } : null;
+      if (want && p.photo) want.photo = p.photo;
       if (same(want, known('directory/' + pid))) return;
       if (want) write('directory/' + pid, want); else del('directory/' + pid);
     }
@@ -434,10 +435,13 @@ var Store = (function () {
     }
     function remove(c, prev) {
       if (c === 'notes') return putNotes(prev.personId);
-      if (c === 'people') { ['people', 'details', 'directory'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
+      if (c === 'people') { ['people', 'details', 'directory', 'photos'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       del(c + '/' + prev.id);
     }
-    function purge(pid) { ['medical', 'notes', 'directory'].forEach(function (x) { if (is('admin') || x !== 'directory') del(x + '/' + pid); }); }
+    function purge(pid) { ['medical', 'notes', 'directory', 'photos'].forEach(function (x) { if (is('admin') || (x !== 'directory' && x !== 'photos')) del(x + '/' + pid); }); }
+    /** A person's photo (a small JPEG as a data: address), fetched only when it is shown. '' when there is none or it may not be seen. */
+    function photoGet(pid) { return doc('photos/' + pid).get().then(function (s) { return s.exists ? (s.data().data || '') : ''; }, function () { return ''; }); }
+    function photoSet(pid, data) { return data ? write('photos/' + pid, { data: data, updatedAt: now() }) : del('photos/' + pid); }
     function auditEntry(entry) {
       var e = clean(entry); e.byEmail = session ? session.email : ''; e.ts = fb.firestore.FieldValue.serverTimestamp();
       fs.collection('audit').doc(entry.id).set(e).catch(function (x) { console.error('audit', x); });
@@ -499,13 +503,27 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write,
+      put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet,
       session: function () { return session; } };
   })();
 
   return { load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    /** Photos are kept apart from the person (photos/{id}) and fetched only when shown; the person's card says which version there is. */
+    photo: function (pid) {
+      if (LIVE) return Live.photoGet(pid);
+      var x = ((db && db.photos) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.data : '');
+    },
+    setPhoto: function (pid, data, auditText) {
+      var p = get('people', pid); if (!p) return Promise.resolve();
+      p = copy(p); if (data) p.photo = now() + ' ' + Math.random().toString(36).slice(2, 6); else delete p.photo;
+      var done = LIVE ? Live.photoSet(pid, data) : Promise.resolve((function () {
+        db.photos = (db.photos || []).filter(function (o) { return o.id !== pid; }); if (data) db.photos.push({ id: pid, data: data });
+      })());
+      put('people', p, auditText);
+      return done;
+    },
     /** A small setting kept on this device only (e.g. the language), also before signing in. Not church data. */
     pref: function (k, v) {
       try { if (arguments.length > 1) localStorage.setItem('church_hub_pref_' + k, v); return localStorage.getItem('church_hub_pref_' + k) || ''; } catch (e) { return ''; }

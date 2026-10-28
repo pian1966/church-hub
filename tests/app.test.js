@@ -59,6 +59,7 @@ function seedDocs(opts) {
     Object.assign(out['people/p21'], { firstName: '2023-05-01 Thabo', category: 'Deceased', active: false });
     out['details/p21'] = Object.assign({}, out['details/p21'], { deceasedAt: '2023-04-30' });   // recorded on purpose: kept
     out['people/p14'].firstName = '2020-01-01-Tim';   // alive: left alone
+    out['people/p19'].lastName = '5710210087085 Peters';   // an ID number typed into a name
   }
   if (opts && opts.elvanto) {   // Elvanto updating switched on; Lerato's approved leave (L103) already in Elvanto; the robot's sign-in
     out['settings/church'].elvanto = { on: true, url: 'https://example.elvanto.eu', robotEmail: 'robot@example.com' };
@@ -173,7 +174,7 @@ function serve() {
   await s.page.uncheck('#pf-sw-same'); await s.page.check('.pf-sw[value="Mon"]'); await s.page.check('.pf-sw[value="Tue"]');
   await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow();
-  check(docs['details/p19'].staff && docs['details/p19'].staff.category === 'Support Staff' && docs['details/p19'].staff.workDays === 'Mon, Tue' && docs['people/p19'].category === 'Staff', 'Administrator can mark someone as staff (category, start date, own working days)');
+  check(docs['details/p19'].staff && docs['details/p19'].staff.category === 'Support Staff' && docs['details/p19'].staff.workDays === 'Mon, Tue' && docs['people/p19'].category === 'Church Partner', 'Administrator can mark someone as staff (category, start date, own working days); they stay a Church Partner');
   await s.go('leave/team'); check((await s.text()).includes('Sam Peters'), 'new staff member appears in Leave team balances');
   // Leave settings
   await s.go('leave/settings');
@@ -202,6 +203,33 @@ function serve() {
   check(!docs['roles/johan.vandermerwe@example.com'] && !docs['directory/p23'], 'they can’t sign in and leave the directory');
   check(!Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p23') && futureJohan.length === 0, 'they come off teams and future rosters');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /Recorded the death/.test(docs[k].action)), 'the death is in the audit log');
+  let tt;
+  await s.go('people/p/p24'); tt = await s.text();
+  check(tt.includes('Late spouse') && tt.includes('Was married to Johan van der Merwe') && docs['details/p24'].lateSpouseId === 'p23', 'the surviving spouse’s record says who they were married to');
+  await s.go('people/p/p23'); tt = await s.text();
+  check(tt.includes('Was married to Elsa van der Merwe'), 'and the record of the one who died names the surviving spouse');
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-email', ''); await s.page.fill('#pf-mobile', '');
+  const reqs = await s.page.$$eval('#pf .field.req input, #pf .field.req select', els => els.map(e => e.id));
+  await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  check(reqs.join() === 'pf-first,pf-last' && !(await s.page.$('#pf')) && !docs['people/p23'].email, 'for someone who has died only first and last name must be filled in: ' + reqs.join());
+  // Staff can be Church Partners too
+  await s.go('people/p/p02'); await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-cat', 'Church Partner'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  docs = await s.docsNow(); tt = await s.text();
+  check(docs['people/p02'].category === 'Church Partner' && docs['details/p02'].staff && tt.includes('Church Partner') && tt.includes('Staff · '), 'a staff member can be a Church Partner too (both shown)');
+  await s.go('people'); await s.page.click('[data-act="people:filter"][data-f="Staff"]'); tt = await s.text();
+  check(tt.includes('Mokoena, Thandi'), 'and still appears under Staff');
+  await s.page.click('[data-act="people:filter"][data-f="Church Partner"]'); check((await s.text()).includes('Mokoena, Thandi'), 'and under Church Partners');
+  await s.page.click('[data-act="people:filter"][data-f="all"]');
+  // ID numbers: Administrators only, every view logged
+  await s.go('people/p/p15'); await s.page.click('[data-act="people:editid"]'); await s.page.fill('#idn-v', '8001015009087'); await s.page.click('[data-act="people:saveid"]'); await s.settle();
+  docs = await s.docsNow();
+  check(docs['idNumbers/p15'] && docs['idNumbers/p15'].value === '8001015009087' && !JSON.stringify(docs['people/p15']).includes('8001015009087') && !JSON.stringify(docs['details/p15']).includes('8001015009087'), 'an Administrator can record an ID number, kept apart from the rest');
+  check(!(await s.text()).includes('8001015009087'), 'the ID number is hidden until someone asks to see it');
+  await s.page.click('[data-act="people:showid"]'); await s.page.waitForSelector('#pp-idn .idn'); await s.settle(); docs = await s.docsNow();
+  check((await s.text()).includes('8001015009087') && Object.keys(docs).some(k => k.startsWith('audit/') && /Viewed the ID number of/.test(docs[k].action)), 'Show reveals it, and the view is in the history log');
+  // Church office notes
+  await s.page.fill('#on-text', 'Moved to Durban in 2019.'); await s.page.click('[data-act="people:onote"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['officeNotes/p15'] && docs['officeNotes/p15'].entries[0].text === 'Moved to Durban in 2019.' && (await s.text()).includes('Moved to Durban in 2019.'), 'Administrators can add church office notes');
   await s.go('people'); let tDead = await s.text();
   check(!tDead.includes('Merwe, Johan'), 'someone who has died is not in the Everyone list');
   await s.page.click('[data-act="people:filter"][data-f="deceased"]'); tDead = await s.text();
@@ -529,7 +557,7 @@ function serve() {
   s = await session('linda.pillay@example.com', seedDocs({ legacy: true }));
   await s.settle(); docs = await s.docsNow();
   const gl = Object.keys(docs).filter(k => k.startsWith('guardians/')).map(k => docs[k]);
-  check(docs['settings/church'].dataVersion === 3 && !Object.keys(docs).some(k => k.startsWith('people/') && /^(Member|Visitor|Partner)$/.test(docs[k].category)), 'categories renamed to Church Partner / Visiting Minister (once)');
+  check(docs['settings/church'].dataVersion === 4 && !Object.keys(docs).some(k => k.startsWith('people/') && /^(Member|Visitor|Partner)$/.test(docs[k].category)), 'categories renamed to Church Partner / Visiting Minister (once)');
   check(gl.length > 0 && gl.every(l => !l.confirmed) && gl.some(l => l.childId === 'p28' && l.adultId === 'p29'), 'children linked to the adults of every home they live in, to be confirmed');
   await s.go('home'); check((await s.text()).includes('Confirm the parents and guardians of'), 'Home asks someone to confirm them');
   await finish(s);
@@ -538,12 +566,13 @@ function serve() {
   s = await session('linda.pillay@example.com', seedDocs({ v2: true }));
   await s.settle(); docs = await s.docsNow();
   const cp = Object.keys(docs).filter(k => k.startsWith('people/') && docs[k].category === 'Church Partner').length;
-  check(docs['settings/church'].dataVersion === 3 && cp > 0 && !Object.keys(docs).some(k => k.startsWith('people/') && docs[k].category === 'Partner'), 'every Partner becomes a Church Partner');
+  check(docs['settings/church'].dataVersion === 4 && cp > 0 && !Object.keys(docs).some(k => k.startsWith('people/') && docs[k].category === 'Partner'), 'every Partner becomes a Church Partner');
   check(!Object.keys(docs).some(k => k.startsWith('guardians/') && !docs[k].confirmed && !seedDocs()[k]), 'no guardian links are suggested again');
   check(docs['details/p17'].maritalStatus === 'Partner', 'marital status “Partner” (in a couple) is left alone');
   check(docs['people/p23'].firstName === 'Johan' && docs['details/p23'].deceasedAt === '2024-08-22', '“2024-08-22-Johan” becomes Johan, died 22 Aug 2024 (instead of the import day)');
   check(docs['people/p21'].firstName === 'Thabo' && docs['details/p21'].deceasedAt === '2023-04-30', 'a date of death already recorded on purpose is kept');
   check(docs['people/p14'].firstName === '2020-01-01-Tim', 'names of people who are alive are never changed');
+  check(docs['people/p19'].lastName === 'Peters' && docs['idNumbers/p19'] && docs['idNumbers/p19'].value === '5710210087085', 'an ID number typed into a name becomes their ID number (Administrators only)');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /2 dates of death moved/.test(docs[k].action)), 'the history log says how many names were tidied');
   await finish(s);
 
@@ -570,7 +599,9 @@ function serve() {
   check(ep.length === 11 && pe('Karen') && pe('Mia') && pe('Leo'), 'all 11 people imported – none merged by a shared email');
   check(pe('Brian').familyRole === 'adult' && pe('Mia').familyRole === 'child' && pe('Brian').familyId && pe('Brian').familyId === pe('Leo').familyId, 'parents are adults, children are children, family linked');
   check(pe('Brian').elvantoId === 'aaaa-0001' && pe('Sipho').birthDay === '06-04' && pe('Sipho').category === 'Attender' && pe('Peter').category === 'Deceased', 'Elvanto ID, day-month birthday, category and deceased kept');
-  check(!JSON.stringify(docs).includes('7503125000000') && !JSON.stringify(docs).includes('Made-up note'), 'ID numbers and notes never stored');
+  const brianId = pe('Brian').id, others = Object.keys(docs).filter(k => !/^(idNumbers|officeNotes|audit)\//.test(k)).map(k => docs[k]);
+  check((docs['idNumbers/' + brianId] || {}).value === '7503125000000' && !JSON.stringify(others).includes('7503125000000'), 'ID numbers come across from Elvanto, kept apart (Administrators only)');
+  check(((docs['officeNotes/' + brianId] || {}).entries || []).some(n => n.text === 'Made-up note' && n.by === 'Elvanto') && !JSON.stringify(others).includes('Made-up note'), 'Elvanto notes become church office notes');
   await s.page.waitForSelector('#im-pics.ok', { timeout: 10000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
   check(docs['people/' + pe('Brian').id].photo && /^data:image\/jpeg/.test((docs['photos/' + pe('Brian').id] || {}).data || '') && (await s.text()).includes('1 brought in from Elvanto'), 'the photo is brought in from Elvanto');
   check(elvPics.length === 1 && !elvPics[0].includes('_thumb_'), 'the full-size picture is used, not the small copy');
@@ -644,6 +675,8 @@ function serve() {
   await tour(s, 'pastor');
   await s.go('people/p/p10'); await s.page.fill('#pn-text', 'Visited at home.'); await s.page.click('[data-act="people:note"]'); await s.settle();
   docs = await s.docsNow(); check(docs['notes/p10'] && docs['notes/p10'].entries.length === 2, 'adding a pastoral note saves it');
+  await s.go('people/p/p10'); t = await s.text();
+  check(t.includes('Church office notes') && !t.includes('ID number'), 'Pastors see church office notes but not ID numbers');
   await s.go('people/p/p27'); await s.page.click('[data-act="people:consent"]');
   for (const pur of ['Church records', 'Church directory']) await s.page.check(`.cf-p[data-p="${pur}"]`);
   await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
@@ -701,6 +734,8 @@ function serve() {
   check(dirText.includes('Jacobs, Clare') && !dirText.includes('Smith, Megan') && !dirText.includes('Daniels, Ruth') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
+  await s.go('people/p/p14'); check(!!(await s.page.$('[data-act="people:showid"]')) && !(await s.page.$('[data-act="people:editid"]')), 'a member can see their own ID number but not change it');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:showid"]')) && !(await s.text()).includes('Church office notes'), 'and never someone else’s, nor church office notes');
   await s.go('people/p/p14'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle();
   docs = await s.docsNow();
   check(/^data:image\/jpeg;base64,/.test((docs['photos/p14'] || {}).data || '') && docs['people/p14'].photo && docs['directory/p14'].photo === docs['people/p14'].photo, 'a member can add their own photo (made small, and the directory knows there is one)');

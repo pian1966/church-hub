@@ -59,6 +59,9 @@
         var who = is(c, ['admin', 'pastor']) || (child(id) ? is(c, ['kids']) : mine(c, id));
         return who && (op === 'delete' || (onlyKeys(a, ['data', 'updatedAt']) && typeof a.data === 'string' && a.data.length < 200000));
       } },
+    officeNotes: { read: function (c) { return is(c, ['admin', 'pastor']); }, write: function (c) { return is(c, ['admin', 'pastor']); } },
+    idNumbers: { read: function (c, id) { return is(c, ['admin']) || mine(c, id); },
+      write: function (c, op, id, b, a) { return is(c, ['admin']) && (op === 'delete' || (onlyKeys(a, ['value', 'updatedAt']) && typeof a.value === 'string' && a.value.length <= 20)); } },
     families: { read: function (c) { return is(c, STAFF); }, write: function (c) { return is(c, ['admin', 'pastor']); } },
     consents: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (!!d && mine(c, d.personId)) || (is(c, ['kids']) && !!d && KIDS_CONSENTS.indexOf(d.purpose) >= 0); },
       write: function (c, op, id, b, a) {

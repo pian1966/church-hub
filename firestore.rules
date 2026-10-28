@@ -103,6 +103,17 @@ service cloud.firestore {
         && (isRole(['admin', 'pastor']) || (isChild(id) ? isRole(['kids']) : mine(id)));
       allow delete: if isRole(['admin', 'pastor']) || (isChild(id) ? isRole(['kids']) : mine(id));
     }
+    // Church office notes (e.g. brought across from Elvanto): Administrators and Pastors. Pastoral notes stay Pastors only.
+    match /officeNotes/{personId} {
+      allow read, write: if isRole(['admin', 'pastor']);
+    }
+    // ID numbers: Administrators only (and the person may see their own). Kept apart; every view is logged by the app.
+    match /idNumbers/{personId} {
+      allow read: if admin() || mine(personId);
+      allow create, update: if admin() && request.resource.data.keys().hasOnly(['value', 'updatedAt'])
+        && request.resource.data.value is string && request.resource.data.value.size() <= 20;
+      allow delete: if admin();
+    }
     match /families/{id} {
       allow read: if staff();
       allow write: if isRole(['admin', 'pastor']);

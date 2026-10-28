@@ -25,8 +25,22 @@ var ElvantoImport = (function () {
     ['archived', 'Archived', ['Archived'], /^archived$/i],
     ['deceased', 'Deceased', ['Deceased'], /^deceased$/i],
     ['deceasedDate', 'Date deceased', ['Date Deceased'], /deceased\s*date|date\s*deceased/i],
-    ['photo', 'Photo', ['Photo'], /^(photo|picture|image)$/i]
+    ['photo', 'Photo', ['Photo'], /^(photo|picture|image)$/i],
+    ['idNumber', 'ID number', ['ID Number (Numeric)', 'ID Number'], /^id\s*(number|no\.?)\b/i],
+    ['notes', 'Notes', ['Notes'], /^notes?$/i]
   ];
+  /** An ID number as typed: spaces gone. Elvanto's "numeric" column drops a leading 0 (people born 2000–2009), so 12 digits get it back.
+   *  Spreadsheet-mangled numbers ("5.71021E+12") can't be recovered and are left out. */
+  function idNumber(v) {
+    var s = String(v || '').replace(/[\s-]/g, '');
+    if (/e\+/i.test(s) || !/^[A-Za-z0-9]{5,20}$/.test(s)) return '';
+    return /^\d{12}$/.test(s) ? '0' + s : s;
+  }
+  /** A 13-digit ID number typed into a name ("5710210087085 Thomson") → { id, name: 'Thomson' }; null when there is none. */
+  function idInName(v) {
+    var m = /(^|\s)(\d{13})(?=\s|$)/.exec(String(v || ''));
+    return m ? { id: m[2], name: String(v).replace(m[2], ' ').replace(/\s+/g, ' ').trim() } : null;
+  }
   /** Elvanto's link to someone's photo, for the full-size picture (not the small "_thumb" copy). Only Elvanto's own addresses. */
   function photoLink(v) {
     var s = String(v || '').trim();
@@ -115,6 +129,9 @@ var ElvantoImport = (function () {
       o.deceasedDate = toISO(o.deceasedDate);
       o.photoThumb = /_thumb_\d+\./i.test(o.photo) ? photoLink(o.photo) && o.photo.trim() : '';   // Elvanto's small copy, if the big one is missing
       o.photo = photoLink(o.photo);
+      o.idNumber = idNumber(o.idNumber);
+      ['firstName', 'preferredName', 'lastName'].forEach(function (k) { var m = idInName(o[k]); if (m) { o[k] = m.name; if (!o.idNumber) o.idNumber = m.id; } });
+      o.notes = String(o.notes || '').trim();
       o.archived = yes(o.archived); o.deceased = yes(o.deceased);
       if (o.deceased) ['firstName', 'preferredName', 'lastName'].forEach(function (k) {   // "2024-08-22-Mike": the date they died, then the name
         var dn = datedName(o[k]); if (dn && (dn.name || k !== 'firstName' || o.lastName)) { o[k] = dn.name; if (!o.deceasedDate) o.deceasedDate = dn.date; }
@@ -215,6 +232,6 @@ var ElvantoImport = (function () {
     return out;
   }
 
-  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, photoLink: photoLink, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
+  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, photoLink: photoLink, idNumber: idNumber, idInName: idInName, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
 })();
 if (typeof module !== 'undefined') module.exports = ElvantoImport;

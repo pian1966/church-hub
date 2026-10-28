@@ -29,6 +29,15 @@ This is a design checklist, not legal advice – the church's Information Office
   leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
   died") so the church can decide when to delete their details.
 
+## ID numbers
+- **Purpose (as the church gave it):** telling apart people with the same name; they were also collected during covid. POPIA s10 (minimality) and s14 (keep no longer than needed): the covid reason has ended, so the church should decide whether it still needs ID numbers at all – a date of birth usually tells people apart. Delete them if not.
+- **Where:** `idNumbers/{person}`, apart from everything else; never loaded with the person, only when an Administrator taps **Show**. Every view and change is in the audit log.
+- **Who:** Administrators only. A person may see their own (not change it). Pastors, staff and members never see them.
+- **From Elvanto:** the import reads "ID Number (Numeric)" (a lost leading 0 is put back; spreadsheet-mangled numbers are left out). ID numbers typed into names ("5710210087085 Thomson") are taken out of the name once, when an Administrator signs in.
+
+## Church office notes
+- Notes about a person for the church office (e.g. Elvanto's Notes column). Administrators and Pastors read and write them (`officeNotes/{person}`); members, roster coordinators and Children's ministry don't see them. Pastoral matters belong in pastoral notes (Pastors only). Adding and deleting is in the audit log. Deleting a person deletes their office notes and ID number.
+
 ## Photos of people
 - **Purpose:** recognising people (welcome team, children's check-in, the members' directory). Lawful basis: the church records consent (the church chose not to ask a separate photo consent). The existing "Photos" consent is about photos taken at church events, not these.
 - **Kept small and apart:** each photo is cut to a 320 × 320 picture (about 20–40 KB) and stored in its own place (`photos/{person}`), fetched only when it is shown.

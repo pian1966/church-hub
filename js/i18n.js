@@ -88,6 +88,7 @@ var I18n = (function () {
     ['Confirm your email', 'Bevestig jou e-pos', 'Qinisekisa i-imeyili yakho', 'Qinisekisa i-imeyile yakho'],
     ['For your safety, type the email address you asked the sign-in link for.', 'Vir jou veiligheid: tik die e-posadres waarvoor jy die aanmeldskakel gevra het.', 'Ukuze uphephe, thayipha ikheli le-imeyili ocele ngalo isixhumanisi sokungena.', 'Ukuze ukhuseleke, chwetheza idilesi ye-imeyile oceli ngayo ikhonkco lokungena.'],
     ['unknown', 'onbekend', 'akwaziwa', 'akwaziwa'],
+    ['Unknown', 'Onbekend', 'Akwaziwa', 'Akwaziwa'],
     ['Type “{word}” if not known', 'Tik “{word}” as dit onbekend is', 'Thayipha u-“{word}” uma kungaziwa', 'Chwetheza u-“{word}” ukuba akwaziwa'],
     ['Please fill in the email address, or type “{word}”.', 'Vul asseblief die e-posadres in, of tik “{word}”.', 'Sicela ugcwalise ikheli le-imeyili, noma uthayiphe u-“{word}”.', 'Nceda ugcwalise idilesi ye-imeyile, okanye uchwetheze u-“{word}”.'],
     ['Please fill in the mobile number, or type “{word}”.', 'Vul asseblief die selfoonnommer in, of tik “{word}”.', 'Sicela ugcwalise inombolo yeselula, noma uthayiphe u-“{word}”.', 'Nceda ugcwalise inombolo yeselfowuni, okanye uchwetheze u-“{word}”.'],

@@ -308,7 +308,7 @@ function serve() {
     await s.page.fill('#pf-email', 'Unknown'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]'); await s.settle();
     const d25 = await s.docsNow();
     check(d25['people/p25'].email === '' && (d25['details/p25'] || {}).emailUnknown === true, '“unknown” is saved as not known, never as the word');
-    check((await s.text()).includes('Not known'), 'the profile shows “Not known”');
+    check((await s.text()).includes('Unknown'), 'the profile shows “Unknown”');
   }
   {
     const y = new Date().getFullYear() - 12, wed = y + '-01-01';
@@ -464,9 +464,9 @@ function serve() {
     const q = JSON.parse(JSON.stringify(Store.get('people', 'p19'))); q.familyId = ''; q.householdIds = []; Store.put('people', q); }); await s.settle();
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
-  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'email'); await s.page.selectOption('#bk-v', 'Not known');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'email'); await s.page.selectOption('#bk-v', 'Unknown');
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
-  check((docs['details/p15'] || {}).emailUnknown === true && !(docs['details/p14'] || {}).emailUnknown && docs['people/p14'].email && tt.includes('already have an email address'), 'missing email → “not known” for those without one; anyone with an email is left alone');
+  check((docs['details/p15'] || {}).emailUnknown === true && !(docs['details/p14'] || {}).emailUnknown && docs['people/p14'].email && tt.includes('already have an email address'), 'missing email → “Unknown” for those without one (shown as Unknown); anyone with an email is left alone');
   await s.page.fill('input.adv-v[data-i="0"]', 'Peters'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
   await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'household'); await s.page.selectOption('#bk-v', { index: 1 });
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();

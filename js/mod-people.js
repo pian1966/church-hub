@@ -300,8 +300,8 @@
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
       (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + '</dd>' : '') +
-      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
-        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +
+      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
+        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
       ((full || (child && canChildren())) ? '<dt>' + T('Gender') + '</dt><dd>' + (p.gender ? esc(T(p.gender)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
@@ -896,9 +896,9 @@
       { key: 'gender', label: 'Gender', options: GENDERS, blank: 'Not recorded', keys: ['gender'], set: plain('gender') },
       { key: 'partnerSince', label: 'Date accepted as Church Partner', date: true, keys: ['partnerSince'], set: plain('partnerSince') },
       { key: 'partnerUpdated', label: 'Partnership last updated', date: true, keys: ['partnerUpdated'], set: plain('partnerUpdated') },
-      { key: 'email', label: 'Email (where it’s missing)', options: ['Not known'], keys: ['emailUnknown'], set: function (q) { q.emailUnknown = true; },
+      { key: 'email', label: 'Email (where it’s missing)', options: ['Unknown'], keys: ['emailUnknown'], set: function (q) { q.emailUnknown = true; },
         skip: function (p) { return p.email ? 'already have an email address' : p.familyRole === 'child' ? 'children' : ''; }, note: 'Only for adults with no email address. Anyone who has one is left alone.' },
-      { key: 'mobile', label: 'Mobile (where it’s missing)', options: ['Not known'], keys: ['mobileUnknown'], set: function (q) { q.mobileUnknown = true; },
+      { key: 'mobile', label: 'Mobile (where it’s missing)', options: ['Unknown'], keys: ['mobileUnknown'], set: function (q) { q.mobileUnknown = true; },
         skip: function (p) { return p.mobile ? 'already have a mobile number' : p.familyRole === 'child' ? 'children' : ''; }, note: 'Only for adults with no mobile number. Anyone who has one is left alone.' },
       { key: 'household', label: 'Household (where it’s missing)', options: ['+ New household for each person'], keys: ['familyId'],
         skip: function (p) { return (p.familyId || (p.householdIds || []).length) ? 'already in a household' : ''; },

@@ -29,7 +29,7 @@ ok(pl.added === 11 && pl.updated === 0, 'everyone added – nobody merged, thoug
 ok(pl.families === 2 && pl.sharedEmails === 2, '2 families; 2 shared email addresses reported');
 
 console.log('Categories');
-ok(E.guessCategory('CCH NON Member_Partner') === 'Attender' && E.guessCategory('CCH_OFFICIAL_Member_Partner') === 'Partner', 'non-members → Attender, official members/partners → Partner');
+ok(E.guessCategory('CCH NON Member_Partner') === 'Attender' && E.guessCategory('CCH_OFFICIAL_Member_Partner') === 'Church Partner', 'non-members → Attender, official members/partners → Church Partner');
 ok(E.guessCategory('Visiting Preacher_Guest') === 'Visiting Minister' && E.guessCategory('Legacy') === 'Former member', 'visiting preachers → Visiting Minister, legacy → Former member');
 
 console.log('Making the people');

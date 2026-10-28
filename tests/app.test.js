@@ -45,7 +45,12 @@ function seedDocs(opts) {
   if (opts && opts.legacy) {   // data from before households and the new category names
     delete out['settings/church'].dataVersion;
     Object.keys(out).filter(k => k.startsWith('guardians/')).forEach(k => delete out[k]);
-    Object.keys(out).filter(k => k.startsWith('people/')).forEach(k => { if (out[k].category === 'Partner') out[k].category = 'Member'; if (out[k].category === 'Attender') out[k].category = 'Visitor'; });
+    Object.keys(out).filter(k => k.startsWith('people/')).forEach(k => { if (out[k].category === 'Church Partner') out[k].category = 'Member'; if (out[k].category === 'Attender') out[k].category = 'Visitor'; });
+  }
+  if (opts && opts.v2) {   // data from before "Partner" became "Church Partner"
+    out['settings/church'].dataVersion = 2;
+    Object.keys(out).filter(k => k.startsWith('people/')).forEach(k => { if (out[k].category === 'Church Partner') out[k].category = 'Partner'; });
+    out['details/p17'] = Object.assign({}, out['details/p17'], { maritalStatus: 'Partner' });   // a partner in a couple: not a category
   }
   if (opts && opts.elvanto) {   // Elvanto updating switched on; Lerato's approved leave (L103) already in Elvanto; the robot's sign-in
     out['settings/church'].elvanto = { on: true, url: 'https://example.elvanto.eu', robotEmail: 'robot@example.com' };
@@ -189,6 +194,11 @@ function serve() {
   check(!docs['roles/johan.vandermerwe@example.com'] && !docs['directory/p23'], 'they can’t sign in and leave the directory');
   check(!Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p23') && futureJohan.length === 0, 'they come off teams and future rosters');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /Recorded the death/.test(docs[k].action)), 'the death is in the audit log');
+  await s.go('people'); let tDead = await s.text();
+  check(!tDead.includes('Merwe, Johan'), 'someone who has died is not in the Everyone list');
+  await s.page.click('[data-act="people:filter"][data-f="deceased"]'); tDead = await s.text();
+  check(tDead.includes('van der Merwe, Johan') && tDead.includes('Died ') && !tDead.includes('Jacobs, Tim'), 'the Deceased button lists people who have died, with the date');
+  await s.page.click('[data-act="people:filter"][data-f="all"]');
   // Family names: named after the adults, follow changes, can be given an own name
   await s.go('people/families'); let famText = await s.text();
   check(famText.includes('Tim & Clare Jacobs') && famText.includes('Jason & Priya Naidoo') && famText.includes('Thandi Mokoena'), 'families are named after their adults');
@@ -289,7 +299,7 @@ function serve() {
   await s.go('people/families'); await s.page.fill('#fm-q', 'Liam'); await s.page.waitForTimeout(100); t = await s.text();
   check(t.includes('Tim & Clare Jacobs') && !t.includes('Naidoo'), 'Households page: search by household or anyone in it');
   await s.go('people'); t = await s.text();
-  check(t.includes('Partners') && t.includes('Visiting ministers') && !/\bMembers\b/.test(t), 'categories are called Partner, Attender, Visiting Minister');
+  check(t.includes('Church Partners') && t.includes('Visiting ministers') && !/\bMembers\b/.test(t), 'categories are called Church Partner, Attender, Visiting Minister');
   await finish(s);
 
   console.log('Roster coordinator and member – no access to children’s responsible adults:');
@@ -307,19 +317,25 @@ function serve() {
   check(!!(await s.page.$('#pp-stats')) && !(await s.page.$('#pp-stats[open]')), '“Church at a glance” is closed until opened');
   await s.page.click('#pp-stats > summary'); check(!!(await s.page.$('#pp-stats[open]')), 'opens with a click');
   await s.page.click('a[href="#/people/search"]'); await s.page.waitForSelector('#adv');
-  await s.page.selectOption('.adv-field[data-i="0"]', 'category'); await s.page.selectOption('.adv-v[data-i="0"]', 'Partner');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'category'); await s.page.selectOption('.adv-v[data-i="0"]', 'Church Partner');
   await s.page.click('[data-act="people:advadd"][data-i="0"]');
   await s.page.selectOption('.adv-field[data-i="1"]', 'adultChild'); await s.page.selectOption('.adv-v[data-i="1"]', 'Child');
   await s.page.click('[data-act="people:advrun"]');
-  let want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.category === 'Partner' && p.familyRole === 'child').map(p => p.id).sort().join());
+  let want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.category === 'Church Partner' && p.familyRole === 'child').map(p => p.id).sort().join());
   let got = await s.page.$$eval('.adv-table tbody a', as => as.map(a => a.getAttribute('href').split('/').pop()).sort().join());
   check(want && got === want, 'all of: Partner AND child finds exactly the right people');
   await s.page.selectOption('#adv-match', 'any'); await s.page.click('[data-act="people:advrun"]');
-  want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && (p.category === 'Partner' || p.familyRole === 'child')).length);
+  want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && (p.category === 'Church Partner' || p.familyRole === 'child')).length);
   check((await s.page.$$('.adv-table tbody tr')).length === want, 'any of: Partner OR child');
   await s.page.selectOption('#adv-match', 'logic'); await s.page.fill('#adv-logic', '1 AND NOT 2'); await s.page.press('#adv-logic', 'Enter');
-  want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.category === 'Partner' && p.familyRole !== 'child').length);
+  want = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.category === 'Church Partner' && p.familyRole !== 'child').length);
   check((await s.page.$$('.adv-table tbody tr')).length === want, 'your own logic: 1 AND NOT 2');
+  await s.page.click('[data-act="people:sort"][data-k="first"]');
+  let names = await s.page.$$eval('.adv-table tbody td:first-child a', as => as.map(a => a.textContent));
+  check(names.length > 1 && names.every((n, i) => !i || names[i - 1].localeCompare(n, undefined, { sensitivity: 'base' }) <= 0) && !names[0].includes(','), 'Advanced search results can be sorted by first name: ' + names.slice(0, 3).join(' | '));
+  await s.page.click('[data-act="people:sort"][data-k="last"]');
+  names = await s.page.$$eval('.adv-table tbody td:first-child a', as => as.map(a => a.textContent));
+  check(names.every(n => n.includes(', ')), 'and by surname, shown as “Surname, Name”');
   await s.page.fill('#adv-logic', '1 AND 3'); await s.page.click('[data-act="people:advrun"]');
   check((await s.text()).includes('There is no filter 3'), 'a mistake in the logic is explained in plain English');
   await s.page.fill('#adv-logic', '1 OR 2'); await s.page.selectOption('#adv-addcol', 'birthday'); await s.page.click('[data-act="people:advrun"]');
@@ -491,9 +507,18 @@ function serve() {
   s = await session('linda.pillay@example.com', seedDocs({ legacy: true }));
   await s.settle(); docs = await s.docsNow();
   const gl = Object.keys(docs).filter(k => k.startsWith('guardians/')).map(k => docs[k]);
-  check(docs['settings/church'].dataVersion === 2 && !Object.keys(docs).some(k => k.startsWith('people/') && /^(Member|Visitor)$/.test(docs[k].category)), 'categories renamed to Partner / Visiting Minister (once)');
+  check(docs['settings/church'].dataVersion === 3 && !Object.keys(docs).some(k => k.startsWith('people/') && /^(Member|Visitor|Partner)$/.test(docs[k].category)), 'categories renamed to Church Partner / Visiting Minister (once)');
   check(gl.length > 0 && gl.every(l => !l.confirmed) && gl.some(l => l.childId === 'p28' && l.adultId === 'p29'), 'children linked to the adults of every home they live in, to be confirmed');
   await s.go('home'); check((await s.text()).includes('Confirm the parents and guardians of'), 'Home asks someone to confirm them');
+  await finish(s);
+
+  console.log('Upgrading "Partner" to "Church Partner" (first Administrator sign-in):');
+  s = await session('linda.pillay@example.com', seedDocs({ v2: true }));
+  await s.settle(); docs = await s.docsNow();
+  const cp = Object.keys(docs).filter(k => k.startsWith('people/') && docs[k].category === 'Church Partner').length;
+  check(docs['settings/church'].dataVersion === 3 && cp > 0 && !Object.keys(docs).some(k => k.startsWith('people/') && docs[k].category === 'Partner'), 'every Partner becomes a Church Partner');
+  check(!Object.keys(docs).some(k => k.startsWith('guardians/') && !docs[k].confirmed && !seedDocs()[k]), 'no guardian links are suggested again');
+  check(docs['details/p17'].maritalStatus === 'Partner', 'marital status “Partner” (in a couple) is left alone');
   await finish(s);
 
   /* ---------- Elvanto import ---------- */

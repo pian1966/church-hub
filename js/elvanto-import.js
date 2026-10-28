@@ -27,7 +27,7 @@ var ElvantoImport = (function () {
     ['deceasedDate', 'Date deceased', ['Date Deceased'], /deceased\s*date|date\s*deceased/i]
   ];
   var NEVER = /id\s*number|passport|security|giving|notes?$|password|username/i;   // never read these, whatever they look like
-  var CATEGORIES = ['Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member'];
+  var CATEGORIES = ['Church Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member'];
   var MARITAL = ['Single', 'Engaged', 'Married', 'Partner', 'Separated', 'Divorced', 'Widowed'];
   var MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
 
@@ -87,13 +87,13 @@ var ElvantoImport = (function () {
   /** A sensible Church Hub category for an Elvanto category (the Administrator can change each one before importing). */
   function guessCategory(v) {
     var s = String(v || '');
-    if (!s.trim()) return 'Partner';
+    if (!s.trim()) return 'Church Partner';
     if (/non[\s_-]*member|attend|regular|adherent|newcomer|first\s*time/i.test(s)) return 'Attender';
     if (/visit|guest|preacher|minister|speaker/i.test(s)) return 'Visiting Minister';
     if (/staff|employee/i.test(s)) return 'Staff';
     if (/legacy|former|left|inactive|archive/i.test(s)) return 'Former member';
-    if (/member|partner/i.test(s)) return 'Partner';
-    return 'Partner';
+    if (/member|partner/i.test(s)) return 'Church Partner';
+    return 'Church Partner';
   }
 
   /** Rows → people records (only the mapped columns). */

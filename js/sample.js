@@ -49,7 +49,7 @@ function makeSampleData() {
     var staff = r[5] === 'staff';
     var p = {
       id: r[0], firstName: r[1], lastName: r[2], preferredName: '', familyId: r[3], familyRole: r[4],
-      category: staff ? 'Staff' : r[5] === 'visitor' ? 'Attender' : 'Partner',
+      category: staff ? 'Staff' : r[5] === 'visitor' ? 'Attender' : 'Church Partner',
       email: r[4] === 'child' ? '' : (r[1] + '.' + r[2].replace(/ /g, '')).toLowerCase() + '@example.com',
       mobile: r[4] === 'child' ? '' : '082 000 ' + String(1000 + i * 37).slice(-4),
       birthDate: r[4] === 'child' ? (r[6] || 2015) + '-0' + (1 + (i % 9)) + '-1' + (i % 9) : '',
@@ -176,7 +176,7 @@ function makeSampleData() {
   return {
     version: 1,
     settings: {
-      churchName: 'Christ Church Howick', demo: true, dataVersion: 2,
+      churchName: 'Christ Church Howick', demo: true, dataVersion: 3,
       modules: { people: true, rosters: true, leave: true, privacy: true, import: true, settings: true },
       informationOfficer: { name: '[Information Officer]', email: '[email]', phone: '[phone]', registered: false, deputy: '' },
       retentionMonths: 24,

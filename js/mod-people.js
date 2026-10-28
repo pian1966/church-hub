@@ -3,7 +3,7 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos', 'Children’s medical notes'];
-  var CATS = ['Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member', 'Deceased'];
+  var CATS = ['Church Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member', 'Deceased'];
   var HS = Households;
   function canChildren() { return H.can('*') || H.can('children'); }       // Administrators, Pastors, Children's ministry
   function links(childId) { return HS.linksOf(childId, S.list('guardians')); }
@@ -64,7 +64,7 @@
     act.forEach(function (p) { var a = age(p); if (a === '') { noAge++; return; } AGE_BANDS.forEach(function (b, i) { if (a >= b[0] && a <= b[1]) ages[i][1]++; }); });
     var withAge = act.length - noAge;
     // categories, marital status
-    var cats = ['Partner', 'Attender', 'Visiting Minister', 'Staff'].map(function (c) { return [c, count(act, function (p) { return p.category === c; })]; });
+    var cats = ['Church Partner', 'Attender', 'Visiting Minister', 'Staff'].map(function (c) { return [c, count(act, function (p) { return p.category === c; })]; });
     var mar = MARITAL.map(function (m) { return [m, count(adults, function (p) { return p.maritalStatus === m; })]; }).filter(function (r) { return r[1] || r[0] === 'Married' || r[0] === 'Single'; });
     mar.push(['Not recorded', count(adults, function (p) { return !p.maritalStatus; })]);
     // family sizes
@@ -87,7 +87,7 @@
       tile('Added in the last 12 months', newPeople, '') + tile('Left or died (12 months)', left + died, left + ' left · ' + died + ' died') + '</div>' +
       '<div class="glance-grid">' +
       bars('Age groups', ages, withAge, noAge ? noAge + ' ' + (noAge === 1 ? 'person has' : 'people have') + ' no birthday recorded and aren’t counted here.' : '') +
-      bars('Partners, attenders, visiting ministers and staff', cats, act.length) +
+      bars('Church partners, attenders, visiting ministers and staff', cats, act.length) +
       bars('Marital status (adults)', mar, adults.length) +
       bars('Household size', sizes, fams.length, single ? single + ' adult' + (single === 1 ? ' isn’t' : 's aren’t') + ' in a household.' : '') +
       '<section class="panel glance"><h3>Consent (POPIA)</h3><div class="sbars">' + cons.map(function (c) {
@@ -108,6 +108,10 @@
     last: { label: 'Surname', cmp: function (a, b) { return cmp(a.lastName, b.lastName) || cmp(known(a), known(b)) || cmp(a.firstName, b.firstName); } }
   };
   function sortKey() { if (!state.sort) state.sort = SORTS[Store.pref('peopleSort')] ? Store.pref('peopleSort') : 'last'; return state.sort; }
+  function sortSwitch() {
+    return '<div class="row pp-sort"><span class="muted small" id="pp-sort-l">' + T('Sort by') + '</span><div class="seg small" role="group" aria-labelledby="pp-sort-l">' +
+      Object.keys(SORTS).map(function (k) { var on = sortKey() === k; return '<button data-act="people:sort" data-k="' + k + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '">' + T(SORTS[k].label) + '</button>'; }).join('') + '</div></div>';
+  }
   /** The name as the list is sorted, with the other first name in brackets when they go by a different one. */
   function listName(p) {
     var other = p.preferredName && p.preferredName.toLowerCase() !== (p.firstName || '').toLowerCase(), k = sortKey();
@@ -115,11 +119,14 @@
     return esc(main) + (other ? ' <span class="muted">(' + esc(k === 'first' ? p.preferredName : p.firstName) + ')</span>' : '');
   }
   function renderList() {
-    var list = visiblePeople(), q = state.q.trim().toLowerCase();
-    var filters = [['all', 'Everyone'], ['Partner', 'Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
+    var filters = [['all', 'Everyone'], ['Church Partner', 'Church Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
+    if (canSeeAll()) filters.push(['deceased', 'Deceased']);   // people who have died are kept for the records, out of the other lists
     if (!canBasic()) filters = [['all', T('Directory')]];
+    if (!filters.some(function (f) { return f[0] === state.f; })) state.f = 'all';
+    var dead = state.f === 'deceased', q = state.q.trim().toLowerCase();
+    var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto; }) : visiblePeople();
     var shown = list.filter(function (p) {
-      if (state.f === 'child' ? p.familyRole !== 'child' : (state.f !== 'all' && p.category !== state.f)) return false;
+      if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : (state.f !== 'all' && p.category !== state.f))) return false;
       return !q || (H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : '')).toLowerCase().indexOf(q) >= 0;   // name, contact or family
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? 'Everyone connected to the church: partners, attenders, visiting ministers, staff and children.' : T('People who agreed to be in the church directory.')) + '</p></div>' +
@@ -129,11 +136,11 @@
         (canBasic() ? '<a class="adv-link" href="#/people/search">Advanced search</a>' : '') + '</div>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="' + T('Show') + '">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + f[1] + '</button>'; }).join('') + '</div>' : '') + '</div>' +
       '<div class="row pp-sortrow"><p class="muted small" id="pp-count">' + TN('{n} person', '{n} people', shown.length) + '</p>' +
-        '<div class="row pp-sort"><span class="muted small" id="pp-sort-l">' + T('Sort by') + '</span><div class="seg small" role="group" aria-labelledby="pp-sort-l">' +
-        Object.keys(SORTS).map(function (k) { var on = sortKey() === k; return '<button data-act="people:sort" data-k="' + k + '" class="' + (on ? 'on' : '') + '" aria-pressed="' + on + '">' + T(SORTS[k].label) + '</button>'; }).join('') + '</div></div></div>' +
+        sortSwitch() + '</div>' +
       (shown.length ? '<div class="list">' + shown.map(function (p) {
         var fam = familyOf(p), tags = '';
         if (p.familyRole === 'child') tags += '<span class="tag" style="--c:#0E7490">' + T('Child') + (age(p) !== '' ? ', ' + age(p) : '') + '</span>';
+        else if (dead) tags += '<span class="tag grey">' + esc(p.deceasedAt ? 'Died ' + H.fmt(p.deceasedAt, true) : 'Deceased') + '</span>';
         else tags += '<span class="tag grey">' + esc(p.staff ? p.staff.category : p.category) + '</span>';
         if (canSeeAll() && !hasConsent(p.id, 'Church records')) tags += ' <span class="tag bad">No consent</span>';
         return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + listName(p) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', canBasic() || isMe(p) ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
@@ -614,8 +621,8 @@
     var hit = {}; r.ids.forEach(function (id) { hit[id] = 1; });
     var rows = recs.filter(function (x) { return hit[x.id]; }), k = byKey[A.sort] ? A.sort : 'name';
     rows.sort(function (a, b) {
-      if (k === 'name') return A.dir * (a.p.lastName + ' ' + a.p.firstName).localeCompare(b.p.lastName + ' ' + b.p.firstName);
-      var c = PS.compare(a.values[k], b.values[k]); if (!c) return (a.p.lastName + a.p.firstName).localeCompare(b.p.lastName + b.p.firstName);
+      if (k === 'name') return A.dir * SORTS[sortKey()].cmp(a.p, b.p);   // by first name, known as or surname (the switch above the results)
+      var c = PS.compare(a.values[k], b.values[k]); if (!c) return SORTS[sortKey()].cmp(a.p, b.p);
       var ea = a.values[k] === '' || a.values[k] == null || (Array.isArray(a.values[k]) && !a.values[k].length), eb = b.values[k] === '' || b.values[k] == null || (Array.isArray(b.values[k]) && !b.values[k].length);
       return ea || eb ? c : A.dir * c;   // empty values stay at the bottom either way
     });
@@ -682,13 +689,14 @@
     var cols = ['name'].concat(A.cols), what = A.filters.map(function (f, i) { return (A.match === 'logic' ? (i + 1) + '. ' : '') + PS.describe(f, byKey[f.field], function (v) { return advShow({ type: byKey[f.field].type === 'anniv' ? 'anniv' : byKey[f.field].type === 'date' ? 'date' : 'text' }, v); }); });
     return html + '<section class="panel" id="adv-result"><div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h2 style="margin:0">' + r.rows.length + ' ' + (r.rows.length === 1 ? 'person' : 'people') + ' found</h2>' +
       (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + 'Download (CSV)</button>' : '') + '</div>' +
+      (r.rows.length > 1 ? '<div style="margin-top:8px">' + sortSwitch() + '</div>' : '') +
       '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · and ' : A.match === 'any' ? ' · or ' : ' · ')) + (A.match === 'logic' ? ' · Logic: ' + esc(A.logic) : '') : 'Everyone') +
       (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died'; }) ? '' : ' · people who have left or died are left out unless you search on Status') + '</p>' +
       (r.rows.length ? '<div class="table-wrap"><table class="simple adv-table"><thead><tr>' + cols.map(function (k) {
         var on = (A.sort || 'name') === k;
         return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';
       }).join('') + '</tr></thead><tbody>' + r.rows.map(function (x) {
-        return '<tr>' + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + esc(H.name(x.p)) + '</a></td>' : k === 'email' && x.values.email ? '<td><a href="mailto:' + esc(x.values.email) + '" target="_blank" rel="noopener">' + esc(x.values.email) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
+        return '<tr>' + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + listName(x.p) + '</a></td>' : k === 'email' && x.values.email ? '<td><a href="mailto:' + esc(x.values.email) + '" target="_blank" rel="noopener">' + esc(x.values.email) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
       }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (POPIA).</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
   }
   function advCsv() {
@@ -860,13 +868,14 @@
       });
       return out;
     },
-    /** Once, when an Administrator signs in: new category names, and children linked to their household's adults (to confirm). */
+    /** Once, when an Administrator signs in: new category names ("Church Partner", so it isn't mixed up with a partner in a couple),
+     *  and (from before version 2) children linked to their household's adults, to confirm. */
     upgrade: function () {
-      var st = S.settings(); if (!st || (st.dataVersion || 1) >= 2) return;
-      var renamed = 0, linked = 0, MAP = { Member: 'Partner', Visitor: 'Visiting Minister' };
+      var st = S.settings(), v = st ? st.dataVersion || 1 : 3; if (v >= 3) return;
+      var renamed = 0, linked = 0, MAP = { Member: 'Church Partner', Partner: 'Church Partner', Visitor: 'Visiting Minister' };
       S.list('people').slice().forEach(function (p) { if (MAP[p.category]) { p = JSON.parse(JSON.stringify(p)); p.category = MAP[p.category]; S.put('people', p); renamed++; } });
-      HS.suggestedLinks(S.list('people'), S.list('guardians')).forEach(function (l) { S.put('guardians', l); linked++; });
-      S.setSettings({ dataVersion: 2 }, 'Upgraded people: ' + renamed + ' renamed to Partner / Visiting Minister; ' + linked + ' parent/guardian links made from households (to confirm)');
+      if (v < 2) HS.suggestedLinks(S.list('people'), S.list('guardians')).forEach(function (l) { S.put('guardians', l); linked++; });
+      S.setSettings({ dataVersion: 3 }, 'Upgraded people: ' + renamed + ' renamed to Church Partner / Visiting Minister' + (v < 2 ? '; ' + linked + ' parent/guardian links made from households (to confirm)' : ''));
       if (linked) setTimeout(function () { H.toast('Children are now linked to the adults in their household – please confirm them (see Home)'); }, 400);
     },
     render: function (p) {
@@ -899,7 +908,7 @@
     },
     actions: {
       filter: function (el) { state.f = el.dataset.f; H.render(); },
-      sort: function (el) { state.sort = el.dataset.k; Store.pref('peopleSort', state.sort); H.render(); },
+      sort: function (el) { state.sort = el.dataset.k; Store.pref('peopleSort', state.sort); if (state.adv) { state.adv.sort = 'name'; state.adv.dir = 1; } H.render(); },
       advadd: function (el) { var i = +el.dataset.i, prev = state.adv.filters[i]; state.adv.filters.splice(i + 1, 0, { field: prev ? prev.field : 'name', op: prev ? prev.op : 'has', value: '', value2: '', unit: 'days' }); H.render(); var s2 = document.querySelectorAll('.adv-field')[i + 1]; if (s2) s2.focus(); },
       advdel: function (el) { state.adv.filters.splice(+el.dataset.i, 1); H.render(); },
       advcol: function (el) {
@@ -967,7 +976,7 @@
             p.category = 'Staff';
           } else if (p.staff) {
             delete p.staff;
-            if (p.category === 'Staff') p.category = 'Partner';
+            if (p.category === 'Staff') p.category = 'Church Partner';
           }
         }
         if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = 'To give someone access to Church Hub, add their email address – that’s how they sign in.'; err.hidden = false; return; }
@@ -1023,7 +1032,7 @@
       undodeath: function (el) {
         if (!H.confirmBtn(el, 'Click again: undo the death record')) return;
         var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id)));
-        p.active = true; p.category = p.staff ? 'Staff' : 'Partner'; delete p.deceasedAt; delete p.deathTidied;
+        p.active = true; p.category = p.staff ? 'Staff' : 'Church Partner'; delete p.deceasedAt; delete p.deathTidied;
         p.keyDates = (p.keyDates || []).filter(function (k) { return k.label !== 'Died' && k.label !== 'Funeral'; });
         S.put('people', p, 'Undid the death record of ' + H.name(p));
         H.render(); H.toast('Undone. Give them app access, teams and roster turns again if needed.');

@@ -353,6 +353,28 @@ function serve() {
   check(!!(await s.page.$('#pf-staff')) && await s.page.evaluate(() => document.activeElement && document.activeElement.id === 'pf-staff'), 'marked Staff but not in Leave yet: Set up leave opens the staff details');
   await finish(s);
 
+  console.log('Couples: spouses, partners and wedding anniversaries:');
+  s = await session('thandi.mokoena@example.com', seedDocs()); await s.go('people/p/p15');
+  t = await s.text(); check(t.includes('Spouse') && t.includes('Tim Jacobs') && t.includes('22 Nov 2008'), 'Clare’s page names Tim as her spouse and suggests his anniversary');
+  await s.go('people/families'); t = await s.page.textContent('#couples').catch(() => '');
+  check(t.includes('Tim Jacobs') && t.includes('Clare Jacobs') && t.includes('Married to each other'), 'Households: couples to check, worked out from the household');
+  check((await s.text()).includes('Spouses: Tim Jacobs & Clare Jacobs'), 'each household shows its couple');
+  await s.page.click('#couples [data-act="people:couplefix"][data-a="p14"][data-b="p15"], #couples [data-act="people:couplefix"][data-a="p15"][data-b="p14"]'); await s.settle();
+  docs = await s.docsNow();
+  check((docs['details/p15'].keyDates || []).some(k => /Wedding/.test(k.label) && k.date === '2008-11-22'), 'one tap copies Tim’s wedding anniversary to Clare');
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && /Couple: wedding anniversary from Tim Jacobs/.test(JSON.stringify(docs[k]))), 'the change is in the audit log');
+  check(!((await s.page.textContent('#couples').catch(() => '')) || '').includes('Clare Jacobs'), '…and the couple no longer needs checking');
+  await s.page.evaluate(() => { Store.get('people', 'p17').maritalStatus = 'Partner'; Store.get('people', 'p18').maritalStatus = ''; });
+  await s.go('people'); await s.go('people/families'); t = await s.page.textContent('#couples').catch(() => '');
+  check(t.includes('Probably partners') || t.includes('Partners'), 'partners are suggested too');
+  check(!t.includes('anniversary is') || !/Smith[^]*anniversary/.test(t), 'partners get no anniversary');
+  await s.page.click('#couples [data-act="people:notcouple"]'); await s.settle(); docs = await s.docsNow();
+  check((docs['families/f3'].notCouples || []).length === 1 && !(await s.page.$('#couples')), '“Not a couple” is remembered and the suggestion goes away');
+  await finish(s);
+  s = await session('sipho.dlamini@example.com', seedDocs()); await s.go('people/families');
+  check(!(await s.page.$('#couples')) && !(await s.text()).includes('Spouses:'), 'a Roster coordinator doesn’t see couples (marital status is private)');
+  await finish(s);
+
   console.log('Adding a person:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
   await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Test'); await s.page.fill('#pf-last', 'Person');

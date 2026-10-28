@@ -123,6 +123,35 @@
       }).join('') + '</div>' : '<p class="empty">' + T('No one matches. Try another name, or clear the search.') + '</p>');
   }
 
+  /* ---------- couples: spouses and partners, worked out from each household (rules in js/households.js) ---------- */
+  // Marital status and anniversaries are private details: only Administrators and Pastors see and change them.
+  function canCouples() { return canSeeAll() && (H.can('*') || H.can('people.edit')); }
+  function allCouples() { return canCouples() ? HS.couples(S.list('people'), S.list('families')) : []; }
+  function couplesToCheck() { return canCouples() ? HS.couplesToCheck(S.list('people'), S.list('families')) : []; }
+  function coupleOf(pid) { return allCouples().filter(function (c) { return c.a === pid || c.b === pid; })[0] || null; }
+  function first(id) { var q = S.get('people', id); return q ? (q.preferredName || q.firstName) : ''; }
+  /** What a couple needs, in words, and the button that does it. */
+  function coupleTodo(c) {
+    var lines = [], did = [];
+    if (c.copy) { lines.push(esc(first(c.copy.from)) + '’s wedding anniversary is ' + esc(H.fmt(c.copy.date, true)) + '; ' + esc(first(c.copy.to)) + ' has none recorded.'); did.push('add ' + H.fmt(c.copy.date, true) + ' as ' + first(c.copy.to) + '’s anniversary'); }
+    if (c.mark) { lines.push(esc(first(c.mark.id)) + '’s marital status isn’t recorded.'); did.push('mark ' + first(c.mark.id) + ' as ' + (c.mark.status === 'Married' ? 'married' : 'a partner')); }
+    if (c.differ) lines.push('Their wedding anniversaries differ: ' + esc(H.fmt(wedOf(c.a), true)) + ' and ' + esc(H.fmt(wedOf(c.b), true)) + '. Open each person to correct the wrong one.');
+    var who = []; if (c.copy) who.push(first(c.copy.to)); if (c.mark && who.indexOf(first(c.mark.id)) < 0) who.push(first(c.mark.id));
+    var fix = did.length ? '<button class="btn small primary" style="white-space:normal" data-act="people:couplefix" data-a="' + c.a + '" data-b="' + c.b + '" title="' + esc(did.join(' and ')) + '">Yes, update ' + esc(who.join(' and ')) + '</button>' : '';
+    return { lines: lines, fix: fix };
+  }
+  function wedOf(id) { var q = S.get('people', id); return q ? keyDate(q, WEDDING) : ''; }
+  function coupleWord(c) { return c.kind === 'spouse' ? (c.sure ? 'Married to each other' : 'Probably married to each other') : (c.sure ? 'Partners' : 'Probably partners'); }
+
+  /** Person page: "Spouse" or "Partner", going by their household, with any suggested change for this person. */
+  function coupleLine(p) {
+    var c = coupleOf(p.id); if (!c) return '';
+    var o = S.get('people', c.a === p.id ? c.b : c.a), t = coupleTodo(c), mine = (c.copy && c.copy.to === p.id) || (c.mark && c.mark.id === p.id) || c.differ;
+    return '<dt>' + (c.kind === 'spouse' ? 'Spouse' : 'Partner') + '</dt><dd><a href="#/people/p/' + o.id + '">' + esc(H.name(o)) + '</a>' +
+      '<span class="kv-sub">' + (c.sure ? 'Going by their household' : 'Probably – going by their household') + '</span>' +
+      (mine ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
+  }
+
   /** Administrators: go straight to a staff member's leave, or set it up if they're marked Staff but not yet in Leave. */
   function leaveButton(p) {
     var leaveOn = ((S.settings() || {}).modules || {}).leave !== false;
@@ -168,6 +197,7 @@
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
+      (!child ? coupleLine(p) : '') +
       // Wedding anniversary straight after marital status: the date, or "Not recorded" with an Add link, for anyone ever married
       (full && !child && !keyDate(p, WEDDING) && /^(Married|Separated|Divorced|Widowed)$/.test(p.maritalStatus || '') ? '<dt>' + T('Wedding anniversary') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' +
         ((!me || H.can('*')) && (full || H.can('people.edit')) ? ' · <button class="link" data-act="people:edit" data-id="' + p.id + '" data-focus="pf-wed">' + T('Add') + '</button>' : '') + '</dd>' : '') +
@@ -305,19 +335,21 @@
   /* ---------- families ---------- */
   function renderFamilies() {
     var surname = function (f) { var n = H.familyName(f).split(' '); return n[n.length - 1] + ' ' + n.join(' '); };
-    var fq = state.fq.trim().toLowerCase();
+    var fq = state.fq.trim().toLowerCase(), cps = allCouples();
     var fams = S.list('families').filter(function (f) {
       return !fq || (H.familyName(f) + ' ' + members(f.id).map(function (m) { return H.names(m).join(' | '); }).join(' | ')).toLowerCase().indexOf(fq) >= 0;
     }).sort(function (a, b) { return surname(a).localeCompare(surname(b)); });
     return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + 'People</a><div class="page-head"><div><h1>Households</h1><p class="lead">A household is the people who live together – what Elvanto calls a “family”. Each is named after its adults (e.g. “Tim & Clare Jacobs”). A child of separated parents can be in two households. Parents, guardians and who may collect a child are recorded on the child’s profile.</p></div>' +
       '<button class="btn primary" data-act="people:newfam">' + H.icon(H.ICON.plus, 18) + 'New household</button></div>' +
       '<label class="search" style="margin-bottom:14px">' + H.icon(H.ICON.search, 18) + '<span class="sr">Search households</span><input id="fm-q" type="search" placeholder="Search by household or anyone in it" value="' + esc(state.fq) + '"></label>' +
+      couplesPanel() +
       '<p class="muted small">' + fams.length + ' ' + (fams.length === 1 ? 'household' : 'households') + '</p>' +
       (fams.length ? '' : '<p class="empty">No household matches. Try another name.</p>') +
       '<div class="grid2">' + fams.map(function (f) {
         var ms = members(f.id);
         return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + esc(H.familyName(f)) + '</h2><button class="btn small" data-act="people:renamefam" data-id="' + f.id + '">Rename</button></div>' +
-          (f.custom ? '<p class="hint" style="margin:2px 0 8px">Own name</p>' : '<p class="hint" style="margin:2px 0 8px">Named after its adults</p>') + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (HS.householdsOf(m).length > 1 ? ' · lives in ' + HS.householdsOf(m).length + ' households' : '') : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this household yet.</p>') + '</section>';
+          (f.custom ? '<p class="hint" style="margin:2px 0 8px">Own name</p>' : '<p class="hint" style="margin:2px 0 8px">Named after its adults</p>') +
+          cps.filter(function (c) { return c.familyId === f.id; }).map(function (c) { return '<p class="small" style="margin:0 0 8px">' + H.icon(H.ICON.people, 14) + ' ' + esc((c.kind === 'spouse' ? 'Spouses' : 'Partners') + ': ' + H.name(S.get('people', c.a)) + ' & ' + H.name(S.get('people', c.b))) + (c.sure ? '' : ' <span class="muted">(probably)</span>') + '</p>'; }).join('') + (ms.length ? '<div class="list">' + ms.map(function (m) { return '<a class="item" href="#/people/p/' + m.id + '">' + H.avatar(m, 32) + '<span class="grow"><b>' + esc(H.name(m)) + '</b><small>' + (m.familyRole === 'child' ? 'Child' + (HS.householdsOf(m).length > 1 ? ' · lives in ' + HS.householdsOf(m).length + ' households' : '') : 'Adult') + '</small></span></a>'; }).join('') + '</div>' : '<p class="muted">No one in this household yet.</p>') + '</section>';
       }).join('') + '</div>';
   }
 
@@ -367,6 +399,19 @@
     }).join('') +
       (stop ? (H.can('*') ? '<label class="check" style="margin-top:8px"><input type="checkbox" id="pf-dup-ok"' + (was ? ' checked' : '') + '><span>' + 'I’ve checked: this is a different person' + '</span></label>'
         : '<span style="display:block;margin-top:6px">' + 'To avoid duplicates this can’t be saved. If it really is a different person, ask an Administrator.' + '</span>') : '');
+  }
+
+  /** Households page: couples with an anniversary to copy, a marital status to record, or anniversaries that differ. */
+  function couplesPanel() {
+    var list = couplesToCheck(); if (!list.length) return '';
+    return '<section class="panel" id="couples" style="margin-bottom:16px"><h2 style="margin:0 0 4px">Couples to check</h2>' +
+      '<p class="hint" style="margin:0 0 10px">Worked out from who lives together, their marital status, surname, age and anniversary. Partners don’t get an anniversary. Nothing changes until you say yes.</p>' +
+      '<div class="list">' + list.map(function (c) {
+        var t = coupleTodo(c), a = S.get('people', c.a), b = S.get('people', c.b);
+        return '<div class="item" style="align-items:flex-start;flex-wrap:wrap;gap:8px"><span class="grow" style="min-width:220px"><b><a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a> & <a href="#/people/p/' + b.id + '">' + esc(H.name(b)) + '</a></b>' +
+          '<small>' + esc(coupleWord(c)) + '. ' + t.lines.join(' ') + '</small></span>' +
+          '<span class="btns">' + t.fix + '<button class="btn small" data-act="people:notcouple" data-a="' + c.a + '" data-b="' + c.b + '" data-f="' + c.familyId + '">Not a couple</button></span></div>';
+      }).join('') + '</div></section>';
   }
 
   /* ---------- edit dialogs ---------- */
@@ -681,6 +726,8 @@
         var dupN = DUP.find(dupPeople(), notDup()).filter(function (d) { return d.level !== 'possible'; }).length;
         if (dupN) out.push({ text: dupN + (dupN === 1 ? ' person looks' : ' people look') + ' entered twice', href: '#/people/duplicates' });
       }
+      var cpl = couplesToCheck();
+      if (cpl.length) out.push({ text: cpl.length + (cpl.length === 1 ? ' couple' : ' couples') + ' to check: wedding anniversary or marital status', href: '#/people/families' });
       if (noMarital.length) out.push({ text: noMarital.length + ' adult' + (noMarital.length === 1 ? ' has' : 's have') + ' no marital status', href: '#/people/p/' + noMarital[0].id });
       var since = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), -7 * CARE_WEEKS));
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
@@ -933,6 +980,27 @@
         if (!H.can('*')) return;
         var a = S.get('people', el.dataset.a), b = S.get('people', el.dataset.b);
         S.setSettings({ notDuplicates: notDup().concat([DUP.pair(el.dataset.a, el.dataset.b)]) }, 'Not the same person: ' + H.name(a) + ' and ' + H.name(b));
+        H.render(); H.toast('Won’t be suggested again');
+      },
+      couplefix: function (el) {
+        var key = HS.pairKey(el.dataset.a, el.dataset.b), c = HS.couples(S.list('people'), S.list('families')).filter(function (x) { return HS.pairKey(x.a, x.b) === key; })[0];
+        if (!c || !canCouples()) return;
+        var ids = []; if (c.copy) ids.push(c.copy.to); if (c.mark && ids.indexOf(c.mark.id) < 0) ids.push(c.mark.id);
+        ids.forEach(function (id) {
+          var q = JSON.parse(JSON.stringify(S.get('people', id))), what = [];
+          if (c.mark && c.mark.id === id) { q.maritalStatus = c.mark.status; what.push('marital status ' + c.mark.status); }
+          if (c.copy && c.copy.to === id) {
+            q.keyDates = (q.keyDates || []).filter(function (k) { return !WEDDING.test(k.label || ''); }).concat([{ label: 'Wedding anniversary', date: c.copy.date }]);
+            what.push('wedding anniversary from ' + H.name(S.get('people', c.copy.from)));
+          }
+          S.put('people', q, 'Couple: ' + what.join(', ') + ' for ' + H.name(q));
+        });
+        H.render(); H.toast('Updated');
+      },
+      notcouple: function (el) {
+        var f = S.get('families', el.dataset.f); if (!f || !canCouples()) return;
+        f = JSON.parse(JSON.stringify(f)); f.notCouples = (f.notCouples || []).concat([HS.pairKey(el.dataset.a, el.dataset.b)]);
+        S.put('families', f, 'Not a couple: ' + H.name(S.get('people', el.dataset.a)) + ' and ' + H.name(S.get('people', el.dataset.b)));
         H.render(); H.toast('Won’t be suggested again');
       },
       renamefam: function (el) {

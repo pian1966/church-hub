@@ -20,6 +20,15 @@ const R = [
 const run = (filters, match, logic) => { const r = PS.run(R, { filters, match: match || 'all', logic }, FIELDS, TODAY); return r.error || r.ids.join(''); };
 const F = (field, op, value, value2, unit) => ({ field, op, value, value2, unit });
 
+console.log('Known as');
+{
+  const K = [{ id: 'x', values: { first: 'Douglas' }, alts: { first: ['Doug'] } }, { id: 'y', values: { first: 'Dumi' } }];
+  const k = (op, v) => { const r = PS.run(K, { filters: [F('first', op, v)], match: 'all' }, FIELDS, TODAY); return r.error || r.ids.join(''); };
+  check(k('has', 'douglas') === 'x' && k('has', 'doug') === 'x', 'finds someone by their first name or what they are known as');
+  check(k('eq', 'doug') === 'x' && k('starts', 'dou') === 'x', 'equals and starts with also try the known-as name');
+  check(k('nhas', 'doug') === 'y' && k('ne', 'doug') === 'y', '"does not" means neither name matches');
+}
+
 console.log('Text and choice');
 check(run([F('first', 'eq', 'anna')]) === 'a', 'equals ignores capitals');
 check(run([F('first', 'has', 'ar')]) === 'c', 'contains');

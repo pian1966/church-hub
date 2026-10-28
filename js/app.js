@@ -41,6 +41,13 @@ var Hub = (function () {
   }
   function today() { return LeaveCore.iso(new Date()); }
   function name(p) { return p ? ((p.preferredName || p.firstName) + ' ' + p.lastName) : ''; }
+  /** Every way to write someone's name, for searching: "Douglas Pike" and, if different, what they're known as ("Doug Pike"). */
+  function names(p) {
+    if (!p) return [];
+    var a = [((p.firstName || '') + ' ' + (p.lastName || '')).trim()], k = p.preferredName ? (p.preferredName + ' ' + (p.lastName || '')).trim() : '';
+    if (k && k.toLowerCase() !== a[0].toLowerCase()) a.push(k);
+    return a;
+  }
   /** A family's name: its own name if one was given (custom), otherwise its adults, e.g. "Tim & Clare Jacobs",
    *  "Thandi Mokoena & Sipho Dlamini" or "Megan Smith". It follows changes (marriage, moving out, death) by itself. */
   function familyName(f) {
@@ -391,6 +398,6 @@ var Hub = (function () {
   }
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    esc: esc, fmt: fmt, today: today, name: name, familyName: familyName, avatar: avatar, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
+    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
     dialogHead: dialogHead, toast: toast, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
 })();

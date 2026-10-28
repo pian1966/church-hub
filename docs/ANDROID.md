@@ -21,14 +21,16 @@ The download link for members (after step 2):
 
 ## Step 1 – Give GitHub the signing key (once)
 
-Android only installs updates signed with the same key. Church Hub uses **the same key as the Leave Manager app**,
-so you don't need a new one.
+Android only installs updates signed with the same key. Church Hub has **its own key**, in the file
+**ChurchHub-ANDROID_KEYSTORE.txt** you were given (27 Oct 2026). It is separate from Leave Manager's key.
 
-1. Find the file **ANDROID_KEYSTORE.txt** that you were given for Leave Manager (GitHub never shows a saved secret
-   again, so the file is the only copy). Open it in Notepad (or TextEdit on a Mac) and copy everything in it.
-2. Open **https://github.com/pian1966/church-hub/settings/secrets/actions** and sign in to GitHub.
-3. Click **New repository secret**.
-4. Name: `ANDROID_KEYSTORE`. Secret: paste what you copied. Click **Add secret**.
+1. **First, keep a safe copy** of ChurchHub-ANDROID_KEYSTORE.txt in the church's own private storage (e.g. a private
+   Google Drive folder of the church account). GitHub never shows a saved secret again, so that file is the only copy.
+   If it is ever lost, a new key can be made, but everyone then has to uninstall the app and install it again once.
+2. Open the file in Notepad (or TextEdit on a Mac) and copy everything in it (Ctrl+A, then Ctrl+C).
+3. Open **https://github.com/pian1966/church-hub/settings/secrets/actions** and sign in to GitHub.
+4. Click **New repository secret**.
+5. Name: `ANDROID_KEYSTORE`. Secret: paste what you copied. Click **Add secret**.
 
 Never paste the key into a chat or into a file in the repository – the repository is public.
 
@@ -55,7 +57,7 @@ Firebase console, signed in with the church's Google account.
 3. Scroll down to **Your apps** → click **Add app** → choose the **Android** icon.
 4. Android package name: `org.christchurchhowick.churchhub`
 5. App nickname: `Church Hub Android`
-6. Debug signing certificate SHA-1: `4C:42:7C:4A:E5:0C:00:B4:36:7A:B6:3E:76:2B:53:F5:0E:8E:9F:52`
+6. Debug signing certificate SHA-1: `34:6D:29:12:B8:5E:4B:C6:97:51:11:F6:7A:3A:53:8E:DE:BF:EB:9E`
    (this is the fingerprint of the signing key from step 1 – it is not a secret).
 7. Click **Register app**. Skip the next screens (**Next**, **Next**, **Continue to console**) – nothing needs downloading.
 

@@ -27,8 +27,8 @@ android {
             if (ks) {
                 storeFile file(ks)
                 storePassword System.getenv('KEYSTORE_PASSWORD')
-                // The same signing key as the Leave Manager app (repository secret ANDROID_KEYSTORE), see docs/ANDROID.md
-                keyAlias 'leavemanager'
+                // Church Hub's own signing key (repository secret ANDROID_KEYSTORE), see docs/ANDROID.md
+                keyAlias 'churchhub'
                 keyPassword System.getenv('KEYSTORE_PASSWORD')
             }
         }

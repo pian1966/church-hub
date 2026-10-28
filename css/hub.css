@@ -248,6 +248,10 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .pp-searchrow { align-items: flex-start; }
 .pp-searchcol { flex: 1; min-width: 220px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .pp-searchcol .search { width: 100%; }
+.pp-sortrow { justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.pp-sortrow #pp-count { margin: 0; }
+.pp-sort { gap: 8px; align-items: center; flex-wrap: wrap; }
+.seg.small button { padding: 4px 10px; min-height: 32px; font-size: 13px; }
 .adv-link { font-size: 13.5px; color: var(--accent-ink); text-decoration: underline; text-underline-offset: 2px; padding: 4px 2px; }
 .adv-link:hover { text-decoration-thickness: 2px; }
 

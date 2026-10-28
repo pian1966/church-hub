@@ -126,6 +126,8 @@ var I18n = (function () {
     ['Search by name, household, email or phone', 'Soek volgens naam, huishouding, e-pos of foon', 'Sesha ngegama, ikhaya, i-imeyili noma ucingo', 'Khangela ngegama, ikhaya, i-imeyile okanye ifowuni'],
     ['Directory', 'Gids', 'Uhlu', 'Uluhlu'],
     ['Show', 'Wys', 'Bonisa', 'Bonisa'],
+    ['Sort by', 'Sorteer volgens', 'Hlela ngo', 'Lungelelanisa nge'],
+    ['Surname', 'Van', 'Isibongo', 'Ifani'],
     ['{n} person', '{n} persoon', 'Umuntu o-{n}', 'Umntu o-{n}'],
     ['{n} people', '{n} mense', 'Abantu abangu-{n}', 'Abantu abangama-{n}'],
     ['No one matches. Try another name, or clear the search.', 'Niemand pas nie. Probeer ’n ander naam, of maak die soektog skoon.', 'Akekho ofanayo. Zama elinye igama, noma usule ukusesha.', 'Akukho mntu uhambelanayo. Zama elinye igama, okanye ucime ukhangelo.'],

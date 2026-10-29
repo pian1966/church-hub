@@ -106,6 +106,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ 29 Oct 2026: **View as another role** – Administrators can see Church Hub as a Pastor, Roster coordinator, Children's
   ministry or Member would (the eye next to their name, or More on a phone). A banner shows it; nothing is saved meanwhile;
   pastoral and medical notes stay hidden; starting and stopping is in the audit log.
+- ✅ 29 Oct 2026: **Province** on a person's details is a dropdown of South Africa's nine provinces (the typing list didn't open in some browsers).
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

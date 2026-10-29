@@ -1048,7 +1048,11 @@
           '<label class="field">' + T('Address line 2') + '<input id="pf-street2" value="' + esc((p.address || {}).street2 || '') + '" autocomplete="address-line2"></label>' +
           '<div class="two"><label class="field">' + T('Town or city') + '<input id="pf-city" value="' + esc((p.address || {}).city || '') + '" autocomplete="address-level2"></label>' +
           '<label class="field">' + T('Postcode') + '<input id="pf-postcode" value="' + esc((p.address || {}).postcode || '') + '" inputmode="numeric" autocomplete="postal-code"></label></div>' +
-          '<div class="two"><label class="field">' + T('Province') + '<input id="pf-province" list="pf-provinces" value="' + esc((p.address || {}).province || '') + '"><datalist id="pf-provinces">' + PROVINCES.map(function (x) { return '<option value="' + x + '">'; }).join('') + '</datalist></label>' +
+          '<div class="two"><label class="field">' + T('Province') + '<select id="pf-province">' + (function (cur) {   // South Africa's nine provinces; anything else already recorded (e.g. from Elvanto) is kept
+            var opts = ['<option value="">' + T('Choose…') + '</option>'].concat(PROVINCES.slice().sort().map(function (x) { return '<option' + (x === cur ? ' selected' : '') + '>' + x + '</option>'; }));
+            if (cur && PROVINCES.indexOf(cur) < 0) opts.push('<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>');
+            return opts.join('');
+          })((p.address || {}).province || '') + '</select></label>' +
           '<label class="field">' + T('Country') + '<input id="pf-country" value="' + esc((p.address || {}).country || (p.address ? '' : 'South Africa')) + '" autocomplete="country-name"></label></div></fieldset>' +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
       (admin ? staffFields(p) : '') +

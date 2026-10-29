@@ -10,7 +10,7 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var FREQ = ['weekly', 'fortnightly', 'monthly', 'occasional'];
-  var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos'];
+  var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Care group', 'Photos'];
   var APK = 'https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk';   // built by .github/workflows/build-android.yml
 
   function me() { return H.user(); }
@@ -69,6 +69,7 @@
     if (fam) office += '<dt>' + T('Household') + '</dt><dd>' + esc(H.familyName(fam)) + '</dd>';
     html += '<section class="panel"><h2>' + T('Kept by the church office') + '</h2>' + (office ? '<dl class="kv">' + office + '</dl>' : '') +
       '<p class="hint">' + T('Something wrong or missing here? Please tell the church office and they will change it.') + '</p></section>';
+    html += window.CareUI ? CareUI.mePanel() : '';   // their care group, if they are in one
     // Consent (POPIA): what they agreed to
     var cf = window.PeopleHelpers ? PeopleHelpers.consentFor : function () { return null; };
     html += '<section class="panel"><h2>' + T('Consent') + '</h2><p class="hint" style="margin:0 0 10px">' + T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) + '</p><div class="list">' +
@@ -79,6 +80,7 @@
     // Language and signing out: easy to find on a phone
     html += '<section class="panel"><h2>' + T('This phone or computer') + '</h2><div class="row" style="flex-wrap:wrap;gap:12px">' + I18n.picker('me-lang') +
       '<button class="btn" data-act="hub:signout" style="margin-left:auto">' + H.icon(H.ICON.out, 18) + T('Sign out') + '</button></div>' +
+      (I18n.isDraft() ? '<p class="hint">' + T('This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.') + '</p>' : '') +
       (window.ChurchHubApp ? '<p class="hint">' + T('Church Hub app, version {v}', { v: esc(appVersion()) }) + '</p>' :
         /Android/i.test(navigator.userAgent) ? '<p class="hint"><a href="' + APK + '" target="_blank" rel="noopener">' + T('Get the Church Hub app for Android') + '</a></p>' : '') + '</section>';
     return html + '</div>';

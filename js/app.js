@@ -223,7 +223,9 @@ var Hub = (function () {
   /* ---------- modules ---------- */
   function register(m) { modules.push(m); }
   /** One-off data upgrades (module.upgrade), run when an Administrator signs in. */
-  function runUpgrades() { if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
+  /** Modules may do something for everyone once they are signed in (e.g. keep their care group card up to date). */
+  function signedInHooks() { var u = user; setTimeout(function () { if (!u || !user || user.id !== u.id) return; u = user; modules.forEach(function (m) { if (m.signedIn) { try { m.signedIn(u); } catch (e) { console.error('signedIn', m.id, e); } } }); }, 1500); }
+  function runUpgrades() { signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
   function enabled() {
     var on = (Store.settings().modules || {});
     return modules.filter(function (m) { return on[m.id] !== false && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*')); });
@@ -267,11 +269,12 @@ var Hub = (function () {
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>Church Hub</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '</div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(roleLabel(myRole())) + '</small></span>' +
-      (realAdmin() ? '<button class="icon-btn ghost" data-act="hub:viewaspick" aria-label="View as another role" title="View as another role">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
+      (realAdmin() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="See Church Hub as another role would">' + icon(ICON.eye, 16) + 'View as…</button></div>' : '') +
       '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>Church Hub</b></a>' +
-      '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></header>' +
+      '<span class="top-r">' + (realAdmin() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="View as another role" title="View as another role">' + icon(ICON.eye) + '</button>' : '') +
+      '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
       (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>Viewing as <b>' + esc(roleLabel(myRole())) + '</b> – this is what they see. Nothing you do here is saved.</span>' +
         '<button class="btn small" data-act="hub:viewas" data-r="admin">Back to Administrator</button></div>' : '') +
@@ -547,7 +550,7 @@ var Hub = (function () {
     document.querySelectorAll('.lang-sel').forEach(function (sel) {
       if (sel.dataset.wired) return; sel.dataset.wired = '1';
       sel.addEventListener('change', function () {
-        I18n.set(sel.value); Store.pref('lang', I18n.get());
+        I18n.set(sel.value); Store.pref('lang', sel.value);   // a language from another file is redrawn when it arrives
         if (document.querySelector('#modal .overlay')) closeModal();
         render(); var again = document.querySelector('.lang-sel'); if (again) again.focus();
       });
@@ -581,6 +584,7 @@ var Hub = (function () {
     root = document.getElementById('app');
     if (inApp()) document.documentElement.classList.add('in-app');
     if (homeScreen()) document.documentElement.classList.add('home-screen');
+    I18n.onLoad(function () { if (document.querySelector('#modal .overlay')) closeModal(); render(); });
     I18n.set(Store.pref('lang') || 'en');
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);

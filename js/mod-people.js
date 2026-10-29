@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
-  var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos', 'Children’s medical notes'];
+  var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Care group', 'Photos', 'Children’s medical notes'];
   var CATS = ['Church Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member', 'Deceased'];
   var HS = Households;
   function canChildren() { return H.can('*') || H.can('children'); }       // Administrators, Pastors, Children's ministry
@@ -67,9 +67,9 @@
     });
   }
   function catTags(p) {
-    var t = '<span class="tag grey">' + esc(p.category || '') + '</span>';
-    if (!p.staff) return t;
-    return p.category === 'Staff' ? '<span class="tag grey">' + esc(p.staff.category || 'Staff') + '</span>' : t + ' <span class="tag grey">' + esc('Staff' + (p.staff.category ? ' · ' + p.staff.category : '')) + '</span>';
+    var t = '<span class="tag grey">' + esc(p.category || '') + '</span>', care = window.CareUI ? CareUI.tag(p) : '';
+    if (!p.staff) return t + care;
+    return (p.category === 'Staff' ? '<span class="tag grey">' + esc(p.staff.category || 'Staff') + '</span>' : t + ' <span class="tag grey">' + esc('Staff' + (p.staff.category ? ' · ' + p.staff.category : '')) + '</span>') + care;
   }
   /** Someone who died while married to this person: recorded when the death was recorded, or (for older records) the one
    *  person who has died in their household when they are widowed. */
@@ -1079,7 +1079,7 @@
               '<label class="field">' + T('Country') + countrySelect(a.country || '') + '</label></div></fieldset>';
           })(p.address || {}) +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
-      (admin ? staffFields(p) : '') +
+      (admin ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">Mark as left</button>' : '') +
@@ -1098,7 +1098,7 @@
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
-    wireCountry();
+    wireCountry(); if (window.CareUI) CareUI.wireFields();
     var pc = document.getElementById('pf-cat'), pcf = document.getElementById('pf-partner-f');
     if (pc && pcf) pc.addEventListener('change', function () { pcf.hidden = pc.value !== 'Church Partner'; });
     var lt = document.getElementById('pf-late'), ltf = document.getElementById('pf-late-f'), mar = document.getElementById('pf-marital');
@@ -1159,7 +1159,7 @@
       '<div class="dlg-body">' + purposes.map(function (pur, i) {
         return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(pur) + '"' + (hasConsent(p.id, pur) ? ' checked' : '') + '><span><b>' + esc(T(pur)) + '</b><br><span class="muted small">' + esc(T({
           'Church records': 'Keep their details on the church database.', 'Email': 'Church news and information by email.', 'SMS': 'Reminders and urgent news by SMS.',
-          'Church directory': 'Name and phone visible to other members.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
+          'Church directory': 'Name and phone visible to other members.', 'Care group': 'Photo, phone, email, address and birthday shared with my care group.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
       }).join('') +
       (child ? '' : '<p class="field-l" style="margin:14px 0 4px">' + T('Would like to receive') + '</p>' + RECEIVE.map(function (r) {
         return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(r[0]) + '"' + (hasConsent(p.id, r[0]) ? ' checked' : '') + '><span><b>' + esc(T(r[0])) + '</b><br><span class="muted small">' + esc(T(r[1])) + '</span></span></label>';
@@ -1187,6 +1187,7 @@
   function tidyDeath(id) {
     var p = S.get('people', id); if (!p) return;
     var d = p.deceasedAt || H.today(), n = 0;
+    if (window.CareUI) CareUI.place(p, '', false, 'After a death: ');
     S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === id && (!s || s.date >= d); }).forEach(function (a) { S.remove('assignments', a.id); n++; });
     S.find('skills', function (k) { return k.personId === id; }).forEach(function (k) { S.remove('skills', k.id); });
     S.find('serveOffers', function (o) { return o.personId === id; }).forEach(function (o) { S.remove('serveOffers', o.id); });
@@ -1452,7 +1453,10 @@
         if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family', custom: false }, 'Created a household for ' + p.firstName + ' ' + p.lastName); fam = f.id; }
         if (fam !== null) p.familyId = fam;
         if (p.familyRole === 'child' && !p.familyId && !dead) { err.textContent = 'Children must be in a household, so the church knows who they live with.'; err.hidden = false; return; }
+        var care = window.CareUI ? CareUI.read() : null;
+        if (care && care.error && !dead) { err.textContent = care.error; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
+        if (window.CareUI) { if (care && !care.error && !CareUI.place(p, care.gid, care.leader)) CareUI.sync(p.id); else if (!care) CareUI.sync(p.id); }
         dups.forEach(function (m) { markNotSame(p.id, m.id); });
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();
@@ -1469,6 +1473,7 @@
           S.put('consents', { personId: p.id, purpose: pur, given: box.checked, date: H.today(), method: me ? 'Changed in the app' : method.value, recordedBy: H.name(H.user()), guardianId: guardian ? guardian.value : '' },
             (box.checked ? 'Consent given: ' : 'Consent withdrawn: ') + pur + ' for ' + H.name(p));
         });
+        if (window.CareUI) CareUI.sync(p.id);   // their care group card follows their consent
         H.closeModal(); H.render(); H.toast(T('Consent saved'));
       },
       death: function (el) {

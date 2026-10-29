@@ -15,17 +15,19 @@ var Wording = (function () {
     ['visiting', ['Visiting Minister', 'Visiting Ministers'], 'A preacher or minister from elsewhere (a category)'],
     ['kids', ['Children’s ministry', 'Children’s ministry'], 'The role that looks after children (and their medical notes)'],
     ['rosters', ['Roster coordinator', 'Roster coordinators'], 'The role that makes the rosters'],
-    ['office', ['Church office', 'Church offices'], 'Where the administration is done']
+    ['office', ['Church office', 'Church offices'], 'Where the administration is done'],
+    ['care', ['Care group', 'Care groups'], 'A small group that cares for one another'],
+    ['carer', ['Carer', 'Carers'], 'Someone who leads a care group']
   ];
   var SETS = {
     general: { name: 'General (as Church Hub comes)', words: {} },
-    anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'] } },
-    catholic: { name: 'Catholic', words: { pastor: ['Priest', 'Priests'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Priest', 'Visiting Priests'], kids: ['Children’s catechesis', 'Children’s catechesis'], office: ['Parish office', 'Parish offices'] } },
-    methodist: { name: 'Methodist', words: { pastor: ['Minister', 'Ministers'], partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'] } },
-    presbyterian: { name: 'Presbyterian / Reformed', words: { pastor: ['Minister', 'Ministers'], partner: ['Communicant Member', 'Communicant Members'], attender: ['Adherent', 'Adherents'] } },
-    baptist: { name: 'Baptist', words: { partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'] } },
-    pentecostal: { name: 'Pentecostal / Charismatic', words: { partner: ['Member', 'Members'], visiting: ['Guest Speaker', 'Guest Speakers'] } },
-    lutheran: { name: 'Lutheran', words: { partner: ['Member', 'Members'], visiting: ['Visiting Pastor', 'Visiting Pastors'], office: ['Parish office', 'Parish offices'] } }
+    anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Home group leader', 'Home group leaders'] } },
+    catholic: { name: 'Catholic', words: { pastor: ['Priest', 'Priests'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Priest', 'Visiting Priests'], kids: ['Children’s catechesis', 'Children’s catechesis'], office: ['Parish office', 'Parish offices'], care: ['Small Christian Community', 'Small Christian Communities'], carer: ['Leader', 'Leaders'] } },
+    methodist: { name: 'Methodist', words: { pastor: ['Minister', 'Ministers'], partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Class', 'Classes'], carer: ['Class leader', 'Class leaders'] } },
+    presbyterian: { name: 'Presbyterian / Reformed', words: { pastor: ['Minister', 'Ministers'], partner: ['Communicant Member', 'Communicant Members'], attender: ['Adherent', 'Adherents'], care: ['Elder’s district', 'Elders’ districts'], carer: ['Elder', 'Elders'] } },
+    baptist: { name: 'Baptist', words: { partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Small group', 'Small groups'], carer: ['Group leader', 'Group leaders'] } },
+    pentecostal: { name: 'Pentecostal / Charismatic', words: { partner: ['Member', 'Members'], visiting: ['Guest Speaker', 'Guest Speakers'], care: ['Cell group', 'Cell groups'], carer: ['Cell leader', 'Cell leaders'] } },
+    lutheran: { name: 'Lutheran', words: { partner: ['Member', 'Members'], visiting: ['Visiting Pastor', 'Visiting Pastors'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Group leader', 'Group leaders'] } }
   };
 
   /** The words in use: { key: [singular, plural] } from the chosen set and any the Administrator renamed. */

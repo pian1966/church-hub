@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
@@ -285,6 +285,9 @@ var Store = (function () {
         ['skills', 'assignments', 'blockouts'].forEach(function (c) { add(c, own(c)); });
         add('groups', coll('groups').where('memberIds', 'array-contains', me));
       }
+      // Care groups: Administrators and Pastors see all; everyone else their own group (and its members' cards, loaded
+      // once the group is known – see shares())
+      add('careGroups', is('admin', 'pastor') ? coll('careGroups') : coll('careGroups').where('memberIds', 'array-contains', me));
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
       add('serveOffers', is('admin', 'rosters') ? coll('serveOffers') : own('serveOffers'));
       if (is('admin', 'pastor')) { add('details', coll('details')); add('consents', coll('consents')); }
@@ -325,6 +328,7 @@ var Store = (function () {
           if (snap.docs) snap.docs.forEach(function (d) { m[d.id] = d.data(); });
           else if (snap.exists) m[snap.id] = snap.data();
           raw[s.key] = m;
+          if (s.key === 'careGroups' && !is('admin', 'pastor')) shares(Object.keys(m));
           if (!snap.metadata.hasPendingWrites) forget(s.coll);
           if (first) { first = false; if (--pending === 0) whenLoaded(); }
           else if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
@@ -335,8 +339,20 @@ var Store = (function () {
         }));
       });
     }
+    /** The cards of the people in my care group(s): careGroups/{id}/share, followed as my groups change. */
+    var shareSubs = {};
+    function shares(gids) {
+      Object.keys(shareSubs).forEach(function (g) { if (gids.indexOf(g) < 0) { try { shareSubs[g](); } catch (e) {} delete shareSubs[g]; delete raw['share:' + g]; } });
+      gids.forEach(function (g) {
+        if (shareSubs[g]) return;
+        shareSubs[g] = fs.collection('careGroups/' + g + '/share').onSnapshot(function (snap) {
+          var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw['share:' + g] = m;
+          if (ready) { rebuild(); remoteChanged(); }
+        }, function (e) { console.error('Could not load care group ' + g, e); });
+      });
+    }
     function forget(coll) { Object.keys(local).forEach(function (k) { if (k.split('/')[0] === coll) delete local[k]; }); }
-    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; ready = false; }
+    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); ready = false; }
     function remoteChanged() {
       clearTimeout(remoteTimer);
       remoteTimer = setTimeout(function () { remoteListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }, 300);
@@ -370,7 +386,9 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups'].forEach(function (c) { db[c] = arr(c); });
+      db.careShare = [];
+      Object.keys(raw).forEach(function (k) { if (k.indexOf('share:') === 0) { var g = k.slice(6); Object.keys(raw[k]).forEach(function (pid) { var o = copy(raw[k][pid]); o.id = pid; o.groupId = g; db.careShare.push(o); }); } });
       var cons = merged('consents', 'consentsMe', 'consentsMed', 'consentsPhotos');
       db.consents = Object.keys(cons).map(function (id) { var o = copy(cons[id]); o.id = id; return o; });
       db.notes = [];
@@ -445,15 +463,18 @@ var Store = (function () {
     }
     function put(c, obj, prev) {
       if (c === 'people') return putPerson(obj);
+      if (c === 'careShare') { var d = copy(obj); delete d.groupId; if (prev && prev.groupId && prev.groupId !== obj.groupId) del('careGroups/' + prev.groupId + '/share/' + obj.id); return write('careGroups/' + obj.groupId + '/share/' + obj.id, d); }
       if (c === 'notes' || c === 'officeNotes') return putNotes(obj.personId, c);
       write(c + '/' + obj.id, obj);
       if (c === 'consents' && obj.purpose === DIRECTORY) syncDirectory(obj.personId);
     }
     function remove(c, prev) {
+      if (c === 'careShare') return del('careGroups/' + prev.groupId + '/share/' + prev.id);
       if (c === 'notes' || c === 'officeNotes') return putNotes(prev.personId, c);
       if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       del(c + '/' + prev.id);
     }
+    function unshare(gid, pid) { return del('careGroups/' + gid + '/share/' + pid); }
     function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
     /** ID numbers: Administrators (and the person themself) only, fetched one at a time when someone asks to see one. */
     function idGet(pid) { return doc('idNumbers/' + pid).get().then(function (s) { return s.exists ? (s.data().value || '') : ''; }); }
@@ -522,7 +543,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -533,6 +554,12 @@ var Store = (function () {
   return { load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    /** Someone left a care group: their card there goes (careGroups/{gid}/share/{pid}). */
+    careUnshare: function (gid, pid) {
+      if (previewing()) return;
+      db.careShare = list('careShare').filter(function (x) { return !(x.id === pid && x.groupId === gid); });
+      if (LIVE) Live.unshare(gid, pid); save(); changed();
+    },
     /** "View as": an Administrator sees Church Hub as another role would (Pastor, Roster coordinator, Children's ministry, Member).
      *  Live, only what that role may load is loaded (less, never more: not pastoral or medical notes, which Administrators may not
      *  read). Nothing can be saved meanwhile. Not remembered: signing in again or refreshing returns to Administrator. */

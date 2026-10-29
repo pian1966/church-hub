@@ -19,6 +19,8 @@ ok(cat('Children’s ministry and Pastors') === 'Children’s catechesis and Pri
 const own = W.changer({ wording: { set: 'anglican', custom: { pastor: ['Rector', 'Rectors'], partner: ['Church Partner', ''] } } });
 ok(own('Pastors and Church Partners') === 'Rectors and Church Partners' && own('a Pastor') === 'a Rector', 'renamed words win over the set (and the set can be undone word by word)');
 ok(W.words({ wording: { set: 'methodist' } }).pastor.join() === 'Minister,Ministers' && W.words({ wording: { set: 'nope' } }).pastor.join() === 'Pastor,Pastors', 'words for a set; an unknown set is General');
+const meth = W.changer({ wording: { set: 'methodist' } });
+ok(meth('My care group · Carer') === 'My class · Class leader' && meth('Care group member') === 'Class member', 'Methodist: care groups are classes, carers class leaders');
 ok(W.pairs({ wording: { set: 'anglican' } }).every((p, i, a) => i === 0 || a[i - 1][0].length >= p[0].length), 'longest words are changed first (Visiting Minister before Minister)');
 
 if (fails) { console.log('\n' + fails + ' wording test(s) FAILED'); process.exit(1); }

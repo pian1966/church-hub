@@ -3,7 +3,7 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store;
   var MODS = [['people', 'People', 'Directory, households and consent'], ['rosters', 'Rosters', 'Serving rosters, teams and serving together'], ['leave', 'Leave', 'Staff leave (Leave Manager built in)'],
-    ['privacy', 'Privacy', 'Privacy law tools (consent, requests, breaches)'], ['import', 'Import', 'Bring data across from Elvanto']];
+    ['care', 'Care groups', 'Small groups that care for one another'], ['privacy', 'Privacy', 'Privacy law tools (consent, requests, breaches)'], ['import', 'Import', 'Bring data across from Elvanto']];
 
   /** The number of people with an access level; point at it (or tap it) to see who they are. Long lists (e.g. "No access") stay a number. */
   function whoHas(ps, role) {
@@ -30,6 +30,33 @@
       '<button class="btn small" data-act="settings:addslot">' + H.icon(H.ICON.plus, 16) + 'Add a service</button></section>';
   }
 
+  var allSvcs = false;   // show every upcoming service, not just the next few
+  /** Services that need a roster: the upcoming ones (remove any you won't hold), regular ones for some weeks, and special ones. */
+  function renderServices(st, svcs) {
+    var sl = Serving.slots(st), shown = allSvcs ? svcs : svcs.slice(0, 8), year = +H.today().slice(0, 4);
+    var specials = Serving.specials(year), groups = [];
+    specials.forEach(function (x) { if (groups.indexOf(x.when) < 0) groups.push(x.when); });
+    return '<section class="panel"><h2>Services that need a roster</h2>' +
+      (svcs.length ? '<div class="list">' + shown.map(function (s) {
+        return '<div class="item"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + (s.special ? ' <span class="tag">Special</span>' : '') + '</b><small>' + esc(s.time + ' · ' + s.name + (s.venue && s.name.indexOf(s.venue) < 0 ? ' · ' + s.venue : '')) + '</small></span>' +
+          '<button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="Remove the service on ' + esc(H.fmt(s.date, true)) + '" title="Remove this service (and its roster)">' + H.icon(H.ICON.trash, 18) + '</button></div>';
+      }).join('') + '</div>' + (svcs.length > 8 ? '<p class="hint"><button class="link" data-act="settings:allsvc">' + (allSvcs ? 'Show fewer' : 'Show all ' + svcs.length) + '</button></p>' : '') : '<p class="muted">None planned.</p>') +
+      (svcs.some(function (s) { return !s.special; }) ? '<details class="sub"><summary>Stop holding a regular service…</summary><p class="hint">Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Services and venues”.</p>' +
+        '<div class="two"><label class="field">Service<select id="sv-stop">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select></label>' +
+        '<label class="field">From<input type="date" id="sv-stop-from" value="' + H.today() + '"></label></div><button class="btn small" data-act="settings:stopsvc">Remove these services</button></details>' : '') +
+      '<h3 style="margin:16px 0 6px">Every week</h3><div class="two"><label class="field req">Service<select id="sv-slot">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select><small>Add more times or venues under “Services and venues”.</small></label>' +
+      '<label class="field">For the next<select id="sv-n"><option value="4">4 weeks</option><option value="8" selected>8 weeks</option><option value="13">13 weeks</option></select></label></div>' +
+      '<button class="btn small" data-act="settings:addsvc">Add these services</button>' +
+      '<h3 style="margin:18px 0 6px">A special service</h3><p class="hint" style="margin-top:0">E.g. Maundy Thursday, Good Friday or Christmas Day. Choose one of the suggestions (the date is filled in) or type your own.</p>' +
+      '<label class="field req">Name<input id="sp-name" list="sp-list" autocomplete="off" placeholder="e.g. Good Friday"><datalist id="sp-list">' + specials.map(function (x) { return '<option value="' + esc(x.name) + '">' + esc((x.date ? H.fmt(Serving.specialDate(x.name, H.today()), true) + ' · ' : '') + (x.used || x.when)) + '</option>'; }).join('') + '</datalist></label>' +
+      '<div class="two"><label class="field req">Date<input type="date" id="sp-date" min="' + H.today() + '"></label><label class="field req">Time<input type="time" id="sp-time" value="' + esc((sl[0] || {}).time || '09:00') + '"></label></div>' +
+      '<div class="two"><label class="field">Campus or venue<input id="sp-venue" placeholder="Leave empty for the church itself"></label>' +
+      '<label class="field">Teams like<select id="sp-like">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select><small>Positions that only serve some services follow this one.</small></label></div>' +
+      '<button class="btn small" data-act="settings:addspecial">' + H.icon(H.ICON.plus, 16) + 'Add special service</button>' +
+      '<details class="sub"><summary>Ideas by kind of church</summary><div class="hint">' + groups.map(function (g) {
+        return '<p style="margin:8px 0 2px"><b>' + esc(g) + '</b></p><p style="margin:0">' + specials.filter(function (x) { return x.when === g; }).map(function (x) { return esc(x.name) + (x.used ? ' <span class="muted">(' + esc(x.used) + ')</span>' : ''); }).join(' · ') + '</p>';
+      }).join('') + '</div></details></section>';
+  }
   /** Church wording: a ready-made set for the kind of church, and any word renamed (js/wording.js). */
   function renderWording(st) {
     var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', words = Wording.words(st);
@@ -62,16 +89,15 @@
         return '<tr><td><b>' + esc(H.ROLES[r[0]].label) + '</b></td><td>' + esc(r[1]) + '</td><td>' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>';
       }).join('') + '</tbody></table></div><p class="hint">Change someone’s access from their profile (People → Edit details).</p></section>' +
       renderSlots() +
-      '<section class="panel"><h2>Services that need a roster</h2>' + (svcs.length ? '<div class="list">' + svcs.slice(0, 6).map(function (s) { return '<div class="item"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + '</b><small>' + esc(s.time + ' · ' + s.name + (s.venue ? ' · ' + s.venue : '')) + '</small></span><button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="Remove this service">' + H.icon(H.ICON.trash, 18) + '</button></div>'; }).join('') + '</div>' + (svcs.length > 6 ? '<p class="hint">…and ' + (svcs.length - 6) + ' more.</p>' : '') : '<p class="muted">None planned.</p>') +
-      '<div class="two" style="margin-top:12px"><label class="field req">Service<select id="sv-slot">' + Serving.slots(st).map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select><small>Add more times or venues under “Services and venues”.</small></label>' +
-      '<label class="field">For the next<select id="sv-n"><option value="4">4 weeks</option><option value="8" selected>8 weeks</option><option value="13">13 weeks</option></select></label></div>' +
-      '<button class="btn small" data-act="settings:addsvc">Add these services</button></section></div>';
+      renderServices(st, svcs) + '</div>';
   }
 
   H.register({
     id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'],
     render: function () { return H.can('*') ? render() : '<p class="empty">Only Administrators can change settings.</p>'; },
     after: function () {
+      var sn = document.getElementById('sp-name'), sd = document.getElementById('sp-date');
+      if (sn && sd) sn.addEventListener('input', function () { var d = Serving.specialDate(sn.value.trim(), H.today()); if (d) sd.value = d; });   // a suggestion fills in its date
       var ws = document.getElementById('wd-set');
       if (ws) ws.addEventListener('change', function () {   // fill in the set's words, to save or change
         var w = Wording.words({ wording: { set: ws.value } });
@@ -125,6 +151,24 @@
           if (!S.find('services', function (s) { return s.date === iso && Serving.slotOf(s) === x.id; }).length) { S.put('services', { date: iso, time: time, name: name, slot: x.id, venue: x.venue || '' }); added++; }
         }
         S.audit('Added ' + added + ' services', 'services'); H.render(); H.toast(added + ' services added');
+      },
+      allsvc: function () { allSvcs = !allSvcs; H.render(); },
+      stopsvc: function (el) {
+        var id = document.getElementById('sv-stop').value, from = document.getElementById('sv-stop-from').value || H.today();
+        var gone = S.find('services', function (s) { return !s.special && Serving.slotOf(s) === id && s.date >= from; });
+        if (!gone.length) { H.toast('There are none of those from that date', true); return; }
+        if (!H.confirmBtn(el, 'Remove ' + gone.length + '? Click again')) return;
+        gone.forEach(function (sv) { S.find('assignments', function (x) { return x.serviceId === sv.id; }).forEach(function (x) { S.remove('assignments', x.id); }); S.remove('services', sv.id); });
+        S.audit('Stopped ' + Serving.slotLabel(id, S.settings()) + ' services from ' + from + ': removed ' + gone.length + ' (with their rosters)', 'services');
+        H.render(); H.toast(gone.length + ' services removed');
+      },
+      addspecial: function () {
+        var g = function (id) { return document.getElementById(id).value.trim(); }, name = g('sp-name'), date = g('sp-date'), time = g('sp-time'), venue = g('sp-venue'), like = g('sp-like');
+        if (!name || !date || !time) { H.toast('Give the service a name, a date and a time', true); return; }
+        if (date < H.today()) { H.toast('Choose a date from today on', true); return; }
+        if (S.find('services', function (s) { return s.date === date && s.time === time && (s.venue || '') === venue; }).length) { H.toast('There is already a service then', true); return; }
+        S.put('services', { date: date, time: time, name: name, slot: like, venue: venue, special: true }, 'Added a special service: ' + name + ' on ' + date);
+        H.render(); H.toast(name + ' added – make its roster under Rosters');
       },
       delsvc: function (el) { if (!H.confirmBtn(el, '✕?')) return; S.find('assignments', function (x) { return x.serviceId === el.dataset.id; }).forEach(function (x) { S.remove('assignments', x.id); }); S.remove('services', el.dataset.id, 'Removed a service'); H.render(); }
     }

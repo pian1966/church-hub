@@ -26,6 +26,8 @@
   }
   function onlyKeys(a, keys) { return Object.keys(a || {}).every(function (k) { return keys.indexOf(k) >= 0; }); }
   var KIDS_CONSENTS = ['Children’s medical notes', 'Photos'];
+  function inCare(c, gid) { return is(c, ANY) && c.me !== '' && docs['careGroups/' + gid].memberIds.indexOf(c.me) >= 0; }   // a missing group fails
+  function leadsCare(c, gid) { return is(c, ANY) && c.me !== '' && (docs['careGroups/' + gid].leaderIds || []).indexOf(c.me) >= 0; }
   function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || is(c, ['admin'])); },
@@ -102,6 +104,18 @@
         return op === 'update' && mine(c, b.staffId) && a.status === 'Cancelled' && onlyChanges(b, a, ['status', 'cancelledBy']);
       } },
     leaveAdjustments: { read: function (c, id, d) { return is(c, ['admin']) || (!!d && mine(c, d.staffId)); }, write: function (c) { return is(c, ['admin']); } },
+    careGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && c.me !== '' && !!d && (d.memberIds || []).indexOf(c.me) >= 0); },
+      write: function (c, op, id, b, a) {
+        if (is(c, ['admin', 'pastor'])) return true;
+        if (op !== 'update' || !is(c, ANY) || c.me === '' || (b.leaderIds || []).indexOf(c.me) < 0) return false;
+        return onlyChanges(b, a, ['memberIds', 'names', 'updatedAt']) && a.memberIds.indexOf(c.me) >= 0 && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
+      } },
+    'careGroups/share': { read: function (c, pid, d, gid) { return is(c, ['admin', 'pastor']) || inCare(c, gid); },
+      write: function (c, op, pid, b, a, gid) {
+        if (op === 'delete') return is(c, ['admin', 'pastor']) || mine(c, pid) || leadsCare(c, gid);
+        return (is(c, ['admin', 'pastor']) || (mine(c, pid) && inCare(c, gid))) && onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
+          && (a.photo === undefined || (typeof a.photo === 'string' && a.photo.length < 40000));
+      } },
     dsr: 'admin', breaches: 'admin',
     audit: { read: function (c) { return is(c, ['admin']); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }
@@ -113,14 +127,17 @@
     return p || { read: function () { return false; }, write: function () { return false; } };
   }
   // A rule that looks at a missing document fails (as in Firestore), hence the try/catch.
-  function canRead(path, data) { var s = path.split('/'); try { return !!policy(s[0]).read(ctx(), s[1], data); } catch (e) { return false; } }
-  function canWrite(op, path, before, after) { var s = path.split('/'); try { return !!policy(s[0]).write(ctx(), op, s[1], before, after); } catch (e) { return false; } }
+  // careGroups/{gid}/share/{pid} is checked by POLICY['careGroups/share'] with the group's id last
+  function canRead(path, data) { var s = path.split('/'); try { return s.length === 4 ? !!policy(s[0] + '/' + s[2]).read(ctx(), s[3], data, s[1]) : !!policy(s[0]).read(ctx(), s[1], data); } catch (e) { return false; } }
+  function canWrite(op, path, before, after) { var s = path.split('/'); try { return s.length === 4 ? !!policy(s[0] + '/' + s[2]).write(ctx(), op, s[3], before, after, s[1]) : !!policy(s[0]).write(ctx(), op, s[1], before, after); } catch (e) { return false; } }
+  function lastId(path) { return path.split('/').pop(); }
+  function parentOf(path) { return path.slice(0, path.lastIndexOf('/')); }
   function denied(what) { F.denied.push(what); var e = new Error('Missing or insufficient permissions.'); e.code = 'permission-denied'; return e; }
 
   /* ---------- documents and queries ---------- */
   function serverTs(o) { Object.keys(o).forEach(function (k) { if (o[k] && o[k].__serverTs) o[k] = { seconds: Date.now() / 1000 }; }); return o; }
-  function DocSnap(path) { var d = docs[path]; this.id = path.split('/')[1]; this.exists = d !== undefined; this.metadata = { hasPendingWrites: false }; this.data = function () { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }; }
-  function DocRef(path) { this.path = path; this.id = path.split('/')[1]; }
+  function DocSnap(path) { var d = docs[path]; this.id = lastId(path); this.exists = d !== undefined; this.metadata = { hasPendingWrites: false }; this.data = function () { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }; }
+  function DocRef(path) { this.path = path; this.id = lastId(path); }
   DocRef.prototype.get = function () {
     var p = this.path;
     return new Promise(function (res, rej) { setTimeout(function () { canRead(p, docs[p]) ? res(new DocSnap(p)) : rej(denied('get ' + p)); }, 0); });
@@ -138,13 +155,13 @@
     return q.filters.every(function (f) { var v = d[f[0]]; return f[1] === '==' ? v === f[2] : f[1] === 'array-contains' ? Array.isArray(v) && v.indexOf(f[2]) >= 0 : false; });
   }
   function run(q) {
-    var out = Object.keys(docs).filter(function (k) { return k.split('/')[0] === q.coll && matches(q, docs[k]); });
+    var out = Object.keys(docs).filter(function (k) { return parentOf(k) === q.coll && matches(q, docs[k]); });
     // Like Firestore, a query is refused if it could return anything the reader may not see.
     var bad = out.filter(function (k) { return !canRead(k, docs[k]); });
     if (bad.length) throw denied('list ' + q.coll + ' ' + JSON.stringify(q.filters) + ' (e.g. ' + bad[0] + ')');
     if (q.order) out.sort(function (a, b) { var x = (docs[a][q.order[0]] || {}).seconds || 0, y = (docs[b][q.order[0]] || {}).seconds || 0; return q.order[1] === 'desc' ? y - x : x - y; });
     if (q.lim) out = out.slice(0, q.lim);
-    return { docs: out.map(function (k) { return { id: k.split('/')[1], data: (function (d) { return function () { return JSON.parse(JSON.stringify(d)); }; })(docs[k]) }; }), metadata: { hasPendingWrites: false } };
+    return { docs: out.map(function (k) { return { id: lastId(k), data: (function (d) { return function () { return JSON.parse(JSON.stringify(d)); }; })(docs[k]) }; }), metadata: { hasPendingWrites: false } };
   }
   function deliver(l) {
     try {

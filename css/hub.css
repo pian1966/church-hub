@@ -27,7 +27,10 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .mark { width: 36px; height: 36px; border-radius: 10px; background: var(--accent); color: #fff; display: grid; place-items: center; flex: 0 0 auto; }
 .who { display: flex; align-items: center; gap: 10px; padding: 12px 6px 0; border-top: 1px solid #3A322C; margin-top: 10px; }
 .who span { flex: 1; min-width: 0; } .who b { display: block; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } .who small { color: var(--side-muted); font-size: 12px; }
-.main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.main-col { flex: 1; min-width: 0; display: flex; flex-direction: column; position: relative; }
+.corner { position: absolute; top: 14px; right: 20px; z-index: 4; }
+.corner .btn { gap: 6px; }
+.top-r { display: flex; gap: 8px; }
 main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; outline: none; }
 .top { display: none; }
 .tabbar { display: none; }
@@ -36,6 +39,7 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 
 @media (max-width: 860px) {
   .side { display: none; }
+  .corner { display: none; }
   .top { display: flex; align-items: center; justify-content: space-between; background: var(--side); padding: 10px 14px; position: sticky; top: 0; z-index: 5; }
   .top .brand { padding: 0; } .top .mark { width: 32px; height: 32px; }
   .top .icon-btn { color: #fff; border-color: #4A413A; background: transparent; }
@@ -354,3 +358,7 @@ body.is-busy { cursor: progress; }
 .viewas .btn { margin-left: auto; }
 .viewas-pick { display: grid; gap: 8px; }
 .viewas-pick .btn { justify-content: flex-start; width: 100%; }
+/* Small fold-out sections inside a panel */
+details.sub { margin: 12px 0 4px; border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 12px; }
+details.sub > summary { cursor: pointer; font-weight: 600; color: var(--accent-ink); }
+details.sub[open] > summary { margin-bottom: 8px; }

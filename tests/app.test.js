@@ -8,6 +8,7 @@
  *       node tests/app.test.js
  */
 'use strict';
+const Serving = require('../js/serving.js');
 const fs = require('fs'), path = require('path'), vm = require('vm'), http = require('http');
 const { chromium } = require('playwright');
 const ROOT = path.join(__dirname, '..');
@@ -521,7 +522,11 @@ function serve() {
   const shown = await s.page.textContent('.who[data-role="pastor"] .who-list');
   check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
   check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
-  await s.page.selectOption('#st-country', 'KE'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
+  for (let i = 0; i < 3 && (await s.docsNow())['settings/church'].country !== 'KE'; i++) {   // the screen may redraw between choosing and saving
+    await s.settle(); await s.page.selectOption('#st-country', 'KE'); await s.page.click('[data-act="settings:name"]');
+    await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 3000 }).catch(() => {});
+  }
+  await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
   await s.go('privacy'); t = await s.text();
   check(t.includes('Privacy (Data Protection Act)') && t.includes('Office of the Data Protection Commissioner') && !t.includes('POPIA') && !t.includes('Information Regulator'), 'Privacy follows the country’s law (Kenya: Data Protection Act, ODPC)');
@@ -553,6 +558,15 @@ function serve() {
   await s.page.selectOption('#sv-slot', hilton.id); await s.page.selectOption('#sv-n', '4'); await s.page.click('[data-act="settings:addsvc"]'); await s.settle(); docs = await s.docsNow();
   const hs = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].slot === hilton.id);
   check(hs.length === 4 && hs.every(k => docs[k].time === '09:30' && docs[k].venue === 'Hilton hall'), 'services that need a roster can be added for the new service and venue');
+  await s.page.type('#sp-name', 'Good Friday');
+  check(await s.page.inputValue('#sp-date') === Serving.specialDate('Good Friday', new Date().toISOString().slice(0, 10)), 'choosing Good Friday fills in its date (worked out from Easter)');
+  await s.page.fill('#sp-time', '09:00'); await s.page.click('[data-act="settings:addspecial"]'); await s.settle(); docs = await s.docsNow();
+  const gf = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].name === 'Good Friday' && docs[k].special);
+  if (await s.page.$('[data-act="settings:allsvc"]')) { await s.page.click('[data-act="settings:allsvc"]'); await s.settle(); }
+  check(gf.length === 1 && docs[gf[0]].time === '09:00' && (await s.text()).includes('Special'), 'a special service can be added, and shows as Special');
+  await s.page.click('details.sub summary'); await s.page.selectOption('#sv-stop', hilton.id);
+  await s.page.click('[data-act="settings:stopsvc"]'); await s.page.click('[data-act="settings:stopsvc"]'); await s.settle(); docs = await s.docsNow();
+  check(!Object.keys(docs).some(k => k.startsWith('services/') && docs[k].slot === hilton.id && !docs[k].special) && gf.every(k => docs[k]), 'stopping a regular service removes its upcoming services (special ones stay)');
   await finish(s);
   s = await session('tim.jacobs@example.com', (() => { const d = seedDocs(); d['settings/church'] = Object.assign({}, d['settings/church'], { serviceSlots: slotsNow }); return d; })());
   await s.go('me/serve'); await s.page.click('[data-act="me:offer"][data-p="tea"]');
@@ -598,6 +612,40 @@ function serve() {
   await finish(s);
   s = await session('pieter.vanwyk@example.com', seedDocs()); await s.go('home');
   check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'only Administrators can use “View as”');
+  await finish(s);
+
+  console.log('Care groups:');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('care');
+  await s.page.fill('#cg-new', 'Hilton Tuesday'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();
+  const cgId = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Hilton Tuesday').split('/')[1];
+  await s.page.selectOption('.cg-add[data-g="' + cgId + '"]', 'p14'); await s.page.click('[data-act="care:add"][data-g="' + cgId + '"]'); await s.settle();
+  await s.page.click('[data-act="care:lead"][data-id="p14"]'); await s.settle();
+  await s.page.selectOption('.cg-add[data-g="' + cgId + '"]', 'p15'); await s.page.click('[data-act="care:add"][data-g="' + cgId + '"]'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
+  check(docs['careGroups/' + cgId].memberIds.join() === 'p14,p15' && docs['careGroups/' + cgId].leaderIds.join() === 'p14', 'an Administrator sets up a care group with a carer and members');
+  const card15 = docs['careGroups/' + cgId + '/share/p15'];
+  check(card15 && card15.firstName === 'Clare' && card15.ok === false && !card15.mobile && !card15.email, 'without “Care group” consent the group sees only the name');
+  await s.go('people/p/p17'); await s.page.click('[data-act="people:edit"]'); await fillHome(s);
+  await s.page.check('#pf-care'); await s.page.click('[data-act="people:save"]');
+  check((await s.page.textContent('#pf-err')).includes('Choose which care group'), 'Edit details: ticking Care group member asks which group');
+  await s.page.selectOption('#pf-care-g', cgId); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['careGroups/' + cgId].memberIds.includes('p17') && (await s.text()).includes('Care group member · Hilton Tuesday'), '…then they are in it, with a tag on their profile');
+  await finish(s);
+  const careSeed = seedDocs();
+  careSeed['careGroups/cgA'] = { name: 'Merrivale', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
+  careSeed['careGroups/cgB'] = { name: 'Howick', leaderIds: ['p18'], memberIds: ['p18', 'p19'], names: { p18: 'A', p19: 'B' } };
+  careSeed['careGroups/cgA/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555', email: 'clare@example.com', birthday: '07-14', leader: false };
+  careSeed['careGroups/cgB/share/p19'] = { firstName: 'Secret', lastName: 'Person', ok: true, mobile: '000' };
+  careSeed['consents/cCare14'] = { personId: 'p14', purpose: 'Care group', given: true, date: '2026-10-01', method: 'Online form' };
+  s = await session('tim.jacobs@example.com', careSeed); await s.go('me'); await s.page.waitForTimeout(400); t = await s.page.textContent('#my-care').catch(() => '');
+  check(t.includes('Merrivale') && t.includes('Clare') && t.includes('082 000 1555') && t.includes('14 Jul') && !t.includes('Secret'), 'a member sees their care group: phone, email and birthday of those who agreed – not other groups');
+  await s.page.waitForTimeout(1800); docs = await s.docsNow();
+  check(docs['careGroups/cgA/share/p14'] && docs['careGroups/cgA/share/p14'].ok === true && docs['careGroups/cgA/share/p14'].mobile, 'after signing in, their own card is brought up to date (with their consent)');
+  await s.page.click('[data-act="care:mineadd"]'); const addable = await s.page.$$eval('#cg-who option', o => o.map(x => x.value).filter(Boolean));
+  check(addable.length > 0 && !addable.includes('p15'), 'a carer can add people from the church directory');
+  await s.page.selectOption('#cg-who', addable[0]); await s.page.click('[data-act="care:mineaddsave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['careGroups/cgA'].memberIds.includes(addable[0]), '…and they are added');
+  await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['careGroups/cgA'].memberIds.includes('p15') && !docs['careGroups/cgA/share/p15'], 'a carer can take someone out (their card goes too)');
   await finish(s);
 
   console.log('Wedding anniversary on the profile:');

@@ -23,7 +23,7 @@ var Store = (function () {
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
-  var previewRole = '', PREVIEW_MSG = 'You’re only viewing Church Hub as another role – nothing is saved. Switch back to Administrator to make changes.';
+  var previewRole = '', previewCare = '', PREVIEW_MSG = 'You’re only viewing Church Hub as another role – nothing is saved. Switch back to Administrator to make changes.';
   function previewing() { if (!previewRole) return false; errorListeners.forEach(function (fn) { try { fn(PREVIEW_MSG); } catch (x) { console.error(x); } }); return true; }
 
   var cfg = (typeof window !== 'undefined' && window.CHURCH_HUB_FIREBASE) || {};
@@ -287,7 +287,7 @@ var Store = (function () {
       }
       // Care groups: Administrators and Pastors see all; everyone else their own group (and its members' cards, loaded
       // once the group is known – see shares())
-      add('careGroups', is('admin', 'pastor') ? coll('careGroups') : coll('careGroups').where('memberIds', 'array-contains', me));
+      add('careGroups', previewCare ? doc('careGroups/' + previewCare) : is('admin', 'pastor') ? coll('careGroups') : coll('careGroups').where('memberIds', 'array-contains', me));   // "View as" a carer: that group
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
       add('serveOffers', is('admin', 'rosters') ? coll('serveOffers') : own('serveOffers'));
       if (is('admin', 'pastor')) { add('details', coll('details')); add('consents', coll('consents')); }
@@ -563,14 +563,23 @@ var Store = (function () {
     /** "View as": an Administrator sees Church Hub as another role would (Pastor, Roster coordinator, Children's ministry, Member).
      *  Live, only what that role may load is loaded (less, never more: not pastoral or medical notes, which Administrators may not
      *  read). Nothing can be saved meanwhile. Not remembered: signing in again or refreshing returns to Administrator. */
-    preview: function (r) {
+    preview: function (r, careGroup) {
       if (arguments.length) {
-        var was = previewRole; r = r === 'admin' ? '' : r || '';
+        var was = previewRole, wasCare = previewCare; r = r === 'admin' ? '' : r || ''; careGroup = r ? careGroup || '' : '';
         if (r && LIVE && (Live.session() || {}).role !== 'admin') return previewRole;
-        if (r !== was) { if (r) audit('Started viewing Church Hub as ' + r + ' (nothing saved meanwhile)', 'settings'); previewRole = r; if (!r) audit('Stopped viewing as ' + was, 'settings'); if (LIVE) Live.preview(); else changed(); }
+        if (r !== was || careGroup !== wasCare) {
+          var who = function (x, g) { return g ? 'carer of the care group ' + ((get('careGroups', g) || {}).name || g) : x; };
+          if (was) audit('Stopped viewing as ' + who(was, wasCare), 'settings');
+          previewRole = ''; previewCare = '';
+          if (r) audit('Started viewing Church Hub as ' + who(r, careGroup) + ' (nothing saved meanwhile)', 'settings');
+          previewRole = r; previewCare = careGroup;
+          if (LIVE) Live.preview(); else changed();
+        }
       }
       return previewRole;
     },
+    /** "View as" a carer: the care group being looked at ('' otherwise). */
+    previewCare: function () { return previewCare; },
     whenSaved: function (ms) { return LIVE ? Live.whenSaved(ms) : Promise.resolve(); },
     /** Photos are kept apart from the person (photos/{id}) and fetched only when shown; the person's card says which version there is. */
     photo: function (pid) {

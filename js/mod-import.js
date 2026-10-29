@@ -9,7 +9,7 @@
   function photoNote() {
     if (!pics || !pics.todo) return '';
     return '<div class="note ' + (pics.running ? 'info' : 'ok') + '" id="im-pics" role="status">' + (pics.running
-      ? '<svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="19" y="4" width="10" height="40" rx="2.5"/><rect x="8" y="14" width="32" height="10" rx="2.5"/></svg>Bringing in photos from Elvanto: ' + (pics.done + pics.failed) + ' of ' + pics.todo + '. Please keep this page open.'
+      ? '<svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>Bringing in photos from Elvanto: ' + (pics.done + pics.failed) + ' of ' + pics.todo + '. Please keep this page open.'
       : '<b>Photos:</b> ' + pics.done + ' brought in from Elvanto' + (pics.failed ? ', ' + pics.failed + ' couldn’t be downloaded (they can be added by hand on each person’s page)' : '') + '.') + '</div>';
   }
   function fetchPhotos(queue) {

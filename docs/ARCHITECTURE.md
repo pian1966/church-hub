@@ -121,7 +121,7 @@ loads only what that role would load – less than an Administrator, never more:
 (Children's ministry) are left out, because the rules don't let an Administrator read them. The screens follow it through
 `myRole()` in `js/app.js`. Nothing is saved while viewing (`put`, `remove`, `setSettings`, `saveLeave`, photos, ID numbers are
 refused with a message); audit entries are still written, marked "(viewing as …)", and starting and stopping is logged.
-It is not remembered: refreshing or signing in again returns to Administrator. No rules change: the database still sees the
+**Carer**: the Administrator chooses a care group and sees it on the Me page as its carer does (`Store.preview('member', groupId)` loads that group and its cards). It is not remembered: refreshing or signing in again returns to Administrator. No rules change: the database still sees the
 Administrator's own sign-in.
 
 ## Me (members' own page) and the Android app

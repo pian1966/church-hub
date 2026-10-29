@@ -28,7 +28,10 @@ var Hub = (function () {
   function myRole() { return Store.preview() || (user && user.appRole) || 'member'; }
   /** Really an Administrator (also while viewing as someone else), so "View as" is offered. */
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
-  var VIEW_AS = ['pastor', 'rosters', 'kids', 'member'], switching = null;
+  var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
+  /** In "View as", the Member access level is called Church Partner (the church's own word, Settings → Church wording). */
+  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (Church Partner)' : r === 'member' ? 'Church Partner' : roleLabel(r); }
+  function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
   function can(perm) {
     if (!user) return false;
     var p = (ROLES[myRole()] || ROLES.member).perms;
@@ -280,7 +283,7 @@ var Hub = (function () {
       '<span class="top-r">' + (realAdmin() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="View as another role" title="View as another role">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
-      (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>Viewing as <b>' + esc(roleLabel(myRole())) + '</b> – this is what they see. Nothing you do here is saved.</span>' +
+      (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>Viewing as <b>' + esc(viewingAs()) + '</b> – this is what they see. Nothing you do here is saved.</span>' +
         '<button class="btn small" data-act="hub:viewas" data-r="admin">Back to Administrator</button></div>' : '') +
       '<main id="main" tabindex="-1">' + body + '</main></div>' +
       '<nav class="tabbar" aria-label="' + T('Quick menu') + '">' + tabs.map(function (id) {
@@ -415,7 +418,7 @@ var Hub = (function () {
   function busy(msg, work) {
     var el = document.getElementById('busy');
     if (!el) { el = document.createElement('div'); el.id = 'busy'; el.className = 'busy'; el.setAttribute('role', 'status'); el.setAttribute('aria-live', 'polite'); document.body.appendChild(el); }
-    el.innerHTML = '<div class="busy-box"><svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="19" y="4" width="10" height="40" rx="2.5"/><rect x="8" y="14" width="32" height="10" rx="2.5"/></svg>' +
+    el.innerHTML = '<div class="busy-box"><svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>' +
       '<p>' + esc(msg || T('Working…')) + '</p><p class="small">' + T('Please keep this page open.') + '</p></div>';
     el.hidden = false; document.body.classList.add('is-busy');
     var done = function () { el.hidden = true; document.body.classList.remove('is-busy'); };
@@ -511,21 +514,31 @@ var Hub = (function () {
     /** "View as": an Administrator sees Church Hub the way a Pastor, Roster coordinator, Children's ministry or a Member would. */
     viewaspick: function () {
       if (!realAdmin()) return;
-      var cur = Store.preview() || 'admin';
+      var cur = Store.previewCare() ? 'carer' : Store.preview() || 'admin';
       modal(dialogHead('View as another role', 'See what other people see when they sign in') + '<div class="dlg-body"><p class="muted" style="margin-top:0">You stay signed in as yourself, but Church Hub shows only what that role may see. ' +
         'Nothing you do is saved while you’re viewing. Pastoral and medical notes stay hidden – only Pastors and Children’s ministry may see those.</p><div class="viewas-pick">' +
         ['admin'].concat(VIEW_AS).map(function (r) {
-          return '<button class="btn' + (r === cur ? ' primary' : '') + '" data-act="hub:viewas" data-r="' + r + '"' + (r === cur ? ' aria-current="true"' : '') + '>' + esc(roleLabel(r)) + (r === 'admin' ? ' (you)' : '') + '</button>';
+          return '<button class="btn' + (r === cur ? ' primary' : '') + '" data-act="hub:viewas" data-r="' + r + '"' + (r === cur ? ' aria-current="true"' : '') + '>' + esc(viewLabel(r)) + (r === 'admin' ? ' (you)' : '') + '</button>';
         }).join('') + '</div></div>', 'View as another role');
     },
     viewas: function (el) {
-      var r = el.dataset.r === 'admin' ? '' : el.dataset.r;
-      if (!realAdmin() || (r && VIEW_AS.indexOf(r) < 0) || r === Store.preview()) { closeModal(); return; }
+      var r = el.dataset.r === 'admin' ? '' : el.dataset.r, g = el.dataset.g || '';
+      if (!realAdmin() || (r && VIEW_AS.indexOf(r) < 0)) { closeModal(); return; }
+      if (r === 'carer' && !g) {   // a carer of which group?
+        var gs = Store.list('careGroups').slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+        if (!gs.length) { closeModal(); toast('There are no care groups yet – add them on the Care groups page', true); return; }
+        modal(dialogHead('View as a carer', 'Which care group?') + '<div class="dlg-body"><p class="muted" style="margin-top:0">See the group the way its carer does, on their Me page.</p><div class="viewas-pick">' +
+          gs.map(function (x) { return '<button class="btn" data-act="hub:viewas" data-r="carer" data-g="' + esc(x.id) + '">' + esc(x.name) + ' <span class="muted small">(' + (x.memberIds || []).length + ')</span></button>'; }).join('') + '</div></div>', 'View as a carer');
+        return;
+      }
+      var role = r === 'carer' ? 'member' : r;
+      if (role === Store.preview() && g === Store.previewCare()) { closeModal(); return; }
       closeModal();
-      var after = function () { location.hash = '#/home'; render(); toast(r ? 'Viewing as ' + roleLabel(r) + ' – nothing is saved' : 'Back to Administrator'); };
-      if (!Store.isLive()) { Store.preview(r); after(); return; }
-      busy(r ? 'Loading what a ' + roleLabel(r) + ' sees…' : 'Back to Administrator…', function () {
-        return new Promise(function (done) { switching = done; Store.preview(r); });
+      var label = r === 'carer' ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(r);
+      var after = function () { location.hash = r === 'carer' ? '#/me' : '#/home'; render(); toast(r ? 'Viewing as ' + label + ' – nothing is saved' : 'Back to Administrator'); };
+      if (!Store.isLive()) { Store.preview(role, g); after(); return; }
+      busy(r ? 'Loading what ' + label + ' sees…' : 'Back to Administrator…', function () {
+        return new Promise(function (done) { switching = done; Store.preview(role, g); });
       }).then(after);
     },
     close: function () { closeModal(); },

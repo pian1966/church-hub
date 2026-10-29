@@ -517,12 +517,13 @@ var I18n = (function () {
     return '<label class="lang-pick"><span class="sr">' + t('Language') + '</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"></path></svg>' +
       '<select class="lang-sel"' + (id ? ' id="' + id + '"' : '') + ' aria-label="' + t('Language') + '">' + options() + '</select></label>';
   }
-  /** English and the South African languages first, then more languages by continent. */
+  /** English first, then the languages by continent (Africa starts with Afrikaans, isiZulu and isiXhosa). */
   function options() {
     var cur = loading && Object.keys(loading).filter(function (k) { return loading[k] === 'wanted'; })[0] || lang, done = false;
     var opt = function (code, name, en) { var sel = code === cur && !done; if (sel) done = true; return '<option value="' + code + '"' + (sel ? ' selected' : '') + '>' + name + (en && en !== name ? ' (' + en + ')' : '') + '</option>'; };
-    return LANGS.map(function (l) { return opt(l[0], l[1]); }).join('') + ['Africa', 'Europe', 'Americas'].map(function (c) {
-      return '<optgroup label="' + t(c) + '">' + MORE.filter(function (m) { return m[3].indexOf(c) >= 0; }).map(function (m) { return opt(m[0], m[1], m[2]); }).join('') + '</optgroup>';
+    var ZA = LANGS.slice(1).map(function (l) { return [l[0], l[1], '', ['Africa']]; });   // Afrikaans, isiZulu, isiXhosa sit with Africa's languages
+    return opt('en', 'English') + ['Africa', 'Europe', 'Americas'].map(function (c) {
+      return '<optgroup label="' + t(c) + '">' + (c === 'Africa' ? ZA : []).concat(MORE.filter(function (m) { return m[3].indexOf(c) >= 0; })).map(function (m) { return opt(m[0], m[1], m[2]); }).join('') + '</optgroup>';
     }).join('');
   }
 

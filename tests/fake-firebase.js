@@ -16,7 +16,7 @@
   function ctx() {
     var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
     return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', me: r && r.personId ? r.personId : '',
-      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid) };
+      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [] };
   }
   function is(c, list) { return c.signedIn && !!c.role && list.indexOf(c.role) >= 0; }
   function mine(c, pid) { return is(c, ANY) && c.me !== '' && pid === c.me; }
@@ -28,6 +28,7 @@
   var KIDS_CONSENTS = ['Children’s medical notes', 'Photos'];
   function inCare(c, gid) { return is(c, ANY) && c.me !== '' && docs['careGroups/' + gid].memberIds.indexOf(c.me) >= 0; }   // a missing group fails
   function leadsCare(c, gid) { return is(c, ANY) && c.me !== '' && (docs['careGroups/' + gid].leaderIds || []).indexOf(c.me) >= 0; }
+  function checks(c, lang) { return is(c, ANY) && c.langs.indexOf(lang) >= 0; }   // checks translations in that language
   function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || is(c, ['admin'])); },
@@ -115,6 +116,15 @@
         if (op === 'delete') return is(c, ['admin', 'pastor']) || mine(c, pid) || leadsCare(c, gid);
         return (is(c, ['admin', 'pastor']) || (mine(c, pid) && inCare(c, gid))) && onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
           && (a.photo === undefined || (typeof a.photo === 'string' && a.photo.length < 40000));
+      } },
+    words: { read: function (c) { return is(c, ANY); },
+      write: function (c, op, id, b, a) { return (is(c, ['admin']) || checks(c, id)) && (op === 'delete' || (onlyKeys(a, ['words', 'updatedAt', 'by']) && !!a.words && typeof a.words === 'object' && !Array.isArray(a.words))); } },
+    wordIdeas: { read: function (c, id, d) { return is(c, ['admin']) || (!!d && (mine(c, d.personId) || checks(c, d.lang))); },
+      write: function (c, op, id, b, a) {
+        if (op === 'create') return mine(c, a.personId) && a.status === 'waiting' && onlyKeys(a, ['lang', 'en', 'text', 'note', 'personId', 'name', 'status', 'createdAt'])
+          && typeof a.lang === 'string' && typeof a.en === 'string' && typeof a.text === 'string' && a.text.length <= 3000 && (a.note === undefined || (typeof a.note === 'string' && a.note.length <= 500));
+        if (op === 'delete') return is(c, ['admin']) || checks(c, b.lang) || mine(c, b.personId);
+        return (is(c, ['admin']) || checks(c, b.lang)) && onlyChanges(b, a, ['status', 'reply', 'reviewedBy', 'reviewedAt', 'used']) && ['used', 'declined'].indexOf(a.status) >= 0;
       } },
     dsr: 'admin', breaches: 'admin',
     audit: { read: function (c) { return is(c, ['admin']); },

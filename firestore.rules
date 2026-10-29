@@ -244,6 +244,30 @@ service cloud.firestore {
       allow write: if robot();
     }
 
+    // ---------- translations ----------
+    // Anyone signed in may suggest better wording in a language. The people who check a language (the languages on their
+    // access-list entry, set by an Administrator) and Administrators decide; approved wording goes into words/{language},
+    // which everyone signed in reads. A suggestion keeps who sent it, so the checker can thank or ask them.
+    function checks(lang) { return anyone() && lang in access().get('langs', []); }
+    match /words/{lang} {
+      allow read: if anyone();
+      allow create, update: if (admin() || checks(lang)) && request.resource.data.keys().hasOnly(['words', 'updatedAt', 'by'])
+        && request.resource.data.words is map;
+      allow delete: if admin() || checks(lang);
+    }
+    match /wordIdeas/{id} {
+      allow read: if admin() || mine(resource.data.personId) || checks(resource.data.lang);
+      allow create: if mine(request.resource.data.personId) && request.resource.data.status == 'waiting'
+        && request.resource.data.keys().hasOnly(['lang', 'en', 'text', 'note', 'personId', 'name', 'status', 'createdAt'])
+        && request.resource.data.lang is string && request.resource.data.en is string
+        && request.resource.data.text is string && request.resource.data.text.size() <= 3000
+        && request.resource.data.get('note', '') is string && request.resource.data.get('note', '').size() <= 500;
+      allow update: if (admin() || checks(resource.data.lang))
+        && onlyChanges(['status', 'reply', 'reviewedBy', 'reviewedAt', 'used'])
+        && request.resource.data.status in ['used', 'declined'];
+      allow delete: if admin() || checks(resource.data.lang) || mine(resource.data.personId);
+    }
+
     // ---------- POPIA registers (Administrators only) ----------
     match /dsr/{id} { allow read, write: if admin(); }
     match /breaches/{id} { allow read, write: if admin(); }

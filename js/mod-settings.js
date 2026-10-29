@@ -3,7 +3,8 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var MODS = [['people', 'People', 'Directory, households and consent'], ['rosters', 'Rosters', 'Serving rosters, teams and serving together'], ['leave', 'Leave', 'Staff leave (Leave Manager built in)'],
-    ['care', 'Care groups', 'Small groups that care for one another'], ['privacy', 'Privacy', 'Privacy law tools (consent, requests, breaches)'], ['import', 'Import', 'Bring data across from Elvanto']];
+    ['care', 'Care groups', 'Small groups that care for one another'], ['privacy', 'Privacy', 'Privacy law tools (consent, requests, breaches)'], ['import', 'Import', 'Bring data across from Elvanto'],
+    ['words', 'Translations', 'Members suggest better wording in their language']];
 
   /** The number of people with an access level; point at it (or tap it) to see who they are. Long lists (e.g. "No access") stay a number. */
   function whoHas(ps, role) {

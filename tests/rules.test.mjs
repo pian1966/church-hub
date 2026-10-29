@@ -62,6 +62,11 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('careGroups/cg3', { name: 'Merrivale', leaderIds: ['p15'], memberIds: ['p15', 'p14'], names: {} });
   await set('careGroups/cg1/share/p15', { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082', birthday: '07-14' });
   await set('careGroups/cg2/share/p05', { firstName: 'Sipho', lastName: 'Dlamini', ok: false });
+  // Translations: Nomvula (a member) checks isiZulu; a suggestion from Clare (p15) in isiZulu and one in Afrikaans
+  await set('roles/nomvula@example.com', { role: 'member', personId: 'p20', langs: ['zu'] });
+  await set('wordIdeas/w15', { lang: 'zu', en: 'Home', text: 'Ekhaya', personId: 'p15', name: 'Clare', status: 'waiting', createdAt: 'x' });
+  await set('wordIdeas/w16', { lang: 'af', en: 'Home', text: 'Tuiste', personId: 'p15', name: 'Clare', status: 'waiting', createdAt: 'x' });
+  await set('words/zu', { words: { Home: 'Ekhaya' }, updatedAt: 'x', by: 'Nomvula' });
   await set('elvantoSync/L9', { personId: 'p15', name: 'A p15', start: '2027-02-01', end: '2027-02-02', want: 'Unavailable', have: '', haveNote: '', status: 'Done', note: '' });
 });
 
@@ -358,6 +363,42 @@ await t('care groups: members see their own group and its cards; carers add and 
   await can(db.pastor.doc('careGroups/cg4').set({ name: 'New', leaderIds: [], memberIds: [] })); await can(db.admin.doc('careGroups/cg4').delete());
   await can(db.pastor.doc('careGroups/cg2/share/p01').set({ firstName: 'Linda', lastName: 'Pillay', ok: false }));
 });
+console.log('Translations');
+const checker = env.authenticatedContext('uid-nomvula', { email: 'nomvula@example.com', email_verified: true }).firestore();
+await t('everyone signed in reads the approved wording; only checkers of that language and Administrators change it', async () => {
+  for (const r of roles) await can(read(db[r], 'words/zu'));
+  await cannot(read(stranger, 'words/zu'));
+  const w = { words: { Home: 'Ekhaya lami' }, updatedAt: 'x', by: 'Nomvula' };
+  await can(checker.doc('words/zu').set(w));
+  await cannot(checker.doc('words/af').set(w));                                     // not her language
+  await cannot(db.member.doc('words/zu').set(w)); await cannot(db.pastor.doc('words/zu').set(w));
+  await can(db.admin.doc('words/af').set(w));
+  await cannot(checker.doc('words/zu').set(Object.assign({}, w, { extra: 1 })));    // only the listed fields
+  await cannot(checker.doc('words/zu').set({ words: 'not a list', updatedAt: 'x' }));
+  await can(db.admin.doc('words/af').delete());
+});
+await t('anyone signed in suggests wording as themselves; checkers see and answer only their language', async () => {
+  const idea = { lang: 'zu', en: 'Save', text: 'Gcina', note: 'shorter', personId: 'p14', name: 'Tim', status: 'waiting', createdAt: 'x' };
+  await can(db.member.doc('wordIdeas/w14').set(idea));
+  await cannot(db.member.doc('wordIdeas/w17').set(Object.assign({}, idea, { personId: 'p15' })));    // not for someone else
+  await cannot(db.member.doc('wordIdeas/w18').set(Object.assign({}, idea, { status: 'used' })));     // can't approve their own
+  await cannot(db.member.doc('wordIdeas/w19').set(Object.assign({}, idea, { reply: 'x' })));          // only the listed fields
+  await cannot(db.member.doc('wordIdeas/w20').set(Object.assign({}, idea, { text: 'x'.repeat(3001) })));
+  await cannot(stranger.doc('wordIdeas/w21').set(idea));
+  await can(list(db.member.collection('wordIdeas').where('personId', '==', 'p14')));
+  await cannot(list(db.member.collection('wordIdeas'))); await cannot(read(db.member, 'wordIdeas/w15'));
+  await can(list(checker.collection('wordIdeas').where('lang', '==', 'zu'))); await can(read(checker, 'wordIdeas/w15'));
+  await cannot(read(checker, 'wordIdeas/w16')); await cannot(list(checker.collection('wordIdeas').where('lang', '==', 'af')));
+  await cannot(read(db.pastor, 'wordIdeas/w15')); await can(list(db.admin.collection('wordIdeas')));
+  await can(checker.doc('wordIdeas/w15').update({ status: 'used', reviewedBy: 'Nomvula', reviewedAt: 'x' }));
+  await cannot(checker.doc('wordIdeas/w16').update({ status: 'declined' }));
+  await cannot(checker.doc('wordIdeas/w14').update({ status: 'used', text: 'Changed' }));             // can't change what was suggested
+  await cannot(db.member.doc('wordIdeas/w14').update({ status: 'used' }));
+  await can(db.admin.doc('wordIdeas/w16').update({ status: 'declined', reply: 'Thank you', reviewedBy: 'Linda', reviewedAt: 'x' }));
+  await can(db.member.doc('wordIdeas/w14').delete());                                                // takes it back
+  await cannot(db.member.doc('wordIdeas/w15').delete());
+});
+
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });
 
 await env.cleanup();

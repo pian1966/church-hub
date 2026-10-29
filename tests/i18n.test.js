@@ -42,6 +42,20 @@ I18n.set('zu'); check(I18n.t('Sign out') === 'Phuma' && I18n.dow()[0] === 'Son',
 I18n.set('xh'); check(I18n.t('Yes') === 'Ewe', 'isiXhosa');
 I18n.set('fr'); check(I18n.get() === 'en', 'an unknown language becomes English');
 
+console.log('Better wording from the church (Translations)');
+I18n.set('zu');
+I18n.override('zu', { 'Sign out': 'Phuma manje' });
+check(I18n.t('Sign out') === 'Phuma manje' && I18n.word('zu', 'Sign out') === 'Phuma manje' && I18n.word('zu', 'Sign out', true) === 'Phuma', 'approved wording is used before the built-in one');
+I18n.override('zu', {}); check(I18n.t('Sign out') === 'Phuma', 'and the built-in wording comes back when it is removed');
+check(I18n.check('Edit {name}', 'Hlela {name}') === '' && I18n.check('Edit {name}', 'Hlela') === 'parts' && I18n.check('Edit {name}', ' ') === 'empty', 'a suggestion must keep the {parts}');
+check(I18n.check('Tap <b>Save</b>', 'Thepha <b>Gcina</b>') === '' && I18n.check('Tap <b>Save</b>', 'Thepha Gcina') === 'tags', 'and the bold marks');
+I18n.page('#/me'); I18n.t('Sign out'); I18n.t('Yes'); I18n.page('#/me'); I18n.t('Home');
+check(['Sign out', 'Yes', 'Home'].every(x => I18n.seen().indexOf(x) >= 0), 'remembers the texts shown on a page (also when it is drawn again)');
+I18n.page(null); I18n.t('Cancel'); check(I18n.seen().indexOf('Cancel') < 0 && I18n.seen().indexOf('Yes') >= 0, 'not while on the Translations page, which keeps the page before it');
+I18n.page('#/home'); check(I18n.seen().indexOf('Yes') < 0, 'and starts again on the next page');
+check(I18n.name('zu') === 'isiZulu' && I18n.name('ve') === 'Tshivenḓa' && I18n.english().indexOf('Sign out') >= 0, 'language names and the list of English texts');
+I18n.set('en');
+
 console.log('More languages (js/lang/*.js, loaded when chosen; missing lines show in English)');
 const vm = require('vm'), langDir = path.join(__dirname, '..', 'js', 'lang');
 for (const [code, name] of I18n.MORE) {

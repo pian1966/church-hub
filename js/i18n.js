@@ -25,7 +25,7 @@ var I18n = (function () {
     ['es', 'Español', 'Spanish', ['Europe', 'Americas']], ['de', 'Deutsch', 'German', ['Europe']], ['nl', 'Nederlands', 'Dutch', ['Europe']],
     ['it', 'Italiano', 'Italian', ['Europe']], ['pl', 'Polski', 'Polish', ['Europe']]
   ];
-  var PACK_VERSION = 6, loading = {}, onLoad = [];
+  var PACK_VERSION = 7, loading = {}, onLoad = [];
   var DATES = {
     en: { mon: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
     af: { mon: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'], dow: ['So', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Sa'] },
@@ -1494,23 +1494,117 @@ var I18n = (function () {
     ['Weeks', 'Weke', 'Amaviki', 'Iiveki'],
     ['Week', 'Week', 'Iviki', 'Iveki'],
     ['Weekend', 'Naweek', 'Impelasonto', 'Impelaveki'],
-    ['Weekends', 'Naweke', 'Izimpelasonto', 'Iimpelaveki']
+    ['Weekends', 'Naweke', 'Izimpelasonto', 'Iimpelaveki'],
+    ['Help improve the {lang} wording on this page', 'Help om die {lang}-bewoording op hierdie bladsy te verbeter', 'Siza ukuthuthukisa amagama esi-{lang} kuleli khasi', 'Nceda ukuphucula amagama esi-{lang} kweli phepha'],
+    ['Translations', 'Vertalings', 'Ukuhumusha', 'Iinguqulelo'],
+    ['Help Church Hub read well in your language: suggest better wording for any text, and someone who speaks it checks it.', 'Help Church Hub om goed te lees in jou taal: stel beter bewoording voor vir enige teks, en iemand wat die taal praat, kyk dit na.', 'Siza i-Church Hub ifundeke kahle olimini lwakho: phakamisa amagama angcono kunoma yimuphi umbhalo, futhi umuntu okhuluma lolo limi uyawuhlola.', 'Nceda i-Church Hub ifundeke kakuhle ngolwimi lwakho: cebisa amagama angcono kuwo nawuphi na umbhalo, kwaye umntu othetha olo lwimi uyawujonga.'],
+    ['Suggest', 'Stel voor', 'Phakamisa', 'Cebisa'],
+    ['To check', 'Om na te gaan', 'Okufanele kuhlolwe', 'Okufuneka kujongwe'],
+    ['Who checks', 'Wie gaan na', 'Ubani ohlolayo', 'Ngubani ojongayo'],
+    ['No texts from that page – choose “All texts” to see everything.', 'Geen tekste van daardie bladsy nie – kies “Alle tekste” om alles te sien.', 'Ayikho imibhalo evela kulelo khasi – khetha “Yonke imibhalo” ukuze ubone konke.', 'Akukho mibhalo ivela kwelo phepha – khetha “Yonke imibhalo” ukuze ubone yonke into.'],
+    ['Nothing matches that.', 'Niks pas daarby nie.', 'Akukho okufana nalokho.', 'Akukho nto ihambelana noko.'],
+    ['Not translated yet – shows in English', 'Nog nie vertaal nie – wys in Engels', 'Akukahunyushwa – kuvela ngesiNgisi', 'Akukaguqulelwa – kubonakala ngesiNgesi'],
+    ['English', 'Engels', 'IsiNgisi', 'IsiNgesi'],
+    ['You suggested new wording', 'Jy het nuwe bewoording voorgestel', 'Uphakamise amagama amasha', 'Ucebise amagama amatsha'],
+    ['Suggest better wording', 'Stel beter bewoording voor', 'Phakamisa amagama angcono', 'Cebisa amagama angcono'],
+    ['Show {n} more', 'Wys nog {n}', 'Bonisa okunye okungu-{n}', 'Bonisa ezinye ezi-{n}'],
+    ['Find a text', 'Soek ’n teks', 'Thola umbhalo', 'Fumana umbhalo'],
+    ['Type a few words, in English or in your language', 'Tik ’n paar woorde, in Engels of in jou taal', 'Bhala amagama ambalwa, ngesiNgisi noma ngolimi lwakho', 'Chwetheza amagama ambalwa, ngesiNgesi okanye ngolwimi lwakho'],
+    ['Which texts', 'Watter tekste', 'Iyiphi imibhalo', 'Yeyiphi imibhalo'],
+    ['On the page you were on', 'Op die bladsy waar jy was', 'Ekhasini obukulo', 'Kwiphepha obukulo'],
+    ['All texts', 'Alle tekste', 'Yonke imibhalo', 'Yonke imibhalo'],
+    ['{lang} was translated by computer, so some wording may read oddly. Your suggestions help everyone who uses it.', '{lang} is deur ’n rekenaar vertaal, so sommige bewoording kan vreemd lees. Jou voorstelle help almal wat dit gebruik.', 'I-{lang} ihunyushwe ngekhompyutha, ngakho amanye amagama angafundeka kabi. Iziphakamiso zakho zisiza wonke umuntu oyisebenzisayo.', 'I-{lang} iguqulelwe yikhompyutha, ngoko amanye amagama anokufundeka kakubi. Iingcebiso zakho zinceda wonke umntu oyisebenzisayo.'],
+    ['Your suggestions', 'Jou voorstelle', 'Iziphakamiso zakho', 'Iingcebiso zakho'],
+    ['Reply', 'Antwoord', 'Impendulo', 'Impendulo'],
+    ['Take back this suggestion', 'Trek hierdie voorstel terug', 'Hoxisa lesi siphakamiso', 'Rhoxisa le ngcebiso'],
+    ['Write your wording first.', 'Skryf eers jou bewoording.', 'Bhala amagama akho kuqala.', 'Bhala amagama akho kuqala.'],
+    ['Keep the parts in curly brackets exactly as they are: {parts}', 'Hou die dele tussen krulhakies presies soos hulle is: {parts}', 'Gcina izingxenye ezisemabakaki agobile njengoba zinjalo: {parts}', 'Gcina iinxalenye ezisezibiyeni ezigobileyo njengoko zinjalo: {parts}'],
+    ['Keep the bold marks exactly as in the English.', 'Hou die vetdruk-merke presies soos in die Engels.', 'Gcina izimpawu zokugqamisa njengoba zinjalo esiNgisini.', 'Gcina iimpawu zokugqamisa njengoko zinjalo kwisiNgesi.'],
+    ['Better wording', 'Beter bewoording', 'Amagama angcono', 'Amagama angcono'],
+    ['Now', 'Nou', 'Manje', 'Ngoku'],
+    ['Your wording', 'Jou bewoording', 'Amagama akho', 'Amagama akho'],
+    ['Church Hub puts a name, number or date there.', 'Church Hub sit ’n naam, getal of datum daar.', 'I-Church Hub ifaka igama, inombolo noma usuku lapho.', 'I-Church Hub ifaka igama, inani okanye umhla apho.'],
+    ['Anything the checker should know', 'Enigiets wat die naganer moet weet', 'Noma yini umhloli okufanele ayazi', 'Nantoni na umjongi afanele ukuyazi'],
+    ['e.g. this is the word we use at church', 'bv. dit is die woord wat ons by die kerk gebruik', 'isib. leli yigama esilisebenzisayo esontweni', 'umz. eli ligama esilisebenzisayo ecaweni'],
+    ['Use it now', 'Gebruik dit nou', 'Kusebenzise manje', 'Yisebenzise ngoku'],
+    ['Send suggestion', 'Stuur voorstel', 'Thumela isiphakamiso', 'Thumela ingcebiso'],
+    ['That is the same as the wording now.', 'Dit is dieselfde as die bewoording nou.', 'Lokho kuyafana namagama akhona manje.', 'Oko kuyafana namagama akhoyo ngoku.'],
+    ['Suggestions to check', 'Voorstelle om na te gaan', 'Iziphakamiso okufanele zihlolwe', 'Iingcebiso ezifuneka zijongwe'],
+    ['You can check every language. Where someone else checks a language, leave it to them – they speak it.', 'Jy kan elke taal nagaan. Waar iemand anders ’n taal nagaan, laat dit aan hulle oor – hulle praat dit.', 'Ungahlola zonke izilimi. Lapho omunye umuntu ehlola ulimi, kushiyele yena – uyalukhuluma.', 'Unokujonga zonke iilwimi. Apho omnye umntu ejonga ulwimi, mshiyele – uyaluthetha.'],
+    ['Suggested by {name}, {date}', 'Voorgestel deur {name}, {date}', 'Kuphakanyiswe ngu-{name}, {date}', 'Icetyiswe ngu-{name}, {date}'],
+    ['Use this', 'Gebruik hierdie', 'Sebenzisa lokhu', 'Sebenzisa oku'],
+    ['Change it first', 'Verander dit eers', 'Kushintshe kuqala', 'Yitshintshe kuqala'],
+    ['Not this time', 'Nie hierdie keer nie', 'Hhayi kulokhu', 'Hayi ngeli xesha'],
+    ['Nothing waiting. Thank you!', 'Niks wag nie. Dankie!', 'Akukho okulindile. Ngiyabonga!', 'Akukho nto ilindileyo. Enkosi!'],
+    ['Changed wording in use', 'Veranderde bewoording in gebruik', 'Amagama ashintshiwe asetshenziswayo', 'Amagama atshintshiweyo asetyenziswayo'],
+    ['These show instead of the wording that came with Church Hub. Download them so they can also be built into the app.', 'Dit wys in plaas van die bewoording wat saam met Church Hub gekom het. Laai dit af sodat dit ook in die toepassing ingebou kan word.', 'Lawa avela esikhundleni samagama eza ne-Church Hub. Walande ukuze nawo afakwe ku-app.', 'La abonakala endaweni yamagama eze ne-Church Hub. Wakhuphele ukuze nawo afakwe kwi-app.'],
+    ['{n} text', '{n} teks', 'Umbhalo ongu-{n}', 'Umbhalo o-{n}'],
+    ['{n} texts', '{n} tekste', 'Imibhalo engu-{n}', 'Imibhalo e-{n}'],
+    ['Go back to the original', 'Gaan terug na die oorspronklike', 'Buyela kokokuqala', 'Buyela kwelokuqala'],
+    ['Download the changed wording', 'Laai die veranderde bewoording af', 'Landa amagama ashintshiwe', 'Khuphela amagama atshintshiweyo'],
+    ['None yet.', 'Nog geen.', 'Akukabikho.', 'Akukabikho.'],
+    ['Message for {name}', 'Boodskap vir {name}', 'Umlayezo oya ku-{name}', 'Umyalezo oya ku-{name}'],
+    ['e.g. thank you – we say it differently at church', 'bv. dankie – ons sê dit anders by die kerk', 'isib. ngiyabonga – sikusho ngenye indlela esontweni', 'umz. enkosi – siyithetha ngenye indlela ecaweni'],
+    ['Who checks each language', 'Wie elke taal nagaan', 'Ubani ohlola ulimi ngalunye', 'Ngubani ojonga ulwimi ngalunye'],
+    ['Choose someone who speaks the language well. They see the suggestions for it and decide which wording to use. They can already sign in to Church Hub.', 'Kies iemand wat die taal goed praat. Hulle sien die voorstelle daarvoor en besluit watter bewoording om te gebruik. Hulle kan reeds by Church Hub aanmeld.', 'Khetha umuntu olukhuluma kahle ulimi. Ubona iziphakamiso zalo futhi anqume ukuthi yimaphi amagama azosetshenziswa. Usevele angangena ku-Church Hub.', 'Khetha umntu oluthetha kakuhle ulwimi. Ubona iingcebiso zalo aze agqibe ukuba ngawaphi amagama aza kusetyenziswa. Sele enokungena kwi-Church Hub.'],
+    ['They see the suggestions the next time they open Church Hub (or refresh the page).', 'Hulle sien die voorstelle die volgende keer as hulle Church Hub oopmaak (of die bladsy verfris).', 'Bazobona iziphakamiso ngokulandelayo uma bevula i-Church Hub (noma bevuselela ikhasi).', 'Baza kubona iingcebiso kwixesha elizayo xa bevula i-Church Hub (okanye behlaziya iphepha).'],
+    ['Stop {name} checking {lang}', 'Laat {name} ophou om {lang} na te gaan', 'Misa u-{name} ukuthi angabe esahlola i-{lang}', 'Yeka u-{name} ukuba ajonge i-{lang}'],
+    ['remove', 'verwyder', 'susa', 'susa'],
+    ['Nobody checks a language yet, so suggestions come to the Administrators.', 'Niemand gaan nog ’n taal na nie, so voorstelle gaan na die Administrateurs.', 'Akekho ohlola ulimi okwamanje, ngakho iziphakamiso ziya kubaPhathi.', 'Akukho mntu ujonga ulwimi okwangoku, ngoko iingcebiso ziya kubaLawuli.'],
+    ['{n} suggestion to check', '{n} voorstel om na te gaan', 'Isiphakamiso esingu-{n} okufanele sihlolwe', 'Ingcebiso e-{n} efuneka ijongwe'],
+    ['{n} suggestions to check', '{n} voorstelle om na te gaan', 'Iziphakamiso ezingu-{n} okufanele zihlolwe', 'Iingcebiso ezi-{n} ezifuneka zijongwe'],
+    ['{n} wording suggestion to check', '{n} bewoordingsvoorstel om na te gaan', 'Isiphakamiso samagama esingu-{n} okufanele sihlolwe', 'Ingcebiso yamagama e-{n} efuneka ijongwe'],
+    ['{n} wording suggestions to check', '{n} bewoordingsvoorstelle om na te gaan', 'Iziphakamiso zamagama ezingu-{n} okufanele zihlolwe', 'Iingcebiso zamagama ezi-{n} ezifuneka zijongwe'],
+    ['Thank you – your suggestion has been sent to be checked.', 'Dankie – jou voorstel is gestuur om nagegaan te word.', 'Ngiyabonga – isiphakamiso sakho sithunyelwe ukuze sihlolwe.', 'Enkosi – ingcebiso yakho ithunyelwe ukuba ijongwe.'],
+    ['Saved – everyone now sees the new wording.', 'Gestoor – almal sien nou die nuwe bewoording.', 'Kulondoloziwe – wonke umuntu manje ubona amagama amasha.', 'Kugciniwe – wonke umntu ngoku ubona amagama amatsha.'],
+    ['Wording to use', 'Bewoording om te gebruik', 'Amagama azosetshenziswa', 'Amagama aza kusetyenziswa'],
+    ['The original wording is back.', 'Die oorspronklike bewoording is terug.', 'Amagama okuqala abuyile.', 'Amagama okuqala abuyile.'],
+    ['Choose a person first.', 'Kies eers ’n persoon.', 'Khetha umuntu kuqala.', 'Khetha umntu kuqala.'],
+    ['{name} now checks {lang}', '{name} gaan nou {lang} na', 'U-{name} manje uhlola i-{lang}', 'U-{name} ngoku ujonga i-{lang}'],
+    ['Suggest better wording in your language', 'Stel beter bewoording in jou taal voor', 'Phakamisa amagama angcono olimini lwakho', 'Cebisa amagama angcono ngolwimi lwakho'],
+    ['Members suggest better wording in their language', 'Lede stel beter bewoording in hul taal voor', 'Amalungu aphakamisa amagama angcono olimini lwawo', 'Amalungu acebisa amagama angcono ngolwimi lwawo'],
+    ['Waiting to be checked', 'Wag om nagegaan te word', 'Kulindile ukuhlolwa', 'Ilindele ukujongwa'],
+    ['In use – thank you', 'In gebruik – dankie', 'Kuyasetshenziswa – ngiyabonga', 'Iyasetyenziswa – enkosi'],
+    ['Not used', 'Nie gebruik nie', 'Akusetshenziswanga', 'Ayisetyenziswanga']
   ];
 
   var D = { af: {}, zu: {}, xh: {} };
   ROWS.forEach(function (r) { D.af[r[0]] = r[1]; D.zu[r[0]] = r[2]; D.xh[r[0]] = r[3]; });
   var lang = 'en';
+  /** Better wording suggested by the church's own speakers and approved by a checker (words/{code} in the database).
+   *  It is used before the wording in this file, so improvements show at once, without a new version of the app. */
+  var O = {}, waiters = {};
+  /** The texts shown on the page someone was last on (so they can improve exactly those). */
+  var seen = {}, seenPage = '', watching = true;
 
   /** A language file (js/lang/<code>.js) adds itself: { mon, dow, words: { English: translation } }. */
   function add(code, pack) {
     D[code] = pack.words || {}; DATES[code] = { mon: pack.mon || DATES.en.mon, dow: pack.dow || DATES.en.dow };
     if (loading[code] === 'wanted') { lang = code; if (typeof document !== 'undefined') document.documentElement.lang = code; onLoad.forEach(function (fn) { try { fn(code); } catch (e) { console.error(e); } }); }
     loading[code] = 'done';
+    (waiters[code] || []).splice(0).forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
+  }
+  /** Fetch a language's file without switching to it (e.g. to suggest wording in it); cb when it is here. */
+  function load(code, cb) {
+    if (DATES[code] || !more(code) || typeof document === 'undefined') { if (cb) cb(); return; }
+    (waiters[code] = waiters[code] || []).push(cb || function () {});
+    if (!loading[code]) { loading[code] = 'asked'; var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + PACK_VERSION; sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
+  }
+  /** What a suggestion must keep from the English: the same {parts} and the same <b>…</b> markup. '' = fine. */
+  function check(en, text) {
+    var x = String(text || '').trim();
+    if (!x) return 'empty';
+    var parts = function (v) { return (String(v).match(/\{\w+\}/g) || []).sort().join(' '); };
+    var tags = function (v) { return (String(v).match(/<\/?\w+/g) || []).join(); };
+    if (parts(en) !== parts(x)) return 'parts';
+    if (tags(en) !== tags(x)) return 'tags';
+    return '';
   }
   function more(code) { return MORE.filter(function (m) { return m[0] === code; })[0]; }
   /** The text in the chosen language (or English), with {name} parts filled in. */
   function t(s, vars) {
-    var x = (D[lang] && D[lang][s]) || s;
+    if (watching) seen[s] = 1;
+    var x = (O[lang] && O[lang][s]) || (D[lang] && D[lang][s]) || s;
     if (vars) x = x.replace(/\{(\w+)\}/g, function (m, k) { return Object.prototype.hasOwnProperty.call(vars, k) ? String(vars[k]) : m; });
     return x;
   }
@@ -1546,6 +1640,16 @@ var I18n = (function () {
   return { LANGS: LANGS, MORE: MORE, ROWS: ROWS, t: t, tn: tn, set: set, add: add, get: function () { return lang; }, picker: picker,
     /** A language chosen from MORE has arrived (to redraw the screen). */ onLoad: function (fn) { onLoad.push(fn); },
     /** Drafted by Claude (AI) and not yet checked by fluent speakers (all of MORE). */ isDraft: function (code) { return !!more(code || lang); },
-    mon: function () { return DATES[lang].mon; }, dow: function () { return DATES[lang].dow; } };
+    mon: function () { return DATES[lang].mon; }, dow: function () { return DATES[lang].dow; },
+    /** Every English text in the app (the first column above). */ english: function () { return ROWS.map(function (r) { return r[0]; }); },
+    /** A language's name as people know it ('zu' → isiZulu; MORE also gives the English name). */
+    name: function (code) { var l = LANGS.filter(function (x) { return x[0] === code; })[0] || more(code); return l ? l[1] : code; },
+    /** The wording in use for one text in a language ('' = none yet, so English shows); builtIn: ignore approved changes. */
+    word: function (code, en, builtIn) { return (!builtIn && O[code] && O[code][en]) || (D[code] && D[code][en]) || ''; },
+    /** Use the approved wording for a language: { English: better wording }. */ override: function (code, words) { O[code] = words || {}; },
+    load: load, check: check,
+    /** The router says which page is showing (texts are collected per page); null while on the translations page itself. */
+    page: function (id) { if (id === null) { watching = false; return; } watching = true; if (id !== seenPage) { seen = {}; seenPage = id; } },
+    /** The texts shown on that page, as English. */ seen: function () { return Object.keys(seen); } };
 })();
 if (typeof module !== 'undefined') module.exports = I18n;

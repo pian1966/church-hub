@@ -97,6 +97,10 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n.js – one line per text); then decide whether to translate
   staff screens too
 - ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
+- ✅ 29 Oct 2026: **Which service?** – offering to serve (Me → Serving) now asks at which services; the roster coordinator's Yes
+  keeps that choice. Settings → **Services and venues** lists the regular services (8am, 10am, 5pm) and can add other times,
+  days, campuses or venues; rosters, volunteering, search and the Elvanto import all use that list. People who served at all
+  three old services now serve at every service, so new ones include them. **Re-publish the rules.**
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

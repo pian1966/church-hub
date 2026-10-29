@@ -111,6 +111,15 @@ console.log('Service times: positions that run at one service, volunteers who se
   ok(at('e', 'creche') === 'a' && at('t', 'creche') === '' && at('f', 'creche') === '' && !r.gaps.some(g => g.positionId === 'creche' && g.serviceId !== 'e'), 'Creche Duty only at the 8:00 service – no gaps reported at 10:00 or 17:00');
   ok(at('t', 'sound') === 'b' && at('e', 'sound') === 'c' && at('f', 'sound') === 'c', 'volunteers are only rostered at the services they serve at');
 }
+{
+  const P = [{ id: 'a', firstName: 'Ann', lastName: 'A' }, { id: 'b', firstName: 'Ben', lastName: 'B' }];
+  const pos = [{ id: 'sound', teamId: 't', name: 'Sound Desk', needed: 1 }];
+  const sk = [{ personId: 'a', positionId: 'sound', frequency: 'weekly', times: ['09:30@hilton'] }, { personId: 'b', positionId: 'sound', frequency: 'weekly', times: ['10:00'] }];
+  const sv = [{ id: 'h', date: '2026-11-01', time: '09:30', slot: '09:30@hilton' }, { id: 'm', date: '2026-11-01', time: '10:00' }];
+  const r = R.autoFill({ people: P, positions: pos, skills: sk, services: sv, assignments: [], groups: [], away: [] }, sv.map(s => s.id));
+  const at = s => r.assignments.filter(x => x.serviceId === s).map(x => x.personId).join();
+  ok(at('h') === 'a' && at('m') === 'b', 'another campus or venue: volunteers serve where they said (older services without a venue still work)');
+}
 
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

@@ -415,7 +415,9 @@ var I18n = (function () {
     ['Not now', 'Nie nou nie', 'Hhayi manje', 'Hayi ngoku'],
     ['The roster coordinator says: “{text}”', 'Die roosterkoördineerder sê: “{text}”', 'Umhleli wohlelo lokusebenza uthi: “{text}”', 'Umququzeleli woludwe lomsebenzi uthi: “{text}”'],
     ['Waiting for the roster coordinator', 'Wag vir die roosterkoördineerder', 'Kulindwe umhleli wohlelo lokusebenza', 'Kulindwe umququzeleli woludwe lomsebenzi'],
-    ['Change how often you serve', 'Verander hoe gereeld jy dien', 'Shintsha ukuthi ukhonza kangaki', 'Tshintsha ukuba ukhonza kangaphi'],
+    ['Change how you serve', 'Verander hoe jy dien', 'Shintsha indlela okhonza ngayo', 'Tshintsha indlela okhonza ngayo'],
+    ['At which services?', 'By watter dienste?', 'Kuziphi izinkonzo?', 'Kwezeziphi iinkonzo?'],
+    ['Please tick at least one service.', 'Merk asseblief ten minste een diens.', 'Sicela umake okungenani inkonzo eyodwa.', 'Nceda uphawule ubuncinane inkonzo enye.'],
     ['Offer to help', 'Bied aan om te help', 'Nikela ukusiza', 'Nikela ukunceda'],
     ['How often could you serve?', 'Hoe gereeld kan jy dien?', 'Ungakhonza kangaki?', 'Ungakhonza kangaphi?'],
     ['(now)', '(nou)', '(manje)', '(ngoku)'],
@@ -426,7 +428,7 @@ var I18n = (function () {
     ['Send to the roster coordinator', 'Stuur na die roosterkoördineerder', 'Thumela kumhleli wohlelo lokusebenza', 'Thumela kumququzeleli woludwe lomsebenzi'],
     ['The roster coordinator answered {n} of your serving offers', 'Die roosterkoördineerder het {n} van jou diensaanbiedinge beantwoord', 'Umhleli wohlelo lokusebenza uphendule okungu-{n} kweminikelo yakho yokukhonza', 'Umququzeleli woludwe lomsebenzi uphendule ezi-{n} kwizithembiso zakho zokukhonza'],
     ['Please choose how often.', 'Kies asseblief hoe gereeld.', 'Sicela ukhethe ukuthi kangaki.', 'Nceda ukhethe ukuba kangaphi.'],
-    ['That’s how often you serve now. Choose another answer, or Cancel.', 'Dis hoe gereeld jy nou dien. Kies ’n ander antwoord, of Kanselleer.', 'Yilokho okhonza ngakho manje. Khetha enye impendulo, noma Khansela.', 'Yile nto ukhonza ngayo ngoku. Khetha enye impendulo, okanye Rhoxisa.'],
+    ['That’s how you serve now. Choose another answer, or Cancel.', 'Dis hoe jy nou dien. Kies ’n ander antwoord, of Kanselleer.', 'Yileyo indlela okhonza ngayo manje. Khetha enye impendulo, noma Khansela.', 'Yile ndlela okhonza ngayo ngoku. Khetha enye impendulo, okanye Rhoxisa.'],
     ['Sent – the roster coordinator will be in touch', 'Gestuur – die roosterkoördineerder sal met jou in verbinding tree', 'Kuthunyelwe – umhleli wohlelo lokusebenza uzoxhumana nawe', 'Kuthunyelwe – umququzeleli woludwe lomsebenzi uya kuqhagamshelana nawe']
   ];
 

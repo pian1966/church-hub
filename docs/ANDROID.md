@@ -10,7 +10,7 @@ features therefore appear in the app straight away, without anyone updating it. 
 | --- | --- |
 | **My details** | See and correct their name, "known as", email and mobile. See what the church office keeps (birthday, marital status, household) and ask the office to correct it. Change their consent choices; read the privacy notice; choose the language; sign out. |
 | **Days away** | Add days they can't serve (tick service days, or add a holiday), remove them, and see approved leave. If they are already on the roster on a day away, it says so, with a **Can't make it** button. |
-| **Serving** | Accept or decline turns; see where they serve; **offer to help** in another place, ask to serve more or less often, or ask to stop. The roster coordinator answers under **Rosters → Teams** (Yes / Not now with a short reply). |
+| **Serving** | Accept or decline turns; see where they serve; **offer to help** in another place, ask to serve more or less often or at other services, or ask to stop. The roster coordinator answers under **Rosters → Teams** (Yes / Not now with a short reply). |
 
 The app keeps no church information on the phone; it only remembers who is signed in and the language.
 

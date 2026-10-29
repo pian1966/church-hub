@@ -279,7 +279,7 @@ function serve() {
   // Departments and positions, then volunteering
   await s.go('rosters/teams'); await s.page.click('[data-act="rosters:setupdepts"]'); await s.settle(); docs = await s.docsNow();
   const posDocs = Object.keys(docs).filter(k => k.startsWith('positions/pos-'));
-  check(docs['teams/dept-operational'] && docs['teams/dept-music'] && docs['teams/dept-creche'] && posDocs.length === 26 && docs['teams/dept-memorial'] && JSON.stringify(docs['positions/pos-creche'].times) === '["08:00"]' && docs['positions/pos-host'].times.length === 3,
+  check(docs['teams/dept-operational'] && docs['teams/dept-music'] && docs['teams/dept-creche'] && posDocs.length === 26 && docs['teams/dept-memorial'] && JSON.stringify(docs['positions/pos-creche'].times) === '["08:00"]' && docs['positions/pos-host'].times.length === 0,
     'Rosters → Teams adds the church’s 8 departments and 26 positions (Creche Duty only at 8:00): ' + posDocs.length);
   check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
   check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && (await s.text()).includes('8am only'), 'once added, the offer goes, and 8am-only positions say so');
@@ -503,6 +503,24 @@ function serve() {
   await s.page.click('.who[data-role="pastor"] summary');
   const shown = await s.page.textContent('.who[data-role="pastor"] .who-list');
   check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
+  t = await s.text(); check(t.includes('Services and venues') && t.includes('8am') && t.includes('10am') && t.includes('5pm'), 'Settings lists the regular services (8am, 10am, 5pm to start with)');
+  await s.page.fill('#sl-time', '09:30'); await s.page.fill('#sl-label', '9:30am'); await s.page.fill('#sl-venue', 'Hilton hall'); await s.page.click('[data-act="settings:addslot"]'); await s.settle(); docs = await s.docsNow();
+  const slotsNow = docs['settings/church'].serviceSlots || [];
+  const hilton = slotsNow.filter(x => x.venue === 'Hilton hall')[0];
+  check(slotsNow.length === 4 && hilton && hilton.time === '09:30' && hilton.id !== '09:30' && (await s.text()).includes('Hilton hall'), 'an Administrator can add a service at another time and venue');
+  await s.page.selectOption('#sv-slot', hilton.id); await s.page.selectOption('#sv-n', '4'); await s.page.click('[data-act="settings:addsvc"]'); await s.settle(); docs = await s.docsNow();
+  const hs = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].slot === hilton.id);
+  check(hs.length === 4 && hs.every(k => docs[k].time === '09:30' && docs[k].venue === 'Hilton hall'), 'services that need a roster can be added for the new service and venue');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', (() => { const d = seedDocs(); d['settings/church'] = Object.assign({}, d['settings/church'], { serviceSlots: slotsNow }); return d; })());
+  await s.go('me/serve'); await s.page.click('[data-act="me:offer"][data-p="tea"]');
+  check(await s.page.$$eval('.mo-t', b => b.length === 4 && b.every(x => x.checked)) && (await s.page.textContent('body')).includes('Hilton hall'), 'offering to help asks at which services – the new venue included');
+  await s.page.uncheck('.mo-t[value="08:00"]'); await s.page.uncheck('.mo-t[value="10:00"]'); await s.page.uncheck('.mo-t[value="17:00"]'); await s.page.uncheck('.mo-t[value="' + hilton.id + '"]');
+  await s.page.check('input[name=mo-f][value=monthly]'); await s.page.click('[data-act="me:send"]');
+  check((await s.page.textContent('body')).includes('Please tick at least one service'), 'at least one service must be ticked');
+  await s.page.check('.mo-t[value="' + hilton.id + '"]'); await s.page.click('[data-act="me:send"]'); await s.settle(); docs = await s.docsNow();
+  const hOff = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14' && docs[k].positionId === 'tea')[0];
+  check(hOff && JSON.stringify(docs[hOff].times) === JSON.stringify([hilton.id]), 'the offer remembers which services they chose');
   await finish(s);
   s = await session('sipho.dlamini@example.com', seedDocs());
   await s.go('people/search');
@@ -678,7 +696,7 @@ function serve() {
   s = await session('linda.pillay@example.com', seedDocs({ legacy: true }));
   await s.settle(); docs = await s.docsNow();
   const gl = Object.keys(docs).filter(k => k.startsWith('guardians/')).map(k => docs[k]);
-  check(docs['settings/church'].dataVersion === 4 && !Object.keys(docs).some(k => k.startsWith('people/') && /^(Member|Visitor|Partner)$/.test(docs[k].category)), 'categories renamed to Church Partner / Visiting Minister (once)');
+  check(docs['settings/church'].dataVersion === 5 && !Object.keys(docs).some(k => k.startsWith('people/') && /^(Member|Visitor|Partner)$/.test(docs[k].category)), 'categories renamed to Church Partner / Visiting Minister (once)');
   check(gl.length > 0 && gl.every(l => !l.confirmed) && gl.some(l => l.childId === 'p28' && l.adultId === 'p29'), 'children linked to the adults of every home they live in, to be confirmed');
   await s.go('home'); check((await s.text()).includes('Confirm the parents and guardians of'), 'Home asks someone to confirm them');
   await finish(s);
@@ -687,7 +705,7 @@ function serve() {
   s = await session('linda.pillay@example.com', seedDocs({ v2: true }));
   await s.settle(); docs = await s.docsNow();
   const cp = Object.keys(docs).filter(k => k.startsWith('people/') && docs[k].category === 'Church Partner').length;
-  check(docs['settings/church'].dataVersion === 4 && cp > 0 && !Object.keys(docs).some(k => k.startsWith('people/') && docs[k].category === 'Partner'), 'every Partner becomes a Church Partner');
+  check(docs['settings/church'].dataVersion === 5 && cp > 0 && !Object.keys(docs).some(k => k.startsWith('people/') && docs[k].category === 'Partner'), 'every Partner becomes a Church Partner');
   check(!Object.keys(docs).some(k => k.startsWith('guardians/') && !docs[k].confirmed && !seedDocs()[k]), 'no guardian links are suggested again');
   check(docs['details/p17'].maritalStatus === 'Partner', 'marital status “Partner” (in a couple) is left alone');
   check(docs['people/p23'].firstName === 'Johan' && docs['details/p23'].deceasedAt === '2024-08-22', '“2024-08-22-Johan” becomes Johan, died 22 Aug 2024 (instead of the import day)');
@@ -836,6 +854,7 @@ function serve() {
   const offersSeed = seedDocs();
   offersSeed['serveOffers/soTim1'] = { personId: 'p14', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'waiting', createdAt: '2026-10-21 10:00' };
   offersSeed['serveOffers/soTim2'] = { personId: 'p14', positionId: 'sound', kind: 'change', frequency: 'weekly', note: '', status: 'waiting', createdAt: '2026-10-22 10:00' };
+  offersSeed['serveOffers/so1'] = Object.assign({}, offersSeed['serveOffers/so1'], { times: ['10:00'] });
   s = await session('sipho.dlamini@example.com', offersSeed);
   await tour(s, 'rosters');
   check(await s.page.evaluate(() => !Store.find('consents', () => true).some(c => c.personId !== 'p05')), 'can’t see other people’s consent records');
@@ -844,9 +863,10 @@ function serve() {
   check(Object.keys(docs).some(k => k.startsWith('assignments/') && docs[k].personId === 'p20' && docs[k].status === 'pending' && docs[k].source === 'manual'), 'adding someone to the roster saves it');
   await s.go('home'); check((await s.text()).includes('offered to serve'), 'Home: a to-do to answer offers to serve');
   await s.go('rosters/teams'); t = await s.text();
-  check(t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
+  check(t.includes('at 10am') && t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
   await s.page.click('[data-act="rosters:offeryes"][data-id="so1"]'); await s.settle(); docs = await s.docsNow();
   check(!docs['serveOffers/so1'] && Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p15' && docs[k].positionId === 'tea' && docs[k].frequency === 'monthly'), 'Yes puts them on the team, as often as they asked, and clears the offer');
+  check(Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p15' && docs[k].positionId === 'tea' && JSON.stringify(docs[k].times) === '["10:00"]'), '… and only at the services they chose');
   await s.page.click('[data-act="rosters:offeryes"][data-id="soTim2"]'); await s.settle(); docs = await s.docsNow();
   check(docs['skills/kp14sound'].frequency === 'weekly', 'Yes to “serve more often” changes how often');
   await s.page.click('[data-act="rosters:offerno"][data-id="soTim1"]'); await s.page.fill('#of-reply', 'The door team is full until January'); await s.page.click('[data-act="rosters:offernosend"]'); await s.settle(); docs = await s.docsNow();

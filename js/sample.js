@@ -176,7 +176,7 @@ function makeSampleData() {
   return {
     version: 1,
     settings: {
-      churchName: 'Christ Church Howick', demo: true, dataVersion: 4,
+      churchName: 'Christ Church Howick', demo: true, dataVersion: 5,
       modules: { people: true, rosters: true, leave: true, privacy: true, import: true, settings: true },
       informationOfficer: { name: '[Information Officer]', email: '[email]', phone: '[phone]', registered: false, deputy: '' },
       retentionMonths: 24,

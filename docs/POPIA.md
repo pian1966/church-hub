@@ -78,7 +78,7 @@ restrictions. Downloading results (CSV) is recorded in the audit log with how ma
 should stay on church computers and be deleted once used.
 
 ## Offers to serve
-When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, their optional note and the
+When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, at which services, their optional note and the
 roster coordinator's reply. Purpose: planning rosters; basis: the person asked themselves. Only the person, Roster
 coordinators and Administrators can see it (database rules). Yes moves it onto the team list and deletes the offer;
 the person can withdraw it at any time; it is included in "export everything held about a person" and removed when

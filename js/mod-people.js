@@ -395,12 +395,14 @@
   }
 
   /* ---------- volunteering ---------- */
+  function slotName(id) { return Serving.slotLabel(id, S.settings()); }
+  function slotIds() { return Serving.slots(S.settings()).map(function (x) { return x.id; }); }
   function canVolunteer() { return H.can('*') || H.can('rosters.manage'); }
   /** Services someone serves at: from their serving (empty = any service). */
   function serveTimes(sk) {
     var t = {}, any = false;
     sk.forEach(function (k) { if (k.times && k.times.length) k.times.forEach(function (x) { t[x] = 1; }); else any = true; });
-    return any || !sk.length ? Serving.TIMES.map(function (x) { return x[0]; }) : Serving.TIMES.map(function (x) { return x[0]; }).filter(function (x) { return t[x]; });
+    return any || !sk.length ? slotIds() : slotIds().filter(function (x) { return t[x]; });
   }
   function volunteerPanel(p, me) {
     var sk = S.find('skills', function (k) { return k.personId === p.id; }), pos = {};
@@ -411,7 +413,7 @@
     if (!sk.length && !canVolunteer() && !me) return '';
     return '<section class="panel"><h2>' + T('Volunteering') + '</h2><dl class="kv">' +
       '<dt>' + T('Volunteer') + '</dt><dd>' + (sk.length ? T('Yes') : T('No')) + '</dd>' +
-      (sk.length ? '<dt>' + T('Services') + '</dt><dd>' + esc(serveTimes(sk).map(Serving.timeLabel).join(', ')) + '</dd>' +
+      (sk.length ? '<dt>' + T('Services') + '</dt><dd>' + esc(serveTimes(sk).map(slotName).join(', ')) + '</dd>' +
         teams.map(function (t) { return '<dt>' + esc(t.name) + '</dt><dd>' + esc(byTeam[t.id].join(', ')) + '</dd>'; }).join('') : '') + '</dl>' +
       gr.map(function (g) { var names = esc(g.memberIds.filter(function (m) { return m !== p.id; }).map(function (m) { return H.name(S.get('people', m)); }).join(', ')); return '<p class="hint">' + H.icon(g.kind === 'together' ? H.ICON.link : H.ICON.split, 14) + ' ' + T(g.kind === 'together' ? 'Serves together with {names}' : 'Kept apart from {names}', { names: names }) + ' (' + esc(T(g.strength === 'must' ? 'always' : 'when possible')) + ')</p>'; }).join('') +
       '<div class="btns" style="margin-top:10px">' + (canVolunteer() ? '<button class="btn small" data-act="people:volunteer" data-id="' + p.id + '">Edit volunteering</button>' : '') +
@@ -424,13 +426,13 @@
       '<fieldset class="vol-yes"><legend class="field-l">Volunteer</legend><label class="check" style="display:inline-flex;margin-right:16px"><input type="radio" name="vol" value="yes"' + (sk.length ? ' checked' : '') + '><span>Yes</span></label>' +
         '<label class="check" style="display:inline-flex"><input type="radio" name="vol" value="no"' + (sk.length ? '' : ' checked') + '><span>No</span></label></fieldset>' +
       '<div id="vol-f"' + (sk.length ? '' : ' hidden') + '><fieldset><legend class="field-l">Services</legend><div class="row" style="gap:4px 16px;flex-wrap:wrap">' +
-        Serving.TIMES.map(function (t) { return '<label class="check" style="margin:0"><input type="checkbox" class="vol-t" value="' + t[0] + '"' + (sk.length && times.indexOf(t[0]) >= 0 ? ' checked' : '') + '><span>' + t[1] + '</span></label>'; }).join('') + '</div></fieldset>' +
+        Serving.slots(S.settings()).map(function (x) { return [x.id, slotName(x.id)]; }).map(function (t) { return '<label class="check" style="margin:0"><input type="checkbox" class="vol-t" value="' + t[0] + '"' + (sk.length && times.indexOf(t[0]) >= 0 ? ' checked' : '') + '><span>' + t[1] + '</span></label>'; }).join('') + '</div></fieldset>' +
         '<p class="field-l" style="margin:14px 0 4px">Departments and positions</p>' +
         teams.map(function (t) {
           var ps = S.find('positions', function (x) { return x.teamId === t.id; }), on = ps.some(function (x) { return mine[x.id]; });
           return '<fieldset class="panel vol-dept" style="padding:10px 12px;margin:0 0 8px"><label class="check" style="margin:0"><input type="checkbox" class="vol-d" data-t="' + t.id + '"' + (on ? ' checked' : '') + '><span><b>' + esc(t.name) + '</b></span></label>' +
             '<div class="vol-ps" data-t="' + t.id + '"' + (on ? '' : ' hidden') + ' style="margin:6px 0 0 28px">' + ps.map(function (x) {
-              var only = x.times && x.times.length && x.times.length < Serving.TIMES.length ? ' <span class="muted small">(' + esc(x.times.map(Serving.timeLabel).join(', ')) + ' only)</span>' : '';
+              var only = x.times && x.times.length && x.times.length < slotIds().length ? ' <span class="muted small">(' + esc(x.times.map(slotName).join(', ')) + ' only)</span>' : '';
               return '<label class="check" style="margin:2px 0"><input type="checkbox" class="vol-p" value="' + x.id + '"' + (mine[x.id] ? ' checked' : '') + '><span>' + esc(x.name) + only + '</span></label>';
             }).join('') + '</div></fieldset>';
         }).join('') +
@@ -781,7 +783,7 @@
     var office = {}; if (H.can('*') || H.can('people.edit')) S.list('officeNotes').forEach(function (n) { (office[n.personId] = office[n.personId] || []).push(n.text); });
     add(H.can('*') || H.can('people.edit'), 'Notes', 'officeNotes', 'Church office notes', 'text', function (p) { return (office[p.id] || []).join(' · '); });
     add(roster, 'Serving', 'volunteer', 'Volunteer', 'yesno', function (p) { return sv(p).pos.length > 0; });
-    add(roster, 'Serving', 'serviceTimes', 'Volunteers at service', 'list', function (p) { return serveInfoTimes(p.id); }, Serving.TIMES.map(function (t) { return t[1]; }));
+    add(roster, 'Serving', 'serviceTimes', 'Volunteers at service', 'list', function (p) { return serveInfoTimes(p.id); }, slotIds().map(slotName));
     add(roster, 'Serving', 'awaySoon', 'Away in the next 8 weeks', 'yesno', function (p) { return awaySoon(p.id); });
     add(all, 'Personal', 'lateSpouse', 'Late spouse', 'text', function (p) { var l = lateSpouse(p); return l ? H.name(l) : p.lateSpouseName || ''; });
     add(all, 'Name and contact', 'postcode', 'Postcode', 'text', function (p) { return (p.address || {}).postcode || ''; });
@@ -792,7 +794,7 @@
   /** The services someone volunteers at, as 8am / 10am / 5pm (every service when not narrowed down). */
   function serveInfoTimes(pid) {
     var sk = S.find('skills', function (k) { return k.personId === pid; }); if (!sk.length) return [];
-    return serveTimes(sk).map(Serving.timeLabel);
+    return serveTimes(sk).map(slotName);
   }
   function awaySoon(pid) {
     var t = H.today(), end = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(t), 56));
@@ -1191,8 +1193,9 @@
      *  dates of death that were typed in front of a name in Elvanto ("2024-08-22-Mike") moved to the date they died,
      *  and (from before version 2) children linked to their household's adults, to confirm. */
     upgrade: function () {
-      var st = S.settings(), v = st ? st.dataVersion || 1 : 4; if (v >= 4) return;
+      var st = S.settings(), v = st ? st.dataVersion || 1 : 5; if (v >= 5) return;
       var say = [], linked = 0;
+      if (v < 4) {
       if (v < 3) {
         var renamed = 0, MAP = { Member: 'Church Partner', Partner: 'Church Partner', Visitor: 'Visiting Minister' };
         S.list('people').slice().forEach(function (p) { if (MAP[p.category]) { p = JSON.parse(JSON.stringify(p)); p.category = MAP[p.category]; S.put('people', p); renamed++; } });
@@ -1200,7 +1203,16 @@
         if (v < 2) { HS.suggestedLinks(S.list('people'), S.list('guardians')).forEach(function (l) { S.put('guardians', l); linked++; }); say.push(linked + ' parent/guardian links made from households (to confirm)'); }
       }
       say.push(tidyIdNames() + ' ID numbers moved out of names (Administrators only)');
-      S.setSettings({ dataVersion: 4 }, 'Upgraded people: ' + say.join('; '));
+      }
+      // Version 5: services became a list the church can add to (times and venues). Someone who served at all three
+      // old services now serves at "every service", so new ones include them too.
+      var widened = 0;
+      S.list('skills').slice().forEach(function (k) {
+        var t = k.times || [];
+        if (t.length >= 3 && ['08:00', '10:00', '17:00'].every(function (x) { return t.indexOf(x) >= 0; })) { k = JSON.parse(JSON.stringify(k)); k.times = []; S.put('skills', k); widened++; }
+      });
+      say.push(widened + ' people serving at all three services now serve at every service');
+      S.setSettings({ dataVersion: 5 }, 'Upgraded people: ' + say.join('; '));
       if (linked) setTimeout(function () { H.toast('Children are now linked to the adults in their household – please confirm them (see Home)'); }, 400);
     },
     render: function (p) {
@@ -1579,7 +1591,7 @@
         if (yes && !want.length) { err.textContent = 'Tick at least one department and position.'; err.hidden = false; return; }
         if (!yes) want = [];
         var sk = S.find('skills', function (k) { return k.personId === p.id; }), freq = document.getElementById('vol-freq') ? document.getElementById('vol-freq').value : 'fortnightly';
-        var allTimes = times.length === Serving.TIMES.length ? [] : times;   // every service: no restriction
+        var allTimes = times.length === slotIds().length ? [] : times;   // every service: no restriction
         sk.forEach(function (k) { if (want.indexOf(k.positionId) < 0) S.remove('skills', k.id); });
         want.forEach(function (pid) {
           var k = sk.filter(function (x) { return x.positionId === pid; })[0];
@@ -1587,7 +1599,7 @@
           k.times = allTimes; S.put('skills', k);
         });
         var names = want.map(function (id) { return (S.get('positions', id) || {}).name; });
-        S.audit(yes ? 'Volunteering for ' + H.name(p) + ': ' + times.map(Serving.timeLabel).join(', ') + ' – ' + names.join(', ') : 'Not volunteering: ' + H.name(p), 'people/' + p.id);
+        S.audit(yes ? 'Volunteering for ' + H.name(p) + ': ' + times.map(slotName).join(', ') + ' – ' + names.join(', ') : 'Not volunteering: ' + H.name(p), 'people/' + p.id);
         H.closeModal(); H.render(); H.toast(T('Saved'));
       },
       lateyes: function (el) {

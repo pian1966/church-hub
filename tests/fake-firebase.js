@@ -88,7 +88,7 @@
         if (is(c, ['admin', 'rosters'])) return true;
         if (op === 'delete') return mine(c, b.personId);
         return op === 'create' && mine(c, a.personId) && a.status === 'waiting' && ['join', 'change', 'stop'].indexOf(a.kind) >= 0
-          && onlyKeys(a, ['personId', 'positionId', 'kind', 'frequency', 'note', 'status', 'createdAt', 'updatedAt']);
+          && onlyKeys(a, ['personId', 'positionId', 'kind', 'frequency', 'times', 'note', 'status', 'createdAt', 'updatedAt']);
       } },
     blockouts: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) { return is(c, ['admin', 'rosters']) || mine(c, op === 'delete' ? b.personId : a.personId); } },

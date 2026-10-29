@@ -25,7 +25,7 @@ js/elvanto-sync.js        ElvantoSync: when a leave change needs an Elvanto "Una
 js/households.js          Households: households, parents/guardians, couples and late-spouse suggestions (pure, tested)
 js/people-search.js       PeopleSearch: Advanced search filters and logic (pure, tested)
 js/duplicates.js          Duplicates: finding and merging people entered twice (pure, tested)
-js/serving.js             Serving: the church's services (8am, 10am, 5pm), departments and positions as in Elvanto
+js/serving.js             Serving: the church's regular services (settings.serviceSlots; 8am, 10am, 5pm until changed), departments and positions as in Elvanto
 js/i18n.js                I18n: the four languages (tested)       js/sample.js  made-up church for demo mode and tests
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers (search matching, photos and
@@ -84,12 +84,12 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `noCollect` | people **not allowed to collect** a child (e.g. a court order): { childId, personId \| name, note } – restricted, every view logged |
 | `consents` | per person and purpose: given/withdrawn, date, how, recorded by, guardian for children. Also what they'd **like to receive** (weekly notices by email, prayer needs and missionary updates by WhatsApp or email, "Who is Jesus" on WhatsApp) – a choice never ticked isn't recorded |
 | `notes` | pastoral notes (restricted) |
-| `teams`, `positions`, `skills` | departments, positions and who serves where, how often (`frequency`) and at which services (`times`, e.g. ["08:00","10:00"]; empty = any). A position's `times` are the services it runs at (Creche Duty only at 08:00; Memorial Teas: `memorial`). Rosters → Teams adds the church's 8 departments and 26 positions in one click (`js/serving.js`); a person's **Volunteering** (People) writes their `skills` |
+| `teams`, `positions`, `skills` | departments, positions and who serves where, how often (`frequency`) and at which services (`times`, service ids such as ["08:00","10:00"] or "09:30@hilton-hall"; empty = every service). The regular services are `settings.serviceSlots` – { id, label, day, time, venue } – set in Settings → Services and venues (8am, 10am and 5pm until changed); a roster `service` carries its `slot` and `venue`. A position's `times` are the services it runs at (Creche Duty only at 08:00; Memorial Teas: `memorial`). Rosters → Teams adds the church's 8 departments and 26 positions in one click (`js/serving.js`); a person's **Volunteering** (People) writes their `skills` |
 | `services` | dates and times of services/events needing a roster |
 | `assignments` | person × position × service, status pending/accepted/declined, why |
 | `groups` | serve **together** (must/prefer) or keep **apart** |
 | `blockouts` | away dates people enter themselves |
-| `serveOffers` | a person's request to join a position, serve more/less often, or stop: { personId, positionId, kind join\|change\|stop, frequency, note, status waiting\|declined, reply }. The person creates and withdraws their own; Administrators and Roster coordinators answer (Yes changes `skills` and deletes the offer; Not now sets `declined` + `reply`) |
+| `serveOffers` | a person's request to join a position, serve more/less often, or stop: { personId, positionId, kind join\|change\|stop, frequency, times (services chosen; empty = every service), note, status waiting\|declined, reply }. The person creates and withdraws their own; Administrators and Roster coordinators answer (Yes changes `skills` and deletes the offer; Not now sets `declined` + `reply`) |
 | `leave` | Leave Manager data in LeaveCore format (types, categories, requests, holidays, terms, adjustments, rules) |
 | `dsr` | POPIA data-subject requests (access, correction, deletion, objection) |
 | `breaches` | security-compromise register (POPIA s22) |

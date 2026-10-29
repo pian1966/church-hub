@@ -34,12 +34,13 @@
   /** Elvanto's department positions ("10:00 Reading") → this person's serving, with the services they serve at.
    *  Adds to what they already have; never takes anything away. */
   function servingFrom(pid, list, out) {
-    var want = {};
+    var want = {}, sl = Serving.slots(S.settings()), nSlots = sl.length;
+    var slotFor = function (time) { var x = sl.filter(function (y) { return y.time === time && !y.venue; })[0] || sl.filter(function (y) { return y.time === time; })[0]; return x ? x.id : time; };
     list.forEach(function (x) {
       var pos = Serving.findPosition(x.name, S.list('positions'));
       if (!pos) { out.unknown[x.name] = 1; return; }
       var w = want[pos.id] = want[pos.id] || {};
-      if (/^\d\d:\d\d$/.test(x.time)) w[x.time] = 1;
+      if (/^\d\d:\d\d$/.test(x.time)) w[slotFor(x.time)] = 1;
     });
     Object.keys(want).forEach(function (posId) {
       var times = Object.keys(want[posId]).sort(), k = S.find('skills', function (s) { return s.personId === pid && s.positionId === posId; })[0];
@@ -47,8 +48,8 @@
         if (!k.times || !k.times.length) return;   // already serves at any service
         var u = k.times.concat(times).filter(function (t, i, a) { return a.indexOf(t) === i; }).sort();
         if (u.length === k.times.length) return;
-        k = JSON.parse(JSON.stringify(k)); k.times = u.length >= Serving.TIMES.length ? [] : u;
-      } else k = { personId: pid, positionId: posId, frequency: 'fortnightly', times: times.length >= Serving.TIMES.length ? [] : times };
+        k = JSON.parse(JSON.stringify(k)); k.times = u.length >= nSlots ? [] : u;
+      } else k = { personId: pid, positionId: posId, frequency: 'fortnightly', times: times.length >= nSlots ? [] : times };
       S.put('skills', k); out.serving++;
     });
   }

@@ -34,7 +34,8 @@
     return S.list('positions').slice().sort(function (a, b) { return t.indexOf(a.teamId) - t.indexOf(b.teamId); });
   }
   /** A position only runs at some services (e.g. Creche Duty at 8:00): elsewhere its cell is shown as not needed. */
-  function runsAt(p, s) { return !(p.times && p.times.length && s.time && p.times.indexOf(s.time) < 0); }
+  function runsAt(p, s) { var k = Serving.slotOf(s); return !(p.times && p.times.length && k && p.times.indexOf(k) < 0); }
+  function slotName(id) { return Serving.slotLabel(id, S.settings()); }
   function narrow() { return window.innerWidth < 700; }
   function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; }); }
   function inView() {
@@ -80,7 +81,7 @@
           var tg = R.groupsOf(engineData(), a.personId, 'together').length ? H.icon(H.ICON.link, 14) : '';
           return '<button class="chip ' + cls + '" data-act="rosters:slot" data-id="' + esc(a.id) + '" title="' + esc(a.reason || (isAway ? isAway : a.status)) + '">' + esc(H.name(who)) + '<span class="tg">' + tg + '</span></button>';
         }).join('');
-        if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">Not at ' + esc(Serving.timeLabel(s.time)) + '</span></td>';
+        if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">Not at ' + esc(slotName(Serving.slotOf(s))) + '</span></td>';
         for (var i = live; i < p.needed && runsAt(p, s); i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ Add someone</button>';
         return '<td><div class="slot">' + cells + '</div></td>';
       }).join('') + '</tr>';
@@ -142,7 +143,7 @@
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
       return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; });
-        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + p.needed + ' per service' + (p.times && p.times.length && p.times.length < Serving.TIMES.length ? ' · ' + esc(p.times.map(Serving.timeLabel).join(', ') + ' only') : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + 'Add</button></div>' +
+        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + p.needed + ' per service' + (p.times && p.times.length && p.times.length < Serving.slots(S.settings()).length ? ' · ' + esc(p.times.map(slotName).join(', ') + ' only') : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + 'Add</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
             return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc((FREQ.filter(function (f) { return f[0] === k.frequency; })[0] || ['', k.frequency])[1]) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="Remove ' + esc(H.name(pp)) + ' from ' + esc(p.name) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
@@ -159,8 +160,9 @@
     var po = pos(o.positionId), where = po ? po.name + ' (' + ((team(po.teamId) || {}).name || '') + ')' : 'a position that has been removed';
     var k = S.find('skills', function (x) { return x.personId === o.personId && x.positionId === o.positionId; })[0];
     if (o.kind === 'stop') return 'would like to stop serving on ' + where;
-    if (o.kind === 'change') return 'would like to serve on ' + where + ' ' + freqName(o.frequency) + (k ? ' (now ' + freqName(k.frequency) + ')' : '');
-    return 'offers to help on ' + where + ', ' + freqName(o.frequency);
+    var at = function (t) { return t && t.length ? ' at ' + t.map(slotName).join(', ') : ''; };
+    if (o.kind === 'change') return 'would like to serve on ' + where + ' ' + freqName(o.frequency) + at(o.times) + (k ? ' (now ' + freqName(k.frequency) + at(k.times) + ')' : '');
+    return 'offers to help on ' + where + ', ' + freqName(o.frequency) + at(o.times);
   }
   function renderOffers() {
     var list = waitingOffers();
@@ -385,8 +387,8 @@
         var who = H.name(person(o.personId)), text = offerText(o);
         var have = S.find('skills', function (k) { return k.personId === o.personId && k.positionId === o.positionId; });
         if (o.kind === 'stop') have.forEach(function (k) { S.remove('skills', k.id); });
-        else if (have.length) { var k = have[0]; k.frequency = o.frequency || k.frequency; S.put('skills', k); }
-        else if (pos(o.positionId)) S.put('skills', { personId: o.personId, positionId: o.positionId, frequency: o.frequency || 'fortnightly' });
+        else if (have.length) { var k = JSON.parse(JSON.stringify(have[0])); k.frequency = o.frequency || k.frequency; if (o.times) k.times = o.times; S.put('skills', k); }
+        else if (pos(o.positionId)) S.put('skills', { personId: o.personId, positionId: o.positionId, frequency: o.frequency || 'fortnightly', times: o.times || [] });
         S.remove('serveOffers', o.id, 'Said yes: ' + who + ' ' + text);
         H.render(); H.toast(o.kind === 'stop' ? who + ' is off that team now' : who + ' is on the team – they can now be rostered');
       },

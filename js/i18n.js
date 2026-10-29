@@ -429,7 +429,29 @@ var I18n = (function () {
     ['The roster coordinator answered {n} of your serving offers', 'Die roosterkoördineerder het {n} van jou diensaanbiedinge beantwoord', 'Umhleli wohlelo lokusebenza uphendule okungu-{n} kweminikelo yakho yokukhonza', 'Umququzeleli woludwe lomsebenzi uphendule ezi-{n} kwizithembiso zakho zokukhonza'],
     ['Please choose how often.', 'Kies asseblief hoe gereeld.', 'Sicela ukhethe ukuthi kangaki.', 'Nceda ukhethe ukuba kangaphi.'],
     ['That’s how you serve now. Choose another answer, or Cancel.', 'Dis hoe jy nou dien. Kies ’n ander antwoord, of Kanselleer.', 'Yileyo indlela okhonza ngayo manje. Khetha enye impendulo, noma Khansela.', 'Yile ndlela okhonza ngayo ngoku. Khetha enye impendulo, okanye Rhoxisa.'],
-    ['Sent – the roster coordinator will be in touch', 'Gestuur – die roosterkoördineerder sal met jou in verbinding tree', 'Kuthunyelwe – umhleli wohlelo lokusebenza uzoxhumana nawe', 'Kuthunyelwe – umququzeleli woludwe lomsebenzi uya kuqhagamshelana nawe']
+    ['Sent – the roster coordinator will be in touch', 'Gestuur – die roosterkoördineerder sal met jou in verbinding tree', 'Kuthunyelwe – umhleli wohlelo lokusebenza uzoxhumana nawe', 'Kuthunyelwe – umququzeleli woludwe lomsebenzi uya kuqhagamshelana nawe'],
+    ['State', 'Staat', 'Isifunda', 'Ilizwe'],
+    ['County', 'Graafskap', 'Isifunda', 'Ingingqi'],
+    ['Region', 'Streek', 'Isifunda', 'Ingingqi'],
+    ['District', 'Distrik', 'Isifunda', 'Isithili'],
+    ['Canton', 'Kanton', 'Isifunda (Canton)', 'Ingingqi (Canton)'],
+    ['Department', 'Departement', 'Isifunda (Department)', 'Ingingqi (Department)'],
+    ['Parish', 'Distrik (Parish)', 'Isifunda (Parish)', 'Ingingqi (Parish)'],
+    ['Voivodeship', 'Woiwodskap', 'Isifundazwe (Voivodeship)', 'Iphondo (Voivodeship)'],
+    ['Autonomous community', 'Outonome gemeenskap', 'Isifunda esizimele', 'Ingingqi ezimeleyo'],
+    ['Province or territory', 'Provinsie of gebied', 'Isifundazwe noma indawo', 'Iphondo okanye ummandla'],
+    ['State or territory', 'Staat of gebied', 'Isifunda noma indawo', 'Ilizwe okanye ummandla'],
+    ['Province, state or region', 'Provinsie, staat of streek', 'Isifundazwe, isifunda noma indawo', 'Iphondo, ilizwe okanye ingingqi'],
+    ['Postal code', 'Poskode', 'Ikhodi yeposi', 'Ikhowudi yeposi'],
+    ['ZIP code', 'Poskode (ZIP)', 'Ikhodi yeposi (ZIP)', 'Ikhowudi yeposi (ZIP)'],
+    ['Eircode', 'Eircode', 'Eircode', 'Eircode'],
+    ['CEP', 'CEP', 'CEP', 'CEP'],
+    ['Africa', 'Afrika', 'i-Afrika', 'iAfrika'],
+    ['Europe', 'Europa', 'i-Europe', 'iYurophu'],
+    ['Americas', 'Amerikas', 'amaMelika', 'iiMerika'],
+    ['Oceania', 'Oseanië', 'i-Oceania', 'iOshiyaniya'],
+    ['Another country…', '’n Ander land…', 'Elinye izwe…', 'Elinye ilizwe…'],
+    ['Type the country', 'Tik die land', 'Bhala izwe', 'Bhala ilizwe']
   ];
 
   var D = { af: {}, zu: {}, xh: {} };

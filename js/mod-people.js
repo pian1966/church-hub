@@ -9,7 +9,6 @@
   function links(childId) { return HS.linksOf(childId, S.list('guardians')); }
   function linkName(l) { var a = l.adultId ? S.get('people', l.adultId) : null; return a ? H.name(a) : (l.name || 'Someone'); }
   var GENDERS = ['Female', 'Male'];
-  var PROVINCES = ['KwaZulu-Natal', 'Gauteng', 'Western Cape', 'Eastern Cape', 'Free State', 'Mpumalanga', 'Limpopo', 'North West', 'Northern Cape'];
   // What someone would like to receive, kept in the consent register (POPIA: when and how they chose it). Adults only.
   var RECEIVE = [
     ['Weekly Church Notices (via Email)', 'The weekly notices by email.'],
@@ -36,10 +35,36 @@
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
   /** The category, plus "Staff" when they work for the church – a Church Partner can be on the staff too. */
-  /** A home address as lines to show ("1 Main Road", "Howick 3290", "KwaZulu-Natal"); South Africa isn't repeated. */
+  /** A home address as lines to show ("1 Main Road", "Howick 3290", "KwaZulu-Natal"); the church's own country isn't repeated. */
   function addressLines(p) {
     var a = p && p.address; if (!a) return [];
-    return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !/^south africa$/i.test(a.country) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
+    var c = a.country && Countries.find(a.country), home = Countries.church(S.settings());
+    return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !(c && c.code === home.code) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
+  }
+  /* ---------- addresses in any country: the country decides the list of provinces, states or counties (js/countries.js) ---------- */
+  function countrySelect(cur) {   // cur: the address's country as recorded ('' = the church's)
+    var home = Countries.church(S.settings()), c = cur ? Countries.find(cur) : home, other = cur && !c;
+    return '<select id="pf-country" autocomplete="country-name">' + Countries.grouped().map(function (g) {
+      return '<optgroup label="' + esc(T(g.continent)) + '">' + g.countries.map(function (x) { return '<option value="' + esc(x.name) + '"' + (c && c.code === x.code ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</optgroup>';
+    }).join('') + (other ? '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>' : '') + '<option value="__other">' + T('Another country…') + '</option></select>' +
+      '<input id="pf-country-o" placeholder="' + T('Type the country') + '" hidden>';
+  }
+  function regionControl(c, cur) {   // a list when the country has one (anything else already recorded is kept), otherwise a box to type in
+    if (!c || !c.regions) return '<input id="pf-province" value="' + esc(cur || '') + '" autocomplete="address-level1">';
+    return '<select id="pf-province" autocomplete="address-level1"><option value="">' + T('Choose…') + '</option>' + c.regions.map(function (x) { return '<option' + (x === cur ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') +
+      (cur && c.regions.indexOf(cur) < 0 ? '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>' : '') + '</select>';
+  }
+  function wireCountry() {
+    var sel = document.getElementById('pf-country'); if (!sel) return;
+    sel.addEventListener('change', function () {
+      var o = document.getElementById('pf-country-o'), other = sel.value === '__other', c = other ? null : Countries.find(sel.value);
+      o.hidden = !other; if (other) o.focus();
+      document.getElementById('pf-region-l').textContent = T(c ? c.regionLabel : 'Province, state or region');
+      document.getElementById('pf-postcode-l').textContent = T(c ? c.postcodeLabel : 'Postal code');
+      var w = document.getElementById('pf-region-w'), was = document.getElementById('pf-province').value;
+      var v = c ? Countries.region(was, c.code) : '';   // keep it only if the new country has it (e.g. typed "KZN" earlier)
+      w.innerHTML = regionControl(c, c && c.regions && c.regions.indexOf(v) >= 0 ? v : '');
+    });
   }
   function catTags(p) {
     var t = '<span class="tag grey">' + esc(p.category || '') + '</span>';
@@ -1047,13 +1072,12 @@
           '<label class="field">' + T('Street address') + '<input id="pf-street" value="' + esc((p.address || {}).street || '') + '" autocomplete="address-line1"></label>' +
           '<label class="field">' + T('Address line 2') + '<input id="pf-street2" value="' + esc((p.address || {}).street2 || '') + '" autocomplete="address-line2"></label>' +
           '<div class="two"><label class="field">' + T('Town or city') + '<input id="pf-city" value="' + esc((p.address || {}).city || '') + '" autocomplete="address-level2"></label>' +
-          '<label class="field">' + T('Postcode') + '<input id="pf-postcode" value="' + esc((p.address || {}).postcode || '') + '" inputmode="numeric" autocomplete="postal-code"></label></div>' +
-          '<div class="two"><label class="field">' + T('Province') + '<select id="pf-province">' + (function (cur) {   // South Africa's nine provinces; anything else already recorded (e.g. from Elvanto) is kept
-            var opts = ['<option value="">' + T('Choose…') + '</option>'].concat(PROVINCES.slice().sort().map(function (x) { return '<option' + (x === cur ? ' selected' : '') + '>' + x + '</option>'; }));
-            if (cur && PROVINCES.indexOf(cur) < 0) opts.push('<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>');
-            return opts.join('');
-          })((p.address || {}).province || '') + '</select></label>' +
-          '<label class="field">' + T('Country') + '<input id="pf-country" value="' + esc((p.address || {}).country || (p.address ? '' : 'South Africa')) + '" autocomplete="country-name"></label></div></fieldset>' +
+          (function (a) {
+            var c = a.country ? Countries.find(a.country) : Countries.church(S.settings());
+            return '<label class="field"><span id="pf-postcode-l">' + T(c ? c.postcodeLabel : 'Postal code') + '</span><input id="pf-postcode" value="' + esc(a.postcode || '') + '" autocomplete="postal-code"></label></div>' +
+              '<div class="two"><label class="field"><span id="pf-region-l">' + T(c ? c.regionLabel : 'Province, state or region') + '</span><span id="pf-region-w">' + regionControl(c, a.province || '') + '</span></label>' +
+              '<label class="field">' + T('Country') + countrySelect(a.country || '') + '</label></div></fieldset>';
+          })(p.address || {}) +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
       (admin ? staffFields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
@@ -1074,6 +1098,7 @@
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
+    wireCountry();
     var pc = document.getElementById('pf-cat'), pcf = document.getElementById('pf-partner-f');
     if (pc && pcf) pc.addEventListener('change', function () { pcf.hidden = pc.value !== 'Church Partner'; });
     var lt = document.getElementById('pf-late'), ltf = document.getElementById('pf-late-f'), mar = document.getElementById('pf-marital');
@@ -1384,7 +1409,7 @@
         if (g('pf-gender') !== null) { if (g('pf-gender')) p.gender = g('pf-gender'); else delete p.gender; }
         if (g('pf-middle') !== null) { if (g('pf-middle')) p.middleName = g('pf-middle'); else delete p.middleName; }
         if (g('pf-street') !== null) {
-          var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') };
+          var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') === '__other' ? g('pf-country-o') : g('pf-country') };
           if (ad.street || ad.street2 || ad.city || ad.postcode) p.address = ad; else delete p.address;
         }
         if (g('pf-psince') !== null) {

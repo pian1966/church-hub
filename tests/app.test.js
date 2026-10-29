@@ -268,6 +268,14 @@ function serve() {
   await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-middle', 'Anne'); await s.page.fill('#pf-street', '12 Main Road'); await s.page.fill('#pf-city', 'Howick'); await s.page.fill('#pf-postcode', '3290'); check(JSON.stringify(await s.page.$$eval('#pf-province option', o => o.slice(1).map(x => x.value))) === JSON.stringify(['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape']), 'Province is a dropdown of South Africa’s nine provinces'); await s.page.selectOption('#pf-province', 'KwaZulu-Natal');
   await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   check(docs['details/p15'].middleName === 'Anne' && docs['details/p15'].address.city === 'Howick' && tt.includes('12 Main Road') && tt.includes('Howick 3290') && !tt.includes('South Africa') && !JSON.stringify(docs['people/p15']).includes('Main Road'), 'middle name and home address saved with the private details and shown');
+  await s.page.click('[data-act="people:edit"]');
+  check(await s.page.inputValue('#pf-country') === 'South Africa' && (await s.page.textContent('#pf-region-l')) === 'Province', 'the address is in South Africa, with its provinces');
+  await s.page.selectOption('#pf-country', 'United States');
+  check((await s.page.textContent('#pf-region-l')) === 'State' && (await s.page.textContent('#pf-postcode-l')) === 'ZIP code' && (await s.page.$$eval('#pf-province option', o => o.length)) === 52, 'choosing another country gives its states and wording (State, ZIP code)');
+  await s.page.selectOption('#pf-province', 'Texas'); await s.page.selectOption('#pf-country', 'United Kingdom');
+  check(await s.page.$eval('#pf-province', e => e.tagName) === 'INPUT' && (await s.page.textContent('#pf-region-l')) === 'County', 'a country without a list gets a box to type the county in');
+  await s.page.fill('#pf-province', 'Kent'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p15'].address.country === 'United Kingdom' && docs['details/p15'].address.province === 'Kent' && tt.includes('United Kingdom') && tt.includes('Kent'), 'an address in another country is saved and shown with its country');
   await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p15'))); p.partnerUpdated = '2026'; Store.put('people', p); }); await s.settle();
   await s.go('people'); await s.go('people/p/p15'); const yrT = await s.text(); check(yrT.includes('Partnership last updated 2026'), 'a renewal year from Elvanto shows as the year: ' + (yrT.match(/Accepted.{0,80}/) || [yrT.slice(yrT.indexOf('Gender'), yrT.indexOf('Gender') + 200)])[0]);
   await s.page.click('[data-act="people:edit"]'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
@@ -512,6 +520,10 @@ function serve() {
   await s.page.click('.who[data-role="pastor"] summary');
   const shown = await s.page.textContent('.who[data-role="pastor"] .who-list');
   check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
+  check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
+  await s.page.selectOption('#st-country', 'KE'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
+  check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
+  await s.page.selectOption('#st-country', 'ZA'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'ZA', null, { timeout: 5000 }).catch(() => {}); await s.settle();
   t = await s.text(); check(t.includes('Services and venues') && t.includes('8am') && t.includes('10am') && t.includes('5pm'), 'Settings lists the regular services (8am, 10am, 5pm to start with)');
   await s.page.fill('#sl-time', '09:30'); await s.page.fill('#sl-label', '9:30am'); await s.page.fill('#sl-venue', 'Hilton hall'); await s.page.click('[data-act="settings:addslot"]'); await s.settle(); docs = await s.docsNow();
   const slotsNow = docs['settings/church'].serviceSlots || [];

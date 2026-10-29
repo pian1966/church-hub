@@ -35,7 +35,11 @@
     var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
     var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
     return '<div class="page-head"><div><h1>Settings</h1><p class="lead">Church details, which apps are switched on, who can see what, and service times.</p></div></div><div class="grid2">' +
-      '<section class="panel"><h2>Church</h2><label class="field req">Church name<input id="st-name" value="' + esc(st.churchName) + '"></label><button class="btn small" data-act="settings:name">Save</button></section>' +
+      '<section class="panel"><h2>Church</h2><label class="field req">Church name<input id="st-name" value="' + esc(st.churchName) + '"></label>' +
+        '<label class="field req">Country<select id="st-country">' + Countries.grouped().map(function (g) {
+          return '<optgroup label="' + esc(g.continent) + '">' + g.countries.map(function (x) { return '<option value="' + x.code + '"' + (x.code === Countries.church(st).code ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</optgroup>';
+        }).join('') + '</select><small>Sets the usual country for addresses (with its provinces, states or counties) and which privacy law the Privacy pages follow.</small></label>' +
+        '<button class="btn small" data-act="settings:name">Save</button></section>' +
       '<section class="panel"><h2>Apps</h2><p class="hint" style="margin-top:0">Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.</p>' + MODS.map(function (m) {
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(m[1]) + '</b><br><span class="muted small">' + esc(m[2]) + '</span></span></label>';
       }).join('') + '<p class="hint">More apps (groups, check-in, messages, calendar) arrive in later phases.</p></section>' +
@@ -59,7 +63,14 @@
       });
     },
     actions: {
-      name: function () { var n = document.getElementById('st-name').value.trim(); if (n) { S.setSettings({ churchName: n }, 'Renamed the church'); H.render(); H.toast('Saved'); } },
+      name: function () {
+        var st = S.settings(), n = document.getElementById('st-name').value.trim(), c = document.getElementById('st-country').value, say = [];
+        if (!n) { H.toast('Give the church a name', true); return; }
+        if (n !== st.churchName) say.push('Renamed the church');
+        if (c !== Countries.church(st).code) say.push('Country: ' + Countries.find(c).name);
+        if (say.length) S.setSettings({ churchName: n, country: c }, say.join('; '));
+        H.render(); H.toast('Saved');
+      },
       addslot: function () {
         var sl = Serving.slots(S.settings()), time = document.getElementById('sl-time').value, label = document.getElementById('sl-label').value.trim(), venue = document.getElementById('sl-venue').value.trim(), day = +document.getElementById('sl-day').value;
         if (!time || !label) { H.toast('Give the service a time and a name', true); return; }

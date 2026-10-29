@@ -361,6 +361,8 @@ function serve() {
   await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].action === 'Viewed collection restrictions for Ravi Naidoo'), 'viewing a collection restriction is logged');
   await s.go('people/p/p16'); await s.page.click('[data-act="people:link"][data-child="p16"]');
+  await s.page.fill('#modal .find-in', 'elsa van');
+  check(await s.page.$$eval('#gl-who option', o => o.filter(x => x.value && !x.value.startsWith('__')).map(x => x.value).join()) === 'p24' && await s.page.inputValue('#gl-who') === 'p24', 'long lists of people narrow as you type part of a name (and pick the match)');
   await s.page.selectOption('#gl-who', 'p24'); await s.page.selectOption('#gl-rel', 'Step-parent');
   check(!(await s.page.isChecked('#gl-consent')) && await s.page.isChecked('#gl-collect'), 'a step-parent can collect but can’t give consent by default');
   await s.page.click('[data-act="people:linksave"]'); await s.settle();
@@ -634,9 +636,11 @@ function serve() {
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('care');
   await s.page.fill('#cg-new', 'Hilton Tuesday'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();
   const cgId = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Hilton Tuesday').split('/')[1];
-  await s.page.selectOption('.cg-add[data-g="' + cgId + '"]', 'p14'); await s.page.click('[data-act="care:add"][data-g="' + cgId + '"]'); await s.settle();
+  await s.page.fill('.cg-q[data-for="g-' + cgId + '"]', 'tim jac');
+  check(await s.page.$$eval('.cg-hits .cg-pick', b => b.length === 1 && b[0].dataset.id === 'p14'), 'Care groups: typing part of a name (“tim jac”) finds the person to add');
+  await s.page.click('.cg-pick[data-id="p14"]'); await s.settle();
   await s.page.click('[data-act="care:lead"][data-id="p14"]'); await s.settle();
-  await s.page.selectOption('.cg-add[data-g="' + cgId + '"]', 'p15'); await s.page.click('[data-act="care:add"][data-g="' + cgId + '"]'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
+  await s.page.fill('.cg-q[data-for="g-' + cgId + '"]', 'clare'); await s.page.press('.cg-q[data-for="g-' + cgId + '"]', 'Enter'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
   check(docs['careGroups/' + cgId].memberIds.join() === 'p14,p15' && docs['careGroups/' + cgId].leaderIds.join() === 'p14', 'an Administrator sets up a care group with a carer and members');
   const card15 = docs['careGroups/' + cgId + '/share/p15'];
   check(card15 && card15.firstName === 'Clare' && card15.ok === false && !card15.mobile && !card15.email, 'without “Care group” consent the group sees only the name');
@@ -656,9 +660,13 @@ function serve() {
   check(t.includes('Merrivale') && t.includes('Clare') && t.includes('082 000 1555') && t.includes('14 Jul') && !t.includes('Secret'), 'a member sees their care group: phone, email and birthday of those who agreed – not other groups');
   await s.page.waitForTimeout(1800); docs = await s.docsNow();
   check(docs['careGroups/cgA/share/p14'] && docs['careGroups/cgA/share/p14'].ok === true && docs['careGroups/cgA/share/p14'].mobile, 'after signing in, their own card is brought up to date (with their consent)');
-  await s.page.click('[data-act="care:mineadd"]'); const addable = await s.page.$$eval('#cg-who option', o => o.map(x => x.value).filter(Boolean));
-  check(addable.length > 0 && !addable.includes('p15'), 'a carer can add people from the church directory');
-  await s.page.selectOption('#cg-who', addable[0]); await s.page.click('[data-act="care:mineaddsave"]'); await s.settle(); docs = await s.docsNow();
+  await s.page.click('[data-act="care:mineadd"]');
+  const cand = await s.page.evaluate(() => { const g = Store.get('careGroups', 'cgA'); const p = Store.list('people').find(x => x.inDirectory && x.familyRole !== 'child' && !g.memberIds.includes(x.id)); return p ? { id: p.id, first: p.firstName } : null; });
+  await s.page.fill('.cg-q[data-for="mine"]', cand ? cand.first : 'zzz');
+  const addable = await s.page.$$eval('.cg-hits[data-for="mine"] .cg-pick', b => b.map(x => x.dataset.id));
+  check(!!cand && addable.includes(cand.id) && !addable.includes('p15'), 'a carer can find people from the church directory by typing part of a name');
+  await s.page.click('.cg-pick[data-id="' + cand.id + '"]'); await s.settle(); docs = await s.docsNow();
+  addable[0] = cand.id;
   check(docs['careGroups/cgA'].memberIds.includes(addable[0]), '…and they are added');
   for (let i = 0; i < 4 && (await s.docsNow())['careGroups/cgA'].memberIds.includes('p15'); i++) { await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.settle(); }   // click, then click again to confirm
   docs = await s.docsNow();

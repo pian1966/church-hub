@@ -105,6 +105,30 @@
     return ' <span class="tag">' + (Care.isLeader(g, p.id) ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>';
   }
 
+  /* ---------- finding someone to add: type part of a name ("dar ben" finds Darren Bennett) ---------- */
+  var finders = {};
+  function finder(key, people, act, data, note, placeholder) {
+    finders[key] = { people: people, act: act, data: data || {}, note: note || function () { return ''; } };
+    return '<div class="cg-find"><input class="cg-q" data-for="' + esc(key) + '" placeholder="' + esc(placeholder) + '" autocomplete="off" aria-label="' + esc(placeholder) + '">' +
+      '<div class="cg-hits list" data-for="' + esc(key) + '" aria-live="polite"></div></div>';
+  }
+  function showHits(inp) {
+    var f = finders[inp.dataset.for], box = document.querySelector('.cg-hits[data-for="' + inp.dataset.for + '"]'); if (!f || !box) return;
+    var q = inp.value.trim(); if (!q) { box.innerHTML = ''; return; }
+    var hits = f.people.filter(function (p) { return H.matches(H.name(p) + ' ' + (p.firstName || '') + ' ' + (p.preferredName || '') + ' ' + (p.lastName || ''), q); });
+    var attrs = Object.keys(f.data).map(function (k) { return ' data-' + k + '="' + esc(f.data[k]) + '"'; }).join('');
+    box.innerHTML = hits.length ? hits.slice(0, 8).map(function (p) {
+      return '<button type="button" class="item cg-pick" data-act="' + f.act + '" data-id="' + esc(p.id) + '"' + attrs + '>' + H.avatar(p, 28) + '<span class="grow"><b>' + esc(H.name(p)) + '</b>' + (f.note(p) ? '<small>' + esc(f.note(p)) + '</small>' : '') + '</span>' + H.icon(H.ICON.plus, 16) + '</button>';
+    }).join('') + (hits.length > 8 ? '<p class="hint" style="margin:4px 0 0">' + T('{n} more – type more of the name', { n: hits.length - 8 }) + '</p>' : '') : '<p class="muted small" style="margin:6px 0 0">' + T('No one matches') + '</p>';
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', function (ev) { if (ev.target.classList && ev.target.classList.contains('cg-q')) showHits(ev.target); });
+    document.addEventListener('keydown', function (ev) {   // Enter adds the first match
+      if (ev.key !== 'Enter' || !ev.target.classList || !ev.target.classList.contains('cg-q')) return;
+      ev.preventDefault(); var b = document.querySelector('.cg-hits[data-for="' + ev.target.dataset.for + '"] .cg-pick'); if (b) b.click();
+    });
+  }
+
   /* ---------- the Care groups page (Administrators and Pastors) ---------- */
   function adults(exclude) { return S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && p.firstName !== 'Deleted' && !p.mergedInto && exclude.indexOf(p.id) < 0; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); }); }
   function render() {
@@ -126,9 +150,7 @@
               '<button class="btn small" data-act="care:lead" data-g="' + g.id + '" data-id="' + p.id + '">' + (isL ? 'Not a carer' : 'Make carer') + '</button>' +
               '<button class="icon-btn ghost" data-act="care:out" data-g="' + g.id + '" data-id="' + p.id + '" aria-label="Take ' + esc(H.name(p)) + ' out" title="Take out of the group">' + H.icon(H.ICON.x, 16) + '</button></div>';
           }).join('') + '</div>' : '<p class="muted">No one yet.</p>') +
-          '<div class="row" style="gap:8px;margin-top:10px"><select class="cg-add grow" data-g="' + g.id + '" aria-label="Add someone to ' + esc(g.name) + '"><option value="">Add someone…</option>' +
-            adults(g.memberIds || []).map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + (inAny[p.id] ? ' (now in ' + esc(inAny[p.id]) + ')' : '') + '</option>'; }).join('') + '</select>' +
-            '<button class="btn small" data-act="care:add" data-g="' + g.id + '">Add</button></div></section>';
+          '<div style="margin-top:10px">' + finder('g-' + g.id, adults(g.memberIds || []), 'care:add', { g: g.id }, function (p) { return inAny[p.id] ? 'Now in ' + inAny[p.id] + ' – adding moves them' : ''; }, 'Add someone: type part of their name') + '</div></section>';
       }).join('') + '</div>' : '<p class="empty">No care groups yet.</p>') +
       (gs.length ? '<p class="hint">Members’ cards update when their details or consent change. <button class="link" data-act="care:syncall">Update everyone’s cards now</button></p>' : '');
   }
@@ -160,8 +182,9 @@
         S.remove('careGroups', g.id, 'Deleted the care group ' + g.name + ' (' + (g.memberIds || []).length + ' people)'); H.render(); H.toast('Care group deleted');
       },
       add: function (el) {
-        var sel = document.querySelector('.cg-add[data-g="' + el.dataset.g + '"]'), p = sel && S.get('people', sel.value); if (!p) { H.toast('Choose someone to add', true); return; }
-        place(p, el.dataset.g, false); H.render(); H.toast('Added to the group');
+        var p = S.get('people', el.dataset.id); if (!p) { H.toast('Choose someone to add', true); return; }
+        place(p, el.dataset.g, false); H.render(); H.toast(H.name(p) + ' added to the group');
+        var again = document.querySelector('.cg-q[data-for="g-' + el.dataset.g + '"]'); if (again) again.focus();   // ready for the next name
       },
       lead: function (el) { var p = S.get('people', el.dataset.id), g = S.get('careGroups', el.dataset.g); if (p && g) { place(p, g.id, !Care.isLeader(g, p.id)); H.render(); } },
       out: function (el) { var p = S.get('people', el.dataset.id) || { id: el.dataset.id, firstName: 'Someone', lastName: '' }; place(p, '', false); H.render(); H.toast('Taken out of the group'); },
@@ -174,12 +197,13 @@
         var u = me(), g = Care.groupOf(S.list('careGroups'), u.id); if (!g || !Care.isLeader(g, u.id)) return;
         var choices = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (g.memberIds || []).indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); })
           .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
-        H.modal(H.dialogHead(T('Add someone to the group'), g.name) + '<div class="dlg-body">' + (choices.length ? '<label class="field req">' + T('Who') + '<select id="cg-who"><option value="">' + T('Choose…') + '</option>' +
-          choices.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + '</option>'; }).join('') + '</select><small>' + T('People in the church directory.') + '</small></label>' : '<p class="muted">' + T('No one else in the church directory to add.') + '</p>') +
-          '<p id="cg-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' + (choices.length ? '<button class="btn primary" data-act="care:mineaddsave">' + T('Add') + '</button>' : '') + '</div>', T('Add someone to the group'));
+        H.modal(H.dialogHead(T('Add someone to the group'), g.name) + '<div class="dlg-body">' + (choices.length ? '<label class="field" style="margin-bottom:6px">' + T('Who') + '</label>' +
+          finder('mine', choices, 'care:mineaddsave', {}, null, T('Type part of their name')) + '<p class="hint">' + T('People in the church directory.') + '</p>' : '<p class="muted">' + T('No one else in the church directory to add.') + '</p>') +
+          '<p id="cg-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button></div>', T('Add someone to the group'));
+        var q = document.querySelector('.cg-q[data-for="mine"]'); if (q) q.focus();
       },
-      mineaddsave: function () {
-        var u = me(), g = Care.groupOf(S.list('careGroups'), u.id), id = document.getElementById('cg-who').value, p = S.get('people', id);
+      mineaddsave: function (el) {
+        var u = me(), g = Care.groupOf(S.list('careGroups'), u.id), id = el.dataset.id, p = S.get('people', id);
         if (!p) { var e = document.getElementById('cg-err'); e.textContent = T('Choose someone to add.'); e.hidden = false; return; }
         var x = JSON.parse(JSON.stringify(g)); x.memberIds.push(p.id); x.names = x.names || {}; x.names[p.id] = Care.nameOf(p);
         S.put('careGroups', x, 'Carer added ' + H.name(p) + ' to the care group ' + g.name); H.closeModal(); H.render(); H.toast(T('Added to the group'));

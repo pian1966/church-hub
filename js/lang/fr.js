@@ -433,6 +433,10 @@ I18n.add('fr', {
     "Added to the group": "Ajouté au groupe",
     "Taken out of the group": "Retiré du groupe",
     "Sign out of Church Hub?": "Se déconnecter de Church Hub ?",
-    "You will need to sign in again next time.": "Vous devrez vous reconnecter la prochaine fois."
+    "You will need to sign in again next time.": "Vous devrez vous reconnecter la prochaine fois.",
+    "Type part of a name to narrow the list": "Tapez une partie d’un nom pour réduire la liste",
+    "{n} more – type more of the name": "{n} de plus – tapez davantage du nom",
+    "No one matches": "Personne ne correspond",
+    "Type part of their name": "Tapez une partie de son nom"
   }
 });

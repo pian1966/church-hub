@@ -433,6 +433,10 @@ I18n.add('yo', {
     "Added to the group": "A ti fi kún ẹgbẹ́",
     "Taken out of the group": "A ti yọ kúrò nínú ẹgbẹ́",
     "Sign out of Church Hub?": "Ṣé o fẹ́ jáde kúrò nínú Church Hub?",
-    "You will need to sign in again next time.": "Ìwọ yóò ní láti wọlé lẹ́ẹ̀kan sí i nígbà míì."
+    "You will need to sign in again next time.": "Ìwọ yóò ní láti wọlé lẹ́ẹ̀kan sí i nígbà míì.",
+    "Type part of a name to narrow the list": "Kọ apá kan orúkọ láti dín àkójọ kù",
+    "{n} more – type more of the name": "{n} sí i – kọ púpọ̀ sí i nínú orúkọ náà",
+    "No one matches": "Kò sí ẹni tí ó bá a mu",
+    "Type part of their name": "Kọ apá kan orúkọ wọn"
   }
 });

@@ -118,7 +118,7 @@
       ret: function () { S.setSettings({ retentionMonths: +document.getElementById('pv-ret').value }, 'Changed the retention period'); H.toast('Saved'); H.render(); },
       newreq: function () {
         var people = S.find('people', function (p) { return p.firstName !== 'Deleted'; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
-        H.modal(H.dialogHead('Log a request') + '<div class="dlg-body"><label class="field req">From<select id="rq-p">' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + '</option>'; }).join('') + '</select></label>' +
+        H.modal(H.dialogHead('Log a request') + '<div class="dlg-body"><label class="field req">From<select class="findable" id="rq-p">' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + '</option>'; }).join('') + '</select></label>' +
           '<label class="field req">They asked for<select id="rq-k">' + KINDS.map(function (k) { return '<option>' + esc(k) + '</option>'; }).join('') + '</select></label><label class="field req">Received<input type="date" id="rq-d" value="' + H.today() + '"></label><label class="field">Notes<input id="rq-n"></label></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="privacy:savereq">Save</button></div>', 'Log a request');
       },

@@ -250,7 +250,7 @@ var Hub = (function () {
     var keyOf = function (d) { var sm = d.querySelector('summary'); return d.id || (sm ? sm.textContent.trim() : ''); };
     var wasOpen = [].map.call(root.querySelectorAll('details[open]'), keyOf).filter(Boolean), samePage = root.dataset.page === location.hash;
     root.innerHTML = shell(mod, body);
-    root.dataset.page = location.hash; guardBack();
+    root.dataset.page = location.hash; guardBack(); findables(root);
     if (samePage && wasOpen.length) root.querySelectorAll('details').forEach(function (d) { if (wasOpen.indexOf(keyOf(d)) >= 0) d.open = true; });   // a refresh keeps unfolded sections open
     ourWords(root);
     wirePrompts();
@@ -390,12 +390,35 @@ var Hub = (function () {
     if (k !== wordKey) { wordKey = k; wordFn = I18n.get() === 'en' && st && st.wording ? Wording.changer(st) : null; }
     return wordFn;
   }
+  /** Long lists of people or households (select.findable, 10 or more): a box above the list narrows it as you type
+   *  part of a name ("dar ben"). The list keeps its own value, so saving works as before. */
+  function findables(el) {
+    if (!el || !el.querySelectorAll) return;
+    el.querySelectorAll('select.findable').forEach(function (sel) {
+      if (sel.dataset.fw || sel.options.length < 10) return;
+      sel.dataset.fw = '1';
+      var all = [].map.call(sel.options, function (o) { return { v: o.value, t: o.text, keep: !o.value || /^__/.test(o.value) }; });
+      var inp = document.createElement('input');
+      inp.type = 'search'; inp.className = 'find-in'; inp.autocomplete = 'off';
+      inp.placeholder = T('Type part of a name to narrow the list'); inp.setAttribute('aria-label', inp.placeholder);
+      sel.parentNode.insertBefore(inp, sel);
+      inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') ev.preventDefault(); });
+      inp.addEventListener('input', function () {
+        var q = inp.value.trim(), cur = sel.value;
+        var shown = all.filter(function (o) { return o.keep || !q || matches(o.t, q); });
+        sel.innerHTML = shown.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.t) + '</option>'; }).join('');
+        var hit = q ? shown.filter(function (o) { return !o.keep; })[0] : null;
+        sel.value = hit ? hit.v : shown.some(function (o) { return o.v === cur; }) ? cur : (shown[0] || {}).v || '';
+        sel.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+    });
+  }
   function ourWords(el) { var f = words(); if (f && el) Wording.apply(el, f); }
   function modal(html, label, wide) {
     lastFocus = document.activeElement;
     var m = document.getElementById('modal');
     m.innerHTML = '<div class="overlay" data-act="hub:overlay"><div class="dialog' + (wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' + html + '</div></div>';
-    ourWords(m);
+    ourWords(m); findables(m);
     var body = m.querySelector('.dlg-body');
     if (body && body.querySelector('.field.req')) body.insertAdjacentHTML('afterbegin', reqKey());
     markRequired();

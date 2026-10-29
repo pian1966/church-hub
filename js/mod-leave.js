@@ -245,7 +245,7 @@
     if (!people.length) { H.toast(T('Leave is for staff members'), true); return; }
     var who = people.filter(function (s) { return s.id === (whoId || me.id); })[0] || people[0];
     H.modal(H.dialogHead(admin && who.id !== me.id ? 'Book leave' : T('Request leave'), T('Only your working days are counted.')) + '<form class="dlg-body" id="lf" novalidate>' +
-      (people.length > 1 ? '<label class="field">For<select id="lf-who">' + people.map(function (s) { return '<option value="' + s.id + '"' + (s.id === who.id ? ' selected' : '') + '>' + esc(s.name) + (s.id === me.id ? ' (you)' : '') + '</option>'; }).join('') + '</select></label>' : '<input type="hidden" id="lf-who" value="' + who.id + '">') +
+      (people.length > 1 ? '<label class="field">For<select class="findable" id="lf-who">' + people.map(function (s) { return '<option value="' + s.id + '"' + (s.id === who.id ? ' selected' : '') + '>' + esc(s.name) + (s.id === me.id ? ' (you)' : '') + '</option>'; }).join('') + '</select></label>' : '<input type="hidden" id="lf-who" value="' + who.id + '">') +
       '<label class="field req">' + T('Type of leave') + '<select id="lf-type"></select></label><div id="lf-bal"></div>' +
       '<div class="two"><label class="field req">' + T('First day') + '<input type="date" id="lf-start"></label><label class="field req">' + T('Last day') + '<input type="date" id="lf-end"></label></div>' +
       '<label class="field' + (admin ? '' : ' req') + '">' + T('Note for the Administrator') + '<textarea id="lf-note" rows="2" placeholder="' + T('What is the leave for?') + '"></textarea></label>' +

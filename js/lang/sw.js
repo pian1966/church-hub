@@ -433,6 +433,10 @@ I18n.add('sw', {
     "Added to the group": "Ameongezwa kwenye kikundi",
     "Taken out of the group": "Ametolewa kwenye kikundi",
     "Sign out of Church Hub?": "Utoke kwenye Church Hub?",
-    "You will need to sign in again next time.": "Utahitaji kuingia tena wakati ujao."
+    "You will need to sign in again next time.": "Utahitaji kuingia tena wakati ujao.",
+    "Type part of a name to narrow the list": "Andika sehemu ya jina ili kupunguza orodha",
+    "{n} more – type more of the name": "Wengine {n} – andika zaidi ya jina",
+    "No one matches": "Hakuna anayelingana",
+    "Type part of their name": "Andika sehemu ya jina lake"
   }
 });

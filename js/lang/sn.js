@@ -433,6 +433,10 @@ I18n.add('sn', {
     "Added to the group": "Awedzerwa muboka",
     "Taken out of the group": "Abviswa muboka",
     "Sign out of Church Hub?": "Kubuda muChurch Hub?",
-    "You will need to sign in again next time.": "Uchafanira kupinda zvakare nguva inotevera."
+    "You will need to sign in again next time.": "Uchafanira kupinda zvakare nguva inotevera.",
+    "Type part of a name to narrow the list": "Nyora chikamu chezita kuti udzikise rondedzero",
+    "{n} more – type more of the name": "Vamwe {n} – nyora zvimwe zvezita",
+    "No one matches": "Hapana anoenderana",
+    "Type part of their name": "Nyora chikamu chezita rake"
   }
 });

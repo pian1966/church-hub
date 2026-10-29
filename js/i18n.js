@@ -25,7 +25,7 @@ var I18n = (function () {
     ['es', 'Español', 'Spanish', ['Europe', 'Americas']], ['de', 'Deutsch', 'German', ['Europe']], ['nl', 'Nederlands', 'Dutch', ['Europe']],
     ['it', 'Italiano', 'Italian', ['Europe']], ['pl', 'Polski', 'Polish', ['Europe']]
   ];
-  var PACK_VERSION = 2, loading = {}, onLoad = [];
+  var PACK_VERSION = 3, loading = {}, onLoad = [];
   var DATES = {
     en: { mon: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
     af: { mon: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'], dow: ['So', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Sa'] },
@@ -481,7 +481,11 @@ var I18n = (function () {
     ['Added to the group', 'By die groep gevoeg', 'Wengezwe eqenjini', 'Wongezwe eqeleni'],
     ['Taken out of the group', 'Uit die groep gehaal', 'Ukhishwe eqenjini', 'Ukhutshiwe eqeleni'],
     ['Sign out of Church Hub?', 'Meld af van Church Hub?', 'Uphume ku-Church Hub?', 'Uphuma kwi-Church Hub?'],
-    ['You will need to sign in again next time.', 'Jy sal volgende keer weer moet aanmeld.', 'Kuzodingeka ungene futhi ngokuzayo.', 'Kuya kufuneka ungene kwakhona kwixesha elizayo.']
+    ['You will need to sign in again next time.', 'Jy sal volgende keer weer moet aanmeld.', 'Kuzodingeka ungene futhi ngokuzayo.', 'Kuya kufuneka ungene kwakhona kwixesha elizayo.'],
+    ['Type part of a name to narrow the list', 'Tik deel van ’n naam om die lys te verkort', 'Bhala ingxenye yegama ukuze unciphise uhlu', 'Bhala inxalenye yegama ukuze unciphise uluhlu'],
+    ['{n} more – type more of the name', 'Nog {n} – tik meer van die naam', 'Abanye abangu-{n} – bhala okwengeziwe kwegama', 'Abanye abangu-{n} – bhala ngakumbi igama'],
+    ['No one matches', 'Niemand pas nie', 'Akekho ofanayo', 'Akukho mntu ufanayo'],
+    ['Type part of their name', 'Tik deel van hul naam', 'Bhala ingxenye yegama labo', 'Bhala inxalenye yegama labo']
   ];
 
   var D = { af: {}, zu: {}, xh: {} };

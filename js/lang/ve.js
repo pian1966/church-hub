@@ -433,6 +433,10 @@ I18n.add('ve', {
     "Added to the group": "O engedzwa kha tshigwada",
     "Taken out of the group": "O bviswa kha tshigwada",
     "Sign out of Church Hub?": "Ni khou bva kha Church Hub?",
-    "You will need to sign in again next time.": "Ni ḓo fanela u dzhena hafhu tshifhinga tshi ḓaho."
+    "You will need to sign in again next time.": "Ni ḓo fanela u dzhena hafhu tshifhinga tshi ḓaho.",
+    "Type part of a name to narrow the list": "Ṅwalani tshipiḓa tsha dzina u fhungudza mutevhe",
+    "{n} more – type more of the name": "Vhaṅwe vha {n} – ṅwalani zwinzhi zwa dzina",
+    "No one matches": "A hu na ane a tshimbilelana",
+    "Type part of their name": "Ṅwalani tshipiḓa tsha dzina ḽawe"
   }
 });

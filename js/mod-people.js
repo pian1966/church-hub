@@ -593,7 +593,7 @@
           '<div class="list" style="margin:10px 0">' + card(a, x.bothDied ? (a.maritalStatus || '') + ' · ' + died(a) : x.stillMarried ? 'Still recorded as Married – Yes changes this to Widowed' : 'Widowed') + card(b, died(b)) + '</div>' +
           '<div class="btns"><button class="btn small primary" data-act="people:lateyes" data-a="' + x.a + '" data-b="' + x.b + '">' + T('Yes, they were married') + '</button><button class="btn small" data-act="people:lateno" data-a="' + x.a + '" data-b="' + x.b + '">' + T('Not a couple') + '</button></div></section>';
       }).join('') +
-      (open.length ? '<section class="panel" style="margin-top:16px"><h2>Widowed, no match found (' + open.length + ')</h2><p class="hint" style="margin-top:0">' + T('Open each one and use') + ' <b>' + T('Edit details → Late spouse') + '</b> ' + T('to choose someone, or type the name of someone who isn’t in Church Hub.') + '</p><div class="list">' +
+      (open.length ? '<section class="panel" style="margin-top:16px"><h2>Widowed, no match found (' + open.length + ')</h2><p class="hint" style="margin-top:0">' + T('Open each one and use {where} to choose someone, or type the name of someone who isn’t in Church Hub.', { where: '<b>' + T('Edit details → Late spouse') + '</b>' }) + '</p><div class="list">' +
         open.sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); }).map(function (p) { return card(p, 'Widowed'); }).join('') + '</div></section>' : '');
   }
 
@@ -967,8 +967,8 @@
   function bulkUndoNote() {
     var u = state.bulkUndo; if (!u) return '';
     var why = Object.keys(u.skipped || {}).map(function (k) { return u.skipped[k] + ' ' + k; });
-    return '<div class="note ok" role="status" style="margin-bottom:12px">' + T('Changed') + ' <b>' + esc(u.label) + '</b> ' + T('to') + ' <b>' + esc(u.value || 'nothing') + '</b> for ' + u.items.length + (u.items.length === 1 ? ' person' : ' people') +
-      (why.length ? ' (left out: ' + esc(why.join(', ')) + ')' : '') + '. <button class="link" data-act="people:bulkundo">' + T('Undo') + '</button></div>';
+    return '<div class="note ok" role="status" style="margin-bottom:12px">' + TN('Changed {field} to {value} for {n} person', 'Changed {field} to {value} for {n} people', u.items.length, { field: '<b>' + esc(u.label) + '</b>', value: '<b>' + esc(u.value || T('nothing')) + '</b>' }) +
+      (why.length ? ' (' + esc(T('left out: {who}', { who: why.join(', ') })) + ')' : '') + '. <button class="link" data-act="people:bulkundo">' + T('Undo') + '</button></div>';
   }
   function bulkDialog() {
     var ids = Object.keys(state.adv.sel || {}), F = bulkFields(), f = F[0];

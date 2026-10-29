@@ -93,7 +93,7 @@ function serve() {
 (async () => {
   const srv = await serve(), BASE = 'http://127.0.0.1:' + srv.address().port + '/index.html';
   const browser = await chromium.launch(); let fails = 0;
-  const check = (ok, msg) => { if (!ok) fails++; console.log((ok ? '  ✓ ' : '  ✗ ') + msg); };
+  const check = (ok, msg) => { if (!ok) { fails++; if (process.env.GITHUB_ACTIONS) console.log('::error title=App test::' + String(msg).replace(/[\r\n]+/g, ' ').slice(0, 300)); } console.log((ok ? '  ✓ ' : '  ✗ ') + msg); };
   const fake = fs.readFileSync(path.join(__dirname, 'fake-firebase.js'), 'utf8');
 
   /* ---------- Demo (no Firebase) ---------- */
@@ -1240,4 +1240,4 @@ function serve() {
   await browser.close(); srv.close();
   console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nLive mode: all checks passed');
   process.exit(fails ? 1 : 0);
-})().catch(e => { console.error(e); process.exit(1); });
+})().catch(e => { console.error(e); if (process.env.GITHUB_ACTIONS) console.log('::error title=App test stopped::' + String(e && e.stack || e).replace(/[\r\n]+/g, ' | ').slice(0, 600)); process.exit(1); });

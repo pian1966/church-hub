@@ -415,6 +415,22 @@ I18n.add('es', {
     "Oceania": "Oceanía",
     "Another country…": "Otro país…",
     "Type the country": "Escribe el país",
-    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Este idioma lo tradujo una computadora y todavía se está revisando. Si algo suena raro, avisa a la oficina de la iglesia."
+    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Este idioma lo tradujo una computadora y todavía se está revisando. Si algo suena raro, avisa a la oficina de la iglesia.",
+    "Care group": "Grupo de cuidado",
+    "Photo, phone, email, address and birthday shared with my care group.": "Foto, teléfono, correo, dirección y cumpleaños compartidos con mi grupo de cuidado.",
+    "My care group": "Mi grupo de cuidado",
+    "People in your care group see your details only if you agreed (under Consent).": "Las personas de tu grupo de cuidado solo ven tus datos si lo aceptaste (en Consentimiento).",
+    "A new member": "Un miembro nuevo",
+    "you": "tú",
+    "Carer": "Responsable",
+    "Details not shared": "Datos no compartidos",
+    "Details appear when they next sign in": "Los datos aparecerán cuando vuelva a entrar",
+    "Take {name} out of the group": "Sacar a {name} del grupo",
+    "Add someone to the group": "Añadir a alguien al grupo",
+    "People in the church directory.": "Personas del directorio de la iglesia.",
+    "No one else in the church directory to add.": "No hay nadie más en el directorio de la iglesia para añadir.",
+    "Choose someone to add.": "Elige a alguien para añadir.",
+    "Added to the group": "Añadido al grupo",
+    "Taken out of the group": "Sacado del grupo"
   }
 });

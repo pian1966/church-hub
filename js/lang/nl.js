@@ -415,6 +415,22 @@ I18n.add('nl', {
     "Oceania": "Oceanië",
     "Another country…": "Ander land…",
     "Type the country": "Typ het land",
-    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Deze taal is door een computer vertaald en wordt nog nagekeken. Als iets vreemd klinkt, laat het dan het kerkelijk bureau weten."
+    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Deze taal is door een computer vertaald en wordt nog nagekeken. Als iets vreemd klinkt, laat het dan het kerkelijk bureau weten.",
+    "Care group": "Kring",
+    "Photo, phone, email, address and birthday shared with my care group.": "Foto, telefoon, e-mail, adres en verjaardag gedeeld met mijn kring.",
+    "My care group": "Mijn kring",
+    "People in your care group see your details only if you agreed (under Consent).": "Mensen in uw kring zien uw gegevens alleen als u daarmee hebt ingestemd (onder Toestemming).",
+    "A new member": "Een nieuw lid",
+    "you": "u",
+    "Carer": "Kringleider",
+    "Details not shared": "Gegevens niet gedeeld",
+    "Details appear when they next sign in": "Gegevens verschijnen als ze zich de volgende keer aanmelden",
+    "Take {name} out of the group": "{name} uit de kring halen",
+    "Add someone to the group": "Iemand aan de kring toevoegen",
+    "People in the church directory.": "Mensen in de gemeentegids.",
+    "No one else in the church directory to add.": "Er is niemand anders in de gemeentegids om toe te voegen.",
+    "Choose someone to add.": "Kies iemand om toe te voegen.",
+    "Added to the group": "Aan de kring toegevoegd",
+    "Taken out of the group": "Uit de kring gehaald"
   }
 });

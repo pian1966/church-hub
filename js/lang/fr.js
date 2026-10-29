@@ -415,6 +415,22 @@ I18n.add('fr', {
     "Oceania": "Océanie",
     "Another country…": "Un autre pays…",
     "Type the country": "Saisissez le pays",
-    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Cette langue a été traduite par ordinateur et est encore en cours de vérification. Si quelque chose semble étrange, merci de le signaler au secrétariat de l’église."
+    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Cette langue a été traduite par ordinateur et est encore en cours de vérification. Si quelque chose semble étrange, merci de le signaler au secrétariat de l’église.",
+    "Care group": "Groupe de maison",
+    "Photo, phone, email, address and birthday shared with my care group.": "Photo, téléphone, e-mail, adresse et anniversaire partagés avec mon groupe de maison.",
+    "My care group": "Mon groupe de maison",
+    "People in your care group see your details only if you agreed (under Consent).": "Les membres de votre groupe de maison ne voient vos informations que si vous l’avez accepté (sous Consentement).",
+    "A new member": "Un nouveau membre",
+    "you": "vous",
+    "Carer": "Responsable",
+    "Details not shared": "Informations non partagées",
+    "Details appear when they next sign in": "Les informations apparaîtront à sa prochaine connexion",
+    "Take {name} out of the group": "Retirer {name} du groupe",
+    "Add someone to the group": "Ajouter quelqu’un au groupe",
+    "People in the church directory.": "Les personnes de l’annuaire de l’église.",
+    "No one else in the church directory to add.": "Personne d’autre dans l’annuaire de l’église à ajouter.",
+    "Choose someone to add.": "Choisissez quelqu’un à ajouter.",
+    "Added to the group": "Ajouté au groupe",
+    "Taken out of the group": "Retiré du groupe"
   }
 });

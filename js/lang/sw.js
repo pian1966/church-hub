@@ -415,6 +415,22 @@ I18n.add('sw', {
     "Oceania": "Oceania",
     "Another country…": "Nchi nyingine…",
     "Type the country": "Andika nchi",
-    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Lugha hii imetafsiriwa na kompyuta na bado inakaguliwa. Kitu kikisomeka vibaya, tafadhali iambie ofisi ya kanisa."
+    "This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.": "Lugha hii imetafsiriwa na kompyuta na bado inakaguliwa. Kitu kikisomeka vibaya, tafadhali iambie ofisi ya kanisa.",
+    "Care group": "Kikundi cha kujaliana",
+    "Photo, phone, email, address and birthday shared with my care group.": "Picha, simu, barua pepe, anwani na siku ya kuzaliwa vinashirikiwa na kikundi changu cha kujaliana.",
+    "My care group": "Kikundi changu cha kujaliana",
+    "People in your care group see your details only if you agreed (under Consent).": "Watu wa kikundi chako cha kujaliana wanaona taarifa zako ukikubali tu (chini ya Ridhaa).",
+    "A new member": "Mshirika mpya",
+    "you": "wewe",
+    "Carer": "Kiongozi",
+    "Details not shared": "Taarifa hazijashirikiwa",
+    "Details appear when they next sign in": "Taarifa zitaonekana watakapoingia tena",
+    "Take {name} out of the group": "Mtoe {name} kwenye kikundi",
+    "Add someone to the group": "Ongeza mtu kwenye kikundi",
+    "People in the church directory.": "Watu walio kwenye orodha ya kanisa.",
+    "No one else in the church directory to add.": "Hakuna mwingine kwenye orodha ya kanisa wa kuongeza.",
+    "Choose someone to add.": "Chagua mtu wa kuongeza.",
+    "Added to the group": "Ameongezwa kwenye kikundi",
+    "Taken out of the group": "Ametolewa kwenye kikundi"
   }
 });

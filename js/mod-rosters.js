@@ -46,7 +46,7 @@
   }
 
   function tabs(active) {
-    var t = manager() ? [['', 'Roster'], ['teams', 'Teams'], ['together', 'Serving together'], ['away', 'Away dates'], ['mine', 'My serving']] : [['mine', T('My serving')], ['together', T('Serving together')], ['away', T('Away dates')]];
+    var t = manager() ? [['', T('Roster')], ['teams', T('Teams')], ['together', T('Serving together')], ['away', T('Away dates')], ['mine', T('My serving')]] : [['mine', T('My serving')], ['together', T('Serving together')], ['away', T('Away dates')]];
     return '<nav class="seg" aria-label="' + T('Rosters') + '" style="margin-bottom:18px">' + t.map(function (x) { return '<a href="#/rosters' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === active ? 'on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + x[1] + '</a>'; }).join('') + '</nav>';
   }
   function head(title, lead, btns) { return '<div class="page-head"><div><h1>' + esc(title) + '</h1><p class="lead">' + lead + '</p></div>' + (btns ? '<div class="btns">' + btns + '</div>' : '') + '</div>'; }
@@ -57,18 +57,18 @@
     var extra = state.preview ? state.preview.assignments : [];
     var all = S.list('assignments').concat(extra), away = awayList();
     var problems = R.check(engineData(), ids);
-    var html = head('Rosters', 'Who is serving at each service. Families and friends who asked to serve together are kept together.',
-      '<button class="btn" data-act="rosters:move" data-d="-' + (narrow() ? 1 : 4) + '" aria-label="Earlier services">‹ Earlier</button><button class="btn" data-act="rosters:move" data-d="' + (narrow() ? 1 : 4) + '" aria-label="Later services">Later ›</button>' +
-      (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + 'Fill the gaps for me</button>')) + tabs('');
+    var html = head(T('Rosters'), T('Who is serving at each service. Families and friends who asked to serve together are kept together.'),
+      '<button class="btn" data-act="rosters:move" data-d="-' + (narrow() ? 1 : 4) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + (narrow() ? 1 : 4) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
+      (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>')) + tabs('');
     if (state.preview) {
       var n = state.preview.assignments.length;
-      html += '<div class="note info"><b>' + n + ' suggestion' + (n === 1 ? '' : 's') + '</b> shown with a dashed border. Families and friends are kept together, people who are away are skipped, and turns are shared fairly. ' +
-        'Hover or tap a suggestion to see why.' + (state.preview.gaps.length ? ' <b>' + state.preview.gaps.length + ' slot(s) still can’t be filled</b> – see below.' : '') +
-        '<div class="btns" style="margin-top:10px"><button class="btn primary small" data-act="rosters:keep">Keep these and ask people</button><button class="btn small" data-act="rosters:discard">Discard</button></div></div>';
+      html += '<div class="note info"><b>' + TN('{n} suggestion', '{n} suggestions', n) + '</b> ' + T('shown with a dashed border. Families and friends are kept together, people who are away are skipped, and turns are shared fairly.') + ' ' +
+        T('Hover or tap a suggestion to see why.') + (state.preview.gaps.length ? ' <b>' + TN('{n} slot still can’t be filled', '{n} slots still can’t be filled', state.preview.gaps.length) + '</b> – ' + T('see below.') : '') +
+        '<div class="btns" style="margin-top:10px"><button class="btn primary small" data-act="rosters:keep">' + T('Keep these and ask people') + '</button><button class="btn small" data-act="rosters:discard">' + T('Discard') + '</button></div></div>';
     }
-    if (problems.length) html += '<div class="note warn"><b>Please check</b><ul>' + problems.map(function (p) { return '<li>' + esc(p.text) + '</li>'; }).join('') + '</ul></div>';
-    html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>Accepted</span><span><i style="background:var(--warn-soft)"></i>Waiting for a reply</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>Suggestion</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>Gap</span><span><i style="background:#F2EEEA"></i>Said no</span></div>';
-    html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">Position</th>' + svcs.map(function (s) { return '<th scope="col">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span></th>'; }).join('') + '</tr></thead><tbody>';
+    if (problems.length) html += '<div class="note warn"><b>' + T('Please check') + '</b><ul>' + problems.map(function (p) { return '<li>' + esc(p.text) + '</li>'; }).join('') + '</ul></div>';
+    html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
+    html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span></th>'; }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
     orderedPositions().forEach(function (p) {
       if (p.teamId !== lastTeam) { lastTeam = p.teamId; html += '<tr class="team-row"><th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th></tr>'; }
@@ -79,19 +79,19 @@
           var who = person(a.personId), isAway = R.awayReason({ away: away }, a.personId, s.date);
           var cls = a.source === 'auto' && extra.indexOf(a) >= 0 ? 'auto' : isAway && a.status !== 'declined' ? 'away' : a.status;
           var tg = R.groupsOf(engineData(), a.personId, 'together').length ? H.icon(H.ICON.link, 14) : '';
-          return '<button class="chip ' + cls + '" data-act="rosters:slot" data-id="' + esc(a.id) + '" title="' + esc(a.reason || (isAway ? isAway : a.status)) + '">' + esc(H.name(who)) + '<span class="tg">' + tg + '</span></button>';
+          return '<button class="chip ' + cls + '" data-act="rosters:slot" data-id="' + esc(a.id) + '" title="' + esc(a.reason || (isAway ? isAway : T({ accepted: 'Accepted', pending: 'Waiting for a reply', declined: 'Said no' }[a.status] || a.status))) + '">' + esc(H.name(who)) + '<span class="tg">' + tg + '</span></button>';
         }).join('');
-        if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">Not at ' + esc(slotName(Serving.slotOf(s))) + '</span></td>';
-        for (var i = live; i < p.needed && runsAt(p, s); i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ Add someone</button>';
+        if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">' + esc(T('Not at {time}', { time: slotName(Serving.slotOf(s)) })) + '</span></td>';
+        for (var i = live; i < p.needed && runsAt(p, s); i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ ' + T('Add someone') + '</button>';
         return '<td><div class="slot">' + cells + '</div></td>';
       }).join('') + '</tr>';
     });
     html += '</tbody></table></div>';
     if (state.preview && state.preview.gaps.length) {
-      html += '<section class="panel" style="margin-top:16px"><h2>Why some slots are still empty</h2>' + state.preview.gaps.map(function (g) {
+      html += '<section class="panel" style="margin-top:16px"><h2>' + T('Why some slots are still empty') + '</h2>' + state.preview.gaps.map(function (g) {
         var s = S.get('services', g.serviceId);
-        return '<details style="margin:8px 0"><summary><b>' + esc((pos(g.positionId) || {}).name) + '</b>, ' + esc(H.fmt(s.date)) + ': ' + g.missing + ' more needed</summary><ul class="small muted">' + g.why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></details>';
-      }).join('') + '<p class="hint">Add more people to the team, or ask someone directly with “+ Add someone”.</p></section>';
+        return '<details style="margin:8px 0"><summary><b>' + esc((pos(g.positionId) || {}).name) + '</b>, ' + esc(H.fmt(s.date)) + ': ' + T('{n} more needed', { n: g.missing }) + '</summary><ul class="small muted">' + g.why.map(function (w) { return '<li>' + esc(w) + '</li>'; }).join('') + '</ul></details>';
+      }).join('') + '<p class="hint">' + T('Add more people to the team, or ask someone directly with “+ Add someone”.') + '</p></section>';
     }
     return html;
   }
@@ -102,76 +102,76 @@
     var groups = S.find('groups', function (g) { return g.memberIds.indexOf(a.personId) >= 0; });
     H.modal(H.dialogHead(H.name(p), po.name + ' · ' + H.fmt(s.date, true) + ' ' + s.time) + '<div class="dlg-body">' +
       (a.reason ? '<p class="note info">' + esc(a.reason) + '</p>' : '') +
-      groups.map(function (g) { return '<p class="hint">' + (g.kind === 'together' ? 'Serves together with ' : 'Kept apart from ') + esc(g.memberIds.filter(function (m) { return m !== p.id; }).map(function (m) { return H.name(person(m)); }).join(', ')) + '.</p>'; }).join('') +
-      (isPreview ? '<p class="muted">This is a suggestion. Keep the suggestions to ask them.</p>' : '<p>Status: <b>' + esc({ accepted: 'Accepted', pending: 'Waiting for a reply', declined: 'Said no' }[a.status]) + '</b></p>') + '</div>' +
-      '<div class="dlg-foot">' + (isPreview ? '<button class="btn" data-act="rosters:dropsug" data-id="' + esc(a.id) + '">Remove suggestion</button>' :
-        '<button class="btn" style="margin-right:auto" data-act="rosters:remove" data-id="' + a.id + '">Take off the roster</button>' +
-        (a.status !== 'declined' ? '<button class="btn" data-act="rosters:status" data-id="' + a.id + '" data-s="declined">Mark “can’t make it”</button>' : '') +
-        (a.status !== 'accepted' ? '<button class="btn ok" data-act="rosters:status" data-id="' + a.id + '" data-s="accepted">Mark accepted</button>' : '')) + '</div>', 'Roster slot');
+      groups.map(function (g) { return '<p class="hint">' + esc(T(g.kind === 'together' ? 'Serves together with {names}.' : 'Kept apart from {names}.', { names: g.memberIds.filter(function (m) { return m !== p.id; }).map(function (m) { return H.name(person(m)); }).join(', ') })) + '</p>'; }).join('') +
+      (isPreview ? '<p class="muted">' + T('This is a suggestion. Keep the suggestions to ask them.') + '</p>' : '<p>' + T('Status') + ': <b>' + esc(T({ accepted: 'Accepted', pending: 'Waiting for a reply', declined: 'Said no' }[a.status] || '')) + '</b></p>') + '</div>' +
+      '<div class="dlg-foot">' + (isPreview ? '<button class="btn" data-act="rosters:dropsug" data-id="' + esc(a.id) + '">' + T('Remove suggestion') + '</button>' :
+        '<button class="btn" style="margin-right:auto" data-act="rosters:remove" data-id="' + a.id + '">' + T('Take off the roster') + '</button>' +
+        (a.status !== 'declined' ? '<button class="btn" data-act="rosters:status" data-id="' + a.id + '" data-s="declined">' + T('Mark “can’t make it”') + '</button>' : '') +
+        (a.status !== 'accepted' ? '<button class="btn ok" data-act="rosters:status" data-id="' + a.id + '" data-s="accepted">' + T('Mark accepted') + '</button>' : '')) + '</div>', T('Roster slot'));
   }
 
   function assignDialog(serviceId, positionId) {
     var s = S.get('services', serviceId), po = pos(positionId), d = engineData();
     var cands = S.find('skills', function (k) { return k.positionId === positionId; }).map(function (k) {
       var p = person(k.personId), why = R.awayReason(d, k.personId, s.date);
-      if (!why && d.assignments.some(function (a) { return a.serviceId === serviceId && a.personId === k.personId && a.status !== 'declined'; })) why = 'Already serving that day';
-      if (!why && d.assignments.some(function (a) { return a.serviceId === serviceId && a.personId === k.personId && a.status === 'declined'; })) why = 'Said no for that day';
+      if (!why && d.assignments.some(function (a) { return a.serviceId === serviceId && a.personId === k.personId && a.status !== 'declined'; })) why = T('Already serving that day');
+      if (!why && d.assignments.some(function (a) { return a.serviceId === serviceId && a.personId === k.personId && a.status === 'declined'; })) why = T('Said no for that day');
       var apart = R.groupsOf(d, k.personId, 'apart').filter(function (g) { return g.memberIds.some(function (m) { return m !== k.personId && d.assignments.some(function (a) { return a.serviceId === serviceId && a.personId === m && a.status !== 'declined'; }); }); })[0];
-      if (!why && apart) why = 'Kept apart from someone already serving';
+      if (!why && apart) why = T('Kept apart from someone already serving');
       var tg = R.groupsOf(d, k.personId, 'together')[0];
       return { p: p, why: why, tg: tg };
     }).filter(function (c) { return c.p && c.p.active !== false; }).sort(function (a, b) { return (!!a.why - !!b.why) || H.name(a.p).localeCompare(H.name(b.p)); });
-    H.modal(H.dialogHead('Add someone', po.name + ' · ' + H.fmt(s.date, true)) + '<div class="dlg-body">' +
+    H.modal(H.dialogHead(T('Add someone'), po.name + ' · ' + H.fmt(s.date, true)) + '<div class="dlg-body">' +
       (cands.length ? '<div class="list">' + cands.map(function (c) {
         return '<button class="item" data-act="rosters:pick" data-s="' + serviceId + '" data-p="' + positionId + '" data-person="' + c.p.id + '"' + (c.why ? ' disabled style="opacity:.55;cursor:not-allowed"' : '') + '>' + H.avatar(c.p, 32) +
-          '<span class="grow"><b>' + esc(H.name(c.p)) + '</b><small>' + esc(c.why || (c.tg ? 'Serves together with ' + c.tg.memberIds.filter(function (m) { return m !== c.p.id; }).map(function (m) { return H.name(person(m)); }).join(', ') + (c.tg.strength === 'must' ? ' (always) – they’ll be asked too' : ' (when possible)') : 'Available')) + '</small></span>' +
-          (c.why ? '<span class="tag grey">Not available</span>' : '<span class="tag ok">Available</span>') + '</button>';
-      }).join('') + '</div>' : '<p class="empty">No one is on this team yet. Add people under Teams.</p>') + '</div>' +
-      '<div class="dlg-foot"><a class="btn" href="#/rosters/teams" data-act="hub:close">Manage teams</a><button class="btn" data-act="hub:close">Close</button></div>', 'Add someone');
+          '<span class="grow"><b>' + esc(H.name(c.p)) + '</b><small>' + esc(c.why || (c.tg ? T(c.tg.strength === 'must' ? 'Serves together with {names} (always) – they’ll be asked too' : 'Serves together with {names} (when possible)', { names: c.tg.memberIds.filter(function (m) { return m !== c.p.id; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Available'))) + '</small></span>' +
+          (c.why ? '<span class="tag grey">' + T('Not available') + '</span>' : '<span class="tag ok">' + T('Available') + '</span>') + '</button>';
+      }).join('') + '</div>' : '<p class="empty">' + T('No one is on this team yet. Add people under Teams.') + '</p>') + '</div>' +
+      '<div class="dlg-foot"><a class="btn" href="#/rosters/teams" data-act="hub:close">' + T('Manage teams') + '</a><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Add someone'));
   }
 
   /* ---------- teams ---------- */
   function renderTeams() {
-    var html = head('Teams', 'Who can serve in each position, and how often they’d like to.', '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + 'New team</button>') + tabs('teams');
+    var html = head(T('Teams'), T('Who can serve in each position, and how often they’d like to.'), '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + T('New team') + '</button>') + tabs('teams');
     html += renderOffers();
     var add = window.Serving ? Serving.missing(S.list('teams'), S.list('positions')) : { teams: [], positions: [] };
-    if (add.positions.length && (H.can('*') || H.can('rosters.manage'))) html += '<div class="note info" style="margin-bottom:16px"><b>Set up the church’s departments.</b> Adds ' +
-      (add.teams.length ? add.teams.length + ' department' + (add.teams.length === 1 ? '' : 's') + ' and ' : '') + add.positions.length + ' position' + (add.positions.length === 1 ? '' : 's') +
-      ' as in Elvanto (Operational, Extra Slot, Hospitality, Music, Teens, Children, Creche, Memorial Service), each marked with the services it runs at. Nothing here is changed or removed. ' +
-      '<button class="btn small primary" data-act="rosters:setupdepts">Add them</button></div>';
+    if (add.positions.length && (H.can('*') || H.can('rosters.manage'))) html += '<div class="note info" style="margin-bottom:16px"><b>' + T('Set up the church’s departments.') + '</b> ' +
+      (add.teams.length ? T('Adds {d} and {p} as in Elvanto (Operational, Extra Slot, Hospitality, Music, Teens, Children, Creche, Memorial Service), each marked with the services it runs at.', { d: TN('{n} department', '{n} departments', add.teams.length), p: TN('{n} position', '{n} positions', add.positions.length) })
+        : T('Adds {p} as in Elvanto, each marked with the services it runs at.', { p: TN('{n} position', '{n} positions', add.positions.length) })) + ' ' + T('Nothing here is changed or removed.') + ' ' +
+      '<button class="btn small primary" data-act="rosters:setupdepts">' + T('Add them') + '</button></div>';
     html += '<div class="grid2">' + S.list('teams').map(function (t) {
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
       return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; });
-        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + p.needed + ' per service' + (p.times && p.times.length && p.times.length < Serving.slots(S.settings()).length ? ' · ' + esc(p.times.map(slotName).join(', ') + ' only') : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + 'Add</button></div>' +
+        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + T('{n} per service', { n: p.needed }) + (p.times && p.times.length && p.times.length < Serving.slots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
-            return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc((FREQ.filter(function (f) { return f[0] === k.frequency; })[0] || ['', k.frequency])[1]) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="Remove ' + esc(H.name(pp)) + ' from ' + esc(p.name) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
-          }).join('') + '</div>' : '<p class="hint">No one yet.</p>') + '</div>';
-      }).join('') + '<button class="btn small" data-act="rosters:newpos" data-t="' + t.id + '">' + H.icon(H.ICON.plus, 16) + 'Add a position</button></section>';
+            return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc(T((FREQ.filter(function (f) { return f[0] === k.frequency; })[0] || ['', k.frequency])[1])) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
+          }).join('') + '</div>' : '<p class="hint">' + T('No one yet.') + '</p>') + '</div>';
+      }).join('') + '<button class="btn small" data-act="rosters:newpos" data-t="' + t.id + '">' + H.icon(H.ICON.plus, 16) + T('Add a position') + '</button></section>';
     }).join('') + '</div>';
     return html;
   }
 
   /* ---------- offers to serve (from Me → Serving) ---------- */
   function waitingOffers() { return S.find('serveOffers', function (o) { return o.status === 'waiting'; }).sort(function (a, b) { return (a.createdAt || '') < (b.createdAt || '') ? -1 : 1; }); }
-  function freqName(f) { return (FREQ.filter(function (x) { return x[0] === f; })[0] || ['', 'Now and then'])[1].toLowerCase(); }
+  function freqName(f) { return T((FREQ.filter(function (x) { return x[0] === f; })[0] || ['', 'Now and then'])[1]).toLowerCase(); }
   function offerText(o) {
-    var po = pos(o.positionId), where = po ? po.name + ' (' + ((team(po.teamId) || {}).name || '') + ')' : 'a position that has been removed';
+    var po = pos(o.positionId), where = po ? po.name + ' (' + ((team(po.teamId) || {}).name || '') + ')' : T('a position that has been removed');
     var k = S.find('skills', function (x) { return x.personId === o.personId && x.positionId === o.positionId; })[0];
-    if (o.kind === 'stop') return 'would like to stop serving on ' + where;
-    var at = function (t) { return t && t.length ? ' at ' + t.map(slotName).join(', ') : ''; };
-    if (o.kind === 'change') return 'would like to serve on ' + where + ' ' + freqName(o.frequency) + at(o.times) + (k ? ' (now ' + freqName(k.frequency) + at(k.times) + ')' : '');
-    return 'offers to help on ' + where + ', ' + freqName(o.frequency) + at(o.times);
+    if (o.kind === 'stop') return T('would like to stop serving on {where}', { where: where });
+    var at = function (t) { return t && t.length ? ' ' + T('at {times}', { times: t.map(slotName).join(', ') }) : ''; };
+    if (o.kind === 'change') return T('would like to serve on {where}', { where: where }) + ' ' + freqName(o.frequency) + at(o.times) + (k ? ' (' + T('now {how}', { how: freqName(k.frequency) + at(k.times) }) + ')' : '');
+    return T('offers to help on {where}', { where: where }) + ', ' + freqName(o.frequency) + at(o.times);
   }
   function renderOffers() {
     var list = waitingOffers();
     if (!list.length) return '';
-    return '<section class="panel" style="margin-bottom:16px"><h2>Offers to serve <span class="tag warn">' + list.length + '</span></h2>' +
-      '<p class="hint" style="margin-top:0">People asked from their own “Me” page. Yes updates the team straight away; Not now sends them a short reply.</p><div class="list">' + list.map(function (o) {
+    return '<section class="panel" style="margin-bottom:16px"><h2>' + T('Offers to serve') + ' <span class="tag warn">' + list.length + '</span></h2>' +
+      '<p class="hint" style="margin-top:0">' + T('People asked from their own “Me” page. Yes updates the team straight away; Not now sends them a short reply.') + '</p><div class="list">' + list.map(function (o) {
         var p = person(o.personId);
-        return '<div class="item offer-item">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p) || 'Someone') + '</b><small>' + esc(offerText(o)) + (o.note ? ' · “' + esc(o.note) + '”' : '') + ' · ' + esc(H.fmt((o.createdAt || '').slice(0, 10))) + '</small></span>' +
-          '<span class="btns"><button class="btn small" data-act="rosters:offerno" data-id="' + esc(o.id) + '">Not now</button><button class="btn small ok" data-act="rosters:offeryes" data-id="' + esc(o.id) + '">Yes</button></span></div>';
+        return '<div class="item offer-item">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p) || T('Someone')) + '</b><small>' + esc(offerText(o)) + (o.note ? ' · “' + esc(o.note) + '”' : '') + ' · ' + esc(H.fmt((o.createdAt || '').slice(0, 10))) + '</small></span>' +
+          '<span class="btns"><button class="btn small" data-act="rosters:offerno" data-id="' + esc(o.id) + '">' + T('Not now') + '</button><button class="btn small ok" data-act="rosters:offeryes" data-id="' + esc(o.id) + '">' + T('Yes') + '</button></span></div>';
       }).join('') + '</div></section>';
   }
 
@@ -180,8 +180,8 @@
     var gs = S.list('groups'), me = H.user();
     var mine = manager() ? gs : gs.filter(function (g) { return g.memberIds.indexOf(me.id) >= 0; });
     var html = head(T('Serving together'), T('Families and friends who want to serve at the same service – and people who mustn’t serve at the same time.'),
-      '<button class="btn primary" data-act="rosters:group" data-kind="together">' + H.icon(H.ICON.link, 18) + (manager() ? 'Serve together' : T('Ask to serve with someone')) + '</button>' +
-      (manager() ? '<button class="btn" data-act="rosters:group" data-kind="apart">' + H.icon(H.ICON.split, 18) + 'Keep apart</button>' : '')) + tabs('together');
+      '<button class="btn primary" data-act="rosters:group" data-kind="together">' + H.icon(H.ICON.link, 18) + (manager() ? T('Serve together') : T('Ask to serve with someone')) + '</button>' +
+      (manager() ? '<button class="btn" data-act="rosters:group" data-kind="apart">' + H.icon(H.ICON.split, 18) + T('Keep apart') + '</button>' : '')) + tabs('together');
     html += '<div class="grid2" style="margin-bottom:16px"><div class="note info" style="margin:0"><b>' + H.icon(H.ICON.link, 16) + ' ' + T('Serve together') + '</b><br>' + T('“Always” = rostered together or not at all (e.g. a family sharing a car). “When possible” = together when it works, otherwise separately.') + '</div>' +
       '<div class="note warn" style="margin:0"><b>' + H.icon(H.ICON.split, 16) + ' ' + T('Keep apart') + '</b><br>' + T('Never rostered at the same service – e.g. parents taking turns with a baby.') + '</div></div>';
     html += mine.length ? '<div class="list">' + mine.map(function (g) {
@@ -198,13 +198,13 @@
     var people = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' || (p.familyRole === 'child' && S.find('skills', function (k) { return k.personId === p.id; }).length); })
       .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
     var fams = S.list('families');
-    H.modal(H.dialogHead(isNew ? (g.kind === 'apart' ? 'Keep people apart' : T('Serve together')) : T('Edit {name}', { name: g.name }), g.kind === 'apart' ? 'They will never be rostered at the same service.' : T('The roster will put them at the same service.')) +
+    H.modal(H.dialogHead(isNew ? (g.kind === 'apart' ? T('Keep people apart') : T('Serve together')) : T('Edit {name}', { name: g.name }), g.kind === 'apart' ? T('They will never be rostered at the same service.') : T('The roster will put them at the same service.')) +
       '<div class="dlg-body"><input type="hidden" id="gr-id" value="' + esc(g.id || '') + '"><input type="hidden" id="gr-kind" value="' + g.kind + '">' +
-      '<label class="field">' + T('Name') + '<input id="gr-name" value="' + esc(g.name) + '" placeholder="' + (g.kind === 'apart' ? 'e.g. Megan & David (baby at home)' : T('e.g. Naidoo family, or Sam & Kavi')) + '"></label>' +
+      '<label class="field">' + T('Name') + '<input id="gr-name" value="' + esc(g.name) + '" placeholder="' + (g.kind === 'apart' ? T('e.g. Megan & David (baby at home)') : T('e.g. Naidoo family, or Sam & Kavi')) + '"></label>' +
       (g.kind === 'together' ? '<fieldset class="field" style="border:0;padding:0;margin:0 0 14px"><legend style="margin-bottom:6px">' + T('How important is it?') + '</legend>' +
         '<label class="check"><input type="radio" name="gr-str" value="must"' + (g.strength === 'must' ? ' checked' : '') + '><span><b>' + T('Always together') + '</b><br><span class="muted small">' + T('If one can’t serve, none of them are rostered that week.') + '</span></span></label>' +
         '<label class="check"><input type="radio" name="gr-str" value="prefer"' + (g.strength !== 'must' ? ' checked' : '') + '><span><b>' + T('Together when possible') + '</b><br><span class="muted small">' + T('Otherwise they can be rostered separately.') + '</span></span></label></fieldset>' : '') +
-      (manager() && fams.length ? '<label class="field">Quick add a household<select class="findable" id="gr-fam"><option value="">Choose a household…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '">' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' : '') +
+      (manager() && fams.length ? '<label class="field">' + T('Quick add a household') + '<select class="findable" id="gr-fam"><option value="">' + T('Choose a household…') + '</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '">' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' : '') +
       '<fieldset class="field" style="border:0;padding:0;margin:0"><legend style="margin-bottom:6px">' + T('Who') + '</legend><div style="max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:4px 12px">' +
       people.map(function (p) { return '<label class="check"><input type="checkbox" class="gr-m" value="' + p.id + '"' + (g.memberIds.indexOf(p.id) >= 0 ? ' checked' : '') + '>' + esc(H.name(p)) + (p.familyRole === 'child' ? ' <span class="muted small">' + T('(teen)') + '</span>' : '') + '</label>'; }).join('') + '</div></fieldset>' +
       '<label class="field" style="margin-top:14px">' + T('Note') + '<input id="gr-note" value="' + esc(g.note || '') + '" placeholder="' + T('Why – helps whoever does the roster') + '"></label><p id="gr-err" class="note bad" hidden></p></div>' +
@@ -258,15 +258,15 @@
   var MOD; H.register(MOD = {
     id: 'rosters', name: 'Rosters', desc: 'Who serves when – families kept together', icon: H.ICON.rosters, tint: '#2F6FB3',
     stat: function (u) {
-      if (manager()) { var g = nextGaps(); return g ? (g.n ? g.n + ' gap' + (g.n === 1 ? '' : 's') + ' on ' + H.fmt(g.s.date) : 'All filled for ' + H.fmt(g.s.date)) : 'No services planned'; }
+      if (manager()) { var g = nextGaps(); return g ? (g.n ? TN('{n} gap on {date}', '{n} gaps on {date}', g.n, { date: H.fmt(g.s.date) }) : T('All filled for {date}', { date: H.fmt(g.s.date) })) : T('No services planned'); }
       var p = S.find('assignments', function (a) { return a.personId === u.id && a.status === 'pending'; }).length;
       return p ? TN('{n} turn to reply to', '{n} turns to reply to', p) : T('Your serving');
     },
     todos: function (u) {
       var out = [], mine = S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === u.id && a.status === 'pending' && s && s.date >= H.today(); });
       if (mine.length) out.push({ text: TN('Reply to {n} serving request', 'Reply to {n} serving requests', mine.length), href: '#/rosters/mine' });
-      if (manager()) { var w = waitingOffers().length; if (w) out.push({ text: w + (w === 1 ? ' person has' : ' people have') + ' offered to serve – answer them', href: '#/rosters/teams' }); }
-      if (manager()) { var g = nextGaps(); if (g && g.n) out.push({ text: 'Fill ' + g.n + ' gap' + (g.n === 1 ? '' : 's') + ' on the roster for ' + H.fmt(g.s.date), href: '#/rosters' }); }
+      if (manager()) { var w = waitingOffers().length; if (w) out.push({ text: TN('{n} person has offered to serve – answer them', '{n} people have offered to serve – answer them', w), href: '#/rosters/teams' }); }
+      if (manager()) { var g = nextGaps(); if (g && g.n) out.push({ text: TN('Fill {n} gap on the roster for {date}', 'Fill {n} gaps on the roster for {date}', g.n, { date: H.fmt(g.s.date) }), href: '#/rosters' }); }
       return out;
     },
     render: function (p) {
@@ -280,11 +280,11 @@
     actions: {
       setupdepts: function () {
         var add = Serving.missing(S.list('teams'), S.list('positions'));
-        H.busy('Adding the departments…', function () {
+        H.busy(T('Adding the departments…'), function () {
         add.teams.forEach(function (t) { S.put('teams', t); });
         add.positions.forEach(function (p) { S.put('positions', p); });
         S.audit('Set up the church’s departments: ' + add.teams.length + ' departments and ' + add.positions.length + ' positions added', 'teams');
-        H.render(); H.toast('Departments and positions added');
+        H.render(); H.toast(T('Departments and positions added'));
         });
       },
       move: function (el) { state.start += +el.dataset.d; state.preview = null; H.render(); },
@@ -292,12 +292,12 @@
         var ids = inView().filter(function (s) { return s.date >= H.today(); }).map(function (s) { return s.id; });
         state.preview = R.autoFill(engineData(), ids);
         H.render();
-        H.toast(state.preview.assignments.length ? state.preview.assignments.length + ' suggestions ready – check and keep them' : 'Nothing more can be filled automatically');
+        H.toast(state.preview.assignments.length ? TN('{n} suggestion ready – check and keep it', '{n} suggestions ready – check and keep them', state.preview.assignments.length) : T('Nothing more can be filled automatically'));
       },
       keep: function () {
         state.preview.assignments.forEach(function (a) { S.put('assignments', { serviceId: a.serviceId, positionId: a.positionId, personId: a.personId, status: 'pending', source: 'auto', reason: a.reason }); });
         S.audit('Kept ' + state.preview.assignments.length + ' roster suggestions', 'assignments');
-        var n = state.preview.assignments.length; state.preview = null; H.render(); H.toast(n + ' people asked to serve (they’ll get a message once email is connected)');
+        var n = state.preview.assignments.length; state.preview = null; H.render(); H.toast(TN('{n} person asked to serve (they’ll get a message once email is connected)', '{n} people asked to serve (they’ll get a message once email is connected)', n));
       },
       discard: function () { state.preview = null; H.render(); },
       slot: function (el) {
@@ -306,14 +306,14 @@
       },
       dropsug: function (el) { state.preview.assignments = state.preview.assignments.filter(function (x) { return x.id !== el.dataset.id; }); H.closeModal(); H.render(); },
       status: function (el) { var a = S.get('assignments', el.dataset.id); a.status = el.dataset.s; S.put('assignments', a, 'Roster status changed'); H.closeModal(); H.render(); },
-      remove: function (el) { if (!H.confirmBtn(el, 'Click again to remove')) return; S.remove('assignments', el.dataset.id, 'Removed from roster'); H.closeModal(); H.render(); },
+      remove: function (el) { if (!H.confirmBtn(el, T('Click again to remove'))) return; S.remove('assignments', el.dataset.id, 'Removed from roster'); H.closeModal(); H.render(); },
       assign: function (el) { assignDialog(el.dataset.s, el.dataset.p); },
       pick: function (el) {
         var sid = el.dataset.s, pid = el.dataset.p, who = el.dataset.person, d = engineData();
         S.put('assignments', { serviceId: sid, positionId: pid, personId: who, status: 'pending', source: 'manual' }, 'Added to roster');
         var tg = R.groupsOf(d, who, 'together').filter(function (g) { return g.strength === 'must'; })[0];
         H.closeModal(); H.render();
-        H.toast(tg ? 'Added. ' + H.name(person(who)) + ' always serves with ' + tg.memberIds.filter(function (m) { return m !== who; }).map(function (m) { return H.name(person(m)); }).join(', ') + ' – use “Fill the gaps” to place them too.' : 'Added – waiting for their reply');
+        H.toast(tg ? T('Added. {name} always serves with {names} – use “Fill the gaps” to place them too.', { name: H.name(person(who)), names: tg.memberIds.filter(function (m) { return m !== who; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Added – waiting for their reply'));
       },
       reply: function (el) { var a = S.get('assignments', el.dataset.id); a.status = el.dataset.s; S.put('assignments', a, el.dataset.s === 'accepted' ? 'Accepted a serving turn' : 'Declined a serving turn'); H.render(); H.toast(T(el.dataset.s === 'accepted' ? 'Thank you!' : 'Thanks for letting us know')); },
       group: function (el) { groupDialog(el.dataset.id ? S.get('groups', el.dataset.id) : null, el.dataset.kind); },
@@ -372,14 +372,14 @@
         H.closeModal(); H.render(); H.toast(TN('{n} away date saved – no rostering on those days', '{n} away dates saved – no rostering on those days', out.length));
       },
       delaway: function (el) { S.remove('blockouts', el.dataset.id, 'Removed away dates'); H.render(); },
-      newteam: function () { var n = prompt('Name of the new team (e.g. Prayer)'); if (n && n.trim()) { S.put('teams', { name: n.trim() }, 'Created team ' + n.trim()); H.render(); } },
-      newpos: function (el) { var n = prompt('Name of the position (e.g. Camera)'); if (!n || !n.trim()) return; var k = parseInt(prompt('How many people are needed per service?', '1'), 10) || 1; S.put('positions', { teamId: el.dataset.t, name: n.trim(), needed: k }, 'Added position ' + n.trim()); H.render(); },
+      newteam: function () { var n = prompt(T('Name of the new team (e.g. Prayer)')); if (n && n.trim()) { S.put('teams', { name: n.trim() }, 'Created team ' + n.trim()); H.render(); } },
+      newpos: function (el) { var n = prompt(T('Name of the position (e.g. Camera)')); if (!n || !n.trim()) return; var k = parseInt(prompt(T('How many people are needed per service?'), '1'), 10) || 1; S.put('positions', { teamId: el.dataset.t, name: n.trim(), needed: k }, 'Added position ' + n.trim()); H.render(); },
       addmember: function (el) {
         var po = pos(el.dataset.p), have = S.find('skills', function (k) { return k.positionId === po.id; }).map(function (k) { return k.personId; });
         var people = S.find('people', function (p) { return p.active !== false && have.indexOf(p.id) < 0; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
-        H.modal(H.dialogHead('Add to ' + po.name) + '<div class="dlg-body"><label class="field req">Person<select class="findable" id="am-p">' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + (p.familyRole === 'child' ? ' (child/teen)' : '') + '</option>'; }).join('') + '</select></label>' +
-          '<label class="field">How often would they like to serve?<select id="am-f">' + FREQ.map(function (f) { return '<option value="' + f[0] + '"' + (f[0] === 'fortnightly' ? ' selected' : '') + '>' + f[1] + '</option>'; }).join('') + '</select></label></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="rosters:savemember" data-p="' + po.id + '">Add</button></div>', 'Add team member');
+        H.modal(H.dialogHead(T('Add to {position}', { position: po.name })) + '<div class="dlg-body"><label class="field req">' + T('Person') + '<select class="findable" id="am-p">' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + (p.familyRole === 'child' ? ' ' + T('(child/teen)') : '') + '</option>'; }).join('') + '</select></label>' +
+          '<label class="field">' + T('How often would they like to serve?') + '<select id="am-f">' + FREQ.map(function (f) { return '<option value="' + f[0] + '"' + (f[0] === 'fortnightly' ? ' selected' : '') + '>' + T(f[1]) + '</option>'; }).join('') + '</select></label></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="rosters:savemember" data-p="' + po.id + '">' + T('Add') + '</button></div>', T('Add team member'));
       },
       savemember: function (el) { S.put('skills', { personId: document.getElementById('am-p').value, positionId: el.dataset.p, frequency: document.getElementById('am-f').value }, 'Added to a team'); H.closeModal(); H.render(); },
       offeryes: function (el) {
@@ -390,18 +390,18 @@
         else if (have.length) { var k = JSON.parse(JSON.stringify(have[0])); k.frequency = o.frequency || k.frequency; if (o.times) k.times = o.times; S.put('skills', k); }
         else if (pos(o.positionId)) S.put('skills', { personId: o.personId, positionId: o.positionId, frequency: o.frequency || 'fortnightly', times: o.times || [] });
         S.remove('serveOffers', o.id, 'Said yes: ' + who + ' ' + text);
-        H.render(); H.toast(o.kind === 'stop' ? who + ' is off that team now' : who + ' is on the team – they can now be rostered');
+        H.render(); H.toast(T(o.kind === 'stop' ? '{name} is off that team now' : '{name} is on the team – they can now be rostered', { name: who }));
       },
       offerno: function (el) {
         var o = S.get('serveOffers', el.dataset.id); if (!o) return;
-        H.modal(H.dialogHead('Not now', H.name(person(o.personId)) + ' ' + offerText(o)) + '<div class="dlg-body"><label class="field">A short reply for them (they will see it)<textarea id="of-reply" rows="2" maxlength="200" placeholder="e.g. The team is full for now – we’ll ask you in the new year"></textarea></label></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="rosters:offernosend" data-id="' + esc(o.id) + '">Send</button></div>', 'Not now');
+        H.modal(H.dialogHead(T('Not now'), H.name(person(o.personId)) + ' ' + offerText(o)) + '<div class="dlg-body"><label class="field">' + T('A short reply for them (they will see it)') + '<textarea id="of-reply" rows="2" maxlength="200" placeholder="' + esc(T('e.g. The team is full for now – we’ll ask you in the new year')) + '"></textarea></label></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="rosters:offernosend" data-id="' + esc(o.id) + '">' + T('Send') + '</button></div>', T('Not now'));
       },
       offernosend: function (el) {
         var o = S.get('serveOffers', el.dataset.id); if (!o) return H.closeModal();
         o.status = 'declined'; o.reply = document.getElementById('of-reply').value.trim().slice(0, 200);
         S.put('serveOffers', o, 'Said not now: ' + H.name(person(o.personId)) + ' ' + offerText(o));
-        H.closeModal(); H.render(); H.toast('Reply sent');
+        H.closeModal(); H.render(); H.toast(T('Reply sent'));
       },
       unskill: function (el) { S.remove('skills', el.dataset.id, 'Removed from a team'); H.render(); }
     }

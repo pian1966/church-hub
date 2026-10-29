@@ -93,12 +93,12 @@
     if (!manager() || !p || p.familyRole === 'child') return '';
     var gs = groups(), mine = p.id ? Care.groupsOf(gs, p.id) : [], on = mine.length > 0, inIt = {};
     mine.forEach(function (g) { inIt[g.id] = Care.isLeader(g, p.id); });
-    return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-care"' + (on ? ' checked' : '') + '><span><b>Care group member</b><br><span class="muted small">In one or more of the church’s care groups (tick which).</span></span></label>' +
-      '<div id="pf-care-f"' + (on ? '' : ' hidden') + ' style="margin-top:10px">' + (gs.length ? '<div class="field req" style="margin:0"><span>Which care groups</span><div class="list" id="pf-care-gs">' + gs.map(function (x) {
+    return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-care"' + (on ? ' checked' : '') + '><span><b>' + T('Care group member') + '</b><br><span class="muted small">' + T('In one or more of the church’s care groups (tick which).') + '</span></span></label>' +
+      '<div id="pf-care-f"' + (on ? '' : ' hidden') + ' style="margin-top:10px">' + (gs.length ? '<div class="field req" style="margin:0"><span>' + T('Which care groups') + '</span><div class="list" id="pf-care-gs">' + gs.map(function (x) {
         var has = Object.prototype.hasOwnProperty.call(inIt, x.id);
         return '<div class="item" style="gap:12px;flex-wrap:wrap"><label class="check grow" style="margin:0"><input type="checkbox" class="pf-cg" value="' + esc(x.id) + '"' + (has ? ' checked' : '') + '><span>' + esc(x.name) + '</span></label>' +
-          '<label class="check" style="margin:0"><input type="checkbox" class="pf-cgl" data-g="' + esc(x.id) + '"' + (inIt[x.id] ? ' checked' : '') + (has ? '' : ' disabled') + '><span class="small">Carer (leads it)</span></label></div>';
-      }).join('') + '</div></div>' : '<p class="hint">There are no care groups yet – add them on the <a href="#/care">Care groups</a> page first.</p>') + '</div></fieldset>';
+          '<label class="check" style="margin:0"><input type="checkbox" class="pf-cgl" data-g="' + esc(x.id) + '"' + (inIt[x.id] ? ' checked' : '') + (has ? '' : ' disabled') + '><span class="small">' + T('Carer (leads it)') + '</span></label></div>';
+      }).join('') + '</div></div>' : '<p class="hint">' + T('There are no care groups yet – add them on the {link} page first.', { link: '<a href="#/care">' + T('Care groups') + '</a>' }) + '</p>') + '</div></fieldset>';
   }
   function wireFields() {
     var b = document.getElementById('pf-care'), f = document.getElementById('pf-care-f');
@@ -112,14 +112,14 @@
     var b = document.getElementById('pf-care'); if (!b) return null;
     var want = {};
     if (b.checked) Array.prototype.forEach.call(document.querySelectorAll('.pf-cg:checked'), function (c) { var l = document.querySelector('.pf-cgl[data-g="' + c.value + '"]'); want[c.value] = !!(l && l.checked); });
-    if (b.checked && !Object.keys(want).length) return { error: 'Tick which care group(s) they are in (or untick Care group member).' };
+    if (b.checked && !Object.keys(want).length) return { error: T('Tick which care group(s) they are in (or untick Care group member).') };
     return { on: b.checked, want: want };
   }
   function apply(p, v) { return setFrom(p, v); }
   /** The tags on a person: Care group member or Carer, with each group's name. */
   function tag(p) {
     if (!manager()) return '';
-    return Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return ' <span class="tag">' + (Care.isLeader(g, p.id) ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>'; }).join('');
+    return Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return ' <span class="tag">' + T(Care.isLeader(g, p.id) ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>'; }).join('');
   }
 
   /* ---------- finding someone to add: type part of a name ("dar ben" finds Darren Bennett) ---------- */
@@ -149,44 +149,44 @@
   /* ---------- the Care groups page (Administrators and Pastors) ---------- */
   function adults(exclude) { return S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && p.firstName !== 'Deleted' && !p.mergedInto && exclude.indexOf(p.id) < 0; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); }); }
   function render() {
-    if (!manager()) return '<p class="empty">Only Administrators and Pastors can set up care groups.</p>';
+    if (!manager()) return '<p class="empty">' + T('Only Administrators and Pastors can set up care groups.') + '</p>';
     var gs = groups(), inAny = {};
     gs.forEach(function (g) { (g.memberIds || []).forEach(function (m) { (inAny[m] = inAny[m] || []).push(g.name); }); });
-    return '<div class="page-head"><div><h1>Care groups</h1><p class="lead">Small groups that care for one another. A person can be in more than one group. Members see each other’s photo, phone, email, address and birthday – only if they agreed (consent “Care group”). Carers can add and remove members of their own group.</p></div></div>' +
-      '<section class="panel"><h2>Add a care group</h2><div class="row" style="gap:10px;flex-wrap:wrap"><label class="field req grow" style="margin:0">Name<input id="cg-new" placeholder="e.g. Hilton Tuesday evening"></label><button class="btn primary" data-act="care:addgroup" style="align-self:end">' + H.icon(H.ICON.plus, 16) + 'Add</button></div></section>' +
+    return '<div class="page-head"><div><h1>' + T('Care groups') + '</h1><p class="lead">' + T('Small groups that care for one another. A person can be in more than one group. Members see each other’s photo, phone, email, address and birthday – only if they agreed (consent “Care group”). Carers can add and remove members of their own group.') + '</p></div></div>' +
+      '<section class="panel"><h2>' + T('Add a care group') + '</h2><div class="row" style="gap:10px;flex-wrap:wrap"><label class="field req grow" style="margin:0">' + T('Name') + '<input id="cg-new" placeholder="' + esc(T('e.g. Hilton Tuesday evening')) + '"></label><button class="btn primary" data-act="care:addgroup" style="align-self:end">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div></section>' +
       (gs.length ? '<div class="grid2">' + gs.map(function (g) {
         var ms = (g.memberIds || []).map(function (id) { return S.get('people', id) || { id: id, firstName: (g.names || {})[id] || 'Someone', lastName: '' }; }).sort(function (a, b) {
           var la = Care.isLeader(g, a.id) ? 0 : 1, lb = Care.isLeader(g, b.id) ? 0 : 1; return la - lb || H.name(a).localeCompare(H.name(b)); });
         return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} person', '{n} people', ms.length) + '</span>' +
-          '<button class="icon-btn ghost" data-act="care:rename" data-id="' + g.id + '" aria-label="Rename ' + esc(g.name) + '" title="Rename">' + H.icon('M4 20h4L20 8l-4-4L4 16zM14 6l4 4', 16) + '</button>' +
-          '<button class="icon-btn ghost" data-act="care:copy" data-id="' + g.id + '" aria-label="Duplicate ' + esc(g.name) + '" title="Duplicate the group, with all its members">' + H.icon('M9 9h11v11H9zM5 15H4V4h11v1', 16) + '</button>' +
-          '<button class="icon-btn ghost" data-act="care:delgroup" data-id="' + g.id + '" aria-label="Delete ' + esc(g.name) + '" title="Delete the group">' + H.icon(H.ICON.trash, 16) + '</button></div>' +
+          '<button class="icon-btn ghost" data-act="care:rename" data-id="' + g.id + '" aria-label="' + esc(T('Rename {name}', { name: g.name })) + '" title="' + esc(T('Rename')) + '">' + H.icon('M4 20h4L20 8l-4-4L4 16zM14 6l4 4', 16) + '</button>' +
+          '<button class="icon-btn ghost" data-act="care:copy" data-id="' + g.id + '" aria-label="' + esc(T('Duplicate {name}', { name: g.name })) + '" title="' + esc(T('Duplicate the group, with all its members')) + '">' + H.icon('M9 9h11v11H9zM5 15H4V4h11v1', 16) + '</button>' +
+          '<button class="icon-btn ghost" data-act="care:delgroup" data-id="' + g.id + '" aria-label="' + esc(T('Delete {name}', { name: g.name })) + '" title="' + esc(T('Delete the group')) + '">' + H.icon(H.ICON.trash, 16) + '</button></div>' +
           (ms.length ? '<div class="list" style="margin-top:8px">' + ms.map(function (p) {
             var isL = Care.isLeader(g, p.id);
-            return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><a href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>' + (isL ? ' <span class="tag ok">Carer</span>' : '') + (consented(p.id) ? '' : ' <small class="muted">details not shared (no consent yet)</small>') + '</span>' +
-              '<button class="btn small" data-act="care:lead" data-g="' + g.id + '" data-id="' + p.id + '">' + (isL ? 'Not a carer' : 'Make carer') + '</button>' +
-              '<button class="icon-btn ghost" data-act="care:out" data-g="' + g.id + '" data-id="' + p.id + '" aria-label="Take ' + esc(H.name(p)) + ' out" title="Take out of the group">' + H.icon(H.ICON.x, 16) + '</button></div>';
-          }).join('') + '</div>' : '<p class="muted">No one yet.</p>') +
-          '<div style="margin-top:10px">' + finder('g-' + g.id, adults(g.memberIds || []), 'care:add', { g: g.id }, function (p) { return inAny[p.id] ? 'Also in ' + inAny[p.id].join(', ') : ''; }, 'Add someone: type part of their name') + '</div></section>';
-      }).join('') + '</div>' : '<p class="empty">No care groups yet.</p>') +
-      (gs.length ? '<p class="hint">Members’ cards update when their details or consent change. <button class="link" data-act="care:syncall">Update everyone’s cards now</button></p>' : '');
+            return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><a href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>' + (isL ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + (consented(p.id) ? '' : ' <small class="muted">' + T('details not shared (no consent yet)') + '</small>') + '</span>' +
+              '<button class="btn small" data-act="care:lead" data-g="' + g.id + '" data-id="' + p.id + '">' + T(isL ? 'Not a carer' : 'Make carer') + '</button>' +
+              '<button class="icon-btn ghost" data-act="care:out" data-g="' + g.id + '" data-id="' + p.id + '" aria-label="' + esc(T('Take {name} out', { name: H.name(p) })) + '" title="' + esc(T('Take out of the group')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
+          }).join('') + '</div>' : '<p class="muted">' + T('No one yet.') + '</p>') +
+          '<div style="margin-top:10px">' + finder('g-' + g.id, adults(g.memberIds || []), 'care:add', { g: g.id }, function (p) { return inAny[p.id] ? T('Also in {groups}', { groups: inAny[p.id].join(', ') }) : ''; }, T('Add someone: type part of their name')) + '</div></section>';
+      }).join('') + '</div>' : '<p class="empty">' + T('No care groups yet.') + '</p>') +
+      (gs.length ? '<p class="hint">' + T('Members’ cards update when their details or consent change.') + ' <button class="link" data-act="care:syncall">' + T('Update everyone’s cards now') + '</button></p>' : '');
   }
 
   H.register({
     id: 'care', name: 'Care groups', desc: 'Small groups that care for one another', icon: HEART, tint: '#B4436C', roles: ['admin', 'pastor'],
     render: function () { return render(); },
-    stat: function () { return manager() ? S.list('careGroups').length + ' groups' : ''; },
+    stat: function () { return manager() ? TN('{n} group', '{n} groups', S.list('careGroups').length) : ''; },
     /** After signing in: keep my own card in my care group up to date (carers may have added me). */
     signedIn: function (u) { if (u && !manager() && Care.groupsOf(S.list('careGroups'), u.id).length) sync(u.id); },
     actions: {
       addgroup: function () {
-        var n = document.getElementById('cg-new').value.trim(); if (!n) { H.toast('Give the group a name', true); return; }
-        if (S.list('careGroups').some(function (g) { return String(g.name).toLowerCase() === n.toLowerCase(); })) { H.toast('There is already a group with that name', true); return; }
-        S.put('careGroups', { name: n, leaderIds: [], memberIds: [], names: {} }, 'Added the care group ' + n); H.render(); H.toast('Care group added');
+        var n = document.getElementById('cg-new').value.trim(); if (!n) { H.toast(T('Give the group a name'), true); return; }
+        if (S.list('careGroups').some(function (g) { return String(g.name).toLowerCase() === n.toLowerCase(); })) { H.toast(T('There is already a group with that name'), true); return; }
+        S.put('careGroups', { name: n, leaderIds: [], memberIds: [], names: {} }, 'Added the care group ' + n); H.render(); H.toast(T('Care group added'));
       },
       rename: function (el) {
         var g = S.get('careGroups', el.dataset.id); if (!g) return;
-        H.modal(H.dialogHead('Rename ' + g.name) + '<div class="dlg-body"><label class="field req">Name<input id="cg-name" value="' + esc(g.name) + '"></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="care:saverename" data-id="' + g.id + '">Save</button></div>', 'Rename');
+        H.modal(H.dialogHead(T('Rename {name}', { name: g.name })) + '<div class="dlg-body"><label class="field req">' + T('Name') + '<input id="cg-name" value="' + esc(g.name) + '"></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="care:saverename" data-id="' + g.id + '">' + T('Save') + '</button></div>', T('Rename'));
       },
       saverename: function (el) {
         var g = JSON.parse(JSON.stringify(S.get('careGroups', el.dataset.id))), n = document.getElementById('cg-name').value.trim(); if (!n) return;
@@ -194,33 +194,33 @@
       },
       copy: function (el) {
         var g = S.get('careGroups', el.dataset.id); if (!g) return;
-        H.modal(H.dialogHead('Duplicate ' + g.name, TN('{n} person', '{n} people', (g.memberIds || []).length) + ' will be in the new group too') + '<div class="dlg-body"><label class="field req">Name of the new group<input id="cg-copy" value="' + esc(g.name + ' (copy)') + '"></label><label class="check"><input type="checkbox" id="cg-copy-l" checked><span>Keep the same carers</span></label><p id="cg-err" class="note bad" hidden></p></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="care:savecopy" data-id="' + g.id + '">Duplicate</button></div>', 'Duplicate');
+        H.modal(H.dialogHead(T('Duplicate {name}', { name: g.name }), TN('{n} person will be in the new group too', '{n} people will be in the new group too', (g.memberIds || []).length)) + '<div class="dlg-body"><label class="field req">' + T('Name of the new group') + '<input id="cg-copy" value="' + esc(T('{name} (copy)', { name: g.name })) + '"></label><label class="check"><input type="checkbox" id="cg-copy-l" checked><span>' + T('Keep the same carers') + '</span></label><p id="cg-err" class="note bad" hidden></p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="care:savecopy" data-id="' + g.id + '">' + T('Duplicate') + '</button></div>', T('Duplicate'));
         var i = document.getElementById('cg-copy'); if (i) { i.focus(); i.select(); }
       },
       savecopy: function (el) {
         var g = S.get('careGroups', el.dataset.id), n = document.getElementById('cg-copy').value.trim(), e = document.getElementById('cg-err'); if (!g) return;
-        if (!n || S.list('careGroups').some(function (x) { return String(x.name).toLowerCase() === n.toLowerCase(); })) { e.textContent = n ? 'There is already a group with that name.' : 'Give the new group a name.'; e.hidden = false; return; }
+        if (!n || S.list('careGroups').some(function (x) { return String(x.name).toLowerCase() === n.toLowerCase(); })) { e.textContent = T(n ? 'There is already a group with that name.' : 'Give the new group a name.'); e.hidden = false; return; }
         var x = { name: n, memberIds: (g.memberIds || []).slice(), leaderIds: document.getElementById('cg-copy-l').checked ? (g.leaderIds || []).slice() : [], names: JSON.parse(JSON.stringify(g.names || {})) };
         S.put('careGroups', x, 'Duplicated the care group ' + g.name + ' as ' + n + ' (' + x.memberIds.length + ' people)');
-        H.closeModal(); H.render(); H.toast('Care group duplicated');
+        H.closeModal(); H.render(); H.toast(T('Care group duplicated'));
         Promise.all(x.memberIds.map(sync));   // each member gets a card in the new group
       },
       delgroup: function (el) {
         var g = S.get('careGroups', el.dataset.id); if (!g || !H.confirmBtn(el, '✕?')) return;
         (g.memberIds || []).forEach(function (pid) { S.careUnshare(g.id, pid); });
-        S.remove('careGroups', g.id, 'Deleted the care group ' + g.name + ' (' + (g.memberIds || []).length + ' people)'); H.render(); H.toast('Care group deleted');
+        S.remove('careGroups', g.id, 'Deleted the care group ' + g.name + ' (' + (g.memberIds || []).length + ' people)'); H.render(); H.toast(T('Care group deleted'));
       },
       add: function (el) {
-        var p = S.get('people', el.dataset.id); if (!p) { H.toast('Choose someone to add', true); return; }
-        place(p, el.dataset.g, false); H.render(); H.toast(H.name(p) + ' added to the group');
+        var p = S.get('people', el.dataset.id); if (!p) { H.toast(T('Choose someone to add'), true); return; }
+        place(p, el.dataset.g, false); H.render(); H.toast(T('{name} added to the group', { name: H.name(p) }));
         var again = document.querySelector('.cg-q[data-for="g-' + el.dataset.g + '"]'); if (again) again.focus();   // ready for the next name
       },
       lead: function (el) { var p = S.get('people', el.dataset.id), g = S.get('careGroups', el.dataset.g); if (p && g) { place(p, g.id, !Care.isLeader(g, p.id)); H.render(); } },
-      out: function (el) { var p = S.get('people', el.dataset.id) || { id: el.dataset.id, firstName: 'Someone', lastName: '' }; saveChanges(p, Care.takeOut(S.list('careGroups'), p.id, el.dataset.g)); H.render(); H.toast('Taken out of the group'); },
+      out: function (el) { var p = S.get('people', el.dataset.id) || { id: el.dataset.id, firstName: 'Someone', lastName: '' }; saveChanges(p, Care.takeOut(S.list('careGroups'), p.id, el.dataset.g)); H.render(); H.toast(T('Taken out of the group')); },
       syncall: function () {
         var all = []; S.list('careGroups').forEach(function (g) { (g.memberIds || []).forEach(function (m) { if (all.indexOf(m) < 0) all.push(m); }); });
-        H.busy('Updating cards…', function () { return Promise.all(all.map(sync)); }).then(function () { S.audit('Updated the care group cards of ' + all.length + ' people', 'care'); H.toast('Cards updated'); });
+        H.busy(T('Updating cards…'), function () { return Promise.all(all.map(sync)); }).then(function () { S.audit('Updated the care group cards of ' + all.length + ' people', 'care'); H.toast(T('Cards updated')); });
       },
       /* a carer, on their Me page */
       mineadd: function (el) {

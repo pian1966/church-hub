@@ -25,6 +25,11 @@ var RosterCore = (function () {
   'use strict';
 
   var FREQ_DAYS = { weekly: 7, fortnightly: 14, monthly: 28, occasional: 56 };
+  /** Texts people see, in their language when the app has one (I18n); plain English in tests. */
+  function T(s, v) {
+    if (typeof I18n !== 'undefined' && I18n.t) return I18n.t(s, v);
+    return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in v ? String(v[k]) : m; }) : s;
+  }
 
   function parse(s) { var p = String(s).split('-'); return new Date(+p[0], +p[1] - 1, +p[2], 12); }
   function daysBetween(a, b) { return Math.round((parse(b) - parse(a)) / 86400000); }
@@ -84,20 +89,20 @@ var RosterCore = (function () {
     /** Can this person take this position at this service? '' = yes, otherwise why not. */
     function blocker(svc, personId, positionId) {
       var p = people[personId];
-      if (!p || p.active === false) return 'not active';
-      if (!skillFor(personId, positionId)) return 'not on this team';
+      if (!p || p.active === false) return T('not active');
+      if (!skillFor(personId, positionId)) return T('not on this team');
       var kt = skillFor(personId, positionId).times;
-      if (kt && kt.length && slotOf(svc) && kt.indexOf(slotOf(svc)) < 0) return 'serves at other services';
+      if (kt && kt.length && slotOf(svc) && kt.indexOf(slotOf(svc)) < 0) return T('serves at other services');
       var away = awayReason(data, personId, svc.date); if (away) return away;
-      if (servingAt(svc.id, personId)) return 'already serving at this service';
-      if (declined(svc.id, personId)) return 'said no to this service';
+      if (servingAt(svc.id, personId)) return T('already serving at this service');
+      if (declined(svc.id, personId)) return T('said no to this service');
       var apart = groupsOf(data, personId, 'apart').some(function (g) {
         return g.memberIds.some(function (o) { return o !== personId && servingAt(svc.id, o); });
       });
-      if (apart) return 'kept apart from someone already serving';
+      if (apart) return T('kept apart from someone already serving');
       var k = skillFor(personId, positionId), gap = FREQ_DAYS[k.frequency] || 14;
       var last = lastServed(personId, svc.date);
-      if (last && daysBetween(last, svc.date) < Math.min(gap, 7) ) return 'served too recently';
+      if (last && daysBetween(last, svc.date) < Math.min(gap, 7) ) return T('served too recently');
       return '';
     }
 
@@ -154,20 +159,20 @@ var RosterCore = (function () {
             if (!tg.length) { add(svc, pid, pos.id, reasonFor(svc, pid)); done = true; break; }
             var g = tg[0], placed = placeGroup(svc, g, pid, pos.id);
             if (placed.ok) {
-              placed.plan.forEach(function (x) { add(svc, x.personId, x.positionId, 'Serving together: ' + g.name); });
+              placed.plan.forEach(function (x) { add(svc, x.personId, x.positionId, T('Serving together: {name}', { name: g.name })); });
               done = true;
             } else if (g.strength !== 'must') alone.push({ pid: pid, g: g });
             // "Prefer together" that can't be placed together now: only serve alone if no one else can (tried below).
             // "Must together" that can't all serve: skip this person.
           }
           if (!done && alone.length) {
-            add(svc, alone[0].pid, pos.id, reasonFor(svc, alone[0].pid) + ' (couldn’t place “' + alone[0].g.name + '” together this time)');
+            add(svc, alone[0].pid, pos.id, reasonFor(svc, alone[0].pid) + ' ' + T('(couldn’t place “{name}” together this time)', { name: alone[0].g.name }));
             done = true;
           }
           if (!done) {
             var why = (data.skills || []).filter(function (k) { return k.positionId === pos.id; }).map(function (k) {
               var b = blocker(svc, k.personId, pos.id);
-              return fullName(people[k.personId]) + ': ' + (b || 'their “must serve together” group can’t all serve');
+              return fullName(people[k.personId]) + ': ' + (b || T('their “must serve together” group can’t all serve'));
             });
             gaps.push({ serviceId: svc.id, positionId: pos.id, missing: (pos.needed || 1) - filled(svc.id, pos.id), why: why });
             break;
@@ -179,7 +184,7 @@ var RosterCore = (function () {
 
     function reasonFor(svc, pid) {
       var last = lastServed(pid, svc.date);
-      return last ? 'Fair turn: last served ' + Math.round(daysBetween(last, svc.date) / 7) + ' week(s) before' : 'Fair turn: hasn’t served yet';
+      return last ? T('Fair turn: last served {n} week(s) before', { n: Math.round(daysBetween(last, svc.date) / 7) }) : T('Fair turn: hasn’t served yet');
     }
   }
 
@@ -190,13 +195,13 @@ var RosterCore = (function () {
       var here = (data.assignments || []).filter(function (a) { return a.serviceId === svc.id && a.status !== 'declined'; });
       here.forEach(function (a) {
         var away = awayReason(data, a.personId, svc.date);
-        if (away) out.push({ serviceId: svc.id, personId: a.personId, level: 'bad', text: fullName(people[a.personId]) + ' is away (' + away + ') but rostered for ' + (pos[a.positionId] || {}).name + '.' });
+        if (away) out.push({ serviceId: svc.id, personId: a.personId, level: 'bad', text: T('{name} is away ({why}) but rostered for {position}.', { name: fullName(people[a.personId]), why: away, position: (pos[a.positionId] || {}).name }) });
       });
       (data.groups || []).forEach(function (g) {
         var inHere = g.memberIds.filter(function (m) { return here.some(function (a) { return a.personId === m; }); });
-        if (g.kind === 'apart' && inHere.length > 1) out.push({ serviceId: svc.id, level: 'bad', text: g.name + ': ' + inHere.map(function (m) { return fullName(people[m]); }).join(' and ') + ' are both serving, but should be kept apart.' });
+        if (g.kind === 'apart' && inHere.length > 1) out.push({ serviceId: svc.id, level: 'bad', text: T('{group}: {names} are both serving, but should be kept apart.', { group: g.name, names: inHere.map(function (m) { return fullName(people[m]); }).join(' & ') }) });
         if (g.kind === 'together' && inHere.length && inHere.length < g.memberIds.length)
-          out.push({ serviceId: svc.id, level: g.strength === 'must' ? 'bad' : 'warn', text: g.name + ': only ' + inHere.map(function (m) { return fullName(people[m]); }).join(', ') + ' rostered – they asked to serve together.' });
+          out.push({ serviceId: svc.id, level: g.strength === 'must' ? 'bad' : 'warn', text: T('{group}: only {names} rostered – they asked to serve together.', { group: g.name, names: inHere.map(function (m) { return fullName(people[m]); }).join(', ') }) });
       });
     });
     return out;

@@ -181,6 +181,39 @@ var Hub = (function () {
 
   /** Running inside the Church Hub Android app (android/), which adds window.ChurchHubApp. */
   function inApp() { return !!(window.ChurchHubApp && window.ChurchHubApp.googleSignIn); }
+  /** Opened from the phone's home screen (iPhone "Add to Home Screen", or Android's "Install app"), not in a browser tab. */
+  function homeScreen() {
+    try { return window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches); } catch (e) { return false; }
+  }
+  /** Church Hub as an app on a phone: the Android app or the home-screen app. Email links open in the browser there,
+   *  which keeps its own sign-in, so people paste the link instead. */
+  function phoneApp() { return inApp() || homeScreen(); }
+  function isIPhone() { var u = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1); }
+
+  /* ---------- prompts on Home and Me: a photo of yourself (in the apps), and putting Church Hub on an iPhone's home screen ---------- */
+  var LATER_DAYS = { selfie: 30, iphone: 60 }, photoAdded = false;   // photoAdded: just added here (the database may not have answered yet)
+  function later(k) { var d = Store.pref(k + 'Later'); return d && (Date.now() - Date.parse(d)) < LATER_DAYS[k] * 864e5; }
+  function prompts() {
+    var me = user && Store.get('people', user.id), out = '';
+    if (me && phoneApp() && !me.photo && !photoAdded && me.familyRole !== 'child' && !later('selfie'))
+      out += '<section class="panel prompt" id="selfie-ask"><div class="row" style="gap:14px;align-items:center">' + avatar(me, 56) +
+        '<div class="grow"><h2 style="margin:0 0 4px">' + T('Add a photo of yourself') + '</h2><p class="muted small" style="margin:0">' + T('So people at church can put a face to your name. Only people who may see your details see it.') + '</p></div></div>' +
+        '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="hub:selfie">' + icon(ICON.plus, 18) + T('Take or choose a photo') + '</button>' +
+        '<button class="btn" data-act="hub:later" data-k="selfie">' + T('Not now') + '</button></div><input type="file" id="selfie-file" accept="image/*" hidden></section>';
+    if (user && isIPhone() && !homeScreen() && !later('iphone'))
+      out += '<section class="panel prompt" id="iphone-ask"><h2 style="margin:0 0 4px">' + T('Church Hub on your iPhone') + '</h2>' +
+        '<p class="small" style="margin:0">' + T('Tap the Share button (the square with an arrow), then “Add to Home Screen”. Church Hub then opens like an app, full screen, with its own icon.') + '</p>' +
+        '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="iphone">' + T('Not now') + '</button></div></section>';
+    return out;
+  }
+  function wirePrompts() {
+    var f = document.getElementById('selfie-file'); if (!f) return;
+    f.addEventListener('change', function () {
+      var file = f.files && f.files[0], me = user && Store.get('people', user.id); f.value = ''; if (!file || !me) return;
+      cropPhoto(file).then(function (data) { photoAdded = true; return Store.setPhoto(me.id, data, 'Added a photo of ' + name(me) + ' (their own)').then(function () { render(); toast(T('Photo saved')); }); })
+        .catch(function () { toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.'), true); });
+    });
+  }
 
   /* ---------- modules ---------- */
   function register(m) { modules.push(m); }
@@ -202,7 +235,9 @@ var Hub = (function () {
     var p = parts(), mod = p[0] === 'home' ? null : moduleById(p[0]);
     if (mod && enabled().indexOf(mod) < 0) { go('home'); return; }
     var body = mod ? mod.render(p.slice(1)) : renderHome();
+    if (!mod || (mod.id === 'me' && !p[1])) body = prompts() + body;   // Home and My details
     root.innerHTML = shell(mod, body);
+    wirePrompts();
     if (mod && mod.after) mod.after(p.slice(1));
     loadPhotos();
     langWire(); markRequired();
@@ -262,7 +297,7 @@ var Hub = (function () {
     var st = live, html;
     if (st.stage === 'loading') html = '<h1>Church Hub</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
     else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
-    else if (st.stage === 'linkSent' && inApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
+    else if (st.stage === 'linkSent' && phoneApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       '<ol class="steps"><li>' + T('Open the email on this phone.') + '</li><li>' + T('Press and hold the sign-in link, then choose Copy link.') + '</li><li>' + T('Come back here, paste it in the box and tap Sign in.') + '</li></ol>' +
       '<form id="si-form" novalidate><label class="field">' + T('Sign-in link') + '<input id="si-link" type="url" inputmode="url" autocomplete="off" placeholder="https://…"></label><p id="si-err" class="note bad" hidden></p>' +
       '<button class="btn primary" data-act="hub:pastelink">' + T('Sign in') + '</button> <button class="btn" type="button" data-act="hub:restart">' + T('Use a different way') + '</button></form>';
@@ -284,7 +319,7 @@ var Hub = (function () {
       '<p class="muted" style="text-align:center;margin:14px 0 6px">' + T('or get a sign-in link by email') + '</p>') +
       '<form id="si-form" novalidate><label class="field"><span class="sr">' + T('Email') + '</span><input id="si-email" type="email" placeholder="you@example.com" autocomplete="email"></label><p id="si-err" class="note bad" hidden></p>' +
       '<button class="btn" data-act="hub:sendlink">' + T('Email me a link') + '</button></form>' +
-      (inApp() && Store.live.pendingEmail() ? '<p style="margin:10px 0 0"><button class="link" data-act="hub:havelink">' + T('I already have a sign-in link') + '</button></p>' : '') +
+      (phoneApp() && Store.live.pendingEmail() ? '<p style="margin:10px 0 0"><button class="link" data-act="hub:havelink">' + T('I already have a sign-in link') + '</button></p>' : '') +
       '<p class="fine">' + esc(((Store.settings() || {}).privacyNotice || 'The church keeps your information secure and stores it in South Africa').split('.')[0]) + '. ' + T('Want to look around first?') + ' <a href="?demo">' + T('Try the demo with made-up people') + '</a>.</p>';
     root.innerHTML = liveCard(html);
     var f = root.querySelector('input'); if (f) f.focus();
@@ -296,7 +331,7 @@ var Hub = (function () {
       user = st.person; Store.setUser(user);
       Store.audit('Signed in', 'people/' + user.id);
       runUpgrades();
-      if (!location.hash || location.hash === '#') location.hash = inApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
+      if (!location.hash || location.hash === '#') location.hash = phoneApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
       render();
     } else { user = null; Store.setUser(null); renderLive(); }
   }
@@ -424,6 +459,8 @@ var Hub = (function () {
       live = { stage: 'loading', email: email }; renderLive(); Store.live.finishEmailLink(email);
     },
     restart: function () { live = { stage: 'signedOut' }; renderLive(); },
+    selfie: function () { var f = document.getElementById('selfie-file'); if (f) f.click(); },
+    later: function (el) { Store.pref(el.dataset.k + 'Later', new Date().toISOString()); var b = el.closest('.prompt'); if (b) b.remove(); },
     havelink: function () { live = { stage: 'linkSent', email: Store.live.pendingEmail() }; renderLive(); },
     setup: function (el) {
       var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, errEl = document.getElementById('su-err');
@@ -499,6 +536,7 @@ var Hub = (function () {
   function start() {
     root = document.getElementById('app');
     if (inApp()) document.documentElement.classList.add('in-app');
+    if (homeScreen()) document.documentElement.classList.add('home-screen');
     I18n.set(Store.pref('lang') || 'en');
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);

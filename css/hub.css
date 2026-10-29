@@ -328,3 +328,6 @@ body.is-busy { cursor: progress; }
 .adv-fpick { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
 .adv-row .adv-ff { min-height: 36px; padding: 6px 10px; font-size: 14px; }
 .adv-fcount { font-size: 12px; padding-left: 2px; }
+/* Prompts on Home and My details (photo of yourself, iPhone home screen) */
+.panel.prompt { margin-bottom: 16px; border-left: 4px solid var(--accent, #E8590C); }
+.panel.prompt h2 { font-size: 1.05rem; }

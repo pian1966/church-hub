@@ -112,11 +112,11 @@ function serve() {
   }
 
   async function session(email, docs, opts) {
-    const context = await browser.newContext(), page = await context.newPage(), errs = [];
+    const context = await browser.newContext(opts && opts.ua ? { userAgent: opts.ua, viewport: { width: 390, height: 844 } } : {}), page = await context.newPage(), errs = [];
     page.on('pageerror', e => errs.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errs.push(m.text()); });
     await page.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());       // no internet: fonts, Firebase CDN
-    await page.addInitScript(([fakeSrc, seed, mail, app]) => {
+    await page.addInitScript(([fakeSrc, seed, mail, app, standalone]) => {
       window.CHURCH_HUB_FIREBASE = { apiKey: 'test-only', projectId: 'demo-church-hub', authDomain: 'localhost', appId: 'test', googleWebClientId: app && app.clientId || '' };
       // Stand-in for the Android app's bridge (android/…/MainActivity.java): Android's account picker returns a Google ID token
       if (app) window.ChurchHubApp = Object.assign({ version: () => '1.0.7', retry: () => {}, googleSignIn: id => { window.__appGoogle = id; setTimeout(() => window.churchHubGoogle('id-token-for-' + id), 0); } },
@@ -124,7 +124,8 @@ function serve() {
       (0, eval)(fakeSrc);
       window.__fake.seed(seed);
       if (mail) window.__fake.setUser({ email: mail, emailVerified: true });
-    }, [fake, docs, email, (opts && opts.app) || null]);
+      if (standalone) Object.defineProperty(window.navigator, 'standalone', { get: () => true });   // opened from an iPhone's home screen
+    }, [fake, docs, email, (opts && opts.app) || null, !!(opts && opts.standalone)]);
     await page.goto(BASE);
     const ready = await page.waitForSelector('.app, .signin-card h1', { timeout: 8000 });
     const docsNow = () => page.evaluate(() => window.__fake.docs);
@@ -1034,6 +1035,25 @@ function serve() {
   t = await s.text(); check(t.includes('Church Hub app, version 1.0.7'), 'Me shows the app version');
   await s.page.click('[data-act="people:consent"]'); check(await s.page.evaluate(() => window.churchHubBack() === true && !document.querySelector('#modal .overlay')), 'the back button closes an open window first');
   check(await s.page.evaluate(() => window.churchHubBack() === false), '…then lets the app go back a page');
+  await finish(s);
+
+  console.log('iPhone: home-screen app and the photo prompt:');
+  const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
+  s = await session('tim.jacobs@example.com', seedDocs(), { ua: IPHONE });
+  await s.go('home'); t = await s.text();
+  check(t.includes('Church Hub on your iPhone') && t.includes('Add to Home Screen') && !t.includes('Add a photo of yourself'), 'iPhone in Safari: how to put Church Hub on the home screen (no photo prompt in a browser)');
+  await s.page.click('[data-act="hub:later"][data-k="iphone"]'); await s.go('me'); await s.go('home');
+  check(!(await s.text()).includes('Church Hub on your iPhone'), '“Not now” puts it away');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', seedDocs(), { ua: IPHONE, standalone: true });
+  await s.go('me'); t = await s.text();
+  check(t.includes('Add a photo of yourself') && !t.includes('Church Hub on your iPhone'), 'home-screen app: asks for a photo of yourself on My details');
+  await s.page.setInputFiles('#selfie-file', PNG); await s.page.waitForSelector('#crop-ok'); await s.page.click('#crop-ok'); await s.settle(); docs = await s.docsNow();
+  check(docs['photos/p14'] && docs['people/p14'].photo && !(await s.text()).includes('Add a photo of yourself'), 'they take or choose one, choose the face, and the prompt goes');
+  await finish(s);
+  s = await session('clare.jacobs@example.com', seedDocs(), { ua: IPHONE, standalone: true });
+  await s.go('me'); await s.page.click('[data-act="hub:later"][data-k="selfie"]'); await s.go('home'); await s.go('me');
+  check(!(await s.text()).includes('Add a photo of yourself'), '“Not now” waits (a month)');
   await finish(s);
 
   console.log('Downloads in the Android app:');

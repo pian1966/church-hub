@@ -369,3 +369,10 @@ details.sub[open] > summary { margin-bottom: 8px; }
 .cg-hits .cg-pick { width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; cursor: pointer; font: inherit; color: var(--ink); margin-top: 4px; }
 .cg-hits .cg-pick:hover, .cg-hits .cg-pick:focus-visible { border-color: var(--accent); }
 .find-in { display: block; width: 100%; min-height: 36px; padding: 6px 10px; margin: 4px 0 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2, #FBFAF8); color: var(--ink); font: inherit; font-size: 14px; }
+
+/* Care groups: the name may wrap; Rename, Duplicate and Delete sit close together */
+.cg-head { align-items: flex-start; gap: 8px; }
+.cg-head > .grow { min-width: 0; overflow-wrap: anywhere; }
+.cg-head > .grow .small { display: block; margin-top: 2px; }
+.cg-tools { display: flex; gap: 0; flex: 0 0 auto; margin: -4px -6px 0 0; }
+.cg-tools .icon-btn { width: 32px; height: 32px; border-radius: 8px; }

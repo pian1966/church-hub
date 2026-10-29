@@ -251,19 +251,19 @@ service cloud.firestore {
     function checks(lang) { return anyone() && lang in access().get('langs', []); }
     match /words/{lang} {
       allow read: if anyone();
-      allow create, update: if (admin() || checks(lang)) && request.resource.data.keys().hasOnly(['words', 'updatedAt', 'by'])
+      allow create, update: if (admin() || checks(lang)) && request.resource.data.keys().hasOnly(['words', 'updatedAt', 'createdAt', 'by'])
         && request.resource.data.words is map;
       allow delete: if admin() || checks(lang);
     }
     match /wordIdeas/{id} {
       allow read: if admin() || mine(resource.data.personId) || checks(resource.data.lang);
       allow create: if mine(request.resource.data.personId) && request.resource.data.status == 'waiting'
-        && request.resource.data.keys().hasOnly(['lang', 'en', 'text', 'note', 'personId', 'name', 'status', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['lang', 'en', 'text', 'note', 'personId', 'name', 'status', 'createdAt', 'updatedAt'])
         && request.resource.data.lang is string && request.resource.data.en is string
         && request.resource.data.text is string && request.resource.data.text.size() <= 3000
         && request.resource.data.get('note', '') is string && request.resource.data.get('note', '').size() <= 500;
       allow update: if (admin() || checks(resource.data.lang))
-        && onlyChanges(['status', 'reply', 'reviewedBy', 'reviewedAt', 'used'])
+        && onlyChanges(['status', 'reply', 'reviewedBy', 'reviewedAt', 'updatedAt'])
         && request.resource.data.status in ['used', 'declined'];
       allow delete: if admin() || checks(resource.data.lang) || mine(resource.data.personId);
     }

@@ -118,13 +118,13 @@
           && (a.photo === undefined || (typeof a.photo === 'string' && a.photo.length < 40000));
       } },
     words: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return (is(c, ['admin']) || checks(c, id)) && (op === 'delete' || (onlyKeys(a, ['words', 'updatedAt', 'by']) && !!a.words && typeof a.words === 'object' && !Array.isArray(a.words))); } },
+      write: function (c, op, id, b, a) { return (is(c, ['admin']) || checks(c, id)) && (op === 'delete' || (onlyKeys(a, ['words', 'updatedAt', 'createdAt', 'by']) && !!a.words && typeof a.words === 'object' && !Array.isArray(a.words))); } },
     wordIdeas: { read: function (c, id, d) { return is(c, ['admin']) || (!!d && (mine(c, d.personId) || checks(c, d.lang))); },
       write: function (c, op, id, b, a) {
-        if (op === 'create') return mine(c, a.personId) && a.status === 'waiting' && onlyKeys(a, ['lang', 'en', 'text', 'note', 'personId', 'name', 'status', 'createdAt'])
+        if (op === 'create') return mine(c, a.personId) && a.status === 'waiting' && onlyKeys(a, ['lang', 'en', 'text', 'note', 'personId', 'name', 'status', 'createdAt', 'updatedAt'])
           && typeof a.lang === 'string' && typeof a.en === 'string' && typeof a.text === 'string' && a.text.length <= 3000 && (a.note === undefined || (typeof a.note === 'string' && a.note.length <= 500));
         if (op === 'delete') return is(c, ['admin']) || checks(c, b.lang) || mine(c, b.personId);
-        return (is(c, ['admin']) || checks(c, b.lang)) && onlyChanges(b, a, ['status', 'reply', 'reviewedBy', 'reviewedAt', 'used']) && ['used', 'declined'].indexOf(a.status) >= 0;
+        return (is(c, ['admin']) || checks(c, b.lang)) && onlyChanges(b, a, ['status', 'reply', 'reviewedBy', 'reviewedAt', 'updatedAt']) && ['used', 'declined'].indexOf(a.status) >= 0;
       } },
     dsr: 'admin', breaches: 'admin',
     audit: { read: function (c) { return is(c, ['admin']); },

@@ -16,7 +16,7 @@
  *                                                                  (e.g. ['08:00']; empty or missing = every service)
  *   skills:       [{ personId, positionId, frequency, times }]     frequency: 'weekly' | 'fortnightly' | 'monthly' | 'occasional';
  *                                                                  times = the services they serve at (empty or missing = any)
- *   services:     [{ id, date, time, name }]
+ *   services:     [{ id, date, time, name, slot }]                 slot = the regular service (time + venue); missing = time
  *   assignments:  [{ id, serviceId, positionId, personId, status, source }]  status: pending | accepted | declined
  *   groups:       [{ id, name, kind: 'together'|'apart', strength: 'must'|'prefer', memberIds: [] }]
  *   away:         [{ personId, from, to, reason }]                 blockouts + approved leave
@@ -32,7 +32,8 @@ var RosterCore = (function () {
   function fullName(p) { return p ? (p.firstName + ' ' + p.lastName).trim() : ''; }
 
   /** Does this position run at this service? Positions without times run at every service. */
-  function runsAt(pos, svc) { return !(pos.times && pos.times.length && svc.time && pos.times.indexOf(svc.time) < 0); }
+  function slotOf(svc) { return svc.slot || svc.time; }   // which regular service (time and venue) this is
+  function runsAt(pos, svc) { return !(pos.times && pos.times.length && slotOf(svc) && pos.times.indexOf(slotOf(svc)) < 0); }
 
   /** Is this person away (leave or blockout) on this date? Returns the reason or ''. */
   function awayReason(data, personId, date) {
@@ -86,7 +87,7 @@ var RosterCore = (function () {
       if (!p || p.active === false) return 'not active';
       if (!skillFor(personId, positionId)) return 'not on this team';
       var kt = skillFor(personId, positionId).times;
-      if (kt && kt.length && svc.time && kt.indexOf(svc.time) < 0) return 'serves at other services';
+      if (kt && kt.length && slotOf(svc) && kt.indexOf(slotOf(svc)) < 0) return 'serves at other services';
       var away = awayReason(data, personId, svc.date); if (away) return away;
       if (servingAt(svc.id, personId)) return 'already serving at this service';
       if (declined(svc.id, personId)) return 'said no to this service';

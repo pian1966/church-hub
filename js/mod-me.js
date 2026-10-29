@@ -148,9 +148,17 @@
     return '<small class="me-offer">' + esc(asked) + ' <span class="tag warn">' + T('Waiting for the roster coordinator') + '</span></small>';
   }
 
+  /** The services this position runs at (all the church's regular services when it isn't narrowed down). */
+  function slotsFor(positionId) {
+    var p = pos(positionId), all = Serving.slots(S.settings());
+    return p && p.times && p.times.length ? all.filter(function (x) { return p.times.indexOf(x.id) >= 0; }) : all;
+  }
   function offerDialog(positionId, current) {
-    var title = current ? T('Change how often you serve') : T('Offer to help');
+    var title = current ? T('Change how you serve') : T('Offer to help'), sl = slotsFor(positionId);
+    var mine = current && current.times && current.times.length ? current.times : sl.map(function (x) { return x.id; });
     H.modal(H.dialogHead(title, posName(positionId)) + '<div class="dlg-body">' +
+      (sl.length > 1 ? '<fieldset class="field" style="border:0;padding:0;margin:0 0 12px" id="mo-slots"><legend style="margin-bottom:6px">' + T('At which services?') + '</legend>' +
+        sl.map(function (x) { return '<label class="check"><input type="checkbox" class="mo-t" value="' + esc(x.id) + '"' + (mine.indexOf(x.id) >= 0 ? ' checked' : '') + '><span>' + esc(Serving.slotLabel(x.id, S.settings())) + '</span></label>'; }).join('') + '</fieldset>' : '') +
       '<fieldset class="field" style="border:0;padding:0;margin:0 0 12px"><legend style="margin-bottom:6px">' + T('How often could you serve?') + '</legend>' +
       FREQ.map(function (f) {
         return '<label class="check"><input type="radio" name="mo-f" value="' + f + '"' + ((current ? current.frequency : 'fortnightly') === f ? ' checked' : '') + '><span>' + esc(freqText(f)) + (current && current.frequency === f ? ' <span class="muted small">' + T('(now)') + '</span>' : '') + '</span></label>';
@@ -185,12 +193,16 @@
         var u = me(), pid = el.dataset.p, f = document.querySelector('input[name=mo-f]:checked'), err = document.getElementById('mo-err');
         var current = mySkills().filter(function (k) { return k.positionId === pid; })[0];
         if (!f) { err.textContent = T('Please choose how often.'); err.hidden = false; return; }
-        var kind = f.value === 'stop' ? 'stop' : el.dataset.k;
-        if (kind === 'change' && current && current.frequency === f.value) { err.textContent = T('That’s how often you serve now. Choose another answer, or Cancel.'); err.hidden = false; return; }
+        var kind = f.value === 'stop' ? 'stop' : el.dataset.k, sl = slotsFor(pid);
+        var times = sl.length > 1 ? [].map.call(document.querySelectorAll('.mo-t:checked'), function (x) { return x.value; }) : [];
+        if (kind !== 'stop' && sl.length > 1 && !times.length) { err.textContent = T('Please tick at least one service.'); err.hidden = false; return; }
+        if (times.length === sl.length) times = [];   // every service
+        var sameTimes = current && JSON.stringify((current.times || []).slice().sort()) === JSON.stringify(times.slice().sort());
+        if (kind === 'change' && current && current.frequency === f.value && sameTimes) { err.textContent = T('That’s how you serve now. Choose another answer, or Cancel.'); err.hidden = false; return; }
         // One offer per position: an earlier answer is replaced by the new question
         myOffers().filter(function (o) { return o.positionId === pid; }).forEach(function (o) { S.remove('serveOffers', o.id); });
-        S.put('serveOffers', { personId: u.id, positionId: pid, kind: kind, frequency: kind === 'stop' ? '' : f.value, note: document.getElementById('mo-note').value.trim().slice(0, 300), status: 'waiting' },
-          (kind === 'join' ? 'Offered to serve: ' : kind === 'stop' ? 'Asked to stop serving: ' : 'Asked to change how often they serve: ') + posName(pid));
+        S.put('serveOffers', { personId: u.id, positionId: pid, kind: kind, frequency: kind === 'stop' ? '' : f.value, times: kind === 'stop' ? [] : times, note: document.getElementById('mo-note').value.trim().slice(0, 300), status: 'waiting' },
+          (kind === 'join' ? 'Offered to serve: ' : kind === 'stop' ? 'Asked to stop serving: ' : 'Asked to change how they serve: ') + posName(pid));
         H.closeModal(); H.render();
         H.toast(T('Sent – the roster coordinator will be in touch'));
       },

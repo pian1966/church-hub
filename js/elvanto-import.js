@@ -7,41 +7,42 @@
  */
 var ElvantoImport = (function () {
   'use strict';
+  function TX(s) { return s; }   // a text shown on screen, translated there (the language test checks it)
 
   /* Columns: [key, label, exact Elvanto headings (tried first, in order), fallback pattern, pattern to never match] */
   var FIELDS = [
-    ['id', 'Elvanto ID', ['Member ID', 'Person ID', 'ID'], /^(person|member)\s*id$|elvanto\s*id/i],
-    ['firstName', 'First name *', ['First Name'], /^first\s*name|given/i],
-    ['lastName', 'Last name *', ['Last Name'], /^last\s*name|^surname/i],
-    ['preferredName', 'Known as', ['Preferred Name'], /prefer|nick/i],
-    ['email', 'Email', ['Email Address', 'Email'], /^e-?mail(\s*address)?$/i],
-    ['mobile', 'Mobile', ['Cellphone Number', 'Mobile', 'Mobile Phone'], /mobile|cell/i],
-    ['phone', 'Other phone', ['Landline Home Phone Number', 'Home Phone', 'Phone'], /home\s*phone|landline|^phone$|telephone/i],
-    ['birthDate', 'Birthday', ['Date of Birth', 'Birthday'], /^(date\s*of\s*)?birth(day|date)?$/i],
-    ['family', 'Family (ID, or the primary & spouse names)', ['Family ID', 'Primary & Spouse Full Names'], /^family\s*id$/i],
-    ['relationship', 'Family relationship', ['Family Relationship'], /^family\s*(relationship|role)$/i],
-    ['maritalStatus', 'Marital status', ['Marital Status'], /^marital/i],
-    ['category', 'Category', ['People Category', 'Category'], /categor|member\s*type/i],
-    ['archived', 'Archived', ['Archived'], /^archived$/i],
-    ['deceased', 'Deceased', ['Deceased'], /^deceased$/i],
-    ['deceasedDate', 'Date deceased', ['Date Deceased'], /deceased\s*date|date\s*deceased/i],
-    ['photo', 'Photo', ['Photo'], /^(photo|picture|image)$/i],
-    ['idNumber', 'ID number', ['ID Number (Numeric)', 'ID Number'], /^id\s*(number|no\.?)\b/i],
-    ['notes', 'Notes', ['Notes'], /^notes?$/i],
-    ['gender', 'Gender', ['Gender'], /^(gender|sex)$/i],
-    ['dateAdded', 'Date added to Elvanto', ['Date Added'], /^date\s*added$/i],
-    ['middleName', 'Middle name', ['Middle Name'], /^middle\s*name$/i],
-    ['anniversary', 'Wedding anniversary', ['Anniversary'], /^(wedding\s*)?anniversary$/i],
-    ['partnerSince', 'Date accepted as Church Partner', ['Membership Date'], /^member(ship)?\s*date$/i],
-    ['partnerUpdated', 'Partnership last updated', ['Membership last renewed on:'], /^member(ship)?\s*(last\s*)?renewed/i],
-    ['receive', 'What they’d like to receive', ['Checklist of what to receive'], /what\s*to\s*receive/i],
-    ['positions', 'Volunteering (department positions)', ['Department Positions'], /^department\s*positions$/i],
-    ['street', 'Home address', ['Home Address'], /^home\s*address$/i],
-    ['street2', 'Home address line 2', ['Home Address Line 2'], /^home\s*address\s*line\s*2$/i],
-    ['city', 'Town or city', ['Home City'], /^home\s*city$/i],
-    ['postcode', 'Postcode', ['Home Postcode'], /^home\s*post(al)?\s*code$/i],
-    ['province', 'Province', ['Province'], /^(home\s*)?(province|state)$/i],
-    ['country', 'Country', ['Home Country'], /^home\s*country$/i]
+    ['id', TX('Elvanto ID'), ['Member ID', 'Person ID', 'ID'], /^(person|member)\s*id$|elvanto\s*id/i],
+    ['firstName', TX('First name *'), ['First Name'], /^first\s*name|given/i],
+    ['lastName', TX('Last name *'), ['Last Name'], /^last\s*name|^surname/i],
+    ['preferredName', TX('Known as'), ['Preferred Name'], /prefer|nick/i],
+    ['email', TX('Email'), ['Email Address', 'Email'], /^e-?mail(\s*address)?$/i],
+    ['mobile', TX('Mobile'), ['Cellphone Number', 'Mobile', 'Mobile Phone'], /mobile|cell/i],
+    ['phone', TX('Other phone'), ['Landline Home Phone Number', 'Home Phone', 'Phone'], /home\s*phone|landline|^phone$|telephone/i],
+    ['birthDate', TX('Birthday'), ['Date of Birth', 'Birthday'], /^(date\s*of\s*)?birth(day|date)?$/i],
+    ['family', TX('Family (ID, or the primary & spouse names)'), ['Family ID', 'Primary & Spouse Full Names'], /^family\s*id$/i],
+    ['relationship', TX('Family relationship'), ['Family Relationship'], /^family\s*(relationship|role)$/i],
+    ['maritalStatus', TX('Marital status'), ['Marital Status'], /^marital/i],
+    ['category', TX('Category'), ['People Category', 'Category'], /categor|member\s*type/i],
+    ['archived', TX('Archived'), ['Archived'], /^archived$/i],
+    ['deceased', TX('Deceased'), ['Deceased'], /^deceased$/i],
+    ['deceasedDate', TX('Date deceased'), ['Date Deceased'], /deceased\s*date|date\s*deceased/i],
+    ['photo', TX('Photo'), ['Photo'], /^(photo|picture|image)$/i],
+    ['idNumber', TX('ID number'), ['ID Number (Numeric)', 'ID Number'], /^id\s*(number|no\.?)\b/i],
+    ['notes', TX('Notes'), ['Notes'], /^notes?$/i],
+    ['gender', TX('Gender'), ['Gender'], /^(gender|sex)$/i],
+    ['dateAdded', TX('Date added to Elvanto'), ['Date Added'], /^date\s*added$/i],
+    ['middleName', TX('Middle name'), ['Middle Name'], /^middle\s*name$/i],
+    ['anniversary', TX('Wedding anniversary'), ['Anniversary'], /^(wedding\s*)?anniversary$/i],
+    ['partnerSince', TX('Date accepted as Church Partner'), ['Membership Date'], /^member(ship)?\s*date$/i],
+    ['partnerUpdated', TX('Partnership last updated'), ['Membership last renewed on:'], /^member(ship)?\s*(last\s*)?renewed/i],
+    ['receive', TX('What they’d like to receive'), ['Checklist of what to receive'], /what\s*to\s*receive/i],
+    ['positions', TX('Volunteering (department positions)'), ['Department Positions'], /^department\s*positions$/i],
+    ['street', TX('Home address'), ['Home Address'], /^home\s*address$/i],
+    ['street2', TX('Home address line 2'), ['Home Address Line 2'], /^home\s*address\s*line\s*2$/i],
+    ['city', TX('Town or city'), ['Home City'], /^home\s*city$/i],
+    ['postcode', TX('Postcode'), ['Home Postcode'], /^home\s*post(al)?\s*code$/i],
+    ['province', TX('Province'), ['Province'], /^(home\s*)?(province|state)$/i],
+    ['country', TX('Country'), ['Home Country'], /^home\s*country$/i]
   ];
   /** What someone ticked in Elvanto's "Checklist of what to receive" → Church Hub's choices (as in the consent register). */
   var RECEIVE = [
@@ -129,7 +130,7 @@ var ElvantoImport = (function () {
     return s.replace(/_thumb(_\d+\.[a-z]+)/i, '$1');
   }
   var NEVER = /id\s*number|passport|security|giving|notes?$|password|username/i;   // never read these, whatever they look like
-  var CATEGORIES = ['Church Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member'];
+  var CATEGORIES = [TX('Church Partner'), TX('Attender'), TX('Visiting Minister'), TX('Staff'), TX('Former member')];
   var MARITAL = ['Single', 'Engaged', 'Married', 'Partner', 'Separated', 'Divorced', 'Widowed'];
   var MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, oct: 10, nov: 11, dec: 12 };
 
@@ -257,9 +258,9 @@ var ElvantoImport = (function () {
     var claimed = {}, out = [];
     recs.forEach(function (o) {
       var free = (people || []).filter(function (p) { return !claimed[p.id] && p.firstName !== 'Deleted'; }), hit = null, how = '';
-      if (o.id) { hit = free.filter(function (p) { return p.elvantoId === o.id; })[0]; how = 'Elvanto ID'; }
-      if (!hit && o.email) { hit = free.filter(function (p) { return norm(p.email) === o.email && sameFirst(p, o) && (!p.elvantoId || !o.id); })[0]; how = 'email and first name'; }
-      if (!hit) { hit = free.filter(function (p) { return !p.elvantoId && norm(p.firstName + ' ' + p.lastName) === norm(o.firstName + ' ' + o.lastName); })[0]; how = 'name'; }
+      if (o.id) { hit = free.filter(function (p) { return p.elvantoId === o.id; })[0]; how = TX('Elvanto ID'); }
+      if (!hit && o.email) { hit = free.filter(function (p) { return norm(p.email) === o.email && sameFirst(p, o) && (!p.elvantoId || !o.id); })[0]; how = TX('email and first name'); }
+      if (!hit) { hit = free.filter(function (p) { return !p.elvantoId && norm(p.firstName + ' ' + p.lastName) === norm(o.firstName + ' ' + o.lastName); })[0]; how = TX('name'); }
       if (hit) claimed[hit.id] = 1;
       out.push({ rec: o, personId: hit ? hit.id : null, how: hit ? how : '' });
     });

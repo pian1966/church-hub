@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
-  var KINDS = ['Access (copy of their information)', 'Correction', 'Deletion', 'Objection to processing'];
+  var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
+  var KINDS = [TX('Access (copy of their information)'), TX('Correction'), TX('Deletion'), TX('Objection to processing')];
 
   function tabs(a) {
     return '<nav class="seg" aria-label="' + esc(T('Privacy')) + '" style="margin-bottom:18px">' + [['', T('Overview')], ['requests', T('Requests')], ['retention', T('Retention')], ['breaches', T('Breaches')], ['audit', T('Audit log')]].map(function (x) {
@@ -10,7 +11,7 @@
   }
   /** The privacy law of the church's country (Settings → Country): POPIA in South Africa, GDPR in Europe, … */
   function law() { return PrivacyLaw.forChurch(S.settings()); }
-  function head() { var L = law(); return '<div class="page-head"><div><h1>Privacy (' + esc(L.short) + ')</h1><p class="lead">Keeping the church on the right side of the ' + esc(L.name) + ': who is responsible, what people agreed to, and every request and incident.</p></div></div>'; }
+  function head() { var L = law(); return '<div class="page-head"><div><h1>' + T('Privacy ({law})', { law: esc(L.short) }) + '</h1><p class="lead">' + T('Keeping the church on the right side of the {law}: who is responsible, what people agreed to, and every request and incident.', { law: esc(L.name) }) + '</p></div></div>'; }
   function addDays(iso, n) { return LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(iso), n)); }
   function openRequests() { return S.find('dsr', function (d) { return d.status !== 'Done'; }); }
 
@@ -37,7 +38,7 @@
       '<section class="panel"><h2>' + esc(law().officer) + '</h2><dl class="kv"><dt>' + T('Name') + '</dt><dd>' + esc(io.name) + '</dd><dt>' + T('Email') + '</dt><dd>' + esc(io.email) + '</dd><dt>' + T('Phone') + '</dt><dd>' + esc(io.phone) + '</dd><dt>' + T('Deputy') + '</dt><dd>' + esc(io.deputy || '—') + '</dd>' + (law().register ? '<dt>' + T('Registered') + '</dt><dd>' + (io.registered ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag warn">' + T('Not yet') + '</span>') + '</dd>' : '') + '<dt>' + T('Regulator') + '</dt><dd>' + esc(law().regulator) + '</dd></dl>' +
       '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="privacy:io">' + T('Edit') + '</button></div></section>' +
       '<section class="panel"><h2>' + T('Privacy notice') + '</h2><p class="hint" style="margin-top:0">' + T('Plain words: what the church collects, why, how long, and how to ask for it to be corrected or deleted.') + '</p><label class="field"><span class="sr">' + T('Privacy notice') + '</span><textarea id="pv-notice" rows="7">' + esc(st.privacyNotice) + '</textarea></label><button class="btn small" data-act="privacy:notice">' + T('Save notice') + '</button></section>' +
-      '<section class="panel"><h2>' + T('How long we keep information') + '</h2><label class="field">' + T('Review people who have left or been inactive after') + '<select id="pv-ret">' + [12, 24, 36, 60].map(function (m) { return '<option value="' + m + '"' + (st.retentionMonths === m ? ' selected' : '') + '>' + m + ' months</option>'; }).join('') + '</select></label><button class="btn small" data-act="privacy:ret">' + T('Save') + '</button><p class="hint">' + T('Staff leave records are kept as employment records.') + '</p></section></div>';
+      '<section class="panel"><h2>' + T('How long we keep information') + '</h2><label class="field">' + T('Review people who have left or been inactive after') + '<select id="pv-ret">' + [12, 24, 36, 60].map(function (m) { return '<option value="' + m + '"' + (st.retentionMonths === m ? ' selected' : '') + '>' + T('{n} months', { n: m }) + '</option>'; }).join('') + '</select></label><button class="btn small" data-act="privacy:ret">' + T('Save') + '</button><p class="hint">' + T('Staff leave records are kept as employment records.') + '</p></section></div>';
   }
 
   function renderRequests() {
@@ -58,14 +59,14 @@
     var left = S.find('people', function (p) { return p.active === false && p.firstName !== 'Deleted'; });
     var stale = S.find('people', function (p) { return p.active !== false && (p.updatedAt || p.createdAt || '9') < cutoff && !S.find('assignments', function (a) { return a.personId === p.id; }).length; });
     var row = function (p, why) { return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc(why) + '</small></span><a class="btn small" href="#/people/p/' + p.id + '">' + T('Open') + '</a><button class="btn small" data-act="privacy:erase" data-id="' + p.id + '">' + T('Delete their information') + '</button></div>'; };
-    return head() + tabs('retention') + '<p class="muted">' + esc(law().short) + ' says information should not be kept longer than needed. Review these people: delete their information, or keep them if they’re still connected.</p>' +
+    return head() + tabs('retention') + '<p class="muted">' + T('{law} says information should not be kept longer than needed. Review these people: delete their information, or keep them if they’re still connected.', { law: esc(law().short) }) + '</p>' +
       '<section class="block"><h2>' + T('People who have left or died') + '</h2>' + (left.length ? '<div class="list">' + left.map(function (p) { return row(p, p.deceasedAt ? T('Died {date}', { date: H.fmt(p.deceasedAt, true) }) : T('Marked as left {date}', { date: p.archivedAt ? H.fmt(p.archivedAt, true) : '' }).trim()); }).join('') + '</div>' : '<p class="empty">' + T('No one has been marked as left.') + '</p>') + '</section>' +
       '<section class="block"><h2>' + T('No activity for {n} months', { n: months }) + '</h2>' + (stale.length ? '<div class="list">' + stale.map(function (p) { return row(p, T('Last updated {date}', { date: (p.updatedAt || '').slice(0, 10) })); }).join('') + '</div>' : '<p class="empty">' + T('No one is overdue for review.') + '</p>') + '</section>';
   }
 
   function renderBreaches() {
     var list = S.list('breaches');
-    return head() + tabs('breaches') + '<div class="row" style="margin-bottom:12px"><p class="muted grow" style="margin:0">If personal information is lost, stolen or seen by someone who shouldn’t (e.g. a lost phone, a wrong email), record it here. ' + esc(law().breach) + '</p><button class="btn primary" data-act="privacy:newbreach">' + H.icon(H.ICON.plus, 18) + T('Record an incident') + '</button></div>' +
+    return head() + tabs('breaches') + '<div class="row" style="margin-bottom:12px"><p class="muted grow" style="margin:0">' + T('If personal information is lost, stolen or seen by someone who shouldn’t (e.g. a lost phone, a wrong email), record it here.') + ' ' + esc(law().breach) + '</p><button class="btn primary" data-act="privacy:newbreach">' + H.icon(H.ICON.plus, 18) + T('Record an incident') + '</button></div>' +
       (list.length ? '<div class="list">' + list.map(function (b) { return '<div class="item"><span class="grow"><b>' + esc(H.fmt(b.date, true) + ' · ' + b.what) + '</b><small>' + esc(T('People affected: {n}', { n: b.affected || '?' }) + ' · ' + T('Regulator told: {when}', { when: b.regulator || T('not yet') }) + ' · ' + T('People told: {when}', { when: b.told || T('not yet') })) + '</small></span></div>'; }).join('') + '</div>' : '<p class="empty">' + T('No incidents recorded.') + '</p>');
   }
 
@@ -126,7 +127,7 @@
       savereq: function () {
         var d = document.getElementById('rq-d').value || H.today();
         S.put('dsr', { personId: document.getElementById('rq-p').value, kind: document.getElementById('rq-k').value.split(' (')[0], received: d, due: addDays(d, law().days), status: 'Open', notes: document.getElementById('rq-n').value.trim() }, 'Logged a privacy request');
-        H.closeModal(); H.render(); H.toast('Logged – respond by ' + H.fmt(addDays(d, law().days), true));
+        H.closeModal(); H.render(); H.toast(T('Logged – respond by {date}', { date: H.fmt(addDays(d, law().days), true) }));
       },
       done: function (el) { var d = S.get('dsr', el.dataset.id); d.status = 'Done'; d.doneAt = H.today(); S.put('dsr', d, 'Completed a privacy request'); H.render(); },
       export: function (el) { PeopleHelpers.exportPerson(S.get('people', el.dataset.id)); },

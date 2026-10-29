@@ -22,7 +22,8 @@ console.log('Texts used in the app');
 const dir = path.join(__dirname, '..', 'js'), used = new Set();
 for (const f of fs.readdirSync(dir).filter(f => /\.js$/.test(f) && f !== 'i18n.js')) {
   const src = fs.readFileSync(path.join(dir, f), 'utf8');
-  for (const m of src.matchAll(/\bTN?\(\s*'((?:[^'\\]|\\.)*)'(?:\s*,\s*'((?:[^'\\]|\\.)*)')?/g)) {
+  // T('…') and TN('…', '…') are shown at once; TX('…') marks a text kept in a list and translated where it is shown
+  for (const m of src.matchAll(/\bT[NX]?\(\s*'((?:[^'\\]|\\.)*)'(?:\s*,\s*'((?:[^'\\]|\\.)*)')?/g)) {
     used.add(m[1].replace(/\\'/g, "'"));
     if (/\bTN\(/.test(m[0]) && m[2] !== undefined) used.add(m[2].replace(/\\'/g, "'"));
   }

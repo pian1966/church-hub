@@ -2,6 +2,12 @@
 (function () {
   'use strict';
   var T = I18n.t, TN = I18n.tn;
+  var TX = function (s) { return s; };   // a text kept as it is and translated where it is shown (the language test checks it)
+  TX('day'); TX('days'); TX('calendar day'); TX('calendar days');   // LeaveCore.unitName (shared with Leave Manager, so English there)
+  /** "6 days", in the chosen language (LeaveCore.fmtAmount gives English). */
+  /** "Mon, Wed–Sun" (LeaveCore, English) with the day names in the chosen language. */
+  function dayNames(x) { var D = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; return String(x).replace(/\b(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\b/g, function (d) { return I18n.dow()[D.indexOf(d)]; }); }
+  function amt(t, n) { return C.fmtDays(n) + ' ' + T(C.unitName(t, n)); }
   var H = Hub, esc = H.esc, S = Store, S2 = Store, C = LeaveCore;
   var state = { tab: '' };
 
@@ -41,7 +47,7 @@
     return '<section class="block"><h2>' + esc(T('What you have left in {year}', { year: C.lyLabel(y, C.ctx(d).S) })) + '</h2><div class="bal">' + cards + '</div></section>' +
       '<section class="block"><h2>' + T('Your upcoming leave') + '</h2>' + (mine.length ? '<div class="list">' + mine.map(function (r) {
         var t = typeOf(d, r.type);
-        return '<div class="item"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow"><b>' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + C.fmtAmount(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · ' + r.reason : '')) + '</small></span>' + pill(r.status) +
+        return '<div class="item"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow"><b>' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + amt(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · ' + r.reason : '')) + '</small></span>' + pill(r.status) +
           (r.status === 'Pending' || r.start > H.today() ? '<button class="btn small" data-act="leave:cancel" data-id="' + r.id + '">' + T('Cancel') + '</button>' : '') + '</div>';
       }).join('') + '</div>' : '<p class="empty">' + T('No leave booked. Use “Request leave” to book some.') + '</p>') + '</section>';
   }
@@ -50,7 +56,7 @@
     var pend = d.requests.filter(function (r) { return r.status === 'Pending'; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
     return '<section class="block"><h2>' + T('Waiting for your decision') + '</h2>' + (pend.length ? '<div class="list">' + pend.map(function (r) {
       var st = C.staffById(d, r.staffId), t = typeOf(d, r.type), w = st ? C.requestWarnings(d, st, r, r.id, true) : [];
-      return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + (st ? '<a href="#/leave/staff/' + st.id + '">' + esc(st.name) + '</a>' : '?') + ' · ' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + C.fmtAmount(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small>' +
+      return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + (st ? '<a href="#/leave/staff/' + st.id + '">' + esc(st.name) + '</a>' : '?') + ' · ' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + amt(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small>' +
         (w.length ? '<span class="note warn" style="display:block;margin:8px 0 0;font-size:13px">⚠ ' + w.map(esc).join('<br>⚠ ') + '</span>' : '') + '</span>' +
         '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">' + T('Decline') + '</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved"' + (C.allowanceWarning(d, st, r, r.id, true) ? ' data-over="1"' : '') + '>' + T('Approve') + '</button></span></div>';
     }).join('') + '</div>' : '<p class="empty">' + T('Nothing is waiting for approval.') + '</p>') + '</section>';
@@ -62,7 +68,7 @@
     var bal = {}; staff.forEach(function (s) { bal[s.id] = C.balances(d, s.id, y); });
     // Only kinds of leave that someone in the list has an allowance for
     var types = d.types.filter(function (t) { return t.deducts && staff.some(function (s) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); });
-    return '<section class="block"><h2>Days left in ' + esc(C.lyLabel(y, C.ctx(d).S)) + '</h2><div class="panel table-wrap"><table class="simple"><thead><tr><th>' + T('Staff') + '</th>' + types.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    return '<section class="block"><h2>' + esc(T('Days left in {year}', { year: C.lyLabel(y, C.ctx(d).S) })) + '</h2><div class="panel table-wrap"><table class="simple"><thead><tr><th>' + T('Staff') + '</th>' + types.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       staff.map(function (s) {
         var b = bal[s.id];
         return '<tr><td><a href="#/leave/staff/' + s.id + '"><b>' + esc(s.name) + '</b></a><br><span class="muted small">' + esc(s.level) + '</span></td>' + types.map(function (t) { var x = b[t.code]; return '<td class="lt">' + (x && x.entitled != null ? C.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';
@@ -136,7 +142,7 @@
     var list = mine.filter(function (r) { return inYear(r, y, S); }).sort(function (a, b) { return a.start < b.start ? 1 : -1; });
     var adj = (d.adjustments || []).filter(function (a) { return a.staffId === id && Number(a.year) === y; });
     var h = back + '<div class="page-head"><div class="row">' + H.avatar(p || { id: id, firstName: st.name }, 56) + '<div><h1>' + esc(st.name) + '</h1><p class="lead" style="margin-top:2px">' + esc(st.level) +
-      (st.start ? ' · ' + esc(T('started {date}', { date: H.fmt(st.start, true) })) : '') + ' · ' + T('Working days') + ': ' + esc(C.daysLabel ? C.daysLabel(ctx.swd[id] || ctx.open) : (st.workDays || (lv && lv.workDays) || '')) + '</p></div></div>' +
+      (st.start ? ' · ' + esc(T('started {date}', { date: H.fmt(st.start, true) })) : '') + ' · ' + T('Working days') + ': ' + esc(C.daysLabel ? dayNames(C.daysLabel(ctx.swd[id] || ctx.open)) : (st.workDays || (lv && lv.workDays) || '')) + '</p></div></div>' +
       '<div class="btns"><button class="btn primary" data-act="leave:request" data-who="' + id + '">' + H.icon(H.ICON.plus, 18) + T('Book leave') + '</button>' +
       '<button class="btn" data-act="leave:staffcsv" data-id="' + id + '">' + H.icon(H.ICON.download, 18) + T('Download report') + '</button>' + (p ? '<a class="btn" href="#/people/p/' + id + '">' + T('Profile') + '</a>' : '') + '</div></div>';
     h += '<nav class="seg" aria-label="' + esc(T('Leave year')) + '" style="margin-bottom:16px">' + Object.keys(years).map(Number).sort().map(function (x) {
@@ -158,7 +164,7 @@
     h += '<section class="block"><h2>' + esc(T('Leave in {year}', { year: C.lyLabel(y, S) })) + '</h2>' + (list.length ? '<div class="list">' + list.map(function (r) {
       var t = typeOf(d, r.type), n = C.amount(r, t, ctx);
       return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + esc(range(r)) + '</b><small>' +
-        esc(t.name + ' · ' + C.fmtAmount(t, n) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small><small>' +
+        esc(t.name + ' · ' + amt(t, n) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small><small>' +
         esc([r.submitted ? T('Asked {date}', { date: String(r.submitted).slice(0, 10) }) : '', r.decidedBy ? T(r.status === 'Declined' ? 'Declined by {name}' : 'Approved by {name}', { name: r.decidedBy }) + (r.decidedOn ? ' ' + T('on {date}', { date: String(r.decidedOn).slice(0, 10) }) : '') : '',
           r.cancelledBy ? T('Cancelled by {name}', { name: r.cancelledBy }) : '', r.source === 'Leave Manager' ? T('from Leave Manager') : ''].filter(Boolean).join(' · ')) + '</small></span>' + pill(r.status) +
         (r.status === 'Pending' ? '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">' + T('Decline') + '</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved">' + T('Approve') + '</button></span>' : '') +
@@ -179,7 +185,7 @@
   var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   function dayBoxes(cls, value, extra) {
     var on = String(value || '').split(/\s*,\s*/);
-    return '<span class="daybox">' + DAYS.map(function (d) { return '<label title="' + d + '"><input type="checkbox" class="' + cls + '" value="' + d + '"' + (extra || '') + (on.indexOf(d) >= 0 ? ' checked' : '') + '><span>' + d.slice(0, 2) + '</span></label>'; }).join('') + '</span>';
+    return '<span class="daybox">' + DAYS.map(function (d, i) { var w = I18n.dow()[(i + 1) % 7]; return '<label title="' + esc(w) + '"><input type="checkbox" class="' + cls + '" value="' + d + '"' + (extra || '') + (on.indexOf(d) >= 0 ? ' checked' : '') + '><span>' + esc(w.slice(0, 2)) + '</span></label>'; }).join('') + '</span>';
   }
   function picked(cls, scope) { var out = []; (scope || document).querySelectorAll('.' + cls + ':checked').forEach(function (b) { out.push(b.value); }); return out.join(', '); }
 
@@ -225,7 +231,7 @@
     html += '<section class="panel"><h2>' + T('Public holidays and church closures') + '</h2><p class="hint" style="margin-top:0">' + T('These days don’t use anyone’s leave.') + '</p>' +
       (missing.length ? '<p class="note warn">' + missing.map(function (yy) { return '<button class="btn small" data-act="leave:addsa" data-y="' + yy + '">' + T('Add South African public holidays for {year}', { year: yy }) + '</button>'; }).join(' ') + '</p>' : '') +
       '<div class="list" style="max-height:320px;overflow:auto">' + hol.map(function (h) {
-        return '<div class="item"><span class="grow"><b>' + esc(H.fmt(h.date, true)) + '</b><small>' + esc(h.name) + '</small></span><button class="icon-btn ghost" data-act="leave:delhol" data-date="' + h.date + '" aria-label="Remove ' + esc(h.name) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
+        return '<div class="item"><span class="grow"><b>' + esc(H.fmt(h.date, true)) + '</b><small>' + esc(h.name) + '</small></span><button class="icon-btn ghost" data-act="leave:delhol" data-date="' + h.date + '" aria-label="' + esc(T('Remove {name}', { name: h.name })) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
       }).join('') + '</div><div class="two" style="margin-top:10px"><label class="field req">' + T('Date') + '<input type="date" id="ls-hd"></label><label class="field req">' + T('Name') + '<input id="ls-hn" placeholder="' + esc(T('e.g. Office closed – Christmas week')) + '"></label></div>' +
       '<button class="btn small" data-act="leave:addhol">' + T('Add this day') + '</button>' +
       (lv.holidays.some(function (h) { return +h.date.slice(0, 4) === y + 2 && !h.church; }) ? '' : ' <button class="link" data-act="leave:addsa" data-y="' + (y + 2) + '">' + T('Add public holidays for {year}', { year: y + 2 }) + '</button>') +
@@ -273,7 +279,7 @@
         warn = C.requestWarnings(d, st, r, undefined, false);
         var n = C.countDays(r, C.ctx(d));
         $('lf-sum').hidden = false;
-        $('lf-sum').innerHTML = '<b>' + esc(C.fmtAmount(t, C.amount(r, t, C.ctx(d)))) + '</b>' + (C.isDayUnit(t) ? '' : ' (' + esc(T('{n} working days', { n: n })) + ')') + (warn.length ? '<br>⚠ ' + warn.map(esc).join('<br>⚠ ') : '');
+        $('lf-sum').innerHTML = '<b>' + esc(amt(t, C.amount(r, t, C.ctx(d)))) + '</b>' + (C.isDayUnit(t) ? '' : ' (' + esc(T('{n} working days', { n: n })) + ')') + (warn.length ? '<br>⚠ ' + warn.map(esc).join('<br>⚠ ') : '');
       } else $('lf-sum').hidden = true;
       $('lf-err').hidden = !errs.length; $('lf-err').innerHTML = errs.map(esc).join('<br>');
       $('lf-go').disabled = !t || !C.isISO(r.start) || errs.length > 0;

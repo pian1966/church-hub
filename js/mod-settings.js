@@ -2,9 +2,10 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
-  var MODS = [['people', 'People', 'Directory, households and consent'], ['rosters', 'Rosters', 'Serving rosters, teams and serving together'], ['leave', 'Leave', 'Staff leave (Leave Manager built in)'],
-    ['care', 'Care groups', 'Small groups that care for one another'], ['privacy', 'Privacy', 'Privacy law tools (consent, requests, breaches)'], ['import', 'Import', 'Bring data across from Elvanto'],
-    ['words', 'Translations', 'Members suggest better wording in their language']];
+  var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
+  var MODS = [['people', TX('People'), TX('Directory, households and consent')], ['rosters', TX('Rosters'), TX('Serving rosters, teams and serving together')], ['leave', TX('Leave'), TX('Staff leave (Leave Manager built in)')],
+    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
+    ['words', TX('Translations'), TX('Members suggest better wording in their language')]];
 
   /** The number of people with an access level; point at it (or tap it) to see who they are. Long lists (e.g. "No access") stay a number. */
   function whoHas(ps, role) {
@@ -14,8 +15,8 @@
       ps.map(function (p) { return '<a href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>'; }).join('') + '</div></details>';
   }
 
-  var DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-  function slotText(x) { return DAYS[x.day || 0] + ' ' + x.label + (x.venue ? ' · ' + x.venue : ''); }
+  var DAYS = [TX('Sunday'), TX('Monday'), TX('Tuesday'), TX('Wednesday'), TX('Thursday'), TX('Friday'), TX('Saturday')];
+  function slotText(x) { return T(DAYS[x.day || 0]) + ' ' + x.label + (x.venue ? ' · ' + x.venue : ''); }
   /** The church's regular services: times and campuses/venues. Volunteers say which ones they serve at. */
   function renderSlots() {
     var sl = Serving.slots(S.settings()), used = {};
@@ -23,9 +24,9 @@
     return '<section class="panel"><h2>' + T('Services and venues') + '</h2><p class="hint" style="margin-top:0">' + T('The church’s regular services. Volunteers say which of these they can serve at, and rostering keeps to it. Add another time, or another campus or venue, when the church starts one.') + '</p>' +
       '<div class="list">' + sl.map(function (x) {
         return '<div class="item"><span class="grow"><b>' + esc(x.label) + '</b><small>' + esc(T(DAYS[x.day || 0]) + ' ' + x.time + (x.venue ? ' · ' + x.venue : '')) + (used[x.id] ? ' · ' + TN('{n} volunteer place', '{n} volunteer places', used[x.id]) : '') + '</small></span>' +
-          (sl.length > 1 ? '<button class="icon-btn ghost" data-act="settings:delslot" data-id="' + esc(x.id) + '" aria-label="Remove ' + esc(x.label) + '">' + H.icon(H.ICON.trash, 18) + '</button>' : '') + '</div>';
+          (sl.length > 1 ? '<button class="icon-btn ghost" data-act="settings:delslot" data-id="' + esc(x.id) + '" aria-label="' + esc(T('Remove {name}', { name: x.label })) + '">' + H.icon(H.ICON.trash, 18) + '</button>' : '') + '</div>';
       }).join('') + '</div>' +
-      '<div class="two" style="margin-top:12px"><label class="field">' + T('Day') + '<select id="sl-day">' + DAYS.map(function (d, i) { return '<option value="' + i + '">' + d + '</option>'; }).join('') + '</select></label>' +
+      '<div class="two" style="margin-top:12px"><label class="field">' + T('Day') + '<select id="sl-day">' + DAYS.map(function (d, i) { return '<option value="' + i + '">' + esc(T(d)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field req">' + T('Time') + '<input id="sl-time" type="time" value="09:30"></label></div>' +
       '<div class="two"><label class="field req">' + T('Name') + '<input id="sl-label" placeholder="' + esc(T('e.g. 9:30am, or Youth service')) + '"></label><label class="field">' + T('Campus or venue') + '<input id="sl-venue" placeholder="' + esc(T('Leave empty for the church itself')) + '"></label></div>' +
       '<button class="btn small" data-act="settings:addslot">' + H.icon(H.ICON.plus, 16) + T('Add a service') + '</button></section>';
@@ -40,7 +41,7 @@
     return '<section class="panel"><h2>' + T('Services that need a roster') + '</h2>' +
       (svcs.length ? '<div class="list">' + shown.map(function (s) {
         return '<div class="item"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + (s.special ? ' <span class="tag">' + T('Special') + '</span>' : '') + '</b><small>' + esc(s.time + ' · ' + s.name + (s.venue && s.name.indexOf(s.venue) < 0 ? ' · ' + s.venue : '')) + '</small></span>' +
-          '<button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="Remove the service on ' + esc(H.fmt(s.date, true)) + '" title="' + esc(T('Remove this service (and its roster)')) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
+          '<button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="' + esc(T('Remove the service on {date}', { date: H.fmt(s.date, true) })) + '" title="' + esc(T('Remove this service (and its roster)')) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
       }).join('') + '</div>' + (svcs.length > 8 ? '<p class="hint"><button class="link" data-act="settings:allsvc">' + (allSvcs ? T('Show fewer') : T('Show all {n}', { n: svcs.length })) + '</button></p>' : '') : '<p class="muted">' + T('None planned.') + '</p>') +
       (svcs.some(function (s) { return !s.special; }) ? '<details class="sub"><summary>' + T('Stop holding a regular service…') + '</summary><p class="hint">' + T('Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Services and venues”.') + '</p>' +
         '<div class="two"><label class="field">' + T('Service') + '<select id="sv-stop">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select></label>' +

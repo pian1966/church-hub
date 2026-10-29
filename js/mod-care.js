@@ -157,10 +157,10 @@
       (gs.length ? '<div class="grid2">' + gs.map(function (g) {
         var ms = (g.memberIds || []).map(function (id) { return S.get('people', id) || { id: id, firstName: (g.names || {})[id] || 'Someone', lastName: '' }; }).sort(function (a, b) {
           var la = Care.isLeader(g, a.id) ? 0 : 1, lb = Care.isLeader(g, b.id) ? 0 : 1; return la - lb || H.name(a).localeCompare(H.name(b)); });
-        return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} person', '{n} people', ms.length) + '</span>' +
+        return '<section class="panel"><div class="row cg-head"><div class="grow"><h2 style="margin:0">' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} person', '{n} people', ms.length) + '</span></div><span class="cg-tools">' +
           '<button class="icon-btn ghost" data-act="care:rename" data-id="' + g.id + '" aria-label="' + esc(T('Rename {name}', { name: g.name })) + '" title="' + esc(T('Rename')) + '">' + H.icon('M4 20h4L20 8l-4-4L4 16zM14 6l4 4', 16) + '</button>' +
           '<button class="icon-btn ghost" data-act="care:copy" data-id="' + g.id + '" aria-label="' + esc(T('Duplicate {name}', { name: g.name })) + '" title="' + esc(T('Duplicate the group, with all its members')) + '">' + H.icon('M9 9h11v11H9zM5 15H4V4h11v1', 16) + '</button>' +
-          '<button class="icon-btn ghost" data-act="care:delgroup" data-id="' + g.id + '" aria-label="' + esc(T('Delete {name}', { name: g.name })) + '" title="' + esc(T('Delete the group')) + '">' + H.icon(H.ICON.trash, 16) + '</button></div>' +
+          '<button class="icon-btn ghost" data-act="care:delgroup" data-id="' + g.id + '" aria-label="' + esc(T('Delete {name}', { name: g.name })) + '" title="' + esc(T('Delete the group')) + '">' + H.icon(H.ICON.trash, 16) + '</button></span></div>' +
           (ms.length ? '<div class="list" style="margin-top:8px">' + ms.map(function (p) {
             var isL = Care.isLeader(g, p.id);
             return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><a href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>' + (isL ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + (consented(p.id) ? '' : ' <small class="muted">' + T('details not shared (no consent yet)') + '</small>') + '</span>' +
@@ -216,7 +216,12 @@
         place(p, el.dataset.g, false); H.render(); H.toast(T('{name} added to the group', { name: H.name(p) }));
         var again = document.querySelector('.cg-q[data-for="g-' + el.dataset.g + '"]'); if (again) again.focus();   // ready for the next name
       },
-      lead: function (el) { var p = S.get('people', el.dataset.id), g = S.get('careGroups', el.dataset.g); if (p && g) { place(p, g.id, !Care.isLeader(g, p.id)); H.render(); } },
+      lead: function (el) {   // "Not a carer" stops them being a carer in every group; "Make carer" is for this group
+        var p = S.get('people', el.dataset.id), g = S.get('careGroups', el.dataset.g); if (!p || !g) return;
+        if (!Care.isLeader(g, p.id)) { place(p, g.id, true); H.render(); return; }
+        var n = 0; Care.groupsOf(S.list('careGroups'), p.id).forEach(function (x) { if (Care.isLeader(x, p.id) && place(p, x.id, false)) n++; });
+        H.render(); if (n > 1) H.toast(T('{name} is no longer a carer in {n} groups', { name: H.name(p), n: n }));
+      },
       out: function (el) { var p = S.get('people', el.dataset.id) || { id: el.dataset.id, firstName: 'Someone', lastName: '' }; saveChanges(p, Care.takeOut(S.list('careGroups'), p.id, el.dataset.g)); H.render(); H.toast(T('Taken out of the group')); },
       syncall: function () {
         var all = []; S.list('careGroups').forEach(function (g) { (g.memberIds || []).forEach(function (m) { if (all.indexOf(m) < 0) all.push(m); }); });

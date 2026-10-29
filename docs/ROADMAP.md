@@ -107,6 +107,18 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   ministry or Member would (the eye next to their name, or More on a phone). A banner shows it; nothing is saved meanwhile;
   pastoral and medical notes stay hidden; starting and stopping is in the audit log.
 - ✅ 29 Oct 2026: **Province** on a person's details is a dropdown of South Africa's nine provinces (the typing list didn't open in some browsers).
+- ✅ 29 Oct 2026: **International and denominational** – the church's country (Settings) and a country per address, with
+  its provinces/states/counties and postcode wording (46 countries); **Church wording** sets (Anglican, Catholic, Methodist,
+  Presbyterian/Reformed, Baptist, Pentecostal, Lutheran) and renaming any word; the Privacy pages follow the country's law
+  (POPIA, GDPR, UK GDPR and others); **18 more languages** by continent (Africa, Europe, Americas), drafted by Claude –
+  to be checked by fluent speakers.
+- ✅ 29 Oct 2026: **Care groups** – set up by Administrators and Pastors; carers add and remove members; members see each
+  other's photo, phone, email, address and birthday with the new "Care group" consent. **Re-publish the rules.**
+- ✅ 29 Oct 2026: **Services** – remove any upcoming one, stop a regular service from a date, and add **special services**
+  (Maundy Thursday, Tenebrae, Good Friday, Christmas Day, Ascension, Pentecost and more, dates worked out from Easter).
+  **View as…** moved to the top right. Unfolded sections stay open when the screen refreshes.
+- ⬜ Later: other countries' public holidays for Leave (Leave still uses South Africa's); translations checked by fluent
+  speakers; church wording in the other languages too.
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

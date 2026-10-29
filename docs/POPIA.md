@@ -105,6 +105,19 @@ Leave Manager PINs are dropped on reading. From an Elvanto export only the colum
 notes, giving and security codes are ignored – but it is safer to leave those columns out of the export altogether. Keep the download on the church computer and delete it once imported. Once Leave
 Manager is retired, its Google Sheet should be archived (read-only) or deleted under the church's retention period.
 
+## Care groups
+- Purpose: care and fellowship in small groups. Basis: **consent** – the new "Care group" consent (People → Consent, or
+  the person's own privacy choices). Without it, the group sees only their name.
+- What the group sees: photo (small), mobile, email, home address and birthday (day and month, not the year) – a separate
+  card per person in their group (`careGroups/{id}/share/{person}`), not their record. Only members of that group,
+  Administrators and Pastors can read it (database rules, tested). Carers may add and remove members; every change is in
+  the audit log. Leaving a group removes the person's card from it; after a death they are taken out.
+
+## Other countries
+Church Hub's privacy pages follow the church's country (Settings → Country): POPIA in South Africa, the GDPR in Europe
+(with each country's data protection authority), UK GDPR, and other countries' laws where listed (`js/privacy-law.js`).
+This document describes POPIA; churches elsewhere should check the same points against their own law.
+
 ## Other POPIA points covered
 - **Direct marketing by email/SMS (s69):** only to people with consent for that channel; every message will include an opt-out (Phase 5).
 - **Cross-border transfers (s72):** the church's data (Firestore) is stored in Johannesburg. **Sign-in accounts** (the email addresses of people given access, and their Google name) are kept by Firebase Authentication on Google's global servers – the privacy notice should say so. Any other overseas service (e.g. an SMS gateway) is also listed in the privacy notice.

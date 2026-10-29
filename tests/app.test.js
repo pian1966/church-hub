@@ -655,6 +655,13 @@ function serve() {
   for (let i = 0; i < 4 && (await s.docsNow())['careGroups/cgA'].memberIds.includes('p15'); i++) { await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.settle(); }   // click, then click again to confirm
   docs = await s.docsNow();
   check(!docs['careGroups/cgA'].memberIds.includes('p15') && !docs['careGroups/cgA/share/p15'], 'a carer can take someone out (their card goes too)');
+  // More languages, grouped by continent and loaded when chosen
+  const groupsSeen = await s.page.$$eval('#me-lang optgroup', g => g.map(x => x.label));
+  check(groupsSeen.join() === 'Africa,Europe,Americas' && await s.page.$$eval('#me-lang option', o => o.length > 20), 'the language list offers more languages, by continent: ' + groupsSeen.join(', '));
+  await s.page.selectOption('#me-lang', 'sw'); await s.page.waitForFunction(() => I18n.get() === 'sw', null, { timeout: 5000 }).catch(() => {});
+  t = await s.page.textContent('main');
+  check(await s.page.evaluate(() => I18n.get()) === 'sw' && t.includes('Lugha hii imetafsiriwa na kompyuta'), 'choosing Kiswahili loads it, with a note that it is still being checked');
+  await s.page.selectOption('#me-lang', 'en'); await s.settle();
   await finish(s);
 
   console.log('Wedding anniversary on the profile:');

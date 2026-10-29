@@ -26,16 +26,23 @@ js/households.js          Households: households, parents/guardians, couples and
 js/people-search.js       PeopleSearch: Advanced search filters and logic (pure, tested)
 js/duplicates.js          Duplicates: finding and merging people entered twice (pure, tested)
 js/serving.js             Serving: the church's regular services (settings.serviceSlots; 8am, 10am, 5pm until changed), departments and positions as in Elvanto
-js/i18n.js                I18n: the four languages (tested)       js/sample.js  made-up church for demo mode and tests
+js/i18n.js                I18n: English, Afrikaans, isiZulu, isiXhosa (tested), and the list of more languages
+js/lang/<code>.js         one file per further language (18, by continent), loaded only when someone chooses it (tested)
+js/countries.js           Countries: 46 countries – regions (province/state/county…), postcode wording, dialling code, law (tested)
+js/privacy-law.js         PrivacyLaw: the law the Privacy pages follow, from the church's country (POPIA, GDPR, UK GDPR…; tested)
+js/wording.js             Wording: the church's own words (sets by denomination + renamed words), applied to the screens (tested)
+js/care.js                Care: care groups – who is in which group, carers, and the card the group sees (tested)
+js/sample.js              made-up church for demo mode and tests
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers (search matching, photos and
                           "Choose the face", the turning cross for long jobs, downloads)
-js/mod-*.js               one file per module: me, people, rosters, leave, privacy, import, settings
+js/mod-*.js               one file per module: me, people, rosters, leave, care, privacy, import, settings
 android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
 manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
 firestore.rules           database security rules: who may read/write what (POPIA)
 tests/*.test.js           one per pure rules file above (roster, leave-import, elvanto-import, elvanto-sync, households,
-                          people-search, duplicates, i18n) and the robot (robot.test.js); made-up data in tests/fixtures
+                          people-search, duplicates, i18n, countries, privacy-law, wording, serving, care) and the robot
+                          (robot.test.js); made-up data in tests/fixtures
 tests/rules.test.mjs      security rules (Firestore emulator)
 tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js)
 .github/workflows/tests.yml  runs all of these on GitHub after every push
@@ -285,3 +292,51 @@ Later: direct import through the Elvanto API (server side, with the church's API
 - Code: GitHub (`church-hub` repository); website: GitHub Pages.
 - Data: Google Firebase (Firestore + Authentication), project owned by the church, data stored in Johannesburg (Firestore region `africa-south1`).
 - Never put real church data in GitHub or in a Claude Project.
+
+## Going international (countries, church wording, privacy law, languages)
+- **Countries** (`js/countries.js`): Settings → Church → Country (`settings.country`, a code such as `ZA`; South Africa until
+  chosen). Each address has its own country (stored by its English name, as Elvanto exports it); the form swaps the province
+  list, its label (Province, State, County, Canton…) and the postcode label (ZIP code, Eircode, CEP…) as the country changes.
+  Countries without a fixed list get a box to type in. Phone numbers are compared by their last 9 digits, so any country's
+  "+44 7700…" and "07700…" match (duplicates).
+- **Church wording** (`js/wording.js`): Settings → Church wording: a set (General, Anglican, Catholic, Methodist,
+  Presbyterian/Reformed, Baptist, Pentecostal, Lutheran) and any word renamed (`settings.wording = { set, custom }`).
+  `app.js` changes the words in what is shown (text nodes and titles/placeholders, after every render, in dialogs and
+  messages) – in English only; stored values never change (`Church Partner` in the database shows as "Parishioner").
+  Text inside `data-own-words` (people's notes, the wording panel itself) is left alone.
+- **Privacy law** (`js/privacy-law.js`): from the church's country – POPIA (ZA), GDPR (EU/EEA, with each country's
+  authority; Germany notes church data protection law), UK GDPR (ICO), FADP (CH), PIPEDA (CA), Privacy Act (AU, NZ),
+  LGPD (BR), and Kenya, Nigeria, Zimbabwe, Botswana, Rwanda, Malawi, Ethiopia, Mexico, Chile; general wording elsewhere.
+  The Privacy pages, the officer's title, the regulator, breach advice and days to answer a request follow it. Checked
+  October 2026 – not legal advice.
+- **Languages**: `js/i18n.js` keeps the four built-in languages; `I18n.MORE` lists 18 more (Sesotho, Setswana, Sepedi,
+  Xitsonga, siSwati, Tshivenḓa, isiNdebele, chiShona, Kiswahili, Amharic, Yorùbá, French, Portuguese, Spanish, German, Dutch,
+  Italian, Polish), each in `js/lang/<code>.js` (`I18n.add(code, { mon, dow, words })`), fetched when chosen; the screen is
+  redrawn when it arrives (`I18n.onLoad`). The picker groups them by continent. A line missing in a file shows in English;
+  `tests/i18n.test.js` checks every file keeps the `{parts}`. All were drafted by Claude (AI): the Me page says so and asks
+  people to tell the church office if something reads oddly. When adding a member-facing text, add it to `js/i18n.js`
+  (required) and, when you can, to the `js/lang` files.
+
+## Care groups (Care groups page; `js/care.js`, `js/mod-care.js`)
+- `careGroups/{id}` = { name, leaderIds (carers), memberIds, names: { personId: name } }. One group per person.
+  Administrators and Pastors create, rename and delete groups and put people in them (Care groups page, or Edit details →
+  "Care group member" + which group + Carer). A group's carers may add people from the church directory and take members
+  out (only `memberIds`/`names` change; they stay in it; they can't change the carers or the name).
+- What the group sees: each member's card `careGroups/{id}/share/{personId}` – name always; with the "Care group" consent
+  also a small photo (96 px), mobile, email, address and birthday (day and month). The card is written by the person
+  themselves (after signing in, and when they change their details or consent) or by an Administrator/Pastor; carers may
+  delete a card when they take someone out. Members load their group (`where memberIds array-contains me`), then its cards
+  (`Store` follows `careGroups/{id}/share` once the group is known). Rules: `firestore.rules` (careGroups, share).
+- Shown: members – "My care group" on their Me page; staff – a "Care group member / Carer · group" tag on profiles.
+  Church wording renames them (Home group, Cell group, Class and Class leader, Small Christian Community…).
+
+## Services that need a roster
+- Settings lists every upcoming service with a bin to remove it (and its roster); "Stop holding a regular service…"
+  removes a regular one's upcoming services from a date (confirmed in a dialog).
+- **Special services** (`Serving.specials(year)`): suggestions grouped by season with the churches that usually keep them,
+  and dates worked out from Easter (`Serving.easter`): Ash Wednesday, Palm Sunday, Maundy Thursday, Tenebrae, Good Friday,
+  Easter Vigil, Ascension Day, Pentecost, Trinity Sunday, Corpus Christi; plus Advent Sunday, Christmas Eve and Day,
+  Watchnight, Covenant service, Epiphany, Remembrance Sunday, Reformation Sunday, All Saints', Christ the King, and occasions
+  (baptisms, confirmations, weddings, funerals…). A special service is a `services` record with `special: true`; "Teams
+  like" picks which regular service's positions it uses (its `slot`).
+

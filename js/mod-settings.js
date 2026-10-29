@@ -157,7 +157,14 @@
         var id = document.getElementById('sv-stop').value, from = document.getElementById('sv-stop-from').value || H.today();
         var gone = S.find('services', function (s) { return !s.special && Serving.slotOf(s) === id && s.date >= from; });
         if (!gone.length) { H.toast('There are none of those from that date', true); return; }
-        if (!H.confirmBtn(el, 'Remove ' + gone.length + '? Click again')) return;
+        H.modal(H.dialogHead('Remove ' + gone.length + ' services?', Serving.slotLabel(id, S.settings()) + ' from ' + H.fmt(from, true)) +
+          '<div class="dlg-body"><p>Their rosters go too, and the people on them are no longer expected. This can’t be undone.</p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn danger" data-act="settings:stopsvcgo" data-id="' + esc(id) + '" data-from="' + esc(from) + '">Remove ' + gone.length + ' services</button></div>', 'Remove services');
+      },
+      stopsvcgo: function (el) {
+        var id = el.dataset.id, from = el.dataset.from;
+        var gone = S.find('services', function (s) { return !s.special && Serving.slotOf(s) === id && s.date >= from; });
+        H.closeModal();
         gone.forEach(function (sv) { S.find('assignments', function (x) { return x.serviceId === sv.id; }).forEach(function (x) { S.remove('assignments', x.id); }); S.remove('services', sv.id); });
         S.audit('Stopped ' + Serving.slotLabel(id, S.settings()) + ' services from ' + from + ': removed ' + gone.length + ' (with their rosters)', 'services');
         H.render(); H.toast(gone.length + ' services removed');

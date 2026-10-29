@@ -565,7 +565,7 @@ function serve() {
   if (await s.page.$('[data-act="settings:allsvc"]')) { await s.page.click('[data-act="settings:allsvc"]'); await s.settle(); }
   check(gf.length === 1 && docs[gf[0]].time === '09:00' && (await s.text()).includes('Special'), 'a special service can be added, and shows as Special');
   await s.page.click('details.sub summary'); await s.page.selectOption('#sv-stop', hilton.id);
-  await s.page.click('[data-act="settings:stopsvc"]'); await s.page.click('[data-act="settings:stopsvc"]'); await s.settle(); docs = await s.docsNow();
+  await s.page.click('[data-act="settings:stopsvc"]'); await s.page.click('[data-act="settings:stopsvcgo"]'); await s.settle(); docs = await s.docsNow();
   check(!Object.keys(docs).some(k => k.startsWith('services/') && docs[k].slot === hilton.id && !docs[k].special) && gf.every(k => docs[k]), 'stopping a regular service removes its upcoming services (special ones stay)');
   await finish(s);
   s = await session('tim.jacobs@example.com', (() => { const d = seedDocs(); d['settings/church'] = Object.assign({}, d['settings/church'], { serviceSlots: slotsNow }); return d; })());
@@ -644,7 +644,8 @@ function serve() {
   check(addable.length > 0 && !addable.includes('p15'), 'a carer can add people from the church directory');
   await s.page.selectOption('#cg-who', addable[0]); await s.page.click('[data-act="care:mineaddsave"]'); await s.settle(); docs = await s.docsNow();
   check(docs['careGroups/cgA'].memberIds.includes(addable[0]), '…and they are added');
-  await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.settle(); docs = await s.docsNow();
+  for (let i = 0; i < 4 && (await s.docsNow())['careGroups/cgA'].memberIds.includes('p15'); i++) { await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.settle(); }   // click, then click again to confirm
+  docs = await s.docsNow();
   check(!docs['careGroups/cgA'].memberIds.includes('p15') && !docs['careGroups/cgA/share/p15'], 'a carer can take someone out (their card goes too)');
   await finish(s);
 

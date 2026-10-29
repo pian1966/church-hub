@@ -103,6 +103,9 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   three old services now serve at every service, so new ones include them. **Re-publish the rules.**
 - ✅ 29 Oct 2026: **Advanced search field list as in Elvanto** – clicking the field opens the whole list (with its group
   headings) and a box to type in; typing "name" or "marit" narrows the list as you type; Enter or a click picks, Esc closes.
+- ✅ 29 Oct 2026: **View as another role** – Administrators can see Church Hub as a Pastor, Roster coordinator, Children's
+  ministry or Member would (the eye next to their name, or More on a phone). A banner shows it; nothing is saved meanwhile;
+  pastoral and medical notes stay hidden; starting and stopping is in the audit log.
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

@@ -347,3 +347,10 @@ body.is-busy { cursor: progress; }
 /* Prompts on Home and My details (photo of yourself, iPhone home screen) */
 .panel.prompt { margin-bottom: 16px; border-left: 4px solid var(--accent, #E8590C); }
 .panel.prompt h2 { font-size: 1.05rem; }
+
+/* "View as": an Administrator seeing Church Hub as another role */
+.viewas { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; background: #FFF4D6; color: #5C4300; border-bottom: 1px solid #F0D98A; font-size: 14px; }
+.viewas span { flex: 1 1 220px; }
+.viewas .btn { margin-left: auto; }
+.viewas-pick { display: grid; gap: 8px; }
+.viewas-pick .btn { justify-content: flex-start; width: 100%; }

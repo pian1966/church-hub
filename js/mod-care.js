@@ -21,30 +21,37 @@
       img.onerror = function () { ok(''); }; img.src = dataUrl;
     });
   }
-  function sameCard(a, b) { return Care.FIELDS.every(function (k) { return k === 'updatedAt' || k === 'createdAt' || JSON.stringify(a[k] === undefined ? null : a[k]) === JSON.stringify(b[k] === undefined ? null : b[k]); }) && a.groupId === b.groupId; }
-  /** Bring a person's card in their care group up to date (by an Administrator or Pastor, or the person themself). */
+  function sameCard(a, b) { return Care.FIELDS.every(function (k) { return k === 'updatedAt' || k === 'createdAt' || JSON.stringify(a[k] === undefined ? null : a[k]) === JSON.stringify(b[k] === undefined ? null : b[k]); }); }
+  /** Bring a person's cards up to date – one in each care group they are in (by an Administrator or Pastor, or the person themself). */
   function sync(pid) {
     var u = me(), p = S.get('people', pid); if (!p || !u || !(manager() || u.id === pid) || S.preview()) return Promise.resolve();
-    var g = Care.groupOf(S.list('careGroups'), pid), old = S.get('careShare', pid);
-    if (!g) { if (old) S.remove('careShare', pid); return Promise.resolve(); }
+    var gs = Care.groupsOf(S.list('careGroups'), pid), ids = gs.map(function (g) { return g.id; });
+    S.find('careShare', function (c) { return c.personId === pid && ids.indexOf(c.groupId) < 0; }).forEach(function (c) { S.careUnshare(c.groupId, pid); });   // groups they have left
+    if (!gs.length) return Promise.resolve();
     var ok = consented(pid);
     return (ok && p.photo ? S.photo(pid).then(thumb, function () { return ''; }) : Promise.resolve('')).then(function (ph) {
-      var card = Object.assign({ id: pid, groupId: g.id }, Care.card(p, ok, Care.isLeader(g, pid), ph));
-      if (old && sameCard(old, card)) return;
-      S.put('careShare', card);
+      gs.forEach(function (g) {
+        var card = Object.assign({ id: g.id + ':' + pid, personId: pid, groupId: g.id }, Care.card(p, ok, Care.isLeader(g, pid), ph)), old = S.get('careShare', card.id);
+        if (!old || !sameCard(old, card)) S.put('careShare', card);
+      });
     });
   }
-  /** Put someone in a group (or none), as a carer or not; their card follows. */
-  function place(p, gid, leader, why) {
-    var before = Care.groupOf(S.list('careGroups'), p.id), changes = Care.place(S.list('careGroups'), p, gid, leader);
+  /** Save changed groups, take away the cards in groups they left, write a line in the audit log. */
+  function saveChanges(p, changes, why) {
     if (!changes.length) return false;
-    changes.forEach(function (g) { S.put('careGroups', g); });
-    if (before && before.id !== gid) S.careUnshare(before.id, p.id);
-    var now = gid ? S.get('careGroups', gid) : null;
-    S.audit((why || '') + (now ? (leader ? 'Carer of ' : 'In care group ') + now.name + ': ' : 'Taken out of care group ' + (before ? before.name : '') + ': ') + H.name(p), 'people/' + p.id);
+    changes.forEach(function (g) {
+      var was = S.get('careGroups', g.id) || {}, wasIn = (was.memberIds || []).indexOf(p.id) >= 0, isIn = g.memberIds.indexOf(p.id) >= 0;
+      S.put('careGroups', g);
+      if (wasIn && !isIn) S.careUnshare(g.id, p.id);
+      S.audit((why || '') + (isIn ? (Care.isLeader(g, p.id) ? 'Carer of ' : 'In care group ') + g.name : 'Taken out of care group ' + g.name) + ': ' + H.name(p), 'people/' + p.id);
+    });
     sync(p.id);
     return true;
   }
+  /** Put someone in a group (their other groups stay), as a carer or not; gid '' = out of every group. */
+  function place(p, gid, leader, why) { return saveChanges(p, Care.place(S.list('careGroups'), p, gid, leader), why); }
+  /** Set all of someone's groups at once (Edit details): want = { groupId: carer? }. */
+  function setFrom(p, v) { return v && !v.error ? saveChanges(p, Care.setGroups(S.list('careGroups'), p, v.want)) : false; }
   function pic(c, size) {
     var n = ((c.preferredName || c.firstName || '?').charAt(0) + (c.lastName || '').charAt(0)).toUpperCase();
     return '<span class="av' + (c.photo ? ' pic' : '') + '" style="--s:' + (size || 40) + 'px' + (c.photo ? ';background-image:url(' + c.photo + ')' : '') + '" aria-hidden="true">' + esc(n) + '</span>';
@@ -54,14 +61,17 @@
   /* ---------- a member's own care group (on their Me page) ---------- */
   function mePanel() {
     var u = me(); if (!u) return '';
-    var pc = S.previewCare(), g = pc ? S.get('careGroups', pc) : Care.groupOf(S.list('careGroups'), u.id); if (!g) return '';
-    var lead = !!pc || Care.isLeader(g, u.id), cards = {};   // "View as" a carer: an Administrator sees the group as its carer does
-    S.list('careShare').forEach(function (c) { if (c.groupId === g.id) cards[c.id] = c; });
+    var pc = S.previewCare(), gs = pc ? [S.get('careGroups', pc)].filter(Boolean) : Care.groupsOf(S.list('careGroups'), u.id); if (!gs.length) return '';
+    return '<div id="my-care">' + gs.map(function (g) { return oneGroup(g, u, !!pc); }).join('') + '</div>';
+  }
+  function oneGroup(g, u, asCarer) {
+    var lead = asCarer || Care.isLeader(g, u.id), cards = {};   // "View as" a carer: an Administrator sees the group as its carer does
+    S.list('careShare').forEach(function (c) { if (c.groupId === g.id) cards[c.personId] = c; });
     var ids = (g.memberIds || []).slice().sort(function (a, b) {
       var la = Care.isLeader(g, a) ? 0 : 1, lb = Care.isLeader(g, b) ? 0 : 1; if (la !== lb) return la - lb;
       return String((g.names || {})[a] || '').localeCompare(String((g.names || {})[b] || ''));
     });
-    return '<section class="panel" id="my-care"><div class="row"><h2 class="grow" style="margin:0">' + T('My care group') + ': ' + esc(g.name) + '</h2>' + H.icon(HEART, 18) + '</div>' +
+    return '<section class="panel my-care" data-g="' + esc(g.id) + '"><div class="row"><h2 class="grow" style="margin:0">' + T('My care group') + ': ' + esc(g.name) + '</h2>' + H.icon(HEART, 18) + '</div>' +
       '<p class="hint" style="margin:4px 0 10px">' + T('People in your care group see your details only if you agreed (under Consent).') + '</p><div class="list">' +
       ids.map(function (pid) {
         var c = cards[pid] || { firstName: ((g.names || {})[pid] || '').split(' ')[0], lastName: ((g.names || {})[pid] || '').split(' ').slice(1).join(' ') }, isL = Care.isLeader(g, pid), you = pid === u.id;
@@ -73,36 +83,43 @@
         if (c.birthday) bits.push(T('Birthday') + ' ' + esc(birthday(c.birthday)));
         return '<div class="item" style="align-items:flex-start">' + pic(c, 44) + '<span class="grow"><b>' + esc(name) + (you ? ' <span class="muted">(' + T('you') + ')</span>' : '') + (isL ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + '</b>' +
           '<small>' + (bits.length ? bits.join(' · ') : (cards[pid] ? T('Details not shared') : T('Details appear when they next sign in'))) + '</small></span>' +
-          (lead && !you && !isL ? '<button class="icon-btn ghost" data-act="care:mineout" data-id="' + esc(pid) + '" aria-label="' + esc(T('Take {name} out of the group', { name: name })) + '" title="' + esc(T('Take {name} out of the group', { name: name })) + '">' + H.icon(H.ICON.x, 16) + '</button>' : '') + '</div>';
+          (lead && !you && !isL ? '<button class="icon-btn ghost" data-act="care:mineout" data-g="' + esc(g.id) + '" data-id="' + esc(pid) + '" aria-label="' + esc(T('Take {name} out of the group', { name: name })) + '" title="' + esc(T('Take {name} out of the group', { name: name })) + '">' + H.icon(H.ICON.x, 16) + '</button>' : '') + '</div>';
       }).join('') + '</div>' +
-      (lead ? '<div class="btns" style="margin-top:12px"><button class="btn" data-act="care:mineadd">' + H.icon(H.ICON.plus, 16) + T('Add someone to the group') + '</button></div>' : '') + '</section>';
+      (lead ? '<div class="btns" style="margin-top:12px"><button class="btn" data-act="care:mineadd" data-g="' + esc(g.id) + '">' + H.icon(H.ICON.plus, 16) + T('Add someone to the group') + '</button></div>' : '') + '</section>';
   }
 
   /* ---------- Edit details (Administrators and Pastors) ---------- */
   function fields(p) {
     if (!manager() || !p || p.familyRole === 'child') return '';
-    var gs = groups(), g = p.id ? Care.groupOf(gs, p.id) : null, on = !!g;
-    return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-care"' + (on ? ' checked' : '') + '><span><b>Care group member</b><br><span class="muted small">In one of the church’s care groups (choose which).</span></span></label>' +
-      '<div id="pf-care-f"' + (on ? '' : ' hidden') + ' style="margin-top:10px">' + (gs.length ? '<div class="two"><label class="field req">Which care group<select id="pf-care-g"><option value="">Choose…</option>' + gs.map(function (x) { return '<option value="' + esc(x.id) + '"' + (g && g.id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></label>' +
-        '<label class="check" style="align-self:end"><input type="checkbox" id="pf-care-l"' + (g && Care.isLeader(g, p.id) ? ' checked' : '') + '><span>Carer (leads the group)</span></label></div>' : '<p class="hint">There are no care groups yet – add them on the <a href="#/care">Care groups</a> page first.</p>') + '</div></fieldset>';
+    var gs = groups(), mine = p.id ? Care.groupsOf(gs, p.id) : [], on = mine.length > 0, inIt = {};
+    mine.forEach(function (g) { inIt[g.id] = Care.isLeader(g, p.id); });
+    return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-care"' + (on ? ' checked' : '') + '><span><b>Care group member</b><br><span class="muted small">In one or more of the church’s care groups (tick which).</span></span></label>' +
+      '<div id="pf-care-f"' + (on ? '' : ' hidden') + ' style="margin-top:10px">' + (gs.length ? '<div class="field req" style="margin:0"><span>Which care groups</span><div class="list" id="pf-care-gs">' + gs.map(function (x) {
+        var has = Object.prototype.hasOwnProperty.call(inIt, x.id);
+        return '<div class="item" style="gap:12px;flex-wrap:wrap"><label class="check grow" style="margin:0"><input type="checkbox" class="pf-cg" value="' + esc(x.id) + '"' + (has ? ' checked' : '') + '><span>' + esc(x.name) + '</span></label>' +
+          '<label class="check" style="margin:0"><input type="checkbox" class="pf-cgl" data-g="' + esc(x.id) + '"' + (inIt[x.id] ? ' checked' : '') + (has ? '' : ' disabled') + '><span class="small">Carer (leads it)</span></label></div>';
+      }).join('') + '</div></div>' : '<p class="hint">There are no care groups yet – add them on the <a href="#/care">Care groups</a> page first.</p>') + '</div></fieldset>';
   }
   function wireFields() {
     var b = document.getElementById('pf-care'), f = document.getElementById('pf-care-f');
     if (b && f) b.addEventListener('change', function () { f.hidden = !b.checked; });
+    Array.prototype.forEach.call(document.querySelectorAll('.pf-cg'), function (c) {
+      c.addEventListener('change', function () { var l = document.querySelector('.pf-cgl[data-g="' + c.value + '"]'); if (l) { l.disabled = !c.checked; if (!c.checked) l.checked = false; } });
+    });
   }
-  /** What the form says: { on, gid, leader }, or { error } when a group must be chosen. */
+  /** What the form says: { on, want: { groupId: carer? } }, or { error } when no group is ticked. */
   function read() {
     var b = document.getElementById('pf-care'); if (!b) return null;
-    var g = document.getElementById('pf-care-g'), l = document.getElementById('pf-care-l');
-    if (b.checked && (!g || !g.value)) return { error: 'Choose which care group they are in (or untick Care group member).' };
-    return { on: b.checked, gid: b.checked ? g.value : '', leader: b.checked && !!(l && l.checked) };
+    var want = {};
+    if (b.checked) Array.prototype.forEach.call(document.querySelectorAll('.pf-cg:checked'), function (c) { var l = document.querySelector('.pf-cgl[data-g="' + c.value + '"]'); want[c.value] = !!(l && l.checked); });
+    if (b.checked && !Object.keys(want).length) return { error: 'Tick which care group(s) they are in (or untick Care group member).' };
+    return { on: b.checked, want: want };
   }
-  function apply(p, v) { if (v && !v.error) place(p, v.gid, v.leader); }
-  /** The tag on a person: Care group member or Carer, with the group's name. */
+  function apply(p, v) { return setFrom(p, v); }
+  /** The tags on a person: Care group member or Carer, with each group's name. */
   function tag(p) {
     if (!manager()) return '';
-    var g = Care.groupOf(S.list('careGroups'), p.id); if (!g) return '';
-    return ' <span class="tag">' + (Care.isLeader(g, p.id) ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>';
+    return Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return ' <span class="tag">' + (Care.isLeader(g, p.id) ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>'; }).join('');
   }
 
   /* ---------- finding someone to add: type part of a name ("dar ben" finds Darren Bennett) ---------- */
@@ -133,10 +150,9 @@
   function adults(exclude) { return S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && p.firstName !== 'Deleted' && !p.mergedInto && exclude.indexOf(p.id) < 0; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); }); }
   function render() {
     if (!manager()) return '<p class="empty">Only Administrators and Pastors can set up care groups.</p>';
-    var gs = groups(), two = Care.inSeveral(gs), inAny = {};
-    gs.forEach(function (g) { (g.memberIds || []).forEach(function (m) { inAny[m] = g.name; }); });
-    return '<div class="page-head"><div><h1>Care groups</h1><p class="lead">Small groups that care for one another. Each person can be in one group. Members see each other’s photo, phone, email, address and birthday – only if they agreed (consent “Care group”). Carers can add and remove members of their own group.</p></div></div>' +
-      (two.length ? '<p class="note warn">In more than one group (two carers added them): ' + two.map(function (id) { return esc(H.name(S.get('people', id))); }).join(', ') + '. Choose their group below.</p>' : '') +
+    var gs = groups(), inAny = {};
+    gs.forEach(function (g) { (g.memberIds || []).forEach(function (m) { (inAny[m] = inAny[m] || []).push(g.name); }); });
+    return '<div class="page-head"><div><h1>Care groups</h1><p class="lead">Small groups that care for one another. A person can be in more than one group. Members see each other’s photo, phone, email, address and birthday – only if they agreed (consent “Care group”). Carers can add and remove members of their own group.</p></div></div>' +
       '<section class="panel"><h2>Add a care group</h2><div class="row" style="gap:10px;flex-wrap:wrap"><label class="field req grow" style="margin:0">Name<input id="cg-new" placeholder="e.g. Hilton Tuesday evening"></label><button class="btn primary" data-act="care:addgroup" style="align-self:end">' + H.icon(H.ICON.plus, 16) + 'Add</button></div></section>' +
       (gs.length ? '<div class="grid2">' + gs.map(function (g) {
         var ms = (g.memberIds || []).map(function (id) { return S.get('people', id) || { id: id, firstName: (g.names || {})[id] || 'Someone', lastName: '' }; }).sort(function (a, b) {
@@ -150,7 +166,7 @@
               '<button class="btn small" data-act="care:lead" data-g="' + g.id + '" data-id="' + p.id + '">' + (isL ? 'Not a carer' : 'Make carer') + '</button>' +
               '<button class="icon-btn ghost" data-act="care:out" data-g="' + g.id + '" data-id="' + p.id + '" aria-label="Take ' + esc(H.name(p)) + ' out" title="Take out of the group">' + H.icon(H.ICON.x, 16) + '</button></div>';
           }).join('') + '</div>' : '<p class="muted">No one yet.</p>') +
-          '<div style="margin-top:10px">' + finder('g-' + g.id, adults(g.memberIds || []), 'care:add', { g: g.id }, function (p) { return inAny[p.id] ? 'Now in ' + inAny[p.id] + ' – adding moves them' : ''; }, 'Add someone: type part of their name') + '</div></section>';
+          '<div style="margin-top:10px">' + finder('g-' + g.id, adults(g.memberIds || []), 'care:add', { g: g.id }, function (p) { return inAny[p.id] ? 'Also in ' + inAny[p.id].join(', ') : ''; }, 'Add someone: type part of their name') + '</div></section>';
       }).join('') + '</div>' : '<p class="empty">No care groups yet.</p>') +
       (gs.length ? '<p class="hint">Members’ cards update when their details or consent change. <button class="link" data-act="care:syncall">Update everyone’s cards now</button></p>' : '');
   }
@@ -159,9 +175,8 @@
     id: 'care', name: 'Care groups', desc: 'Small groups that care for one another', icon: HEART, tint: '#B4436C', roles: ['admin', 'pastor'],
     render: function () { return render(); },
     stat: function () { return manager() ? S.list('careGroups').length + ' groups' : ''; },
-    todos: function () { var two = manager() ? Care.inSeveral(S.list('careGroups')) : []; return two.length ? [{ text: two.length + ' in more than one care group', href: '#/care', tag: 'Care' }] : []; },
     /** After signing in: keep my own card in my care group up to date (carers may have added me). */
-    signedIn: function (u) { if (u && !manager() && Care.groupOf(S.list('careGroups'), u.id)) sync(u.id); },
+    signedIn: function (u) { if (u && !manager() && Care.groupsOf(S.list('careGroups'), u.id).length) sync(u.id); },
     actions: {
       addgroup: function () {
         var n = document.getElementById('cg-new').value.trim(); if (!n) { H.toast('Give the group a name', true); return; }
@@ -187,36 +202,36 @@
         var again = document.querySelector('.cg-q[data-for="g-' + el.dataset.g + '"]'); if (again) again.focus();   // ready for the next name
       },
       lead: function (el) { var p = S.get('people', el.dataset.id), g = S.get('careGroups', el.dataset.g); if (p && g) { place(p, g.id, !Care.isLeader(g, p.id)); H.render(); } },
-      out: function (el) { var p = S.get('people', el.dataset.id) || { id: el.dataset.id, firstName: 'Someone', lastName: '' }; place(p, '', false); H.render(); H.toast('Taken out of the group'); },
+      out: function (el) { var p = S.get('people', el.dataset.id) || { id: el.dataset.id, firstName: 'Someone', lastName: '' }; saveChanges(p, Care.takeOut(S.list('careGroups'), p.id, el.dataset.g)); H.render(); H.toast('Taken out of the group'); },
       syncall: function () {
-        var all = []; S.list('careGroups').forEach(function (g) { all = all.concat(g.memberIds || []); });
+        var all = []; S.list('careGroups').forEach(function (g) { (g.memberIds || []).forEach(function (m) { if (all.indexOf(m) < 0) all.push(m); }); });
         H.busy('Updating cards…', function () { return Promise.all(all.map(sync)); }).then(function () { S.audit('Updated the care group cards of ' + all.length + ' people', 'care'); H.toast('Cards updated'); });
       },
       /* a carer, on their Me page */
-      mineadd: function () {
-        var u = me(), g = Care.groupOf(S.list('careGroups'), u.id); if (!g || !Care.isLeader(g, u.id)) return;
+      mineadd: function (el) {
+        var u = me(), g = S.get('careGroups', el.dataset.g); if (!g || !Care.isLeader(g, u.id)) return;
         var choices = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (g.memberIds || []).indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); })
           .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
         H.modal(H.dialogHead(T('Add someone to the group'), g.name) + '<div class="dlg-body">' + (choices.length ? '<label class="field" style="margin-bottom:6px">' + T('Who') + '</label>' +
-          finder('mine', choices, 'care:mineaddsave', {}, null, T('Type part of their name')) + '<p class="hint">' + T('People in the church directory.') + '</p>' : '<p class="muted">' + T('No one else in the church directory to add.') + '</p>') +
+          finder('mine', choices, 'care:mineaddsave', { g: g.id }, null, T('Type part of their name')) + '<p class="hint">' + T('People in the church directory.') + '</p>' : '<p class="muted">' + T('No one else in the church directory to add.') + '</p>') +
           '<p id="cg-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button></div>', T('Add someone to the group'));
         var q = document.querySelector('.cg-q[data-for="mine"]'); if (q) q.focus();
       },
       mineaddsave: function (el) {
-        var u = me(), g = Care.groupOf(S.list('careGroups'), u.id), id = el.dataset.id, p = S.get('people', id);
+        var u = me(), g = S.get('careGroups', el.dataset.g), id = el.dataset.id, p = S.get('people', id); if (!g || !Care.isLeader(g, u.id)) return;
         if (!p) { var e = document.getElementById('cg-err'); e.textContent = T('Choose someone to add.'); e.hidden = false; return; }
         var x = JSON.parse(JSON.stringify(g)); x.memberIds.push(p.id); x.names = x.names || {}; x.names[p.id] = Care.nameOf(p);
         S.put('careGroups', x, 'Carer added ' + H.name(p) + ' to the care group ' + g.name); H.closeModal(); H.render(); H.toast(T('Added to the group'));
       },
       mineout: function (el) {
-        var u = me(), g = Care.groupOf(S.list('careGroups'), u.id), pid = el.dataset.id; if (!g || !Care.isLeader(g, u.id) || !H.confirmBtn(el, '✕?')) return;
+        var u = me(), g = S.get('careGroups', el.dataset.g), pid = el.dataset.id; if (!g || !Care.isLeader(g, u.id) || !H.confirmBtn(el, '✕?')) return;
         var x = JSON.parse(JSON.stringify(g)), name = (x.names || {})[pid] || '';
         x.memberIds = x.memberIds.filter(function (m) { return m !== pid; }); if (x.names) delete x.names[pid];
         S.put('careGroups', x, 'Carer took ' + name + ' out of the care group ' + g.name);
-        if (S.get('careShare', pid)) S.remove('careShare', pid);
+        S.careUnshare(g.id, pid);
         H.render(); H.toast(T('Taken out of the group'));
       }
     }
   });
-  window.CareUI = { mePanel: mePanel, fields: fields, wireFields: wireFields, read: read, apply: apply, tag: tag, sync: sync, place: place };
+  window.CareUI = { mePanel: mePanel, fields: fields, wireFields: wireFields, read: read, apply: apply, tag: tag, sync: sync, place: place, setFrom: setFrom };
 })();

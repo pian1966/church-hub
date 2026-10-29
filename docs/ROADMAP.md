@@ -123,6 +123,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ 29 Oct 2026: View as calls the Member level **Church Partner**. **Late spouses**: a widow and a man of her surname who died married are suggested even in different households; someone still recorded as Married whose spouse died is suggested too (Yes changes them to Widowed).
 - ✅ 29 Oct 2026: **Leaving Church Hub asks first**: Back past the first screen (browser and iPhone home-screen app) asks “Leave Church Hub?”; Sign out asks “Sign out of Church Hub?” (closing the tab still gets the browser’s own warning; the Android back button already asked).
 - ✅ 29 Oct 2026: **Type part of a name** to add people to care groups (Care groups page and carers’ Add someone); every long list of people or households (household, parent/guardian, not allowed to collect, late spouse, rosters, days away, privacy requests, leave, Leave Manager import) narrows as you type.
+- ✅ 29 Oct 2026: **More than one care group** per person (tick each in Edit details; a carer in one, a member in another); each group gets its own card; members see all their groups on the Me page. No rules change.
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

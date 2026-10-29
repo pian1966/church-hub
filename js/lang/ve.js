@@ -431,6 +431,8 @@ I18n.add('ve', {
     "No one else in the church directory to add.": "A hu na muṅwe muthu kha bugu ya madzina ya kereke ane a nga engedzwa.",
     "Choose someone to add.": "Nangani muthu ane a ḓo engedzwa.",
     "Added to the group": "O engedzwa kha tshigwada",
-    "Taken out of the group": "O bviswa kha tshigwada"
+    "Taken out of the group": "O bviswa kha tshigwada",
+    "Sign out of Church Hub?": "Ni khou bva kha Church Hub?",
+    "You will need to sign in again next time.": "Ni ḓo fanela u dzhena hafhu tshifhinga tshi ḓaho."
   }
 });

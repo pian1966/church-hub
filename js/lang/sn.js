@@ -431,6 +431,8 @@ I18n.add('sn', {
     "No one else in the church directory to add.": "Hapana mumwe mubhuku remazita rechechi angawedzerwa.",
     "Choose someone to add.": "Sarudza munhu wekuwedzera.",
     "Added to the group": "Awedzerwa muboka",
-    "Taken out of the group": "Abviswa muboka"
+    "Taken out of the group": "Abviswa muboka",
+    "Sign out of Church Hub?": "Kubuda muChurch Hub?",
+    "You will need to sign in again next time.": "Uchafanira kupinda zvakare nguva inotevera."
   }
 });

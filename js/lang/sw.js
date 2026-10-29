@@ -431,6 +431,8 @@ I18n.add('sw', {
     "No one else in the church directory to add.": "Hakuna mwingine kwenye orodha ya kanisa wa kuongeza.",
     "Choose someone to add.": "Chagua mtu wa kuongeza.",
     "Added to the group": "Ameongezwa kwenye kikundi",
-    "Taken out of the group": "Ametolewa kwenye kikundi"
+    "Taken out of the group": "Ametolewa kwenye kikundi",
+    "Sign out of Church Hub?": "Utoke kwenye Church Hub?",
+    "You will need to sign in again next time.": "Utahitaji kuingia tena wakati ujao."
   }
 });

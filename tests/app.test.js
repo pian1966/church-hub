@@ -1173,7 +1173,14 @@ function serve() {
   await s.page.evaluate(() => { window.__fake.nextUser = { email: 'Tim.Jacobs@example.com', emailVerified: true }; });
   await s.page.click('[data-act="hub:google"]'); await s.page.waitForSelector('.app', { timeout: 5000 }).catch(() => {});
   check(!!(await s.page.$('.app')), 'Google sign-in works (email in any capitals)');
-  await s.page.click('.side [data-act="hub:signout"]'); await s.settle();
+  // Going Back past the first screen asks first
+  await s.page.goBack().catch(() => {}); await s.page.waitForSelector('[data-act="hub:stay"]', { timeout: 3000 }).catch(() => {});
+  check((await s.page.textContent('#modal').catch(() => '')).includes('Leave Church Hub?'), 'Back past the first screen asks “Leave Church Hub?”');
+  await s.page.click('[data-act="hub:stay"]'); await s.settle();
+  check(!!(await s.page.$('.app')) && !(await s.page.$('#modal .overlay')), '“Stay” keeps them in Church Hub');
+  await s.page.click('.side [data-act="hub:signout"]');
+  check((await s.page.textContent('#modal')).includes('Sign out of Church Hub?') && !!(await s.page.$('.app')), 'Sign out asks first');
+  await s.page.click('[data-act="hub:signoutyes"]'); await s.settle();
   check((await s.page.textContent('.signin-card')).includes('Sign in with Google'), 'signing out returns to the sign-in screen');
   await finish(s);
 

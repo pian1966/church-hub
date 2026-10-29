@@ -250,7 +250,7 @@ var Hub = (function () {
     var keyOf = function (d) { var sm = d.querySelector('summary'); return d.id || (sm ? sm.textContent.trim() : ''); };
     var wasOpen = [].map.call(root.querySelectorAll('details[open]'), keyOf).filter(Boolean), samePage = root.dataset.page === location.hash;
     root.innerHTML = shell(mod, body);
-    root.dataset.page = location.hash;
+    root.dataset.page = location.hash; guardBack();
     if (samePage && wasOpen.length) root.querySelectorAll('details').forEach(function (d) { if (wasOpen.indexOf(keyOf(d)) >= 0) d.open = true; });   // a refresh keeps unfolded sections open
     ourWords(root);
     wirePrompts();
@@ -448,7 +448,13 @@ var Hub = (function () {
   var hubActions = {
     signin: function (el) { var p = Store.get('people', el.dataset.id); user = p; Store.setUser(p); try { sessionStorage.setItem('hub_user', p.id); } catch (e) {} Store.audit('Signed in (demo)', 'people/' + p.id); runUpgrades(); go('home'); render(); },
     signinany: function () { hubActions.signin({ dataset: { id: document.getElementById('si-any').value } }); },
+    /** Signing out asks first (not in the demo, where it means "switch person"). */
     signout: function () {
+      if (!Store.isLive()) return hubActions.signoutyes();
+      modal(dialogHead(T('Sign out of Church Hub?')) + '<div class="dlg-body"><p style="margin:0">' + T('You will need to sign in again next time.') + '</p></div>' +
+        '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="hub:signoutyes">' + T('Sign out') + '</button></div>', T('Sign out'));
+    },
+    signoutyes: function () {
       if (Store.preview() && !Store.isLive()) Store.preview('');
       if (user) Store.audit('Signed out', 'people/' + user.id);
       user = null; Store.setUser(null); try { sessionStorage.removeItem('hub_user'); } catch (e) {}
@@ -541,6 +547,11 @@ var Hub = (function () {
         return new Promise(function (done) { switching = done; Store.preview(role, g); });
       }).then(after);
     },
+    stay: function () { closeModal(); try { history.pushState({ hubTop: 1 }, ''); } catch (e) {} },
+    leave: function () {
+      closeModal(); leaveOk = Date.now(); history.back();
+      setTimeout(function () { if (document.visibilityState !== 'hidden') { try { window.close(); } catch (e) {} } }, 400);   // nothing to go back to: try to close the window
+    },
     close: function () { closeModal(); },
     overlay: function (el, ev) { if (ev.target === el) closeModal(); }
   };
@@ -585,6 +596,19 @@ var Hub = (function () {
   // Browsers show their own wording ("Leave site?"); a page can't change it. Not in the Android app, which asks itself.
   // Email, phone and WhatsApp links open another app without leaving, so they don't ask.
   var leaveOk = 0;
+  /** Back past Church Hub's first screen (a browser's Back, or the iPhone home-screen app) asks "Leave Church Hub?" first:
+   *  an extra step in the history catches it. The Android app asks itself (MainActivity.confirmLeave). */
+  var backGuard = false;
+  function guardBack() {
+    if (backGuard || inApp() || !user || !window.history || !history.pushState) return;
+    backGuard = true;
+    try { history.replaceState({ hubBase: 1 }, ''); history.pushState({ hubTop: 1 }, ''); } catch (e) { return; }
+    window.addEventListener('popstate', function (ev) {
+      if (!(ev.state && ev.state.hubBase) || !user) return;
+      modal(dialogHead(T('Leave Church Hub?')) + '<div class="dlg-body"><p style="margin:0">' + T('Are you sure you want to close Church Hub?') + '</p></div>' +
+        '<div class="dlg-foot"><button class="btn" data-act="hub:stay">' + T('Stay') + '</button><button class="btn primary" data-act="hub:leave">' + T('Close Church Hub') + '</button></div>', T('Leave Church Hub?'));
+    });
+  }
   function watchLeaving() {
     if (inApp()) return;
     document.addEventListener('click', function (ev) {

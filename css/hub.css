@@ -314,7 +314,7 @@ fieldset { border: 0; padding: 0; margin: 0 0 12px; min-width: 0; }
 .busy-box { background: #fff; color: var(--ink, #1C1814); border-radius: 18px; padding: 24px 28px; text-align: center; max-width: 320px; box-shadow: 0 10px 40px rgba(0,0,0,.25); }
 .busy-box p { margin: 10px 0 0; font-weight: 600; }
 .busy-box p.small { margin-top: 4px; font-weight: 400; color: var(--muted, #6B625A); }
-.busy-cross { width: 56px; height: 56px; fill: var(--accent, #E8590C); animation: busy-turn 1.4s linear infinite; will-change: transform; }
+.busy-cross { width: 26px; height: 26px; fill: var(--accent, #E8590C); animation: busy-turn 1.4s linear infinite; will-change: transform; }
 @keyframes busy-turn { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .busy-cross { animation: busy-pulse 1.6s ease-in-out infinite; } @keyframes busy-pulse { 50% { opacity: .35; } } }
 body.is-busy { cursor: progress; }

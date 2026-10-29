@@ -431,6 +431,8 @@ I18n.add('ts', {
     "No one else in the church directory to add.": "A ku na munhu un’wana eka buku ya mavito ya kereke loyi a nga engeteriwaka.",
     "Choose someone to add.": "Hlawula munhu loyi a nga ta engeteriwa.",
     "Added to the group": "U engeteriwile eka ntlawa",
-    "Taken out of the group": "U humesiwile eka ntlawa"
+    "Taken out of the group": "U humesiwile eka ntlawa",
+    "Sign out of Church Hub?": "U huma eka Church Hub?",
+    "You will need to sign in again next time.": "U ta fanela ku nghena nakambe nkarhi lowu taka."
   }
 });

@@ -25,7 +25,7 @@ var I18n = (function () {
     ['es', 'Español', 'Spanish', ['Europe', 'Americas']], ['de', 'Deutsch', 'German', ['Europe']], ['nl', 'Nederlands', 'Dutch', ['Europe']],
     ['it', 'Italiano', 'Italian', ['Europe']], ['pl', 'Polski', 'Polish', ['Europe']]
   ];
-  var PACK_VERSION = 1, loading = {}, onLoad = [];
+  var PACK_VERSION = 2, loading = {}, onLoad = [];
   var DATES = {
     en: { mon: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
     af: { mon: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'], dow: ['So', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Sa'] },
@@ -479,7 +479,9 @@ var I18n = (function () {
     ['No one else in the church directory to add.', 'Niemand anders in die kerkgids om by te voeg nie.', 'Akekho omunye ohlwini lwesonto ongamengeza.', 'Akukho mntu wumbi kuludwe lwecawa onokongezwa.'],
     ['Choose someone to add.', 'Kies iemand om by te voeg.', 'Khetha ozomengeza.', 'Khetha umntu oza kumongeza.'],
     ['Added to the group', 'By die groep gevoeg', 'Wengezwe eqenjini', 'Wongezwe eqeleni'],
-    ['Taken out of the group', 'Uit die groep gehaal', 'Ukhishwe eqenjini', 'Ukhutshiwe eqeleni']
+    ['Taken out of the group', 'Uit die groep gehaal', 'Ukhishwe eqenjini', 'Ukhutshiwe eqeleni'],
+    ['Sign out of Church Hub?', 'Meld af van Church Hub?', 'Uphume ku-Church Hub?', 'Uphuma kwi-Church Hub?'],
+    ['You will need to sign in again next time.', 'Jy sal volgende keer weer moet aanmeld.', 'Kuzodingeka ungene futhi ngokuzayo.', 'Kuya kufuneka ungene kwakhona kwixesha elizayo.']
   ];
 
   var D = { af: {}, zu: {}, xh: {} };

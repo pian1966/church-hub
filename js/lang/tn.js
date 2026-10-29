@@ -431,6 +431,8 @@ I18n.add('tn', {
     "No one else in the church directory to add.": "Ga go na ope o sele mo bukaneng ya kereke yo o ka tsenngwang.",
     "Choose someone to add.": "Tlhopha motho yo o ka tsenngwang.",
     "Added to the group": "O tsentswe mo setlhopheng",
-    "Taken out of the group": "O ntshitswe mo setlhopheng"
+    "Taken out of the group": "O ntshitswe mo setlhopheng",
+    "Sign out of Church Hub?": "Tswa mo Church Hub?",
+    "You will need to sign in again next time.": "O tla tlhoka go tsena gape nako e e tlang."
   }
 });

@@ -431,6 +431,8 @@ I18n.add('am', {
     "No one else in the church directory to add.": "በቤተ ክርስቲያን ማውጫ ውስጥ የሚጨመር ሌላ ሰው የለም።",
     "Choose someone to add.": "የሚጨመረውን ሰው ይምረጡ።",
     "Added to the group": "ወደ ቡድኑ ተጨምሯል",
-    "Taken out of the group": "ከቡድኑ ወጥቷል"
+    "Taken out of the group": "ከቡድኑ ወጥቷል",
+    "Sign out of Church Hub?": "ከChurch Hub ይውጡ?",
+    "You will need to sign in again next time.": "በሚቀጥለው ጊዜ እንደገና መግባት ያስፈልግዎታል።"
   }
 });

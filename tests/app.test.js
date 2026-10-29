@@ -886,7 +886,7 @@ function serve() {
   check(docs['words/zu'] && docs['words/zu'].words['Sign out'] === 'Phuma manje' && docs['wordIdeas/wC'].status === 'used' && docs['wordIdeas/wC'].reviewedBy === 'Tim Jacobs', '“Use this” puts the wording in use and marks the suggestion');
   await s.page.selectOption('.side-lang .lang-sel', 'zu'); await s.page.waitForTimeout(80);
   check((await s.page.getAttribute('.side [data-act="hub:signout"]', 'title')) === 'Phuma manje', 'everyone now sees the new wording, without a new version of the app');
-  await s.go('words/check'); await s.page.click('[data-act="words:revert"]'); await s.page.click('[data-act="words:revert"]'); await s.settle();
+  await s.go('words/check'); await s.page.click('main details summary'); await s.page.click('[data-act="words:revert"]'); await s.page.click('[data-act="words:revert"]'); await s.settle();
   docs = await s.docsNow();
   check(!docs['words/zu'] && (await s.page.getAttribute('.side [data-act="hub:signout"]', 'title')) === 'Phuma', '“Go back to the original” undoes it');
   await finish(s);

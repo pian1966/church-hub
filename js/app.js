@@ -244,7 +244,11 @@ var Hub = (function () {
     if (mod && enabled().indexOf(mod) < 0) { go('home'); return; }
     var body = mod ? mod.render(p.slice(1)) : renderHome();
     if (!mod || (mod.id === 'me' && !p[1])) body = prompts() + body;   // Home and My details
+    var keyOf = function (d) { var sm = d.querySelector('summary'); return d.id || (sm ? sm.textContent.trim() : ''); };
+    var wasOpen = [].map.call(root.querySelectorAll('details[open]'), keyOf).filter(Boolean), samePage = root.dataset.page === location.hash;
     root.innerHTML = shell(mod, body);
+    root.dataset.page = location.hash;
+    if (samePage && wasOpen.length) root.querySelectorAll('details').forEach(function (d) { if (wasOpen.indexOf(keyOf(d)) >= 0) d.open = true; });   // a refresh keeps unfolded sections open
     ourWords(root);
     wirePrompts();
     if (mod && mod.after) mod.after(p.slice(1));

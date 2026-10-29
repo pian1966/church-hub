@@ -655,6 +655,10 @@ function serve() {
   await s.page.click('[data-act="care:copy"][data-id="' + cgId + '"]'); await s.page.fill('#cg-copy', 'Hilton Thursday'); await s.page.click('[data-act="care:savecopy"]'); await s.settle(); await s.page.waitForTimeout(400); docs = await s.docsNow();
   const cgDup = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Hilton Thursday');
   check(cgDup && docs[cgDup].memberIds.join() === 'p14,p15' && docs[cgDup].leaderIds.join() === 'p14' && docs[cgDup + '/share/p15'] && docs['careGroups/' + cgId].memberIds.join() === 'p14,p15', 'Duplicate a care group: a new group with the same members and carers (each with a card in it); the original stays');
+  await s.page.click('[data-act="care:lead"][data-g="' + cgId + '"][data-id="p14"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['careGroups/' + cgId].leaderIds.includes('p14') && !docs[cgDup].leaderIds.includes('p14') && docs[cgDup].memberIds.includes('p14'), '“Not a carer” in one group stops them being a carer in their other groups too (they stay members)');
+  const tools = await s.page.$eval('.cg-tools', e => { const b = [...e.querySelectorAll('button')].map(x => x.getBoundingClientRect()); return b[2].right - b[0].left; });
+  check(tools < 110, 'Rename, Duplicate and Delete sit close together (' + Math.round(tools) + 'px)');
   await s.go('people/p/p17'); await s.page.click('[data-act="people:edit"]'); await fillHome(s);
   await s.page.check('#pf-care'); await s.page.click('[data-act="people:save"]');
   check((await s.page.textContent('#pf-err')).includes('Tick which care group'), 'Edit details: ticking Care group member asks which group(s)');

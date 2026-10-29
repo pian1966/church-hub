@@ -22,6 +22,9 @@ var Store = (function () {
     'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
+  /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
+  var previewRole = '', PREVIEW_MSG = 'You’re only viewing Church Hub as another role – nothing is saved. Switch back to Administrator to make changes.';
+  function previewing() { if (!previewRole) return false; errorListeners.forEach(function (fn) { try { fn(PREVIEW_MSG); } catch (x) { console.error(x); } }); return true; }
 
   var cfg = (typeof window !== 'undefined' && window.CHURCH_HUB_FIREBASE) || {};
   var LIVE = !!(cfg.apiKey && cfg.projectId) && !/[?&]demo(=|&|$)/.test(location.search);
@@ -55,6 +58,7 @@ var Store = (function () {
   function get(c, id) { return list(c).filter(function (x) { return x.id === id; })[0] || null; }
   function find(c, fn) { return list(c).filter(fn); }
   function put(c, obj, auditText) {
+    if (previewing()) return obj;
     if (!obj.id) obj.id = uid(c.slice(0, 2));
     var arr = list(c), i = arr.findIndex(function (x) { return x.id === obj.id; }), prev = i >= 0 ? copy(arr[i]) : null;
     obj.updatedAt = now();
@@ -65,6 +69,7 @@ var Store = (function () {
     return obj;
   }
   function remove(c, id, auditText) {
+    if (previewing()) return;
     var prev = get(c, id);
     db[c] = list(c).filter(function (x) { return x.id !== id; });
     if (LIVE && prev) Live.remove(c, prev);
@@ -74,6 +79,7 @@ var Store = (function () {
   /** Delete a person's restricted information (medical and pastoral notes) – used for POPIA deletion requests.
    *  Works even for an Administrator, who cannot read these notes. */
   function purge(personId) {
+    if (previewing()) return;
     db.notes = list('notes').filter(function (n) { return n.personId !== personId; });
     db.officeNotes = list('officeNotes').filter(function (n) { return n.personId !== personId; });
     if (db.idNumbers) db.idNumbers = db.idNumbers.filter(function (x) { return x.id !== personId; });
@@ -83,6 +89,7 @@ var Store = (function () {
   }
   /** POPIA accountability: who did what to whose information, and when. */
   function audit(action, target) {
+    if (previewRole) action = '(viewing as ' + previewRole + ') ' + action;
     var entry = { id: uid('au'), at: now(), who: user ? ((user.preferredName || user.firstName) + ' ' + user.lastName) : 'System', action: action, target: target || '' };
     db.audit.unshift(entry);
     if (db.audit.length > 5000) db.audit.length = 5000;
@@ -91,6 +98,7 @@ var Store = (function () {
   }
   function settings() { return db.settings; }
   function setSettings(patch, auditText) {
+    if (previewing()) return;
     Object.assign(db.settings, patch);
     if (LIVE) Live.write('settings/church', db.settings);
     if (auditText) audit(auditText, 'settings');
@@ -99,6 +107,7 @@ var Store = (function () {
   function leave() { return db.leave; }
   /** Save leave. Tells onLeaveChange listeners which requests changed (e.g. to update Elvanto), unless opts.quiet (imports). */
   function saveLeave(auditText, opts) {
+    if (previewing()) return;
     var changes = [];
     ((db.leave && db.leave.requests) || []).forEach(function (r) {
       if (r.synthetic) return;
@@ -148,7 +157,7 @@ var Store = (function () {
       var s = path.split('/'), from = { people: ['people'], details: ['details', 'detailsMe'], medical: ['medical'], directory: ['directory'] }[s[0]] || [s[0]];
       var m = merged.apply(null, from); return m[s[1]] === undefined ? null : m[s[1]];
     }
-    function role() { return session ? session.role : ''; }
+    function role() { return session ? previewRole || session.role : ''; }
     function is() { return Array.prototype.indexOf.call(arguments, role()) >= 0; }
 
     /* ---------- loading the Firebase library ---------- */
@@ -288,11 +297,11 @@ var Store = (function () {
           add('consentsPhotos', coll('consents').where('purpose', '==', 'Photos'));
         }
       }
-      if (r === 'kids') add('medical', coll('medical'));
+      if (r === 'kids' && !previewRole) add('medical', coll('medical'));   // "View as": an Administrator may not read these
       // Responsible adults and collection restrictions: Administrators, Pastors, Children's ministry; others only links to themselves
       if (is('admin', 'pastor', 'kids')) { add('guardians', coll('guardians')); add('noCollect', coll('noCollect')); }
       else add('guardians', fs.collection('guardians').where('adultId', '==', me));
-      if (r === 'pastor') add('notes', coll('notes'));
+      if (r === 'pastor' && !previewRole) add('notes', coll('notes'));
       if (is('admin', 'pastor')) add('officeNotes', coll('officeNotes'));
       if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); add('elvantoFound', coll('elvantoFound')); }
       else add('elvantoSync', own('elvantoSync'));
@@ -352,7 +361,7 @@ var Store = (function () {
         if (med[id]) p.medical = copy(med[id]);
         if (dir[id]) p.inDirectory = true;
         p.id = id;
-        if (id === session.personId) p.appRole = session.role;     // the access list is the source of truth
+        if (id === session.personId) p.appRole = role();     // the access list is the source of truth (or the role being viewed as)
         return p;
       });
       Object.keys(dir).forEach(function (id) {                     // members: other people come from the directory
@@ -515,6 +524,8 @@ var Store = (function () {
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       put: put, remove: remove, purge: purge, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
+      /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
+      preview: function () { stop(); subscribe(); },
       whenSaved: function (ms) { return fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, ms || 60000); })]) : Promise.resolve(); },
       session: function () { return session; } };
   })();
@@ -522,6 +533,17 @@ var Store = (function () {
   return { load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    /** "View as": an Administrator sees Church Hub as another role would (Pastor, Roster coordinator, Children's ministry, Member).
+     *  Live, only what that role may load is loaded (less, never more: not pastoral or medical notes, which Administrators may not
+     *  read). Nothing can be saved meanwhile. Not remembered: signing in again or refreshing returns to Administrator. */
+    preview: function (r) {
+      if (arguments.length) {
+        var was = previewRole; r = r === 'admin' ? '' : r || '';
+        if (r && LIVE && (Live.session() || {}).role !== 'admin') return previewRole;
+        if (r !== was) { if (r) audit('Started viewing Church Hub as ' + r + ' (nothing saved meanwhile)', 'settings'); previewRole = r; if (!r) audit('Stopped viewing as ' + was, 'settings'); if (LIVE) Live.preview(); else changed(); }
+      }
+      return previewRole;
+    },
     whenSaved: function (ms) { return LIVE ? Live.whenSaved(ms) : Promise.resolve(); },
     /** Photos are kept apart from the person (photos/{id}) and fetched only when shown; the person's card says which version there is. */
     photo: function (pid) {
@@ -534,12 +556,14 @@ var Store = (function () {
       var x = ((db && db.idNumbers) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.value : '');
     },
     setIdNumber: function (pid, v, auditText) {
+      if (previewing()) return Promise.resolve();
       v = String(v || '').replace(/\s+/g, '');
       if (!LIVE) { db.idNumbers = (db.idNumbers || []).filter(function (o) { return o.id !== pid; }); if (v) db.idNumbers.push({ id: pid, value: v }); save(); }
       if (auditText) audit(auditText, 'people/' + pid);
       return LIVE ? Live.idSet(pid, v) : Promise.resolve();
     },
     setPhoto: function (pid, data, auditText) {
+      if (previewing()) return Promise.resolve();
       var p = get('people', pid); if (!p) return Promise.resolve();
       p = copy(p); if (data) p.photo = now() + ' ' + Math.random().toString(36).slice(2, 6); else delete p.photo;
       var done = LIVE ? Live.photoSet(pid, data) : Promise.resolve((function () {
@@ -554,7 +578,7 @@ var Store = (function () {
     },
     onRemoteChange: function (fn) { remoteListeners.push(fn); }, onError: function (fn) { errorListeners.push(fn); },
     onLeaveChange: function (fn) { leaveHooks.push(fn); },
-    setRobot: function (email, uid, oldEmail) { return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
+    setRobot: function (email, uid, oldEmail) { if (previewing()) return Promise.resolve(); return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
     live: { boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
       setup: Live.setup, session: Live.session } };
 })();

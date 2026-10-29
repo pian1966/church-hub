@@ -541,6 +541,32 @@ function serve() {
   await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
   await finish(s);
 
+  console.log('View as another role (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
+  check(await s.page.isVisible('[data-act="hub:viewaspick"]'), 'an Administrator has a “View as” switch');
+  await s.page.click('[data-act="hub:viewaspick"]');
+  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,pastor,rosters,kids,member', 'they can view as a Pastor, Roster coordinator, Children’s ministry or Member');
+  await s.page.click('[data-act="hub:viewas"][data-r="member"]'); await s.page.waitForSelector('.viewas'); await s.settle();
+  t = await s.page.textContent('body');
+  check(t.includes('Viewing as') && t.includes('Member') && !(await s.page.$('nav a[href="#/settings"]')) && !(await s.page.$('nav a[href="#/import"]')), 'as a Member: a banner says so, and Settings and Import are gone');
+  check(await s.page.evaluate(() => !Hub.can('*') && !Hub.can('people.basic') && !Store.list('consents').some(c => c.personId !== 'p01') && !Store.list('serveOffers').some(o => o.personId !== 'p01')), 'only what a Member may load is loaded (not other people’s consents or offers to serve)');
+  await s.go('people'); check(!(await s.page.$('a[href="#/people/search"]')), 'no Advanced search as a Member');
+  await s.page.evaluate(() => Store.setSettings({ churchName: 'Changed while viewing' }, 'x')); await s.settle();
+  docs = await s.docsNow();
+  check((await s.page.textContent('#toast')).includes('nothing is saved') && docs['settings/church'].churchName !== 'Changed while viewing', 'nothing can be saved while viewing as someone else');
+  await s.page.click('.viewas [data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' }); await s.settle();
+  check(await s.page.evaluate(() => Hub.can('*') && Store.list('people').length > 20) && !!(await s.page.$('nav a[href="#/settings"]')), '“Back to Administrator” returns everything');
+  await s.page.click('[data-act="hub:viewaspick"]'); await s.page.click('[data-act="hub:viewas"][data-r="pastor"]'); await s.page.waitForSelector('.viewas'); await s.settle();
+  check(await s.page.evaluate(() => Hub.can('people.view') && !Hub.can('*') && !Store.list('notes').length), 'as a Pastor: they see people, but pastoral notes stay hidden from the Administrator');
+  await s.page.click('[data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' }); await s.settle();
+  docs = await s.docsNow();
+  const au = Object.values(docs).filter(d => d.action && /viewing/i.test(d.action)).map(d => d.action);
+  check(au.some(a => /Started viewing Church Hub as member/.test(a)) && au.some(a => /Stopped viewing as pastor/.test(a)), 'starting and stopping “View as” is in the audit log');
+  await finish(s);
+  s = await session('pieter.vanwyk@example.com', seedDocs()); await s.go('home');
+  check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'only Administrators can use “View as”');
+  await finish(s);
+
   console.log('Wedding anniversary on the profile:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p15');
   await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', ''); await s.page.click('[data-act="people:save"]'); await s.settle();

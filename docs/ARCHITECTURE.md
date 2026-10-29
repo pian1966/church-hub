@@ -107,6 +107,16 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 
 Leave approval follows Leave Manager: Administrators approve.
 
+### View as another role (Administrators)
+An Administrator can switch to **View as** Pastor, Roster coordinator, Children's ministry or Member (the eye next to their name,
+or More on a phone) to see what that role sees. `Store.preview(role)` makes `role()` in `js/store.js` the viewed role, so `plan()`
+loads only what that role would load – less than an Administrator, never more: pastoral notes (Pastors) and medical notes
+(Children's ministry) are left out, because the rules don't let an Administrator read them. The screens follow it through
+`myRole()` in `js/app.js`. Nothing is saved while viewing (`put`, `remove`, `setSettings`, `saveLeave`, photos, ID numbers are
+refused with a message); audit entries are still written, marked "(viewing as …)", and starting and stopping is logged.
+It is not remembered: refreshing or signing in again returns to Administrator. No rules change: the database still sees the
+Administrator's own sign-in.
+
 ## Me (members' own page) and the Android app
 `js/mod-me.js` – **Me**, for everyone: *My details* (contact details they may change, what the office keeps, consent,
 language, sign out), *Days away* (their blockouts and approved leave; warns about roster turns on those days) and

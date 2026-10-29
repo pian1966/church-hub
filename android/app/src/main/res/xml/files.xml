@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Only the camera folder in the app's cache is shared, and only with the camera app while a photo is being taken. -->
+<paths>
+    <cache-path name="camera" path="camera/" />
+</paths>

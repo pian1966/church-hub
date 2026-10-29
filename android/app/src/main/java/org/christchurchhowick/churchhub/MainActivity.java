@@ -3,9 +3,14 @@ package org.christchurchhowick.churchhub;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.ActivityNotFoundException;
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
+import android.os.Environment;
+import android.provider.MediaStore;
 import android.os.CancellationSignal;
 import android.os.SystemClock;
 import android.webkit.JavascriptInterface;
@@ -31,6 +36,12 @@ import androidx.credentials.exceptions.NoCredentialException;
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption;
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential;
 
+import androidx.core.content.FileProvider;
+
+import java.io.File;
+import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONTokener;
@@ -41,7 +52,8 @@ import org.json.JSONTokener;
  * The app shows the Church Hub website full screen (members land on "Me": their details, days away and serving),
  * so everyone always has the newest version without updating the app. Like the Leave Manager app, it adds what a
  * phone app should do: Android's own "Sign in with Google", the back button, links opening in the right app,
- * choosing files, and an offline screen. Church data is never stored by the app itself.
+ * choosing files (and taking a photo with the camera), saving downloads, and an offline screen. Church data is never
+ * stored by the app itself – only a download someone asks for, saved in the phone's Downloads.
  */
 public class MainActivity extends Activity {
 
@@ -54,6 +66,9 @@ public class MainActivity extends Activity {
     private long pausedAt = 0;
     private boolean showingOffline = false;
     private ValueCallback<Uri[]> fileCallback;
+    /** Where the camera puts a photo just taken (in the app's own cache), until the page has read it. */
+    private File cameraFile;
+    private Uri cameraUri;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -147,7 +162,11 @@ public class MainActivity extends Activity {
         super.onActivityResult(requestCode, resultCode, data);
         if (requestCode != PICK_FILE || fileCallback == null) return;
         Uri[] picked = null;
-        if (resultCode == RESULT_OK && data != null) {
+        boolean fromCamera = cameraFile != null && cameraFile.length() > 0
+                && (data == null || (data.getData() == null && data.getClipData() == null));
+        if (resultCode == RESULT_OK && fromCamera) {
+            picked = new Uri[] { cameraUri };
+        } else if (resultCode == RESULT_OK && data != null) {
             if (data.getClipData() != null) {
                 int n = data.getClipData().getItemCount();
                 picked = new Uri[n];
@@ -195,7 +214,7 @@ public class MainActivity extends Activity {
         }
     }
 
-    /** Lets "Choose file" buttons work (e.g. an Administrator importing a spreadsheet). */
+    /** Lets "Choose file" buttons work (e.g. an Administrator importing a spreadsheet). For a photo it also offers the camera. */
     private class Chrome extends WebChromeClient {
         @Override
         public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback, FileChooserParams params) {
@@ -204,7 +223,14 @@ public class MainActivity extends Activity {
             try {
                 Intent pick = params.createIntent();
                 if (params.getMode() == FileChooserParams.MODE_OPEN_MULTIPLE) pick.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
-                startActivityForResult(pick, PICK_FILE);
+                Intent camera = wantsPhoto(params) ? cameraIntent() : null;
+                if (camera != null) {
+                    Intent choose = Intent.createChooser(pick, "Add a photo");
+                    choose.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] { camera });
+                    startActivityForResult(choose, PICK_FILE);
+                } else {
+                    startActivityForResult(pick, PICK_FILE);
+                }
                 return true;
             } catch (ActivityNotFoundException e) {
                 fileCallback = null;
@@ -214,10 +240,90 @@ public class MainActivity extends Activity {
         }
     }
 
+    /** True when the page asks for a picture (e.g. Add photo), so the camera can be offered too. */
+    private static boolean wantsPhoto(WebChromeClient.FileChooserParams params) {
+        String[] types = params.getAcceptTypes();
+        if (types == null) return false;
+        for (String t : types) if (t != null && t.trim().startsWith("image")) return true;
+        return false;
+    }
+
+    /** The phone's camera app, saving the photo into this app's cache (shared through the app's FileProvider). */
+    private Intent cameraIntent() {
+        Intent take = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+        if (take.resolveActivity(getPackageManager()) == null) return null;
+        try {
+            File dir = new File(getCacheDir(), "camera");
+            if (!dir.exists() && !dir.mkdirs()) return null;
+            File[] old = dir.listFiles();
+            if (old != null) for (File f : old) f.delete();   // only ever the photo being added now
+            cameraFile = new File(dir, "photo-" + System.currentTimeMillis() + ".jpg");
+            cameraUri = FileProvider.getUriForFile(this, getPackageName() + ".files", cameraFile);
+            take.putExtra(MediaStore.EXTRA_OUTPUT, cameraUri);
+            take.addFlags(Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            return take;
+        } catch (Exception e) {
+            cameraFile = null; cameraUri = null;
+            return null;
+        }
+    }
+
+    /**
+     * Saves a download from the page (an Advanced search CSV, someone's data export) in the phone's Downloads folder,
+     * then offers to open it. Older phones (before Android 10) get the share menu instead: email, Drive, Files…
+     */
+    private void saveDownload(String name, String mime, String text) {
+        String safe = (name == null || name.trim().isEmpty() ? "church-hub-download.txt" : name).replaceAll("[\\\\/:*?\"<>|]", "-");
+        String type = (mime == null || mime.trim().isEmpty()) ? "text/plain" : mime;
+        byte[] bytes = (text == null ? "" : text).getBytes(StandardCharsets.UTF_8);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            ContentResolver cr = getContentResolver();
+            ContentValues v = new ContentValues();
+            v.put(MediaStore.MediaColumns.DISPLAY_NAME, safe);
+            v.put(MediaStore.MediaColumns.MIME_TYPE, type);
+            v.put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS);
+            Uri uri = cr.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, v);
+            if (uri != null) {
+                try (OutputStream out = cr.openOutputStream(uri)) {
+                    if (out == null) throw new Exception("no stream");
+                    out.write(bytes);
+                    final Uri saved = uri;
+                    new AlertDialog.Builder(this)
+                        .setTitle("Saved in Downloads")
+                        .setMessage(safe)
+                        .setNegativeButton("OK", null)
+                        .setPositiveButton("Open", (d, w) -> {
+                            Intent open = new Intent(Intent.ACTION_VIEW).setDataAndType(saved, type).addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+                            try { startActivity(open); }
+                            catch (ActivityNotFoundException e) { Toast.makeText(this, "No app on this phone can open " + safe + ". It's in Downloads.", Toast.LENGTH_LONG).show(); }
+                        })
+                        .show();
+                    return;
+                } catch (Exception e) {
+                    cr.delete(uri, null, null);
+                }
+            }
+        }
+        // Older phones, or saving didn't work: the share menu, with the file's text
+        Intent send = new Intent(Intent.ACTION_SEND);
+        send.setType(type.startsWith("text/") ? type : "text/plain");
+        send.putExtra(Intent.EXTRA_SUBJECT, safe);
+        send.putExtra(Intent.EXTRA_TITLE, safe);
+        send.putExtra(Intent.EXTRA_TEXT, text == null ? "" : text);
+        try { startActivity(Intent.createChooser(send, "Save or send " + safe)); }
+        catch (ActivityNotFoundException e) { Toast.makeText(this, "No app on this phone can save that.", Toast.LENGTH_LONG).show(); }
+    }
+
     /** Functions the Church Hub page can call, as window.ChurchHubApp.*. */
     private class Bridge {
         @JavascriptInterface
         public String version() { return BuildConfig.VERSION_NAME; }
+
+        /** A download from the page: saved in Downloads (see saveDownload). */
+        @JavascriptInterface
+        public void saveFile(String name, String mime, String text) {
+            runOnUiThread(() -> saveDownload(name, mime, text));
+        }
 
         /** Shows Android's Google account picker; the result goes back to the page (js/store.js, appGoogle). */
         @JavascriptInterface

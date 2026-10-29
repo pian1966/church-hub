@@ -370,6 +370,9 @@ var Hub = (function () {
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = 'toast'; }, 3200);
   }
   function download(filename, text, type) {
+    // In the Android app (version with saveFile): saved in the phone's Downloads. Browsers: an ordinary download.
+    if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFile === 'function') { window.ChurchHubApp.saveFile(filename, type || 'application/json', String(text)); return; }
+    if (window.ChurchHubApp) { toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([text], { type: type || 'application/json' }));
     a.download = filename; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);

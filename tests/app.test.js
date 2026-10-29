@@ -113,7 +113,8 @@ function serve() {
     await page.addInitScript(([fakeSrc, seed, mail, app]) => {
       window.CHURCH_HUB_FIREBASE = { apiKey: 'test-only', projectId: 'demo-church-hub', authDomain: 'localhost', appId: 'test', googleWebClientId: app && app.clientId || '' };
       // Stand-in for the Android app's bridge (android/…/MainActivity.java): Android's account picker returns a Google ID token
-      if (app) window.ChurchHubApp = { version: () => '1.0.7', retry: () => {}, googleSignIn: id => { window.__appGoogle = id; setTimeout(() => window.churchHubGoogle('id-token-for-' + id), 0); } };
+      if (app) window.ChurchHubApp = Object.assign({ version: () => '1.0.7', retry: () => {}, googleSignIn: id => { window.__appGoogle = id; setTimeout(() => window.churchHubGoogle('id-token-for-' + id), 0); } },
+        app.saveFile ? { saveFile: (n, m, t) => { window.__saved = { n, m, t }; } } : {});
       (0, eval)(fakeSrc);
       window.__fake.seed(seed);
       if (mail) window.__fake.setUser({ email: mail, emailVerified: true });
@@ -1002,6 +1003,17 @@ function serve() {
   t = await s.text(); check(t.includes('Church Hub app, version 1.0.7'), 'Me shows the app version');
   await s.page.click('[data-act="people:consent"]'); check(await s.page.evaluate(() => window.churchHubBack() === true && !document.querySelector('#modal .overlay')), 'the back button closes an open window first');
   check(await s.page.evaluate(() => window.churchHubBack() === false), '…then lets the app go back a page');
+  await finish(s);
+
+  console.log('Downloads in the Android app:');
+  s = await session('linda.pillay@example.com', seedDocs(), { app: { saveFile: true } });
+  await s.go('people/search'); await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.click('[data-act="people:advcsv"]'); await s.page.waitForTimeout(100);
+  const saved = await s.page.evaluate(() => window.__saved);
+  check(saved && /^people-search-.*\.csv$/.test(saved.n) && saved.m === 'text/csv' && saved.t.split('\n').length >= 3, 'Download (CSV) goes to the app, which saves it in the phone’s Downloads');
+  await finish(s);
+  s = await session('linda.pillay@example.com', seedDocs(), { app: {} });
+  await s.go('people/search'); await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.click('[data-act="people:advcsv"]'); await s.page.waitForTimeout(100);
+  check((await s.page.textContent('#toast')).includes('update the Church Hub app'), 'an older app version is asked to update instead of nothing happening');
   await finish(s);
 
   s = await session('', seedDocs(), { app: {} });

@@ -199,6 +199,7 @@ var I18n = (function () {
     ['Zoom in', 'Zoem in', 'Sondeza', 'Sondeza'],
     ['Zoom out', 'Zoem uit', 'Hlehlisa', 'Hlehlisa'],
     ['Use this photo', 'Gebruik hierdie foto', 'Sebenzisa lesi sithombe', 'Sebenzisa le foto'],
+    ['Please update the Church Hub app to download files, or use a browser.', 'Werk asseblief die Church Hub-app by om lêers af te laai, of gebruik ’n blaaier.', 'Sicela ubuyekeze uhlelo lwe-Church Hub ukuze ulande amafayela, noma usebenzise isiphequluli.', 'Nceda uhlaziye usetyenziso lwe-Church Hub ukuze ukhuphele iifayile, okanye usebenzise isikhangeli.'],
     ['Working…', 'Besig…', 'Kuyasebenza…', 'Kuyasebenza…'],
     ['Please keep this page open.', 'Hou asseblief hierdie bladsy oop.', 'Sicela ugcine leli khasi livuliwe.', 'Nceda ugcine eli phepha livulekile.'],
     ['Something went wrong. Please try again.', 'Iets het skeefgeloop. Probeer asseblief weer.', 'Kukhona okungahambanga kahle. Sicela uzame futhi.', 'Kukho into engahambanga kakuhle. Nceda uzame kwakhona.'],

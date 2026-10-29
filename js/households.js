@@ -118,11 +118,15 @@ var Households = (function () {
   /**
    * Who a widow or widower (or someone who has died) was probably married to, among the people who have died.
    * Clues, each worth points: same household (40), same wedding date (40), shared email (30), shared mobile (25),
-   * same surname (25), born within 15 years of each other (10); born more than 25 years apart takes 30 off.
+   * same surname (25), widowed and the other was married when they died (25), born within 15 years of each other (10);
+   * born more than 25 years apart takes 30 off. So a widow and a man of her surname who died married are suggested even
+   * when Elvanto put them in different households.
+   * Someone living who is still recorded as Married (and has no living married partner in their household) is looked at
+   * too – stillMarried: true, so saying yes can change them to Widowed.
    * Only pairs with at least 50 points; each person in at most one suggestion (best first). People an Administrator
    * already settled (lateSpouseId / lateSpouseSet) and pairs marked "not a couple" (notLateSpouse) are left out.
    *   people: everyone (with details), dead(p) → true when p has died.
-   *   → [{ a: survivor id, b: deceased id, score, reasons: [...], bothDied }]
+   *   → [{ a: survivor id, b: deceased id, score, reasons: [...], bothDied, stillMarried }]
    */
   function lateSpouseSuggestions(people, dead) {
     var norm = function (s) { return String(s || '').trim().toLowerCase(); };
@@ -130,8 +134,12 @@ var Households = (function () {
     var adults = (people || []).filter(function (p) { return p.familyRole !== 'child' && !p.mergedInto && p.firstName !== 'Deleted'; });
     var linked = {};   // deceased people already named as someone's late spouse
     adults.forEach(function (p) { if (p.lateSpouseId) linked[p.lateSpouseId] = 1; });
+    var livingPartner = function (p) {   // a living married adult in the same household: their spouse is alive
+      return adults.some(function (x) { return x.id !== p.id && !dead(x) && x.maritalStatus === 'Married' && householdsOf(p).some(function (h) { return inHousehold(x, h); }); });
+    };
     var survivors = adults.filter(function (p) {
       if (p.lateSpouseId || p.lateSpouseSet) return false;
+      if (p.maritalStatus === 'Married' && !dead(p)) return !livingPartner(p);
       return p.maritalStatus === 'Widowed' || (dead(p) && (p.maritalStatus === 'Married' || p.maritalStatus === 'Widowed'));
     });
     var gone = adults.filter(function (p) { return dead(p) && !linked[p.id] && !p.lateSpouseId; });
@@ -147,9 +155,11 @@ var Households = (function () {
         if (norm(a.email) && norm(a.email) === norm(b.email)) { score += 30; why.push('same email'); }
         if (digits(a.mobile).length >= 9 && digits(a.mobile) === digits(b.mobile)) { score += 25; why.push('same phone number'); }
         if (norm(a.lastName) && norm(a.lastName) === norm(b.lastName)) { score += 25; why.push('same surname'); }
+        if (a.maritalStatus === 'Widowed' && !dead(a) && b.maritalStatus === 'Married') { score += 25; why.push('widowed, and they died married'); }
         var ya = yearOf(a.birthDate), yb = yearOf(b.birthDate);
         if (ya && yb) { var gap = Math.abs(ya - yb); if (gap <= 15) { score += 10; why.push('similar age'); } else if (gap > 25) { score -= 30; why.push(gap + ' years apart in age'); } }
-        if (score >= 50) cand.push({ a: a.id, b: b.id, score: score, reasons: why.filter(function (r) { return !/apart/.test(r); }), bothDied: dead(a) });
+        var still = a.maritalStatus === 'Married' && !dead(a);
+        if (score >= 50) cand.push({ a: a.id, b: b.id, score: score, reasons: why.filter(function (r) { return !/apart/.test(r); }).concat(still ? ['still recorded as Married'] : []), bothDied: dead(a), stillMarried: still });
       });
     });
     cand.sort(function (x, y) { return y.score - x.score || (x.a + x.b < y.a + y.b ? -1 : 1); });

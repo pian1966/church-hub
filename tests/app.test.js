@@ -606,7 +606,7 @@ function serve() {
   check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,pastor,rosters,kids,carer,member', 'they can view as a Pastor, Roster coordinator, Children’s ministry, a carer or a Member');
   await s.page.click('[data-act="hub:viewas"][data-r="member"]'); await s.page.waitForSelector('.viewas'); await s.settle();
   t = await s.page.textContent('body');
-  check(t.includes('Viewing as') && t.includes('Member') && !(await s.page.$('nav a[href="#/settings"]')) && !(await s.page.$('nav a[href="#/import"]')), 'as a Member: a banner says so, and Settings and Import are gone');
+  check(t.includes('Viewing as') && (await s.page.textContent('.viewas')).includes('Church Partner') && !(await s.page.$('nav a[href="#/settings"]')) && !(await s.page.$('nav a[href="#/import"]')), 'as a Church Partner: a banner says so, and Settings and Import are gone');
   check(await s.page.evaluate(() => !Hub.can('*') && !Hub.can('people.basic') && !Store.list('consents').some(c => c.personId !== 'p01') && !Store.list('serveOffers').some(o => o.personId !== 'p01')), 'only what a Member may load is loaded (not other people’s consents or offers to serve)');
   await s.go('people'); check(!(await s.page.$('a[href="#/people/search"]')), 'no Advanced search as a Member');
   await s.page.evaluate(() => Store.setSettings({ churchName: 'Changed while viewing' }, 'x')); await s.settle();

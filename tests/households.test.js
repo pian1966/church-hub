@@ -109,6 +109,21 @@ console.log('Late spouses: who a widow or widower was probably married to');
   ok(!s2.some(x => x.a === 'elsa' && x.b === 'johan') && !s2.some(x => x.a === 'ruth'), '“not a couple” and people an Administrator already settled are left out');
   const P3 = P.map(p => p.id === 'elsa' ? Object.assign({}, p, { lateSpouseId: 'johan' }) : p);
   ok(!HS.lateSpouseSuggestions(P3, dead).some(x => x.b === 'johan'), 'someone already named as a late spouse isn’t suggested again');
+  // A widow in her own household, and her husband who died married (Elvanto often keeps them apart)
+  const P4 = [
+    { id: 'gwen', firstName: 'Gwen', lastName: 'Mcfarlane', familyRole: 'adult', familyId: 'g1', maritalStatus: 'Widowed' },
+    { id: 'nigel', firstName: 'Nigel', lastName: 'McFarlane', familyRole: 'adult', familyId: 'g2', maritalStatus: 'Married', deceasedAt: '2023-04-04' },
+    { id: 'stan', firstName: 'Stan', lastName: 'Pike', familyRole: 'adult', familyId: 'g3', maritalStatus: 'Married' },
+    { id: 'sue', firstName: 'Sue', lastName: 'Pike', familyRole: 'adult', familyId: 'g3', maritalStatus: 'Married', deceasedAt: '2025-01-01' },
+    { id: 'jo', firstName: 'Jo', lastName: 'Dube', familyRole: 'adult', familyId: 'g4', maritalStatus: 'Married' },
+    { id: 'al', firstName: 'Al', lastName: 'Dube', familyRole: 'adult', familyId: 'g4', maritalStatus: 'Married' },
+    { id: 'old', firstName: 'Old', lastName: 'Dube', familyRole: 'adult', familyId: '', maritalStatus: 'Married', deceasedAt: '2000-01-01' }
+  ];
+  const s4 = HS.lateSpouseSuggestions(P4, dead), g = s4.find(x => x.a === 'gwen');
+  ok(g && g.b === 'nigel' && g.reasons.includes('same surname') && g.reasons.includes('widowed, and they died married'), 'a widow and a man of her surname who died married are suggested, even in different households (any capitals)');
+  const st = s4.find(x => x.a === 'stan');
+  ok(st && st.b === 'sue' && st.stillMarried && st.reasons.includes('still recorded as Married'), 'someone still recorded as Married whose spouse has died is suggested (to change to Widowed)');
+  ok(!s4.some(x => x.a === 'jo' || x.a === 'al'), 'not someone whose married partner is alive in their household');
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');

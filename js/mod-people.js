@@ -589,7 +589,7 @@
         var a = S.get('people', x.a), b = S.get('people', x.b);
         return '<section class="panel" style="margin-bottom:12px"><div class="row" style="flex-wrap:wrap;gap:8px"><h2 class="grow" style="margin:0;font-size:1rem">' + (x.bothDied ? 'Probably married to each other' : 'Probably married') + '</h2><span class="tag ' + (x.score >= 80 ? 'ok' : 'grey') + '">' + (x.score >= 80 ? 'Likely' : 'Possible') + '</span></div>' +
           '<p class="hint" style="margin:6px 0 0">' + esc(x.reasons.join(' · ')) + '</p>' +
-          '<div class="list" style="margin:10px 0">' + card(a, x.bothDied ? (a.maritalStatus || '') + ' · ' + died(a) : 'Widowed') + card(b, died(b)) + '</div>' +
+          '<div class="list" style="margin:10px 0">' + card(a, x.bothDied ? (a.maritalStatus || '') + ' · ' + died(a) : x.stillMarried ? 'Still recorded as Married – Yes changes this to Widowed' : 'Widowed') + card(b, died(b)) + '</div>' +
           '<div class="btns"><button class="btn small primary" data-act="people:lateyes" data-a="' + x.a + '" data-b="' + x.b + '">Yes, they were married</button><button class="btn small" data-act="people:lateno" data-a="' + x.a + '" data-b="' + x.b + '">Not a couple</button></div></section>';
       }).join('') +
       (open.length ? '<section class="panel" style="margin-top:16px"><h2>Widowed, no match found (' + open.length + ')</h2><p class="hint" style="margin-top:0">Open each one and use <b>Edit details → Late spouse</b> to choose someone, or type the name of someone who isn’t in Church Hub.</p><div class="list">' +
@@ -1684,7 +1684,8 @@
       lateyes: function (el) {
         var a = JSON.parse(JSON.stringify(S.get('people', el.dataset.a))), b = S.get('people', el.dataset.b);
         a.lateSpouseId = b.id; delete a.lateSpouseName; delete a.lateSpouseSet;
-        S.put('people', a, 'Late spouse: ' + H.name(a) + ' was married to ' + H.name(b));
+        var widowed = a.maritalStatus === 'Married' && !isDead(a); if (widowed) a.maritalStatus = 'Widowed';   // still recorded as Married
+        S.put('people', a, 'Late spouse: ' + H.name(a) + ' was married to ' + H.name(b) + (widowed ? ' (marital status changed to Widowed)' : ''));
         H.render(); H.toast('Saved: ' + H.name(a) + ' was married to ' + H.name(b));
       },
       lateno: function (el) {

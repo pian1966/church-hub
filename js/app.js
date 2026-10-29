@@ -29,8 +29,9 @@ var Hub = (function () {
   /** Really an Administrator (also while viewing as someone else), so "View as" is offered. */
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
   var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
-  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
-  function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : roleLabel(myRole()); }
+  /** In "View as", the Member access level is called Church Partner (the church's own word, Settings → Church wording). */
+  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (Church Partner)' : r === 'member' ? 'Church Partner' : roleLabel(r); }
+  function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
   function can(perm) {
     if (!user) return false;
     var p = (ROLES[myRole()] || ROLES.member).perms;
@@ -533,7 +534,7 @@ var Hub = (function () {
       var role = r === 'carer' ? 'member' : r;
       if (role === Store.preview() && g === Store.previewCare()) { closeModal(); return; }
       closeModal();
-      var label = r === 'carer' ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : roleLabel(r);
+      var label = r === 'carer' ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(r);
       var after = function () { location.hash = r === 'carer' ? '#/me' : '#/home'; render(); toast(r ? 'Viewing as ' + label + ' – nothing is saved' : 'Back to Administrator'); };
       if (!Store.isLive()) { Store.preview(role, g); after(); return; }
       busy(r ? 'Loading what ' + label + ' sees…' : 'Back to Administrator…', function () {

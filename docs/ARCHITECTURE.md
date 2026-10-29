@@ -22,14 +22,21 @@ js/leave-import.js        LeaveImport: reads a Leave Manager sheet (Excel or CSV
 js/xlsx-lite.js           XlsxLite: small built-in .xlsx reader (zip + XML; no outside library)
 js/elvanto-import.js      ElvantoImport: reads an Elvanto People export and plans the import (pure, tested)
 js/elvanto-sync.js        ElvantoSync: when a leave change needs an Elvanto "Unavailable Volunteers" update (pure, tested)
+js/households.js          Households: households, parents/guardians, couples and late-spouse suggestions (pure, tested)
+js/people-search.js       PeopleSearch: Advanced search filters and logic (pure, tested)
+js/duplicates.js          Duplicates: finding and merging people entered twice (pure, tested)
+js/serving.js             Serving: the church's services (8am, 10am, 5pm), departments and positions as in Elvanto
+js/i18n.js                I18n: the four languages (tested)       js/sample.js  made-up church for demo mode and tests
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
-js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers
+js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers (search matching, photos and
+                          "Choose the face", the turning cross for long jobs, downloads)
 js/mod-*.js               one file per module: me, people, rosters, leave, privacy, import, settings
 android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
 manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
 firestore.rules           database security rules: who may read/write what (POPIA)
-tests/roster.test.js      rostering engine          tests/leave-import.test.js  Leave Manager import (made-up sheet in tests/fixtures)
-          tests/rules.test.mjs  security rules (Firestore emulator)
+tests/*.test.js           one per pure rules file above (roster, leave-import, elvanto-import, elvanto-sync, households,
+                          people-search, duplicates, i18n) and the robot (robot.test.js); made-up data in tests/fixtures
+tests/rules.test.mjs      security rules (Firestore emulator)
 tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js)
 .github/workflows/tests.yml  runs all of these on GitHub after every push
 ```
@@ -48,11 +55,14 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 
   | Document | Holds | Read by |
   | --- | --- | --- |
-  | `people/{id}` | name, family, category, email, mobile, active, app role (display copy) | Admin, Pastor, Roster coordinator, Children's ministry; the person |
-  | `details/{id}` | birthday, marital status, key dates, staff details, date of death, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
+  | `people/{id}` | name, household, category, email, mobile, active, app role (display copy), `photo` (version of their photo, if any), date added | Admin, Pastor, Roster coordinator, Children's ministry; the person |
+  | `details/{id}` | everything else about the person: birthday, gender, middle name, home address, marital status, late spouse, key dates (wedding, died, funeral), staff details, Church Partner dates, date of death, "unknown" email/mobile, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
   | `medical/{id}` | children's allergies and medical notes | **Children's ministry only** |
   | `notes/{personId}` | pastoral notes (`entries` list) | **Pastors only** |
-  | `directory/{id}` | name and mobile of adults with *Church directory* consent | everyone signed in |
+  | `officeNotes/{personId}` | church office notes (`entries` list; Elvanto's Notes come here) | Admin, Pastor |
+  | `idNumbers/{personId}` | ID number (`value`) – fetched one at a time on **Show**, every view audit-logged | **Admin only**; the person sees their own |
+  | `photos/{id}` | the photo (`data`: a 320 × 320 JPEG), fetched only when shown | adults: staff, the person, members when the adult is in the directory; children: Admin, Pastor, Children's ministry |
+  | `directory/{id}` | name, mobile and `photo` version of adults with *Church directory* consent | everyone signed in |
 - *Leave*: `leave/config` (types, levels, rules, holidays, `autoApprove`), `leaveRequests/{id}`, `leaveAdjustments/{id}`.
   `away/{id}` holds approved leave as dates only, so rosters and "Who's away" work without showing anyone's leave type or reason.
 - Everything else is one document per item (`families`, `consents`, `teams`, `positions`, `skills`, `services`,
@@ -67,13 +77,13 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | Collection | Holds |
 | --- | --- |
 | `settings` | church name, modules on/off, Information Officer, retention period, privacy notice |
-| `people` | name, contact, household(s), category (Partner, Attender, Visiting Minister, Staff, Former member, Deceased), marital status (adults), staff details (leave category, start date, working days), key dates, date of death, child medical notes (special personal information), Elvanto ID |
+| `people` | name (and middle name), contact, household(s), category (Church Partner, Attender, Visiting Minister, Staff, Former member, Deceased), gender, home address, marital status (adults), late spouse, Church Partner dates, staff details (leave category, start date, working days – staff keep their category, so a Church Partner can be staff), key dates, date of death, child medical notes (special personal information), Elvanto ID; the photo, ID number and office notes are kept apart (see above) |
 | `families` | households: `name` + `custom`. Shown via `Hub.familyName()`: named after its active adults ("Tim & Clare Jacobs", "Thandi Mokoena & Sipho Dlamini") unless `custom` is true; no "head of household". A person's main household is `familyId`; extra households (children of separated parents) are `householdIds` |
 | `guardians` | the adults responsible for a child, independent of households: { childId, adultId \| name + phone, relationship, canConsent, primary, mayCollect, confirmed } (`js/households.js`) |
 | `noCollect` | people **not allowed to collect** a child (e.g. a court order): { childId, personId \| name, note } – restricted, every view logged |
-| `consents` | per person and purpose: given/withdrawn, date, how, recorded by, guardian for children |
+| `consents` | per person and purpose: given/withdrawn, date, how, recorded by, guardian for children. Also what they'd **like to receive** (weekly notices by email, prayer needs and missionary updates by WhatsApp or email, "Who is Jesus" on WhatsApp) – a choice never ticked isn't recorded |
 | `notes` | pastoral notes (restricted) |
-| `teams`, `positions`, `skills` | who can serve where, and how often they'd like to |
+| `teams`, `positions`, `skills` | departments, positions and who serves where, how often (`frequency`) and at which services (`times`, e.g. ["08:00","10:00"]; empty = any). A position's `times` are the services it runs at (Creche Duty only at 08:00; Memorial Teas: `memorial`). Rosters → Teams adds the church's 8 departments and 26 positions in one click (`js/serving.js`); a person's **Volunteering** (People) writes their `skills` |
 | `services` | dates and times of services/events needing a roster |
 | `assignments` | person × position × service, status pending/accepted/declined, why |
 | `groups` | serve **together** (must/prefer) or keep **apart** |
@@ -105,7 +115,10 @@ tab bar shows Me first for members (staff get their working areas first).
 **Offers to serve** go to `serveOffers` (see Collections); roster coordinators answer them at the top of Rosters → Teams,
 with a Home to-do. A declined offer shows the reply under the position until the person taps OK.
 **Android app** (`android/`, built by `.github/workflows/build-android.yml`, setup in `docs/ANDROID.md`): a WebView
-showing the website, built like Leave Manager's app (its own signing key). It adds `window.ChurchHubApp`; when present,
+showing the website, built like Leave Manager's app (its own signing key). It offers the camera next to the gallery when a
+page asks for a picture (photo saved in the app's cache, shared with the camera app only through a FileProvider), and
+`ChurchHubApp.saveFile(name, type, text)` saves downloads in the phone's Downloads (`Hub.download()` uses it; older app
+versions are asked to update). It adds `window.ChurchHubApp`; when present,
 `Store.live.google()` asks Android's account picker for a Google ID token and signs in with
 `signInWithCredential` (needs `googleWebClientId` in `firebase-config.js`), and after "Email me a link" the person pastes
 the link from the email (Google's sign-in pop-up and email links can't open inside an app). Members open on `#/me`;
@@ -125,9 +138,11 @@ households). Pure rules in `js/households.js`, tested in `tests/households.test.
   their "may collect".
 - Links made automatically (on upgrade, from households, or from Elvanto's Primary/Spouse) start **unconfirmed**; Home shows a
   to-do until a person checks them, and for children with nobody who can give consent.
-- **Upgrades**: modules may have `upgrade()`, run for Administrators after sign-in. `settings.dataVersion` 2 renamed the
-  categories Member → Partner and Visitor → Visiting Minister and linked existing children to their household adults (unconfirmed).
-  The *Member* access level (role) keeps its name.
+- **Upgrades**: modules may have `upgrade()`, run for Administrators after sign-in, once per `settings.dataVersion`:
+  2 renamed the categories Member → Partner and Visitor → Visiting Minister and linked existing children to their household
+  adults (unconfirmed); 3 renamed Partner → **Church Partner** (not to be confused with a partner in a couple) and moved
+  dates of death typed in front of names ("2024-08-22-Mike") into the date died; 4 moved ID numbers typed into names into
+  `idNumbers`. The *Member* access level (role) keeps its name.
 
 ## Languages
 English, Afrikaans, isiZulu and isiXhosa for the screens members use (sign-in, Home, menus, the directory and my details,
@@ -173,8 +188,14 @@ names, contact, household, category and date added for everyone with people acce
 serving) with rosters access; birthdays and age for Administrators, Pastors and Children's ministry; marital status, consent,
 status, staff for Administrators and Pastors; parents/guardians for Children's ministry; app access for Administrators.
 Medical and pastoral notes and collection restrictions are never searchable. People who left or died are only included when
-searching on Status or Date of death. Downloads are audit-logged. Searches aren't saved yet (Phase 2: smart lists).
+searching on Status, Date of death or Year of death. Downloads are audit-logged. Searches aren't saved yet (Phase 2: smart lists).
 Members have no advanced search. "Church at a glance" (Administrators) is closed until opened.
+**Searching** (People, Households, and "Contains"): every word typed must appear, in any order – "andr pi" finds Andrew Pike
+(`Hub.matches`). Lists sort by first name, known as or surname (remembered per device).
+**Change selected…** (Administrators): tick people in the results, then one change for all of them – marital status, category,
+gender, Church Partner dates, or filling gaps (email or mobile → Unknown, household → a new one each). Children are left out of
+marital status, people who died out of category; each person changed is audit-logged, and **Undo** puts everyone back
+(and removes households it made). Long jobs show the turning cross (`Hub.busy`) until everything is saved.
 
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,
@@ -183,6 +204,12 @@ and "change spouse to Widowed" for a married spouse in the same family). The per
 Administrators then finish it (automatically if they recorded it, otherwise from their to-do list): off future rosters, teams,
 serving groups and away dates; future leave cancelled; sign-in removed; their parent/guardian links and collection restrictions removed. Past serving and leave stay. Pastors get
 "Care for the family of …" on their to-do list for 8 weeks. "Recorded by mistake?" undoes it (teams and rosters must be re-added).
+The date of death and funeral can be corrected later in Edit details. Home only asks to finish a death when something is
+left to undo, so people who died before they came into Church Hub (e.g. from Elvanto) aren't a to-do; People → **Deceased**
+lists everyone who has died. **Late spouse**: recording a death remembers it on the widowed spouse (`lateSpouseId`), whose
+page then says "Was married to …" (and the reverse). Administrators can set it in Edit details (someone who died, a name, or
+nobody) and get suggestions under People → **Late spouses** (`Households.lateSpouseSuggestions`: same household, wedding
+date, email, phone, surname and age; "Not a couple" is remembered as `notLateSpouse`).
 Later phases must leave deceased people out of messages, birthday reminders and anniversaries.
 
 ## Approved leave in Elvanto (Unavailable Volunteers)
@@ -211,9 +238,15 @@ doubling – run it once to trial and again at switch-over. The preview shows ea
 
 ## Elvanto import
 Phase 1: Elvanto's People export (CSV) → column mapping → category mapping → preview → import people and families.
-- Only these columns are read: Member ID (Elvanto's person reference), names, Email Address, Cellphone/Landline, Date of Birth,
-  Family Relationship, Primary & Spouse Full Names (family key when there is no Family ID), Marital Status, People Category,
-  Archived, Deceased, Date Deceased. ID numbers, notes, giving, security codes etc. are never read.
+- Only these columns are read: Member ID (Elvanto's person reference – include it), Date Added (becomes `createdAt`), names
+  and Middle Name, Email Address, Cellphone/Landline, Date of Birth (also "MM-DD" without a year), Gender, Family Relationship,
+  Primary & Spouse Full Names (family key when there is no Family ID), Marital Status, Anniversary, People Category,
+  Membership Date and Membership last renewed on (Church Partner dates; a year on its own is kept), Archived, Deceased, Date
+  Deceased, Photo (downloaded from Elvanto's own https address and made small, for people without a photo), ID Number
+  (→ `idNumbers`; a lost leading 0 put back), Notes (→ church office notes), Checklist of what to receive (→ consents),
+  Department Positions ("10:00 Reading" → `skills` with times; departments added if missing) and the home address
+  (provinces tidied). Groups, giving, security codes and Elvanto's email/SMS preferences (ticked by default, so not consent)
+  are never read. Dates or ID numbers typed into names are moved out.
 - Matching: Elvanto ID → same email AND same first name (families share emails) → same full name for someone not yet linked to
   Elvanto. No person is matched twice in one import, so two rows always stay two people. Re-importing updates, never doubles.
 - Children: under 18 by birthday; without a birthday, a relationship of Child/Son/Daughter. Birthdays without a year are kept as

@@ -29,6 +29,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   - 28 Oct 2026: Change selected… can also fill in what’s missing – Email or Mobile “not known” (only where empty, adults only) and Household “+ New household for each person” (only for people with none; Undo removes the new households)
   - 28 Oct 2026: adding a photo asks to choose the face (drag, zoom slider / + − / mouse wheel / arrow keys, circle preview); searches find every word typed, in any order (“andr pi” → Andrew Pike) – People, Households and Advanced search “contains”
   - 28 Oct 2026: date of death and funeral can be corrected in Edit details (Administrators and Pastors)
+  - 29 Oct 2026: Android app – downloads saved in the phone’s Downloads, camera offered for Add photo (new app version); ARCHITECTURE.md, README, ANDROID.md brought up to date
   - 28 Oct 2026: duplicates – People → Find duplicates (Administrators and Pastors) with "Same person: fix…" to merge two records, a warning while adding or editing someone, and very likely duplicates can't be saved unless confirmed as a different person
   - 28 Oct 2026: couples (spouses and partners) worked out from each household; Households → "Couples to confirm" (Administrators and Pastors) confirms them, copies a spouse's wedding anniversary (partners get none) and records a missing marital status; "Not a couple" to dismiss
   - 28 Oct 2026: Administrators get a Leave button on a staff member's page (or "Set up leave" if they're marked Staff but not yet in Leave)
@@ -98,6 +99,13 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out
 - ⬜ Church: set up the robot (docs/ELVANTO-ROBOT.md steps 1–5; **re-publish the rules**), switch over with step 6
 - ⬜ Later: Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)
+- ⬜ Leave Manager features not yet in Church Hub (checked 29 Oct 2026 against leave-manager's README and guides):
+  wallchart, month calendar and year planner; printable leave reports with signature lines, all-staff summary and the
+  payroll (unpaid leave) report; Dashboard insights (who's away today, leave still to take, cover problems in the next 8
+  weeks, busiest months, sick-leave patterns); editing cover rules / blocked days (imported rules are already enforced);
+  stand-in approver; a leave History page (the audit log has the events); emails (new request with a Review button,
+  decision, cancelled, Monday "Who's away this week", "use it or lose it" reminders); holidays and school terms updating
+  themselves; Google Calendar mirror; the Google Form; help videos; dark mode.
 - ⬜ Church: remove the first Elvanto import (Import page), re-export (fewer columns), import again and check
 - ⬜ Church: trial the Leave Manager import, compare balances, then re-import at switch-over and retire Leave Manager (archive the sheet)
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)

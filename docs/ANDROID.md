@@ -100,11 +100,15 @@ The serving offers need the newest rules, so repeat **[FIREBASE-SETUP.md](FIREBA
 - **Do people need to update the app?** Almost never – new features come through the website. If the `android`
   folder changes, GitHub builds a new version; installing it over the old one keeps people signed in.
   Version history worth an update: **28 Oct 2026** – the back button asks "Leave Church Hub?" before closing the app.
+  **29 Oct 2026** – downloads work (Advanced search CSV, a person's data export: saved in the phone's **Downloads**, with
+  an **Open** button; phones older than Android 10 get the share menu), and **Add photo** offers the **camera** as well as
+  the gallery. Older versions say "Please update the Church Hub app to download files" instead of doing nothing.
 - **Is the key restricted to the website (FIREBASE-SETUP step 8) a problem?** No – the app opens the church's
   website address, so the restriction still matches.
 - **Can we put it in the Google Play Store later?** Yes: the same app can be uploaded with a Google Play developer
   account (once-off USD 25). Then Play Protect warnings go away and updates install automatically.
 - **For developers:** `android/` is a small WebView app (`MainActivity.java`) with a bridge `window.ChurchHubApp`
-  (`version()`, `googleSignIn(webClientId)`, `retry()`). The page answers through `window.churchHubGoogle(idToken)`,
+  (`version()`, `googleSignIn(webClientId)`, `retry()`, `saveFile(name, type, text)`). Picking a picture offers the camera
+  too (FileProvider `${applicationId}.files`, the app's cache only). The page answers through `window.churchHubGoogle(idToken)`,
   `churchHubGoogleError(message)` and `churchHubGoogleCancel()` (`js/store.js`), and `window.churchHubBack()` closes an
   open window before the back button goes back a page (`js/app.js`). Built by `.github/workflows/build-android.yml`.

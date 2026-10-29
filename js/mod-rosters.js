@@ -72,7 +72,7 @@
     var lastTeam = '';
     orderedPositions().forEach(function (p) {
       if (p.teamId !== lastTeam) { lastTeam = p.teamId; html += '<tr class="team-row"><th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th></tr>'; }
-      html += '<tr><th scope="row">' + esc(p.name) + '<small>' + p.needed + ' needed</small></th>' + svcs.map(function (s) {
+      html += '<tr><th scope="row">' + esc(p.name) + '<small>' + T('{n} needed', { n: p.needed }) + '</small></th>' + svcs.map(function (s) {
         var here = all.filter(function (a) { return a.serviceId === s.id && a.positionId === p.id; });
         var live = here.filter(function (a) { return a.status !== 'declined'; }).length;
         var cells = here.map(function (a) {

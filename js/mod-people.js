@@ -1456,7 +1456,7 @@
         var care = window.CareUI ? CareUI.read() : null;
         if (care && care.error && !dead) { err.textContent = care.error; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
-        if (window.CareUI) { if (care && !care.error && !CareUI.place(p, care.gid, care.leader)) CareUI.sync(p.id); else if (!care) CareUI.sync(p.id); }
+        if (window.CareUI) { if (!(care && CareUI.setFrom(p, care))) CareUI.sync(p.id); }
         dups.forEach(function (m) { markNotSame(p.id, m.id); });
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();

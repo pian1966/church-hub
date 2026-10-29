@@ -318,7 +318,7 @@ Later: direct import through the Elvanto API (server side, with the church's API
   (required) and, when you can, to the `js/lang` files.
 
 ## Care groups (Care groups page; `js/care.js`, `js/mod-care.js`)
-- `careGroups/{id}` = { name, leaderIds (carers), memberIds, names: { personId: name } }. One group per person.
+- `careGroups/{id}` = { name, leaderIds (carers), memberIds, names: { personId: name } }. A person may be in several groups (a carer in one, a member in another), with a card in each. Locally a card is `careShare` id `group:person`.
   Administrators and Pastors create, rename and delete groups and put people in them (Care groups page, or Edit details →
   "Care group member" + which group + Carer). A group's carers may add people from the church directory and take members
   out (only `memberIds`/`names` change; they stay in it; they can't change the carers or the name).

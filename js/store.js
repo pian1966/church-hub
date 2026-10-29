@@ -388,7 +388,7 @@ var Store = (function () {
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
       ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups'].forEach(function (c) { db[c] = arr(c); });
       db.careShare = [];
-      Object.keys(raw).forEach(function (k) { if (k.indexOf('share:') === 0) { var g = k.slice(6); Object.keys(raw[k]).forEach(function (pid) { var o = copy(raw[k][pid]); o.id = pid; o.groupId = g; db.careShare.push(o); }); } });
+      Object.keys(raw).forEach(function (k) { if (k.indexOf('share:') === 0) { var g = k.slice(6); Object.keys(raw[k]).forEach(function (pid) { var o = copy(raw[k][pid]); o.id = g + ':' + pid; o.personId = pid; o.groupId = g; db.careShare.push(o); }); } });
       var cons = merged('consents', 'consentsMe', 'consentsMed', 'consentsPhotos');
       db.consents = Object.keys(cons).map(function (id) { var o = copy(cons[id]); o.id = id; return o; });
       db.notes = [];
@@ -463,13 +463,13 @@ var Store = (function () {
     }
     function put(c, obj, prev) {
       if (c === 'people') return putPerson(obj);
-      if (c === 'careShare') { var d = copy(obj); delete d.groupId; if (prev && prev.groupId && prev.groupId !== obj.groupId) del('careGroups/' + prev.groupId + '/share/' + obj.id); return write('careGroups/' + obj.groupId + '/share/' + obj.id, d); }
+      if (c === 'careShare') { var d = copy(obj); delete d.groupId; delete d.personId; return write('careGroups/' + obj.groupId + '/share/' + obj.personId, d); }   // one card per group: id = group:person
       if (c === 'notes' || c === 'officeNotes') return putNotes(obj.personId, c);
       write(c + '/' + obj.id, obj);
       if (c === 'consents' && obj.purpose === DIRECTORY) syncDirectory(obj.personId);
     }
     function remove(c, prev) {
-      if (c === 'careShare') return del('careGroups/' + prev.groupId + '/share/' + prev.id);
+      if (c === 'careShare') return del('careGroups/' + prev.groupId + '/share/' + prev.personId);
       if (c === 'notes' || c === 'officeNotes') return putNotes(prev.personId, c);
       if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       del(c + '/' + prev.id);
@@ -557,7 +557,7 @@ var Store = (function () {
     /** Someone left a care group: their card there goes (careGroups/{gid}/share/{pid}). */
     careUnshare: function (gid, pid) {
       if (previewing()) return;
-      db.careShare = list('careShare').filter(function (x) { return !(x.id === pid && x.groupId === gid); });
+      db.careShare = list('careShare').filter(function (x) { return !(x.personId === pid && x.groupId === gid); });
       if (LIVE) Live.unshare(gid, pid); save(); changed();
     },
     /** "View as": an Administrator sees Church Hub as another role would (Pastor, Roster coordinator, Children's ministry, Member).

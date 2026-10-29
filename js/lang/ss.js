@@ -433,6 +433,10 @@ I18n.add('ss', {
     "Added to the group": "Ufakiwe elicenjini",
     "Taken out of the group": "Ukhishwe elicenjini",
     "Sign out of Church Hub?": "Uyaphuma ku-Church Hub?",
-    "You will need to sign in again next time.": "Kutawudzingeka ungene futsi ngalokulandzelako."
+    "You will need to sign in again next time.": "Kutawudzingeka ungene futsi ngalokulandzelako.",
+    "Type part of a name to narrow the list": "Bhala incenye yeligama kute unciphise luhlu",
+    "{n} more – type more of the name": "Labanye labangu-{n} – bhala lokunyenti kweligama",
+    "No one matches": "Akekho lofanako",
+    "Type part of their name": "Bhala incenye yeligama lakhe"
   }
 });

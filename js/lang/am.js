@@ -433,6 +433,10 @@ I18n.add('am', {
     "Added to the group": "ወደ ቡድኑ ተጨምሯል",
     "Taken out of the group": "ከቡድኑ ወጥቷል",
     "Sign out of Church Hub?": "ከChurch Hub ይውጡ?",
-    "You will need to sign in again next time.": "በሚቀጥለው ጊዜ እንደገና መግባት ያስፈልግዎታል።"
+    "You will need to sign in again next time.": "በሚቀጥለው ጊዜ እንደገና መግባት ያስፈልግዎታል።",
+    "Type part of a name to narrow the list": "ዝርዝሩን ለማሳጠር የስሙን ክፍል ይጻፉ",
+    "{n} more – type more of the name": "ሌሎች {n} – ተጨማሪ የስሙን ፊደላት ይጻፉ",
+    "No one matches": "የሚመሳሰል የለም",
+    "Type part of their name": "የስማቸውን ክፍል ይጻፉ"
   }
 });

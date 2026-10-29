@@ -433,6 +433,10 @@ I18n.add('nr', {
     "Added to the group": "Ufakiwe esihlotjheni",
     "Taken out of the group": "Ukhitjhiwe esihlotjheni",
     "Sign out of Church Hub?": "Uyaphuma ku-Church Hub?",
-    "You will need to sign in again next time.": "Kuzokufuneka ungene godu ngesikhathi esizako."
+    "You will need to sign in again next time.": "Kuzokufuneka ungene godu ngesikhathi esizako.",
+    "Type part of a name to narrow the list": "Tlola ingcenye yebizo bona unciphise irhelo",
+    "{n} more – type more of the name": "Abanye abangu-{n} – tlola okunengi kwebizo",
+    "No one matches": "Akekho ofanako",
+    "Type part of their name": "Tlola ingcenye yebizo lakhe"
   }
 });

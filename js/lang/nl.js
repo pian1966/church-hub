@@ -433,6 +433,10 @@ I18n.add('nl', {
     "Added to the group": "Aan de kring toegevoegd",
     "Taken out of the group": "Uit de kring gehaald",
     "Sign out of Church Hub?": "Afmelden bij Church Hub?",
-    "You will need to sign in again next time.": "U moet zich de volgende keer opnieuw aanmelden."
+    "You will need to sign in again next time.": "U moet zich de volgende keer opnieuw aanmelden.",
+    "Type part of a name to narrow the list": "Typ een deel van een naam om de lijst in te korten",
+    "{n} more – type more of the name": "Nog {n} – typ meer van de naam",
+    "No one matches": "Niemand gevonden",
+    "Type part of their name": "Typ een deel van de naam"
   }
 });

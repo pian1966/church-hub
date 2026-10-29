@@ -433,6 +433,10 @@ I18n.add('tn', {
     "Added to the group": "O tsentswe mo setlhopheng",
     "Taken out of the group": "O ntshitswe mo setlhopheng",
     "Sign out of Church Hub?": "Tswa mo Church Hub?",
-    "You will need to sign in again next time.": "O tla tlhoka go tsena gape nako e e tlang."
+    "You will need to sign in again next time.": "O tla tlhoka go tsena gape nako e e tlang.",
+    "Type part of a name to narrow the list": "Kwala karolo ya leina go khutshwafatsa lenaane",
+    "{n} more – type more of the name": "Ba bangwe ba le {n} – kwala go feta leina",
+    "No one matches": "Ga go na ope yo o tsamaelanang",
+    "Type part of their name": "Kwala karolo ya leina la gagwe"
   }
 });

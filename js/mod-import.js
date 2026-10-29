@@ -182,7 +182,7 @@
       '<div class="table-wrap"><table class="simple"><thead><tr><th>In Leave Manager</th><th>Category</th><th>Church Hub person</th></tr></thead><tbody>' + pl.matches.map(function (m) {
         var c = lst.choice[m.lm.id];
         return '<tr><td><b>' + esc(m.lm.name) + '</b><br><span class="muted small">' + esc(m.lm.email || 'no email') + (m.lm.active ? '' : ' · not active') + '</span></td><td>' + esc(m.lm.level) + '</td><td>' +
-          '<select class="lm-who" data-id="' + esc(m.lm.id) + '" aria-label="Church Hub person for ' + esc(m.lm.name) + '"><option value="__new"' + (c === '__new' ? ' selected' : '') + '>+ Add as a new person</option><option value="__skip"' + (c === '__skip' ? ' selected' : '') + '>Don’t bring across</option>' +
+          '<select class="lm-who findable" data-id="' + esc(m.lm.id) + '" aria-label="Church Hub person for ' + esc(m.lm.name) + '"><option value="__new"' + (c === '__new' ? ' selected' : '') + '>+ Add as a new person</option><option value="__skip"' + (c === '__skip' ? ' selected' : '') + '>Don’t bring across</option>' +
           people.map(function (p) { return '<option value="' + p.id + '"' + (c === p.id ? ' selected' : '') + '>' + esc(H.name(p)) + '</option>'; }).join('') + '</select>' +
           (m.personId && c === m.personId ? '<br><span class="muted small">Matched by ' + m.by + '</span>' : '') + '</td></tr>';
       }).join('') + '</tbody></table></div></section>';

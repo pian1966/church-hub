@@ -502,7 +502,7 @@
     l = l || Object.assign({ childId: childId, adultId: '', name: '', phone: '', relationship: 'Mother' }, HS.defaultsFor('Mother'));
     var outside = !l.adultId && !!l.name;
     H.modal(H.dialogHead(isNew ? 'Add a parent, guardian or collector' : 'Edit ' + linkName(l), 'For ' + H.name(c)) + '<div class="dlg-body">' +
-      '<label class="field req">Who<select id="gl-who"><option value="">Choose…</option><option value="__out"' + (outside ? ' selected' : '') + '>Someone not in Church Hub…</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
+      '<label class="field req">Who<select class="findable" id="gl-who"><option value="">Choose…</option><option value="__out"' + (outside ? ' selected' : '') + '>Someone not in Church Hub…</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
       '<div id="gl-out" class="two"' + (outside ? '' : ' hidden') + '><label class="field req">Name<input id="gl-name" value="' + esc(l.name || '') + '"></label><label class="field">Phone<input id="gl-phone" type="tel" value="' + esc(l.phone || '') + '"></label></div>' +
       '<label class="field req">Relationship to ' + esc(c.firstName) + '<select id="gl-rel">' + HS.RELATIONSHIPS.map(function (r) { return '<option' + (l.relationship === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
       '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>Can give consent</b><br><span class="muted small">A parent or legal guardian (' + esc(PrivacyLaw.forChurch(S.settings()).short) + '). Not step-parents, grandparents or collectors unless they are legal guardians.</span></span></label>' +
@@ -517,7 +517,7 @@
   function ncDialog(childId) {
     var c = S.get('people', childId);
     H.modal(H.dialogHead('Not allowed to collect ' + c.firstName, 'Children’s ministry will see an alert. Keep the note short and factual.') + '<div class="dlg-body">' +
-      '<label class="field req">Who<select id="nc-who"><option value="__out">Someone not in Church Hub…</option>' + adultOptions('', childId) + '</select></label>' +
+      '<label class="field req">Who<select class="findable" id="nc-who"><option value="__out">Someone not in Church Hub…</option>' + adultOptions('', childId) + '</select></label>' +
       '<label class="field req" id="nc-name-f">Name<input id="nc-name"></label>' +
       '<label class="field">Note <small>(e.g. “Court order – call Karen”)</small><input id="nc-note"></label><p id="nc-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary danger" data-act="people:ncsave" data-child="' + childId + '">Save</button></div>', 'Not allowed to collect');
@@ -527,7 +527,7 @@
   function homeDialog(pid) {
     var p = S.get('people', pid), hs = HS.householdsOf(p);
     var fams = S.list('families').filter(function (f) { return hs.indexOf(f.id) < 0; }).sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); });
-    H.modal(H.dialogHead('Another household for ' + p.firstName, 'For example, the other parent’s home.') + '<div class="dlg-body"><label class="field req">Household<select id="hm-f">' +
+    H.modal(H.dialogHead('Another household for ' + p.firstName, 'For example, the other parent’s home.') + '<div class="dlg-body"><label class="field req">Household<select class="findable" id="hm-f">' +
       fams.map(function (f) { return '<option value="' + f.id + '">' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:savehome" data-id="' + pid + '">Add</button></div>', 'Another household');
   }
@@ -1062,7 +1062,7 @@
         '<label class="field">Partnership last updated<input id="pf-pupd" type="date" max="' + H.today() + '" value="' + esc(/^\d{4}$/.test(p.partnerUpdated || '') ? '' : p.partnerUpdated || '') + '">' +
           (/^\d{4}$/.test(p.partnerUpdated || '') ? '<small>Elvanto only says ' + esc(p.partnerUpdated) + '. Leave empty to keep that, or choose the date.</small>' : '') + '</label></div>' +
         '<label class="field">Gender<select id="pf-gender"><option value="">Not recorded</option>' + GENDERS.map(function (g) { return '<option' + (p.gender === g ? ' selected' : '') + '>' + g + '</option>'; }).join('') + '</select></label>' +
-        '<div class="two"><label class="field req" id="pf-fam-f">Household<select id="pf-fam"><option value="">Choose…</option><option value="__new">+ New household…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' +
+        '<div class="two"><label class="field req" id="pf-fam-f">Household<select class="findable" id="pf-fam"><option value="">Choose…</option><option value="__new">+ New household…</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field req">In the household as<select id="pf-frole">' + (p.familyRole ? '' : '<option value="" selected>Choose…</option>') + '<option value="adult"' + (p.familyRole === 'adult' ? ' selected' : '') + '>Adult</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>Child (under 18)</option></select></label></div>' +
         '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Marital status<select id="pf-marital"><option value="">Choose…</option>' + MARITAL.map(function (m) { return '<option' + (p.maritalStatus === m ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select><small>For pastoral care. Choose “Not known” if you don’t know.</small></label>' +
         (admin ? lateSpouseField(p) : '') +
@@ -1127,7 +1127,7 @@
       .sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); });
     if (cur && dead.indexOf(cur) < 0) dead.unshift(cur);
     var sel = cur ? cur.id : p.lateSpouseName ? '__out' : '';
-    return '<div id="pf-late-f"' + (show ? '' : ' hidden') + '><label class="field">Late spouse<select id="pf-late"><option value="">Nobody recorded</option>' +
+    return '<div id="pf-late-f"' + (show ? '' : ' hidden') + '><label class="field">Late spouse<select class="findable" id="pf-late"><option value="">Nobody recorded</option>' +
       dead.map(function (x) { return '<option value="' + x.id + '"' + (sel === x.id ? ' selected' : '') + '>' + esc(x.lastName + ', ' + (x.preferredName || x.firstName)) + (x.deceasedAt ? ' (died ' + esc(H.fmt(x.deceasedAt, true)) + ')' : '') + '</option>'; }).join('') +
       '<option value="__out"' + (sel === '__out' ? ' selected' : '') + '>Someone not in Church Hub…</option></select><small>Who they were married to. Shown on their record as “Was married to …”.</small></label>' +
       '<label class="field" id="pf-late-n-f"' + (sel === '__out' ? '' : ' hidden') + '>Their name<input id="pf-late-n" value="' + esc(p.lateSpouseName || '') + '"></label></div>';

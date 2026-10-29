@@ -433,6 +433,10 @@ I18n.add('ts', {
     "Added to the group": "U engeteriwile eka ntlawa",
     "Taken out of the group": "U humesiwile eka ntlawa",
     "Sign out of Church Hub?": "U huma eka Church Hub?",
-    "You will need to sign in again next time.": "U ta fanela ku nghena nakambe nkarhi lowu taka."
+    "You will need to sign in again next time.": "U ta fanela ku nghena nakambe nkarhi lowu taka.",
+    "Type part of a name to narrow the list": "Tsala xiphemu xa vito ku hunguta nxaxamelo",
+    "{n} more – type more of the name": "Van’wana va {n} – tsala swo tala swa vito",
+    "No one matches": "A ku na loyi a fambelanaka",
+    "Type part of their name": "Tsala xiphemu xa vito ra yena"
   }
 });

@@ -848,14 +848,19 @@
     var A = state.adv, F = searchFields(), byKey = {}, groups = [];
     F.forEach(function (f) { byKey[f.key] = f; if (groups.indexOf(f.group) < 0) groups.push(f.group); });
     A.cols = A.cols.filter(function (k) { return byKey[k] && k !== 'name'; });
-    var fieldSelect = function (f, i) {   // type part of a field's name ("not", "marit") to narrow the list down
-      var q = f.find || '', list = q ? F.filter(function (x) { return H.matches(x.label + ' ' + x.group, q) || x.key === f.field; }) : F;
-      var hits = q ? F.filter(function (x) { return H.matches(x.label + ' ' + x.group, q); }).length : F.length;
-      return '<span class="adv-fpick"><input type="search" class="adv-ff" data-i="' + i + '" value="' + esc(q) + '" placeholder="Type to find a field…" autocomplete="off" aria-label="Filter ' + (i + 1) + ': type to find a field">' +
-        (q ? '<small class="adv-fcount muted">' + (hits ? hits + (hits === 1 ? ' field matches' : ' fields match') : 'No field matches') + '</small>' : '') +
-        '<select class="adv-field" data-i="' + i + '" aria-label="Filter ' + (i + 1) + ': search on">' + (byKey[f.field] ? '' : '<option value="">Choose…</option>') + groups.map(function (g) {
-          var xs = list.filter(function (x) { return x.group === g; }); if (!xs.length) return '';
-          return '<optgroup label="' + esc(g) + '">' + xs.map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
+    var fieldSelect = function (f, i) {   // like Elvanto: open the list, then type part of a field's name ("marit") to narrow it down
+      var cur = byKey[f.field];
+      return '<span class="adv-fpick" data-i="' + i + '">' +
+        '<button type="button" class="adv-fbtn" data-i="' + i + '" aria-haspopup="listbox" aria-expanded="false" aria-label="Filter ' + (i + 1) + ': search on ' + esc(cur ? cur.label : 'nothing yet') + '">' +
+          '<span>' + esc(cur ? cur.label : 'Choose a field…') + '</span></button>' +
+        '<span class="adv-fpop" hidden><input type="search" class="adv-ff" data-i="' + i + '" placeholder="Type to find a field…" autocomplete="off" aria-label="Type to find a field" aria-controls="adv-fl' + i + '">' +
+          '<span class="adv-flist" id="adv-fl' + i + '" role="listbox">' + groups.map(function (g) {
+            return '<span class="adv-fg" role="group" aria-label="' + esc(g) + '"><span class="adv-fgh">' + esc(g) + '</span>' + F.filter(function (x) { return x.group === g; }).map(function (x) {
+              return '<button type="button" class="adv-fo' + (x.key === f.field ? ' on' : '') + '" role="option" aria-selected="' + (x.key === f.field) + '" data-i="' + i + '" data-key="' + x.key + '" data-text="' + esc(x.label) + '">' + esc(x.label) + '</button>';
+            }).join('') + '</span>';
+          }).join('') + '<span class="adv-fnone muted" hidden>No field matches</span></span></span>' +
+        '<select class="adv-field sr-only" data-i="' + i + '" tabindex="-1" aria-hidden="true">' + (cur ? '' : '<option value="">Choose…</option>') + groups.map(function (g) {   // the same list, for the tests and screen readers
+          return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g; }).map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
         }).join('') + '</select></span>';
     };
     var word = A.match === 'any' ? 'OR' : 'AND', logicNote = '';
@@ -971,16 +976,41 @@
     S.audit('Downloaded an advanced search: ' + r.rows.length + ' people (' + cols.map(function (k) { return r.byKey[k].label; }).join(', ') + ')', 'people');
     H.download('people-search-' + H.today() + '.csv', text, 'text/csv');
   }
+  var fieldDocHooked = false;
+  function fieldClose() {
+    document.querySelectorAll('.adv-fpop').forEach(function (p) { p.hidden = true; });
+    document.querySelectorAll('.adv-fbtn').forEach(function (b) { b.setAttribute('aria-expanded', 'false'); });
+  }
+  function fieldActive(pop, o) {
+    pop.querySelectorAll('.adv-fo.act').forEach(function (x) { x.classList.remove('act'); });
+    if (o) { o.classList.add('act'); try { o.scrollIntoView({ block: 'nearest' }); } catch (e) {} }
+  }
+  function fieldOpen(b) {   // returns the box to type in
+    var pick = b.closest('.adv-fpick'), pop = pick.querySelector('.adv-fpop'), inp = pop.querySelector('.adv-ff');
+    pop.hidden = false; b.setAttribute('aria-expanded', 'true'); inp.value = ''; fieldFilter(inp);
+    fieldActive(pop, pop.querySelector('.adv-fo.on') || pop.querySelector('.adv-fo')); inp.focus();
+    return inp;
+  }
+  function fieldFilter(inp) {   // narrow the list to the fields whose name has every word typed, even part-words
+    var pop = inp.closest('.adv-fpop'), q = inp.value.trim(), first = null;
+    pop.querySelectorAll('.adv-fg').forEach(function (g) {
+      var any = false;
+      g.querySelectorAll('.adv-fo').forEach(function (o) { var ok = !q || H.matches(o.dataset.text, q); o.hidden = !ok; if (ok) { any = true; if (!first) first = o; } });
+      g.hidden = !any;
+    });
+    pop.querySelector('.adv-fnone').hidden = !!first;
+    fieldActive(pop, q ? first : pop.querySelector('.adv-fo.on') || first);
+  }
+  function fieldPick(o) {
+    var i = o.dataset.i, sel = document.querySelector('.adv-field[data-i="' + i + '"]'); if (!sel) return;
+    fieldClose();
+    if (sel.value !== o.dataset.key) { sel.value = o.dataset.key; advSync(sel); H.render(); }
+    var b = document.querySelector('.adv-fbtn[data-i="' + i + '"]'); if (b) b.focus();
+  }
   function advSync(el) {   // keep what is typed in the state, so a refresh never loses it
     var A = state.adv, i = +el.dataset.i, f = A.filters[i];
     if (el.classList.contains('adv-v') && f) { f[el.dataset.k] = el.value; return false; }
-    if (el.classList.contains('adv-ff') && f) {   // typing part of a field's name picks the first field that matches
-      f.find = el.value;
-      var hit = el.value.trim() ? searchFields().filter(function (x) { return H.matches(x.label + ' ' + x.group, el.value); }) : [];
-      if (hit.length && !hit.some(function (x) { return x.key === f.field; })) { f.field = hit[0].key; f.op = hit[0].type === 'text' ? 'has' : PS.opsFor(hit[0].type)[0][0]; f.value = f.value2 = ''; f.unit = 'days'; }
-      return true;
-    }
-    if (el.classList.contains('adv-field') && f) { f.find = ''; f.field = el.value; var d = searchFields().filter(function (x) { return x.key === el.value; })[0]; f.op = d ? (d.type === 'text' ? 'has' : PS.opsFor(d.type)[0][0]) : ''; /* text: "contains" is what people expect */ f.value = f.value2 = ''; f.unit = 'days'; return true; }
+    if (el.classList.contains('adv-field') && f) { f.field = el.value; var d = searchFields().filter(function (x) { return x.key === el.value; })[0]; f.op = d ? (d.type === 'text' ? 'has' : PS.opsFor(d.type)[0][0]) : ''; /* text: "contains" is what people expect */ f.value = f.value2 = ''; f.unit = 'days'; return true; }
     if (el.classList.contains('adv-op') && f) { var k1 = PS.valueKind('', f.op); f.op = el.value; if (PS.valueKind('', f.op) !== k1) { f.value = f.value2 = ''; } f.unit = f.unit || 'days'; return true; }
     if (el.id === 'adv-match') { A.match = el.value; return true; }
     if (el.id === 'adv-logic') { A.logic = el.value; return false; }
@@ -1243,16 +1273,31 @@
         var onEdit = function (ev) {
           var t = ev.target; if (t.classList.contains('adv-ff') || !advSync(t)) return;   // the field finder is handled as it's typed
           H.render();   // the choices changed: show the right boxes, and keep the place
-          var b = t.id ? document.getElementById(t.id) : document.querySelector('.' + t.classList[0] + '[data-i="' + t.dataset.i + '"]');
+          var b = t.id ? document.getElementById(t.id) : document.querySelector('.' + (t.classList.contains('adv-field') ? 'adv-fbtn' : t.classList[0]) + '[data-i="' + t.dataset.i + '"]');
           if (b) b.focus();
         };
         adv.addEventListener('input', function (ev) {
           var t = ev.target; if (t.tagName === 'SELECT') return;
-          if (advSync(t) && t.classList.contains('adv-ff')) {   // redraw the narrowed list, keep typing
-            var pos = t.selectionStart, i = t.dataset.i; H.render();
-            var n = document.querySelector('.adv-ff[data-i="' + i + '"]'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
-          }
+          if (t.classList.contains('adv-ff')) fieldFilter(t); else advSync(t);
         });
+        // The field list: opens with a box to type in; typing narrows it; arrows and Enter pick; Esc or a click elsewhere closes
+        adv.addEventListener('click', function (ev) {
+          var b = ev.target.closest('.adv-fbtn'), o = ev.target.closest('.adv-fo');
+          if (b) { var open = b.getAttribute('aria-expanded') === 'true'; fieldClose(); if (!open) fieldOpen(b); return; }
+          if (o) fieldPick(o);
+        });
+        adv.addEventListener('keydown', function (ev) {
+          var t = ev.target, pop = t.closest && t.closest('.adv-fpop');
+          if (t.classList.contains('adv-fbtn') && (ev.key === 'ArrowDown' || ev.key === 'Enter' || ev.key === ' ') && t.getAttribute('aria-expanded') !== 'true') { ev.preventDefault(); fieldOpen(t); return; }
+          if (t.classList.contains('adv-fbtn') && ev.key.length === 1 && !ev.ctrlKey && !ev.metaKey && !ev.altKey) { ev.preventDefault(); var inp = fieldOpen(t); inp.value = ev.key; fieldFilter(inp); return; }   // just start typing
+          if (!pop) return;
+          var vis = [].filter.call(pop.querySelectorAll('.adv-fo'), function (x) { return !x.hidden; }), k = vis.indexOf(pop.querySelector('.adv-fo.act'));
+          if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') { ev.preventDefault(); fieldActive(pop, vis[Math.max(0, Math.min(vis.length - 1, k + (ev.key === 'ArrowDown' ? 1 : -1)))]); if (t.classList.contains('adv-fo')) pop.querySelector('.adv-ff').focus(); }
+          else if (ev.key === 'Enter') { ev.preventDefault(); if (vis[k]) fieldPick(vis[k]); }
+          else if (ev.key === 'Escape') { ev.preventDefault(); var i = pop.closest('.adv-fpick').dataset.i; fieldClose(); var fb = document.querySelector('.adv-fbtn[data-i="' + i + '"]'); if (fb) fb.focus(); }
+          else if (ev.key === 'Tab') fieldClose();
+        });
+        if (!fieldDocHooked) { fieldDocHooked = true; document.addEventListener('mousedown', function (ev) { if (!ev.target.closest || !ev.target.closest('.adv-fpick')) fieldClose(); }); }
         adv.addEventListener('change', onEdit);
         var lg = document.getElementById('adv-logic');
         if (lg) lg.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); state.adv.ran = true; H.render(); } });
@@ -1276,7 +1321,7 @@
         S.setPhoto(p.id, null, 'Removed the photo of ' + H.name(p)).then(function () { H.render(); H.toast(T('Photo removed')); });
       },
       sort: function (el) { state.sort = el.dataset.k; Store.pref('peopleSort', state.sort); if (state.adv) { state.adv.sort = 'name'; state.adv.dir = 1; } H.render(); },
-      advadd: function (el) { var i = +el.dataset.i, prev = state.adv.filters[i]; state.adv.filters.splice(i + 1, 0, { field: prev ? prev.field : 'name', op: prev ? prev.op : 'has', value: '', value2: '', unit: 'days' }); H.render(); var s2 = document.querySelectorAll('.adv-field')[i + 1]; if (s2) s2.focus(); },
+      advadd: function (el) { var i = +el.dataset.i, prev = state.adv.filters[i]; state.adv.filters.splice(i + 1, 0, { field: prev ? prev.field : 'name', op: prev ? prev.op : 'has', value: '', value2: '', unit: 'days' }); H.render(); var s2 = document.querySelectorAll('.adv-fbtn')[i + 1]; if (s2) s2.focus(); },
       advdel: function (el) { state.adv.filters.splice(+el.dataset.i, 1); H.render(); },
       advcol: function (el) {
         var c = state.adv.cols, i = c.indexOf(el.dataset.k), m = +el.dataset.m;

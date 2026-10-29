@@ -456,11 +456,20 @@ function serve() {
   await s.page.evaluate(() => { const p = Store.get('people', 'p05'); delete p.deceasedAt; p.active = true; p.category = 'Staff'; });
   // Finding a field by typing part of its name; searching church office notes
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
-  await s.page.fill('.adv-ff[data-i="0"]', 'marit'); await s.page.waitForTimeout(100);
-  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'marital' && (await s.page.$$eval('.adv-field[data-i="0"] option', o => o.length)) === 1 && (await s.page.inputValue('.adv-ff[data-i="0"]')) === 'marit',
-    'typing “marit” narrows the fields to Marital status and picks it (typing carries on)');
-  await s.page.fill('.adv-ff[data-i="0"]', 'office not'); await s.page.waitForTimeout(100);
-  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'officeNotes', '“office not” finds Church office notes');
+  const shownFields = () => s.page.$$eval('.adv-fpick[data-i="0"] .adv-fo', o => o.filter(x => x.offsetParent).map(x => x.textContent));
+  await s.page.click('.adv-fbtn[data-i="0"]');
+  check(await s.page.isVisible('.adv-ff[data-i="0"]') && (await s.page.evaluate(() => document.activeElement.classList.contains('adv-ff'))) && (await shownFields()).length > 20 && (await s.page.isVisible('.adv-fpick[data-i="0"] .adv-fgh')),
+    'clicking the field opens the whole list, with group headings and a box to type in (ready to type)');
+  await s.page.keyboard.type('marit');
+  check(JSON.stringify(await shownFields()) === '["Marital status"]', 'typing “marit” narrows the list to Marital status: ' + (await shownFields()).join(', '));
+  await s.page.keyboard.type('xyz'); check(await s.page.isVisible('.adv-fpick[data-i="0"] .adv-fnone'), 'nothing matching says so');
+  await s.page.fill('.adv-ff[data-i="0"]', 'name'); const nameHits = await shownFields();
+  check(nameHits.length > 1 && nameHits.every(x => /name/i.test(x)), 'typing “name” shows only the name fields: ' + nameHits.join(', '));
+  await s.page.fill('.adv-ff[data-i="0"]', 'marit'); await s.page.keyboard.press('Enter'); await s.settle();
+  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'marital' && (await s.page.textContent('.adv-fbtn[data-i="0"]')).includes('Marital status') && await s.page.isHidden('.adv-ff[data-i="0"]'), 'Enter picks it and closes the list');
+  await s.page.click('.adv-fbtn[data-i="0"]'); await s.page.keyboard.type('office not'); await s.page.click('.adv-fpick[data-i="0"] .adv-fo:visible'); await s.settle();
+  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'officeNotes', '“office not” finds Church office notes, and a click picks it');
+  await s.page.click('.adv-fbtn[data-i="0"]'); await s.page.keyboard.press('Escape'); check(await s.page.isHidden('.adv-ff[data-i="0"]') && await s.page.inputValue('.adv-field[data-i="0"]') === 'officeNotes', 'Esc closes the list without changing the field');
   await s.page.evaluate(() => Store.put('officeNotes', { personId: 'p16', text: 'Moved from Durban in 2019', by: 'Elvanto', at: '2026-10-28' })); await s.settle();
   await s.page.fill('input.adv-v[data-i="0"]', 'durban'); await s.page.click('[data-act="people:advrun"]');
   const onames = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.getAttribute('href')));

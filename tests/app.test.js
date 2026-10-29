@@ -453,6 +453,18 @@ function serve() {
   const p05 = await s.page.evaluate(() => Store.get('people', 'p05').lastName);
   check(names.length === 1 && names[0].includes(p05), 'Advanced search: Year of death finds who died that year: ' + names.join(' | '));
   await s.page.evaluate(() => { const p = Store.get('people', 'p05'); delete p.deceasedAt; p.active = true; p.category = 'Staff'; });
+  // Finding a field by typing part of its name; searching church office notes
+  await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
+  await s.page.fill('.adv-ff[data-i="0"]', 'marit'); await s.page.waitForTimeout(100);
+  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'marital' && (await s.page.$$eval('.adv-field[data-i="0"] option', o => o.length)) === 1 && (await s.page.inputValue('.adv-ff[data-i="0"]')) === 'marit',
+    'typing “marit” narrows the fields to Marital status and picks it (typing carries on)');
+  await s.page.fill('.adv-ff[data-i="0"]', 'office not'); await s.page.waitForTimeout(100);
+  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'officeNotes', '“office not” finds Church office notes');
+  await s.page.evaluate(() => Store.put('officeNotes', { personId: 'p16', text: 'Moved from Durban in 2019', by: 'Elvanto', at: '2026-10-28' })); await s.settle();
+  await s.page.fill('input.adv-v[data-i="0"]', 'durban'); await s.page.click('[data-act="people:advrun"]');
+  const onames = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.getAttribute('href')));
+  check(onames.length === 1 && onames[0].endsWith('/p16'), 'Advanced search finds people by their church office notes');
+  check(!(await s.page.$$eval('.adv-field[data-i="0"] option', o => o.map(x => x.textContent))).some(x => /pastoral|medical/i.test(x)), 'pastoral and medical notes are never searchable');
   // Changing many people at once
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]');

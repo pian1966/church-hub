@@ -60,6 +60,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
   | `medical/{id}` | children's allergies and medical notes | **Children's ministry only** |
   | `notes/{personId}` | pastoral notes (`entries` list) | **Pastors only** |
   | `officeNotes/{personId}` | church office notes (`entries` list; Elvanto's Notes come here) | Admin, Pastor |
+  | `elvantoFound/unavailable` | what the robot read in Elvanto's Unavailable Volunteers: names and dates only | **Admin only** (the robot writes it) |
   | `idNumbers/{personId}` | ID number (`value`) – fetched one at a time on **Show**, every view audit-logged | **Admin only**; the person sees their own |
   | `photos/{id}` | the photo (`data`: a 320 × 320 JPEG), fetched only when shown | adults: staff, the person, members when the adult is in the directory; children: Admin, Pastor, Children's ministry |
   | `directory/{id}` | name, mobile and `photo` version of adults with *Church directory* consent | everyone signed in |
@@ -190,6 +191,8 @@ status, staff for Administrators and Pastors; parents/guardians for Children's m
 Medical and pastoral notes and collection restrictions are never searchable. People who left or died are only included when
 searching on Status, Date of death or Year of death. Downloads are audit-logged. Searches aren't saved yet (Phase 2: smart lists).
 Members have no advanced search. "Church at a glance" (Administrators) is closed until opened.
+Each filter has *Type to find a field…*, which narrows the field list as you type and picks the first match; text fields start
+on "contains". Church office notes are searchable (Administrators and Pastors).
 **Searching** (People, Households, and "Contains"): every word typed must appear, in any order – "andr pi" finds Andrew Pike
 (`Hub.matches`). Lists sort by first name, known as or surname (remembered per device).
 **Change selected…** (Administrators): tick people in the results, then one change for all of them – marital status, category,
@@ -211,6 +214,20 @@ page then says "Was married to …" (and the reverse). Administrators can set it
 nobody) and get suggestions under People → **Late spouses** (`Households.lateSpouseSuggestions`: same household, wedding
 date, email, phone, surname and age; "Not a couple" is remembered as `notLateSpouse`).
 Later phases must leave deceased people out of messages, birthday reminders and anniversaries.
+
+## Elvanto's unavailable dates → Church Hub (until switch-over)
+`MODE=read` of the robot (nightly 03:07, `.github/workflows/elvanto-robot.yml`; only if `settings.elvanto.read`) reads the whole
+Unavailable Volunteers list (all pages) – each row's name and dates, never the reason – with `readRows`/`datesIn` in
+`robot/robot.js` (tested), and writes `elvantoFound/unavailable` = { readAt, entries: [{ name, from, to, fromLeave }], rows,
+unread, pages } (robot writes only those fields; Administrators read/delete). Import → *Unavailable dates from Elvanto*
+matches names with `ElvantoImport.matchFound` (tested: known-as names, "Surname, First", several/no match → choose) and adds
+`blockouts` with `source: 'elvanto'`; entries made for leave (note "Church Hub …"/"Leave Manager …") count as already there.
+
+## Phone apps and prompts
+`phoneApp()` in `js/app.js` = the Android app or a home-screen app (`navigator.standalone` / display-mode standalone): starts
+on Me and signs in by pasting the email link. `prompts()` adds to Home and My details: *Add a photo of yourself* (phone apps,
+adults without a photo; Not now → `Store.pref('selfieLater')`, 30 days) and, in an iPhone browser, how to add Church Hub to
+the home screen (60 days).
 
 ## Approved leave in Elvanto (Unavailable Volunteers)
 As in Leave Manager: `Store.saveLeave` tells `onLeaveChange` listeners which requests changed; the Leave module asks

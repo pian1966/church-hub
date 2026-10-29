@@ -30,6 +30,9 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   - 28 Oct 2026: adding a photo asks to choose the face (drag, zoom slider / + − / mouse wheel / arrow keys, circle preview); searches find every word typed, in any order (“andr pi” → Andrew Pike) – People, Households and Advanced search “contains”
   - 28 Oct 2026: date of death and funeral can be corrected in Edit details (Administrators and Pastors)
   - 29 Oct 2026: Android app – downloads saved in the phone’s Downloads, camera offered for Add photo (new app version); ARCHITECTURE.md, README, ANDROID.md brought up to date
+  - 29 Oct 2026: Elvanto robot reads Elvanto’s Unavailable Volunteers every night (names and dates only, when switched on) → Import → Unavailable dates from Elvanto (Administrators check, choose, add as away dates). Departments and positions keep coming from the Elvanto import
+  - 29 Oct 2026: Advanced search – church office notes, volunteer, volunteers at service, away in the next 8 weeks, late spouse, postcode, province, Elvanto ID; “Type to find a field…”; text fields start on “contains”
+  - 29 Oct 2026: iPhone home-screen app (home-screen tags, Safari hint, sign-in by pasting the email link, starts on Me); app users without a photo are asked to add one (Not now = a month)
   - 28 Oct 2026: duplicates – People → Find duplicates (Administrators and Pastors) with "Same person: fix…" to merge two records, a warning while adding or editing someone, and very likely duplicates can't be saved unless confirmed as a different person
   - 28 Oct 2026: couples (spouses and partners) worked out from each household; Households → "Couples to confirm" (Administrators and Pastors) confirms them, copies a spouse's wedding anniversary (partners get none) and records a missing marital status; "Not a couple" to dismiss
   - 28 Oct 2026: Administrators get a Leave button on a staff member's page (or "Set up leave" if they're marked Staff but not yet in Leave)

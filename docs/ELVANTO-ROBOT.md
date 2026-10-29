@@ -1,7 +1,14 @@
-# Approved leave → Elvanto's "Unavailable Volunteers" – setting up the robot
+# The Elvanto robot – setting it up
 
-When leave is approved in Church Hub, the person should be marked unavailable in Elvanto, so nobody rosters them in Elvanto
-while they're away. Leave Manager did this with a robot; Church Hub does it the same way.
+The robot does two jobs:
+1. **Church Hub → Elvanto:** when leave is approved in Church Hub, the person is marked unavailable in Elvanto, so nobody rosters
+   them in Elvanto while they're away (as Leave Manager did). Switched on at switch-over (step 6).
+2. **Elvanto → Church Hub (until you switch over):** every night it reads who is unavailable in Elvanto – names and dates only,
+   never the reason – and an Administrator checks and adds them to Church Hub as away dates (step 7).
+
+Volunteers' **departments and positions** come across with the Elvanto import (Import → From Elvanto, the "Department
+Positions" column), not the robot: the export already holds them exactly, and reading them page by page in Elvanto would be
+slow and break easily. Run the import again whenever you want them refreshed – it adds, never removes.
 
 **How it works.** Elvanto doesn't let other programs set "Unavailable Volunteers", so a robot logs into Elvanto with a browser
 every 15 minutes (on GitHub) and adds, changes or removes the unavailability, like a person would. Each entry it makes has the
@@ -56,6 +63,19 @@ Do these together, so entries aren't made twice:
 
 Leave that Leave Manager's robot already put in Elvanto stays there. If it's later cancelled or changed in Church Hub, the
 robot finds Leave Manager's entry by its note ("Leave Manager ‹request ID›") and updates it.
+
+## Step 7 – Bring Elvanto's unavailable dates into Church Hub (until switch-over)
+1. In Church Hub, **Leave → Elvanto**: tick **Read Elvanto's unavailable dates every night** and **Save**.
+2. To try it now: GitHub → **Actions** → **Elvanto robot** → **Run workflow** → mode **read** → **Run workflow**. A green tick
+   after a few minutes means it read the list. (From then on it runs by itself at about 3am.)
+3. In Church Hub, **Import → Unavailable dates from Elvanto**: each entry is matched to a person by name.
+   - **Ready to add** – untick any you don't want.
+   - **Choose who it is** – the name matches several people, or no one exactly: choose the person, or untick it.
+   - **Already in Church Hub** – away dates you added before, and leave (already in Church Hub).
+   Then **Add … away dates**. Rosters in Church Hub now know those people are away. Nothing changes in Elvanto.
+4. Do this every week or so until you switch over; already-added dates are never doubled.
+5. At switch-over (step 6), untick **Read Elvanto's unavailable dates every night** – from then on people enter their own
+   away dates in Church Hub (Me → Days away), and the robot copies leave the other way.
 
 ## Every day
 - Approve, change and cancel leave in **Church Hub only**. Within about 15 minutes **Leave → Elvanto** shows **Done**.

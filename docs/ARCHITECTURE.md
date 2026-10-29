@@ -36,7 +36,7 @@ js/sample.js              made-up church for demo mode and tests
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers (search matching, photos and
                           "Choose the face", the turning cross for long jobs, downloads)
-js/mod-*.js               one file per module: me, people, rosters, leave, care, privacy, import, settings
+js/mod-*.js               one file per module: me, people, rosters, leave, care, privacy, import, settings, words (Translations)
 android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
 manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
 firestore.rules           database security rules: who may read/write what (POPIA)
@@ -101,6 +101,8 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `dsr` | POPIA data-subject requests (access, correction, deletion, objection) |
 | `breaches` | security-compromise register (POPIA s22) |
 | `audit` | who viewed or changed sensitive information, and when |
+| `wordIdeas` | suggested better wording: { lang, en (the English text), text, note, personId, name, status waiting\|used\|declined, reply, reviewedBy, reviewedAt } |
+| `words` | approved wording, one document per language (`words/zu` = { words: { English: wording }, updatedAt, by }), used before the built-in translations |
 
 ### Roles (enforced in the screens and by the database security rules, `firestore.rules`)
 | Role | Can |
@@ -315,7 +317,17 @@ Later: direct import through the Elvanto API (server side, with the church's API
   redrawn when it arrives (`I18n.onLoad`). The picker groups them by continent. A line missing in a file shows in English;
   `tests/i18n.test.js` checks every file keeps the `{parts}`. All were drafted by Claude (AI): the Me page says so and asks
   people to tell the church office if something reads oddly. When adding a member-facing text, add it to `js/i18n.js`
-  (required) and, when you can, to the `js/lang` files.
+  and to every `js/lang` file – `tests/i18n.test.js` fails if any of the 22 languages is missing a line.
+- **Better wording from the church** (`js/mod-words.js`, the Translations card): anyone signed in who uses another language
+  sees "Help improve the … wording on this page" at the foot of every page. It opens the texts that page showed
+  (`I18n.page()` / `I18n.seen()`, collected by the router) or all of them, with a search; a suggestion must keep the
+  English text's {parts} and bold marks (`I18n.check`). Suggestions go to `wordIdeas`. Each language can have **checkers**:
+  an Administrator chooses them (Translations → Who checks), which puts `reviewLangs` on the person and `langs` on their
+  access-list entry (`roles/{email}`), so the rules let them read that language's suggestions and write `words/{lang}`.
+  Administrators can check every language. "Use this" (or "Change it first") writes the wording into `words/{lang}`;
+  `I18n.override()` uses it before the built-in line, so it shows for everyone at once. "Go back to the original" removes it.
+  "Download the changed wording" gives a JSON file to fold into `js/i18n.js` / `js/lang` later. Approved wording only shows
+  after signing in (the sign-in screen uses the built-in files).
 
 ## Care groups (Care groups page; `js/care.js`, `js/mod-care.js`)
 - `careGroups/{id}` = { name, leaderIds (carers), memberIds, names: { personId: name } }. A person may be in several groups (a carer in one, a member in another), with a card in each. Locally a card is `careShare` id `group:person`.

@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
@@ -135,7 +135,7 @@ var Store = (function () {
     var EMAIL_KEY = 'church_hub_signin_email';
     // Fields that live in people/{id}; everything else (except medical) goes to details/{id}.
     var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
-      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo'];
+      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs'];
     var DIRECTORY = 'Church directory';
     var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false;
     var savedLeave = { requests: {}, adjustments: {}, config: '' }, remoteTimer = null;
@@ -254,7 +254,7 @@ var Store = (function () {
       doc('roles/' + email).get().then(function (snap) {
         if (!snap.exists) return onState({ stage: 'noAccess', email: email });
         var r = snap.data();
-        session = { email: email, role: r.role, personId: r.personId || '' };
+        session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [] };
         if (!session.personId) {
           if (r.role !== 'admin') return onState({ stage: 'noAccess', email: email, reason: 'noPerson' });
           // An Administrator added by hand: set up the church only if nobody has yet, otherwise just their own record.
@@ -290,6 +290,13 @@ var Store = (function () {
       add('careGroups', previewCare ? doc('careGroups/' + previewCare) : is('admin', 'pastor') ? coll('careGroups') : coll('careGroups').where('memberIds', 'array-contains', me));   // "View as" a carer: that group
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
       add('serveOffers', is('admin', 'rosters') ? coll('serveOffers') : own('serveOffers'));
+      // Translations: the approved wording for everyone; suggestions – Administrators all, checkers their languages, everyone their own
+      add('words', coll('words'));
+      if (r === 'admin') add('wordIdeas', coll('wordIdeas'));
+      else {
+        add('wordIdeasMe', own('wordIdeas'));
+        (previewRole ? [] : session.langs || []).forEach(function (l) { COLL['wordIdeas_' + l] = 'wordIdeas'; add('wordIdeas_' + l, coll('wordIdeas').where('lang', '==', l)); });
+      }
       if (is('admin', 'pastor')) { add('details', coll('details')); add('consents', coll('consents')); }
       else {
         add('detailsMe', doc('details/' + me));
@@ -387,6 +394,9 @@ var Store = (function () {
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
       ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups'].forEach(function (c) { db[c] = arr(c); });
+      db.words = arr('words');
+      var ideas = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('wordIdeas') === 0; }));
+      db.wordIdeas = Object.keys(ideas).map(function (id) { var o = copy(ideas[id]); o.id = id; return o; });
       db.careShare = [];
       Object.keys(raw).forEach(function (k) { if (k.indexOf('share:') === 0) { var g = k.slice(6); Object.keys(raw[k]).forEach(function (pid) { var o = copy(raw[k][pid]); o.id = g + ':' + pid; o.personId = pid; o.groupId = g; db.careShare.push(o); }); } });
       var cons = merged('consents', 'consentsMe', 'consentsMed', 'consentsPhotos');
@@ -454,7 +464,11 @@ var Store = (function () {
       var wasR = prev && prev.appRole && prev.appRole !== 'none' && prev.active !== false ? prev.appRole : '';
       // Remove sign-in when the email changes or access ends – also if someone else (e.g. a Pastor recording a death) changed the record first.
       if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) del('roles/' + was);
-      if (email && r && (email !== was || r !== wasR || !prev)) write('roles/' + email, { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() });
+      var langs = (p.reviewLangs || []).slice().sort(), wasLangs = ((prev && prev.reviewLangs) || []).slice().sort();
+      if (email && r && (email !== was || r !== wasR || !prev || langs.join() !== wasLangs.join())) {
+        var acc = { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }; if (langs.length) acc.langs = langs;   // languages they check (translations)
+        write('roles/' + email, acc);
+      }
     }
     function putNotes(pid, c) {   // pastoral notes or church office notes: one document per person holding all their notes
       c = c || 'notes';
@@ -554,6 +568,12 @@ var Store = (function () {
   return { load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */
+    reviewLangs: function () {
+      if (previewRole) return [];
+      if (LIVE) return ((Live.session() || {}).langs || []).slice();
+      var me = user && get('people', user.id); return ((me && me.reviewLangs) || []).slice();
+    },
     /** Someone left a care group: their card there goes (careGroups/{gid}/share/{pid}). */
     careUnshare: function (gid, pid) {
       if (previewing()) return;

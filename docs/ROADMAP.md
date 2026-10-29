@@ -126,6 +126,13 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
 - ✅ 29 Oct 2026: **More than one care group** per person (tick each in Edit details; a carer in one, a member in another); each group gets its own card; members see all their groups on the Me page. **Duplicate a care group** with all its members (button next to Rename and Delete). No rules change.
 - ✅ 29 Oct 2026: **Staff screens translated (drafts, all 22 languages)**: Rosters (coordinator side too), Care groups, People (lists, profiles, households, guardians, medical, duplicates, late spouses, advanced search, edit form), and the roster’s own messages. Fluent speakers should check the drafts.
 - ✅ 29 Oct 2026: **The rest translated (drafts, all 22 languages)**: Leave admin (approvals, team balances, staff pages, Elvanto robot, leave settings), Settings, Privacy, Import (Elvanto and Leave Manager), the setup screen and “View as”. The whole app is now translated. The language test is now strict for all 22 languages: a new text with no translation fails the checks. Left in English on purpose: the audit log, robot notes and CSV column headings (records, not screens). Fluent speakers should check the drafts, especially siSwati, isiNdebele, Xitsonga and Tshivenda.
+- ✅ 29 Oct 2026: **Better translations from the church**: anyone using another language can suggest better wording for any text
+  ("Help improve the … wording on this page" at the foot of every page, or the Translations card). An Administrator chooses who
+  checks each language (Translations → Who checks); checkers (and Administrators) use, change or decline suggestions, and approved
+  wording shows for everyone at once. Rules changed: the church must re-publish `firestore.rules`.
+- ⬜ Next: a sweep for screen text still in English that the language test can't see (Advanced search fields and comparisons,
+  some People dialogs such as duplicates and bulk changes, the Privacy page headings and intros, "Days left in …", weekday hints in
+  Leave settings), then translate it. The privacy laws' own names and guidance (`js/privacy-law.js`) are also still English.
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

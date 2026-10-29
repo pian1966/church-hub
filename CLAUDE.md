@@ -10,8 +10,9 @@
   (`node tests/people-search.test.js`) – only offer fields a role may see, never medical/pastoral notes or collection restrictions.
   The church's departments and positions (with the services each runs at): `js/serving.js`. Duplicates: `js/duplicates.js` (`node tests/duplicates.test.js`).
 - Member-facing text goes through `T('…')` with a line in `js/i18n.js` for all four languages (`node tests/i18n.test.js`).
-  18 more languages live in `js/lang/<code>.js` (loaded when chosen; a missing line shows in English) – add new lines there too when you can.
+  18 more languages live in `js/lang/<code>.js` (loaded when chosen) – every new line goes there too: the test fails if any language misses one.
   Countries and their regions: `js/countries.js`; the privacy law by country: `js/privacy-law.js`; the church's own words: `js/wording.js`;
+  translation suggestions and checkers: `js/mod-words.js` (approved wording in `words/{lang}`, used before the built-in lines);
   care groups: `js/care.js` (`node tests/countries.test.js`, `tests/privacy-law.test.js`, `tests/wording.test.js`, `tests/care.test.js`, `tests/serving.test.js`).
   Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"` (shaded, with a key); never write "(optional)".
 - Elvanto updates for approved leave: `js/elvanto-sync.js` (`node tests/elvanto-sync.test.js`) and the robot `robot/robot.js`

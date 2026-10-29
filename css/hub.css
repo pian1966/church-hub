@@ -376,3 +376,8 @@ details.sub[open] > summary { margin-bottom: 8px; }
 .cg-head > .grow .small { display: block; margin-top: 2px; }
 .cg-tools { display: flex; gap: 0; flex: 0 0 auto; margin: -4px -6px 0 0; }
 .cg-tools .icon-btn { width: 32px; height: 32px; border-radius: 8px; }
+
+/* Translations: "Help improve the … wording on this page", at the foot of each page in another language */
+.improve { margin: 28px 0 8px; font-size: 14px; }
+.improve a { display: inline-flex; align-items: center; gap: 6px; color: var(--muted, #6b625a); }
+.panel.inset { background: var(--bg, #faf8f5); box-shadow: none; border: 1px solid var(--line, #e7e1d9); }

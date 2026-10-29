@@ -113,6 +113,13 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   Administrators and Pastors can read it (database rules, tested). Carers may add and remove members; every change is in
   the audit log. Leaving a group removes the person's card from it; after a death they are taken out.
 
+## Suggestions for better translations
+- When someone suggests better wording (Translations), Church Hub keeps the suggestion with their name and person ID, so the
+  checker can thank them or ask what they meant. Purpose: improving the app's wording; basis: the person sends it themselves.
+- Who sees it: the person, the checkers of that language, and Administrators (database rules, tested). It holds no other
+  personal information. The person can take back a suggestion that is still waiting; it is included in "export everything
+  held about a person" and deleted when someone's information is deleted. Approved wording itself holds no names.
+
 ## Other countries
 Church Hub's privacy pages follow the church's country (Settings → Country): POPIA in South Africa, the GDPR in Europe
 (with each country's data protection authority), UK GDPR, and other countries' laws where listed (`js/privacy-law.js`).

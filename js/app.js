@@ -231,7 +231,7 @@ var Hub = (function () {
   function runUpgrades() { signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
   function enabled() {
     var on = (Store.settings().modules || {});
-    return modules.filter(function (m) { return on[m.id] !== false && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*')); });
+    return modules.filter(function (m) { return on[m.id] !== false && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*')) && (!m.show || m.show()); });
   }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
 
@@ -243,8 +243,12 @@ var Hub = (function () {
   function render() {
     if (switching) return;   // "View as": the right information is still loading
     if (!user) return renderSignIn();
+    modules.forEach(function (m) { if (m.beforeRender) { try { m.beforeRender(); } catch (e) { console.error(m.id, e); } } });   // e.g. approved translations
     var p = parts(), mod = p[0] === 'home' ? null : moduleById(p[0]);
     if (mod && enabled().indexOf(mod) < 0) { go('home'); return; }
+    // Translations: remember which texts each page shows, so people can improve exactly those (Translations → "On the page you were on")
+    if (p[0] === 'words') { if (!inWords && mod && mod.leaving) mod.leaving(I18n.seen()); inWords = true; I18n.page(null); }
+    else { inWords = false; I18n.page(location.hash); }
     var body = mod ? mod.render(p.slice(1)) : renderHome();
     if (!mod || (mod.id === 'me' && !p[1])) body = prompts() + body;   // Home and My details
     var keyOf = function (d) { var sm = d.querySelector('summary'); return d.id || (sm ? sm.textContent.trim() : ''); };
@@ -260,6 +264,13 @@ var Hub = (function () {
     var h = root.querySelector('main h1'); if (h) document.title = h.textContent + ' · Church Hub';
   }
 
+  var inWords = false;
+  /** At the foot of each page in another language: a way to suggest better wording for what is on it. */
+  function improveLink(mod) {
+    var w = moduleById('words');
+    if (I18n.get() === 'en' || (mod && mod.id === 'words') || !w || enabled().indexOf(w) < 0) return '';
+    return '<p class="improve"><a href="#/words/page">' + icon('M4 20h4L19 9l-4-4L4 16v4z', 16) + T('Help improve the {lang} wording on this page', { lang: esc(I18n.name(I18n.get())) }) + '</a></p>';
+  }
   function navItems(active) {
     var items = [{ id: 'home', name: T('Home'), icon: ICON.home }].concat(enabled().map(function (m) { return { id: m.id, name: T(m.name), icon: m.icon }; }));
     return items.map(function (it) {
@@ -285,7 +296,7 @@ var Hub = (function () {
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
       (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>' + T('Viewing as {role} – this is what they see. Nothing you do here is saved.', { role: '<b>' + esc(viewingAs()) + '</b>' }) + '</span>' +
         '<button class="btn small" data-act="hub:viewas" data-r="admin">' + T('Back to Administrator') + '</button></div>' : '') +
-      '<main id="main" tabindex="-1">' + body + '</main></div>' +
+      '<main id="main" tabindex="-1">' + body + improveLink(mod) + '</main></div>' +
       '<nav class="tabbar" aria-label="' + T('Quick menu') + '">' + tabs.map(function (id) {
         var m = id === 'home' ? { name: 'Home', icon: ICON.home } : moduleById(id);
         return '<a href="#/' + id + '" class="' + (id === active ? 'on' : '') + '">' + icon(m.icon, 22) + '<span>' + esc(T(m.name)) + '</span></a>';

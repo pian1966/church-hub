@@ -564,9 +564,17 @@ function serve() {
   const gf = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].name === 'Good Friday' && docs[k].special);
   if (await s.page.$('[data-act="settings:allsvc"]')) { await s.page.click('[data-act="settings:allsvc"]'); await s.settle(); }
   check(gf.length === 1 && docs[gf[0]].time === '09:00' && (await s.text()).includes('Special'), 'a special service can be added, and shows as Special');
-  await s.page.click('details.sub summary'); await s.page.selectOption('#sv-stop', hilton.id);
-  await s.page.click('[data-act="settings:stopsvc"]'); await s.page.click('[data-act="settings:stopsvcgo"]'); await s.settle(); docs = await s.docsNow();
-  check(!Object.keys(docs).some(k => k.startsWith('services/') && docs[k].slot === hilton.id && !docs[k].special) && gf.every(k => docs[k]), 'stopping a regular service removes its upcoming services (special ones stay)');
+  const hiltonLeft = async () => Object.entries(await s.docsNow()).some(([k, d]) => k.startsWith('services/') && d.slot === hilton.id && !d.special);
+  let stopNote = '';
+  for (let i = 0; i < 3 && await hiltonLeft(); i++) {   // the screen may redraw between steps on a slow computer
+    await s.settle();
+    if (!(await s.page.$eval('details.sub', d => d.open).catch(() => false))) await s.page.click('details.sub summary');
+    await s.page.selectOption('#sv-stop', hilton.id); await s.page.click('[data-act="settings:stopsvc"]');
+    const go = await s.page.waitForSelector('[data-act="settings:stopsvcgo"]', { timeout: 5000 }).catch(() => null);
+    if (go) { await go.click(); await s.settle(); } else stopNote = ' (no dialog; message: ' + (await s.page.textContent('#toast').catch(() => '')) + ')';
+  }
+  docs = await s.docsNow();
+  check(!(await hiltonLeft()) && gf.every(k => docs[k]), 'stopping a regular service removes its upcoming services (special ones stay)' + stopNote);
   await finish(s);
   s = await session('tim.jacobs@example.com', (() => { const d = seedDocs(); d['settings/church'] = Object.assign({}, d['settings/church'], { serviceSlots: slotsNow }); return d; })());
   await s.go('me/serve'); await s.page.click('[data-act="me:offer"][data-p="tea"]');

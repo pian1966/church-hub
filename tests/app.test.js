@@ -652,6 +652,9 @@ function serve() {
   check(docs['careGroups/' + cg2].memberIds.includes('p15') && docs['careGroups/' + cgId].memberIds.includes('p15') && docs['careGroups/' + cg2 + '/share/p15'] && docs['careGroups/' + cgId + '/share/p15'], 'a person can be in two care groups, with a card in each');
   await s.page.click('[data-act="care:out"][data-g="' + cg2 + '"][data-id="p15"]'); await s.settle(); docs = await s.docsNow();
   check(!docs['careGroups/' + cg2].memberIds.includes('p15') && !docs['careGroups/' + cg2 + '/share/p15'] && docs['careGroups/' + cgId].memberIds.includes('p15') && docs['careGroups/' + cgId + '/share/p15'], 'taking them out of one group leaves them in the other');
+  await s.page.click('[data-act="care:copy"][data-id="' + cgId + '"]'); await s.page.fill('#cg-copy', 'Hilton Thursday'); await s.page.click('[data-act="care:savecopy"]'); await s.settle(); await s.page.waitForTimeout(400); docs = await s.docsNow();
+  const cgDup = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Hilton Thursday');
+  check(cgDup && docs[cgDup].memberIds.join() === 'p14,p15' && docs[cgDup].leaderIds.join() === 'p14' && docs[cgDup + '/share/p15'] && docs['careGroups/' + cgId].memberIds.join() === 'p14,p15', 'Duplicate a care group: a new group with the same members and carers (each with a card in it); the original stays');
   await s.go('people/p/p17'); await s.page.click('[data-act="people:edit"]'); await fillHome(s);
   await s.page.check('#pf-care'); await s.page.click('[data-act="people:save"]');
   check((await s.page.textContent('#pf-err')).includes('Tick which care group'), 'Edit details: ticking Care group member asks which group(s)');

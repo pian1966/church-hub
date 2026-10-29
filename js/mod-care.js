@@ -159,6 +159,7 @@
           var la = Care.isLeader(g, a.id) ? 0 : 1, lb = Care.isLeader(g, b.id) ? 0 : 1; return la - lb || H.name(a).localeCompare(H.name(b)); });
         return '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} person', '{n} people', ms.length) + '</span>' +
           '<button class="icon-btn ghost" data-act="care:rename" data-id="' + g.id + '" aria-label="Rename ' + esc(g.name) + '" title="Rename">' + H.icon('M4 20h4L20 8l-4-4L4 16zM14 6l4 4', 16) + '</button>' +
+          '<button class="icon-btn ghost" data-act="care:copy" data-id="' + g.id + '" aria-label="Duplicate ' + esc(g.name) + '" title="Duplicate the group, with all its members">' + H.icon('M9 9h11v11H9zM5 15H4V4h11v1', 16) + '</button>' +
           '<button class="icon-btn ghost" data-act="care:delgroup" data-id="' + g.id + '" aria-label="Delete ' + esc(g.name) + '" title="Delete the group">' + H.icon(H.ICON.trash, 16) + '</button></div>' +
           (ms.length ? '<div class="list" style="margin-top:8px">' + ms.map(function (p) {
             var isL = Care.isLeader(g, p.id);
@@ -190,6 +191,20 @@
       saverename: function (el) {
         var g = JSON.parse(JSON.stringify(S.get('careGroups', el.dataset.id))), n = document.getElementById('cg-name').value.trim(); if (!n) return;
         var was = g.name; g.name = n; S.put('careGroups', g, 'Renamed the care group ' + was + ' to ' + n); H.closeModal(); H.render();
+      },
+      copy: function (el) {
+        var g = S.get('careGroups', el.dataset.id); if (!g) return;
+        H.modal(H.dialogHead('Duplicate ' + g.name, TN('{n} person', '{n} people', (g.memberIds || []).length) + ' will be in the new group too') + '<div class="dlg-body"><label class="field req">Name of the new group<input id="cg-copy" value="' + esc(g.name + ' (copy)') + '"></label><label class="check"><input type="checkbox" id="cg-copy-l" checked><span>Keep the same carers</span></label><p id="cg-err" class="note bad" hidden></p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="care:savecopy" data-id="' + g.id + '">Duplicate</button></div>', 'Duplicate');
+        var i = document.getElementById('cg-copy'); if (i) { i.focus(); i.select(); }
+      },
+      savecopy: function (el) {
+        var g = S.get('careGroups', el.dataset.id), n = document.getElementById('cg-copy').value.trim(), e = document.getElementById('cg-err'); if (!g) return;
+        if (!n || S.list('careGroups').some(function (x) { return String(x.name).toLowerCase() === n.toLowerCase(); })) { e.textContent = n ? 'There is already a group with that name.' : 'Give the new group a name.'; e.hidden = false; return; }
+        var x = { name: n, memberIds: (g.memberIds || []).slice(), leaderIds: document.getElementById('cg-copy-l').checked ? (g.leaderIds || []).slice() : [], names: JSON.parse(JSON.stringify(g.names || {})) };
+        S.put('careGroups', x, 'Duplicated the care group ' + g.name + ' as ' + n + ' (' + x.memberIds.length + ' people)');
+        H.closeModal(); H.render(); H.toast('Care group duplicated');
+        Promise.all(x.memberIds.map(sync));   // each member gets a card in the new group
       },
       delgroup: function (el) {
         var g = S.get('careGroups', el.dataset.id); if (!g || !H.confirmBtn(el, '✕?')) return;

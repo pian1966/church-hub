@@ -431,6 +431,8 @@ I18n.add('pl', {
     "No one else in the church directory to add.": "W katalogu kościoła nie ma już nikogo do dodania.",
     "Choose someone to add.": "Wybierz osobę do dodania.",
     "Added to the group": "Dodano do grupy",
-    "Taken out of the group": "Usunięto z grupy"
+    "Taken out of the group": "Usunięto z grupy",
+    "Sign out of Church Hub?": "Wylogować się z Church Hub?",
+    "You will need to sign in again next time.": "Następnym razem trzeba będzie zalogować się ponownie."
   }
 });

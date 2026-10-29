@@ -431,6 +431,8 @@ I18n.add('ss', {
     "No one else in the church directory to add.": "Kute lomunye umuntfu eluhlwini lwemagama lwelibandla longafakwa.",
     "Choose someone to add.": "Khetsa umuntfu lotawufakwa.",
     "Added to the group": "Ufakiwe elicenjini",
-    "Taken out of the group": "Ukhishwe elicenjini"
+    "Taken out of the group": "Ukhishwe elicenjini",
+    "Sign out of Church Hub?": "Uyaphuma ku-Church Hub?",
+    "You will need to sign in again next time.": "Kutawudzingeka ungene futsi ngalokulandzelako."
   }
 });

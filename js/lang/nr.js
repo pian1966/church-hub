@@ -431,6 +431,8 @@ I18n.add('nr', {
     "No one else in the church directory to add.": "Akekho omunye umuntu eRhelweni lamabizo lekereke ongafakwa.",
     "Choose someone to add.": "Khetha umuntu ozokufakwa.",
     "Added to the group": "Ufakiwe esihlotjheni",
-    "Taken out of the group": "Ukhitjhiwe esihlotjheni"
+    "Taken out of the group": "Ukhitjhiwe esihlotjheni",
+    "Sign out of Church Hub?": "Uyaphuma ku-Church Hub?",
+    "You will need to sign in again next time.": "Kuzokufuneka ungene godu ngesikhathi esizako."
   }
 });

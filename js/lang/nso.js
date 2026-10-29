@@ -431,6 +431,8 @@ I18n.add('nso', {
     "No one else in the church directory to add.": "Ga go motho yo mongwe pukung ya maina ya kereke yo a ka tsenywago.",
     "Choose someone to add.": "Kgetha motho yo a tlago go tsenywa.",
     "Added to the group": "O tsentšwe sehlopheng",
-    "Taken out of the group": "O ntšhitšwe sehlopheng"
+    "Taken out of the group": "O ntšhitšwe sehlopheng",
+    "Sign out of Church Hub?": "Tšwa go Church Hub?",
+    "You will need to sign in again next time.": "O tla swanela go tsena gape nakong ye e tlago."
   }
 });

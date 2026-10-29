@@ -121,6 +121,7 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   speakers; church wording in the other languages too.
 - ✅ 29 Oct 2026: **View as a carer** (choose the care group; see it as its carer does); Afrikaans, isiZulu and isiXhosa listed with Africa's languages; a finer turning cross.
 - ✅ 29 Oct 2026: View as calls the Member level **Church Partner**. **Late spouses**: a widow and a man of her surname who died married are suggested even in different households; someone still recorded as Married whose spouse died is suggested too (Yes changes them to Widowed).
+- ✅ 29 Oct 2026: **Leaving Church Hub asks first**: Back past the first screen (browser and iPhone home-screen app) asks “Leave Church Hub?”; Sign out asks “Sign out of Church Hub?” (closing the tab still gets the browser’s own warning; the Android back button already asked).
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

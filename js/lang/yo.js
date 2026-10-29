@@ -431,6 +431,8 @@ I18n.add('yo', {
     "No one else in the church directory to add.": "Kò sí ẹlòmíràn nínú ìwé orúkọ ìjọ láti fi kún un.",
     "Choose someone to add.": "Yan ẹni tí a ó fi kún un.",
     "Added to the group": "A ti fi kún ẹgbẹ́",
-    "Taken out of the group": "A ti yọ kúrò nínú ẹgbẹ́"
+    "Taken out of the group": "A ti yọ kúrò nínú ẹgbẹ́",
+    "Sign out of Church Hub?": "Ṣé o fẹ́ jáde kúrò nínú Church Hub?",
+    "You will need to sign in again next time.": "Ìwọ yóò ní láti wọlé lẹ́ẹ̀kan sí i nígbà míì."
   }
 });

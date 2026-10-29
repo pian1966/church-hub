@@ -431,6 +431,8 @@ I18n.add('nl', {
     "No one else in the church directory to add.": "Er is niemand anders in de gemeentegids om toe te voegen.",
     "Choose someone to add.": "Kies iemand om toe te voegen.",
     "Added to the group": "Aan de kring toegevoegd",
-    "Taken out of the group": "Uit de kring gehaald"
+    "Taken out of the group": "Uit de kring gehaald",
+    "Sign out of Church Hub?": "Afmelden bij Church Hub?",
+    "You will need to sign in again next time.": "U moet zich de volgende keer opnieuw aanmelden."
   }
 });

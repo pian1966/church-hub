@@ -222,7 +222,7 @@ await t('away dates: members add their own only', async () => {
 await t('offers to serve: members ask for themselves; only roster coordinators and Administrators answer', async () => {
   const offer = { personId: 'p14', positionId: 'tea', kind: 'join', frequency: 'monthly', note: 'After the service', status: 'waiting', createdAt: 'x', updatedAt: 'x' };
   await can(db.member.doc('serveOffers/o14').set(offer));
-  await can(db.member.doc('serveOffers/o20').set(Object.assign({}, offer, { times: ['08:00', '17:00'] })));   // at which services
+  await can(db.member.doc('serveOffers/o21').set(Object.assign({}, offer, { times: ['08:00', '17:00'] })));   // at which services
   await can(list(db.member.collection('serveOffers').where('personId', '==', 'p14')));
   await cannot(list(db.member.collection('serveOffers')));
   await cannot(read(db.member, 'serveOffers/o15'));

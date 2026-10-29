@@ -54,8 +54,8 @@
   /* ---------- a member's own care group (on their Me page) ---------- */
   function mePanel() {
     var u = me(); if (!u) return '';
-    var g = Care.groupOf(S.list('careGroups'), u.id); if (!g) return '';
-    var lead = Care.isLeader(g, u.id), cards = {};
+    var pc = S.previewCare(), g = pc ? S.get('careGroups', pc) : Care.groupOf(S.list('careGroups'), u.id); if (!g) return '';
+    var lead = !!pc || Care.isLeader(g, u.id), cards = {};   // "View as" a carer: an Administrator sees the group as its carer does
     S.list('careShare').forEach(function (c) { if (c.groupId === g.id) cards[c.id] = c; });
     var ids = (g.memberIds || []).slice().sort(function (a, b) {
       var la = Care.isLeader(g, a) ? 0 : 1, lb = Care.isLeader(g, b) ? 0 : 1; if (la !== lb) return la - lb;

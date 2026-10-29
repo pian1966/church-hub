@@ -597,10 +597,13 @@ function serve() {
   await finish(s);
 
   console.log('View as another role (Administrator):');
-  s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
+  const viewSeed = seedDocs();
+  viewSeed['careGroups/cgV'] = { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
+  viewSeed['careGroups/cgV/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555' };
+  s = await session('linda.pillay@example.com', viewSeed); await s.go('home');
   check(await s.page.isVisible('[data-act="hub:viewaspick"]'), 'an Administrator has a “View as” switch');
   await s.page.click('[data-act="hub:viewaspick"]');
-  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,pastor,rosters,kids,member', 'they can view as a Pastor, Roster coordinator, Children’s ministry or Member');
+  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,pastor,rosters,kids,carer,member', 'they can view as a Pastor, Roster coordinator, Children’s ministry, a carer or a Member');
   await s.page.click('[data-act="hub:viewas"][data-r="member"]'); await s.page.waitForSelector('.viewas'); await s.settle();
   t = await s.page.textContent('body');
   check(t.includes('Viewing as') && t.includes('Member') && !(await s.page.$('nav a[href="#/settings"]')) && !(await s.page.$('nav a[href="#/import"]')), 'as a Member: a banner says so, and Settings and Import are gone');
@@ -614,6 +617,11 @@ function serve() {
   await s.page.click('[data-act="hub:viewaspick"]'); await s.page.click('[data-act="hub:viewas"][data-r="pastor"]'); await s.page.waitForSelector('.viewas'); await s.settle();
   check(await s.page.evaluate(() => Hub.can('people.view') && !Hub.can('*') && !Store.list('notes').length), 'as a Pastor: they see people, but pastoral notes stay hidden from the Administrator');
   await s.page.click('[data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' }); await s.settle();
+  await s.page.click('[data-act="hub:viewaspick"]'); await s.page.click('[data-act="hub:viewas"][data-r="carer"]');
+  await s.page.click('[data-act="hub:viewas"][data-r="carer"][data-g="cgV"]'); await s.page.waitForSelector('.viewas'); await s.settle(); await s.page.waitForTimeout(400);
+  t = await s.page.textContent('#my-care').catch(() => '');
+  check((await s.page.textContent('.viewas')).includes('Carer · Hilton') && t.includes('Clare') && t.includes('082 000 1555') && !!(await s.page.$('[data-act="care:mineadd"]')), 'as a carer: their care group on the Me page, with Add someone');
+  await s.page.click('.viewas [data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' }); await s.settle();
   docs = await s.docsNow();
   const au = Object.values(docs).filter(d => d.action && /viewing/i.test(d.action)).map(d => d.action);
   check(au.some(a => /Started viewing Church Hub as member/.test(a)) && au.some(a => /Stopped viewing as pastor/.test(a)), 'starting and stopping “View as” is in the audit log');

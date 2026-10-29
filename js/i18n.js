@@ -15,6 +15,17 @@
 var I18n = (function () {
   'use strict';
   var LANGS = [['en', 'English'], ['af', 'Afrikaans'], ['zu', 'isiZulu'], ['xh', 'isiXhosa']];
+  /** More languages, each in its own file (js/lang/<code>.js), loaded only when someone chooses it:
+   *  [code, its own name, English name, continents]. Drafted by Claude (AI): fluent speakers should check them. */
+  var MORE = [
+    ['st', 'Sesotho', 'Sesotho', ['Africa']], ['tn', 'Setswana', 'Setswana', ['Africa']], ['nso', 'Sesotho sa Leboa', 'Sepedi', ['Africa']],
+    ['ts', 'Xitsonga', 'Xitsonga', ['Africa']], ['ss', 'siSwati', 'siSwati', ['Africa']], ['ve', 'Tshivenḓa', 'Tshivenda', ['Africa']], ['nr', 'isiNdebele', 'isiNdebele', ['Africa']],
+    ['sn', 'chiShona', 'Shona', ['Africa']], ['sw', 'Kiswahili', 'Swahili', ['Africa']], ['am', 'አማርኛ', 'Amharic', ['Africa']], ['yo', 'Yorùbá', 'Yoruba', ['Africa']],
+    ['fr', 'Français', 'French', ['Africa', 'Europe', 'Americas']], ['pt', 'Português', 'Portuguese', ['Africa', 'Europe', 'Americas']],
+    ['es', 'Español', 'Spanish', ['Europe', 'Americas']], ['de', 'Deutsch', 'German', ['Europe']], ['nl', 'Nederlands', 'Dutch', ['Europe']],
+    ['it', 'Italiano', 'Italian', ['Europe']], ['pl', 'Polski', 'Polish', ['Europe']]
+  ];
+  var PACK_VERSION = 1, loading = {}, onLoad = [];
   var DATES = {
     en: { mon: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
     af: { mon: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'], dow: ['So', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Sa'] },
@@ -174,7 +185,7 @@ var I18n = (function () {
     ['Lives in {n} households', 'Woon in {n} huishoudings', 'Uhlala emakhaya angu-{n}', 'Uhlala kumakhaya ama-{n}'],
     ['(main)', '(hoof)', '(elikhulu)', '(eliphambili)'],
     ['Consent', 'Toestemming', 'Imvume', 'Imvume'],
-    ['What you have agreed to, as POPIA requires.', 'Waartoe jy ingestem het, soos POPIA vereis.', 'Lokho okuvumile, njengoba i-POPIA idinga.', 'Oko uvumileyo kuko, njengoko i-POPIA ifuna.'],
+    ['What you have agreed to, as {law} requires.', 'Waartoe jy ingestem het, soos {law} vereis.', 'Lokho okuvumile, njengoba i-{law} idinga.', 'Oko uvumileyo kuko, njengoko i-{law} ifuna.'],
     ['Church records', 'Kerkrekords', 'Amarekhodi ebandla', 'Iirekhodi zecawe'],
     ['SMS', 'SMS', 'I-SMS', 'I-SMS'],
     ['Photos', 'Foto’s', 'Izithombe', 'Iifoto'],
@@ -429,13 +440,59 @@ var I18n = (function () {
     ['The roster coordinator answered {n} of your serving offers', 'Die roosterkoördineerder het {n} van jou diensaanbiedinge beantwoord', 'Umhleli wohlelo lokusebenza uphendule okungu-{n} kweminikelo yakho yokukhonza', 'Umququzeleli woludwe lomsebenzi uphendule ezi-{n} kwizithembiso zakho zokukhonza'],
     ['Please choose how often.', 'Kies asseblief hoe gereeld.', 'Sicela ukhethe ukuthi kangaki.', 'Nceda ukhethe ukuba kangaphi.'],
     ['That’s how you serve now. Choose another answer, or Cancel.', 'Dis hoe jy nou dien. Kies ’n ander antwoord, of Kanselleer.', 'Yileyo indlela okhonza ngayo manje. Khetha enye impendulo, noma Khansela.', 'Yile ndlela okhonza ngayo ngoku. Khetha enye impendulo, okanye Rhoxisa.'],
-    ['Sent – the roster coordinator will be in touch', 'Gestuur – die roosterkoördineerder sal met jou in verbinding tree', 'Kuthunyelwe – umhleli wohlelo lokusebenza uzoxhumana nawe', 'Kuthunyelwe – umququzeleli woludwe lomsebenzi uya kuqhagamshelana nawe']
+    ['Sent – the roster coordinator will be in touch', 'Gestuur – die roosterkoördineerder sal met jou in verbinding tree', 'Kuthunyelwe – umhleli wohlelo lokusebenza uzoxhumana nawe', 'Kuthunyelwe – umququzeleli woludwe lomsebenzi uya kuqhagamshelana nawe'],
+    ['State', 'Staat', 'Isifunda', 'Ilizwe'],
+    ['County', 'Graafskap', 'Isifunda', 'Ingingqi'],
+    ['Region', 'Streek', 'Isifunda', 'Ingingqi'],
+    ['District', 'Distrik', 'Isifunda', 'Isithili'],
+    ['Canton', 'Kanton', 'Isifunda (Canton)', 'Ingingqi (Canton)'],
+    ['Department', 'Departement', 'Isifunda (Department)', 'Ingingqi (Department)'],
+    ['Parish', 'Distrik (Parish)', 'Isifunda (Parish)', 'Ingingqi (Parish)'],
+    ['Voivodeship', 'Woiwodskap', 'Isifundazwe (Voivodeship)', 'Iphondo (Voivodeship)'],
+    ['Autonomous community', 'Outonome gemeenskap', 'Isifunda esizimele', 'Ingingqi ezimeleyo'],
+    ['Province or territory', 'Provinsie of gebied', 'Isifundazwe noma indawo', 'Iphondo okanye ummandla'],
+    ['State or territory', 'Staat of gebied', 'Isifunda noma indawo', 'Ilizwe okanye ummandla'],
+    ['Province, state or region', 'Provinsie, staat of streek', 'Isifundazwe, isifunda noma indawo', 'Iphondo, ilizwe okanye ingingqi'],
+    ['Postal code', 'Poskode', 'Ikhodi yeposi', 'Ikhowudi yeposi'],
+    ['ZIP code', 'Poskode (ZIP)', 'Ikhodi yeposi (ZIP)', 'Ikhowudi yeposi (ZIP)'],
+    ['Eircode', 'Eircode', 'Eircode', 'Eircode'],
+    ['CEP', 'CEP', 'CEP', 'CEP'],
+    ['Africa', 'Afrika', 'i-Afrika', 'iAfrika'],
+    ['Europe', 'Europa', 'i-Europe', 'iYurophu'],
+    ['Americas', 'Amerikas', 'amaMelika', 'iiMerika'],
+    ['Oceania', 'Oseanië', 'i-Oceania', 'iOshiyaniya'],
+    ['Another country…', '’n Ander land…', 'Elinye izwe…', 'Elinye ilizwe…'],
+    ['Type the country', 'Tik die land', 'Bhala izwe', 'Bhala ilizwe'],
+    ['This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.', 'Hierdie taal is deur ’n rekenaar vertaal en word nog nagegaan. As iets vreemd lees, sê asseblief vir die kerkkantoor.', 'Lolu limi luhunyushwe yikhompyutha futhi lusahlolwa. Uma kukhona okufundeka kabi, sicela utshele ihhovisi lesonto.', 'Olu lwimi luguqulelwe yikhompyutha kwaye lusajongwa. Ukuba kukho into efundeka ngendlela engaqhelekanga, nceda uxelele iofisi yecawa.'],
+    ['Care group', 'Selgroep', 'Iqembu lokunakekelana', 'Iqela lokukhathalelana'],
+    ['Photo, phone, email, address and birthday shared with my care group.', 'Foto, telefoon, e-pos, adres en verjaarsdag gedeel met my selgroep.', 'Isithombe, ifoni, i-imeyili, ikheli nosuku lokuzalwa kwabelwana neqembu lami lokunakekelana.', 'Ifoto, ifowuni, i-imeyile, idilesi nomhla wokuzalwa kwabelwana neqela lam lokukhathalelana.'],
+    ['My care group', 'My selgroep', 'Iqembu lami lokunakekelana', 'Iqela lam lokukhathalelana'],
+    ['People in your care group see your details only if you agreed (under Consent).', 'Mense in jou selgroep sien jou besonderhede net as jy ingestem het (onder Toestemming).', 'Abantu abaseqenjini lakho lokunakekelana babona imininingwane yakho kuphela uma uvumile (ngaphansi kwemvume).', 'Abantu abakwiqela lakho lokukhathalelana babona iinkcukacha zakho kuphela ukuba uvumile (phantsi kwemvume).'],
+    ['A new member', '’n Nuwe lid', 'Ilungu elisha', 'Ilungu elitsha'],
+    ['you', 'jy', 'wena', 'wena'],
+    ['Carer', 'Leier', 'Umnakekeli', 'Umkhathaleli'],
+    ['Details not shared', 'Besonderhede nie gedeel nie', 'Imininingwane ayabelwanga', 'Iinkcukacha azabelwanga'],
+    ['Details appear when they next sign in', 'Besonderhede verskyn wanneer hulle volgende keer aanmeld', 'Imininingwane izovela uma bengena ngokuzayo', 'Iinkcukacha ziza kuvela xa bengena kwakhona'],
+    ['Take {name} out of the group', 'Haal {name} uit die groep', 'Khipha u-{name} eqenjini', 'Khupha u-{name} eqeleni'],
+    ['Add someone to the group', 'Voeg iemand by die groep', 'Engeza othile eqenjini', 'Yongeza umntu eqeleni'],
+    ['People in the church directory.', 'Mense in die kerkgids.', 'Abantu abasohlwini lwesonto.', 'Abantu abakuludwe lwecawa.'],
+    ['No one else in the church directory to add.', 'Niemand anders in die kerkgids om by te voeg nie.', 'Akekho omunye ohlwini lwesonto ongamengeza.', 'Akukho mntu wumbi kuludwe lwecawa onokongezwa.'],
+    ['Choose someone to add.', 'Kies iemand om by te voeg.', 'Khetha ozomengeza.', 'Khetha umntu oza kumongeza.'],
+    ['Added to the group', 'By die groep gevoeg', 'Wengezwe eqenjini', 'Wongezwe eqeleni'],
+    ['Taken out of the group', 'Uit die groep gehaal', 'Ukhishwe eqenjini', 'Ukhutshiwe eqeleni']
   ];
 
   var D = { af: {}, zu: {}, xh: {} };
   ROWS.forEach(function (r) { D.af[r[0]] = r[1]; D.zu[r[0]] = r[2]; D.xh[r[0]] = r[3]; });
   var lang = 'en';
 
+  /** A language file (js/lang/<code>.js) adds itself: { mon, dow, words: { English: translation } }. */
+  function add(code, pack) {
+    D[code] = pack.words || {}; DATES[code] = { mon: pack.mon || DATES.en.mon, dow: pack.dow || DATES.en.dow };
+    if (loading[code] === 'wanted') { lang = code; if (typeof document !== 'undefined') document.documentElement.lang = code; onLoad.forEach(function (fn) { try { fn(code); } catch (e) { console.error(e); } }); }
+    loading[code] = 'done';
+  }
+  function more(code) { return MORE.filter(function (m) { return m[0] === code; })[0]; }
   /** The text in the chosen language (or English), with {name} parts filled in. */
   function t(s, vars) {
     var x = (D[lang] && D[lang][s]) || s;
@@ -445,16 +502,34 @@ var I18n = (function () {
   /** One or many: tn('{n} person', '{n} people', 3). */
   function tn(one, many, n, vars) { var v = Object.assign({ n: n }, vars || {}); return t(n === 1 ? one : many, v); }
   function set(code) {
+    if (!DATES[code] && more(code) && typeof document !== 'undefined') {   // fetch it; the screen is redrawn when it arrives (onLoad)
+      Object.keys(loading).forEach(function (k) { if (loading[k] === 'wanted') loading[k] = 'asked'; });
+      if (loading[code] !== 'asked') { var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + PACK_VERSION; sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
+      loading[code] = 'wanted';
+      return lang;
+    }
+    Object.keys(loading).forEach(function (k) { if (loading[k] === 'wanted') loading[k] = 'asked'; });
     lang = DATES[code] ? code : 'en';
     if (typeof document !== 'undefined') document.documentElement.lang = lang;
     return lang;
   }
   function picker(id) {
     return '<label class="lang-pick"><span class="sr">' + t('Language') + '</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"></path></svg>' +
-      '<select class="lang-sel"' + (id ? ' id="' + id + '"' : '') + ' aria-label="' + t('Language') + '">' + LANGS.map(function (l) { return '<option value="' + l[0] + '"' + (l[0] === lang ? ' selected' : '') + '>' + l[1] + '</option>'; }).join('') + '</select></label>';
+      '<select class="lang-sel"' + (id ? ' id="' + id + '"' : '') + ' aria-label="' + t('Language') + '">' + options() + '</select></label>';
+  }
+  /** English and the South African languages first, then more languages by continent. */
+  function options() {
+    var cur = loading && Object.keys(loading).filter(function (k) { return loading[k] === 'wanted'; })[0] || lang, done = false;
+    var opt = function (code, name, en) { var sel = code === cur && !done; if (sel) done = true; return '<option value="' + code + '"' + (sel ? ' selected' : '') + '>' + name + (en && en !== name ? ' (' + en + ')' : '') + '</option>'; };
+    return LANGS.map(function (l) { return opt(l[0], l[1]); }).join('') + ['Africa', 'Europe', 'Americas'].map(function (c) {
+      return '<optgroup label="' + t(c) + '">' + MORE.filter(function (m) { return m[3].indexOf(c) >= 0; }).map(function (m) { return opt(m[0], m[1], m[2]); }).join('') + '</optgroup>';
+    }).join('');
   }
 
-  return { LANGS: LANGS, ROWS: ROWS, t: t, tn: tn, set: set, get: function () { return lang; }, picker: picker,
+
+  return { LANGS: LANGS, MORE: MORE, ROWS: ROWS, t: t, tn: tn, set: set, add: add, get: function () { return lang; }, picker: picker,
+    /** A language chosen from MORE has arrived (to redraw the screen). */ onLoad: function (fn) { onLoad.push(fn); },
+    /** Drafted by Claude (AI) and not yet checked by fluent speakers (all of MORE). */ isDraft: function (code) { return !!more(code || lang); },
     mon: function () { return DATES[lang].mon; }, dow: function () { return DATES[lang].dow; } };
 })();
 if (typeof module !== 'undefined') module.exports = I18n;

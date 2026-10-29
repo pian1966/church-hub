@@ -2,14 +2,13 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
-  var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos', 'Children’s medical notes'];
+  var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Care group', 'Photos', 'Children’s medical notes'];
   var CATS = ['Church Partner', 'Attender', 'Visiting Minister', 'Staff', 'Former member', 'Deceased'];
   var HS = Households;
   function canChildren() { return H.can('*') || H.can('children'); }       // Administrators, Pastors, Children's ministry
   function links(childId) { return HS.linksOf(childId, S.list('guardians')); }
   function linkName(l) { var a = l.adultId ? S.get('people', l.adultId) : null; return a ? H.name(a) : (l.name || 'Someone'); }
   var GENDERS = ['Female', 'Male'];
-  var PROVINCES = ['KwaZulu-Natal', 'Gauteng', 'Western Cape', 'Eastern Cape', 'Free State', 'Mpumalanga', 'Limpopo', 'North West', 'Northern Cape'];
   // What someone would like to receive, kept in the consent register (POPIA: when and how they chose it). Adults only.
   var RECEIVE = [
     ['Weekly Church Notices (via Email)', 'The weekly notices by email.'],
@@ -36,15 +35,41 @@
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
   /** The category, plus "Staff" when they work for the church – a Church Partner can be on the staff too. */
-  /** A home address as lines to show ("1 Main Road", "Howick 3290", "KwaZulu-Natal"); South Africa isn't repeated. */
+  /** A home address as lines to show ("1 Main Road", "Howick 3290", "KwaZulu-Natal"); the church's own country isn't repeated. */
   function addressLines(p) {
     var a = p && p.address; if (!a) return [];
-    return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !/^south africa$/i.test(a.country) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
+    var c = a.country && Countries.find(a.country), home = Countries.church(S.settings());
+    return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !(c && c.code === home.code) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
+  }
+  /* ---------- addresses in any country: the country decides the list of provinces, states or counties (js/countries.js) ---------- */
+  function countrySelect(cur) {   // cur: the address's country as recorded ('' = the church's)
+    var home = Countries.church(S.settings()), c = cur ? Countries.find(cur) : home, other = cur && !c;
+    return '<select id="pf-country" autocomplete="country-name">' + Countries.grouped().map(function (g) {
+      return '<optgroup label="' + esc(T(g.continent)) + '">' + g.countries.map(function (x) { return '<option value="' + esc(x.name) + '"' + (c && c.code === x.code ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</optgroup>';
+    }).join('') + (other ? '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>' : '') + '<option value="__other">' + T('Another country…') + '</option></select>' +
+      '<input id="pf-country-o" placeholder="' + T('Type the country') + '" hidden>';
+  }
+  function regionControl(c, cur) {   // a list when the country has one (anything else already recorded is kept), otherwise a box to type in
+    if (!c || !c.regions) return '<input id="pf-province" value="' + esc(cur || '') + '" autocomplete="address-level1">';
+    return '<select id="pf-province" autocomplete="address-level1"><option value="">' + T('Choose…') + '</option>' + c.regions.map(function (x) { return '<option' + (x === cur ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join('') +
+      (cur && c.regions.indexOf(cur) < 0 ? '<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>' : '') + '</select>';
+  }
+  function wireCountry() {
+    var sel = document.getElementById('pf-country'); if (!sel) return;
+    sel.addEventListener('change', function () {
+      var o = document.getElementById('pf-country-o'), other = sel.value === '__other', c = other ? null : Countries.find(sel.value);
+      o.hidden = !other; if (other) o.focus();
+      document.getElementById('pf-region-l').textContent = T(c ? c.regionLabel : 'Province, state or region');
+      document.getElementById('pf-postcode-l').textContent = T(c ? c.postcodeLabel : 'Postal code');
+      var w = document.getElementById('pf-region-w'), was = document.getElementById('pf-province').value;
+      var v = c ? Countries.region(was, c.code) : '';   // keep it only if the new country has it (e.g. typed "KZN" earlier)
+      w.innerHTML = regionControl(c, c && c.regions && c.regions.indexOf(v) >= 0 ? v : '');
+    });
   }
   function catTags(p) {
-    var t = '<span class="tag grey">' + esc(p.category || '') + '</span>';
-    if (!p.staff) return t;
-    return p.category === 'Staff' ? '<span class="tag grey">' + esc(p.staff.category || 'Staff') + '</span>' : t + ' <span class="tag grey">' + esc('Staff' + (p.staff.category ? ' · ' + p.staff.category : '')) + '</span>';
+    var t = '<span class="tag grey">' + esc(p.category || '') + '</span>', care = window.CareUI ? CareUI.tag(p) : '';
+    if (!p.staff) return t + care;
+    return (p.category === 'Staff' ? '<span class="tag grey">' + esc(p.staff.category || 'Staff') + '</span>' : t + ' <span class="tag grey">' + esc('Staff' + (p.staff.category ? ' · ' + p.staff.category : '')) + '</span>') + care;
   }
   /** Someone who died while married to this person: recorded when the death was recorded, or (for older records) the one
    *  person who has died in their household when they are widowed. */
@@ -124,7 +149,7 @@
       bars('Church partners, attenders, visiting ministers and staff', cats, act.length) +
       bars('Marital status (adults)', mar, adults.length) +
       bars('Household size', sizes, fams.length, single ? single + ' adult' + (single === 1 ? ' isn’t' : 's aren’t') + ' in a household.' : '') +
-      '<section class="panel glance"><h3>Consent (POPIA)</h3><div class="sbars">' + cons.map(function (c) {
+      '<section class="panel glance"><h3>Consent (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ')</h3><div class="sbars">' + cons.map(function (c) {
         var w = pct(c[1], c[2]);
         return '<div class="sbar" title="' + esc(c[0] + ': ' + c[1] + ' of ' + c[2] + ' (' + w + '%)') + '"><span class="sbar-l">' + esc(c[0]) + '</span><span class="sbar-t" aria-hidden="true"><i style="width:' + w + '%"></i></span><span class="sbar-v">' + w + '% <small>' + c[1] + '/' + c[2] + '</small></span></div>';
       }).join('') + '</div><p class="hint">Share of people who agreed. Email, SMS and directory: adults only.</p></section>' +
@@ -353,7 +378,7 @@
     }
     // Consent (POPIA)
     if (full) {
-      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Consent') + '</h2>' + H.icon(H.ICON.privacy, 18) + '</div><p class="hint" style="margin:4px 0 10px">' + (me ? T('What you have agreed to, as POPIA requires.') : 'What ' + esc(p.firstName) + ' has agreed to, as POPIA requires.') + (child ? ' A parent or guardian gives consent for children.' : '') + '</p>' +
+      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Consent') + '</h2>' + H.icon(H.ICON.privacy, 18) + '</div><p class="hint" style="margin:4px 0 10px">' + (me ? T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) : 'What ' + esc(p.firstName) + ' has agreed to, as POPIA requires.') + (child ? ' A parent or guardian gives consent for children.' : '') + '</p>' +
         '<div class="list">' + PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; }).map(function (pur) {
           var c = consentFor(p.id, pur);
           return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b><small>' + (c ? esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) }) + ' · ' + T(c.method) + (c.guardianId ? ' · ' + T('by {name}', { name: H.name(S.get('people', c.guardianId)) }) : '')) : T('Not asked yet')) + '</small></span>' +
@@ -377,7 +402,7 @@
     if ((H.can('*') || H.can('people.edit')) && !me) {
       var onotes = S.find('officeNotes', function (n) { return n.personId === p.id; });
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">Church office notes</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + 'Administrators and Pastors</span></div>' +
-        (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line">' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? 'From Elvanto' : n.by) + ', ' + H.fmt(n.at, true)) +
+        (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? 'From Elvanto' : n.by) + ', ' + H.fmt(n.at, true)) +
           ' · <button class="link" data-act="people:delonote" data-id="' + n.id + '">Delete</button></p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
         '<label class="field" style="margin-top:12px">Add a note<textarea id="on-text" rows="2" placeholder="Administrators and Pastors can see this. Pastoral matters go in pastoral notes."></textarea></label><button class="btn small" data-act="people:onote" data-id="' + p.id + '">Save note</button></section>';
     }
@@ -385,7 +410,7 @@
     if (seeNotes && !me) {
       var notes = S.find('notes', function (n) { return n.personId === p.id; });
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">Pastoral notes</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + 'Pastors only · views are logged</span></div>' +
-        (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0">' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
+        (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
         '<label class="field" style="margin-top:12px">Add a note<textarea id="pn-text" rows="2" placeholder="Only pastors can see this"></textarea></label><button class="btn small" data-act="people:note" data-id="' + p.id + '">Save note</button></section>';
     }
     // Volunteering: services, departments and positions (Rosters teams and positions); roster coordinators and Administrators change it
@@ -480,7 +505,7 @@
       '<label class="field req">Who<select id="gl-who"><option value="">Choose…</option><option value="__out"' + (outside ? ' selected' : '') + '>Someone not in Church Hub…</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
       '<div id="gl-out" class="two"' + (outside ? '' : ' hidden') + '><label class="field req">Name<input id="gl-name" value="' + esc(l.name || '') + '"></label><label class="field">Phone<input id="gl-phone" type="tel" value="' + esc(l.phone || '') + '"></label></div>' +
       '<label class="field req">Relationship to ' + esc(c.firstName) + '<select id="gl-rel">' + HS.RELATIONSHIPS.map(function (r) { return '<option' + (l.relationship === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
-      '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>Can give consent</b><br><span class="muted small">A parent or legal guardian (POPIA). Not step-parents, grandparents or collectors unless they are legal guardians.</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>Can give consent</b><br><span class="muted small">A parent or legal guardian (' + esc(PrivacyLaw.forChurch(S.settings()).short) + '). Not step-parents, grandparents or collectors unless they are legal guardians.</span></span></label>' +
       '<label class="check"><input type="checkbox" id="gl-primary"' + (l.primary ? ' checked' : '') + '><span><b>Primary contact</b><br><span class="muted small">Gets messages from the church about ' + esc(c.firstName) + '.</span></span></label>' +
       '<label class="check"><input type="checkbox" id="gl-collect"' + (l.mayCollect ? ' checked' : '') + '><span><b>May collect ' + esc(c.firstName) + '</b><br><span class="muted small">Can sign ' + esc(c.firstName) + ' out of children’s church.</span></span></label>' +
       '<p id="gl-err" class="note bad" hidden></p></div><div class="dlg-foot">' + (isNew ? '' : '<button class="btn" style="margin-right:auto" data-act="people:linkdel" data-id="' + l.id + '">Remove</button>') +
@@ -911,7 +936,7 @@
         return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';
       }).join('') + '</tr></thead><tbody>' + r.rows.map(function (x) {
         return '<tr>' + (bulk ? '<td class="sel"><input type="checkbox" class="adv-sel" value="' + x.id + '" aria-label="Tick ' + esc(H.name(x.p)) + '"' + (sel[x.id] ? ' checked' : '') + '></td>' : '') + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + listName(x.p) + '</a></td>' : k === 'email' && x.values.email ? '<td><a href="mailto:' + esc(x.values.email) + '" target="_blank" rel="noopener">' + esc(x.values.email) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
-      }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (POPIA).</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
+      }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ').</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
   }
   /* ---------- changing many people at once (Administrators): tick people in the results, then one field for all of them ---------- */
   function canBulk() { return H.can('*'); }
@@ -1047,15 +1072,14 @@
           '<label class="field">' + T('Street address') + '<input id="pf-street" value="' + esc((p.address || {}).street || '') + '" autocomplete="address-line1"></label>' +
           '<label class="field">' + T('Address line 2') + '<input id="pf-street2" value="' + esc((p.address || {}).street2 || '') + '" autocomplete="address-line2"></label>' +
           '<div class="two"><label class="field">' + T('Town or city') + '<input id="pf-city" value="' + esc((p.address || {}).city || '') + '" autocomplete="address-level2"></label>' +
-          '<label class="field">' + T('Postcode') + '<input id="pf-postcode" value="' + esc((p.address || {}).postcode || '') + '" inputmode="numeric" autocomplete="postal-code"></label></div>' +
-          '<div class="two"><label class="field">' + T('Province') + '<select id="pf-province">' + (function (cur) {   // South Africa's nine provinces; anything else already recorded (e.g. from Elvanto) is kept
-            var opts = ['<option value="">' + T('Choose…') + '</option>'].concat(PROVINCES.slice().sort().map(function (x) { return '<option' + (x === cur ? ' selected' : '') + '>' + x + '</option>'; }));
-            if (cur && PROVINCES.indexOf(cur) < 0) opts.push('<option value="' + esc(cur) + '" selected>' + esc(cur) + '</option>');
-            return opts.join('');
-          })((p.address || {}).province || '') + '</select></label>' +
-          '<label class="field">' + T('Country') + '<input id="pf-country" value="' + esc((p.address || {}).country || (p.address ? '' : 'South Africa')) + '" autocomplete="country-name"></label></div></fieldset>' +
+          (function (a) {
+            var c = a.country ? Countries.find(a.country) : Countries.church(S.settings());
+            return '<label class="field"><span id="pf-postcode-l">' + T(c ? c.postcodeLabel : 'Postal code') + '</span><input id="pf-postcode" value="' + esc(a.postcode || '') + '" autocomplete="postal-code"></label></div>' +
+              '<div class="two"><label class="field"><span id="pf-region-l">' + T(c ? c.regionLabel : 'Province, state or region') + '</span><span id="pf-region-w">' + regionControl(c, a.province || '') + '</span></label>' +
+              '<label class="field">' + T('Country') + countrySelect(a.country || '') + '</label></div></fieldset>';
+          })(p.address || {}) +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>Wedding anniversary<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
-      (admin ? staffFields(p) : '') +
+      (admin ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
       (admin ? '<label class="field">App access<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(H.ROLES[r].label) + '</option>'; }).join('') + '</select><small>What they can see and do in Church Hub.' + (Store.isLive() ? ' They sign in with Google or an email link using the email address above.' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">Mark as left</button>' : '') +
@@ -1074,6 +1098,7 @@
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
+    wireCountry(); if (window.CareUI) CareUI.wireFields();
     var pc = document.getElementById('pf-cat'), pcf = document.getElementById('pf-partner-f');
     if (pc && pcf) pc.addEventListener('change', function () { pcf.hidden = pc.value !== 'Church Partner'; });
     var lt = document.getElementById('pf-late'), ltf = document.getElementById('pf-late-f'), mar = document.getElementById('pf-marital');
@@ -1126,7 +1151,7 @@
     var child = p.familyRole === 'child', me = isMe(p);
     var guardians = child ? HS.consentAdults(p.id, S.list('guardians')).map(function (l) { return S.get('people', l.adultId); }).filter(Boolean) : [];
     if (child && !me && !guardians.length) {
-      H.modal(H.dialogHead('Consent for ' + H.name(p)) + '<div class="dlg-body"><p class="note warn" style="margin:0">No parent or guardian who can give consent is recorded for ' + esc(p.firstName) + '. Under POPIA a parent or legal guardian gives consent for a child.</p><p>Add them under <b>Parents, guardians and collection</b> on ' + esc(p.firstName) + '’s profile, then record consent.</p></div><div class="dlg-foot"><button class="btn primary" data-act="hub:close">OK</button></div>', 'Consent');
+      H.modal(H.dialogHead('Consent for ' + H.name(p)) + '<div class="dlg-body"><p class="note warn" style="margin:0">No parent or guardian who can give consent is recorded for ' + esc(p.firstName) + '. Under ' + esc(PrivacyLaw.forChurch(S.settings()).short) + ' a parent or legal guardian gives consent for a child.</p><p>Add them under <b>Parents, guardians and collection</b> on ' + esc(p.firstName) + '’s profile, then record consent.</p></div><div class="dlg-foot"><button class="btn primary" data-act="hub:close">OK</button></div>', 'Consent');
       return;
     }
     var purposes = PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; });
@@ -1134,7 +1159,7 @@
       '<div class="dlg-body">' + purposes.map(function (pur, i) {
         return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(pur) + '"' + (hasConsent(p.id, pur) ? ' checked' : '') + '><span><b>' + esc(T(pur)) + '</b><br><span class="muted small">' + esc(T({
           'Church records': 'Keep their details on the church database.', 'Email': 'Church news and information by email.', 'SMS': 'Reminders and urgent news by SMS.',
-          'Church directory': 'Name and phone visible to other members.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
+          'Church directory': 'Name and phone visible to other members.', 'Care group': 'Photo, phone, email, address and birthday shared with my care group.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
       }).join('') +
       (child ? '' : '<p class="field-l" style="margin:14px 0 4px">' + T('Would like to receive') + '</p>' + RECEIVE.map(function (r) {
         return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(r[0]) + '"' + (hasConsent(p.id, r[0]) ? ' checked' : '') + '><span><b>' + esc(T(r[0])) + '</b><br><span class="muted small">' + esc(T(r[1])) + '</span></span></label>';
@@ -1162,6 +1187,7 @@
   function tidyDeath(id) {
     var p = S.get('people', id); if (!p) return;
     var d = p.deceasedAt || H.today(), n = 0;
+    if (window.CareUI) CareUI.place(p, '', false, 'After a death: ');
     S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === id && (!s || s.date >= d); }).forEach(function (a) { S.remove('assignments', a.id); n++; });
     S.find('skills', function (k) { return k.personId === id; }).forEach(function (k) { S.remove('skills', k.id); });
     S.find('serveOffers', function (o) { return o.personId === id; }).forEach(function (o) { S.remove('serveOffers', o.id); });
@@ -1183,7 +1209,7 @@
   function exportPerson(p) {
     var pick = function (c) { return S.find(c, function (x) { return x.personId === p.id || (x.memberIds && x.memberIds.indexOf(p.id) >= 0); }); };
     var lv = Store.leave();
-    var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (POPIA section 23).',
+    var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (' + PrivacyLaw.forChurch(S.settings()).copyRight + ').',
       restricted: H.can('notes') && H.can('medical') ? '' : 'Pastoral notes and children’s medical notes are kept separately and only Pastors / Children’s ministry can read them. Ask them to add these if the request covers them.',
       person: p, family: familyOf(p), households: HS.householdsOf(p).map(function (h) { return S.get('families', h); }),
       responsibleAdults: S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }), consents: pick('consents'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts'), offersToServe: pick('serveOffers') },
@@ -1200,7 +1226,7 @@
       if (!H.can('*') && !H.can('people.view') && !canChildren()) return [];
       var all = H.can('*') || H.can('people.view');
       var out = [], missing = all ? S.find('people', function (p) { return p.active !== false && !hasConsent(p.id, 'Church records'); }) : [];
-      if (missing.length) out.push({ text: missing.length + ' ' + (missing.length === 1 ? 'person has' : 'people have') + ' no recorded consent', href: '#/people/p/' + missing[0].id, tag: 'POPIA' });
+      if (missing.length) out.push({ text: missing.length + ' ' + (missing.length === 1 ? 'person has' : 'people have') + ' no recorded consent', href: '#/people/p/' + missing[0].id, tag: PrivacyLaw.forChurch(S.settings()).short });
       if (canChildren()) {
         var nd = HS.needs(S.list('people'), S.list('guardians'));
         if (nd.noConsenter.length) out.push({ text: nd.noConsenter.length + ' ' + (nd.noConsenter.length === 1 ? 'child has' : 'children have') + ' no parent or guardian who can give consent', href: '#/people/p/' + nd.noConsenter[0].id, tag: 'Children' });
@@ -1384,7 +1410,7 @@
         if (g('pf-gender') !== null) { if (g('pf-gender')) p.gender = g('pf-gender'); else delete p.gender; }
         if (g('pf-middle') !== null) { if (g('pf-middle')) p.middleName = g('pf-middle'); else delete p.middleName; }
         if (g('pf-street') !== null) {
-          var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') };
+          var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') === '__other' ? g('pf-country-o') : g('pf-country') };
           if (ad.street || ad.street2 || ad.city || ad.postcode) p.address = ad; else delete p.address;
         }
         if (g('pf-psince') !== null) {
@@ -1427,7 +1453,10 @@
         if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family', custom: false }, 'Created a household for ' + p.firstName + ' ' + p.lastName); fam = f.id; }
         if (fam !== null) p.familyId = fam;
         if (p.familyRole === 'child' && !p.familyId && !dead) { err.textContent = 'Children must be in a household, so the church knows who they live with.'; err.hidden = false; return; }
+        var care = window.CareUI ? CareUI.read() : null;
+        if (care && care.error && !dead) { err.textContent = care.error; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
+        if (window.CareUI) { if (care && !care.error && !CareUI.place(p, care.gid, care.leader)) CareUI.sync(p.id); else if (!care) CareUI.sync(p.id); }
         dups.forEach(function (m) { markNotSame(p.id, m.id); });
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();
@@ -1444,6 +1473,7 @@
           S.put('consents', { personId: p.id, purpose: pur, given: box.checked, date: H.today(), method: me ? 'Changed in the app' : method.value, recordedBy: H.name(H.user()), guardianId: guardian ? guardian.value : '' },
             (box.checked ? 'Consent given: ' : 'Consent withdrawn: ') + pur + ' for ' + H.name(p));
         });
+        if (window.CareUI) CareUI.sync(p.id);   // their care group card follows their consent
         H.closeModal(); H.render(); H.toast(T('Consent saved'));
       },
       death: function (el) {
@@ -1536,7 +1566,7 @@
       savemedical: function (el) {
         var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id))), a = document.getElementById('md-a').value.trim(), n = document.getElementById('md-n').value.trim();
         if ((a || n) && !hasConsent(p.id, 'Children’s medical notes')) {
-          var e = document.getElementById('md-err'); e.textContent = 'A parent or guardian must agree first (POPIA). Ask a Pastor or the church office to record their consent on ' + p.firstName + '’s profile.'; e.hidden = false; return;
+          var e = document.getElementById('md-err'); e.textContent = 'A parent or guardian must agree first (' + PrivacyLaw.forChurch(S.settings()).short + '). Ask a Pastor or the church office to record their consent on ' + p.firstName + '’s profile.'; e.hidden = false; return;
         }
         if (a || n) p.medical = { allergies: a, notes: n }; else delete p.medical;
         S.put('people', p, 'Updated children’s medical notes of ' + H.name(p));
@@ -1564,7 +1594,7 @@
       },
       editid: function (el) {
         var p = S.get('people', el.dataset.id), known = state.idShown && state.idShown.id === p.id ? state.idShown.value : '';
-        H.modal(H.dialogHead('ID number of ' + H.name(p), 'Administrators only. Keep it only if the church still needs it (POPIA).') + '<div class="dlg-body">' +
+        H.modal(H.dialogHead('ID number of ' + H.name(p), 'Administrators only. Keep it only if the church still needs it (' + PrivacyLaw.forChurch(S.settings()).short + ').') + '<div class="dlg-body">' +
           '<label class="field">ID number<input id="idn-v" inputmode="numeric" autocomplete="off" value="' + esc(known) + '" placeholder="' + (known ? '' : 'Leave empty to keep the current one') + '"><small>South African ID numbers have 13 digits. Passport numbers are fine too.</small></label>' +
           '<label class="check"><input type="checkbox" id="idn-del"><span>Remove the ID number</span></label><p id="idn-err" class="note bad" hidden></p></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:saveid" data-id="' + p.id + '">Save</button></div>', 'ID number');

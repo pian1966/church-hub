@@ -153,6 +153,26 @@ service cloud.firestore {
         || (mine(me()) && me() in resource.data.memberIds && me() in request.resource.data.memberIds);
       allow delete: if isRole(['admin', 'rosters']) || (mine(me()) && me() in resource.data.memberIds);
     }
+    // Care groups. Administrators and Pastors set them up; a group's carers (leaderIds) may add and remove its members.
+    // Members read their own group, and each member's card in it (share/{person}): their name, and the rest only
+    // if they agreed (consent "Care group"). Each person keeps their own card up to date.
+    function careRef(gid) { return /databases/$(database)/documents/careGroups/$(gid); }
+    function inCare(gid) { return anyone() && me() != '' && me() in get(careRef(gid)).data.get('memberIds', []); }
+    function leadsCare(gid) { return anyone() && me() != '' && me() in get(careRef(gid)).data.get('leaderIds', []); }
+    match /careGroups/{gid} {
+      allow read: if isRole(['admin', 'pastor']) || (anyone() && me() != '' && me() in resource.data.get('memberIds', []));
+      allow create, delete: if isRole(['admin', 'pastor']);
+      allow update: if isRole(['admin', 'pastor'])
+        || (anyone() && me() != '' && me() in resource.data.get('leaderIds', []) && onlyChanges(['memberIds', 'names', 'updatedAt'])
+            && me() in request.resource.data.memberIds && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])));
+      match /share/{pid} {
+        allow read: if isRole(['admin', 'pastor']) || inCare(gid);
+        allow create, update: if (isRole(['admin', 'pastor']) || (mine(pid) && inCare(gid)))
+          && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
+          && (request.resource.data.get('photo', '') is string) && request.resource.data.get('photo', '').size() < 40000;
+        allow delete: if isRole(['admin', 'pastor']) || mine(pid) || leadsCare(gid);
+      }
+    }
     // Offers to serve: a person asks to join a position, change how often, or stop; the roster coordinator answers.
     match /serveOffers/{id} {
       allow read: if isRole(['admin', 'rosters']) || mine(resource.data.personId);

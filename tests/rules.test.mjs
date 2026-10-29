@@ -57,6 +57,11 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('noCollect/n1', { childId: 'p12', personId: '', name: 'Made-up Person', note: 'Court order' });
   await set('roles/robot@example.com', { role: 'robot', uid: 'robot-uid', name: 'Elvanto robot' });
   await set('elvantoSync/L1', { personId: 'p05', name: 'A p05', start: '2027-01-06', end: '2027-01-06', want: 'Unavailable', have: '', haveNote: '', status: 'Waiting', note: '' });
+  await set('careGroups/cg1', { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim', p15: 'Clare' } });
+  await set('careGroups/cg2', { name: 'Howick', leaderIds: ['p05'], memberIds: ['p05', 'p01'], names: {} });
+  await set('careGroups/cg3', { name: 'Merrivale', leaderIds: ['p15'], memberIds: ['p15', 'p14'], names: {} });
+  await set('careGroups/cg1/share/p15', { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082', birthday: '07-14' });
+  await set('careGroups/cg2/share/p05', { firstName: 'Sipho', lastName: 'Dlamini', ok: false });
   await set('elvantoSync/L9', { personId: 'p15', name: 'A p15', start: '2027-02-01', end: '2027-02-02', want: 'Unavailable', have: '', haveNote: '', status: 'Done', note: '' });
 });
 
@@ -326,6 +331,32 @@ await t('audit log: anyone adds entries about themselves; only Administrators re
   await cannot(db.member.doc('audit/m3').set({ action: 'Signed in', byEmail: 'tim@example.com', ts: new Date(2020, 0, 1) }));
   await only('audit/a1', ['admin']);
   await cannot(db.admin.doc('audit/a1').update({ action: 'changed' })); await cannot(db.admin.doc('audit/a1').delete());
+});
+await t('care groups: members see their own group and its cards; carers add and remove members', async () => {
+  await can(read(db.member, 'careGroups/cg1')); await cannot(read(db.member, 'careGroups/cg2'));
+  await can(list(db.member.collection('careGroups').where('memberIds', 'array-contains', 'p14')));
+  await cannot(list(db.member.collection('careGroups')));
+  await can(read(db.member, 'careGroups/cg1/share/p15')); await can(list(db.member.collection('careGroups/cg1/share')));
+  await cannot(read(db.member, 'careGroups/cg2/share/p05')); await cannot(list(db.member.collection('careGroups/cg2/share')));
+  await cannot(read(db.rosters, 'careGroups/cg1')); await cannot(read(db.kids, 'careGroups/cg1/share/p15'));
+  await can(read(db.pastor, 'careGroups/cg2/share/p05')); await can(list(db.admin.collection('careGroups')));
+  // each person writes only their own card, only in a group they are in, and only the card's fields
+  const card = { firstName: 'Tim', lastName: 'Jacobs', ok: true, mobile: '083', updatedAt: 'x', createdAt: 'x' };
+  await can(db.member.doc('careGroups/cg1/share/p14').set(card));
+  await cannot(db.member.doc('careGroups/cg2/share/p14').set(card));
+  await cannot(db.member.doc('careGroups/cg1/share/p15').set(Object.assign({}, card, { firstName: 'Clare' })));
+  await cannot(db.member.doc('careGroups/cg1/share/p14').set(Object.assign({}, card, { medical: 'x' })));
+  await cannot(db.member.doc('careGroups/cg1/share/p14').set(Object.assign({}, card, { photo: 'x'.repeat(50000) })));
+  // a carer (Tim leads cg1) may change who is in the group, not its name or carers; a member of cg3 may not
+  await can(db.member.doc('careGroups/cg1').update({ memberIds: ['p14', 'p15', 'p16'], names: { p14: 'Tim', p15: 'Clare', p16: 'Sam' }, updatedAt: 'x' }));
+  await cannot(db.member.doc('careGroups/cg1').update({ name: 'Mine' }));
+  await cannot(db.member.doc('careGroups/cg1').update({ leaderIds: ['p14', 'p16'] }));
+  await cannot(db.member.doc('careGroups/cg1').update({ memberIds: ['p15', 'p16'] }));   // a carer can't take themself out
+  await cannot(db.member.doc('careGroups/cg3').update({ memberIds: ['p15', 'p14', 'p16'] }));
+  await can(db.member.doc('careGroups/cg1/share/p15').delete());   // a carer removes a card when taking someone out
+  await cannot(db.member.doc('careGroups/cg4').set({ name: 'New', leaderIds: ['p14'], memberIds: ['p14'] }));
+  await can(db.pastor.doc('careGroups/cg4').set({ name: 'New', leaderIds: [], memberIds: [] })); await can(db.admin.doc('careGroups/cg4').delete());
+  await can(db.pastor.doc('careGroups/cg2/share/p01').set({ firstName: 'Linda', lastName: 'Pillay', ok: false }));
 });
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });
 

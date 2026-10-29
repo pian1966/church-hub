@@ -8,6 +8,7 @@
  *       node tests/app.test.js
  */
 'use strict';
+const Serving = require('../js/serving.js');
 const fs = require('fs'), path = require('path'), vm = require('vm'), http = require('http');
 const { chromium } = require('playwright');
 const ROOT = path.join(__dirname, '..');
@@ -92,7 +93,7 @@ function serve() {
 (async () => {
   const srv = await serve(), BASE = 'http://127.0.0.1:' + srv.address().port + '/index.html';
   const browser = await chromium.launch(); let fails = 0;
-  const check = (ok, msg) => { if (!ok) fails++; console.log((ok ? '  ✓ ' : '  ✗ ') + msg); };
+  const check = (ok, msg) => { if (!ok) { fails++; if (process.env.GITHUB_ACTIONS) console.log('::error title=App test::' + String(msg).replace(/[\r\n]+/g, ' ').slice(0, 300)); } console.log((ok ? '  ✓ ' : '  ✗ ') + msg); };
   const fake = fs.readFileSync(path.join(__dirname, 'fake-firebase.js'), 'utf8');
 
   /* ---------- Demo (no Firebase) ---------- */
@@ -268,6 +269,14 @@ function serve() {
   await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-middle', 'Anne'); await s.page.fill('#pf-street', '12 Main Road'); await s.page.fill('#pf-city', 'Howick'); await s.page.fill('#pf-postcode', '3290'); check(JSON.stringify(await s.page.$$eval('#pf-province option', o => o.slice(1).map(x => x.value))) === JSON.stringify(['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape']), 'Province is a dropdown of South Africa’s nine provinces'); await s.page.selectOption('#pf-province', 'KwaZulu-Natal');
   await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   check(docs['details/p15'].middleName === 'Anne' && docs['details/p15'].address.city === 'Howick' && tt.includes('12 Main Road') && tt.includes('Howick 3290') && !tt.includes('South Africa') && !JSON.stringify(docs['people/p15']).includes('Main Road'), 'middle name and home address saved with the private details and shown');
+  await s.page.click('[data-act="people:edit"]');
+  check(await s.page.inputValue('#pf-country') === 'South Africa' && (await s.page.textContent('#pf-region-l')) === 'Province', 'the address is in South Africa, with its provinces');
+  await s.page.selectOption('#pf-country', 'United States');
+  check((await s.page.textContent('#pf-region-l')) === 'State' && (await s.page.textContent('#pf-postcode-l')) === 'ZIP code' && (await s.page.$$eval('#pf-province option', o => o.length)) === 52, 'choosing another country gives its states and wording (State, ZIP code)');
+  await s.page.selectOption('#pf-province', 'Texas'); await s.page.selectOption('#pf-country', 'United Kingdom');
+  check(await s.page.$eval('#pf-province', e => e.tagName) === 'INPUT' && (await s.page.textContent('#pf-region-l')) === 'County', 'a country without a list gets a box to type the county in');
+  await s.page.fill('#pf-province', 'Kent'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p15'].address.country === 'United Kingdom' && docs['details/p15'].address.province === 'Kent' && tt.includes('United Kingdom') && tt.includes('Kent'), 'an address in another country is saved and shown with its country');
   await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p15'))); p.partnerUpdated = '2026'; Store.put('people', p); }); await s.settle();
   await s.go('people'); await s.go('people/p/p15'); const yrT = await s.text(); check(yrT.includes('Partnership last updated 2026'), 'a renewal year from Elvanto shows as the year: ' + (yrT.match(/Accepted.{0,80}/) || [yrT.slice(yrT.indexOf('Gender'), yrT.indexOf('Gender') + 200)])[0]);
   await s.page.click('[data-act="people:edit"]'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
@@ -512,6 +521,35 @@ function serve() {
   await s.page.click('.who[data-role="pastor"] summary');
   const shown = await s.page.textContent('.who[data-role="pastor"] .who-list');
   check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
+  check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
+  for (let i = 0; i < 3 && (await s.docsNow())['settings/church'].country !== 'KE'; i++) {   // the screen may redraw between choosing and saving
+    await s.settle(); await s.page.selectOption('#st-country', 'KE'); await s.page.click('[data-act="settings:name"]');
+    await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 3000 }).catch(() => {});
+  }
+  await s.settle(); docs = await s.docsNow();
+  check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
+  await s.go('privacy'); t = await s.text();
+  check(t.includes('Privacy (Data Protection Act)') && t.includes('Office of the Data Protection Commissioner') && !t.includes('POPIA') && !t.includes('Information Regulator'), 'Privacy follows the country’s law (Kenya: Data Protection Act, ODPC)');
+  await s.page.evaluate(() => Store.setSettings({ country: 'DE' })); await s.settle(); await s.go('privacy/breaches'); t = await s.text();
+  check(t.includes('Privacy (GDPR)') && t.includes('72 hours'), 'Germany: GDPR and its 72 hours for a breach');
+  await s.page.evaluate(() => Store.setSettings({ country: 'ZA' })); await s.settle(); await s.go('privacy'); t = await s.text();
+  check(t.includes('Privacy (POPIA)') && t.includes('Information Regulator'), 'South Africa: POPIA and the Information Regulator');
+  await s.go('settings');
+  await s.page.selectOption('#st-country', 'ZA'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'ZA', null, { timeout: 5000 }).catch(() => {}); await s.settle();
+  // Church wording: an Anglican church
+  await s.page.selectOption('#wd-set', 'anglican');
+  check(await s.page.inputValue('.wd-1[data-k="pastor"]') === 'Clergy' && await s.page.inputValue('.wd-1[data-k="partner"]') === 'Parishioner', 'Church wording: choosing Anglican fills in its words');
+  await s.page.fill('.wd-1[data-k="pastor"]', 'Rector'); await s.page.fill('.wd-2[data-k="pastor"]', 'Rectors'); await s.page.click('[data-act="settings:savewords"]');
+  await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'anglican', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
+  check(docs['settings/church'].wording.set === 'anglican' && docs['settings/church'].wording.custom.pastor[0] === 'Rector', 'the set and own words are saved');
+  t = await s.page.textContent('.grid2 > section:nth-of-type(4)');
+  check(/Rector/.test(t) && !/\bPastor\b/.test(t), 'the screens use the church’s words (Who can see what: Rector)');
+  const someP = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].category === 'Church Partner').split('/')[1];
+  await s.go('people/p/' + someP); t = await s.text();
+  check(t.includes('Parishioner') && !t.includes('Church Partner') && docs['people/' + someP].category === 'Church Partner', 'a Church Partner shows as a Parishioner – the record itself is unchanged');
+  await s.go('settings'); await s.page.selectOption('#wd-set', 'general'); await s.page.click('[data-act="settings:savewords"]');
+  await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'general', null, { timeout: 5000 }).catch(() => {}); await s.settle();
+  check((await s.text()).includes('Church Partner'), 'back to General, the usual words return');
   t = await s.text(); check(t.includes('Services and venues') && t.includes('8am') && t.includes('10am') && t.includes('5pm'), 'Settings lists the regular services (8am, 10am, 5pm to start with)');
   await s.page.fill('#sl-time', '09:30'); await s.page.fill('#sl-label', '9:30am'); await s.page.fill('#sl-venue', 'Hilton hall'); await s.page.click('[data-act="settings:addslot"]'); await s.settle(); docs = await s.docsNow();
   const slotsNow = docs['settings/church'].serviceSlots || [];
@@ -520,6 +558,23 @@ function serve() {
   await s.page.selectOption('#sv-slot', hilton.id); await s.page.selectOption('#sv-n', '4'); await s.page.click('[data-act="settings:addsvc"]'); await s.settle(); docs = await s.docsNow();
   const hs = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].slot === hilton.id);
   check(hs.length === 4 && hs.every(k => docs[k].time === '09:30' && docs[k].venue === 'Hilton hall'), 'services that need a roster can be added for the new service and venue');
+  await s.page.type('#sp-name', 'Good Friday');
+  check(await s.page.inputValue('#sp-date') === Serving.specialDate('Good Friday', new Date().toISOString().slice(0, 10)), 'choosing Good Friday fills in its date (worked out from Easter)');
+  await s.page.fill('#sp-time', '09:00'); await s.page.click('[data-act="settings:addspecial"]'); await s.settle(); docs = await s.docsNow();
+  const gf = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].name === 'Good Friday' && docs[k].special);
+  if (await s.page.$('[data-act="settings:allsvc"]')) { await s.page.click('[data-act="settings:allsvc"]'); await s.settle(); }
+  check(gf.length === 1 && docs[gf[0]].time === '09:00' && (await s.text()).includes('Special'), 'a special service can be added, and shows as Special');
+  const hiltonLeft = async () => Object.entries(await s.docsNow()).some(([k, d]) => k.startsWith('services/') && d.slot === hilton.id && !d.special);
+  let stopNote = '';
+  for (let i = 0; i < 3 && await hiltonLeft(); i++) {   // the screen may redraw between steps on a slow computer
+    await s.settle();
+    if (!(await s.page.$eval('details.sub', d => d.open).catch(() => false))) await s.page.click('details.sub summary');
+    await s.page.selectOption('#sv-stop', hilton.id); await s.page.click('[data-act="settings:stopsvc"]');
+    const go = await s.page.waitForSelector('[data-act="settings:stopsvcgo"]', { timeout: 5000 }).catch(() => null);
+    if (go) { await go.click(); await s.settle(); } else stopNote = ' (no dialog; message: ' + (await s.page.textContent('#toast').catch(() => '')) + ')';
+  }
+  docs = await s.docsNow();
+  check(!(await hiltonLeft()) && gf.every(k => docs[k]), 'stopping a regular service removes its upcoming services (special ones stay)' + stopNote);
   await finish(s);
   s = await session('tim.jacobs@example.com', (() => { const d = seedDocs(); d['settings/church'] = Object.assign({}, d['settings/church'], { serviceSlots: slotsNow }); return d; })());
   await s.go('me/serve'); await s.page.click('[data-act="me:offer"][data-p="tea"]');
@@ -565,6 +620,48 @@ function serve() {
   await finish(s);
   s = await session('pieter.vanwyk@example.com', seedDocs()); await s.go('home');
   check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'only Administrators can use “View as”');
+  await finish(s);
+
+  console.log('Care groups:');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('care');
+  await s.page.fill('#cg-new', 'Hilton Tuesday'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();
+  const cgId = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Hilton Tuesday').split('/')[1];
+  await s.page.selectOption('.cg-add[data-g="' + cgId + '"]', 'p14'); await s.page.click('[data-act="care:add"][data-g="' + cgId + '"]'); await s.settle();
+  await s.page.click('[data-act="care:lead"][data-id="p14"]'); await s.settle();
+  await s.page.selectOption('.cg-add[data-g="' + cgId + '"]', 'p15'); await s.page.click('[data-act="care:add"][data-g="' + cgId + '"]'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
+  check(docs['careGroups/' + cgId].memberIds.join() === 'p14,p15' && docs['careGroups/' + cgId].leaderIds.join() === 'p14', 'an Administrator sets up a care group with a carer and members');
+  const card15 = docs['careGroups/' + cgId + '/share/p15'];
+  check(card15 && card15.firstName === 'Clare' && card15.ok === false && !card15.mobile && !card15.email, 'without “Care group” consent the group sees only the name');
+  await s.go('people/p/p17'); await s.page.click('[data-act="people:edit"]'); await fillHome(s);
+  await s.page.check('#pf-care'); await s.page.click('[data-act="people:save"]');
+  check((await s.page.textContent('#pf-err')).includes('Choose which care group'), 'Edit details: ticking Care group member asks which group');
+  await s.page.selectOption('#pf-care-g', cgId); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['careGroups/' + cgId].memberIds.includes('p17') && (await s.text()).includes('Care group member · Hilton Tuesday'), '…then they are in it, with a tag on their profile');
+  await finish(s);
+  const careSeed = seedDocs();
+  careSeed['careGroups/cgA'] = { name: 'Merrivale', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
+  careSeed['careGroups/cgB'] = { name: 'Howick', leaderIds: ['p18'], memberIds: ['p18', 'p19'], names: { p18: 'A', p19: 'B' } };
+  careSeed['careGroups/cgA/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555', email: 'clare@example.com', birthday: '07-14', leader: false };
+  careSeed['careGroups/cgB/share/p19'] = { firstName: 'Secret', lastName: 'Person', ok: true, mobile: '000' };
+  careSeed['consents/cCare14'] = { personId: 'p14', purpose: 'Care group', given: true, date: '2026-10-01', method: 'Online form' };
+  s = await session('tim.jacobs@example.com', careSeed); await s.go('me'); await s.page.waitForTimeout(400); t = await s.page.textContent('#my-care').catch(() => '');
+  check(t.includes('Merrivale') && t.includes('Clare') && t.includes('082 000 1555') && t.includes('14 Jul') && !t.includes('Secret'), 'a member sees their care group: phone, email and birthday of those who agreed – not other groups');
+  await s.page.waitForTimeout(1800); docs = await s.docsNow();
+  check(docs['careGroups/cgA/share/p14'] && docs['careGroups/cgA/share/p14'].ok === true && docs['careGroups/cgA/share/p14'].mobile, 'after signing in, their own card is brought up to date (with their consent)');
+  await s.page.click('[data-act="care:mineadd"]'); const addable = await s.page.$$eval('#cg-who option', o => o.map(x => x.value).filter(Boolean));
+  check(addable.length > 0 && !addable.includes('p15'), 'a carer can add people from the church directory');
+  await s.page.selectOption('#cg-who', addable[0]); await s.page.click('[data-act="care:mineaddsave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['careGroups/cgA'].memberIds.includes(addable[0]), '…and they are added');
+  for (let i = 0; i < 4 && (await s.docsNow())['careGroups/cgA'].memberIds.includes('p15'); i++) { await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.settle(); }   // click, then click again to confirm
+  docs = await s.docsNow();
+  check(!docs['careGroups/cgA'].memberIds.includes('p15') && !docs['careGroups/cgA/share/p15'], 'a carer can take someone out (their card goes too)');
+  // More languages, grouped by continent and loaded when chosen
+  const groupsSeen = await s.page.$$eval('#me-lang optgroup', g => g.map(x => x.label));
+  check(groupsSeen.join() === 'Africa,Europe,Americas' && await s.page.$$eval('#me-lang option', o => o.length > 20), 'the language list offers more languages, by continent: ' + groupsSeen.join(', '));
+  await s.page.selectOption('#me-lang', 'sw'); await s.page.waitForFunction(() => I18n.get() === 'sw', null, { timeout: 5000 }).catch(() => {});
+  t = await s.page.textContent('main');
+  check(await s.page.evaluate(() => I18n.get()) === 'sw' && t.includes('Lugha hii imetafsiriwa na kompyuta'), 'choosing Kiswahili loads it, with a note that it is still being checked');
+  await s.page.selectOption('#me-lang', 'en'); await s.settle();
   await finish(s);
 
   console.log('Wedding anniversary on the profile:');
@@ -1159,4 +1256,4 @@ function serve() {
   await browser.close(); srv.close();
   console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nLive mode: all checks passed');
   process.exit(fails ? 1 : 0);
-})().catch(e => { console.error(e); process.exit(1); });
+})().catch(e => { console.error(e); if (process.env.GITHUB_ACTIONS) console.log('::error title=App test stopped::' + String(e && e.stack || e).replace(/[\r\n]+/g, ' | ').slice(0, 600)); process.exit(1); });

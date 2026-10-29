@@ -5,7 +5,7 @@
  *  - Names: the same first name, a known short form ("Doug" / "Douglas", "Bill" / "William"), the "known as" name, a small
  *    typing slip ("Jonh" / "John"), accents and capitals ignored, first and last name swapped, a double-barrelled surname
  *    ("van der Merwe" / "Merwe"), or a maiden name (the same first name, birthday and contact details).
- *  - Contact details: the same email (Gmail dots and +labels ignored) or mobile (+27 82… is 082…).
+ *  - Contact details: the same email (Gmail dots and +labels ignored) or mobile (+27 82… is 082…, +44 7700… is 07700…).
  *    Households often share an email or a landline, so contact details alone never make a duplicate: the first name must match too.
  *  - Birthday: the same date counts for; two different dates count strongly against (they are different people).
  *  - Elvanto ID: the same ID is certain; two different IDs are different people in Elvanto.
@@ -47,10 +47,8 @@ var Duplicates = (function () {
     return user + '@' + dom;
   }
   function phone(s) {
-    var d = String(s || '').replace(/\D/g, '');
-    if (/^27\d{9}$/.test(d)) d = '0' + d.slice(2);
-    if (/^\d{9}$/.test(d) && d[0] !== '0') d = '0' + d;
-    return d.length >= 9 ? d : '';
+    var d = String(s || '').replace(/\D/g, '');   // any country: the last 9 digits, after the country code or the leading 0
+    return d.length >= 9 ? '0' + d.slice(-9) : '';
   }
   /** Edits needed to turn a into b (Damerau: a swapped pair of letters counts as one). */
   function distance(a, b) {

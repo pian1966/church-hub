@@ -71,7 +71,54 @@ var Serving = (function () {
     var n = norm(name); n = norm(ALIASES[n] || n);
     return (positions || []).filter(function (x) { return norm(x.name) === n; })[0] || null;
   }
+
+  /* ---------- special services (Settings → Services that need a roster → Add a special service) ---------- */
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+  function ymd(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+  function plus(d, n) { var x = new Date(d.getFullYear(), d.getMonth(), d.getDate() + n); return x; }
+  /** Easter Sunday in a year (Western churches, Gregorian calendar). */
+  function easter(y) {
+    var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4, f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3);
+    var h = (19 * a + b - d - g + 15) % 30, i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+    var mo = Math.floor((h + l - 7 * m + 114) / 31), da = ((h + l - 7 * m + 114) % 31) + 1;
+    return new Date(y, mo - 1, da);
+  }
+  function nthSunday(y, month, n) { var d = new Date(y, month, 1); while (d.getDay() !== 0) d = plus(d, 1); return plus(d, (n - 1) * 7); }
+  /** Services churches hold on special days, with the date in a year where there is one: [{ name, date, when, used }].
+   *  used: which churches usually keep it ('' = most churches). Add or change any here; dates are suggestions. */
+  function specials(year) {
+    var E = easter(year), xmas = new Date(year, 11, 25), advent = plus(xmas, -((xmas.getDay() || 7) + 21));
+    var L = [
+      ['Advent Sunday', advent, 'Christmas', ''], ['Lessons and Carols', null, 'Christmas', ''], ['Carol service', null, 'Christmas', ''],
+      ['Christmas Eve', new Date(year, 11, 24), 'Christmas', ''], ['Midnight Mass / Midnight service', new Date(year, 11, 24), 'Christmas', 'Anglican, Catholic, Lutheran'],
+      ['Christmas Day', xmas, 'Christmas', ''], ['Watchnight service', new Date(year, 11, 31), 'Christmas', 'Methodist, Pentecostal and others'],
+      ['Covenant service', nthSunday(year, 0, 1), 'Christmas', 'Methodist'], ['Epiphany', new Date(year, 0, 6), 'Christmas', 'Anglican, Catholic, Lutheran'],
+      ['Candlemas (the Presentation)', new Date(year, 1, 2), 'Christmas', 'Anglican, Catholic'],
+      ['Ash Wednesday', plus(E, -46), 'Lent and Easter', ''], ['Mothering Sunday', plus(E, -21), 'Lent and Easter', 'Anglican (UK and Ireland)'],
+      ['Palm Sunday', plus(E, -7), 'Lent and Easter', ''], ['Maundy Thursday', plus(E, -3), 'Lent and Easter', ''], ['Tenebrae', plus(E, -3), 'Lent and Easter', 'Anglican, Catholic, Lutheran'],
+      ['Good Friday', plus(E, -2), 'Lent and Easter', ''], ['Stations of the Cross', plus(E, -2), 'Lent and Easter', 'Catholic, Anglican'],
+      ['Easter Vigil', plus(E, -1), 'Lent and Easter', 'Anglican, Catholic, Lutheran'], ['Easter Sunrise service', E, 'Lent and Easter', ''], ['Easter Day', E, 'Lent and Easter', ''],
+      ['Ascension Day', plus(E, 39), 'Lent and Easter', ''], ['Pentecost (Whitsunday)', plus(E, 49), 'Lent and Easter', ''], ['Trinity Sunday', plus(E, 56), 'Lent and Easter', 'Anglican, Catholic, Lutheran'],
+      ['Corpus Christi', plus(E, 60), 'Lent and Easter', 'Catholic'], ['Aldersgate Sunday', new Date(year, 4, 24), 'Through the year', 'Methodist'],
+      ['Mother’s Day', nthSunday(year, 4, 2), 'Through the year', ''], ['Father’s Day', nthSunday(year, 5, 3), 'Through the year', ''],
+      ['Assumption of Mary', new Date(year, 7, 15), 'Through the year', 'Catholic'], ['Harvest festival / Thanksgiving', null, 'Through the year', ''],
+      ['Reformation Sunday', new Date(year, 9, 31), 'Through the year', 'Lutheran, Reformed, Presbyterian'], ['All Saints’ Day', new Date(year, 10, 1), 'Through the year', 'Anglican, Catholic, Lutheran'],
+      ['All Souls’ (service of remembrance for the departed)', new Date(year, 10, 2), 'Through the year', 'Anglican, Catholic'], ['Remembrance Sunday', nthSunday(year, 10, 2), 'Through the year', 'UK, Commonwealth'],
+      ['Christ the King', plus(advent, -7), 'Through the year', 'Catholic, Anglican, Lutheran'], ['Church anniversary', null, 'Through the year', ''],
+      ['Week of Prayer', null, 'Through the year', ''], ['Prayer and fasting', null, 'Through the year', 'Pentecostal and others'], ['Revival meetings', null, 'Through the year', 'Pentecostal, Baptist'],
+      ['Baptism service', null, 'Occasions', ''], ['Confirmation', null, 'Occasions', 'Anglican, Catholic, Lutheran, Methodist'], ['Holy Communion / Lord’s Supper', null, 'Occasions', ''],
+      ['Induction or ordination', null, 'Occasions', ''], ['Youth Sunday', null, 'Occasions', ''], ['Wedding', null, 'Occasions', ''], ['Funeral', null, 'Occasions', ''], ['Memorial service', null, 'Occasions', '']
+    ];
+    return L.map(function (x) { return { name: x[0], date: x[1] ? ymd(x[1]) : '', when: x[2], used: x[3] }; });
+  }
+  /** The next date for a special service (this year's, or next year's once it has passed); '' when it has no fixed day. */
+  function specialDate(name, today) {
+    var y = +String(today).slice(0, 4), f = function (yr) { return specials(yr).filter(function (x) { return x.name.toLowerCase() === String(name).toLowerCase(); })[0]; };
+    var a = f(y); if (!a || !a.date) return '';
+    return a.date >= today ? a.date : f(y + 1).date;
+  }
+
   return { TIMES: TIMES, DEFAULT_SLOTS: DEFAULT_SLOTS, DEPARTMENTS: DEPARTMENTS, missing: missing, timeLabel: timeLabel, findPosition: findPosition,
-    slots: slots, slotLabel: slotLabel, newSlotId: newSlotId, slotOf: slotOf };
+    slots: slots, slotLabel: slotLabel, newSlotId: newSlotId, slotOf: slotOf, easter: function (y) { return ymd(easter(y)); }, specials: specials, specialDate: specialDate };
 })();
 if (typeof module !== 'undefined') module.exports = Serving;

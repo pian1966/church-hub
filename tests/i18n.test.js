@@ -42,5 +42,19 @@ I18n.set('zu'); check(I18n.t('Sign out') === 'Phuma' && I18n.dow()[0] === 'Son',
 I18n.set('xh'); check(I18n.t('Yes') === 'Ewe', 'isiXhosa');
 I18n.set('fr'); check(I18n.get() === 'en', 'an unknown language becomes English');
 
+console.log('More languages (js/lang/*.js, loaded when chosen; missing lines show in English)');
+const vm = require('vm'), langDir = path.join(__dirname, '..', 'js', 'lang');
+for (const [code, name] of I18n.MORE) {
+  const file = path.join(langDir, code + '.js');
+  if (!fs.existsSync(file)) { check(false, name + ': js/lang/' + code + '.js exists'); continue; }
+  let pack = null;
+  vm.runInNewContext(fs.readFileSync(file, 'utf8'), { I18n: { add: (c, p) => { if (c === code) pack = p; } } });
+  const words = (pack && pack.words) || {}, keys = Object.keys(words);
+  const bad = keys.filter(k => parts(k) !== parts(words[k]) || !String(words[k]).trim() || (k.match(/<\/?\w+/g) || []).join() !== (String(words[k]).match(/<\/?\w+/g) || []).join());
+  const missingHere = [...used].filter(x => !words[x]);
+  check(!!pack && pack.mon.length === 12 && pack.dow.length === 7 && !bad.length, name + ': months, days, and every line keeps its {parts}' + (bad.length ? ': ' + bad.slice(0, 3).join(' | ') : ''));
+  if (missingHere.length) console.log('    (' + name + ': ' + missingHere.length + ' line(s) not translated yet – shown in English)');
+}
+
 if (fails) { console.log('\n' + fails + ' language test(s) FAILED'); process.exit(1); }
 console.log('\nAll language tests passed');

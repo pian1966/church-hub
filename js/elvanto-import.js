@@ -64,12 +64,11 @@ var ElvantoImport = (function () {
       return m ? { time: pad(+m[1]) + ':' + m[2], name: m[3].trim() } : x.trim() ? { time: '', name: x.trim() } : null;
     }).filter(Boolean);
   }
-  /** Province as people type it ("KZN", "KZn") → the full name. */
-  function province(v) {
-    var s = String(v || '').trim(), k = s.toLowerCase().replace(/[^a-z]/g, '');
-    var P = { kzn: 'KwaZulu-Natal', kwazulunatal: 'KwaZulu-Natal', gp: 'Gauteng', gauteng: 'Gauteng', wc: 'Western Cape', westerncape: 'Western Cape', ec: 'Eastern Cape', easterncape: 'Eastern Cape',
-      fs: 'Free State', freestate: 'Free State', mp: 'Mpumalanga', mpumalanga: 'Mpumalanga', lp: 'Limpopo', limpopo: 'Limpopo', nw: 'North West', northwest: 'North West', nc: 'Northern Cape', northerncape: 'Northern Cape' };
-    return P[k] || s;
+  /** Province, state or county as people type it ("KZN", "KZn", "NSW") → the name in that country's list (js/countries.js). */
+  var C = typeof Countries !== 'undefined' ? Countries : (typeof require === 'function' ? require('./countries.js') : null);
+  function province(v, country) {
+    var s = String(v || '').trim(), c = C && (C.find(country) || C.find(C.DEFAULT));
+    return c ? C.region(s, c.code) : s;
   }
 
   /**
@@ -223,7 +222,7 @@ var ElvantoImport = (function () {
       o.partnerUpdated = /^\d{4}$/.test(String(o.partnerUpdated || '').trim()) ? String(o.partnerUpdated).trim() : toISO(o.partnerUpdated);
       o.receive = receiveChoices(o.receive);
       o.positions = positionsOf(o.positions);
-      o.address = { street: o.street, street2: o.street2, city: o.city, postcode: o.postcode, province: province(o.province), country: o.country };
+      o.address = { street: o.street, street2: o.street2, city: o.city, postcode: o.postcode, province: province(o.province, o.country), country: o.country };
       if (!o.address.street && !o.address.street2 && !o.address.city && !o.address.postcode) o.address = null;   // a province or country on its own isn't an address
       o.archived = yes(o.archived); o.deceased = yes(o.deceased);
       if (o.deceased) ['firstName', 'preferredName', 'lastName'].forEach(function (k) {   // "2024-08-22-Mike": the date they died, then the name

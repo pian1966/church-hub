@@ -243,6 +243,7 @@ var Hub = (function () {
     var body = mod ? mod.render(p.slice(1)) : renderHome();
     if (!mod || (mod.id === 'me' && !p[1])) body = prompts() + body;   // Home and My details
     root.innerHTML = shell(mod, body);
+    ourWords(root);
     wirePrompts();
     if (mod && mod.after) mod.after(p.slice(1));
     loadPhotos();
@@ -372,10 +373,19 @@ var Hub = (function () {
 
   /* ---------- modal and toast ---------- */
   var lastFocus = null;
+  /** The church's own words (Settings → Church wording) on everything shown – in English; translations keep theirs. */
+  var wordKey = null, wordFn = null;
+  function words() {
+    var st = Store.settings && Store.settings(), k = I18n.get() + JSON.stringify((st && st.wording) || {});
+    if (k !== wordKey) { wordKey = k; wordFn = I18n.get() === 'en' && st && st.wording ? Wording.changer(st) : null; }
+    return wordFn;
+  }
+  function ourWords(el) { var f = words(); if (f && el) Wording.apply(el, f); }
   function modal(html, label, wide) {
     lastFocus = document.activeElement;
     var m = document.getElementById('modal');
     m.innerHTML = '<div class="overlay" data-act="hub:overlay"><div class="dialog' + (wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' + html + '</div></div>';
+    ourWords(m);
     var body = m.querySelector('.dlg-body');
     if (body && body.querySelector('.field.req')) body.insertAdjacentHTML('afterbegin', reqKey());
     markRequired();
@@ -412,7 +422,7 @@ var Hub = (function () {
   }
   function toast(msg, bad) {
     var t = document.getElementById('toast');
-    t.textContent = msg; t.className = 'toast show' + (bad ? ' bad' : '');
+    var wf = words(); t.textContent = wf ? wf(String(msg)) : msg; t.className = 'toast show' + (bad ? ' bad' : '');
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = 'toast'; }, 3200);
   }
   function download(filename, text, type) {

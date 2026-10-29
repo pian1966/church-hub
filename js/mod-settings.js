@@ -30,6 +30,19 @@
       '<button class="btn small" data-act="settings:addslot">' + H.icon(H.ICON.plus, 16) + 'Add a service</button></section>';
   }
 
+  /** Church wording: a ready-made set for the kind of church, and any word renamed (js/wording.js). */
+  function renderWording(st) {
+    var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', words = Wording.words(st);
+    return '<section class="panel" data-own-words><h2>Church wording</h2><p class="hint" style="margin-top:0">The words your church uses for people and roles. ' +
+      'The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.</p>' +
+      '<label class="field">Kind of church<select id="wd-set">' + Object.keys(Wording.SETS).map(function (k) { return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(Wording.SETS[k].name) + '</option>'; }).join('') + '</select><small>Choosing one fills in its words below; you can still change any of them.</small></label>' +
+      '<div class="table-wrap"><table class="simple"><thead><tr><th>Church Hub says</th><th>Your word</th><th>More than one</th></tr></thead><tbody>' +
+      Wording.TERMS.map(function (t) {
+        return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(t[2]) + '</span></td>' +
+          '<td><input class="wd-1" data-k="' + t[0] + '" value="' + esc(words[t[0]][0]) + '" aria-label="Your word for ' + esc(t[1][0]) + '"></td>' +
+          '<td><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="Your word for ' + esc(t[1][1]) + '"></td></tr>';
+      }).join('') + '</tbody></table></div><button class="btn small" data-act="settings:savewords">Save wording</button></section>';
+  }
   function render() {
     var st = S.settings(), on = st.modules || {};
     var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
@@ -40,6 +53,7 @@
           return '<optgroup label="' + esc(g.continent) + '">' + g.countries.map(function (x) { return '<option value="' + x.code + '"' + (x.code === Countries.church(st).code ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</optgroup>';
         }).join('') + '</select><small>Sets the usual country for addresses (with its provinces, states or counties) and which privacy law the Privacy pages follow.</small></label>' +
         '<button class="btn small" data-act="settings:name">Save</button></section>' +
+      renderWording(st) +
       '<section class="panel"><h2>Apps</h2><p class="hint" style="margin-top:0">Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.</p>' + MODS.map(function (m) {
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(m[1]) + '</b><br><span class="muted small">' + esc(m[2]) + '</span></span></label>';
       }).join('') + '<p class="hint">More apps (groups, check-in, messages, calendar) arrive in later phases.</p></section>' +
@@ -58,6 +72,12 @@
     id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'],
     render: function () { return H.can('*') ? render() : '<p class="empty">Only Administrators can change settings.</p>'; },
     after: function () {
+      var ws = document.getElementById('wd-set');
+      if (ws) ws.addEventListener('change', function () {   // fill in the set's words, to save or change
+        var w = Wording.words({ wording: { set: ws.value } });
+        document.querySelectorAll('.wd-1').forEach(function (i) { i.value = w[i.dataset.k][0]; });
+        document.querySelectorAll('.wd-2').forEach(function (i) { i.value = w[i.dataset.k][1]; });
+      });
       document.querySelectorAll('.st-mod').forEach(function (b) {
         b.addEventListener('change', function () { var m = Object.assign({}, S.settings().modules); m[b.value] = b.checked; S.setSettings({ modules: m }, (b.checked ? 'Switched on ' : 'Switched off ') + b.value); H.toast(b.checked ? 'Switched on' : 'Switched off – its card is hidden'); H.render(); });
       });
@@ -70,6 +90,16 @@
         if (c !== Countries.church(st).code) say.push('Country: ' + Countries.find(c).name);
         if (say.length) S.setSettings({ churchName: n, country: c }, say.join('; '));
         H.render(); H.toast('Saved');
+      },
+      savewords: function () {
+        var set = document.getElementById('wd-set').value, base = Wording.words({ wording: { set: set } }), custom = {}, renamed = [];
+        document.querySelectorAll('.wd-1').forEach(function (i) {
+          var k = i.dataset.k, one = i.value.trim(), many = (document.querySelector('.wd-2[data-k="' + k + '"]').value || '').trim() || one;
+          if (!one) { one = base[k][0]; many = base[k][1]; }
+          if (one !== base[k][0] || many !== base[k][1]) { custom[k] = [one, many]; renamed.push(one); }
+        });
+        S.setSettings({ wording: { set: set, custom: custom } }, 'Church wording: ' + Wording.SETS[set].name + (renamed.length ? ' (own words: ' + renamed.join(', ') + ')' : ''));
+        H.render(); H.toast('Wording saved');
       },
       addslot: function () {
         var sl = Serving.slots(S.settings()), time = document.getElementById('sl-time').value, label = document.getElementById('sl-label').value.trim(), venue = document.getElementById('sl-venue').value.trim(), day = +document.getElementById('sl-day').value;

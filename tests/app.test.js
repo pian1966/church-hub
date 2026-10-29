@@ -524,6 +524,20 @@ function serve() {
   await s.page.selectOption('#st-country', 'KE'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
   await s.page.selectOption('#st-country', 'ZA'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'ZA', null, { timeout: 5000 }).catch(() => {}); await s.settle();
+  // Church wording: an Anglican church
+  await s.page.selectOption('#wd-set', 'anglican');
+  check(await s.page.inputValue('.wd-1[data-k="pastor"]') === 'Clergy' && await s.page.inputValue('.wd-1[data-k="partner"]') === 'Parishioner', 'Church wording: choosing Anglican fills in its words');
+  await s.page.fill('.wd-1[data-k="pastor"]', 'Rector'); await s.page.fill('.wd-2[data-k="pastor"]', 'Rectors'); await s.page.click('[data-act="settings:savewords"]');
+  await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'anglican', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
+  check(docs['settings/church'].wording.set === 'anglican' && docs['settings/church'].wording.custom.pastor[0] === 'Rector', 'the set and own words are saved');
+  t = await s.page.textContent('.grid2 > section:nth-of-type(4)');
+  check(/Rector/.test(t) && !/\bPastor\b/.test(t), 'the screens use the church’s words (Who can see what: Rector)');
+  const someP = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].category === 'Church Partner').split('/')[1];
+  await s.go('people/p/' + someP); t = await s.text();
+  check(t.includes('Parishioner') && !t.includes('Church Partner') && docs['people/' + someP].category === 'Church Partner', 'a Church Partner shows as a Parishioner – the record itself is unchanged');
+  await s.go('settings'); await s.page.selectOption('#wd-set', 'general'); await s.page.click('[data-act="settings:savewords"]');
+  await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'general', null, { timeout: 5000 }).catch(() => {}); await s.settle();
+  check((await s.text()).includes('Church Partner'), 'back to General, the usual words return');
   t = await s.text(); check(t.includes('Services and venues') && t.includes('8am') && t.includes('10am') && t.includes('5pm'), 'Settings lists the regular services (8am, 10am, 5pm to start with)');
   await s.page.fill('#sl-time', '09:30'); await s.page.fill('#sl-label', '9:30am'); await s.page.fill('#sl-venue', 'Hilton hall'); await s.page.click('[data-act="settings:addslot"]'); await s.settle(); docs = await s.docsNow();
   const slotsNow = docs['settings/church'].serviceSlots || [];

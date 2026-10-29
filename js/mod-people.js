@@ -402,7 +402,7 @@
     if ((H.can('*') || H.can('people.edit')) && !me) {
       var onotes = S.find('officeNotes', function (n) { return n.personId === p.id; });
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">Church office notes</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + 'Administrators and Pastors</span></div>' +
-        (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line">' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? 'From Elvanto' : n.by) + ', ' + H.fmt(n.at, true)) +
+        (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? 'From Elvanto' : n.by) + ', ' + H.fmt(n.at, true)) +
           ' · <button class="link" data-act="people:delonote" data-id="' + n.id + '">Delete</button></p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
         '<label class="field" style="margin-top:12px">Add a note<textarea id="on-text" rows="2" placeholder="Administrators and Pastors can see this. Pastoral matters go in pastoral notes."></textarea></label><button class="btn small" data-act="people:onote" data-id="' + p.id + '">Save note</button></section>';
     }
@@ -410,7 +410,7 @@
     if (seeNotes && !me) {
       var notes = S.find('notes', function (n) { return n.personId === p.id; });
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">Pastoral notes</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + 'Pastors only · views are logged</span></div>' +
-        (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0">' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
+        (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">No notes.</p>') +
         '<label class="field" style="margin-top:12px">Add a note<textarea id="pn-text" rows="2" placeholder="Only pastors can see this"></textarea></label><button class="btn small" data-act="people:note" data-id="' + p.id + '">Save note</button></section>';
     }
     // Volunteering: services, departments and positions (Rosters teams and positions); roster coordinators and Administrators change it

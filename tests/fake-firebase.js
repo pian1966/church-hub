@@ -40,6 +40,7 @@
         return c.robot && onlyChanges(b, a, ['status', 'note', 'have', 'haveNote', 'doneAt']);
       } },
     robotStatus: { read: function (c) { return is(c, ['admin']); }, write: function (c) { return c.robot; } },
+    elvantoFound: { read: function (c) { return is(c, ['admin']); }, write: function (c, op) { return op === 'delete' ? is(c, ['admin']) : c.robot; } },
     guardians: { read: function (c, id, d) { return is(c, ['admin', 'pastor', 'kids']) || (!!d && mine(c, d.adultId)); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },
     noCollect: { read: function (c) { return is(c, ['admin', 'pastor', 'kids']); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },
     people: { read: function (c, id) { return is(c, STAFF) || mine(c, id); },

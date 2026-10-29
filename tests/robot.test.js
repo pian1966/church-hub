@@ -5,6 +5,16 @@ let fails = 0;
 const ok = (cond, msg) => { console.log((cond ? '  ✓ ' : '  ✗ ') + msg); if (!cond) fails++; };
 const R = require('../robot/robot.js');
 
+console.log('Reading Elvanto’s unavailable dates (names and dates only)');
+ok(JSON.stringify(R.datesIn('03/04/2026 – 05/04/2026')) === '["2026-04-03","2026-04-05"]' && JSON.stringify(R.datesIn('Mon 3 Nov – Wed 5 Nov', 2026)) === '["2026-11-03","2026-11-05"]', 'dates as Elvanto may write them (day first, or with month names)');
+ok(!R.datesIn('Decline 3 things', 2026).length && !R.datesIn('31/02/2026').length, 'words that only look like months, and impossible dates, aren’t dates');
+{
+  const rr = R.readRows([['Anna Example', '3 Nov 2026', '5 Nov 2026', 'Hospital', 'Edit'], ['Ben Example', '01/01/2020', ''], ['Cara Example', '10/11/2026', '', 'Church Hub L12'], ['Anna Example', '3 Nov 2026', '5 Nov 2026', 'x'], ['Some text', 'more']], '2026-10-29');
+  ok(rr.entries.length === 2 && rr.entries[0].name === 'Anna Example' && rr.entries[0].from === '2026-11-03' && rr.entries[0].to === '2026-11-05', 'a row → name, first and last day (doubles once)');
+  ok(!JSON.stringify(rr).includes('Hospital'), 'the reason is never kept');
+  ok(!rr.entries.some(e => e.name === 'Ben Example') && rr.entries[1].fromLeave === true && rr.unread === 1, 'past entries left out; entries made for leave marked; rows not understood counted');
+}
+
 console.log('Converting values');
 const sample = { a: 'x', n: 3, f: 1.5, b: true, z: null, m: { k: 'v' }, l: ['p', 1] };
 ok(JSON.stringify(R.fromValue(R.toValue(sample))) === JSON.stringify(sample), 'text, numbers, yes/no, maps and lists survive the round trip');
@@ -82,6 +92,15 @@ srv.listen(0, '127.0.0.1', async () => {
     ok(DB['elvantoSync/LC'].data.note === '', 'entries not waiting are left alone');
     ok(DB['robotStatus/elvanto'].data.lastRun && DB['robotStatus/elvanto'].data.done === 2, 'records the run (2 done)');
     ok(!/Anna|Ben|Cara|Example|2026-1[12]/.test(r.stdout), 'the public log has no names or dates');
+
+    console.log('Reading the list every night');
+    reset(true); r = await runRobot('read', { FAKE_ROWS: JSON.stringify([['Anna Example', '3 Nov 2026', '5 Nov 2026', 'Hospital']]), TODAY: '2026-10-29' });
+    ok(!DB['elvantoFound/unavailable'] && /switched off/.test(r.stdout), 'does nothing until “Read Elvanto’s unavailable dates” is ticked in Church Hub');
+    DB['settings/church'].data.elvanto.read = true;
+    r = await runRobot('read', { FAKE_ROWS: JSON.stringify([['Anna Example', '3 Nov 2026', '5 Nov 2026', 'Hospital']]), TODAY: '2026-10-29' });
+    const F = (DB['elvantoFound/unavailable'] || {}).data || {};
+    ok(F.entries && F.entries.length === 1 && F.entries[0].name === 'Anna Example' && F.readAt && F.rows === 1, 'writes what it found for an Administrator to check (Import)');
+    ok(!JSON.stringify(F).includes('Hospital') && !/Anna|Example|2026-11/.test(r.stdout), 'no reasons kept; the public log has no names or dates');
 
     console.log('Leave changed while the robot was working');
     reset(true);

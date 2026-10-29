@@ -72,6 +72,45 @@ var ElvantoImport = (function () {
     return P[k] || s;
   }
 
+  /**
+   * What the robot found in Elvanto's Unavailable Volunteers (names and dates) → what to do in Church Hub.
+   *   found: [{ name, from, to, fromLeave }], people: Church Hub's people, blockouts: their away dates.
+   *   → [{ name, from, to, status, personId, choices }] with status
+   *      'new' (one person matches; not in Church Hub yet), 'have' (already an away date), 'leave' (made by Church Hub or
+   *      Leave Manager for leave – already in Church Hub), 'several' (more than one person with that name; choices = their ids),
+   *      'nomatch' (no one by that name; choices = people with the same surname).
+   */
+  function matchFound(found, people, blockouts) {
+    var norm = function (s) { return String(s || '').toLowerCase().replace(/[’']/g, '').replace(/[^a-z\u00c0-\u024f]+/g, ' ').trim(); };
+    var live = (people || []).filter(function (p) { return p.active !== false && !p.mergedInto && p.firstName !== 'Deleted'; });
+    var byName = {}, bySurname = {};
+    live.forEach(function (p) {
+      var keys = [norm(p.firstName + ' ' + p.lastName)];
+      if (p.preferredName) keys.push(norm(p.preferredName + ' ' + p.lastName));
+      keys.forEach(function (k) { (byName[k] = byName[k] || []).indexOf(p.id) < 0 && byName[k].push(p.id); });
+      (bySurname[norm(p.lastName)] = bySurname[norm(p.lastName)] || []).push(p.id);
+    });
+    return (found || []).map(function (e) {
+      var out = { name: e.name, from: e.from, to: e.to, status: '', personId: '', choices: [] };
+      if (e.fromLeave) { out.status = 'leave'; return out; }
+      var n = norm(e.name), ids = byName[n] || [];
+      if (!ids.length && n.indexOf(' ') > 0) {   // "Pike, Andrew" or a middle name: try surname + first word
+        var parts = n.split(' '), first = parts[0], last = parts[parts.length - 1];
+        ids = (byName[first + ' ' + last] || []).concat(/,/.test(e.name) ? (byName[parts.slice(1).join(' ') + ' ' + first] || []) : []);
+      }
+      if (ids.length === 1) {
+        out.personId = ids[0];
+        out.status = (blockouts || []).some(function (b) { return b.personId === ids[0] && b.from === e.from && (b.to || b.from) === e.to; }) ? 'have' : 'new';
+      } else if (ids.length > 1) { out.status = 'several'; out.choices = ids; }
+      else { out.status = 'nomatch'; out.choices = (bySurname[n.split(' ').pop()] || []).slice(0, 20); }
+      if (out.choices.length) {   // someone already chose who it is: an away date from Elvanto on those dates
+        var done = (blockouts || []).filter(function (b) { return b.source === 'elvanto' && out.choices.indexOf(b.personId) >= 0 && b.from === e.from && (b.to || b.from) === e.to; })[0];
+        if (done) { out.status = 'have'; out.personId = done.personId; }
+      }
+      return out;
+    });
+  }
+
   /** An ID number as typed: spaces gone. Elvanto's "numeric" column drops a leading 0 (people born 2000–2009), so 12 digits get it back.
    *  Spreadsheet-mangled numbers ("5.71021E+12") can't be recovered and are left out. */
   function idNumber(v) {
@@ -293,6 +332,6 @@ var ElvantoImport = (function () {
     return out;
   }
 
-  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, datedName: datedName, photoLink: photoLink, idNumber: idNumber, idInName: idInName, receiveChoices: receiveChoices, positionsOf: positionsOf, province: province, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
+  return { FIELDS: FIELDS, CATEGORIES: CATEGORIES, matchFound: matchFound, datedName: datedName, photoLink: photoLink, idNumber: idNumber, idInName: idInName, receiveChoices: receiveChoices, positionsOf: positionsOf, province: province, guardianLinks: guardianLinks, parseCSV: parseCSV, guess: guess, toISO: toISO, monthDay: monthDay, records: records, plan: plan, toPerson: toPerson, guessCategory: guessCategory };
 })();
 if (typeof module !== 'undefined') module.exports = ElvantoImport;

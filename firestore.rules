@@ -213,6 +213,12 @@ service cloud.firestore {
         || (robot() && onlyChanges(['status', 'note', 'have', 'haveNote', 'doneAt']));
       allow delete: if admin();
     }
+    // What the robot found in Elvanto (nightly, when switched on): names and dates of Unavailable Volunteers, for an
+    // Administrator to check and apply in Church Hub (Import). The robot writes it; only Administrators read or delete it.
+    match /elvantoFound/{id} {
+      allow read, delete: if admin();
+      allow create, update: if robot() && request.resource.data.keys().hasOnly(['readAt', 'entries', 'rows', 'unread', 'pages', 'applied']);
+    }
     match /robotStatus/{id} {
       allow read: if admin();
       allow write: if robot();

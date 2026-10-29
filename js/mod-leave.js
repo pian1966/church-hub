@@ -101,6 +101,7 @@
     var h = '<p class="muted" style="margin-top:0">Approved leave goes into Elvanto’s <b>Unavailable Volunteers</b> list, so nobody is rostered in Elvanto while they’re away. Elvanto can’t be updated directly, so a robot logs into Elvanto every 15 minutes and does it, like Leave Manager’s robot. Each entry has the note “Church Hub &lt;request ID&gt;”.</p>';
     h += '<div class="grid2"><section class="panel"><h2>Settings</h2>' +
       '<label class="check"><input type="checkbox" id="el-on"' + (el.on ? ' checked' : '') + '><span><b>Keep Elvanto up to date</b><br><span class="muted small">Switch on when you stop using Leave Manager (switch Leave Manager’s robot off at the same time), so entries aren’t made twice.</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="el-read"' + (el.read ? ' checked' : '') + '><span><b>Read Elvanto’s unavailable dates every night</b><br><span class="muted small">Until you switch over, the robot reads who is unavailable in Elvanto (names and dates only). Check and add them to Church Hub under <a href="#/import">Import</a>.</span></span></label>' +
       '<label class="field">Elvanto web address<input id="el-url" value="' + esc(el.url || '') + '" placeholder="https://yourchurch.elvanto.eu"></label>' +
       '<label class="field">Robot’s Church Hub sign-in (email)<input id="el-remail" value="' + esc(el.robotEmail || '') + '" placeholder="e.g. robot@yourchurch.org"><small>The account you created for the robot in Firebase (see the setup guide).</small></label>' +
       '<label class="field">Robot’s account ID (User UID)<input id="el-ruid" placeholder="' + (el.robotEmail ? 'Saved – type a new one to change it' : 'Copy it from Firebase → Authentication → Users') + '"></label>' +
@@ -312,12 +313,12 @@
     },
     actions: {
       elsave: function () {
-        var old = elvSettings(), on = document.getElementById('el-on').checked, url = document.getElementById('el-url').value.trim().replace(/\/+$/, '');
+        var old = elvSettings(), on = document.getElementById('el-on').checked, rd = document.getElementById('el-read').checked, url = document.getElementById('el-url').value.trim().replace(/\/+$/, '');
         var email = document.getElementById('el-remail').value.trim().toLowerCase(), uid = document.getElementById('el-ruid').value.trim();
-        if (on && !/^https:\/\/[\w.-]+\.elvanto\.[a-z.]+$/i.test(url)) { H.toast('Type your Elvanto web address, e.g. https://yourchurch.elvanto.eu', true); return; }
+        if ((on || rd) && !/^https:\/\/[\w.-]+\.elvanto\.[a-z.]+$/i.test(url)) { H.toast('Type your Elvanto web address, e.g. https://yourchurch.elvanto.eu', true); return; }
         if (email && email !== old.robotEmail && !uid) { H.toast('Also paste the robot’s account ID (User UID) from Firebase', true); return; }
         if (uid || (old.robotEmail && old.robotEmail !== email)) S.setRobot(email, uid, old.robotEmail);
-        S.setSettings({ elvanto: { on: on, url: url, robotEmail: email } }, (on && !old.on ? 'Switched on' : !on && old.on ? 'Switched off' : 'Changed') + ' keeping Elvanto up to date');
+        S.setSettings({ elvanto: { on: on, read: rd, url: url, robotEmail: email } }, (on && !old.on ? 'Switched on' : !on && old.on ? 'Switched off' : 'Changed') + ' keeping Elvanto up to date' + (rd !== !!old.read ? (rd ? '; reading Elvanto’s unavailable dates switched on' : '; reading Elvanto’s unavailable dates switched off') : ''));
         H.render(); H.toast('Saved');
       },
       elretry: function (el) { var e = JSON.parse(JSON.stringify(S.get('elvantoSync', el.dataset.id))); e.status = 'Waiting'; e.note = 'Trying again – the robot will do it on its next run.'; S.put('elvantoSync', e, 'Asked the Elvanto robot to try again'); H.render(); },

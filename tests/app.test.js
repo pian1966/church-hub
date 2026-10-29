@@ -62,6 +62,12 @@ function seedDocs(opts) {
     out['people/p14'].firstName = '2020-01-01-Tim';   // alive: left alone
     out['people/p19'].lastName = '5710210087085 Peters';   // an ID number typed into a name
   }
+  if (opts && opts.found) {   // what the robot read in Elvanto's Unavailable Volunteers (made-up)
+    out['settings/church'].elvanto = { on: false, read: true, url: 'https://example.elvanto.eu' };
+    out['elvantoFound/unavailable'] = { readAt: '2026-10-29T01:07:00Z', rows: 4, unread: 1, pages: 1, entries: [
+      { name: 'Clare Jacobs', from: '2030-11-03', to: '2030-11-05', fromLeave: false }, { name: 'Jacobs, Tim', from: '2030-11-10', to: '2030-11-10', fromLeave: false },
+      { name: 'Megan Jacobs', from: '2030-12-01', to: '2030-12-01', fromLeave: false }, { name: 'Lerato Khumalo', from: '2030-12-07', to: '2030-12-08', fromLeave: true }] };
+  }
   if (opts && opts.elvanto) {   // Elvanto updating switched on; Lerato's approved leave (L103) already in Elvanto; the robot's sign-in
     out['settings/church'].elvanto = { on: true, url: 'https://example.elvanto.eu', robotEmail: 'robot@example.com' };
     const l = d.leave.requests.find(r => r.id === 'L103');
@@ -640,6 +646,19 @@ function serve() {
   check((await s.text()).includes('Kontak en besonderhede') && (await s.text()).includes('Toestemming'), 'my details in Afrikaans');
   await s.page.selectOption('.side-lang .lang-sel', 'en'); await s.page.waitForTimeout(80);
   check((await s.page.textContent('.side nav')).includes('People'), 'back to English');
+  await finish(s);
+
+  console.log('Unavailable dates the robot read in Elvanto (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs({ found: true }));
+  await s.go('import/unavailable'); t = await s.text();
+  check(t.includes('Ready to add (2)') && t.includes('Choose who it is (1)') && t.includes('Megan Jacobs') && t.includes('Already in Church Hub (1)') && t.includes('couldn’t read'), 'Import shows what the robot found: ready, choose who, already in Church Hub');
+  await s.page.selectOption('.un-pick', 'p14'); await s.page.uncheck('.un-on >> nth=1');
+  await s.page.click('[data-act="import:unapply"]'); await s.settle(); docs = await s.docsNow();
+  const bo = Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].source === 'elvanto').map(k => docs[k]);
+  check(bo.length === 2 && bo.some(b => b.personId === 'p15' && b.from === '2030-11-03' && b.to === '2030-11-05') && bo.some(b => b.personId === 'p14' && b.from === '2030-12-01') && !bo.some(b => b.from === '2030-11-10'),
+    'Add makes away dates for the ticked ones (and the chosen person), not for the one left out');
+  t = await s.text(); check(t.includes('Ready to add (1)') && t.includes('Already in Church Hub (3)'), 'added ones move to “Already in Church Hub”');
+  await s.go('leave/elvanto'); check(await s.page.isChecked('#el-read'), 'Leave → Elvanto has the switch for reading every night');
   await finish(s);
 
   console.log('Upgrading existing data (first Administrator sign-in):');

@@ -12,10 +12,14 @@
  *   MODE=check    – is there work? (no browser) Prints and outputs "jobs=N"; records that the robot is alive.
  *   MODE=run      – do the work and report back to Church Hub (shown under Leave → Elvanto).
  *   MODE=explore  – log in and describe Elvanto's pages (field names, buttons) so the robot can be adjusted. Changes nothing.
+ *   MODE=read     – (nightly) read Elvanto's whole Unavailable Volunteers list – names and dates only, never reasons – into
+ *                   elvantoFound/unavailable, for an Administrator to check and apply in Church Hub (Import). Changes nothing
+ *                   in Elvanto. Only when "Read Elvanto's unavailable dates" is ticked under Leave → Elvanto.
  *
  * Env: ROBOT_EMAIL, ROBOT_PASSWORD (its Church Hub sign-in), ELVANTO_USERNAME, ELVANTO_PASSWORD;
  *      optional ELV_LIST_PATH, SITE_URL (default https://pian1966.github.io/church-hub/).
- *      For tests: AUTH_URL, FS_URL (stand-in servers), FIREBASE_CONFIG_FILE, FAKE_ELVANTO=1 (no browser; pretends each job worked).
+ *      For tests: AUTH_URL, FS_URL (stand-in servers), FIREBASE_CONFIG_FILE, FAKE_ELVANTO=1 (no browser; pretends each job worked),
+ *      FAKE_ROWS (JSON: the table rows the list would show, for MODE=read), TODAY (yyyy-mm-dd).
  */
 const fs = require('fs');
 const path = require('path');
@@ -271,12 +275,92 @@ async function removeUnavailability(page, base, job) {
 }
 
 
+/* ------------------------------ reading the list (MODE=read) ------------------------------ */
+const MONTHS = { jan: 1, feb: 2, mar: 3, apr: 4, may: 5, jun: 6, jul: 7, aug: 8, sep: 9, sept: 9, oct: 10, nov: 11, dec: 12 };
+const pad2 = (n) => ('0' + n).slice(-2);
+const okDate = (y, m, d) => { const t = new Date(Date.UTC(y, m - 1, d)); return t.getUTCFullYear() === y && t.getUTCMonth() === m - 1 && t.getUTCDate() === d; };
+/** All dates in a piece of text, as yyyy-mm-dd, in order. South African style: 03/04/2026 is 3 April. */
+function datesIn(text, year) {
+  const s = String(text || ''), out = [];
+  const MON = '(jan(?:uary)?|feb(?:ruary)?|mar(?:ch)?|apr(?:il)?|may|june?|july?|aug(?:ust)?|sep(?:t(?:ember)?)?|oct(?:ober)?|nov(?:ember)?|dec(?:ember)?)\\b';
+  const re = new RegExp('(\\d{4})-(\\d{1,2})-(\\d{1,2})|(\\d{1,2})[\\/.](\\d{1,2})[\\/.](\\d{2,4})|(\\d{1,2})(?:st|nd|rd|th)?\\s+' + MON + '\\.?,?(?:\\s+(\\d{4}))?|' + MON + '\\.?\\s+(\\d{1,2})(?:st|nd|rd|th)?,?(?:\\s+(\\d{4}))?', 'gi');
+  let m;
+  while ((m = re.exec(s))) {
+    let y, mo, d;
+    if (m[1]) { y = +m[1]; mo = +m[2]; d = +m[3]; }
+    else if (m[4]) { d = +m[4]; mo = +m[5]; y = +m[6]; if (y < 100) y += 2000; if (mo > 12 && d <= 12) { const t = d; d = mo; mo = t; } }
+    else if (m[7]) { d = +m[7]; mo = MONTHS[m[8].toLowerCase().slice(0, 3)]; y = m[9] ? +m[9] : year; }
+    else { mo = MONTHS[m[10].toLowerCase().slice(0, 3)]; d = +m[11]; y = m[12] ? +m[12] : year; }
+    if (y && mo && d && okDate(y, mo, d)) out.push(y + '-' + pad2(mo) + '-' + pad2(d));
+  }
+  return out;
+}
+/**
+ * The Unavailable Volunteers table, row by row (each row = its cells' text) → who is unavailable when.
+ * Keeps only names and dates (never the reason); marks entries made for leave (note "Church Hub …" / "Leave Manager …"),
+ * which are already in Church Hub. Past entries are left out.
+ */
+function readRows(rows, today) {
+  const year = +String(today).slice(0, 4), entries = [], seen = {};
+  let unread = 0;
+  (rows || []).forEach(cells => {
+    cells = (cells || []).map(clean);
+    const all = cells.join(' | ');
+    const ds = datesIn(all, year);
+    if (!ds.length) { if (cells.some(c => /[A-Za-z]/.test(c)) && cells.length > 1) unread++; return; }
+    const name = cells.find(c => /[A-Za-z]{2}/.test(c) && !datesIn(c, year).length && !/^(edit|delete|remove|all day|repeat\w*)$/i.test(c));
+    if (!name) { unread++; return; }
+    const from = ds[0], to = ds[1] && ds[1] >= ds[0] ? ds[1] : ds[0];
+    if (to < today) return;
+    const fromLeave = /\b(Church Hub|Leave Manager) [\w-]+/.test(all);
+    const key = name.toLowerCase() + '|' + from + '|' + to;
+    if (seen[key]) return; seen[key] = 1;
+    entries.push({ name: name.slice(0, 80), from, to, fromLeave });
+  });
+  return { entries, unread };
+}
+async function readUnavailable(page, base) {
+  if (!page) return { rows: JSON.parse(process.env.FAKE_ROWS || '[]'), pages: 1 };
+  await openList(page, base);
+  const rows = []; const visited = new Set(); let pages = 0;
+  for (; pages < 40; pages++) {
+    visited.add(page.url());
+    rows.push(...await page.$$eval('tr', trs => trs.map(tr => [...tr.querySelectorAll('td')].map(td => td.innerText)).filter(c => c.length)));
+    const next = await page.evaluate(() => {
+      const a = [...document.querySelectorAll('a[rel=next], .pagination a, a[aria-label*="Next" i], a')].find(x => /^(next|›|»|next ›|next »)$/i.test((x.innerText || x.getAttribute('aria-label') || '').trim()) && !x.closest('.disabled'));
+      return a && a.href && !/^javascript/i.test(a.href) ? a.href : '';
+    });
+    if (!next || visited.has(next)) break;
+    await page.goto(next, { waitUntil: 'domcontentloaded' }); await page.waitForTimeout(1200);
+  }
+  return { rows, pages: pages + 1 };
+}
+
 /* ------------------------------ main ------------------------------ */
 async function main() {
   if (!process.env.ROBOT_EMAIL || !process.env.ROBOT_PASSWORD) { log('Robot not set up (no ROBOT_EMAIL / ROBOT_PASSWORD).'); if (MODE === 'check') out('jobs=0'); return; }
   await signIn();
   const settings = (await getDoc('settings/church')) || {}, elv = settings.elvanto || {};
   const base = String(elv.url || '').replace(/\/+$/, '');
+  if (MODE === 'read') {
+    if (!elv.read) { log('Reading Elvanto’s unavailable dates is switched off in Church Hub (Leave → Elvanto).'); return; }
+    if (!base) throw new Error('The Elvanto web address isn’t set in Church Hub (Leave → Elvanto).');
+    let browser = null, page = null;
+    if (!process.env.FAKE_ELVANTO) {
+      const { chromium } = require('playwright');
+      browser = await chromium.launch();
+      page = await browser.newPage({ viewport: { width: 1366, height: 900 }, locale: 'en-GB', timezoneId: 'Africa/Johannesburg' });
+      page.setDefaultTimeout(15000);
+      await login(page, base); log('Logged in.');
+    }
+    try {
+      const today = process.env.TODAY || new Date(Date.now() + 2 * 3600e3).toISOString().slice(0, 10);   // Johannesburg date
+      const got = await readUnavailable(page, base), r = readRows(got.rows, today);
+      await patch('elvantoFound/unavailable', { readAt: new Date().toISOString(), entries: r.entries, rows: got.rows.length, unread: r.unread, pages: got.pages });
+      log('Read', got.pages, 'page(s):', r.entries.length, 'entries now or later,', r.unread, 'row(s) not understood. Nothing changed in Elvanto.');
+    } finally { if (browser) await browser.close(); }
+    return;
+  }
   const jobs = elv.on ? await waitingJobs() : [];
   if (MODE === 'check') {
     log(elv.on ? 'jobs=' + jobs.length : 'Keeping Elvanto up to date is switched off in Church Hub.'); out('jobs=' + jobs.length);
@@ -345,4 +429,4 @@ async function report(job, res) {
 function out(line) { fs.appendFileSync(process.env.GITHUB_OUTPUT || '/dev/null', line + '\n'); }
 
 if (require.main === module) main().catch(e => { console.log('Robot error:', String(e.message || e).replace(/[\w.+-]+@[\w.-]+/g, '<email>')); process.exit(1); });
-module.exports = { fromValue, toValue, noteFor };
+module.exports = { fromValue, toValue, noteFor, datesIn, readRows };

@@ -149,7 +149,7 @@
       bars('Church partners, attenders, visiting ministers and staff', cats, act.length) +
       bars('Marital status (adults)', mar, adults.length) +
       bars('Household size', sizes, fams.length, single ? single + ' adult' + (single === 1 ? ' isn’t' : 's aren’t') + ' in a household.' : '') +
-      '<section class="panel glance"><h3>Consent (POPIA)</h3><div class="sbars">' + cons.map(function (c) {
+      '<section class="panel glance"><h3>Consent (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ')</h3><div class="sbars">' + cons.map(function (c) {
         var w = pct(c[1], c[2]);
         return '<div class="sbar" title="' + esc(c[0] + ': ' + c[1] + ' of ' + c[2] + ' (' + w + '%)') + '"><span class="sbar-l">' + esc(c[0]) + '</span><span class="sbar-t" aria-hidden="true"><i style="width:' + w + '%"></i></span><span class="sbar-v">' + w + '% <small>' + c[1] + '/' + c[2] + '</small></span></div>';
       }).join('') + '</div><p class="hint">Share of people who agreed. Email, SMS and directory: adults only.</p></section>' +
@@ -378,7 +378,7 @@
     }
     // Consent (POPIA)
     if (full) {
-      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Consent') + '</h2>' + H.icon(H.ICON.privacy, 18) + '</div><p class="hint" style="margin:4px 0 10px">' + (me ? T('What you have agreed to, as POPIA requires.') : 'What ' + esc(p.firstName) + ' has agreed to, as POPIA requires.') + (child ? ' A parent or guardian gives consent for children.' : '') + '</p>' +
+      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Consent') + '</h2>' + H.icon(H.ICON.privacy, 18) + '</div><p class="hint" style="margin:4px 0 10px">' + (me ? T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) : 'What ' + esc(p.firstName) + ' has agreed to, as POPIA requires.') + (child ? ' A parent or guardian gives consent for children.' : '') + '</p>' +
         '<div class="list">' + PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; }).map(function (pur) {
           var c = consentFor(p.id, pur);
           return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b><small>' + (c ? esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) }) + ' · ' + T(c.method) + (c.guardianId ? ' · ' + T('by {name}', { name: H.name(S.get('people', c.guardianId)) }) : '')) : T('Not asked yet')) + '</small></span>' +
@@ -505,7 +505,7 @@
       '<label class="field req">Who<select id="gl-who"><option value="">Choose…</option><option value="__out"' + (outside ? ' selected' : '') + '>Someone not in Church Hub…</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
       '<div id="gl-out" class="two"' + (outside ? '' : ' hidden') + '><label class="field req">Name<input id="gl-name" value="' + esc(l.name || '') + '"></label><label class="field">Phone<input id="gl-phone" type="tel" value="' + esc(l.phone || '') + '"></label></div>' +
       '<label class="field req">Relationship to ' + esc(c.firstName) + '<select id="gl-rel">' + HS.RELATIONSHIPS.map(function (r) { return '<option' + (l.relationship === r ? ' selected' : '') + '>' + r + '</option>'; }).join('') + '</select></label>' +
-      '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>Can give consent</b><br><span class="muted small">A parent or legal guardian (POPIA). Not step-parents, grandparents or collectors unless they are legal guardians.</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>Can give consent</b><br><span class="muted small">A parent or legal guardian (' + esc(PrivacyLaw.forChurch(S.settings()).short) + '). Not step-parents, grandparents or collectors unless they are legal guardians.</span></span></label>' +
       '<label class="check"><input type="checkbox" id="gl-primary"' + (l.primary ? ' checked' : '') + '><span><b>Primary contact</b><br><span class="muted small">Gets messages from the church about ' + esc(c.firstName) + '.</span></span></label>' +
       '<label class="check"><input type="checkbox" id="gl-collect"' + (l.mayCollect ? ' checked' : '') + '><span><b>May collect ' + esc(c.firstName) + '</b><br><span class="muted small">Can sign ' + esc(c.firstName) + ' out of children’s church.</span></span></label>' +
       '<p id="gl-err" class="note bad" hidden></p></div><div class="dlg-foot">' + (isNew ? '' : '<button class="btn" style="margin-right:auto" data-act="people:linkdel" data-id="' + l.id + '">Remove</button>') +
@@ -936,7 +936,7 @@
         return '<th' + (on ? ' aria-sort="' + (A.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="th-sort" data-act="people:advsort" data-k="' + k + '">' + esc(r.byKey[k].label) + (on ? (A.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>';
       }).join('') + '</tr></thead><tbody>' + r.rows.map(function (x) {
         return '<tr>' + (bulk ? '<td class="sel"><input type="checkbox" class="adv-sel" value="' + x.id + '" aria-label="Tick ' + esc(H.name(x.p)) + '"' + (sel[x.id] ? ' checked' : '') + '></td>' : '') + cols.map(function (k) { return k === 'name' ? '<td><a href="#/people/p/' + x.id + '">' + listName(x.p) + '</a></td>' : k === 'email' && x.values.email ? '<td><a href="mailto:' + esc(x.values.email) + '" target="_blank" rel="noopener">' + esc(x.values.email) + '</a></td>' : '<td>' + esc(advShow(r.byKey[k], x.values[k])) + '</td>'; }).join('') + '</tr>';
-      }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (POPIA).</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
+      }).join('') + '</tbody></table></div><p class="hint">Downloads hold personal information: keep them on church computers and delete them when you’re done (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ').</p>' : '<p class="empty">No one matches these filters.</p>') + '</section>';
   }
   /* ---------- changing many people at once (Administrators): tick people in the results, then one field for all of them ---------- */
   function canBulk() { return H.can('*'); }
@@ -1151,7 +1151,7 @@
     var child = p.familyRole === 'child', me = isMe(p);
     var guardians = child ? HS.consentAdults(p.id, S.list('guardians')).map(function (l) { return S.get('people', l.adultId); }).filter(Boolean) : [];
     if (child && !me && !guardians.length) {
-      H.modal(H.dialogHead('Consent for ' + H.name(p)) + '<div class="dlg-body"><p class="note warn" style="margin:0">No parent or guardian who can give consent is recorded for ' + esc(p.firstName) + '. Under POPIA a parent or legal guardian gives consent for a child.</p><p>Add them under <b>Parents, guardians and collection</b> on ' + esc(p.firstName) + '’s profile, then record consent.</p></div><div class="dlg-foot"><button class="btn primary" data-act="hub:close">OK</button></div>', 'Consent');
+      H.modal(H.dialogHead('Consent for ' + H.name(p)) + '<div class="dlg-body"><p class="note warn" style="margin:0">No parent or guardian who can give consent is recorded for ' + esc(p.firstName) + '. Under ' + esc(PrivacyLaw.forChurch(S.settings()).short) + ' a parent or legal guardian gives consent for a child.</p><p>Add them under <b>Parents, guardians and collection</b> on ' + esc(p.firstName) + '’s profile, then record consent.</p></div><div class="dlg-foot"><button class="btn primary" data-act="hub:close">OK</button></div>', 'Consent');
       return;
     }
     var purposes = PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; });
@@ -1208,7 +1208,7 @@
   function exportPerson(p) {
     var pick = function (c) { return S.find(c, function (x) { return x.personId === p.id || (x.memberIds && x.memberIds.indexOf(p.id) >= 0); }); };
     var lv = Store.leave();
-    var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (POPIA section 23).',
+    var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (' + PrivacyLaw.forChurch(S.settings()).copyRight + ').',
       restricted: H.can('notes') && H.can('medical') ? '' : 'Pastoral notes and children’s medical notes are kept separately and only Pastors / Children’s ministry can read them. Ask them to add these if the request covers them.',
       person: p, family: familyOf(p), households: HS.householdsOf(p).map(function (h) { return S.get('families', h); }),
       responsibleAdults: S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }), consents: pick('consents'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts'), offersToServe: pick('serveOffers') },
@@ -1225,7 +1225,7 @@
       if (!H.can('*') && !H.can('people.view') && !canChildren()) return [];
       var all = H.can('*') || H.can('people.view');
       var out = [], missing = all ? S.find('people', function (p) { return p.active !== false && !hasConsent(p.id, 'Church records'); }) : [];
-      if (missing.length) out.push({ text: missing.length + ' ' + (missing.length === 1 ? 'person has' : 'people have') + ' no recorded consent', href: '#/people/p/' + missing[0].id, tag: 'POPIA' });
+      if (missing.length) out.push({ text: missing.length + ' ' + (missing.length === 1 ? 'person has' : 'people have') + ' no recorded consent', href: '#/people/p/' + missing[0].id, tag: PrivacyLaw.forChurch(S.settings()).short });
       if (canChildren()) {
         var nd = HS.needs(S.list('people'), S.list('guardians'));
         if (nd.noConsenter.length) out.push({ text: nd.noConsenter.length + ' ' + (nd.noConsenter.length === 1 ? 'child has' : 'children have') + ' no parent or guardian who can give consent', href: '#/people/p/' + nd.noConsenter[0].id, tag: 'Children' });
@@ -1561,7 +1561,7 @@
       savemedical: function (el) {
         var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id))), a = document.getElementById('md-a').value.trim(), n = document.getElementById('md-n').value.trim();
         if ((a || n) && !hasConsent(p.id, 'Children’s medical notes')) {
-          var e = document.getElementById('md-err'); e.textContent = 'A parent or guardian must agree first (POPIA). Ask a Pastor or the church office to record their consent on ' + p.firstName + '’s profile.'; e.hidden = false; return;
+          var e = document.getElementById('md-err'); e.textContent = 'A parent or guardian must agree first (' + PrivacyLaw.forChurch(S.settings()).short + '). Ask a Pastor or the church office to record their consent on ' + p.firstName + '’s profile.'; e.hidden = false; return;
         }
         if (a || n) p.medical = { allergies: a, notes: n }; else delete p.medical;
         S.put('people', p, 'Updated children’s medical notes of ' + H.name(p));
@@ -1589,7 +1589,7 @@
       },
       editid: function (el) {
         var p = S.get('people', el.dataset.id), known = state.idShown && state.idShown.id === p.id ? state.idShown.value : '';
-        H.modal(H.dialogHead('ID number of ' + H.name(p), 'Administrators only. Keep it only if the church still needs it (POPIA).') + '<div class="dlg-body">' +
+        H.modal(H.dialogHead('ID number of ' + H.name(p), 'Administrators only. Keep it only if the church still needs it (' + PrivacyLaw.forChurch(S.settings()).short + ').') + '<div class="dlg-body">' +
           '<label class="field">ID number<input id="idn-v" inputmode="numeric" autocomplete="off" value="' + esc(known) + '" placeholder="' + (known ? '' : 'Leave empty to keep the current one') + '"><small>South African ID numbers have 13 digits. Passport numbers are fine too.</small></label>' +
           '<label class="check"><input type="checkbox" id="idn-del"><span>Remove the ID number</span></label><p id="idn-err" class="note bad" hidden></p></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="people:saveid" data-id="' + p.id + '">Save</button></div>', 'ID number');

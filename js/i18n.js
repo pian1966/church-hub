@@ -174,7 +174,7 @@ var I18n = (function () {
     ['Lives in {n} households', 'Woon in {n} huishoudings', 'Uhlala emakhaya angu-{n}', 'Uhlala kumakhaya ama-{n}'],
     ['(main)', '(hoof)', '(elikhulu)', '(eliphambili)'],
     ['Consent', 'Toestemming', 'Imvume', 'Imvume'],
-    ['What you have agreed to, as POPIA requires.', 'Waartoe jy ingestem het, soos POPIA vereis.', 'Lokho okuvumile, njengoba i-POPIA idinga.', 'Oko uvumileyo kuko, njengoko i-POPIA ifuna.'],
+    ['What you have agreed to, as {law} requires.', 'Waartoe jy ingestem het, soos {law} vereis.', 'Lokho okuvumile, njengoba i-{law} idinga.', 'Oko uvumileyo kuko, njengoko i-{law} ifuna.'],
     ['Church records', 'Kerkrekords', 'Amarekhodi ebandla', 'Iirekhodi zecawe'],
     ['SMS', 'SMS', 'I-SMS', 'I-SMS'],
     ['Photos', 'Foto’s', 'Izithombe', 'Iifoto'],

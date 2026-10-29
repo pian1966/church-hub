@@ -523,6 +523,13 @@ function serve() {
   check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
   await s.page.selectOption('#st-country', 'KE'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
+  await s.go('privacy'); t = await s.text();
+  check(t.includes('Privacy (Data Protection Act)') && t.includes('Office of the Data Protection Commissioner') && !t.includes('POPIA') && !t.includes('Information Regulator'), 'Privacy follows the country’s law (Kenya: Data Protection Act, ODPC)');
+  await s.page.evaluate(() => Store.setSettings({ country: 'DE' })); await s.settle(); await s.go('privacy/breaches'); t = await s.text();
+  check(t.includes('Privacy (GDPR)') && t.includes('72 hours'), 'Germany: GDPR and its 72 hours for a breach');
+  await s.page.evaluate(() => Store.setSettings({ country: 'ZA' })); await s.settle(); await s.go('privacy'); t = await s.text();
+  check(t.includes('Privacy (POPIA)') && t.includes('Information Regulator'), 'South Africa: POPIA and the Information Regulator');
+  await s.go('settings');
   await s.page.selectOption('#st-country', 'ZA'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'ZA', null, { timeout: 5000 }).catch(() => {}); await s.settle();
   // Church wording: an Anglican church
   await s.page.selectOption('#wd-set', 'anglican');

@@ -71,7 +71,7 @@
       '<p class="hint">' + T('Something wrong or missing here? Please tell the church office and they will change it.') + '</p></section>';
     // Consent (POPIA): what they agreed to
     var cf = window.PeopleHelpers ? PeopleHelpers.consentFor : function () { return null; };
-    html += '<section class="panel"><h2>' + T('Consent') + '</h2><p class="hint" style="margin:0 0 10px">' + T('What you have agreed to, as POPIA requires.') + '</p><div class="list">' +
+    html += '<section class="panel"><h2>' + T('Consent') + '</h2><p class="hint" style="margin:0 0 10px">' + T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) + '</p><div class="list">' +
       PURPOSES.map(function (pur) {
         var c = cf(p.id, pur);
         return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b></span>' + (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';

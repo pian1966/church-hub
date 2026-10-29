@@ -120,7 +120,7 @@
       '<section class="panel"><h2>Categories</h2><p class="hint" style="margin-top:0">What each Elvanto category becomes in Church Hub.</p>' + Object.keys(pl.categories).map(function (c) {
         return '<label class="field">' + esc(c || '(no category)') + ' <small>(' + pl.categories[c] + ')</small><select class="im-cat" data-c="' + esc(c) + '">' + E.CATEGORIES.map(function (x) { return '<option' + (st.cats[c] === x ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label>';
       }).join('') + '</section>' +
-      '<section class="panel"><label class="check"><input type="checkbox" id="im-consent"><span>Elvanto records show these people agreed to the church keeping their details. <span class="muted small">Only tick if that’s true – otherwise you’ll be reminded to ask them (POPIA).</span></span></label>' +
+      '<section class="panel"><label class="check"><input type="checkbox" id="im-consent"><span>Elvanto records show these people agreed to the church keeping their details. <span class="muted small">Only tick if that’s true – otherwise you’ll be reminded to ask them (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ').</span></span></label>' +
       '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="import:go"' + (st.map.firstName == null || st.map.lastName == null ? ' disabled' : '') + '>Import ' + r.length + ' people</button><button class="btn" data-act="import:again">Start again</button></div></section></div></div>';
     return h;
   }

@@ -1,6 +1,8 @@
 # Church Hub → Elvanto robot (see robot/robot.js; adapted from Leave Manager's robot).
 # Every 15 minutes it checks Church Hub's Elvanto list (Leave → Elvanto) for approved, changed or cancelled leave,
 # and if there is any, logs into Elvanto and updates the Unavailable Volunteers list.
+# Every night (about 3am) it reads Elvanto's whole Unavailable Volunteers list – names and dates only – for an
+# Administrator to check and apply in Church Hub (Import → Unavailable dates from Elvanto), if switched on in Church Hub.
 #
 # Repository secrets (Settings → Secrets and variables → Actions) – see docs/ELVANTO-ROBOT.md:
 #   ROBOT_EMAIL, ROBOT_PASSWORD   – the robot's own Church Hub sign-in (created in Firebase → Authentication)
@@ -11,13 +13,14 @@ name: Elvanto robot
 on:
   schedule:
     - cron: '*/15 * * * *'
+    - cron: '7 1 * * *'        # 03:07 in Johannesburg: read Elvanto's unavailable dates
   workflow_dispatch:
     inputs:
       mode:
-        description: 'run = do waiting work · explore = describe Elvanto’s pages, change nothing'
+        description: 'run = do waiting work · read = read Elvanto’s unavailable dates for Church Hub · explore = describe Elvanto’s pages, change nothing'
         default: run
         type: choice
-        options: [run, explore]
+        options: [run, read, explore]
 
 concurrency:
   group: elvanto-robot
@@ -37,8 +40,13 @@ jobs:
         with:
           node-version: 22
 
+      - name: Which job
+        id: mode
+        run: echo "mode=${{ github.event.inputs.mode || (github.event.schedule == '7 1 * * *' && 'read') || 'run' }}" >> "$GITHUB_OUTPUT"
+
       - name: Anything to do?
         id: check
+        if: steps.mode.outputs.mode == 'run'
         env:
           ROBOT_EMAIL: ${{ secrets.ROBOT_EMAIL }}
           ROBOT_PASSWORD: ${{ secrets.ROBOT_PASSWORD }}
@@ -46,19 +54,19 @@ jobs:
         run: node robot/robot.js
 
       - name: Install the browser
-        if: steps.check.outputs.jobs != '0' || github.event.inputs.mode == 'explore'
+        if: steps.check.outputs.jobs != '0' || steps.mode.outputs.mode != 'run'
         working-directory: robot
         run: |
           npm install --no-audit --no-fund
           npx playwright install --with-deps chromium
 
-      - name: Update Elvanto
-        if: steps.check.outputs.jobs != '0' || github.event.inputs.mode == 'explore'
+      - name: Update Elvanto (or read it)
+        if: steps.check.outputs.jobs != '0' || steps.mode.outputs.mode != 'run'
         env:
           ROBOT_EMAIL: ${{ secrets.ROBOT_EMAIL }}
           ROBOT_PASSWORD: ${{ secrets.ROBOT_PASSWORD }}
           ELVANTO_USERNAME: ${{ secrets.ELVANTO_USERNAME }}
           ELVANTO_PASSWORD: ${{ secrets.ELVANTO_PASSWORD }}
           ELV_LIST_PATH: ${{ vars.ELVANTO_LIST_PATH }}
-          MODE: ${{ github.event.inputs.mode || 'run' }}
+          MODE: ${{ steps.mode.outputs.mode }}
         run: node robot/robot.js

@@ -286,6 +286,15 @@ await t('the robot reports results but can’t change who or when', async () => 
   await cannot(robotDb.doc('elvantoSync/L2').set({ personId: 'p01', status: 'Waiting' }));
   await can(robotDb.doc('robotStatus/elvanto').set({ lastRun: '2026-10-26T10:00:00Z', done: 1 }));
 });
+await t('what the robot reads in Elvanto: it writes names and dates only; only Administrators read or delete it', async () => {
+  await can(robotDb.doc('elvantoFound/unavailable').set({ readAt: 'x', entries: [{ name: 'A B', from: '2026-11-03', to: '2026-11-05', fromLeave: false }], rows: 1, unread: 0, pages: 1 }));
+  await cannot(robotDb.doc('elvantoFound/unavailable').set({ readAt: 'x', entries: [], reason: 'Hospital' }));
+  await cannot(read(robotDb, 'elvantoFound/unavailable'));
+  for (const r of ['pastor', 'kids', 'rosters', 'member']) await cannot(read(db[r], 'elvantoFound/unavailable'));
+  await can(read(db.admin, 'elvantoFound/unavailable'));
+  await cannot(db.admin.doc('elvantoFound/unavailable').set({ readAt: 'y', entries: [] }));
+  await can(db.admin.doc('elvantoFound/unavailable').delete());
+});
 await t('another account using the robot’s email gets nothing', async () => {
   await cannot(list(impostor.collection('elvantoSync'))); await cannot(read(impostor, 'settings/church'));
 });

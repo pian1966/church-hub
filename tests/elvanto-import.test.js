@@ -70,6 +70,22 @@ ok(E.province('KZn') === 'KwaZulu-Natal' && E.province('KwaZulu-Natal') === 'Kwa
   ok(!E.toPerson(rr[1], null, {}, '', '2026-10-28').address, 'a province and country on their own aren’t an address');
 }
 
+console.log('Unavailable dates the robot found in Elvanto');
+{
+  const P = [{ id: 'a', firstName: 'Andrew', lastName: 'Pike' }, { id: 'b', firstName: 'Douglas', preferredName: 'Doug', lastName: 'Pike' },
+    { id: 'c', firstName: 'Sam', lastName: 'Smith' }, { id: 'd', firstName: 'Sam', lastName: 'Smith' }, { id: 'e', firstName: 'Old', lastName: 'Pike', active: false }];
+  const m = E.matchFound([{ name: 'Andrew Pike', from: '2026-11-03', to: '2026-11-05' }, { name: 'Doug Pike', from: '2026-11-08', to: '2026-11-08' },
+    { name: 'Pike, Andrew', from: '2026-12-01', to: '2026-12-01' }, { name: 'Sam Smith', from: '2026-11-01', to: '2026-11-01' }, { name: 'Megan Pike', from: '2026-11-01', to: '2026-11-01' },
+    { name: 'Andrew Pike', from: '2026-11-10', to: '2026-11-10', fromLeave: true }], P, [{ personId: 'b', from: '2026-11-08', to: '2026-11-08' }]);
+  ok(m[0].status === 'new' && m[0].personId === 'a', 'a name matches one person: ready to add');
+  ok(m[1].status === 'have' && m[1].personId === 'b', 'found by the name they’re known as; already an away date');
+  ok(m[2].status === 'new' && m[2].personId === 'a', '“Surname, First name” works too');
+  ok(m[3].status === 'several' && m[3].choices.join() === 'c,d', 'two people with the same name: choose');
+  ok(m[4].status === 'nomatch' && m[4].choices.join() === 'a,b', 'no one by that name: people with the same surname offered (not people who left)');
+  ok(m[5].status === 'leave', 'entries made for leave are already in Church Hub');
+  ok(E.matchFound([{ name: 'Sam Smith', from: '2026-11-01', to: '2026-11-01' }], P, [{ personId: 'd', from: '2026-11-01', to: '2026-11-01', source: 'elvanto' }])[0].status === 'have', 'once someone has chosen who it is, it counts as already in Church Hub');
+}
+
 console.log('Making the people');
 const p = E.toPerson(by('Peter'), null, {}, '', '2026-10-26');
 ok(p.active === false && p.category === 'Deceased' && p.deceasedAt === '2026-02-02', 'Deceased in Elvanto → recorded as died, with the date');

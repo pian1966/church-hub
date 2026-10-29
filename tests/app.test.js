@@ -62,6 +62,12 @@ function seedDocs(opts) {
     out['people/p14'].firstName = '2020-01-01-Tim';   // alive: left alone
     out['people/p19'].lastName = '5710210087085 Peters';   // an ID number typed into a name
   }
+  if (opts && opts.found) {   // what the robot read in Elvanto's Unavailable Volunteers (made-up)
+    out['settings/church'].elvanto = { on: false, read: true, url: 'https://example.elvanto.eu' };
+    out['elvantoFound/unavailable'] = { readAt: '2026-10-29T01:07:00Z', rows: 4, unread: 1, pages: 1, entries: [
+      { name: 'Clare Jacobs', from: '2030-11-03', to: '2030-11-05', fromLeave: false }, { name: 'Jacobs, Tim', from: '2030-11-10', to: '2030-11-10', fromLeave: false },
+      { name: 'Megan Jacobs', from: '2030-12-01', to: '2030-12-01', fromLeave: false }, { name: 'Lerato Khumalo', from: '2030-12-07', to: '2030-12-08', fromLeave: true }] };
+  }
   if (opts && opts.elvanto) {   // Elvanto updating switched on; Lerato's approved leave (L103) already in Elvanto; the robot's sign-in
     out['settings/church'].elvanto = { on: true, url: 'https://example.elvanto.eu', robotEmail: 'robot@example.com' };
     const l = d.leave.requests.find(r => r.id === 'L103');
@@ -106,18 +112,20 @@ function serve() {
   }
 
   async function session(email, docs, opts) {
-    const context = await browser.newContext(), page = await context.newPage(), errs = [];
+    const context = await browser.newContext(opts && opts.ua ? { userAgent: opts.ua, viewport: { width: 390, height: 844 } } : {}), page = await context.newPage(), errs = [];
     page.on('pageerror', e => errs.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errs.push(m.text()); });
     await page.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());       // no internet: fonts, Firebase CDN
-    await page.addInitScript(([fakeSrc, seed, mail, app]) => {
+    await page.addInitScript(([fakeSrc, seed, mail, app, standalone]) => {
       window.CHURCH_HUB_FIREBASE = { apiKey: 'test-only', projectId: 'demo-church-hub', authDomain: 'localhost', appId: 'test', googleWebClientId: app && app.clientId || '' };
       // Stand-in for the Android app's bridge (android/…/MainActivity.java): Android's account picker returns a Google ID token
-      if (app) window.ChurchHubApp = { version: () => '1.0.7', retry: () => {}, googleSignIn: id => { window.__appGoogle = id; setTimeout(() => window.churchHubGoogle('id-token-for-' + id), 0); } };
+      if (app) window.ChurchHubApp = Object.assign({ version: () => '1.0.7', retry: () => {}, googleSignIn: id => { window.__appGoogle = id; setTimeout(() => window.churchHubGoogle('id-token-for-' + id), 0); } },
+        app.saveFile ? { saveFile: (n, m, t) => { window.__saved = { n, m, t }; } } : {});
       (0, eval)(fakeSrc);
       window.__fake.seed(seed);
       if (mail) window.__fake.setUser({ email: mail, emailVerified: true });
-    }, [fake, docs, email, (opts && opts.app) || null]);
+      if (standalone) Object.defineProperty(window.navigator, 'standalone', { get: () => true });   // opened from an iPhone's home screen
+    }, [fake, docs, email, (opts && opts.app) || null, !!(opts && opts.standalone)]);
     await page.goto(BASE);
     const ready = await page.waitForSelector('.app, .signin-card h1', { timeout: 8000 });
     const docsNow = () => page.evaluate(() => window.__fake.docs);
@@ -446,6 +454,18 @@ function serve() {
   const p05 = await s.page.evaluate(() => Store.get('people', 'p05').lastName);
   check(names.length === 1 && names[0].includes(p05), 'Advanced search: Year of death finds who died that year: ' + names.join(' | '));
   await s.page.evaluate(() => { const p = Store.get('people', 'p05'); delete p.deceasedAt; p.active = true; p.category = 'Staff'; });
+  // Finding a field by typing part of its name; searching church office notes
+  await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
+  await s.page.fill('.adv-ff[data-i="0"]', 'marit'); await s.page.waitForTimeout(100);
+  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'marital' && (await s.page.$$eval('.adv-field[data-i="0"] option', o => o.length)) === 1 && (await s.page.inputValue('.adv-ff[data-i="0"]')) === 'marit',
+    'typing “marit” narrows the fields to Marital status and picks it (typing carries on)');
+  await s.page.fill('.adv-ff[data-i="0"]', 'office not'); await s.page.waitForTimeout(100);
+  check(await s.page.inputValue('.adv-field[data-i="0"]') === 'officeNotes', '“office not” finds Church office notes');
+  await s.page.evaluate(() => Store.put('officeNotes', { personId: 'p16', text: 'Moved from Durban in 2019', by: 'Elvanto', at: '2026-10-28' })); await s.settle();
+  await s.page.fill('input.adv-v[data-i="0"]', 'durban'); await s.page.click('[data-act="people:advrun"]');
+  const onames = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.getAttribute('href')));
+  check(onames.length === 1 && onames[0].endsWith('/p16'), 'Advanced search finds people by their church office notes');
+  check(!(await s.page.$$eval('.adv-field[data-i="0"] option', o => o.map(x => x.textContent))).some(x => /pastoral|medical/i.test(x)), 'pastoral and medical notes are never searchable');
   // Changing many people at once
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]');
@@ -639,6 +659,19 @@ function serve() {
   check((await s.text()).includes('Kontak en besonderhede') && (await s.text()).includes('Toestemming'), 'my details in Afrikaans');
   await s.page.selectOption('.side-lang .lang-sel', 'en'); await s.page.waitForTimeout(80);
   check((await s.page.textContent('.side nav')).includes('People'), 'back to English');
+  await finish(s);
+
+  console.log('Unavailable dates the robot read in Elvanto (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs({ found: true }));
+  await s.go('import/unavailable'); t = await s.text();
+  check(t.includes('Ready to add (2)') && t.includes('Choose who it is (1)') && t.includes('Megan Jacobs') && t.includes('Already in Church Hub (1)') && t.includes('couldn’t read'), 'Import shows what the robot found: ready, choose who, already in Church Hub');
+  await s.page.selectOption('.un-pick', 'p14'); await s.page.uncheck('.un-on >> nth=1');
+  await s.page.click('[data-act="import:unapply"]'); await s.settle(); docs = await s.docsNow();
+  const bo = Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].source === 'elvanto').map(k => docs[k]);
+  check(bo.length === 2 && bo.some(b => b.personId === 'p15' && b.from === '2030-11-03' && b.to === '2030-11-05') && bo.some(b => b.personId === 'p14' && b.from === '2030-12-01') && !bo.some(b => b.from === '2030-11-10'),
+    'Add makes away dates for the ticked ones (and the chosen person), not for the one left out');
+  t = await s.text(); check(t.includes('Ready to add (1)') && t.includes('Already in Church Hub (3)'), 'added ones move to “Already in Church Hub”');
+  await s.go('leave/elvanto'); check(await s.page.isChecked('#el-read'), 'Leave → Elvanto has the switch for reading every night');
   await finish(s);
 
   console.log('Upgrading existing data (first Administrator sign-in):');
@@ -1002,6 +1035,36 @@ function serve() {
   t = await s.text(); check(t.includes('Church Hub app, version 1.0.7'), 'Me shows the app version');
   await s.page.click('[data-act="people:consent"]'); check(await s.page.evaluate(() => window.churchHubBack() === true && !document.querySelector('#modal .overlay')), 'the back button closes an open window first');
   check(await s.page.evaluate(() => window.churchHubBack() === false), '…then lets the app go back a page');
+  await finish(s);
+
+  console.log('iPhone: home-screen app and the photo prompt:');
+  const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
+  s = await session('tim.jacobs@example.com', seedDocs(), { ua: IPHONE });
+  await s.go('home'); t = await s.text();
+  check(t.includes('Church Hub on your iPhone') && t.includes('Add to Home Screen') && !t.includes('Add a photo of yourself'), 'iPhone in Safari: how to put Church Hub on the home screen (no photo prompt in a browser)');
+  await s.page.click('[data-act="hub:later"][data-k="iphone"]'); await s.go('me'); await s.go('home');
+  check(!(await s.text()).includes('Church Hub on your iPhone'), '“Not now” puts it away');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', seedDocs(), { ua: IPHONE, standalone: true });
+  await s.go('me'); t = await s.text();
+  check(t.includes('Add a photo of yourself') && !t.includes('Church Hub on your iPhone'), 'home-screen app: asks for a photo of yourself on My details');
+  await s.page.setInputFiles('#selfie-file', PNG); await s.page.waitForSelector('#crop-ok'); await s.page.click('#crop-ok'); await s.settle(); docs = await s.docsNow();
+  check(docs['photos/p14'] && docs['people/p14'].photo && !(await s.text()).includes('Add a photo of yourself'), 'they take or choose one, choose the face, and the prompt goes');
+  await finish(s);
+  s = await session('clare.jacobs@example.com', seedDocs(), { ua: IPHONE, standalone: true });
+  await s.go('me'); await s.page.click('[data-act="hub:later"][data-k="selfie"]'); await s.go('home'); await s.go('me');
+  check(!(await s.text()).includes('Add a photo of yourself'), '“Not now” waits (a month)');
+  await finish(s);
+
+  console.log('Downloads in the Android app:');
+  s = await session('linda.pillay@example.com', seedDocs(), { app: { saveFile: true } });
+  await s.go('people/search'); await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.click('[data-act="people:advcsv"]'); await s.page.waitForTimeout(100);
+  const saved = await s.page.evaluate(() => window.__saved);
+  check(saved && /^people-search-.*\.csv$/.test(saved.n) && saved.m === 'text/csv' && saved.t.split('\n').length >= 3, 'Download (CSV) goes to the app, which saves it in the phone’s Downloads');
+  await finish(s);
+  s = await session('linda.pillay@example.com', seedDocs(), { app: {} });
+  await s.go('people/search'); await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.click('[data-act="people:advcsv"]'); await s.page.waitForTimeout(100);
+  check((await s.page.textContent('#toast')).includes('update the Church Hub app'), 'an older app version is asked to update instead of nothing happening');
   await finish(s);
 
   s = await session('', seedDocs(), { app: {} });

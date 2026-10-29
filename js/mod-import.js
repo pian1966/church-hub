@@ -52,13 +52,41 @@
       S.put('skills', k); out.serving++;
     });
   }
+  /* ---------- unavailable dates the robot read in Elvanto (Leave → Elvanto: "Read Elvanto's unavailable dates") ---------- */
+  var un = { pick: {}, skip: {} };   // choices for names that need one; entries left out
+  function unKey(x, i) { return i + '|' + x.from; }
+  function renderUnavailable() {
+    var h = '<div class="page-head"><div><h1>Unavailable dates from Elvanto</h1><p class="lead">Who is unavailable in Elvanto, read by the robot every night. Check them and add them to Church Hub as away dates, so rosters here know too. Nothing is changed in Elvanto.</p></div></div>' + tabs('unavailable');
+    var f = S.get('elvantoFound', 'unavailable'), el = (S.settings() || {}).elvanto || {};
+    if (!f) return h + '<p class="empty">' + (el.read ? 'The robot hasn’t read Elvanto yet – it does so every night at about 3am.' : 'Switch this on under <a href="#/leave/elvanto">Leave → Elvanto</a> (“Read Elvanto’s unavailable dates every night”). The robot needs to be set up first – see the guide in docs/ELVANTO-ROBOT.md.') + '</p>';
+    var rows = E.matchFound(f.entries || [], S.list('people'), S.list('blockouts'));
+    var name = function (id) { var p = S.get('people', id); return p ? H.name(p) : ''; };
+    var when = function (x) { return H.fmt(x.from, true) + (x.to && x.to !== x.from ? ' – ' + H.fmt(x.to, true) : ''); };
+    var groups = { new: [], pick: [], have: [], leave: [] };
+    rows.forEach(function (x, i) { x.key = unKey(x, i); if (x.status === 'new') groups.new.push(x); else if (x.status === 'several' || x.status === 'nomatch') groups.pick.push(x); else groups[x.status].push(x); });
+    var ready = groups.new.filter(function (x) { return !un.skip[x.key]; }).length + groups.pick.filter(function (x) { return un.pick[x.key] && !un.skip[x.key]; }).length;
+    h += '<p class="muted small">Read ' + esc(f.readAt ? new Date(f.readAt).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' }) : '') + ' · ' + (f.entries || []).length + ' entries from today on' + (f.unread ? ' · ' + f.unread + ' row(s) the robot couldn’t read – check those in Elvanto' : '') + '</p>';
+    if (groups.new.length || groups.pick.length) h += '<div class="btns" style="margin:0 0 14px"><button class="btn primary" data-act="import:unapply"' + (ready ? '' : ' disabled') + '>Add ' + ready + ' away date' + (ready === 1 ? '' : 's') + '</button></div>';
+    var tick = function (x) { return '<input type="checkbox" class="un-on" data-k="' + esc(x.key) + '"' + (un.skip[x.key] ? '' : ' checked') + ' aria-label="Add this">'; };
+    if (groups.new.length) h += '<section class="panel"><h2>Ready to add (' + groups.new.length + ')</h2><div class="list">' + groups.new.map(function (x) {
+      return '<label class="item">' + tick(x) + '<span class="grow"><b>' + esc(name(x.personId)) + '</b><small>' + esc(when(x)) + (x.name.toLowerCase() !== name(x.personId).toLowerCase() ? ' · in Elvanto: ' + esc(x.name) : '') + '</small></span></label>';
+    }).join('') + '</div></section>';
+    if (groups.pick.length) h += '<section class="panel"><h2>Choose who it is (' + groups.pick.length + ')</h2><p class="hint" style="margin-top:0">The name in Elvanto matches more than one person in Church Hub, or no one exactly.</p><div class="list">' + groups.pick.map(function (x) {
+      return '<div class="item" style="flex-wrap:wrap">' + tick(x) + '<span class="grow" style="min-width:180px"><b>' + esc(x.name) + '</b><small>' + esc(when(x)) + ' · ' + (x.status === 'several' ? 'several people with this name' : 'no one with this exact name') + '</small></span>' +
+        '<select class="un-pick" data-k="' + esc(x.key) + '" aria-label="Who is ' + esc(x.name) + '"><option value="">Choose…</option>' + x.choices.map(function (id) { return '<option value="' + id + '"' + (un.pick[x.key] === id ? ' selected' : '') + '>' + esc(name(id)) + '</option>'; }).join('') + '</select></div>';
+    }).join('') + '</div></section>';
+    if (groups.have.length || groups.leave.length) h += '<details class="panel"><summary><b>Already in Church Hub (' + (groups.have.length + groups.leave.length) + ')</b></summary><p class="small muted">' +
+      groups.have.map(function (x) { return esc(name(x.personId) + ', ' + when(x)); }).concat(groups.leave.map(function (x) { return esc(x.name + ', ' + when(x) + ' (leave)'); })).join('<br>') + '</p></details>';
+    if (!rows.length) h += '<p class="empty">No one is unavailable in Elvanto from today on.</p>';
+    return h;
+  }
   function recs() { return E.records(st.rows, st.map, H.today()); }
   /** A short, stable family reference from Elvanto's family key (which may be names). */
   function famRef(key) { var h = 5381; for (var i = 0; i < key.length; i++) h = ((h * 33) ^ key.charCodeAt(i)) >>> 0; return /^[\w-]{1,40}$/.test(key) && !/\s/.test(key) ? key : 'EF-' + h.toString(36); }
   function fromElvanto() { return S.find('people', function (p) { return p.source === 'elvanto' && p.firstName !== 'Deleted'; }); }
 
   function tabs(active) {
-    return '<nav class="seg" aria-label="Import from" style="margin-bottom:18px"><a href="#/import" class="' + (active === 'elvanto' ? 'on' : '') + '">From Elvanto</a><a href="#/import/leave" class="' + (active === 'leave' ? 'on' : '') + '">From Leave Manager</a></nav>';
+    return '<nav class="seg" aria-label="Import from" style="margin-bottom:18px"><a href="#/import" class="' + (active === 'elvanto' ? 'on' : '') + '">From Elvanto</a><a href="#/import/leave" class="' + (active === 'leave' ? 'on' : '') + '">From Leave Manager</a><a href="#/import/unavailable" class="' + (active === 'unavailable' ? 'on' : '') + '">Unavailable dates from Elvanto</a></nav>';
   }
 
   function render() {
@@ -218,8 +246,10 @@
 
   H.register({
     id: 'import', name: 'Import', desc: 'Bring people across from Elvanto, and leave from Leave Manager', icon: H.ICON.import, tint: '#A16207', roles: ['admin'],
-    render: function (parts) { return !H.can('*') ? '<p class="empty">Only Administrators can import.</p>' : parts && parts[0] === 'leave' ? renderLeave() : render(); },
+    render: function (parts) { return !H.can('*') ? '<p class="empty">Only Administrators can import.</p>' : parts && parts[0] === 'leave' ? renderLeave() : parts && parts[0] === 'unavailable' ? renderUnavailable() : render(); },
     after: function () {
+      document.querySelectorAll('.un-on').forEach(function (b) { b.addEventListener('change', function () { if (b.checked) delete un.skip[b.dataset.k]; else un.skip[b.dataset.k] = 1; H.render(); }); });
+      document.querySelectorAll('.un-pick').forEach(function (s) { s.addEventListener('change', function () { if (s.value) un.pick[s.dataset.k] = s.value; else delete un.pick[s.dataset.k]; H.render(); }); });
       var lf = document.getElementById('lm-file');
       if (lf) lf.addEventListener('change', function () { if (lf.files.length) readFiles(Array.prototype.slice.call(lf.files)); });
       document.querySelectorAll('.lm-who').forEach(function (s) { s.addEventListener('change', function () { lst.choice[s.dataset.id] = s.value; H.render(); }); });
@@ -230,6 +260,21 @@
       document.querySelectorAll('.im-cat').forEach(function (s) { s.addEventListener('change', function () { st.cats[s.dataset.c] = s.value; }); });
     },
     actions: {
+      unapply: function () {
+        var f = S.get('elvantoFound', 'unavailable'); if (!f) return;
+        var rows = E.matchFound(f.entries || [], S.list('people'), S.list('blockouts')), todo = [];
+        rows.forEach(function (x, i) {
+          var k = unKey(x, i); if (un.skip[k]) return;
+          var pid = x.status === 'new' ? x.personId : (x.status === 'several' || x.status === 'nomatch') ? un.pick[k] : '';
+          if (pid && !S.find('blockouts', function (b) { return b.personId === pid && b.from === x.from && (b.to || b.from) === x.to; }).length) todo.push({ personId: pid, from: x.from, to: x.to });
+        });
+        if (!todo.length) return;
+        H.busy('Adding ' + todo.length + ' away dates…', function () {
+          todo.forEach(function (b) { S.put('blockouts', { personId: b.personId, from: b.from, to: b.to, reason: 'Unavailable in Elvanto', source: 'elvanto' }); });
+          S.audit('Added ' + todo.length + ' away dates from Elvanto’s Unavailable Volunteers', 'blockouts');
+          un = { pick: {}, skip: {} }; H.render(); H.toast(todo.length + ' away date' + (todo.length === 1 ? '' : 's') + ' added');
+        });
+      },
       lgo: function (el) { if (!H.confirmBtn(el, 'Click again to import')) return; H.busy('Importing from Leave Manager…', applyLeaveImport); },
       lagain: function () { lst = { tables: null, files: [], choice: {}, opt: { settings: true, details: true }, done: null, busy: false }; H.render(); },
       lsample: function () {

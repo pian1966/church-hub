@@ -324,3 +324,10 @@ body.is-busy { cursor: progress; }
 .crop-zoom { display: flex; align-items: center; gap: 10px; max-width: 360px; margin: 12px auto 0; }
 .crop-zoom input { flex: 1; }
 .crop-zoom .icon-btn { font-size: 20px; font-weight: 700; min-width: 40px; }
+/* Advanced search: type part of a field's name above its list */
+.adv-fpick { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.adv-row .adv-ff { min-height: 36px; padding: 6px 10px; font-size: 14px; }
+.adv-fcount { font-size: 12px; padding-left: 2px; }
+/* Prompts on Home and My details (photo of yourself, iPhone home screen) */
+.panel.prompt { margin-bottom: 16px; border-left: 4px solid var(--accent, #E8590C); }
+.panel.prompt h2 { font-size: 1.05rem; }

@@ -48,11 +48,18 @@ This is a design checklist, not legal advice – the church's Information Office
 ## Church office notes
 - Notes about a person for the church office (e.g. Elvanto's Notes column). Administrators and Pastors read and write them (`officeNotes/{person}`); members, roster coordinators and Children's ministry don't see them. Pastoral matters belong in pastoral notes (Pastors only). Adding and deleting is in the audit log. Deleting a person deletes their office notes and ID number.
 
+## What the robot reads in Elvanto
+- Nightly, only when switched on (Leave → Elvanto): Elvanto's Unavailable Volunteers list – **names and dates from today on,
+  never the reason** (POPIA s10, minimality) – kept in `elvantoFound/unavailable`, which only Administrators can read or delete.
+  An Administrator decides what becomes an away date (Import → Unavailable dates from Elvanto); that is audit-logged. The
+  robot's public log has counts only.
+
 ## Photos of people
 - **Purpose:** recognising people (welcome team, children's check-in, the members' directory). Lawful basis: the church records consent (the church chose not to ask a separate photo consent). The existing "Photos" consent is about photos taken at church events, not these.
 - **Kept small and apart:** each photo is cut to a 320 × 320 picture (about 20–40 KB) and stored in its own place (`photos/{person}`), fetched only when it is shown.
 - **Who sees them:** adults – staff, the person, and members when the adult agreed to be in the directory. Children – Administrators, Pastors and Children's ministry only (members, roster coordinators and the child's parents don't see them in the app).
 - **From Elvanto:** the import downloads each person's picture from Elvanto's own address (only for people without a photo), makes it small and stores it the same way; the count is in the audit log.
+- **Asking for one:** in the Android app and the iPhone home-screen app, adults without a photo are asked (once a month at most) to add one of themselves.
 - **Who adds them:** Administrators and Pastors; Children's ministry for children; adults their own. Adding, changing and removing a photo is in the audit log. Deleting a person deletes their photo.
 
 ## Children: who gives consent and who may collect

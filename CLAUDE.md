@@ -8,6 +8,7 @@
   `node tests/elvanto-import.test.js`. Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Households and guardians rules: `js/households.js` (`node tests/households.test.js`); advanced people search: `js/people-search.js`
   (`node tests/people-search.test.js`) – only offer fields a role may see, never medical/pastoral notes or collection restrictions.
+  The church's departments and positions (with the services each runs at): `js/serving.js`. Duplicates: `js/duplicates.js` (`node tests/duplicates.test.js`).
 - Member-facing text goes through `T('…')` with a line in `js/i18n.js` for all four languages (`node tests/i18n.test.js`).
   Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"` (shaded, with a key); never write "(optional)".
 - Elvanto updates for approved leave: `js/elvanto-sync.js` (`node tests/elvanto-sync.test.js`) and the robot `robot/robot.js`

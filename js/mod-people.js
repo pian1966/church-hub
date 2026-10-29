@@ -777,7 +777,27 @@
     add(all, 'Staff', 'staff', 'Church staff member', 'yesno', function (p) { return !!p.staff; });
     add(all, 'Staff', 'staffCategory', 'Staff category', 'text', function (p) { return p.staff ? p.staff.category : ''; });
     add(all, 'Staff', 'staffStart', 'Started working', 'date', function (p) { return p.staff ? p.staff.start : ''; });
+    // Church office notes (Administrators and Pastors). Pastoral and medical notes are never searchable.
+    var office = {}; if (H.can('*') || H.can('people.edit')) S.list('officeNotes').forEach(function (n) { (office[n.personId] = office[n.personId] || []).push(n.text); });
+    add(H.can('*') || H.can('people.edit'), 'Notes', 'officeNotes', 'Church office notes', 'text', function (p) { return (office[p.id] || []).join(' · '); });
+    add(roster, 'Serving', 'volunteer', 'Volunteer', 'yesno', function (p) { return sv(p).pos.length > 0; });
+    add(roster, 'Serving', 'serviceTimes', 'Volunteers at service', 'list', function (p) { return serveInfoTimes(p.id); }, Serving.TIMES.map(function (t) { return t[1]; }));
+    add(roster, 'Serving', 'awaySoon', 'Away in the next 8 weeks', 'yesno', function (p) { return awaySoon(p.id); });
+    add(all, 'Personal', 'lateSpouse', 'Late spouse', 'text', function (p) { var l = lateSpouse(p); return l ? H.name(l) : p.lateSpouseName || ''; });
+    add(all, 'Name and contact', 'postcode', 'Postcode', 'text', function (p) { return (p.address || {}).postcode || ''; });
+    add(all, 'Name and contact', 'province', 'Province', 'text', function (p) { return (p.address || {}).province || ''; });
+    add(H.can('*'), 'Church', 'elvantoId', 'Elvanto ID', 'text', function (p) { return p.elvantoId || ''; });
     return F;
+  }
+  /** The services someone volunteers at, as 8am / 10am / 5pm (every service when not narrowed down). */
+  function serveInfoTimes(pid) {
+    var sk = S.find('skills', function (k) { return k.personId === pid; }); if (!sk.length) return [];
+    return serveTimes(sk).map(Serving.timeLabel);
+  }
+  function awaySoon(pid) {
+    var t = H.today(), end = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(t), 56));
+    return S.find('blockouts', function (b) { return b.personId === pid && (b.to || b.from) >= t && b.from <= end; }).length > 0 ||
+      ((S.leave() || {}).requests || []).some(function (r) { return r.staffId === pid && r.status === 'Approved' && r.end >= t && r.start <= end; });
   }
   function advShow(f, v) {
     if (v == null || v === '' || (Array.isArray(v) && !v.length)) return '';
@@ -826,10 +846,15 @@
     var A = state.adv, F = searchFields(), byKey = {}, groups = [];
     F.forEach(function (f) { byKey[f.key] = f; if (groups.indexOf(f.group) < 0) groups.push(f.group); });
     A.cols = A.cols.filter(function (k) { return byKey[k] && k !== 'name'; });
-    var fieldSelect = function (f, i) {
-      return '<select class="adv-field" data-i="' + i + '" aria-label="Filter ' + (i + 1) + ': search on">' + (byKey[f.field] ? '' : '<option value="">Choose…</option>') + groups.map(function (g) {
-        return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g; }).map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
-      }).join('') + '</select>';
+    var fieldSelect = function (f, i) {   // type part of a field's name ("not", "marit") to narrow the list down
+      var q = f.find || '', list = q ? F.filter(function (x) { return H.matches(x.label + ' ' + x.group, q) || x.key === f.field; }) : F;
+      var hits = q ? F.filter(function (x) { return H.matches(x.label + ' ' + x.group, q); }).length : F.length;
+      return '<span class="adv-fpick"><input type="search" class="adv-ff" data-i="' + i + '" value="' + esc(q) + '" placeholder="Type to find a field…" autocomplete="off" aria-label="Filter ' + (i + 1) + ': type to find a field">' +
+        (q ? '<small class="adv-fcount muted">' + (hits ? hits + (hits === 1 ? ' field matches' : ' fields match') : 'No field matches') + '</small>' : '') +
+        '<select class="adv-field" data-i="' + i + '" aria-label="Filter ' + (i + 1) + ': search on">' + (byKey[f.field] ? '' : '<option value="">Choose…</option>') + groups.map(function (g) {
+          var xs = list.filter(function (x) { return x.group === g; }); if (!xs.length) return '';
+          return '<optgroup label="' + esc(g) + '">' + xs.map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
+        }).join('') + '</select></span>';
     };
     var word = A.match === 'any' ? 'OR' : 'AND', logicNote = '';
     if (A.match === 'logic' && A.logic.trim()) { var pl = PS.parseLogic(A.logic, A.filters.length); if (!pl.error && pl.unused.length) logicNote = '<p class="hint">Not used in your logic: filter ' + pl.unused.join(', ') + '.</p>'; }
@@ -947,7 +972,13 @@
   function advSync(el) {   // keep what is typed in the state, so a refresh never loses it
     var A = state.adv, i = +el.dataset.i, f = A.filters[i];
     if (el.classList.contains('adv-v') && f) { f[el.dataset.k] = el.value; return false; }
-    if (el.classList.contains('adv-field') && f) { f.field = el.value; var d = searchFields().filter(function (x) { return x.key === el.value; })[0]; f.op = d ? PS.opsFor(d.type)[0][0] : ''; f.value = f.value2 = ''; f.unit = 'days'; return true; }
+    if (el.classList.contains('adv-ff') && f) {   // typing part of a field's name picks the first field that matches
+      f.find = el.value;
+      var hit = el.value.trim() ? searchFields().filter(function (x) { return H.matches(x.label + ' ' + x.group, el.value); }) : [];
+      if (hit.length && !hit.some(function (x) { return x.key === f.field; })) { f.field = hit[0].key; f.op = hit[0].type === 'text' ? 'has' : PS.opsFor(hit[0].type)[0][0]; f.value = f.value2 = ''; f.unit = 'days'; }
+      return true;
+    }
+    if (el.classList.contains('adv-field') && f) { f.find = ''; f.field = el.value; var d = searchFields().filter(function (x) { return x.key === el.value; })[0]; f.op = d ? (d.type === 'text' ? 'has' : PS.opsFor(d.type)[0][0]) : ''; /* text: "contains" is what people expect */ f.value = f.value2 = ''; f.unit = 'days'; return true; }
     if (el.classList.contains('adv-op') && f) { var k1 = PS.valueKind('', f.op); f.op = el.value; if (PS.valueKind('', f.op) !== k1) { f.value = f.value2 = ''; } f.unit = f.unit || 'days'; return true; }
     if (el.id === 'adv-match') { A.match = el.value; return true; }
     if (el.id === 'adv-logic') { A.logic = el.value; return false; }
@@ -1198,12 +1229,18 @@
       var adv = document.getElementById('adv');
       if (adv) {
         var onEdit = function (ev) {
-          var t = ev.target; if (!advSync(t)) return;
+          var t = ev.target; if (t.classList.contains('adv-ff') || !advSync(t)) return;   // the field finder is handled as it's typed
           H.render();   // the choices changed: show the right boxes, and keep the place
           var b = t.id ? document.getElementById(t.id) : document.querySelector('.' + t.classList[0] + '[data-i="' + t.dataset.i + '"]');
           if (b) b.focus();
         };
-        adv.addEventListener('input', function (ev) { if (ev.target.tagName !== 'SELECT') advSync(ev.target); });
+        adv.addEventListener('input', function (ev) {
+          var t = ev.target; if (t.tagName === 'SELECT') return;
+          if (advSync(t) && t.classList.contains('adv-ff')) {   // redraw the narrowed list, keep typing
+            var pos = t.selectionStart, i = t.dataset.i; H.render();
+            var n = document.querySelector('.adv-ff[data-i="' + i + '"]'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
+          }
+        });
         adv.addEventListener('change', onEdit);
         var lg = document.getElementById('adv-logic');
         if (lg) lg.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); state.adv.ran = true; H.render(); } });

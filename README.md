@@ -7,6 +7,6 @@ A replacement for Elvanto for Christ Church Howick – people, rosters (families
 - **Going live:** [docs/FIREBASE-SETUP.md](docs/FIREBASE-SETUP.md) – the church's Firebase project, step by step
 - **Android app:** [docs/ANDROID.md](docs/ANDROID.md) – members' own details, days away and serving on their phone · download: https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk
 - **Leave → Elvanto:** [docs/ELVANTO-ROBOT.md](docs/ELVANTO-ROBOT.md) – approved leave as Elvanto unavailability (robot)
-- **Tests:** `node tests/roster.test.js` · `node tests/leave-import.test.js` · `node tests/elvanto-import.test.js` · `node tests/app.test.js` (Playwright) · rules: see `tests/rules.test.mjs`. All run on GitHub after every push.
+- **Tests:** `node tests/<name>.test.js` for roster, leave-import, elvanto-import, elvanto-sync, households, people-search, duplicates, i18n and robot · `node tests/app.test.js` (the whole app in a browser, Playwright) · `tests/rules.test.mjs` (security rules, Firestore emulator). All run on GitHub after every push.
 
 No real church data belongs in this repository – it is public.

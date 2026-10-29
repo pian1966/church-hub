@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
 
@@ -294,7 +294,7 @@ var Store = (function () {
       else add('guardians', fs.collection('guardians').where('adultId', '==', me));
       if (r === 'pastor') add('notes', coll('notes'));
       if (is('admin', 'pastor')) add('officeNotes', coll('officeNotes'));
-      if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); }
+      if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); add('elvantoFound', coll('elvantoFound')); }
       else add('elvantoSync', own('elvantoSync'));
       if (r === 'admin') {
         ['dsr', 'breaches'].forEach(function (c) { add(c, coll(c)); });
@@ -361,7 +361,7 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers'].forEach(function (c) { db[c] = arr(c); });
       var cons = merged('consents', 'consentsMe', 'consentsMed', 'consentsPhotos');
       db.consents = Object.keys(cons).map(function (id) { var o = copy(cons[id]); o.id = id; return o; });
       db.notes = [];

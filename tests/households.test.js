@@ -99,7 +99,7 @@ console.log('Late spouses: who a widow or widower was probably married to');
   const dead = p => !!p.deceasedAt;
   const s = HS.lateSpouseSuggestions(P, dead), pair = (a, b) => s.find(x => x.a === a && x.b === b);
   ok(pair('elsa', 'johan') && pair('elsa', 'johan').reasons.includes('same household') && pair('elsa', 'johan').reasons.includes('same wedding date'), 'a widow is matched with the husband in her household with the same wedding date');
-  ok(pair('ruth', 'bob') && pair('ruth', 'bob').reasons.join() === 'same email,same surname', 'a widow matched by a shared email and surname (not to the much younger Tom Smith)');
+  ok(pair('ruth', 'bob') && ['same email', 'same surname'].every(r => pair('ruth', 'bob').reasons.includes(r)), 'a widow matched by a shared email and surname (not to the much younger Tom Smith)');
   ok(!s.some(x => x.b === 'tom'), 'someone 45 years younger isn’t suggested');
   ok(s.some(x => [x.a, x.b].sort().join() === 'ann,ben' && x.bothDied), 'two people who have both died can be suggested (same phone and surname)');
   ok(!s.some(x => x.b === 'kid' || x.a === 'kid') && !s.some(x => x.a === 'lone'), 'children never; no suggestion without enough clues');
@@ -113,6 +113,9 @@ console.log('Late spouses: who a widow or widower was probably married to');
   const P4 = [
     { id: 'gwen', firstName: 'Gwen', lastName: 'Mcfarlane', familyRole: 'adult', familyId: 'g1', maritalStatus: 'Widowed' },
     { id: 'nigel', firstName: 'Nigel', lastName: 'McFarlane', familyRole: 'adult', familyId: 'g2', maritalStatus: 'Married', deceasedAt: '2023-04-04' },
+    { id: 'mary', firstName: 'Mary', lastName: 'Botha', familyRole: 'adult', familyId: 'g5', maritalStatus: 'Widowed' },
+    { id: 'piet', firstName: 'Piet', lastName: 'Botha', familyRole: 'adult', familyId: '', deceasedAt: '2015-01-01' },
+    { id: 'sis', firstName: 'Sis', lastName: 'Botha', familyRole: 'adult', familyId: '', maritalStatus: 'Single', deceasedAt: '2016-01-01' },
     { id: 'stan', firstName: 'Stan', lastName: 'Pike', familyRole: 'adult', familyId: 'g3', maritalStatus: 'Married' },
     { id: 'sue', firstName: 'Sue', lastName: 'Pike', familyRole: 'adult', familyId: 'g3', maritalStatus: 'Married', deceasedAt: '2025-01-01' },
     { id: 'jo', firstName: 'Jo', lastName: 'Dube', familyRole: 'adult', familyId: 'g4', maritalStatus: 'Married' },
@@ -121,6 +124,8 @@ console.log('Late spouses: who a widow or widower was probably married to');
   ];
   const s4 = HS.lateSpouseSuggestions(P4, dead), g = s4.find(x => x.a === 'gwen');
   ok(g && g.b === 'nigel' && g.reasons.includes('same surname') && g.reasons.includes('widowed, and they died married'), 'a widow and a man of her surname who died married are suggested, even in different households (any capitals)');
+  const mb = s4.find(x => x.a === 'mary');
+  ok(mb && mb.b === 'piet' && mb.reasons.includes('widowed, and they died (marital status not recorded)'), '…also when his marital status wasn’t recorded (but not someone who died single)');
   const st = s4.find(x => x.a === 'stan');
   ok(st && st.b === 'sue' && st.stillMarried && st.reasons.includes('still recorded as Married'), 'someone still recorded as Married whose spouse has died is suggested (to change to Widowed)');
   ok(!s4.some(x => x.a === 'jo' || x.a === 'al'), 'not someone whose married partner is alive in their household');

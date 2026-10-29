@@ -118,7 +118,7 @@ var Households = (function () {
   /**
    * Who a widow or widower (or someone who has died) was probably married to, among the people who have died.
    * Clues, each worth points: same household (40), same wedding date (40), shared email (30), shared mobile (25),
-   * same surname (25), widowed and the other was married when they died (25), born within 15 years of each other (10);
+   * same surname (25), widowed and the other died married or with no marital status recorded (25), born within 15 years of each other (10);
    * born more than 25 years apart takes 30 off. So a widow and a man of her surname who died married are suggested even
    * when Elvanto put them in different households.
    * Someone living who is still recorded as Married (and has no living married partner in their household) is looked at
@@ -155,7 +155,10 @@ var Households = (function () {
         if (norm(a.email) && norm(a.email) === norm(b.email)) { score += 30; why.push('same email'); }
         if (digits(a.mobile).length >= 9 && digits(a.mobile) === digits(b.mobile)) { score += 25; why.push('same phone number'); }
         if (norm(a.lastName) && norm(a.lastName) === norm(b.lastName)) { score += 25; why.push('same surname'); }
-        if (a.maritalStatus === 'Widowed' && !dead(a) && b.maritalStatus === 'Married') { score += 25; why.push('widowed, and they died married'); }
+        // a widow, and someone who died married – or with no marital status recorded (often the case for older records)
+        if (a.maritalStatus === 'Widowed' && !dead(a) && (b.maritalStatus === 'Married' || !b.maritalStatus || b.maritalStatus === 'Not known')) {
+          score += 25; why.push(b.maritalStatus === 'Married' ? 'widowed, and they died married' : 'widowed, and they died (marital status not recorded)');
+        }
         var ya = yearOf(a.birthDate), yb = yearOf(b.birthDate);
         if (ya && yb) { var gap = Math.abs(ya - yb); if (gap <= 15) { score += 10; why.push('similar age'); } else if (gap > 25) { score -= 30; why.push(gap + ' years apart in age'); } }
         var still = a.maritalStatus === 'Married' && !dead(a);

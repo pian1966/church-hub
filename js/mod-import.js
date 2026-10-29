@@ -1,7 +1,7 @@
 /* Church Hub – Import: people from Elvanto (People export as CSV; rules in js/elvanto-import.js) and leave from Leave Manager (js/leave-import.js). */
 (function () {
   'use strict';
-  var H = Hub, esc = H.esc, S = Store;
+  var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var E = ElvantoImport;
   var st = { rows: null, head: null, map: {}, fileName: '', done: null, cats: {} };
   /* ---------- photos from Elvanto: downloaded one at a time after the import, for people who have none yet ---------- */
@@ -9,8 +9,8 @@
   function photoNote() {
     if (!pics || !pics.todo) return '';
     return '<div class="note ' + (pics.running ? 'info' : 'ok') + '" id="im-pics" role="status">' + (pics.running
-      ? '<svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>Bringing in photos from Elvanto: ' + (pics.done + pics.failed) + ' of ' + pics.todo + '. Please keep this page open.'
-      : '<b>Photos:</b> ' + pics.done + ' brought in from Elvanto' + (pics.failed ? ', ' + pics.failed + ' couldn’t be downloaded (they can be added by hand on each person’s page)' : '') + '.') + '</div>';
+      ? '<svg class="busy-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>' + T('Bringing in photos from Elvanto: {n} of {total}. Please keep this page open.', { n: pics.done + pics.failed, total: pics.todo })
+      : '<b>' + T('Photos:') + '</b> ' + T('{n} brought in from Elvanto', { n: pics.done }) + (pics.failed ? ', ' + T('{n} couldn’t be downloaded (they can be added by hand on each person’s page)', { n: pics.failed }) : '') + '.') + '</div>';
   }
   function fetchPhotos(queue) {
     pics = { todo: queue.length, done: 0, failed: 0, running: true };
@@ -57,28 +57,28 @@
   var un = { pick: {}, skip: {} };   // choices for names that need one; entries left out
   function unKey(x, i) { return i + '|' + x.from; }
   function renderUnavailable() {
-    var h = '<div class="page-head"><div><h1>Unavailable dates from Elvanto</h1><p class="lead">Who is unavailable in Elvanto, read by the robot every night. Check them and add them to Church Hub as away dates, so rosters here know too. Nothing is changed in Elvanto.</p></div></div>' + tabs('unavailable');
+    var h = '<div class="page-head"><div><h1>' + T('Unavailable dates from Elvanto') + '</h1><p class="lead">' + T('Who is unavailable in Elvanto, read by the robot every night. Check them and add them to Church Hub as away dates, so rosters here know too. Nothing is changed in Elvanto.') + '</p></div></div>' + tabs('unavailable');
     var f = S.get('elvantoFound', 'unavailable'), el = (S.settings() || {}).elvanto || {};
-    if (!f) return h + '<p class="empty">' + (el.read ? 'The robot hasn’t read Elvanto yet – it does so every night at about 3am.' : 'Switch this on under <a href="#/leave/elvanto">Leave → Elvanto</a> (“Read Elvanto’s unavailable dates every night”). The robot needs to be set up first – see the guide in docs/ELVANTO-ROBOT.md.') + '</p>';
+    if (!f) return h + '<p class="empty">' + (el.read ? T('The robot hasn’t read Elvanto yet – it does so every night at about 3am.') : T('Switch this on under {link} (“Read Elvanto’s unavailable dates every night”). The robot needs to be set up first – see the guide in docs/ELVANTO-ROBOT.md.', { link: '<a href="#/leave/elvanto">' + T('Leave → Elvanto') + '</a>' })) + '</p>';
     var rows = E.matchFound(f.entries || [], S.list('people'), S.list('blockouts'));
     var name = function (id) { var p = S.get('people', id); return p ? H.name(p) : ''; };
     var when = function (x) { return H.fmt(x.from, true) + (x.to && x.to !== x.from ? ' – ' + H.fmt(x.to, true) : ''); };
     var groups = { new: [], pick: [], have: [], leave: [] };
     rows.forEach(function (x, i) { x.key = unKey(x, i); if (x.status === 'new') groups.new.push(x); else if (x.status === 'several' || x.status === 'nomatch') groups.pick.push(x); else groups[x.status].push(x); });
     var ready = groups.new.filter(function (x) { return !un.skip[x.key]; }).length + groups.pick.filter(function (x) { return un.pick[x.key] && !un.skip[x.key]; }).length;
-    h += '<p class="muted small">Read ' + esc(f.readAt ? new Date(f.readAt).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' }) : '') + ' · ' + (f.entries || []).length + ' entries from today on' + (f.unread ? ' · ' + f.unread + ' row(s) the robot couldn’t read – check those in Elvanto' : '') + '</p>';
-    if (groups.new.length || groups.pick.length) h += '<div class="btns" style="margin:0 0 14px"><button class="btn primary" data-act="import:unapply"' + (ready ? '' : ' disabled') + '>Add ' + ready + ' away date' + (ready === 1 ? '' : 's') + '</button></div>';
-    var tick = function (x) { return '<input type="checkbox" class="un-on" data-k="' + esc(x.key) + '"' + (un.skip[x.key] ? '' : ' checked') + ' aria-label="Add this">'; };
+    h += '<p class="muted small">' + esc(T('Read {when}', { when: f.readAt ? new Date(f.readAt).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' }) : '' })) + ' · ' + T('{n} entries from today on', { n: (f.entries || []).length }) + (f.unread ? ' · ' + T('{n} row(s) the robot couldn’t read – check those in Elvanto', { n: f.unread }) : '') + '</p>';
+    if (groups.new.length || groups.pick.length) h += '<div class="btns" style="margin:0 0 14px"><button class="btn primary" data-act="import:unapply"' + (ready ? '' : ' disabled') + '>' + TN('Add {n} away date', 'Add {n} away dates', ready) + '</button></div>';
+    var tick = function (x) { return '<input type="checkbox" class="un-on" data-k="' + esc(x.key) + '"' + (un.skip[x.key] ? '' : ' checked') + ' aria-label="' + esc(T('Add this')) + '">'; };
     if (groups.new.length) h += '<section class="panel"><h2>Ready to add (' + groups.new.length + ')</h2><div class="list">' + groups.new.map(function (x) {
       return '<label class="item">' + tick(x) + '<span class="grow"><b>' + esc(name(x.personId)) + '</b><small>' + esc(when(x)) + (x.name.toLowerCase() !== name(x.personId).toLowerCase() ? ' · in Elvanto: ' + esc(x.name) : '') + '</small></span></label>';
     }).join('') + '</div></section>';
-    if (groups.pick.length) h += '<section class="panel"><h2>Choose who it is (' + groups.pick.length + ')</h2><p class="hint" style="margin-top:0">The name in Elvanto matches more than one person in Church Hub, or no one exactly.</p><div class="list">' + groups.pick.map(function (x) {
+    if (groups.pick.length) h += '<section class="panel"><h2>Choose who it is (' + groups.pick.length + ')</h2><p class="hint" style="margin-top:0">' + T('The name in Elvanto matches more than one person in Church Hub, or no one exactly.') + '</p><div class="list">' + groups.pick.map(function (x) {
       return '<div class="item" style="flex-wrap:wrap">' + tick(x) + '<span class="grow" style="min-width:180px"><b>' + esc(x.name) + '</b><small>' + esc(when(x)) + ' · ' + (x.status === 'several' ? 'several people with this name' : 'no one with this exact name') + '</small></span>' +
-        '<select class="un-pick" data-k="' + esc(x.key) + '" aria-label="Who is ' + esc(x.name) + '"><option value="">Choose…</option>' + x.choices.map(function (id) { return '<option value="' + id + '"' + (un.pick[x.key] === id ? ' selected' : '') + '>' + esc(name(id)) + '</option>'; }).join('') + '</select></div>';
+        '<select class="un-pick" data-k="' + esc(x.key) + '" aria-label="Who is ' + esc(x.name) + '"><option value="">' + T('Choose…') + '</option>' + x.choices.map(function (id) { return '<option value="' + id + '"' + (un.pick[x.key] === id ? ' selected' : '') + '>' + esc(name(id)) + '</option>'; }).join('') + '</select></div>';
     }).join('') + '</div></section>';
     if (groups.have.length || groups.leave.length) h += '<details class="panel"><summary><b>Already in Church Hub (' + (groups.have.length + groups.leave.length) + ')</b></summary><p class="small muted">' +
       groups.have.map(function (x) { return esc(name(x.personId) + ', ' + when(x)); }).concat(groups.leave.map(function (x) { return esc(x.name + ', ' + when(x) + ' (leave)'); })).join('<br>') + '</p></details>';
-    if (!rows.length) h += '<p class="empty">No one is unavailable in Elvanto from today on.</p>';
+    if (!rows.length) h += '<p class="empty">' + T('No one is unavailable in Elvanto from today on.') + '</p>';
     return h;
   }
   function recs() { return E.records(st.rows, st.map, H.today()); }
@@ -87,47 +87,47 @@
   function fromElvanto() { return S.find('people', function (p) { return p.source === 'elvanto' && p.firstName !== 'Deleted'; }); }
 
   function tabs(active) {
-    return '<nav class="seg" aria-label="Import from" style="margin-bottom:18px"><a href="#/import" class="' + (active === 'elvanto' ? 'on' : '') + '">From Elvanto</a><a href="#/import/leave" class="' + (active === 'leave' ? 'on' : '') + '">From Leave Manager</a><a href="#/import/unavailable" class="' + (active === 'unavailable' ? 'on' : '') + '">Unavailable dates from Elvanto</a></nav>';
+    return '<nav class="seg" aria-label="' + esc(T('Import from')) + '" style="margin-bottom:18px"><a href="#/import" class="' + (active === 'elvanto' ? 'on' : '') + '">' + T('From Elvanto') + '</a><a href="#/import/leave" class="' + (active === 'leave' ? 'on' : '') + '">' + T('From Leave Manager') + '</a><a href="#/import/unavailable" class="' + (active === 'unavailable' ? 'on' : '') + '">' + T('Unavailable dates from Elvanto') + '</a></nav>';
   }
 
   function render() {
-    var h = '<div class="page-head"><div><h1>Import from Elvanto</h1><p class="lead">Bring your people and households (Elvanto’s “families”) across from Elvanto. Nothing is changed in Elvanto.</p></div></div>' + tabs('elvanto');
+    var h = '<div class="page-head"><div><h1>' + T('Import from Elvanto') + '</h1><p class="lead">' + T('Bring your people and households (Elvanto’s “families”) across from Elvanto. Nothing is changed in Elvanto.') + '</p></div></div>' + tabs('elvanto');
     var already = fromElvanto().length;
     if (st.done) {
-      h += photoNote() + '<div class="note ok"><b>Imported.</b> ' + st.done.added + ' added, ' + st.done.updated + ' updated, ' + st.done.families + ' families created.' + (st.done.serving ? ' ' + st.done.serving + ' volunteering positions.' : '') + (st.done.receive ? ' ' + st.done.receive + ' “would like to receive” choices.' : '') +
-        (st.done.unknown && st.done.unknown.length ? ' Positions Church Hub doesn’t have (left out): ' + esc(st.done.unknown.join(', ')) + '.' : '') + (st.done.links ? ' ' + st.done.links + ' children linked to their parents – please confirm them (see Home).' : '') + (st.done.noConsent ? ' ' + st.done.noConsent + ' people need consent recorded – see the to-do list on Home.' : '') + '</div><div class="btns"><a class="btn primary" href="#/people">Open People</a><button class="btn" data-act="import:again">Import another file</button></div>';
+      h += photoNote() + '<div class="note ok"><b>' + T('Imported.') + '</b> ' + T('{a} added, {u} updated, {f} households created.', { a: st.done.added, u: st.done.updated, f: st.done.families }) + (st.done.serving ? ' ' + T('{n} volunteering positions.', { n: st.done.serving }) : '') + (st.done.receive ? ' ' + T('{n} “would like to receive” choices.', { n: st.done.receive }) : '') +
+        (st.done.unknown && st.done.unknown.length ? ' ' + T('Positions Church Hub doesn’t have (left out): {list}.', { list: esc(st.done.unknown.join(', ')) }) : '') + (st.done.links ? ' ' + T('{n} children linked to their parents – please confirm them (see Home).', { n: st.done.links }) : '') + (st.done.noConsent ? ' ' + T('{n} people need consent recorded – see the to-do list on Home.', { n: st.done.noConsent }) : '') + '</div><div class="btns"><a class="btn primary" href="#/people">' + T('Open People') + '</a><button class="btn" data-act="import:again">' + T('Import another file') + '</button></div>';
       return h;
     }
     if (!st.rows) {
-      return h + '<div class="grid2"><section class="panel"><h2>1. Export from Elvanto</h2><ol style="margin:0;padding-left:20px;line-height:1.7"><li>In Elvanto, open <b>People</b> and clear the filters so everyone is listed.</li><li>Choose <b>Export</b> → <b>CSV</b>.</li></ol>' +
-        '<p class="hint">Church Hub reads only: <b>Member ID</b> (please include it – it stops people being doubled when you import again), Date Added, names (with Middle Name), Email Address, Cellphone Number, Date of Birth, Gender, Family Relationship, Primary &amp; Spouse Full Names, Marital Status, Anniversary, People Category, Membership Date and Membership last renewed on, Archived, Deceased, <b>Photo</b> (downloaded from Elvanto and made small), ID Number (Administrators only), Notes (church office notes), Checklist of what to receive, Department Positions (volunteering) and the home address. Everything else (groups, giving, security codes…) is ignored – but it’s safer to leave those columns out of the export.</p>' +
-        '<p class="hint">Keep the file on the church computer and delete it once imported – it contains personal information.</p></section>' +
-        '<section class="panel"><h2>2. Choose the file</h2><label class="field">Elvanto export (.csv)<input type="file" id="im-file" accept=".csv,text/csv"></label><p class="hint">Or <button class="link" data-act="import:sample">try it with a made-up sample file</button>.</p></section></div>' +
-        (already ? '<section class="panel" style="margin-top:16px"><h2>Start again</h2><p style="margin-top:0">' + already + ' ' + (already === 1 ? 'person was' : 'people were') + ' brought in from Elvanto. If an import went wrong, remove them and import again. People who have been given app access, are staff, or are you, are kept.</p>' +
-          '<button class="btn" data-act="import:unimport">Remove everyone brought in from Elvanto</button></section>' : '');
+      return h + '<div class="grid2"><section class="panel"><h2>' + T('1. Export from Elvanto') + '</h2><ol style="margin:0;padding-left:20px;line-height:1.7"><li>' + T('In Elvanto, open {people} and clear the filters so everyone is listed.', { people: '<b>' + T('People') + '</b>' }) + '</li><li>' + T('Choose {export} → {csv}.', { export: '<b>' + T('Export') + '</b>', csv: '<b>CSV</b>' }) + '</li></ol>' +
+        '<p class="hint">' + T('Church Hub reads only:') + ' <b>' + T('Member ID') + '</b> (please include it – it stops people being doubled when you import again), Date Added, names (with Middle Name), Email Address, Cellphone Number, Date of Birth, Gender, Family Relationship, Primary &amp; Spouse Full Names, Marital Status, Anniversary, People Category, Membership Date and Membership last renewed on, Archived, Deceased, <b>' + T('Photo') + '</b> ' + T('(downloaded from Elvanto and made small), ID Number (Administrators only), Notes (church office notes), Checklist of what to receive, Department Positions (volunteering) and the home address. Everything else (groups, giving, security codes…) is ignored – but it’s safer to leave those columns out of the export.') + '</p>' +
+        '<p class="hint">' + T('Keep the file on the church computer and delete it once imported – it contains personal information.') + '</p></section>' +
+        '<section class="panel"><h2>' + T('2. Choose the file') + '</h2><label class="field">' + T('Elvanto export (.csv)') + '<input type="file" id="im-file" accept=".csv,text/csv"></label><p class="hint">' + T('Or {link}.', { link: '<button class="link" data-act="import:sample">' + T('try it with a made-up sample file') + '</button>' }) + '</p></section></div>' +
+        (already ? '<section class="panel" style="margin-top:16px"><h2>' + T('Start again') + '</h2><p style="margin-top:0">' + already + ' ' + (already === 1 ? 'person was' : 'people were') + ' brought in from Elvanto. If an import went wrong, remove them and import again. People who have been given app access, are staff, or are you, are kept.</p>' +
+          '<button class="btn" data-act="import:unimport">' + T('Remove everyone brought in from Elvanto') + '</button></section>' : '');
     }
     var r = recs(), pl = E.plan(r, S.list('people'));
     Object.keys(pl.categories).forEach(function (c) { if (!st.cats[c]) st.cats[c] = E.guessCategory(c); });
-    h += '<div class="note info">File: <b>' + esc(st.fileName) + '</b> – ' + st.rows.length + ' rows. Check the matching below, then import.</div>';
-    h += '<div class="grid2"><section class="panel"><h2>Match the columns</h2>' + E.FIELDS.map(function (f) {
-      return '<label class="field">' + esc(f[1]) + '<select class="im-map" data-f="' + f[0] + '"><option value="">— not in the file —</option>' + st.head.map(function (c, i) { return '<option value="' + i + '"' + (st.map[f[0]] === i ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
+    h += '<div class="note info">' + T('File: {file} – {n} rows. Check the matching below, then import.', { file: '<b>' + esc(st.fileName) + '</b>', n: st.rows.length }) + '</div>';
+    h += '<div class="grid2"><section class="panel"><h2>' + T('Match the columns') + '</h2>' + E.FIELDS.map(function (f) {
+      return '<label class="field">' + esc(f[1]) + '<select class="im-map" data-f="' + f[0] + '"><option value="">' + T('— not in the file —') + '</option>' + st.head.map(function (c, i) { return '<option value="' + i + '"' + (st.map[f[0]] === i ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
     }).join('') + '</section><div>' +
-      '<section class="panel"><h2>What will happen</h2><div class="stats"><div class="stat"><span>New people</span><b>' + pl.added + '</b></div><div class="stat"><span>Already here (updated)</span><b>' + pl.updated + '</b></div><div class="stat"><span>Children</span><b>' + pl.children + '</b></div><div class="stat"><span>Households</span><b>' + pl.families + '</b></div></div>' +
-      (pl.sharedEmails ? '<p class="hint">' + pl.sharedEmails + ' email address' + (pl.sharedEmails === 1 ? ' is' : 'es are') + ' shared by more than one person (e.g. a couple). They stay separate people.</p>' : '') +
-      '<div class="table-wrap"><table class="simple"><thead><tr><th>Name</th><th>Email</th><th>In Church Hub</th></tr></thead><tbody>' + pl.items.slice(0, 8).map(function (x) {
-        var o = x.rec; return '<tr><td>' + esc(o.firstName + ' ' + o.lastName) + (o.child ? ' <span class="tag" style="--c:#0E7490">Child</span>' : '') + '</td><td>' + esc(o.email) + '</td><td>' + (x.personId ? 'Update (matched by ' + esc(x.how) + ')' : 'New') + '</td></tr>';
+      '<section class="panel"><h2>' + T('What will happen') + '</h2><div class="stats"><div class="stat"><span>' + T('New people') + '</span><b>' + pl.added + '</b></div><div class="stat"><span>' + T('Already here (updated)') + '</span><b>' + pl.updated + '</b></div><div class="stat"><span>' + T('Children') + '</span><b>' + pl.children + '</b></div><div class="stat"><span>' + T('Households') + '</span><b>' + pl.families + '</b></div></div>' +
+      (pl.sharedEmails ? '<p class="hint">' + TN('{n} email address is shared by more than one person (e.g. a couple). They stay separate people.', '{n} email addresses are shared by more than one person (e.g. a couple). They stay separate people.', pl.sharedEmails) + '</p>' : '') +
+      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Name') + '</th><th>' + T('Email') + '</th><th>' + T('In Church Hub') + '</th></tr></thead><tbody>' + pl.items.slice(0, 8).map(function (x) {
+        var o = x.rec; return '<tr><td>' + esc(o.firstName + ' ' + o.lastName) + (o.child ? ' <span class="tag" style="--c:#0E7490">' + T('Child') + '</span>' : '') + '</td><td>' + esc(o.email) + '</td><td>' + (x.personId ? 'Update (matched by ' + esc(x.how) + ')' : 'New') + '</td></tr>';
       }).join('') + '</tbody></table></div>' + (r.length > 8 ? '<p class="hint">…and ' + (r.length - 8) + ' more.</p>' : '') + '</section>' +
-      '<section class="panel"><h2>Categories</h2><p class="hint" style="margin-top:0">What each Elvanto category becomes in Church Hub.</p>' + Object.keys(pl.categories).map(function (c) {
+      '<section class="panel"><h2>' + T('Categories') + '</h2><p class="hint" style="margin-top:0">' + T('What each Elvanto category becomes in Church Hub.') + '</p>' + Object.keys(pl.categories).map(function (c) {
         return '<label class="field">' + esc(c || '(no category)') + ' <small>(' + pl.categories[c] + ')</small><select class="im-cat" data-c="' + esc(c) + '">' + E.CATEGORIES.map(function (x) { return '<option' + (st.cats[c] === x ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label>';
       }).join('') + '</section>' +
-      '<section class="panel"><label class="check"><input type="checkbox" id="im-consent"><span>Elvanto records show these people agreed to the church keeping their details. <span class="muted small">Only tick if that’s true – otherwise you’ll be reminded to ask them (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ').</span></span></label>' +
-      '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="import:go"' + (st.map.firstName == null || st.map.lastName == null ? ' disabled' : '') + '>Import ' + r.length + ' people</button><button class="btn" data-act="import:again">Start again</button></div></section></div></div>';
+      '<section class="panel"><label class="check"><input type="checkbox" id="im-consent"><span>' + T('Elvanto records show these people agreed to the church keeping their details.') + ' <span class="muted small">Only tick if that’s true – otherwise you’ll be reminded to ask them (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ').</span></span></label>' +
+      '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="import:go"' + (st.map.firstName == null || st.map.lastName == null ? ' disabled' : '') + '>Import ' + r.length + ' people</button><button class="btn" data-act="import:again">' + T('Start again') + '</button></div></section></div></div>';
     return h;
   }
 
   function load(name, text) {
     var rows = E.parseCSV(text);
-    if (rows.length < 2) { H.toast('That file has no rows to import', true); return; }
+    if (rows.length < 2) { H.toast(T('That file has no rows to import'), true); return; }
     st.head = rows[0]; st.rows = rows.slice(1); st.map = E.guess(st.head); st.fileName = name; st.done = null; st.cats = {}; H.render();
   }
 
@@ -155,44 +155,44 @@
   }
 
   function renderLeave() {
-    var h = '<div class="page-head"><div><h1>Import from Leave Manager</h1><p class="lead">Bring staff leave across from the Leave Manager Google Sheet: booked and past leave, carried-over days and the leave settings. Nothing is changed in the sheet.</p></div></div>' + tabs('leave');
+    var h = '<div class="page-head"><div><h1>' + T('Import from Leave Manager') + '</h1><p class="lead">' + T('Bring staff leave across from the Leave Manager Google Sheet: booked and past leave, carried-over days and the leave settings. Nothing is changed in the sheet.') + '</p></div></div>' + tabs('leave');
     if (lst.done) {
       var d = lst.done;
-      return h + '<div class="note ok"><b>Imported.</b> ' + d.added + ' leave requests added, ' + d.updated + ' updated, ' + d.adjustments + ' adjustments' + (d.newPeople ? ', ' + d.newPeople + ' new staff added to People' : '') + (d.skipped ? '. ' + d.skipped + ' requests skipped (staff not brought across).' : '.') + '</div>' +
-        '<p>Check <a href="#/leave/team">Leave → Team balances</a> against Leave Manager. You can run the import again just before switching over: leave already brought in is updated, not doubled.</p>' +
-        '<div class="btns"><a class="btn primary" href="#/leave/team">Team balances</a><button class="btn" data-act="import:lagain">Import again</button></div>';
+      return h + '<div class="note ok"><b>' + T('Imported.') + '</b> ' + T('{a} leave requests added, {u} updated, {j} adjustments', { a: d.added, u: d.updated, j: d.adjustments }) + (d.newPeople ? ', ' + T('{n} new staff added to People', { n: d.newPeople }) : '') + (d.skipped ? '. ' + T('{n} requests skipped (staff not brought across).', { n: d.skipped }) : '.') + '</div>' +
+        '<p>' + T('Check {link} against Leave Manager. You can run the import again just before switching over: leave already brought in is updated, not doubled.', { link: '<a href="#/leave/team">' + T('Leave → Team balances') + '</a>' }) + '</p>' +
+        '<div class="btns"><a class="btn primary" href="#/leave/team">' + T('Team balances') + '</a><button class="btn" data-act="import:lagain">' + T('Import again') + '</button></div>';
     }
     if (!lst.tables) {
-      return h + '<div class="grid2"><section class="panel"><h2>1. Download the sheet</h2><ol style="margin:0;padding-left:20px;line-height:1.7">' +
-        '<li>Open the <b>Leave Manager</b> Google Sheet.</li><li>Click <b>File → Download → Microsoft Excel (.xlsx)</b>.</li><li>Come back here and choose that file.</li></ol>' +
-        '<p class="hint">Or download each tab as <b>CSV</b> (File → Download → Comma-separated values) and choose them all at once. PINs are never brought across.</p>' +
-        '<p class="hint">The file holds staff leave and reasons – keep it on the church computer and delete it once imported.</p></section>' +
-        '<section class="panel"><h2>2. Choose the file</h2><label class="field">Leave Manager download (.xlsx or .csv files)<input type="file" id="lm-file" accept=".xlsx,.csv,text/csv" multiple></label>' +
-        (lst.busy ? '<p class="muted">Reading…</p>' : '') + '<p class="hint">Or <button class="link" data-act="import:lsample">try it with a made-up Leave Manager sheet</button>.</p></section></div>';
+      return h + '<div class="grid2"><section class="panel"><h2>' + T('1. Download the sheet') + '</h2><ol style="margin:0;padding-left:20px;line-height:1.7">' +
+        '<li>' + T('Open the {sheet} Google Sheet.', { sheet: '<b>Leave Manager</b>' }) + '</li><li>' + T('Click {menu}.', { menu: '<b>' + T('File → Download → Microsoft Excel (.xlsx)') + '</b>' }) + '</li><li>' + T('Come back here and choose that file.') + '</li></ol>' +
+        '<p class="hint">' + T('Or download each tab as {csv} (File → Download → Comma-separated values) and choose them all at once. PINs are never brought across.', { csv: '<b>CSV</b>' }) + '</p>' +
+        '<p class="hint">' + T('The file holds staff leave and reasons – keep it on the church computer and delete it once imported.') + '</p></section>' +
+        '<section class="panel"><h2>' + T('2. Choose the file') + '</h2><label class="field">' + T('Leave Manager download (.xlsx or .csv files)') + '<input type="file" id="lm-file" accept=".xlsx,.csv,text/csv" multiple></label>' +
+        (lst.busy ? '<p class="muted">' + T('Reading…') + '</p>' : '') + '<p class="hint">' + T('Or {link}.', { link: '<button class="link" data-act="import:lsample">' + T('try it with a made-up Leave Manager sheet') + '</button>' }) + '</p></section></div>';
     }
     var pl = currentPlan(), pv = previewData(pl), lv = pv.data, kinds = Object.keys(lst.tables);
     var y = LeaveCore.lyOf(H.today(), LeaveCore.ctx(lv).S), ded = (lv.types || []).filter(function (t) { return t.deducts && t.active !== false && lv.staff.some(function (st) { var x = LeaveCore.balances(lv, st.id, y)[t.code]; return x && x.entitled != null; }); });
     var status = {}; pl.requests.forEach(function (r) { status[r.status] = (status[r.status] || 0) + 1; });
-    h += '<div class="note info">Read: <b>' + esc(lst.files.join(', ')) + '</b> – found ' + kinds.map(function (k) { return esc(KIND_NAMES[k] || k); }).join(', ') + '.</div>';
-    if (pl.missing.length) h += '<p class="note bad">The ' + pl.missing.map(function (k) { return KIND_NAMES[k]; }).join(' and ') + ' tab' + (pl.missing.length > 1 ? 's are' : ' is') + ' missing. Download the whole sheet as Excel, or include those CSV files.</p>';
+    h += '<div class="note info">' + T('Read: {files} – found {tabs}.', { files: '<b>' + esc(lst.files.join(', ')) + '</b>', tabs: kinds.map(function (k) { return esc(T(KIND_NAMES[k] || k)); }).join(', ') }) + '</div>';
+    if (pl.missing.length) h += '<p class="note bad">' + T('Missing tabs: {tabs}. Download the whole sheet as Excel, or include those CSV files.', { tabs: pl.missing.map(function (k) { return T(KIND_NAMES[k]); }).join(', ') }) + '</p>';
     if (pl.unknownTypes.length) h += '<p class="note warn">Some leave uses kinds of leave that aren’t in the Leave Types tab: ' + esc(pl.unknownTypes.join(', ')) + '.</p>';
     if (pl.skipped.requests.length) h += '<p class="note warn">' + pl.skipped.requests.length + ' request(s) have dates that can’t be read and will be left out.</p>';
     var people = adults();
-    h += '<section class="panel"><h2>Staff</h2><p class="hint" style="margin-top:0">Each Leave Manager staff member is matched to their person in Church Hub (by email, then by name). Check the matches; people not found can be added as new people (without app access).</p>' +
-      '<div class="table-wrap"><table class="simple"><thead><tr><th>In Leave Manager</th><th>Category</th><th>Church Hub person</th></tr></thead><tbody>' + pl.matches.map(function (m) {
+    h += '<section class="panel"><h2>' + T('Staff') + '</h2><p class="hint" style="margin-top:0">Each Leave Manager staff member is matched to their person in Church Hub (by email, then by name). Check the matches; people not found can be added as new people (without app access).</p>' +
+      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('In Leave Manager') + '</th><th>' + T('Category') + '</th><th>' + T('Church Hub person') + '</th></tr></thead><tbody>' + pl.matches.map(function (m) {
         var c = lst.choice[m.lm.id];
         return '<tr><td><b>' + esc(m.lm.name) + '</b><br><span class="muted small">' + esc(m.lm.email || 'no email') + (m.lm.active ? '' : ' · not active') + '</span></td><td>' + esc(m.lm.level) + '</td><td>' +
-          '<select class="lm-who findable" data-id="' + esc(m.lm.id) + '" aria-label="Church Hub person for ' + esc(m.lm.name) + '"><option value="__new"' + (c === '__new' ? ' selected' : '') + '>+ Add as a new person</option><option value="__skip"' + (c === '__skip' ? ' selected' : '') + '>Don’t bring across</option>' +
+          '<select class="lm-who findable" data-id="' + esc(m.lm.id) + '" aria-label="Church Hub person for ' + esc(m.lm.name) + '"><option value="__new"' + (c === '__new' ? ' selected' : '') + '>' + T('+ Add as a new person') + '</option><option value="__skip"' + (c === '__skip' ? ' selected' : '') + '>' + T('Don’t bring across') + '</option>' +
           people.map(function (p) { return '<option value="' + p.id + '"' + (c === p.id ? ' selected' : '') + '>' + esc(H.name(p)) + '</option>'; }).join('') + '</select>' +
           (m.personId && c === m.personId ? '<br><span class="muted small">Matched by ' + m.by + '</span>' : '') + '</td></tr>';
       }).join('') + '</tbody></table></div></section>';
-    h += '<div class="grid2" style="margin-top:16px"><section class="panel"><h2>What will happen</h2><div class="stats">' +
-      '<div class="stat"><span>Leave requests</span><b>' + pl.requests.length + '</b></div><div class="stat"><span>Approved</span><b>' + (status.Approved || 0) + '</b></div><div class="stat"><span>Waiting</span><b>' + (status.Pending || 0) + '</b></div><div class="stat"><span>Adjustments</span><b>' + pl.adjustments.length + '</b></div></div>' +
-      '<label class="check" style="margin-top:10px"><input type="checkbox" id="lm-set"' + (lst.opt.settings ? ' checked' : '') + '><span>Use the sheet’s settings: kinds of leave, categories and allowances, school terms, public holidays and cover rules <span class="muted small">(replaces what’s in Leave → Settings)</span></span></label>' +
-      '<label class="check"><input type="checkbox" id="lm-det"' + (lst.opt.details ? ' checked' : '') + '><span>Update staff details (category, start date, working days) from the sheet</span></label>' +
-      '<p class="hint">Leave already in Church Hub stays. Running this again later updates what was brought in, without doubling it.</p>' +
-      '<div class="btns"><button class="btn primary" data-act="import:lgo"' + (pl.missing.length ? ' disabled' : '') + '>Import leave</button><button class="btn" data-act="import:lagain">Start again</button></div></section>' +
-      '<section class="panel"><h2>Balances after importing (' + esc(LeaveCore.lyLabel(y, LeaveCore.ctx(lv).S)) + ')</h2><p class="hint" style="margin-top:0">Compare these with <b>Team</b> in Leave Manager – they should be the same, apart from any leave already booked in Church Hub itself.</p><div class="table-wrap"><table class="simple"><thead><tr><th>Staff</th>' +
+    h += '<div class="grid2" style="margin-top:16px"><section class="panel"><h2>' + T('What will happen') + '</h2><div class="stats">' +
+      '<div class="stat"><span>' + T('Leave requests') + '</span><b>' + pl.requests.length + '</b></div><div class="stat"><span>' + T('Approved') + '</span><b>' + (status.Approved || 0) + '</b></div><div class="stat"><span>' + T('Waiting') + '</span><b>' + (status.Pending || 0) + '</b></div><div class="stat"><span>' + T('Adjustments') + '</span><b>' + pl.adjustments.length + '</b></div></div>' +
+      '<label class="check" style="margin-top:10px"><input type="checkbox" id="lm-set"' + (lst.opt.settings ? ' checked' : '') + '><span>' + T('Use the sheet’s settings: kinds of leave, categories and allowances, school terms, public holidays and cover rules') + ' <span class="muted small">' + T('(replaces what’s in Leave → Settings)') + '</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="lm-det"' + (lst.opt.details ? ' checked' : '') + '><span>' + T('Update staff details (category, start date, working days) from the sheet') + '</span></label>' +
+      '<p class="hint">' + T('Leave already in Church Hub stays. Running this again later updates what was brought in, without doubling it.') + '</p>' +
+      '<div class="btns"><button class="btn primary" data-act="import:lgo"' + (pl.missing.length ? ' disabled' : '') + '>' + T('Import leave') + '</button><button class="btn" data-act="import:lagain">' + T('Start again') + '</button></div></section>' +
+      '<section class="panel"><h2>' + esc(T('Balances after importing ({year})', { year: LeaveCore.lyLabel(y, LeaveCore.ctx(lv).S) })) + '</h2>' + '<p class="hint" style="margin-top:0">' + T('Compare these with {team} in Leave Manager – they should be the same, apart from any leave already booked in Church Hub itself.', { team: '<b>' + T('Team') + '</b>' }) + '</p><div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Staff') + '</th>' +
       ded.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       lv.staff.filter(function (st) { return LeaveCore.tracksLeave({ level: st.level }); }).map(function (st) {
         var b = LeaveCore.balances(lv, st.id, y);
@@ -208,19 +208,19 @@
       names.push(f.name);
       return new Promise(function (res, rej) {
         var rd = new FileReader();
-        rd.onerror = function () { rej(new Error('Could not read ' + f.name)); };
+        rd.onerror = function () { rej(new Error(T('Could not read {file}', { file: f.name }))); };
         if (/\.xlsx$/i.test(f.name)) {
           rd.onload = function () { XlsxLite.read(rd.result).then(function (sheets) { sheets.forEach(function (x) { lists.push(x); }); res(); }, rej); };
           rd.readAsArrayBuffer(f);
         } else { rd.onload = function () { lists.push(LI.parseCSV(rd.result)); res(); }; rd.readAsText(f); }
       });
     })).then(function () { loaded(lists, names); })
-      .catch(function (e) { lst.busy = false; H.render(); H.toast(e.message + '. You can also download the tabs as CSV files instead.', true); });
+      .catch(function (e) { lst.busy = false; H.render(); H.toast(e.message + '. ' + T('You can also download the tabs as CSV files instead.'), true); });
   }
   function loaded(lists, names) {
     lst.busy = false;
     var t = LI.collect(lists);
-    if (!Object.keys(t).length) { H.render(); H.toast('That doesn’t look like a Leave Manager sheet – no Leave Manager tabs found.', true); return; }
+    if (!Object.keys(t).length) { H.render(); H.toast(T('That doesn’t look like a Leave Manager sheet – no Leave Manager tabs found.'), true); return; }
     lst.tables = t; lst.files = names; lst.choice = {}; lst.done = null; H.render();
   }
 
@@ -242,12 +242,12 @@
     });
     var n = LI.applyLeave(S.leave(), pl, map, lst.opt.settings);
     S.saveLeave('Imported leave from Leave Manager (' + lst.files.join(', ') + '): ' + n.added + ' added, ' + n.updated + ' updated, ' + n.adjustments + ' adjustments' + (lst.opt.settings ? ', settings replaced' : ''), { quiet: true });   // Leave Manager already put its approved leave into Elvanto
-    n.newPeople = newPeople; lst.done = n; lst.tables = null; H.render(); H.toast('Leave imported');
+    n.newPeople = newPeople; lst.done = n; lst.tables = null; H.render(); H.toast(T('Leave imported'));
   }
 
   H.register({
     id: 'import', name: 'Import', desc: 'Bring people across from Elvanto, and leave from Leave Manager', icon: H.ICON.import, tint: '#A16207', roles: ['admin'],
-    render: function (parts) { return !H.can('*') ? '<p class="empty">Only Administrators can import.</p>' : parts && parts[0] === 'leave' ? renderLeave() : parts && parts[0] === 'unavailable' ? renderUnavailable() : render(); },
+    render: function (parts) { return !H.can('*') ? '<p class="empty">' + T('Only Administrators can import.') + '</p>' : parts && parts[0] === 'leave' ? renderLeave() : parts && parts[0] === 'unavailable' ? renderUnavailable() : render(); },
     after: function () {
       document.querySelectorAll('.un-on').forEach(function (b) { b.addEventListener('change', function () { if (b.checked) delete un.skip[b.dataset.k]; else un.skip[b.dataset.k] = 1; H.render(); }); });
       document.querySelectorAll('.un-pick').forEach(function (s) { s.addEventListener('change', function () { if (s.value) un.pick[s.dataset.k] = s.value; else delete un.pick[s.dataset.k]; H.render(); }); });
@@ -270,13 +270,13 @@
           if (pid && !S.find('blockouts', function (b) { return b.personId === pid && b.from === x.from && (b.to || b.from) === x.to; }).length) todo.push({ personId: pid, from: x.from, to: x.to });
         });
         if (!todo.length) return;
-        H.busy('Adding ' + todo.length + ' away dates…', function () {
+        H.busy(TN('Adding {n} away date…', 'Adding {n} away dates…', todo.length), function () {
           todo.forEach(function (b) { S.put('blockouts', { personId: b.personId, from: b.from, to: b.to, reason: 'Unavailable in Elvanto', source: 'elvanto' }); });
           S.audit('Added ' + todo.length + ' away dates from Elvanto’s Unavailable Volunteers', 'blockouts');
-          un = { pick: {}, skip: {} }; H.render(); H.toast(todo.length + ' away date' + (todo.length === 1 ? '' : 's') + ' added');
+          un = { pick: {}, skip: {} }; H.render(); H.toast(TN('{n} away date added', '{n} away dates added', todo.length));
         });
       },
-      lgo: function (el) { if (!H.confirmBtn(el, 'Click again to import')) return; H.busy('Importing from Leave Manager…', applyLeaveImport); },
+      lgo: function (el) { if (!H.confirmBtn(el, T('Click again to import'))) return; H.busy(T('Importing from Leave Manager…'), applyLeaveImport); },
       lagain: function () { lst = { tables: null, files: [], choice: {}, opt: { settings: true, details: true }, done: null, busy: false }; H.render(); },
       lsample: function () {
         var names = ['Staff', 'Requests', 'Adjustments', 'Categories', 'Leave Types', 'School Terms', 'Public Holidays', 'Settings'];
@@ -294,8 +294,8 @@
       },
       again: function () { st = { rows: null, head: null, map: {}, fileName: '', done: null, cats: {} }; H.render(); },
       go: function (el) {
-        if (!H.confirmBtn(el, 'Click again to import')) return;
-        H.busy('Importing people from Elvanto…', function () {
+        if (!H.confirmBtn(el, T('Click again to import'))) return;
+        H.busy(T('Importing people from Elvanto…'), function () {
         var r = recs(), pl = E.plan(r, S.list('people')), famIds = {}, ids = {}, out = { added: 0, updated: 0, families: 0, noConsent: 0, links: 0, ids: 0, notes: 0, receive: 0, serving: 0, unknown: {} };
         // Volunteering needs the church's departments and positions: add any that are missing first
         if (r.some(function (o) { return o.positions && o.positions.length; }) && window.Serving) {
@@ -342,7 +342,7 @@
         S.audit('Imported ' + r.length + ' people from Elvanto (' + st.fileName + '): ' + out.added + ' added, ' + out.updated + ' updated' + (out.ids ? ', ' + out.ids + ' ID numbers' : '') + (out.notes ? ', ' + out.notes + ' notes' : '') +
           (out.receive ? ', ' + out.receive + ' “would like to receive” choices' : '') + (out.serving ? ', ' + out.serving + ' volunteering positions' : ''), 'people');
         out.unknown = Object.keys(out.unknown);
-        st.done = out; st.rows = null; pics = null; H.render(); H.toast('Import finished');
+        st.done = out; st.rows = null; pics = null; H.render(); H.toast(T('Import finished'));
         if (photoQueue.length) { fetchPhotos(photoQueue); H.render(); }
         });
       },
@@ -350,7 +350,7 @@
         var me = H.user(), all = fromElvanto();
         var keep = all.filter(function (p) { return p.id === me.id || p.staff || ['admin', 'pastor', 'rosters', 'kids'].indexOf(p.appRole) >= 0; });
         var go = all.filter(function (p) { return keep.indexOf(p) < 0; });
-        if (!H.confirmBtn(el, 'Click again: remove ' + go.length + ' people')) return;
+        if (!H.confirmBtn(el, TN('Click again: remove {n} person', 'Click again: remove {n} people', go.length))) return;
         H.busy('Removing ' + go.length + ' people…', function () {
         go.forEach(function (p) {
           S.find('consents', function (c) { return c.personId === p.id; }).forEach(function (c) { S.remove('consents', c.id); });

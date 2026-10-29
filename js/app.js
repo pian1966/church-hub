@@ -30,7 +30,7 @@ var Hub = (function () {
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
   var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
   /** In "View as", the Member access level is called Church Partner (the church's own word, Settings → Church wording). */
-  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (Church Partner)' : r === 'member' ? 'Church Partner' : roleLabel(r); }
+  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + T('Church Partner') + ')' : r === 'member' ? T('Church Partner') : roleLabel(r); }
   function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
   function can(perm) {
     if (!user) return false;
@@ -273,18 +273,18 @@ var Hub = (function () {
     var on = enabled().map(function (m) { return m.id; });
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
-      '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>Church Hub</b><small>' + esc(s.churchName) + '</small></span></div>' +
+      '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '</div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(roleLabel(myRole())) + '</small></span>' +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
-      (realAdmin() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="See Church Hub as another role would">' + icon(ICON.eye, 16) + 'View as…</button></div>' : '') +
-      '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>Church Hub</b></a>' +
-      '<span class="top-r">' + (realAdmin() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="View as another role" title="View as another role">' + icon(ICON.eye) + '</button>' : '') +
+      (realAdmin() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button></div>' : '') +
+      '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>' + 'Church Hub' + '</b></a>' +
+      '<span class="top-r">' + (realAdmin() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
-      (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>Viewing as <b>' + esc(viewingAs()) + '</b> – this is what they see. Nothing you do here is saved.</span>' +
-        '<button class="btn small" data-act="hub:viewas" data-r="admin">Back to Administrator</button></div>' : '') +
+      (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>' + T('Viewing as {role} – this is what they see. Nothing you do here is saved.', { role: '<b>' + esc(viewingAs()) + '</b>' }) + '</span>' +
+        '<button class="btn small" data-act="hub:viewas" data-r="admin">' + T('Back to Administrator') + '</button></div>' : '') +
       '<main id="main" tabindex="-1">' + body + '</main></div>' +
       '<nav class="tabbar" aria-label="' + T('Quick menu') + '">' + tabs.map(function (id) {
         var m = id === 'home' ? { name: 'Home', icon: ICON.home } : moduleById(id);
@@ -310,12 +310,12 @@ var Hub = (function () {
   var live = { stage: 'loading' };
   function liveCard(inner) {
     return '<div class="signin"><div class="signin-card">' +
-      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>Church Hub</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
+      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
       '<div class="signin-lang">' + I18n.picker() + '</div>' + inner + '</div></div>';
   }
   function renderLive() {
     var st = live, html;
-    if (st.stage === 'loading') html = '<h1>Church Hub</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
+    if (st.stage === 'loading') html = '<h1>' + 'Church Hub' + '</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
     else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
     else if (st.stage === 'linkSent' && phoneApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       '<ol class="steps"><li>' + T('Open the email on this phone.') + '</li><li>' + T('Press and hold the sign-in link, then choose Copy link.') + '</li><li>' + T('Come back here, paste it in the box and tap Sign in.') + '</li></ol>' +
@@ -330,14 +330,14 @@ var Hub = (function () {
       noPerson: T('You have access, but your person record is missing. Please ask the church office.')
     }[st.reason] || T('You are signed in as {email}, but this email address hasn’t been given access to Church Hub. Ask the church office to add it, or sign out and use another account.', { email: '<b>' + esc(st.email) + '</b>' })) + '</p>' +
       '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button>';
-    else if (st.stage === 'setup') html = '<h1>' + (st.needChurch ? 'Set up Church Hub' : 'Welcome') + '</h1><p class="lead">' + (st.needChurch ? 'You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).' : 'Please add your name to finish setting up your access.') + '</p>' +
-      '<form id="su-form" novalidate>' + reqKey() + (st.needChurch ? '<label class="field req">Church name<input id="su-church" value="Christ Church Howick"></label>' : '') +
-      '<div class="two"><label class="field req">Your first name<input id="su-first" autocomplete="given-name"></label><label class="field req">Last name<input id="su-last" autocomplete="family-name"></label></div>' +
-      '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + (st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">Sign out</button>';
+    else if (st.stage === 'setup') html = '<h1>' + T(st.needChurch ? 'Set up Church Hub' : 'Welcome') + '</h1><p class="lead">' + T(st.needChurch ? 'You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).' : 'Please add your name to finish setting up your access.') + '</p>' +
+      '<form id="su-form" novalidate>' + reqKey() + (st.needChurch ? '<label class="field req">' + T('Church name') + '<input id="su-church" value="Christ Church Howick"></label>' : '') +
+      '<div class="two"><label class="field req">' + T('Your first name') + '<input id="su-first" autocomplete="given-name"></label><label class="field req">' + T('Last name') + '<input id="su-last" autocomplete="family-name"></label></div>' +
+      '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + T(st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">' + T('Sign out') + '</button>';
     else html = '<h1>' + T('Sign in') + '</h1><p class="lead">' + T('For church staff, leaders and members who have been given access.') + '</p>' + (st.message ? '<p class="note bad">' + esc(st.message) + '</p>' : '') +
       (inApp() && !(window.CHURCH_HUB_FIREBASE || {}).googleWebClientId ? '' : '<button class="btn primary big-btn" data-act="hub:google">' + icon('M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5c-.2 1.2-.9 2.2-1.9 2.8v2.4h3.1c1.8-1.7 2.8-4.1 2.8-6.9zM12 21c2.6 0 4.7-.9 6.3-2.3l-3.1-2.4c-.9.6-2 .9-3.2.9-2.5 0-4.6-1.7-5.3-3.9H3.5v2.4C5.1 18.9 8.3 21 12 21zM6.7 13.3a5.4 5.4 0 0 1 0-3.4V7.5H3.5a9 9 0 0 0 0 8.2zM12 6.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9 9 0 0 0 3.5 7.5l3.2 2.4C7.4 8.2 9.5 6.6 12 6.6z', 18) + T('Sign in with Google') + '</button>' +
       '<p class="muted" style="text-align:center;margin:14px 0 6px">' + T('or get a sign-in link by email') + '</p>') +
-      '<form id="si-form" novalidate><label class="field"><span class="sr">' + T('Email') + '</span><input id="si-email" type="email" placeholder="you@example.com" autocomplete="email"></label><p id="si-err" class="note bad" hidden></p>' +
+      '<form id="si-form" novalidate><label class="field"><span class="sr">' + T('Email') + '</span><input id="si-email" type="email" placeholder="' + 'you@example.com' + '" autocomplete="email"></label><p id="si-err" class="note bad" hidden></p>' +
       '<button class="btn" data-act="hub:sendlink">' + T('Email me a link') + '</button></form>' +
       (phoneApp() && Store.live.pendingEmail() ? '<p style="margin:10px 0 0"><button class="link" data-act="hub:havelink">' + T('I already have a sign-in link') + '</button></p>' : '') +
       '<p class="fine">' + esc(((Store.settings() || {}).privacyNotice || 'The church keeps your information secure and stores it in South Africa').split('.')[0]) + '. ' + T('Want to look around first?') + ' <a href="?demo">' + T('Try the demo with made-up people') + '</a>.</p>';
@@ -366,7 +366,7 @@ var Hub = (function () {
     people.forEach(function (p) { (byRole[p.appRole] = byRole[p.appRole] || []).push(p); });
     var order = ['admin', 'pastor', 'rosters', 'kids', 'member'];
     root.innerHTML = '<div class="signin"><div class="signin-card">' +
-      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>Church Hub</b><small>' + esc(s.churchName) + '</small></span></div>' +
+      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<div class="signin-lang">' + I18n.picker() + '</div><h1>' + T('Sign in') + '</h1>' +
       '<p class="lead">' + T('This is a demo with made-up people. Choose who to be: each role sees different things.') + '</p>' +
       order.filter(function (r) { return byRole[r]; }).map(function (r) {
@@ -525,48 +525,48 @@ var Hub = (function () {
     havelink: function () { live = { stage: 'linkSent', email: Store.live.pendingEmail() }; renderLive(); },
     setup: function (el) {
       var v = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, errEl = document.getElementById('su-err');
-      if (!v('su-first') || !v('su-last') || (live.needChurch && !v('su-church'))) { errEl.textContent = 'Please fill in every box.'; errEl.hidden = false; return; }
+      if (!v('su-first') || !v('su-last') || (live.needChurch && !v('su-church'))) { errEl.textContent = T('Please fill in every box.'); errEl.hidden = false; return; }
       el.disabled = true;
       Store.live.setup({ churchName: live.needChurch ? v('su-church') : '', firstName: v('su-first'), lastName: v('su-last') }, makeSampleData)
-        .catch(function (e) { el.disabled = false; errEl.textContent = 'Setting up didn’t work (' + ((e && e.code) || 'error') + '). Check the rules were published (setup guide, step 7).'; errEl.hidden = false; });
+        .catch(function (e) { el.disabled = false; errEl.textContent = T('Setting up didn’t work ({code}). Check the rules were published (setup guide, step 7).', { code: (e && e.code) || 'error' }); errEl.hidden = false; });
     },
-    reset: function () { if (confirmBtn(this)) { Store.reset(makeSampleData); user = Store.get('people', user.id) || null; render(); toast('Demo data reset'); } },
+    reset: function () { if (confirmBtn(this)) { Store.reset(makeSampleData); user = Store.get('people', user.id) || null; render(); toast(T('Demo data reset')); } },
     menu: function () {
       modal(dialogHead(T('All apps')) + '<div class="cards in-dialog">' + [{ id: 'home', name: 'Home', icon: ICON.home, tint: '#6B625A', desc: 'Your to-do list' }].concat(enabled()).map(function (m) {
         return '<a class="appcard" href="#/' + m.id + '" data-act="hub:close"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(T(m.desc)) + '</span></a>';
       }).join('') + '</div>' +
-        (realAdmin() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + 'Back to Administrator</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + 'View as another role…</button>') + '</div>' : '') +
+        (realAdmin() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + T('Back to Administrator') + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
         '<div class="dlg-foot" style="justify-content:space-between">' + I18n.picker('lang-menu') + '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button></div>', T('All apps'));
       langWire();
     },
-    notice: function (el, ev) { ev.preventDefault(); modal(dialogHead(T('Privacy notice'), T('How we use your information')) + '<div class="dlg-body"><p>' + esc(Store.settings().privacyNotice) + '</p><p class="muted">' + T('Information Officer') + ': ' + esc(Store.settings().informationOfficer.name) + '</p></div>', 'Privacy notice'); },
+    notice: function (el, ev) { ev.preventDefault(); modal(dialogHead(T('Privacy notice'), T('How we use your information')) + '<div class="dlg-body"><p>' + esc(Store.settings().privacyNotice) + '</p><p class="muted">' + T('Information Officer') + ': ' + esc(Store.settings().informationOfficer.name) + '</p></div>', T('Privacy notice')); },
     /** "View as": an Administrator sees Church Hub the way a Pastor, Roster coordinator, Children's ministry or a Member would. */
     viewaspick: function () {
       if (!realAdmin()) return;
       var cur = Store.previewCare() ? 'carer' : Store.preview() || 'admin';
-      modal(dialogHead('View as another role', 'See what other people see when they sign in') + '<div class="dlg-body"><p class="muted" style="margin-top:0">You stay signed in as yourself, but Church Hub shows only what that role may see. ' +
-        'Nothing you do is saved while you’re viewing. Pastoral and medical notes stay hidden – only Pastors and Children’s ministry may see those.</p><div class="viewas-pick">' +
+      modal(dialogHead(T('View as another role'), T('See what other people see when they sign in')) + '<div class="dlg-body"><p class="muted" style="margin-top:0">' + T('You stay signed in as yourself, but Church Hub shows only what that role may see.') + ' ' +
+        T('Nothing you do is saved while you’re viewing. Pastoral and medical notes stay hidden – only Pastors and Children’s ministry may see those.') + '</p><div class="viewas-pick">' +
         ['admin'].concat(VIEW_AS).map(function (r) {
-          return '<button class="btn' + (r === cur ? ' primary' : '') + '" data-act="hub:viewas" data-r="' + r + '"' + (r === cur ? ' aria-current="true"' : '') + '>' + esc(viewLabel(r)) + (r === 'admin' ? ' (you)' : '') + '</button>';
-        }).join('') + '</div></div>', 'View as another role');
+          return '<button class="btn' + (r === cur ? ' primary' : '') + '" data-act="hub:viewas" data-r="' + r + '"' + (r === cur ? ' aria-current="true"' : '') + '>' + esc(viewLabel(r)) + (r === 'admin' ? ' (' + T('you') + ')' : '') + '</button>';
+        }).join('') + '</div></div>', T('View as another role'));
     },
     viewas: function (el) {
       var r = el.dataset.r === 'admin' ? '' : el.dataset.r, g = el.dataset.g || '';
       if (!realAdmin() || (r && VIEW_AS.indexOf(r) < 0)) { closeModal(); return; }
       if (r === 'carer' && !g) {   // a carer of which group?
         var gs = Store.list('careGroups').slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
-        if (!gs.length) { closeModal(); toast('There are no care groups yet – add them on the Care groups page', true); return; }
-        modal(dialogHead('View as a carer', 'Which care group?') + '<div class="dlg-body"><p class="muted" style="margin-top:0">See the group the way its carer does, on their Me page.</p><div class="viewas-pick">' +
-          gs.map(function (x) { return '<button class="btn" data-act="hub:viewas" data-r="carer" data-g="' + esc(x.id) + '">' + esc(x.name) + ' <span class="muted small">(' + (x.memberIds || []).length + ')</span></button>'; }).join('') + '</div></div>', 'View as a carer');
+        if (!gs.length) { closeModal(); toast(T('There are no care groups yet – add them on the Care groups page'), true); return; }
+        modal(dialogHead(T('View as a carer'), T('Which care group?')) + '<div class="dlg-body"><p class="muted" style="margin-top:0">' + T('See the group the way its carer does, on their Me page.') + '</p><div class="viewas-pick">' +
+          gs.map(function (x) { return '<button class="btn" data-act="hub:viewas" data-r="carer" data-g="' + esc(x.id) + '">' + esc(x.name) + ' <span class="muted small">(' + (x.memberIds || []).length + ')</span></button>'; }).join('') + '</div></div>', T('View as a carer'));
         return;
       }
       var role = r === 'carer' ? 'member' : r;
       if (role === Store.preview() && g === Store.previewCare()) { closeModal(); return; }
       closeModal();
       var label = r === 'carer' ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(r);
-      var after = function () { location.hash = r === 'carer' ? '#/me' : '#/home'; render(); toast(r ? 'Viewing as ' + label + ' – nothing is saved' : 'Back to Administrator'); };
+      var after = function () { location.hash = r === 'carer' ? '#/me' : '#/home'; render(); toast(r ? T('Viewing as {role} – nothing is saved', { role: label }) : T('Back to Administrator')); };
       if (!Store.isLive()) { Store.preview(role, g); after(); return; }
-      busy(r ? 'Loading what ' + label + ' sees…' : 'Back to Administrator…', function () {
+      busy(r ? T('Loading what {role} sees…', { role: label }) : T('Back to Administrator…'), function () {
         return new Promise(function (done) { switching = done; Store.preview(role, g); });
       }).then(after);
     },

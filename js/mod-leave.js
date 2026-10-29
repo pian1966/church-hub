@@ -1,7 +1,7 @@
 /* Church Hub – Leave (Leave Manager built in). Uses LeaveCore, the same rules file as Leave Manager. */
 (function () {
   'use strict';
-  var T = I18n.t;
+  var T = I18n.t, TN = I18n.tn;
   var H = Hub, esc = H.esc, S = Store, S2 = Store, C = LeaveCore;
   var state = { tab: '' };
 
@@ -23,10 +23,10 @@
   function tabs(d, active) {
     var t = [];
     if (takesLeave(d)) t.push(['', T('My leave')]);
-    if (isLeaveAdmin()) { t.push(['approvals', 'Approvals']); t.push(['team', 'Team balances']); }
+    if (isLeaveAdmin()) { t.push(['approvals', T('Approvals')]); t.push(['team', T('Team balances')]); }
     t.push(['away', T('Who’s away')]);
-    if (isLeaveAdmin()) { t.push(['settings', 'Settings']); t.push(['elvanto', 'Elvanto']); }
-    return t.length > 1 ? '<nav class="seg" aria-label="Leave" style="margin-bottom:18px">' + t.map(function (x) { return '<a href="#/leave' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === active ? 'on' : '') + '">' + x[1] + '</a>'; }).join('') + '</nav>' : '';
+    if (isLeaveAdmin()) { t.push(['settings', T('Settings')]); t.push(['elvanto', 'Elvanto']); }
+    return t.length > 1 ? '<nav class="seg" aria-label="' + esc(T('Leave')) + '" style="margin-bottom:18px">' + t.map(function (x) { return '<a href="#/leave' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === active ? 'on' : '') + '">' + x[1] + '</a>'; }).join('') + '</nav>' : '';
   }
 
   function renderMine(d) {
@@ -48,12 +48,12 @@
 
   function renderApprovals(d) {
     var pend = d.requests.filter(function (r) { return r.status === 'Pending'; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
-    return '<section class="block"><h2>Waiting for your decision</h2>' + (pend.length ? '<div class="list">' + pend.map(function (r) {
+    return '<section class="block"><h2>' + T('Waiting for your decision') + '</h2>' + (pend.length ? '<div class="list">' + pend.map(function (r) {
       var st = C.staffById(d, r.staffId), t = typeOf(d, r.type), w = st ? C.requestWarnings(d, st, r, r.id, true) : [];
       return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + (st ? '<a href="#/leave/staff/' + st.id + '">' + esc(st.name) + '</a>' : '?') + ' · ' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + C.fmtAmount(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small>' +
         (w.length ? '<span class="note warn" style="display:block;margin:8px 0 0;font-size:13px">⚠ ' + w.map(esc).join('<br>⚠ ') + '</span>' : '') + '</span>' +
-        '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">Decline</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved"' + (C.allowanceWarning(d, st, r, r.id, true) ? ' data-over="1"' : '') + '>Approve</button></span></div>';
-    }).join('') + '</div>' : '<p class="empty">Nothing is waiting for approval.</p>') + '</section>';
+        '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">' + T('Decline') + '</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved"' + (C.allowanceWarning(d, st, r, r.id, true) ? ' data-over="1"' : '') + '>' + T('Approve') + '</button></span></div>';
+    }).join('') + '</div>' : '<p class="empty">' + T('Nothing is waiting for approval.') + '</p>') + '</section>';
   }
 
   function renderTeam(d) {
@@ -62,14 +62,14 @@
     var bal = {}; staff.forEach(function (s) { bal[s.id] = C.balances(d, s.id, y); });
     // Only kinds of leave that someone in the list has an allowance for
     var types = d.types.filter(function (t) { return t.deducts && staff.some(function (s) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); });
-    return '<section class="block"><h2>Days left in ' + esc(C.lyLabel(y, C.ctx(d).S)) + '</h2><div class="panel table-wrap"><table class="simple"><thead><tr><th>Staff</th>' + types.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+    return '<section class="block"><h2>Days left in ' + esc(C.lyLabel(y, C.ctx(d).S)) + '</h2><div class="panel table-wrap"><table class="simple"><thead><tr><th>' + T('Staff') + '</th>' + types.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       staff.map(function (s) {
         var b = bal[s.id];
         return '<tr><td><a href="#/leave/staff/' + s.id + '"><b>' + esc(s.name) + '</b></a><br><span class="muted small">' + esc(s.level) + '</span></td>' + types.map(function (t) { var x = b[t.code]; return '<td class="lt">' + (x && x.entitled != null ? C.fmtDays(x.available) : '<span class="muted">–</span>') + '</td>'; }).join('') + '</tr>';
       }).join('') + '</tbody></table></div>' +
-      '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="leave:teamcsv">' + H.icon(H.ICON.download, 16) + 'Download team balances</button></div>' +
-      '<p class="hint">Click a name for that person’s leave in detail.</p>' +
-      (staff.some(function (s) { return !types.some(function (t) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); }) ? '<p class="hint">A dash in every column means that person’s staff category has no allowances yet – set them under Leave → Settings.</p>' : '') + '</section>';
+      '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="leave:teamcsv">' + H.icon(H.ICON.download, 16) + T('Download team balances') + '</button></div>' +
+      '<p class="hint">' + T('Click a name for that person’s leave in detail.') + '</p>' +
+      (staff.some(function (s) { return !types.some(function (t) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); }) ? '<p class="hint">' + T('A dash in every column means that person’s staff category has no allowances yet – set them under Leave → Settings.') + '</p>' : '') + '</section>';
   }
 
   function renderAway(d) {
@@ -98,26 +98,26 @@
     var order = { Failed: 0, Check: 1, Waiting: 2, Done: 3 };
     list.sort(function (a, b) { return (order[a.status] - order[b.status]) || (a.start < b.start ? 1 : -1); });
     var probs = ElvantoSync.problems(list, Date.now());
-    var h = '<p class="muted" style="margin-top:0">Approved leave goes into Elvanto’s <b>Unavailable Volunteers</b> list, so nobody is rostered in Elvanto while they’re away. Elvanto can’t be updated directly, so a robot logs into Elvanto every 15 minutes and does it, like Leave Manager’s robot. Each entry has the note “Church Hub &lt;request ID&gt;”.</p>';
-    h += '<div class="grid2"><section class="panel"><h2>Settings</h2>' +
-      '<label class="check"><input type="checkbox" id="el-on"' + (el.on ? ' checked' : '') + '><span><b>Keep Elvanto up to date</b><br><span class="muted small">Switch on when you stop using Leave Manager (switch Leave Manager’s robot off at the same time), so entries aren’t made twice.</span></span></label>' +
-      '<label class="check"><input type="checkbox" id="el-read"' + (el.read ? ' checked' : '') + '><span><b>Read Elvanto’s unavailable dates every night</b><br><span class="muted small">Until you switch over, the robot reads who is unavailable in Elvanto (names and dates only). Check and add them to Church Hub under <a href="#/import">Import</a>.</span></span></label>' +
-      '<label class="field">Elvanto web address<input id="el-url" value="' + esc(el.url || '') + '" placeholder="https://yourchurch.elvanto.eu"></label>' +
-      '<label class="field">Robot’s Church Hub sign-in (email)<input id="el-remail" value="' + esc(el.robotEmail || '') + '" placeholder="e.g. robot@yourchurch.org"><small>The account you created for the robot in Firebase (see the setup guide).</small></label>' +
-      '<label class="field">Robot’s account ID (User UID)<input id="el-ruid" placeholder="' + (el.robotEmail ? 'Saved – type a new one to change it' : 'Copy it from Firebase → Authentication → Users') + '"></label>' +
-      '<button class="btn small primary" data-act="leave:elsave">Save</button></section>' +
-      '<section class="panel"><h2>Robot</h2>' + (rs.lastRun ? '<p style="margin-top:0">Last ran <b>' + esc(utcLocal(rs.lastRun)) + '</b>' + (rs.done != null ? ' · ' + rs.done + ' done' : '') + '.</p>' : '<p class="muted" style="margin-top:0">The robot hasn’t run yet.</p>') +
+    var h = '<p class="muted" style="margin-top:0">' + T('Approved leave goes into Elvanto’s {list} list, so nobody is rostered in Elvanto while they’re away. Elvanto can’t be updated directly, so a robot logs into Elvanto every 15 minutes and does it, like Leave Manager’s robot.', { list: '<b>Unavailable Volunteers</b>' }) + ' ' + T('Each entry has the note “Church Hub {id}”.', { id: '&lt;' + T('request ID') + '&gt;' }) + '</p>';
+    h += '<div class="grid2"><section class="panel"><h2>' + T('Settings') + '</h2>' +
+      '<label class="check"><input type="checkbox" id="el-on"' + (el.on ? ' checked' : '') + '><span><b>' + T('Keep Elvanto up to date') + '</b><br><span class="muted small">' + T('Switch on when you stop using Leave Manager (switch Leave Manager’s robot off at the same time), so entries aren’t made twice.') + '</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="el-read"' + (el.read ? ' checked' : '') + '><span><b>' + T('Read Elvanto’s unavailable dates every night') + '</b><br><span class="muted small">' + T('Until you switch over, the robot reads who is unavailable in Elvanto (names and dates only). Check and add them to Church Hub under {link}.', { link: '<a href="#/import">' + T('Import') + '</a>' }) + '</span></span></label>' +
+      '<label class="field">' + T('Elvanto web address') + '<input id="el-url" value="' + esc(el.url || '') + '" placeholder="https://yourchurch.elvanto.eu"></label>' +
+      '<label class="field">' + T('Robot’s Church Hub sign-in (email)') + '<input id="el-remail" value="' + esc(el.robotEmail || '') + '" placeholder="' + esc(T('e.g. robot@yourchurch.org')) + '"><small>' + T('The account you created for the robot in Firebase (see the setup guide).') + '</small></label>' +
+      '<label class="field">' + T('Robot’s account ID (User UID)') + '<input id="el-ruid" placeholder="' + esc(T(el.robotEmail ? 'Saved – type a new one to change it' : 'Copy it from Firebase → Authentication → Users')) + '"></label>' +
+      '<button class="btn small primary" data-act="leave:elsave">' + T('Save') + '</button></section>' +
+      '<section class="panel"><h2>' + T('Robot') + '</h2>' + (rs.lastRun ? '<p style="margin-top:0">' + T('Last ran {when}', { when: '<b>' + esc(utcLocal(rs.lastRun)) + '</b>' }) + (rs.done != null ? ' · ' + T('{n} done', { n: rs.done }) : '') + '.' + '</p>' : '<p class="muted" style="margin-top:0">' + T('The robot hasn’t run yet.') + '</p>') +
       (rs.fatal ? '<p class="note bad">It couldn’t finish: ' + esc(rs.fatal) + '</p>' : '') +
-      (el.url ? '<p><a href="' + esc(rs.listUrl || el.url) + '" target="_blank" rel="noopener">Open Elvanto</a> → People → Volunteers → Unavailable Volunteers</p>' : '') +
-      '<p class="hint">Change leave in Church Hub, not in Elvanto – otherwise the robot can’t keep it up to date.</p></section></div>';
-    h += '<section class="block"><h2>Entries' + (probs.length ? ' <span class="tag bad">' + probs.length + ' to check</span>' : '') + '</h2>' + (list.length ? '<div class="list">' + list.slice(0, 200).map(function (e) {
+      (el.url ? '<p><a href="' + esc(rs.listUrl || el.url) + '" target="_blank" rel="noopener">' + T('Open Elvanto') + '</a> ' + T('→ People → Volunteers → Unavailable Volunteers') + '</p>' : '') +
+      '<p class="hint">' + T('Change leave in Church Hub, not in Elvanto – otherwise the robot can’t keep it up to date.') + '</p></section></div>';
+    h += '<section class="block"><h2>' + T('Entries') + (probs.length ? ' <span class="tag bad">' + T('{n} to check', { n: probs.length }) + '</span>' : '') + '</h2>' + (list.length ? '<div class="list">' + list.slice(0, 200).map(function (e) {
       var tag = { Waiting: 'warn', Done: 'ok', Failed: 'bad', Check: 'bad' }[e.status] || 'grey';
       return '<div class="item" style="align-items:flex-start;flex-wrap:wrap"><span class="grow" style="min-width:220px"><b>' + esc(e.name || personName(e.personId)) + ' · ' + esc(range({ start: e.start, end: e.end })) + '</b>' +
-        '<small>Should be: ' + esc(e.want === 'Unavailable' ? 'unavailable' : 'removed') + ' · In Elvanto: ' + esc(e.have || 'nothing') + '</small><small>' + esc(e.note || '') + (e.updatedAt ? ' · ' + esc(utcLocal(e.updatedAt)) : '') + '</small></span>' +
-        '<span class="tag ' + tag + '">' + esc(e.status === 'Waiting' ? 'Waiting for the robot' : e.status === 'Check' ? 'Check by hand' : e.status) + '</span>' +
-        (e.status !== 'Waiting' ? '<button class="btn small" data-act="leave:elretry" data-id="' + e.id + '">Try again</button>' : '') +
-        (e.status !== 'Done' ? '<button class="btn small" data-act="leave:eldone" data-id="' + e.id + '">Done by hand</button>' : '') + '</div>';
-    }).join('') + '</div>' : '<p class="empty">Nothing yet. Once switched on, approved, changed and cancelled leave appears here.</p>') + '</section>';
+        '<small>' + esc(T(e.want === 'Unavailable' ? 'Should be: unavailable' : 'Should be: removed')) + ' · ' + esc(T('In Elvanto: {what}', { what: e.have || T('nothing') })) + '</small><small>' + esc(e.note || '') + (e.updatedAt ? ' · ' + esc(utcLocal(e.updatedAt)) : '') + '</small></span>' +
+        '<span class="tag ' + tag + '">' + esc(T({ Waiting: 'Waiting for the robot', Check: 'Check by hand', Done: 'Done', Failed: 'Failed' }[e.status] || e.status)) + '</span>' +
+        (e.status !== 'Waiting' ? '<button class="btn small" data-act="leave:elretry" data-id="' + e.id + '">' + T('Try again') + '</button>' : '') +
+        (e.status !== 'Done' ? '<button class="btn small" data-act="leave:eldone" data-id="' + e.id + '">' + T('Done by hand') + '</button>' : '') + '</div>';
+    }).join('') + '</div>' : '<p class="empty">' + T('Nothing yet. Once switched on, approved, changed and cancelled leave appears here.') + '</p>') + '</section>';
     return h;
   }
 
@@ -127,8 +127,8 @@
   function inYear(r, y, S) { var rg = C.lyRange(y, S); return r.end >= rg.start && r.start <= rg.end; }
   function renderStaff(d, id, yy) {
     var st = C.staffById(d, id), S = C.ctx(d).S, p = S2.get('people', id);
-    var back = '<a class="crumb" href="#/leave/team">' + H.icon(H.ICON.back, 16) + 'Team balances</a>';
-    if (!st) return back + '<p class="empty">This person isn’t set up as staff. Mark them as staff under People → Edit details.</p>';
+    var back = '<a class="crumb" href="#/leave/team">' + H.icon(H.ICON.back, 16) + T('Team balances') + '</a>';
+    if (!st) return back + '<p class="empty">' + T('This person isn’t set up as staff. Mark them as staff under People → Edit details.') + '</p>';
     if (auditedStaff !== id) { auditedStaff = id; S2.audit('Viewed the leave of ' + st.name, 'people/' + id); }   // may include sick leave
     var y = yy ? +yy : yearOf(d), rg = C.lyRange(y, S), lv = C.level(d, st), ctx = C.ctx(d);
     var bal = C.balances(d, id, y), mine = d.requests.filter(function (r) { return r.staffId === id && !r.synthetic; });
@@ -136,40 +136,40 @@
     var list = mine.filter(function (r) { return inYear(r, y, S); }).sort(function (a, b) { return a.start < b.start ? 1 : -1; });
     var adj = (d.adjustments || []).filter(function (a) { return a.staffId === id && Number(a.year) === y; });
     var h = back + '<div class="page-head"><div class="row">' + H.avatar(p || { id: id, firstName: st.name }, 56) + '<div><h1>' + esc(st.name) + '</h1><p class="lead" style="margin-top:2px">' + esc(st.level) +
-      (st.start ? ' · started ' + esc(H.fmt(st.start, true)) : '') + ' · works ' + esc(C.daysLabel ? C.daysLabel(ctx.swd[id] || ctx.open) : (st.workDays || (lv && lv.workDays) || '')) + '</p></div></div>' +
-      '<div class="btns"><button class="btn primary" data-act="leave:request" data-who="' + id + '">' + H.icon(H.ICON.plus, 18) + 'Book leave</button>' +
-      '<button class="btn" data-act="leave:staffcsv" data-id="' + id + '">' + H.icon(H.ICON.download, 18) + 'Download report</button>' + (p ? '<a class="btn" href="#/people/p/' + id + '">Profile</a>' : '') + '</div></div>';
-    h += '<nav class="seg" aria-label="Leave year" style="margin-bottom:16px">' + Object.keys(years).map(Number).sort().map(function (x) {
+      (st.start ? ' · ' + esc(T('started {date}', { date: H.fmt(st.start, true) })) : '') + ' · ' + T('Working days') + ': ' + esc(C.daysLabel ? C.daysLabel(ctx.swd[id] || ctx.open) : (st.workDays || (lv && lv.workDays) || '')) + '</p></div></div>' +
+      '<div class="btns"><button class="btn primary" data-act="leave:request" data-who="' + id + '">' + H.icon(H.ICON.plus, 18) + T('Book leave') + '</button>' +
+      '<button class="btn" data-act="leave:staffcsv" data-id="' + id + '">' + H.icon(H.ICON.download, 18) + T('Download report') + '</button>' + (p ? '<a class="btn" href="#/people/p/' + id + '">' + T('Profile') + '</a>' : '') + '</div></div>';
+    h += '<nav class="seg" aria-label="' + esc(T('Leave year')) + '" style="margin-bottom:16px">' + Object.keys(years).map(Number).sort().map(function (x) {
       return '<a href="#/leave/staff/' + id + '/' + x + '" class="' + (x === y ? 'on' : '') + '">' + esc(C.lyLabel(x, S)) + '</a>';
     }).join('') + '</nav>';
     // Balances, with how each is made up
     var kinds = d.types.filter(function (t) { return bal[t.code] && (bal[t.code].entitled != null || bal[t.code].approved || bal[t.code].pending); });
-    h += '<section class="block"><h2>' + esc(C.lyLabel(y, S)) + ': ' + esc(H.fmt(rg.start, true)) + ' – ' + esc(H.fmt(rg.end, true)) + '</h2>' + (kinds.length ? '<div class="panel table-wrap"><table class="simple"><thead><tr><th>Kind of leave</th><th class="lt">Allowance</th><th class="lt">From last year</th><th class="lt">Taken</th><th class="lt">Waiting</th><th class="lt">Left</th></tr></thead><tbody>' +
+    h += '<section class="block"><h2>' + esc(C.lyLabel(y, S)) + ': ' + esc(H.fmt(rg.start, true)) + ' – ' + esc(H.fmt(rg.end, true)) + '</h2>' + (kinds.length ? '<div class="panel table-wrap"><table class="simple"><thead><tr><th>' + T('Kind of leave') + '</th><th class="lt">' + T('Allowance') + '</th><th class="lt">' + T('From last year') + '</th><th class="lt">' + T('Taken') + '</th><th class="lt">' + T('Waiting') + '</th><th class="lt">' + T('Left') + '</th></tr></thead><tbody>' +
       kinds.map(function (t) {
         var b = bal[t.code], ly = b.lastYear, u = function (n) { return C.fmtDays(n); };
         var adjN = adj.filter(function (a) { return a.type === t.code; }).reduce(function (s, a) { return s + (Number(a.days) || 0); }, 0);
-        return '<tr><td><span class="dot" style="--c:' + esc(t.colour) + '"></span> ' + esc(t.name) + (adjN ? '<br><span class="muted small">includes ' + (adjN > 0 ? '+' : '') + u(adjN) + ' adjustment</span>' : '') + '</td>' +
+        return '<tr><td><span class="dot" style="--c:' + esc(t.colour) + '"></span> ' + esc(t.name) + (adjN ? '<br><span class="muted small">' + T('includes {n} adjustment', { n: (adjN > 0 ? '+' : '') + u(adjN) }) + '</span>' : '') + '</td>' +
           '<td class="lt">' + (b.entitled != null ? u(b.entitled) : '<span class="muted">–</span>') + '</td>' +
-          '<td class="lt">' + (b.broughtForward ? u(b.broughtForward) : ly && ly.left ? (ly.until < H.today() ? '<span class="muted">' + u(ly.left) + '</span><br><span class="muted small">unused, ended ' + esc(H.fmt(ly.until)) + '</span>' : u(ly.left) + '<br><span class="muted small">until ' + esc(H.fmt(ly.until)) + '</span>') : '<span class="muted">–</span>') + '</td>' +
+          '<td class="lt">' + (b.broughtForward ? u(b.broughtForward) : ly && ly.left ? (ly.until < H.today() ? '<span class="muted">' + u(ly.left) + '</span><br><span class="muted small">' + esc(T('unused, ended {date}', { date: H.fmt(ly.until) })) + '</span>' : u(ly.left) + '<br><span class="muted small">' + esc(T('until {date}', { date: H.fmt(ly.until) })) + '</span>') : '<span class="muted">–</span>') + '</td>' +
           '<td class="lt">' + u(b.approved || 0) + '</td><td class="lt">' + (b.pending ? u(b.pending) : '<span class="muted">–</span>') + '</td>' +
           '<td class="lt"><b>' + (b.entitled != null ? u(b.available) : '<span class="muted">–</span>') + '</b></td></tr>';
-      }).join('') + '</tbody></table></div><p class="hint">“Left” takes off approved and waiting leave. Days from last year are used first, until the date shown.</p>' : '<p class="empty">No allowances for ' + esc(st.level) + ' – set them under Leave → Settings.</p>') + '</section>';
+      }).join('') + '</tbody></table></div><p class="hint">' + T('“Left” takes off approved and waiting leave. Days from last year are used first, until the date shown.') + '</p>' : '<p class="empty">' + esc(T('No allowances for {category} – set them under Leave → Settings.', { category: st.level })) + '</p>') + '</section>';
     // Every request in the year
-    h += '<section class="block"><h2>Leave in ' + esc(C.lyLabel(y, S)) + '</h2>' + (list.length ? '<div class="list">' + list.map(function (r) {
+    h += '<section class="block"><h2>' + esc(T('Leave in {year}', { year: C.lyLabel(y, S) })) + '</h2>' + (list.length ? '<div class="list">' + list.map(function (r) {
       var t = typeOf(d, r.type), n = C.amount(r, t, ctx);
       return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + esc(range(r)) + '</b><small>' +
         esc(t.name + ' · ' + C.fmtAmount(t, n) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small><small>' +
-        esc([r.submitted ? 'Asked ' + String(r.submitted).slice(0, 10) : '', r.decidedBy ? (r.status === 'Declined' ? 'Declined' : 'Approved') + ' by ' + r.decidedBy + (r.decidedOn ? ' on ' + String(r.decidedOn).slice(0, 10) : '') : '',
-          r.cancelledBy ? 'Cancelled by ' + r.cancelledBy : '', r.source === 'Leave Manager' ? 'from Leave Manager' : ''].filter(Boolean).join(' · ')) + '</small></span>' + pill(r.status) +
-        (r.status === 'Pending' ? '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">Decline</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved">Approve</button></span>' : '') +
-        ((r.status === 'Approved' || r.status === 'Pending') && r.end >= H.today() ? '<button class="btn small" data-act="leave:cancel" data-id="' + r.id + '">Cancel</button>' : '') + '</div>';
-    }).join('') + '</div>' : '<p class="empty">No leave in this leave year.</p>') + '</section>';
+        esc([r.submitted ? T('Asked {date}', { date: String(r.submitted).slice(0, 10) }) : '', r.decidedBy ? T(r.status === 'Declined' ? 'Declined by {name}' : 'Approved by {name}', { name: r.decidedBy }) + (r.decidedOn ? ' ' + T('on {date}', { date: String(r.decidedOn).slice(0, 10) }) : '') : '',
+          r.cancelledBy ? T('Cancelled by {name}', { name: r.cancelledBy }) : '', r.source === 'Leave Manager' ? T('from Leave Manager') : ''].filter(Boolean).join(' · ')) + '</small></span>' + pill(r.status) +
+        (r.status === 'Pending' ? '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">' + T('Decline') + '</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved">' + T('Approve') + '</button></span>' : '') +
+        ((r.status === 'Approved' || r.status === 'Pending') && r.end >= H.today() ? '<button class="btn small" data-act="leave:cancel" data-id="' + r.id + '">' + T('Cancel') + '</button>' : '') + '</div>';
+    }).join('') + '</div>' : '<p class="empty">' + T('No leave in this leave year.') + '</p>') + '</section>';
     // Adjustments
-    h += '<section class="block"><h2>Adjustments in ' + esc(C.lyLabel(y, S)) + '</h2><p class="muted" style="margin-top:0">Extra days or corrections (e.g. days carried over by agreement, or a public holiday worked).</p>' +
+    h += '<section class="block"><h2>' + esc(T('Adjustments in {year}', { year: C.lyLabel(y, S) })) + '</h2><p class="muted" style="margin-top:0">' + T('Extra days or corrections (e.g. days carried over by agreement, or a public holiday worked).') + '</p>' +
       (adj.length ? '<div class="list">' + adj.map(function (a) { var t = typeOf(d, a.type); return '<div class="item"><span class="grow"><b>' + (a.days > 0 ? '+' : '') + C.fmtDays(a.days) + ' ' + esc(t.name) + '</b><small>' + esc(a.note || '') + '</small></span></div>'; }).join('') + '</div>' : '') +
-      '<div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:10px"><label class="field" style="margin:0">Kind of leave<select id="adj-t">' + d.types.filter(function (t) { return t.deducts && C.offered(d, st, t); }).map(function (t) { return '<option value="' + t.code + '">' + esc(t.name) + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field req" style="margin:0">Days (+ or −)<input id="adj-d" type="number" step="0.5" style="width:100px"></label><label class="field grow" style="margin:0">Why<input id="adj-n" placeholder="e.g. Carried over by agreement"></label>' +
-      '<button class="btn" data-act="leave:addadj" data-id="' + id + '" data-y="' + y + '">Add adjustment</button></div></section>';
+      '<div class="row" style="flex-wrap:wrap;gap:8px;align-items:flex-end;margin-top:10px"><label class="field" style="margin:0">' + T('Kind of leave') + '<select id="adj-t">' + d.types.filter(function (t) { return t.deducts && C.offered(d, st, t); }).map(function (t) { return '<option value="' + t.code + '">' + esc(t.name) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="field req" style="margin:0">' + T('Days (+ or −)') + '<input id="adj-d" type="number" step="0.5" style="width:100px"></label><label class="field grow" style="margin:0">' + T('Why') + '<input id="adj-n" placeholder="' + esc(T('e.g. Carried over by agreement')) + '"></label>' +
+      '<button class="btn" data-act="leave:addadj" data-id="' + id + '" data-y="' + y + '">' + T('Add adjustment') + '</button></div></section>';
     return h;
   }
   function csv(rows) { return rows.map(function (r) { return r.map(function (v) { v = String(v == null ? '' : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(','); }).join('\r\n'); }
@@ -187,55 +187,55 @@
     var lv = S.leave(), st = lv.settings, ded = lv.types.filter(function (t) { return t.deducts; });
     var staffCount = {}; d.staff.forEach(function (s) { staffCount[s.level] = (staffCount[s.level] || 0) + 1; });
     var y = new Date().getFullYear(), years = [y, y + 1];
-    var html = '<p class="muted">These work exactly like the tabs in the Leave Manager sheet. Changes apply straight away to everyone’s balances.</p><div class="grid2">';
+    var html = '<p class="muted">' + T('These work exactly like the tabs in the Leave Manager sheet. Changes apply straight away to everyone’s balances.') + '</p><div class="grid2">';
 
     // General
-    html += '<section class="panel"><h2>General</h2>' +
-      '<label class="field">The leave year starts in<select id="ls-start">' + MONTHS.map(function (m, i) { return '<option value="' + (i + 1) + '"' + (Number(st.LeaveYearStartMonth || 1) === i + 1 ? ' selected' : '') + '>' + m + '</option>'; }).join('') + '</select></label>' +
-      '<div class="field">Days the church is open<br>' + dayBoxes('ls-open', st.OpenDays) + '<small>Used for anyone without their own working days.</small></div>' +
-      '<label class="check"><input type="checkbox" id="ls-prorata"' + (/^false$/i.test(String(st.ProRata)) ? '' : ' checked') + '><span>New staff get a share of the year’s allowance (pro-rata)</span></label>' +
-      '<label class="check"><input type="checkbox" id="ls-neg"' + (/^true$/i.test(String(st.AllowNegative)) ? ' checked' : '') + '><span>Staff may ask for more leave than they have left (Administrators can always approve it)</span></label>' +
-      '<button class="btn small" data-act="leave:savegeneral">Save</button></section>';
+    html += '<section class="panel"><h2>' + T('General') + '</h2>' +
+      '<label class="field">' + T('The leave year starts in') + '<select id="ls-start">' + MONTHS.map(function (m, i) { return '<option value="' + (i + 1) + '"' + (Number(st.LeaveYearStartMonth || 1) === i + 1 ? ' selected' : '') + '>' + T(m) + '</option>'; }).join('') + '</select></label>' +
+      '<div class="field">' + T('Days the church is open') + '<br>' + dayBoxes('ls-open', st.OpenDays) + '<small>' + T('Used for anyone without their own working days.') + '</small></div>' +
+      '<label class="check"><input type="checkbox" id="ls-prorata"' + (/^false$/i.test(String(st.ProRata)) ? '' : ' checked') + '><span>' + T('New staff get a share of the year’s allowance (pro-rata)') + '</span></label>' +
+      '<label class="check"><input type="checkbox" id="ls-neg"' + (/^true$/i.test(String(st.AllowNegative)) ? ' checked' : '') + '><span>' + T('Staff may ask for more leave than they have left (Administrators can always approve it)') + '</span></label>' +
+      '<button class="btn small" data-act="leave:savegeneral">' + T('Save') + '</button></section>';
 
     // Terms
     var terms = lv.terms.slice().sort(function (a, b) { return a.start < b.start ? -1 : 1; });
-    html += '<section class="panel"><h2>School terms</h2><p class="hint" style="margin-top:0">Needed for leave limited per term (e.g. one Weekend Off per term).</p><div id="ls-terms">' +
-      terms.map(termRow).join('') + '</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="leave:addterm">' + H.icon(H.ICON.plus, 16) + 'Add a term</button><button class="btn small primary" data-act="leave:saveterms">Save terms</button></div></section>';
+    html += '<section class="panel"><h2>' + T('School terms') + '</h2><p class="hint" style="margin-top:0">' + T('Needed for leave limited per term (e.g. one Weekend Off per term).') + '</p><div id="ls-terms">' +
+      terms.map(termRow).join('') + '</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="leave:addterm">' + H.icon(H.ICON.plus, 16) + T('Add a term') + '</button><button class="btn small primary" data-act="leave:saveterms">' + T('Save terms') + '</button></div></section>';
 
     // Categories and allowances
-    html += '<section class="panel" style="grid-column:1/-1"><h2>Staff categories and allowances</h2><p class="hint" style="margin-top:0">Days per leave year for each category. Leave a box empty if that category doesn’t get that kind of leave. The “Administrator” category manages leave but doesn’t take it here.</p>' +
-      '<div class="table-wrap"><table class="simple" id="ls-levels"><thead><tr><th>Category</th><th>Working days</th>' + ded.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
+    html += '<section class="panel" style="grid-column:1/-1"><h2>' + T('Staff categories and allowances') + '</h2><p class="hint" style="margin-top:0">' + T('Days per leave year for each category. Leave a box empty if that category doesn’t get that kind of leave. The “Administrator” category manages leave but doesn’t take it here.') + '</p>' +
+      '<div class="table-wrap"><table class="simple" id="ls-levels"><thead><tr><th>' + T('Category') + '</th><th>' + T('Working days') + '</th>' + ded.map(function (t) { return '<th class="lt">' + esc(t.name) + '</th>'; }).join('') + '<th></th></tr></thead><tbody>' +
       lv.levels.map(function (l, i) {
-        return '<tr data-i="' + i + '"><td><b>' + esc(l.label || l.level) + '</b><br><span class="muted small">' + (staffCount[l.level] || 0) + ' staff</span></td><td>' + dayBoxes('ls-wd', l.workDays) + '</td>' +
-          ded.map(function (t) { var v = l.ent[t.code]; return '<td class="lt"><input class="ls-ent" data-code="' + t.code + '" type="number" min="0" step="0.5" style="width:64px" value="' + (v == null ? '' : v) + '" aria-label="' + esc(t.name + ' for ' + l.level) + '"></td>'; }).join('') +
+        return '<tr data-i="' + i + '"><td><b>' + esc(l.label || l.level) + '</b><br><span class="muted small">' + TN('{n} staff member', '{n} staff', staffCount[l.level] || 0) + '</span></td><td>' + dayBoxes('ls-wd', l.workDays) + '</td>' +
+          ded.map(function (t) { var v = l.ent[t.code]; return '<td class="lt"><input class="ls-ent" data-code="' + t.code + '" type="number" min="0" step="0.5" style="width:64px" value="' + (v == null ? '' : v) + '" aria-label="' + esc(T('{type} for {category}', { type: t.name, category: l.level })) + '"></td>'; }).join('') +
           '<td>' + (staffCount[l.level] ? '' : '<button class="icon-btn ghost" data-act="leave:dellevel" data-i="' + i + '" aria-label="Remove category ' + esc(l.level) + '">' + H.icon(H.ICON.trash, 18) + '</button>') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-      '<div class="btns"><button class="btn small" data-act="leave:addlevel">' + H.icon(H.ICON.plus, 16) + 'Add a category</button><button class="btn small primary" data-act="leave:savelevels">Save categories</button></div></section>';
+      '<div class="btns"><button class="btn small" data-act="leave:addlevel">' + H.icon(H.ICON.plus, 16) + T('Add a category') + '</button><button class="btn small primary" data-act="leave:savelevels">' + T('Save categories') + '</button></div></section>';
 
     // Leave types
-    html += '<section class="panel"><h2>Kinds of leave</h2><div class="list">' + lv.types.map(function (t, i) {
-      return '<div class="item" style="flex-wrap:wrap"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow" style="min-width:160px"><input class="ls-tname" data-i="' + i + '" value="' + esc(t.name) + '" aria-label="Name" style="width:100%"><small>' + esc(t.code) + ' · ' + (t.deducts ? 'uses an allowance' : 'no allowance') + (t.perTerm ? ' · ' + t.perTerm + ' per term' : '') + '</small></span>' +
-        '<label class="check" style="margin:0"><input type="checkbox" class="ls-tappr" data-i="' + i + '"' + (t.needsApproval === false ? '' : ' checked') + '><span>Needs approval</span></label>' +
-        '<label class="check" style="margin:0"><input type="checkbox" class="ls-tuse" data-i="' + i + '"' + (t.active === false ? '' : ' checked') + '><span>In use</span></label></div>';
-    }).join('') + '</div><div class="btns" style="margin-top:10px"><button class="btn small" data-act="leave:addtype">' + H.icon(H.ICON.plus, 16) + 'Add a kind of leave</button><button class="btn small primary" data-act="leave:savetypes">Save</button></div></section>';
+    html += '<section class="panel"><h2>' + T('Kinds of leave') + '</h2><div class="list">' + lv.types.map(function (t, i) {
+      return '<div class="item" style="flex-wrap:wrap"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow" style="min-width:160px"><input class="ls-tname" data-i="' + i + '" value="' + esc(t.name) + '" aria-label="' + esc(T('Name')) + '" style="width:100%"><small>' + esc(t.code) + ' · ' + T(t.deducts ? 'uses an allowance' : 'no allowance') + (t.perTerm ? ' · ' + T('{n} per term', { n: t.perTerm }) : '') + '</small></span>' +
+        '<label class="check" style="margin:0"><input type="checkbox" class="ls-tappr" data-i="' + i + '"' + (t.needsApproval === false ? '' : ' checked') + '><span>' + T('Needs approval') + '</span></label>' +
+        '<label class="check" style="margin:0"><input type="checkbox" class="ls-tuse" data-i="' + i + '"' + (t.active === false ? '' : ' checked') + '><span>' + T('In use') + '</span></label></div>';
+    }).join('') + '</div><div class="btns" style="margin-top:10px"><button class="btn small" data-act="leave:addtype">' + H.icon(H.ICON.plus, 16) + T('Add a kind of leave') + '</button><button class="btn small primary" data-act="leave:savetypes">' + T('Save') + '</button></div></section>';
 
     // Public holidays
     var hol = lv.holidays.filter(function (h) { return +h.date.slice(0, 4) >= y; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
     var missing = years.filter(function (yy) { return !lv.holidays.some(function (h) { return +h.date.slice(0, 4) === yy && !h.church; }); });
-    html += '<section class="panel"><h2>Public holidays and church closures</h2><p class="hint" style="margin-top:0">These days don’t use anyone’s leave.</p>' +
-      (missing.length ? '<p class="note warn">' + missing.map(function (yy) { return '<button class="btn small" data-act="leave:addsa" data-y="' + yy + '">Add South African public holidays for ' + yy + '</button>'; }).join(' ') + '</p>' : '') +
+    html += '<section class="panel"><h2>' + T('Public holidays and church closures') + '</h2><p class="hint" style="margin-top:0">' + T('These days don’t use anyone’s leave.') + '</p>' +
+      (missing.length ? '<p class="note warn">' + missing.map(function (yy) { return '<button class="btn small" data-act="leave:addsa" data-y="' + yy + '">' + T('Add South African public holidays for {year}', { year: yy }) + '</button>'; }).join(' ') + '</p>' : '') +
       '<div class="list" style="max-height:320px;overflow:auto">' + hol.map(function (h) {
         return '<div class="item"><span class="grow"><b>' + esc(H.fmt(h.date, true)) + '</b><small>' + esc(h.name) + '</small></span><button class="icon-btn ghost" data-act="leave:delhol" data-date="' + h.date + '" aria-label="Remove ' + esc(h.name) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
-      }).join('') + '</div><div class="two" style="margin-top:10px"><label class="field req">Date<input type="date" id="ls-hd"></label><label class="field req">Name<input id="ls-hn" placeholder="e.g. Office closed – Christmas week"></label></div>' +
-      '<button class="btn small" data-act="leave:addhol">Add this day</button>' +
-      (lv.holidays.some(function (h) { return +h.date.slice(0, 4) === y + 2 && !h.church; }) ? '' : ' <button class="link" data-act="leave:addsa" data-y="' + (y + 2) + '">Add public holidays for ' + (y + 2) + '</button>') +
+      }).join('') + '</div><div class="two" style="margin-top:10px"><label class="field req">' + T('Date') + '<input type="date" id="ls-hd"></label><label class="field req">' + T('Name') + '<input id="ls-hn" placeholder="' + esc(T('e.g. Office closed – Christmas week')) + '"></label></div>' +
+      '<button class="btn small" data-act="leave:addhol">' + T('Add this day') + '</button>' +
+      (lv.holidays.some(function (h) { return +h.date.slice(0, 4) === y + 2 && !h.church; }) ? '' : ' <button class="link" data-act="leave:addsa" data-y="' + (y + 2) + '">' + T('Add public holidays for {year}', { year: y + 2 }) + '</button>') +
       '</section>';
     return html + '</div>';
   }
   function termRow(t) {
-    return '<div class="ls-term"><label class="field" style="margin:0 0 6px">Name<input class="ls-tn" value="' + esc(t.name || '') + '" placeholder="e.g. Term 1 2027"></label>' +
-      '<div class="ls-term-dates"><label class="field" style="margin:0">Starts<input type="date" class="ls-ts" value="' + esc(t.start || '') + '"></label><label class="field" style="margin:0">Ends<input type="date" class="ls-te" value="' + esc(t.end || '') + '"></label>' +
-      '<button class="icon-btn ghost" data-act="leave:delterm" aria-label="Remove this term">' + H.icon(H.ICON.trash, 18) + '</button></div></div>';
+    return '<div class="ls-term"><label class="field" style="margin:0 0 6px">' + T('Name') + '<input class="ls-tn" value="' + esc(t.name || '') + '" placeholder="' + esc(T('e.g. Term 1 2027')) + '"></label>' +
+      '<div class="ls-term-dates"><label class="field" style="margin:0">' + T('Starts') + '<input type="date" class="ls-ts" value="' + esc(t.start || '') + '"></label><label class="field" style="margin:0">' + T('Ends') + '<input type="date" class="ls-te" value="' + esc(t.end || '') + '"></label>' +
+      '<button class="icon-btn ghost" data-act="leave:delterm" aria-label="' + esc(T('Remove this term')) + '">' + H.icon(H.ICON.trash, 18) + '</button></div></div>';
   }
 
   /* ---------- request form ---------- */
@@ -244,8 +244,8 @@
     var people = d.staff.filter(function (s) { return C.tracksLeave(s) && s.active && (s.id === me.id || admin); });
     if (!people.length) { H.toast(T('Leave is for staff members'), true); return; }
     var who = people.filter(function (s) { return s.id === (whoId || me.id); })[0] || people[0];
-    H.modal(H.dialogHead(admin && who.id !== me.id ? 'Book leave' : T('Request leave'), T('Only your working days are counted.')) + '<form class="dlg-body" id="lf" novalidate>' +
-      (people.length > 1 ? '<label class="field">For<select class="findable" id="lf-who">' + people.map(function (s) { return '<option value="' + s.id + '"' + (s.id === who.id ? ' selected' : '') + '>' + esc(s.name) + (s.id === me.id ? ' (you)' : '') + '</option>'; }).join('') + '</select></label>' : '<input type="hidden" id="lf-who" value="' + who.id + '">') +
+    H.modal(H.dialogHead(admin && who.id !== me.id ? T('Book leave') : T('Request leave'), T('Only your working days are counted.')) + '<form class="dlg-body" id="lf" novalidate>' +
+      (people.length > 1 ? '<label class="field">' + T('For') + '<select class="findable" id="lf-who">' + people.map(function (s) { return '<option value="' + s.id + '"' + (s.id === who.id ? ' selected' : '') + '>' + esc(s.name) + (s.id === me.id ? ' (you)' : '') + '</option>'; }).join('') + '</select></label>' : '<input type="hidden" id="lf-who" value="' + who.id + '">') +
       '<label class="field req">' + T('Type of leave') + '<select id="lf-type"></select></label><div id="lf-bal"></div>' +
       '<div class="two"><label class="field req">' + T('First day') + '<input type="date" id="lf-start"></label><label class="field req">' + T('Last day') + '<input type="date" id="lf-end"></label></div>' +
       '<label class="field' + (admin ? '' : ' req') + '">' + T('Note for the Administrator') + '<textarea id="lf-note" rows="2" placeholder="' + T('What is the leave for?') + '"></textarea></label>' +
@@ -264,7 +264,7 @@
       var bal = '';
       if (t && t.deducts) {
         var b = C.balances(d, st.id, C.lyOf(r.start || H.today(), C.ctx(d).S))[t.code];
-        if (b && b.entitled != null) bal = '<div class="fbal" style="--c:' + esc(t.colour) + '">' + (st.id === me.id ? T('You have {n} {unit} of {type} left', { n: '<b>' + C.fmtDays(b.available) + '</b>', unit: esc(T(C.unitName(t, b.available))), type: esc(t.name) }) : esc(st.name.split(' ')[0]) + ' has <b>' + C.fmtDays(b.available) + '</b> ' + esc(C.unitName(t, b.available)) + ' of ' + esc(t.name) + ' left') + (b.pending ? ' · ' + esc(T('{n} waiting', { n: C.fmtDays(b.pending) })) : '') + '</div>';
+        if (b && b.entitled != null) bal = '<div class="fbal" style="--c:' + esc(t.colour) + '">' + (st.id === me.id ? T('You have {n} {unit} of {type} left', { n: '<b>' + C.fmtDays(b.available) + '</b>', unit: esc(T(C.unitName(t, b.available))), type: esc(t.name) }) : T('{name} has {n} {unit} of {type} left', { name: esc(st.name.split(' ')[0]), n: '<b>' + C.fmtDays(b.available) + '</b>', unit: esc(T(C.unitName(t, b.available))), type: esc(t.name) })) + (b.pending ? ' · ' + esc(T('{n} waiting', { n: C.fmtDays(b.pending) })) : '') + '</div>';
       } else if (t) bal = '<div class="fbal" style="--c:' + esc(t.colour) + '">' + esc(T('{type} doesn’t use an allowance.', { type: t.name })) + '</div>';
       $('lf-bal').innerHTML = bal;
       var errs = [], warn = [];
@@ -277,7 +277,7 @@
       } else $('lf-sum').hidden = true;
       $('lf-err').hidden = !errs.length; $('lf-err').innerHTML = errs.map(esc).join('<br>');
       $('lf-go').disabled = !t || !C.isISO(r.start) || errs.length > 0;
-      $('lf-go').textContent = admin && st.id !== me.id ? 'Book leave' : T('Send request');
+      $('lf-go').textContent = admin && st.id !== me.id ? T('Book leave') : T('Send request');
     }
     fillTypes();
     $('lf-who').addEventListener('change', function () { fillTypes(); update(); });
@@ -293,15 +293,15 @@
     roles: ['admin', 'pastor', 'rosters', 'kids', 'member'],
     stat: function (u) {
       var d = data();
-      if (isLeaveAdmin()) { var n = d.requests.filter(function (r) { return r.status === 'Pending'; }).length; return n ? n + ' waiting for approval' : 'Nothing waiting'; }
+      if (isLeaveAdmin()) { var n = d.requests.filter(function (r) { return r.status === 'Pending'; }).length; return n ? T('{n} waiting for approval', { n: n }) : T('Nothing waiting'); }
       return T(takesLeave(d) ? 'Your balances and requests' : 'Who’s away');
     },
     todos: function () {
       var d = data(); if (!isLeaveAdmin()) return [];
       var n = d.requests.filter(function (r) { return r.status === 'Pending'; }).length, out = [];
-      if (n) out.push({ text: 'Approve or decline ' + n + ' leave request' + (n === 1 ? '' : 's'), href: '#/leave/approvals' });
+      if (n) out.push({ text: TN('Approve or decline {n} leave request', 'Approve or decline {n} leave requests', n), href: '#/leave/approvals' });
       var probs = ElvantoSync.problems(S.list('elvantoSync'), Date.now());
-      if (probs.length) out.push({ text: probs.length + ' Elvanto update' + (probs.length === 1 ? '' : 's') + ' to check', href: '#/leave/elvanto', tag: 'Elvanto' });
+      if (probs.length) out.push({ text: TN('{n} Elvanto update to check', '{n} Elvanto updates to check', probs.length), href: '#/leave/elvanto', tag: 'Elvanto' });
       return out;
     },
     render: function (p) {
@@ -309,32 +309,32 @@
       if (v === 'staff' && isLeaveAdmin()) return renderStaff(d, p[1], p[2]);
       var body = v === 'elvanto' && isLeaveAdmin() ? renderElvanto(d) : v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && isLeaveAdmin() ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);
       return '<div class="page-head"><div><h1>' + T('Leave') + '</h1><p class="lead">' + T('Staff leave with the same rules as Leave Manager: only working days count, public holidays are free, and approved leave keeps people off the roster.') + '</p></div>' +
-        (takesLeave(d) || isLeaveAdmin() ? '<button class="btn primary" data-act="leave:request">' + H.icon(H.ICON.plus, 18) + (takesLeave(d) ? T('Request leave') : 'Book leave') + '</button>' : '') + '</div>' + tabs(d, v) + body;
+        (takesLeave(d) || isLeaveAdmin() ? '<button class="btn primary" data-act="leave:request">' + H.icon(H.ICON.plus, 18) + (takesLeave(d) ? T('Request leave') : T('Book leave')) + '</button>' : '') + '</div>' + tabs(d, v) + body;
     },
     actions: {
       elsave: function () {
         var old = elvSettings(), on = document.getElementById('el-on').checked, rd = document.getElementById('el-read').checked, url = document.getElementById('el-url').value.trim().replace(/\/+$/, '');
         var email = document.getElementById('el-remail').value.trim().toLowerCase(), uid = document.getElementById('el-ruid').value.trim();
-        if ((on || rd) && !/^https:\/\/[\w.-]+\.elvanto\.[a-z.]+$/i.test(url)) { H.toast('Type your Elvanto web address, e.g. https://yourchurch.elvanto.eu', true); return; }
-        if (email && email !== old.robotEmail && !uid) { H.toast('Also paste the robot’s account ID (User UID) from Firebase', true); return; }
+        if ((on || rd) && !/^https:\/\/[\w.-]+\.elvanto\.[a-z.]+$/i.test(url)) { H.toast(T('Type your Elvanto web address, e.g. https://yourchurch.elvanto.eu'), true); return; }
+        if (email && email !== old.robotEmail && !uid) { H.toast(T('Also paste the robot’s account ID (User UID) from Firebase'), true); return; }
         if (uid || (old.robotEmail && old.robotEmail !== email)) S.setRobot(email, uid, old.robotEmail);
         S.setSettings({ elvanto: { on: on, read: rd, url: url, robotEmail: email } }, (on && !old.on ? 'Switched on' : !on && old.on ? 'Switched off' : 'Changed') + ' keeping Elvanto up to date' + (rd !== !!old.read ? (rd ? '; reading Elvanto’s unavailable dates switched on' : '; reading Elvanto’s unavailable dates switched off') : ''));
-        H.render(); H.toast('Saved');
+        H.render(); H.toast(T('Saved'));
       },
       elretry: function (el) { var e = JSON.parse(JSON.stringify(S.get('elvantoSync', el.dataset.id))); e.status = 'Waiting'; e.note = 'Trying again – the robot will do it on its next run.'; S.put('elvantoSync', e, 'Asked the Elvanto robot to try again'); H.render(); },
       eldone: function (el) {
-        if (!H.confirmBtn(el, 'Click again: done in Elvanto')) return;
+        if (!H.confirmBtn(el, T('Click again: done in Elvanto'))) return;
         var e = JSON.parse(JSON.stringify(S.get('elvantoSync', el.dataset.id)));
         e.status = 'Done'; e.have = e.want === 'Unavailable' ? e.start + ' to ' + e.end : ''; e.note = 'Done by hand by ' + H.name(H.user()) + '.';
         S.put('elvantoSync', e, 'Marked an Elvanto update as done by hand'); H.render();
       },
       addadj: function (el) {
         var days = Number(document.getElementById('adj-d').value), note = document.getElementById('adj-n').value.trim(), t = document.getElementById('adj-t').value;
-        if (!t || !days) { H.toast('Choose the kind of leave and the number of days (use − to take days off)', true); return; }
+        if (!t || !days) { H.toast(T('Choose the kind of leave and the number of days (use − to take days off)'), true); return; }
         var lv = S.leave(), st = C.staffById(data(), el.dataset.id);
         lv.adjustments = lv.adjustments || [];
         lv.adjustments.push({ id: 'ADJ-' + Date.now().toString(36), staffId: el.dataset.id, year: +el.dataset.y, type: t, days: days, note: note });
-        S.saveLeave('Adjustment of ' + days + ' days ' + t + ' for ' + (st ? st.name : '')); H.render(); H.toast('Adjustment added');
+        S.saveLeave('Adjustment of ' + days + ' days ' + t + ' for ' + (st ? st.name : '')); H.render(); H.toast(T('Adjustment added'));
       },
       staffcsv: function (el) {
         var d = data(), st = C.staffById(d, el.dataset.id), ctx = C.ctx(d);
@@ -359,11 +359,11 @@
       },
       savegeneral: function () {
         var lv = S.leave(), open = picked('ls-open');
-        if (!open) { H.toast('Tick at least one day the church is open', true); return; }
+        if (!open) { H.toast(T('Tick at least one day the church is open'), true); return; }
         lv.settings.LeaveYearStartMonth = +document.getElementById('ls-start').value; lv.settings.OpenDays = open;
         lv.settings.ProRata = document.getElementById('ls-prorata').checked ? 'TRUE' : 'FALSE';
         lv.settings.AllowNegative = document.getElementById('ls-neg').checked ? 'TRUE' : 'FALSE';
-        S.saveLeave('Changed leave settings'); H.render(); H.toast('Saved');
+        S.saveLeave('Changed leave settings'); H.render(); H.toast(T('Saved'));
       },
       addterm: function () { var box = document.getElementById('ls-terms'), div = document.createElement('div'); div.innerHTML = termRow({}); box.appendChild(div.firstChild); box.lastChild.querySelector('input').focus(); },
       delterm: function (el) { el.closest('.ls-term').remove(); },
@@ -372,44 +372,44 @@
         document.querySelectorAll('.ls-term').forEach(function (r) {
           var n = r.querySelector('.ls-tn').value.trim(), a = r.querySelector('.ls-ts').value, b = r.querySelector('.ls-te').value;
           if (!n && !a && !b) return;
-          if (!n || !a || !b || b < a) bad = 'Each term needs a name, a start and an end date (the end after the start).'; else out.push({ name: n, start: a, end: b });
+          if (!n || !a || !b || b < a) bad = T('Each term needs a name, a start and an end date (the end after the start).'); else out.push({ name: n, start: a, end: b });
         });
         if (bad) { H.toast(bad, true); return; }
         S.leave().terms = out.sort(function (x, y) { return x.start < y.start ? -1 : 1; });
-        S.saveLeave('Changed school terms'); H.render(); H.toast('Terms saved');
+        S.saveLeave('Changed school terms'); H.render(); H.toast(T('Terms saved'));
       },
       savelevels: function () {
         var lv = S.leave(), bad = '';
         document.querySelectorAll('#ls-levels tbody tr').forEach(function (tr) {
           var l = lv.levels[+tr.dataset.i], wd = picked('ls-wd', tr);
-          if (!wd) bad = 'Tick the working days for ' + l.level + '.';
+          if (!wd) bad = T('Tick the working days for {category}.', { category: l.level });
           l.workDays = wd; l.ent = {};
           tr.querySelectorAll('.ls-ent').forEach(function (inp) { if (inp.value !== '' && !isNaN(inp.value)) l.ent[inp.dataset.code] = Number(inp.value); });
         });
         if (bad) { H.toast(bad, true); return; }
-        S.saveLeave('Changed staff categories and allowances'); H.render(); H.toast('Categories saved');
+        S.saveLeave('Changed staff categories and allowances'); H.render(); H.toast(T('Categories saved'));
       },
       addlevel: function () {
-        var n = (prompt('Name of the new staff category (e.g. Youth Worker)') || '').trim(); if (!n) return;
+        var n = (prompt(T('Name of the new staff category (e.g. Youth Worker)')) || '').trim(); if (!n) return;
         var lv = S.leave();
-        if (lv.levels.some(function (l) { return l.level.toLowerCase() === n.toLowerCase(); })) { H.toast('There is already a category called ' + n, true); return; }
+        if (lv.levels.some(function (l) { return l.level.toLowerCase() === n.toLowerCase(); })) { H.toast(T('There is already a category called {name}', { name: n }), true); return; }
         lv.levels.push({ level: n, label: n, workDays: lv.settings.OpenDays || 'Mon, Tue, Wed, Thu, Fri', ent: {} });
-        S.saveLeave('Added staff category ' + n); H.render(); H.toast('Added – now fill in its days and allowances');
+        S.saveLeave('Added staff category ' + n); H.render(); H.toast(T('Added – now fill in its days and allowances'));
       },
       dellevel: function (el) { if (!H.confirmBtn(el, '✕?')) return; var lv = S.leave(), l = lv.levels.splice(+el.dataset.i, 1)[0]; S.saveLeave('Removed staff category ' + l.level); H.render(); },
       savetypes: function () {
         var lv = S.leave(), bad = '';
-        document.querySelectorAll('.ls-tname').forEach(function (inp) { var n = inp.value.trim(); if (!n) bad = 'Every kind of leave needs a name.'; else lv.types[+inp.dataset.i].name = n; });
+        document.querySelectorAll('.ls-tname').forEach(function (inp) { var n = inp.value.trim(); if (!n) bad = T('Every kind of leave needs a name.'); else lv.types[+inp.dataset.i].name = n; });
         if (bad) { H.toast(bad, true); return; }
         document.querySelectorAll('.ls-tappr').forEach(function (b) { lv.types[+b.dataset.i].needsApproval = b.checked; });
         document.querySelectorAll('.ls-tuse').forEach(function (b) { lv.types[+b.dataset.i].active = b.checked; });
-        S.saveLeave('Changed kinds of leave'); H.render(); H.toast('Saved');
+        S.saveLeave('Changed kinds of leave'); H.render(); H.toast(T('Saved'));
       },
       addtype: function () {
-        H.modal(H.dialogHead('Add a kind of leave') + '<div class="dlg-body"><label class="field req">Name<input id="nt-n" placeholder="e.g. Study Leave"></label>' +
-          '<label class="check"><input type="checkbox" id="nt-d" checked><span>Uses an allowance (days per year, set per category)</span></label>' +
-          '<label class="check"><input type="checkbox" id="nt-h" checked><span>Half days allowed</span></label></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">Cancel</button><button class="btn primary" data-act="leave:savetype">Add</button></div>', 'Add a kind of leave');
+        H.modal(H.dialogHead(T('Add a kind of leave')) + '<div class="dlg-body"><label class="field req">' + T('Name') + '<input id="nt-n" placeholder="' + esc(T('e.g. Study Leave')) + '"></label>' +
+          '<label class="check"><input type="checkbox" id="nt-d" checked><span>' + T('Uses an allowance (days per year, set per category)') + '</span></label>' +
+          '<label class="check"><input type="checkbox" id="nt-h" checked><span>' + T('Half days allowed') + '</span></label></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="leave:savetype">' + T('Add') + '</button></div>', T('Add a kind of leave'));
       },
       savetype: function () {
         var n = document.getElementById('nt-n').value.trim(); if (!n) return;
@@ -418,19 +418,19 @@
         var COLS = ['#2F80C0', '#7C3AED', '#0E7490', '#A16207', '#B0527A', '#4C9A6A'];
         lv.types.push({ code: code, name: n, colour: COLS[lv.types.length % COLS.length], deducts: document.getElementById('nt-d').checked, halfDay: document.getElementById('nt-h').checked, proRata: false, needsApproval: true, unit: 'Days' });
         var ded = document.getElementById('nt-d').checked;
-        S.saveLeave('Added leave type ' + n); H.closeModal(); H.render(); H.toast('Added' + (ded ? ' – now set the days per category' : ''));
+        S.saveLeave('Added leave type ' + n); H.closeModal(); H.render(); H.toast(T(ded ? 'Added – now set the days per category' : 'Added'));
       },
       addsa: function (el) {
         var lv = S.leave(), y = +el.dataset.y, have = {};
         lv.holidays.forEach(function (h) { have[h.date] = 1; });
         C.saPublicHolidays(y).forEach(function (h) { if (!have[h.date]) lv.holidays.push(h); });
-        S.saveLeave('Added public holidays for ' + y); H.render(); H.toast('Public holidays for ' + y + ' added');
+        S.saveLeave('Added public holidays for ' + y); H.render(); H.toast(T('Public holidays for {year} added', { year: y }));
       },
       addhol: function () {
         var dt = document.getElementById('ls-hd').value, n = document.getElementById('ls-hn').value.trim();
-        if (!dt || !n) { H.toast('Choose a date and give it a name', true); return; }
-        var lv = S.leave(); if (lv.holidays.some(function (h) { return h.date === dt; })) { H.toast('That day is already listed', true); return; }
-        lv.holidays.push({ date: dt, name: n, church: true }); S.saveLeave('Added a church closure: ' + n); H.render(); H.toast('Added');
+        if (!dt || !n) { H.toast(T('Choose a date and give it a name'), true); return; }
+        var lv = S.leave(); if (lv.holidays.some(function (h) { return h.date === dt; })) { H.toast(T('That day is already listed'), true); return; }
+        lv.holidays.push({ date: dt, name: n, church: true }); S.saveLeave('Added a church closure: ' + n); H.render(); H.toast(T('Added'));
       },
       delhol: function (el) { var lv = S.leave(); lv.holidays = lv.holidays.filter(function (h) { return h.date !== el.dataset.date; }); S.saveLeave('Removed a holiday'); H.render(); },
       request: function (el) { requestDialog(el && el.dataset ? el.dataset.who : ''); },
@@ -440,16 +440,16 @@
           var p = C.prepareRequest(d, actor(d), { staffId: $('lf-who').value, type: $('lf-type').value, start: $('lf-start').value, end: $('lf-end').value || $('lf-start').value, half: 'None', reason: $('lf-note').value });
           var r = p.req; r.id = 'L' + Date.now().toString(36).toUpperCase(); r.submitted = H.today(); r.source = 'Hub';
           S.leave().requests.push(r); S.saveLeave((r.status === 'Approved' ? 'Booked ' : 'Requested ') + p.type.name + ' for ' + p.staff.name);
-          H.closeModal(); H.render(); H.toast(r.status === 'Approved' ? 'Booked' : T('Sent – the Administrator will approve it'));
+          H.closeModal(); H.render(); H.toast(r.status === 'Approved' ? T('Booked') : T('Sent – the Administrator will approve it'));
         } catch (e) { $('lf-err').hidden = false; $('lf-err').textContent = e.message; }
       },
       decide: function (el) {
-        if (el.dataset.d === 'Approved' && el.dataset.over && !el.dataset.sure) { H.confirmBtn(el, 'Approve anyway'); H.toast('This is more than their allowance', true); return; }
+        if (el.dataset.d === 'Approved' && el.dataset.over && !el.dataset.sure) { H.confirmBtn(el, T('Approve anyway')); H.toast(T('This is more than their allowance'), true); return; }
         var d = data();
         try {
           var p = C.prepareDecision(d, actor(d), el.dataset.id, el.dataset.d);
           p.req.status = el.dataset.d; p.req.decidedBy = H.name(H.user()); p.req.decidedOn = H.today();
-          S.saveLeave(el.dataset.d + ' leave for ' + p.staff.name); H.render(); H.toast(el.dataset.d === 'Approved' ? 'Approved' : 'Declined');
+          S.saveLeave(el.dataset.d + ' leave for ' + p.staff.name); H.render(); H.toast(T(el.dataset.d === 'Approved' ? 'Approved' : 'Declined'));
         } catch (e) { H.toast(e.message, true); }
       },
       cancel: function (el) {

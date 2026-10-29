@@ -53,7 +53,7 @@ for (const [code, name] of I18n.MORE) {
   const bad = keys.filter(k => parts(k) !== parts(words[k]) || !String(words[k]).trim() || (k.match(/<\/?\w+/g) || []).join() !== (String(words[k]).match(/<\/?\w+/g) || []).join());
   const missingHere = [...used].filter(x => !words[x]);
   check(!!pack && pack.mon.length === 12 && pack.dow.length === 7 && !bad.length, name + ': months, days, and every line keeps its {parts}' + (bad.length ? ': ' + bad.slice(0, 3).join(' | ') : ''));
-  if (missingHere.length) console.log('    (' + name + ': ' + missingHere.length + ' line(s) not translated yet – shown in English)');
+  check(!missingHere.length, name + ': every text in the app is translated' + (missingHere.length ? ':\n      ' + missingHere.slice(0, 10).join('\n      ') : ''));
 }
 
 if (fails) { console.log('\n' + fails + ' language test(s) FAILED'); process.exit(1); }

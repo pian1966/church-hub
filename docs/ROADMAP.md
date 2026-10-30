@@ -130,9 +130,13 @@ Status key: ✅ done · 🟡 in progress · ⬜ planned
   ("Help improve the … wording on this page" at the foot of every page, or the Translations card). An Administrator chooses who
   checks each language (Translations → Who checks); checkers (and Administrators) use, change or decline suggestions, and approved
   wording shows for everyone at once. Rules changed: the church must re-publish `firestore.rules`.
-- ⬜ Next: a sweep for screen text still in English that the language test can't see (Advanced search fields and comparisons,
-  some People dialogs such as duplicates and bulk changes, the Privacy page headings and intros, "Days left in …", weekday hints in
-  Leave settings), then translate it. The privacy laws' own names and guidance (`js/privacy-law.js`) are also still English.
+- ✅ 29 Oct 2026: **Sweep for leftover English** (found by showing every page and dialog, as each role, in a test language that
+  marks translated text): Advanced search (fields, comparisons, messages, screen-reader labels), Change many people, Find
+  duplicates and Late spouses (with their reasons), the Elvanto import's mapping, the Privacy headings and intros, Leave
+  (days left, weekday names, "6 days"), Settings weekdays, form messages, dialog names – 235 texts in all 22 languages.
+  `TX('…')` now marks a text kept in a list and translated where it is shown, so the language test checks those too.
+  Still English on purpose: church data (names, teams, kinds of leave, holidays, countries, special-service names), Elvanto's
+  own column headings, the audit log, CSV downloads, and the privacy laws' names and legal guidance (`js/privacy-law.js`).
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out

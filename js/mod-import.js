@@ -69,15 +69,15 @@
     h += '<p class="muted small">' + esc(T('Read {when}', { when: f.readAt ? new Date(f.readAt).toLocaleString('en-ZA', { dateStyle: 'medium', timeStyle: 'short' }) : '' })) + ' · ' + T('{n} entries from today on', { n: (f.entries || []).length }) + (f.unread ? ' · ' + T('{n} row(s) the robot couldn’t read – check those in Elvanto', { n: f.unread }) : '') + '</p>';
     if (groups.new.length || groups.pick.length) h += '<div class="btns" style="margin:0 0 14px"><button class="btn primary" data-act="import:unapply"' + (ready ? '' : ' disabled') + '>' + TN('Add {n} away date', 'Add {n} away dates', ready) + '</button></div>';
     var tick = function (x) { return '<input type="checkbox" class="un-on" data-k="' + esc(x.key) + '"' + (un.skip[x.key] ? '' : ' checked') + ' aria-label="' + esc(T('Add this')) + '">'; };
-    if (groups.new.length) h += '<section class="panel"><h2>Ready to add (' + groups.new.length + ')</h2><div class="list">' + groups.new.map(function (x) {
-      return '<label class="item">' + tick(x) + '<span class="grow"><b>' + esc(name(x.personId)) + '</b><small>' + esc(when(x)) + (x.name.toLowerCase() !== name(x.personId).toLowerCase() ? ' · in Elvanto: ' + esc(x.name) : '') + '</small></span></label>';
+    if (groups.new.length) h += '<section class="panel"><h2>' + T('Ready to add ({n})', { n: groups.new.length }) + '</h2><div class="list">' + groups.new.map(function (x) {
+      return '<label class="item">' + tick(x) + '<span class="grow"><b>' + esc(name(x.personId)) + '</b><small>' + esc(when(x)) + (x.name.toLowerCase() !== name(x.personId).toLowerCase() ? ' · ' + esc(T('in Elvanto: {name}', { name: x.name })) : '') + '</small></span></label>';
     }).join('') + '</div></section>';
-    if (groups.pick.length) h += '<section class="panel"><h2>Choose who it is (' + groups.pick.length + ')</h2><p class="hint" style="margin-top:0">' + T('The name in Elvanto matches more than one person in Church Hub, or no one exactly.') + '</p><div class="list">' + groups.pick.map(function (x) {
-      return '<div class="item" style="flex-wrap:wrap">' + tick(x) + '<span class="grow" style="min-width:180px"><b>' + esc(x.name) + '</b><small>' + esc(when(x)) + ' · ' + (x.status === 'several' ? 'several people with this name' : 'no one with this exact name') + '</small></span>' +
-        '<select class="un-pick" data-k="' + esc(x.key) + '" aria-label="Who is ' + esc(x.name) + '"><option value="">' + T('Choose…') + '</option>' + x.choices.map(function (id) { return '<option value="' + id + '"' + (un.pick[x.key] === id ? ' selected' : '') + '>' + esc(name(id)) + '</option>'; }).join('') + '</select></div>';
+    if (groups.pick.length) h += '<section class="panel"><h2>' + T('Choose who it is ({n})', { n: groups.pick.length }) + '</h2><p class="hint" style="margin-top:0">' + T('The name in Elvanto matches more than one person in Church Hub, or no one exactly.') + '</p><div class="list">' + groups.pick.map(function (x) {
+      return '<div class="item" style="flex-wrap:wrap">' + tick(x) + '<span class="grow" style="min-width:180px"><b>' + esc(x.name) + '</b><small>' + esc(when(x)) + ' · ' + T(x.status === 'several' ? 'several people with this name' : 'no one with this exact name') + '</small></span>' +
+        '<select class="un-pick" data-k="' + esc(x.key) + '" aria-label="' + esc(T('Who is {name}?', { name: x.name })) + '"><option value="">' + T('Choose…') + '</option>' + x.choices.map(function (id) { return '<option value="' + id + '"' + (un.pick[x.key] === id ? ' selected' : '') + '>' + esc(name(id)) + '</option>'; }).join('') + '</select></div>';
     }).join('') + '</div></section>';
-    if (groups.have.length || groups.leave.length) h += '<details class="panel"><summary><b>Already in Church Hub (' + (groups.have.length + groups.leave.length) + ')</b></summary><p class="small muted">' +
-      groups.have.map(function (x) { return esc(name(x.personId) + ', ' + when(x)); }).concat(groups.leave.map(function (x) { return esc(x.name + ', ' + when(x) + ' (leave)'); })).join('<br>') + '</p></details>';
+    if (groups.have.length || groups.leave.length) h += '<details class="panel"><summary><b>' + T('Already in Church Hub ({n})', { n: groups.have.length + groups.leave.length }) + '</b></summary><p class="small muted">' +
+      groups.have.map(function (x) { return esc(name(x.personId) + ', ' + when(x)); }).concat(groups.leave.map(function (x) { return esc(x.name + ', ' + when(x) + ' (' + T('leave') + ')'); })).join('<br>') + '</p></details>';
     if (!rows.length) h += '<p class="empty">' + T('No one is unavailable in Elvanto from today on.') + '</p>';
     return h;
   }
@@ -100,28 +100,28 @@
     }
     if (!st.rows) {
       return h + '<div class="grid2"><section class="panel"><h2>' + T('1. Export from Elvanto') + '</h2><ol style="margin:0;padding-left:20px;line-height:1.7"><li>' + T('In Elvanto, open {people} and clear the filters so everyone is listed.', { people: '<b>' + T('People') + '</b>' }) + '</li><li>' + T('Choose {export} → {csv}.', { export: '<b>' + T('Export') + '</b>', csv: '<b>CSV</b>' }) + '</li></ol>' +
-        '<p class="hint">' + T('Church Hub reads only:') + ' <b>' + T('Member ID') + '</b> (please include it – it stops people being doubled when you import again), Date Added, names (with Middle Name), Email Address, Cellphone Number, Date of Birth, Gender, Family Relationship, Primary &amp; Spouse Full Names, Marital Status, Anniversary, People Category, Membership Date and Membership last renewed on, Archived, Deceased, <b>' + T('Photo') + '</b> ' + T('(downloaded from Elvanto and made small), ID Number (Administrators only), Notes (church office notes), Checklist of what to receive, Department Positions (volunteering) and the home address. Everything else (groups, giving, security codes…) is ignored – but it’s safer to leave those columns out of the export.') + '</p>' +
+        '<p class="hint">' + T('Church Hub reads only:') + ' <b>' + T('Member ID') + '</b> ' + T('(please include it – it stops people being doubled when you import again)') + ', Date Added, First Name, Last Name, Preferred Name, Middle Name, Email Address, Cellphone Number, Date of Birth, Gender, Family Relationship, Primary &amp; Spouse Full Names, Marital Status, Anniversary, People Category, Membership Date and Membership last renewed on, Archived, Deceased, <b>' + T('Photo') + '</b> ' + T('(downloaded from Elvanto and made small), ID Number (Administrators only), Notes (church office notes), Checklist of what to receive, Department Positions (volunteering) and the home address. Everything else (groups, giving, security codes…) is ignored – but it’s safer to leave those columns out of the export.') + '</p>' +
         '<p class="hint">' + T('Keep the file on the church computer and delete it once imported – it contains personal information.') + '</p></section>' +
         '<section class="panel"><h2>' + T('2. Choose the file') + '</h2><label class="field">' + T('Elvanto export (.csv)') + '<input type="file" id="im-file" accept=".csv,text/csv"></label><p class="hint">' + T('Or {link}.', { link: '<button class="link" data-act="import:sample">' + T('try it with a made-up sample file') + '</button>' }) + '</p></section></div>' +
-        (already ? '<section class="panel" style="margin-top:16px"><h2>' + T('Start again') + '</h2><p style="margin-top:0">' + already + ' ' + (already === 1 ? 'person was' : 'people were') + ' brought in from Elvanto. If an import went wrong, remove them and import again. People who have been given app access, are staff, or are you, are kept.</p>' +
+        (already ? '<section class="panel" style="margin-top:16px"><h2>' + T('Start again') + '</h2><p style="margin-top:0">' + TN('{n} person was brought in from Elvanto.', '{n} people were brought in from Elvanto.', already) + ' ' + T('If an import went wrong, remove them and import again. People who have been given app access, are staff, or are you, are kept.') + '</p>' +
           '<button class="btn" data-act="import:unimport">' + T('Remove everyone brought in from Elvanto') + '</button></section>' : '');
     }
     var r = recs(), pl = E.plan(r, S.list('people'));
     Object.keys(pl.categories).forEach(function (c) { if (!st.cats[c]) st.cats[c] = E.guessCategory(c); });
     h += '<div class="note info">' + T('File: {file} – {n} rows. Check the matching below, then import.', { file: '<b>' + esc(st.fileName) + '</b>', n: st.rows.length }) + '</div>';
     h += '<div class="grid2"><section class="panel"><h2>' + T('Match the columns') + '</h2>' + E.FIELDS.map(function (f) {
-      return '<label class="field">' + esc(f[1]) + '<select class="im-map" data-f="' + f[0] + '"><option value="">' + T('— not in the file —') + '</option>' + st.head.map(function (c, i) { return '<option value="' + i + '"' + (st.map[f[0]] === i ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
+      return '<label class="field">' + esc(T(f[1])) + '<select class="im-map" data-f="' + f[0] + '"><option value="">' + T('— not in the file —') + '</option>' + st.head.map(function (c, i) { return '<option value="' + i + '"' + (st.map[f[0]] === i ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>';
     }).join('') + '</section><div>' +
       '<section class="panel"><h2>' + T('What will happen') + '</h2><div class="stats"><div class="stat"><span>' + T('New people') + '</span><b>' + pl.added + '</b></div><div class="stat"><span>' + T('Already here (updated)') + '</span><b>' + pl.updated + '</b></div><div class="stat"><span>' + T('Children') + '</span><b>' + pl.children + '</b></div><div class="stat"><span>' + T('Households') + '</span><b>' + pl.families + '</b></div></div>' +
       (pl.sharedEmails ? '<p class="hint">' + TN('{n} email address is shared by more than one person (e.g. a couple). They stay separate people.', '{n} email addresses are shared by more than one person (e.g. a couple). They stay separate people.', pl.sharedEmails) + '</p>' : '') +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Name') + '</th><th>' + T('Email') + '</th><th>' + T('In Church Hub') + '</th></tr></thead><tbody>' + pl.items.slice(0, 8).map(function (x) {
-        var o = x.rec; return '<tr><td>' + esc(o.firstName + ' ' + o.lastName) + (o.child ? ' <span class="tag" style="--c:#0E7490">' + T('Child') + '</span>' : '') + '</td><td>' + esc(o.email) + '</td><td>' + (x.personId ? 'Update (matched by ' + esc(x.how) + ')' : 'New') + '</td></tr>';
-      }).join('') + '</tbody></table></div>' + (r.length > 8 ? '<p class="hint">…and ' + (r.length - 8) + ' more.</p>' : '') + '</section>' +
+        var o = x.rec; return '<tr><td>' + esc(o.firstName + ' ' + o.lastName) + (o.child ? ' <span class="tag" style="--c:#0E7490">' + T('Child') + '</span>' : '') + '</td><td>' + esc(o.email) + '</td><td>' + (x.personId ? esc(T('Update (matched by {how})', { how: T(x.how) })) : T('New')) + '</td></tr>';
+      }).join('') + '</tbody></table></div>' + (r.length > 8 ? '<p class="hint">' + T('…and {n} more.', { n: r.length - 8 }) + '</p>' : '') + '</section>' +
       '<section class="panel"><h2>' + T('Categories') + '</h2><p class="hint" style="margin-top:0">' + T('What each Elvanto category becomes in Church Hub.') + '</p>' + Object.keys(pl.categories).map(function (c) {
-        return '<label class="field">' + esc(c || '(no category)') + ' <small>(' + pl.categories[c] + ')</small><select class="im-cat" data-c="' + esc(c) + '">' + E.CATEGORIES.map(function (x) { return '<option' + (st.cats[c] === x ? ' selected' : '') + '>' + x + '</option>'; }).join('') + '</select></label>';
+        return '<label class="field">' + esc(c || T('(no category)')) + ' <small>(' + pl.categories[c] + ')</small><select class="im-cat" data-c="' + esc(c) + '">' + E.CATEGORIES.map(function (x) { return '<option value="' + esc(x) + '"' + (st.cats[c] === x ? ' selected' : '') + '>' + esc(T(x)) + '</option>'; }).join('') + '</select></label>';
       }).join('') + '</section>' +
-      '<section class="panel"><label class="check"><input type="checkbox" id="im-consent"><span>' + T('Elvanto records show these people agreed to the church keeping their details.') + ' <span class="muted small">Only tick if that’s true – otherwise you’ll be reminded to ask them (' + esc(PrivacyLaw.forChurch(S.settings()).short) + ').</span></span></label>' +
-      '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="import:go"' + (st.map.firstName == null || st.map.lastName == null ? ' disabled' : '') + '>Import ' + r.length + ' people</button><button class="btn" data-act="import:again">' + T('Start again') + '</button></div></section></div></div>';
+      '<section class="panel"><label class="check"><input type="checkbox" id="im-consent"><span>' + T('Elvanto records show these people agreed to the church keeping their details.') + ' <span class="muted small">' + T('Only tick if that’s true – otherwise you’ll be reminded to ask them ({law}).', { law: esc(PrivacyLaw.forChurch(S.settings()).short) }) + '</span></span></label>' +
+      '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="import:go"' + (st.map.firstName == null || st.map.lastName == null ? ' disabled' : '') + '>' + TN('Import {n} person', 'Import {n} people', r.length) + '</button><button class="btn" data-act="import:again">' + T('Start again') + '</button></div></section></div></div>';
     return h;
   }
 
@@ -282,7 +282,7 @@
         var names = ['Staff', 'Requests', 'Adjustments', 'Categories', 'Leave Types', 'School Terms', 'Public Holidays', 'Settings'];
         Promise.all(names.map(function (n) { return fetch('tests/fixtures/leave-manager/' + encodeURIComponent(n) + '.csv').then(function (r) { if (!r.ok) throw new Error(); return r.text(); }); }))
           .then(function (texts) { loaded(texts.map(LI.parseCSV), ['made-up Leave Manager sheet']); })
-          .catch(function () { H.toast('Couldn’t load the made-up sheet', true); });
+          .catch(function () { H.toast(T('Couldn’t load the made-up sheet'), true); });
       },
       sample: function () {
         load('elvanto-people-sample.csv', 'Member ID,First Name,Last Name,Preferred Name,Email Address,Cellphone Number,Date of Birth,Primary & Spouse Full Names,Family Relationship,Marital Status,People Category,Archived,Deceased\n' +
@@ -365,7 +365,7 @@
         S.list('groups').slice().forEach(function (g) { if (g.memberIds.some(function (m) { return gone[m]; })) { var left = g.memberIds.filter(function (m) { return !gone[m]; }); if (left.length < 2) S.remove('groups', g.id); else { g = JSON.parse(JSON.stringify(g)); g.memberIds = left; S.put('groups', g); } } });
         S.find('families', function (f) { return f.elvantoId && !S.find('people', function (p) { return p.familyId === f.id; }).length; }).forEach(function (f) { S.remove('families', f.id); });
         S.audit('Removed ' + go.length + ' people brought in from Elvanto, to import again' + (keep.length ? ' (kept ' + keep.length + ' with app access or staff details)' : ''), 'people');
-        H.render(); H.toast(go.length + ' removed' + (keep.length ? ', ' + keep.length + ' kept' : '') + ' – now import the file again');
+        H.render(); H.toast((keep.length ? T('{n} removed, {k} kept – now import the file again', { n: go.length, k: keep.length }) : T('{n} removed – now import the file again', { n: go.length })));
         });
       }
     }

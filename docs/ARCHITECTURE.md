@@ -318,6 +318,10 @@ Later: direct import through the Elvanto API (server side, with the church's API
   `tests/i18n.test.js` checks every file keeps the `{parts}`. All were drafted by Claude (AI): the Me page says so and asks
   people to tell the church office if something reads oddly. When adding a member-facing text, add it to `js/i18n.js`
   and to every `js/lang` file – `tests/i18n.test.js` fails if any of the 22 languages is missing a line.
+  A text kept in a list and translated where it is shown (field names, kinds of request, reasons from the rules files) is
+  written `TX('…')` (does nothing but mark it), so the test checks it too; values stored in the database stay English.
+  The pure rules files (`roster.js`, `people-search.js`, `duplicates.js`, `households.js`) use `I18n.t` when it is there
+  and plain English in their tests.
 - **Better wording from the church** (`js/mod-words.js`, the Translations card): anyone signed in who uses another language
   sees "Help improve the … wording on this page" at the foot of every page. It opens the texts that page showed
   (`I18n.page()` / `I18n.seen()`, collected by the router) or all of them, with a search; a suggestion must keep the

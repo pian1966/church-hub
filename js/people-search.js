@@ -11,24 +11,31 @@
  */
 var PeopleSearch = (function () {
   'use strict';
+  /** Texts people see, in their language when the app has one (I18n); plain English in tests. TX marks a text kept as it
+   *  is in a list and translated where it is shown. */
+  function T(s, v) {
+    if (typeof I18n !== 'undefined' && I18n.t) return I18n.t(s, v);
+    return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in v ? String(v[k]) : m; }) : s;
+  }
+  function TX(s) { return s; }
   /** The words someone typed, e.g. "andr pi" → ['andr', 'pi']. */
   function words(q) { return String(q || '').trim().split(/\s+/).filter(Boolean); }
   var OPS = {
-    text: [['eq', 'Equals'], ['ne', 'Does not equal'], ['has', 'Contains'], ['nhas', 'Does not contain'], ['starts', 'Starts with'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
-    choice: [['eq', 'Is'], ['ne', 'Is not'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
-    list: [['inc', 'Includes'], ['ninc', 'Does not include'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
-    number: [['eq', 'Equals'], ['ne', 'Does not equal'], ['gt', 'Is more than'], ['lt', 'Is less than'], ['between', 'Is between'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
-    date: [['eq', 'Equals'], ['ne', 'Does not equal'], ['after', 'Is after'], ['before', 'Is before'], ['last', 'Is in the last'], ['nlast', 'Is not in the last'],
-      ['between', 'Is between'], ['next', 'Is in the next'], ['nnext', 'Is not in the next'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
-    anniv: [['next', 'Is in the next'], ['last', 'Was in the last'], ['month', 'Is in the month'], ['eq', 'Is on'], ['empty', 'Is empty'], ['nempty', 'Is not empty']],
-    yesno: [['yes', 'Is yes'], ['no', 'Is no']]
+    text: [['eq', TX('Equals')], ['ne', TX('Does not equal')], ['has', TX('Contains')], ['nhas', TX('Does not contain')], ['starts', TX('Starts with')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
+    choice: [['eq', TX('Is')], ['ne', TX('Is not')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
+    list: [['inc', TX('Includes')], ['ninc', TX('Does not include')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
+    number: [['eq', TX('Equals')], ['ne', TX('Does not equal')], ['gt', TX('Is more than')], ['lt', TX('Is less than')], ['between', TX('Is between')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
+    date: [['eq', TX('Equals')], ['ne', TX('Does not equal')], ['after', TX('Is after')], ['before', TX('Is before')], ['last', TX('Is in the last')], ['nlast', TX('Is not in the last')],
+      ['between', TX('Is between')], ['next', TX('Is in the next')], ['nnext', TX('Is not in the next')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
+    anniv: [['next', TX('Is in the next')], ['last', TX('Was in the last')], ['month', TX('Is in the month')], ['eq', TX('Is on')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
+    yesno: [['yes', TX('Is yes')], ['no', TX('Is no')]]
   };
-  var UNITS = [['days', 'days'], ['weeks', 'weeks'], ['months', 'months'], ['years', 'years']];
-  var MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+  var UNITS = [['days', TX('days')], ['weeks', TX('weeks')], ['months', TX('months')], ['years', TX('years')]];
+  var MONTHS = [TX('January'), TX('February'), TX('March'), TX('April'), TX('May'), TX('June'), TX('July'), TX('August'), TX('September'), TX('October'), TX('November'), TX('December')];
   var NO_VALUE = { empty: 1, nempty: 1, yes: 1, no: 1 };
 
   function opsFor(type) { return OPS[type] || OPS.text; }
-  function opLabel(type, op) { var o = opsFor(type).filter(function (x) { return x[0] === op; })[0]; return o ? o[1] : op; }
+  function opLabel(type, op) { var o = opsFor(type).filter(function (x) { return x[0] === op; })[0]; return o ? T(o[1]) : op; }
   /** What kind of value box an operator needs: 'none', 'one', 'two' (between), 'span' (number + unit), 'month'. */
   function valueKind(type, op) {
     if (NO_VALUE[op]) return 'none';
@@ -132,31 +139,31 @@ var PeopleSearch = (function () {
    */
   function parseLogic(s, count) {
     var tk = tokens(String(s || '')), i = 0, used = {};
-    if (!tk.length) return { error: 'Type your own logic, for example 1 AND (2 OR 3).' };
+    if (!tk.length) return { error: T('Type your own logic, for example 1 AND (2 OR 3).') };
     function fail(msg) { throw new Error(msg); }
     function factor() {
       var t = tk[i];
-      if (t === undefined) fail('The logic stops too early – something is missing at the end.');
+      if (t === undefined) fail(T('The logic stops too early – something is missing at the end.'));
       if (t === 'not') { i++; return { not: factor() }; }
       if (t === '(') {
         i++; var e = expr();
-        if (tk[i] !== ')') fail('A bracket “(” isn’t closed – add a “)”.');
+        if (tk[i] !== ')') fail(T('A bracket “(” isn’t closed – add a “)”.'));
         i++; return e;
       }
       if (/^\d+$/.test(t)) {
-        var n = +t; if (n < 1 || n > count) fail('There is no filter ' + n + ' – the filters are numbered 1 to ' + count + '.');
+        var n = +t; if (n < 1 || n > count) fail(T('There is no filter {n} – the filters are numbered 1 to {count}.', { n: n, count: count }));
         i++; used[n] = 1; return { n: n };
       }
-      if (t === ')') fail('There is a “)” without a matching “(”.');
-      if (t === 'and' || t === 'or') fail('“' + t.toUpperCase() + '” needs a filter number before it.');
-      fail('“' + t + '” isn’t understood – use filter numbers, AND, OR, NOT and brackets.');
+      if (t === ')') fail(T('There is a “)” without a matching “(”.'));
+      if (t === 'and' || t === 'or') fail(T('“{word}” needs a filter number before it.', { word: t.toUpperCase() }));
+      fail(T('“{word}” isn’t understood – use filter numbers, AND, OR, NOT and brackets.', { word: t }));
     }
     function term() { var l = factor(); while (tk[i] === 'and') { i++; l = { and: [l, factor()] }; } return l; }
     function expr() { var l = term(); while (tk[i] === 'or') { i++; l = { or: [l, term()] }; } return l; }
     try {
       var tree = expr();
-      if (i < tk.length && !/^(\d+|\(|\)|not)$/.test(tk[i])) fail('“' + tk[i] + '” isn’t understood – use filter numbers, AND, OR, NOT and brackets.');
-      if (i < tk.length) fail(tk[i] === ')' ? 'There is a “)” without a matching “(”.' : 'Put AND or OR between filter ' + (tk[i - 1] || '') + ' and “' + tk[i] + '”.');
+      if (i < tk.length && !/^(\d+|\(|\)|not)$/.test(tk[i])) fail(T('“{word}” isn’t understood – use filter numbers, AND, OR, NOT and brackets.', { word: tk[i] }));
+      if (i < tk.length) fail(tk[i] === ')' ? T('There is a “)” without a matching “(”.') : T('Put AND or OR between filter {n} and “{word}”.', { n: tk[i - 1] || '', word: tk[i] }));
       var unused = []; for (var k = 1; k <= count; k++) if (!used[k]) unused.push(k);
       return { tree: tree, unused: unused };
     } catch (e) { return { error: e.message }; }
@@ -171,14 +178,14 @@ var PeopleSearch = (function () {
   /** Is a filter filled in? Returns '' or what is missing, in plain English. */
   function incomplete(f, fields) {
     var def = fields[f.field];
-    if (!def) return 'choose what to search on';
-    if (!opsFor(def.type).some(function (o) { return o[0] === f.op; })) return 'choose how to compare';
+    if (!def) return T('choose what to search on');
+    if (!opsFor(def.type).some(function (o) { return o[0] === f.op; })) return T('choose how to compare');
     var k = valueKind(def.type, f.op), has = function (v) { return v != null && String(v).trim() !== ''; };
-    if (k === 'one' && !has(f.value)) return 'fill in a value';
-    if (k === 'two' && (!has(f.value) || !has(f.value2))) return 'fill in both values';
-    if (k === 'span' && (!has(f.value) || isNaN(Number(f.value)) || Number(f.value) < 0)) return 'fill in how many ' + (f.unit || 'days');
-    if (k === 'month' && !has(f.value)) return 'choose a month';
-    if (def.type === 'number' && k !== 'none' && (isNaN(Number(f.value)) || (k === 'two' && isNaN(Number(f.value2))))) return 'use a number';
+    if (k === 'one' && !has(f.value)) return T('fill in a value');
+    if (k === 'two' && (!has(f.value) || !has(f.value2))) return T('fill in both values');
+    if (k === 'span' && (!has(f.value) || isNaN(Number(f.value)) || Number(f.value) < 0)) return T('fill in how many {unit}', { unit: T(f.unit || 'days') });
+    if (k === 'month' && !has(f.value)) return T('choose a month');
+    if (def.type === 'number' && k !== 'none' && (isNaN(Number(f.value)) || (k === 'two' && isNaN(Number(f.value2))))) return T('use a number');
     return '';
   }
 
@@ -189,7 +196,7 @@ var PeopleSearch = (function () {
    */
   function run(records, search, fields, today) {
     var fs = search.filters || [];
-    for (var i = 0; i < fs.length; i++) { var miss = incomplete(fs[i], fields); if (miss) return { error: 'Filter ' + (i + 1) + ': ' + miss + '.' }; }
+    for (var i = 0; i < fs.length; i++) { var miss = incomplete(fs[i], fields); if (miss) return { error: T('Filter {n}: {problem}.', { n: i + 1, problem: miss }) }; }
     var tree = null;
     if (search.match === 'logic') { var pl = parseLogic(search.logic, fs.length); if (pl.error) return { error: pl.error }; tree = pl.tree; }
     var ids = (records || []).filter(function (r) {
@@ -211,7 +218,7 @@ var PeopleSearch = (function () {
   function describe(f, def, show) {
     if (!def) return '';
     var k = valueKind(def.type, f.op), v = show ? show(f.value) : f.value, v2 = show ? show(f.value2) : f.value2;
-    var tail = k === 'none' ? '' : k === 'two' ? ' ' + v + ' and ' + v2 : k === 'span' ? ' ' + f.value + ' ' + (f.unit || 'days') : k === 'month' ? ' ' + (MONTHS[Number(f.value) - 1] || '') : ' “' + v + '”';
+    var tail = k === 'none' ? '' : k === 'two' ? ' ' + T('{a} and {b}', { a: v, b: v2 }) : k === 'span' ? ' ' + f.value + ' ' + T(f.unit || 'days') : k === 'month' ? ' ' + (MONTHS[Number(f.value) - 1] ? T(MONTHS[Number(f.value) - 1]) : '') : ' “' + v + '”';
     return def.label + ' ' + opLabel(def.type, f.op).toLowerCase() + tail;
   }
 

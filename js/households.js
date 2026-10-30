@@ -13,6 +13,13 @@
  */
 var Households = (function () {
   'use strict';
+  /** Texts people see, in their language when the app has one (I18n); plain English in tests. TX marks a text kept as it is
+   *  and translated later. */
+  function T(s, v) {
+    if (typeof I18n !== 'undefined' && I18n.t) return I18n.t(s, v);
+    return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in v ? String(v[k]) : m; }) : s;
+  }
+  function TX(s) { return s; }
   var RELATIONSHIPS = ['Mother', 'Father', 'Parent', 'Step-parent', 'Legal guardian', 'Foster carer', 'Grandparent', 'Other relative', 'Trusted collector'];
   /** Relationships that can normally give consent for a child (a parent or legal guardian). */
   var CONSENTING = ['Mother', 'Father', 'Parent', 'Legal guardian', 'Foster carer'];
@@ -149,20 +156,20 @@ var Households = (function () {
         if (a.id === b.id || (a.notLateSpouse || []).indexOf(b.id) >= 0 || (b.notLateSpouse || []).indexOf(a.id) >= 0) return;
         if (dead(a) && a.maritalStatus === 'Widowed' && b.maritalStatus === 'Widowed') return;   // both widowed: each lost someone else
         var score = 0, why = [];
-        if (householdsOf(a).some(function (h) { return inHousehold(b, h); })) { score += 40; why.push('same household'); }
+        if (householdsOf(a).some(function (h) { return inHousehold(b, h); })) { score += 40; why.push(TX('same household')); }
         var wa = weddingOf(a), wb = weddingOf(b);
-        if (wa && wa === wb) { score += 40; why.push('same wedding date'); }
-        if (norm(a.email) && norm(a.email) === norm(b.email)) { score += 30; why.push('same email'); }
-        if (digits(a.mobile).length >= 9 && digits(a.mobile) === digits(b.mobile)) { score += 25; why.push('same phone number'); }
-        if (norm(a.lastName) && norm(a.lastName) === norm(b.lastName)) { score += 25; why.push('same surname'); }
+        if (wa && wa === wb) { score += 40; why.push(TX('same wedding date')); }
+        if (norm(a.email) && norm(a.email) === norm(b.email)) { score += 30; why.push(TX('same email')); }
+        if (digits(a.mobile).length >= 9 && digits(a.mobile) === digits(b.mobile)) { score += 25; why.push(TX('same phone number')); }
+        if (norm(a.lastName) && norm(a.lastName) === norm(b.lastName)) { score += 25; why.push(TX('same surname')); }
         // a widow, and someone who died married – or with no marital status recorded (often the case for older records)
         if (a.maritalStatus === 'Widowed' && !dead(a) && (b.maritalStatus === 'Married' || !b.maritalStatus || b.maritalStatus === 'Not known')) {
-          score += 25; why.push(b.maritalStatus === 'Married' ? 'widowed, and they died married' : 'widowed, and they died (marital status not recorded)');
+          score += 25; why.push(b.maritalStatus === 'Married' ? TX('widowed, and they died married') : TX('widowed, and they died (marital status not recorded)'));
         }
         var ya = yearOf(a.birthDate), yb = yearOf(b.birthDate);
-        if (ya && yb) { var gap = Math.abs(ya - yb); if (gap <= 15) { score += 10; why.push('similar age'); } else if (gap > 25) { score -= 30; why.push(gap + ' years apart in age'); } }
+        if (ya && yb) { var gap = Math.abs(ya - yb); if (gap <= 15) { score += 10; why.push(TX('similar age')); } else if (gap > 25) { score -= 30; why.push(gap + ' years apart in age'); } }
         var still = a.maritalStatus === 'Married' && !dead(a);
-        if (score >= 50) cand.push({ a: a.id, b: b.id, score: score, reasons: why.filter(function (r) { return !/apart/.test(r); }).concat(still ? ['still recorded as Married'] : []), bothDied: dead(a), stillMarried: still });
+        if (score >= 50) cand.push({ a: a.id, b: b.id, score: score, reasons: why.filter(function (r) { return !/apart/.test(r); }).concat(still ? [TX('still recorded as Married')] : []).map(function (r) { return T(r); }), bothDied: dead(a), stillMarried: still });
       });
     });
     cand.sort(function (x, y) { return y.score - x.score || (x.a + x.b < y.a + y.b ? -1 : 1); });

@@ -3,7 +3,8 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store, R = RosterCore, T = I18n.t, TN = I18n.tn;
   var state = { start: 0, preview: null, gapsOpen: false };
-  var FREQ = [['weekly', 'Every week'], ['fortnightly', 'Every 2 weeks'], ['monthly', 'Once a month'], ['occasional', 'Now and then']];
+  var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
+  var FREQ = [['weekly', TX('Every week')], ['fortnightly', TX('Every 2 weeks')], ['monthly', TX('Once a month')], ['occasional', TX('Now and then')]];
 
   function manager() { return H.can('rosters.manage') || H.can('*'); }
   function person(id) { return S.get('people', id); }

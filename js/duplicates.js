@@ -15,6 +15,11 @@
  */
 var Duplicates = (function () {
   'use strict';
+  /** Texts people see, in their language when the app has one (I18n); plain English in tests. */
+  function T(s, v) {
+    if (typeof I18n !== 'undefined' && I18n.t) return I18n.t(s, v);
+    return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in v ? String(v[k]) : m; }) : s;
+  }
 
   // Common short forms of first names (each line: the full name, then its short forms). South African and English names.
   var SHORT = [
@@ -114,24 +119,24 @@ var Duplicates = (function () {
     var fm = firstMatch(p, q), lm = lastMatch(p, q), sw = swapped(p, q), why = [], s = 0;
     var me = emails(p), sameMail = me.length && emails(q).some(function (e) { return me.indexOf(e) >= 0; });
     var mp = phone(p.mobile), sameMobile = !!mp && mp === phone(q.mobile), sameBirth = !!bp && bp === bq;
-    if (sw) { s += 55; why.push('First and last name swapped'); }
+    if (sw) { s += 55; why.push(T('First and last name swapped')); }
     else {
-      if (fm === 'same') { s += 35; why.push('Same first name'); }
-      else if (fm === 'known') { s += 32; why.push('Same name (one is what they are known as)'); }
-      else if (fm === 'short') { s += 30; why.push('Short form of the same first name (' + plain(p.preferredName || p.firstName) + ' / ' + plain(q.preferredName || q.firstName) + ')'); }
-      else if (fm === 'slip') { s += 22; why.push('First names differ by a letter or two'); }
-      else if (fm === 'initial') { s += 12; why.push('First name given as an initial'); }
-      if (lm === 'same') { s += 30; why.push('Same surname'); }
-      else if (lm === 'slip') { s += 20; why.push('Surnames differ by a letter or two'); }
-      else if (lm === 'part') { s += 15; why.push('Part of the surname matches'); }
+      if (fm === 'same') { s += 35; why.push(T('Same first name')); }
+      else if (fm === 'known') { s += 32; why.push(T('Same name (one is what they are known as)')); }
+      else if (fm === 'short') { s += 30; why.push(T('Short form of the same first name ({a} / {b})', { a: plain(p.preferredName || p.firstName), b: plain(q.preferredName || q.firstName) })); }
+      else if (fm === 'slip') { s += 22; why.push(T('First names differ by a letter or two')); }
+      else if (fm === 'initial') { s += 12; why.push(T('First name given as an initial')); }
+      if (lm === 'same') { s += 30; why.push(T('Same surname')); }
+      else if (lm === 'slip') { s += 20; why.push(T('Surnames differ by a letter or two')); }
+      else if (lm === 'part') { s += 15; why.push(T('Part of the surname matches')); }
     }
     var firstOk = sw || !!fm && fm !== 'initial';
     // Contact details only count with a matching first name: families share emails and phones.
-    if (sameMail) { if (firstOk) { s += 30; why.push('Same email address'); } }
-    if (sameMobile) { if (firstOk) { s += 30; why.push('Same mobile number'); } }
-    if (sameBirth) { s += firstOk ? 30 : 0; if (firstOk) why.push('Same birthday'); }
+    if (sameMail) { if (firstOk) { s += 30; why.push(T('Same email address')); } }
+    if (sameMobile) { if (firstOk) { s += 30; why.push(T('Same mobile number')); } }
+    if (sameBirth) { s += firstOk ? 30 : 0; if (firstOk) why.push(T('Same birthday')); }
     // A maiden name: same first name and birthday or contact details, different surname
-    if (!lm && !sw && firstOk && (sameBirth || sameMail || sameMobile)) why.push('Different surname – perhaps a maiden or married name');
+    if (!lm && !sw && firstOk && (sameBirth || sameMail || sameMobile)) why.push(T('Different surname – perhaps a maiden or married name'));
     if (!firstOk && !sw) s = Math.min(s, 30);                // a different first name is a different person, even in the same household
     if (!lm && !sw && !(sameBirth || sameMail || sameMobile)) s = Math.min(s, 30);
     return { score: Math.min(s, 99), reasons: why, sure: false };

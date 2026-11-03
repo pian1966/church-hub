@@ -1,26 +1,55 @@
-# Working on Church Hub
+# Working on Church Hub – the map
 
-- Plain HTML/CSS/JavaScript, no build step. Open `index.html` or the GitHub Pages site.
-- Read `docs/ARCHITECTURE.md`, `docs/POPIA.md` and `docs/ROADMAP.md` before changing anything; update ROADMAP.md at the end of each session.
-- New features are modules (`js/mod-*.js`) registered with `Hub.register`. Data goes through `Store` only, never localStorage directly.
-- Rostering rules live in `js/roster.js` and must stay pure and tested: run `node tests/roster.test.js` before committing.
-  The Leave Manager import (`js/leave-import.js`) and Elvanto import (`js/elvanto-import.js`) likewise: `node tests/leave-import.test.js`,
-  `node tests/elvanto-import.test.js`. Test data is made up (`tests/fixtures`); never add a real export to the repository.
-- Households and guardians rules: `js/households.js` (`node tests/households.test.js`); advanced people search: `js/people-search.js`
-  (`node tests/people-search.test.js`) – only offer fields a role may see, never medical/pastoral notes or collection restrictions.
-  The church's departments and positions (with the services each runs at): `js/serving.js`. Duplicates: `js/duplicates.js` (`node tests/duplicates.test.js`).
-- Member-facing text goes through `T('…')` with a line in `js/i18n.js` for all four languages (`node tests/i18n.test.js`).
-  18 more languages live in `js/lang/<code>.js` (loaded when chosen) – every new line goes there too: the test fails if any language misses one.
-  Countries and their regions: `js/countries.js`; the privacy law by country: `js/privacy-law.js`; the church's own words: `js/wording.js`;
-  translation suggestions and checkers: `js/mod-words.js` (approved wording in `words/{lang}`, used before the built-in lines);
-  care groups: `js/care.js` (`node tests/countries.test.js`, `tests/privacy-law.test.js`, `tests/wording.test.js`, `tests/care.test.js`, `tests/serving.test.js`).
-  Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"` (shaded, with a key); never write "(optional)".
-- Elvanto updates for approved leave: `js/elvanto-sync.js` (`node tests/elvanto-sync.test.js`) and the robot `robot/robot.js`
-  (`node tests/robot.test.js`). The robot's log is public: never print names, dates or emails.
-- Who sees what is enforced by `firestore.rules`. Changing access means changing, together: `firestore.rules`, `plan()` in `js/store.js`,
-  the POLICY copy in `tests/fake-firebase.js`, and `tests/rules.test.mjs` / `tests/app.test.js`. Run `node tests/app.test.js` (needs Playwright);
-  GitHub runs everything, including the rules against the Firestore emulator, on every push. Tell the church to re-publish the rules (FIREBASE-SETUP.md step 7).
+Plain HTML/CSS/JavaScript, no build step (`index.html`, or the GitHub Pages site). Talk to the church in plain English; the users are not technical.
+
+**Don't read every doc at the start.** Use this page to find the file for the task, then read only the part that applies:
+`docs/ARCHITECTURE.md` (find the section by its `##` heading) and, for anything touching personal information, the matching
+section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finished work goes to `docs/CHANGELOG.md`, which nobody needs to read.
+
+## Which file does what
+| Area | Code | Words (`T('…')`) | Tests |
+|---|---|---|---|
+| Shell: sign-in, roles, router, Home, UI helpers | `js/app.js` | `js/i18n/common.js` | `tests/app/admin.js`, `signin.js` |
+| Data layer (demo or Firestore), who may ask for what (`plan()`) | `js/store.js`, `js/firebase-config.js` | – | `tests/rules.test.mjs`, `tests/fake-firebase.js` |
+| People: registers the page, to-do list, upgrades, events | `js/mod-people.js` (loads last) | `js/i18n/people.js` | `tests/app/people.js` |
+| People: shared helpers (who sees what, consent, ages, couples) | `js/people/core.js` | `js/i18n/people.js` | |
+| People: the list and Church at a glance | `js/people/directory.js` | `js/i18n/people.js` | |
+| People: a person's page (photo, notes, ID, guardians, homes, serving) | `js/people/profile.js` | `js/i18n/profile.js` | `tests/app/people-details.js` |
+| People: Add / Edit details, consent, a death, marking as left | `js/people/edit.js` | `js/i18n/edit.js` | `tests/app/people-details.js` |
+| Households, couples, late spouses, duplicates | `js/people/households.js`, `js/households.js`, `js/duplicates.js` | `js/i18n/households.js` | `tests/households.test.js`, `duplicates.test.js` |
+| Advanced search, Change selected… | `js/people/search.js`, `js/people-search.js` | `js/i18n/search.js` | `tests/people-search.test.js`, `tests/app/people.js` |
+| Rosters, services | `js/mod-rosters.js`, `js/roster.js`, `js/serving.js` | `js/i18n/rosters.js` | `tests/roster.test.js`, `serving.test.js`, `tests/app/roles.js` |
+| Leave (Leave Manager built in) | `js/mod-leave.js`, `js/leave-core.js`, `js/leave-import.js` | `js/i18n/leave.js` | `tests/leave-import.test.js`, `tests/app/admin.js` |
+| Me (members' own page) | `js/mod-me.js` | `js/i18n/me.js` | `tests/app/roles.js` |
+| Care groups | `js/mod-care.js`, `js/care.js` | `js/i18n/care.js` | `tests/care.test.js`, `tests/app/care.js` |
+| Privacy pages, law by country | `js/mod-privacy.js`, `js/privacy-law.js` | `js/i18n/privacy.js` | `tests/privacy-law.test.js` |
+| Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
+| Settings, countries, church wording, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
+| Language engine, 18 more languages | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
+| Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
+| Demo data | `js/sample.js` | – | |
+
+The browser test is `node tests/app.test.js` (needs Playwright); it starts the browser and runs each part in `tests/app/` in turn.
+GitHub runs every test, including the rules against the Firestore emulator, on every push (`.github/workflows/tests.yml`).
+
+## Rules
+- New features are modules (`js/mod-*.js`) registered with `Hub.register`; a big module can be split like People
+  (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
+  Data goes through `Store` only, never localStorage directly.
+- Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
+  `privacy-law`, `wording`, `serving`, `care`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  Test data is made up (`tests/fixtures`); never add a real export to the repository.
+- Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
+- Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
+  that uses it (`common.js` if several parts use it). Every new line also goes in all 18 `js/lang/<code>.js` files: these are large,
+  so don't read them – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js` fails if any language misses a line.
+- Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"`; never write "(optional)".
+- Changing who sees what means changing, together: `firestore.rules`, `plan()` in `js/store.js`, the POLICY copy in `tests/fake-firebase.js`,
+  and `tests/rules.test.mjs` / `tests/app/*.js`. Tell the church to re-publish the rules (FIREBASE-SETUP.md step 7).
   Keep `firestore.rules` to plain keyboard characters (no curly quotes or dashes): the Firebase console rejects them.
-- `js/leave-core.js` is a copy of `assets/core.js` from the `leave-manager` repository (also used by its Apps Script). Change both together.
-- Privacy (POPIA): every new piece of personal information needs a purpose, a consent or lawful basis, an access rule by role, and audit logging for sensitive views. Never commit real church data, names, keys or passwords – the repository is public.
-- Talk to the church in plain English; the users are not technical.
+- `js/leave-core.js` is a copy of `assets/core.js` in the `leave-manager` repository (also used by its Apps Script). Change both together.
+- The robot's log is public: never print names, dates or emails.
+- Privacy (POPIA): every new piece of personal information needs a purpose, a consent or lawful basis, an access rule by role,
+  and audit logging for sensitive views (read the matching section of `docs/POPIA.md`). Never commit real church data, names, keys
+  or passwords – the repository is public.
+- At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

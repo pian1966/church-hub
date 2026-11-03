@@ -1,0 +1,150 @@
+/* Church Hub – browser test, part: each role on its own: Pastor, Children’s ministry, Roster coordinator, Member, a Pastor offering to serve.
+ * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
+'use strict';
+module.exports = async function (ctx) {
+  const { PNG, PNG2, check, fillHome, finish, seedDocs, session, tour } = ctx;
+  let docs, s, t;
+  console.log('Pastor (Thandi):');
+  s = await session('thandi.mokoena@example.com', seedDocs());
+  await tour(s, 'pastor');
+  await s.go('people/p/p10'); await s.page.fill('#pn-text', 'Visited at home.'); await s.page.click('[data-act="people:note"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['notes/p10'] && docs['notes/p10'].entries.length === 2, 'adding a pastoral note saves it');
+  await s.go('people/p/p10'); t = await s.text();
+  check(t.includes('Church office notes') && !t.includes('ID number'), 'Pastors see church office notes but not ID numbers');
+  await s.page.click('[data-act="people:edit"]'); check(!(await s.page.$('#pf-late')), 'only Administrators change who someone was married to'); await s.page.click('[data-act="hub:close"]');
+  await s.go('people'); check(!(await s.page.$('a[href="#/people/late"]')), 'Late spouses is for Administrators');
+  await s.go('people/search'); await s.page.click('[data-act="people:advrun"]'); check(!(await s.page.$('.adv-sel')), 'only Administrators change many people at once');
+  await s.go('people/p/p27'); await s.page.click('[data-act="people:consent"]');
+  for (const pur of ['Church records', 'Church directory']) await s.page.check(`.cf-p[data-p="${pur}"]`);
+  await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
+  docs = await s.docsNow(); check(!!docs['directory/p27'] && docs['directory/p27'].mobile && !docs['directory/p27'].email, 'directory consent adds name and phone (not email) to the directory');
+  // A Pastor records a death: Thabo (married to Ayanda)
+  await s.go('people/p/p21'); await s.page.click('[data-act="people:death"]'); await s.page.fill('#dd-note', 'Family would like a visit.'); await s.page.click('[data-act="people:savedeath"]'); await s.settle();
+  docs = await s.docsNow();
+  check(docs['people/p21'].category === 'Deceased' && docs['details/p22'].maritalStatus === 'Widowed' && !docs['directory/p21'] && docs['notes/p21'], 'a Pastor can record a death (with a pastoral note); the directory follows');
+  check(!docs['details/p21'].deathTidied, 'rosters and sign-in are left for the Administrator to finish');
+  await s.go('home'); check((await s.text()).includes('Care for the family of Thabo Nkosi'), 'Pastors get “care for the family” on their to-do list');
+  await finish(s);
+
+  /* ---------- Children's ministry ---------- */
+  console.log('Children’s ministry (Grace):');
+  s = await session('grace.ndlovu@example.com', seedDocs());
+  await tour(s, 'kids');
+  await s.go('people'); check((await s.text()).includes('Aisha'), 'sees the children');
+  await s.go('people/p/p12'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Nuts and bee stings'); await s.page.click('[data-act="people:savemedical"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['medical/p12'] && docs['medical/p12'].allergies === 'Nuts and bee stings', 'editing medical notes saves them');
+  await s.go('people/p/p12'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('#crop-ok'); await s.page.click('#crop-ok'); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['photos/p12'] && docs['people/p12'].photo, 'Children’s ministry can add a child’s photo');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:photo"]')), 'but not an adult’s');
+  await s.go('people/p/p16'); await s.page.click('[data-act="people:medical"]'); await s.page.fill('#md-a', 'Penicillin'); await s.page.click('[data-act="people:savemedical"]');
+  check(await s.page.isVisible('#md-err'), 'can’t add medical notes without a guardian’s consent'); await s.page.click('[data-act="hub:close"]');
+  check(await s.page.evaluate(() => Store.get('people', 'p02').birthDate === undefined && Store.get('people', 'p12').birthDate !== ''), 'sees children’s birthdays but not adults’ details');
+  await finish(s);
+
+  /* ---------- Roster coordinator ---------- */
+  console.log('Roster coordinator (Sipho):');
+  const offersSeed = seedDocs();
+  offersSeed['serveOffers/soTim1'] = { personId: 'p14', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'waiting', createdAt: '2026-10-21 10:00' };
+  offersSeed['serveOffers/soTim2'] = { personId: 'p14', positionId: 'sound', kind: 'change', frequency: 'weekly', note: '', status: 'waiting', createdAt: '2026-10-22 10:00' };
+  offersSeed['serveOffers/so1'] = Object.assign({}, offersSeed['serveOffers/so1'], { times: ['10:00'] });
+  s = await session('sipho.dlamini@example.com', offersSeed);
+  await tour(s, 'rosters');
+  check(await s.page.evaluate(() => !Store.find('consents', () => true).some(c => c.personId !== 'p05')), 'can’t see other people’s consent records');
+  await s.page.evaluate(() => Store.put('assignments', { serviceId: Store.list('services')[5].id, positionId: 'door', personId: 'p20', status: 'pending', source: 'manual' }, 'Added to roster'));
+  await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).some(k => k.startsWith('assignments/') && docs[k].personId === 'p20' && docs[k].status === 'pending' && docs[k].source === 'manual'), 'adding someone to the roster saves it');
+  await s.go('home'); check((await s.text()).includes('offered to serve'), 'Home: a to-do to answer offers to serve');
+  await s.go('rosters/teams'); t = await s.text();
+  check(t.includes('at 10am') && t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
+  await s.page.click('[data-act="rosters:offeryes"][data-id="so1"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['serveOffers/so1'] && Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p15' && docs[k].positionId === 'tea' && docs[k].frequency === 'monthly'), 'Yes puts them on the team, as often as they asked, and clears the offer');
+  check(Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p15' && docs[k].positionId === 'tea' && JSON.stringify(docs[k].times) === '["10:00"]'), '… and only at the services they chose');
+  await s.page.click('[data-act="rosters:offeryes"][data-id="soTim2"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['skills/kp14sound'].frequency === 'weekly', 'Yes to “serve more often” changes how often');
+  await s.page.click('[data-act="rosters:offerno"][data-id="soTim1"]'); await s.page.fill('#of-reply', 'The door team is full until January'); await s.page.click('[data-act="rosters:offernosend"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['serveOffers/soTim1'].status === 'declined' && docs['serveOffers/soTim1'].reply === 'The door team is full until January' && !Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p14' && docs[k].positionId === 'door'), 'Not now sends a short reply and leaves the team as it was');
+  await finish(s);
+
+  /* ---------- Member ---------- */
+  console.log('Member (Tim):');
+  s = await session('tim.jacobs@example.com', seedDocs());
+  await tour(s, 'member');
+  await s.go('people'); const dirText = await s.text();
+  check(dirText.includes('Jacobs, Clare') && !dirText.includes('Smith, Megan') && !dirText.includes('Daniels, Ruth') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
+  await s.go('people/p/p14'); check(!!(await s.page.$('[data-act="people:showid"]')) && !(await s.page.$('[data-act="people:editid"]')), 'a member can see their own ID number but not change it');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:showid"]')) && !(await s.text()).includes('Church office notes'), 'and never someone else’s, nor church office notes');
+  await s.go('people/p/p14'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('#crop-ok'); await s.page.click('#crop-ok'); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle();
+  docs = await s.docsNow();
+  check(/^data:image\/jpeg;base64,/.test((docs['photos/p14'] || {}).data || '') && docs['people/p14'].photo && docs['directory/p14'].photo === docs['people/p14'].photo, 'a member can add their own photo (made small, and the directory knows there is one)');
+  check(await s.page.$('.page-head .av.pic') !== null, 'their photo shows on their page');
+  await s.page.setInputFiles('#pp-photo', PNG2); await s.page.waitForSelector('#crop-c');
+  const px = () => s.page.evaluate(() => Array.from(document.getElementById('crop-c').getContext('2d').getImageData(250, 300, 1, 1).data.slice(0, 3)));
+  await s.page.click('#crop-in'); await s.page.click('#crop-in'); const z1 = +(await s.page.inputValue('#crop-z')), p1 = await px();
+  const box = await s.page.locator('#crop-c').boundingBox();
+  await s.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await s.page.mouse.down(); await s.page.mouse.move(box.x + box.width / 2 - box.width / 4, box.y + box.height / 2, { steps: 5 }); await s.page.mouse.up();
+  const p2 = await px();
+  check(z1 > 1.5 && p1[2] < 100 && p2[2] > 150, 'adding a photo first asks to choose the face: zoom in, and drag to move (orange → blue under the same spot)');
+  await s.page.click('[data-act="hub:close"]');
+  await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:photo"]')), 'a member can’t add photos of other people');
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:nophoto"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['photos/p14'] && !docs['people/p14'].photo, 'and can remove it');
+  await s.go('rosters/away'); await s.page.click('[data-act="rosters:addaway"]');
+  const ticks = await s.page.$$('.aw-d'); await ticks[1].check(); await ticks[3].check();
+  await s.page.click('[data-act="rosters:awayrange"]'); await s.page.fill('.aw-range .aw-f', '2027-07-01'); await s.page.dispatchEvent('.aw-range .aw-f', 'change'); await s.page.fill('.aw-range .aw-t', '2027-07-14');
+  await s.page.click('[data-act="rosters:saveaway"]'); await s.settle();
+  docs = await s.docsNow(); const myAway = Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14');
+  check(myAway.length === 3 && myAway.some(k => docs[k].from === '2027-07-01' && docs[k].to === '2027-07-14'), 'can add several away dates at once (2 service days + a holiday)');
+  await s.go('rosters/mine'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['assignments/kTim'].status === 'accepted', 'can accept a serving turn');
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Church directory"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
+  docs = await s.docsNow(); check(!docs['directory/p14'], 'withdrawing directory consent removes them from the directory');
+  const consentsBefore = Object.keys(docs).filter(k => k.startsWith('consents/')).length;
+  await s.page.click('[data-act="people:consent"]'); await s.page.check('.cf-p[data-p="Missionary updates (via WhatsApp)"]'); await s.page.check('.cf-p[data-p="“Who is Jesus” (via WhatsApp)"]');
+  await s.page.click('[data-act="people:saveconsent"]'); await s.settle(); docs = await s.docsNow();
+  const chosen = Object.values(docs).filter(d => d.personId === 'p14' && /via/.test(d.purpose || ''));
+  check(chosen.length === 2 && chosen.every(c => c.given && c.method === 'Changed in the app') && (await s.text()).includes('Would like to receive'), 'a member can choose what they’d like to receive (Missionary updates on WhatsApp, “Who is Jesus”)');
+  check(Object.keys(docs).filter(k => k.startsWith('consents/')).length === consentsBefore + 2, 'choices they didn’t tick aren’t recorded as a “no”');
+  check(await s.page.evaluate(() => Store.list('people').every(p => !p.birthDate || p.id === 'p14')), 'can’t see anyone else’s private details');
+  // Me: details, days away, serving
+  await s.go('me'); t = await s.text();
+  check(t.includes('Contact details') && t.includes('082 999 0000') && t.includes('Kept by the church office') && t.includes('Married'), 'Me shows their contact details and what the church office keeps');
+  check(!!(await s.page.$('.tabbar a[href="#/me"]')), 'Me is in the phone tab bar');
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-pref', 'Timmy'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['people/p14'].preferredName === 'Timmy' && (await s.text()).includes('Timmy'), 'Me → Change my details saves (known as)');
+  await s.go('me/away'); t = await s.text();
+  check(t.includes('14 Jul 2027') && (await s.page.$$('[data-act="rosters:delaway"]')).length === 3, 'Days away lists their own away dates');
+  await s.page.click('[data-act="rosters:delaway"]'); await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14').length === 2, 'they can remove a day away');
+  await s.go('me/serve'); t = await s.text();
+  check(t.includes('Sound desk') && t.includes('Every 2 weeks') && t.includes('Where would you like to help?') && t.includes('Tea & coffee'), 'Serving shows where they serve and where they could help');
+  await s.page.click('[data-act="me:offer"][data-p="tea"]'); await s.page.check('input[name=mo-f][value=monthly]'); await s.page.fill('#mo-note', 'After the 9:30'); await s.page.click('[data-act="me:send"]'); await s.settle();
+  docs = await s.docsNow(); let offs = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14');
+  check(offs.length === 1 && docs[offs[0]].kind === 'join' && docs[offs[0]].positionId === 'tea' && docs[offs[0]].frequency === 'monthly' && docs[offs[0]].note === 'After the 9:30' && docs[offs[0]].status === 'waiting', 'offering to help saves an offer for the roster coordinator');
+  check((await s.text()).includes('Waiting for the roster coordinator'), 'the offer shows as waiting');
+  await s.page.click('[data-act="me:change"][data-p="sound"]'); await s.page.check('input[name=mo-f][value=stop]'); await s.page.click('[data-act="me:send"]'); await s.settle();
+  docs = await s.docsNow(); offs = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14');
+  check(offs.some(k => docs[k].kind === 'stop' && docs[k].positionId === 'sound') && docs['skills/kp14sound'], 'asking to stop is a request – the team is unchanged until the coordinator says yes');
+  await s.page.click('[data-act="me:withdraw"]'); await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14').length === 1, 'they can withdraw an offer');
+  check(await s.page.evaluate(() => Store.list('serveOffers').every(o => o.personId === 'p14')), 'they see only their own offers');
+  await finish(s);
+
+  console.log('Member: an answer from the roster coordinator');
+  const answered = seedDocs(); answered['serveOffers/soA'] = { personId: 'p14', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'declined', reply: 'The door team is full until January' };
+  s = await session('tim.jacobs@example.com', answered);
+  await s.go('home'); check((await s.text()).includes('The roster coordinator answered 1 of your serving offers'), 'Home tells them the roster coordinator answered');
+  await s.go('me/serve'); t = await s.text(); check(t.includes('Not now') && t.includes('The door team is full until January'), 'they see the reply under the position');
+  await s.page.click('[data-act="me:withdraw"][data-id="soA"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['serveOffers/soA'], 'OK clears the answer');
+  await finish(s);
+
+  console.log('Pastor offering to serve (staff, not a roster coordinator):');
+  s = await session('thandi.mokoena@example.com', seedDocs());
+  await s.go('me/serve'); await s.page.click('[data-act="me:offer"][data-p="door"]'); await s.page.click('[data-act="me:send"]'); await s.settle();
+  docs = await s.docsNow(); check(Object.keys(docs).some(k => k.startsWith('serveOffers/') && docs[k].personId === 'p02' && docs[k].positionId === 'door'), 'a Pastor can offer to serve too');
+  await finish(s);
+
+  /* ---------- Elvanto: approved leave → Unavailable Volunteers ---------- */
+};

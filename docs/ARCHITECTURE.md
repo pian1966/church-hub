@@ -26,7 +26,8 @@ js/households.js          Households: households, parents/guardians, couples and
 js/people-search.js       PeopleSearch: Advanced search filters and logic (pure, tested)
 js/duplicates.js          Duplicates: finding and merging people entered twice (pure, tested)
 js/serving.js             Serving: the church's regular services (settings.serviceSlots; 8am, 10am, 5pm until changed), departments and positions as in Elvanto
-js/i18n.js                I18n: English, Afrikaans, isiZulu, isiXhosa (tested), and the list of more languages
+js/i18n.js                I18n: the language engine and the list of more languages (tested)
+js/i18n/<area>.js         the words in English, Afrikaans, isiZulu, isiXhosa – one file per part of the app (common.js for shared words)
 js/lang/<code>.js         one file per further language (18, by continent), loaded only when someone chooses it (tested)
 js/countries.js           Countries: 46 countries – regions (province/state/county…), postcode wording, dialling code, law (tested)
 js/privacy-law.js         PrivacyLaw: the law the Privacy pages follow, from the church's country (POPIA, GDPR, UK GDPR…; tested)
@@ -37,6 +38,7 @@ robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers (search matching, photos and
                           "Choose the face", the turning cross for long jobs, downloads)
 js/mod-*.js               one file per module: me, people, rosters, leave, care, privacy, import, settings, words (Translations)
+js/people/*.js            the People module in parts: core, directory, profile, edit, households, search (mod-people.js puts them together)
 android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
 manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
 firestore.rules           database security rules: who may read/write what (POPIA)
@@ -44,7 +46,7 @@ tests/*.test.js           one per pure rules file above (roster, leave-import, e
                           people-search, duplicates, i18n, countries, privacy-law, wording, serving, care) and the robot
                           (robot.test.js); made-up data in tests/fixtures
 tests/rules.test.mjs      security rules (Firestore emulator)
-tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js)
+tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js); its parts are in tests/app/*.js
 .github/workflows/tests.yml  runs all of these on GitHub after every push
 ```
 
@@ -167,7 +169,7 @@ households). Pure rules in `js/households.js`, tested in `tests/households.test.
 ## Languages
 English, Afrikaans, isiZulu and isiXhosa for the screens members use (sign-in, Home, menus, the directory and my details,
 consent, My serving, serving together, away dates, my leave). Code wraps English text in `T('…')` / `TN(one, many, n)`;
-`js/i18n.js` holds one line per text with all four languages, plus month and day names for dates. `tests/i18n.test.js`
+`js/i18n/<area>.js` holds one line per text with all four languages (one file per part of the app; `js/i18n.js` is the engine), plus month and day names for dates. `tests/i18n.test.js`
 finds every `T('…')` in the code and fails if a language is missing or a {part} is lost. The choice is kept per device
 (`Store.pref('lang')`), so it also works on the sign-in screen. Administrator-only screens stay English for now, as do the
 church's own words (categories, teams, services, kinds of leave, privacy notice) and the shared leave rules' messages.
@@ -311,12 +313,12 @@ Later: direct import through the Elvanto API (server side, with the church's API
   LGPD (BR), and Kenya, Nigeria, Zimbabwe, Botswana, Rwanda, Malawi, Ethiopia, Mexico, Chile; general wording elsewhere.
   The Privacy pages, the officer's title, the regulator, breach advice and days to answer a request follow it. Checked
   October 2026 – not legal advice.
-- **Languages**: `js/i18n.js` keeps the four built-in languages; `I18n.MORE` lists 18 more (Sesotho, Setswana, Sepedi,
+- **Languages**: `js/i18n/*.js` keep the four built-in languages; `I18n.MORE` lists 18 more (Sesotho, Setswana, Sepedi,
   Xitsonga, siSwati, Tshivenḓa, isiNdebele, chiShona, Kiswahili, Amharic, Yorùbá, French, Portuguese, Spanish, German, Dutch,
   Italian, Polish), each in `js/lang/<code>.js` (`I18n.add(code, { mon, dow, words })`), fetched when chosen; the screen is
   redrawn when it arrives (`I18n.onLoad`). The picker groups them by continent. A line missing in a file shows in English;
   `tests/i18n.test.js` checks every file keeps the `{parts}`. All were drafted by Claude (AI): the Me page says so and asks
-  people to tell the church office if something reads oddly. When adding a member-facing text, add it to `js/i18n.js`
+  people to tell the church office if something reads oddly. When adding a member-facing text, add it to the right `js/i18n/<area>.js`
   and to every `js/lang` file – `tests/i18n.test.js` fails if any of the 22 languages is missing a line.
   A text kept in a list and translated where it is shown (field names, kinds of request, reasons from the rules files) is
   written `TX('…')` (does nothing but mark it), so the test checks it too; values stored in the database stay English.
@@ -330,7 +332,7 @@ Later: direct import through the Elvanto API (server side, with the church's API
   access-list entry (`roles/{email}`), so the rules let them read that language's suggestions and write `words/{lang}`.
   Administrators can check every language. "Use this" (or "Change it first") writes the wording into `words/{lang}`;
   `I18n.override()` uses it before the built-in line, so it shows for everyone at once. "Go back to the original" removes it.
-  "Download the changed wording" gives a JSON file to fold into `js/i18n.js` / `js/lang` later. Approved wording only shows
+  "Download the changed wording" gives a JSON file to fold into `js/i18n/*.js` / `js/lang` later. Approved wording only shows
   after signing in (the sign-in screen uses the built-in files).
 
 ## Care groups (Care groups page; `js/care.js`, `js/mod-care.js`)

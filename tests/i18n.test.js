@@ -1,4 +1,4 @@
-/* Tests for js/i18n.js (languages). Run: node tests/i18n.test.js
+/* Tests for js/i18n.js and its word files js/i18n/*.js (languages). Run: node tests/i18n.test.js
  * Every T('…') / TN('…', '…') text in the app must have Afrikaans, isiZulu and isiXhosa, with the same {parts}. */
 'use strict';
 const fs = require('fs'), path = require('path');
@@ -20,7 +20,10 @@ check(!badTags.length, 'no translation adds or loses markup');
 
 console.log('Texts used in the app');
 const dir = path.join(__dirname, '..', 'js'), used = new Set();
-for (const f of fs.readdirSync(dir).filter(f => /\.js$/.test(f) && f !== 'i18n.js')) {
+// js/*.js and the parts in js/people/ (not the word files themselves: js/i18n.js, js/i18n/, js/lang/)
+const appFiles = fs.readdirSync(dir).filter(f => /\.js$/.test(f) && f !== 'i18n.js')
+  .concat(fs.readdirSync(path.join(dir, 'people')).filter(f => /\.js$/.test(f)).map(f => 'people/' + f));
+for (const f of appFiles) {
   const src = fs.readFileSync(path.join(dir, f), 'utf8');
   // T('…') and TN('…', '…') are shown at once; TX('…') marks a text kept in a list and translated where it is shown
   for (const m of src.matchAll(/\bT[NX]?\(\s*'((?:[^'\\]|\\.)*)'(?:\s*,\s*'((?:[^'\\]|\\.)*)')?/g)) {

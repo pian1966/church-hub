@@ -160,3 +160,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   finds part of a mobile number (with or without spaces, and "+27 82…" and "082…" find each other), an email address or a
   home address – only what the person searching may already see (each person's directory consent and Settings → What others
   can see). `tests/directory-search.test.js`.
+- ✅ 4 Nov 2026: **Church Partner role terminology** (version 0.5.1): the member access tier's base label is "Church Partner"
+  instead of "Member" so that Settings → Who can see what (and other role dropdowns/labels) picks up the church's wording from
+  Terminology settings.

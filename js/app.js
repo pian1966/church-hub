@@ -17,7 +17,7 @@ var Hub = (function () {
     pastor: { label: 'Pastor', perms: ['people.view', 'people.edit', 'notes', 'children', 'rosters.view'] },
     rosters: { label: 'Roster coordinator', perms: ['people.basic', 'rosters.manage', 'rosters.view'] },
     kids: { label: 'Children’s ministry', perms: ['people.basic', 'children', 'medical', 'rosters.view'] },
-    member: { label: 'Member', perms: [] },
+    member: { label: 'Church Partner', perms: [] },
     none: { label: 'No access (can’t sign in)', perms: [] }
   };
   /** POPIA: children's medical notes are for Children's ministry only and pastoral notes for Pastors only –
@@ -30,7 +30,7 @@ var Hub = (function () {
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
   var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
   /** In "View as", the Member access level is called Church Partner (the church's own word, Settings → Terminology (Church Words)). */
-  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + T('Church Partner') + ')' : r === 'member' ? T('Church Partner') : roleLabel(r); }
+  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
   function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
   function can(perm) {
     if (!user) return false;

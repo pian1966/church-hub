@@ -147,3 +147,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   number, so About kept showing 0.3.0). Update now loads the page under a new address. `tests/versions.test.js` checks it.
 - ✅ 4 Nov 2026: **AGENTS.md** so Jules (Google's Gemini coding agent) follows the same rules as Claude (`CLAUDE.md`), works on
   its own branches, and knows how to run the tests.
+- ✅ 4 Nov 2026: **Show access level under Me** (version 0.4.2): the "Me" page now shows which tier/level of access (App access)
+  the user is on under details kept by the church office.

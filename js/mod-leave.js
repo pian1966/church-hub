@@ -21,6 +21,8 @@
   }
   function actor(d) { return C.staffById(d, H.user().id) || { id: H.user().id, name: H.name(H.user()), role: H.can('*') ? 'Administrator' : 'Staff', level: 'Administrator' }; }
   function isLeaveAdmin() { return H.can('*'); }
+  /** A Church Partner (Member access) who isn't on the staff: leave isn't theirs to see. */
+  function partner() { return !H.can('*') && !H.can('people.view') && !H.can('people.basic') && !H.can('children'); }
   function takesLeave(d) { var st = C.staffById(d, H.user().id); return st && C.tracksLeave(st); }
   function typeOf(d, code) { return C.type(d, code) || { name: code, colour: '#64748B' }; }
   function pill(st) { return '<span class="tag ' + ({ Approved: 'ok', Pending: 'warn', Declined: 'bad', Cancelled: 'grey' }[st] || 'grey') + '">' + esc(T(st === 'Pending' ? 'Waiting' : st)) + '</span>'; }
@@ -297,6 +299,7 @@
   H.register({
     id: 'leave', name: 'Leave', desc: 'Staff leave – Leave Manager built in', icon: H.ICON.leave, tint: '#E8590C',
     roles: ['admin', 'pastor', 'rosters', 'kids', 'member'],
+    show: function () { return !partner() || !!takesLeave(data()); },   // Church Partners only if they're staff who take leave
     stat: function (u) {
       var d = data();
       if (isLeaveAdmin()) { var n = d.requests.filter(function (r) { return r.status === 'Pending'; }).length; return n ? T('{n} waiting for approval', { n: n }) : T('Nothing waiting'); }
@@ -311,6 +314,7 @@
       return out;
     },
     render: function (p) {
+      if (partner() && !takesLeave(data())) return '<h1>' + T('Leave') + '</h1><p class="empty">' + T('Leave is for church staff.') + '</p>';
       var d = data(), v = p[0] || (takesLeave(d) ? '' : isLeaveAdmin() ? 'approvals' : 'away');
       if (v === 'staff' && isLeaveAdmin()) return renderStaff(d, p[1], p[2]);
       var body = v === 'elvanto' && isLeaveAdmin() ? renderElvanto(d) : v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && isLeaveAdmin() ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);

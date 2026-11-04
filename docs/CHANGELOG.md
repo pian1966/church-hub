@@ -129,3 +129,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   `TX('…')` now marks a text kept in a list and translated where it is shown, so the language test checks those too.
   Still English on purpose: church data (names, teams, kinds of leave, holidays, countries, special-service names), Elvanto's
   own column headings, the audit log, CSV downloads, and the privacy laws' names and legal guidance (`js/privacy-law.js`).
+- ✅ 4 Nov 2026: **Church Partners and their family details**: Leave is hidden from Church Partners who aren't staff. On
+  Me → My details they can ask the church office to change their marital status, wedding anniversary, spouse or partner and
+  children; nothing changes until an Administrator checks it (People → Changes people asked for, Home to-do). Rules
+  changed (`detailChanges`): the church must re-publish `firestore.rules`.

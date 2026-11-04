@@ -5,6 +5,8 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 ## Phase 1 – Foundation 🟡 – built and live (pre-release v0.1.0, 25 Oct 2026); church trial and Leave Manager import next
 - 🟡 Church to do: tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
 - ⬜ Confirm step 8 (key restricted to the website) is done
+- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7) so Church Partners can ask for changes to their family details
+- ⬜ Decide: should Church Partners who aren't staff stop receiving colleagues' away dates at all (now hidden on screen only)?
 - ⬜ Church: fill in Leave → Settings (terms, allowances) and mark staff; try Leave alongside the old Leave Manager
 - ⬜ Church: Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), re-publish rules, try it, send the link
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate

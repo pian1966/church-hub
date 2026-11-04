@@ -65,10 +65,13 @@
     if (p.birthDate) office += '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>';
     else if (p.birthDay) office += '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + '</dd>';
     if (!child) office += '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>';
+    var wed = !child && window.PeopleParts ? PeopleParts.keyDate(p, PeopleParts.WEDDING) : '';
+    if (wed) office += '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(wed, true)) + '</dd>';
     var fam = p.familyId ? S.get('families', p.familyId) : null;
     if (fam) office += '<dt>' + T('Household') + '</dt><dd>' + esc(H.familyName(fam)) + '</dd>';
     html += '<section class="panel"><h2>' + T('Kept by the church office') + '</h2>' + (office ? '<dl class="kv">' + office + '</dl>' : '') +
-      '<p class="hint">' + T('Something wrong or missing here? Please tell the church office and they will change it.') + '</p></section>';
+      '<p class="hint">' + T(child ? 'Something wrong or missing here? Please tell the church office and they will change it.' : 'Something wrong or missing, such as your marriage or children? Ask to change it, and the church office will check it.') + '</p>' +
+      (window.PeopleParts ? PeopleParts.changesMePanel() : '') + '</section>';
     html += window.CareUI ? CareUI.mePanel() : '';   // their care group, if they are in one
     // Consent (POPIA): what they agreed to
     var cf = window.PeopleHelpers ? PeopleHelpers.consentFor : function () { return null; };

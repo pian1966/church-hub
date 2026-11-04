@@ -131,6 +131,44 @@ module.exports = async function (ctx) {
   check(await s.page.evaluate(() => Store.list('serveOffers').every(o => o.personId === 'p14')), 'they see only their own offers');
   await finish(s);
 
+  console.log('Member: no Leave, and asking the church office to change family details');
+  s = await session('tim.jacobs@example.com', seedDocs());
+  await s.go('home');
+  check(!(await s.page.$('nav a[href="#/leave"]')) && !(await s.page.$('.tabbar a[href="#/leave"]')), 'a Church Partner who isn’t staff doesn’t see Leave');
+  await s.go('leave'); check((await s.page.evaluate(() => location.hash)) === '#/home' && !(await s.text()).includes('Who’s away'), '…not even by typing its address');
+  await s.go('me'); check((await s.text()).includes('22 Nov 2008'), 'Me shows their wedding anniversary');
+  await s.page.click('[data-act="people:askchange"]'); await s.page.click('[data-act="people:sendchange"]');
+  check(await s.page.isVisible('#dc-err'), 'sending with nothing changed asks them to fill something in');
+  await s.page.fill('#dc-wed', '2008-11-29'); await s.page.fill('#dc-sp', 'Clare Jacobs'); await s.page.fill('#dc-ch', 'Sam Jacobs, 3 May 2015\nAmy Jacobs, 9 Jan 2018');
+  await s.page.click('[data-act="people:sendchange"]'); await s.settle(); docs = await s.docsNow();
+  let dcs = Object.keys(docs).filter(k => k.startsWith('detailChanges/'));
+  check(dcs.length === 1 && docs[dcs[0]].personId === 'p14' && docs[dcs[0]].anniversary === '2008-11-29' && docs[dcs[0]].spouse === 'Clare Jacobs' && docs[dcs[0]].status === 'waiting' && !docs[dcs[0]].maritalStatus, 'the request is saved for the church office (unchanged marital status left out)');
+  check(JSON.stringify(docs['details/p14'].keyDates).includes('2008-11-22') && (await s.text()).includes('Waiting for the church office to check'), 'nothing on their record changes yet; it shows as waiting');
+  const asked = docs[dcs[0]], askedId = dcs[0];
+  await finish(s);
+
+  console.log('Administrator: checking a change someone asked for');
+  const withAsk = seedDocs(); withAsk[askedId] = Object.assign({}, asked, { maritalStatus: 'Separated' });
+  s = await session('linda.pillay@example.com', withAsk);
+  await s.go('home'); check((await s.text()).includes('1 change to family details to check'), 'Home lists it as a to-do');
+  await s.go('people/changes'); t = await s.text();
+  check(t.includes('Tim Jacobs') && t.includes('Clare Jacobs') && t.includes('Amy Jacobs') && t.includes('now: Married'), 'People → Changes shows what they asked for next to what is recorded');
+  await s.page.click('[data-act="people:applychange"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p14'].maritalStatus === 'Separated' || docs['people/p14'].maritalStatus === 'Separated', 'Yes saves the marital status');
+  check(JSON.stringify(docs['details/p14'].keyDates).includes('2008-11-29') && !JSON.stringify(docs['details/p14'].keyDates).includes('2008-11-22'), '…and replaces the wedding anniversary');
+  check(docs[askedId] && docs[askedId].status === 'checked' && (await s.text()).includes('then press Done'), 'with a spouse and children to add, it stays until they are added');
+  await s.page.click('[data-act="people:donechange"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[askedId] && (await s.text()).includes('Nothing to check.'), 'Done clears it');
+  await finish(s);
+
+  console.log('Member: the church office didn’t make a change');
+  const said = seedDocs(); said['detailChanges/dcN'] = { personId: 'p14', maritalStatus: 'Divorced', anniversary: '', spouse: '', children: '', note: '', status: 'declined', reply: 'Please phone the office' };
+  s = await session('tim.jacobs@example.com', said);
+  await s.go('me'); t = await s.text(); check(t.includes('Not changed') && t.includes('Please phone the office'), 'they see the reply');
+  await s.page.click('[data-act="people:withdrawchange"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['detailChanges/dcN'], 'OK clears it');
+  await finish(s);
+
   console.log('Member: an answer from the roster coordinator');
   const answered = seedDocs(); answered['serveOffers/soA'] = { personId: 'p14', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'declined', reply: 'The door team is full until January' };
   s = await session('tim.jacobs@example.com', answered);

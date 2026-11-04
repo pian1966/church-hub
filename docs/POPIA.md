@@ -84,6 +84,15 @@ coordinators and Administrators can see it (database rules). Yes moves it onto t
 the person can withdraw it at any time; it is included in "export everything held about a person" and removed when
 someone is deleted or dies.
 
+## Changes people ask for (family details)
+Church Partners can ask, from Me → My details, for their marital status, wedding anniversary, spouse or partner and children
+to be changed. Church Hub keeps what they typed (names and birthdays of their children, their spouse's name, a note) and the
+office's reply. Purpose: keeping church records accurate; basis: the person asked themselves. Nothing on their record changes
+until an Administrator checks it. Only the person and Administrators can see it (database rules); the person can withdraw
+it at any time; it is included in "export everything held about a person", deleted once dealt with, and removed when
+someone is deleted. A child named in a request is only added to Church Hub by an Administrator, with the usual consent
+from a parent or guardian.
+
 ## The Android app
 The app shows the church's website; it stores no church information on the phone except the sign-in (as a browser
 does) and the chosen language. Android's "Sign in with Google" is handled by Google on the phone. The app is downloaded

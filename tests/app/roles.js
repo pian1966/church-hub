@@ -136,6 +136,14 @@ module.exports = async function (ctx) {
   await s.go('home');
   check(!(await s.page.$('nav a[href="#/leave"]')) && !(await s.page.$('.tabbar a[href="#/leave"]')), 'a Church Partner who isn’t staff doesn’t see Leave');
   await s.go('leave'); check((await s.page.evaluate(() => location.hash)) === '#/home' && !(await s.text()).includes('Who’s away'), '…not even by typing its address');
+  await s.go('about'); await s.page.waitForSelector('.note.ok, .note.warn, .note.bad'); t = await s.text();
+  check(t.includes('About Church Hub') && t.includes('0.') && t.includes('Developed by') && t.includes('You have the latest version.'), 'About shows the version, date and developer, and checks for updates by itself');
+  check(!!(await s.page.$('nav a[href="#/about"]')), 'About is in everyone’s menu');
+  const newer = u => /js\/version\.js\?t=/.test(u.href);
+  await s.page.route(newer, r => r.fulfill({ contentType: 'text/javascript', body: "var ChurchHubVersion = { version: '9.9.9', date: '2030-01-01' };" }));
+  await s.page.click('[data-act="about:check"]'); await s.page.waitForSelector('[data-act="about:reload"]');
+  check((await s.text()).includes('Version 9.9.9 is ready.'), 'a newer version on the website offers Update now');
+  await s.page.unroute(newer);
   await s.go('me'); check((await s.text()).includes('22 Nov 2008'), 'Me shows their wedding anniversary');
   await s.page.click('[data-act="people:askchange"]'); await s.page.click('[data-act="people:sendchange"]');
   check(await s.page.isVisible('#dc-err'), 'sending with nothing changed asks them to fill something in');

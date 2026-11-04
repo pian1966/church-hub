@@ -24,6 +24,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Care groups | `js/mod-care.js`, `js/care.js` | `js/i18n/care.js` | `tests/care.test.js`, `tests/app/care.js` |
 | Privacy pages, law by country | `js/mod-privacy.js`, `js/privacy-law.js` | `js/i18n/privacy.js` | `tests/privacy-law.test.js` |
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
+| About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
 | Settings, countries, church wording, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
 | Language engine, 18 more languages | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
@@ -52,4 +53,6 @@ GitHub runs every test, including the rules against the Firestore emulator, on e
 - Privacy (POPIA): every new piece of personal information needs a purpose, a consent or lawful basis, an access rule by role,
   and audit logging for sensitive views (read the matching section of `docs/POPIA.md`). Never commit real church data, names, keys
   or passwords – the repository is public.
+- Every change that reaches the website raises the version in `js/version.js` (and its date): the middle number for new
+  features, the last for fixes. About → Check for updates compares it with the website's copy.
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

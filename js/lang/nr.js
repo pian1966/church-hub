@@ -1416,7 +1416,7 @@ I18n.add('nr', {
     "Positions that only serve some services follow this one.": "Iinkhundla ezisebenza eenkhonzweni ezithileko kwaphela zilandela lesi.",
     "Add special service": "Faka isikhonzo esikhethekileko",
     "Ideas by kind of church": "Imibono ngohlobo lwesonto",
-    "Church wording": "Amagama wesonto",
+    "Terminology (Church Words)": "Amathemu (Amagama wesonto)",
     "The words your church uses for people and roles.": "Amagama isonto lakho eliwasebenzisako ebantwini nemisebenzini.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Iinkrini ziyatjhuguluka (ngesiNgisi – amanye amalimi agcina amagama wawo); amarekhodi wabo boke ahlala anjalo.",
     "Kind of church": "Uhlobo lwesonto",

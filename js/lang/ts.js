@@ -1416,7 +1416,7 @@ I18n.add('ts', {
     "Positions that only serve some services follow this one.": "Swikhundlha leswi tirhaka eka vugandzeri byin'wana ntsena swi landza lebyi.",
     "Add special service": "Engetela vugandzeri lebyi hlawulekeke",
     "Ideas by kind of church": "Miehleketo hi ku ya hi muxaka wa kereke",
-    "Church wording": "Marito ya kereke",
+    "Terminology (Church Words)": "Marito (Marito ya kereke)",
     "The words your church uses for people and roles.": "Marito lawa kereke ya wena yi ma tirhisaka eka vanhu na mintirho.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Tikirini ta cinca (hi Xinghezi – tindzimi tin'wana ti hlayisa marito ya tona); marekhodo ya hinkwavo ma tshama ma ri tano.",
     "Kind of church": "Muxaka wa kereke",

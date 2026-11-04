@@ -153,3 +153,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   the user is on under details kept by the church office.
 - ✅ 4 Nov 2026: **No "Member" label on other people for Church Partners** (version 0.4.3): people from the directory carry no
   category, so none is shown (it showed a made-up "Member", ignoring Church wording).
+- ✅ 4 Nov 2026: **Terminology (Church Words) page** (version 0.4.4): "Church wording" under Settings is now called
+  "Terminology (Church Words)" and has its own full-width page (`#/settings/terminology`), with a summary card and a Change
+  button on Settings, so the table of words is easier to edit.

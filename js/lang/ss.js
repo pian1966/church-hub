@@ -1416,7 +1416,7 @@ I18n.add('ss', {
     "Positions that only serve some services follow this one.": "Tikhundla letisebenta etinkonzweni letitsite kuphela tilandzela lena.",
     "Add special service": "Faka inkonzo lekhetsekile",
     "Ideas by kind of church": "Imibono ngeluhlobo lwelibandla",
-    "Church wording": "Emagama elibandla",
+    "Terminology (Church Words)": "Emagama (Emagama elibandla)",
     "The words your church uses for people and roles.": "Emagama libandla lakho lelawasebentisako ebantfwini nasemisebentini.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Tikrini tiyaguculeka (ngesiNgisi – letinye tilimi tigcina emagama ato); emarekhodi abo bonkhe ahlala anjalo.",
     "Kind of church": "Luhlobo lwelibandla",

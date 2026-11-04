@@ -38,7 +38,7 @@ I18n.rows([
     ['Positions that only serve some services follow this one.', 'Posisies wat net by sommige dienste dien, volg hierdie een.', 'Izikhundla ezikhonza kwezinye izinkonzo kuphela zilandela le.', 'Izikhundla ezikhonza kwezinye iinkonzo kuphela zilandela le.'],
     ['Add special service', 'Voeg spesiale diens by', 'Engeza inkonzo ekhethekile', 'Yongeza inkonzo ekhethekileyo'],
     ['Ideas by kind of church', 'Idees volgens soort kerk', 'Imibono ngohlobo lwebandla', 'Izimvo ngohlobo lwecawe'],
-    ['Church wording', 'Kerkwoorde', 'Amagama ebandla', 'Amagama ecawe'],
+    ['Terminology (Church Words)', 'Terminologie (Kerkwoorde)', 'Amatemu (Amagama ebandla)', 'Amathemu (Amagama ecawe)'],
     ['The words your church uses for people and roles.', 'Die woorde wat jou kerk vir mense en rolle gebruik.', 'Amagama ibandla lakho elisebenzisa ngawo abantu nemisebenzi.', 'Amagama asetyenziswa licawe lakho ngabantu nemisebenzi.'],
     ['The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.', 'Die skerms verander (in Engels – die ander tale hou hul eie woorde); almal se rekords bly soos hulle is.', 'Izikrini ziyashintsha (ngesiNgisi – ezinye izilimi zigcina amagama azo); amarekhodi awo wonke umuntu ahlala enjalo.', 'Izikrini ziyatshintsha (ngesiNgesi – ezinye iilwimi zigcina amagama azo); iirekhodi zabo bonke zihlala zinjalo.'],
     ['Kind of church', 'Soort kerk', 'Uhlobo lwebandla', 'Uhlobo lwecawe'],

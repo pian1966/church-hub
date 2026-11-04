@@ -1416,7 +1416,7 @@ I18n.add('nl', {
     "Positions that only serve some services follow this one.": "Taken die maar bij sommige diensten dienen, volgen deze.",
     "Add special service": "Bijzondere dienst toevoegen",
     "Ideas by kind of church": "Ideeën per soort kerk",
-    "Church wording": "Woorden van de kerk",
+    "Terminology (Church Words)": "Terminologie (Woorden van de kerk)",
     "The words your church uses for people and roles.": "De woorden die je kerk gebruikt voor mensen en rollen.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "De schermen veranderen (in het Engels – de andere talen houden hun eigen woorden); ieders gegevens blijven zoals ze zijn.",
     "Kind of church": "Soort kerk",

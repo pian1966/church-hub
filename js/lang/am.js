@@ -1416,7 +1416,7 @@ I18n.add('am', {
     "Positions that only serve some services follow this one.": "በአንዳንድ አገልግሎቶች ብቻ የሚያገለግሉ ቦታዎች ይህን ይከተላሉ።",
     "Add special service": "ልዩ አገልግሎት ጨምር",
     "Ideas by kind of church": "በቤተ ክርስቲያን ዓይነት ሀሳቦች",
-    "Church wording": "የቤተ ክርስቲያን ቃላት",
+    "Terminology (Church Words)": "የቃላት አጠቃቀም (የቤተ ክርስቲያን ቃላት)",
     "The words your church uses for people and roles.": "ቤተ ክርስቲያንዎ ለሰዎችና ለሚናዎች የሚጠቀምባቸው ቃላት።",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "ስክሪኖቹ ይቀየራሉ (በእንግሊዝኛ – ሌሎች ቋንቋዎች የራሳቸውን ቃላት ይይዛሉ)፤ የሁሉም መዝገቦች እንዳሉ ይቆያሉ።",
     "Kind of church": "የቤተ ክርስቲያን ዓይነት",

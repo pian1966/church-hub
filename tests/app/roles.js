@@ -140,8 +140,8 @@ module.exports = async function (ctx) {
   check(JSON.stringify(docs['settings/church'].seeOthers) === JSON.stringify({ member: ['email'], rosters: ['mobile', 'email'], kids: [] }), 'the choices are saved');
   check(docs['directory/' + shareWho].email === docs['people/' + shareWho].email && !docs['directory/' + shareWho].mobile, 'the directory now carries email (only what Church Partners may see)');
   const shareName = docs['people/' + shareWho].firstName, shareEmail = docs['people/' + shareWho].email, saved = docs;
-  // Church wording: Worship → Music
-  await s.go('settings'); await s.page.selectOption('#wd-music', 'Music');
+  // Terminology: Worship → Music
+  await s.go('settings/terminology'); await s.page.selectOption('#wd-music', 'Music');
   check(await s.page.inputValue('.wd-1[data-k="worshipTeam"]') === 'Music team' && await s.page.inputValue('.wd-1[data-k="worshipLeader"]') === 'Music leader', 'Church wording: choosing Music fills in Music, Music team and Music leader');
   await s.page.click('[data-act="settings:savewords"]'); await s.settle();
   for (let i = 0; i < 50 && !(((await s.docsNow())['settings/church'].wording || {}).custom || {}).worship; i++) await s.page.waitForTimeout(100);   // saved

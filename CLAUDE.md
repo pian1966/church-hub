@@ -56,4 +56,6 @@ GitHub runs every test, including the rules against the Firestore emulator, on e
 - Every change that reaches the website raises the version in `js/version.js` (and its date): the middle number for new
   features, the last for fixes. Put the same number after every `?v=` in `index.html` (one find-and-replace), or browsers
   and phones keep their old copies; `node tests/versions.test.js` checks it. Language files follow automatically.
+- Other AI agents (Jules / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.
+  Work on your own branch from the latest `main`; on a conflict in `js/version.js` / `index.html`, take the higher version.
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

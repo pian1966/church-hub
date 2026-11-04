@@ -145,3 +145,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026: **Updates load properly** (version 0.4.1): every file in `index.html` now carries the version number
   (`?v=0.4.1`), so a new version always makes browsers and phones fetch every file (version.js had been left on an old
   number, so About kept showing 0.3.0). Update now loads the page under a new address. `tests/versions.test.js` checks it.
+- ✅ 4 Nov 2026: **AGENTS.md** so Jules (Google's Gemini coding agent) follows the same rules as Claude (`CLAUDE.md`), works on
+  its own branches, and knows how to run the tests.

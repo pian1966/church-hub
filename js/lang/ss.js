@@ -477,6 +477,7 @@ I18n.add('ss', {
     "Africa": "i-Afrika",
     "Europe": "i-Europe",
     "Americas": "i-Amerika",
+    "Asia": "i-Asia",
     "Oceania": "i-Oceania",
     "Another country…": "Lelinye live…",
     "Type the country": "Bhala live",

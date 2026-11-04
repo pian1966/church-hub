@@ -209,6 +209,7 @@ I18n.rows([
     ['Africa', 'Afrika', 'i-Afrika', 'iAfrika'],
     ['Europe', 'Europa', 'i-Europe', 'iYurophu'],
     ['Americas', 'Amerikas', 'amaMelika', 'iiMerika'],
+    ['Asia', 'Asië', 'i-Asia', 'i-Eshiya'],
     ['Oceania', 'Oseanië', 'i-Oceania', 'iOshiyaniya'],
     ['Photo, phone, email, address and birthday shared with my care group.', 'Foto, telefoon, e-pos, adres en verjaarsdag gedeel met my selgroep.', 'Isithombe, ifoni, i-imeyili, ikheli nosuku lokuzalwa kwabelwana neqembu lami lokunakekelana.', 'Ifoto, ifowuni, i-imeyile, idilesi nomhla wokuzalwa kwabelwana neqela lam lokukhathalelana.'],
     ['you', 'jy', 'wena', 'wena'],

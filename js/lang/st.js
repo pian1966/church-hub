@@ -477,6 +477,7 @@ I18n.add('st', {
     "Africa": "Afrika",
     "Europe": "Yuropa",
     "Americas": "Amerika",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Naha e nngwe…",
     "Type the country": "Ngola naha",

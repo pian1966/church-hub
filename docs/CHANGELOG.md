@@ -180,3 +180,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   mobile, email and street address show who already has one *starting* like what has been typed: a mobile from 7 digits
   ("+27 82…" = "082…"), an email from 6 characters, an address from a house number and 3 letters ("12 Mai" → 12 Main Road;
   Rd/Road and St/Street the same). Addresses are new to the check; people in the chosen household are left out. All 22 languages.
+- ✅ 4 Nov 2026: **Chinese, Japanese and American English** (version 0.9.0): added Simplified Chinese, Traditional Chinese,
+  Japanese (in a new Asia section in the language picker), and American English (in Americas).

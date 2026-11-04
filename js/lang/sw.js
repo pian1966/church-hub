@@ -477,6 +477,7 @@ I18n.add('sw', {
     "Africa": "Afrika",
     "Europe": "Ulaya",
     "Americas": "Amerika",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Nchi nyingine…",
     "Type the country": "Andika nchi",

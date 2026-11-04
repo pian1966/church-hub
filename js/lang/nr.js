@@ -477,6 +477,7 @@ I18n.add('nr', {
     "Africa": "i-Afrika",
     "Europe": "i-Yurophu",
     "Americas": "i-Amerika",
+    "Asia": "i-Asia",
     "Oceania": "i-Oceania",
     "Another country…": "Enye inarha…",
     "Type the country": "Tlola inarha",

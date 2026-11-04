@@ -477,6 +477,7 @@ I18n.add('nl', {
     "Africa": "Afrika",
     "Europe": "Europa",
     "Americas": "Amerika",
+    "Asia": "Azië",
     "Oceania": "Oceanië",
     "Another country…": "Ander land…",
     "Type the country": "Typ het land",

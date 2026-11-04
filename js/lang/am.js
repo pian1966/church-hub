@@ -477,6 +477,7 @@ I18n.add('am', {
     "Africa": "አፍሪካ",
     "Europe": "አውሮፓ",
     "Americas": "አሜሪካ",
+    "Asia": "እስያ",
     "Oceania": "ኦሽኒያ",
     "Another country…": "ሌላ ሀገር…",
     "Type the country": "ሀገሩን ይጻፉ",

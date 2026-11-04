@@ -477,6 +477,7 @@ I18n.add('nso', {
     "Africa": "Afrika",
     "Europe": "Yuropa",
     "Americas": "Amerika",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Naga ye nngwe…",
     "Type the country": "Ngwala naga",

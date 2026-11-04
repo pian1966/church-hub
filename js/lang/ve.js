@@ -477,6 +477,7 @@ I18n.add('ve', {
     "Africa": "Afrika",
     "Europe": "Yuropa",
     "Americas": "Amerika",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Ḽiṅwe shango…",
     "Type the country": "Ṅwalani shango",

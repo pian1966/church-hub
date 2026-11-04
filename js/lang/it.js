@@ -477,6 +477,7 @@ I18n.add('it', {
     "Africa": "Africa",
     "Europe": "Europa",
     "Americas": "Americhe",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Un altro paese…",
     "Type the country": "Scrivi il paese",

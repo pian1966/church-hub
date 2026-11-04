@@ -176,3 +176,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026 (0.8.0): **live duplicate check** – warns as each letter is typed (two letters of each name; unfinished and
   sound-alike names; "vd" surnames), shows under the email and mobile boxes who already has that email or number, and a
   **sensitivity slider** (1–5) on Find duplicates. New words in all 22 languages.
+- ✅ 4 Nov 2026: **Chinese, Japanese and American English** (version 0.9.0): added Simplified Chinese, Traditional Chinese,
+  Japanese (in a new Asia section in the language picker), and American English (in Americas).

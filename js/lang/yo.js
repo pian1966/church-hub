@@ -477,6 +477,7 @@ I18n.add('yo', {
     "Africa": "Áfíríkà",
     "Europe": "Yúróòpù",
     "Americas": "Amẹ́ríkà",
+    "Asia": "Éṣíà",
     "Oceania": "Oṣẹ́áníà",
     "Another country…": "Orílẹ̀-èdè mìíràn…",
     "Type the country": "Kọ orílẹ̀-èdè náà",

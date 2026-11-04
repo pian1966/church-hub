@@ -477,6 +477,7 @@ I18n.add('ts', {
     "Africa": "Afrika",
     "Europe": "Yuropa",
     "Americas": "Amerika",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Tiko rin’wana…",
     "Type the country": "Tsala tiko",

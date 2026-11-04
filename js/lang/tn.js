@@ -477,6 +477,7 @@ I18n.add('tn', {
     "Africa": "Aforika",
     "Europe": "Yuropa",
     "Americas": "Amerika",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Naga e nngwe…",
     "Type the country": "Kwala naga",

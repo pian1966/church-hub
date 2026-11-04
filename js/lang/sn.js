@@ -477,6 +477,7 @@ I18n.add('sn', {
     "Africa": "Africa",
     "Europe": "Europe",
     "Americas": "America",
+    "Asia": "Asia",
     "Oceania": "Oceania",
     "Another country…": "Imwe nyika…",
     "Type the country": "Nyora nyika",

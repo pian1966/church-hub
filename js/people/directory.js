@@ -57,7 +57,7 @@
     // consent (POPIA)
     var cons = ['Church records', 'Email', 'SMS', 'Church directory', 'Photos'].map(function (pur) {
       var who = pur === 'Church records' || pur === 'Photos' ? act : adults;
-      return [pur, count(who, function (p) { return hasConsent(p.id, pur); }), who.length];
+      return [P.purposeName(pur), count(who, function (p) { return hasConsent(p.id, pur); }), who.length];
     });
     // serving
     var onTeam = {}; S.list('skills').forEach(function (k) { onTeam[k.personId] = 1; });
@@ -137,7 +137,8 @@
     var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto; }) : visiblePeople();
     var shown = list.filter(function (p) {
       if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
-      return !q || H.matches(H.names(p).join(' | ') + ' ' + p.email + ' ' + (p.mobile || '') + ' ' + (canBasic() ? householdNames(p).join(' ') : ''), q);   // name, contact or family; "andr pi" finds Andrew Pike
+      var open = P.seeTier() !== 'member' || isMe(p);   // Church Partners search by name only
+      return !q || H.matches(H.names(p).join(' | ') + ' ' + (open && P.mayShare(p, 'email') ? p.email || '' : '') + ' ' + (open && P.mayShare(p, 'mobile') ? p.mobile || '' : '') + ' ' + (canBasic() ? householdNames(p).join(' ') : ''), q);   // name, contact or family; "andr pi" finds Andrew Pike
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : T('People who agreed to be in the church directory.')) + '</p></div>' +
       '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
@@ -153,7 +154,7 @@
         else if (dead) tags += '<span class="tag grey">' + esc(p.deceasedAt ? T('Died {date}', { date: H.fmt(p.deceasedAt, true) }) : T('Deceased')) + '</span>';
         else tags += catTags(p);
         if (canSeeAll() && !hasConsent(p.id, 'Church records')) tags += ' <span class="tag bad">' + T('No consent') + '</span>';
-        return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + listName(p) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', canBasic() || isMe(p) ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
+        return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + listName(p) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', (P.seeTier() !== 'member' || isMe(p)) && P.mayShare(p, 'mobile') ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + tags + '</a>';
       }).join('') + '</div>' : '<p class="empty">' + T('No one matches. Try another name, or clear the search.') + '</p>');
   }
 

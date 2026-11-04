@@ -84,11 +84,19 @@ service cloud.firestore {
     match /noCollect/{id} {
       allow read, write: if isRole(['admin', 'pastor', 'kids']);
     }
-    // Church directory: name, phone and whether there is a photo, for adults who agreed to be listed. Everyone signed in can read it.
+    // Contact details, for adults who agreed to share them. directory: everyone signed in can read it - their name and photo,
+    // plus only what Settings lets Church Partners see (mobile, email, address, spouse). contacts: staff and leaders only -
+    // home address and spouse, when Settings lets Roster coordinators or Children's ministry see them.
     match /directory/{id} {
       allow read: if anyone();
       allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
-        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'photo']);
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo']);
+      allow delete: if isRole(['admin', 'pastor']) || mine(id);
+    }
+    match /contacts/{id} {
+      allow read: if staff();
+      allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
+        && request.resource.data.keys().hasOnly(['shareAddress', 'shareSpouse']);
       allow delete: if isRole(['admin', 'pastor']) || mine(id);
     }
     // Photos, one small picture per person. Adults: staff, the person, and members when the adult is in the directory.

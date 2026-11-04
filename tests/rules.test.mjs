@@ -181,10 +181,10 @@ await t('who may add photos: Administrators and Pastors; Children’s ministry f
   await cannot(db.kids.doc('people/p15').update({ photo: 'y' }));
   await can(db.member.doc('photos/p14').delete()); await cannot(db.member.doc('photos/p15').delete());
 });
-await t('directory: everyone signed in can read; it holds only name and phone', async () => {
+await t('directory: everyone signed in can read; it holds only the contact details Settings shares', async () => {
   for (const r of roles) await can(list(db[r].collection('directory')));
-  await can(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', preferredName: '', mobile: '082' }));
-  await cannot(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', email: 'tim@example.com' }));
+  await can(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', preferredName: '', mobile: '082', email: 'tim@example.com', shareAddress: '1 Oak St', shareSpouse: 'Clare Jacobs' }));
+  await cannot(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', birthDate: '1980-01-01' }));
   await cannot(db.member.doc('directory/p15').set({ firstName: 'X', lastName: 'Y' }));
 });
 await t('families: staff roles only', () => only('families/f2', ['admin', 'pastor', 'kids', 'rosters']));
@@ -246,6 +246,13 @@ await t('family details: people ask for changes; only Administrators check and m
   await can(db.admin.doc('detailChanges/d15').update({ status: 'declined', reply: 'Please phone the office' }));
   await can(db.member.doc('detailChanges/d14').delete());                                                // withdraw
   await cannot(db.member.doc('detailChanges/d15').delete());
+});
+await t('contacts (address and spouse for staff and leaders): only staff read them', async () => {
+  await can(db.member.doc('contacts/p14').set({ shareAddress: '1 Oak St', shareSpouse: 'Clare Jacobs' }));
+  await cannot(db.member.doc('contacts/p14').set({ shareAddress: '1 Oak St', mobile: '082' }));
+  await cannot(db.member.doc('contacts/p15').set({ shareAddress: '1 Oak St' }));
+  await cannot(read(db.member, 'contacts/p14'));
+  for (const r of ['admin', 'pastor', 'rosters', 'kids']) await can(read(db[r], 'contacts/p14'));
 });
 await t('offers to serve: members ask for themselves; only roster coordinators and Administrators answer', async () => {
   const offer = { personId: 'p14', positionId: 'tea', kind: 'join', frequency: 'monthly', note: 'After the service', status: 'waiting', createdAt: 'x', updatedAt: 'x' };

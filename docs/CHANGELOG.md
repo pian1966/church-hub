@@ -135,3 +135,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   changed (`detailChanges`): the church must re-publish `firestore.rules`.
 - ✅ 4 Nov 2026: **About page for everyone** (version 0.2.0): version and release date, Android app version, developer,
   privacy notice, what's new, and Check for updates (website and Android app).
+- ✅ 4 Nov 2026: **Contact details by role** (version 0.3.0): the directory consent is now "Contact details" (name, phone,
+  email, address); Settings → What others can see sets, per role, what besides the name others see (name only by default);
+  Church Partners see shared details as pictures they can't tap or copy. Every script's `?v=` raised so phones fetch the new
+  files (the language box was still showing on Me from an old copy). Rules changed (`directory`, `contacts`): re-publish.

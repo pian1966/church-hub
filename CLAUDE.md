@@ -53,6 +53,7 @@ GitHub runs every test, including the rules against the Firestore emulator, on e
 - Privacy (POPIA): every new piece of personal information needs a purpose, a consent or lawful basis, an access rule by role,
   and audit logging for sensitive views (read the matching section of `docs/POPIA.md`). Never commit real church data, names, keys
   or passwords – the repository is public.
+- Every changed `.js` file gets its `?v=` number raised in `index.html`, or phones and browsers keep using their old copy.
 - Every change that reaches the website raises the version in `js/version.js` (and its date): the middle number for new
   features, the last for fixes. About → Check for updates compares it with the website's copy.
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

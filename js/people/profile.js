@@ -108,9 +108,12 @@
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
-      (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + '</dd>' : '') +
-      (!child ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? '<a href="mailto:' + esc(p.email) + '" target="_blank" rel="noopener">' + esc(p.email) + '</a>' : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
-        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? '<a href="tel:' + esc(p.mobile.replace(/\s/g, '')) + '">' + esc(p.mobile) + '</a>' : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
+      (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + '</dd>' :
+        !full && P.contactHtml(p, 'address') ? '<dt>' + T('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : '') +
+      (!child && (canSeeAll() || me) ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
+        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
+      // Everyone else: only what Settings shares with their role, of people who agreed (Contact details)
+      (!child && !canSeeAll() && !me ? ['email', 'mobile', 'spouse'].map(function (f) { var v = P.contactHtml(p, f); return v ? '<dt>' + T(f === 'email' ? 'Email' : f === 'mobile' ? 'Mobile' : 'Spouse or partner') + '</dt><dd>' + v + '</dd>' : ''; }).join('') : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
       (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
       ((full || (child && canChildren())) ? '<dt>' + T('Gender') + '</dt><dd>' + (p.gender ? esc(T(p.gender)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
@@ -165,12 +168,12 @@
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Consent') + '</h2>' + H.icon(H.ICON.privacy, 18) + '</div><p class="hint" style="margin:4px 0 10px">' + (me ? T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) : esc(T('What {name} has agreed to, as {law} requires.', { name: p.firstName, law: PrivacyLaw.forChurch(S.settings()).short }))) + (child ? ' ' + T('A parent or guardian gives consent for children.') : '') + '</p>' +
         '<div class="list">' + PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; }).map(function (pur) {
           var c = consentFor(p.id, pur);
-          return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b><small>' + (c ? esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) }) + ' · ' + T(c.method) + (c.guardianId ? ' · ' + T('by {name}', { name: H.name(S.get('people', c.guardianId)) }) : '')) : T('Not asked yet')) + '</small></span>' +
+          return '<div class="item"><span class="grow"><b>' + esc(T(P.purposeName(pur))) + '</b><small>' + (c ? esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) }) + ' · ' + T(c.method) + (c.guardianId ? ' · ' + T('by {name}', { name: H.name(S.get('people', c.guardianId)) }) : '')) : T('Not asked yet')) + '</small></span>' +
             (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag bad">' + T('Missing') + '</span>') + '</div>';
         }).join('') + '</div>' +
         (child ? '' : '<h3 style="margin:16px 0 6px;font-size:.95rem">' + T('Would like to receive') + '</h3><div class="list">' + RECEIVE_P.map(function (pur) {
           var c = consentFor(p.id, pur);
-          return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b>' + (c ? '<small>' + esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) })) + '</small>' : '') + '</span>' +
+          return '<div class="item"><span class="grow"><b>' + esc(T(P.purposeName(pur))) + '</b>' + (c ? '<small>' + esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) })) + '</small>' : '') + '</span>' +
             (c && c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : c ? '<span class="tag grey">' + T('No') + '</span>' : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
         }).join('') + '</div>') +
         '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="people:consent" data-id="' + p.id + '">' + T(me ? 'Change my choices' : 'Record consent') + '</button></div></section>';

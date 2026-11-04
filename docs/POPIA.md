@@ -84,6 +84,15 @@ coordinators and Administrators can see it (database rules). Yes moves it onto t
 the person can withdraw it at any time; it is included in "export everything held about a person" and removed when
 someone is deleted or dies.
 
+## Contact details: what others can see
+The consent "Church directory" is shown as **Contact details**: name, phone, email and home address may be seen by church
+staff and leaders, and by members as far as the church allows. Settings → What others can see decides, per role (Church
+Partners, Roster coordinators, Children's ministry), what besides the name is shown – name only by default. Administrators
+and Pastors see everything; people who didn't agree show nothing beyond what a role already had. The database holds only
+what each role may see: `directory/{id}` (everyone) carries only what Church Partners may see; `contacts/{id}` (staff and
+leaders only) carries address and spouse. Church Partners see shared details as pictures, so they can't tap or copy them
+(they can still read them, or photograph the screen). Care group sharing is separate (Care groups).
+
 ## Changes people ask for (family details)
 Church Partners can ask, from Me → My details, for their marital status, wedding anniversary, spouse or partner and children
 to be changed. Church Hub keeps what they typed (names and birthdays of their children, their spouse's name, a note) and the

@@ -149,3 +149,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   its own branches, and knows how to run the tests.
 - ✅ 4 Nov 2026: **Show access level under Me** (version 0.4.2): the "Me" page now shows which tier/level of access (App access)
   the user is on under details kept by the church office.
+- ✅ 4 Nov 2026: **No "Member" label on other people for Church Partners** (version 0.4.3): people from the directory carry no
+  category, so none is shown (it showed a made-up "Member", ignoring Church wording).

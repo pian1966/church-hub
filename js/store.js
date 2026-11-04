@@ -394,7 +394,7 @@ var Store = (function () {
       });
       Object.keys(dir).forEach(function (id) {                     // members: other people come from the directory
         if (cards[id]) return;
-        people.push(Object.assign({ id: id, familyId: '', familyRole: 'adult', category: 'Member', email: '', active: true, inDirectory: true, appRole: 'member', keyDates: [] }, copy(dir[id])));
+        people.push(Object.assign({ id: id, familyId: '', familyRole: 'adult', category: '', email: '', active: true, inDirectory: true, appRole: 'member', keyDates: [] }, copy(dir[id])));
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;

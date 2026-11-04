@@ -1,4 +1,4 @@
-# Church Hub – for AI coding agents (Jules / Gemini and others)
+# Church Hub – for AI coding agents (Jules, Antigravity / Gemini and others)
 
 **Read `CLAUDE.md` first and follow it exactly.** It is the project map (which file does what) and the house rules,
 written for Claude but meant for every agent working on Church Hub. When this file and `CLAUDE.md` disagree, `CLAUDE.md` wins.
@@ -16,6 +16,8 @@ The rules people most often miss:
 ## Working alongside Claude
 Claude also works on this repository, often at the same time.
 - Start every task from the latest `main`, on your own branch, and finish with a pull request. Never push to `main`.
+- If you run on someone's computer (Antigravity), before changing any file run `git switch main`, `git pull`, then
+  `git switch -c <short-name-for-the-task>`. When done, push that branch and open a pull request (or tell the person how).
 - Keep a pull request to one job. If GitHub says it has conflicts (often in `js/version.js` and `index.html`), update the
   branch from `main` and take the higher version number.
 - At the end, move finished work from `docs/ROADMAP.md` to `docs/CHANGELOG.md`, as `CLAUDE.md` says.

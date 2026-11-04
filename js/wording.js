@@ -17,8 +17,17 @@ var Wording = (function () {
     ['rosters', ['Roster coordinator', 'Roster coordinators'], 'The role that makes the rosters'],
     ['office', ['Church office', 'Church offices'], 'Where the administration is done'],
     ['care', ['Care group', 'Care groups'], 'A small group that cares for one another'],
-    ['carer', ['Carer', 'Carers'], 'Someone who leads a care group']
+    ['carer', ['Carer', 'Carers'], 'Someone who leads a care group'],
+    ['worship', ['Worship', 'Worship'], 'Music in services (also teams and positions named after it)'],
+    ['worshipTeam', ['Worship team', 'Worship teams'], 'The team that leads music in services'],
+    ['worshipLeader', ['Worship leader', 'Worship leaders'], 'Who leads the music in a service']
   ];
+  /** Quick choices for what the music in services is called (Settings → Church wording). */
+  var MUSIC = {
+    Worship: { worship: ['Worship', 'Worship'], worshipTeam: ['Worship team', 'Worship teams'], worshipLeader: ['Worship leader', 'Worship leaders'] },
+    Music: { worship: ['Music', 'Music'], worshipTeam: ['Music team', 'Music teams'], worshipLeader: ['Music leader', 'Music leaders'] },
+    Praise: { worship: ['Praise', 'Praise'], worshipTeam: ['Praise team', 'Praise teams'], worshipLeader: ['Praise leader', 'Praise leaders'] }
+  };
   var SETS = {
     general: { name: 'General (as Church Hub comes)', words: {} },
     anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Home group leader', 'Home group leaders'] } },
@@ -39,6 +48,7 @@ var Wording = (function () {
     });
     return out;
   }
+  function titleCase(s) { return s.replace(/(^| )([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }); }
   function lowerFirst(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
   /** What to change on the screen: [[from, to], …], longest first, with the lower-case forms ("pastor" → "minister") too. */
   function pairs(settings) {
@@ -48,6 +58,8 @@ var Wording = (function () {
         var from = t[1][i], to = w[t[0]][i];
         if (from === to) return;
         out.push([from, to]);
+        // "Worship Team" written with capitals (e.g. a team's name) changes too, to "Music Team"
+        if (/ [a-z]/.test(from)) out.push([titleCase(from), titleCase(to)]);
         if (lowerFirst(from) !== from) out.push([lowerFirst(from), /^[A-Z][a-z]/.test(to) && !/ [A-Z]/.test(to) ? lowerFirst(to) : to]);
       });
     });
@@ -75,6 +87,6 @@ var Wording = (function () {
     });
   }
 
-  return { TERMS: TERMS, SETS: SETS, words: words, pairs: pairs, changer: changer, apply: apply };
+  return { TERMS: TERMS, SETS: SETS, MUSIC: MUSIC, words: words, pairs: pairs, changer: changer, apply: apply };
 })();
 if (typeof module !== 'undefined') module.exports = Wording;

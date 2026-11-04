@@ -4,6 +4,8 @@
   'use strict';
   var H = Hub, esc = H.esc, T = I18n.t, V = window.ChurchHubVersion || { version: '?', date: '', developer: '', repo: '' };
   var check = { state: '', web: '', app: '' };   // state: '' | checking | done | failed
+  // Every time About is opened, check again (also when coming back to it)
+  window.addEventListener('hashchange', function () { if (/^#\/about/.test(location.hash) && check.state !== 'checking') check.state = ''; });
 
   /** -1, 0 or 1: is version a older than, the same as, or newer than b? ("0.10.0" is newer than "0.9.3") */
   function cmp(a, b) {
@@ -70,7 +72,7 @@
     icon: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-5M12 8h.01',
     stat: function () { return T('Version {v}', { v: V.version }); },
     render: render,
-    after: function () { if (!check.state) runCheck(); },   // check once when the page first opens
+    after: function () { if (!check.state) runCheck(); },   // check as soon as the page opens
     actions: {
       check: function () { runCheck(); },
       reload: function () { location.reload(); }

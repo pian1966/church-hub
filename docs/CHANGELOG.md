@@ -139,3 +139,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   email, address); Settings → What others can see sets, per role, what besides the name others see (name only by default);
   Church Partners see shared details as pictures they can't tap or copy. Every script's `?v=` raised so phones fetch the new
   files (the language box was still showing on Me from an old copy). Rules changed (`directory`, `contacts`): re-publish.
+- ✅ 4 Nov 2026: **Small fixes and Music wording** (version 0.4.0): Sign out only in the menu (not on Me); Settings → Church
+  wording can call music in services Worship, Music or Praise (with its team and leader); About checks for updates every time
+  it is opened. Language files now refresh on phones too (`PACK_VERSION`).

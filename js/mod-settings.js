@@ -65,6 +65,9 @@
     return '<section class="panel" data-own-words><h2>' + T('Church wording') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + ' ' +
       T('The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.') + '</p>' +
       '<label class="field">' + T('Kind of church') + '<select id="wd-set">' + Object.keys(Wording.SETS).map(function (k) { return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(Wording.SETS[k].name) + '</option>'; }).join('') + '</select><small>' + T('Choosing one fills in its words below; you can still change any of them.') + '</small></label>' +
+      '<label class="field">' + T('Music in services is called') + '<select id="wd-music"><option value="">–</option>' + Object.keys(Wording.MUSIC).map(function (k) {
+        return '<option value="' + k + '"' + (Wording.MUSIC[k].worship[0] === words.worship[0] && Wording.MUSIC[k].worshipTeam[0] === words.worshipTeam[0] && Wording.MUSIC[k].worshipLeader[0] === words.worshipLeader[0] ? ' selected' : '') + '>' + esc(k + ' / ' + Wording.MUSIC[k].worshipTeam[0] + ' / ' + Wording.MUSIC[k].worshipLeader[0]) + '</option>';
+      }).join('') + '</select><small>' + T('Fills in the three words below; you can still change each one. Then Save wording.') + '</small></label>' +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
       Wording.TERMS.map(function (t) {
         return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(T(t[2])) + '</span></td>' +
@@ -123,6 +126,11 @@
         var w = Wording.words({ wording: { set: ws.value } });
         document.querySelectorAll('.wd-1').forEach(function (i) { i.value = w[i.dataset.k][0]; });
         document.querySelectorAll('.wd-2').forEach(function (i) { i.value = w[i.dataset.k][1]; });
+      });
+      var wm = document.getElementById('wd-music');
+      if (wm) wm.addEventListener('change', function () {   // Worship / Music / Praise: fill in the three words
+        var m = Wording.MUSIC[wm.value]; if (!m) return;
+        Object.keys(m).forEach(function (k) { var a = document.querySelector('.wd-1[data-k="' + k + '"]'), b = document.querySelector('.wd-2[data-k="' + k + '"]'); if (a) a.value = m[k][0]; if (b) b.value = m[k][1]; });
       });
       document.querySelectorAll('.st-mod').forEach(function (b) {
         b.addEventListener('change', function () { var m = Object.assign({}, S.settings().modules); m[b.value] = b.checked; S.setSettings({ modules: m }, (b.checked ? 'Switched on ' : 'Switched off ') + b.value); H.toast(T(b.checked ? 'Switched on' : 'Switched off – its card is hidden')); H.render(); });

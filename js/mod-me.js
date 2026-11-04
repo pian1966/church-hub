@@ -80,12 +80,11 @@
         var c = cf(p.id, pur);
         return '<div class="item"><span class="grow"><b>' + esc(T(window.PeopleParts ? PeopleParts.purposeName(pur) : pur)) + '</b></span>' + (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
       }).join('') + '</div><div class="btns" style="margin-top:12px"><button class="btn" data-act="people:consent" data-id="' + esc(p.id) + '">' + T('Change my choices') + '</button> <button class="btn" data-act="hub:notice">' + T('Privacy notice') + '</button></div></section>';
-    // Signing out: easy to find on a phone. The language is chosen in the menu only (left on a computer, ☰ on a phone).
-    html += '<section class="panel"><h2>' + T('This phone or computer') + '</h2><div class="row" style="flex-wrap:wrap;gap:12px">' +
-      '<button class="btn" data-act="hub:signout">' + H.icon(H.ICON.out, 18) + T('Sign out') + '</button></div>' +
-      (I18n.isDraft() ? '<p class="hint">' + T('This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.') + '</p>' : '') +
+    // Signing out and the language are in the menu (left on a computer, ☰ on a phone); here only notes about this device
+    var device = (I18n.isDraft() ? '<p class="hint">' + T('This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.') + '</p>' : '') +
       (window.ChurchHubApp ? '<p class="hint">' + T('Church Hub app, version {v}', { v: esc(appVersion()) }) + '</p>' :
-        /Android/i.test(navigator.userAgent) ? '<p class="hint"><a href="' + APK + '" target="_blank" rel="noopener">' + T('Get the Church Hub app for Android') + '</a></p>' : '') + '</section>';
+        /Android/i.test(navigator.userAgent) ? '<p class="hint"><a href="' + APK + '" target="_blank" rel="noopener">' + T('Get the Church Hub app for Android') + '</a></p>' : '');
+    if (device) html += '<section class="panel"><h2>' + T('This phone or computer') + '</h2>' + device + '</section>';
     return html + '</div>';
   }
   function appVersion() { try { return window.ChurchHubApp.version(); } catch (e) { return ''; } }

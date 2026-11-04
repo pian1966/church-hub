@@ -140,6 +140,12 @@ module.exports = async function (ctx) {
   check(JSON.stringify(docs['settings/church'].seeOthers) === JSON.stringify({ member: ['email'], rosters: ['mobile', 'email'], kids: [] }), 'the choices are saved');
   check(docs['directory/' + shareWho].email === docs['people/' + shareWho].email && !docs['directory/' + shareWho].mobile, 'the directory now carries email (only what Church Partners may see)');
   const shareName = docs['people/' + shareWho].firstName, shareEmail = docs['people/' + shareWho].email, saved = docs;
+  // Church wording: Worship → Music
+  await s.go('settings'); await s.page.selectOption('#wd-music', 'Music');
+  check(await s.page.inputValue('.wd-1[data-k="worshipTeam"]') === 'Music team' && await s.page.inputValue('.wd-1[data-k="worshipLeader"]') === 'Music leader', 'Church wording: choosing Music fills in Music, Music team and Music leader');
+  await s.page.click('[data-act="settings:savewords"]'); await s.settle();
+  await s.go('rosters/teams'); t = await s.text();
+  check(t.includes('Music') && !t.includes('Worship'), 'the Worship team now shows as Music');
   await finish(s);
 
   console.log('Church Partner and Roster coordinator: shared contact details');
@@ -166,6 +172,10 @@ module.exports = async function (ctx) {
   await s.page.route(newer, r => r.fulfill({ contentType: 'text/javascript', body: "var ChurchHubVersion = { version: '9.9.9', date: '2030-01-01' };" }));
   await s.page.click('[data-act="about:check"]'); await s.page.waitForSelector('[data-act="about:reload"]');
   check((await s.text()).includes('Version 9.9.9 is ready.'), 'a newer version on the website offers Update now');
+  await s.page.unroute(newer);
+  let checks = 0; await s.page.route(newer, r => { checks++; r.continue(); });
+  await s.go('home'); await s.go('about'); await s.page.waitForSelector('.note.ok');
+  check(checks === 1, 'opening About again checks for updates again, straight away');
   await s.page.unroute(newer);
   await s.go('me'); check((await s.text()).includes('22 Nov 2008'), 'Me shows their wedding anniversary');
   await s.page.click('[data-act="people:askchange"]'); await s.page.click('[data-act="people:sendchange"]');

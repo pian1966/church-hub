@@ -90,7 +90,7 @@ var PeopleParts = { actions: {} };
   function allCouples() { return canCouples() ? HS.couples(S.list('people'), S.list('families')) : []; }
   function couplesToCheck() { return canCouples() ? HS.couplesToCheck(S.list('people'), S.list('families')) : []; }
   function coupleOf(pid) { return allCouples().filter(function (c) { return c.a === pid || c.b === pid; })[0] || null; }
-  /* ---------- contact details: what each role sees of other people (Settings → What others can see) ----------
+  /* ---------- contact details: what each role sees of other people (Settings → Who can see what) ----------
    * Administrators and Pastors see everything; everyone sees their own. Church Partners, Roster coordinators and
    * Children's ministry see a name only, plus what Settings ticks for their role – and only of adults who agreed
    * (consent "Church directory", shown as Contact details). Church Partners can't tap or copy them (drawn as pictures). */

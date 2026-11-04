@@ -11,7 +11,7 @@
   function whoHas(ps, role) {
     if (!ps.length || ps.length > 40) return String(ps.length);
     ps = ps.slice().sort(function (a, b) { return (a.lastName + ' ' + a.firstName).localeCompare(b.lastName + ' ' + b.firstName); });
-    return '<details class="who" data-role="' + role + '"><summary title="' + esc(ps.map(H.name).join(', ')) + '">' + ps.length + '</summary><div class="who-list">' +
+    return '<details class="who-has" data-role="' + role + '"><summary title="' + esc(ps.map(H.name).join(', ')) + '">' + ps.length + '</summary><div class="who-list">' +
       ps.map(function (p) { return '<a href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>'; }).join('') + '</div></details>';
   }
 
@@ -108,30 +108,31 @@
       '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p>' + MODS.map(function (m) {
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
       }).join('') + '<p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' +
-      '<section class="panel"><h2>' + T('Who can see what') + '</h2><div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th><th>' + T('Can') + '</th><th>' + T('People') + '</th></tr></thead><tbody>' +
-      [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']].map(function (r) {
-        return '<tr><td><b>' + esc(T(H.ROLES[r[0]].label)) + '</b></td><td>' + esc(T(r[1])) + '</td><td>' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>';
-      }).join('') + '</tbody></table></div><p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p></section>' +
-      renderSeeOthers(st) +
+      renderAccess(st, byRole) +
       renderSlots() +
       renderServices(st, svcs) + '</div>';
   }
 
-  /** What each role sees of other people (contact details), for adults who agreed to share them. Name only by default. */
-  function renderSeeOthers(st) {
+  /** Who can see what: each access level, what it can use, which of other people's contact details it sees
+   *  (only adults who agreed to be in the directory; name only unless ticked), and who has it. Administrators and
+   *  Pastors always see everything; No access can't sign in. Saved as settings.seeOthers = { member, rosters, kids }. */
+  var ACCESS = [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']];
+  function renderAccess(st, byRole) {
     var P = window.PeopleParts, see = st.seeOthers || {};
-    if (!P) return '';
-    return '<section class="panel" id="see-others"><h2>' + T('What others can see') + '</h2><p class="hint" style="margin-top:0">' +
-      T('Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.') + '</p>' +
-      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th>' + P.SHARE.map(function (f) { return '<th>' + esc(T(f[1])) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      P.TIERS.map(function (t) {
-        return '<tr><td><b>' + esc(T(t[1])) + '</b></td>' + P.SHARE.map(function (f) {
-          var on = (see[t[0]] || []).indexOf(f[0]) >= 0;
-          return '<td><input type="checkbox" class="st-see" data-t="' + t[0] + '" value="' + f[0] + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(T(t[1]) + ': ' + T(f[1])) + '"></td>';
-        }).join('') + '</tr>';
+    return '<section class="panel" id="see-others" style="grid-column:1/-1"><h2>' + T('Who can see what') + '</h2>' +
+      (P ? '<p class="hint" style="margin-top:0">' + T('Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.') + '</p>' : '') +
+      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th><th>' + T('Can') + '</th><th>' + T('People') + '</th></tr></thead><tbody>' +
+      ACCESS.map(function (r) {
+        var choose = P && P.TIERS.some(function (t) { return t[0] === r[0]; }), opts = '';
+        if (P && r[0] !== 'none') opts = '<div class="see-opts"><span class="muted small">' + T('Others’ contact details') + ':</span>' + (choose ? P.SHARE.map(function (f) {
+          var on = (see[r[0]] || []).indexOf(f[0]) >= 0;
+          return '<label><input type="checkbox" class="st-see" data-t="' + r[0] + '" value="' + f[0] + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T(f[1])) + '">' + esc(T(f[1])) + '</label>';
+        }).join('') : '<span class="small">' + T('All, always') + '</span>') + '</div>';
+        return '<tr><td><b>' + esc(H.roleLabel(r[0])) + '</b></td><td>' + esc(T(r[1])) + opts + '</td><td>' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-      '<p class="hint">' + T('Church Partners see these as pictures: they can read them, but can’t tap or copy them. Care group leaders see more of their own group (Care groups).') + '</p>' +
-      '<button class="btn small" data-act="settings:see">' + T('Save') + '</button></section>';
+      (P ? '<p class="hint">' + T('People with Basic access see these as pictures: they can read them, but can’t tap or copy them. Care group leaders see more of their own group (Care groups).') + '</p>' : '') +
+      '<p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p>' +
+      (P ? '<button class="btn small" data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
   }
 
   H.register({
@@ -160,7 +161,7 @@
         var see = {}; window.PeopleParts.TIERS.forEach(function (t) { see[t[0]] = []; });
         document.querySelectorAll('.st-see').forEach(function (b) { if (b.checked) see[b.dataset.t].push(b.value); });
         var say = window.PeopleParts.TIERS.map(function (t) { return t[0] + ': ' + (see[t[0]].length ? see[t[0]].join(', ') : 'name only'); }).join('; ');
-        S.setSettings({ seeOthers: see }, 'What others can see: ' + say);
+        S.setSettings({ seeOthers: see }, 'Who can see what (contact details): ' + say);
         S.resyncDirectory();   // everyone's shared contact details, as now allowed
         H.render(); H.toast(T('Saved'));
       },

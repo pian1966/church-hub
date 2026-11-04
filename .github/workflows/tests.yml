@@ -27,6 +27,8 @@ jobs:
         run: node tests/i18n.test.js
       - name: Advanced people search
         run: node tests/people-search.test.js
+      - name: People list search (names, contact details, addresses)
+        run: node tests/directory-search.test.js
       - name: Finding duplicates
         run: node tests/duplicates.test.js
       - name: Countries (addresses, regions)

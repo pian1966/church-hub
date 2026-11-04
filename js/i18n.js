@@ -28,7 +28,7 @@ var I18n = (function () {
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
   var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'privacy', 'import', 'settings'];
-  var PACK_VERSION = 8, loading = {}, onLoad = [];
+  var PACK_VERSION = 9, loading = {}, onLoad = [];
   var DATES = {
     en: { mon: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
     af: { mon: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'], dow: ['So', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Sa'] },

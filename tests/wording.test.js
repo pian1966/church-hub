@@ -23,5 +23,10 @@ const meth = W.changer({ wording: { set: 'methodist' } });
 ok(meth('My care group · Carer') === 'My class · Class leader' && meth('Care group member') === 'Class member', 'Methodist: care groups are classes, carers class leaders');
 ok(W.pairs({ wording: { set: 'anglican' } }).every((p, i, a) => i === 0 || a[i - 1][0].length >= p[0].length), 'longest words are changed first (Visiting Minister before Minister)');
 
+const mus = W.changer({ wording: { custom: W.MUSIC.Music } });
+ok(mus('Worship team') === 'Music team' && mus('Worship Team') === 'Music Team' && mus('the worship leader') === 'the music leader' && mus('Worship') === 'Music', 'Worship → Music, Worship team → Music team, worship leader → music leader');
+const pr = W.changer({ wording: { custom: Object.assign({}, W.MUSIC.Praise, { worshipLeader: ['Band leader', 'Band leaders'] }) } });
+ok(pr('Worship Leader and Worship team') === 'Band Leader and Praise team' && pr('Sunday worship') === 'Sunday praise', 'Praise, with the leader renamed on its own');
+ok(W.changer({})('Worship team') === 'Worship team', 'as Church Hub comes: Worship stays');
 if (fails) { console.log('\n' + fails + ' wording test(s) FAILED'); process.exit(1); }
 console.log('\nAll wording tests passed');

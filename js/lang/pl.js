@@ -47,6 +47,7 @@ I18n.add('pl', {
     "Roster coordinator": "Koordynator grafiku",
     "Children’s ministry": "Służba dziecięca",
     "Member": "Członek",
+    "Basic access": "Dostęp podstawowy",
     "Directory, households and consent": "Katalog, gospodarstwa domowe i zgody",
     "Church directory": "Katalog kościoła",
     "Who serves when – families kept together": "Kto służy kiedy – rodziny razem",

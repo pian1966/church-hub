@@ -162,3 +162,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   can see). `tests/directory-search.test.js`.
 - ✅ 4 Nov 2026: **About says "staff management"** (version 0.5.1): About now says Church Hub keeps the church’s people, rosters,
   care groups and staff management in one place (was "leave"), in every language.
+- ✅ 4 Nov 2026: **"Basic access" instead of "Member"** (version 0.5.2, from Jules's #49): the access level for everyone who can
+  sign in without a special role is called "Basic access" everywhere (Settings, a person's App access, Me, View as, advanced
+  search), so it can't be confused with the Church Partner, Attender or Visiting Minister categories.

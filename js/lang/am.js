@@ -47,6 +47,7 @@ I18n.add('am', {
     "Roster coordinator": "የፕሮግራም አስተባባሪ",
     "Children’s ministry": "የሕፃናት አገልግሎት",
     "Member": "አባል",
+    "Basic access": "መሠረታዊ መዳረሻ",
     "Directory, households and consent": "ማውጫ፣ ቤተሰቦች እና ፈቃድ",
     "Church directory": "የቤተ ክርስቲያን ማውጫ",
     "Who serves when – families kept together": "ማን መቼ ያገለግላል – ቤተሰቦች አብረው ይቆያሉ",

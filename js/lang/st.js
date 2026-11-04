@@ -47,6 +47,7 @@ I18n.add('st', {
     "Roster coordinator": "Mohlophisi wa manane",
     "Children’s ministry": "Tshebeletso ya bana",
     "Member": "Setho",
+    "Basic access": "Phihlello ya motheo",
     "Directory, households and consent": "Bukana, malapa le tumello",
     "Church directory": "Bukana ya kereke",
     "Who serves when – families kept together": "Ke mang ya sebeletsang neng – malapa a dula mmoho",

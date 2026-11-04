@@ -47,6 +47,7 @@ I18n.add('tn', {
     "Roster coordinator": "Mothulaganyi wa manane",
     "Children’s ministry": "Tirelo ya bana",
     "Member": "Leloko",
+    "Basic access": "Phitlhelelo ya motheo",
     "Directory, households and consent": "Bukana, malapa le tetlelelo",
     "Church directory": "Bukana ya kereke",
     "Who serves when – families kept together": "Ke mang yo o direlang leng – malapa a nna mmogo",

@@ -57,7 +57,7 @@
       if (asked.length) out.push({ text: TN('{n} change to family details to check', '{n} changes to family details to check', asked.length), href: '#/people/changes' });
       var noMarital = all ? S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; }) : [];
       if (canDup()) {
-        var dupN = DUP.find(dupPeople(), notDup()).filter(function (d) { return d.level !== 'possible'; }).length;
+        var dupN = DUP.find(dupPeople(), notDup(), P.dupSens()).filter(function (d) { return d.level !== 'possible'; }).length;
         if (dupN) out.push({ text: TN('{n} person looks entered twice', '{n} people look entered twice', dupN), href: '#/people/duplicates' });
       }
       var cpl = couplesToCheck();

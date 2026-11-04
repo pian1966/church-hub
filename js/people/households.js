@@ -78,10 +78,10 @@
   function renderDuplicates() {
     var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>';
     if (!canDup()) return back + '<p class="empty">' + T('Finding duplicates is for Administrators and Pastors.') + '</p>';
-    var found = DUP.find(dupPeople(), notDup());
+    var found = DUP.find(dupPeople(), notDup(), P.dupSens());
     return back + '<div class="page-head"><div><h1>' + T('Find duplicates') + '</h1><p class="lead">' + T('People who may have been entered twice. Church Hub compares names (including short forms like Doug and Douglas, “known as”, typing slips, swapped and maiden names), email, mobile, birthday and Elvanto ID. Families sharing an email or phone are not counted as duplicates.') + '</p></div></div>' +
       (found.length ? '<p class="muted small">' + TN('{n} pair to check, most likely first. Open each to compare.', '{n} pairs to check, most likely first. Open each to compare.', found.length) + ' <b>' + T('Same person: fix…') + '</b> ' + T('keeps one record, fills in what it’s missing from the other and moves consents, guardians and serving across.') + '</p>' : '<p class="empty">' + T('No duplicates found.') + '</p>') +
-      found.map(function (d) {
+      sensPanel() + found.map(function (d) {
         var a = S.get('people', d.a), b = S.get('people', d.b);
         return '<section class="panel" style="margin-bottom:12px"><div class="row" style="flex-wrap:wrap;gap:8px"><h2 class="grow" style="margin:0;font-size:1rem">' + esc(T(DUPWORD[d.level])) + '</h2><span class="tag ' + (d.level === 'possible' ? 'grey' : 'warn') + '">' + T(d.level === 'possible' ? 'Check' : 'Likely') + '</span></div>' +
           '<p class="hint" style="margin:6px 0 0">' + esc(d.reasons.join(' · ')) + '</p>' +
@@ -89,6 +89,23 @@
           '<div class="btns"><button class="btn small primary" data-act="people:fixdup" data-a="' + d.a + '" data-b="' + d.b + '">' + T('Same person: fix…') + '</button><button class="btn small" data-act="people:notdup" data-a="' + d.a + '" data-b="' + d.b + '">' + T('Not the same person') + '</button></div></section>';
       }).join('');
   }
+  /** The sliding scale: how readily people are flagged, here and while someone is typed in. Administrators change it (a church setting). */
+  function sensPanel() {
+    var n = P.dupSens(), admin = H.can('*');
+    return '<section class="panel" style="margin-bottom:12px"><h2 style="margin:0 0 6px;font-size:1rem">' + T('How sensitive is the duplicate check?') + '</h2>' +
+      '<div class="row" style="gap:10px;align-items:center"><span class="muted small">' + T('Fewer warnings') + '</span>' +
+      '<input type="range" id="dup-sens" min="1" max="5" step="1" value="' + n + '" class="grow" aria-label="' + esc(T('How sensitive is the duplicate check?')) + '"' + (admin ? '' : ' disabled') + '>' +
+      '<span class="muted small">' + T('More warnings') + '</span></div>' +
+      '<p class="hint" style="margin:6px 0 0"><b>' + T('Level {n} of 5', { n: n }) + (n === 3 ? ' ' + T('(recommended)') : '') + '.</b> ' +
+      T('Moves how readily people are flagged, here and while someone is being typed in. A very likely duplicate is always stopped.') +
+      (admin ? '' : ' ' + T('Only an Administrator can change this.')) + '</p></section>';
+  }
+  if (typeof document !== 'undefined') document.addEventListener('change', function (ev) {
+    if (!ev.target || ev.target.id !== 'dup-sens' || !H.can('*')) return;
+    var n = +ev.target.value; S.setSettings({ dupSensitivity: n }, 'Duplicate check sensitivity set to ' + n + ' of 5'); H.render();
+    var again = document.getElementById('dup-sens'); if (again) again.focus();
+  });
+
   /* Fixing a duplicate: keep one record, fill its gaps from the other, move what points at the other, retire the other. */
   var FIELD_NAMES = { email: TX('Email'), mobile: TX('Mobile'), birthDate: TX('Birthday'), maritalStatus: TX('Marital status'), preferredName: TX('Known as'),
     firstName: TX('First name'), lastName: TX('Last name'), elvantoId: TX('Elvanto link'), staff: TX('Staff details'), familyId: TX('Household'), keyDates: TX('Key dates'),

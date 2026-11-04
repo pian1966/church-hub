@@ -383,3 +383,6 @@ details.sub[open] > summary { margin-bottom: 8px; }
 .improve { margin: 28px 0 8px; font-size: 14px; }
 .improve a { display: inline-flex; align-items: center; gap: 6px; color: var(--muted, #6b625a); }
 .panel.inset { background: var(--bg, #faf8f5); box-shadow: none; border: 1px solid var(--line, #e7e1d9); }
+/* Duplicate check while typing: who else already has this email or mobile */
+.dup-hint { display: block; margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: var(--warn-soft); color: var(--warn) !important; font-size: 13px; }
+.dup-hint a { color: inherit; font-weight: 600; }

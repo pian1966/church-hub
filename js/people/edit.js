@@ -56,14 +56,34 @@
       birthDate: g('pf-birth'), familyRole: fr ? fr.value : '' };
   }
   function dupMatches() { if (!canSeeAll()) return []; var t = typedPerson(); if (!t.firstName || !t.lastName) return []; var ex = t.id ? S.get('people', t.id) : null; if (ex && ex.elvantoId) t.elvantoId = ex.elvantoId; return DUP.matches(t, dupPeople(), notDup()); }
+  /** The live check, as each letter is typed (Duplicates.live): similar names from two letters of each name, and an email or
+   *  mobile already on someone else's record – shown right under that box. Only for those who may see everyone (not members). */
+  function dupLive() {
+    if (!canSeeAll()) return { people: [], email: [], mobile: [] };
+    var t = typedPerson(), ex = t.id ? S.get('people', t.id) : null; if (ex && ex.elvantoId) t.elvantoId = ex.elvantoId;
+    return DUP.live(t, dupPeople(), notDup(), P.dupSens());
+  }
+  function personLinks(ids) {
+    return ids.slice(0, 3).map(function (id) { var q = S.get('people', id); return q ? '<a href="#/people/p/' + q.id + '" data-act="hub:close">' + esc(H.name(q)) + '</a>' : ''; }).filter(Boolean).join(', ') + (ids.length > 3 ? ' …' : '');
+  }
+  /** Under the email or mobile box: who else has it already (only when it was typed or changed here, not someone's own saved one). */
+  function contactHint(field, ids, norm) {
+    var hint = document.getElementById(field + '-dup'), inp = document.getElementById(field); if (!hint || !inp) return;
+    var changed = norm(inp.value) !== norm(inp.dataset.was || '');
+    hint.hidden = !(ids.length && changed);
+    hint.innerHTML = hint.hidden ? '' : (field === 'pf-email' ? T('This email address is already used by {names}.', { names: personLinks(ids) }) : T('This mobile number is already used by {names}.', { names: personLinks(ids) })) +
+      ' ' + T('Families often share one – check this isn’t the same person.');
+  }
   function dupWarn() {
     var box = document.getElementById('pf-dup'); if (!box) return;
-    var ms = dupMatches().slice(0, 3), stop = ms.some(function (m) { return m.score >= 70; });
+    var live = dupLive();
+    contactHint('pf-email', live.email, DUP.email); contactHint('pf-mobile', live.mobile, DUP.phone);
+    var ms = live.people.slice(0, 3), stop = ms.some(function (m) { return m.score >= 70; }), similar = ms.every(function (m) { return m.level === 'similar'; });
     box.hidden = !ms.length;
     if (!ms.length) { box.innerHTML = ''; return; }
     var keep = document.getElementById('pf-dup-ok'), was = keep && keep.checked;
-    box.className = 'note ' + (stop ? 'bad' : 'warn');
-    box.innerHTML = '<b>' + T('This may be someone already in Church Hub:') + '</b>' + ms.map(function (m) {
+    box.className = 'note ' + (stop ? 'bad' : similar ? 'info' : 'warn');
+    box.innerHTML = '<b>' + (similar ? T('Similar names already in Church Hub:') : T('This may be someone already in Church Hub:')) + '</b>' + ms.map(function (m) {
       var q = S.get('people', m.id), hs = householdNames(q);
       return '<span style="display:block;margin-top:6px"><a href="#/people/p/' + q.id + '" data-act="hub:close">' + esc(H.name(q)) + '</a>' + (hs.length ? ' · ' + esc(hs[0]) : '') + ' <span class="muted small">(' + esc(m.reasons.join(', ')) + ')</span></span>';
     }).join('') +
@@ -82,8 +102,8 @@
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
       '<div class="two"><label class="field">' + T('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
       (!me || admin ? '<label class="field">' + T('Middle name') + '<input id="pf-middle" value="' + esc(p.middleName || '') + '" autocomplete="additional-name"></label>' : '') + '</div>' +
-      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label>' +
-      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"></label></div>' +
+      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + T('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.email || '') + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-email-dup" class="dup-hint" role="status" aria-live="polite" hidden></small></label>' +
+      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + T('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.mobile || '') + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-mobile-dup" class="dup-hint" role="status" aria-live="polite" hidden></small></label></div>' +
       (!me || admin ? '<div class="two"><label class="field">' + T('Birthday') + '<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field req">' + T('Category') + '<select id="pf-cat">' + (p.category ? '' : '<option value="" selected>' + T('Choose…') + '</option>') + CATS.map(function (c) { return '<option value="' + esc(c) + '"' + (p.category === c ? ' selected' : '') + '>' + esc(T(c)) + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two" id="pf-partner-f"' + (p.category === 'Church Partner' ? '' : ' hidden') + '><label class="field">' + T('Date accepted as Church Partner') + '<input id="pf-psince" type="date" max="' + H.today() + '" value="' + esc(p.partnerSince || '') + '"></label>' +
@@ -119,7 +139,7 @@
     }
     var dupT = null;
     ['pf-first', 'pf-last', 'pf-pref', 'pf-email', 'pf-mobile', 'pf-birth', 'pf-frole'].forEach(function (id) {
-      var e = document.getElementById(id); if (e) e.addEventListener(e.tagName === 'SELECT' || e.type === 'date' ? 'change' : 'input', function () { clearTimeout(dupT); dupT = setTimeout(dupWarn, 250); });
+      var e = document.getElementById(id); if (e) e.addEventListener(e.tagName === 'SELECT' || e.type === 'date' ? 'change' : 'input', function () { clearTimeout(dupT); dupT = setTimeout(dupWarn, 150); });
     });
     if (p.id) dupWarn();
     var sb = document.getElementById('pf-staff'), sf = document.getElementById('pf-staff-f');

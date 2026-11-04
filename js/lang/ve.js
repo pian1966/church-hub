@@ -391,7 +391,7 @@ I18n.add('ve', {
     "Developed by": "Yo itwa nga",
     "With help from Claude, an AI made by Anthropic": "Nga thuso ya Claude, AI yo itwaho nga Anthropic",
     "About Church Hub": "Nga ha Church Hub",
-    "Church Hub keeps the church’s people, rosters, care groups and leave in one place.": "Church Hub i vhulunga vhathu vha kereke, mbekanyamushumo, zwigwada zwa ndondolo na mafhuvhalo fhethu huthihi.",
+    "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub i vhulunga vhathu vha kereke, mbekanyamushumo, zwigwada zwa ndondolo na ndangulo ya vhashumi fhethu huthihi.",
     "What’s new": "Zwiswa",
     "Opens on GitHub": "I vula kha GitHub",
     "Source code": "Khoudu ya tshisima",

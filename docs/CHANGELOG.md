@@ -160,6 +160,8 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   finds part of a mobile number (with or without spaces, and "+27 82…" and "082…" find each other), an email address or a
   home address – only what the person searching may already see (each person's directory consent and Settings → What others
   can see). `tests/directory-search.test.js`.
-- ✅ 4 Nov 2026: **Church Partner role terminology** (version 0.5.1): the member access tier's base label is "Church Partner"
-  instead of "Member" so that Settings → Who can see what (and other role dropdowns/labels) picks up the church's wording from
-  Terminology settings.
+- ✅ 4 Nov 2026: **About says "staff management"** (version 0.5.1): About now says Church Hub keeps the church’s people, rosters,
+  care groups and staff management in one place (was "leave"), in every language.
+- ✅ 4 Nov 2026: **"Basic access" instead of "Member"** (version 0.5.2, from Jules's #49): the access level for everyone who can
+  sign in without a special role is called "Basic access" everywhere (Settings, a person's App access, Me, View as, advanced
+  search), so it can't be confused with the Church Partner, Attender or Visiting Minister categories.

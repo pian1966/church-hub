@@ -391,7 +391,7 @@ I18n.add('pt', {
     "Developed by": "Desenvolvido por",
     "With help from Claude, an AI made by Anthropic": "Com a ajuda de Claude, uma IA da Anthropic",
     "About Church Hub": "Sobre o Church Hub",
-    "Church Hub keeps the church’s people, rosters, care groups and leave in one place.": "O Church Hub guarda num só lugar as pessoas, as escalas, os grupos de cuidado e as férias da igreja.",
+    "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "O Church Hub guarda num só lugar as pessoas, as escalas, os grupos de cuidado e a gestão do pessoal da igreja.",
     "What’s new": "Novidades",
     "Opens on GitHub": "Abre no GitHub",
     "Source code": "Código-fonte",

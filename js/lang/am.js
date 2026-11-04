@@ -391,7 +391,7 @@ I18n.add('am', {
     "Developed by": "ያዘጋጀው",
     "With help from Claude, an AI made by Anthropic": "በAnthropic በተሠራው AI በClaude እገዛ",
     "About Church Hub": "ስለ Church Hub",
-    "Church Hub keeps the church’s people, rosters, care groups and leave in one place.": "Church Hub የቤተ ክርስቲያኑን ሰዎች፣ የአገልግሎት ፕሮግራሞች፣ የእንክብካቤ ቡድኖች እና ፈቃድ በአንድ ቦታ ይይዛል።",
+    "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub የቤተ ክርስቲያኑን ሰዎች፣ የአገልግሎት ፕሮግራሞች፣ የእንክብካቤ ቡድኖች እና የሠራተኞች አስተዳደር በአንድ ቦታ ይይዛል።",
     "What’s new": "አዲስ ነገሮች",
     "Opens on GitHub": "በGitHub ይከፈታል",
     "Source code": "የምንጭ ኮድ",

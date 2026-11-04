@@ -176,3 +176,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026 (0.8.0): **live duplicate check** – warns as each letter is typed (two letters of each name; unfinished and
   sound-alike names; "vd" surnames), shows under the email and mobile boxes who already has that email or number, and a
   **sensitivity slider** (1–5) on Find duplicates. New words in all 22 languages.
+- ✅ 4 Nov 2026 (0.9.0): **duplicate check on partly typed contact details** – while someone is added or edited, the boxes for
+  mobile, email and street address show who already has one *starting* like what has been typed: a mobile from 7 digits
+  ("+27 82…" = "082…"), an email from 6 characters, an address from a house number and 3 letters ("12 Mai" → 12 Main Road;
+  Rd/Road and St/Street the same). Addresses are new to the check; people in the chosen household are left out. All 22 languages.

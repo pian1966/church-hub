@@ -51,6 +51,44 @@ ok(m[0] && m[0].id === 'p2' && m.some(x => x.id === 'p1') && !m.some(x => x.id =
 ok(!D.matches({ id: 'p1', firstName: 'Douglas', lastName: 'Pike', mobile: '0825551234' }, people).some(x => x.id === 'p1'), 'editing someone doesn’t match them with themselves');
 ok(!D.matches({ id: 'p1', firstName: 'Douglas', lastName: 'Pike' }, people, ['p1|p2']).some(x => x.id === 'p2'), 'pairs marked “not the same person” are not warned about again');
 
+console.log('Names that sound alike or are spelt differently');
+const first = (a, b) => D.compare({ id: 'a', firstName: a, lastName: 'Pike' }, { id: 'b', firstName: b, lastName: 'Pike' });
+ok(['Stephen|Steven', 'Catherine|Kathryn', 'Jon|John', 'Sean|Shaun', 'Mark|Marco'].every(x => D.level(first(...x.split('|')).score) === 'possible'), 'sound-alike first names: Stephen/Steven, Catherine/Kathryn, Jon/John, Sean/Shaun, Mark/Marco');
+ok(['Ruth|Rita', 'Jan|Jon', 'Tim|Tom', 'Liam|Leah', 'Naidoo|Nadia'].every(x => !D.level(first(...x.split('|')).score)), 'but short names that only share consonants stay different (Ruth/Rita, Jan/Jon, Tim/Tom)');
+ok(D.compare({ id: 'a', firstName: 'Priya', lastName: 'Pillay' }, { id: 'b', firstName: 'Priya', lastName: 'Pillai' }).score >= 45, 'surnames spelt differently: Pillay / Pillai');
+ok(D.compare({ id: 'a', firstName: 'Anne-Marie', lastName: 'Botha' }, { id: 'b', firstName: 'Annemarie', lastName: 'Botha' }).first === 'same', 'Anne-Marie and Annemarie are the same first name');
+ok(D.compare({ id: 'a', firstName: 'Elsa', lastName: 'vd Merwe' }, { id: 'b', firstName: 'Elsa', lastName: 'van der Merwe' }).last === 'same', '“vd Merwe” is “van der Merwe”');
+
+console.log('Live check while typing');
+const town = [
+  { id: 'q1', firstName: 'Douglas', lastName: 'Pike', email: 'doug.pike@gmail.com', mobile: '082 555 1234' },
+  { id: 'q2', firstName: 'Tim', lastName: 'Jacobs', email: 'jacobs@x.com', mobile: '0821110000' },
+  { id: 'q3', firstName: 'Dawn', lastName: 'Pillay' }, { id: 'q4', firstName: 'Sipho', lastName: 'Nkosi' }, { id: 'q5', firstName: 'Sipho', lastName: 'Dlamini' },
+  { id: 'q6', firstName: 'Ann', lastName: 'Old', mobile: '0820000000', mergedInto: 'q1' }
+];
+let L = D.live({ firstName: 'Do', lastName: 'Pi' }, town);
+ok(L.people.length === 1 && L.people[0].id === 'q1' && L.people[0].level === 'similar', 'two letters of each name already point to Douglas Pike (not Dawn Pillay)');
+ok(D.live({ firstName: 'Timoth', lastName: 'Jac' }, town).people.some(m => m.id === 'q2'), '“Timoth Jac…” (on the way to Timothy) already points to Tim Jacobs');
+L = D.live({ firstName: 'Sipho', lastName: 'Nk' }, town);
+ok(L.people.map(m => m.id).join() === 'q4' && L.people[0].level === 'possible', '“Sipho Nk…”: Sipho Nkosi, not every Sipho');
+ok(!D.live({ firstName: 'Sipho', lastName: 'N' }, town).people.length && !D.live({ firstName: 'S', lastName: 'Nkosi' }, town).people.length, 'one letter isn’t enough to warn');
+L = D.live({ firstName: '', lastName: '', email: 'Doug.Pike+church@GMAIL.com', mobile: '+27 82 111 0000' }, town);
+ok(L.email.join() === 'q1' && L.mobile.join() === 'q2', 'an email or mobile already on someone’s record is found on its own, before any name is typed');
+ok(!D.live({ mobile: '0820000000' }, town).mobile.length, 'retired (merged) records are left out');
+ok(!D.live({ id: 'q1', firstName: 'Douglas', lastName: 'Pike', email: 'doug.pike@gmail.com', mobile: '0825551234' }, town).email.length, 'editing someone doesn’t find their own email');
+L = D.live({ firstName: 'Doug', lastName: 'Pike', mobile: '082 555 1234' }, town);
+ok(L.people[0].id === 'q1' && L.people[0].level === 'likely', 'name and mobile together: very likely the same person');
+
+console.log('Sensitivity (1 = fewer warnings … 5 = more)');
+const bill = [{ id: 'a', firstName: 'William', lastName: 'Botha' }, { id: 'b', firstName: 'Bill', lastName: 'Botha' }];
+ok(D.find(bill, [], 3).length === 1 && D.find(bill, [], 1).length === 0, 'William/Bill Botha (nothing else): shown normally, not at the lowest setting');
+const tj = [{ id: 'a', firstName: 'Tim', lastName: 'Jacobs', mobile: '0821110000' }, { id: 'b', firstName: 'Timothy', lastName: 'Jacobs', mobile: '0821110000' }];
+ok([1, 2, 3, 4, 5].every(n => D.find(tj, [], n)[0] && D.find(tj, [], n)[0].level === 'likely'), '“very likely” (which stops saving) is the same at every setting');
+const fam = [{ id: 'a', firstName: 'Tim', lastName: 'Jacobs', email: 'j@x.com' }, { id: 'b', firstName: 'Clare', lastName: 'Jacobs', email: 'j@x.com' }];
+ok(!D.find(fam, [], 5).length, 'even at the highest setting a husband and wife sharing an email aren’t called duplicates');
+ok(!D.live({ firstName: 'Sipho', lastName: 'N' }, town, [], 3).people.length && D.live({ firstName: 'Sipho', lastName: 'N' }, town, [], 5).people.some(m => m.id === 'q4'), 'at the higher settings one letter of the surname is enough to start');
+ok(!D.live({ firstName: 'Do', lastName: 'Pi' }, town, [], 1).people.length, 'at the lowest setting no “similar name” hints');
+
 console.log('Fixing a duplicate');
 {
   const keep = { id: 'k', firstName: 'Doug', lastName: 'Pike', email: 'doug@x.com', mobile: '', category: 'Partner', createdAt: '2025-03-01', familyId: 'f1',

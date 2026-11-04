@@ -76,6 +76,28 @@ module.exports = async function (ctx) {
     await s.close();
   }
 
+  console.log('Duplicate check while typing (Administrator):');
+  s = await session('linda.pillay@example.com', seedDocs()); docs = await s.docsNow();
+  await s.go('people'); await s.page.click('[data-act="people:add"]');
+  await s.page.fill('#pf-email', docs['people/p14'].email.toUpperCase()); await s.page.waitForTimeout(300);
+  check(await s.page.isVisible('#pf-email-dup') && (await s.page.textContent('#pf-email-dup')).includes('Tim Jacobs'), 'an email already on someone’s record is flagged under the box, before any name is typed');
+  await s.page.fill('#pf-mobile', docs['people/p15'].mobile); await s.page.waitForTimeout(300);
+  check((await s.page.textContent('#pf-mobile-dup')).includes('Clare Jacobs'), '…and so is a mobile number');
+  await s.page.fill('#pf-email', ''); await s.page.fill('#pf-mobile', ''); await s.page.fill('#pf-first', 'Ti'); await s.page.fill('#pf-last', 'Ja'); await s.page.waitForTimeout(300);
+  check(await s.page.isVisible('#pf-dup') && (await s.page.textContent('#pf-dup')).includes('Tim Jacobs') && !(await s.page.isVisible('#pf-email-dup')), 'two letters of each name already show similar names');
+  await s.page.click('[data-act="hub:close"]');
+  await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await s.page.waitForTimeout(300);
+  check(!(await s.page.isVisible('#pf-email-dup')), 'opening someone with a shared family email doesn’t warn until it’s changed');
+  await s.page.click('[data-act="hub:close"]');
+  await s.go('people/duplicates');
+  check(await s.page.$eval('#dup-sens', e => e.value === '3' && !e.disabled), 'Find duplicates has a sensitivity slider (1–5), set to 3');
+  await s.page.$eval('#dup-sens', e => { e.value = '5'; e.dispatchEvent(new Event('change', { bubbles: true })); }); await s.settle();
+  check((await s.docsNow())['settings/church'].dupSensitivity === 5 && (await s.text()).includes('Level 5 of 5'), 'moving it saves the church’s choice');
+  await finish(s);
+  s = await session('thandi.mokoena@example.com', seedDocs()); await s.go('people/duplicates');
+  check(await s.page.$eval('#dup-sens', e => e.disabled), 'Pastors see the setting but can’t change it');
+  await finish(s);
+
   console.log('Duplicates (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
   check(!!(await s.page.$('a[href="#/people/duplicates"]')), 'People has a Find duplicates button for Administrators');

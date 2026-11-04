@@ -173,3 +173,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   ID number finds people by all or part of their ID number (at least 4 digits; spaces ignored). The numbers are fetched only
   when Search is pressed, never shown in the results, a column or the download, and each search is in the history log with
   who was found.
+- ✅ 4 Nov 2026 (0.8.0): **live duplicate check** – warns as each letter is typed (two letters of each name; unfinished and
+  sound-alike names; "vd" surnames), shows under the email and mobile boxes who already has that email or number, and a
+  **sensitivity slider** (1–5) on Find duplicates. New words in all 22 languages.

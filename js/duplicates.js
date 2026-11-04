@@ -3,8 +3,9 @@
  *
  * Two records are compared on what usually gives a duplicate away, and every suggestion says why:
  *  - Names: the same first name, a known short form ("Doug" / "Douglas", "Bill" / "William"), the "known as" name, a small
- *    typing slip ("Jonh" / "John"), accents and capitals ignored, first and last name swapped, a double-barrelled surname
- *    ("van der Merwe" / "Merwe"), or a maiden name (the same first name, birthday and contact details).
+ *    typing slip ("Jonh" / "John"), names that sound alike ("Stephen" / "Steven", "Pillay" / "Pillai"), spaces and dashes
+ *    ignored ("Anne-Marie" / "Annemarie"), accents and capitals ignored, first and last name swapped, a double-barrelled
+ *    surname ("van der Merwe" / "Merwe", "vd Merwe"), or a maiden name (the same first name, birthday and contact details).
  *  - Contact details: the same email (Gmail dots and +labels ignored) or mobile (+27 82… is 082…, +44 7700… is 07700…).
  *    Households often share an email or a landline, so contact details alone never make a duplicate: the first name must match too.
  *  - Birthday: the same date counts for; two different dates count strongly against (they are different people).
@@ -12,6 +13,12 @@
  * A parent and a child with the same name (e.g. "Johan van der Merwe" senior and junior) are kept apart by the birthday,
  * or by one being an adult and the other a child.
  * Scores: 100 = certain, 70 or more = very likely ("Probably the same person"), 45 or more = worth a look ("Possibly").
+ * Sensitivity (the church's choice, 1 = fewer warnings … 5 = more): moves the "worth a look" and "similar" lines (SENS);
+ * "very likely" (70, which stops saving) never moves, and a different first name never counts, at any setting.
+ *
+ * While someone is typed in (live()), the check starts early: two letters of each name are enough (an unfinished name
+ * matches the start of a longer one, and a similar surname is shown as "similar"), and an email or mobile number that is
+ * already on someone's record is reported on its own, whatever the names – families often share them, so that is a hint, not a block.
  */
 var Duplicates = (function () {
   'use strict';
@@ -35,7 +42,12 @@ var Duplicates = (function () {
     'rebecca becky becca', 'richard rich rick dick', 'robert rob bob bobby robbie', 'ronald ron ronnie', 'samuel sam sammy',
     'samantha sam sammy', 'stephen steve stevie', 'steven steve', 'susan sue suzie', 'theodore theo ted', 'thomas tom tommy',
     'timothy tim timmy', 'victoria vicky tori', 'william will bill billy willie', 'zandile zandi', 'nomvula vuvu', 'sibusiso sibu',
-    'thandiwe thandi', 'thabiso thabo', 'lindiwe lindi', 'nokuthula thula', 'nompumelelo mpume', 'bongani bongi'
+    'thandiwe thandi', 'thabiso thabo', 'lindiwe lindi', 'nokuthula thula', 'nompumelelo mpume', 'bongani bongi',
+    'jacobus japie', 'johanna hanna hannie', 'maria marie ria', 'susanna sanna sannie', 'hendrina rina', 'wilhelmina mina wilma',
+    'nicolaas klaas nico', 'stefanus fanie stefan', 'gertruida truida', 'magdalena lena magda', 'nkosinathi nathi', 'siphiwe spha',
+    'thembinkosi thembi', 'mandisa mandi', 'nonhlanhla hlanhla', 'phumzile phumi', 'zanele zane', 'nomsa nomsie',
+    'sean shaun shawn', 'anthony anton', 'jeffrey jeff', 'geoffrey geoff jeff', 'gerald gerry', 'jacqueline jackie', 'josephine jo josie', 'joanne jo',
+    'leonard len lenny', 'raymond ray', 'ronald ron', 'sebastian seb', 'valerie val', 'veronica ronnie', 'wendy wen'
   ];
   var GROUP = {};
   SHORT.forEach(function (line, i) { line.split(' ').forEach(function (n) { (GROUP[n] = GROUP[n] || []).push(i); }); });
@@ -69,28 +81,62 @@ var Duplicates = (function () {
     }
     return d[a.length][b.length];
   }
+  /** A rough "sounds like" key, so differently spelt names that sound alike match: Stephen/Steven, Sean/Shaun,
+   *  Catherine/Kathryn, Philip/Phillip, Jon/John, Pillay/Pillai, Mohammed/Muhammad, Nkosi/Nkozi. */
+  function sound(w, vowels) {
+    w = plain(w).replace(/ /g, ''); if (!w) return '';
+    w = w.replace(/^g(?=[eiy])/, 'j').replace(/sch|sh/g, 's').replace(/ph/g, 'f').replace(/gh/g, 'g').replace(/th/g, 't')
+      .replace(/ch/g, 'k').replace(/ck|q/g, 'k').replace(/c(?=[eiy])/g, 's').replace(/c/g, 'k').replace(/x/g, 'ks').replace(/z/g, 's')
+      .replace(/f/g, 'v').replace(/w/g, 'v').replace(/y/g, 'i').replace(/h/g, '').replace(/(.)\1+/g, '$1');
+    return vowels ? w : w[0] + w.slice(1).replace(/[aeiou]/g, '');
+  }
+  /** Sound alike: the same with the vowels (Jon/John, Sarah/Sara), or – for longer names – the same consonants
+   *  (Stephen/Steven, Catherine/Kathryn). Short names need the vowels too, so Ruth and Rita stay different. */
+  function soundsAlike(a, b) {
+    a = a.replace(/ /g, ''); b = b.replace(/ /g, '');
+    if (a.length < 3 || b.length < 3 || a === b) return false;
+    if (sound(a, true) === sound(b, true)) return true;
+    var x = sound(a), y = sound(b);
+    return a.length >= 4 && b.length >= 4 && x.length >= 3 && x === y;
+  }
+  /** One name is the start of the other – only while typing ("Dou" for "Douglas"). */
+  function starts(typed, full) { return typed.length >= 1 && full.length > typed.length && full.indexOf(typed) === 0; }
+  /** While typing: "Timoth" is on its way to "Timothy", which is a long form of "Tim". */
+  var NAMES = Object.keys(GROUP);
+  function startsShort(typed, other) {
+    if (typed.length < 3) return false;
+    return NAMES.some(function (n) { return n.length > typed.length && n.indexOf(typed) === 0 && sameGroup(n, other); });
+  }
   function slip(a, b) { var n = Math.min(a.length, b.length); return n >= 4 && distance(a, b) <= (n >= 7 ? 2 : 1); }
   function sameGroup(a, b) { return (GROUP[a] || []).some(function (g) { return (GROUP[b] || []).indexOf(g) >= 0; }); }
 
-  /** How the first names compare: 'same', 'short' (Doug/Douglas), 'known' (the "known as" name), 'slip', 'initial' or ''. */
-  function firstMatch(p, q) {
+  /** How the first names compare: 'same', 'short' (Doug/Douglas), 'known' (the "known as" name), 'slip', 'sound', 'start'
+   *  (only while typing: p's name is the start of q's), 'initial' or ''. */
+  function firstMatch(p, q, typing) {
     var a = [plain(p.firstName), plain(p.preferredName)].filter(Boolean), b = [plain(q.firstName), plain(q.preferredName)].filter(Boolean);
     var fa = a[0] || '', fb = b[0] || '';
-    if (fa && fa === fb) return 'same';
+    if (fa && (fa === fb || fa.replace(/ /g, '') === fb.replace(/ /g, ''))) return 'same';
     if (a.some(function (x) { return b.indexOf(x) >= 0; })) return 'known';
     var wa = fa.split(' ')[0], wb = fb.split(' ')[0];      // "Anna Marie" / "Anna"
     if (wa && wa === wb) return 'same';
     if (a.some(function (x) { return b.some(function (y) { return sameGroup(x, y) || sameGroup(x.split(' ')[0], y.split(' ')[0]); }); })) return 'short';
     if (slip(fa, fb)) return 'slip';
+    if (a.some(function (x) { return b.some(function (y) { return soundsAlike(x, y) || soundsAlike(x.split(' ')[0], y.split(' ')[0]); }); })) return 'sound';
+    if (typing && a.some(function (x) { return b.some(function (y) { return starts(x, y) || startsShort(x, y); }); })) return 'start';
     if ((fa.length === 1 && fb[0] === fa) || (fb.length === 1 && fa[0] === fb)) return 'initial';
     return '';
   }
-  /** How the surnames compare: 'same', 'slip', 'part' (van der Merwe / Merwe, Smith-Jones / Smith) or ''. */
-  function lastMatch(p, q) {
-    var a = plain(p.lastName), b = plain(q.lastName);
+  /** "vd Merwe", "v.d. Merwe" → "van der merwe"; "v Wyk" → "van wyk". */
+  function surname(s) { return plain(String(s || '').replace(/\bv\.?\s?d\.?\s+/i, 'van der ').replace(/\bv\.?\s+(?=\w)/i, 'van ')); }
+  /** How the surnames compare: 'same', 'slip', 'sound', 'part' (van der Merwe / Merwe, Smith-Jones / Smith),
+   *  'start' (only while typing: p's surname is the start of q's) or ''. */
+  function lastMatch(p, q, typing) {
+    var a = surname(p.lastName), b = surname(q.lastName);
     if (!a || !b) return '';
     if (a === b || a.replace(/ /g, '') === b.replace(/ /g, '')) return 'same';
     if (slip(a.replace(/ /g, ''), b.replace(/ /g, ''))) return 'slip';
+    if (soundsAlike(a, b)) return 'sound';
+    if (typing && (starts(a.replace(/ /g, ''), b.replace(/ /g, '')) || starts(a, b.split(' ').pop()))) return 'start';
     var pa = a.split(' '), pb = b.split(' '), la = pa[pa.length - 1], lb = pb[pb.length - 1];
     if (la.length >= 3 && la === lb) return 'part';
     if ((pa.indexOf(lb) >= 0 && lb.length >= 3) || (pb.indexOf(la) >= 0 && la.length >= 3)) return 'part';
@@ -107,7 +153,7 @@ var Duplicates = (function () {
   /**
    * Compare two people. Returns { score, reasons: [text], sure: bool } – score 0 when they are clearly different people.
    */
-  function compare(p, q) {
+  function compare(p, q, typing) {
     if (!p || !q || p.id && p.id === q.id) return { score: 0, reasons: [] };
     if (p.elvantoId && q.elvantoId) {
       if (p.elvantoId === q.elvantoId) return { score: 100, reasons: ['The same Elvanto ID'], sure: true };
@@ -116,7 +162,7 @@ var Duplicates = (function () {
     var bp = birth(p), bq = birth(q);
     if (bp && bq && bp !== bq) return { score: 0, reasons: [] };    // different birthdays: different people
     if (p.familyRole && q.familyRole && (p.familyRole === 'child') !== (q.familyRole === 'child') && !(bp && bp === bq)) return { score: 0, reasons: [] };
-    var fm = firstMatch(p, q), lm = lastMatch(p, q), sw = swapped(p, q), why = [], s = 0;
+    var fm = firstMatch(p, q, typing), lm = lastMatch(p, q, typing), sw = swapped(p, q), why = [], s = 0;
     var me = emails(p), sameMail = me.length && emails(q).some(function (e) { return me.indexOf(e) >= 0; });
     var mp = phone(p.mobile), sameMobile = !!mp && mp === phone(q.mobile), sameBirth = !!bp && bp === bq;
     if (sw) { s += 55; why.push(T('First and last name swapped')); }
@@ -125,10 +171,14 @@ var Duplicates = (function () {
       else if (fm === 'known') { s += 32; why.push(T('Same name (one is what they are known as)')); }
       else if (fm === 'short') { s += 30; why.push(T('Short form of the same first name ({a} / {b})', { a: plain(p.preferredName || p.firstName), b: plain(q.preferredName || q.firstName) })); }
       else if (fm === 'slip') { s += 22; why.push(T('First names differ by a letter or two')); }
+      else if (fm === 'sound') { s += 24; why.push(T('First names sound alike')); }
+      else if (fm === 'start') { s += 18; why.push(T('Similar name')); }
       else if (fm === 'initial') { s += 12; why.push(T('First name given as an initial')); }
       if (lm === 'same') { s += 30; why.push(T('Same surname')); }
       else if (lm === 'slip') { s += 20; why.push(T('Surnames differ by a letter or two')); }
+      else if (lm === 'sound') { s += 20; why.push(T('Surnames sound alike')); }
       else if (lm === 'part') { s += 15; why.push(T('Part of the surname matches')); }
+      else if (lm === 'start') { s += 15; if (fm !== 'start') why.push(T('Similar name')); }
     }
     var firstOk = sw || !!fm && fm !== 'initial';
     // Contact details only count with a matching first name: families share emails and phones.
@@ -139,16 +189,19 @@ var Duplicates = (function () {
     if (!lm && !sw && firstOk && (sameBirth || sameMail || sameMobile)) why.push(T('Different surname – perhaps a maiden or married name'));
     if (!firstOk && !sw) s = Math.min(s, 30);                // a different first name is a different person, even in the same household
     if (!lm && !sw && !(sameBirth || sameMail || sameMobile)) s = Math.min(s, 30);
-    return { score: Math.min(s, 99), reasons: why, sure: false };
+    return { score: Math.min(s, 99), reasons: why, sure: false, first: fm, last: lm, sameEmail: !!sameMail, sameMobile: sameMobile };
   }
-  function level(score) { return score >= 100 ? 'certain' : score >= 70 ? 'likely' : score >= 45 ? 'possible' : ''; }
+  var SENS = { 1: { possible: 62, similar: 0, letters: 2 }, 2: { possible: 52, similar: 36, letters: 2 }, 3: { possible: 45, similar: 30, letters: 2 },
+    4: { possible: 38, similar: 24, letters: 1 }, 5: { possible: 31, similar: 18, letters: 1 } };
+  function cut(sens) { return SENS[sens] || SENS[3]; }
+  function level(score, sens) { return score >= 100 ? 'certain' : score >= 70 ? 'likely' : score >= cut(sens).possible ? 'possible' : ''; }
 
   /**
    * Possible duplicates among everyone. people: [{ id, firstName, lastName, preferredName, email, mobile, birthDate, familyRole,
    * elvantoId, active }]. ignore: ["id1|id2"] pairs the church said are different people.
    * Returns [{ a, b, score, level, reasons }], most likely first. People who were deleted are left out.
    */
-  function find(people, ignore) {
+  function find(people, ignore, sens) {
     var skip = {}; (ignore || []).forEach(function (k) { skip[k] = 1; });
     var list = (people || []).filter(function (p) { return p && p.firstName !== 'Deleted' && !p.deletedAt && !p.mergedInto; });
     // Compare only people who share something cheap to check, so it stays fast with thousands of people.
@@ -169,7 +222,7 @@ var Duplicates = (function () {
         var key = pair(b[i].id, b[j].id);
         if (seen[key] || skip[key] || b[i].id === b[j].id) continue;
         seen[key] = 1;
-        var c = compare(b[i], b[j]), lv = level(c.score);
+        var c = compare(b[i], b[j]), lv = level(c.score, sens);
         if (lv) out.push({ a: b[i].id, b: b[j].id, score: c.score, level: lv, reasons: c.reasons });
       }
     });
@@ -182,12 +235,39 @@ var Duplicates = (function () {
    * While someone is being added or changed: the existing people they may be. person: what has been typed so far
    * (with its own id when editing, so it isn't matched to itself). Returns [{ id, score, level, reasons }], best first.
    */
-  function matches(person, people, ignore) {
+  function matches(person, people, ignore, sens) {
     var skip = {}; (ignore || []).forEach(function (k) { skip[k] = 1; });
     return (people || []).filter(function (q) { return q.id !== person.id && q.firstName !== 'Deleted' && !q.deletedAt && !q.mergedInto && !(person.id && skip[pair(person.id, q.id)]); })
-      .map(function (q) { var c = compare(person, q); return { id: q.id, score: c.score, level: level(c.score), reasons: c.reasons }; })
+      .map(function (q) { var c = compare(person, q); return { id: q.id, score: c.score, level: level(c.score, sens), reasons: c.reasons }; })
       .filter(function (m) { return m.level; })
       .sort(function (x, y) { return y.score - x.score; });
+  }
+
+  /**
+   * The live check in the Add / Edit window, as each letter is typed. person: what has been typed so far (with its own id when
+   * editing); sens: the church's sensitivity (1–5, default 3). Returns:
+   *   people: [{ id, score, level: certain|likely|possible|similar, reasons }], best first – names need two letters each;
+   *           "similar" = a name like it (the surname matches, sounds alike or starts the same), shown as a gentle hint
+   *   email:  [id] – others whose email is the one typed     mobile: [id] – others whose mobile is the one typed
+   */
+  function live(person, people, ignore, sens) {
+    var cs = cut(sens);
+    var skip = {}; (ignore || []).forEach(function (k) { skip[k] = 1; });
+    var others = (people || []).filter(function (q) { return q && q.id !== person.id && q.firstName !== 'Deleted' && !q.deletedAt && !q.mergedInto; });
+    var me = emails(person), mob = phone(person.mobile);
+    var out = { people: [], email: [], mobile: [] };
+    others.forEach(function (q) {
+      if (me.length && emails(q).some(function (e) { return me.indexOf(e) >= 0; })) out.email.push(q.id);
+      if (mob && phone(q.mobile) === mob) out.mobile.push(q.id);
+    });
+    if (plain(person.firstName).length >= 2 && surname(person.lastName).length >= cs.letters) {
+      out.people = others.filter(function (q) { return !(person.id && skip[pair(person.id, q.id)]); }).map(function (q) {
+        var c = compare(person, q, true), lv = level(c.score, sens);
+        if (!lv && cs.similar && c.score >= cs.similar && c.last && c.first) lv = 'similar';
+        return { id: q.id, score: c.score, level: lv, reasons: c.reasons };
+      }).filter(function (m) { return m.level; }).sort(function (x, y) { return y.score - x.score; });
+    }
+    return out;
   }
 
   /* ---------- fixing a duplicate: one record is kept, the other is retired ---------- */
@@ -233,7 +313,7 @@ var Duplicates = (function () {
     return out;
   }
 
-  return { compare: compare, find: find, matches: matches, level: level, pair: pair, phone: phone, email: email, plain: plain,
+  return { compare: compare, find: find, matches: matches, live: live, sound: sound, level: level, SENS: SENS, pair: pair, phone: phone, email: email, plain: plain,
     mergeFields: mergeFields, ignored: ignored };
 })();
 if (typeof module !== 'undefined') module.exports = Duplicates;

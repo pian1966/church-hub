@@ -13,6 +13,9 @@
     for (var i = 0; i < Math.max(x.length, y.length); i++) { var d = (x[i] || 0) - (y[i] || 0); if (d) return d < 0 ? -1 : 1; }
     return 0;
   }
+  /** The page's address without the ?u=… that Update now adds (other parts, like ?demo, stay). */
+  function cleanSearch() { return location.search.replace(/([?&])u=\d+(&|$)/, function (m, a, b) { return b ? a : ''; }).replace(/^&/, '?'); }
+  if (/[?&]u=\d+/.test(location.search)) { try { history.replaceState(history.state, '', location.pathname + cleanSearch() + location.hash); } catch (e) {} }
   function appVersion() { try { return window.ChurchHubApp && window.ChurchHubApp.version ? String(window.ChurchHubApp.version()) : ''; } catch (e) { return ''; } }
   function isoDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? H.fmt(d, true) : ''; }
 
@@ -75,7 +78,8 @@
     after: function () { if (!check.state) runCheck(); },   // check as soon as the page opens
     actions: {
       check: function () { runCheck(); },
-      reload: function () { location.reload(); }
+      // Load the page again under a new address, so neither the browser nor the phone uses its saved copy
+      reload: function () { var q = cleanSearch().replace(/^\?/, ''); location.replace(location.pathname + '?' + (q ? q + '&' : '') + 'u=' + Date.now() + location.hash); }
     }
   });
   window.ChurchHubAbout = { cmp: cmp };

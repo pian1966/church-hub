@@ -173,6 +173,8 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="about:check"]'); await s.page.waitForSelector('[data-act="about:reload"]');
   check((await s.text()).includes('Version 9.9.9 is ready.'), 'a newer version on the website offers Update now');
   await s.page.unroute(newer);
+  await Promise.all([s.page.waitForNavigation(), s.page.click('[data-act="about:reload"]')]); await s.page.waitForTimeout(800);
+  check(await s.page.evaluate(() => !/[?&]u=/.test(location.search) && location.hash === '#/about'), 'Update now loads the page afresh (a new address, tidied afterwards) and stays on About');
   let checks = 0; await s.page.route(newer, r => { checks++; r.continue(); });
   await s.go('home'); await s.go('about'); await s.page.waitForSelector('.note.ok');
   check(checks === 1, 'opening About again checks for updates again, straight away');

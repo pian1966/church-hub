@@ -142,3 +142,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026: **Small fixes and Music wording** (version 0.4.0): Sign out only in the menu (not on Me); Settings → Church
   wording can call music in services Worship, Music or Praise (with its team and leader); About checks for updates every time
   it is opened. Language files now refresh on phones too (`PACK_VERSION`).
+- ✅ 4 Nov 2026: **Updates load properly** (version 0.4.1): every file in `index.html` now carries the version number
+  (`?v=0.4.1`), so a new version always makes browsers and phones fetch every file (version.js had been left on an old
+  number, so About kept showing 0.3.0). Update now loads the page under a new address. `tests/versions.test.js` checks it.

@@ -47,6 +47,7 @@ I18n.add('ve', {
     "Roster coordinator": "Mudzudzanyi wa mitevhe",
     "Children’s ministry": "Mushumo wa vhana",
     "Member": "Murado",
+    "Basic access": "U swikela ha mutheo",
     "Directory, households and consent": "Bugu ya madzina, miṱa na thendelo",
     "Church directory": "Bugu ya madzina ya kereke",
     "Who serves when – families kept together": "Ndi nnyi ane a shuma lini – miṱa i dzula yo ṱangana",

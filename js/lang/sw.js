@@ -47,6 +47,7 @@ I18n.add('sw', {
     "Roster coordinator": "Mratibu wa ratiba",
     "Children’s ministry": "Huduma ya watoto",
     "Member": "Mshirika",
+    "Basic access": "Ufikiaji wa msingi",
     "Directory, households and consent": "Orodha, kaya na ridhaa",
     "Church directory": "Orodha ya kanisa",
     "Who serves when – families kept together": "Nani anahudumu lini – familia zinakaa pamoja",

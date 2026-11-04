@@ -47,6 +47,7 @@ I18n.add('yo', {
     "Roster coordinator": "Olùṣètò ètò iṣẹ́",
     "Children’s ministry": "Iṣẹ́ àwọn ọmọdé",
     "Member": "Ọmọ ìjọ",
+    "Basic access": "Ìwọlé ìpìlẹ̀",
     "Directory, households and consent": "Ìwé orúkọ, ìdílé àti ìyọ̀ǹda",
     "Church directory": "Ìwé orúkọ ìjọ",
     "Who serves when – families kept together": "Ta ló ń sìn nígbà wo – àwọn ìdílé wà papọ̀",

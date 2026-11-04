@@ -47,6 +47,7 @@ I18n.add('ss', {
     "Roster coordinator": "Umhleli weluhlelo",
     "Children’s ministry": "Umsebenti webantfwana",
     "Member": "Lilunga",
+    "Basic access": "Kungena lokusisekelo",
     "Directory, households and consent": "Luhlu lwemagama, imindeni nemvumo",
     "Church directory": "Luhlu lwemagama lwelibandla",
     "Who serves when – families kept together": "Ngubani losebenta nini – imindeni ihlala ndzawonye",

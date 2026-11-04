@@ -47,6 +47,7 @@ I18n.add('nso', {
     "Roster coordinator": "Morulaganyi wa manaane",
     "Children’s ministry": "Tirelo ya bana",
     "Member": "Leloko",
+    "Basic access": "Phihlelelo ya motheo",
     "Directory, households and consent": "Puku ya maina, malapa le tumelelo",
     "Church directory": "Puku ya maina ya kereke",
     "Who serves when – families kept together": "Ke mang yo a hlankelago neng – malapa a dula mmogo",

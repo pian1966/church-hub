@@ -47,6 +47,7 @@ I18n.add('nl', {
     "Roster coordinator": "Roostercoördinator",
     "Children’s ministry": "Kinderwerk",
     "Member": "Lid",
+    "Basic access": "Basistoegang",
     "Directory, households and consent": "Adresboek, huishoudens en toestemming",
     "Church directory": "Gemeentegids",
     "Who serves when – families kept together": "Wie wanneer dient – gezinnen blijven bij elkaar",

@@ -47,6 +47,7 @@ I18n.add('fr', {
     "Roster coordinator": "Coordinateur des plannings",
     "Children’s ministry": "Ministère des enfants",
     "Member": "Membre",
+    "Basic access": "Accès de base",
     "Directory, households and consent": "Annuaire, foyers et consentement",
     "Church directory": "Annuaire de l’église",
     "Who serves when – families kept together": "Qui sert quand – les familles restent ensemble",

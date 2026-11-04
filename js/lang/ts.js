@@ -47,6 +47,7 @@ I18n.add('ts', {
     "Roster coordinator": "Mululamisi wa mintlawa",
     "Children’s ministry": "Ntirho wa vana",
     "Member": "Xirho",
+    "Basic access": "Mfikelelo wa xisekelo",
     "Directory, households and consent": "Buku ya mavito, mindyangu ni mpfumelelo",
     "Church directory": "Buku ya mavito ya kereke",
     "Who serves when – families kept together": "I mani la tirhaka rini – mindyangu yi tshama swin’we",

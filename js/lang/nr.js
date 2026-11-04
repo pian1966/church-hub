@@ -47,6 +47,7 @@ I18n.add('nr', {
     "Roster coordinator": "Umhleli wohlelo",
     "Children’s ministry": "Umsebenzi wabantwana",
     "Member": "Ilunga",
+    "Basic access": "Ukufikelela okusisekelo",
     "Directory, households and consent": "Irhelo lamabizo, imindeni nemvumo",
     "Church directory": "Irhelo lamabizo lekereke",
     "Who serves when – families kept together": "Ngubani osebenza nini – imindeni ihlala ndawonye",

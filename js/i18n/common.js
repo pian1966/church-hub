@@ -43,6 +43,7 @@ I18n.rows([
     ['Roster coordinator', 'Roosterkoördineerder', 'Umhleli wohlelo lokusebenza', 'Umququzeleli woludwe lomsebenzi'],
     ['Children’s ministry', 'Kinderbediening', 'Inkonzo yezingane', 'Ubulungiseleli babantwana'],
     ['Member', 'Lidmaat', 'Ilungu', 'Ilungu'],
+    ['Basic access', 'Basiese toegang', 'Ukufinyelela okuyisisekelo', 'Ufikelelo olusisiseko'],
     ['Who serves when – families kept together', 'Wie dien wanneer – gesinne bly saam', 'Ubani okhonza nini – imindeni ihlala ndawonye', 'Ngubani okhonza nini – iintsapho zihlala kunye'],
     ['Staff leave – Leave Manager built in', 'Personeelverlof – Leave Manager ingebou', 'Ikhefu labasebenzi – iLeave Manager ingaphakathi', 'Ikhefu labasebenzi – iLeave Manager ingaphakathi'],
     ['Sign in', 'Meld aan', 'Ngena', 'Ngena'],

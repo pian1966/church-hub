@@ -47,6 +47,7 @@ I18n.add('sn', {
     "Roster coordinator": "Murongi wezvirongwa",
     "Children’s ministry": "Basa revana",
     "Member": "Nhengo",
+    "Basic access": "Mvumo yepasi",
     "Directory, households and consent": "Bhuku remazita, mhuri nemvumo",
     "Church directory": "Bhuku remazita rechechi",
     "Who serves when – families kept together": "Ndiani anoshanda rini – mhuri dzinogara pamwe",

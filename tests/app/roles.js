@@ -17,7 +17,7 @@ module.exports = async function (ctx) {
   await s.go('people/p/p27'); await s.page.click('[data-act="people:consent"]');
   for (const pur of ['Church records', 'Church directory']) await s.page.check(`.cf-p[data-p="${pur}"]`);
   await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
-  docs = await s.docsNow(); check(!!docs['directory/p27'] && docs['directory/p27'].mobile && !docs['directory/p27'].email, 'directory consent adds name and phone (not email) to the directory');
+  docs = await s.docsNow(); check(!!docs['directory/p27'] && !docs['directory/p27'].mobile && !docs['directory/p27'].email, 'Contact details consent lists their name only (the default)');
   // A Pastor records a death: Thabo (married to Ayanda)
   await s.go('people/p/p21'); await s.page.click('[data-act="people:death"]'); await s.page.fill('#dd-note', 'Family would like a visit.'); await s.page.click('[data-act="people:savedeath"]'); await s.settle();
   docs = await s.docsNow();
@@ -72,7 +72,7 @@ module.exports = async function (ctx) {
   await s.go('people'); const dirText = await s.text();
   check(dirText.includes('Jacobs, Clare') && !dirText.includes('Smith, Megan') && !dirText.includes('Daniels, Ruth') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
-  docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'].mobile === '082 999 0000', 'can correct own phone number (directory follows)');
+  docs = await s.docsNow(); check(docs['people/p14'].mobile === '082 999 0000' && docs['directory/p14'] && !docs['directory/p14'].mobile, 'can correct own phone number (others still see their name only)');
   await s.go('people/p/p14'); check(!!(await s.page.$('[data-act="people:showid"]')) && !(await s.page.$('[data-act="people:editid"]')), 'a member can see their own ID number but not change it');
   await s.go('people/p/p15'); check(!(await s.page.$('[data-act="people:showid"]')) && !(await s.text()).includes('Church office notes'), 'and never someone else’s, nor church office notes');
   await s.go('people/p/p14'); await s.page.setInputFiles('#pp-photo', PNG); await s.page.waitForSelector('#crop-ok'); await s.page.click('#crop-ok'); await s.page.waitForSelector('[data-act="people:nophoto"]'); await s.settle();
@@ -129,6 +129,29 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="me:withdraw"]'); await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14').length === 1, 'they can withdraw an offer');
   check(await s.page.evaluate(() => Store.list('serveOffers').every(o => o.personId === 'p14')), 'they see only their own offers');
+  await finish(s);
+
+  console.log('Administrator: what others can see of contact details');
+  s = await session('linda.pillay@example.com', seedDocs());
+  await s.go('settings'); check(await s.page.$$eval('.st-see', b => b.length === 12 && b.every(x => !x.checked)), 'Settings → What others can see: name only for every role by default');
+  await s.page.check('.st-see[data-t="member"][value="email"]'); await s.page.check('.st-see[data-t="rosters"][value="email"]'); await s.page.check('.st-see[data-t="rosters"][value="mobile"]');
+  await s.page.click('[data-act="settings:see"]'); await s.settle(); docs = await s.docsNow();
+  const shareWho = Object.keys(docs).filter(k => k.startsWith('directory/') && k !== 'directory/p14').map(k => k.split('/')[1]).filter(id => docs['people/' + id] && docs['people/' + id].email)[0];
+  check(JSON.stringify(docs['settings/church'].seeOthers) === JSON.stringify({ member: ['email'], rosters: ['mobile', 'email'], kids: [] }), 'the choices are saved');
+  check(docs['directory/' + shareWho].email === docs['people/' + shareWho].email && !docs['directory/' + shareWho].mobile, 'the directory now carries email (only what Church Partners may see)');
+  const shareName = docs['people/' + shareWho].firstName, shareEmail = docs['people/' + shareWho].email, saved = docs;
+  await finish(s);
+
+  console.log('Church Partner and Roster coordinator: shared contact details');
+  const shared = seedDocs(); shared['settings/church'] = saved['settings/church']; shared['directory/' + shareWho] = saved['directory/' + shareWho];
+  s = await session('tim.jacobs@example.com', shared);
+  await s.go('people/p/' + shareWho); t = await s.text();
+  check(!!(await s.page.$('img.nocopy')) && !(await s.page.$('a[href^="mailto:"]')) && !t.includes(shareEmail), 'a Church Partner sees the email as a picture: not a link, not text to copy');
+  check(!(await s.page.$('a[href^="tel:"]')), '…and no phone number (not ticked)');
+  await finish(s);
+  s = await session('sipho.dlamini@example.com', shared);
+  await s.go('people/p/' + shareWho);
+  check(!!(await s.page.$('a[href="mailto:' + shareEmail + '"]')) && !(await s.page.$('img.nocopy')), 'a Roster coordinator can tap the email of ' + shareName);
   await finish(s);
 
   console.log('Member: no Leave, and asking the church office to change family details');

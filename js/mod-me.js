@@ -78,7 +78,7 @@
     html += '<section class="panel"><h2>' + T('Consent') + '</h2><p class="hint" style="margin:0 0 10px">' + T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) + '</p><div class="list">' +
       PURPOSES.map(function (pur) {
         var c = cf(p.id, pur);
-        return '<div class="item"><span class="grow"><b>' + esc(T(pur)) + '</b></span>' + (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
+        return '<div class="item"><span class="grow"><b>' + esc(T(window.PeopleParts ? PeopleParts.purposeName(pur) : pur)) + '</b></span>' + (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
       }).join('') + '</div><div class="btns" style="margin-top:12px"><button class="btn" data-act="people:consent" data-id="' + esc(p.id) + '">' + T('Change my choices') + '</button> <button class="btn" data-act="hub:notice">' + T('Privacy notice') + '</button></div></section>';
     // Signing out: easy to find on a phone. The language is chosen in the menu only (left on a computer, ☰ on a phone).
     html += '<section class="panel"><h2>' + T('This phone or computer') + '</h2><div class="row" style="flex-wrap:wrap;gap:12px">' +

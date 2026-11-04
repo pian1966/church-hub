@@ -275,6 +275,7 @@ var Store = (function () {
       add('settings', doc('settings/church'));
       add('leaveConfig', doc('leave/config'));
       add('directory', coll('directory'));
+      if (staff) add('contacts', coll('contacts'));   // staff and leaders: home address and spouse of people who agreed to share them
       ['teams', 'positions', 'services', 'away'].forEach(function (c) { add(c, coll(c)); });
       if (staff) {
         add('people', coll('people'));
@@ -380,11 +381,13 @@ var Store = (function () {
     function arr(key) { var m = raw[key] || {}; return Object.keys(m).map(function (id) { var o = copy(m[id]); o.id = id; return o; }); }
     function merged() { var out = {}; Array.prototype.slice.call(arguments).forEach(function (k) { var m = raw[k] || {}; Object.keys(m).forEach(function (id) { out[id] = m[id]; }); }); return out; }
     function rebuild() {
-      var details = merged('details', 'detailsMe'), med = raw.medical || {}, dir = raw.directory || {}, cards = raw.people || {};
+      var details = merged('details', 'detailsMe'), med = raw.medical || {}, dir = raw.directory || {}, cards = raw.people || {}, shared = raw.contacts || {};
       var people = Object.keys(cards).map(function (id) {
         var p = Object.assign({ keyDates: [] }, copy(details[id] || {}), copy(cards[id]));
         if (med[id]) p.medical = copy(med[id]);
         if (dir[id]) p.inDirectory = true;
+        // What they agreed to share (Contact details), for roles that can't read their private details
+        ['shareAddress', 'shareSpouse'].forEach(function (k) { var v = (shared[id] || {})[k] || (dir[id] || {})[k]; if (v) p[k] = v; });
         p.id = id;
         if (id === session.personId) p.appRole = role();     // the access list is the source of truth (or the role being viewed as)
         return p;
@@ -450,15 +453,45 @@ var Store = (function () {
       if (is('admin')) syncRole(p, was.card);
     }
     /** Keep the members' directory in step with consent: name and phone only, adults who agreed. */
+    /** Contact details (consent "Church directory", shown as Contact details): what other people may see of someone who agreed.
+     *  directory/{id} – everyone signed in: name and photo, plus what Settings lets Church Partners see (mobile, email,
+     *  address, spouse). contacts/{id} – staff and leaders only: address and spouse, when Settings lets Roster coordinators
+     *  or Children's ministry see them (they already read names, email and mobile from people/{id}). */
     function syncDirectory(pid) {
       if (!(is('admin', 'pastor') || pid === session.personId)) return;
       var p = get('people', pid), latest = find('consents', function (c) { return c.personId === pid && c.purpose === DIRECTORY && !c.withdrawnAt; })
         .sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0];
-      var want = p && p.familyRole !== 'child' && p.active !== false && latest && latest.given ? { firstName: p.firstName || '', lastName: p.lastName || '', preferredName: p.preferredName || '', mobile: p.mobile || '' } : null;
-      if (want && p.photo) want.photo = p.photo;
-      if (same(want, known('directory/' + pid))) return;
-      if (want) write('directory/' + pid, want); else del('directory/' + pid);
+      var ok = p && p.familyRole !== 'child' && p.active !== false && latest && latest.given, see = (db.settings && db.settings.seeOthers) || {};
+      var allows = function (tier, f) { return (see[tier] || []).indexOf(f) >= 0; };
+      var addr = ok ? addressOf(p) : '', spouse = ok ? spouseOf(p, known('directory/' + pid), known('contacts/' + pid)) : '';
+      var want = ok ? { firstName: p.firstName || '', lastName: p.lastName || '', preferredName: p.preferredName || '' } : null;
+      if (want) {
+        if (p.photo) want.photo = p.photo;
+        if (allows('member', 'mobile') && p.mobile) want.mobile = p.mobile;
+        if (allows('member', 'email') && p.email) want.email = p.email;
+        if (allows('member', 'address') && addr) want.shareAddress = addr;
+        if (allows('member', 'spouse') && spouse) want.shareSpouse = spouse;
+      }
+      if (!same(want, known('directory/' + pid))) { if (want) write('directory/' + pid, want); else del('directory/' + pid); }
+      var lead = {};
+      if (ok && addr && (allows('rosters', 'address') || allows('kids', 'address'))) lead.shareAddress = addr;
+      if (ok && spouse && (allows('rosters', 'spouse') || allows('kids', 'spouse'))) lead.shareSpouse = spouse;
+      if (!Object.keys(lead).length) lead = null;
+      if (!same(lead, known('contacts/' + pid))) { if (lead) write('contacts/' + pid, lead); else del('contacts/' + pid); }
     }
+    /** "12 Oak Street, Howick, 3290" from the home address fields (empty when there is none or it can't be read). */
+    function addressOf(p) { return window.PeopleParts && PeopleParts.addressLines ? PeopleParts.addressLines(p).join(', ') : ''; }
+    /** Their spouse or partner's name, from their household (Administrators and Pastors can work it out; anyone else keeps what is there). */
+    function spouseOf(p, dirWas, leadWas) {
+      if (is('admin', 'pastor') && window.Households) {
+        var c = Households.couples(list('people'), list('families')).filter(function (x) { return x.a === p.id || x.b === p.id; })[0];
+        var o = c && get('people', c.a === p.id ? c.b : c.a);
+        return o ? ((o.preferredName || o.firstName || '') + ' ' + (o.lastName || '')).trim() : '';
+      }
+      return (dirWas && dirWas.shareSpouse) || (leadWas && leadWas.shareSpouse) || '';
+    }
+    /** Administrators: bring everyone's shared contact details in line with Settings (after changing what each role sees). */
+    function resyncDirectory() { if (!is('admin')) return 0; var n = 0; list('people').forEach(function (p) { syncDirectory(p.id); n++; }); return n; }
     /** Administrators give sign-in access from the person's record: roles/{email} = { role, personId }. */
     function syncRole(p, prev) {
       var email = (p.email || '').trim().toLowerCase(), was = prev ? (prev.email || '').trim().toLowerCase() : '';
@@ -559,7 +592,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, unshare: unshare, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -567,7 +600,9 @@ var Store = (function () {
       session: function () { return session; } };
   })();
 
-  return { load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
+  /** Administrators, after changing what each role sees of other people: rewrite the shared contact details (live only). */
+  function resyncDirectory() { return LIVE ? Live.resyncDirectory() : 0; }
+  return { resyncDirectory: resyncDirectory, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */

@@ -186,9 +186,9 @@
     var purposes = PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; });
     H.modal(H.dialogHead(me ? T('My privacy choices') : T('Consent for {name}', { name: H.name(p) }), T(me ? 'Tick what you agree to. Unticking withdraws consent from today.' : 'Tick what they agree to. Unticking withdraws consent from today.')) +
       '<div class="dlg-body">' + purposes.map(function (pur, i) {
-        return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(pur) + '"' + (hasConsent(p.id, pur) ? ' checked' : '') + '><span><b>' + esc(T(pur)) + '</b><br><span class="muted small">' + esc(T({
+        return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(pur) + '"' + (hasConsent(p.id, pur) ? ' checked' : '') + '><span><b>' + esc(T(P.purposeName(pur))) + '</b><br><span class="muted small">' + esc(T({
           'Church records': 'Keep their details on the church database.', 'Email': 'Church news and information by email.', 'SMS': 'Reminders and urgent news by SMS.',
-          'Church directory': 'Name and phone visible to other members.', 'Care group': 'Photo, phone, email, address and birthday shared with my care group.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
+          'Church directory': 'My name, phone, email and home address may be seen by church staff and leaders, and by members as far as the church allows.', 'Care group': 'Photo, phone, email, address and birthday shared with my care group.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
       }).join('') +
       (child ? '' : '<p class="field-l" style="margin:14px 0 4px">' + T('Would like to receive') + '</p>' + RECEIVE.map(function (r) {
         return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(r[0]) + '"' + (hasConsent(p.id, r[0]) ? ' checked' : '') + '><span><b>' + esc(T(r[0])) + '</b><br><span class="muted small">' + esc(T(r[1])) + '</span></span></label>';

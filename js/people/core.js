@@ -90,6 +90,50 @@ var PeopleParts = { actions: {} };
   function allCouples() { return canCouples() ? HS.couples(S.list('people'), S.list('families')) : []; }
   function couplesToCheck() { return canCouples() ? HS.couplesToCheck(S.list('people'), S.list('families')) : []; }
   function coupleOf(pid) { return allCouples().filter(function (c) { return c.a === pid || c.b === pid; })[0] || null; }
+  /* ---------- contact details: what each role sees of other people (Settings → What others can see) ----------
+   * Administrators and Pastors see everything; everyone sees their own. Church Partners, Roster coordinators and
+   * Children's ministry see a name only, plus what Settings ticks for their role – and only of adults who agreed
+   * (consent "Church directory", shown as Contact details). Church Partners can't tap or copy them (drawn as pictures). */
+  var SHARE = [['mobile', TX('Mobile')], ['email', TX('Email')], ['address', TX('Home address')], ['spouse', TX('Spouse or partner')]];
+  var TIERS = [['member', TX('Church Partners')], ['rosters', TX('Roster coordinator')], ['kids', TX('Children’s ministry')]];
+  function seeTier() { return canSeeAll() ? '' : H.can('rosters.manage') ? 'rosters' : H.can('people.basic') ? 'kids' : 'member'; }
+  function tierSees(f) { var t = seeTier(); return !t || (((S.settings() || {}).seeOthers || {})[t] || []).indexOf(f) >= 0; }
+  function mayShare(p, f) {
+    if (!p) return false;
+    if (canSeeAll() || isMe(p)) return true;
+    return tierSees(f) && p.familyRole !== 'child' && p.active !== false && !!(p.inDirectory || hasConsent(p.id, 'Church directory'));
+  }
+  function sharedValue(p, f) {
+    if (f === 'mobile') return p.mobile || '';
+    if (f === 'email') return p.email || '';
+    if (f === 'address') return p.shareAddress || addressLines(p).join(', ');
+    if (f === 'spouse') {
+      if (p.shareSpouse) return p.shareSpouse;
+      var c = HS.couples(S.list('people'), S.list('families')).filter(function (x) { return x.a === p.id || x.b === p.id; })[0];
+      return c ? H.name(S.get('people', c.a === p.id ? c.b : c.a)) : '';
+    }
+    return '';
+  }
+  /** Text drawn as a picture: it can be read, but not tapped, selected or copied (for Church Partners). */
+  function textPicture(s) {
+    var c = document.createElement('canvas'), x = c.getContext('2d'), r = window.devicePixelRatio || 1;
+    var cs = getComputedStyle(document.body), font = '15px ' + (cs.fontFamily || 'sans-serif');
+    x.font = font; var w = Math.ceil(x.measureText(s).width) + 4;
+    c.width = w * r; c.height = 22 * r; x.scale(r, r); x.font = font; x.fillStyle = cs.color || '#222'; x.textBaseline = 'middle'; x.fillText(s, 2, 11);
+    return '<img class="nocopy" src="' + c.toDataURL() + '" width="' + w + '" height="22" alt="' + esc(T('Shown as a picture')) + '" draggable="false" style="vertical-align:middle;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;pointer-events:none;max-width:100%;height:auto">';
+  }
+  /** One contact detail for this viewer: a link (staff and leaders), a picture (Church Partners) or '' when not shared. */
+  function contactHtml(p, f) {
+    if (!mayShare(p, f)) return '';
+    var v = sharedValue(p, f); if (!v) return '';
+    var open = canSeeAll() || isMe(p) || seeTier() !== 'member';
+    if (f === 'spouse') return esc(v);
+    if (f === 'address') return v.split(/,\s*/).map(function (l) { return open ? esc(l) : textPicture(l); }).join('<br>');
+    if (!open) return textPicture(v);
+    return f === 'email' ? '<a href="mailto:' + esc(v) + '" target="_blank" rel="noopener">' + esc(v) + '</a>' : '<a href="tel:' + esc(v.replace(/\s/g, '')) + '">' + esc(v) + '</a>';
+  }
+  /** Consent "Church directory" is shown as Contact details (name, phone, email and address shared with staff and leaders). */
+  function purposeName(pur) { return pur === 'Church directory' ? 'Contact details' : pur; }
   function first(id) { var q = S.get('people', id); return q ? (q.preferredName || q.firstName) : ''; }
   /* ---------- volunteering ---------- */
   function slotName(id) { return Serving.slotLabel(id, S.settings()); }
@@ -117,5 +161,5 @@ var PeopleParts = { actions: {} };
   function keyDate(p, re) { var k = (p.keyDates || []).filter(function (x) { return re.test(x.label || ''); })[0]; return k ? k.date : ''; }
   function uniq(a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }).sort(function (x, y) { return String(x).localeCompare(String(y)); }); }
 
-  Object.assign(P, { CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
+  Object.assign(P, { purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
 })(PeopleParts);

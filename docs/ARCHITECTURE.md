@@ -154,6 +154,13 @@ versions are asked to update). It adds `window.ChurchHubApp`; when present,
 the link from the email (Google's sign-in pop-up and email links can't open inside an app). Members open on `#/me`;
 `window.churchHubBack()` lets the back button close a dialog first.
 
+## Contact details by role (Settings → What others can see)
+`settings.seeOthers` = { member: [...], rosters: [...], kids: [...] } with any of mobile, email, address, spouse (name only when
+empty, the default). `Store` syncDirectory writes `directory/{id}` (name, photo + the member list) and `contacts/{id}`
+(address, spouse – if Roster coordinators or Children's ministry may see them) for adults with the "Church directory"
+consent; Settings → Save rewrites everyone (`Store.resyncDirectory()`). Screens use `PeopleParts.mayShare(p, field)` and
+`contactHtml(p, field)`: links for staff and leaders, `textPicture()` (a canvas image) for Church Partners.
+
 ## About (`js/mod-about.js`, `js/version.js`)
 For everyone, and can't be switched off. Shows the version and its date from `js/version.js`, the Android app's version
 (`ChurchHubApp.version()`), the church, the developer, and links to the privacy notice, the changelog and the code.

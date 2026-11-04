@@ -139,5 +139,7 @@ I18n.rows([
     ['Don’t change', 'Moenie verander nie', 'Ungashintshi', 'Musa ukutshintsha'],
     ['Nothing has changed yet. Fill in what should change, or Cancel.', 'Niks het nog verander nie. Vul in wat moet verander, of Kanselleer.', 'Akukho okushintshile okwamanje. Gcwalisa okufanele kushintshe, noma Khansela.', 'Akukho nto itshintshileyo okwangoku. Zalisa oko kufuneka kutshintshe, okanye Rhoxisa.'],
     ['Sent – the church office will check it', 'Gestuur – die kerkkantoor sal dit nagaan', 'Kuthunyelwe – ihhovisi lesonto lizokuhlola', 'Kuthunyelwe – iofisi yecawe iya kuyijonga'],
-    ['Say why, so they know what to do.', 'Sê hoekom, sodat hulle weet wat om te doen.', 'Sho ukuthi kungani, ukuze bazi ukuthi benzeni.', 'Yitsho isizathu, ukuze bazi ukuba benze ntoni.']
+    ['Say why, so they know what to do.', 'Sê hoekom, sodat hulle weet wat om te doen.', 'Sho ukuthi kungani, ukuze bazi ukuthi benzeni.', 'Yitsho isizathu, ukuze bazi ukuba benze ntoni.'],
+    ['Shown as a picture', 'As ’n prent gewys', 'Kuboniswa njengesithombe', 'Kuboniswa njengomfanekiso'],
+    ['Shares contact details', 'Deel kontakbesonderhede', 'Wabelana ngemininingwane yokuxhumana', 'Wabelana ngeenkcukacha zoqhagamshelwano']
 ]);

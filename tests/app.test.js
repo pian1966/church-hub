@@ -37,7 +37,7 @@ function seedDocs(opts) {
     det.familyRole = p.familyRole;
     put('people/' + p.id, card); put('details/' + p.id, det);
     if (p.medical) put('medical/' + p.id, p.medical);
-    if (p.familyRole !== 'child' && consentGiven(p.id, 'Church directory')) put('directory/' + p.id, { firstName: p.firstName, lastName: p.lastName, preferredName: p.preferredName, mobile: p.mobile });
+    if (p.familyRole !== 'child' && consentGiven(p.id, 'Church directory')) put('directory/' + p.id, { firstName: p.firstName, lastName: p.lastName, preferredName: p.preferredName });   // name only (Settings → What others can see)
     if (p.email && p.familyRole !== 'child') put('roles/' + p.email.toLowerCase(), { role: p.appRole, personId: p.id });
   });
   const notes = {}; d.notes.forEach(n => { (notes[n.personId] = notes[n.personId] || []).push(strip(n)); });

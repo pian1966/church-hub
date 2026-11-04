@@ -53,8 +53,8 @@
     add(true, TX('Name and contact'), 'firstName', TX('First name'), 'text', function (p) { return p.firstName; }, null, function (p) { return p.preferredName ? [p.preferredName] : []; });
     add(true, TX('Name and contact'), 'lastName', TX('Last name'), 'text', function (p) { return p.lastName; });
     add(true, TX('Name and contact'), 'preferredName', TX('Preferred name'), 'text', function (p) { return p.preferredName; });
-    add(true, TX('Name and contact'), 'email', TX('Email'), 'text', function (p) { return p.email; });
-    add(true, TX('Name and contact'), 'mobile', TX('Mobile'), 'text', function (p) { return p.mobile; });
+    add(P.tierSees('email'), TX('Name and contact'), 'email', TX('Email'), 'text', function (p) { return P.mayShare(p, 'email') ? p.email : ''; });   // only what their role may see
+    add(P.tierSees('mobile'), TX('Name and contact'), 'mobile', TX('Mobile'), 'text', function (p) { return P.mayShare(p, 'mobile') ? p.mobile : ''; });
     add(true, TX('Church'), 'household', TX('Household'), 'list', function (p) { return householdNames(p); }, uniq(S.list('families').map(function (f) { return H.familyName(f); })));
     add(true, TX('Church'), 'category', TX('Category'), 'choice', function (p) { return p.category; }, CATS);
     add(true, TX('Church'), 'adultChild', TX('Adult or child'), 'choice', function (p) { return p.familyRole === 'child' ? 'Child' : 'Adult'; }, ['Adult', 'Child']);
@@ -82,7 +82,7 @@
     add(kids, TX('Children'), 'consenter', TX('Has a parent or guardian who can give consent'), 'yesno', function (p) { return p.familyRole === 'child' && HS.consentAdults(p.id, S.list('guardians')).length > 0; });
     add(all, TX('Privacy'), 'consents', TX('Consent given for'), 'list', function (p) { return PURPOSES.filter(function (x) { return hasConsent(p.id, x); }); }, PURPOSES);
     add(all, TX('Privacy'), 'receive', TX('Would like to receive'), 'list', function (p) { return RECEIVE_P.filter(function (x) { return hasConsent(p.id, x); }); }, RECEIVE_P);
-    add(all, TX('Privacy'), 'directory', TX('In the church directory'), 'yesno', function (p) { return hasConsent(p.id, 'Church directory'); });
+    add(all, TX('Privacy'), 'directory', TX('Shares contact details'), 'yesno', function (p) { return hasConsent(p.id, 'Church directory'); });
     add(H.can('*'), TX('Privacy'), 'access', TX('App access'), 'choice', function (p) { return (H.ROLES[p.appRole || 'member'] || {}).label; }, Object.keys(H.ROLES).map(function (r) { return H.ROLES[r].label; }));
     add(all, TX('Staff'), 'staff', TX('Church staff member'), 'yesno', function (p) { return !!p.staff; });
     add(all, TX('Staff'), 'staffCategory', TX('Staff category'), 'text', function (p) { return p.staff ? p.staff.category : ''; });

@@ -57,7 +57,9 @@
     medical: { read: function (c) { return is(c, ['kids']); }, write: function (c, op) { return is(c, op === 'delete' ? ['kids', 'admin'] : ['kids']); } },
     notes: { read: function (c) { return is(c, ['pastor']); }, write: function (c, op) { return is(c, op === 'delete' ? ['pastor', 'admin'] : ['pastor']); } },
     directory: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'photo'])); } },
+      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo'])); } },
+    contacts: { read: function (c) { return is(c, STAFF); },
+      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['shareAddress', 'shareSpouse'])); } },
     photos: { read: function (c, id) { return child(id) ? is(c, ['admin', 'pastor', 'kids']) : is(c, STAFF) || mine(c, id) || (is(c, ANY) && docs['directory/' + id] !== undefined); },
       write: function (c, op, id, b, a) {
         var who = is(c, ['admin', 'pastor']) || (child(id) ? is(c, ['kids']) : mine(c, id));

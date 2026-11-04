@@ -149,4 +149,8 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   its own branches, and knows how to run the tests.
 - ✅ 4 Nov 2026: **Show access level under Me** (version 0.4.2): the "Me" page now shows which tier/level of access (App access)
   the user is on under details kept by the church office.
-- ✅ 4 Nov 2026: **Terminology page** (version 0.4.3): renamed "Church wording" to "Terminology" under Settings and moved it to its own subpage (`#/settings/terminology`) so that the terms table is full width and easier to edit.
+- ✅ 4 Nov 2026: **No "Member" label on other people for Church Partners** (version 0.4.3): people from the directory carry no
+  category, so none is shown (it showed a made-up "Member", ignoring Church wording).
+- ✅ 4 Nov 2026: **Terminology (Church Words) page** (version 0.4.4): "Church wording" under Settings is now called
+  "Terminology (Church Words)" and has its own full-width page (`#/settings/terminology`), with a summary card and a Change
+  button on Settings, so the table of words is easier to edit.

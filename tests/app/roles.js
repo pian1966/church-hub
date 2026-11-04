@@ -144,7 +144,9 @@ module.exports = async function (ctx) {
   await s.go('settings/terminology'); await s.page.selectOption('#wd-music', 'Music');
   check(await s.page.inputValue('.wd-1[data-k="worshipTeam"]') === 'Music team' && await s.page.inputValue('.wd-1[data-k="worshipLeader"]') === 'Music leader', 'Church wording: choosing Music fills in Music, Music team and Music leader');
   await s.page.click('[data-act="settings:savewords"]'); await s.settle();
-  await s.go('rosters/teams'); t = await s.text();
+  for (let i = 0; i < 50 && !(((await s.docsNow())['settings/church'].wording || {}).custom || {}).worship; i++) await s.page.waitForTimeout(100);   // saved
+  check(JSON.stringify(((await s.docsNow())['settings/church'].wording || {}).custom || {}).includes('Music team'), 'Save wording saves Music');
+  await s.go('rosters/teams'); await s.page.waitForFunction(() => !document.querySelector('main').textContent.includes('Worship'), null, { timeout: 5000 }).catch(() => {}); t = await s.text();
   check(t.includes('Music') && !t.includes('Worship'), 'the Worship team now shows as Music');
   await finish(s);
 

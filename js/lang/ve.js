@@ -1416,7 +1416,7 @@ I18n.add('ve', {
     "Positions that only serve some services follow this one.": "Zwiimo zwi shumaho kha tshumelo dziṅwe fhedzi zwi tevhela iyi.",
     "Add special service": "Engedzani tshumelo yo khethekaho",
     "Ideas by kind of church": "Mihumbulo u ya nga lushaka lwa kereke",
-    "Terminology": "Maipfi",
+    "Terminology (Church Words)": "Maipfi (Maipfi a kereke)",
     "The words your church uses for people and roles.": "Maipfi ane kereke yaṋu ya a shumisa kha vhathu na mishumo.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Zwikirini zwi a shanduka (nga Tshiisimane – nyambo dziṅwe dzi vhulunga maipfi adzo); rekhodo dza vhoṱhe dzi dzula dzo ralo.",
     "Kind of church": "Lushaka lwa kereke",

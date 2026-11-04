@@ -1416,7 +1416,7 @@ I18n.add('it', {
     "Positions that only serve some services follow this one.": "I ruoli che servono solo in alcuni culti seguono questo.",
     "Add special service": "Aggiungi culto speciale",
     "Ideas by kind of church": "Idee per tipo di chiesa",
-    "Terminology": "Terminologia",
+    "Terminology (Church Words)": "Terminologia (Vocabolario della chiesa)",
     "The words your church uses for people and roles.": "Le parole che la tua chiesa usa per persone e ruoli.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Le schermate cambiano (in inglese – le altre lingue mantengono le proprie parole); i dati di tutti restano come sono.",
     "Kind of church": "Tipo di chiesa",

@@ -29,7 +29,7 @@ var Hub = (function () {
   /** Really an Administrator (also while viewing as someone else), so "View as" is offered. */
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
   var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
-  /** In "View as", the Member access level is called Church Partner (the church's own word, Settings → Terminology). */
+  /** In "View as", the Member access level is called Church Partner (the church's own word, Settings → Terminology (Church Words)). */
   function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + T('Church Partner') + ')' : r === 'member' ? T('Church Partner') : roleLabel(r); }
   function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
   function can(perm) {
@@ -394,7 +394,7 @@ var Hub = (function () {
 
   /* ---------- modal and toast ---------- */
   var lastFocus = null;
-  /** The church's own words (Settings → Terminology) on everything shown – in English; translations keep theirs. */
+  /** The church's own words (Settings → Terminology (Church Words)) on everything shown – in English; translations keep theirs. */
   var wordKey = null, wordFn = null;
   function words() {
     var st = Store.settings && Store.settings(), k = I18n.get() + JSON.stringify((st && st.wording) || {});

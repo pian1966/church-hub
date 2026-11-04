@@ -61,23 +61,23 @@
   }
   function tabs(a) {
     return '<nav class="seg" aria-label="' + esc(T('Settings')) + '" style="margin-bottom:18px">' +
-      [['', T('Settings')], ['terminology', T('Terminology')]].map(function (x) {
+      [['', T('Settings')], ['terminology', T('Terminology (Church Words)')]].map(function (x) {
         return '<a href="#/settings' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === a ? 'on' : '') + '">' + esc(x[1]) + '</a>';
       }).join('') + '</nav>';
   }
   function renderTerminologyCard(st) {
     var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', custom = w.custom || {};
     var renamed = Object.keys(custom).filter(function (k) { return custom[k] && custom[k][0]; });
-    return '<section class="panel"><h2>' + T('Terminology') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + '</p>' +
+    return '<section class="panel"><h2>' + T('Terminology (Church Words)') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + '</p>' +
       '<p><b>' + T('Kind of church') + ':</b> ' + esc(Wording.SETS[cur].name) + (renamed.length ? ' <span class="muted">(' + esc(renamed.map(function (k) { return custom[k][0]; }).join(', ')) + ')</span>' : '') + '</p>' +
       '<p><a href="#/settings/terminology" class="btn small">' + T('Change') + '</a></p></section>';
   }
-  /** Terminology: a ready-made set for the kind of church, and any word renamed (js/wording.js). Full-width page. */
+  /** Terminology (Church Words): a ready-made set for the kind of church, and any word renamed (js/wording.js). Full-width page. */
   function renderTerminology(st) {
     var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', words = Wording.words(st);
-    return '<div class="page-head"><div><h1>' + T('Terminology') + '</h1><p class="lead">' + T('The words your church uses for people and roles.') + '</p></div></div>' +
+    return '<div class="page-head"><div><h1>' + T('Terminology (Church Words)') + '</h1><p class="lead">' + T('The words your church uses for people and roles.') + '</p></div></div>' +
       tabs('terminology') +
-      '<section class="panel" data-own-words><h2>' + T('Terminology') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + ' ' +
+      '<section class="panel" data-own-words><p class="hint" style="margin-top:0">' +
       T('The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.') + '</p>' +
       '<div class="two"><label class="field">' + T('Kind of church') + '<select id="wd-set">' + Object.keys(Wording.SETS).map(function (k) { return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(Wording.SETS[k].name) + '</option>'; }).join('') + '</select><small>' + T('Choosing one fills in its words below; you can still change any of them.') + '</small></label>' +
       '<label class="field">' + T('Music in services is called') + '<select id="wd-music"><option value="">–</option>' + Object.keys(Wording.MUSIC).map(function (k) {
@@ -179,7 +179,7 @@
           if (!one) { one = base[k][0]; many = base[k][1]; }
           if (one !== base[k][0] || many !== base[k][1]) { custom[k] = [one, many]; renamed.push(one); }
         });
-        S.setSettings({ wording: { set: set, custom: custom } }, 'Terminology: ' + Wording.SETS[set].name + (renamed.length ? ' (own words: ' + renamed.join(', ') + ')' : ''));
+        S.setSettings({ wording: { set: set, custom: custom } }, 'Terminology (Church Words): ' + Wording.SETS[set].name + (renamed.length ? ' (own words: ' + renamed.join(', ') + ')' : ''));
         H.render(); H.toast(T('Wording saved'));
       },
       addslot: function () {

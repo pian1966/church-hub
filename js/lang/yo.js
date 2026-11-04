@@ -1416,7 +1416,7 @@ I18n.add('yo', {
     "Positions that only serve some services follow this one.": "Àwọn ipò tí ó ń sìn ní àwọn ìsìn kan nìkan ń tẹ̀lé èyí.",
     "Add special service": "Fi ìsìn àkànṣe kún un",
     "Ideas by kind of church": "Àwọn èrò gẹ́gẹ́ bí irú ìjọ",
-    "Terminology": "Àwọn ọ̀rọ̀ tí a ń lò",
+    "Terminology (Church Words)": "Àwọn ọ̀rọ̀ tí a ń lò (Ọ̀rọ̀ ìjọ)",
     "The words your church uses for people and roles.": "Àwọn ọ̀rọ̀ tí ìjọ rẹ ń lò fún àwọn ènìyàn àti ipa.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Àwọn ojú ìbòjú ń yí padà (ní èdè Gẹ̀ẹ́sì – àwọn èdè mìíràn ń pa ọ̀rọ̀ tiwọn mọ́); àkọsílẹ̀ gbogbo ènìyàn ń dúró bí wọ́n ṣe wà.",
     "Kind of church": "Irú ìjọ",

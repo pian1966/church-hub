@@ -1416,7 +1416,7 @@ I18n.add('sw', {
     "Positions that only serve some services follow this one.": "Nafasi zinazohudumu kwenye baadhi ya ibada pekee hufuata hii.",
     "Add special service": "Ongeza ibada maalum",
     "Ideas by kind of church": "Mawazo kwa aina ya kanisa",
-    "Terminology": "Istilahi",
+    "Terminology (Church Words)": "Istilahi (Maneno ya kanisa)",
     "The words your church uses for people and roles.": "Maneno ambayo kanisa lako hutumia kwa watu na majukumu.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Skrini hubadilika (kwa Kiingereza – lugha nyingine hubaki na maneno yake); rekodi za kila mtu hubaki kama zilivyo.",
     "Kind of church": "Aina ya kanisa",

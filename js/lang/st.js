@@ -1416,7 +1416,7 @@ I18n.add('st', {
     "Positions that only serve some services follow this one.": "Maemo a sebeletsang ditshebeletsong tse ding feela a latela ena.",
     "Add special service": "Kenya tshebeletso e ikgethang",
     "Ideas by kind of church": "Mehopolo ho ya ka mofuta wa kereke",
-    "Terminology": "Mareo",
+    "Terminology (Church Words)": "Mareo (Mantswe a kereke)",
     "The words your church uses for people and roles.": "Mantswe ao kereke ya hao e a sebedisang bakeng sa batho le dikarolo.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Diskrine di a fetoha (ka Senyesemane – dipuo tse ding di boloka mantswe a tsona); direkoto tsa bohle di dula di le jwalo.",
     "Kind of church": "Mofuta wa kereke",

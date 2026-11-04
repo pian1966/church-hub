@@ -1416,7 +1416,7 @@ I18n.add('sn', {
     "Positions that only serve some services follow this one.": "Mabasa anoshanda pamimwe misangano chete anotevera uyu.",
     "Add special service": "Wedzera musangano wakakosha",
     "Ideas by kind of church": "Pfungwa zvichienderana nemhando yechechi",
-    "Church wording": "Mazwi echechi",
+    "Terminology": "Mazwi anotsanangura",
     "The words your church uses for people and roles.": "Mazwi anoshandiswa nechechi yenyu kuvanhu nemabasa.",
     "The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.": "Masikirini anochinja (muChirungu – mimwe mitauro inochengeta mazwi ayo); marekodhi evose anoramba akadaro.",
     "Kind of church": "Mhando yechechi",

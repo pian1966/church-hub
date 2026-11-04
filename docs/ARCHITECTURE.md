@@ -326,7 +326,7 @@ Later: direct import through the Elvanto API (server side, with the church's API
   list, its label (Province, State, County, Canton…) and the postcode label (ZIP code, Eircode, CEP…) as the country changes.
   Countries without a fixed list get a box to type in. Phone numbers are compared by their last 9 digits, so any country's
   "+44 7700…" and "07700…" match (duplicates).
-- **Church wording** (`js/wording.js`): Settings → Church wording: a set (General, Anglican, Catholic, Methodist,
+- **Church wording** (`js/wording.js`): Settings → Terminology: a set (General, Anglican, Catholic, Methodist,
   Presbyterian/Reformed, Baptist, Pentecostal, Lutheran) and any word renamed (`settings.wording = { set, custom }`).
   `app.js` changes the words in what is shown (text nodes and titles/placeholders, after every render, in dialogs and
   messages) – in English only; stored values never change (`Church Partner` in the database shows as "Parishioner").

@@ -1,5 +1,5 @@
 /*
- * Church Hub – the church's own words for people and roles (Settings → Church wording).
+ * Church Hub – the church's own words for people and roles (Settings → Terminology).
  * Churches call the same things by different names: a Pastor may be a Priest, Minister or Clergy; a Church Partner a
  * Member or Parishioner. An Administrator picks a ready-made set for their kind of church and can rename any word.
  * Only what is shown on the screen changes (in English); what is stored stays the same ("Church Partner" in the database
@@ -22,7 +22,7 @@ var Wording = (function () {
     ['worshipTeam', ['Worship team', 'Worship teams'], 'The team that leads music in services'],
     ['worshipLeader', ['Worship leader', 'Worship leaders'], 'Who leads the music in a service']
   ];
-  /** Quick choices for what the music in services is called (Settings → Church wording). */
+  /** Quick choices for what the music in services is called (Settings → Terminology). */
   var MUSIC = {
     Worship: { worship: ['Worship', 'Worship'], worshipTeam: ['Worship team', 'Worship teams'], worshipLeader: ['Worship leader', 'Worship leaders'] },
     Music: { worship: ['Music', 'Music'], worshipTeam: ['Music team', 'Music teams'], worshipLeader: ['Music leader', 'Music leaders'] },

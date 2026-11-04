@@ -59,15 +59,30 @@
         return '<p style="margin:8px 0 2px"><b>' + esc(g) + '</b></p><p style="margin:0">' + specials.filter(function (x) { return x.when === g; }).map(function (x) { return esc(x.name) + (x.used ? ' <span class="muted">(' + esc(x.used) + ')</span>' : ''); }).join(' · ') + '</p>';
       }).join('') + '</div></details></section>';
   }
-  /** Church wording: a ready-made set for the kind of church, and any word renamed (js/wording.js). */
-  function renderWording(st) {
+  function tabs(a) {
+    return '<nav class="seg" aria-label="' + esc(T('Settings')) + '" style="margin-bottom:18px">' +
+      [['', T('Settings')], ['terminology', T('Terminology')]].map(function (x) {
+        return '<a href="#/settings' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === a ? 'on' : '') + '">' + esc(x[1]) + '</a>';
+      }).join('') + '</nav>';
+  }
+  function renderTerminologyCard(st) {
+    var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', custom = w.custom || {};
+    var renamed = Object.keys(custom).filter(function (k) { return custom[k] && custom[k][0]; });
+    return '<section class="panel"><h2>' + T('Terminology') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + '</p>' +
+      '<p><b>' + T('Kind of church') + ':</b> ' + esc(Wording.SETS[cur].name) + (renamed.length ? ' <span class="muted">(' + esc(renamed.map(function (k) { return custom[k][0]; }).join(', ')) + ')</span>' : '') + '</p>' +
+      '<p><a href="#/settings/terminology" class="btn small">' + T('Change') + '</a></p></section>';
+  }
+  /** Terminology: a ready-made set for the kind of church, and any word renamed (js/wording.js). Full-width page. */
+  function renderTerminology(st) {
     var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', words = Wording.words(st);
-    return '<section class="panel" data-own-words><h2>' + T('Church wording') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + ' ' +
+    return '<div class="page-head"><div><h1>' + T('Terminology') + '</h1><p class="lead">' + T('The words your church uses for people and roles.') + '</p></div></div>' +
+      tabs('terminology') +
+      '<section class="panel" data-own-words><h2>' + T('Terminology') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + ' ' +
       T('The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.') + '</p>' +
-      '<label class="field">' + T('Kind of church') + '<select id="wd-set">' + Object.keys(Wording.SETS).map(function (k) { return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(Wording.SETS[k].name) + '</option>'; }).join('') + '</select><small>' + T('Choosing one fills in its words below; you can still change any of them.') + '</small></label>' +
+      '<div class="two"><label class="field">' + T('Kind of church') + '<select id="wd-set">' + Object.keys(Wording.SETS).map(function (k) { return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(Wording.SETS[k].name) + '</option>'; }).join('') + '</select><small>' + T('Choosing one fills in its words below; you can still change any of them.') + '</small></label>' +
       '<label class="field">' + T('Music in services is called') + '<select id="wd-music"><option value="">–</option>' + Object.keys(Wording.MUSIC).map(function (k) {
         return '<option value="' + k + '"' + (Wording.MUSIC[k].worship[0] === words.worship[0] && Wording.MUSIC[k].worshipTeam[0] === words.worshipTeam[0] && Wording.MUSIC[k].worshipLeader[0] === words.worshipLeader[0] ? ' selected' : '') + '>' + esc(k + ' / ' + Wording.MUSIC[k].worshipTeam[0] + ' / ' + Wording.MUSIC[k].worshipLeader[0]) + '</option>';
-      }).join('') + '</select><small>' + T('Fills in the three words below; you can still change each one. Then Save wording.') + '</small></label>' +
+      }).join('') + '</select><small>' + T('Fills in the three words below; you can still change each one. Then Save wording.') + '</small></label></div>' +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
       Wording.TERMS.map(function (t) {
         return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(T(t[2])) + '</span></td>' +
@@ -75,17 +90,21 @@
           '<td><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][1] })) + '"></td></tr>';
       }).join('') + '</tbody></table></div><button class="btn small" data-act="settings:savewords">' + T('Save wording') + '</button></section>';
   }
-  function render() {
-    var st = S.settings(), on = st.modules || {};
+  function render(parts) {
+    var st = S.settings();
+    if (parts && parts[0] === 'terminology') return renderTerminology(st);
+    var on = st.modules || {};
     var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
     var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-    return '<div class="page-head"><div><h1>' + T('Settings') + '</h1><p class="lead">' + T('Church details, which apps are switched on, who can see what, and service times.') + '</p></div></div><div class="grid2">' +
+    return '<div class="page-head"><div><h1>' + T('Settings') + '</h1><p class="lead">' + T('Church details, which apps are switched on, who can see what, and service times.') + '</p></div></div>' +
+      tabs('') +
+      '<div class="grid2">' +
       '<section class="panel"><h2>' + T('Church') + '</h2><label class="field req">' + T('Church name') + '<input id="st-name" value="' + esc(st.churchName) + '"></label>' +
         '<label class="field req">' + T('Country') + '<select id="st-country">' + Countries.grouped().map(function (g) {
           return '<optgroup label="' + esc(g.continent) + '">' + g.countries.map(function (x) { return '<option value="' + x.code + '"' + (x.code === Countries.church(st).code ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</optgroup>';
         }).join('') + '</select><small>' + T('Sets the usual country for addresses (with its provinces, states or counties) and which privacy law the Privacy pages follow.') + '</small></label>' +
         '<button class="btn small" data-act="settings:name">' + T('Save') + '</button></section>' +
-      renderWording(st) +
+      renderTerminologyCard(st) +
       '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p>' + MODS.map(function (m) {
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
       }).join('') + '<p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' +
@@ -117,7 +136,7 @@
 
   H.register({
     id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'],
-    render: function () { return H.can('*') ? render() : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>'; },
+    render: function (parts) { return H.can('*') ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>'; },
     after: function () {
       var sn = document.getElementById('sp-name'), sd = document.getElementById('sp-date');
       if (sn && sd) sn.addEventListener('input', function () { var d = Serving.specialDate(sn.value.trim(), H.today()); if (d) sd.value = d; });   // a suggestion fills in its date
@@ -160,7 +179,7 @@
           if (!one) { one = base[k][0]; many = base[k][1]; }
           if (one !== base[k][0] || many !== base[k][1]) { custom[k] = [one, many]; renamed.push(one); }
         });
-        S.setSettings({ wording: { set: set, custom: custom } }, 'Church wording: ' + Wording.SETS[set].name + (renamed.length ? ' (own words: ' + renamed.join(', ') + ')' : ''));
+        S.setSettings({ wording: { set: set, custom: custom } }, 'Terminology: ' + Wording.SETS[set].name + (renamed.length ? ' (own words: ' + renamed.join(', ') + ')' : ''));
         H.render(); H.toast(T('Wording saved'));
       },
       addslot: function () {

@@ -149,3 +149,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   its own branches, and knows how to run the tests.
 - ✅ 4 Nov 2026: **Show access level under Me** (version 0.4.2): the "Me" page now shows which tier/level of access (App access)
   the user is on under details kept by the church office.
+- ✅ 4 Nov 2026: **Terminology page** (version 0.4.3): renamed "Church wording" to "Terminology" under Settings and moved it to its own subpage (`#/settings/terminology`) so that the terms table is full width and easier to edit.

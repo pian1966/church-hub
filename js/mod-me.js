@@ -69,6 +69,7 @@
     if (wed) office += '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(wed, true)) + '</dd>';
     var fam = p.familyId ? S.get('families', p.familyId) : null;
     if (fam) office += '<dt>' + T('Household') + '</dt><dd>' + esc(H.familyName(fam)) + '</dd>';
+    office += '<dt>' + T('App access') + '</dt><dd>' + esc(H.roleLabel(p.appRole || 'member')) + '</dd>';
     html += '<section class="panel"><h2>' + T('Kept by the church office') + '</h2>' + (office ? '<dl class="kv">' + office + '</dl>' : '') +
       '<p class="hint">' + T(child ? 'Something wrong or missing here? Please tell the church office and they will change it.' : 'Something wrong or missing, such as your marriage or children? Ask to change it, and the church office will check it.') + '</p>' +
       (window.PeopleParts ? PeopleParts.changesMePanel() : '') + '</section>';

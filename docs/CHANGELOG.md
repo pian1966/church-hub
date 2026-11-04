@@ -182,3 +182,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   Rd/Road and St/Street the same). Addresses are new to the check; people in the chosen household are left out. All 22 languages.
 - ✅ 4 Nov 2026: **Chinese, Japanese and American English** (version 0.9.0): added Simplified Chinese, Traditional Chinese,
   Japanese (in a new Asia section in the language picker), and American English (in Americas).
+- ✅ 4 Nov 2026 (0.10.0): the two 0.9.0 changes above released together; the new duplicate-check sentences added to Chinese, Japanese and American English.

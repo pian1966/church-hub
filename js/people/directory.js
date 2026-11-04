@@ -5,6 +5,7 @@
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var MARITAL = P.MARITAL, SORTS = P.SORTS, state = P.state;
   // From the other People files (each looked up when called)
+  function addressLines() { return P.addressLines.apply(this, arguments); }
   function age() { return P.age.apply(this, arguments); }
   function canBasic() { return P.canBasic.apply(this, arguments); }
   function canDup() { return P.canDup.apply(this, arguments); }
@@ -128,6 +129,31 @@
     var main = k === 'first' ? p.firstName + ' ' + p.lastName : k === 'known' ? known(p) + ' ' + p.lastName : p.lastName + ', ' + known(p);
     return esc(main) + (other ? ' <span class="muted">(' + esc(k === 'first' ? p.preferredName : p.firstName) + ')</span>' : '');
   }
+  /** Whether a person matches a search query against names, contact and personal information they may share. */
+  function matchesPerson(p, q) {
+    if (!q) return true;
+    var open = P.seeTier() !== 'member' || isMe(p);
+    var parts = H.names(p);
+    var mob = (open || P.tierSees('mobile')) && P.mayShare(p, 'mobile') ? (p.mobile || '') : '';
+    var em = (open || P.tierSees('email')) && P.mayShare(p, 'email') ? (p.email || '') : '';
+    var addr = (open || P.tierSees('address')) && P.mayShare(p, 'address') ? (p.shareAddress || (addressLines(p) || []).join(' ')) : '';
+    if (em) parts.push(em);
+    if (mob) {
+      parts.push(mob);
+      var digits = mob.replace(/\D/g, '');
+      if (digits && digits !== mob) parts.push(digits);
+    }
+    if (canBasic()) parts = parts.concat(householdNames(p));
+    if (addr) parts.push(addr);
+    var text = parts.join(' ');
+    if (H.matches(text, q)) return true;
+    var qDigits = String(q).replace(/\D/g, '');
+    if (qDigits && qDigits.length >= 3 && mob) {
+      var mDigits = mob.replace(/\D/g, '');
+      if (mDigits.indexOf(qDigits) >= 0) return true;
+    }
+    return false;
+  }
   function renderList() {
     var filters = [['all', 'Everyone'], ['Church Partner', 'Church Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
     if (canSeeAll()) filters.push(['deceased', 'Deceased']);   // people who have died are kept for the records, out of the other lists
@@ -137,8 +163,7 @@
     var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto; }) : visiblePeople();
     var shown = list.filter(function (p) {
       if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
-      var open = P.seeTier() !== 'member' || isMe(p);   // Church Partners search by name only
-      return !q || H.matches(H.names(p).join(' | ') + ' ' + (open && P.mayShare(p, 'email') ? p.email || '' : '') + ' ' + (open && P.mayShare(p, 'mobile') ? p.mobile || '' : '') + ' ' + (canBasic() ? householdNames(p).join(' ') : ''), q);   // name, contact or family; "andr pi" finds Andrew Pike
+      return matchesPerson(p, q);
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : T('People who agreed to be in the church directory.')) + '</p></div>' +
       '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
@@ -164,5 +189,5 @@
     sort: function (el) { state.sort = el.dataset.k; Store.pref('peopleSort', state.sort); if (state.adv) { state.adv.sort = 'name'; state.adv.dir = 1; } H.render(); }
   });
 
-  Object.assign(P, { AGE_BANDS: AGE_BANDS, bars: bars, listName: listName, pct: pct, renderList: renderList, renderStats: renderStats, sortKey: sortKey, sortSwitch: sortSwitch, tidyDeathDates: tidyDeathDates, tidyIdNames: tidyIdNames });
+  Object.assign(P, { AGE_BANDS: AGE_BANDS, bars: bars, listName: listName, matchesPerson: matchesPerson, pct: pct, renderList: renderList, renderStats: renderStats, sortKey: sortKey, sortSwitch: sortSwitch, tidyDeathDates: tidyDeathDates, tidyIdNames: tidyIdNames });
 })(PeopleParts);

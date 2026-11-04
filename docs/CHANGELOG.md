@@ -156,3 +156,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026: **Terminology (Church Words) page** (version 0.4.4): "Church wording" under Settings is now called
   "Terminology (Church Words)" and has its own full-width page (`#/settings/terminology`), with a summary card and a Change
   button on Settings, so the table of words is easier to edit.
+- ✅ 4 Nov 2026: **Search people by phone, email or address** (version 0.5.0, from Jules's #46): the People search box also
+  finds part of a mobile number (with or without spaces, and "+27 82…" and "082…" find each other), an email address or a
+  home address – only what the person searching may already see (each person's directory consent and Settings → What others
+  can see). `tests/directory-search.test.js`.

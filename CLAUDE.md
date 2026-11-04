@@ -53,8 +53,7 @@ GitHub runs every test, including the rules against the Firestore emulator, on e
 - Privacy (POPIA): every new piece of personal information needs a purpose, a consent or lawful basis, an access rule by role,
   and audit logging for sensitive views (read the matching section of `docs/POPIA.md`). Never commit real church data, names, keys
   or passwords – the repository is public.
-- Every changed `.js` file gets its `?v=` number raised in `index.html`, or phones and browsers keep using their old copy. Changed
-  `js/lang/*.js` files: raise `PACK_VERSION` in `js/i18n.js` instead.
 - Every change that reaches the website raises the version in `js/version.js` (and its date): the middle number for new
-  features, the last for fixes. About → Check for updates compares it with the website's copy.
+  features, the last for fixes. Put the same number after every `?v=` in `index.html` (one find-and-replace), or browsers
+  and phones keep their old copies; `node tests/versions.test.js` checks it. Language files follow automatically.
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

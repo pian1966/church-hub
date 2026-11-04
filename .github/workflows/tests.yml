@@ -21,6 +21,8 @@ jobs:
         run: node tests/elvanto-sync.test.js && node tests/robot.test.js
       - name: Households and guardians
         run: node tests/households.test.js
+      - name: Version numbers (every file fetched again after an update)
+        run: node tests/versions.test.js
       - name: Languages
         run: node tests/i18n.test.js
       - name: Advanced people search

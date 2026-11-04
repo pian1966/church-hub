@@ -28,7 +28,9 @@ var I18n = (function () {
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
   var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'privacy', 'import', 'settings'];
+  // Language files are fetched again with every new version of Church Hub (js/version.js), so phones don't keep old words
   var PACK_VERSION = 9, loading = {}, onLoad = [];
+  function packV() { return (typeof ChurchHubVersion !== 'undefined' && ChurchHubVersion.version) || PACK_VERSION; }
   var DATES = {
     en: { mon: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
     af: { mon: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'], dow: ['So', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Sa'] },
@@ -61,7 +63,7 @@ var I18n = (function () {
   function load(code, cb) {
     if (DATES[code] || !more(code) || typeof document === 'undefined') { if (cb) cb(); return; }
     (waiters[code] = waiters[code] || []).push(cb || function () {});
-    if (!loading[code]) { loading[code] = 'asked'; var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + PACK_VERSION; sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
+    if (!loading[code]) { loading[code] = 'asked'; var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + packV(); sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
   }
   /** What a suggestion must keep from the English: the same {parts} and the same <b>…</b> markup. '' = fine. */
   function check(en, text) {
@@ -86,7 +88,7 @@ var I18n = (function () {
   function set(code) {
     if (!DATES[code] && more(code) && typeof document !== 'undefined') {   // fetch it; the screen is redrawn when it arrives (onLoad)
       Object.keys(loading).forEach(function (k) { if (loading[k] === 'wanted') loading[k] = 'asked'; });
-      if (loading[code] !== 'asked') { var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + PACK_VERSION; sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
+      if (loading[code] !== 'asked') { var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + packV(); sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
       loading[code] = 'wanted';
       return lang;
     }

@@ -391,7 +391,7 @@ I18n.add('yo', {
     "Developed by": "Ẹni tó ṣe é",
     "With help from Claude, an AI made by Anthropic": "Pẹ̀lú ìrànlọ́wọ́ Claude, AI tí Anthropic ṣe",
     "About Church Hub": "Nípa Church Hub",
-    "Church Hub keeps the church’s people, rosters, care groups and leave in one place.": "Church Hub ń tọ́jú àwọn ènìyàn ìjọ, ètò iṣẹ́ ìsìn, àwọn ẹgbẹ́ ìtọ́jú àti ìsinmi sí ibì kan.",
+    "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub ń tọ́jú àwọn ènìyàn ìjọ, ètò iṣẹ́ ìsìn, àwọn ẹgbẹ́ ìtọ́jú àti ìṣàkóso òṣìṣẹ́ sí ibì kan.",
     "What’s new": "Ohun tuntun",
     "Opens on GitHub": "Yóò ṣí lórí GitHub",
     "Source code": "Kóòdù orísun",

@@ -385,7 +385,7 @@ I18n.rows([
     ['Developed by', 'Ontwikkel deur', 'Yakhiwe ngu', 'Yakhiwe ngu'],
     ['With help from Claude, an AI made by Anthropic', 'Met hulp van Claude, ’n KI gemaak deur Anthropic', 'Ngosizo lukaClaude, i-AI eyenziwe yi-Anthropic', 'Ngoncedo lukaClaude, i-AI eyenziwe yi-Anthropic'],
     ['About Church Hub', 'Oor Church Hub', 'Mayelana ne-Church Hub', 'Malunga ne-Church Hub'],
-    ['Church Hub keeps the church’s people, rosters, care groups and leave in one place.', 'Church Hub hou die kerk se mense, roosters, sorggroepe en verlof op een plek.', 'I-Church Hub igcina abantu besonto, uhlelo lokusebenza, amaqembu okunakekela nekhefu endaweni eyodwa.', 'I-Church Hub igcina abantu becawe, uludwe lomsebenzi, amaqela okhathalelo nekhefu kwindawo enye.'],
+    ['Church Hub keeps the church’s people, rosters, care groups and staff management in one place.', 'Church Hub hou die kerk se mense, roosters, sorggroepe en personeelbestuur op een plek.', 'I-Church Hub igcina abantu besonto, uhlelo lokusebenza, amaqembu okunakekela nokuphathwa kwabasebenzi endaweni eyodwa.', 'I-Church Hub igcina abantu becawe, uludwe lomsebenzi, amaqela okhathalelo nolawulo lwabasebenzi kwindawo enye.'],
     ['What’s new', 'Wat is nuut', 'Okusha', 'Okutsha'],
     ['Opens on GitHub', 'Maak op GitHub oop', 'Ivula ku-GitHub', 'Ivula kwi-GitHub'],
     ['Source code', 'Bronkode', 'Ikhodi yomthombo', 'Ikhowudi yomthombo'],

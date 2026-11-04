@@ -160,3 +160,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   finds part of a mobile number (with or without spaces, and "+27 82…" and "082…" find each other), an email address or a
   home address – only what the person searching may already see (each person's directory consent and Settings → What others
   can see). `tests/directory-search.test.js`.
+- ✅ 4 Nov 2026: **About says "staff management"** (version 0.5.1): About now says Church Hub keeps the church’s people, rosters,
+  care groups and staff management in one place (was "leave"), in every language.

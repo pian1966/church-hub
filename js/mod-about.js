@@ -61,7 +61,7 @@
       (st.churchName ? '<dt>' + T('Made for') + '</dt><dd>' + esc(st.churchName) + '</dd>' : '') +
       '<dt>' + T('Developed by') + '</dt><dd>' + esc(V.developer) + '<span class="kv-sub">' + T('With help from Claude, an AI made by Anthropic') + '</span></dd>' +
       '<dt>' + T('Language') + '</dt><dd>' + esc(I18n.name ? I18n.name(I18n.get()) : I18n.get()) + '</dd>';
-    return '<div class="page-head"><div><h1>' + T('About Church Hub') + '</h1><p class="lead">' + T('Church Hub keeps the church’s people, rosters, care groups and leave in one place.') + '</p></div></div>' +
+    return '<div class="page-head"><div><h1>' + T('About Church Hub') + '</h1><p class="lead">' + T('Church Hub keeps the church’s people, rosters, care groups and staff management in one place.') + '</p></div></div>' +
       '<div class="grid2"><section class="panel"><h2>Church Hub</h2><dl class="kv">' + dl + '</dl></section>' + updatePanel() +
       '<section class="panel"><h2>' + T('More') + '</h2><div class="list">' +
         '<a class="item" href="#" data-act="hub:notice"><span class="grow"><b>' + T('Privacy notice') + '</b></span></a>' +

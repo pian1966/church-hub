@@ -391,7 +391,7 @@ I18n.add('nl', {
     "Developed by": "Ontwikkeld door",
     "With help from Claude, an AI made by Anthropic": "Met hulp van Claude, een AI van Anthropic",
     "About Church Hub": "Over Church Hub",
-    "Church Hub keeps the church’s people, rosters, care groups and leave in one place.": "Church Hub houdt de mensen, roosters, kringen en het verlof van de kerk op één plek bij.",
+    "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub houdt de mensen, roosters, kringen en het personeelsbeheer van de kerk op één plek bij.",
     "What’s new": "Wat is er nieuw",
     "Opens on GitHub": "Opent op GitHub",
     "Source code": "Broncode",

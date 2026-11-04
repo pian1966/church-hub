@@ -391,7 +391,7 @@ I18n.add('sw', {
     "Developed by": "Imetengenezwa na",
     "With help from Claude, an AI made by Anthropic": "Kwa msaada wa Claude, AI iliyotengenezwa na Anthropic",
     "About Church Hub": "Kuhusu Church Hub",
-    "Church Hub keeps the church’s people, rosters, care groups and leave in one place.": "Church Hub huhifadhi watu wa kanisa, ratiba za huduma, vikundi vya malezi na likizo mahali pamoja.",
+    "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub huhifadhi watu wa kanisa, ratiba za huduma, vikundi vya malezi na usimamizi wa wafanyakazi mahali pamoja.",
     "What’s new": "Mapya",
     "Opens on GitHub": "Hufunguka kwenye GitHub",
     "Source code": "Msimbo chanzo",

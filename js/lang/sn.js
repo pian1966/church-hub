@@ -391,7 +391,7 @@ I18n.add('sn', {
     "Developed by": "Yakagadzirwa na",
     "With help from Claude, an AI made by Anthropic": "Nerubatsiro rwaClaude, AI yakagadzirwa neAnthropic",
     "About Church Hub": "Nezve Church Hub",
-    "Church Hub keeps the church’s people, rosters, care groups and leave in one place.": "Church Hub inochengeta vanhu vechechi, zvirongwa zvebasa, mapoka ekuchengetana uye zororo panzvimbo imwe.",
+    "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub inochengeta vanhu vechechi, zvirongwa zvebasa, mapoka ekuchengetana uye kutonga kwevashandi panzvimbo imwe.",
     "What’s new": "Zvitsva",
     "Opens on GitHub": "Inovhura paGitHub",
     "Source code": "Kodhi yekwakabva",

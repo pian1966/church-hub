@@ -27,6 +27,7 @@
   function members() { return P.members.apply(this, arguments); }
   function needsTidy() { return P.needsTidy.apply(this, arguments); }
   function notDup() { return P.notDup.apply(this, arguments); }
+  function renderChanges() { return P.renderChanges.apply(this, arguments); }
   function renderDuplicates() { return P.renderDuplicates.apply(this, arguments); }
   function renderFamilies() { return P.renderFamilies.apply(this, arguments); }
   function renderLate() { return P.renderLate.apply(this, arguments); }
@@ -52,6 +53,8 @@
         if (nd.noConsenter.length) out.push({ text: TN('{n} child has no parent or guardian who can give consent', '{n} children have no parent or guardian who can give consent', nd.noConsenter.length), href: '#/people/p/' + nd.noConsenter[0].id, tag: 'Children' });
         if (nd.unconfirmed.length) out.push({ text: TN('Confirm the parents and guardians of {n} child', 'Confirm the parents and guardians of {n} children', nd.unconfirmed.length), href: '#/people/p/' + nd.unconfirmed[0].id, tag: 'Children' });
       }
+      var asked = P.changesToCheck();
+      if (asked.length) out.push({ text: TN('{n} change to family details to check', '{n} changes to family details to check', asked.length), href: '#/people/changes' });
       var noMarital = all ? S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; }) : [];
       if (canDup()) {
         var dupN = DUP.find(dupPeople(), notDup()).filter(function (d) { return d.level !== 'possible'; }).length;
@@ -101,6 +104,7 @@
       if (p[0] === 'search') return renderSearch();
       if (p[0] === 'duplicates') return renderDuplicates();
       if (p[0] === 'late') return renderLate();
+      if (p[0] === 'changes') return renderChanges();
       return renderList();
     },
     after: function () {

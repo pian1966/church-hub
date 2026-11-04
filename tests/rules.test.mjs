@@ -46,6 +46,7 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('groups/g1', { memberIds: ['p14', 'p15'], kind: 'together' });
   await set('groups/g2', { memberIds: ['p15', 'p01'], kind: 'apart' });
   await set('blockouts/b15', { personId: 'p15', from: '2026-01-01', to: '2026-01-01' });
+  await set('detailChanges/d15', { personId: 'p15', maritalStatus: 'Married', anniversary: '', spouse: '', children: '', note: '', status: 'waiting' });
   await set('serveOffers/o15', { personId: 'p15', positionId: 'door', kind: 'join', frequency: 'monthly', note: '', status: 'waiting' });
   await set('leaveRequests/L1', { staffId: 'p05', type: 'SSL', status: 'Approved', start: '2027-01-06', end: '2027-01-06', reason: 'Wedding' });
   await set('leaveRequests/L2', { staffId: 'p02', type: 'SL', status: 'Approved', start: '2027-01-06', end: '2027-01-06', reason: 'Flu' });
@@ -228,6 +229,23 @@ await t('away dates: members add their own only', async () => {
   await can(db.member.doc('blockouts/b14').set({ personId: 'p14', from: '2027-02-01', to: '2027-02-01' }));
   await cannot(db.member.doc('blockouts/b16').set({ personId: 'p15', from: '2027-02-01', to: '2027-02-01' }));
   await cannot(read(db.member, 'blockouts/b15'));
+});
+await t('family details: people ask for changes; only Administrators check and make them', async () => {
+  const ask = { personId: 'p14', maritalStatus: 'Married', anniversary: '2010-04-17', spouse: 'Clare Jacobs', children: 'Sam, 3 May 2015', note: '', status: 'waiting', createdAt: 'x', updatedAt: 'x' };
+  await can(db.member.doc('detailChanges/d14').set(ask));
+  await can(list(db.member.collection('detailChanges').where('personId', '==', 'p14')));
+  await cannot(list(db.member.collection('detailChanges')));
+  await cannot(read(db.member, 'detailChanges/d15'));
+  await cannot(db.member.doc('detailChanges/d16').set(Object.assign({}, ask, { personId: 'p15' })));      // not for someone else
+  await cannot(db.member.doc('detailChanges/d17').set(Object.assign({}, ask, { status: 'checked' })));    // can't approve their own
+  await cannot(db.member.doc('detailChanges/d18').set(Object.assign({}, ask, { reply: 'ok' })));          // only the listed fields
+  await cannot(db.member.doc('detailChanges/d14').update({ status: 'checked' }));
+  await cannot(db.member.doc('details/p14').update({ maritalStatus: 'Married' }));                         // the record itself stays the office's
+  await cannot(list(db.pastor.collection('detailChanges')));
+  await can(list(db.admin.collection('detailChanges')));
+  await can(db.admin.doc('detailChanges/d15').update({ status: 'declined', reply: 'Please phone the office' }));
+  await can(db.member.doc('detailChanges/d14').delete());                                                // withdraw
+  await cannot(db.member.doc('detailChanges/d15').delete());
 });
 await t('offers to serve: members ask for themselves; only roster coordinators and Administrators answer', async () => {
   const offer = { personId: 'p14', positionId: 'tea', kind: 'join', frequency: 'monthly', note: 'After the service', status: 'waiting', createdAt: 'x', updatedAt: 'x' };

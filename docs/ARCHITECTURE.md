@@ -136,6 +136,14 @@ language, sign out), *Days away* (their blockouts and approved leave; warns abou
 tab bar shows Me first for members (staff get their working areas first).
 **Offers to serve** go to `serveOffers` (see Collections); roster coordinators answer them at the top of Rosters → Teams,
 with a Home to-do. A declined offer shows the reply under the position until the person taps OK.
+**Changes to family details** (`js/people/changes.js`, collection `detailChanges`): from Me → My details a person asks for
+a new marital status, wedding anniversary, spouse or partner (a name) and children (one per line). Only Administrators
+see them (People → Changes, Home to-do). Yes saves the marital status and anniversary; if a spouse or children were named
+the request stays as `checked` until the Administrator has added them to the household and taps Done (deleted). Don't
+change sets `declined` + `reply`, shown on Me until the person taps OK. One request per person at a time.
+**Leave** is hidden from Church Partners (Member access) unless they are staff who take leave; staff with Member access
+keep My leave and Who's away. (Approved leave still reaches every signed-in person as dates only, for rosters – see
+`away` in firestore.rules.)
 **Android app** (`android/`, built by `.github/workflows/build-android.yml`, setup in `docs/ANDROID.md`): a WebView
 showing the website, built like Leave Manager's app (its own signing key). It offers the camera next to the gallery when a
 page asks for a picture (photo saved in the app's cache, shared with the camera app only through a FileProvider), and

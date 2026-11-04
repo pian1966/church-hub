@@ -162,5 +162,6 @@ I18n.rows([
     ['This is more than their allowance', 'Dit is meer as hul toelae', 'Lokhu kungaphezu kwesabelo sabo', 'Oku kungaphezu kwesabelo sabo'],
     ['calendar day', 'kalenderdag', 'usuku lwekhalenda', 'usuku lwekhalenda'],
     ['calendar days', 'kalenderdae', 'izinsuku zekhalenda', 'iintsuku zekhalenda'],
-    ['Days left in {year}', 'Dae oor in {year}', 'Izinsuku ezisele ku-{year}', 'Iintsuku ezishiyekileyo ku-{year}']
+    ['Days left in {year}', 'Dae oor in {year}', 'Izinsuku ezisele ku-{year}', 'Iintsuku ezishiyekileyo ku-{year}'],
+    ['Leave is for church staff.', 'Verlof is vir kerkpersoneel.', 'Ikhefu lelabasebenzi besonto.', 'Ikhefu lelabasebenzi becawe.']
 ]);

@@ -133,3 +133,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   Me → My details they can ask the church office to change their marital status, wedding anniversary, spouse or partner and
   children; nothing changes until an Administrator checks it (People → Changes people asked for, Home to-do). Rules
   changed (`detailChanges`): the church must re-publish `firestore.rules`.
+- ✅ 4 Nov 2026: **About page for everyone** (version 0.2.0): version and release date, Android app version, developer,
+  privacy notice, what's new, and Check for updates (website and Android app).

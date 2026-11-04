@@ -154,6 +154,14 @@ versions are asked to update). It adds `window.ChurchHubApp`; when present,
 the link from the email (Google's sign-in pop-up and email links can't open inside an app). Members open on `#/me`;
 `window.churchHubBack()` lets the back button close a dialog first.
 
+## About (`js/mod-about.js`, `js/version.js`)
+For everyone, and can't be switched off. Shows the version and its date from `js/version.js`, the Android app's version
+(`ChurchHubApp.version()`), the church, the developer, and links to the privacy notice, the changelog and the code.
+Check for updates (also run once when the page opens) fetches `js/version.js?t=…` from the website without the browser's
+copy and compares the numbers; a newer one offers Update now (reload). In the Android app it also reads the newest app
+from GitHub's `android` release ("Church Hub for Android 1.0.16") and offers the download. Raise the version with every
+change that goes live.
+
 ## Households and responsible adults
 Modelled on Planning Center (a child can live in several households) and ChurchSuite (responsible adults are separate from
 households). Pure rules in `js/households.js`, tested in `tests/households.test.js`.

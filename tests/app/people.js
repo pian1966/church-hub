@@ -171,9 +171,9 @@ module.exports = async function (ctx) {
   check(!docs['people/p19'].familyId && !docs['families/' + newFam], 'Undo takes them out again and removes the new household');
   await s.go('settings');
   const pastors = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.appRole === 'pastor' && p.familyRole !== 'child').map(p => p.lastName));
-  const tip = await s.page.getAttribute('.who[data-role="pastor"] summary', 'title');
-  await s.page.click('.who[data-role="pastor"] summary');
-  const shown = await s.page.textContent('.who[data-role="pastor"] .who-list');
+  const tip = await s.page.getAttribute('.who-has[data-role="pastor"] summary', 'title');
+  await s.page.click('.who-has[data-role="pastor"] summary');
+  const shown = await s.page.textContent('.who-has[data-role="pastor"] .who-list');
   check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
   check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
   for (let i = 0; i < 3 && (await s.docsNow())['settings/church'].country !== 'KE'; i++) {   // the screen may redraw between choosing and saving

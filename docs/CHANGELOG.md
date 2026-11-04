@@ -165,3 +165,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026: **"Basic access" instead of "Member"** (version 0.5.2, from Jules's #49): the access level for everyone who can
   sign in without a special role is called "Basic access" everywhere (Settings, a person's App access, Me, View as, advanced
   search), so it can't be confused with the Church Partner, Attender or Visiting Minister categories.
+- ✅ 4 Nov 2026: **One "Who can see what" table** (version 0.6.0): Settings → Who can see what and What others can see are one
+  full-width table. Each access level shows what it can use, which of other people's contact details it sees (tick boxes for
+  Basic access, Roster coordinator and Children's ministry; "All, always" for Administrator and Pastor), and who has it.
+  Fixed a stray line above the People numbers.

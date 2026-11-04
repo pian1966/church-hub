@@ -154,7 +154,7 @@ versions are asked to update). It adds `window.ChurchHubApp`; when present,
 the link from the email (Google's sign-in pop-up and email links can't open inside an app). Members open on `#/me`;
 `window.churchHubBack()` lets the back button close a dialog first.
 
-## Contact details by role (Settings → What others can see)
+## Contact details by role (Settings → Who can see what)
 `settings.seeOthers` = { member: [...], rosters: [...], kids: [...] } with any of mobile, email, address, spouse (name only when
 empty, the default). `Store` syncDirectory writes `directory/{id}` (name, photo + the member list) and `contacts/{id}`
 (address, spouse – if Roster coordinators or Children's ministry may see them) for adults with the "Church directory"

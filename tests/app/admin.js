@@ -102,6 +102,18 @@ module.exports = async function (ctx) {
   check(!(await s.text()).includes('8001015009087'), 'the ID number is hidden until someone asks to see it');
   await s.page.click('[data-act="people:showid"]'); await s.page.waitForSelector('#pp-idn .idn'); await s.settle(); docs = await s.docsNow();
   check((await s.text()).includes('8001015009087') && Object.keys(docs).some(k => k.startsWith('audit/') && /Viewed the ID number of/.test(docs[k].action)), 'Show reveals it, and the view is in the history log');
+  // Advanced search on ID number (Administrators): a filter only – never a column or shown – fetched on Search and logged
+  await s.go('people/search');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'idNumber'); await s.settle();
+  check(!(await s.page.$('#adv-addcol option[value="idNumber"]')), 'ID number can be searched on, but never added as a column');
+  await s.page.fill('input.adv-v[data-i="0"]', '800'); await s.page.click('[data-act="people:advrun"]'); await s.settle();
+  check((await s.text()).includes('Type at least 4 digits of the ID number.'), 'a search on ID number needs at least 4 digits');
+  await s.page.fill('input.adv-v[data-i="0"]', '8001 0150'); await s.page.click('[data-act="people:advrun"]');
+  await s.page.waitForSelector('#adv-result h2'); await s.settle(); docs = await s.docsNow();
+  const idRes = await s.page.textContent('#adv-result');
+  check(idRes.includes('1 person found') && idRes.includes(docs['people/p15'].lastName) && !idRes.includes('8001015009087'), 'part of an ID number (spaces ignored) finds the person, without showing the number');
+  check(Object.keys(docs).some(k => k.startsWith('audit/') && /^Searched by ID number/.test(docs[k].action) && docs[k].action.includes(docs['people/p15'].lastName)), 'a search on ID numbers is in the history log, with who was found');
+  await s.page.click('[data-act="people:advreset"]'); await s.go('people/p/p15');
   // Church office notes
   await s.page.fill('#on-text', 'Moved to Durban in 2019.'); await s.page.click('[data-act="people:onote"]'); await s.settle(); docs = await s.docsNow();
   check(docs['officeNotes/p15'] && docs['officeNotes/p15'].entries[0].text === 'Moved to Durban in 2019.' && (await s.text()).includes('Moved to Durban in 2019.'), 'Administrators can add church office notes');

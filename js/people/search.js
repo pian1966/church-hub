@@ -48,7 +48,7 @@
   function searchFields() {
     var all = canSeeAll(), roster = H.can('*') || H.can('rosters.view'), kids = canChildren(), birth = all || H.can('children');
     var serve = roster ? servingInfo() : {}, sv = function (p) { return serve[p.id] || { pos: [], teams: [], last: '', next: '' }; };
-    var F = [], add = function (ok, group, key, label, type, get, options, alts) { if (ok) F.push({ group: T(group), key: key, label: T(label), en: label, type: type, get: get, options: options, alts: alts }); };
+    var F = [], add = function (ok, group, key, label, type, get, options, alts, more) { if (ok) F.push(Object.assign({ group: T(group), key: key, label: T(label), en: label, type: type, get: get, options: options, alts: alts }, more)); };
     add(true, TX('Name and contact'), 'name', TX('Name'), 'text', function (p) { return H.name(p); }, null, function (p) { return H.names(p); });   // also finds Douglas when known as Doug
     add(true, TX('Name and contact'), 'firstName', TX('First name'), 'text', function (p) { return p.firstName; }, null, function (p) { return p.preferredName ? [p.preferredName] : []; });
     add(true, TX('Name and contact'), 'lastName', TX('Last name'), 'text', function (p) { return p.lastName; });
@@ -97,6 +97,8 @@
     add(all, TX('Name and contact'), 'postcode', TX('Postcode'), 'text', function (p) { return (p.address || {}).postcode || ''; });
     add(all, TX('Name and contact'), 'province', TX('Province'), 'text', function (p) { return (p.address || {}).province || ''; });
     add(H.can('*'), TX('Church'), 'elvantoId', TX('Elvanto ID'), 'text', function (p) { return p.elvantoId || ''; });
+    // ID numbers (Administrators): a filter only – never a column, a download or on screen. Fetched when Search is pressed.
+    add(H.can('*'), TX('Privacy'), 'idNumber', TX('ID number'), 'text', function (p) { return idNums ? idNums[p.id] || '' : ''; }, null, null, { noCol: true });
     return F;
   }
   /** The services someone volunteers at, as 8am / 10am / 5pm (every service when not narrowed down). */
@@ -118,8 +120,16 @@
     if (f.type === 'anniv') { var m = PS.md(v); return m ? (+m.slice(3)) + ' ' + H.mon()[+m.slice(0, 2) - 1] : ''; }
     return String(v);
   }
+  /** ID numbers fetched for an advanced search on them ({ personId: value }); only in memory, dropped on Start again. */
+  var idNums = null;
+  function idFilters() { return state.adv.filters.filter(function (f) { return f.field === 'idNumber'; }); }
+  function idTooShort() { return idFilters().some(function (f) { return ['eq', 'ne', 'has', 'nhas', 'starts'].indexOf(f.op) >= 0 && String(f.value || '').replace(/\s+/g, '').length < 4; }); }
   function advRun(F) {
     var A = state.adv, byKey = {}; F.forEach(function (f) { byKey[f.key] = f; });
+    if (byKey.idNumber && idFilters().length) {
+      if (idTooShort()) return { error: T('Type at least 4 digits of the ID number.') };
+      if (!idNums) return { error: T('Press Search to look up ID numbers.') };
+    }
     var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; });
     var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted'; }) : visiblePeople();
     if (!usesStatus) people = people.filter(function (p) { return p.active !== false; });
@@ -156,7 +166,7 @@
     if (!canBasic()) return crumb + '<p class="empty">' + T('Advanced search isn’t available to you.') + '</p>';
     var A = state.adv, F = searchFields(), byKey = {}, groups = [];
     F.forEach(function (f) { byKey[f.key] = f; if (groups.indexOf(f.group) < 0) groups.push(f.group); });
-    A.cols = A.cols.filter(function (k) { return byKey[k] && k !== 'name'; });
+    A.cols = A.cols.filter(function (k) { return byKey[k] && !byKey[k].noCol && k !== 'name'; });
     var fieldSelect = function (f, i) {   // like Elvanto: open the list, then type part of a field's name ("marit") to narrow it down
       var cur = byKey[f.field];
       return '<span class="adv-fpick" data-i="' + i + '">' +
@@ -198,7 +208,7 @@
           '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="0" aria-label="' + esc(T('Remove column {column}', { column: byKey[k].label })) + '">' + H.icon(H.ICON.x, 14) + '</button></span>';
       }).join('') + '</div>' +
       '<label class="field" style="max-width:320px;margin-top:12px">' + T('Add a column') + '<select id="adv-addcol"><option value="">' + T('Choose…') + '</option>' + groups.map(function (g) {
-        return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g && x.key !== 'name' && A.cols.indexOf(x.key) < 0; }).map(function (x) { return '<option value="' + x.key + '">' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
+        return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g && x.key !== 'name' && !x.noCol && A.cols.indexOf(x.key) < 0; }).map(function (x) { return '<option value="' + x.key + '">' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
       }).join('') + '</select></label></section>' +
       '<div class="btns" style="margin:4px 0 18px"><button class="btn primary" data-act="people:advrun">' + H.icon(H.ICON.search, 18) + T('Search') + '</button><button class="btn" data-act="people:advreset">' + T('Start again') + '</button></div></div>';
     if (!A.ran) return html;
@@ -336,8 +346,18 @@
         if (!m) c.splice(i, 1); else if (c[i + m]) { c[i] = c[i + m]; c[i + m] = el.dataset.k; }
         H.render();
       },
-    advrun: function () { state.adv.ran = true; H.render(); var r = document.getElementById('adv-result'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); },
-    advreset: function () { state.adv = emptyAdv(); H.render(); },
+    advrun: function () {
+      var go = function () { state.adv.ran = true; H.render(); var r = document.getElementById('adv-result'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
+      var idf = idFilters(); idf.forEach(function (f) { f.value = String(f.value || '').replace(/\s+/g, ''); });
+      if (!idf.length || !H.can('*') || idTooShort()) return go();
+      Store.idNumbers().then(function (all) {   // fresh each time Search is pressed, and logged with who was found
+        idNums = all; go();
+        var r = advRun(searchFields()); if (r.error) return;
+        var names = r.rows.map(function (x) { return H.name(x.p); });
+        S.audit('Searched by ID number (advanced search): ' + (names.length ? names.length + ' found – ' + names.slice(0, 10).join(', ') + (names.length > 10 ? ', …' : '') : 'nobody found'), 'people');
+      }, function () { H.toast(T('Couldn’t load the ID numbers'), true); });
+    },
+    advreset: function () { state.adv = emptyAdv(); idNums = null; H.render(); },
     advsort: function (el) { var A = state.adv; if (A.sort === el.dataset.k) A.dir = -A.dir; else { A.sort = el.dataset.k; A.dir = 1; } H.render(); },
     advcsv: function () { advCsv(); },
     bulk: function () { if (canBulk()) bulkDialog(); },

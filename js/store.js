@@ -527,6 +527,8 @@ var Store = (function () {
     function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
     /** ID numbers: Administrators (and the person themself) only, fetched one at a time when someone asks to see one. */
     function idGet(pid) { return doc('idNumbers/' + pid).get().then(function (s) { return s.exists ? (s.data().value || '') : ''; }); }
+    /** Every ID number at once, { personId: value } – only for an Administrator's advanced search on ID number (logged there). */
+    function idAll() { return fs.collection('idNumbers').get().then(function (s) { var o = {}; s.docs.forEach(function (d) { o[d.id] = (d.data() || {}).value || ''; }); return o; }); }
     function idSet(pid, v) { return v ? write('idNumbers/' + pid, { value: v, updatedAt: now() }) : del('idNumbers/' + pid); }
     /** A person's photo (a small JPEG as a data: address), fetched only when it is shown. '' when there is none or it may not be seen. */
     function photoGet(pid) { return doc('photos/' + pid).get().then(function (s) { return s.exists ? (s.data().data || '') : ''; }, function () { return ''; }); }
@@ -592,7 +594,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -647,6 +649,11 @@ var Store = (function () {
     idNumber: function (pid) {
       if (LIVE) return Live.idGet(pid);
       var x = ((db && db.idNumbers) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.value : '');
+    },
+    /** Every ID number, { personId: value }: Administrators only, for an advanced search on ID number – never kept or shown. */
+    idNumbers: function () {
+      if (LIVE) return Live.idAll();
+      var o = {}; ((db && db.idNumbers) || []).forEach(function (x) { o[x.id] = x.value; }); return Promise.resolve(o);
     },
     setIdNumber: function (pid, v, auditText) {
       if (previewing()) return Promise.resolve();

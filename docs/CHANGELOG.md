@@ -169,3 +169,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   full-width table. Each access level shows what it can use, which of other people's contact details it sees (tick boxes for
   Basic access, Roster coordinator and Children's ministry; "All, always" for Administrator and Pastor), and who has it.
   Fixed a stray line above the People numbers.
+- ✅ 4 Nov 2026: **Advanced search on ID number** (version 0.7.0, Administrators only): People → Advanced search → Privacy →
+  ID number finds people by all or part of their ID number (at least 4 digits; spaces ignored). The numbers are fetched only
+  when Search is pressed, never shown in the results, a column or the download, and each search is in the history log with
+  who was found.

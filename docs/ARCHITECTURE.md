@@ -70,7 +70,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
   | `notes/{personId}` | pastoral notes (`entries` list) | **Pastors only** |
   | `officeNotes/{personId}` | church office notes (`entries` list; Elvanto's Notes come here) | Admin, Pastor |
   | `elvantoFound/unavailable` | what the robot read in Elvanto's Unavailable Volunteers: names and dates only | **Admin only** (the robot writes it) |
-  | `idNumbers/{personId}` | ID number (`value`) – fetched one at a time on **Show**, every view audit-logged | **Admin only**; the person sees their own |
+  | `idNumbers/{personId}` | ID number (`value`) – fetched one at a time on **Show**, or all at once for an advanced search on ID number (a filter only, never a column or download); every view and search audit-logged | **Admin only**; the person sees their own |
   | `photos/{id}` | the photo (`data`: a 320 × 320 JPEG), fetched only when shown | adults: staff, the person, members when the adult is in the directory; children: Admin, Pastor, Children's ministry |
   | `directory/{id}` | name, mobile and `photo` version of adults with *Church directory* consent | everyone signed in |
 - *Leave*: `leave/config` (types, levels, rules, holidays, `autoApprove`), `leaveRequests/{id}`, `leaveAdjustments/{id}`.

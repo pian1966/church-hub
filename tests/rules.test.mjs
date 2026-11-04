@@ -159,6 +159,9 @@ await t('ID numbers: Administrators only; a person may see their own but not cha
   await can(db.admin.doc('idNumbers/p15').set({ value: '8001015009087', updatedAt: 'y' }));
   await cannot(db.admin.doc('idNumbers/p15').set({ value: '8001015009087', updatedAt: 'y', note: 'x' }));
   await cannot(list(db.pastor.collection('idNumbers')));
+  // Advanced search on ID number fetches them all at once: Administrators only
+  await can(list(db.admin.collection('idNumbers')));
+  for (const r of ['pastor', 'rosters', 'kids', 'member']) await cannot(list(db[r].collection('idNumbers')));
 });
 
 console.log('Photos');

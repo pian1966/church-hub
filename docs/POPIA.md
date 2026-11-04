@@ -41,7 +41,7 @@ This is a design checklist, not legal advice – the church's Information Office
 
 ## ID numbers
 - **Purpose (as the church gave it):** telling apart people with the same name; they were also collected during covid. POPIA s10 (minimality) and s14 (keep no longer than needed): the covid reason has ended, so the church should decide whether it still needs ID numbers at all – a date of birth usually tells people apart. Delete them if not.
-- **Where:** `idNumbers/{person}`, apart from everything else; never loaded with the person, only when an Administrator taps **Show**. Every view and change is in the audit log.
+- **Where:** `idNumbers/{person}`, apart from everything else; never loaded with the person, only when an Administrator taps **Show**, or presses Search in an advanced search with an *ID number* filter (all are fetched for that search, kept only in memory and never shown, put in a column or downloaded; at least 4 digits must be typed). Every view, search (with who was found) and change is in the audit log.
 - **Who:** Administrators only. A person may see their own (not change it). Pastors, staff and members never see them.
 - **From Elvanto:** the import reads "ID Number (Numeric)" (a lost leading 0 is put back; spreadsheet-mangled numbers are left out). ID numbers typed into names ("5710210087085 Thomson") are taken out of the name once, when an Administrator signs in.
 

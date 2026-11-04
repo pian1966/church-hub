@@ -169,6 +169,7 @@
   Query.prototype.orderBy = function (f, dir) { return new Query(this.coll, this.filters, [f, dir], this.lim); };
   Query.prototype.limit = function (n) { return new Query(this.coll, this.filters, this.order, n); };
   Query.prototype.doc = function (id) { return new DocRef(this.coll + '/' + id); };
+  Query.prototype.get = function () { try { return Promise.resolve(run(this)); } catch (e) { return Promise.reject(e); } };
   Query.prototype.onSnapshot = function (cb, errCb) { return listen({ query: this, cb: cb, err: errCb }); };
   function matches(q, d) {
     return q.filters.every(function (f) { var v = d[f[0]]; return f[1] === '==' ? v === f[2] : f[1] === 'array-contains' ? Array.isArray(v) && v.indexOf(f[2]) >= 0 : false; });

@@ -395,6 +395,7 @@ I18n.add('nso', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub e boloka batho ba kereke, mananeo a tirelo, dihlopha tša tlhokomelo le taolo ya bašomi lefelong le tee.",
     "What’s new": "Tše mpsha",
     "Opens on GitHub": "E bula go GitHub",
+    "Open in Google Maps": "Bula go Google Maps",
     "Source code": "Khoutu ya mothopo",
     "Version {v}": "Kgatišo ya {v}",
     "Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.": "Bohle ba bona maina a batho bao ba dumetšego go abelana dintlha tša bona tša kgokagano. Swaya seo karolo ye nngwe le ye nngwe e ka se bonago gape. Balaodi le Baruti ba dula ba bona tšohle.",

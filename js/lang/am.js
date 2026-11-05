@@ -395,6 +395,7 @@ I18n.add('am', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub የቤተ ክርስቲያኑን ሰዎች፣ የአገልግሎት ፕሮግራሞች፣ የእንክብካቤ ቡድኖች እና የሠራተኞች አስተዳደር በአንድ ቦታ ይይዛል።",
     "What’s new": "አዲስ ነገሮች",
     "Opens on GitHub": "በGitHub ይከፈታል",
+    "Open in Google Maps": "በGoogle Maps ይክፈቱ",
     "Source code": "የምንጭ ኮድ",
     "Version {v}": "ስሪት {v}",
     "Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.": "ሁሉም ሰው የመገናኛ መረጃቸውን ለማጋራት የተስማሙ ሰዎችን ስም ያያል። እያንዳንዱ ሚና ሌላ ምን ማየት እንደሚችል ምልክት ያድርጉ። አስተዳዳሪዎች እና ፓስተሮች ሁልጊዜ ሁሉንም ያያሉ።",

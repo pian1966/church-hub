@@ -125,6 +125,8 @@ a.item:hover, button.item:hover { background: var(--surface-2); }
 button.item { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; }
 .item b { display: block; font-size: 14.5px; } .item small { display: block; color: var(--muted); font-size: 13px; }
 .kv { display: grid; grid-template-columns: fit-content(45%) minmax(0, 1fr);   /* labels take only the width the longest one needs (any language), never more than 45% */ gap: 8px 14px; font-size: 14.5px; margin: 0; }
+.map-link { display: inline-grid; place-items: center; width: 26px; height: 26px; margin: -4px 0 -4px 2px; border-radius: 8px; color: var(--accent-ink); vertical-align: middle; }
+.map-link:hover, .map-link:focus-visible { background: var(--surface-2); }
 .kv dt { color: var(--muted); } .kv dd { margin: 0; overflow-wrap: anywhere; }
 .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow); }

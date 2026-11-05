@@ -395,6 +395,7 @@ I18n.add('pl', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub trzyma w jednym miejscu ludzi, grafiki służby, grupy opieki i zarządzanie pracownikami kościoła.",
     "What’s new": "Co nowego",
     "Opens on GitHub": "Otwiera się w GitHub",
+    "Open in Google Maps": "Otwórz w Mapach Google",
     "Source code": "Kod źródłowy",
     "Version {v}": "Wersja {v}",
     "Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.": "Wszyscy widzą imiona i nazwiska osób, które zgodziły się udostępnić dane kontaktowe. Zaznacz, co jeszcze może widzieć każda rola. Administratorzy i pastorzy zawsze widzą wszystko.",

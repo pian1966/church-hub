@@ -395,6 +395,7 @@ I18n.add('yo', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub ń tọ́jú àwọn ènìyàn ìjọ, ètò iṣẹ́ ìsìn, àwọn ẹgbẹ́ ìtọ́jú àti ìṣàkóso òṣìṣẹ́ sí ibì kan.",
     "What’s new": "Ohun tuntun",
     "Opens on GitHub": "Yóò ṣí lórí GitHub",
+    "Open in Google Maps": "Ṣí ní Google Maps",
     "Source code": "Kóòdù orísun",
     "Version {v}": "Ẹ̀dà {v}",
     "Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.": "Gbogbo ènìyàn ń rí orúkọ àwọn tí wọ́n gbà láti pín àlàyé ìkànsí wọn. Fi àmì sí ohun mìíràn tí ipa kọ̀ọ̀kan lè rí. Àwọn alábòójútó àti àwọn Pásítọ̀ máa ń rí ohun gbogbo.",

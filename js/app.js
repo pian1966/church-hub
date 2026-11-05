@@ -171,6 +171,14 @@ var Hub = (function () {
   function icon(path, size) {
     return '<svg width="' + (size || 20) + '" height="' + (size || 20) + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + path + '"></path></svg>';
   }
+  /** A small map-pin button that opens an address in Google Maps (a new tab). The address goes to Google only when tapped. */
+  function mapLink(address) {
+    var q = String(address || '').replace(/\s+/g, ' ').trim(); if (!q) return '';
+    var country = (Countries.church(Store.settings()) || {}).name;
+    if (country && q.toLowerCase().indexOf(country.toLowerCase()) < 0) q += ', ' + country;   // the church's own country isn't shown, but helps the map
+    return '<a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=' + esc(encodeURIComponent(q)) + '" target="_blank" rel="noopener noreferrer" title="' + esc(T('Open in Google Maps')) + '" aria-label="' + esc(T('Open in Google Maps')) + '">' +
+      icon('M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z', 16) + '</a>';
+  }
   var ICON = {
     home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
     people: 'M16 11a4 4 0 1 0-8 0M3 21c1-4 5-6 9-6s8 2 9 6',
@@ -691,6 +699,6 @@ var Hub = (function () {
   }
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, modal: modal, closeModal: closeModal,
+    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, modal: modal, closeModal: closeModal,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
 })();

@@ -386,6 +386,7 @@ I18n.add('zh-Hant', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub 將教會的人員、花名冊、護理小組和員工管理集中在一個地方。",
     "What’s new": "最新消息",
     "Opens on GitHub": "在 GitHub 上打開",
+    "Open in Google Maps": "在 Google 地圖中開啟",
     "Source code": "原始碼",
     "Version {v}": "版本{v}",
     "Church directory": "教會名錄",

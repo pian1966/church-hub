@@ -643,6 +643,7 @@ I18n.add('nr', {
     "Lives in {place}, an area of this group": "Uhlala e-{place}, indawo yesiqhema lesi",
     "Lives in {place}, like others in this group": "Uhlala e-{place}, njengabanye esiqhemeni lesi",
     "No home address": "Akukho ikheli lekhaya",
+    "Lives in {place} – which part? Closest groups: {groups}": "Uhlala e-{place} – kuyiphi ingcenye? Iinqhema eziseduze: {groups}",
     "No care group in {place} yet": "Akhenge kube nesiqhema sokunakekelana e-{place}",
     "The people they live with are in different groups: {groups}": "Abantu ahlala nabo basiqhemeni esahlukeneko: {groups}",
     "Close to more than one group: {groups}": "Useduze neenqhema ezingaphezu kwesisodwa: {groups}",

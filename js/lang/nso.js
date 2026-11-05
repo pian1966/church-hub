@@ -643,6 +643,7 @@ I18n.add('nso', {
     "Lives in {place}, an area of this group": "O dula {place}, lefelo la sehlopha se",
     "Lives in {place}, like others in this group": "O dula {place}, bjalo ka ba bangwe ba sehlopha se",
     "No home address": "Ga go na aterese ya gae",
+    "Lives in {place} – which part? Closest groups: {groups}": "O dula {place} – karolong efe? Dihlopha tše di lego kgauswi: {groups}",
     "No care group in {place} yet": "Ga go eso be le sehlopha sa tlhokomelo {place}",
     "The people they live with are in different groups: {groups}": "Batho bao a dulago le bona ba dihlopheng tše di fapanego: {groups}",
     "Close to more than one group: {groups}": "Kgauswi le dihlopha tše di fetago se tee: {groups}",

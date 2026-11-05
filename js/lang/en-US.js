@@ -1541,6 +1541,7 @@ I18n.add('en-US', {
     "Lives in {place}, an area of this group": "Lives in {place}, an area of this group",
     "Lives in {place}, like others in this group": "Lives in {place}, like others in this group",
     "No home address": "No home address",
+    "Lives in {place} – which part? Closest groups: {groups}": "Lives in {place} – which part? Closest groups: {groups}",
     "No care group in {place} yet": "No care group in {place} yet",
     "The people they live with are in different groups: {groups}": "The people they live with are in different groups: {groups}",
     "Close to more than one group: {groups}": "Close to more than one group: {groups}",

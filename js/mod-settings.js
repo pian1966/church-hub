@@ -61,7 +61,7 @@
   }
   function tabs(a) {
     return '<nav class="seg" aria-label="' + esc(T('Settings')) + '" style="margin-bottom:18px">' +
-      [['', T('Settings')], ['terminology', T('Terminology (Church Words)')]].map(function (x) {
+      [['', T('Settings')], ['terminology', T('Terminology (Church Words)')], ['emails', T('Email templates')]].map(function (x) {
         return '<a href="#/settings' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === a ? 'on' : '') + '">' + esc(x[1]) + '</a>';
       }).join('') + '</nav>';
   }
@@ -90,9 +90,45 @@
           '<td><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][1] })) + '"></td></tr>';
       }).join('') + '</tbody></table></div><button class="btn small" data-act="settings:savewords">' + T('Save wording') + '</button></section>';
   }
+  /** Email templates for anniversaries, birthdays, death days of spouses, and welcome messages. */
+  function renderEmailTemplates(st) {
+    var E = window.Emails || (typeof require !== 'undefined' ? require('./emails.js') : null);
+    var templates = E ? E.getTemplates(st) : {};
+    var curMethod = E ? E.getMethod(st) : 'afrihost';
+    var keys = ['birthday', 'anniversary', 'spouseDeath', 'welcomeFirst', 'welcomeThreeWeeks'];
+    var hints = {
+      birthday: TX('Sent on a member’s birthday. Placeholders: {firstName}, {lastName}, {fullName}, {churchName}, {yearsText}.'),
+      anniversary: TX('Sent on a wedding anniversary. Placeholders: {firstName}, {lastName}, {fullName}, {churchName}, {yearsText}.'),
+      spouseDeath: TX('Sent on the death day of a spouse. Placeholders: {firstName}, {lastName}, {fullName}, {spouseName}, {churchName}, {yearsText}.'),
+      welcomeFirst: TX('Sent to a newcomer on their first visit. Placeholders: {firstName}, {lastName}, {fullName}, {churchName}.'),
+      welcomeThreeWeeks: TX('Sent to a newcomer 3 weeks after their first visit. Placeholders: {firstName}, {lastName}, {fullName}, {churchName}.')
+    };
+
+    return '<div class="page-head"><div><h1>' + T('Email templates') + '</h1><p class="lead">' + T('Editable email templates for birthdays, anniversaries, late spouse remembrance, and newcomer welcome messages.') + '</p></div></div>' +
+      tabs('emails') +
+      '<section class="panel"><h2>' + T('Sending email') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('Choose how Church Hub opens emails to send.') + '</p>' +
+      '<div class="two"><label class="field">' + T('Send emails using') + '<select id="em-method">' +
+      '<option value="afrihost"' + (curMethod === 'afrihost' ? ' selected' : '') + '>' + T('Afrihost email ({email})', { email: 'office@christchurchhowick.co.za' }) + '</option>' +
+      '<option value="gmail"' + (curMethod === 'gmail' ? ' selected' : '') + '>' + T('Gmail ({email}) with alias / Reply-To', { email: 'christchurchhowick@gmail.com' }) + '</option>' +
+      '</select><small>' + T('Afrihost opens your email client directly; Gmail opens Gmail in your browser with reply-to set.') + '</small></label></div>' +
+      '</section>' +
+      keys.map(function (k) {
+        var tmpl = templates[k] || {};
+        return '<section class="panel"><h2>' + esc(T(tmpl.name)) + '</h2>' +
+          '<p class="hint" style="margin-top:0">' + esc(T(hints[k])) + '</p>' +
+          '<label class="field req">' + T('Subject') + '<input id="em-sub-' + k + '" value="' + esc(tmpl.subject) + '"></label>' +
+          '<label class="field req">' + T('Message body') + '<textarea id="em-body-' + k + '" rows="5">' + esc(tmpl.body) + '</textarea></label>' +
+          '</section>';
+      }).join('') +
+      '<div class="btns" style="margin-top:16px"><button class="btn primary" data-act="settings:saveemails">' + T('Save email templates') + '</button>' +
+      '<button class="btn" data-act="settings:resetemails">' + T('Reset to defaults') + '</button></div>';
+  }
+
   function render(parts) {
     var st = S.settings();
     if (parts && parts[0] === 'terminology') return renderTerminology(st);
+    if (parts && parts[0] === 'emails') return renderEmailTemplates(st);
     var on = st.modules || {};
     var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
     var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
@@ -135,9 +171,95 @@
       (P ? '<button class="btn small" data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
   }
 
+  var pendingEmailSend = null;
+
+  function dailyEmailTodos() {
+    if (!H.can('*')) return [];
+    var E = window.Emails; if (!E) return [];
+    var st = S.settings(), dismissed = st.dismissedEmailPrompts || {};
+    var todayStr = H.today();
+    var events = E.findEvents(S.list('people'), todayStr, dismissed);
+    var labels = {
+      birthday: TX('Send birthday email to {name}'),
+      anniversary: TX('Send wedding anniversary email to {name}'),
+      spouseDeath: TX('Send comforting email to {name} (spouse’s death anniversary)'),
+      welcomeFirst: TX('Send welcome email to {name} (first visit)'),
+      welcomeThreeWeeks: TX('Send 3-week welcome email to {name}')
+    };
+
+    return events.map(function (ev) {
+      return {
+        text: T(labels[ev.type], { name: H.name(ev.person) }),
+        href: '#/settings/sendemail/' + encodeURIComponent(ev.id),
+        tag: 'Email',
+        ev: ev
+      };
+    });
+  }
+
+  function showSendDialog(evId) {
+    var E = window.Emails; if (!E) return;
+    var st = S.settings(), dismissed = st.dismissedEmailPrompts || {};
+    var events = E.findEvents(S.list('people'), H.today(), dismissed);
+    var ev = events.filter(function (x) { return x.id === evId; })[0];
+    if (!ev) {
+      // Maybe already sent or not found, try without dismissed filter
+      events = E.findEvents(S.list('people'), H.today(), {});
+      ev = events.filter(function (x) { return x.id === evId; })[0];
+    }
+    if (!ev) {
+      H.toast(T('That email prompt is no longer needed or already sent'));
+      H.go('home');
+      return;
+    }
+
+    var templates = E.getTemplates(st);
+    var tmpl = templates[ev.type] || {};
+    var data = Object.assign({}, ev.data, {
+      churchName: st.churchName || 'Christ Church Howick'
+    });
+    var subject = E.interpolate(tmpl.subject, data);
+    var body = E.interpolate(tmpl.body, data);
+    var curMethod = E.getMethod(st);
+
+    pendingEmailSend = {
+      ev: ev,
+      subject: subject,
+      body: body,
+      method: curMethod
+    };
+
+    var html = H.dialogHead(T('Send email to {name}', { name: H.name(ev.person) })) +
+      '<div class="dlg-body">' +
+      '<div class="two"><label class="field">' + T('To') + '<input id="em-send-to" value="' + esc(ev.recipientEmail) + '" readonly></label>' +
+      '<label class="field">' + T('Send using') + '<select id="em-send-method">' +
+      '<option value="afrihost"' + (curMethod === 'afrihost' ? ' selected' : '') + '>' + T('Afrihost email ({email})', { email: 'office@christchurchhowick.co.za' }) + '</option>' +
+      '<option value="gmail"' + (curMethod === 'gmail' ? ' selected' : '') + '>' + T('Gmail ({email}) with alias / Reply-To', { email: 'christchurchhowick@gmail.com' }) + '</option>' +
+      '</select></label></div>' +
+      '<label class="field req">' + T('Subject') + '<input id="em-send-sub" value="' + esc(subject) + '"></label>' +
+      '<label class="field req">' + T('Message') + '<textarea id="em-send-body" rows="6">' + esc(body) + '</textarea></label>' +
+      '</div>' +
+      '<div class="dlg-foot" style="justify-content:space-between">' +
+      '<button class="btn ghost" data-act="settings:dismissemail" data-id="' + esc(ev.id) + '">' + T('Don’t send today') + '</button>' +
+      '<div><button class="btn" data-act="hub:close">' + T('Cancel') + '</button> ' +
+      '<button class="btn primary" data-act="settings:sendemailnow" data-id="' + esc(ev.id) + '">' + T('Open email') + '</button></div>' +
+      '</div>';
+
+    H.modal(html, T('Send email'));
+  }
+
   H.register({
     id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'],
-    render: function (parts) { return H.can('*') ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>'; },
+    todos: function (u) {
+      return dailyEmailTodos();
+    },
+    render: function (parts) {
+      if (parts && parts[0] === 'sendemail' && parts[1]) {
+        setTimeout(function () { showSendDialog(decodeURIComponent(parts[1])); }, 50);
+        return render(['emails']);
+      }
+      return H.can('*') ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>';
+    },
     after: function () {
       var sn = document.getElementById('sp-name'), sd = document.getElementById('sp-date');
       if (sn && sd) sn.addEventListener('input', function () { var d = Serving.specialDate(sn.value.trim(), H.today()); if (d) sd.value = d; });   // a suggestion fills in its date
@@ -157,6 +279,66 @@
       });
     },
     actions: {
+      saveemails: function () {
+        var E = window.Emails; if (!E) return;
+        var keys = ['birthday', 'anniversary', 'spouseDeath', 'welcomeFirst', 'welcomeThreeWeeks'];
+        var templates = {};
+        keys.forEach(function (k) {
+          var subEl = document.getElementById('em-sub-' + k);
+          var bodyEl = document.getElementById('em-body-' + k);
+          templates[k] = {
+            subject: subEl ? subEl.value.trim() : '',
+            body: bodyEl ? bodyEl.value.trim() : ''
+          };
+        });
+        var methEl = document.getElementById('em-method');
+        var method = methEl ? methEl.value : 'afrihost';
+        S.setSettings({ emailTemplates: templates, emailMethod: method }, 'Saved email templates');
+        H.render(); H.toast(T('Email templates saved'));
+      },
+      resetemails: function () {
+        var E = window.Emails; if (!E) return;
+        S.setSettings({ emailTemplates: null }, 'Reset email templates to defaults');
+        H.render(); H.toast(T('Reset to defaults'));
+      },
+      dismissemail: function (el) {
+        var evId = el.dataset.id; if (!evId) return;
+        var st = S.settings(), dismissed = Object.assign({}, st.dismissedEmailPrompts || {});
+        dismissed[evId] = true;
+        S.setSettings({ dismissedEmailPrompts: dismissed }, 'Dismissed daily email prompt');
+        H.closeModal();
+        H.render();
+        H.toast(T('Prompt dismissed for today'));
+      },
+      sendemailnow: function (el) {
+        var evId = el.dataset.id; if (!evId) return;
+        var E = window.Emails; if (!E) return;
+        var to = (document.getElementById('em-send-to') || {}).value || '';
+        var method = (document.getElementById('em-send-method') || {}).value || 'afrihost';
+        var subject = (document.getElementById('em-send-sub') || {}).value || '';
+        var body = (document.getElementById('em-send-body') || {}).value || '';
+
+        var url = E.makeSendUrl(method, {
+          to: to,
+          subject: subject,
+          body: body
+        });
+
+        // Mark dismissed for today so prompt disappears
+        var st = S.settings(), dismissed = Object.assign({}, st.dismissedEmailPrompts || {});
+        dismissed[evId] = true;
+        S.setSettings({ dismissedEmailPrompts: dismissed }, 'Sent email via prompt');
+
+        H.closeModal();
+        H.render();
+
+        if (method === 'gmail') {
+          window.open(url, '_blank', 'noopener,noreferrer');
+        } else {
+          location.href = url;
+        }
+        H.toast(T('Opening email…'));
+      },
       see: function () {
         var see = {}; window.PeopleParts.TIERS.forEach(function (t) { see[t[0]] = []; });
         document.querySelectorAll('.st-see').forEach(function (b) { if (b.checked) see[b.dataset.t].push(b.value); });

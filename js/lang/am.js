@@ -1595,6 +1595,8 @@ I18n.add('am', {
     "Short form of the same first name ({a} / {b})": "የአንድ ዓይነት ስም አጭር ቅጽ ({a} / {b})",
     "First names differ by a letter or two": "የመጀመሪያ ስሞች በአንድ ወይም በሁለት ፊደል ይለያያሉ",
     "First name given as an initial": "የመጀመሪያ ስም በመጀመሪያ ፊደል ብቻ ተሰጥቷል",
+    "One first name is the start of the other ({a} / {b})": "አንዱ የመጀመሪያ ስም የሌላው መጀመሪያ ነው ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "በElvanto ውስጥ ሁለት የተለያዩ ሰዎች – እዚያም ያረጋግጡ",
     "Same surname": "ተመሳሳይ የአባት ስም",
     "Surnames differ by a letter or two": "የአባት ስሞች በአንድ ወይም በሁለት ፊደል ይለያያሉ",
     "Part of the surname matches": "የአባት ስሙ ከፊሉ ይመሳሰላል",

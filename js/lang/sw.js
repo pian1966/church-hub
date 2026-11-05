@@ -1595,6 +1595,8 @@ I18n.add('sw', {
     "Short form of the same first name ({a} / {b})": "Kifupi cha jina lilelile ({a} / {b})",
     "First names differ by a letter or two": "Majina ya kwanza yanatofautiana kwa herufi moja au mbili",
     "First name given as an initial": "Jina la kwanza limetolewa kama herufi ya kwanza tu",
+    "One first name is the start of the other ({a} / {b})": "Jina moja la kwanza ni mwanzo wa jingine ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Watu wawili tofauti kwenye Elvanto – angalia huko pia",
     "Same surname": "Jina la ukoo sawa",
     "Surnames differ by a letter or two": "Majina ya ukoo yanatofautiana kwa herufi moja au mbili",
     "Part of the surname matches": "Sehemu ya jina la ukoo inalingana",

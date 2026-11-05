@@ -59,6 +59,8 @@ I18n.rows([
     ['Short form of the same first name ({a} / {b})', 'Kort vorm van dieselfde voornaam ({a} / {b})', 'Ifomu elifushane legama elifanayo ({a} / {b})', 'Uhlobo olufutshane lwegama elifanayo ({a} / {b})'],
     ['First names differ by a letter or two', 'Voorname verskil met ’n letter of twee', 'Amagama ahluka ngohlamvu olulodwa noma ezimbili', 'Amagama ahluka ngonobumba omnye okanye ababini'],
     ['First name given as an initial', 'Voornaam as ’n voorletter gegee', 'Igama linikezwe njengohlamvu lokuqala', 'Igama linikwe njengonobumba wokuqala'],
+    ["One first name is the start of the other ({a} / {b})", "Een voornaam is die begin van die ander ({a} / {b})", "Elinye igama lokuqala liyisiqalo selinye ({a} / {b})", "Elinye igama lokuqala sisiqalo selinye ({a} / {b})"],
+    ["Two separate people in Elvanto – check there too", "Twee aparte mense in Elvanto – kyk ook daar", "Abantu ababili abahlukene ku-Elvanto – hlola nalapho", "Abantu ababini abahlukeneyo kwi-Elvanto – jonga nalapho"],
     ['Same surname', 'Dieselfde van', 'Isibongo esifanayo', 'Ifani efanayo'],
     ['Surnames differ by a letter or two', 'Vanne verskil met ’n letter of twee', 'Izibongo zihluka ngohlamvu olulodwa noma ezimbili', 'Iifani zahluka ngonobumba omnye okanye ababini'],
     ['Part of the surname matches', 'Deel van die van pas', 'Ingxenye yesibongo iyafana', 'Inxalenye yefani iyafana'],

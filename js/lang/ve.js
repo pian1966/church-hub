@@ -1595,6 +1595,8 @@ I18n.add('ve', {
     "Short form of the same first name ({a} / {b})": "Tshivhumbeo tshipfufhi tsha dzina ḽi fanaho ({a} / {b})",
     "First names differ by a letter or two": "Madzina a u thoma a fhambana nga ḽiḓeretha ḽithihi kana mavhili",
     "First name given as an initial": "Dzina ḽa u thoma ḽo ṋewa sa ḽiḓeretha ḽa u thoma",
+    "One first name is the start of the other ({a} / {b})": "Dzina ḽiṅwe ḽa u thoma ndi mathomo a ḽiṅwe ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Vhathu vhavhili vho fhambanaho kha Elvanto – sedzani na henefho",
     "Same surname": "Tshivongo tshi fanaho",
     "Surnames differ by a letter or two": "Zwivongo zwi fhambana nga ḽiḓeretha ḽithihi kana mavhili",
     "Part of the surname matches": "Tshipiḓa tsha tshivongo tshi a fana",

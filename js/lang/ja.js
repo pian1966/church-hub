@@ -780,6 +780,8 @@ I18n.add('ja', {
     "Short form of the same first name ({a} / {b})": "同じ名の短縮形 ({a} /{b})",
     "First names differ by a letter or two": "名前は 1 文字か 2 文字異なります",
     "First name given as an initial": "イニシャルとして付けられた名",
+    "One first name is the start of the other ({a} / {b})": "一方の名がもう一方の名の書き始めです ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Elvanto では別々の人です。そちらも確認してください",
     "Same surname": "同姓",
     "Surnames differ by a letter or two": "姓は 1 文字か 2 文字異なります",
     "Part of the surname matches": "姓の一部が一致する",

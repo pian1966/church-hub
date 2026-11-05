@@ -1595,6 +1595,8 @@ I18n.add('de', {
     "Short form of the same first name ({a} / {b})": "Kurzform desselben Vornamens ({a} / {b})",
     "First names differ by a letter or two": "Vornamen unterscheiden sich um ein oder zwei Buchstaben",
     "First name given as an initial": "Vorname als Initiale angegeben",
+    "One first name is the start of the other ({a} / {b})": "Ein Vorname ist der Anfang des anderen ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Zwei getrennte Personen in Elvanto – dort ebenfalls prüfen",
     "Same surname": "Gleicher Nachname",
     "Surnames differ by a letter or two": "Nachnamen unterscheiden sich um ein oder zwei Buchstaben",
     "Part of the surname matches": "Ein Teil des Nachnamens stimmt überein",

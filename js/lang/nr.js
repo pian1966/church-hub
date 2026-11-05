@@ -1595,6 +1595,8 @@ I18n.add('nr', {
     "Short form of the same first name ({a} / {b})": "Isimo esifitjhani sebizo elifanako ({a} / {b})",
     "First names differ by a letter or two": "Amabizo wokuthoma ahlukana ngonobumba oyedwa namkha ababili",
     "First name given as an initial": "Ibizo lokuthoma linikelwe njengonobumba wokuthoma",
+    "One first name is the start of the other ({a} / {b})": "Elinye ibizo lokuthoma lisiqalo selinye ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Abantu ababili abahlukeneko ku-Elvanto – qala nalapho",
     "Same surname": "Isibongo esifanako",
     "Surnames differ by a letter or two": "Iimbongo zihlukana ngonobumba oyedwa namkha ababili",
     "Part of the surname matches": "Ingcenye yesibongo iyafana",

@@ -1595,6 +1595,8 @@ I18n.add('tn', {
     "Short form of the same first name ({a} / {b})": "Sebopego se se khutshwane sa leina le le tshwanang ({a} / {b})",
     "First names differ by a letter or two": "Maina a ntlha a farologana ka tlhaka e le nngwe kgotsa di le pedi",
     "First name given as an initial": "Leina la ntlha le neilwe jaaka tlhaka ya ntlha",
+    "One first name is the start of the other ({a} / {b})": "Leina le lengwe la ntlha ke tshimologo ya le lengwe ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Batho ba babedi ba ba farologaneng mo Elvanto – lebelela le foo",
     "Same surname": "Sefane se se tshwanang",
     "Surnames differ by a letter or two": "Difane di farologana ka tlhaka e le nngwe kgotsa di le pedi",
     "Part of the surname matches": "Karolo ya sefane e a tshwana",

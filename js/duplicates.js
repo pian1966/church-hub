@@ -9,7 +9,8 @@
  *  - Contact details: the same email (Gmail dots and +labels ignored) or mobile (+27 82… is 082…, +44 7700… is 07700…).
  *    Households often share an email or a landline, so contact details alone never make a duplicate: the first name must match too.
  *  - Birthday: the same date counts for; two different dates count strongly against (they are different people).
- *  - Elvanto ID: the same ID is certain; two different IDs are different people in Elvanto.
+ *  - Elvanto ID: the same ID is certain; two different IDs are still compared (Elvanto has duplicates too), but at most "worth a look".
+ *  - A first name cut short ("And Pike" for Andy Pike) counts only with the same mobile, email or birthday.
  * A parent and a child with the same name (e.g. "Johan van der Merwe" senior and junior) are kept apart by the birthday,
  * or by one being an adult and the other a child.
  * Scores: 100 = certain, 70 or more = very likely ("Probably the same person"), 45 or more = worth a look ("Possibly").
@@ -138,6 +139,8 @@ var Duplicates = (function () {
     if (typed.length < 3) return false;
     return NAMES.some(function (n) { return n.length > typed.length && n.indexOf(typed) === 0 && sameGroup(n, other); });
   }
+  /** A first name cut short ("And" for "Andy", "Chri" for "Christine"): 3 letters or more, the start of the other name. */
+  function cutOff(a, b) { a = a.split(' ')[0]; b = b.split(' ')[0]; return a.length >= 3 && b.length > a.length && b.indexOf(a) === 0; }
   function slip(a, b) { var n = Math.min(a.length, b.length); return n >= 4 && distance(a, b) <= (n >= 7 ? 2 : 1); }
   function sameGroup(a, b) { return (GROUP[a] || []).some(function (g) { return (GROUP[b] || []).indexOf(g) >= 0; }); }
 
@@ -155,6 +158,7 @@ var Duplicates = (function () {
     if (a.some(function (x) { return b.some(function (y) { return soundsAlike(x, y) || soundsAlike(x.split(' ')[0], y.split(' ')[0]); }); })) return 'sound';
     if (typing && a.some(function (x) { return b.some(function (y) { return starts(x, y) || startsShort(x, y); }); })) return 'start';
     if ((fa.length === 1 && fb[0] === fa) || (fb.length === 1 && fa[0] === fb)) return 'initial';
+    if (a.some(function (x) { return b.some(function (y) { return cutOff(x, y) || cutOff(y, x); }); })) return 'cut';
     return '';
   }
   /** "vd Merwe", "v.d. Merwe" → "van der merwe"; "v Wyk" → "van wyk". */
@@ -188,14 +192,15 @@ var Duplicates = (function () {
     if (!p || !q || p.id && p.id === q.id) return { score: 0, reasons: [] };
     if (p.elvantoId && q.elvantoId) {
       if (p.elvantoId === q.elvantoId) return { score: 100, reasons: ['The same Elvanto ID'], sure: true };
-      return { score: 0, reasons: [] };                      // two different people in Elvanto
     }
+    var twoInElvanto = !!(p.elvantoId && q.elvantoId);       // Elvanto has duplicates of its own: compared as usual, but never "certain" or "very likely" 
     var bp = birth(p), bq = birth(q);
     if (bp && bq && bp !== bq) return { score: 0, reasons: [] };    // different birthdays: different people
     if (p.familyRole && q.familyRole && (p.familyRole === 'child') !== (q.familyRole === 'child') && !(bp && bp === bq)) return { score: 0, reasons: [] };
     var fm = firstMatch(p, q, typing), lm = lastMatch(p, q, typing), sw = swapped(p, q), why = [], s = 0;
     var me = emails(p), sameMail = me.length && emails(q).some(function (e) { return me.indexOf(e) >= 0; });
     var mp = phone(p.mobile), sameMobile = !!mp && mp === phone(q.mobile), sameBirth = !!bp && bp === bq;
+    if (fm === 'cut' && !(sameBirth || sameMail || sameMobile)) fm = '';   // a cut-off name alone is too weak (Chris / Christine)
     if (sw) { s += 55; why.push(T('First and last name swapped')); }
     else {
       if (fm === 'same') { s += 35; why.push(T('Same first name')); }
@@ -205,13 +210,14 @@ var Duplicates = (function () {
       else if (fm === 'sound') { s += 24; why.push(T('First names sound alike')); }
       else if (fm === 'start') { s += 18; why.push(T('Similar name')); }
       else if (fm === 'initial') { s += 12; why.push(T('First name given as an initial')); }
+      else if (fm === 'cut' && (sameBirth || sameMail || sameMobile)) { s += 22; why.push(T('One first name is the start of the other ({a} / {b})', { a: plain(p.firstName), b: plain(q.preferredName || q.firstName) })); }
       if (lm === 'same') { s += 30; why.push(T('Same surname')); }
       else if (lm === 'slip') { s += 20; why.push(T('Surnames differ by a letter or two')); }
       else if (lm === 'sound') { s += 20; why.push(T('Surnames sound alike')); }
       else if (lm === 'part') { s += 15; why.push(T('Part of the surname matches')); }
       else if (lm === 'start') { s += 15; if (fm !== 'start') why.push(T('Similar name')); }
     }
-    var firstOk = sw || !!fm && fm !== 'initial';
+    var firstOk = sw || !!fm && fm !== 'initial';   // 'cut' only gets here with the same mobile, email or birthday
     // Contact details only count with a matching first name: families share emails and phones.
     if (sameMail) { if (firstOk) { s += 30; why.push(T('Same email address')); } }
     if (sameMobile) { if (firstOk) { s += 30; why.push(T('Same mobile number')); } }
@@ -220,6 +226,7 @@ var Duplicates = (function () {
     if (!lm && !sw && firstOk && (sameBirth || sameMail || sameMobile)) why.push(T('Different surname – perhaps a maiden or married name'));
     if (!firstOk && !sw) s = Math.min(s, 30);                // a different first name is a different person, even in the same household
     if (!lm && !sw && !(sameBirth || sameMail || sameMobile)) s = Math.min(s, 30);
+    if (twoInElvanto && s >= 45) { s = Math.min(s, 69); why.push(T('Two separate people in Elvanto – check there too')); }
     return { score: Math.min(s, 99), reasons: why, sure: false, first: fm, last: lm, sameEmail: !!sameMail, sameMobile: sameMobile };
   }
   var SENS = { 1: { possible: 62, similar: 0, letters: 2 }, 2: { possible: 52, similar: 36, letters: 2 }, 3: { possible: 45, similar: 30, letters: 2 },

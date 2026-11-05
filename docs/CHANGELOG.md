@@ -185,3 +185,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026 (0.10.0): the two 0.9.0 changes above released together; the new duplicate-check sentences added to Chinese, Japanese and American English.
 - ✅ 5 Nov 2026 (0.10.1): Care groups – the large “Not a carer / Make carer” button beside each member is now a small star: faint until you point at it, filled green for a carer (the words show when you hover).
 - ✅ 5 Nov 2026 (0.10.2): “Help improve the … wording on this page” now sits at the very bottom of each page, smaller and in a lighter grey.
+- ✅ 5 Nov 2026 (0.10.3): “Help improve the … wording” is now a small footnote at the bottom right of each page.

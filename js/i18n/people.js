@@ -2,6 +2,22 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Only Administrators can use the Bin.", "Net Administrateurs kan die Asblik gebruik.", "AbaPhathi kuphela abangasebenzisa uMgqomo.", "Abalawuli kuphela abanokusebenzisa iMgqomo."],
+    ["Bin", "Asblik", "Umgqomo", "Umgqomo"],
+    ["People moved to the Bin are hidden everywhere and can’t sign in. Restore them within {n} days; after that they are deleted for good.", "Mense in die Asblik is oral versteek en kan nie aanmeld nie. Herstel hulle binne {n} dae; daarna word hulle vir altyd geskrap.", "Abantu abasemgqonyeni bafihliwe yonke indawo futhi abakwazi ukungena. Babuyise ezinsukwini ezingu-{n}; emva kwalokho bayasulwa unomphela.", "Abantu abakwiMgqomo bafihliwe kuyo yonke indawo kwaye abanakungena. Babuyise kwiintsuku ezi-{n}; emva koko bacinywa ngonaphakade."],
+    ["Moved to the Bin {date} by {name} · deleted on {gone}", "In die Asblik geskuif {date} deur {name} · geskrap op {gone}", "Kufakwe eMgqonyeni ngo-{date} ngu-{name} · kuzosulwa ngo-{gone}", "Kufakwe eMgqomeni ngo-{date} ngu-{name} · kuza kucinywa ngo-{gone}"],
+    ["Served on a roster or took leave: an anonymous record will be kept", "Het op ’n diensrooster gedien of verlof geneem: ’n anonieme rekord word gehou", "Ubesebenza ohlwini lomsebenzi noma uthathe ikhefu: kuzogcinwa irekhodi elingenagama", "Ebesebenza kuluhlu lomsebenzi okanye ethathe ikhefu: kuza kugcinwa irekhodi elingenagama"],
+    ["Restore", "Herstel", "Buyisa", "Buyisela"],
+    ["Delete forever", "Skrap vir altyd", "Susa unomphela", "Cima ngonaphakade"],
+    ["The Bin is empty.", "Die Asblik is leeg.", "UMgqomo awunalutho.", "UMgqomo awunanto."],
+    ["You can’t move yourself to the Bin", "Jy kan nie jouself in die Asblik skuif nie", "Awukwazi ukuzifaka eMgqonyeni", "Awunakuzifaka eMgqomeni"],
+    ["Click again: move to the Bin", "Klik weer: skuif na die Asblik", "Chofoza futhi: faka eMgqonyeni", "Cofa kwakhona: faka eMgqomeni"],
+    ["{name} moved to the Bin. Restore them from People → Bin within {n} days.", "{name} is in die Asblik geskuif. Herstel hulle binne {n} dae onder Mense → Asblik.", "U-{name} ufakwe eMgqonyeni. Mbuyise ku-Abantu → Umgqomo ezinsukwini ezingu-{n}.", "U-{name} ufakwe eMgqomeni. Mbuyisele kwi-Abantu → Umgqomo kwiintsuku ezi-{n}."],
+    ["{name} restored", "{name} herstel", "U-{name} ubuyisiwe", "U-{name} ubuyiselwe"],
+    ["Click again: delete forever", "Klik weer: skrap vir altyd", "Chofoza futhi: susa unomphela", "Cofa kwakhona: cima ngonaphakade"],
+    ["Deleted forever", "Vir altyd geskrap", "Kususwe unomphela", "Kucinywe ngonaphakade"],
+    ["For a test person or someone added by mistake. They can be restored for 30 days.", "Vir ’n toetspersoon of iemand wat per ongeluk bygevoeg is. Kan 30 dae lank herstel word.", "Kumuntu wokuhlola noma ofakwe ngephutha. Angabuyiswa izinsuku ezingu-30.", "Kumntu wovavanyo okanye ofakwe ngempazamo. Unokubuyiselwa iintsuku ezingama-30."],
+    ["Move to Bin", "Skuif na Asblik", "Faka eMgqonyeni", "Faka eMgqomeni"],
     ['Church directory', 'Kerkgids', 'Uhlu lwamalungu ebandla', 'Uluhlu lwamalungu ecawe'],
     ['Unknown', 'Onbekend', 'Akwaziwa', 'Akwaziwa'],
     ['People who agreed to be in the church directory.', 'Mense wat ingestem het om in die kerkgids te wees.', 'Abantu abavumile ukuba sohlwini lwamalungu ebandla.', 'Abantu abavumileyo ukuba kuluhlu lwamalungu ecawe.'],

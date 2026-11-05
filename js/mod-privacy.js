@@ -56,7 +56,7 @@
 
   function renderRetention() {
     var months = S.settings().retentionMonths || 24, cutoff = addDays(H.today(), -Math.round(months * 30.4));
-    var left = S.find('people', function (p) { return p.active === false && p.firstName !== 'Deleted'; });
+    var left = S.find('people', function (p) { return p.active === false && p.firstName !== 'Deleted' && !p.binnedAt; });
     var stale = S.find('people', function (p) { return p.active !== false && (p.updatedAt || p.createdAt || '9') < cutoff && !S.find('assignments', function (a) { return a.personId === p.id; }).length; });
     var row = function (p, why) { return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc(why) + '</small></span><a class="btn small" href="#/people/p/' + p.id + '">' + T('Open') + '</a><button class="btn small" data-act="privacy:erase" data-id="' + p.id + '">' + T('Delete their information') + '</button></div>'; };
     return head() + tabs('retention') + '<p class="muted">' + T('{law} says information should not be kept longer than needed. Review these people: delete their information, or keep them if they’re still connected.', { law: esc(law().short) }) + '</p>' +
@@ -77,6 +77,7 @@
   }
 
   /** Delete someone's personal information, keeping only anonymous numbers (e.g. how many served). */
+  window.PrivacyErase = function (p) { erase(p); };   // also used by People → Bin
   function erase(p) {
     var name = H.name(p);
     S.purge(p.id);                                   // medical and pastoral notes, even though Administrators can't read them

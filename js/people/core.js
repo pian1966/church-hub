@@ -149,7 +149,7 @@ var PeopleParts = { actions: {} };
   var DUP = Duplicates;
   // Administrators and Pastors (both may change people's details). "Not the same person" is kept on both people (notSame).
   function canDup() { return canSeeAll() && (H.can('*') || H.can('people.edit')); }
-  function dupPeople() { return S.find('people', function (p) { return p.firstName !== 'Deleted' && !p.mergedInto; }); }
+  function dupPeople() { return S.find('people', function (p) { return p.firstName !== 'Deleted' && !p.mergedInto && !p.binnedAt; }); }
   function notDup() { return DUP.ignored(S.list('people')); }
   /** How sensitive the duplicate check is: 1 (fewer warnings) … 5 (more); the church sets it on Find duplicates. */
   function dupSens() { var n = +((S.settings() || {}).dupSensitivity); return n >= 1 && n <= 5 ? n : 3; }

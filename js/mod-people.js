@@ -76,6 +76,7 @@
      *  dates of death that were typed in front of a name in Elvanto ("2024-08-22-Mike") moved to the date they died,
      *  and (from before version 2) children linked to their household's adults, to confirm. */
     upgrade: function () {
+      P.emptyBin();   // people in the Bin for more than 30 days are deleted
       var st = S.settings(), v = st ? st.dataVersion || 1 : 5; if (v >= 5) return;
       var say = [], linked = 0;
       if (v < 4) {
@@ -104,6 +105,7 @@
       if (p[0] === 'search') return renderSearch();
       if (p[0] === 'duplicates') return renderDuplicates();
       if (p[0] === 'late') return renderLate();
+      if (p[0] === 'bin') return P.renderBin();
       if (p[0] === 'changes') return renderChanges();
       return renderList();
     },

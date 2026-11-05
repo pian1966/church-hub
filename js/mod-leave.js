@@ -14,7 +14,7 @@
   /** Leave Manager's data shape, with staff taken from People. */
   function data() {
     var lv = S.leave();
-    var staff = S.find('people', function (p) { return p.staff; }).map(function (p) {
+    var staff = S.find('people', function (p) { return p.staff && !p.binnedAt; }).map(function (p) {
       return { id: p.id, name: H.name(p), email: p.email, level: p.staff.category, workDays: p.staff.workDays || '', role: p.appRole === 'admin' ? 'Administrator' : 'Staff', start: p.staff.start, active: p.active !== false };
     });
     return { settings: lv.settings, rules: lv.rules, terms: lv.terms, types: lv.types, levels: lv.levels, holidays: lv.holidays, adjustments: lv.adjustments, requests: lv.requests, staff: staff };

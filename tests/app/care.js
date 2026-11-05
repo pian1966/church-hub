@@ -42,7 +42,7 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('care');
   await s.page.fill('#cg-new', 'Hilton Tuesday'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();
   const cgId = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Hilton Tuesday').split('/')[1];
-  await s.page.fill('.cg-q[data-for="g-' + cgId + '"]', 'tim jac');
+  await s.page.fill('.cg-q[data-for="g-' + cgId + '"]', 'tim jac'); await s.page.waitForTimeout(400);
   check(await s.page.$$eval('.cg-hits .cg-pick', b => b.length === 1 && b[0].dataset.id === 'p14'), 'Care groups: typing part of a name (“tim jac”) finds the person to add');
   await s.page.click('.cg-pick[data-id="p14"]'); await s.settle();
   await s.page.click('[data-act="care:lead"][data-id="p14"]'); await s.settle();
@@ -52,7 +52,7 @@ module.exports = async function (ctx) {
   check(card15 && card15.firstName === 'Clare' && card15.ok === false && !card15.mobile && !card15.email, 'without “Care group” consent the group sees only the name');
   await s.page.fill('#cg-new', 'Prayer chain'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();
   const cg2 = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Prayer chain').split('/')[1];
-  await s.page.fill('.cg-q[data-for="g-' + cg2 + '"]', 'clare');
+  await s.page.fill('.cg-q[data-for="g-' + cg2 + '"]', 'clare'); await s.page.waitForTimeout(400);
   check((await s.page.textContent('.cg-hits[data-for="g-' + cg2 + '"]')).includes('Also in Hilton Tuesday'), 'someone already in a group shows “Also in …” when adding them to another');
   await s.page.press('.cg-q[data-for="g-' + cg2 + '"]', 'Enter'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
   check(docs['careGroups/' + cg2].memberIds.includes('p15') && docs['careGroups/' + cgId].memberIds.includes('p15') && docs['careGroups/' + cg2 + '/share/p15'] && docs['careGroups/' + cgId + '/share/p15'], 'a person can be in two care groups, with a card in each');
@@ -88,7 +88,7 @@ module.exports = async function (ctx) {
   check(t.includes('Prayer chain') && (await s.page.$$('#my-care .my-care')).length === 2 && (await s.page.$$('[data-act="care:mineadd"]')).length === 1, 'someone in two care groups sees both; Add someone only where they are the carer');
   await s.page.click('[data-act="care:mineadd"]');
   const cand = await s.page.evaluate(() => { const g = Store.get('careGroups', 'cgA'); const p = Store.list('people').find(x => x.inDirectory && x.familyRole !== 'child' && !g.memberIds.includes(x.id)); return p ? { id: p.id, first: p.firstName } : null; });
-  await s.page.fill('.cg-q[data-for="mine"]', cand ? cand.first : 'zzz');
+  await s.page.fill('.cg-q[data-for="mine"]', cand ? cand.first : 'zzz'); await s.page.waitForTimeout(400);
   const addable = await s.page.$$eval('.cg-hits[data-for="mine"] .cg-pick', b => b.map(x => x.dataset.id));
   check(!!cand && addable.includes(cand.id) && !addable.includes('p15'), 'a carer can find people from the church directory by typing part of a name');
   await s.page.click('.cg-pick[data-id="' + cand.id + '"]'); await s.settle(); docs = await s.docsNow();

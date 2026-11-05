@@ -2,6 +2,7 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Fills in the three words below; you can still change each one.", "Vul die drie woorde hieronder in; jy kan steeds elkeen verander.", "Igcwalisa amagama amathathu angezansi; usengashintsha ngalinye.", "Igcwalisa amagama amathathu angezantsi; usenokutshintsha nganye."],
     ["Change the church’s settings", "Verander die kerk se instellings", "Shintsha izilungiselelo zebandla", "Tshintsha iisetingi zecawa"],
     ["Give and take away app access (Basic access, Roster coordinator, Children’s ministry)", "Gee en neem app-toegang weg (Basiese toegang, Rooster-koördineerder, Kinderbediening)", "Nikeza futhi ususe ukufinyelela kwe-app (Ukufinyelela okuyisisekelo, Umxhumanisi wohlu, Inkonzo yezingane)", "Nika kwaye ususe ufikelelo kwi-app (Ufikelelo olusisiseko, Umlungelelanisi woluhlu, Ubulungiseleli babantwana)"],
     ["Check changes members ask for, move people to the Bin and delete their information", "Kontroleer veranderinge wat lede vra, skuif mense na die Asblik en skrap hul inligting", "Hlola izinguquko amalungu azicelayo, faka abantu eMgqonyeni futhi usule imininingwane yabo", "Jonga utshintsho olucelwa ngamalungu, faka abantu eMgqomeni kwaye ucime iinkcukacha zabo"],
@@ -178,7 +179,6 @@ I18n.rows([
     ['Others’ contact details', 'Ander se kontakbesonderhede', 'Imininingwane yokuxhumana yabanye', 'Iinkcukacha zoqhagamshelwano zabanye'],
     ['All, always', 'Alles, altyd', 'Konke, njalo', 'Konke, rhoqo'],
     ['Music in services is called', 'Musiek in dienste word genoem', 'Umculo ezinkonzweni ubizwa ngokuthi', 'Umculo kwiinkonzo ubizwa ngokuba'],
-    ['Fills in the three words below; you can still change each one. Then Save wording.', 'Vul die drie woorde hieronder in; jy kan steeds elkeen verander. Druk dan Stoor bewoording.', 'Igcwalisa amagama amathathu angezansi; usengashintsha ngalinye. Bese uthi Londoloza amagama.', 'Igcwalisa amagama amathathu angezantsi; usenokutshintsha nganye. Emva koko Gcina amagama.'],
     ['Music in services (also teams and positions named after it)', 'Musiek in dienste (ook spanne en posisies wat daarna genoem is)', 'Umculo ezinkonzweni (namaqembu nezikhundla eziqanjwe ngawo)', 'Umculo kwiinkonzo (kunye namaqela nezikhundla ezithiywe ngawo)'],
     ['The team that leads music in services', 'Die span wat musiek in dienste lei', 'Iqembu elihola umculo ezinkonzweni', 'Iqela elikhokela umculo kwiinkonzo'],
     ['Who leads the music in a service', 'Wie die musiek in ’n diens lei', 'Ohola umculo enkonzweni', 'Okhokela umculo kwinkonzo'],

@@ -8,7 +8,7 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('leave/settings');
   check(await s.page.isVisible('#ls-rules') && (await s.page.$$('.ls-rule')).length === 1, 'Leave → Settings shows the cover rules (the demo’s Sunday cover)');
   await s.page.click('[data-act="leave:addrule"][data-preset="christmas"]'); await s.settle();
-  await s.page.click('[data-act="leave:saverules"]'); await s.settle(); await s.page.waitForTimeout(300);
+   await s.settle(); await s.page.waitForTimeout(300);
   docs = await s.docsNow();
   check(docs['leave/config'].rules.length === 2 && docs['leave/config'].rules[1].from === '24 Dec' && docs['leave/config'].rules[1].action === 'Block', 'adding “Christmas” saves a blocking rule for 24–26 Dec');
   const today = await s.page.evaluate(() => Hub.today()), later = await s.page.evaluate(() => LeaveCore.iso(LeaveCore.addDays(new Date(), 7)));

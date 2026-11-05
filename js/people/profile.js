@@ -191,14 +191,14 @@
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Church office notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Administrators and Pastors') + '</span></div>' +
         (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? T('From Elvanto') : n.by) + ', ' + H.fmt(n.at, true)) +
           ' · <button class="link" data-act="people:delonote" data-id="' + n.id + '">' + T('Delete') + '</button></p></div>'; }).join('') : '<p class="muted">' + T('No notes.') + '</p>') +
-        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="on-text" rows="2" placeholder="' + esc(T('Administrators and Pastors can see this. Pastoral matters go in pastoral notes.')) + '"></textarea></label><button class="btn small" data-act="people:onote" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
+        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="on-text" rows="2" placeholder="' + esc(T('Administrators and Pastors can see this. Pastoral matters go in pastoral notes.')) + '"></textarea></label><button class="btn small save" data-act="people:onote" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
     }
     // Pastoral notes
     if (seeNotes && !me) {
       var notes = S.find('notes', function (n) { return n.personId === p.id; });
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Pastoral notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Pastors only · views are logged') + '</span></div>' +
         (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">' + T('No notes.') + '</p>') +
-        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="pn-text" rows="2" placeholder="' + esc(T('Only pastors can see this')) + '"></textarea></label><button class="btn small" data-act="people:note" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
+        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="pn-text" rows="2" placeholder="' + esc(T('Only pastors can see this')) + '"></textarea></label><button class="btn small save" data-act="people:note" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
     }
     // Volunteering: services, departments and positions (Rosters teams and positions); roster coordinators and Administrators change it
     html += volunteerPanel(p, me);
@@ -241,7 +241,7 @@
         '<label class="field" style="margin-top:8px">' + T('How often (for new positions)') + '<select id="vol-freq"><option value="weekly">' + T('weekly') + '</option><option value="fortnightly" selected>' + T('fortnightly') + '</option><option value="monthly">' + T('monthly') + '</option><option value="occasional">' + T('occasional') + '</option></select></label></div>' +
       '<p id="vol-err" class="note bad" hidden></p>';
     H.modal(H.dialogHead(T('Volunteering: {name}', { name: H.name(p) }), T('Which services they serve at, and in which departments and positions. Rostering uses this.')) + '<div class="dlg-body">' + body + '</div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' + (teams.length ? '<button class="btn primary" data-act="people:savevolunteer" data-id="' + p.id + '">' + T('Save') + '</button>' : '') + '</div>', T('Volunteering'));
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' + (teams.length ? '<button class="btn save" data-act="people:savevolunteer" data-id="' + p.id + '">' + T('Save') + '</button>' : '') + '</div>', T('Volunteering'));
     document.querySelectorAll('input[name="vol"]').forEach(function (r) { r.addEventListener('change', function () { document.getElementById('vol-f').hidden = r.value !== 'yes' || !r.checked; }); });
     document.querySelectorAll('.vol-d').forEach(function (d) { d.addEventListener('change', function () { document.querySelector('.vol-ps[data-t="' + d.dataset.t + '"]').hidden = !d.checked; }); });
   }
@@ -417,7 +417,7 @@
         H.modal(H.dialogHead(T('Medical notes for {name}', { name: H.name(p) }), T('Only Children’s ministry can see these. Keep it to what leaders need for safety.')) +
           '<div class="dlg-body"><label class="field">' + T('Allergies') + '<input id="md-a" value="' + esc(m.allergies || '') + '" placeholder="' + esc(T('e.g. Nuts (carries an EpiPen)')) + '"></label>' +
           '<label class="field">' + T('Other notes') + '<textarea id="md-n" rows="3" placeholder="' + esc(T('e.g. Asthma pump in bag')) + '">' + esc(m.notes || '') + '</textarea></label><p id="md-err" class="note bad" hidden></p></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:savemedical" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Medical notes'));
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:savemedical" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Medical notes'));
       },
     savemedical: function (el) {
         var p = JSON.parse(JSON.stringify(S.get('people', el.dataset.id))), a = document.getElementById('md-a').value.trim(), n = document.getElementById('md-n').value.trim();
@@ -453,7 +453,7 @@
         H.modal(H.dialogHead(T('ID number of {name}', { name: H.name(p) }), T('Administrators only. Keep it only if the church still needs it ({law}).', { law: PrivacyLaw.forChurch(S.settings()).short })) + '<div class="dlg-body">' +
           '<label class="field">' + T('ID number') + '<input id="idn-v" inputmode="numeric" autocomplete="off" value="' + esc(known) + '" placeholder="' + (known ? '' : esc(T('Leave empty to keep the current one'))) + '"><small>' + T('South African ID numbers have 13 digits. Passport numbers are fine too.') + '</small></label>' +
           '<label class="check"><input type="checkbox" id="idn-del"><span>' + T('Remove the ID number') + '</span></label><p id="idn-err" class="note bad" hidden></p></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:saveid" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('ID number'));
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:saveid" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('ID number'));
       },
     saveid: function (el) {
         var p = S.get('people', el.dataset.id), v = document.getElementById('idn-v').value.replace(/[\s-]/g, ''), del = document.getElementById('idn-del').checked, err = document.getElementById('idn-err');

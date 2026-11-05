@@ -139,10 +139,12 @@
     }).join('') + (hits.length > 8 ? '<p class="hint" style="margin:4px 0 0">' + T('{n} more – type more of the name', { n: hits.length - 8 }) + '</p>' : '') : '<p class="muted small" style="margin:6px 0 0">' + T('No one matches') + '</p>';
   }
   if (typeof document !== 'undefined') {
-    document.addEventListener('input', function (ev) { if (ev.target.classList && ev.target.classList.contains('cg-q')) showHits(ev.target); });
+    var hitsLater = H.pause(showHits, 250);
+    document.addEventListener('input', function (ev) { if (ev.target.classList && ev.target.classList.contains('cg-q')) hitsLater(ev.target); });
     document.addEventListener('keydown', function (ev) {   // Enter adds the first match
       if (ev.key !== 'Enter' || !ev.target.classList || !ev.target.classList.contains('cg-q')) return;
-      ev.preventDefault(); var b = document.querySelector('.cg-hits[data-for="' + ev.target.dataset.for + '"] .cg-pick'); if (b) b.click();
+      ev.preventDefault(); showHits(ev.target);   // typed fast and pressed Enter: search now
+      var b = document.querySelector('.cg-hits[data-for="' + ev.target.dataset.for + '"] .cg-pick'); if (b) b.click();
     });
   }
 
@@ -225,7 +227,7 @@
       rename: function (el) {
         var g = S.get('careGroups', el.dataset.id); if (!g) return;
         H.modal(H.dialogHead(T('Rename {name}', { name: g.name })) + '<div class="dlg-body"><label class="field req">' + T('Name') + '<input id="cg-name" value="' + esc(g.name) + '"></label>' +
-          '<label class="field">' + T('Areas it covers') + '<input id="cg-areas" value="' + esc([].concat(g.areas || []).join(', ')) + '" placeholder="' + esc(T('e.g. Hilton, Howick North, 3245')) + '"></label><p class="hint">' + T('Suburbs, towns or postal codes, separated by commas – used to suggest groups by where people live.') + '</p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="care:saverename" data-id="' + g.id + '">' + T('Save') + '</button></div>', T('Rename'));
+          '<label class="field">' + T('Areas it covers') + '<input id="cg-areas" value="' + esc([].concat(g.areas || []).join(', ')) + '" placeholder="' + esc(T('e.g. Hilton, Howick North, 3245')) + '"></label><p class="hint">' + T('Suburbs, towns or postal codes, separated by commas – used to suggest groups by where people live.') + '</p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="care:saverename" data-id="' + g.id + '">' + T('Save') + '</button></div>', T('Rename'));
       },
       saverename: function (el) {
         var g = JSON.parse(JSON.stringify(S.get('careGroups', el.dataset.id))), n = document.getElementById('cg-name').value.trim(); if (!n) return;

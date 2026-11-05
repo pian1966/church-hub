@@ -199,6 +199,8 @@ var Hub = (function () {
     return '<a class="map-link" href="https://www.google.com/maps/search/?api=1&amp;query=' + esc(encodeURIComponent(q)) + '" target="_blank" rel="noopener noreferrer" title="' + esc(T('Open in Google Maps')) + '" aria-label="' + esc(T('Open in Google Maps')) + '">' +
       icon('M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z', 16) + '</a>';
   }
+  /** Runs fn once typing has paused for `ms` (searching on every key press is slow on phones). */
+  function pause(fn, ms) { var t = null; return function () { var a = arguments, me = this; clearTimeout(t); t = setTimeout(function () { fn.apply(me, a); }, ms || 300); }; }
   var ICON = {
     home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
     people: 'M16 11a4 4 0 1 0-8 0M3 21c1-4 5-6 9-6s8 2 9 6',
@@ -441,17 +443,64 @@ var Hub = (function () {
       inp.placeholder = T('Type part of a name to narrow the list'); inp.setAttribute('aria-label', inp.placeholder);
       sel.parentNode.insertBefore(inp, sel);
       inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') ev.preventDefault(); });
-      inp.addEventListener('input', function () {
+      inp.addEventListener('input', pause(function () {
+        if (!document.body.contains(sel)) return;   // the window was closed meanwhile
         var q = inp.value.trim(), cur = sel.value;
         var shown = all.filter(function (o) { return o.keep || !q || matches(o.t, q); });
         sel.innerHTML = shown.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.t) + '</option>'; }).join('');
         var hit = q ? shown.filter(function (o) { return !o.keep; })[0] : null;
         sel.value = hit ? hit.v : shown.some(function (o) { return o.v === cur; }) ? cur : (shown[0] || {}).v || '';
         sel.dispatchEvent(new Event('change', { bubbles: true }));
-      });
+      }, 200));
     });
   }
   function ourWords(el) { var f = words(); if (f && el) Wording.apply(el, f); }
+  /* ---------- saving as you go (like Google Docs) ----------
+   * A panel whose save button has data-autosave saves by itself: straight after a tick or a choice, and once typing pauses.
+   * The button stays hidden; a small "Saved" note shows it worked (or what is still missing). Pop-up windows keep their buttons. */
+  var autoT = null, autoQuiet = false, autoNoteT = null;
+  function autoBtn(el) {
+    if (!el || !el.closest || el.closest('.dialog') || el.type === 'search' || el.closest('[data-noauto]')) return null;
+    var sec = el.closest('[data-autoscope]') || el.closest('section, .panel');   // a scope: several panels saved by one button
+    return sec ? sec.querySelector('[data-autosave]') : null;
+  }
+  /** Which field had the cursor, so it can be found again after the page is redrawn. */
+  function focusKey(el) {
+    if (!el || el === document.body || !el.closest || !el.closest('main')) return null;
+    var sel = el.id ? '#' + CSS.escape(el.id) : el.tagName.toLowerCase() + [].map.call(el.classList, function (c) { return '.' + CSS.escape(c); }).join('') +
+      ['i', 'code', 'k', 't'].map(function (k) { return el.dataset && el.dataset[k] != null ? '[data-' + k + '="' + CSS.escape(el.dataset[k]) + '"]' : ''; }).join('');
+    var all = [].slice.call(document.querySelectorAll(sel));
+    return { sel: sel, n: Math.max(0, all.indexOf(el)), a: el.selectionStart, b: el.selectionEnd, y: window.scrollY };
+  }
+  function refocus(k) {
+    if (!k) return;
+    var el = document.querySelectorAll(k.sel)[k.n]; if (!el) return;
+    try { el.focus({ preventScroll: true }); if (k.a != null && el.setSelectionRange) el.setSelectionRange(k.a, k.b); } catch (e) { /* not a text box */ }
+    window.scrollTo(0, k.y);
+  }
+  function autoNote(msg, bad) {
+    var n = document.getElementById('autosaved');
+    if (!n) { n = document.createElement('div'); n.id = 'autosaved'; n.setAttribute('role', 'status'); document.body.appendChild(n); }
+    var wf = words(); n.textContent = bad ? '⚠ ' + (wf ? wf(String(msg)) : msg) : '✓ ' + T('Saved');
+    n.className = 'show' + (bad ? ' bad' : '');
+    clearTimeout(autoNoteT); autoNoteT = setTimeout(function () { n.className = ''; }, bad ? 5000 : 1800);
+  }
+  function autoRun(btn, wait) {
+    clearTimeout(autoT);
+    autoT = setTimeout(function () {
+      if (!document.body.contains(btn)) return;
+      var k = focusKey(document.activeElement);
+      autoQuiet = true;
+      try { btn.click(); } finally { autoQuiet = false; }
+      refocus(k);
+    }, wait);
+  }
+  document.addEventListener('change', function (ev) { var b = autoBtn(ev.target); if (b) autoRun(b, 0); });
+  document.addEventListener('input', function (ev) {
+    var t = ev.target; if (!/^(INPUT|TEXTAREA)$/.test(t.tagName) || /^(checkbox|radio|date|range|file|search)$/.test(t.type)) return;
+    var b = autoBtn(t); if (b) autoRun(b, 900);
+  });
+
   function modal(html, label, wide) {
     lastFocus = document.activeElement;
     var m = document.getElementById('modal');
@@ -492,6 +541,7 @@ var Hub = (function () {
     });
   }
   function toast(msg, bad) {
+    if (autoQuiet) { autoNote(msg, bad); return; }   // saving as you go: a small note instead of a toast
     var t = document.getElementById('toast');
     var wf = words(); t.textContent = wf ? wf(String(msg)) : msg; t.className = 'toast show' + (bad ? ' bad' : '');
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = 'toast'; }, 3200);
@@ -719,6 +769,6 @@ var Hub = (function () {
   }
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, modal: modal, closeModal: closeModal,
+    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

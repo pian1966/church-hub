@@ -2,6 +2,7 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Added – give it a name", "Bygevoeg – gee dit ’n naam", "Kungeziwe – kunike igama", "Kongeziwe – kunike igama"],
     ["An email to each person with leave they’ll lose if they don’t take it. Open each, check it and send it.", "’n E-pos aan elke persoon met verlof wat hulle sal verloor as hulle dit nie neem nie. Maak elkeen oop, kyk dit na en stuur dit.", "I-imeyili kumuntu ngamunye onekhefu azolahlekelwa yilo uma engalithathi. Vula ngayinye, uyihlole bese uyithumela.", "I-imeyile kumntu ngamnye onekhefu aza kuliphulukana nalo ukuba akalithathi. Vula nganye, uyijonge uze uyithumele."],
     ["Write the email", "Skryf die e-pos", "Bhala i-imeyili", "Bhala i-imeyile"],
     ["No email address", "Geen e-posadres nie", "Alikho ikheli le-imeyili", "Akukho dilesi ye-imeyile"],
@@ -112,7 +113,6 @@ I18n.rows([
     ["Christmas", "Kersfees", "UKhisimusi", "IKrismesi"],
     ["Easter", "Paasfees", "IPhasika", "IPasika"],
     ["Another rule", "Nog ’n reël", "Omunye umthetho", "Omnye umthetho"],
-    ["Added – check it and Save", "Bygevoeg – kyk dit na en Stoor", "Kungeziwe – kuhlole bese uLondoloza", "Kongeziwe – kujonge uze uGcine"],
     ["Check the From and To dates of “{name}”", "Kyk na die Van- en Tot-datums van “{name}”", "Hlola izinsuku zika-Kusuka naKuya zika-“{name}”", "Jonga imihla ka-Ukusuka nokuYa ka-“{name}”"],
     ["Every rule needs a name.", "Elke reël het ’n naam nodig.", "Umthetho ngamunye udinga igama.", "Umthetho ngamnye ufuna igama."],
     ["Choose the person and both dates", "Kies die persoon en albei datums", "Khetha umuntu nezinsuku zombili", "Khetha umntu nemihla yomibini"],

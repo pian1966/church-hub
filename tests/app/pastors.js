@@ -11,7 +11,7 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings');
   check(await s.page.isVisible('#pastor-can'), 'Settings has “What Pastors can do”');
   for (const v of ['settings', 'leave']) await s.page.check('.st-pc[value="' + v + '"]');
-  await s.page.click('[data-act="settings:pastorcan"]'); await s.settle(); await s.page.waitForTimeout(300);
+  await s.page.waitForTimeout(1200); await s.settle(); await s.page.waitForTimeout(300);
   docs = await s.docsNow();
   check(JSON.stringify(docs['settings/church'].pastorCan) === '["settings","leave"]' && JSON.stringify(docs['roles/thandi.mokoena@example.com'].can) === '["leave","settings"]',
     'ticking Settings and Leave saves them and copies them onto each Pastor’s access entry');

@@ -147,6 +147,7 @@
   }
 
   /* ---------- the Care groups page (Administrators and Pastors) ---------- */
+  var STAR = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z';   // carer on/off, quiet until hovered
   function adults(exclude) { return S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && p.firstName !== 'Deleted' && !p.mergedInto && exclude.indexOf(p.id) < 0; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); }); }
   function render() {
     if (!manager()) return '<p class="empty">' + T('Only Administrators and Pastors can set up care groups.') + '</p>';
@@ -164,7 +165,7 @@
           (ms.length ? '<div class="list" style="margin-top:8px">' + ms.map(function (p) {
             var isL = Care.isLeader(g, p.id);
             return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><a href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>' + (isL ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + (consented(p.id) ? '' : ' <small class="muted">' + T('details not shared (no consent yet)') + '</small>') + '</span>' +
-              '<button class="btn small" data-act="care:lead" data-g="' + g.id + '" data-id="' + p.id + '">' + T(isL ? 'Not a carer' : 'Make carer') + '</button>' +
+              '<button class="icon-btn ghost cg-lead' + (isL ? ' on' : '') + '" data-act="care:lead" data-g="' + g.id + '" data-id="' + p.id + '" aria-pressed="' + isL + '" aria-label="' + esc(T(isL ? 'Not a carer' : 'Make carer') + ': ' + H.name(p)) + '" title="' + esc(T(isL ? 'Not a carer' : 'Make carer')) + '">' + H.icon(STAR, 16) + '</button>' +
               '<button class="icon-btn ghost" data-act="care:out" data-g="' + g.id + '" data-id="' + p.id + '" aria-label="' + esc(T('Take {name} out', { name: H.name(p) })) + '" title="' + esc(T('Take out of the group')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
           }).join('') + '</div>' : '<p class="muted">' + T('No one yet.') + '</p>') +
           '<div style="margin-top:10px">' + finder('g-' + g.id, adults(g.memberIds || []), 'care:add', { g: g.id }, function (p) { return inAny[p.id] ? T('Also in {groups}', { groups: inAny[p.id].join(', ') }) : ''; }, T('Add someone: type part of their name')) + '</div></section>';

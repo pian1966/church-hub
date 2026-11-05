@@ -378,6 +378,12 @@ details.sub[open] > summary { margin-bottom: 8px; }
 .cg-head > .grow .small { display: block; margin-top: 2px; }
 .cg-tools { display: flex; gap: 0; flex: 0 0 auto; margin: -4px -6px 0 0; }
 .cg-tools .icon-btn { width: 32px; height: 32px; border-radius: 8px; }
+/* Care groups: the carer star beside each member – faint until hovered, filled for a carer */
+.cg-lead { width: 32px; height: 32px; border-radius: 8px; color: var(--muted); opacity: .4; transition: opacity .15s, color .15s; }
+.item:hover .cg-lead, .cg-lead:focus-visible { opacity: 1; }
+.cg-lead:hover { color: var(--ok); }
+.cg-lead.on { color: var(--ok); opacity: 1; }
+.cg-lead.on svg path { fill: currentColor; }
 
 /* Translations: "Help improve the … wording on this page", at the foot of each page in another language */
 .improve { margin: 28px 0 8px; font-size: 14px; }

@@ -4,6 +4,7 @@ I18n.add('de', {
   mon: ["Jan.", "Feb.", "März", "Apr.", "Mai", "Juni", "Juli", "Aug.", "Sept.", "Okt.", "Nov.", "Dez."],
   dow: ["So.", "Mo.", "Di.", "Mi.", "Do.", "Fr.", "Sa."],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Hat die Gemeinde verlassen: aus Listen ausgeblendet, Verlauf bleibt",
     "Change the church’s settings": "Die Einstellungen der Gemeinde ändern",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "App-Zugang geben und entziehen (Basiszugang, Dienstplan-Koordination, Kinderdienst)",
     "Check changes members ask for, move people to the Bin and delete their information": "Von Mitgliedern gewünschte Änderungen prüfen, Personen in den Papierkorb verschieben und ihre Daten löschen",

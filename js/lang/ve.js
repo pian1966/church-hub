@@ -4,6 +4,7 @@ I18n.add('ve', {
   mon: ["Pha", "Luh", "Ṱhf", "Lam", "Shu", "Lwi", "Lwa", "Ṱha", "Khu", "Tsh", "Ḽar", "Nye"],
   dow: ["Swo", "Mus", "Vhi", "Rar", "Ṋa", "Ṱan", "Mug"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Vho ṱuwa kerekeni: vho dzumbiwa kha mitevhe, ḓivhazwakale yo vhulungwa",
     "Change the church’s settings": "Shandukisani tshitandadzo tsha kereke",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Ṋeani na u bvisa ndiswa ya app (Ndiswa ya mutheo, Mudzudzanyi wa mutevhe, Vhuḓinḓa ha vhana)",
     "Check changes members ask for, move people to the Bin and delete their information": "Sedzani tshanduko dzine miraḓo ya dzi humbela, isani vhathu kha Bini na u phumula mafhungo avho",

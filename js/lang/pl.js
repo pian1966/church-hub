@@ -4,6 +4,7 @@ I18n.add('pl', {
   mon: ["sty", "lut", "mar", "kwi", "maj", "cze", "lip", "sie", "wrz", "paź", "lis", "gru"],
   dow: ["niedz.", "pon.", "wt.", "śr.", "czw.", "pt.", "sob."],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Odszedł z kościoła: ukryty na listach, historia zachowana",
     "Change the church’s settings": "Zmieniać ustawienia kościoła",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Nadawać i odbierać dostęp do aplikacji (Dostęp podstawowy, Koordynator grafiku, Służba dzieciom)",
     "Check changes members ask for, move people to the Bin and delete their information": "Sprawdzać zmiany, o które proszą członkowie, przenosić osoby do Kosza i usuwać ich dane",

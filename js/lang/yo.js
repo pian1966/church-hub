@@ -4,6 +4,7 @@ I18n.add('yo', {
   mon: ["Ṣẹ́r", "Èrè", "Ẹrẹ̀", "Ìgb", "Ẹ̀bi", "Òkú", "Agẹ", "Ògú", "Owe", "Ọ̀wà", "Bél", "Ọ̀pẹ"],
   dow: ["Àìk", "Ajé", "Ìsẹ́", "Ọjọ́r", "Ọjọ́b", "Ẹtì", "Àbá"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Wọ́n ti fi ìjọ sílẹ̀: a fi wọ́n pamọ́ kúrò nínú àtòjọ, a pa ìtàn mọ́",
     "Change the church’s settings": "Yí ètò ìjọ padà",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Fún ni àti gba ààyè app kúrò (Ààyè ìpìlẹ̀, Olùṣètò àtòjọ, Iṣẹ́ ìránṣẹ́ àwọn ọmọdé)",
     "Check changes members ask for, move people to the Bin and delete their information": "Ṣàyẹ̀wò àwọn àyípadà tí àwọn ọmọ ìjọ béèrè, gbé ènìyàn sí Àpótí ìdọ̀tí kí o sì pa ìwífún wọn rẹ́",

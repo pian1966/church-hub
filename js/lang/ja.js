@@ -4,6 +4,7 @@ I18n.add('ja', {
   mon: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
   dow: ["日", "月", "火", "水", "木", "金", "土"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "教会を離れました：一覧には表示されず、記録は残ります",
     "Change the church’s settings": "教会の設定を変更する",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "アプリのアクセスを与える・取り消す（基本アクセス、当番表コーディネーター、子ども奉仕）",
     "Check changes members ask for, move people to the Bin and delete their information": "会員から依頼された変更を確認し、人をごみ箱に移して情報を削除する",

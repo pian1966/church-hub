@@ -4,6 +4,7 @@ I18n.add('nso', {
   mon: ["Phe", "Dib", "Hla", "Mor", "Mop", "Phu", "Mos", "Ago", "Set", "Ott", "Diph", "Ngw"],
   dow: ["Lam", "Mos", "Lbb", "Lbr", "Lbn", "Lbh", "Mok"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Ba tlogetše kereke: ba utilwe mananeong, histori e bolokilwe",
     "Change the church’s settings": "Fetola dipeakanyo tša kereke",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Fa le go tloša phihlelelo ya app (Phihlelelo ya motheo, Mohlanganyi wa lenaneo, Bodiredi bja bana)",
     "Check changes members ask for, move people to the Bin and delete their information": "Lekola diphetogo tšeo maloko a di kgopelago, iša batho Moqomong gomme o phumole tshedimošo ya bona",

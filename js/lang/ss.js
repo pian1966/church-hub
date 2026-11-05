@@ -4,6 +4,7 @@ I18n.add('ss', {
   mon: ["Bhi", "Inh", "Kol", "Inc", "Mab", "Kho", "Kht", "Ing", "Inh", "Imp", "Lwe", "Ing"],
   dow: ["Son", "Mso", "Bil", "Tsa", "Ne", "Hla", "Mgc"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Balishiyile libandla: bafihliwe eluhlwini, umlandvo ugciniwe",
     "Change the church’s settings": "Shintja tilungiselelo telibandla",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Nika futsi ususe kufinyelela ku-app (Kufinyelela lokusisekelo, Umhlanganisi weluhlu, Lusito lwebantfwana)",
     "Check changes members ask for, move people to the Bin and delete their information": "Hlola tinguckuko lamalunga latiicelako, faka bantfu eMgcomeni futsi usule imininingwane yabo",

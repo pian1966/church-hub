@@ -4,6 +4,7 @@ I18n.add('am', {
   mon: ["ጃን", "ፌብ", "ማርች", "ኤፕ", "ሜይ", "ጁን", "ጁላ", "ኦገ", "ሴፕ", "ኦክቶ", "ኖቬ", "ዲሴ"],
   dow: ["እሑድ", "ሰኞ", "ማክሰ", "ረቡዕ", "ሐሙስ", "ዓርብ", "ቅዳሜ"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "ቤተ ክርስቲያኑን ለቀዋል፤ ከዝርዝሮች ተደብቀዋል፣ ታሪኩ ተጠብቋል",
     "Change the church’s settings": "የቤተ ክርስቲያኑን ቅንብሮች ይቀይሩ",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "የመተግበሪያ መዳረሻ ይስጡ እና ያስወግዱ (መሰረታዊ መዳረሻ፣ የመርሃ ግብር አስተባባሪ፣ የልጆች አገልግሎት)",
     "Check changes members ask for, move people to the Bin and delete their information": "አባላት የሚጠይቋቸውን ለውጦች ያረጋግጡ፣ ሰዎችን ወደ መጣያ ይውሰዱ እና መረጃቸውን ይሰርዙ",

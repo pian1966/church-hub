@@ -4,6 +4,7 @@ I18n.add('zh-Hans', {
   mon: ["1月", "2月", "3月", "4月", "5月", "6月", "7月", "8月", "9月", "10月", "11月", "12月"],
   dow: ["周日", "周一", "周二", "周三", "周四", "周五", "周六"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "已离开教会：从列表中隐藏，保留历史记录",
     "Change the church’s settings": "更改教会的设置",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "授予和收回应用访问权限（基本访问、排班协调员、儿童事工）",
     "Check changes members ask for, move people to the Bin and delete their information": "审核成员申请的更改，把人移到回收站并删除其信息",

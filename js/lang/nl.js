@@ -4,6 +4,7 @@ I18n.add('nl', {
   mon: ["jan", "feb", "mrt", "apr", "mei", "jun", "jul", "aug", "sep", "okt", "nov", "dec"],
   dow: ["zo", "ma", "di", "wo", "do", "vr", "za"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Heeft de kerk verlaten: verborgen in lijsten, geschiedenis blijft bewaard",
     "Change the church’s settings": "De instellingen van de kerk wijzigen",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "App-toegang geven en intrekken (Basistoegang, Roostercoördinator, Kinderwerk)",
     "Check changes members ask for, move people to the Bin and delete their information": "Wijzigingen die leden vragen controleren, mensen naar de Prullenbak verplaatsen en hun gegevens verwijderen",

@@ -4,6 +4,7 @@ I18n.add('nr', {
   mon: ["Jan", "Feb", "Mat", "Apr", "Mey", "Jun", "Jul", "Aga", "Sep", "Okt", "Nov", "Dis"],
   dow: ["Son", "Mvu", "Bil", "Tha", "Ne", "Hla", "Gqi"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Balitjhiyile isonto: bafihliwe emarhelweni, umlando ugcinwe",
     "Change the church’s settings": "Tjhugulula iinlungiselelo zesonto",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Nikela begodu ususe ukufikelela ku-app (Ukufikelela okusisekelo, Umhlanganisi werhelo, Ikonzo yabantwana)",
     "Check changes members ask for, move people to the Bin and delete their information": "Hlola amatjhugululo amalunga awabawako, faka abantu eBinini begodu usule imininingwana yabo",

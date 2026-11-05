@@ -4,6 +4,7 @@ I18n.add('sw', {
   mon: ["Jan", "Feb", "Mac", "Apr", "Mei", "Jun", "Jul", "Ago", "Sep", "Okt", "Nov", "Des"],
   dow: ["Jpi", "Jtt", "Jnn", "Jtn", "Alh", "Ijm", "Jmo"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Wameondoka kanisani: wamefichwa kwenye orodha, historia imehifadhiwa",
     "Change the church’s settings": "Badilisha mipangilio ya kanisa",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Toa na uondoe ufikiaji wa programu (Ufikiaji wa msingi, Mratibu wa ratiba, Huduma ya watoto)",
     "Check changes members ask for, move people to the Bin and delete their information": "Kagua mabadiliko ambayo washiriki wanaomba, hamishia watu Pipani na ufute taarifa zao",

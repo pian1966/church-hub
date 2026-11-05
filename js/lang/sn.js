@@ -4,6 +4,7 @@ I18n.add('sn', {
   mon: ["Ndi", "Kuk", "Kur", "Kub", "Chv", "Chk", "Kur", "Nym", "Gun", "Gum", "Mbu", "Zvi"],
   dow: ["Svo", "Muv", "Chp", "Cht", "Chn", "Chs", "Mug"],
   words: {
+    "They’ve left the church: hidden from lists, history kept": "Vakabva pachechi: vakavanzwa pamarondedzero, nhoroondo yakachengetwa",
     "Change the church’s settings": "Shandura marongero echechi",
     "Give and take away app access (Basic access, Roster coordinator, Children’s ministry)": "Ipa uye ubvise mvumo yeapp (Mvumo yekutanga, Murongi werondedzero, Ushumiri hwevana)",
     "Check changes members ask for, move people to the Bin and delete their information": "Ongorora shanduko dzinokumbirwa nenhengo, isa vanhu muBhini uye udzime ruzivo rwavo",

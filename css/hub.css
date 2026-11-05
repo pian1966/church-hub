@@ -121,6 +121,8 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--ink); text-decoration: none; min-height: 60px; }
 .item + .item { border-top: 1px solid var(--line-2); }
+.pf-top { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin: -4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-2); }
+.pf-top .btn { gap: 6px; }
 .pp-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: 0 1 auto; }
 /* People list on a phone: the tags go under the name, so long names and households keep the full width */
 @media (max-width: 600px) {

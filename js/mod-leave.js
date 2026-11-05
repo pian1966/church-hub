@@ -387,6 +387,52 @@
     update();
   }
 
+  /** "Use it or lose it": one email per person with leave about to be lost (Leave Manager sent these on 1 Nov, 1 Dec and 15 Jan). */
+  function renderReminders(d) {
+    var today = H.today(), list = [];
+    d.staff.filter(function (s) { return s.active && C.tracksLeave(s); }).forEach(function (s) { var u = C.useItOrLoseIt(d, s.id, today); if (u.length) list.push({ s: s, u: u }); });
+    return '<a class="crumb" href="#/leave/dashboard">' + H.icon(H.ICON.back, 16) + T('Dashboard') + '</a><div class="page-head"><div><h1>' + T('Use it or lose it') + '</h1><p class="lead">' + T('An email to each person with leave they’ll lose if they don’t take it. Open each, check it and send it.') + '</p></div></div>' +
+      (list.length ? '<div class="list">' + list.map(function (x) {
+        return '<div class="item"><span class="grow"><b>' + esc(x.s.name) + '</b><small>' + esc(x.u.map(function (u) { return C.fmtDays(u.left) + ' ' + u.type.name + ' – ' + H.fmt(u.until, true); }).join(' · ')) + '</small></span>' +
+          (personEmail(x.s.id) ? '<button class="btn small" data-act="leave:remind" data-id="' + esc(x.s.id) + '">' + T('Write the email') + '</button>' : '<span class="muted small">' + T('No email address') + '</span>') + '</div>';
+      }).join('') + '</div>' : '<p class="empty">' + T('No one has leave about to be lost.') + '</p>') +
+      '<div class="btns" style="margin-top:14px"><button class="btn primary" data-act="leave:reminddone">' + T('Done – mark the reminders as sent') + '</button></div>';
+  }
+
+  /* ---------- emails about leave (opened ready to send, like the birthday emails; sent automatically later) ---------- */
+  function emailTo(to, subject, body, why) {
+    var st = S.settings() || {}, E = window.Emails;
+    if (!E || !to) return;
+    H.modal(H.dialogHead(T('Let them know by email'), why) + '<div class="dlg-body"><label class="field">' + T('To') + '<input id="le-to" value="' + esc(to) + '"></label>' +
+      '<label class="field">' + T('Subject') + '<input id="le-sub" value="' + esc(subject) + '"></label><label class="field">' + T('Message') + '<textarea id="le-body" rows="9">' + esc(body) + '</textarea></label></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Not now') + '</button><button class="btn primary" data-act="leave:mailgo">' + T('Open email') + '</button></div>', T('Email'));
+  }
+  function signOff() { var st = S.settings() || {}; return st.emailSignOff || st.churchName || ''; }
+  function personEmail(id) { var p = S.get('people', id); return p && p.email ? p.email : ''; }
+  function officeEmail() {
+    var st = S.settings() || {}; if (st.emailOffice) return st.emailOffice;
+    return S.find('people', function (p) { return p.appRole === 'admin' && p.active !== false && p.email; }).map(function (p) { return p.email; }).join(', ');
+  }
+  function firstName(id) { var p = S.get('people', id); return p ? (p.preferredName || p.firstName) : ''; }
+  /** The Monday of this week, and whether the weekly "who's away" email / the "use it or lose it" reminders are due. */
+  function weekStart() { var x = C.parse(H.today()); while (x.getDay() !== 1) x = C.addDays(x, -1); return C.iso(x); }
+  function weeklyDue(d) {
+    var st = d.settings || {}, day = st.WeeklyEmail === undefined ? 'Mon' : String(st.WeeklyEmail || '');
+    if (!day) return false;
+    return String(st.LastWeeklyEmail || '') < weekStart();
+  }
+  function reminderDue(d) {
+    var st = d.settings || {}, spec = st.ReminderDates === undefined ? '1 Nov, 1 Dec, 15 Jan' : String(st.ReminderDates || ''), today = H.today(), last = String(st.LastReminder || ''), due = '';
+    spec.split(',').forEach(function (s) { var dt = C.ruleDate(s.trim(), +today.slice(0, 4)); if (dt && dt <= today && dt > last && dt > due) due = dt; });
+    return due;
+  }
+  function weeklyText(d) {
+    var from = weekStart(), to = C.iso(C.addDays(C.parse(from), 6));
+    var away = d.requests.filter(function (r) { return r.status === 'Approved' && r.start <= to && r.end >= from; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
+    var lines = away.map(function (r) { var s = C.staffById(d, r.staffId); return '• ' + (s ? s.name : Hub.name(S.get('people', r.staffId))) + ': ' + range(r); });
+    return T('Good morning everyone,') + '\n\n' + (lines.length ? T('Away this week ({from} – {to}):', { from: H.fmt(from), to: H.fmt(to, true) }) + '\n' + lines.join('\n') : T('No one is away this week.')) + '\n\n' + signOff();
+  }
+
   H.register({
     id: 'leave', name: 'Leave', desc: 'Staff leave – Leave Manager built in', icon: H.ICON.leave, tint: '#E8590C',
     roles: ['admin', 'pastor', 'rosters', 'kids', 'member'],
@@ -402,14 +448,24 @@
       if (n) out.push({ text: TN('Approve or decline {n} leave request', 'Approve or decline {n} leave requests', n), href: '#/leave/approvals' });
       var probs = ElvantoSync.problems(S.list('elvantoSync'), Date.now());
       if (probs.length) out.push({ text: TN('{n} Elvanto update to check', '{n} Elvanto updates to check', probs.length), href: '#/leave/elvanto', tag: 'Elvanto' });
+      if (weeklyDue(d)) out.push({ text: T('Email the staff who is away this week'), href: '#/leave/weekly' });
+      if (reminderDue(d)) out.push({ text: T('Send the “use it or lose it” leave reminders'), href: '#/leave/reminders' });
       return out;
     },
     render: function (p) {
       if (partner() && !takesLeave(data())) return '<h1>' + T('Leave') + '</h1><p class="empty">' + T('Leave is for church staff.') + '</p>';
       var d = data(), v = p[0] || (takesLeave(d) ? '' : isLeaveAdmin() ? 'dashboard' : 'away');
       if (v === 'staff' && isLeaveAdmin()) return renderStaff(d, p[1], p[2]);
+      if (v === 'weekly' && isLeaveAdmin()) {
+        setTimeout(function () {
+          var to = d.staff.filter(function (s) { return s.active && C.tracksLeave(s); }).map(function (s) { return personEmail(s.id); }).filter(Boolean).join(', ');
+          emailTo(to, T('Who’s away this week'), weeklyText(d), T('Then click “Mark as sent” on the Dashboard so it isn’t suggested again this week.'));
+        }, 50);
+        v = 'dashboard';
+      }
+      if (v === 'reminders' && isLeaveAdmin()) return renderReminders(d);
       if (v === 'dashboard' && isLeaveAdmin() && !auditedDash) { auditedDash = true; S2.audit('Opened the leave Dashboard (includes sick leave)', 'leave'); }
-      var body = v === 'dashboard' && isLeaveAdmin() ? LeaveReports.dashboard(d, { range: range }) : v === 'elvanto' && isLeaveAdmin() ? renderElvanto(d) : v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && (isLeaveAdmin() || amStandIn(d)) ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);
+      var body = v === 'dashboard' && isLeaveAdmin() ? (weeklyDue(d) ? '<p class="note info">' + T('This week’s “who’s away” email hasn’t been sent yet.') + ' <a href="#/leave/weekly">' + T('Write it') + '</a> · <button class="link" data-act="leave:weeklydone">' + T('Mark as sent') + '</button></p>' : '') + LeaveReports.dashboard(d, { range: range }) : v === 'elvanto' && isLeaveAdmin() ? renderElvanto(d) : v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && (isLeaveAdmin() || amStandIn(d)) ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);
       return '<div class="page-head"><div><h1>' + T('Leave') + '</h1><p class="lead">' + T('Staff leave with the same rules as Leave Manager: only working days count, public holidays are free, and approved leave keeps people off the roster.') + '</p></div>' +
         (takesLeave(d) || isLeaveAdmin() ? '<button class="btn primary" data-act="leave:request">' + H.icon(H.ICON.plus, 18) + (takesLeave(d) ? T('Request leave') : T('Book leave')) + '</button>' : '') + '</div>' + tabs(d, v) + body;
     },
@@ -499,6 +555,18 @@
         S.saveLeave('Added staff category ' + n); H.render(); H.toast(T('Added – now fill in its days and allowances'));
       },
       dellevel: function (el) { if (!H.confirmBtn(el, '✕?')) return; var lv = S.leave(), l = lv.levels.splice(+el.dataset.i, 1)[0]; S.saveLeave('Removed staff category ' + l.level); H.render(); },
+      mailgo: function () {
+        var st = S.settings() || {}, E = window.Emails, method = E ? E.getMethod(st) : 'mail', $ = function (id) { return document.getElementById(id); };
+        var url = E.makeSendUrl(method, { to: $('le-to').value, subject: $('le-sub').value, body: $('le-body').value, from: st.emailGmail || '' });
+        H.closeModal(); if (method === 'gmail') window.open(url, '_blank', 'noopener,noreferrer'); else location.href = url;
+      },
+      weeklydone: function () { var lv = S.leave(); lv.settings.LastWeeklyEmail = H.today(); S.saveLeave('Sent the weekly “who’s away” email'); H.render(); H.toast(T('Saved')); },
+      reminddone: function () { var lv = S.leave(); lv.settings.LastReminder = H.today(); S.saveLeave('Sent the “use it or lose it” reminders'); H.go('leave/dashboard'); H.toast(T('Saved')); },
+      remind: function (el) {
+        var d = data(), s = C.staffById(d, el.dataset.id), u = C.useItOrLoseIt(d, s.id, H.today());
+        emailTo(personEmail(s.id), T('Your leave: use it or lose it'), T('Dear {name},', { name: firstName(s.id) }) + '\n\n' + T('A reminder that this leave will be lost if it isn’t taken in time:') + '\n' +
+          u.map(function (x) { return '• ' + C.fmtDays(x.left) + ' ' + x.type.name + ' – ' + T('take it by {date}', { date: H.fmt(x.until, true) }); }).join('\n') + '\n\n' + T('You can book it in Church Hub under Leave.') + '\n\n' + signOff(), s.name);
+      },
       change: function (el) { requestDialog(null, el.dataset.id); },
       print: function (el) { var d = data(), st = C.staffById(d, el.dataset.id); LeaveReports.printPerson(d, el.dataset.id, +el.dataset.y || yearOf(d)); if (st) S.audit('Printed the leave report of ' + st.name, 'people/' + st.id); },
       printall: function (el) { var d = data(); LeaveReports.printAll(d, yearOf(d), !!el.dataset.full); S.audit('Printed the all-staff leave ' + (el.dataset.full ? 'report' : 'summary'), 'leave'); },
@@ -585,6 +653,8 @@
           var r = p.req; r.id = 'L' + Date.now().toString(36).toUpperCase(); r.submitted = H.today(); r.source = 'Hub';
           S.leave().requests.push(r); S.saveLeave((r.status === 'Approved' ? 'Booked ' : 'Requested ') + p.type.name + ' for ' + p.staff.name);
           H.closeModal(); H.render(); H.toast(r.status === 'Approved' ? T('Booked') : T('Sent – the Administrator will approve it'));
+          if (r.status === 'Pending' && r.staffId === H.user().id && officeEmail()) emailTo(officeEmail(), T('Leave request: {name}, {dates}', { name: p.staff.name, dates: range(r) }),
+            T('Hello,') + '\n\n' + T('I’ve asked for {type} for {dates} in Church Hub.', { type: p.type.name, dates: range(r) }) + (r.reason ? '\n' + r.reason : '') + '\n\n' + p.staff.name, T('The request is saved. You can also let the church office know.'));
         } catch (e) { $('lf-err').hidden = false; $('lf-err').textContent = e.message; }
       },
       decide: function (el) {
@@ -594,6 +664,8 @@
           var p = C.prepareDecision(d, actor(d), el.dataset.id, el.dataset.d);
           p.req.status = el.dataset.d; p.req.decidedBy = H.name(H.user()); p.req.decidedOn = H.today();
           S.saveLeave(el.dataset.d + ' leave for ' + p.staff.name); H.render(); H.toast(T(el.dataset.d === 'Approved' ? 'Approved' : 'Declined'));
+          if (personEmail(p.staff.id)) emailTo(personEmail(p.staff.id), (el.dataset.d === 'Approved' ? T('Your leave is approved') : T('Your leave request was declined')),
+            T('Dear {name},', { name: firstName(p.staff.id) }) + '\n\n' + T(el.dataset.d === 'Approved' ? TX('Your {type} for {dates} is approved.') : TX('Your request for {type} for {dates} was declined. Please speak to me if you’d like to talk about it.'), { type: p.type ? p.type.name : '', dates: range(p.req) }) + '\n\n' + H.name(H.user()), p.staff.name);
         } catch (e) { H.toast(e.message, true); }
       },
       cancel: function (el) {
@@ -604,4 +676,15 @@
       }
     }
   });
+  /** For the Me page: what the person has left this leave year, if they're staff who take leave. */
+  window.LeaveUI = {
+    meCard: function () {
+      var d = data(), me = H.user(), st = me && C.staffById(d, me.id); if (!st || !C.tracksLeave(st)) return '';
+      var y = C.lyOf(H.today(), C.ctx(d).S), bal = C.balances(d, me.id, y);
+      var rows = d.types.filter(function (t) { return t.deducts && C.offered(d, st, t) && bal[t.code] && bal[t.code].entitled != null; }).map(function (t) {
+        return '<dt><span class="dot" style="--c:' + esc(t.colour) + '"></span> ' + esc(t.name) + '</dt><dd><b>' + C.fmtDays(bal[t.code].available) + '</b> ' + esc(T('of {n} left', { n: C.fmtDays(bal[t.code].entitled) })) + '</dd>';
+      }).join('');
+      return rows ? '<section class="panel"><h2>' + esc(T('Your leave in {year}', { year: C.lyLabel(y, C.ctx(d).S) })) + '</h2><dl class="kv">' + rows + '</dl><div class="btns" style="margin-top:12px"><a class="btn" href="#/leave">' + T('Book or see my leave') + '</a></div></section>' : '';
+    }
+  };
 })();

@@ -158,6 +158,9 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .ls-rule-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
 .ls-rule-row .field { margin: 0 0 6px; min-width: 120px; }
 .ls-rule-row .lr-min { width: 70px; }
+/* A person's name as a chip that opens their page (Care groups) */
+.name-chip { display: inline-flex; align-items: center; max-width: 100%; padding: 3px 11px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); font-weight: 600; font-size: 13.5px; text-decoration: none; overflow-wrap: anywhere; }
+.name-chip:hover, .name-chip:focus-visible { border-color: var(--accent); color: var(--accent-ink); }
 .pf-top { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin: -4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-2); }
 .pf-top .btn { gap: 6px; }
 .pp-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: 0 1 auto; }

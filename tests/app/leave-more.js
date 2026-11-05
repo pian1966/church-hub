@@ -19,6 +19,7 @@ module.exports = async function (ctx) {
   await s.go('leave/staff/p02');
   check((await s.page.$$('.lv-pm')).length === 12, 'a person’s leave page has a 12-month year planner');
   await s.go('leave/dashboard');
+  check(!!(await s.page.$('a[href="#/leave/weekly"]')), 'the Dashboard reminds leave managers to send this week’s “who’s away” email');
   check((await s.page.$$('main .stats .stat')).length === 4 && (await s.text()).includes('Use it or lose it'), 'leave managers get a Dashboard: four numbers, waiting requests, cover, use it or lose it, busiest months, sick leave');
   const [csv] = await Promise.all([s.page.waitForEvent('download'), (async () => { await s.go('leave/team'); await s.page.click('[data-act="leave:payroll"]'); })()]);
   check(/payroll-unpaid-leave/.test(csv.suggestedFilename()), 'Team balances gives the payroll file of unpaid leave');
@@ -45,5 +46,8 @@ module.exports = async function (ctx) {
   await s.page.waitForTimeout(300);
   docs = await s.docsNow();
   check(docs[theirs].status === 'Approved' && docs[theirs].decidedBy && docs['away/' + theirs.split('/')[1]], 'the stand-in approves it (and it counts as away for rosters)');
+  check(await s.page.isVisible('#le-to') && (await s.page.inputValue('#le-body')).includes('approved'), 'after deciding, an email to the person is ready to open (or skip)');
+  await s.page.click('.dlg-foot [data-act="hub:close"]'); await s.go('me');
+  check((await s.text()).includes('Your leave in'), 'a staff member sees what leave they have left on their Me page');
   await finish(s);
 };

@@ -38,38 +38,51 @@ ok(!C.leaderMayChange(groups[0], renamed, 'a') && !C.leaderMayChange(groups[0], 
 ok(C.inSeveral(groups).length === 0 && C.inSeveral(groups.concat([{ id: 'g3', memberIds: ['b'] }])).join() === 'b', 'finds anyone in two or more groups');
 
 console.log('Suggesting groups by where people live');
-const P = (id, first, city, code, extra) => Object.assign({ id, firstName: first, lastName: 'X', category: 'Church Partner', address: city || code ? { city, postcode: code } : undefined }, extra || {});
+const P = (id, first, addr, extra) => Object.assign({ id, firstName: first, lastName: 'X', category: 'Church Partner', address: addr }, extra || {});
+const A = (street, street2, city, postcode) => ({ street, street2, city, postcode });
 const folk = [
-  P('h1', 'Hil', 'Hilton', '3245'), P('h2', 'Hal', 'Hilton', '3245'),                      // in the Hilton group
-  P('w1', 'How', 'Howick', '3290'),                                                          // in Howick Tuesday
-  P('m1', 'Mer', 'Merrivale', '3291'),                                                       // in Merrivale (areas typed: Merrivale, 3291)
-  P('n1', 'Nia', 'Hilton', ''), P('n2', 'Ned', 'howick ', '3290'), P('n3', 'Ora', '', '3291'),
-  P('s1', 'Sue', 'Pietermaritzburg', '3201'), P('s2', 'Sam', '', ''),
-  P('f1', 'Fay', '', '', { familyId: 'F' }), P('f2', 'Fin', 'Howick', '3290', { familyId: 'F' }),   // Fin is in Hilton; Fay lives with him
-  P('k1', 'Kid', 'Hilton', '3245', { familyRole: 'child' }), P('a1', 'Att', 'Hilton', '3245', { category: 'Attender' }),
-  P('x1', 'Gone', 'Hilton', '3245', { active: false }), P('t1', 'Tie', 'Balgowan', '3275'), P('t2', 'Tia', 'Hilton', '3245'),
+  P('g1', 'Gus', A('4 Amber Glen', '', 'Howick', '3290')),                   // in Amber Glen Tuesday
+  P('v1', 'Val', A('9 Main Rd', 'Amber Valley', 'Howick', '3290')),          // in Amber Valley
+  P('w1', 'Wes', A('3 Oak Rd', '', 'Howick West', '3290')),                  // in Howick West
+  P('h1', 'Hil', A('1 Elm Rd', '', 'Hilton', '3245')),                       // in Hilton
+  P('n1', 'Ann', A('12 Amber Glen', '', 'Howick', '3290')),                  // estate in the street line
+  P('n2', 'Ben', A('Unit 7', 'amber valley', 'HOWICK', '3290')),             // estate in the second line, any capitals
+  P('n3', 'Cat', A('8 Pine Rd', '', 'Howick West', '3290')),                 // a part of Howick as the town
+  P('n4', 'Dan', A('5 Main Rd', '', 'Howick', '3290')),                      // just "Howick": which part?
+  P('n5', 'Eve', A('2 Rose Rd', '', 'Hilton', '3245')),                      // only one group in Hilton
+  P('n6', 'Fay', A('6 Hill Rd', '', 'Merrivale', '3291')),                   // Merrivale is typed as an area of the Thursday ladies
+  P('s1', 'Sue', A('1 Long Rd', '', 'Pietermaritzburg', '3201')), P('s2', 'Sam', undefined),
+  P('f1', 'Fin', undefined, { familyId: 'F' }), P('f2', 'Flo', A('4 Amber Glen', '', 'Howick', '3290'), { familyId: 'F' }),   // Flo is in Amber Glen
+  P('k1', 'Kid', A('4 Amber Glen', '', 'Howick', '3290'), { familyRole: 'child' }), P('a1', 'Att', A('4 Amber Glen', '', 'Howick', '3290'), { category: 'Attender' }),
+  P('x1', 'Gone', A('4 Amber Glen', '', 'Howick', '3290'), { active: false }),
 ];
 const cg = [
-  { id: 'H', name: 'Hilton', memberIds: ['h1', 'h2', 'f2', 't2'] },
-  { id: 'W', name: 'Howick Tuesday evening', memberIds: ['w1'] },
-  { id: 'M', name: 'Thursday ladies', areas: ['Merrivale', '3291'], memberIds: ['m1'] },
-  { id: 'B1', name: 'Balgowan A', memberIds: [] }, { id: 'B2', name: 'Balgowan B', memberIds: [] },
+  { id: 'AG', name: 'Amber Glen Tuesday morning', memberIds: ['g1', 'f2'] },
+  { id: 'AV', name: 'Amber Valley', memberIds: ['v1'] },
+  { id: 'HW', name: 'Howick West (Wednesday)', memberIds: ['w1'] },
+  { id: 'HC', name: 'Howick Thursday evening', memberIds: [] },
+  { id: 'HI', name: 'Hilton', memberIds: ['h1'] },
+  { id: 'TL', name: 'Thursday ladies', areas: ['Merrivale', '3291'], memberIds: [] },
 ];
 const sg = C.suggest(cg, folk), c = id => sg.clear.find(x => x.id === id), u = id => sg.unclear.find(x => x.id === id);
-ok(c('n1').groupId === 'H' && c('n1').why === 'area', 'a town in the group’s name: Hilton → the Hilton group');
-ok(c('n2').groupId === 'W' && c('n2').place === 'howick 3290', '…whatever the capitals and spaces');
-ok(c('n3').groupId === 'M' && c('n3').why === 'area', 'the areas typed on a group (here a postal code)');
-ok(c('f1').groupId === 'H' && c('f1').why === 'household' && c('f1').with === 'f2', 'someone without an address goes with the person they live with');
-ok(u('s1').why === 'noGroup' && u('s1').place === 'Pietermaritzburg 3201', 'no group near them: not clear');
-ok(u('s2').why === 'noAddress', 'no address at all: not clear');
-ok(u('t1').why === 'several' && u('t1').groupIds.join() === 'B1,B2', 'two groups for the same area: not clear, with both offered');
-ok(!c('k1') && !u('k1') && !c('a1') && !u('a1') && !c('x1') && !u('x1') && !c('h1') && !u('h1'), 'children, Attenders, people who left and people already in a group are left alone');
-const nb = C.suggest([{ id: 'A', name: 'Tuesday', memberIds: ['h1', 'h2'] }, { id: 'Z', name: 'Friday', memberIds: ['t2'] }, { id: 'Q', name: 'Sunday', memberIds: ['w1'] }], folk);
-ok(nb.clear.find(x => x.id === 'n1').groupId === 'A' && nb.clear.find(x => x.id === 'n1').why === 'neighbours', 'without areas: the group where most of their neighbours are (2 to 1)');
-ok(nb.unclear.find(x => x.id === 'n1') === undefined && nb.clear.find(x => x.id === 'n2').groupId === 'Q', '…and a single group with neighbours');
-const two = C.suggest([{ id: 'A', name: 'Tuesday', memberIds: ['h1'] }, { id: 'Z', name: 'Friday', memberIds: ['t2'] }], folk);
-ok(two.unclear.find(x => x.id === 'n1').why === 'several', 'neighbours split evenly between two groups: not clear');
-const fam = C.suggest([{ id: 'A', name: 'A', memberIds: ['h1'] }, { id: 'Z', name: 'Z', memberIds: ['h2'] }], [P('h1', 'H', 'Hilton', '', { familyId: 'G' }), P('h2', 'I', 'Hilton', '', { familyId: 'G' }), P('h3', 'J', 'Hilton', '', { familyId: 'G' })]);
+ok(c('n1') && c('n1').groupId === 'AG' && c('n1').why === 'area' && c('n1').place === 'Amber Glen', 'Amber Glen in the street → the Amber Glen group, not the Howick one');
+ok(c('n2') && c('n2').groupId === 'AV', 'Amber Valley in the second address line (any capitals) → the Amber Valley group');
+ok(c('n3') && c('n3').groupId === 'HW', '“Howick West” as the town → Howick West, not the plain Howick group');
+ok(u('n4') && u('n4').why === 'whichPart' && u('n4').groupIds[0] === 'HC' && u('n4').groupIds.includes('AG') && u('n4').place === 'Howick', 'just “Howick” while several groups meet in Howick: not clear – which part?');
+ok(c('n5') && c('n5').groupId === 'HI', 'a town with one group: that group');
+ok(c('n6') && c('n6').groupId === 'TL', 'the areas typed on a group');
+ok(c('f1') && c('f1').groupId === 'AG' && c('f1').why === 'household' && c('f1').with === 'f2', 'someone without an address goes with the person they live with');
+ok(u('s1').why === 'noGroup' && u('s1').place === 'Pietermaritzburg 3201' && u('s2').why === 'noAddress', 'no group near them, or no address: not clear');
+ok(!c('k1') && !u('k1') && !c('a1') && !u('a1') && !c('x1') && !u('x1') && !c('g1') && !u('g1'), 'children, Attenders, people who left and people already in a group are left alone');
+const parts = C.suggest([{ id: 'W', name: 'Howick West', memberIds: [] }, { id: 'E', name: 'Howick Central', memberIds: [] }], [P('z', 'Zoe', A('1 Main Rd', '', 'Howick', '3290'))]);
+ok(parts.unclear[0].why === 'whichPart' && parts.unclear[0].groupIds.join() === 'W,E', 'only parts of town have groups (Howick West, Howick Central) and the address says just Howick: which part?');
+const est = C.suggest([{ id: 'A', name: 'Tuesday', memberIds: ['m1', 'm2'] }, { id: 'B', name: 'Friday', memberIds: ['m3', 'm4', 'm5'] }],
+  [P('m1', 'M', A('3 Amber Glen', '', 'Howick', '')), P('m2', 'N', A('9 Amber Glen', '', 'Howick', '')), P('m3', 'O', A('1 Oak Rd', '', 'Howick', '')), P('m4', 'Q', A('2 Oak Rd', '', 'Howick', '')), P('m5', 'R', A('3 Oak Rd', '', 'Howick', '')),
+   P('y', 'Yan', A('20 Amber Glen', '', 'Howick', ''))]);
+ok(est.clear[0] && est.clear[0].groupId === 'A' && est.clear[0].why === 'neighbours' && est.clear[0].place === 'Amber Glen', 'groups not named after places: the group with neighbours in the same street or estate, over more people elsewhere in town');
+const two = C.suggest([{ id: 'A', name: 'Amber Glen 1', memberIds: [] }, { id: 'B', name: 'Amber Glen 2', memberIds: [] }], [P('y', 'Yan', A('20 Amber Glen', '', 'Howick', ''))]);
+ok(two.unclear[0].why === 'several' && two.unclear[0].groupIds.join() === 'A,B', 'two groups named after the same estate: not clear, both offered');
+const fam = C.suggest([{ id: 'A', name: 'A', memberIds: ['h1'] }, { id: 'Z', name: 'Z', memberIds: ['h2'] }], [P('h1', 'H', A('', '', 'Hilton', ''), { familyId: 'G' }), P('h2', 'I', A('', '', 'Hilton', ''), { familyId: 'G' }), P('h3', 'J', A('', '', 'Hilton', ''), { familyId: 'G' })]);
 ok(fam.unclear[0].id === 'h3' && fam.unclear[0].why === 'households', 'the people they live with are in different groups: not clear');
 ok(C.areasOf({ areas: ' Hilton , 3245,, Howick North ' }).towns.join() === 'hilton,howick north' && C.areasOf({ areas: ['3 2 4 5'] }).codes.join() === '3245', 'areas typed with commas: towns and postal codes');
 const withAreas = JSON.parse(JSON.stringify(groups[0])); withAreas.areas = ['Hilton'];

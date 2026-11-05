@@ -1457,6 +1457,7 @@ I18n.add('zh-Hans', {
     "Lives in {place}, an area of this group": "住在{place}，属于这个小组的区域",
     "Lives in {place}, like others in this group": "住在{place}，与这个小组的其他人一样",
     "No home address": "没有住址",
+    "Lives in {place} – which part? Closest groups: {groups}": "住在{place}——哪个区域？最近的小组：{groups}",
     "No care group in {place} yet": "{place}还没有关怀小组",
     "The people they live with are in different groups: {groups}": "同住的人在不同的小组：{groups}",
     "Close to more than one group: {groups}": "靠近多个小组：{groups}",

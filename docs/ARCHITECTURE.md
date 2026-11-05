@@ -379,9 +379,11 @@ Later: direct import through the Elvanto API (server side, with the church's API
 - Shown: members – "My care group" on their Me page; staff – a "Care group member / Carer · group" tag on profiles.
   Church wording renames them (Home group, Cell group, Class and Class leader, Small Christian Community…).
 - Suggest groups by where people live (`Care.suggest`, tested): for every Church Partner (adult, active) in no group yet –
-  first the group of the people they live with (same household); otherwise their suburb/town and postal code (or a household
-  member's) against each group's `areas` (typed in the Rename dialog: towns and postal codes, comma-separated), a town in the
-  group's name ("Hilton Tuesday evening"), and where its members live. Clear = one group stands out; the rest are listed as
+  first the group of the people they live with (same household); otherwise the whole address (or a household member's): the
+  places a group is named after ("Amber Glen Tuesday morning" -> Amber Glen; days, times and "ladies" etc. are ignored) or its typed
+  `areas` (Rename dialog), found in the street or second address line (an estate or suburb) beat one found only in the town, and a
+  longer place beats a shorter one ("Howick West" over "Howick"); then members living in the same street or estate, then the same
+  town. Only the town known ("Howick") while groups meet in several parts of it -> "which part?" (not clear). Clear = one group stands out; the rest are listed as
   "Not clear" (no address, no group nearby, several groups, household split) with the nearest groups starred. Nothing is
   saved until the Administrator or Pastor ticks and confirms.
 

@@ -559,6 +559,7 @@ I18n.add('ve', {
     "Lives in {place}, an area of this group": "U dzula {place}, fhethu ha tshigwada itshi",
     "Lives in {place}, like others in this group": "U dzula {place}, sa vhaṅwe vha tshigwada itshi",
     "No home address": "A hu na ḓiresi ya hayani",
+    "Lives in {place} – which part? Closest groups: {groups}": "U dzula {place} – tshipiḓa tshifhio? Zwigwada zwi re tsini: {groups}",
     "No care group in {place} yet": "A hu athu u vha na tshigwada tsha ndondolo {place}",
     "The people they live with are in different groups: {groups}": "Vhathu vhane a dzula navho vha zwigwadani zwo fhambanaho: {groups}",
     "Close to more than one group: {groups}": "Tsini na zwigwada zwi fhiraho tshithihi: {groups}",

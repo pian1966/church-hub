@@ -559,6 +559,7 @@ I18n.add('tn', {
     "Lives in {place}, an area of this group": "O nna kwa {place}, lefelo la setlhopha se",
     "Lives in {place}, like others in this group": "O nna kwa {place}, jaaka ba bangwe mo setlhopheng se",
     "No home address": "Ga go na aterese ya legae",
+    "Lives in {place} – which part? Closest groups: {groups}": "O nna kwa {place} – karolo efe? Ditlhopha tse di gaufi: {groups}",
     "No care group in {place} yet": "Ga go ise go nne le setlhopha sa tlhokomelo kwa {place}",
     "The people they live with are in different groups: {groups}": "Batho ba a nnang le bone ba mo ditlhopheng tse di farologaneng: {groups}",
     "Close to more than one group: {groups}": "Gaufi le ditlhopha di feta bongwe: {groups}",

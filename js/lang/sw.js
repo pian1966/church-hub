@@ -559,6 +559,7 @@ I18n.add('sw', {
     "Lives in {place}, an area of this group": "Anaishi {place}, eneo la kikundi hiki",
     "Lives in {place}, like others in this group": "Anaishi {place}, kama wengine wa kikundi hiki",
     "No home address": "Hakuna anwani ya nyumbani",
+    "Lives in {place} – which part? Closest groups: {groups}": "Anaishi {place} – sehemu gani? Vikundi vilivyo karibu: {groups}",
     "No care group in {place} yet": "Bado hakuna kikundi cha malezi {place}",
     "The people they live with are in different groups: {groups}": "Watu anaoishi nao wako katika vikundi tofauti: {groups}",
     "Close to more than one group: {groups}": "Karibu na zaidi ya kikundi kimoja: {groups}",

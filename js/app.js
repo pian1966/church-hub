@@ -6,6 +6,7 @@
  *   render(parts)  → HTML for #/id/...parts      after(parts) → wire up anything after render (optional)
  *   todos(user)    → [{ text, href, tag }]       stat(user)   → short text on the Home card (optional)
  *   actions        → { name: function (el, ev) } called for clicks on [data-act="id:name"]
+ *   badge(user)    → a number shown on its menu entry and phone tab, e.g. unread messages (optional; 0 = none)
  */
 var Hub = (function () {
   'use strict';
@@ -301,15 +302,18 @@ var Hub = (function () {
     return '<p class="improve"><a href="#/words/page">' + icon('M4 20h4L19 9l-4-4L4 16v4z', 16) + T('Help improve the {lang} wording on this page', { lang: esc(I18n.name(I18n.get())) }) + '</a></p>';
   }
   function navItems(active) {
-    var items = [{ id: 'home', name: T('Home'), icon: ICON.home }].concat(enabled().map(function (m) { return { id: m.id, name: T(m.name), icon: m.icon }; }));
+    var items = [{ id: 'home', name: T('Home'), icon: ICON.home }].concat(enabled().map(function (m) { return { id: m.id, name: T(m.name), icon: m.icon, n: badgeOf(m) }; }));
     return items.map(function (it) {
-      return '<a href="#/' + it.id + '" class="nav' + (it.id === active ? ' on' : '') + '"' + (it.id === active ? ' aria-current="page"' : '') + '>' + icon(it.icon) + '<span>' + esc(it.name) + '</span></a>';
+      return '<a href="#/' + it.id + '" class="nav' + (it.id === active ? ' on' : '') + '"' + (it.id === active ? ' aria-current="page"' : '') + '>' + icon(it.icon) + '<span class="grow">' + esc(it.name) + '</span>' + badge(it.n) + '</a>';
     }).join('');
   }
+  /** A module's count (e.g. unread messages): a small number on its menu entry and phone tab. */
+  function badgeOf(m) { try { return m && m.badge ? +m.badge(user) || 0 : 0; } catch (e) { return 0; } }
+  function badge(n) { return n > 0 ? '<span class="badge" aria-label="' + esc(T('{n} new', { n: n })) + '">' + (n > 99 ? '99+' : n) + '</span>' : ''; }
   function shell(mod, body) {
     var active = mod ? mod.id : 'home', s = Store.settings();
     // Phone tab bar: members get "Me" (their details, days away, serving) first; staff get their working areas first.
-    var order = can('people.basic') || can('people.view') || can('*') ? ['people', 'rosters', 'leave', 'me'] : ['me', 'people', 'rosters', 'leave'];
+    var order = can('people.basic') || can('people.view') || can('*') ? ['people', 'messages', 'rosters', 'leave', 'me'] : ['me', 'messages', 'people', 'rosters', 'leave'];
     var on = enabled().map(function (m) { return m.id; });
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
@@ -328,7 +332,7 @@ var Hub = (function () {
       '<main id="main" tabindex="-1"><div class="page-body">' + body + '</div>' + improveLink(mod) + '</main></div>' +
       '<nav class="tabbar" aria-label="' + T('Quick menu') + '">' + tabs.map(function (id) {
         var m = id === 'home' ? { name: 'Home', icon: ICON.home } : moduleById(id);
-        return '<a href="#/' + id + '" class="' + (id === active ? 'on' : '') + '">' + icon(m.icon, 22) + '<span>' + esc(T(m.name)) + '</span></a>';
+        return '<a href="#/' + id + '" class="' + (id === active ? 'on' : '') + '"><span class="tab-ic">' + icon(m.icon, 22) + badge(id === 'home' ? 0 : badgeOf(m)) + '</span><span>' + esc(T(m.name)) + '</span></a>';
       }).join('') + '<button data-act="hub:menu">' + icon(ICON.menu, 22) + '<span>' + T('More') + '</span></button></nav>' +
       '</div>';
   }

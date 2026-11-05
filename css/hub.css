@@ -461,3 +461,17 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 /* Duplicate check while typing: who else already has this email or mobile */
 .dup-hint { display: block; margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: var(--warn-soft); color: var(--warn) !important; font-size: 13px; }
 .dup-hint a { color: inherit; font-weight: 600; }
+/* Messages: a count on a menu entry or phone tab (e.g. unread messages), and the message list */
+.badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent-ink); color: #fff; font-size: 11.5px; font-weight: 700; line-height: 1; }
+.tab-ic { position: relative; display: inline-flex; }
+.tab-ic .badge { position: absolute; top: -6px; right: -12px; min-width: 18px; height: 18px; padding: 0 5px; font-size: 10.5px; box-shadow: 0 0 0 2px var(--surface); }
+.msg { display: block; padding: 14px 16px; border-bottom: 1px solid var(--line); }
+.msg:last-child { border-bottom: 0; }
+.msg-top { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; }
+.msg-top b { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.msg.new { box-shadow: inset 3px 0 0 var(--accent); }
+.msg.new .msg-top b::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: middle; }
+.msg-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
+.msg-foot .grow { font-size: 13px; }
+#ms-body { min-height: 140px; }

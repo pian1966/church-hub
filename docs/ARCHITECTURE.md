@@ -33,17 +33,18 @@ js/countries.js           Countries: 46 countries – regions (province/state/co
 js/privacy-law.js         PrivacyLaw: the law the Privacy pages follow, from the church's country (POPIA, GDPR, UK GDPR…; tested)
 js/wording.js             Wording: the church's own words (sets by denomination + renamed words), applied to the screens (tested)
 js/care.js                Care: care groups – who is in which group, carers, and the card the group sees (tested)
+js/messages.js            Msg: messages inside the app – who each audience is, who may send to whom, unread (tested)
 js/sample.js              made-up church for demo mode and tests
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers (search matching, photos and
                           "Choose the face", the turning cross for long jobs, downloads)
-js/mod-*.js               one file per module: me, people, rosters, leave, care, privacy, import, settings, words (Translations)
+js/mod-*.js               one file per module: me, people, rosters, leave, care, messages, privacy, import, settings, words (Translations)
 js/people/*.js            the People module in parts: core, directory, profile, edit, households, search (mod-people.js puts them together)
 android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
 manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
 firestore.rules           database security rules: who may read/write what (POPIA)
 tests/*.test.js           one per pure rules file above (roster, leave-import, elvanto-import, elvanto-sync, households,
-                          people-search, duplicates, i18n, countries, privacy-law, wording, serving, care) and the robot
+                          people-search, duplicates, i18n, countries, privacy-law, wording, serving, care, messages) and the robot
                           (robot.test.js); made-up data in tests/fixtures
 tests/rules.test.mjs      security rules (Firestore emulator)
 tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js); its parts are in tests/app/*.js
@@ -104,6 +105,8 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `breaches` | security-compromise register (POPIA s22) |
 | `audit` | who viewed or changed sensitive information, and when |
 | `wordIdeas` | suggested better wording: { lang, en (the English text), text, note, personId, name, status waiting\|used\|declined, reply, reviewedBy, reviewedAt } |
+| `messages` | a message to a group: { kind care\|group\|staff\|partners, groupId, audience (its name), title, body, fromId, fromName, to: [personIds worked out when sent], readBy: [personIds] } – see Messages below |
+| `msgGroups` | message groups (e.g. Worship team leaders): { name, memberIds, leaderIds } – Administrators and Pastors manage them |
 | `words` | approved wording, one document per language (`words/zu` = { words: { English: wording }, updatedAt, by }), used before the built-in translations |
 
 ### Roles (enforced in the screens and by the database security rules, `firestore.rules`)
@@ -386,6 +389,21 @@ Later: direct import through the Elvanto API (server side, with the church's API
   town. Only the town known ("Howick") while groups meet in several parts of it -> "which part?" (not clear). Clear = one group stands out; the rest are listed as
   "Not clear" (no address, no group nearby, several groups, household split) with the nearest groups starred. Nothing is
   saved until the Administrator or Pastor ticks and confirms.
+
+## Messages (Messages page; `js/messages.js`, `js/mod-messages.js`)
+- Audiences (`Msg.audiences`, tested): Administrators and Pastors – **Staff** (people with staff details), **Church Partners**
+  (active adults), every care group and every message group; carers – their own care group; message-group leaders – their
+  own group. Members only read. The people a message goes to (`to`) are worked out when it is sent, so someone added to a
+  group later doesn't see older messages, and the rules can check each reader.
+- Loading (`plan()` in `js/store.js`): Administrators and Pastors load all `messages` and `msgGroups`; everyone else the
+  messages where `to` contains them, the ones they sent (`fromId`), and the message groups they are in.
+- Reading: opening the inbox (while the app is on screen) adds the person to `readBy` with `arrayUnion` (`Store.markRead`),
+  the only change the rules let a receiver make. Unread messages give a count on the Messages menu entry and phone tab
+  (a module's `badge()` in `js/app.js`) and a Home to-do. Not while an Administrator uses "View as".
+- Writing (Messages → Write, or `#/messages/send/<kind>/<groupId>` – carers get a button on their Me page): a confirmation
+  with how many it goes to; Administrators and Pastors also see how many of them can't sign in yet. Rules: `firestore.rules`
+  (messages, msgGroups) check the sender, that a carer or leader writes only to people in their group, and the sizes.
+- Not yet: phone notifications when the app is closed, email/SMS fallback, replies (see ROADMAP Phase 5).
 
 ## Services that need a roster
 - Settings lists every upcoming service with a bin to remove it (and its roster); "Stop holding a regular service…"

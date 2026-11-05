@@ -85,7 +85,8 @@
           '<small>' + (bits.length ? bits.join(' · ') : (cards[pid] ? T('Details not shared') : T('Details appear when they next sign in'))) + '</small></span>' +
           (lead && !you && !isL ? '<button class="icon-btn ghost" data-act="care:mineout" data-g="' + esc(g.id) + '" data-id="' + esc(pid) + '" aria-label="' + esc(T('Take {name} out of the group', { name: name })) + '" title="' + esc(T('Take {name} out of the group', { name: name })) + '">' + H.icon(H.ICON.x, 16) + '</button>' : '') + '</div>';
       }).join('') + '</div>' +
-      (lead ? '<div class="btns" style="margin-top:12px"><button class="btn" data-act="care:mineadd" data-g="' + esc(g.id) + '">' + H.icon(H.ICON.plus, 16) + T('Add someone to the group') + '</button></div>' : '') + '</section>';
+      (lead ? '<div class="btns" style="margin-top:12px"><button class="btn" data-act="care:mineadd" data-g="' + esc(g.id) + '">' + H.icon(H.ICON.plus, 16) + T('Add someone to the group') + '</button>' +
+        (window.Msg ? '<a class="btn" href="#/messages/send/care/' + esc(g.id) + '">' + H.icon('M4 5h16v11H9l-5 4z', 16) + T('Send the group a message') + '</a>' : '') + '</div>' : '') + '</section>';
   }
 
   /* ---------- Edit details (Administrators and Pastors) ---------- */
@@ -312,5 +313,5 @@
       }
     }
   });
-  window.CareUI = { mePanel: mePanel, fields: fields, wireFields: wireFields, read: read, apply: apply, tag: tag, sync: sync, place: place, setFrom: setFrom };
+  window.CareUI = { finder: finder, mePanel: mePanel, fields: fields, wireFields: wireFields, read: read, apply: apply, tag: tag, sync: sync, place: place, setFrom: setFrom };
 })();

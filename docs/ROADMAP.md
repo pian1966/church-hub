@@ -43,7 +43,7 @@ Accept/decline by email and app, swap requests, reminders, sign-up sheets, run s
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.
 
 ## Phase 5 – Communication and calendar
-Email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
+First step done (0.12.0): email prompts for birthdays, anniversaries and welcomes, opened in the church’s email program. Next: sending them automatically (formatted, with the church logo) through Afrihost or Gmail behind the scenes; then email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.

@@ -135,7 +135,7 @@
         if (op === 'delete') return is(c, ['admin']) || checks(c, b.lang) || mine(c, b.personId);
         return (is(c, ['admin']) || checks(c, b.lang)) && onlyChanges(b, a, ['status', 'reply', 'reviewedBy', 'reviewedAt', 'updatedAt']) && ['used', 'declined'].indexOf(a.status) >= 0;
       } },
-    dsr: 'admin', breaches: 'admin',
+    dsr: 'admin', breaches: 'admin', emailPrompts: 'admin',
     audit: { read: function (c) { return is(c, ['admin']); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }
   };

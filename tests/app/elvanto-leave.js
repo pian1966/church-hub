@@ -61,7 +61,8 @@ module.exports = async function (ctx) {
   check(mine.length === 1 && docs[mine[0]].status === 'Pending', 'requesting leave saves it as waiting for approval');
   await s.go('leave'); await s.page.click(`[data-act="leave:cancel"][data-id="${mine[0].split('/')[1]}"]`); await s.page.click(`[data-act="leave:cancel"][data-id="${mine[0].split('/')[1]}"]`); await s.settle();
   docs = await s.docsNow(); check(docs[mine[0]].status === 'Cancelled', 'can cancel own leave');
-  await s.go('leave/away'); check((await s.text()).includes('Thandi'), '“Who’s away” shows colleagues’ approved leave');
+  await s.go('leave/away'); await s.page.click('[data-act="leave:awayview"][data-v="list"]'); await s.settle();   // the next 6 weeks, whatever today's date
+  check((await s.text()).includes('Thandi'), '“Who’s away” shows colleagues’ approved leave');
   check(await s.page.evaluate(() => Store.leave().requests.every(r => r.staffId === 'p06' || (!r.reason && !r.type))), 'but not the type of leave or the reason');
   await finish(s);
 

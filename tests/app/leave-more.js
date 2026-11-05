@@ -12,6 +12,12 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(docs['leave/config'].rules.length === 2 && docs['leave/config'].rules[1].from === '24 Dec' && docs['leave/config'].rules[1].action === 'Block', 'adding “Christmas” saves a blocking rule for 24–26 Dec');
   const today = await s.page.evaluate(() => Hub.today()), later = await s.page.evaluate(() => LeaveCore.iso(LeaveCore.addDays(new Date(), 7)));
+  await s.go('leave/away');
+  check(await s.page.isVisible('.lv-wall') && (await s.page.$$('.lv-wall tbody tr')).length >= 5, 'Who’s away opens on the wallchart: a row per staff member and the count of who is away');
+  await s.page.click('[data-act="leave:awayview"][data-v="cal"]'); await s.settle();
+  check(await s.page.isVisible('.lv-cal') && (await s.page.$$('.lv-cal-cell:not(.lv-empty)')).length >= 28, '…and as a month calendar');
+  await s.go('leave/staff/p02');
+  check((await s.page.$$('.lv-pm')).length === 12, 'a person’s leave page has a 12-month year planner');
   await s.go('leave/approvals');
   check(await s.page.isVisible('#standin'), 'Approvals has a stand-in approver panel');
   await s.page.selectOption('#si-who', 'p02'); await s.page.fill('#si-from', today); await s.page.fill('#si-to', later);

@@ -2,6 +2,16 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Previous month", "Vorige maand", "Inyanga edlule", "Inyanga edlulileyo"],
+    ["Next month", "Volgende maand", "Inyanga ezayo", "Inyanga ezayo"],
+    ["Not a working day", "Nie ’n werksdag nie", "Akusilo usuku lokusebenza", "Asingomhla wokusebenza"],
+    ["Cover", "Dekking", "Ukumboza", "Ukugubungela"],
+    ["No staff are set up for leave yet.", "Geen personeel is nog vir verlof opgestel nie.", "Abekho abasebenzi abasethelwe ikhefu okwamanje.", "Akukho basebenzi baseteyo ikhefu okwangoku."],
+    ["Red in the bottom row: a cover rule isn’t met that day.", "Rooi in die onderste ry: ’n dekkingsreël word daardie dag nie nagekom nie.", "Okubomvu emugqeni ongezansi: umthetho wokumboza awufezwanga ngalolo suku.", "Obomvu kumqolo ongezantsi: umthetho wokugubungela awufezekanga ngaloo mini."],
+    ["Year planner", "Jaarbeplanner", "Umhleli wonyaka", "Umcwangcisi wonyaka"],
+    ["Wallchart", "Muurkaart", "Ishadi lodonga", "Itshati lodonga"],
+    ["Calendar", "Kalender", "Ikhalenda", "Ikhalenda"],
+    ["List", "Lys", "Uhlu", "Uluhlu"],
     ["A stand-in must be a Pastor, who can already see staff details.", "’n Plaasvervanger moet ’n Pastoor wees, wat reeds personeelbesonderhede kan sien.", "Ozongena esikhundleni kufanele abe nguMfundisi, osevele ekwazi ukubona imininingwane yabasebenzi.", "Oza kungena endaweni kufuneka abe nguMfundisi, osele ekwazi ukubona iinkcukacha zabasebenzi."],
     ["Stand-in approver", "Plaasvervangende goedkeurder", "Ovumayo esikhundleni", "Ovumayo endaweni"],
     ["Going away? Choose someone to approve or decline leave between two dates. They can’t decide their own leave, and their access ends by itself after the last day.", "Gaan jy weg? Kies iemand om verlof tussen twee datums goed te keur of af te keur. Hulle kan nie hul eie verlof besluit nie, en hul toegang eindig vanself ná die laaste dag.", "Uyahamba? Khetha umuntu ozovuma noma enqabe ikhefu phakathi kwezinsuku ezimbili. Abakwazi ukunquma ikhefu labo, futhi ukufinyelela kwabo kuphela ngokwako emva kosuku lokugcina.", "Uyahamba? Khetha umntu oza kuvuma okanye ale ikhefu phakathi kweentsuku ezimbini. Abanakuthatha isigqibo ngekhefu labo, kwaye ufikelelo lwabo luphela ngokwalo emva kosuku lokugqibela."],

@@ -9,7 +9,7 @@
   function dayNames(x) { var D = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']; return String(x).replace(/\b(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\b/g, function (d) { return I18n.dow()[D.indexOf(d)]; }); }
   function amt(t, n) { return C.fmtDays(n) + ' ' + T(C.unitName(t, n)); }
   var H = Hub, esc = H.esc, S = Store, S2 = Store, C = LeaveCore;
-  var state = { tab: '' };
+  var state = { tab: '', away: 'wall', month: '' };
 
   /** Leave Manager's data shape, with staff taken from People. */
   function data() {
@@ -61,7 +61,8 @@
         var t = typeOf(d, r.type);
         return '<div class="item"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow"><b>' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + amt(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · ' + r.reason : '')) + '</small></span>' + pill(r.status) +
           (r.status === 'Pending' || r.start > H.today() ? '<button class="btn small" data-act="leave:cancel" data-id="' + r.id + '">' + T('Cancel') + '</button>' : '') + '</div>';
-      }).join('') + '</div>' : '<p class="empty">' + T('No leave booked. Use “Request leave” to book some.') + '</p>') + '</section>';
+      }).join('') + '</div>' : '<p class="empty">' + T('No leave booked. Use “Request leave” to book some.') + '</p>') + '</section>' +
+      '<section class="block"><h2>' + esc(T('Year planner')) + '</h2>' + LeaveViews.planner(d, me.id, y) + '</section>';
   }
 
   function renderApprovals(d) {
@@ -104,7 +105,16 @@
       (staff.some(function (s) { return !types.some(function (t) { var x = bal[s.id][t.code]; return x && x.entitled != null; }); }) ? '<p class="hint">' + T('A dash in every column means that person’s staff category has no allowances yet – set them under Leave → Settings.') + '</p>' : '') + '</section>';
   }
 
+  /** Who's away: the wallchart (everyone on one month), a month calendar, or the list of the next 6 weeks. */
   function renderAway(d) {
+    var ym = state.month || H.today().slice(0, 7), opts = { pending: isLeaveAdmin() || amStandIn(d) };
+    var views = [['wall', T('Wallchart')], ['cal', T('Calendar')], ['list', T('List')]];
+    var sw = '<div></div><nav class="seg lv-views" aria-label="' + esc(T('Who’s away')) + '" style="margin-bottom:12px">' + views.map(function (v) { return '<button data-act="leave:awayview" data-v="' + v[0] + '" class="' + (state.away === v[0] ? 'on' : '') + '" aria-pressed="' + (state.away === v[0]) + '">' + v[1] + '</button>'; }).join('') + '</nav>';
+    if (state.away === 'wall') return sw + '<section class="block">' + LeaveViews.wallchart(d, ym, opts) + '</section>';
+    if (state.away === 'cal') return sw + '<section class="block">' + LeaveViews.calendar(d, ym, opts) + '</section>';
+    return sw + renderAwayList(d);
+  }
+  function renderAwayList(d) {
     var t = H.today(), end = C.iso(C.addDays(C.parse(t), 42));
     var list = d.requests.filter(function (r) { return (r.status === 'Approved' || (isLeaveAdmin() && r.status === 'Pending')) && r.end >= t && r.start <= end; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
     return '<section class="block"><h2>' + T('Away in the next 6 weeks') + '</h2>' + (list.length ? '<div class="list">' + list.map(function (r) {
@@ -186,6 +196,7 @@
           '<td class="lt">' + u(b.approved || 0) + '</td><td class="lt">' + (b.pending ? u(b.pending) : '<span class="muted">–</span>') + '</td>' +
           '<td class="lt"><b>' + (b.entitled != null ? u(b.available) : '<span class="muted">–</span>') + '</b></td></tr>';
       }).join('') + '</tbody></table></div><p class="hint">' + T('“Left” takes off approved and waiting leave. Days from last year are used first, until the date shown.') + '</p>' : '<p class="empty">' + esc(T('No allowances for {category} – set them under Leave → Settings.', { category: st.level })) + '</p>') + '</section>';
+    h += '<section class="block"><h2>' + esc(T('Year planner')) + '</h2>' + LeaveViews.planner(d, id, y) + '</section>';
     // Every request in the year
     h += '<section class="block"><h2>' + esc(T('Leave in {year}', { year: C.lyLabel(y, S) })) + '</h2>' + (list.length ? '<div class="list">' + list.map(function (r) {
       var t = typeOf(d, r.type), n = C.amount(r, t, ctx);
@@ -478,6 +489,8 @@
         S.saveLeave('Added staff category ' + n); H.render(); H.toast(T('Added – now fill in its days and allowances'));
       },
       dellevel: function (el) { if (!H.confirmBtn(el, '✕?')) return; var lv = S.leave(), l = lv.levels.splice(+el.dataset.i, 1)[0]; S.saveLeave('Removed staff category ' + l.level); H.render(); },
+      awayview: function (el) { state.away = el.dataset.v; H.render(); },
+      month: function (el) { state.month = el.dataset.m; H.render(); },
       addrule: function (el) {
         var lv = S.leave(); lv.rules = document.querySelector('.ls-rule') ? typedRules() : (lv.rules || []);
         lv.rules.push(JSON.parse(JSON.stringify(PRESETS[el.dataset.preset] || PRESETS.blank)));

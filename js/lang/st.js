@@ -674,6 +674,7 @@ I18n.add('st', {
     "Lives in {place}, an area of this group": "O dula {place}, sebaka sa sehlopha sena",
     "Lives in {place}, like others in this group": "O dula {place}, jwalo ka ba bang ba sehlopha sena",
     "No home address": "Ha ho aterese ya lehae",
+    "Lives in {place} – which part? Closest groups: {groups}": "O dula {place} – karolong efe? Dihlopha tse haufi: {groups}",
     "No care group in {place} yet": "Ha ho eso be le sehlopha sa tlhokomelo {place}",
     "The people they live with are in different groups: {groups}": "Batho bao a dulang le bona ba dihlopheng tse fapaneng: {groups}",
     "Close to more than one group: {groups}": "Haufi le dihlopha tse fetang se le seng: {groups}",

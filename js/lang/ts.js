@@ -674,6 +674,7 @@ I18n.add('ts', {
     "Lives in {place}, an area of this group": "U tshama e {place}, ndhawu ya ntlawa lowu",
     "Lives in {place}, like others in this group": "U tshama e {place}, ku fana na van’wana va ntlawa lowu",
     "No home address": "A ku na adirese ya le kaya",
+    "Lives in {place} – which part? Closest groups: {groups}": "U tshama e {place} – xiphemu xihi? Mintlawa leyi nga ekusuhi: {groups}",
     "No care group in {place} yet": "A ka ha vi na ntlawa wa nhlayiso e {place}",
     "The people they live with are in different groups: {groups}": "Vanhu lava a tshamaka na vona va le mintlaweni yo hambana: {groups}",
     "Close to more than one group: {groups}": "Ekusuhi na mintlawa yo tlula wun’we: {groups}",

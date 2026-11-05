@@ -674,6 +674,7 @@ I18n.add('nl', {
     "Lives in {place}, an area of this group": "Woont in {place}, een gebied van deze groep",
     "Lives in {place}, like others in this group": "Woont in {place}, net als anderen in deze groep",
     "No home address": "Geen woonadres",
+    "Lives in {place} – which part? Closest groups: {groups}": "Woont in {place} – welk deel? Dichtstbijzijnde groepen: {groups}",
     "No care group in {place} yet": "Nog geen kring in {place}",
     "The people they live with are in different groups: {groups}": "De mensen bij wie ze wonen zitten in verschillende groepen: {groups}",
     "Close to more than one group: {groups}": "Dicht bij meer dan één groep: {groups}",

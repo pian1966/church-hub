@@ -37,6 +37,7 @@ I18n.rows([
     ['Lives in {place}, an area of this group', 'Woon in {place}, ’n gebied van hierdie groep', 'Uhlala e-{place}, indawo yeqembu leli', 'Uhlala e-{place}, indawo yeli qela'],
     ['Lives in {place}, like others in this group', 'Woon in {place}, soos ander in hierdie groep', 'Uhlala e-{place}, njengabanye kuleli qembu', 'Uhlala e-{place}, njengabanye kweli qela'],
     ['No home address', 'Geen huisadres nie', 'Alikho ikheli lasekhaya', 'Akukho dilesi yasekhaya'],
+    ['Lives in {place} – which part? Closest groups: {groups}', 'Woon in {place} – watter deel? Naaste groepe: {groups}', 'Uhlala e-{place} – kuyiphi ingxenye? Amaqembu aseduze: {groups}', 'Uhlala e-{place} – yeyiphi indawo? Amaqela akufutshane: {groups}'],
     ['No care group in {place} yet', 'Nog geen selgroep in {place} nie', 'Alikabikho iqembu lokunakekelana e-{place}', 'Akukabikho qela lokukhathalelana e-{place}'],
     ['The people they live with are in different groups: {groups}', 'Die mense by wie hulle woon is in verskillende groepe: {groups}', 'Abantu ahlala nabo basemaqenjini ahlukene: {groups}', 'Abantu ahlala nabo bakumaqela ahlukeneyo: {groups}'],
     ['Close to more than one group: {groups}', 'Naby meer as een groep: {groups}', 'Useduze namaqembu angaphezu kweyodwa: {groups}', 'Ukufutshane namaqela angaphezu kwelinye: {groups}'],

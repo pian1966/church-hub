@@ -106,4 +106,29 @@ module.exports = async function (ctx) {
   await s.page.selectOption('.side-lang select', 'en'); await s.settle();
   await finish(s);
 
+  console.log('Care groups: suggest groups by where people live');
+  const areaSeed = seedDocs();
+  const adultsSeed = Object.keys(areaSeed).filter(k => /^people\/[^/]+$/.test(k) && areaSeed[k].category === 'Church Partner' && areaSeed[k].familyRole !== 'child').map(k => k.split('/')[1]);
+  const [a1, a2, a3, a4] = adultsSeed.filter(id => !['p01'].includes(id)).slice(-4);
+  adultsSeed.forEach(id => { delete areaSeed['details/' + id].address; areaSeed['people/' + id].familyId = 'solo-' + id; });
+  areaSeed['details/' + a1].address = { street: '1 Oak Rd', city: 'Hilton', postcode: '3245' };
+  areaSeed['details/' + a2].address = { street: '2 Elm Rd', city: 'Merrivale', postcode: '3291' };
+  areaSeed['careGroups/cgH'] = { name: 'Hilton Tuesday evening', leaderIds: [], memberIds: [], names: {} };
+  areaSeed['careGroups/cgM'] = { name: 'Thursday ladies', leaderIds: [], memberIds: [], names: {} };
+  s = await session('linda.pillay@example.com', areaSeed); await s.go('care');
+  await s.page.click('[data-act="care:rename"][data-id="cgM"]'); await s.page.fill('#cg-areas', 'Merrivale, 3291'); await s.page.click('[data-act="care:saverename"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['careGroups/cgM'].areas.join('|') === 'Merrivale|3291' && (await s.text()).includes('Areas: Merrivale, 3291'), 'Rename: “Areas it covers” saved on the group and shown under its name');
+  await s.page.click('[data-act="care:suggest"]'); await s.settle();
+  const sel = id => s.page.$eval('.cgs-g[data-id="' + id + '"]', e => e.value).catch(() => null), on = id => s.page.$eval('.cgs-on[data-id="' + id + '"]', e => e.checked).catch(() => null);
+  check(await sel(a1) === 'cgH' && await on(a1) && await sel(a2) === 'cgM' && await on(a2), 'suggestions: Hilton → the group named after Hilton; Merrivale → the group covering it; both ticked');
+  check(await sel(a3) === '' && await on(a3) === false && (await s.page.textContent('#cg-suggest')).includes('No home address'), 'someone without an address is in “Not clear”, unticked, with the reason');
+  docs = await s.docsNow();
+  check(!docs['careGroups/cgH'].memberIds.length && !docs['careGroups/cgM'].memberIds.length, 'nothing is saved until confirmed');
+  await s.page.uncheck('.cgs-on[data-id="' + a2 + '"]');
+  await s.page.selectOption('.cgs-g[data-id="' + a3 + '"]', 'cgM'); check(await on(a3), 'choosing a group for an unclear person ticks them');
+  await s.page.click('[data-act="care:suggestsave"]'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
+  check(docs['careGroups/cgH'].memberIds.join() === a1 && docs['careGroups/cgM'].memberIds.join() === a3 && !(await s.page.$('#cg-suggest')), 'confirming puts only the ticked people in their chosen groups');
+  check(Object.values(docs).some(d => d.action && /Suggested by area: In care group Hilton Tuesday evening/.test(d.action)), 'each placement is in the audit log');
+  await finish(s);
+
 };

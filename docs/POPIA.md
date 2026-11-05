@@ -130,6 +130,10 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   card per person in their group (`careGroups/{id}/share/{person}`), not their record. Only members of that group,
   Administrators and Pastors can read it (database rules, tested). Carers may add and remove members; every change is in
   the audit log. Leaving a group removes the person's card from it; after a death they are taken out.
+- Suggesting groups by area (Care groups → Suggest groups by where people live): Administrators and Pastors only, who already
+  see home addresses. It reads the suburb/town and postal code the church already holds, for the same purpose (care and
+  fellowship); nothing is shown to the group or changed until they confirm, and opening the suggestions and every placement
+  are in the audit log. A group's "areas" are place names, not personal information.
 
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church Hub keeps the suggestion with their name and person ID, so the

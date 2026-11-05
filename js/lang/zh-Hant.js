@@ -1487,6 +1487,7 @@ I18n.add('zh-Hant', {
     "Lives in {place}, an area of this group": "住在{place}，屬於這個小組的區域",
     "Lives in {place}, like others in this group": "住在{place}，與這個小組的其他人一樣",
     "No home address": "沒有住址",
+    "Lives in {place} – which part? Closest groups: {groups}": "住在{place}——哪個區域？最近的小組：{groups}",
     "No care group in {place} yet": "{place}還沒有關懷小組",
     "The people they live with are in different groups: {groups}": "同住的人在不同的小組：{groups}",
     "Close to more than one group: {groups}": "靠近多個小組：{groups}",

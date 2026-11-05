@@ -589,6 +589,7 @@ I18n.add('pl', {
     "Lives in {place}, an area of this group": "Mieszka w {place}, na obszarze tej grupy",
     "Lives in {place}, like others in this group": "Mieszka w {place}, jak inni z tej grupy",
     "No home address": "Brak adresu",
+    "Lives in {place} – which part? Closest groups: {groups}": "Mieszka w {place} – w której części? Najbliższe grupy: {groups}",
     "No care group in {place} yet": "Brak jeszcze grupy domowej w {place}",
     "The people they live with are in different groups: {groups}": "Osoby, z którymi mieszka, są w różnych grupach: {groups}",
     "Close to more than one group: {groups}": "Blisko więcej niż jednej grupy: {groups}",

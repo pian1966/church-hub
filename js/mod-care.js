@@ -183,6 +183,8 @@
     if (r.why === 'neighbours') return T('Lives in {place}, like others in this group', { place: place });
     if (r.why === 'noAddress') return T('No home address');
     if (r.why === 'noGroup') return T('No care group in {place} yet', { place: place });
+    var names0 = (r.groupIds || []).map(function (id) { var g = S.get('careGroups', id); return g ? g.name : ''; }).filter(Boolean).join(', ');
+    if (r.why === 'whichPart') return T('Lives in {place} – which part? Closest groups: {groups}', { place: place, groups: names0 });
     var names = (r.groupIds || []).map(function (id) { var g = S.get('careGroups', id); return g ? g.name : ''; }).filter(Boolean).join(', ');
     return T(r.why === 'households' ? 'The people they live with are in different groups: {groups}' : 'Close to more than one group: {groups}', { groups: names });
   }

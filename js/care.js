@@ -90,7 +90,7 @@ var Care = (function () {
   /* ---------- suggesting groups by where people live (an Administrator or Pastor confirms) ---------- */
   function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9À-ɏ]+/g, ' ').trim(); }
   function codeOf(s) { return String(s || '').replace(/\s+/g, '').toUpperCase(); }
-  function hasAddress(p) { var a = p && p.address; return !!(a && (norm(a.city) || codeOf(a.postcode))); }
+  function hasAddress(p) { var a = p && p.address; return !!(a && (norm(a.street) || norm(a.street2) || norm(a.city) || codeOf(a.postcode))); }
   /** A group's areas, typed by an Administrator: "Hilton, 3245, Howick North" → { towns, codes } (anything with a digit is a postal code). */
   function areasOf(g) {
     var towns = [], codes = [];
@@ -99,14 +99,35 @@ var Care = (function () {
     });
     return { towns: towns, codes: codes };
   }
+  // Words in a group's name that say when or who, not where: "Amber Glen Tuesday ladies" → the place is "amber glen".
+  var NOT_PLACE = ('monday tuesday wednesday thursday friday saturday sunday mon tue tues wed thu thur thurs fri sat sun mondays tuesdays wednesdays thursdays fridays saturdays sundays ' +
+    'maandag dinsdag woensdag donderdag vrydag saterdag sondag oggend middag aand ' +
+    'morning mornings afternoon afternoons evening evenings night nights day daytime am pm weekly fortnightly monthly early late ' +
+    'ladies ladys women womens woman men mens man youth young adults adult couples couple seniors senior singles students student mothers moms mums dads fathers families family dames mans jeug ' +
+    'care cell home house group groups grp bible study fellowship prayer community life connect class small kinship circle selgroep groep ' +
+    'the of in at on for with a an').split(' ');
+  var NOT = {}; NOT_PLACE.forEach(function (w) { NOT[w] = 1; });
+  /** The places a group's name names: "Amber Glen & Howick North (Tuesday)" → ["amber glen", "howick north"]. */
+  function namePlaces(name) {
+    return String(name || '').replace(/\([^)]*\)/g, ' ').split(/\s*(?:&|\/|,|\+|;| and | en | - | – )\s*/i).map(function (part) {
+      return norm(part).split(' ').filter(function (w) { return w && !NOT[w] && !/^\d{1,2}(h\d*|am|pm)?$/.test(w); }).join(' ');
+    }).filter(function (x) { return x.length > 2; });
+  }
   function live(p) { return p && p.active !== false && !p.mergedInto && p.firstName !== 'Deleted' && p.category !== 'Deceased' && !p.deathDate; }
+  /** Does this place ("amber glen") appear, as whole words, in this text ("12 amber glen howick")? */
+  function within(text, place) { return !!place && (' ' + text + ' ').indexOf(' ' + place + ' ') >= 0; }
+  /** The street without the house number ("12a Main Rd" → "main rd"): people on the same street, estate or complex are near neighbours. */
+  function streetOf(s) { return norm(s).replace(/^(unit |flat |no |nr )?\d+[a-z]?\s+/, ''); }
   /**
    * Suggest a care group for every Church Partner (adult, active) who isn't in one yet. Looks, in order, at:
    *  1. the people they live with (same household) – if they are in a group, the same group;
-   *  2. their home address (or, without one, a household member's): its suburb/town and postal code against each group's
-   *     areas (typed on the group, or a town in the group's name, e.g. "Hilton Tuesday evening") and where its members live.
+   *  2. their home address (or, without one, a household member's), as deep as it goes: a place a group is named after
+   *     (or its typed areas) found in the street, estate or suburb lines ("Amber Glen", "Howick North") wins over one found
+   *     only in the town ("Howick"), and a longer place over a shorter one; then neighbours – members living in the same
+   *     street, estate or complex, then the same town or postal code.
+   * Someone who only matches a town ("Howick") while several groups meet in that town is not clear: which part of town?
    * Returns { clear: [{ id, groupId, why, place, with? }], unclear: [{ id, why, place?, groupIds }] }, both sorted by name.
-   * why: 'household' | 'area' | 'neighbours' (clear); 'noAddress' | 'noGroup' | 'several' | 'households' (unclear).
+   * why: 'household' | 'area' | 'neighbours' (clear); 'noAddress' | 'noGroup' | 'several' | 'whichPart' | 'households' (unclear).
    */
   function suggest(groups, people, opt) {
     opt = opt || {}; groups = groups || []; people = people || [];
@@ -116,20 +137,14 @@ var Care = (function () {
     var adults = people.filter(function (p) { return live(p) && p.familyRole !== 'child'; });
     function mates(p) { return p.familyId ? adults.filter(function (x) { return x.id !== p.id && x.familyId === p.familyId; }) : []; }
     function addressFor(p) { if (hasAddress(p)) return p.address; var m = mates(p).filter(hasAddress)[0]; return m ? m.address : null; }
-    // every town anyone lives in – so a group called "Hilton Tuesday evening" counts as covering Hilton
-    var allTowns = {}; adults.forEach(function (p) { if (hasAddress(p) && norm(p.address.city)) allTowns[norm(p.address.city)] = 1; });
     var info = groups.map(function (g) {
-      var a = areasOf(g), nm = ' ' + norm(g.name) + ' ', towns = {}, codes = {}, said = {};
-      a.towns.forEach(function (t) { said[t] = 1; }); a.codes.forEach(function (c) { said['#' + c] = 1; });
-      Object.keys(allTowns).forEach(function (t) { if (nm.indexOf(' ' + t + ' ') >= 0) said[t] = 1; });
-      (g.memberIds || []).forEach(function (m) {
-        var p = byId[m]; if (!p || !hasAddress(p)) return;
-        var t = norm(p.address.city), c = codeOf(p.address.postcode);
-        if (t) towns[t] = (towns[t] || 0) + 1; if (c) codes[c] = (codes[c] || 0) + 1;
-      });
-      return { g: g, said: said, towns: towns, codes: codes };
+      var a = areasOf(g), places = namePlaces(g.name).concat(a.towns).filter(function (x, i, all) { return all.indexOf(x) === i; });
+      var near = [];   // where its members live
+      (g.memberIds || []).forEach(function (m) { var p = byId[m]; if (p && hasAddress(p)) near.push(p.address); });
+      return { g: g, places: places, codes: a.codes, near: near };
     });
     function nameOfPlace(a) { return [String(a.city || '').trim(), String(a.postcode || '').trim()].filter(Boolean).join(' '); }
+    function title(s) { return s.replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
     var clear = [], unclear = [];
     adults.forEach(function (p) {
       if (cats.indexOf(p.category) < 0 || inGroup[p.id]) return;
@@ -139,18 +154,46 @@ var Care = (function () {
       if (gs.length > 1) { unclear.push({ id: p.id, why: 'households', groupIds: gs, place: '' }); return; }
       // 2. where they live
       var a = addressFor(p); if (!a) { unclear.push({ id: p.id, why: 'noAddress', groupIds: [], place: '' }); return; }
-      var t = norm(a.city), c = codeOf(a.postcode), where = nameOfPlace(a);
+      var deep = norm([a.street, a.street2].join(' ')), town = norm(a.city), code = codeOf(a.postcode), street = streetOf(a.street), estate = norm(a.street2);
       var scored = info.map(function (x) {
-        var named = (t && x.said[t]) || (c && x.said['#' + c]);
-        var n = (t ? x.towns[t] || 0 : 0) || (c ? x.codes[c] || 0 : 0);   // neighbours: same town, or else same postal code
-        return { id: x.g.id, named: !!named, score: (named ? 10 : 0) + n };
-      }).filter(function (x) { return x.score > 0; }).sort(function (x, y) { return y.score - x.score; });
-      if (!scored.length) { unclear.push({ id: p.id, why: 'noGroup', groupIds: [], place: where }); return; }
-      var best = scored[0], next = scored[1];
-      // clear when one group stands out: the only one, or the only one covering the area, or at least twice as many neighbours
-      if (!next || (best.named && !next.named) || (best.named === next.named && best.score >= 2 * next.score))
-        clear.push({ id: p.id, groupId: best.id, why: best.named ? 'area' : 'neighbours', place: where });
-      else unclear.push({ id: p.id, why: 'several', groupIds: scored.filter(function (x) { return x.named === best.named; }).map(function (x) { return x.id; }).slice(0, 4), place: where });
+        // how specifically the group's name (or areas) matches: 2 = street/estate/suburb line, 1 = town or postal code
+        var level = 0, len = 0, hit = '';
+        x.places.forEach(function (pl) {
+          var lv = within(deep, pl) ? 2 : within(town, pl) ? 1 : 0, ln = pl.split(' ').length;
+          if (lv > level || (lv === level && lv && ln > len)) { level = lv; len = ln; hit = pl; }
+        });
+        if (!level && code && x.codes.indexOf(code) >= 0) { level = 1; len = 1; hit = code; }
+        var close = 0, sameTown = 0;
+        x.near.forEach(function (n) {
+          if ((estate && norm(n.street2) === estate) || (street && streetOf(n.street) === street && norm(n.city) === town)) close++;
+          else if (town ? norm(n.city) === town : code && codeOf(n.postcode) === code) sameTown++;   // a postal code often covers several parts of town
+        });
+        return { id: x.g.id, level: level, len: len, hit: hit, close: close, town: sameTown };
+      }).filter(function (x) { return x.level || x.close || x.town; });
+      // only their town is known ("Howick") and groups are named after parts of it ("Howick West", "Howick Central"): which part?
+      var parts = town ? info.filter(function (x) { return x.places.some(function (pl) { return pl !== town && within(pl, town); }); }) : [];
+      if (!scored.some(function (x) { return x.level; }) && parts.length) { unclear.push({ id: p.id, why: 'whichPart', groupIds: parts.map(function (x) { return x.g.id; }).slice(0, 4), place: String(a.city || '').trim() }); return; }
+      if (!scored.length) { unclear.push({ id: p.id, why: 'noGroup', groupIds: [], place: nameOfPlace(a) }); return; }
+      function by(k) { return function (x, y) { return y[k] - x[k]; }; }
+      // the best named match: deepest line first, then the longest place name
+      var named = scored.filter(function (x) { return x.level; }).sort(function (x, y) { return y.level - x.level || y.len - x.len || y.close - x.close || y.town - x.town; });
+      if (named.length) {
+        var top = named.filter(function (x) { return x.level === named[0].level && x.len === named[0].len; });
+        if (top.length === 1) {
+          // only the town matched, but other groups have members in other parts of that town: ask which part
+          var others = named[0].level === 1 ? scored.filter(function (x) { return x.id !== named[0].id && (x.close || x.town); }) : [];
+          if (!others.length) { clear.push({ id: p.id, groupId: named[0].id, why: 'area', place: title(named[0].hit) }); return; }
+          unclear.push({ id: p.id, why: 'whichPart', groupIds: [named[0].id].concat(others.sort(by('town')).map(function (x) { return x.id; })).slice(0, 4), place: String(a.city || '').trim() || nameOfPlace(a) }); return;
+        }
+        // several groups name the same place: their members decide (twice as many near neighbours)
+        top.sort(function (x, y) { return y.close - x.close || y.town - x.town; });
+        if (top[0].close && top[0].close >= 2 * top[1].close) { clear.push({ id: p.id, groupId: top[0].id, why: 'neighbours', place: title(top[0].hit) }); return; }
+        unclear.push({ id: p.id, why: 'several', groupIds: top.map(function (x) { return x.id; }).slice(0, 4), place: nameOfPlace(a) }); return;
+      }
+      // no group is named after where they live: neighbours in the same street or estate, then in the same town
+      var k = scored.some(function (x) { return x.close; }) ? 'close' : 'town', nb = scored.filter(function (x) { return x[k]; }).sort(by(k));
+      if (!nb[1] || nb[0][k] >= 2 * nb[1][k]) { clear.push({ id: p.id, groupId: nb[0].id, why: 'neighbours', place: k === 'close' ? title(estate || street) : nameOfPlace(a) }); return; }
+      unclear.push({ id: p.id, why: 'several', groupIds: nb.map(function (x) { return x.id; }).slice(0, 4), place: nameOfPlace(a) });
     });
     var byName = function (x, y) { return nameOf(byId[x.id]).localeCompare(nameOf(byId[y.id])); };
     return { clear: clear.sort(byName), unclear: unclear.sort(byName) };

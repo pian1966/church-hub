@@ -66,7 +66,7 @@
   /** Administrators: go straight to a staff member's leave, or set it up if they're marked Staff but not yet in Leave. */
   function leaveButton(p) {
     var leaveOn = ((S.settings() || {}).modules || {}).leave !== false;
-    if (!H.can('*') || !leaveOn || deceased(p) || p.active === false) return '';
+    if (!H.can('leave.manage') || !leaveOn || deceased(p) || p.active === false) return '';
     if (p.staff) return '<a class="btn" href="#/leave/staff/' + p.id + '">' + T('Leave') + '</a>';
     if (p.category === 'Staff') return '<button class="btn" data-act="people:edit" data-id="' + p.id + '" data-focus="pf-staff">' + T('Set up leave') + '</button>';
     return '';
@@ -94,7 +94,7 @@
         (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +
         '<input type="file" id="pp-photo" data-id="' + p.id + '" accept="image/*" hidden>' : '') +
       leaveButton(p) +
-      (H.can('*') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + T('Export their data') + '</button>' : '') +
+      (H.can('privacy.manage') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + T('Export their data') + '</button>' : '') +
       (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">' + T('Record a death') + '</button>' : '') + '</div></div>';
     if (p.mergedInto && S.get('people', p.mergedInto)) html += '<div class="note info" style="margin-bottom:16px">' + T('This was a duplicate record. It was merged into {link} and is kept only for the church’s records.', { link: '<a href="#/people/p/' + p.mergedInto + '">' + esc(H.name(S.get('people', p.mergedInto))) + '</a>' }) + '</div>';
     if (deceased(p) && canRecordDeath()) {
@@ -125,8 +125,8 @@
       (!child && lateSpouse(p) ? '<dt>' + T('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +
         (lateSpouse(p).deceasedAt ? '<span class="kv-sub">' + esc(T('Died {date}', { date: H.fmt(lateSpouse(p).deceasedAt, true) })) + '</span>' : '') + '</dd>' :
         !child && p.lateSpouseName ? '<dt>' + T('Late spouse') + '</dt><dd>' + esc(T('Was married to {name}', { name: p.lateSpouseName })) + '</dd>' : '') +
-      (H.can('*') || me ? '<dt>' + T('ID number') + '</dt><dd id="pp-idn"><button class="link" data-act="people:showid" data-id="' + p.id + '">' + T('Show') + '</button>' +
-        (H.can('*') ? ' · <button class="link" data-act="people:editid" data-id="' + p.id + '">' + T('Change') + '</button>' : '') + '<span class="kv-sub">' + (me && !H.can('*') ? T('Only you and the church Administrators can see it.') : T('Administrators only · views are logged')) + '</span></dd>' : '') +
+      (H.can('idnumbers') || me ? '<dt>' + T('ID number') + '</dt><dd id="pp-idn"><button class="link" data-act="people:showid" data-id="' + p.id + '">' + T('Show') + '</button>' +
+        (H.can('idnumbers') ? ' · <button class="link" data-act="people:editid" data-id="' + p.id + '">' + T('Change') + '</button>' : '') + '<span class="kv-sub">' + (me && !H.can('*') ? T('Only you and the church Administrators can see it.') : T('Administrators only · views are logged')) + '</span></dd>' : '') +
       (!child && survivingSpouses(p).length ? '<dt>' + T('Spouse') + '</dt><dd>' + survivingSpouses(p).map(function (s) { return T('Was married to {name}', { name: '<a href="#/people/p/' + s.id + '">' + esc(H.name(s)) + '</a>' }); }).join('<br>') + '</dd>' : '') +
       // Wedding anniversary straight after marital status: the date, or "Not recorded" with an Add link, for anyone ever married
       (full && !child && !keyDate(p, WEDDING) && /^(Married|Separated|Divorced|Widowed)$/.test(p.maritalStatus || '') ? '<dt>' + T('Wedding anniversary') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' +
@@ -137,7 +137,7 @@
         return '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('Married {n} year', 'Married {n} years', n)) + '</span>' : '') + '</dd>';
       }).join('') : '') +
       (p.staff && full ? '<dt>' + T('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
-      (H.can('*') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.roleLabel(p.appRole || 'member')) + '</dd>' : '') +
+      (H.can('access.manage') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.roleLabel(p.appRole || 'member')) + '</dd>' : '') +
       '</dl></section>';
     if (/<dt>/.test(contact)) html += contact;
     // Households (where they live) – a child can live in more than one

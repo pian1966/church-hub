@@ -69,6 +69,10 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('wordIdeas/w15', { lang: 'zu', en: 'Home', text: 'Ekhaya', personId: 'p15', name: 'Clare', status: 'waiting', createdAt: 'x' });
   await set('wordIdeas/w16', { lang: 'af', en: 'Home', text: 'Tuiste', personId: 'p15', name: 'Clare', status: 'waiting', createdAt: 'x' });
   await set('words/zu', { words: { Home: 'Ekhaya' }, updatedAt: 'x', by: 'Nomvula' });
+  // What Pastors can do: Andile is a Pastor whose church ticked every ability; Thandi (the usual Pastor) has none
+  await set('roles/andile@example.com', { role: 'pastor', personId: 'p03', can: ['settings', 'access', 'people', 'idnumbers', 'leave', 'rosters', 'privacy', 'import', 'words'] });
+  await set('idNumbers/p15', { value: '8001015009087' });
+  await set('people/p40', { firstName: 'Test', lastName: 'Person', familyRole: 'adult' });
   await set('elvantoSync/L9', { personId: 'p15', name: 'A p15', start: '2027-02-01', end: '2027-02-02', want: 'Unavailable', have: '', haveNote: '', status: 'Done', note: '' });
 });
 
@@ -427,6 +431,35 @@ await t('anyone signed in suggests wording as themselves; checkers see and answe
   await can(db.admin.doc('wordIdeas/w16').update({ status: 'declined', reply: 'Thank you', reviewedBy: 'Linda', reviewedAt: 'x' }));
   await can(db.member.doc('wordIdeas/w14').delete());                                                // takes it back
   await cannot(db.member.doc('wordIdeas/w15').delete());
+});
+
+console.log('What Pastors can do');
+const andile = env.authenticatedContext('uid-andile', { email: 'andile@example.com', email_verified: true }).firestore();
+await t('a Pastor without ticks can’t do Administrator things', async () => {
+  await cannot(db.pastor.doc('settings/church').update({ churchName: 'x' }));
+  await cannot(read(db.pastor, 'idNumbers/p15')); await cannot(read(db.pastor, 'dsr/d1')); await cannot(read(db.pastor, 'audit/a1'));
+  await cannot(db.pastor.doc('leaveRequests/L1').update({ status: 'Declined' })); await cannot(db.pastor.doc('teams/t9').set({ name: 'x' }));
+  await cannot(db.pastor.doc('people/p40').delete()); await cannot(read(db.pastor, 'elvantoSync/L1'));
+});
+await t('a Pastor with every tick can do what an Administrator does', async () => {
+  await can(andile.doc('settings/church').update({ churchName: 'Renamed' }));
+  await can(read(andile, 'idNumbers/p15')); await can(andile.doc('idNumbers/p15').set({ value: '8001015009088' }));
+  await can(read(andile, 'dsr/d1')); await can(read(andile, 'audit/a1')); await can(read(andile, 'emailPrompts/p15_birthday_2026-11-05'));
+  await can(andile.doc('leaveRequests/L1').update({ status: 'Declined' })); await can(andile.doc('leave/config').update({ note: 'x' }));
+  await can(andile.doc('teams/t9').set({ name: 'Sound' })); await can(read(andile, 'serveOffers/o15'));
+  await can(read(andile, 'detailChanges/d15')); await can(read(andile, 'elvantoSync/L1')); await can(read(andile, 'wordIdeas/w16'));
+  await can(andile.doc('people/p40').delete());
+});
+await t('…but can’t change what Pastors can do, or give Administrator or Pastor access', async () => {
+  await cannot(andile.doc('settings/church').update({ pastorCan: ['settings'] }));
+  await cannot(andile.doc('roles/andile@example.com').update({ role: 'admin' }));
+  await cannot(andile.doc('roles/new2@example.com').set({ role: 'admin', personId: 'p98' }));
+  await cannot(andile.doc('roles/new2@example.com').set({ role: 'pastor', personId: 'p98' }));
+  await cannot(andile.doc('roles/new2@example.com').set({ role: 'member', personId: 'p98', can: ['settings'] }));
+  await cannot(andile.doc('roles/linda@example.com').delete());
+  await can(andile.doc('roles/new2@example.com').set({ role: 'rosters', personId: 'p98', name: 'New' }));
+  await can(andile.doc('roles/new2@example.com').delete());
+  await cannot(read(andile, 'medical/p12'));                                                        // medical notes stay with Children's ministry
 });
 
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });

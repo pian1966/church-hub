@@ -246,8 +246,8 @@
   }
 
   H.register({
-    id: 'import', name: 'Import', desc: 'Bring people across from Elvanto, and leave from Leave Manager', icon: H.ICON.import, tint: '#A16207', roles: ['admin'],
-    render: function (parts) { return !H.can('*') ? '<p class="empty">' + T('Only Administrators can import.') + '</p>' : parts && parts[0] === 'leave' ? renderLeave() : parts && parts[0] === 'unavailable' ? renderUnavailable() : render(); },
+    id: 'import', name: 'Import', desc: 'Bring people across from Elvanto, and leave from Leave Manager', icon: H.ICON.import, tint: '#A16207', roles: ['admin'], perm: 'import.manage',
+    render: function (parts) { return !H.can('import.manage') ? '<p class="empty">' + T('Only Administrators can import.') + '</p>' : parts && parts[0] === 'leave' ? renderLeave() : parts && parts[0] === 'unavailable' ? renderUnavailable() : render(); },
     after: function () {
       document.querySelectorAll('.un-on').forEach(function (b) { b.addEventListener('change', function () { if (b.checked) delete un.skip[b.dataset.k]; else un.skip[b.dataset.k] = 1; H.render(); }); });
       document.querySelectorAll('.un-pick').forEach(function (s) { s.addEventListener('change', function () { if (s.value) un.pick[s.dataset.k] = s.value; else delete un.pick[s.dataset.k]; H.render(); }); });

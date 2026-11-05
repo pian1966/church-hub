@@ -98,12 +98,16 @@
         : '<span style="display:block;margin-top:6px">' + T('To avoid duplicates this can’t be saved. If it really is a different person, ask an Administrator.') + '</span>') : '');
   }
 
+  var LEFT = 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11';   // a door with an arrow going out
   function editDialog(p) {
     var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: '', familyId: '', familyRole: '', appRole: Store.defaultRole() };
     var admin = H.can('*'), me = isMe(p);
     var fams = S.list('families');
     var html = H.dialogHead(isNew ? T('Add a person') : T('Edit {name}', { name: H.name(p) }), isNew ? T('Only add what the church needs. Ask for consent when you add someone.') : '') +
       '<form id="pf" class="dlg-body" novalidate><input type="hidden" id="pf-id" value="' + esc(p.id || '') + '">' +
+      // Leaving or removing someone: at the top, apart from the details
+      (!isNew && (admin || H.can('people.delete')) ? '<div class="pf-top"><button type="button" class="btn small" data-act="people:archive" data-id="' + p.id + '" title="' + esc(T('They’ve left the church: hidden from lists, history kept')) + '">' + H.icon(LEFT, 16) + T('Mark as left') + '</button>' +
+        '<button type="button" class="btn small" data-act="people:bin" data-id="' + p.id + '" title="' + esc(T('For a test person or someone added by mistake. They can be restored for 30 days.')) + '">' + H.icon(H.ICON.trash, 16) + T('Move to Bin') + '</button></div>' : '') +
       '<div class="two"><label class="field req">' + T('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
       '<label class="field req">' + T('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
@@ -134,10 +138,10 @@
               '<label class="field">' + T('Country') + countrySelect(a.country || '') + '</label></div></fieldset>';
           })(p.address || {}) +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Wedding anniversary') + '<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
-      (admin ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
-      (admin ? '<label class="field">' + T('App access') + '<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') + '</small></label>' : '') +
+      (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
+      (roleChoices(p).length ? '<label class="field">' + T('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
-      '<div class="dlg-foot">' + (!isNew && admin ? '<span style="margin-right:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="people:archive" data-id="' + p.id + '">' + T('Mark as left') + '</button><button class="btn" data-act="people:bin" data-id="' + p.id + '" title="' + esc(T('For a test person or someone added by mistake. They can be restored for 30 days.')) + '">' + H.icon(H.ICON.trash, 16) + T('Move to Bin') + '</button></span>' : '') +
+      '<div class="dlg-foot">' +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:save">' + T(isNew ? 'Add person' : 'Save') + '</button></div>';
     H.modal(html, T(isNew ? 'Add a person' : 'Edit details'));
     if (!isNew && (deceased(p) || p.category === 'Deceased')) {   // someone who has died: only first and last name must be filled in
@@ -190,6 +194,14 @@
   }
 
   /** Staff details for Leave (Administrators only): category (sets allowances and working days), start date (pro-rata), own working days. */
+  /** The app access someone may be given here: any for Administrators; a Pastor with the "access" tick gives the smaller
+   *  roles only, and can't change an Administrator's or another Pastor's access (the rules refuse it too). */
+  function roleChoices(p) {
+    if (H.can('*')) return Object.keys(H.ROLES);
+    if (!H.can('access.manage')) return [];
+    var small = ['member', 'rosters', 'kids', 'none'];
+    return small.indexOf(p.appRole || 'member') >= 0 ? small : [];
+  }
   function staffFields(p) {
     var lv = S.leave() || { levels: [] }, st = p.staff || {}, DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     var mine = st.workDays ? st.workDays.split(/\s*,\s*/) : [];

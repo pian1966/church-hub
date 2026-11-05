@@ -46,13 +46,13 @@
   }
   /** On an Administrator's sign-in: people in the Bin for more than 30 days are deleted. */
   function emptyOld() {
-    if (!H.can('*')) return;
+    if (!H.can('people.delete')) return;
     var today = H.today();
     binned().filter(function (p) { return goneOn(p) <= today; }).forEach(function (p) { deleteForever(p, 'after ' + DAYS + ' days'); });
   }
 
   function renderBin() {
-    if (!H.can('*')) return '<p class="empty">' + T('Only Administrators can use the Bin.') + '</p>';
+    if (!H.can('people.delete')) return '<p class="empty">' + T('Only Administrators can use the Bin.') + '</p>';
     var list = binned();
     return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a><div class="page-head"><div><h1>' + T('Bin') + '</h1>' +
       '<p class="lead">' + T('People moved to the Bin are hidden everywhere and can’t sign in. Restore them within {n} days; after that they are deleted for good.', { n: DAYS }) + '</p></div></div>' +
@@ -66,14 +66,14 @@
       }).join('') + '</div>' : '<p class="empty">' + T('The Bin is empty.') + '</p>');
   }
   function binLink() {
-    if (!H.can('*')) return '';
+    if (!H.can('people.delete')) return '';
     var n = binned().length;
     return n ? '<a class="btn" href="#/people/bin">' + H.icon(H.ICON.trash, 16) + T('Bin') + ' <span class="count">' + n + '</span></a>' : '';
   }
 
   Object.assign(P.actions, {
     bin: function (el) {
-      var p = S.get('people', el.dataset.id); if (!p || !H.can('*')) return;
+      var p = S.get('people', el.dataset.id); if (!p || !H.can('people.delete')) return;
       if (H.user() && p.id === H.user().id) { H.toast(T('You can’t move yourself to the Bin'), true); return; }
       if (!H.confirmBtn(el, T('Click again: move to the Bin'))) return;
       moveToBin(p); H.closeModal(); H.go('people');

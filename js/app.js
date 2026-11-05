@@ -31,9 +31,29 @@ var Hub = (function () {
   var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
   function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
   function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
+  /** What Pastors can do (Settings → What Pastors can do): each tick, the permissions it adds. The database rules check the same
+   *  ticks (may('…') in firestore.rules), copied onto each Pastor's access-list entry. */
+  var TX = function (x) { return x; };   // a text kept in a list, translated where it is shown (the language test checks it)
+  var PASTOR_CAN = [
+    ['settings', TX('Change the church’s settings'), ['settings.manage']],
+    ['access', TX('Give and take away app access (Basic access, Roster coordinator, Children’s ministry)'), ['access.manage']],
+    ['people', TX('Check changes members ask for, move people to the Bin and delete their information'), ['people.delete', 'people.changes']],
+    ['idnumbers', TX('See and change ID numbers'), ['idnumbers']],
+    ['leave', TX('Approve leave, book leave for others and change the leave settings'), ['leave.manage']],
+    ['rosters', TX('Manage rosters, teams and services'), ['rosters.manage']],
+    ['privacy', TX('Privacy: requests, breaches, the audit log, exporting someone’s data'), ['privacy.manage']],
+    ['import', TX('Import from Elvanto and Leave Manager, and the Elvanto robot'), ['import.manage']],
+    ['words', TX('Approve better wording in every language'), ['words.manage']]
+  ];
+  function pastorPerms() {
+    var on = (Store.settings() || {}).pastorCan || [], out = [];
+    PASTOR_CAN.forEach(function (a) { if (on.indexOf(a[0]) >= 0) out = out.concat(a[2]); });
+    return out;
+  }
   function can(perm) {
     if (!user) return false;
     var p = (ROLES[myRole()] || ROLES.member).perms;
+    if (myRole() === 'pastor' && pastorPerms().indexOf(perm) >= 0) return true;
     return p.indexOf(perm) >= 0 || (p.indexOf('*') >= 0 && RESTRICTED.indexOf(perm) < 0);
   }
 
@@ -238,7 +258,7 @@ var Hub = (function () {
   function runUpgrades() { signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
   function enabled() {
     var on = (Store.settings().modules || {});
-    return modules.filter(function (m) { return on[m.id] !== false && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*')) && (!m.show || m.show()); });
+    return modules.filter(function (m) { return on[m.id] !== false && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); });
   }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
 
@@ -700,5 +720,5 @@ var Hub = (function () {
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, modal: modal, closeModal: closeModal,
-    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, T: T, mon: function () { return I18n.mon(); } };
+    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

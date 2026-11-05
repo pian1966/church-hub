@@ -91,7 +91,7 @@
   }
   /** The sliding scale: how readily people are flagged, here and while someone is typed in. Administrators change it (a church setting). */
   function sensPanel() {
-    var n = P.dupSens(), admin = H.can('*');
+    var n = P.dupSens(), admin = H.can('settings.manage');
     return '<section class="panel" style="margin-bottom:12px"><h2 style="margin:0 0 6px;font-size:1rem">' + T('How sensitive is the duplicate check?') + '</h2>' +
       '<div class="row" style="gap:10px;align-items:center"><span class="muted small">' + T('Fewer warnings') + '</span>' +
       '<input type="range" id="dup-sens" min="1" max="5" step="1" value="' + n + '" class="grow" aria-label="' + esc(T('How sensitive is the duplicate check?')) + '"' + (admin ? '' : ' disabled') + '>' +
@@ -101,7 +101,7 @@
       (admin ? '' : ' ' + T('Only an Administrator can change this.')) + '</p></section>';
   }
   if (typeof document !== 'undefined') document.addEventListener('change', function (ev) {
-    if (!ev.target || ev.target.id !== 'dup-sens' || !H.can('*')) return;
+    if (!ev.target || ev.target.id !== 'dup-sens' || !H.can('settings.manage')) return;
     var n = +ev.target.value; S.setSettings({ dupSensitivity: n }, 'Duplicate check sensitivity set to ' + n + ' of 5'); H.render();
     var again = document.getElementById('dup-sens'); if (again) again.focus();
   });

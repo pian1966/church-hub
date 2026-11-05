@@ -151,7 +151,7 @@
       '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p>' + MODS.map(function (m) {
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
       }).join('') + '<p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' +
-      renderAccess(st, byRole) +
+      renderAccess(st, byRole) + renderPastorCan(st) +
       renderSlots() +
       renderServices(st, svcs) + '</div>';
   }
@@ -178,6 +178,20 @@
       (P ? '<button class="btn small" data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
   }
 
+  /** What Pastors can do: an Administrator ticks the Administrator abilities Pastors may have (settings.pastorCan).
+   *  Church Hub copies them onto each Pastor's access-list entry, and the database rules check them there. */
+  function renderPastorCan(st) {
+    var on = st.pastorCan || [], admin = H.can('*');
+    return '<section class="panel" id="pastor-can" style="grid-column:1/-1"><h2>' + T('What Pastors can do') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('Pastors always see and edit everyone’s details, households, children and pastoral notes. Tick what else they may do – up to everything an Administrator does. Medical notes stay with Children’s ministry.') + '</p>' +
+      '<div class="pc-list">' + H.PASTOR_CAN.map(function (a) {
+        return '<label class="check"><input type="checkbox" class="st-pc" value="' + a[0] + '"' + (on.indexOf(a[0]) >= 0 ? ' checked' : '') + (admin ? '' : ' disabled') + '><span>' + esc(T(a[1])) + '</span></label>';
+      }).join('') + '</div>' +
+      (admin ? '<div class="btns"><button class="btn small" data-act="settings:pastorcan">' + T('Save') + '</button> <button class="btn small ghost" data-act="settings:pastorall">' + T('Tick everything') + '</button></div>' +
+        '<p class="hint">' + T('Pastors get the change the next time they open Church Hub.') + (Store.isLive() ? ' ' + T('If you have changed the database rules file, publish it again first (FIREBASE-SETUP step 7).') : '') + '</p>'
+        : '<p class="hint">' + T('Only an Administrator can change this.') + '</p>') + '</section>';
+  }
+
   /** Today's email suggestions: only people who agreed to email; couples together; late spouses as the People page finds them. */
   function todaysEmails() {
     var E = window.Emails, P = window.PeopleParts; if (!E) return [];
@@ -197,7 +211,7 @@
   }
 
   function dailyEmailTodos() {
-    if (!H.can('*')) return [];
+    if (!H.can('settings.manage')) return [];
     var E = window.Emails; if (!E) return [];
     var events = todaysEmails();
     var labels = {
@@ -254,7 +268,7 @@
   }
 
   H.register({
-    id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'],
+    id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'], perm: 'settings.manage',
     todos: function (u) {
       return dailyEmailTodos();
     },
@@ -263,7 +277,7 @@
         setTimeout(function () { showSendDialog(decodeURIComponent(parts[1])); }, 50);
         return render(['emails']);
       }
-      return H.can('*') ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>';
+      return H.can('settings.manage') ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>';
     },
     after: function () {
       var sn = document.getElementById('sp-name'), sd = document.getElementById('sp-date');
@@ -340,6 +354,14 @@
         }
         H.toast(T('Opening email…'));
       },
+      pastorcan: function () {
+        if (!H.can('*')) return;
+        var on = [].slice.call(document.querySelectorAll('.st-pc:checked')).map(function (c) { return c.value; });
+        var names = H.PASTOR_CAN.filter(function (a) { return on.indexOf(a[0]) >= 0; }).map(function (a) { return a[0]; });
+        S.setSettings({ pastorCan: names }, 'What Pastors can do: ' + (names.join(', ') || 'nothing extra'));
+        S.syncPastors(); H.render(); H.toast(T('Saved'));
+      },
+      pastorall: function () { document.querySelectorAll('.st-pc').forEach(function (c) { c.checked = true; }); },
       see: function () {
         var see = {}; window.PeopleParts.TIERS.forEach(function (t) { see[t[0]] = []; });
         document.querySelectorAll('.st-see').forEach(function (b) { if (b.checked) see[b.dataset.t].push(b.value); });

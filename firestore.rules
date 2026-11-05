@@ -32,7 +32,7 @@ service cloud.firestore {
     // access-list entry as "can". may('leave') is true for Administrators, and for Pastors with that tick.
     // Abilities: settings, access, people, idnumbers, leave, rosters, privacy, import, words.
     function may(x) { return admin() || (isRole(['pastor']) && x in access().get('can', [])); }
-    function rosterer() { return rosterer() || may('rosters'); }
+    function rosterer() { return isRole(['admin', 'rosters']) || may('rosters'); }
     // The roles a Pastor with "access" may give or take away (never Administrator or Pastor, never abilities)
     function smallRole(r) { return r in ['rosters', 'kids', 'member']; }
     // The Elvanto robot (GitHub Actions) signs in with its own account. Its access-list entry names its account ID (uid),

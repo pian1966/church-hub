@@ -5,7 +5,7 @@ written for Claude but meant for every agent working on Church Hub. When this fi
 
 The rules people most often miss:
 - Every new piece of screen text goes through `T('…')`, with a line in `js/i18n/<area>.js` (English, Afrikaans, isiZulu,
-  isiXhosa) **and** in all 22 `js/lang/<code>.js` files. `node tests/i18n.test.js` must pass.
+  isiXhosa) **and** in all 19 `js/lang/<code>.js` files. `node tests/i18n.test.js` must pass.
 - Every change that reaches the website raises the version in `js/version.js` (and its date) and puts the same number
   after every `?v=` in `index.html`. `node tests/versions.test.js` must pass.
 - Changing who may see what means changing `firestore.rules`, `plan()` in `js/store.js`, `tests/fake-firebase.js` and

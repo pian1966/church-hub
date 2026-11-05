@@ -109,3 +109,6 @@ each church gives what it chooses once a year, with a small minimum. Today each 
 
 ## Working method
 One phase per fresh chat in the Claude Project "Church Hub", with the repository attached. Update this file at the end of each session.
+- ⬜ Chinese (Simplified, Traditional) and Japanese: add back once translated with the church meaning (Leave, Pastoral notes,
+  Household, Rosters, Care groups…) and checked by a speaker; the earlier files are in the history at 0.10.0 (js/lang/zh-Hans.js,
+  zh-Hant.js, ja.js). Put "Asia" back in the language list (js/i18n.js) and in tests/app/care.js.

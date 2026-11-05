@@ -201,6 +201,11 @@ button.item { width: 100%; border: 0; background: transparent; text-align: left;
 
 /* ---------- leave ---------- */
 .bal { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+a.stat { color: var(--ink); text-decoration: none; } a.stat:hover { border-color: var(--accent); } .stat.warn b { color: #B45309; }
+.lv-bars { display: flex; align-items: flex-end; gap: 6px; height: 170px; padding-top: 10px; }
+.lv-bar { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; font-size: 11px; color: var(--muted); }
+.lv-bar-col { width: 100%; max-width: 34px; display: flex; flex-direction: column-reverse; border-radius: 4px 4px 0 0; overflow: hidden; min-height: 0; }
+.lv-bar-col i { display: block; background: var(--c); min-height: 2px; } .lv-bar b { font-size: 11px; color: var(--ink); margin-top: 3px; min-height: 14px; }
 .bal .stat { border-left: 4px solid var(--c, var(--accent)); }
 .bar { height: 6px; background: #EFEAE4; border-radius: 4px; overflow: hidden; margin-top: 8px; } .bar i { display: block; height: 100%; background: var(--c, var(--accent)); }
 .fbal { border-radius: 12px; padding: 10px 14px; background: color-mix(in srgb, var(--c, #E8590C) 9%, #fff); border: 1px solid var(--line); border-left: 4px solid var(--c, #E8590C); margin: -4px 0 14px; font-size: 14px; }

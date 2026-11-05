@@ -18,6 +18,14 @@ module.exports = async function (ctx) {
   check(await s.page.isVisible('.lv-cal') && (await s.page.$$('.lv-cal-cell:not(.lv-empty)')).length >= 28, '…and as a month calendar');
   await s.go('leave/staff/p02');
   check((await s.page.$$('.lv-pm')).length === 12, 'a person’s leave page has a 12-month year planner');
+  await s.go('leave/dashboard');
+  check((await s.page.$$('main .stats .stat')).length === 4 && (await s.text()).includes('Use it or lose it'), 'leave managers get a Dashboard: four numbers, waiting requests, cover, use it or lose it, busiest months, sick leave');
+  const [csv] = await Promise.all([s.page.waitForEvent('download'), (async () => { await s.go('leave/team'); await s.page.click('[data-act="leave:payroll"]'); })()]);
+  check(/payroll-unpaid-leave/.test(csv.suggestedFilename()), 'Team balances gives the payroll file of unpaid leave');
+  await s.go('leave/staff/p02'); await s.page.click('[data-act="leave:change"]'); await s.page.waitForSelector('#lf-edit', { state: 'attached' });
+  await s.page.fill('#lf-note', 'Family visit in George (changed)'); await s.page.dispatchEvent('#lf-note', 'input'); await s.page.click('[data-act="leave:send"]'); await s.settle(); await s.page.waitForTimeout(300);
+  docs = await s.docsNow();
+  check(Object.keys(docs).some(k => k.startsWith('leaveRequests/') && docs[k].reason === 'Family visit in George (changed)' && docs[k].status === 'Approved'), '“Change” on a request saves the change (an Administrator’s change keeps it approved)');
   await s.go('leave/approvals');
   check(await s.page.isVisible('#standin'), 'Approvals has a stand-in approver panel');
   await s.page.selectOption('#si-who', 'p02'); await s.page.fill('#si-from', today); await s.page.fill('#si-to', later);

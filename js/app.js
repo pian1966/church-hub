@@ -295,7 +295,7 @@ var Hub = (function () {
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
       (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>' + T('Viewing as {role} – this is what they see. Nothing you do here is saved.', { role: '<b>' + esc(viewingAs()) + '</b>' }) + '</span>' +
         '<button class="btn small" data-act="hub:viewas" data-r="admin">' + T('Back to Administrator') + '</button></div>' : '') +
-      '<main id="main" tabindex="-1">' + body + improveLink(mod) + '</main></div>' +
+      '<main id="main" tabindex="-1"><div class="page-body">' + body + '</div>' + improveLink(mod) + '</main></div>' +
       '<nav class="tabbar" aria-label="' + T('Quick menu') + '">' + tabs.map(function (id) {
         var m = id === 'home' ? { name: 'Home', icon: ICON.home } : moduleById(id);
         return '<a href="#/' + id + '" class="' + (id === active ? 'on' : '') + '">' + icon(m.icon, 22) + '<span>' + esc(T(m.name)) + '</span></a>';

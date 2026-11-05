@@ -477,7 +477,10 @@ await t('stand-in: not their own leave', async () => { await cannot(db.rosters.d
 await t('stand-in: only the decision, nothing else', async () => { await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', type: 'SL', decidedBy: 'Sipho', decidedOn: 'x' })); });
 await t('stand-in: not the leave settings', async () => { await cannot(db.rosters.doc('leave/config').update({ note: 'x' })); });
 await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('roles/sipho@example.com').update({ standInFrom: 0, standInTo: Date.now() - 1000 }); });
-await t('stand-in: after the last day, no reading others’ leave', async () => { await cannot(read(db.rosters, 'leaveRequests/S3')); });
+await t('stand-in: after the last day, no reading others’ leave', async () => {
+  const fresh = env.authenticatedContext('uid-rosters-2', { email: 'sipho@example.com', email_verified: true }).firestore();   // a new sign-in, nothing cached
+  await cannot(read(fresh, 'leaveRequests/S3'));
+});
 await t('stand-in: after the last day, no decisions', async () => { await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' })); });
 await t('a leave manager sets the stand-in’s dates, and nothing else on their access entry', async () => {
   await can(db.admin.doc('roles/sipho@example.com').update({ standInFrom: 1, standInTo: 2 }));

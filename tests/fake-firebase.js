@@ -149,8 +149,9 @@
           return was.every(function (x) { return now.indexOf(x) >= 0; }) && now.filter(function (x) { return was.indexOf(x) < 0; }).every(function (x) { return x === c.me; });
         }
         if (!is(c, ANY) || c.me === '' || a.fromId !== c.me) return false;
-        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])) return false;
-        if (['care', 'group', 'staff', 'partners'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
+        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])) return false;
+        if (a.some !== undefined && typeof a.some !== 'boolean') return false;
+        if (['care', 'group', 'staff', 'partners', 'people'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
         if (!Array.isArray(a.to) || !a.to.length || a.to.length > 3000 || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return x === c.me; })) return false;
         if (mgr) return true;

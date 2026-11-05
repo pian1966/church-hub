@@ -2098,6 +2098,11 @@ I18n.add('nr', {
     "Message group added": "Isiqhema semilayezo sengeziwe",
     "Message group deleted": "Isiqhema semilayezo sisusiwe",
     "Not a leader": "Akasi mdosiphambili",
-    "Make leader": "Yenza umdosiphambili"
+    "Make leader": "Yenza umdosiphambili",
+    "Chosen people": "Abantu abakhethiweko",
+    "Only some of them": "Abanye babo kwaphela",
+    "Tick who should get it.": "Khetha bona ngubani okufanele awufumane.",
+    "Tick all": "Khetha boke",
+    "Untick all": "Susa koke ukukhetha"
   }
 });

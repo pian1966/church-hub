@@ -2098,6 +2098,11 @@ I18n.add('nso', {
     "Message group added": "Sehlopha sa melaetša se okeditšwe",
     "Message group deleted": "Sehlopha sa melaetša se phumotšwe",
     "Not a leader": "Ga se moetapele",
-    "Make leader": "Dira moetapele"
+    "Make leader": "Dira moetapele",
+    "Chosen people": "Batho bao ba kgethilwego",
+    "Only some of them": "Ba bangwe ba bona fela",
+    "Tick who should get it.": "Swaya gore ke mang yo a swanetšego go o hwetša.",
+    "Tick all": "Swaya bohle",
+    "Untick all": "Phumola mešwao yohle"
   }
 });

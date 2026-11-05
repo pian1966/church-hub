@@ -2098,6 +2098,11 @@ I18n.add('yo', {
     "Message group added": "A ti ṣàfikún ẹgbẹ́ ọ̀rọ̀",
     "Message group deleted": "A ti pa ẹgbẹ́ ọ̀rọ̀ rẹ́",
     "Not a leader": "Kì í ṣe olórí",
-    "Make leader": "Fi ṣe olórí"
+    "Make leader": "Fi ṣe olórí",
+    "Chosen people": "Àwọn ènìyàn tí a yàn",
+    "Only some of them": "Àwọn kan nínú wọn nìkan",
+    "Tick who should get it.": "Sàmì sí ẹni tó yẹ kó rí i gbà.",
+    "Tick all": "Sàmì sí gbogbo wọn",
+    "Untick all": "Yọ gbogbo àmì kúrò"
   }
 });

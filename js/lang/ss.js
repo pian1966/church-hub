@@ -2098,6 +2098,11 @@ I18n.add('ss', {
     "Message group added": "Licembu lemilayeto lengetiwe",
     "Message group deleted": "Licembu lemilayeto lisusiwe",
     "Not a leader": "Akusuye umholi",
-    "Make leader": "Yenta umholi"
+    "Make leader": "Yenta umholi",
+    "Chosen people": "Bantfu labakhetsiwe",
+    "Only some of them": "Labanye babo kuphela",
+    "Tick who should get it.": "Khetsa kutsi ngubani lofanele kuwutfola.",
+    "Tick all": "Khetsa bonkhe",
+    "Untick all": "Susa konkhe kukhetsa"
   }
 });

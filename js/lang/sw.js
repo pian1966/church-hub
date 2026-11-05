@@ -2098,6 +2098,11 @@ I18n.add('sw', {
     "Message group added": "Kikundi cha ujumbe kimeongezwa",
     "Message group deleted": "Kikundi cha ujumbe kimefutwa",
     "Not a leader": "Si kiongozi",
-    "Make leader": "Fanya kiongozi"
+    "Make leader": "Fanya kiongozi",
+    "Chosen people": "Watu waliochaguliwa",
+    "Only some of them": "Baadhi yao tu",
+    "Tick who should get it.": "Weka alama kwa wanaopaswa kuupata.",
+    "Tick all": "Weka alama wote",
+    "Untick all": "Ondoa alama zote"
   }
 });

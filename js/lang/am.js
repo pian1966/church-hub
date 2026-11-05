@@ -2098,6 +2098,11 @@ I18n.add('am', {
     "Message group added": "የመልእክት ቡድን ተጨምሯል",
     "Message group deleted": "የመልእክት ቡድን ተሰርዟል",
     "Not a leader": "መሪ አይደለም",
-    "Make leader": "መሪ አድርግ"
+    "Make leader": "መሪ አድርግ",
+    "Chosen people": "የተመረጡ ሰዎች",
+    "Only some of them": "ከእነሱ የተወሰኑት ብቻ",
+    "Tick who should get it.": "ማን እንደሚደርሰው ምልክት ያድርጉ።",
+    "Tick all": "ሁሉንም ምረጥ",
+    "Untick all": "ሁሉንም አትምረጥ"
   }
 });

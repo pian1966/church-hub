@@ -27,10 +27,11 @@ ok(M.recipients('group', 'nope', d).length === 0 && M.recipients('odd', '', d).l
 
 console.log('Who may send to whom');
 const pastor = { id: 'a', manager: true }, carer = { id: 'c', manager: false }, leader = { id: 'b', manager: false }, member = { id: 'd', manager: false };
-ok(M.audiences(pastor, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'staff:Staff,partners:Church Partners,care:cg1,group:mg2,group:mg1', 'Administrators and Pastors: staff, Church Partners, every care group and message group (by name)');
+ok(M.audiences(pastor, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'people:Chosen people,staff:Staff,partners:Church Partners,care:cg1,group:mg2,group:mg1', 'Administrators and Pastors: chosen people, staff, Church Partners, every care group and message group (by name)');
 ok(M.audiences(carer, d).map(x => x.groupId).join() === 'cg1', 'a carer: only their own care group');
 ok(M.audiences(leader, d).map(x => x.groupId).join() === 'mg1', 'a group leader: only their own group');
 ok(M.audiences(member, d).length === 0, 'a member: nobody');
+ok(!M.maySend(carer, 'people', '', d) && M.maySend(pastor, 'people', '', d), 'only Administrators and Pastors choose people one by one');
 ok(M.maySend(carer, 'care', 'cg1', d) && !M.maySend(carer, 'staff', '', d) && !M.maySend(member, 'care', 'cg1', d) && !M.maySend(leader, 'group', 'mg2', d) && M.maySend(pastor, 'partners', '', d) && !M.maySend(pastor, 'everyone', '', d), 'maySend agrees');
 
 console.log('Writing a message');
@@ -40,6 +41,19 @@ ok(M.make({ kind: 'care', groupId: 'cg1' }, 'x', '  ', people[2], d).error === '
 ok(M.make({ kind: 'care', groupId: 'cg1' }, '', 'x'.repeat(M.MAX_BODY + 1), people[2], d).error === 'long', 'a very long one is refused');
 ok(M.make({ kind: 'group', groupId: 'none' }, '', 'Hi', people[0], d).error === 'nobody', 'and one to nobody');
 ok(M.make({ kind: 'staff', name: 'Staff' }, 'x'.repeat(300), 'Hi', people[3], d).title.length === M.MAX_TITLE && M.make({ kind: 'staff' }, '', 'Hi', people[3], d).fromName === 'Danny Pike', 'a long title is shortened; the sender’s known-as name is used');
+
+console.log('Choosing people from a checklist');
+let c = M.make({ kind: 'people', name: 'Chosen people' }, '', 'Can you help on Sunday?', people[0], d, ['d']);
+ok(c.kind === 'people' && c.to.join() === 'd' && c.audience === 'Danny Pike' && !c.some, 'one person: the message goes to them, named');
+c = M.make({ kind: 'people' }, '', 'Hi', people[0], d, ['b', 'c', 'e', 'f', 'zz']);
+ok(c.to.join() === 'b,c' && c.audience === '', 'several people: only adults still in the church (not a child, someone who died, or an unknown id)');
+ok(M.make({ kind: 'people' }, '', 'Hi', people[0], d, []).error === 'none' && M.make({ kind: 'people' }, '', 'Hi', people[0], d).error === 'none', 'nobody ticked: refused');
+c = M.make({ kind: 'care', groupId: 'cg1', name: 'Hilton' }, '', 'Hi', people[2], d, ['d', 'b']);
+ok(c.to.join() === 'd' && c.some === true && c.audience === 'Hilton', 'some of a group: only the ticked people who are in it');
+c = M.make({ kind: 'care', groupId: 'cg1', name: 'Hilton' }, '', 'Hi', people[2], d, ['c', 'd']);
+ok(c.to.join() === 'c,d' && !c.some, 'everyone in the group ticked: an ordinary group message');
+ok(M.make({ kind: 'staff' }, '', 'Hi', people[0], d, ['h']).error === 'none', 'ticking only people outside the group sends nothing');
+ok(M.recipients('people', '', d).join() === 'a,b,c,d,h', 'who can be chosen: every adult still in the church');
 
 console.log('Reading');
 const msgs = [
@@ -55,10 +69,10 @@ ok(M.inApp(['a', 'b', 'c', 'd', 'x'], people).join() === 'a,b', 'who can open it
 ok(M.mayDelete(msgs[0], carer) && !M.mayDelete(msgs[0], member) && M.mayDelete(msgs[1], pastor), 'the sender, Administrators and Pastors may delete a message');
 
 console.log('Message groups');
-let g = M.placeIn(msgGroups[1], 'c', true);
-ok(g.memberIds.join() === 'a,c' && g.leaderIds.join() === 'c' && msgGroups[1].memberIds.length === 1, 'adding a leader (the original is untouched)');
+let g = M.placeIn(msgGroups[1], 'c', true, 'Cara Smit');
+ok(g.memberIds.join() === 'a,c' && g.leaderIds.join() === 'c' && g.names.c === 'Cara Smit' && msgGroups[1].memberIds.length === 1, 'adding a leader, with their name (the original is untouched)');
 ok(M.placeIn(g, 'c', true) === null && M.placeIn(g, 'c', false).leaderIds.length === 0, 'nothing changes when nothing changes; a leader can stop leading');
-ok(M.takeOut(g, 'c').memberIds.join() === 'a' && M.takeOut(g, 'c').leaderIds.length === 0 && M.takeOut(g, 'z') === null, 'taking someone out');
+ok(M.takeOut(g, 'c').memberIds.join() === 'a' && M.takeOut(g, 'c').leaderIds.length === 0 && !M.takeOut(g, 'c').names.c && M.takeOut(g, 'z') === null, 'taking someone out');
 
 if (fails) { console.log('\n' + fails + ' test(s) FAILED'); process.exit(1); }
 console.log('\nAll message tests passed');

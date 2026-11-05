@@ -2098,6 +2098,11 @@ I18n.add('it', {
     "Message group added": "Gruppo di messaggi aggiunto",
     "Message group deleted": "Gruppo di messaggi eliminato",
     "Not a leader": "Non responsabile",
-    "Make leader": "Rendi responsabile"
+    "Make leader": "Rendi responsabile",
+    "Chosen people": "Persone scelte",
+    "Only some of them": "Solo alcuni di loro",
+    "Tick who should get it.": "Spunta chi deve riceverlo.",
+    "Tick all": "Spunta tutti",
+    "Untick all": "Togli tutti"
   }
 });

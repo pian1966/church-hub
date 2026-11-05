@@ -44,7 +44,7 @@ jobs:
       - name: Messages
         run: node tests/messages.test.js
       - name: Install test tools
-        run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13 playwright@1
+        run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13 playwright@1.64
       - name: Database security rules (firestore.rules)
         run: npx firebase emulators:exec --only firestore --project demo-church-hub "node tests/rules.test.mjs"
       - name: App in a browser, every role (demo and live)

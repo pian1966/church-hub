@@ -2098,6 +2098,11 @@ I18n.add('ts', {
     "Message group added": "Ntlawa wa marungula wu engeteriwile",
     "Message group deleted": "Ntlawa wa marungula wu susiwile",
     "Not a leader": "A hi murhangeri",
-    "Make leader": "Endla murhangeri"
+    "Make leader": "Endla murhangeri",
+    "Chosen people": "Vanhu lava hlawuriweke",
+    "Only some of them": "Van’wana va vona ntsena",
+    "Tick who should get it.": "Funga leswaku i mani loyi a faneleke ku ri kuma.",
+    "Tick all": "Funga hinkwavo",
+    "Untick all": "Susa mimfungo hinkwayo"
   }
 });

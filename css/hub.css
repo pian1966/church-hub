@@ -475,3 +475,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
 #ms-body { min-height: 140px; }
+/* Messages: ticking who gets a message */
+.ms-pick-box { padding: 12px 14px; margin: 0 0 14px; }
+.ms-find { width: 100%; min-height: 44px; padding: 10px 12px; border: 1px solid #D6CDC4; border-radius: 10px; background: #fff; color: var(--ink); font: inherit; font-size: 15px; }
+.ms-find::placeholder { color: #A39A92; opacity: 1; }
+.ms-list { max-height: 320px; overflow: auto; display: grid; gap: 2px; }
+.ms-list .check { margin: 0; padding: 6px 2px; }
+.ms-list .check[hidden] { display: none; }

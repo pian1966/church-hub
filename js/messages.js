@@ -4,8 +4,12 @@
  *   group    a message group, e.g. Worship team leaders (msgGroups) – sent by Administrators, Pastors or the group's leaders
  *   staff    everyone on the staff (people with staff details)   – Administrators and Pastors only
  *   partners every Church Partner (adults)                       – Administrators and Pastors only
- * messages/{id} = { kind, groupId, audience (its name when sent), title, body, fromId, fromName, to: [personIds], readBy: [personIds] }
- * msgGroups/{id} = { name, memberIds, leaderIds } – leaders are members too.
+ *   people   people chosen one by one from a checklist           – Administrators and Pastors only
+ * Anyone sending to a group may also tick only some of its people (some: true); carers and leaders still only reach
+ * people in their own group.
+ * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, title, body, fromId, fromName, to: [personIds], readBy: [personIds] }
+ * msgGroups/{id} = { name, memberIds, leaderIds, names: { personId: name } } – leaders are members too; names so leaders who
+ *   aren't staff can tick people when writing.
  * The list of people (to) is worked out when the message is sent, so someone who joins a group later doesn't see older
  * messages, and the database rules can check who may read each one. Tested with node: tests/messages.test.js.
  * POPIA: purpose = keeping in touch with the people the church cares for; basis = the church's legitimate interest
@@ -13,20 +17,23 @@
  */
 var Msg = (function () {
   'use strict';
-  var KINDS = ['care', 'group', 'staff', 'partners'];
+  var KINDS = ['care', 'group', 'staff', 'partners', 'people'];
   var MAX_BODY = 4000, MAX_TITLE = 120;
 
   function alive(p) {
     return !!p && p.active !== false && p.familyRole !== 'child' && p.category !== 'Deceased' && !p.binnedAt && !p.mergedInto && !p.deletedAt && p.firstName !== 'Deleted';
   }
   function uniq(ids) { var seen = {}; return (ids || []).filter(function (x) { if (!x || seen[x]) return false; seen[x] = 1; return true; }); }
+  function nameOf(p) { return ((p.preferredName || p.firstName || '') + ' ' + (p.lastName || '')).trim(); }
   function byId(list, id) { return (list || []).filter(function (x) { return x.id === id; })[0] || null; }
   function leads(g, pid) { return !!g && (g.leaderIds || []).indexOf(pid) >= 0; }
 
-  /** Who a message to this audience goes to (person ids). d = { people, careGroups, msgGroups }. */
+  /** Who a message to this audience goes to (person ids). d = { people, careGroups, msgGroups }. "Chosen people": everyone
+   *  who may be chosen (adults still in the church). */
   function recipients(kind, groupId, d) {
     d = d || {};
     if (kind === 'staff') return (d.people || []).filter(function (p) { return alive(p) && !!p.staff; }).map(function (p) { return p.id; });
+    if (kind === 'people') return (d.people || []).filter(alive).map(function (p) { return p.id; });
     if (kind === 'partners') return (d.people || []).filter(function (p) { return alive(p) && p.category === 'Church Partner'; }).map(function (p) { return p.id; });
     var g = byId(kind === 'care' ? d.careGroups : kind === 'group' ? d.msgGroups : [], groupId);
     return g ? uniq((g.memberIds || []).concat(g.leaderIds || [])) : [];
@@ -38,7 +45,7 @@ var Msg = (function () {
    */
   function audiences(who, d) {
     d = d || {}; var out = [], name = function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); };
-    if (who.manager) { out.push({ kind: 'staff', groupId: '', name: 'Staff' }); out.push({ kind: 'partners', groupId: '', name: 'Church Partners' }); }
+    if (who.manager) { out.push({ kind: 'people', groupId: '', name: 'Chosen people' }); out.push({ kind: 'staff', groupId: '', name: 'Staff' }); out.push({ kind: 'partners', groupId: '', name: 'Church Partners' }); }
     (d.careGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'care', groupId: g.id, name: g.name }); });
     (d.msgGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'group', groupId: g.id, name: g.name }); });
     return out;
@@ -52,15 +59,24 @@ var Msg = (function () {
     return false;
   }
 
-  /** A new message, ready to save; or { error } saying what is missing. a = { kind, groupId, name }, from = person. */
-  function make(a, title, body, from, d) {
+  /** A new message, ready to save; or { error } saying what is missing. a = { kind, groupId, name }, from = person.
+   *  chosen = the ids ticked on the checklist (needed for "Chosen people"; for a group, only those of its people get it). */
+  function make(a, title, body, from, d, chosen) {
     title = String(title || '').trim(); body = String(body || '').trim();
     if (!body) return { error: 'empty' };
     if (body.length > MAX_BODY) return { error: 'long' };
-    var to = recipients(a.kind, a.groupId, d);
+    var all = recipients(a.kind, a.groupId, d), to = all, some = false;
+    if (a.kind === 'people' || chosen) {
+      var want = {}; (chosen || []).forEach(function (id) { want[id] = 1; });
+      to = all.filter(function (id) { return want[id]; });
+      some = a.kind !== 'people' && to.length < all.length;
+      if (!to.length) return { error: all.length ? 'none' : 'nobody' };
+    }
     if (!to.length) return { error: 'nobody' };
     var m = { kind: a.kind, groupId: a.groupId || '', audience: a.name || '', title: title.slice(0, MAX_TITLE), body: body,
-      fromId: from.id, fromName: ((from.preferredName || from.firstName || '') + ' ' + (from.lastName || '')).trim(), to: to, readBy: [from.id] };
+      fromId: from.id, fromName: nameOf(from), to: to, readBy: [from.id] };
+    if (a.kind === 'people') m.audience = to.length === 1 ? nameOf(byId(d.people, to[0]) || {}) : '';
+    if (some) m.some = true;
     return m;
   }
 
@@ -83,10 +99,11 @@ var Msg = (function () {
   function mayDelete(m, who) { return !!who.manager || m.fromId === who.id; }
 
   /* ---------- message groups ---------- */
-  /** Add someone to a group, as a leader or not (a copy), or null when nothing changes. */
-  function placeIn(g, pid, leader) {
+  /** Add someone to a group, as a leader or not (a copy), or null when nothing changes. name: their name, kept for leaders. */
+  function placeIn(g, pid, leader, name) {
     var x = JSON.parse(JSON.stringify(g)); x.memberIds = x.memberIds || []; x.leaderIds = x.leaderIds || [];
     if (x.memberIds.indexOf(pid) < 0) x.memberIds.push(pid);
+    if (name) { x.names = x.names || {}; x.names[pid] = name; }
     var isL = x.leaderIds.indexOf(pid) >= 0;
     if (leader && !isL) x.leaderIds.push(pid);
     if (!leader && isL) x.leaderIds = x.leaderIds.filter(function (y) { return y !== pid; });
@@ -95,10 +112,11 @@ var Msg = (function () {
   function takeOut(g, pid) {
     var x = JSON.parse(JSON.stringify(g));
     x.memberIds = (x.memberIds || []).filter(function (y) { return y !== pid; }); x.leaderIds = (x.leaderIds || []).filter(function (y) { return y !== pid; });
+    if (x.names) delete x.names[pid];
     return JSON.stringify(x) === JSON.stringify(g) ? null : x;
   }
 
   return { KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
-    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, seen: seen, inApp: inApp, mayDelete: mayDelete, placeIn: placeIn, takeOut: takeOut, leads: leads };
+    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, seen: seen, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();
 if (typeof module !== 'undefined') module.exports = Msg;

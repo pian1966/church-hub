@@ -137,7 +137,7 @@ function serve() {
     const text = async () => (await page.textContent('main')) || '';
     return { page, errs, ready, docsNow, denied, go, text, settle, close: () => context.close() };
   }
-  const ROUTES = ['home', 'people', 'people/families', 'people/search', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away', 'me', 'me/away', 'me/serve', 'words', 'words/check', 'words/checkers',
+  const ROUTES = ['home', 'people', 'people/families', 'people/search', 'people/p/p12', 'people/p/p10', 'people/p/p14', 'rosters', 'rosters/mine', 'rosters/teams', 'rosters/together', 'rosters/away', 'me', 'me/away', 'me/serve', 'messages', 'messages/send', 'messages/sent', 'messages/groups', 'words', 'words/check', 'words/checkers',
     'leave', 'leave/approvals', 'leave/team', 'leave/staff/p02', 'leave/away', 'leave/settings', 'privacy', 'privacy/requests', 'privacy/retention', 'privacy/breaches', 'privacy/audit', 'import', 'import/leave', 'settings', 'settings/terminology'];
   // Household is compulsory: people in the test data who have none get "+ New household" when edited
   async function fillHome(s) { const f = await s.page.$('#pf-fam'); if (f && (await f.evaluate(e => e.value)) === '') await s.page.selectOption('#pf-fam', '__new'); }
@@ -162,7 +162,7 @@ function serve() {
   const TESTS = __dirname;
   const ctx = { Serving, fs, path, vm, http, chromium, ROOT, sampleData, PNG, PNG2, CARD, seedDocs, serve, srv, BASE, browser, check, fake, demo, session, ROUTES, fillHome, tour, finish, TESTS };
   // The parts, in order (tests/app/*.js); each signs in afresh with the made-up church.
-  for (const part of ['admin', 'pastors', 'leave-more', 'people', 'care', 'people-details', 'languages', 'imports', 'roles', 'elvanto-leave', 'signin']) await require('./app/' + part + '.js')(ctx);
+  for (const part of ['admin', 'pastors', 'leave-more', 'people', 'care', 'messages', 'people-details', 'languages', 'imports', 'roles', 'elvanto-leave', 'signin']) await require('./app/' + part + '.js')(ctx);
 
   await browser.close(); srv.close();
   console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nLive mode: all checks passed');

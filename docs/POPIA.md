@@ -135,6 +135,19 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   fellowship); nothing is shown to the group or changed until they confirm, and opening the suggestions and every placement
   are in the audit log. A group's "areas" are place names, not personal information.
 
+## Messages inside the app
+- Purpose: keeping in touch with the people the church cares for (notices, care-group and team news). Basis: the church's
+  legitimate interest – a message goes only to a group the person belongs to (their care group, a message group an
+  Administrator or Pastor put them in, the staff, or the Church Partners). No new personal information is collected:
+  a message holds the sender's name, the text, the people it went to (record numbers only) and who has opened it.
+- Who may read: the people it went to, its sender, Administrators and Pastors (database rules, tested). Members load only
+  their own; the list of who opened it is shown only to the sender, Administrators and Pastors. People can't change a message
+  they received, only mark it as opened.
+- Who may send: Administrators and Pastors to any group; carers to their own care group; group leaders to their own group.
+  Sending and deleting are in the audit log (to whom and how many – not what the message says). The Write page asks people
+  not to put private or medical details in a message to a group.
+- To do: how long messages are kept (ROADMAP) – until then Administrators, Pastors and senders can delete them.
+
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church Hub keeps the suggestion with their name and person ID, so the
   checker can thank them or ask what they meant. Purpose: improving the app's wording; basis: the person sends it themselves.

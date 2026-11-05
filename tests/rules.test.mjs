@@ -64,6 +64,11 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('careGroups/cg3', { name: 'Merrivale', leaderIds: ['p15'], memberIds: ['p15', 'p14'], names: {} });
   await set('careGroups/cg1/share/p15', { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082', birthday: '07-14' });
   await set('careGroups/cg2/share/p05', { firstName: 'Sipho', lastName: 'Dlamini', ok: false });
+  // Messages: a message group Tim leads, one Clare leads; a message to Tim and Clare, and one to Thandi only
+  await set('msgGroups/mg1', { name: 'Welcome team', leaderIds: ['p14'], memberIds: ['p14', 'p15'] });
+  await set('msgGroups/mg2', { name: 'Alpha team', leaderIds: ['p15'], memberIds: ['p15', 'p02'] });
+  await set('messages/ms1', { kind: 'group', groupId: 'mg1', audience: 'Welcome team', title: '', body: 'Hello', fromId: 'p01', fromName: 'Linda', to: ['p14', 'p15'], readBy: ['p01'] });
+  await set('messages/ms2', { kind: 'staff', groupId: '', audience: 'Staff', title: '', body: 'Staff only', fromId: 'p01', fromName: 'Linda', to: ['p01', 'p02'], readBy: ['p01'] });
   // Translations: Nomvula (a member) checks isiZulu; a suggestion from Clare (p15) in isiZulu and one in Afrikaans
   await set('roles/nomvula@example.com', { role: 'member', personId: 'p20', langs: ['zu'] });
   await set('wordIdeas/w15', { lang: 'zu', en: 'Home', text: 'Ekhaya', personId: 'p15', name: 'Clare', status: 'waiting', createdAt: 'x' });
@@ -396,6 +401,46 @@ await t('care groups: members see their own group and its cards; carers add and 
   await cannot(db.member.doc('careGroups/cg4').set({ name: 'New', leaderIds: ['p14'], memberIds: ['p14'] }));
   await can(db.pastor.doc('careGroups/cg4').set({ name: 'New', leaderIds: [], memberIds: [] })); await can(db.admin.doc('careGroups/cg4').delete());
   await can(db.pastor.doc('careGroups/cg2/share/p01').set({ firstName: 'Linda', lastName: 'Pillay', ok: false }));
+});
+console.log('Messages');
+await t('messages: read by the people they went to, their sender, Administrators and Pastors', async () => {
+  await can(read(db.member, 'messages/ms1')); await cannot(read(db.member, 'messages/ms2'));
+  await can(list(db.member.collection('messages').where('to', 'array-contains', 'p14')));
+  await can(list(db.member.collection('messages').where('fromId', '==', 'p14')));
+  await cannot(list(db.member.collection('messages')));
+  await can(read(db.pastor, 'messages/ms1')); await can(list(db.admin.collection('messages')));
+  await cannot(read(db.rosters, 'messages/ms1')); await cannot(read(stranger, 'messages/ms1'));
+});
+await t('messages: who may send to whom', async () => {
+  const m = (o) => Object.assign({ groupId: '', audience: 'x', title: '', body: 'Hi', fromName: 'x', readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.admin.doc('messages/n1').set(m({ kind: 'staff', fromId: 'p01', to: ['p02', 'p05'], readBy: ['p01'] })));
+  await can(db.pastor.doc('messages/n2').set(m({ kind: 'partners', fromId: 'p02', to: ['p14', 'p15'] })));
+  await cannot(db.pastor.doc('messages/n3').set(m({ kind: 'partners', fromId: 'p01', to: ['p14'] })));          // not in someone else's name
+  await cannot(db.rosters.doc('messages/n4').set(m({ kind: 'staff', fromId: 'p05', to: ['p01'] })));            // staff and Church Partners: Administrators and Pastors only
+  await can(db.member.doc('messages/n5').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p14', 'p15'], readBy: ['p14'] })));   // Tim leads cg1
+  await cannot(db.member.doc('messages/n6').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p14', 'p02'] })));    // someone not in the group
+  await cannot(db.member.doc('messages/n7').set(m({ kind: 'care', groupId: 'cg3', fromId: 'p14', to: ['p15'] })));          // a group he doesn't lead
+  await can(db.member.doc('messages/n8').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'] })));
+  await cannot(db.member.doc('messages/n9').set(m({ kind: 'group', groupId: 'mg2', fromId: 'p14', to: ['p15'] })));
+  await cannot(db.member.doc('messages/n10').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], readBy: ['p15'] })));   // can't mark others as having read it
+  await cannot(db.member.doc('messages/n11').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], extra: 1 })));
+  await cannot(db.member.doc('messages/n12').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], body: '' })));
+  await cannot(db.admin.doc('messages/n13').set(m({ kind: 'staff', fromId: 'p01', to: ['p02'], body: 'x'.repeat(4001) })));
+});
+await t('messages: people mark what they opened as read, and change nothing else', async () => {
+  await can(db.member.doc('messages/ms1').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p14') }));
+  await cannot(db.member.doc('messages/ms1').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p15') }));
+  await cannot(db.member.doc('messages/ms1').update({ readBy: ['p14'] }));   // taking the sender off
+  await cannot(db.member.doc('messages/ms1').update({ body: 'Changed' }));
+  await cannot(db.member.doc('messages/ms1').delete());
+  await can(db.member.doc('messages/n8').delete());   // their own
+  await can(db.pastor.doc('messages/ms1').delete());
+});
+await t('message groups: Administrators and Pastors set them up; members see their own', async () => {
+  await can(read(db.member, 'msgGroups/mg1')); await cannot(read(db.member, 'msgGroups/mg2'));
+  await can(list(db.member.collection('msgGroups').where('memberIds', 'array-contains', 'p14'))); await cannot(list(db.member.collection('msgGroups')));
+  await cannot(db.member.doc('msgGroups/mg1').update({ memberIds: ['p14', 'p15', 'p20'] }));
+  await can(db.pastor.doc('msgGroups/mg3').set({ name: 'New', leaderIds: [], memberIds: [] })); await can(db.admin.doc('msgGroups/mg3').delete());
 });
 console.log('Translations');
 const checker = env.authenticatedContext('uid-nomvula', { email: 'nomvula@example.com', email_verified: true }).firestore();

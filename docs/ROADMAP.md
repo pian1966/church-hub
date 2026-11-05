@@ -43,6 +43,15 @@ Groups and attendance, kids check-in on a tablet with medical alerts and leader 
 
 ## Phase 5 – Communication and calendar
 First step done (0.12.0): email prompts for birthdays, anniversaries and welcomes, opened in the church’s email program. Next: sending them automatically (formatted, with the church logo) through Afrihost or Gmail behind the scenes; then email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
+Messages inside the app done (0.21.0, Messages page). Next for messages:
+- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7) so Messages works for everyone
+- ⬜ Phone notifications ("push") when a message arrives, even with Church Hub closed: Firebase Cloud Messaging in the
+  Android app and the home-screen app (iPhone: iOS 16.4 or later, added to the home screen), sent by a small server step
+  (a Firebase Cloud Function on the Blaze plan, or the GitHub robot with a service-account secret). Ask permission
+  kindly after sign-in; a switch on Me to turn them off.
+- ⬜ Email (and later SMS) for people who can't sign in yet or haven't opened a message after a day – consent-aware
+- ⬜ Replies: a member replies to the sender, or a care group talks together (decide which first)
+- ⬜ Decide how long messages are kept (e.g. 2 years) and add them to Privacy → Retention
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.

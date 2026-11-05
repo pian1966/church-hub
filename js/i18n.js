@@ -28,7 +28,7 @@ var I18n = (function () {
     ['en-US', 'American English', 'American English', ['Americas']]
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
-  var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'privacy', 'import', 'settings'];
+  var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'messages', 'privacy', 'import', 'settings'];
   // Language files are fetched again with every new version of Church Hub (js/version.js), so phones don't keep old words
   var PACK_VERSION = 9, loading = {}, onLoad = [];
   function packV() { return (typeof ChurchHubVersion !== 'undefined' && ChurchHubVersion.version) || PACK_VERSION; }

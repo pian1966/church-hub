@@ -196,6 +196,37 @@ service cloud.firestore {
         allow delete: if isRole(['admin', 'pastor']) || mine(pid) || leadsCare(gid);
       }
     }
+    // Messages inside the app (js/messages.js). A message lists the people it went to (to), worked out when it was sent.
+    // Administrators and Pastors send to anyone; a care group's carers to their group; a message group's leaders to theirs.
+    // Read by the people it went to, its sender, Administrators and Pastors. The only change anyone else may make is to
+    // add themselves to readBy (they opened it). The sender, Administrators and Pastors may delete it.
+    function msgGroupRef(gid) { return /databases/$(database)/documents/msgGroups/$(gid); }
+    function manager() { return isRole(['admin', 'pastor']); }
+    function maySendTo(m) {
+      return manager()
+        || (m.kind == 'care' && me() in get(careRef(m.groupId)).data.get('leaderIds', []) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
+        || (m.kind == 'group' && me() in get(msgGroupRef(m.groupId)).data.get('leaderIds', []) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))));
+    }
+    match /messages/{id} {
+      allow read: if manager() || (anyone() && me() != '' && (me() in resource.data.get('to', []) || resource.data.get('fromId', '') == me()));
+      allow create: if anyone() && me() != '' && request.resource.data.fromId == me()
+        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])
+        && request.resource.data.kind in ['care', 'group', 'staff', 'partners']
+        && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 4000
+        && request.resource.data.get('title', '') is string && request.resource.data.get('title', '').size() <= 120
+        && request.resource.data.to is list && request.resource.data.to.size() > 0 && request.resource.data.to.size() <= 3000
+        && request.resource.data.readBy is list && request.resource.data.readBy.hasOnly([me()])
+        && maySendTo(request.resource.data);
+      allow update: if anyone() && me() != '' && me() in resource.data.get('to', []) && onlyChanges(['readBy'])
+        && request.resource.data.readBy.hasAll(resource.data.get('readBy', []))
+        && request.resource.data.readBy.removeAll(resource.data.get('readBy', [])).hasOnly([me()]);
+      allow delete: if manager() || (anyone() && me() != '' && resource.data.get('fromId', '') == me());
+    }
+    // Message groups (e.g. Worship team leaders): Administrators and Pastors set them up; members see the groups they are in.
+    match /msgGroups/{gid} {
+      allow read: if manager() || (anyone() && me() != '' && me() in resource.data.get('memberIds', []));
+      allow write: if manager();
+    }
     // Offers to serve: a person asks to join a position, change how often, or stop; the roster coordinator answers.
     match /serveOffers/{id} {
       allow read: if rosterer() || mine(resource.data.personId);

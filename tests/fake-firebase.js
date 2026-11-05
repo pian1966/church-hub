@@ -139,6 +139,28 @@
         return (is(c, ['admin', 'pastor']) || (mine(c, pid) && inCare(c, gid))) && onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
           && (a.photo === undefined || (typeof a.photo === 'string' && a.photo.length < 40000));
       } },
+    messages: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && c.me !== '' && !!d && ((d.to || []).indexOf(c.me) >= 0 || d.fromId === c.me)); },
+      write: function (c, op, id, b, a) {
+        var mgr = is(c, ['admin', 'pastor']);
+        if (op === 'delete') return mgr || (is(c, ANY) && c.me !== '' && b.fromId === c.me);
+        if (op === 'update') {
+          if (!is(c, ANY) || c.me === '' || (b.to || []).indexOf(c.me) < 0 || !onlyChanges(b, a, ['readBy'])) return false;
+          var was = b.readBy || [], now = a.readBy || [];
+          return was.every(function (x) { return now.indexOf(x) >= 0; }) && now.filter(function (x) { return was.indexOf(x) < 0; }).every(function (x) { return x === c.me; });
+        }
+        if (!is(c, ANY) || c.me === '' || a.fromId !== c.me) return false;
+        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])) return false;
+        if (['care', 'group', 'staff', 'partners'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
+        if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
+        if (!Array.isArray(a.to) || !a.to.length || a.to.length > 3000 || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return x === c.me; })) return false;
+        if (mgr) return true;
+        var g = a.kind === 'care' ? docs['careGroups/' + a.groupId] : a.kind === 'group' ? docs['msgGroups/' + a.groupId] : null;
+        if (!g || (g.leaderIds || []).indexOf(c.me) < 0) return false;
+        var ok = (g.memberIds || []).concat(a.kind === 'group' ? g.leaderIds || [] : []);
+        return a.to.every(function (x) { return ok.indexOf(x) >= 0; });
+      } },
+    msgGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && c.me !== '' && !!d && (d.memberIds || []).indexOf(c.me) >= 0); },
+      write: function (c) { return is(c, ['admin', 'pastor']); } },
     words: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (may(c, 'words') || checks(c, id)) && (op === 'delete' || (onlyKeys(a, ['words', 'updatedAt', 'createdAt', 'by']) && !!a.words && typeof a.words === 'object' && !Array.isArray(a.words))); } },
     wordIdeas: { read: function (c, id, d) { return may(c, 'words') || (!!d && (mine(c, d.personId) || checks(c, d.lang))); },
@@ -179,7 +201,11 @@
   /** Firestore's update: merges the fields into a document that must exist (a missing one fails, as in Firestore). */
   DocRef.prototype.update = function (fields) {
     if (docs[this.path] === undefined) { var e = new Error('No document to update'); e.code = 'not-found'; return Promise.reject(e); }
-    return apply([{ path: this.path, data: Object.assign(JSON.parse(JSON.stringify(docs[this.path])), fields) }]);
+    var was = JSON.parse(JSON.stringify(docs[this.path])), add = {};
+    Object.keys(fields).forEach(function (k) {   // FieldValue.arrayUnion: add what isn't there yet
+      var v = fields[k]; if (v && v.__union) { var cur = Array.isArray(was[k]) ? was[k].slice() : []; v.__union.forEach(function (x) { if (cur.indexOf(x) < 0) cur.push(x); }); add[k] = cur; } else add[k] = v;
+    });
+    return apply([{ path: this.path, data: Object.assign(was, add) }]);
   };
   DocRef.prototype.onSnapshot = function (cb, errCb) { return listen({ doc: this.path, cb: cb, err: errCb }); };
   function Query(coll, filters, order, lim) { this.coll = coll; this.filters = filters || []; this.order = order; this.lim = lim; }
@@ -243,7 +269,7 @@
   };
   function GoogleAuthProvider() {} GoogleAuthProvider.prototype.setCustomParameters = function () {};
   GoogleAuthProvider.credential = function (idToken) { return { providerId: 'google.com', idToken: idToken }; };
-  var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; } };
+  var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; }, arrayUnion: function () { return { __union: Array.prototype.slice.call(arguments) }; } };
   var authFn = function () { return auth; }; authFn.GoogleAuthProvider = GoogleAuthProvider;
   window.firebase = { apps: [], initializeApp: function (c) { this.apps.push(c); return {}; }, auth: authFn, firestore: firestoreFn };
 })();

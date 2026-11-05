@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
@@ -282,7 +282,7 @@ var Store = (function () {
     /** What to load for each role – mirrors firestore.rules, so no request is refused. */
     function plan() {
       var me = session.personId, r = role(), staff = is('admin', 'pastor', 'rosters', 'kids'), p = [];
-      var COLL = { leaveConfig: 'leave', detailsMe: 'details', consentsMe: 'consents', consentsMed: 'consents', consentsPhotos: 'consents' };
+      var COLL = { leaveConfig: 'leave', detailsMe: 'details', consentsMe: 'consents', consentsMed: 'consents', consentsPhotos: 'consents', messagesTo: 'messages', messagesFrom: 'messages' };
       var add = function (key, ref) { p.push({ key: key, ref: ref, coll: COLL[key] || key }); };
       var coll = function (c) { return fs.collection(c); }, own = function (c, field) { return fs.collection(c).where(field || 'personId', '==', me); };
       add('settings', doc('settings/church'));
@@ -302,6 +302,10 @@ var Store = (function () {
       // Care groups: Administrators and Pastors see all; everyone else their own group (and its members' cards, loaded
       // once the group is known – see shares())
       add('careGroups', previewCare ? doc('careGroups/' + previewCare) : is('admin', 'pastor') ? coll('careGroups') : coll('careGroups').where('memberIds', 'array-contains', me));   // "View as" a carer: that group
+      // Messages (js/messages.js): Administrators and Pastors see them all; everyone else those sent to them and their own.
+      // Message groups: Administrators and Pastors all; everyone else the groups they are in.
+      if (is('admin', 'pastor')) { add('messages', coll('messages')); add('msgGroups', coll('msgGroups')); }
+      else { add('messagesTo', coll('messages').where('to', 'array-contains', me)); add('messagesFrom', own('messages', 'fromId')); add('msgGroups', coll('msgGroups').where('memberIds', 'array-contains', me)); }
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
       add('serveOffers', is('admin', 'rosters') || may('rosters') ? coll('serveOffers') : own('serveOffers'));
       // Changes to family details people asked for: Administrators check them all; everyone else sees their own
@@ -409,7 +413,9 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups', 'detailChanges', 'emailPrompts'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups', 'detailChanges', 'emailPrompts', 'msgGroups'].forEach(function (c) { db[c] = arr(c); });
+      var msgs = merged('messages', 'messagesTo', 'messagesFrom');
+      db.messages = Object.keys(msgs).map(function (id) { var o = copy(msgs[id]); o.id = id; return o; });
       db.words = arr('words');
       var ideas = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('wordIdeas') === 0; }));
       db.wordIdeas = Object.keys(ideas).map(function (id) { var o = copy(ideas[id]); o.id = id; return o; });
@@ -552,6 +558,11 @@ var Store = (function () {
       if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       del(c + '/' + prev.id);
     }
+    /** I opened a message: add me to its readBy (arrayUnion, so two people opening it at once don't undo each other). */
+    function markRead(id) {
+      var path = 'messages/' + id; if (local[path]) local[path] = Object.assign({}, local[path], { readBy: (local[path].readBy || []).concat([session.personId]) });
+      return doc(path).update({ readBy: fb.firestore.FieldValue.arrayUnion(session.personId) }).catch(function (e) { console.error('markRead', e); });
+    }
     function unshare(gid, pid) { return del('careGroups/' + gid + '/share/' + pid); }
     function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
     /** ID numbers: Administrators (and the person themself) only, fetched one at a time when someone asks to see one. */
@@ -623,7 +634,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -645,6 +656,18 @@ var Store = (function () {
       if (previewRole) return [];
       if (LIVE) return ((Live.session() || {}).langs || []).slice();
       var me = user && get('people', user.id); return ((me && me.reviewLangs) || []).slice();
+    },
+    /** The signed-in person opened these messages (ids): they count as read on every device, and the sender sees it.
+     *  Not while viewing as someone else (an Administrator's looking doesn't count as the person reading). */
+    markRead: function (ids, pid) {
+      if (previewRole || !pid) return;
+      var any = false;
+      (ids || []).forEach(function (id) {
+        var m = get('messages', id); if (!m || (m.readBy || []).indexOf(pid) >= 0 || (m.to || []).indexOf(pid) < 0) return;
+        m.readBy = (m.readBy || []).concat([pid]); any = true;
+        if (LIVE) Live.markRead(id);
+      });
+      if (any) { save(); changed(); }
     },
     /** Someone left a care group: their card there goes (careGroups/{gid}/share/{pid}). */
     careUnshare: function (gid, pid) {

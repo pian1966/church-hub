@@ -185,6 +185,10 @@ function makeSampleData() {
     people: people, families: fam, consents: consents, notes: notes, teams: teams, positions: positions, skills: skills,
     services: services, assignments: assignments, groups: groups, blockouts: blockouts, serveOffers: serveOffers, guardians: guardians, noCollect: noCollect,
     dsr: [{ id: 'd1', personId: 'p23', kind: 'Access', received: off(-6), due: off(24), status: 'Open', notes: 'Asked for a copy of everything we hold.' }],
-    breaches: [], audit: [], leave: leave
+    breaches: [], audit: [], leave: leave,
+    // Messages (js/messages.js): one message group and a message to the staff, so the Messages page has something to show
+    msgGroups: [{ id: 'mg1', name: 'Welcome team', leaderIds: ['p17'], memberIds: ['p17', 'p14', 'p20'] }],
+    messages: [{ id: 'ms1', kind: 'staff', groupId: '', audience: 'Staff', title: 'Staff meeting moved', body: 'This week’s staff meeting is on Thursday at 9:00 instead of Tuesday. Tea and rusks in the hall.',
+      fromId: 'p03', fromName: 'Pieter van Wyk', to: ['p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08'], readBy: ['p03', 'p05'], createdAt: off(-1) + ' 08:30', updatedAt: off(-1) + ' 08:30' }]
   };
 }

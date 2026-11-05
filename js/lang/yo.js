@@ -599,6 +599,7 @@ I18n.add('yo', {
     "Lives in {place}, an area of this group": "Ó ń gbé ní {place}, agbègbè ẹgbẹ́ yìí",
     "Lives in {place}, like others in this group": "Ó ń gbé ní {place}, bí àwọn mìíràn nínú ẹgbẹ́ yìí",
     "No home address": "Kò sí àdírẹ́sì ilé",
+    "Lives in {place} – which part? Closest groups: {groups}": "Ó ń gbé ní {place} – apá wo? Àwọn ẹgbẹ́ tó súnmọ́ jùlọ: {groups}",
     "No care group in {place} yet": "Kò tíì sí ẹgbẹ́ ìtọ́jú ní {place}",
     "The people they live with are in different groups: {groups}": "Àwọn tí ó ń gbé pẹ̀lú wà nínú ẹgbẹ́ ọ̀tọ̀ọ̀tọ̀: {groups}",
     "Close to more than one group: {groups}": "Ó súnmọ́ ẹgbẹ́ ju ẹyọ kan lọ: {groups}",

@@ -599,6 +599,7 @@ I18n.add('ss', {
     "Lives in {place}, an area of this group": "Uhlala e-{place}, indzawo yalelicembu",
     "Lives in {place}, like others in this group": "Uhlala e-{place}, njengalabanye kulelicembu",
     "No home address": "Alikho likheli lasekhaya",
+    "Lives in {place} – which part? Closest groups: {groups}": "Uhlala e-{place} – kuyiphi incenye? Emacembu laseduze: {groups}",
     "No care group in {place} yet": "Akukabi khona licembu lekunakekelana e-{place}",
     "The people they live with are in different groups: {groups}": "Bantfu lahlala nabo basemacenjini lahlukene: {groups}",
     "Close to more than one group: {groups}": "Useduze nemacembu langetulu kwalinye: {groups}",

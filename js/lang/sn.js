@@ -599,6 +599,7 @@ I18n.add('sn', {
     "Lives in {place}, an area of this group": "Anogara ku{place}, nzvimbo yeboka iri",
     "Lives in {place}, like others in this group": "Anogara ku{place}, sevamwe veboka iri",
     "No home address": "Hapana kero yekumba",
+    "Lives in {place} – which part? Closest groups: {groups}": "Anogara ku{place} – kupi chaiko? Mapoka ari pedyo: {groups}",
     "No care group in {place} yet": "Hapasati pava neboka rekuchengetana ku{place}",
     "The people they live with are in different groups: {groups}": "Vanhu vaanogara navo vari mumapoka akasiyana: {groups}",
     "Close to more than one group: {groups}": "Pedyo nemapoka anopfuura rimwe: {groups}",

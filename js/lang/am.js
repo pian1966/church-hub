@@ -599,6 +599,7 @@ I18n.add('am', {
     "Lives in {place}, an area of this group": "በ{place} ይኖራል/ትኖራለች፣ የዚህ ቡድን አካባቢ",
     "Lives in {place}, like others in this group": "እንደ ሌሎቹ የዚህ ቡድን አባላት በ{place} ይኖራል/ትኖራለች",
     "No home address": "የቤት አድራሻ የለም",
+    "Lives in {place} – which part? Closest groups: {groups}": "በ{place} ይኖራል/ትኖራለች – የትኛው ክፍል? ቅርብ ቡድኖች፦ {groups}",
     "No care group in {place} yet": "በ{place} እስካሁን የእንክብካቤ ቡድን የለም",
     "The people they live with are in different groups: {groups}": "አብረዋቸው የሚኖሩት ሰዎች በተለያዩ ቡድኖች ውስጥ ናቸው፦ {groups}",
     "Close to more than one group: {groups}": "ከአንድ በላይ ለሆኑ ቡድኖች ቅርብ፦ {groups}",

@@ -463,24 +463,25 @@ await t('…but can’t change what Pastors can do, or give Administrator or Pas
 });
 
 console.log('Stand-in leave approver');
-await t('a stand-in decides other people’s waiting leave between their dates – not their own, and not after', async () => {
-  await env.withSecurityRulesDisabled(async ctx => {
-    const d = ctx.firestore(), now = Date.now();
-    await d.doc('roles/sipho@example.com').update({ standInFrom: now - 86400000, standInTo: now + 86400000 });
-    await d.doc('leaveRequests/S1').set({ staffId: 'p02', type: 'AL', status: 'Pending', start: '2027-03-01', end: '2027-03-02' });
-    await d.doc('leaveRequests/S2').set({ staffId: 'p05', type: 'AL', status: 'Pending', start: '2027-03-01', end: '2027-03-02' });
-    await d.doc('leaveRequests/S3').set({ staffId: 'p02', type: 'AL', status: 'Pending', start: '2027-04-01', end: '2027-04-02' });
-  });
-  await can(read(db.rosters, 'leaveRequests/S1'));
-  await can(db.rosters.doc('leaveRequests/S1').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' }));
-  await can(db.rosters.doc('away/S1').set({ personId: 'p02', from: '2027-03-01', to: '2027-03-02' }));
-  await cannot(db.rosters.doc('leaveRequests/S2').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' }));   // their own
-  await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', type: 'SL', decidedBy: 'Sipho', decidedOn: 'x' }));   // only the decision
-  await cannot(db.rosters.doc('leave/config').update({ note: 'x' }));
-  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('roles/sipho@example.com').update({ standInFrom: 0, standInTo: Date.now() - 1000 }); });
-  await cannot(read(db.rosters, 'leaveRequests/S3'));
-  await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' }));
+await env.withSecurityRulesDisabled(async ctx => {
+  const d = ctx.firestore(), now = Date.now();
+  await d.doc('roles/sipho@example.com').update({ standInFrom: now - 86400000, standInTo: now + 86400000 });
+  await d.doc('leaveRequests/S1').set({ staffId: 'p02', type: 'AL', status: 'Pending', start: '2027-03-01', end: '2027-03-02' });
+  await d.doc('leaveRequests/S2').set({ staffId: 'p05', type: 'AL', status: 'Pending', start: '2027-03-01', end: '2027-03-02' });
+  await d.doc('leaveRequests/S3').set({ staffId: 'p02', type: 'AL', status: 'Pending', start: '2027-04-01', end: '2027-04-02' });
 });
+await t('stand-in: reads other people’s leave between their dates', async () => { await can(read(db.rosters, 'leaveRequests/S1')); });
+await t('stand-in: approves someone else’s waiting leave', async () => { await can(db.rosters.doc('leaveRequests/S1').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' })); });
+await t('stand-in: the approved leave counts as away for rosters', async () => { await can(db.rosters.doc('away/S1').set({ personId: 'p02', from: '2027-03-01', to: '2027-03-02' })); });
+await t('stand-in: not their own leave', async () => { await cannot(db.rosters.doc('leaveRequests/S2').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' })); });
+await t('stand-in: only the decision, nothing else', async () => { await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', type: 'SL', decidedBy: 'Sipho', decidedOn: 'x' })); });
+await t('stand-in: not the leave settings', async () => { await cannot(db.rosters.doc('leave/config').update({ note: 'x' })); });
+await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('roles/sipho@example.com').update({ standInFrom: 0, standInTo: Date.now() - 1000 }); });
+await t('stand-in: after the last day, no reading others’ leave', async () => {
+  const fresh = env.authenticatedContext('uid-rosters-2', { email: 'sipho@example.com', email_verified: true }).firestore();   // a new sign-in, nothing cached
+  await cannot(read(fresh, 'leaveRequests/S3'));
+});
+await t('stand-in: after the last day, no decisions', async () => { await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' })); });
 await t('a leave manager sets the stand-in’s dates, and nothing else on their access entry', async () => {
   await can(db.admin.doc('roles/sipho@example.com').update({ standInFrom: 1, standInTo: 2 }));
   await can(andile.doc('roles/sipho@example.com').update({ standInFrom: 3, standInTo: 4 }));

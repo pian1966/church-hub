@@ -11,7 +11,7 @@
   var MARITAL = P.MARITAL, WEDDING = P.WEDDING;
   function keyDate() { return P.keyDate.apply(this, arguments); }
 
-  function canCheck() { return H.can('*'); }
+  function canCheck() { return H.can('people.changes'); }
   function mine() { var u = H.user(); return u ? S.find('detailChanges', function (c) { return c.personId === u.id; })[0] || null : null; }
   function open() { return canCheck() ? S.find('detailChanges', function (c) { return c.status === 'waiting' || c.status === 'checked'; }) : []; }
   function lines(s) { return String(s || '').split(/\n/).map(function (x) { return x.trim(); }).filter(Boolean); }

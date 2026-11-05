@@ -96,14 +96,14 @@
   }
 
   H.register({
-    id: 'privacy', name: 'Privacy', desc: 'Consent, requests and safeguards', icon: H.ICON.privacy, tint: '#0F766E', roles: ['admin'],
+    id: 'privacy', name: 'Privacy', desc: 'Consent, requests and safeguards', icon: H.ICON.privacy, tint: '#0F766E', roles: ['admin'], perm: 'privacy.manage',
     stat: function () { var c = checks().filter(function (x) { return !x[0]; }).length; return c ? TN('{n} thing to sort out', '{n} things to sort out', c) : T('All in order'); },
     todos: function () {
-      var o = openRequests(); if (!H.can('*')) return [];
+      var o = openRequests(); if (!H.can('privacy.manage')) return [];
       return o.length ? [{ text: TN('{n} privacy request to answer', '{n} privacy requests to answer', o.length), href: '#/privacy/requests', tag: law().short }] : [];
     },
     render: function (p) {
-      if (!H.can('*')) return '<p class="empty">' + T('Only Administrators can open Privacy.') + '</p>';
+      if (!H.can('privacy.manage')) return '<p class="empty">' + T('Only Administrators can open Privacy.') + '</p>';
       return p[0] === 'requests' ? renderRequests() : p[0] === 'retention' ? renderRetention() : p[0] === 'breaches' ? renderBreaches() : p[0] === 'audit' ? renderAudit() : renderOverview();
     },
     actions: {

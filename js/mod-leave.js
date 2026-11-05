@@ -19,8 +19,8 @@
     });
     return { settings: lv.settings, rules: lv.rules, terms: lv.terms, types: lv.types, levels: lv.levels, holidays: lv.holidays, adjustments: lv.adjustments, requests: lv.requests, staff: staff };
   }
-  function actor(d) { return C.staffById(d, H.user().id) || { id: H.user().id, name: H.name(H.user()), role: H.can('*') ? 'Administrator' : 'Staff', level: 'Administrator' }; }
-  function isLeaveAdmin() { return H.can('*'); }
+  function actor(d) { return C.staffById(d, H.user().id) || { id: H.user().id, name: H.name(H.user()), role: H.can('leave.manage') ? 'Administrator' : 'Staff', level: 'Administrator' }; }
+  function isLeaveAdmin() { return H.can('leave.manage'); }
   /** A Church Partner (Member access) who isn't on the staff: leave isn't theirs to see. */
   function partner() { return !H.can('*') && !H.can('people.view') && !H.can('people.basic') && !H.can('children'); }
   function takesLeave(d) { var st = C.staffById(d, H.user().id); return st && C.tracksLeave(st); }

@@ -106,7 +106,7 @@
    *  person's ID number, which only Administrators see. Runs once, when an Administrator signs in. */
   function tidyIdNames() {
     var E = window.ElvantoImport, n = 0;
-    if (!E || !E.idInName || !H.can('*')) return 0;
+    if (!E || !E.idInName || !H.can('idnumbers')) return 0;
     S.list('people').slice().forEach(function (p) {
       var q = null, id = '';
       ['firstName', 'preferredName', 'lastName'].forEach(function (k) { var m = E.idInName(p[k]); if (m) { q = q || JSON.parse(JSON.stringify(p)); q[k] = m.name; id = id || m.id; } });

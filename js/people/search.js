@@ -83,7 +83,7 @@
     add(all, TX('Privacy'), 'consents', TX('Consent given for'), 'list', function (p) { return PURPOSES.filter(function (x) { return hasConsent(p.id, x); }); }, PURPOSES);
     add(all, TX('Privacy'), 'receive', TX('Would like to receive'), 'list', function (p) { return RECEIVE_P.filter(function (x) { return hasConsent(p.id, x); }); }, RECEIVE_P);
     add(all, TX('Privacy'), 'directory', TX('Shares contact details'), 'yesno', function (p) { return hasConsent(p.id, 'Church directory'); });
-    add(H.can('*'), TX('Privacy'), 'access', TX('App access'), 'choice', function (p) { return (H.ROLES[p.appRole || 'member'] || {}).label; }, Object.keys(H.ROLES).map(function (r) { return H.ROLES[r].label; }));
+    add(H.can('access.manage'), TX('Privacy'), 'access', TX('App access'), 'choice', function (p) { return (H.ROLES[p.appRole || 'member'] || {}).label; }, Object.keys(H.ROLES).map(function (r) { return H.ROLES[r].label; }));
     add(all, TX('Staff'), 'staff', TX('Church staff member'), 'yesno', function (p) { return !!p.staff; });
     add(all, TX('Staff'), 'staffCategory', TX('Staff category'), 'text', function (p) { return p.staff ? p.staff.category : ''; });
     add(all, TX('Staff'), 'staffStart', TX('Started working'), 'date', function (p) { return p.staff ? p.staff.start : ''; });
@@ -98,7 +98,7 @@
     add(all, TX('Name and contact'), 'province', TX('Province'), 'text', function (p) { return (p.address || {}).province || ''; });
     add(H.can('*'), TX('Church'), 'elvantoId', TX('Elvanto ID'), 'text', function (p) { return p.elvantoId || ''; });
     // ID numbers (Administrators): a filter only – never a column, a download or on screen. Fetched when Search is pressed.
-    add(H.can('*'), TX('Privacy'), 'idNumber', TX('ID number'), 'text', function (p) { return idNums ? idNums[p.id] || '' : ''; }, null, null, { noCol: true });
+    add(H.can('idnumbers'), TX('Privacy'), 'idNumber', TX('ID number'), 'text', function (p) { return idNums ? idNums[p.id] || '' : ''; }, null, null, { noCol: true });
     return F;
   }
   /** The services someone volunteers at, as 8am / 10am / 5pm (every service when not narrowed down). */
@@ -349,7 +349,7 @@
     advrun: function () {
       var go = function () { state.adv.ran = true; H.render(); var r = document.getElementById('adv-result'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
       var idf = idFilters(); idf.forEach(function (f) { f.value = String(f.value || '').replace(/\s+/g, ''); });
-      if (!idf.length || !H.can('*') || idTooShort()) return go();
+      if (!idf.length || !H.can('idnumbers') || idTooShort()) return go();
       Store.idNumbers().then(function (all) {   // fresh each time Search is pressed, and logged with who was found
         idNums = all; go();
         var r = advRun(searchFields()); if (r.error) return;

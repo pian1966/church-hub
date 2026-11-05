@@ -14,7 +14,7 @@
   function langs() { return I18n.LANGS.slice(1).map(function (l) { return [l[0], l[1]]; }).concat(I18n.MORE.map(function (m) { return [m[0], m[1] + (m[2] !== m[1] ? ' (' + m[2] + ')' : '')]; })); }
   function langName(code) { return I18n.name(code); }
   /** Languages this person decides on: Administrators all of them, checkers the ones the Administrator gave them. */
-  function checkable() { return H.can('*') ? langs().map(function (l) { return l[0]; }) : S.reviewLangs(); }
+  function checkable() { return H.can('words.manage') ? langs().map(function (l) { return l[0]; }) : S.reviewLangs(); }
   function canCheck(code) { return checkable().indexOf(code) >= 0; }
   function english() { return I18n.english(); }
   function plain(x) { return String(x || '').replace(/<[^>]+>/g, ''); }
@@ -128,7 +128,7 @@
     var list = waiting().sort(function (a, b) { return a.lang === b.lang ? (a.en === b.en ? (a.createdAt < b.createdAt ? -1 : 1) : (a.en < b.en ? -1 : 1)) : (a.lang < b.lang ? -1 : 1); });
     var mine = checkable(), used = mine.filter(function (c) { var d = wordsDoc(c); return d && Object.keys(d.words || {}).length; });
     var html = head() + tabs('check') + '<section class="panel"><h2>' + T('Suggestions to check') + '</h2>' +
-      (H.can('*') ? '<p class="hint" style="margin-top:0">' + T('You can check every language. Where someone else checks a language, leave it to them – they speak it.') + '</p>' : '') +
+      (H.can('words.manage') ? '<p class="hint" style="margin-top:0">' + T('You can check every language. Where someone else checks a language, leave it to them – they speak it.') + '</p>' : '') +
       (list.length ? list.map(function (w) {
         var now = I18n.word(w.lang, w.en), bad = problem(w.en, w.text);
         return '<div class="panel inset" style="margin:10px 0"><p class="small muted" style="margin:0">' + esc(langName(w.lang)) + ' · ' + T('English') + '</p><p style="margin:2px 0 8px">' + esc(plain(w.en)) + '</p>' +

@@ -159,6 +159,8 @@ var Store = (function () {
     }
     function role() { return session ? previewRole || session.role : ''; }
     function is() { return Array.prototype.indexOf.call(arguments, role()) >= 0; }
+    /** What Pastors can do (from their access-list entry, as the rules see it); Administrators may do everything. */
+    function may(x) { var r = role(); return r === 'admin' || (r === 'pastor' && !previewRole && (session.can || []).indexOf(x) >= 0); }
 
     /* ---------- loading the Firebase library ---------- */
     function loadSdk(done) {
@@ -254,7 +256,7 @@ var Store = (function () {
       doc('roles/' + email).get().then(function (snap) {
         if (!snap.exists) return onState({ stage: 'noAccess', email: email });
         var r = snap.data();
-        session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [] };
+        session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [], can: r.can || [] };
         if (!session.personId) {
           if (r.role !== 'admin') return onState({ stage: 'noAccess', email: email, reason: 'noPerson' });
           // An Administrator added by hand: set up the church only if nobody has yet, otherwise just their own record.
@@ -290,12 +292,12 @@ var Store = (function () {
       // once the group is known – see shares())
       add('careGroups', previewCare ? doc('careGroups/' + previewCare) : is('admin', 'pastor') ? coll('careGroups') : coll('careGroups').where('memberIds', 'array-contains', me));   // "View as" a carer: that group
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
-      add('serveOffers', is('admin', 'rosters') ? coll('serveOffers') : own('serveOffers'));
+      add('serveOffers', is('admin', 'rosters') || may('rosters') ? coll('serveOffers') : own('serveOffers'));
       // Changes to family details people asked for: Administrators check them all; everyone else sees their own
-      add('detailChanges', r === 'admin' ? coll('detailChanges') : own('detailChanges'));
+      add('detailChanges', may('people') ? coll('detailChanges') : own('detailChanges'));
       // Translations: the approved wording for everyone; suggestions – Administrators all, checkers their languages, everyone their own
       add('words', coll('words'));
-      if (r === 'admin') add('wordIdeas', coll('wordIdeas'));
+      if (may('words')) add('wordIdeas', coll('wordIdeas'));
       else {
         add('wordIdeasMe', own('wordIdeas'));
         (previewRole ? [] : session.langs || []).forEach(function (l) { COLL['wordIdeas_' + l] = 'wordIdeas'; add('wordIdeas_' + l, coll('wordIdeas').where('lang', '==', l)); });
@@ -316,15 +318,12 @@ var Store = (function () {
       else add('guardians', fs.collection('guardians').where('adultId', '==', me));
       if (r === 'pastor' && !previewRole) add('notes', coll('notes'));
       if (is('admin', 'pastor')) add('officeNotes', coll('officeNotes'));
-      if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); add('elvantoFound', coll('elvantoFound')); }
+      if (may('import')) { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); add('elvantoFound', coll('elvantoFound')); }
       else add('elvantoSync', own('elvantoSync'));
-      if (r === 'admin') {
-        ['dsr', 'breaches', 'emailPrompts'].forEach(function (c) { add(c, coll(c)); });
-        add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', coll('leaveAdjustments'));
-        add('audit', coll('audit').orderBy('ts', 'desc').limit(1000));
-      } else {
-        add('leaveRequests', own('leaveRequests', 'staffId')); add('leaveAdjustments', own('leaveAdjustments', 'staffId'));
-      }
+      if (may('privacy')) { ['dsr', 'breaches'].forEach(function (c) { add(c, coll(c)); }); add('audit', coll('audit').orderBy('ts', 'desc').limit(1000)); }
+      if (may('settings')) add('emailPrompts', coll('emailPrompts'));
+      if (may('leave')) { add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', coll('leaveAdjustments')); }
+      else { add('leaveRequests', own('leaveRequests', 'staffId')); add('leaveAdjustments', own('leaveAdjustments', 'staffId')); }
       return p;
     }
 
@@ -450,7 +449,7 @@ var Store = (function () {
       if (!same(a.det, was.det) && is('admin', 'pastor')) write('details/' + p.id, a.det);
       if (!same(a.med, was.med) && is('kids')) { if (a.med) write('medical/' + p.id, a.med); else del('medical/' + p.id); }
       syncDirectory(p.id);
-      if (is('admin')) syncRole(p, was.card);
+      if (is('admin') || may('access')) syncRole(p, was.card);
     }
     /** Keep the members' directory in step with consent: name and phone only, adults who agreed. */
     /** Contact details (consent "Church directory", shown as Contact details): what other people may see of someone who agreed.
@@ -494,16 +493,32 @@ var Store = (function () {
     function resyncDirectory() { if (!is('admin')) return 0; var n = 0; list('people').forEach(function (p) { syncDirectory(p.id); n++; }); return n; }
     /** Administrators give sign-in access from the person's record: roles/{email} = { role, personId }. */
     function syncRole(p, prev) {
+      var SMALL = ['rosters', 'kids', 'member'], small = function (x) { return !x || SMALL.indexOf(x) >= 0; };
+      if (!is('admin') && (!small(p.appRole === 'none' ? '' : p.appRole) || !small(prev && prev.appRole === 'none' ? '' : prev && prev.appRole))) return;   // a Pastor with "access": the smaller roles only
       var email = (p.email || '').trim().toLowerCase(), was = prev ? (prev.email || '').trim().toLowerCase() : '';
       var r = p.appRole && p.appRole !== 'none' && p.active !== false ? p.appRole : '';
       var wasR = prev && prev.appRole && prev.appRole !== 'none' && prev.active !== false ? prev.appRole : '';
       // Remove sign-in when the email changes or access ends – also if someone else (e.g. a Pastor recording a death) changed the record first.
       if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) del('roles/' + was);
       var langs = (p.reviewLangs || []).slice().sort(), wasLangs = ((prev && prev.reviewLangs) || []).slice().sort();
-      if (email && r && (email !== was || r !== wasR || !prev || langs.join() !== wasLangs.join())) {
+      var can = r === 'pastor' ? pastorCan() : [], had = known('roles/' + email);
+      var canChanged = !!had && JSON.stringify(had.can || []) !== JSON.stringify(can);
+      if (email && r && (email !== was || r !== wasR || !prev || langs.join() !== wasLangs.join() || canChanged)) {
         var acc = { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }; if (langs.length) acc.langs = langs;   // languages they check (translations)
+        if (can.length) acc.can = can;   // what Pastors can do (Settings), checked by the rules
         write('roles/' + email, acc);
       }
+    }
+    function pastorCan() { return ((db.settings && db.settings.pastorCan) || []).slice().sort(); }
+    /** After an Administrator changes what Pastors can do: every Pastor's access-list entry gets the new ticks. */
+    function syncPastors() {
+      if (!is('admin')) return;
+      find('people', function (p) { return p.appRole === 'pastor' && p.active !== false && p.email; }).forEach(function (p) {
+        var email = p.email.trim().toLowerCase(), acc = { role: 'pastor', personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }, can = pastorCan();
+        if (p.reviewLangs && p.reviewLangs.length) acc.langs = p.reviewLangs.slice().sort();
+        if (can.length) acc.can = can;
+        write('roles/' + email, acc);
+      });
     }
     function putNotes(pid, c) {   // pastoral notes or church office notes: one document per person holding all their notes
       c = c || 'notes';
@@ -594,7 +609,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, syncPastors: syncPastors, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -604,7 +619,9 @@ var Store = (function () {
 
   /** Administrators, after changing what each role sees of other people: rewrite the shared contact details (live only). */
   function resyncDirectory() { return LIVE ? Live.resyncDirectory() : 0; }
-  return { resyncDirectory: resyncDirectory, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
+  /** What Pastors can do changed: copy it onto every Pastor's access-list entry (live only; the demo has no rules). */
+  function syncPastors() { if (LIVE) Live.syncPastors(); }
+  return { resyncDirectory: resyncDirectory, syncPastors: syncPastors, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */

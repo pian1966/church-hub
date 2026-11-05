@@ -16,9 +16,13 @@
   function ctx() {
     var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
     return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', me: r && r.personId ? r.personId : '',
-      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [] };
+      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [] };
   }
   function is(c, list) { return c.signedIn && !!c.role && list.indexOf(c.role) >= 0; }
+  /** What Pastors can do: Administrators always; Pastors with the tick on their access-list entry. */
+  function may(c, x) { return is(c, ['admin']) || (is(c, ['pastor']) && c.can.indexOf(x) >= 0); }
+  function rosterer(c) { return is(c, ['admin', 'rosters']) || may(c, 'rosters'); }
+  var SMALL = ['rosters', 'kids', 'member'];
   function mine(c, pid) { return is(c, ANY) && c.me !== '' && pid === c.me; }
   function onlyChanges(b, a, keys) {
     var all = {}; Object.keys(b || {}).concat(Object.keys(a || {})).forEach(function (k) { all[k] = 1; });
@@ -31,31 +35,37 @@
   function checks(c, lang) { return is(c, ANY) && c.langs.indexOf(lang) >= 0; }   // checks translations in that language
   function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
   var POLICY = {
-    roles: { read: function (c, id) { return c.signedIn && (id === c.email || is(c, ['admin'])); },
-      write: function (c, op, id, b, a) { return is(c, ['admin']) && (op === 'delete' || ANY.concat(['robot']).indexOf(a.role) >= 0); } },
-    settings: { read: function (c) { return is(c, ANY) || c.robot; }, write: function (c) { return is(c, ['admin']); } },
-    elvantoSync: { read: function (c, id, d) { return is(c, ['admin']) || c.robot || (!!d && mine(c, d.personId)); },
+    roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
       write: function (c, op, id, b, a) {
-        if (is(c, ['admin'])) return true;
+        if (is(c, ['admin'])) return op === 'delete' || ANY.concat(['robot']).indexOf(a.role) >= 0;
+        if (!may(c, 'access')) return false;
+        if (op === 'delete') return SMALL.indexOf(b.role) >= 0;
+        return (op === 'create' || SMALL.indexOf(b.role) >= 0) && SMALL.indexOf(a.role) >= 0 && onlyKeys(a, ['role', 'personId', 'name']);
+      } },
+    settings: { read: function (c) { return is(c, ANY) || c.robot; },
+      write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || [])); } },
+    elvantoSync: { read: function (c, id, d) { return may(c, 'import') || c.robot || (!!d && mine(c, d.personId)); },
+      write: function (c, op, id, b, a) {
+        if (may(c, 'import')) return true;
         if (op === 'delete') return false;
         if (op === 'create') return mine(c, a.personId) && a.status === 'Waiting' && onlyKeys(a, ['personId', 'name', 'start', 'end', 'want', 'have', 'haveNote', 'status', 'note', 'createdAt', 'updatedAt']);
         if (mine(c, b.personId) && a.personId === b.personId && a.status === 'Waiting' && onlyChanges(b, a, ['name', 'start', 'end', 'want', 'status', 'note', 'updatedAt'])) return true;
         return c.robot && onlyChanges(b, a, ['status', 'note', 'have', 'haveNote', 'doneAt']);
       } },
-    robotStatus: { read: function (c) { return is(c, ['admin']); }, write: function (c) { return c.robot; } },
-    elvantoFound: { read: function (c) { return is(c, ['admin']); }, write: function (c, op) { return op === 'delete' ? is(c, ['admin']) : c.robot; } },
+    robotStatus: { read: function (c) { return may(c, 'import'); }, write: function (c) { return c.robot; } },
+    elvantoFound: { read: function (c) { return may(c, 'import'); }, write: function (c, op) { return op === 'delete' ? may(c, 'import') : c.robot; } },
     guardians: { read: function (c, id, d) { return is(c, ['admin', 'pastor', 'kids']) || (!!d && mine(c, d.adultId)); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },
     noCollect: { read: function (c) { return is(c, ['admin', 'pastor', 'kids']); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },
     people: { read: function (c, id) { return is(c, STAFF) || mine(c, id); },
       write: function (c, op, id, b, a) {
-        if (op === 'delete') return is(c, ['admin']);
+        if (op === 'delete') return may(c, 'people');
         return is(c, ['admin', 'pastor']) || (op === 'update' && mine(c, id) && onlyChanges(b, a, ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'updatedAt']))
           || (op === 'update' && is(c, ['kids']) && b.familyRole === 'child' && onlyChanges(b, a, ['photo', 'updatedAt']));
       } },
     details: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || mine(c, id) || (is(c, ['kids']) && !!d && d.familyRole === 'child'); },
       write: function (c) { return is(c, ['admin', 'pastor']); } },
-    medical: { read: function (c) { return is(c, ['kids']); }, write: function (c, op) { return is(c, op === 'delete' ? ['kids', 'admin'] : ['kids']); } },
-    notes: { read: function (c) { return is(c, ['pastor']); }, write: function (c, op) { return is(c, op === 'delete' ? ['pastor', 'admin'] : ['pastor']); } },
+    medical: { read: function (c) { return is(c, ['kids']); }, write: function (c, op) { return is(c, ['kids']) || (op === 'delete' && may(c, 'people')); } },
+    notes: { read: function (c) { return is(c, ['pastor']); }, write: function (c, op) { return is(c, ['pastor']) || (op === 'delete' && may(c, 'people')); } },
     directory: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo'])); } },
     contacts: { read: function (c) { return is(c, STAFF); },
@@ -66,54 +76,54 @@
         return who && (op === 'delete' || (onlyKeys(a, ['data', 'updatedAt']) && typeof a.data === 'string' && a.data.length < 200000));
       } },
     officeNotes: { read: function (c) { return is(c, ['admin', 'pastor']); }, write: function (c) { return is(c, ['admin', 'pastor']); } },
-    idNumbers: { read: function (c, id) { return is(c, ['admin']) || mine(c, id); },
-      write: function (c, op, id, b, a) { return is(c, ['admin']) && (op === 'delete' || (onlyKeys(a, ['value', 'updatedAt']) && typeof a.value === 'string' && a.value.length <= 20)); } },
+    idNumbers: { read: function (c, id) { return may(c, 'idnumbers') || mine(c, id); },
+      write: function (c, op, id, b, a) { return op === 'delete' ? may(c, 'idnumbers') || may(c, 'people') : may(c, 'idnumbers') && onlyKeys(a, ['value', 'updatedAt']) && typeof a.value === 'string' && a.value.length <= 20; } },
     families: { read: function (c) { return is(c, STAFF); }, write: function (c) { return is(c, ['admin', 'pastor']); } },
     consents: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (!!d && mine(c, d.personId)) || (is(c, ['kids']) && !!d && KIDS_CONSENTS.indexOf(d.purpose) >= 0); },
       write: function (c, op, id, b, a) {
-        if (op === 'delete') return is(c, ['admin']);
+        if (op === 'delete') return may(c, 'people');
         if (is(c, ['admin', 'pastor'])) return true;
         return op === 'create' ? mine(c, a.personId) && a.method === 'Changed in the app' : mine(c, b.personId) && onlyChanges(b, a, ['withdrawnAt', 'updatedAt']);
       } },
     teams: 'catalogue', positions: 'catalogue', services: 'catalogue',
-    skills: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); }, write: function (c) { return is(c, ['admin', 'rosters']); } },
+    skills: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); }, write: function (c) { return rosterer(c); } },
     assignments: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
-        if (is(c, ['admin', 'rosters'])) return true;
+        if (rosterer(c)) return true;
         return op === 'update' && mine(c, b.personId) && onlyChanges(b, a, ['status', 'updatedAt']) && ['accepted', 'declined'].indexOf(a.status) >= 0;
       } },
     groups: { read: function (c, id, d) { return is(c, STAFF) || (mine(c, c.me) && !!d && d.memberIds.indexOf(c.me) >= 0); },
       write: function (c, op, id, b, a) {
-        if (is(c, ['admin', 'rosters'])) return true;
+        if (rosterer(c)) return true;
         if (!mine(c, c.me)) return false;
         return (op === 'create' || b.memberIds.indexOf(c.me) >= 0) && (op === 'delete' || a.memberIds.indexOf(c.me) >= 0);
       } },
-    serveOffers: { read: function (c, id, d) { return is(c, ['admin', 'rosters']) || (!!d && mine(c, d.personId)); },
+    serveOffers: { read: function (c, id, d) { return rosterer(c) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
-        if (is(c, ['admin', 'rosters'])) return true;
+        if (rosterer(c)) return true;
         if (op === 'delete') return mine(c, b.personId);
         return op === 'create' && mine(c, a.personId) && a.status === 'waiting' && ['join', 'change', 'stop'].indexOf(a.kind) >= 0
           && onlyKeys(a, ['personId', 'positionId', 'kind', 'frequency', 'times', 'note', 'status', 'createdAt', 'updatedAt']);
       } },
-    detailChanges: { read: function (c, id, d) { return is(c, ['admin']) || (!!d && mine(c, d.personId)); },
+    detailChanges: { read: function (c, id, d) { return may(c, 'people') || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
-        if (is(c, ['admin'])) return true;
+        if (may(c, 'people')) return true;
         if (op === 'delete') return mine(c, b.personId);
         return op === 'create' && mine(c, a.personId) && a.status === 'waiting'
           && onlyKeys(a, ['personId', 'maritalStatus', 'anniversary', 'spouse', 'children', 'note', 'status', 'createdAt', 'updatedAt']);
       } },
     blockouts: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
-      write: function (c, op, id, b, a) { return is(c, ['admin', 'rosters']) || mine(c, op === 'delete' ? b.personId : a.personId); } },
+      write: function (c, op, id, b, a) { return rosterer(c) || mine(c, op === 'delete' ? b.personId : a.personId); } },
     away: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'delete' ? mine(c, b.personId) : mine(c, a.personId) && onlyKeys(a, ['personId', 'from', 'to'])); } },
-    leave: { read: function (c) { return is(c, ANY); }, write: function (c) { return is(c, ['admin']); } },
-    leaveRequests: { read: function (c, id, d) { return is(c, ['admin']) || (!!d && mine(c, d.staffId)); },
+      write: function (c, op, id, b, a) { return may(c, 'leave') || (op === 'delete' ? mine(c, b.personId) : mine(c, a.personId) && onlyKeys(a, ['personId', 'from', 'to'])); } },
+    leave: { read: function (c) { return is(c, ANY); }, write: function (c) { return may(c, 'leave'); } },
+    leaveRequests: { read: function (c, id, d) { return may(c, 'leave') || (!!d && mine(c, d.staffId)); },
       write: function (c, op, id, b, a) {
-        if (is(c, ['admin'])) return true;
+        if (may(c, 'leave')) return true;
         if (op === 'create') return mine(c, a.staffId) && (a.status === 'Pending' || (a.status === 'Approved' && ((docs['leave/config'] || {}).autoApprove || []).indexOf(a.type) >= 0));
         return op === 'update' && mine(c, b.staffId) && a.status === 'Cancelled' && onlyChanges(b, a, ['status', 'cancelledBy']);
       } },
-    leaveAdjustments: { read: function (c, id, d) { return is(c, ['admin']) || (!!d && mine(c, d.staffId)); }, write: function (c) { return is(c, ['admin']); } },
+    leaveAdjustments: { read: function (c, id, d) { return may(c, 'leave') || (!!d && mine(c, d.staffId)); }, write: function (c) { return may(c, 'leave'); } },
     careGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && c.me !== '' && !!d && (d.memberIds || []).indexOf(c.me) >= 0); },
       write: function (c, op, id, b, a) {
         if (is(c, ['admin', 'pastor'])) return true;
@@ -127,22 +137,22 @@
           && (a.photo === undefined || (typeof a.photo === 'string' && a.photo.length < 40000));
       } },
     words: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return (is(c, ['admin']) || checks(c, id)) && (op === 'delete' || (onlyKeys(a, ['words', 'updatedAt', 'createdAt', 'by']) && !!a.words && typeof a.words === 'object' && !Array.isArray(a.words))); } },
-    wordIdeas: { read: function (c, id, d) { return is(c, ['admin']) || (!!d && (mine(c, d.personId) || checks(c, d.lang))); },
+      write: function (c, op, id, b, a) { return (may(c, 'words') || checks(c, id)) && (op === 'delete' || (onlyKeys(a, ['words', 'updatedAt', 'createdAt', 'by']) && !!a.words && typeof a.words === 'object' && !Array.isArray(a.words))); } },
+    wordIdeas: { read: function (c, id, d) { return may(c, 'words') || (!!d && (mine(c, d.personId) || checks(c, d.lang))); },
       write: function (c, op, id, b, a) {
         if (op === 'create') return mine(c, a.personId) && a.status === 'waiting' && onlyKeys(a, ['lang', 'en', 'text', 'note', 'personId', 'name', 'status', 'createdAt', 'updatedAt'])
           && typeof a.lang === 'string' && typeof a.en === 'string' && typeof a.text === 'string' && a.text.length <= 3000 && (a.note === undefined || (typeof a.note === 'string' && a.note.length <= 500));
-        if (op === 'delete') return is(c, ['admin']) || checks(c, b.lang) || mine(c, b.personId);
-        return (is(c, ['admin']) || checks(c, b.lang)) && onlyChanges(b, a, ['status', 'reply', 'reviewedBy', 'reviewedAt', 'updatedAt']) && ['used', 'declined'].indexOf(a.status) >= 0;
+        if (op === 'delete') return may(c, 'words') || checks(c, b.lang) || mine(c, b.personId);
+        return (may(c, 'words') || checks(c, b.lang)) && onlyChanges(b, a, ['status', 'reply', 'reviewedBy', 'reviewedAt', 'updatedAt']) && ['used', 'declined'].indexOf(a.status) >= 0;
       } },
-    dsr: 'admin', breaches: 'admin', emailPrompts: 'admin',
-    audit: { read: function (c) { return is(c, ['admin']); },
+    dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
+    audit: { read: function (c) { return may(c, 'privacy'); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }
   };
   function policy(coll) {
     var p = POLICY[coll];
-    if (p === 'catalogue') return { read: function (c) { return is(c, ANY); }, write: function (c) { return is(c, ['admin', 'rosters']); } };
-    if (p === 'admin') return { read: function (c) { return is(c, ['admin']); }, write: function (c) { return is(c, ['admin']); } };
+    if (p === 'catalogue') return { read: function (c) { return is(c, ANY); }, write: function (c) { return rosterer(c); } };
+    if (typeof p === 'string' && p !== 'catalogue') return { read: function (c) { return may(c, p); }, write: function (c) { return may(c, p); } };   // an ability (Administrators always)
     return p || { read: function () { return false; }, write: function () { return false; } };
   }
   // A rule that looks at a missing document fails (as in Firestore), hence the try/catch.

@@ -389,3 +389,13 @@ Later: direct import through the Elvanto API (server side, with the church's API
   (baptisms, confirmations, weddings, funerals…). A special service is a `services` record with `special: true`; "Teams
   like" picks which regular service's positions it uses (its `slot`).
 
+
+## What Pastors can do (Settings)
+`settings.pastorCan` lists the Administrator abilities Pastors have: settings, access, people, idnumbers, leave, rosters,
+privacy, import, words (`Hub.PASTOR_CAN` names them and the permissions each adds, e.g. leave → `leave.manage`).
+When an Administrator saves it, `Store.syncPastors()` copies the list onto every Pastor's access-list entry
+(`roles/{email}.can`), and `syncRole` keeps it there when someone becomes a Pastor. The rules check that copy:
+`may('leave')` is true for Administrators and for Pastors with the tick. A Pastor with "settings" can change every setting
+except `pastorCan`; with "access" they give and take away only Basic access, Roster coordinator and Children's ministry,
+never Administrator or Pastor, and never abilities. Medical notes stay with Children's ministry whatever is ticked.
+`plan()` in `js/store.js`, the POLICY in `tests/fake-firebase.js` and `tests/rules.test.mjs` follow the same ticks.

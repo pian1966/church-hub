@@ -2098,6 +2098,11 @@ I18n.add('tn', {
     "Message group added": "Setlhopha sa melaetsa se okeditswe",
     "Message group deleted": "Setlhopha sa melaetsa se phimotswe",
     "Not a leader": "Ga se moeteledipele",
-    "Make leader": "Dira moeteledipele"
+    "Make leader": "Dira moeteledipele",
+    "Chosen people": "Batho ba ba tlhophilweng",
+    "Only some of them": "Bangwe ba bone fela",
+    "Tick who should get it.": "Tshwaya gore ke mang yo o tshwanetseng go o amogela.",
+    "Tick all": "Tshwaya botlhe",
+    "Untick all": "Tlosa matshwao otlhe"
   }
 });

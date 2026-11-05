@@ -105,8 +105,8 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `breaches` | security-compromise register (POPIA s22) |
 | `audit` | who viewed or changed sensitive information, and when |
 | `wordIdeas` | suggested better wording: { lang, en (the English text), text, note, personId, name, status waiting\|used\|declined, reply, reviewedBy, reviewedAt } |
-| `messages` | a message to a group: { kind care\|group\|staff\|partners, groupId, audience (its name), title, body, fromId, fromName, to: [personIds worked out when sent], readBy: [personIds] } – see Messages below |
-| `msgGroups` | message groups (e.g. Worship team leaders): { name, memberIds, leaderIds } – Administrators and Pastors manage them |
+| `messages` | a message to a group or chosen people: { kind care\|group\|staff\|partners\|people, groupId, audience (its name, or the one chosen person's), some (only some of a group), title, body, fromId, fromName, to: [personIds worked out when sent], readBy: [personIds] } – see Messages below |
+| `msgGroups` | message groups (e.g. Worship team leaders): { name, memberIds, leaderIds, names } – Administrators and Pastors manage them |
 | `words` | approved wording, one document per language (`words/zu` = { words: { English: wording }, updatedAt, by }), used before the built-in translations |
 
 ### Roles (enforced in the screens and by the database security rules, `firestore.rules`)
@@ -391,9 +391,11 @@ Later: direct import through the Elvanto API (server side, with the church's API
   saved until the Administrator or Pastor ticks and confirms.
 
 ## Messages (Messages page; `js/messages.js`, `js/mod-messages.js`)
-- Audiences (`Msg.audiences`, tested): Administrators and Pastors – **Staff** (people with staff details), **Church Partners**
+- Audiences (`Msg.audiences`, tested): Administrators and Pastors – **Chosen people** (ticked one by one on a checklist of
+  adults still in the church; "Send a message" on a person's page opens it with them ticked, `#/messages/send/people/<id>`), **Staff** (people with staff details), **Church Partners**
   (active adults), every care group and every message group; carers – their own care group; message-group leaders – their
-  own group. Members only read. The people a message goes to (`to`) are worked out when it is sent, so someone added to a
+  own group. Members only read. Writing to a group, "Only some of them" shows its people ticked; unticking narrows `to`
+  (`some: true`) – the rules already only let carers and leaders reach people in their own group. The people a message goes to (`to`) are worked out when it is sent, so someone added to a
   group later doesn't see older messages, and the rules can check each reader.
 - Loading (`plan()` in `js/store.js`): Administrators and Pastors load all `messages` and `msgGroups`; everyone else the
   messages where `to` contains them, the ones they sent (`fromId`), and the message groups they are in.

@@ -2098,6 +2098,11 @@ I18n.add('sn', {
     "Message group added": "Boka remashoko rawedzerwa",
     "Message group deleted": "Boka remashoko radzimwa",
     "Not a leader": "Haasi mutungamiri",
-    "Make leader": "Ita mutungamiri"
+    "Make leader": "Ita mutungamiri",
+    "Chosen people": "Vanhu vakasarudzwa",
+    "Only some of them": "Vamwe vavo chete",
+    "Tick who should get it.": "Maka kuti ndiani anofanira kuriwana.",
+    "Tick all": "Maka vese",
+    "Untick all": "Bvisa zvese zvakamakwa"
   }
 });

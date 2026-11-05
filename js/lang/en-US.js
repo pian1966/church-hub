@@ -2098,6 +2098,11 @@ I18n.add('en-US', {
     "Message group added": "Message group added",
     "Message group deleted": "Message group deleted",
     "Not a leader": "Not a leader",
-    "Make leader": "Make leader"
+    "Make leader": "Make leader",
+    "Chosen people": "Chosen people",
+    "Only some of them": "Only some of them",
+    "Tick who should get it.": "Tick who should get it.",
+    "Tick all": "Tick all",
+    "Untick all": "Untick all"
 }
 });

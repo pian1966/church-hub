@@ -2098,6 +2098,11 @@ I18n.add('ve', {
     "Message group added": "Tshigwada tsha milaedza tsho engedzwa",
     "Message group deleted": "Tshigwada tsha milaedza tsho phumulwa",
     "Not a leader": "A si murangaphanḓa",
-    "Make leader": "Ita murangaphanḓa"
+    "Make leader": "Ita murangaphanḓa",
+    "Chosen people": "Vhathu vho nangwaho",
+    "Only some of them": "Vhaṅwe vhavho fhedzi",
+    "Tick who should get it.": "Swayani uri ndi nnyi ane a fanela u u wana.",
+    "Tick all": "Swayani vhoṱhe",
+    "Untick all": "Bvisani maswao oṱhe"
   }
 });

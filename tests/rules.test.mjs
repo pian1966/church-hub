@@ -426,6 +426,10 @@ await t('messages: who may send to whom', async () => {
   await cannot(db.member.doc('messages/n11').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], extra: 1 })));
   await cannot(db.member.doc('messages/n12').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], body: '' })));
   await cannot(db.admin.doc('messages/n13').set(m({ kind: 'staff', fromId: 'p01', to: ['p02'], body: 'x'.repeat(4001) })));
+  await can(db.pastor.doc('messages/n14').set(m({ kind: 'people', fromId: 'p02', to: ['p15'], audience: 'Clare' })));          // one person, chosen
+  await cannot(db.member.doc('messages/n15').set(m({ kind: 'people', fromId: 'p14', to: ['p15'] })));                         // members can't choose people
+  await can(db.member.doc('messages/n16').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p15'], some: true })));   // a carer: some of the group
+  await cannot(db.member.doc('messages/n17').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p15'], some: 'yes' })));
 });
 await t('messages: people mark what they opened as read, and change nothing else', async () => {
   await can(db.member.doc('messages/ms1').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p14') }));

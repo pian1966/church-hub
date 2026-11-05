@@ -49,5 +49,10 @@ I18n.rows([    ['{n} new', '{n} nuut', '{n} ezintsha', '{n} ezintsha'],
     ['Message group added', 'Boodskapgroep bygevoeg', 'Iqembu lemilayezo lengeziwe', 'Iqela lemiyalezo longeziwe'],
     ['Message group deleted', 'Boodskapgroep uitgevee', 'Iqembu lemilayezo lisusiwe', 'Iqela lemiyalezo licinyiwe'],
     ['Not a leader', 'Nie ’n leier nie', 'Akusiye umholi', 'Ayingonkokeli'],
-    ['Make leader', 'Maak leier', 'Yenza umholi', 'Yenza inkokeli']
+    ['Make leader', 'Maak leier', 'Yenza umholi', 'Yenza inkokeli'],
+    ['Chosen people', 'Gekose mense', 'Abantu abakhethiwe', 'Abantu abakhethiweyo'],
+    ['Only some of them', 'Net sommige van hulle', 'Abanye babo kuphela', 'Abanye babo kuphela'],
+    ['Tick who should get it.', 'Merk wie dit moet kry.', 'Khetha ukuthi ubani okufanele awuthole.', 'Phawula ukuba ngubani ofanele awufumane.'],
+    ['Tick all', 'Merk almal', 'Khetha bonke', 'Phawula bonke'],
+    ['Untick all', 'Ontmerk almal', 'Susa konke ukukhetha', 'Susa zonke iimpawu']
 ]);

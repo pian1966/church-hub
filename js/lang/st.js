@@ -2098,6 +2098,11 @@ I18n.add('st', {
     "Message group added": "Sehlopha sa melaetsa se eketsitswe",
     "Message group deleted": "Sehlopha sa melaetsa se hlakotswe",
     "Not a leader": "Hase moetapele",
-    "Make leader": "Etsa moetapele"
+    "Make leader": "Etsa moetapele",
+    "Chosen people": "Batho ba kgethilweng",
+    "Only some of them": "Ba bang ba bona feela",
+    "Tick who should get it.": "Tshwaya hore ke mang ya lokelang ho o fumana.",
+    "Tick all": "Tshwaya bohle",
+    "Untick all": "Tlosa matshwao ohle"
   }
 });

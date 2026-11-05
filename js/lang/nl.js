@@ -2098,6 +2098,11 @@ I18n.add('nl', {
     "Message group added": "Berichtengroep toegevoegd",
     "Message group deleted": "Berichtengroep verwijderd",
     "Not a leader": "Geen leider",
-    "Make leader": "Leider maken"
+    "Make leader": "Leider maken",
+    "Chosen people": "Gekozen mensen",
+    "Only some of them": "Alleen sommigen van hen",
+    "Tick who should get it.": "Vink aan wie het moet krijgen.",
+    "Tick all": "Alles aanvinken",
+    "Untick all": "Alles uitvinken"
   }
 });

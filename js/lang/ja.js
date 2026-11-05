@@ -386,6 +386,7 @@ I18n.add('ja', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub は、教会の人々、名簿、ケアグループ、スタッフ管理を 1 か所にまとめます。",
     "What’s new": "新機能",
     "Opens on GitHub": "GitHub で開きます",
+    "Open in Google Maps": "Google マップで開く",
     "Source code": "ソースコード",
     "Version {v}": "バージョン{v}",
     "Church directory": "教会名簿",

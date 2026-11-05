@@ -108,7 +108,7 @@
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
-      (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + '</dd>' :
+      (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + ' ' + H.mapLink(addressLines(p).join(', ')) + '</dd>' :
         !full && P.contactHtml(p, 'address') ? '<dt>' + T('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : '') +
       (!child && (canSeeAll() || me) ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +

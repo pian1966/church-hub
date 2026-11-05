@@ -395,6 +395,7 @@ I18n.add('sw', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub huhifadhi watu wa kanisa, ratiba za huduma, vikundi vya malezi na usimamizi wa wafanyakazi mahali pamoja.",
     "What’s new": "Mapya",
     "Opens on GitHub": "Hufunguka kwenye GitHub",
+    "Open in Google Maps": "Fungua kwenye Google Maps",
     "Source code": "Msimbo chanzo",
     "Version {v}": "Toleo {v}",
     "Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.": "Kila mtu anaona majina ya watu waliokubali kushiriki taarifa zao za mawasiliano. Weka alama kile ambacho kila jukumu linaweza kuona zaidi. Wasimamizi na Wachungaji huona kila kitu daima.",

@@ -187,3 +187,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 5 Nov 2026 (0.10.2): “Help improve the … wording on this page” now sits at the very bottom of each page, smaller and in a lighter grey.
 - ✅ 5 Nov 2026 (0.10.3): “Help improve the … wording” is now a small footnote at the bottom right of each page.
 - ✅ 5 Nov 2026 (0.10.4): details lists (Me, a person's page…) – the labels column is only as wide as its longest label in the language being used (at most 45%), so long email addresses get more room.
+- ✅ 5 Nov 2026 (0.11.0): a map pin beside home addresses (a person's page, the People list details, care group cards on Me) opens the address in Google Maps. Not shown to Church Partners where addresses are drawn as pictures. All languages.

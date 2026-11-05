@@ -390,6 +390,7 @@ I18n.rows([
     ['Church Hub keeps the church’s people, rosters, care groups and staff management in one place.', 'Church Hub hou die kerk se mense, roosters, sorggroepe en personeelbestuur op een plek.', 'I-Church Hub igcina abantu besonto, uhlelo lokusebenza, amaqembu okunakekela nokuphathwa kwabasebenzi endaweni eyodwa.', 'I-Church Hub igcina abantu becawe, uludwe lomsebenzi, amaqela okhathalelo nolawulo lwabasebenzi kwindawo enye.'],
     ['What’s new', 'Wat is nuut', 'Okusha', 'Okutsha'],
     ['Opens on GitHub', 'Maak op GitHub oop', 'Ivula ku-GitHub', 'Ivula kwi-GitHub'],
+    ['Open in Google Maps', 'Maak oop in Google Maps', 'Vula ku-Google Maps', 'Vula kwi-Google Maps'],
     ['Source code', 'Bronkode', 'Ikhodi yomthombo', 'Ikhowudi yomthombo'],
     ['Version {v}', 'Weergawe {v}', 'Inguqulo {v}', 'Uguqulelo {v}']
 ]);

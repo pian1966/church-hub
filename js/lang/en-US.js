@@ -386,6 +386,7 @@ I18n.add('en-US', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.",
     "What’s new": "What’s new",
     "Opens on GitHub": "Opens on GitHub",
+    "Open in Google Maps": "Open in Google Maps",
     "Source code": "Source code",
     "Version {v}": "Version {v}",
     "Church directory": "Church directory",

@@ -395,6 +395,7 @@ I18n.add('nr', {
     "Church Hub keeps the church’s people, rosters, care groups and staff management in one place.": "I-Church Hub igcina abantu bekereke, iinhlelo zomsebenzi, amaqembu wokunakekela nokuphathwa kwabasebenzi endaweni yinye.",
     "What’s new": "Okutjha",
     "Opens on GitHub": "Ivula ku-GitHub",
+    "Open in Google Maps": "Vula ku-Google Maps",
     "Source code": "Ikhowudi yomthombo",
     "Version {v}": "Ikhambi {v}",
     "Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.": "Woke umuntu ubona amabizo wabantu abavumileko ukwabelana ngemininingwana yabo yokuthintana. Khetha okhunye okungabonwa mtjhuguluko ngamunye. Abaphathi nabaFundisi bahlala babona koke.",

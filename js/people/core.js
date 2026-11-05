@@ -128,7 +128,7 @@ var PeopleParts = { actions: {} };
     var v = sharedValue(p, f); if (!v) return '';
     var open = canSeeAll() || isMe(p) || seeTier() !== 'member';
     if (f === 'spouse') return esc(v);
-    if (f === 'address') return v.split(/,\s*/).map(function (l) { return open ? esc(l) : textPicture(l); }).join('<br>');
+    if (f === 'address') return v.split(/,\s*/).map(function (l) { return open ? esc(l) : textPicture(l); }).join('<br>') + (open ? ' ' + H.mapLink(v) : '');   // no map link for Church Partners: it would give away the address as text
     if (!open) return textPicture(v);
     return f === 'email' ? '<a href="mailto:' + esc(v) + '" target="_blank" rel="noopener">' + esc(v) + '</a>' : '<a href="tel:' + esc(v.replace(/\s/g, '')) + '">' + esc(v) + '</a>';
   }

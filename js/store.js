@@ -161,6 +161,17 @@ var Store = (function () {
     function is() { return Array.prototype.indexOf.call(arguments, role()) >= 0; }
     /** What Pastors can do (from their access-list entry, as the rules see it); Administrators may do everything. */
     function may(x) { var r = role(); return r === 'admin' || (r === 'pastor' && !previewRole && (session.can || []).indexOf(x) >= 0); }
+    /** The stand-in leave approver, between their dates (on their access-list entry, as the rules see it). */
+    function standingIn() { var t = Date.now(); return !previewRole && session.standInFrom <= t && t <= session.standInTo; }
+    /** Midnight at the start of a date, and the last moment of a date, in this computer's time (milliseconds). */
+    function dayMs(ds, end) { var p = String(ds).split('-'); return new Date(+p[0], +p[1] - 1, +p[2], end ? 23 : 0, end ? 59 : 0, end ? 59 : 0).getTime(); }
+    /** A stand-in approver's dates go on their access-list entry, for the rules; empty dates take them off. */
+    function setStandIn(pid, from, to) {
+      var p = get('people', pid), email = p && (p.email || '').trim().toLowerCase(); if (!email) return;
+      var upd = from && to ? { standInFrom: dayMs(from), standInTo: dayMs(to, true) } : { standInFrom: 0, standInTo: 0 };
+      var path = 'roles/' + email; if (local[path]) local[path] = Object.assign({}, local[path], upd);
+      return doc(path).update(upd).catch(function (e) { err(e, 'set the stand-in'); });
+    }
 
     /* ---------- loading the Firebase library ---------- */
     function loadSdk(done) {
@@ -256,7 +267,7 @@ var Store = (function () {
       doc('roles/' + email).get().then(function (snap) {
         if (!snap.exists) return onState({ stage: 'noAccess', email: email });
         var r = snap.data();
-        session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [], can: r.can || [] };
+        session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [], can: r.can || [], standInFrom: r.standInFrom || 0, standInTo: r.standInTo || 0 };
         if (!session.personId) {
           if (r.role !== 'admin') return onState({ stage: 'noAccess', email: email, reason: 'noPerson' });
           // An Administrator added by hand: set up the church only if nobody has yet, otherwise just their own record.
@@ -323,6 +334,7 @@ var Store = (function () {
       if (may('privacy')) { ['dsr', 'breaches'].forEach(function (c) { add(c, coll(c)); }); add('audit', coll('audit').orderBy('ts', 'desc').limit(1000)); }
       if (may('settings')) add('emailPrompts', coll('emailPrompts'));
       if (may('leave')) { add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', coll('leaveAdjustments')); }
+      else if (standingIn()) { add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', own('leaveAdjustments', 'staffId')); }
       else { add('leaveRequests', own('leaveRequests', 'staffId')); add('leaveAdjustments', own('leaveAdjustments', 'staffId')); }
       return p;
     }
@@ -506,6 +518,8 @@ var Store = (function () {
       if (email && r && (email !== was || r !== wasR || !prev || langs.join() !== wasLangs.join() || canChanged)) {
         var acc = { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }; if (langs.length) acc.langs = langs;   // languages they check (translations)
         if (can.length) acc.can = can;   // what Pastors can do (Settings), checked by the rules
+        var ls = (db.leave && db.leave.settings) || {};
+        if (ls.StandInID === p.id && ls.StandInFrom && ls.StandInTo) { acc.standInFrom = dayMs(ls.StandInFrom); acc.standInTo = dayMs(ls.StandInTo, true); }
         write('roles/' + email, acc);
       }
     }
@@ -564,7 +578,7 @@ var Store = (function () {
         if (r.status === 'Approved') write('away/' + r.id, { personId: r.staffId, from: r.start, to: r.end });
         else if (wasApproved) del('away/' + r.id);
       });
-      if (is('admin')) {
+      if (may('leave')) {   // Administrators, and Pastors with the leave tick
         (lv.adjustments || []).forEach(function (a) { var j = JSON.stringify(a); if (j !== savedLeave.adjustments[a.id]) { savedLeave.adjustments[a.id] = j; write('leaveAdjustments/' + a.id, a); } });
         var conf = leaveConfig(lv);
         if (JSON.stringify(conf) !== savedLeave.config) { savedLeave.config = JSON.stringify(conf); write('leave/config', withAutoApprove(conf)); }
@@ -609,7 +623,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
-      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, syncPastors: syncPastors, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -621,7 +635,9 @@ var Store = (function () {
   function resyncDirectory() { return LIVE ? Live.resyncDirectory() : 0; }
   /** What Pastors can do changed: copy it onto every Pastor's access-list entry (live only; the demo has no rules). */
   function syncPastors() { if (LIVE) Live.syncPastors(); }
-  return { resyncDirectory: resyncDirectory, syncPastors: syncPastors, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
+  /** The stand-in leave approver's dates, for the database rules (live only). */
+  function setStandIn(pid, from, to) { if (LIVE && !previewing()) Live.setStandIn(pid, from, to); }
+  return { resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */

@@ -33,6 +33,8 @@ service cloud.firestore {
     // Abilities: settings, access, people, idnumbers, leave, rosters, privacy, import, words.
     function may(x) { return admin() || (isRole(['pastor']) && x in access().get('can', [])); }
     function rosterer() { return isRole(['admin', 'rosters']) || may('rosters'); }
+    // The stand-in leave approver, between the dates on their access-list entry (Leave > Approvals > Stand-in approver)
+    function standIn() { return anyone() && access().get('standInFrom', 0) <= request.time.toMillis() && request.time.toMillis() <= access().get('standInTo', 0); }
     // The roles a Pastor with "access" may give or take away (never Administrator or Pastor, never abilities)
     function smallRole(r) { return r in ['rosters', 'kids', 'member']; }
     // The Elvanto robot (GitHub Actions) signs in with its own account. Its access-list entry names its account ID (uid),
@@ -48,7 +50,8 @@ service cloud.firestore {
       allow create: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'])
         || (may('access') && smallRole(request.resource.data.role) && request.resource.data.keys().hasOnly(['role', 'personId', 'name']));
       allow update: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'])
-        || (may('access') && smallRole(resource.data.role) && smallRole(request.resource.data.role) && request.resource.data.keys().hasOnly(['role', 'personId', 'name']));
+        || (may('access') && smallRole(resource.data.role) && smallRole(request.resource.data.role) && request.resource.data.keys().hasOnly(['role', 'personId', 'name']))
+        || (may('leave') && onlyChanges(['standInFrom', 'standInTo']) && request.resource.data.standInFrom is int && request.resource.data.standInTo is int);
       allow delete: if admin() || (may('access') && smallRole(resource.data.role));
     }
 
@@ -223,7 +226,7 @@ service cloud.firestore {
     match /away/{id} {
       allow read: if anyone();
       allow create, update: if may('leave')
-        || (mine(request.resource.data.personId) && request.resource.data.keys().hasOnly(['personId', 'from', 'to']));
+        || ((mine(request.resource.data.personId) || standIn()) && request.resource.data.keys().hasOnly(['personId', 'from', 'to']));
       allow delete: if may('leave') || mine(resource.data.personId);
     }
 
@@ -234,14 +237,16 @@ service cloud.firestore {
     }
     // Staff see and request their own leave; only Administrators approve.
     match /leaveRequests/{id} {
-      allow read: if may('leave') || mine(resource.data.staffId);
+      allow read: if may('leave') || standIn() || mine(resource.data.staffId);
       allow create: if may('leave') || (mine(request.resource.data.staffId) && (
         request.resource.data.status == 'Pending'
         || (request.resource.data.status == 'Approved'
             && request.resource.data.type in get(/databases/$(database)/documents/leave/config).data.autoApprove)));
       allow update: if may('leave')
         || (mine(resource.data.staffId) && request.resource.data.status == 'Cancelled'
-            && onlyChanges(['status', 'cancelledBy']));
+            && onlyChanges(['status', 'cancelledBy']))
+        || (standIn() && resource.data.staffId != me() && resource.data.status == 'Pending'
+            && request.resource.data.status in ['Approved', 'Declined'] && onlyChanges(['status', 'decidedBy', 'decidedOn']));
       allow delete: if may('leave');
     }
     match /leaveAdjustments/{id} {
@@ -255,10 +260,10 @@ service cloud.firestore {
     match /elvantoSync/{id} {
       allow read: if may('import') || robot() || mine(resource.data.personId);
       allow create: if may('import')
-        || (mine(request.resource.data.personId) && request.resource.data.status == 'Waiting'
+        || ((mine(request.resource.data.personId) || standIn()) && request.resource.data.status == 'Waiting'
             && request.resource.data.keys().hasOnly(['personId', 'name', 'start', 'end', 'want', 'have', 'haveNote', 'status', 'note', 'createdAt', 'updatedAt']));
       allow update: if may('import')
-        || (mine(resource.data.personId) && request.resource.data.personId == resource.data.personId && request.resource.data.status == 'Waiting'
+        || ((mine(resource.data.personId) || standIn()) && request.resource.data.personId == resource.data.personId && request.resource.data.status == 'Waiting'
             && onlyChanges(['name', 'start', 'end', 'want', 'status', 'note', 'updatedAt']))
         || (robot() && onlyChanges(['status', 'note', 'have', 'haveNote', 'doneAt']));
       allow delete: if may('import');

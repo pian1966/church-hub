@@ -60,6 +60,7 @@
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? esc(p.mobile) : none(p.mobileUnknown)) + '</dd>' : '') +
       '</dl><div class="btns" style="margin-top:12px"><button class="btn primary" data-act="people:edit" data-id="' + esc(p.id) + '">' + T('Change my details') + '</button></div>' +
       (Store.isLive() ? '<p class="hint">' + T('You sign in with your email address, so if you change it, sign in with the new one next time.') + '</p>' : '') + '</section>';
+    if (window.LeaveUI) html += LeaveUI.meCard();   // staff: what they have left this leave year
     // Kept by the church office: shown so people can check them, changed by the office
     var office = '';
     if (p.birthDate) office += '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>';

@@ -110,5 +110,26 @@ console.log('Fixing a duplicate');
   ok(!D.find([{ id: 'a', firstName: 'Ann', lastName: 'Lee', mobile: '0821112222' }, { id: 'b', firstName: 'Ann', lastName: 'Lee', mobile: '0821112222', mergedInto: 'a' }]).length, 'a retired (merged) record is never suggested again');
 }
 
+console.log('Partly typed contact details and addresses (live)');
+{
+  const ppl = [
+    { id: 'a', firstName: 'Thandi', lastName: 'Mokoena', email: 'thandi.mokoena@gmail.com', mobile: '082 555 1234', address: { street: '12 Main Road' }, familyId: 'f1' },
+    { id: 'b', firstName: 'Sipho', lastName: 'Mokoena', mobile: '+27 83 000 1111', address: { street: '12 Main Road' }, familyId: 'f1' },
+    { id: 'c', firstName: 'Ann', lastName: 'Lee', email: 'ann.lee@example.com', mobile: '+44 7700 900123', address: { street: '5 Oak St' }, familyId: 'f2' }];
+  const L = p => D.live(Object.assign({ firstName: '', lastName: '' }, p), ppl, [], 3, { dial: '27' });
+  ok(L({ mobile: '082 555 1' }).mobileLike.join() === 'a', 'seven digits of a mobile already point to who has a number starting that way');
+  ok(L({ mobile: '+27 82 555 1' }).mobileLike.join() === 'a' && L({ mobile: '0027 82 555 1' }).mobileLike.join() === 'a', '“+27 82…” and “0027 82…” are read as “082…”');
+  ok(!L({ mobile: '082 555' }).mobileLike.length, 'six digits are not enough yet');
+  ok(L({ mobile: '082 555 1234' }).mobile.join() === 'a' && !L({ mobile: '082 555 1234' }).mobileLike.length, 'the whole number is “already used”, not “starts like”');
+  ok(!L({ mobile: '+44 7700 9' }).mobileLike.length && L({ mobile: '+44 7700 900123' }).mobile.join() === 'c', 'a number from abroad is only matched once it is complete');
+  ok(L({ email: 'thandi' }).emailLike.join() === 'a' && L({ email: 'ann.l@' }).emailLike.length === 0 && L({ email: 'ann.lee@ex' }).emailLike.join() === 'c', 'an email is hinted at from 6 characters, or once the part before the @ is typed');
+  ok(!L({ email: 'than' }).emailLike.length && !L({ email: 'a@' }).emailLike.length, 'too little of an email says nothing');
+  ok(L({ email: 'Thandi.Mokoena@gmail.com' }).email.join() === 'a' && !L({ email: 'Thandi.Mokoena@gmail.com' }).emailLike.length, 'the whole email is “already used”, not “starts like”');
+  ok(L({ address: { street: '12 Mai' } }).addressLike.join() === 'a,b', 'a house number and three letters find addresses starting that way');
+  ok(L({ address: { street: '12 Main Rd' } }).address.join() === 'a,b' && L({ address: { street: '5 Oak Street' } }).address.join() === 'c', 'Rd and Road, St and Street are the same address');
+  ok(!L({ address: { street: '12 Main Rd' }, familyId: 'f1' }).address.length, 'people in the household chosen for this person are left out');
+  ok(!L({ address: { street: 'Main Road' } }).addressLike.length && !L({ address: { street: '12 Ma' } }).addressLike.length, 'without a house number, or with only two letters, nothing is said');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll duplicate tests passed');
 process.exit(fails ? 1 : 0);

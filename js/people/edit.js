@@ -51,33 +51,40 @@
   /** Live warning in the Add / Edit window: who this may already be. Blocks saving for very likely duplicates. */
   function typedPerson() {
     var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, un = function (v) { return /^(unknown|not known)$/i.test(v) || v.toLowerCase() === T('unknown').toLowerCase() ? '' : v; };
-    var fr = document.getElementById('pf-frole');
+    var fr = document.getElementById('pf-frole'), fam = g('pf-fam');
     return { id: g('pf-id'), firstName: g('pf-first'), lastName: g('pf-last'), preferredName: g('pf-pref'), email: un(g('pf-email')), mobile: un(g('pf-mobile')),
-      birthDate: g('pf-birth'), familyRole: fr ? fr.value : '' };
+      birthDate: g('pf-birth'), familyRole: fr ? fr.value : '', familyId: fam === '__new' ? '' : fam, address: { street: g('pf-street') } };
   }
   function dupMatches() { if (!canSeeAll()) return []; var t = typedPerson(); if (!t.firstName || !t.lastName) return []; var ex = t.id ? S.get('people', t.id) : null; if (ex && ex.elvantoId) t.elvantoId = ex.elvantoId; return DUP.matches(t, dupPeople(), notDup()); }
   /** The live check, as each letter is typed (Duplicates.live): similar names from two letters of each name, and an email or
    *  mobile already on someone else's record – shown right under that box. Only for those who may see everyone (not members). */
   function dupLive() {
-    if (!canSeeAll()) return { people: [], email: [], mobile: [] };
+    if (!canSeeAll()) return { people: [], email: [], mobile: [], emailLike: [], mobileLike: [], address: [], addressLike: [] };
     var t = typedPerson(), ex = t.id ? S.get('people', t.id) : null; if (ex && ex.elvantoId) t.elvantoId = ex.elvantoId;
-    return DUP.live(t, dupPeople(), notDup(), P.dupSens());
+    return DUP.live(t, dupPeople(), notDup(), P.dupSens(), { dial: Countries.church(S.settings()).dial });
   }
   function personLinks(ids) {
     return ids.slice(0, 3).map(function (id) { var q = S.get('people', id); return q ? '<a href="#/people/p/' + q.id + '" data-act="hub:close">' + esc(H.name(q)) + '</a>' : ''; }).filter(Boolean).join(', ') + (ids.length > 3 ? ' …' : '');
   }
-  /** Under the email or mobile box: who else has it already (only when it was typed or changed here, not someone's own saved one). */
-  function contactHint(field, ids, norm) {
+  /** Under the email, mobile or street address box: who else has it already, or one starting like what is typed so far
+   *  (only when it was typed or changed here, not someone's own saved one). */
+  var HINTS = {
+    'pf-email': [TX('This email address is already used by {names}.'), TX('An email address starting like this is already used by {names}.')],
+    'pf-mobile': [TX('This mobile number is already used by {names}.'), TX('A mobile number starting like this is already used by {names}.')],
+    'pf-street': [TX('This address is already used by {names}.'), TX('An address starting like this is already used by {names}.')]
+  };
+  function contactHint(field, same, like, norm) {
     var hint = document.getElementById(field + '-dup'), inp = document.getElementById(field); if (!hint || !inp) return;
-    var changed = norm(inp.value) !== norm(inp.dataset.was || '');
+    var changed = norm(inp.value) !== norm(inp.dataset.was || ''), ids = same.length ? same : like;
     hint.hidden = !(ids.length && changed);
-    hint.innerHTML = hint.hidden ? '' : (field === 'pf-email' ? T('This email address is already used by {names}.', { names: personLinks(ids) }) : T('This mobile number is already used by {names}.', { names: personLinks(ids) })) +
-      ' ' + T('Families often share one – check this isn’t the same person.');
+    hint.innerHTML = hint.hidden ? '' : T(HINTS[field][same.length ? 0 : 1], { names: personLinks(ids) }) + ' ' + T('Families often share one – check this isn’t the same person.');
   }
   function dupWarn() {
     var box = document.getElementById('pf-dup'); if (!box) return;
     var live = dupLive();
-    contactHint('pf-email', live.email, DUP.email); contactHint('pf-mobile', live.mobile, DUP.phone);
+    var low = function (v) { return String(v || '').trim().toLowerCase(); };
+    contactHint('pf-email', live.email, live.emailLike, low); contactHint('pf-mobile', live.mobile, live.mobileLike, function (v) { return String(v || '').replace(/\D/g, ''); });
+    contactHint('pf-street', live.address, live.addressLike, DUP.street);
     var ms = live.people.slice(0, 3), stop = ms.some(function (m) { return m.score >= 70; }), similar = ms.every(function (m) { return m.level === 'similar'; });
     box.hidden = !ms.length;
     if (!ms.length) { box.innerHTML = ''; return; }
@@ -117,7 +124,7 @@
         (!isNew && canRecordDeath() && (deceased(p) || p.category === 'Deceased') ? '<div class="two"><label class="field req">' + T('Date of death') + '<input type="date" id="pf-died" max="' + H.today() + '" value="' + esc(p.deceasedAt || '') + '"></label>' +
           '<label class="field">' + T('Funeral or memorial') + '<input type="date" id="pf-funeral" value="' + esc(keyDate(p, /^funeral$/i)) + '"></label></div>' : '') +
         '<fieldset class="panel" style="padding:10px 12px;margin:6px 0 14px"><legend class="field-l" style="padding:0 4px">' + T('Home address') + '</legend>' +
-          '<label class="field">' + T('Street address') + '<input id="pf-street" value="' + esc((p.address || {}).street || '') + '" autocomplete="address-line1"></label>' +
+          '<label class="field">' + T('Street address') + '<input id="pf-street" value="' + esc((p.address || {}).street || '') + '" data-was="' + esc((p.address || {}).street || '') + '" autocomplete="address-line1"><small id="pf-street-dup" class="dup-hint" role="status" aria-live="polite" hidden></small></label>' +
           '<label class="field">' + T('Address line 2') + '<input id="pf-street2" value="' + esc((p.address || {}).street2 || '') + '" autocomplete="address-line2"></label>' +
           '<div class="two"><label class="field">' + T('Town or city') + '<input id="pf-city" value="' + esc((p.address || {}).city || '') + '" autocomplete="address-level2"></label>' +
           (function (a) {
@@ -138,7 +145,7 @@
       H.markRequired();
     }
     var dupT = null;
-    ['pf-first', 'pf-last', 'pf-pref', 'pf-email', 'pf-mobile', 'pf-birth', 'pf-frole'].forEach(function (id) {
+    ['pf-first', 'pf-last', 'pf-pref', 'pf-email', 'pf-mobile', 'pf-street', 'pf-birth', 'pf-frole', 'pf-fam'].forEach(function (id) {
       var e = document.getElementById(id); if (e) e.addEventListener(e.tagName === 'SELECT' || e.type === 'date' ? 'change' : 'input', function () { clearTimeout(dupT); dupT = setTimeout(dupWarn, 150); });
     });
     if (p.id) dupWarn();

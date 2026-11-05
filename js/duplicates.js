@@ -19,6 +19,9 @@
  * While someone is typed in (live()), the check starts early: two letters of each name are enough (an unfinished name
  * matches the start of a longer one, and a similar surname is shown as "similar"), and an email or mobile number that is
  * already on someone's record is reported on its own, whatever the names – families often share them, so that is a hint, not a block.
+ * Partly typed contact details are hinted at too: a mobile number from 7 digits ("082 555 1" – and "+27 82 555 1" in the church's
+ * own country), an email from 6 characters (or 2 and an "@"), and a street address from a house number and 3 letters ("12 Mai"
+ * finds "12 Main Road"; Rd/Road, St/Street… are the same). People in the household chosen for this person are left out of the address hint.
  */
 var Duplicates = (function () {
   'use strict';
@@ -62,6 +65,34 @@ var Duplicates = (function () {
     if (dom === 'googlemail.com') dom = 'gmail.com';
     if (dom === 'gmail.com') user = user.replace(/\./g, '');
     return user + '@' + dom;
+  }
+  /** A phone number being typed, as dialled at home: "+27 82 555" → "082555" when the church's dialling code is 27. '' if from abroad. */
+  function phoneStart(s, dial) {
+    var raw = String(s || '').trim(), d = raw.replace(/\D/g, ''), intl = raw.charAt(0) === '+' || /^00/.test(d);
+    if (/^00/.test(d)) d = d.slice(2);
+    if (intl) return dial && d.indexOf(dial) === 0 ? '0' + d.slice(dial.length) : '';
+    return d && d.charAt(0) !== '0' ? '0' + d : d;
+  }
+  /** Whether a partly typed mobile (7 digits or more) is the start of a saved one. */
+  function phoneLike(typed, saved, dial) { var t = phoneStart(typed, dial), s = phone(saved); return t.length >= 7 && !!s && s !== t && s.indexOf(t) === 0; }
+  /** Whether a partly typed email (6 characters, or 2 and an "@") is the start of a saved one (not the same one). */
+  function emailLike(typed, saved) {
+    var t = String(typed || '').trim().toLowerCase(), s = String(saved || '').trim().toLowerCase();
+    return (t.indexOf('@') >= 2 || t.length >= 6) && !!s && s !== t && s.indexOf(t) === 0;
+  }
+  var ROAD = { st: 'street', str: 'street', rd: 'road', ave: 'avenue', av: 'avenue', dr: 'drive', cres: 'crescent', cr: 'crescent', ln: 'lane',
+    cl: 'close', pl: 'place', ct: 'court', crt: 'court', blvd: 'boulevard', hwy: 'highway', sq: 'square', tce: 'terrace', ter: 'terrace', ext: 'extension' };
+  /** A street address to compare: small letters, no punctuation, and Rd/St/Ave… written out. */
+  function street(s) {
+    return String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[.,#/'-]/g, ' ').replace(/\s+/g, ' ').trim()
+      .split(' ').map(function (w) { return ROAD[w] || w; }).join(' ');
+  }
+  /** How a typed street address compares with a saved one: 'same', 'starts' (typed so far is its beginning) or ''.
+   *  Needs a house number and 3 letters before it says anything. */
+  function streetLike(typed, saved) {
+    var t = street(typed), s = street(saved);
+    if (!t || !s || !/\d/.test(t) || t.replace(/[^a-z]/g, '').length < 3) return '';
+    return s === t ? 'same' : s.indexOf(t) === 0 ? 'starts' : '';
   }
   function phone(s) {
     var d = String(s || '').replace(/\D/g, '');   // any country: the last 9 digits, after the country code or the leading 0
@@ -249,16 +280,27 @@ var Duplicates = (function () {
    *   people: [{ id, score, level: certain|likely|possible|similar, reasons }], best first – names need two letters each;
    *           "similar" = a name like it (the surname matches, sounds alike or starts the same), shown as a gentle hint
    *   email:  [id] – others whose email is the one typed     mobile: [id] – others whose mobile is the one typed
+   *   emailLike / mobileLike: [id] – others whose email or mobile starts with what has been typed so far (not the same)
+   *   address: [id] – others at the same street address     addressLike: [id] – others whose street address starts like it
+   * opts: { dial: the church's dialling code ('27'), so "+27 82…" is matched as "082…" while it is typed }.
+   * person.familyId: the household chosen for this person – its members are left out of the address hints.
    */
-  function live(person, people, ignore, sens) {
+  function live(person, people, ignore, sens, opts) {
+    var dial = String((opts || {}).dial || ''), st = (person.address || {}).street || '';
     var cs = cut(sens);
     var skip = {}; (ignore || []).forEach(function (k) { skip[k] = 1; });
     var others = (people || []).filter(function (q) { return q && q.id !== person.id && q.firstName !== 'Deleted' && !q.deletedAt && !q.mergedInto; });
     var me = emails(person), mob = phone(person.mobile);
-    var out = { people: [], email: [], mobile: [] };
+    var out = { people: [], email: [], mobile: [], emailLike: [], mobileLike: [], address: [], addressLike: [] };
     others.forEach(function (q) {
-      if (me.length && emails(q).some(function (e) { return me.indexOf(e) >= 0; })) out.email.push(q.id);
-      if (mob && phone(q.mobile) === mob) out.mobile.push(q.id);
+      var sameMail = me.length && emails(q).some(function (e) { return me.indexOf(e) >= 0; }), sameMob = mob && phone(q.mobile) === mob;
+      if (sameMail) out.email.push(q.id);
+      else if (person.email && [q.email].concat(q.otherEmails || []).some(function (e) { return emailLike(person.email, e); })) out.emailLike.push(q.id);
+      if (sameMob) out.mobile.push(q.id);
+      else if (person.mobile && phoneLike(person.mobile, q.mobile, dial)) out.mobileLike.push(q.id);
+      var home = person.familyId && (q.familyId === person.familyId || (q.householdIds || []).indexOf(person.familyId) >= 0);
+      var a = st && !home ? streetLike(st, (q.address || {}).street) : '';
+      if (a === 'same') out.address.push(q.id); else if (a === 'starts') out.addressLike.push(q.id);
     });
     if (plain(person.firstName).length >= 2 && surname(person.lastName).length >= cs.letters) {
       out.people = others.filter(function (q) { return !(person.id && skip[pair(person.id, q.id)]); }).map(function (q) {
@@ -313,7 +355,7 @@ var Duplicates = (function () {
     return out;
   }
 
-  return { compare: compare, find: find, matches: matches, live: live, sound: sound, level: level, SENS: SENS, pair: pair, phone: phone, email: email, plain: plain,
+  return { compare: compare, find: find, matches: matches, live: live, sound: sound, level: level, SENS: SENS, pair: pair, phone: phone, email: email, phoneStart: phoneStart, street: street, streetLike: streetLike, plain: plain,
     mergeFields: mergeFields, ignored: ignored };
 })();
 if (typeof module !== 'undefined') module.exports = Duplicates;

@@ -135,7 +135,7 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', seedDocs());
   await s.go('settings'); check(await s.page.$$eval('.st-see', b => b.length === 12 && b.every(x => !x.checked)), 'Settings → Who can see what: name only for every role by default');
   await s.page.check('.st-see[data-t="member"][value="email"]'); await s.page.check('.st-see[data-t="rosters"][value="email"]'); await s.page.check('.st-see[data-t="rosters"][value="mobile"]');
-  await s.page.click('[data-act="settings:see"]'); await s.settle(); docs = await s.docsNow();
+  await s.page.waitForTimeout(1200); await s.settle(); docs = await s.docsNow();
   const shareWho = Object.keys(docs).filter(k => k.startsWith('directory/') && k !== 'directory/p14').map(k => k.split('/')[1]).filter(id => docs['people/' + id] && docs['people/' + id].email)[0];
   check(JSON.stringify(docs['settings/church'].seeOthers) === JSON.stringify({ member: ['email'], rosters: ['mobile', 'email'], kids: [] }), 'the choices are saved');
   check(docs['directory/' + shareWho].email === docs['people/' + shareWho].email && !docs['directory/' + shareWho].mobile, 'the directory now carries email (only what Church Partners may see)');
@@ -143,7 +143,7 @@ module.exports = async function (ctx) {
   // Terminology: Worship → Music
   await s.go('settings/terminology'); await s.page.selectOption('#wd-music', 'Music');
   check(await s.page.inputValue('.wd-1[data-k="worshipTeam"]') === 'Music team' && await s.page.inputValue('.wd-1[data-k="worshipLeader"]') === 'Music leader', 'Church wording: choosing Music fills in Music, Music team and Music leader');
-  await s.page.click('[data-act="settings:savewords"]'); await s.settle();
+  await s.page.waitForTimeout(1200); await s.settle();
   for (let i = 0; i < 50 && !(((await s.docsNow())['settings/church'].wording || {}).custom || {}).worship; i++) await s.page.waitForTimeout(100);   // saved
   check(JSON.stringify(((await s.docsNow())['settings/church'].wording || {}).custom || {}).includes('Music team'), 'Save wording saves Music');
   await s.go('rosters/teams'); await s.page.waitForFunction(() => !document.querySelector('main').textContent.includes('Worship'), null, { timeout: 5000 }).catch(() => {}); t = await s.text();

@@ -209,7 +209,7 @@
       '<fieldset class="field" style="border:0;padding:0;margin:0"><legend style="margin-bottom:6px">' + T('Who') + '</legend><div style="max-height:240px;overflow:auto;border:1px solid var(--line);border-radius:12px;padding:4px 12px">' +
       people.map(function (p) { return '<label class="check"><input type="checkbox" class="gr-m" value="' + p.id + '"' + (g.memberIds.indexOf(p.id) >= 0 ? ' checked' : '') + '>' + esc(H.name(p)) + (p.familyRole === 'child' ? ' <span class="muted small">' + T('(teen)') + '</span>' : '') + '</label>'; }).join('') + '</div></fieldset>' +
       '<label class="field" style="margin-top:14px">' + T('Note') + '<input id="gr-note" value="' + esc(g.note || '') + '" placeholder="' + T('Why – helps whoever does the roster') + '"></label><p id="gr-err" class="note bad" hidden></p></div>' +
-      '<div class="dlg-foot">' + (!isNew ? '<button class="btn" style="margin-right:auto" data-act="rosters:delgroup" data-id="' + g.id + '">' + T('Delete') + '</button>' : '') + '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="rosters:savegroup">' + T('Save') + '</button></div>', T('Serving together'));
+      '<div class="dlg-foot">' + (!isNew ? '<button class="btn" style="margin-right:auto" data-act="rosters:delgroup" data-id="' + g.id + '">' + T('Delete') + '</button>' : '') + '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="rosters:savegroup">' + T('Save') + '</button></div>', T('Serving together'));
     var famSel = document.getElementById('gr-fam');
     if (famSel) famSel.addEventListener('change', function () {
       var ids = S.find('people', function (p) { return p.familyId === famSel.value; }).map(function (p) { return p.id; });
@@ -342,7 +342,7 @@
           '<p style="margin:4px 0 6px"><b>' + T('Longer stretches') + '</b> <small class="muted">' + T('(e.g. a holiday)') + '</small></p><div id="aw-ranges"></div>' +
           '<button class="btn small" type="button" data-act="rosters:awayrange">' + H.icon(H.ICON.plus, 16) + T('Add a stretch') + '</button>' +
           '<label class="field" style="margin-top:12px">' + T('Reason') + '<input id="aw-r" placeholder="' + T('e.g. holiday') + '"><small>' + T('Only the roster team sees it.') + '</small></label><p id="aw-err" class="note bad" hidden></p></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="rosters:saveaway">' + T('Save') + '</button></div>', T('Away dates'));
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="rosters:saveaway">' + T('Save') + '</button></div>', T('Away dates'));
         if (!days.length) MOD.actions.awayrange();
       },
       awayrange: function () {

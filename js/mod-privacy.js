@@ -37,8 +37,8 @@
     }).join('') + '</div></section>' +
       '<section class="panel"><h2>' + esc(law().officer) + '</h2><dl class="kv"><dt>' + T('Name') + '</dt><dd>' + esc(io.name) + '</dd><dt>' + T('Email') + '</dt><dd>' + esc(io.email) + '</dd><dt>' + T('Phone') + '</dt><dd>' + esc(io.phone) + '</dd><dt>' + T('Deputy') + '</dt><dd>' + esc(io.deputy || '—') + '</dd>' + (law().register ? '<dt>' + T('Registered') + '</dt><dd>' + (io.registered ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag warn">' + T('Not yet') + '</span>') + '</dd>' : '') + '<dt>' + T('Regulator') + '</dt><dd>' + esc(law().regulator) + '</dd></dl>' +
       '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="privacy:io">' + T('Edit') + '</button></div></section>' +
-      '<section class="panel"><h2>' + T('Privacy notice') + '</h2><p class="hint" style="margin-top:0">' + T('Plain words: what the church collects, why, how long, and how to ask for it to be corrected or deleted.') + '</p><label class="field"><span class="sr">' + T('Privacy notice') + '</span><textarea id="pv-notice" rows="7">' + esc(st.privacyNotice) + '</textarea></label><button class="btn small" data-act="privacy:notice">' + T('Save notice') + '</button></section>' +
-      '<section class="panel"><h2>' + T('How long we keep information') + '</h2><label class="field">' + T('Review people who have left or been inactive after') + '<select id="pv-ret">' + [12, 24, 36, 60].map(function (m) { return '<option value="' + m + '"' + (st.retentionMonths === m ? ' selected' : '') + '>' + T('{n} months', { n: m }) + '</option>'; }).join('') + '</select></label><button class="btn small" data-act="privacy:ret">' + T('Save') + '</button><p class="hint">' + T('Staff leave records are kept as employment records.') + '</p></section></div>';
+      '<section class="panel"><h2>' + T('Privacy notice') + '</h2><p class="hint" style="margin-top:0">' + T('Plain words: what the church collects, why, how long, and how to ask for it to be corrected or deleted.') + '</p><label class="field"><span class="sr">' + T('Privacy notice') + '</span><textarea id="pv-notice" rows="7">' + esc(st.privacyNotice) + '</textarea></label><button class="btn small" data-autosave data-act="privacy:notice">' + T('Save notice') + '</button></section>' +
+      '<section class="panel"><h2>' + T('How long we keep information') + '</h2><label class="field">' + T('Review people who have left or been inactive after') + '<select id="pv-ret">' + [12, 24, 36, 60].map(function (m) { return '<option value="' + m + '"' + (st.retentionMonths === m ? ' selected' : '') + '>' + T('{n} months', { n: m }) + '</option>'; }).join('') + '</select></label><button class="btn small" data-autosave data-act="privacy:ret">' + T('Save') + '</button><p class="hint">' + T('Staff leave records are kept as employment records.') + '</p></section></div>';
   }
 
   function renderRequests() {
@@ -111,7 +111,7 @@
         var io = S.settings().informationOfficer;
         H.modal(H.dialogHead(law().officer, T('The person responsible for {law} at the church.', { law: law().short })) + '<div class="dlg-body"><label class="field req">' + T('Name') + '<input id="io-n" value="' + esc(io.name) + '"></label><div class="two"><label class="field req">' + T('Email') + '<input id="io-e" type="email" value="' + esc(io.email) + '"></label><label class="field">' + T('Phone') + '<input id="io-p" value="' + esc(io.phone) + '"></label></div>' +
           '<label class="field">' + T('Deputy') + '<input id="io-d" value="' + esc(io.deputy || '') + '"></label><label class="check"><input type="checkbox" id="io-r"' + (io.registered ? ' checked' : '') + '>' + esc(T('Registered with the {regulator}', { regulator: law().regulator })) + '</label></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="privacy:saveio">' + T('Save') + '</button></div>', law().officer);
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="privacy:saveio">' + T('Save') + '</button></div>', law().officer);
       },
       saveio: function () {
         var v = function (id) { return document.getElementById(id).value.trim(); };
@@ -124,7 +124,7 @@
         var people = S.find('people', function (p) { return p.firstName !== 'Deleted'; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
         H.modal(H.dialogHead(T('Log a request')) + '<div class="dlg-body"><label class="field req">' + T('From') + '<select class="findable" id="rq-p">' + people.map(function (p) { return '<option value="' + p.id + '">' + esc(H.name(p)) + '</option>'; }).join('') + '</select></label>' +
           '<label class="field req">' + T('They asked for') + '<select id="rq-k">' + KINDS.map(function (k) { return '<option value="' + esc(k) + '">' + esc(T(k)) + '</option>'; }).join('') + '</select></label><label class="field req">' + T('Received') + '<input type="date" id="rq-d" value="' + H.today() + '"></label><label class="field">' + T('Notes') + '<input id="rq-n"></label></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="privacy:savereq">' + T('Save') + '</button></div>', T('Log a request'));
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="privacy:savereq">' + T('Save') + '</button></div>', T('Log a request'));
       },
       savereq: function () {
         var d = document.getElementById('rq-d').value || H.today();
@@ -140,7 +140,7 @@
       newbreach: function () {
         H.modal(H.dialogHead(T('Record an incident'), T('What happened to whose information.')) + '<div class="dlg-body"><label class="field req">' + T('Date') + '<input type="date" id="br-d" value="' + H.today() + '"></label><label class="field req">' + T('What happened') + '<textarea id="br-w" rows="3" placeholder="' + esc(T('e.g. A printed roster with phone numbers was left at the coffee shop')) + '"></textarea></label>' +
           '<div class="two"><label class="field">' + T('People affected') + '<input id="br-a" placeholder="' + esc(T('e.g. 14 volunteers')) + '"></label><label class="field">' + T('Regulator told on') + '<input type="date" id="br-r"></label></div><label class="field">' + T('People affected told on') + '<input type="date" id="br-t"></label></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="privacy:savebreach">' + T('Save') + '</button></div>', T('Record an incident'));
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="privacy:savebreach">' + T('Save') + '</button></div>', T('Record an incident'));
       },
       savebreach: function () {
         var v = function (id) { return document.getElementById(id).value.trim(); };

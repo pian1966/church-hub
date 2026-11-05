@@ -154,7 +154,7 @@
   function decideDialog(w) {
     H.modal(H.dialogHead(T('Not this time'), langName(w.lang)) + '<div class="dlg-body"><p>' + esc(plain(w.text)) + '</p>' +
       '<label class="field">' + T('Message for {name}', { name: esc(w.name || '') }) + '<textarea id="w-reply" rows="2" maxlength="300" placeholder="' + esc(T('e.g. thank you – we say it differently at church')) + '"></textarea></label></div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="words:declined" data-id="' + esc(w.id) + '">' + T('Save') + '</button></div>', T('Not this time'));
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="words:declined" data-id="' + esc(w.id) + '">' + T('Save') + '</button></div>', T('Not this time'));
   }
   function decide(w, status, reply, text) {
     var x = JSON.parse(JSON.stringify(w)); x.status = status; x.reviewedBy = H.name(me()); x.reviewedAt = S.now();
@@ -205,7 +205,7 @@
     },
     after: function () {
       var q = document.getElementById('w-q'), l = document.getElementById('w-lang');
-      if (q) q.addEventListener('input', function () { st.q = q.value; st.limit = 40; refreshList(); });
+      if (q) q.addEventListener('input', H.pause(function () { st.q = q.value; st.limit = 40; refreshList(); }, 300));
       if (l) l.addEventListener('change', function () { st.lang = l.value; st.limit = 40; H.render(); });
     },
     /** The texts on the page someone just left (the router keeps them while this page is open). */

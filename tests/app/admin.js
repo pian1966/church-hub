@@ -35,16 +35,16 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="leave:addterm"]');
   const tr = (await s.page.$$('.ls-term')).pop();
   await (await tr.$('.ls-tn')).fill('Term 1 2027'); await (await tr.$('.ls-ts')).fill('2027-01-14'); await (await tr.$('.ls-te')).fill('2027-03-27');
-  await s.page.click('[data-act="leave:saveterms"]'); await s.settle();
+  await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow(); check(docs['leave/config'].terms.some(t => t.name === 'Term 1 2027' && t.end === '2027-03-27'), 'school terms can be added');
   const supportRow = await s.page.$('#ls-levels tbody tr:has-text("Support Staff")');
-  await (await supportRow.$('.ls-ent[data-code="SSL"]')).fill('22'); await s.page.click('[data-act="leave:savelevels"]'); await s.settle();
+  await (await supportRow.$('.ls-ent[data-code="SSL"]')).fill('22'); await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow(); check(docs['leave/config'].levels.find(l => l.level === 'Support Staff').ent.SSL === 22, 'allowances per category can be changed');
   const yy = new Date().getFullYear() + 2; await s.page.click(`[data-act="leave:addsa"][data-y="${yy}"]`); await s.settle();
   await s.page.fill('#ls-hd', yy + '-12-28'); await s.page.fill('#ls-hn', 'Office closed'); await s.page.click('[data-act="leave:addhol"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['leave/config'].holidays.some(h => h.date === yy + '-12-25') && docs['leave/config'].holidays.some(h => h.name === 'Office closed'), 'public holidays for another year and church closures can be added');
-  await s.page.uncheck('.ls-tappr[data-i="7"]'); await s.page.click('[data-act="leave:savetypes"]'); await s.settle();
+  await s.page.uncheck('.ls-tappr[data-i="7"]'); await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow(); check(docs['leave/config'].autoApprove.includes('UL'), 'a kind of leave can be set to not need approval');
   // Record a death: Johan (married to Elsa, on the Door team)
   await s.go('people/p/p23'); await s.page.click('[data-act="people:death"]');

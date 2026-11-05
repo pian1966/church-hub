@@ -37,7 +37,7 @@ module.exports = async function (ctx) {
   await s.page.click('.improve a'); await s.page.waitForTimeout(80);
   const onPage = await s.page.$$eval('#w-list .item small', x => x.map(e => e.textContent));
   check(onPage.length > 3 && onPage.some(x => x.includes('My serving')) && !onPage.some(x => x.includes('Shaded boxes')), '…which lists the texts that were on that page');
-  await s.page.fill('#w-q', 'sign out'); await s.page.waitForTimeout(40);
+  await s.page.fill('#w-q', 'sign out'); await s.page.waitForTimeout(500);
   await s.page.click('#w-list [data-act="words:suggest"]'); await s.page.fill('#w-text', 'Phuma'); await s.page.click('[data-act="words:send"]');
   check((await s.page.textContent('#w-err')).length > 0, 'the same wording as now isn’t sent');
   await s.page.fill('#w-text', 'Phuma {name}'); await s.page.click('[data-act="words:send"]');

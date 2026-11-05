@@ -13,7 +13,7 @@ module.exports = async function (ctx) {
   await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].action === 'Viewed collection restrictions for Ravi Naidoo'), 'viewing a collection restriction is logged');
   await s.go('people/p/p16'); await s.page.click('[data-act="people:link"][data-child="p16"]');
-  await s.page.fill('#modal .find-in', 'elsa van');
+  await s.page.fill('#modal .find-in', 'elsa van'); await s.page.waitForTimeout(400);
   check(await s.page.$$eval('#gl-who option', o => o.filter(x => x.value && !x.value.startsWith('__')).map(x => x.value).join()) === 'p24' && await s.page.inputValue('#gl-who') === 'p24', 'long lists of people narrow as you type part of a name (and pick the match)');
   await s.page.selectOption('#gl-who', 'p24'); await s.page.selectOption('#gl-rel', 'Step-parent');
   check(!(await s.page.isChecked('#gl-consent')) && await s.page.isChecked('#gl-collect'), 'a step-parent can collect but can’t give consent by default');
@@ -34,16 +34,16 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="hub:close"]');
   await s.go('people/p/p16'); await s.page.click('[data-act="people:addhome"][data-id="p16"]'); await s.page.selectOption('#hm-f', 'f3'); await s.page.click('[data-act="people:savehome"]'); await s.settle();
   docs = await s.docsNow(); check(JSON.stringify(docs['people/p16'].householdIds) === '["f3"]', 'a child can be added to another household');
-  await s.go('people'); await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(100); t = await s.text();
+  await s.go('people'); await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(500); t = await s.text();
   check(t.includes('Jacobs, Tim') && t.includes('Jacobs, Clare') && t.includes('Jacobs, Liam'), 'People search finds everyone in a family by the family’s name');
   await s.page.evaluate(() => { Store.get('people', 'p14').preferredName = 'TJ'; });   // Tim Jacobs, known as TJ
-  await s.go('people'); await s.page.fill('#pp-q', 'tim jacobs'); await s.page.waitForTimeout(100); const t1 = await s.text();
-  await s.page.fill('#pp-q', 'tj'); await s.page.waitForTimeout(100); const t2 = await s.text();
+  await s.go('people'); await s.page.fill('#pp-q', 'tim jacobs'); await s.page.waitForTimeout(500); const t1 = await s.text();
+  await s.page.fill('#pp-q', 'tj'); await s.page.waitForTimeout(500); const t2 = await s.text();
   check(t1.includes('Jacobs, TJ (Tim)') && t2.includes('Jacobs, TJ (Tim)'), 'People search finds someone by first name and by what they are known as');
-  await s.page.fill('#pp-q', 'clar jac'); await s.page.waitForTimeout(100); const t3 = await s.text();
-  await s.page.fill('#pp-q', 'jac cla'); await s.page.waitForTimeout(100); const t4 = await s.text();
+  await s.page.fill('#pp-q', 'clar jac'); await s.page.waitForTimeout(500); const t3 = await s.text();
+  await s.page.fill('#pp-q', 'jac cla'); await s.page.waitForTimeout(500); const t4 = await s.text();
   check(t3.includes('Jacobs, Clare') && !t3.includes('Naidoo') && t4.includes('Jacobs, Clare'), 'search by parts of words, in any order (“clar jac”, “jac cla”)');
-  await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(100);
+  await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(500);
   const order = async () => s.page.$$eval('#main .list .item b', (els) => els.map((e) => e.textContent));
   let o = await order();
   check(o.join('|') === 'Jacobs, Clare|Jacobs, Liam|Jacobs, TJ (Tim)', 'People list is sorted by surname by default: ' + o.join('|'));
@@ -51,16 +51,16 @@ module.exports = async function (ctx) {
   check(o.join('|') === 'Clare Jacobs|Liam Jacobs|Tim Jacobs (TJ)', 'switching to First name sorts and shows by first name: ' + o.join('|'));
   await s.page.click('[data-act="people:sort"][data-k="known"]'); o = await order();
   check(o.join('|') === 'Clare Jacobs|Liam Jacobs|TJ Jacobs (Tim)', 'switching to Known as sorts and shows by the name they go by: ' + o.join('|'));
-  await s.go('people'); await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(100);
+  await s.go('people'); await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(500);
   check(await s.page.getAttribute('[data-act="people:sort"][data-k="known"]', 'aria-pressed') === 'true', 'the chosen sort order is remembered');
   await s.page.click('[data-act="people:sort"][data-k="last"]');
-  await s.go('people/families'); await s.page.fill('#fm-q', 'Tim'); await s.page.waitForTimeout(100);
+  await s.go('people/families'); await s.page.fill('#fm-q', 'Tim'); await s.page.waitForTimeout(500);
   check((await s.text()).includes('Jacobs'), 'Households search also finds someone by first name when they have a known-as name');
   await s.page.evaluate(() => { Store.get('people', 'p14').preferredName = ''; });
   await s.go('people');
-  await s.page.fill('#pp-q', 'musa'); await s.page.waitForTimeout(100); t = await s.text();
+  await s.page.fill('#pp-q', 'musa'); await s.page.waitForTimeout(500); t = await s.text();
   check(t.includes('Mokoena, Noah'), 'searching a parent’s name also finds the children who live with them');
-  await s.go('people/families'); await s.page.fill('#fm-q', 'Liam'); await s.page.waitForTimeout(100); t = await s.text();
+  await s.go('people/families'); await s.page.fill('#fm-q', 'Liam'); await s.page.waitForTimeout(500); t = await s.text();
   check(t.includes('Tim & Clare Jacobs') && !t.includes('Naidoo'), 'Households page: search by household or anyone in it');
   await s.go('people'); t = await s.text();
   check(t.includes('Church Partners') && t.includes('Visiting ministers') && !/\bMembers\b/.test(t), 'categories are called Church Partner, Attender, Visiting Minister');
@@ -177,11 +177,12 @@ module.exports = async function (ctx) {
   check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
   check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
   for (let i = 0; i < 3 && (await s.docsNow())['settings/church'].country !== 'KE'; i++) {   // the screen may redraw between choosing and saving
-    await s.settle(); await s.page.selectOption('#st-country', 'KE'); await s.page.click('[data-act="settings:name"]');
+    await s.settle(); await s.page.selectOption('#st-country', 'KE'); await s.page.waitForTimeout(1200);
     await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 3000 }).catch(() => {});
   }
   await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
+  check(await s.page.$$eval('[data-act="settings:name"]', b => b.every(x => !x.offsetParent)) && /Saved/.test(await s.page.textContent('#autosaved').catch(() => '')), 'Settings save as you go: no Save button, a small “Saved” note instead');
   await s.go('privacy'); t = await s.text();
   check(t.includes('Privacy (Data Protection Act)') && t.includes('Office of the Data Protection Commissioner') && !t.includes('POPIA') && !t.includes('Information Regulator'), 'Privacy follows the country’s law (Kenya: Data Protection Act, ODPC)');
   await s.page.evaluate(() => Store.setSettings({ country: 'DE' })); await s.settle(); await s.go('privacy/breaches'); t = await s.text();
@@ -189,12 +190,12 @@ module.exports = async function (ctx) {
   await s.page.evaluate(() => Store.setSettings({ country: 'ZA' })); await s.settle(); await s.go('privacy'); t = await s.text();
   check(t.includes('Privacy (POPIA)') && t.includes('Information Regulator'), 'South Africa: POPIA and the Information Regulator');
   await s.go('settings');
-  await s.page.selectOption('#st-country', 'ZA'); await s.page.click('[data-act="settings:name"]'); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'ZA', null, { timeout: 5000 }).catch(() => {}); await s.settle();
+  await s.page.selectOption('#st-country', 'ZA'); await s.page.waitForTimeout(1200); await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'ZA', null, { timeout: 5000 }).catch(() => {}); await s.settle();
   // Terminology: an Anglican church
   await s.go('settings/terminology');
   await s.page.selectOption('#wd-set', 'anglican');
   check(await s.page.inputValue('.wd-1[data-k="pastor"]') === 'Clergy' && await s.page.inputValue('.wd-1[data-k="partner"]') === 'Parishioner', 'Church wording: choosing Anglican fills in its words');
-  await s.page.fill('.wd-1[data-k="pastor"]', 'Rector'); await s.page.fill('.wd-2[data-k="pastor"]', 'Rectors'); await s.page.click('[data-act="settings:savewords"]');
+  await s.page.fill('.wd-1[data-k="pastor"]', 'Rector'); await s.page.fill('.wd-2[data-k="pastor"]', 'Rectors'); await s.page.waitForTimeout(1200);
   await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'anglican', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].wording.set === 'anglican' && docs['settings/church'].wording.custom.pastor[0] === 'Rector', 'the set and own words are saved');
   await s.go('settings');
@@ -203,7 +204,7 @@ module.exports = async function (ctx) {
   const someP = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].category === 'Church Partner').split('/')[1];
   await s.go('people/p/' + someP); t = await s.text();
   check(t.includes('Parishioner') && !t.includes('Church Partner') && docs['people/' + someP].category === 'Church Partner', 'a Church Partner shows as a Parishioner – the record itself is unchanged');
-  await s.go('settings/terminology'); await s.page.selectOption('#wd-set', 'general'); await s.page.click('[data-act="settings:savewords"]');
+  await s.go('settings/terminology'); await s.page.selectOption('#wd-set', 'general'); await s.page.waitForTimeout(1200);
   await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'general', null, { timeout: 5000 }).catch(() => {}); await s.settle();
   check((await s.text()).includes('Church Partner'), 'back to General, the usual words return');
   await s.go('settings');

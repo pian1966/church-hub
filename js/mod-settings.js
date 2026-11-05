@@ -82,13 +82,13 @@
       '<div class="two"><label class="field">' + T('Kind of church') + '<select id="wd-set">' + Object.keys(Wording.SETS).map(function (k) { return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(Wording.SETS[k].name) + '</option>'; }).join('') + '</select><small>' + T('Choosing one fills in its words below; you can still change any of them.') + '</small></label>' +
       '<label class="field">' + T('Music in services is called') + '<select id="wd-music"><option value="">–</option>' + Object.keys(Wording.MUSIC).map(function (k) {
         return '<option value="' + k + '"' + (Wording.MUSIC[k].worship[0] === words.worship[0] && Wording.MUSIC[k].worshipTeam[0] === words.worshipTeam[0] && Wording.MUSIC[k].worshipLeader[0] === words.worshipLeader[0] ? ' selected' : '') + '>' + esc(k + ' / ' + Wording.MUSIC[k].worshipTeam[0] + ' / ' + Wording.MUSIC[k].worshipLeader[0]) + '</option>';
-      }).join('') + '</select><small>' + T('Fills in the three words below; you can still change each one. Then Save wording.') + '</small></label></div>' +
+      }).join('') + '</select><small>' + T('Fills in the three words below; you can still change each one.') + '</small></label></div>' +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
       Wording.TERMS.map(function (t) {
         return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(T(t[2])) + '</span></td>' +
           '<td><input class="wd-1" data-k="' + t[0] + '" value="' + esc(words[t[0]][0]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][0] })) + '"></td>' +
           '<td><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][1] })) + '"></td></tr>';
-      }).join('') + '</tbody></table></div><button class="btn small" data-act="settings:savewords">' + T('Save wording') + '</button></section>';
+      }).join('') + '</tbody></table></div><button class="btn small" data-autosave data-act="settings:savewords">' + T('Save wording') + '</button></section>';
   }
   /** Email templates for anniversaries, birthdays, death days of spouses, and welcome messages. */
   /** The choice of how to open emails: the email program (church address) or Gmail in the browser. */
@@ -110,7 +110,7 @@
     };
 
     return '<div class="page-head"><div><h1>' + T('Email templates') + '</h1><p class="lead">' + T('Editable email templates for birthdays, anniversaries, late spouse remembrance, and newcomer welcome messages.') + '</p></div></div>' +
-      tabs('emails') +
+      tabs('emails') + '<div data-autoscope>' +
       '<section class="panel"><h2>' + T('Sending email') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Choose how Church Hub opens emails to send.') + '</p>' +
       '<div class="two"><label class="field">' + T('Church email address') + '<input id="em-office" type="email" value="' + esc(st.emailOffice || '') + '"></label>' +
@@ -128,8 +128,8 @@
           '<label class="field req">' + T('Message body') + '<textarea id="em-body-' + k + '" rows="5">' + esc(tmpl.body) + '</textarea></label>' +
           '</section>';
       }).join('') +
-      '<div class="btns" style="margin-top:16px"><button class="btn primary" data-act="settings:saveemails">' + T('Save email templates') + '</button>' +
-      '<button class="btn" data-act="settings:resetemails">' + T('Reset to defaults') + '</button></div>';
+      '<div class="btns" style="margin-top:16px"><button class="btn primary" data-autosave data-act="settings:saveemails">' + T('Save email templates') + '</button>' +
+      '<button class="btn" data-act="settings:resetemails">' + T('Reset to defaults') + '</button></div></div>';
   }
 
   function render(parts) {
@@ -146,7 +146,7 @@
         '<label class="field req">' + T('Country') + '<select id="st-country">' + Countries.grouped().map(function (g) {
           return '<optgroup label="' + esc(g.continent) + '">' + g.countries.map(function (x) { return '<option value="' + x.code + '"' + (x.code === Countries.church(st).code ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</optgroup>';
         }).join('') + '</select><small>' + T('Sets the usual country for addresses (with its provinces, states or counties) and which privacy law the Privacy pages follow.') + '</small></label>' +
-        '<button class="btn small" data-act="settings:name">' + T('Save') + '</button></section>' +
+        '<button class="btn small" data-autosave data-act="settings:name">' + T('Save') + '</button></section>' +
       renderTerminologyCard(st) +
       '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p>' + MODS.map(function (m) {
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
@@ -175,7 +175,7 @@
       }).join('') + '</tbody></table></div>' +
       (P ? '<p class="hint">' + T('People with Basic access see these as pictures: they can read them, but can’t tap or copy them. Care group leaders see more of their own group (Care groups).') + '</p>' : '') +
       '<p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p>' +
-      (P ? '<button class="btn small" data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
+      (P ? '<button class="btn small" data-autosave data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
   }
 
   /** What Pastors can do: an Administrator ticks the Administrator abilities Pastors may have (settings.pastorCan).
@@ -187,7 +187,7 @@
       '<div class="pc-list">' + H.PASTOR_CAN.map(function (a) {
         return '<label class="check"><input type="checkbox" class="st-pc" value="' + a[0] + '"' + (on.indexOf(a[0]) >= 0 ? ' checked' : '') + (admin ? '' : ' disabled') + '><span>' + esc(T(a[1])) + '</span></label>';
       }).join('') + '</div>' +
-      (admin ? '<div class="btns"><button class="btn small" data-act="settings:pastorcan">' + T('Save') + '</button> <button class="btn small ghost" data-act="settings:pastorall">' + T('Tick everything') + '</button></div>' +
+      (admin ? '<div class="btns"><button class="btn small" data-autosave data-act="settings:pastorcan">' + T('Save') + '</button><button class="btn small ghost" data-act="settings:pastorall">' + T('Tick everything') + '</button></div>' +
         '<p class="hint">' + T('Pastors get the change the next time they open Church Hub.') + (Store.isLive() ? ' ' + T('If you have changed the database rules file, publish it again first (FIREBASE-SETUP step 7).') : '') + '</p>'
         : '<p class="hint">' + T('Only an Administrator can change this.') + '</p>') + '</section>';
   }
@@ -361,7 +361,7 @@
         S.setSettings({ pastorCan: names }, 'What Pastors can do: ' + (names.join(', ') || 'nothing extra'));
         S.syncPastors(); H.render(); H.toast(T('Saved'));
       },
-      pastorall: function () { document.querySelectorAll('.st-pc').forEach(function (c) { c.checked = true; }); },
+      pastorall: function () { document.querySelectorAll('.st-pc').forEach(function (c) { c.checked = true; }); var c = document.querySelector('.st-pc'); if (c) c.dispatchEvent(new Event('change', { bubbles: true })); },
       see: function () {
         var see = {}; window.PeopleParts.TIERS.forEach(function (t) { see[t[0]] = []; });
         document.querySelectorAll('.st-see').forEach(function (b) { if (b.checked) see[b.dataset.t].push(b.value); });

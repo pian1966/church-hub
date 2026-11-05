@@ -161,6 +161,14 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 /* A person's name as a chip that opens their page (Care groups) */
 .name-chip { display: inline-flex; align-items: center; max-width: 100%; padding: 3px 11px; border-radius: 999px; background: var(--surface-2); border: 1px solid var(--line); color: var(--ink); font-weight: 600; font-size: 13.5px; text-decoration: none; overflow-wrap: anywhere; }
 .name-chip:hover, .name-chip:focus-visible { border-color: var(--accent); color: var(--accent-ink); }
+/* Saving as you go: the panel's own save button is hidden; a small note says "Saved" */
+[data-autosave] { display: none !important; }
+#autosaved { position: fixed; right: 16px; bottom: 16px; z-index: 70; padding: 6px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; background: #E7F5EC; color: #1F6B3A; border: 1px solid #BFE3CC; opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; pointer-events: none; max-width: calc(100% - 32px); }
+#autosaved.show { opacity: 1; transform: none; } #autosaved.bad { background: #FDECEC; color: #9B1C1C; border-color: #F3C2C2; }
+@media (max-width: 860px) { #autosaved { bottom: 86px; } }
+/* The save buttons that remain (pop-up windows, notes): pale orange */
+.btn.save { background: #FFE9D9; color: #9A3412; border-color: #F7C9A8; }
+.btn.save:hover, .btn.save:focus-visible { background: #FFDCC2; border-color: #EE9E66; }
 .pf-top { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin: -4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-2); }
 .pf-top .btn { gap: 6px; }
 .pp-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: 0 1 auto; }

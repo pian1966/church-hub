@@ -266,7 +266,7 @@
           '<label class="check"><input type="radio" name="rf-mode" value="auto"' + (f.custom ? '' : ' checked') + '><span><b>' + T('Name after the adults') + '</b> <span class="muted">' + T('(recommended, updates itself)') + '</span></span></label>' +
           '<label class="check"><input type="radio" name="rf-mode" value="own"' + (f.custom ? ' checked' : '') + '><span><b>' + T('Use this name') + '</b></span></label>' +
           '<label class="field"><span class="sr">' + T('Household name') + '</span><input id="rf-name" value="' + esc(f.custom ? f.name : '') + '" placeholder="' + esc(T('e.g. The Jacobs household')) + '"></label></div>' +
-          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:saverename" data-id="' + f.id + '">' + T('Save') + '</button></div>', T('Rename household'));
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:saverename" data-id="' + f.id + '">' + T('Save') + '</button></div>', T('Rename household'));
         var inp = document.getElementById('rf-name');
         inp.addEventListener('input', function () { document.querySelector('input[name="rf-mode"][value="own"]').checked = true; });
       },

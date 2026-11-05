@@ -150,7 +150,7 @@
       '<label class="field">' + T('Elvanto web address') + '<input id="el-url" value="' + esc(el.url || '') + '" placeholder="https://yourchurch.elvanto.eu"></label>' +
       '<label class="field">' + T('Robot’s Church Hub sign-in (email)') + '<input id="el-remail" value="' + esc(el.robotEmail || '') + '" placeholder="' + esc(T('e.g. robot@yourchurch.org')) + '"><small>' + T('The account you created for the robot in Firebase (see the setup guide).') + '</small></label>' +
       '<label class="field">' + T('Robot’s account ID (User UID)') + '<input id="el-ruid" placeholder="' + esc(T(el.robotEmail ? 'Saved – type a new one to change it' : 'Copy it from Firebase → Authentication → Users')) + '"></label>' +
-      '<button class="btn small primary" data-act="leave:elsave">' + T('Save') + '</button></section>' +
+      '<button class="btn small save" data-act="leave:elsave">' + T('Save') + '</button></section>' +
       '<section class="panel"><h2>' + T('Robot') + '</h2>' + (rs.lastRun ? '<p style="margin-top:0">' + T('Last ran {when}', { when: '<b>' + esc(utcLocal(rs.lastRun)) + '</b>' }) + (rs.done != null ? ' · ' + T('{n} done', { n: rs.done }) : '') + '.' + '</p>' : '<p class="muted" style="margin-top:0">' + T('The robot hasn’t run yet.') + '</p>') +
       (rs.fatal ? '<p class="note bad">It couldn’t finish: ' + esc(rs.fatal) + '</p>' : '') +
       (el.url ? '<p><a href="' + esc(rs.listUrl || el.url) + '" target="_blank" rel="noopener">' + T('Open Elvanto') + '</a> ' + T('→ People → Volunteers → Unavailable Volunteers') + '</p>' : '') +
@@ -243,12 +243,12 @@
       '<div class="field">' + T('Days the church is open') + '<br>' + dayBoxes('ls-open', st.OpenDays) + '<small>' + T('Used for anyone without their own working days.') + '</small></div>' +
       '<label class="check"><input type="checkbox" id="ls-prorata"' + (/^false$/i.test(String(st.ProRata)) ? '' : ' checked') + '><span>' + T('New staff get a share of the year’s allowance (pro-rata)') + '</span></label>' +
       '<label class="check"><input type="checkbox" id="ls-neg"' + (/^true$/i.test(String(st.AllowNegative)) ? ' checked' : '') + '><span>' + T('Staff may ask for more leave than they have left (Administrators can always approve it)') + '</span></label>' +
-      '<button class="btn small" data-act="leave:savegeneral">' + T('Save') + '</button></section>';
+      '<button class="btn small" data-autosave data-act="leave:savegeneral">' + T('Save') + '</button></section>';
 
     // Terms
     var terms = lv.terms.slice().sort(function (a, b) { return a.start < b.start ? -1 : 1; });
     html += '<section class="panel"><h2>' + T('School terms') + '</h2><p class="hint" style="margin-top:0">' + T('Needed for leave limited per term (e.g. one Weekend Off per term).') + '</p><div id="ls-terms">' +
-      terms.map(termRow).join('') + '</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="leave:addterm">' + H.icon(H.ICON.plus, 16) + T('Add a term') + '</button><button class="btn small primary" data-act="leave:saveterms">' + T('Save terms') + '</button></div></section>';
+      terms.map(termRow).join('') + '</div><div class="btns" style="margin-top:8px"><button class="btn small" data-act="leave:addterm">' + H.icon(H.ICON.plus, 16) + T('Add a term') + '</button><button class="btn small" data-autosave data-act="leave:saveterms">' + T('Save terms') + '</button></div></section>';
 
     // Categories and allowances
     html += '<section class="panel" style="grid-column:1/-1"><h2>' + T('Staff categories and allowances') + '</h2><p class="hint" style="margin-top:0">' + T('Days per leave year for each category. Leave a box empty if that category doesn’t get that kind of leave. The “Administrator” category manages leave but doesn’t take it here.') + '</p>' +
@@ -258,7 +258,7 @@
           ded.map(function (t) { var v = l.ent[t.code]; return '<td class="lt"><input class="ls-ent" data-code="' + t.code + '" type="number" min="0" step="0.5" style="width:64px" value="' + (v == null ? '' : v) + '" aria-label="' + esc(T('{type} for {category}', { type: t.name, category: l.level })) + '"></td>'; }).join('') +
           '<td>' + (staffCount[l.level] ? '' : '<button class="icon-btn ghost" data-act="leave:dellevel" data-i="' + i + '" aria-label="Remove category ' + esc(l.level) + '">' + H.icon(H.ICON.trash, 18) + '</button>') + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
-      '<div class="btns"><button class="btn small" data-act="leave:addlevel">' + H.icon(H.ICON.plus, 16) + T('Add a category') + '</button><button class="btn small primary" data-act="leave:savelevels">' + T('Save categories') + '</button></div></section>';
+      '<div class="btns"><button class="btn small" data-act="leave:addlevel">' + H.icon(H.ICON.plus, 16) + T('Add a category') + '</button><button class="btn small" data-autosave data-act="leave:savelevels">' + T('Save categories') + '</button></div></section>';
 
     html += renderRules(lv);
 
@@ -267,7 +267,7 @@
       return '<div class="item" style="flex-wrap:wrap"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow" style="min-width:160px"><input class="ls-tname" data-i="' + i + '" value="' + esc(t.name) + '" aria-label="' + esc(T('Name')) + '" style="width:100%"><small>' + esc(t.code) + ' · ' + T(t.deducts ? 'uses an allowance' : 'no allowance') + (t.perTerm ? ' · ' + T('{n} per term', { n: t.perTerm }) : '') + '</small></span>' +
         '<label class="check" style="margin:0"><input type="checkbox" class="ls-tappr" data-i="' + i + '"' + (t.needsApproval === false ? '' : ' checked') + '><span>' + T('Needs approval') + '</span></label>' +
         '<label class="check" style="margin:0"><input type="checkbox" class="ls-tuse" data-i="' + i + '"' + (t.active === false ? '' : ' checked') + '><span>' + T('In use') + '</span></label></div>';
-    }).join('') + '</div><div class="btns" style="margin-top:10px"><button class="btn small" data-act="leave:addtype">' + H.icon(H.ICON.plus, 16) + T('Add a kind of leave') + '</button><button class="btn small primary" data-act="leave:savetypes">' + T('Save') + '</button></div></section>';
+    }).join('') + '</div><div class="btns" style="margin-top:10px"><button class="btn small" data-act="leave:addtype">' + H.icon(H.ICON.plus, 16) + T('Add a kind of leave') + '</button><button class="btn small" data-autosave data-act="leave:savetypes">' + T('Save') + '</button></div></section>';
 
     // Public holidays
     var hol = lv.holidays.filter(function (h) { return +h.date.slice(0, 4) >= y; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
@@ -315,7 +315,7 @@
       '<button class="btn small" data-act="leave:addrule" data-preset="christmas">' + H.icon(H.ICON.plus, 16) + T('Christmas') + '</button>' +
       '<button class="btn small" data-act="leave:addrule" data-preset="easter">' + H.icon(H.ICON.plus, 16) + T('Easter') + '</button>' +
       '<button class="btn small" data-act="leave:addrule" data-preset="blank">' + H.icon(H.ICON.plus, 16) + T('Another rule') + '</button>' +
-      '<button class="btn small primary" data-act="leave:saverules">' + T('Save') + '</button></div></section>';
+      '<button class="btn small" data-autosave data-act="leave:saverules">' + T('Save') + '</button></div></section>';
   }
   /** The rules as typed on the page (so adding or removing one keeps what was typed in the others). */
   function typedRules() {
@@ -375,7 +375,7 @@
       } else $('lf-sum').hidden = true;
       $('lf-err').hidden = !errs.length; $('lf-err').innerHTML = errs.map(esc).join('<br>');
       $('lf-go').disabled = !t || !C.isISO(r.start) || errs.length > 0;
-      $('lf-go').textContent = ed ? T('Save change') : admin && st.id !== me.id ? T('Book leave') : T('Send request');
+      $('lf-go').className = 'btn ' + (ed ? 'save' : 'primary'); $('lf-go').textContent = ed ? T('Save change') : admin && st.id !== me.id ? T('Book leave') : T('Send request');
     }
     fillTypes();
     if (ed) { $('lf-type').value = ed.type; $('lf-start').value = ed.start; $('lf-end').value = ed.end; $('lf-note').value = ed.reason || ''; }
@@ -524,7 +524,7 @@
         S.saveLeave('Changed leave settings'); H.render(); H.toast(T('Saved'));
       },
       addterm: function () { var box = document.getElementById('ls-terms'), div = document.createElement('div'); div.innerHTML = termRow({}); box.appendChild(div.firstChild); box.lastChild.querySelector('input').focus(); },
-      delterm: function (el) { el.closest('.ls-term').remove(); },
+      delterm: function (el) { el.closest('.ls-term').remove(); var b = document.querySelector('[data-act="leave:saveterms"]'); if (b) b.click(); },
       saveterms: function () {
         var out = [], bad = '';
         document.querySelectorAll('.ls-term').forEach(function (r) {
@@ -577,7 +577,7 @@
         var lv = S.leave(); lv.rules = document.querySelector('.ls-rule') ? typedRules() : (lv.rules || []);
         lv.rules.push(JSON.parse(JSON.stringify(PRESETS[el.dataset.preset] || PRESETS.blank)));
         H.render(); var rows = document.querySelectorAll('.ls-rule'); if (rows.length) rows[rows.length - 1].scrollIntoView({ block: 'center' });
-        H.toast(T('Added – check it and Save'));
+        if (el.dataset.preset !== 'blank') { S.saveLeave('Added a cover rule: ' + lv.rules[lv.rules.length - 1].name); H.toast(T('Added')); } else H.toast(T('Added – give it a name'));
       },
       delrule: function (el) { var lv = S.leave(); lv.rules = typedRules(); lv.rules.splice(+el.dataset.i, 1); S.saveLeave('Removed a cover rule'); H.render(); H.toast(T('Removed')); },
       saverules: function () {

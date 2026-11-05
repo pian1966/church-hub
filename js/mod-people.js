@@ -111,7 +111,7 @@
     },
     after: function () {
       var fq = document.getElementById('fm-q');
-      if (fq) fq.addEventListener('input', function () { state.fq = fq.value; var pos = fq.selectionStart; H.render(); var n = document.getElementById('fm-q'); n.focus(); n.setSelectionRange(pos, pos); });
+      if (fq) fq.addEventListener('input', H.pause(function () { var f0 = document.getElementById('fm-q'); if (!f0) return; state.fq = f0.value; var pos = f0.selectionStart; H.render(); var n = document.getElementById('fm-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));
       var st = document.getElementById('pp-stats');
       if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
       var res = document.getElementById('adv-result');
@@ -134,7 +134,7 @@
         };
         adv.addEventListener('input', function (ev) {
           var t = ev.target; if (t.tagName === 'SELECT') return;
-          if (t.classList.contains('adv-ff')) fieldFilter(t); else advSync(t);
+          if (t.classList.contains('adv-ff')) fieldFilter(t); else advSync(t);   // only remembers what is typed (quick): the search runs on Enter or Search
         });
         // The field list: opens with a box to type in; typing narrows it; arrows and Enter pick; Esc or a click elsewhere closes
         adv.addEventListener('click', function (ev) {
@@ -167,7 +167,7 @@
         }).catch(function () { H.toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.')); });
       });
       var q = document.getElementById('pp-q');
-      if (q) q.addEventListener('input', function () { state.q = q.value; var pos = q.selectionStart; H.render(); var n = document.getElementById('pp-q'); n.focus(); n.setSelectionRange(pos, pos); });
+      if (q) q.addEventListener('input', H.pause(function () { var n0 = document.getElementById('pp-q'); if (!n0) return; state.q = n0.value; var pos = n0.selectionStart; H.render(); var n = document.getElementById('pp-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));
     },
     actions: P.actions
   });

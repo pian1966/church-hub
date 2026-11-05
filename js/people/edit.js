@@ -142,7 +142,7 @@
       (roleChoices(p).length ? '<label class="field">' + T('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' +
-      '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:save">' + T(isNew ? 'Add person' : 'Save') + '</button></div>';
+      '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:save">' + T(isNew ? 'Add person' : 'Save') + '</button></div>';
     H.modal(html, T(isNew ? 'Add a person' : 'Edit details'));
     if (!isNew && (deceased(p) || p.category === 'Deceased')) {   // someone who has died: only first and last name must be filled in
       document.querySelectorAll('#pf .field.req').forEach(function (f) { if (!f.querySelector('#pf-first, #pf-last, #pf-died')) f.classList.remove('req'); });
@@ -150,7 +150,7 @@
     }
     var dupT = null;
     ['pf-first', 'pf-last', 'pf-pref', 'pf-email', 'pf-mobile', 'pf-street', 'pf-birth', 'pf-frole', 'pf-fam'].forEach(function (id) {
-      var e = document.getElementById(id); if (e) e.addEventListener(e.tagName === 'SELECT' || e.type === 'date' ? 'change' : 'input', function () { clearTimeout(dupT); dupT = setTimeout(dupWarn, 150); });
+      var e = document.getElementById(id); if (e) e.addEventListener(e.tagName === 'SELECT' || e.type === 'date' ? 'change' : 'input', function () { clearTimeout(dupT); dupT = setTimeout(dupWarn, 400); });
     });
     if (p.id) dupWarn();
     var sb = document.getElementById('pf-staff'), sf = document.getElementById('pf-staff-f');
@@ -235,7 +235,7 @@
       (!me ? '<div class="two" style="margin-top:8px"><label class="field">' + T('How it was given') + '<select id="cf-method">' + ['Paper connect card', 'Online form', 'In person (verbal)', 'Email'].map(function (m) { return '<option value="' + m + '">' + esc(T(m)) + '</option>'; }).join('') + '</select></label>' +
         (child ? '<label class="field req">' + T('Given by (parent or guardian)') + '<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
       '<p class="hint">' + esc(Store.settings().privacyNotice) + '</p></div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:saveconsent" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Consent'));
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:saveconsent" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Consent'));
   }
 
 

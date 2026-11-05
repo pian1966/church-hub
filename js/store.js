@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
@@ -319,7 +319,7 @@ var Store = (function () {
       if (r === 'admin') { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); add('elvantoFound', coll('elvantoFound')); }
       else add('elvantoSync', own('elvantoSync'));
       if (r === 'admin') {
-        ['dsr', 'breaches'].forEach(function (c) { add(c, coll(c)); });
+        ['dsr', 'breaches', 'emailPrompts'].forEach(function (c) { add(c, coll(c)); });
         add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', coll('leaveAdjustments'));
         add('audit', coll('audit').orderBy('ts', 'desc').limit(1000));
       } else {
@@ -398,7 +398,7 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups', 'detailChanges'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups', 'detailChanges', 'emailPrompts'].forEach(function (c) { db[c] = arr(c); });
       db.words = arr('words');
       var ideas = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('wordIdeas') === 0; }));
       db.wordIdeas = Object.keys(ideas).map(function (id) { var o = copy(ideas[id]); o.id = id; return o; });

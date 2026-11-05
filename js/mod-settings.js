@@ -91,10 +91,15 @@
       }).join('') + '</tbody></table></div><button class="btn small" data-act="settings:savewords">' + T('Save wording') + '</button></section>';
   }
   /** Email templates for anniversaries, birthdays, death days of spouses, and welcome messages. */
+  /** The choice of how to open emails: the email program (church address) or Gmail in the browser. */
+  function methodSelect(id, cur, st) {
+    return '<select id="' + id + '"><option value="mail"' + (cur !== 'gmail' ? ' selected' : '') + '>' + esc(T('Your email program ({email})', { email: st.emailOffice || '–' })) + '</option>' +
+      '<option value="gmail"' + (cur === 'gmail' ? ' selected' : '') + '>' + esc(T('Gmail in the browser ({email})', { email: st.emailGmail || '–' })) + '</option></select>';
+  }
   function renderEmailTemplates(st) {
     var E = window.Emails || (typeof require !== 'undefined' ? require('./emails.js') : null);
     var templates = E ? E.getTemplates(st) : {};
-    var curMethod = E ? E.getMethod(st) : 'afrihost';
+    var curMethod = E ? E.getMethod(st) : 'mail';
     var keys = ['birthday', 'anniversary', 'spouseDeath', 'welcomeFirst', 'welcomeThreeWeeks'];
     var hints = {
       birthday: TX('Sent on a member’s birthday. Placeholders: {firstName}, {lastName}, {fullName}, {churchName}, {yearsText}.'),
@@ -108,10 +113,12 @@
       tabs('emails') +
       '<section class="panel"><h2>' + T('Sending email') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Choose how Church Hub opens emails to send.') + '</p>' +
-      '<div class="two"><label class="field">' + T('Send emails using') + '<select id="em-method">' +
-      '<option value="afrihost"' + (curMethod === 'afrihost' ? ' selected' : '') + '>' + T('Afrihost email ({email})', { email: 'office@christchurchhowick.co.za' }) + '</option>' +
-      '<option value="gmail"' + (curMethod === 'gmail' ? ' selected' : '') + '>' + T('Gmail ({email}) with alias / Reply-To', { email: 'christchurchhowick@gmail.com' }) + '</option>' +
-      '</select><small>' + T('Afrihost opens your email client directly; Gmail opens Gmail in your browser with reply-to set.') + '</small></label></div>' +
+      '<div class="two"><label class="field">' + T('Church email address') + '<input id="em-office" type="email" value="' + esc(st.emailOffice || '') + '"></label>' +
+      '<label class="field">' + T('Church Gmail address') + '<input id="em-gmail" type="email" value="' + esc(st.emailGmail || '') + '"></label></div>' +
+      '<div class="two"><label class="field">' + T('Send emails using') + methodSelect('em-method', curMethod, st) +
+      '<small>' + T('Your email program opens with the message ready. Gmail opens in the browser: be signed in there with the church’s Gmail account.') + '</small></label>' +
+      '<label class="field">' + T('Signed by') + '<input id="em-sign" value="' + esc(st.emailSignOff || '') + '" placeholder="' + esc(st.churchName || '') + '"></label></div>' +
+      '<p class="hint">' + T('Only people who agreed to receive email (consent “Email”) are suggested; a married couple gets one anniversary email together. {signOff} in a message is the “Signed by” name.') + '</p>' +
       '</section>' +
       keys.map(function (k) {
         var tmpl = templates[k] || {};
@@ -171,14 +178,28 @@
       (P ? '<button class="btn small" data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
   }
 
-  var pendingEmailSend = null;
+  /** Today's email suggestions: only people who agreed to email; couples together; late spouses as the People page finds them. */
+  function todaysEmails() {
+    var E = window.Emails, P = window.PeopleParts; if (!E) return [];
+    var today = H.today(), done = {};
+    S.list('emailPrompts').forEach(function (r) { if (r.date === today) done[r.id] = true; });
+    return E.findEvents(S.list('people'), today, done, {
+      canEmail: function (p) { return P ? P.hasConsent(p.id, 'Email') : false; },
+      spouseOf: function (p) { var c = P && P.coupleOf(p.id); return c ? S.get('people', c.a === p.id ? c.b : c.a) : null; },
+      lateSpouse: function (p) { return P ? P.lateSpouse(p) : null; }
+    });
+  }
+  /** Set a prompt aside for today (sent or not sending); yesterday's are cleared away. */
+  function promptDone(evId, why) {
+    var E = window.Emails, today = H.today();
+    if (E) E.stale(S.list('emailPrompts'), today).forEach(function (r) { S.remove('emailPrompts', r.id); });
+    S.put('emailPrompts', { id: evId, date: today, done: why }, why === 'sent' ? 'Opened an email from the day’s prompts' : 'Set aside an email prompt for today');
+  }
 
   function dailyEmailTodos() {
     if (!H.can('*')) return [];
     var E = window.Emails; if (!E) return [];
-    var st = S.settings(), dismissed = st.dismissedEmailPrompts || {};
-    var todayStr = H.today();
-    var events = E.findEvents(S.list('people'), todayStr, dismissed);
+    var events = todaysEmails();
     var labels = {
       birthday: TX('Send birthday email to {name}'),
       anniversary: TX('Send wedding anniversary email to {name}'),
@@ -189,7 +210,7 @@
 
     return events.map(function (ev) {
       return {
-        text: T(labels[ev.type], { name: H.name(ev.person) }),
+        text: T(labels[ev.type], { name: ev.data.fullName || H.name(ev.person) }),
         href: '#/settings/sendemail/' + encodeURIComponent(ev.id),
         tag: 'Email',
         ev: ev
@@ -199,14 +220,8 @@
 
   function showSendDialog(evId) {
     var E = window.Emails; if (!E) return;
-    var st = S.settings(), dismissed = st.dismissedEmailPrompts || {};
-    var events = E.findEvents(S.list('people'), H.today(), dismissed);
-    var ev = events.filter(function (x) { return x.id === evId; })[0];
-    if (!ev) {
-      // Maybe already sent or not found, try without dismissed filter
-      events = E.findEvents(S.list('people'), H.today(), {});
-      ev = events.filter(function (x) { return x.id === evId; })[0];
-    }
+    var st = S.settings();
+    var ev = todaysEmails().filter(function (x) { return x.id === evId; })[0];
     if (!ev) {
       H.toast(T('That email prompt is no longer needed or already sent'));
       H.go('home');
@@ -216,28 +231,18 @@
     var templates = E.getTemplates(st);
     var tmpl = templates[ev.type] || {};
     var data = Object.assign({}, ev.data, {
-      churchName: st.churchName || 'Christ Church Howick'
+      churchName: st.churchName || '', signOff: st.emailSignOff || st.churchName || ''
     });
     var subject = E.interpolate(tmpl.subject, data);
     var body = E.interpolate(tmpl.body, data);
     var curMethod = E.getMethod(st);
 
-    pendingEmailSend = {
-      ev: ev,
-      subject: subject,
-      body: body,
-      method: curMethod
-    };
-
-    var html = H.dialogHead(T('Send email to {name}', { name: H.name(ev.person) })) +
+    var html = H.dialogHead(T('Send email to {name}', { name: ev.data.fullName || H.name(ev.person) })) +
       '<div class="dlg-body">' +
       '<div class="two"><label class="field">' + T('To') + '<input id="em-send-to" value="' + esc(ev.recipientEmail) + '" readonly></label>' +
-      '<label class="field">' + T('Send using') + '<select id="em-send-method">' +
-      '<option value="afrihost"' + (curMethod === 'afrihost' ? ' selected' : '') + '>' + T('Afrihost email ({email})', { email: 'office@christchurchhowick.co.za' }) + '</option>' +
-      '<option value="gmail"' + (curMethod === 'gmail' ? ' selected' : '') + '>' + T('Gmail ({email}) with alias / Reply-To', { email: 'christchurchhowick@gmail.com' }) + '</option>' +
-      '</select></label></div>' +
+      '<label class="field">' + T('Send using') + methodSelect('em-send-method', curMethod, st) + '</label></div>' +
       '<label class="field req">' + T('Subject') + '<input id="em-send-sub" value="' + esc(subject) + '"></label>' +
-      '<label class="field req">' + T('Message') + '<textarea id="em-send-body" rows="6">' + esc(body) + '</textarea></label>' +
+      '<label class="field req">' + T('Message') + '<textarea id="em-send-body" rows="10">' + esc(body) + '</textarea></label>' +
       '</div>' +
       '<div class="dlg-foot" style="justify-content:space-between">' +
       '<button class="btn ghost" data-act="settings:dismissemail" data-id="' + esc(ev.id) + '">' + T('Don’t send today') + '</button>' +
@@ -292,8 +297,8 @@
           };
         });
         var methEl = document.getElementById('em-method');
-        var method = methEl ? methEl.value : 'afrihost';
-        S.setSettings({ emailTemplates: templates, emailMethod: method }, 'Saved email templates');
+        var method = methEl ? methEl.value : 'mail', val = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; };
+        S.setSettings({ emailTemplates: templates, emailMethod: method, emailOffice: val('em-office'), emailGmail: val('em-gmail'), emailSignOff: val('em-sign') }, 'Saved email templates');
         H.render(); H.toast(T('Email templates saved'));
       },
       resetemails: function () {
@@ -303,9 +308,7 @@
       },
       dismissemail: function (el) {
         var evId = el.dataset.id; if (!evId) return;
-        var st = S.settings(), dismissed = Object.assign({}, st.dismissedEmailPrompts || {});
-        dismissed[evId] = true;
-        S.setSettings({ dismissedEmailPrompts: dismissed }, 'Dismissed daily email prompt');
+        promptDone(evId, 'skipped');
         H.closeModal();
         H.render();
         H.toast(T('Prompt dismissed for today'));
@@ -314,20 +317,18 @@
         var evId = el.dataset.id; if (!evId) return;
         var E = window.Emails; if (!E) return;
         var to = (document.getElementById('em-send-to') || {}).value || '';
-        var method = (document.getElementById('em-send-method') || {}).value || 'afrihost';
+        var method = (document.getElementById('em-send-method') || {}).value || 'mail';
         var subject = (document.getElementById('em-send-sub') || {}).value || '';
         var body = (document.getElementById('em-send-body') || {}).value || '';
 
         var url = E.makeSendUrl(method, {
           to: to,
           subject: subject,
-          body: body
+          body: body,
+          from: (S.settings() || {}).emailGmail || ''
         });
 
-        // Mark dismissed for today so prompt disappears
-        var st = S.settings(), dismissed = Object.assign({}, st.dismissedEmailPrompts || {});
-        dismissed[evId] = true;
-        S.setSettings({ dismissedEmailPrompts: dismissed }, 'Sent email via prompt');
+        promptDone(evId, 'sent');   // the prompt goes for today
 
         H.closeModal();
         H.render();

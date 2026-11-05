@@ -1,38 +1,39 @@
-/* Church Hub – Email templates, placeholders and daily prompt calculations.
- * Used for birthdays, wedding anniversaries, death days of spouses, and newcomer welcome messages. */
+/* Church Hub – Email templates, placeholders and the day's email prompts (pure, tested: tests/emails.test.js).
+ * Birthdays, wedding anniversaries (one email to the couple), the anniversary of a spouse's death, and newcomer welcomes.
+ * Only people who agreed to receive email are suggested (the caller says who, with opts.canEmail).
+ * Church Hub doesn't send these itself yet: it opens the church's email program or Gmail with the message ready. */
 var Emails = (function () {
   'use strict';
 
-  var AFRIHOST_EMAIL = 'office@christchurchhowick.co.za';
-  var GMAIL_EMAIL = 'christchurchhowick@gmail.com';
-
+  var SIGN = '{signOff}';   // the "Signed by" name from Settings → Email templates (the church's name until set)
   var DEFAULT_TEMPLATES = {
     birthday: {
       name: 'Birthday',
-      subject: 'Happy Birthday from {churchName}!',
-      body: 'Dear {firstName},\n\nWishing you a very happy birthday today! We pray that God blesses you richly in the year ahead.\n\nWarm regards,\n{churchName}'
+      subject: 'Happy birthday from {churchName}!',
+      body: 'Dear {firstName},\n\nWishing you a very happy birthday today! We pray that God blesses you richly in the year ahead.\n\nWarm regards,\n' + SIGN
     },
     anniversary: {
       name: 'Wedding anniversary',
-      subject: 'Happy Wedding Anniversary from {churchName}!',
-      body: 'Dear {firstName},\n\nCongratulations on your wedding anniversary today{yearsText}! May God continue to bless your marriage and journey together.\n\nWarm regards,\n{churchName}'
+      subject: 'Happy wedding anniversary from {churchName}!',
+      body: 'Dear {firstName},\n\nCongratulations on your wedding anniversary today{yearsText}! May God continue to bless your marriage and your journey together.\n\nWarm regards,\n' + SIGN
     },
     spouseDeath: {
       name: 'Death day of spouse',
-      subject: 'Thinking of you today – from {churchName}',
-      body: 'Dear {firstName},\n\nWe are holding you in our thoughts and prayers today as you remember {spouseName}{yearsText}. May God’s comfort and peace surround you.\n\nWith love and prayers,\n{churchName}'
+      subject: 'Thinking of you today',
+      body: 'Dear {firstName},\n\nWe are holding you in our thoughts and prayers today as you remember {spouseName}. May God’s comfort and peace surround you.\n\nWith love and prayers,\n' + SIGN
     },
     welcomeFirst: {
       name: 'Welcome (first visit)',
       subject: 'Welcome to {churchName}!',
-      body: 'Dear {firstName},\n\nThank you so much for joining us for the first time! It was wonderful to have you with us. Please let us know if there is any way we can serve you or help you feel at home.\n\nWarm regards,\n{churchName}'
+      body: 'Dear {firstName},\n\nThank you so much for joining us for the first time! It was wonderful to have you with us. Please let us know if there is any way we can help you feel at home.\n\nWarm regards,\n' + SIGN
     },
     welcomeThreeWeeks: {
       name: 'Welcome (3 weeks)',
       subject: 'Thank you for being part of {churchName}',
-      body: 'Dear {firstName},\n\nIt has been great seeing you at {churchName} over these past three weeks! We would love to help you get connected or answer any questions you might have. Please feel free to reach out anytime.\n\nWarm regards,\n{churchName}'
+      body: 'Dear {firstName},\n\nIt has been great seeing you at {churchName} over these past three weeks! We would love to help you get connected or answer any questions you might have. Please feel free to reach out anytime.\n\nWarm regards,\n' + SIGN
     }
   };
+  var NOT_MARRIED = /divorc|separat|widow|single|annul/i;   // no anniversary email for these marital statuses
 
   function getTemplates(settings) {
     var custom = (settings && settings.emailTemplates) || {};
@@ -47,8 +48,10 @@ var Emails = (function () {
     return out;
   }
 
+  /** 'mail' (the computer's or phone's own email program) or 'gmail' (Gmail in the browser). */
   function getMethod(settings) {
-    return (settings && settings.emailMethod) || 'afrihost';
+    var m = settings && settings.emailMethod;
+    return m === 'gmail' ? 'gmail' : 'mail';   // 'afrihost' from the first version means the email program
   }
 
   function interpolate(templateStr, data) {
@@ -61,7 +64,7 @@ var Emails = (function () {
 
   function sameMonthDay(isoDate, todayStr) {
     if (!isoDate || !todayStr) return false;
-    return isoDate.slice(5, 10) === todayStr.slice(5, 10);
+    return String(isoDate).slice(5, 10) === todayStr.slice(5, 10);
   }
 
   function diffDays(isoA, isoB) {
@@ -71,8 +74,7 @@ var Emails = (function () {
 
   function yearsSince(isoDate, todayStr) {
     if (!isoDate || !todayStr || isoDate > todayStr) return 0;
-    var y1 = +isoDate.slice(0, 4), y2 = +todayStr.slice(0, 4);
-    var d = y2 - y1;
+    var d = +todayStr.slice(0, 4) - +isoDate.slice(0, 4);
     if (todayStr.slice(5, 10) < isoDate.slice(5, 10)) d--;
     return Math.max(0, d);
   }
@@ -82,173 +84,99 @@ var Emails = (function () {
     return k ? k.date : '';
   }
 
-  function lateSpouse(p, peopleMap) {
-    if (p.lateSpouseId && peopleMap[p.lateSpouseId]) return peopleMap[p.lateSpouseId];
-    return null;
-  }
+  function gone(p) { return !p || p.active === false || p.deceasedAt || p.category === 'Deceased' || p.mergedInto; }
+  function first(p) { return p.preferredName || p.firstName || ''; }
+  function full(p) { return (first(p) + ' ' + (p.lastName || '')).trim(); }
 
   /**
-   * Finds events for today:
-   *  - birthday
-   *  - anniversary
-   *  - spouseDeath
-   *  - welcomeFirst
-   *  - welcomeThreeWeeks
-   * people: list of person records
-   * todayStr: 'YYYY-MM-DD'
-   * dismissed: map or function (id_eventType_date -> true)
+   * The emails to suggest today.
+   * people: person records · todayStr: 'YYYY-MM-DD'
+   * dismissed: a map or function (event id -> true) of prompts already sent or set aside today
+   * opts: canEmail(p) – they agreed to receive email (default: yes, for tests);
+   *       spouseOf(p) – their living spouse or partner, or null; lateSpouse(p) – the spouse who died, or null
    */
-  function findEvents(people, todayStr, dismissed) {
+  function findEvents(people, todayStr, dismissed, opts) {
+    opts = opts || {};
     if (!todayStr) todayStr = LeaveCore.iso(new Date());
     var isDismissed = typeof dismissed === 'function' ? dismissed : function (key) { return !!(dismissed && dismissed[key]); };
-    var peopleMap = {};
-    (people || []).forEach(function (p) { peopleMap[p.id] = p; });
+    var byId = {};
+    (people || []).forEach(function (p) { byId[p.id] = p; });
+    var canEmail = opts.canEmail || function () { return true; };
+    var spouseOf = opts.spouseOf || function () { return null; };
+    var lateSpouse = opts.lateSpouse || function (p) { return p.lateSpouseId ? byId[p.lateSpouseId] || null : null; };
+    var reachable = function (p) { return !gone(p) && !!p.email && canEmail(p); };
 
-    var events = [];
+    var events = [], seen = {};
+    function add(type, ps, data) {
+      var key = ps.map(function (x) { return x.id; }).sort().join('+') + '_' + type + '_' + todayStr;
+      if (seen[key] || isDismissed(key)) return;
+      seen[key] = true;
+      var to = ps.filter(reachable);
+      if (!to.length) return;
+      events.push({ id: key, type: type, person: ps[0], people: ps, recipientEmail: to.map(function (x) { return x.email; }).join(', '), data: data });
+    }
+    function one(p, extra) {
+      return Object.assign({ firstName: first(p), lastName: p.lastName || '', fullName: full(p) }, extra || {});
+    }
 
     (people || []).forEach(function (p) {
-      if (p.active === false || p.deceasedAt || p.category === 'Deceased' || p.mergedInto) return;
-      if (!p.email) return;
-
-      var fullName = ((p.preferredName || p.firstName || '') + ' ' + (p.lastName || '')).trim();
-      var fName = p.preferredName || p.firstName || '';
+      if (!reachable(p)) return;
 
       // 1. Birthday
       if (p.birthDate && sameMonthDay(p.birthDate, todayStr)) {
-        var bKey = p.id + '_birthday_' + todayStr;
-        if (!isDismissed(bKey)) {
-          var bYears = yearsSince(p.birthDate, todayStr);
-          events.push({
-            id: bKey,
-            type: 'birthday',
-            person: p,
-            recipientEmail: p.email,
-            data: {
-              firstName: fName,
-              lastName: p.lastName || '',
-              fullName: fullName,
-              years: bYears,
-              yearsText: bYears ? ' (' + bYears + ')' : ''
-            }
-          });
-        }
+        var by = yearsSince(p.birthDate, todayStr);
+        add('birthday', [p], one(p, { years: by, yearsText: by ? ' (' + by + ')' : '' }));
       }
 
-      // 2. Wedding anniversary
-      var wedDate = keyDate(p, /wedding|anniversary/i);
-      if (wedDate && sameMonthDay(wedDate, todayStr) && p.familyRole !== 'child' && p.maritalStatus !== 'Widowed') {
-        var anKey = p.id + '_anniversary_' + todayStr;
-        if (!isDismissed(anKey)) {
-          var wYears = yearsSince(wedDate, todayStr);
-          events.push({
-            id: anKey,
-            type: 'anniversary',
-            person: p,
-            recipientEmail: p.email,
-            data: {
-              firstName: fName,
-              lastName: p.lastName || '',
-              fullName: fullName,
-              years: wYears,
-              yearsText: wYears ? ' (' + wYears + ' years)' : ''
-            }
-          });
-        }
+      // 2. Wedding anniversary – one email to the couple when both are still together
+      var wed = keyDate(p, /wedding|anniversary/i), sp = spouseOf(p);
+      if (sp && gone(sp)) sp = null;
+      if (!wed && sp) wed = keyDate(sp, /wedding|anniversary/i);
+      if (wed && sameMonthDay(wed, todayStr) && p.familyRole !== 'child' && !NOT_MARRIED.test(p.maritalStatus || '') && !(sp && NOT_MARRIED.test(sp.maritalStatus || ''))) {
+        var wy = yearsSince(wed, todayStr), ps = sp ? [p, sp] : [p];
+        var sameSurname = sp && (sp.lastName || '') === (p.lastName || '');
+        add('anniversary', ps, {
+          firstName: sp ? first(p) + ' and ' + first(sp) : first(p),
+          lastName: sp && !sameSurname ? '' : p.lastName || '',
+          fullName: sp ? (sameSurname ? first(p) + ' and ' + first(sp) + ' ' + (p.lastName || '') : full(p) + ' and ' + full(sp)).trim() : full(p),
+          years: wy, yearsText: wy ? ' (' + wy + ' years)' : ''
+        });
       }
 
-      // 3. Death day of spouse
-      var ls = lateSpouse(p, peopleMap);
-      var deathDate = ls ? (ls.deceasedAt || keyDate(ls, /died/i)) : '';
-      if (deathDate && sameMonthDay(deathDate, todayStr)) {
-        var spKey = p.id + '_spouseDeath_' + todayStr;
-        if (!isDismissed(spKey)) {
-          var spYears = yearsSince(deathDate, todayStr);
-          var sName = ((ls.preferredName || ls.firstName || '') + ' ' + (ls.lastName || '')).trim();
-          events.push({
-            id: spKey,
-            type: 'spouseDeath',
-            person: p,
-            recipientEmail: p.email,
-            data: {
-              firstName: fName,
-              lastName: p.lastName || '',
-              fullName: fullName,
-              spouseName: sName,
-              years: spYears,
-              yearsText: spYears ? ' ' + spYears + ' year' + (spYears === 1 ? '' : 's') + ' ago' : ''
-            }
-          });
-        }
+      // 3. The anniversary of a spouse's death
+      var ls = lateSpouse(p);
+      var died = ls ? (ls.deceasedAt || keyDate(ls, /died|death/i)) : '';
+      if (died && sameMonthDay(died, todayStr)) {
+        var dy = yearsSince(died, todayStr);
+        add('spouseDeath', [p], one(p, { spouseName: full(ls), years: dy, yearsText: dy ? ' ' + dy + ' year' + (dy === 1 ? '' : 's') + ' ago' : '' }));
       }
 
-      // 4. Welcome (First visit)
-      var fvDate = keyDate(p, /first visit/i);
-      if (fvDate && fvDate === todayStr) {
-        var wfKey = p.id + '_welcomeFirst_' + todayStr;
-        if (!isDismissed(wfKey)) {
-          events.push({
-            id: wfKey,
-            type: 'welcomeFirst',
-            person: p,
-            recipientEmail: p.email,
-            data: {
-              firstName: fName,
-              lastName: p.lastName || '',
-              fullName: fullName
-            }
-          });
-        }
-      }
-
-      // 5. Welcome (3 weeks after first visit = 21 days)
-      if (fvDate && diffDays(fvDate, todayStr) === 21) {
-        var w3Key = p.id + '_welcomeThreeWeeks_' + todayStr;
-        if (!isDismissed(w3Key)) {
-          events.push({
-            id: w3Key,
-            type: 'welcomeThreeWeeks',
-            person: p,
-            recipientEmail: p.email,
-            data: {
-              firstName: fName,
-              lastName: p.lastName || '',
-              fullName: fullName
-            }
-          });
-        }
-      }
+      // 4. Welcome on the day of a first visit, and 5. three weeks later
+      var fv = keyDate(p, /first visit/i);
+      if (fv && fv === todayStr) add('welcomeFirst', [p], one(p));
+      if (fv && diffDays(fv, todayStr) === 21) add('welcomeThreeWeeks', [p], one(p));
     });
 
     return events;
   }
 
   /**
-   * Generates link / url to send email.
-   * method: 'afrihost' or 'gmail'
-   * opts: { to, subject, body, churchName }
+   * The link that opens the email ready to send. method: 'mail' or 'gmail'.
+   * opts: { to, subject, body, from } – from: the church's Gmail address, so Gmail opens in that account when signed in to it.
    */
   function makeSendUrl(method, opts) {
-    var to = encodeURIComponent(opts.to || '');
-    var subject = encodeURIComponent(opts.subject || '');
-    var body = encodeURIComponent(opts.body || '');
-
+    var subject = encodeURIComponent(opts.subject || ''), body = encodeURIComponent(opts.body || '');
     if (method === 'gmail') {
-      // Gmail compose web URL. Christ Church Howick gmail with alias / reply-to notice
-      return 'https://mail.google.com/mail/?view=cm&fs=1&to=' + to +
-        '&su=' + subject +
-        '&body=' + body;
+      return 'https://mail.google.com/mail/' + (opts.from ? '?authuser=' + encodeURIComponent(opts.from) + '&' : '?') +
+        'view=cm&fs=1&to=' + encodeURIComponent(opts.to || '') + '&su=' + subject + '&body=' + body;
     }
-
-    // Default: Afrihost / standard email client (mailto)
-    // We add reply-to and from hint where supported
-    return 'mailto:' + (opts.to || '') +
-      '?subject=' + subject +
-      '&body=' + body;
+    return 'mailto:' + String(opts.to || '').split(/\s*,\s*/).filter(Boolean).join(',') + '?subject=' + subject + '&body=' + body;
   }
 
+  /** Prompts older than today – no longer needed (they are removed so the list never grows). */
+  function stale(records, todayStr) { return (records || []).filter(function (r) { return !r.date || r.date < todayStr; }); }
+
   return {
-    AFRIHOST_EMAIL: AFRIHOST_EMAIL,
-    GMAIL_EMAIL: GMAIL_EMAIL,
     DEFAULT_TEMPLATES: DEFAULT_TEMPLATES,
     getTemplates: getTemplates,
     getMethod: getMethod,
@@ -257,7 +185,8 @@ var Emails = (function () {
     makeSendUrl: makeSendUrl,
     sameMonthDay: sameMonthDay,
     yearsSince: yearsSince,
-    diffDays: diffDays
+    diffDays: diffDays,
+    stale: stale
   };
 })();
 

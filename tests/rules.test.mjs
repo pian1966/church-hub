@@ -52,6 +52,7 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('leaveRequests/L2', { staffId: 'p02', type: 'SL', status: 'Approved', start: '2027-01-06', end: '2027-01-06', reason: 'Flu' });
   await set('away/L2', { personId: 'p02', from: '2027-01-06', to: '2027-01-06' });
   await set('dsr/d1', { personId: 'p15', kind: 'Access' });
+  await set('emailPrompts/p15_birthday_2026-11-05', { date: '2026-11-05', done: 'sent' });
   await set('audit/a1', { action: 'Test', byEmail: 'linda@example.com' });
   await set('guardians/g1', { childId: 'p12', adultId: 'p14', relationship: 'Father', canConsent: true, primary: true, mayCollect: true, confirmed: true });
   await set('guardians/g2', { childId: 'p12', adultId: 'p15', relationship: 'Mother', canConsent: true, primary: true, mayCollect: true, confirmed: true });
@@ -354,6 +355,7 @@ await t('Elvanto list: Administrators see all; staff see and queue only their ow
 
 console.log('POPIA registers and settings');
 await t('requests and breaches: Administrators only', async () => { await only('dsr/d1', ['admin']); await cannot(db.pastor.doc('breaches/b1').set({ what: 'x' })); });
+await t('email prompts (who has a birthday or a bereavement today): Administrators only', async () => { await only('emailPrompts/p15_birthday_2026-11-05', ['admin']); await cannot(db.pastor.doc('emailPrompts/x').set({ date: '2026-11-05' })); });
 await t('settings: everyone reads, Administrators change', async () => {
   for (const r of roles) await can(read(db[r], 'settings/church'));
   await cannot(db.pastor.doc('settings/church').set({ churchName: 'x' })); await can(db.admin.doc('settings/church').set({ churchName: 'Test church' }));

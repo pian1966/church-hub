@@ -289,6 +289,8 @@ service cloud.firestore {
     // ---------- POPIA registers (Administrators only) ----------
     match /dsr/{id} { allow read, write: if admin(); }
     match /breaches/{id} { allow read, write: if admin(); }
+    // The day's email prompts already sent or set aside (Home): Administrators only, cleared each day
+    match /emailPrompts/{id} { allow read, write: if admin(); }
     // Audit log: everyone signed in can add an entry about themselves; only Administrators read it; nobody changes it.
     match /audit/{id} {
       allow read: if admin();

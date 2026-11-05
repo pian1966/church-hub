@@ -14,7 +14,8 @@ function check(ok, what) {
 console.log('Templates and custom settings');
 const def = Emails.getTemplates();
 check(def.birthday && def.anniversary && def.spouseDeath && def.welcomeFirst && def.welcomeThreeWeeks, 'all 5 default templates present');
-check(Emails.getMethod() === 'afrihost', 'default email method is afrihost');
+check(Emails.getMethod() === 'mail', 'default: the email program');
+check(Emails.getMethod({ emailMethod: 'afrihost' }) === 'mail', 'the first version’s “afrihost” still means the email program');
 const custom = Emails.getTemplates({
   emailTemplates: {
     birthday: { subject: 'Custom Birthday', body: 'Custom body for {firstName}' }
@@ -103,6 +104,32 @@ const evsWithDismissed = Emails.findEvents(people, today, dismissed);
 check(!evsWithDismissed.some(e => e.type === 'birthday' && e.person.id === 'p1'), 'respects dismissed event');
 check(evsWithDismissed.some(e => e.type === 'anniversary' && e.person.id === 'p1'), 'non-dismissed event remains');
 
+console.log('Couples, marital status, consent and late spouses');
+const fam = [
+  { id: 'h1', firstName: 'John', lastName: 'Dube', email: 'john@example.com', maritalStatus: 'Married', keyDates: [{ label: 'Wedding anniversary', date: '2000-11-10' }] },
+  { id: 'w1', firstName: 'Mary', lastName: 'Dube', email: 'mary@example.com', maritalStatus: 'Married', keyDates: [{ label: 'Wedding anniversary', date: '2000-11-10' }] },
+  { id: 'd1', firstName: 'Dan', lastName: 'Ross', email: 'dan@example.com', maritalStatus: 'Divorced', keyDates: [{ label: 'Wedding anniversary', date: '1999-11-10' }] },
+  { id: 'n1', firstName: 'Nina', lastName: 'Lee', email: 'nina@example.com', birthDate: '1970-11-10' },
+  { id: 'v1', firstName: 'Vera', lastName: 'Khumalo', email: 'vera@example.com', maritalStatus: 'Widowed' },
+  { id: 'v2', firstName: 'Sipho', lastName: 'Khumalo', deceasedAt: '2019-11-10', category: 'Deceased' }
+];
+const spouses = { h1: 'w1', w1: 'h1' };
+const fe = Emails.findEvents(fam, today, {}, {
+  spouseOf: p => fam.find(x => x.id === spouses[p.id]) || null,
+  canEmail: p => p.id !== 'n1',
+  lateSpouse: p => p.id === 'v1' ? fam.find(x => x.id === 'v2') : null
+});
+const ann = fe.filter(e => e.type === 'anniversary');
+check(ann.length === 1 && ann[0].data.firstName === 'John and Mary' && ann[0].recipientEmail === 'john@example.com, mary@example.com', 'a married couple gets one anniversary email, to both, “Dear John and Mary”');
+check(ann[0].data.fullName === 'John and Mary Dube' && ann[0].data.yearsText === ' (26 years)', 'the couple’s full name and years married');
+check(!fe.some(e => e.person.id === 'd1'), 'no anniversary email for someone divorced');
+check(!fe.some(e => e.person.id === 'n1'), 'nobody is suggested without their consent to email');
+check(fe.some(e => e.type === 'spouseDeath' && e.person.id === 'v1' && e.data.spouseName === 'Sipho Khumalo'), 'the late spouse comes from the People page’s own rule (opts.lateSpouse)');
+const one = Emails.findEvents(fam, today, {}, { spouseOf: p => fam.find(x => x.id === spouses[p.id]) || null, canEmail: p => p.id === 'w1' });
+check(one.filter(e => e.type === 'anniversary').length === 1 && one.find(e => e.type === 'anniversary').recipientEmail === 'mary@example.com', 'only the spouse who agreed to email is sent the couple’s email');
+check(Emails.findEvents(fam, today, { ['h1+w1_anniversary_' + today]: true }, { spouseOf: p => fam.find(x => x.id === spouses[p.id]) || null }).every(e => e.type !== 'anniversary'), 'the couple’s prompt, once done, is gone for both');
+check(Emails.stale([{ id: 'a', date: '2026-11-09' }, { id: 'b', date: today }], today).map(r => r.id).join() === 'a', 'yesterday’s prompts are cleared away');
+
 console.log('Sending URL generation');
 const mailtoUrl = Emails.makeSendUrl('afrihost', {
   to: 'alice@example.com',
@@ -117,6 +144,9 @@ const gmailUrl = Emails.makeSendUrl('gmail', {
   body: 'Dear Alice...'
 });
 check(gmailUrl.indexOf('https://mail.google.com/mail/?view=cm&fs=1') === 0 && gmailUrl.indexOf('to=alice%40example.com') >= 0, 'generates correct gmail web url');
+const asChurch = Emails.makeSendUrl('gmail', { to: 'a@example.com', subject: 's', body: 'b', from: 'church@gmail.com' });
+check(asChurch.indexOf('https://mail.google.com/mail/?authuser=church%40gmail.com&view=cm') === 0, 'Gmail opens in the church’s account when signed in to it');
+check(Emails.makeSendUrl('mail', { to: 'john@example.com, mary@example.com', subject: 's', body: 'b' }).indexOf('mailto:john@example.com,mary@example.com?') === 0, 'one email to both of a couple');
 
 if (fails) {
   console.log('\n' + fails + ' email test(s) FAILED');

@@ -462,6 +462,32 @@ await t('…but can’t change what Pastors can do, or give Administrator or Pas
   await cannot(read(andile, 'medical/p12'));                                                        // medical notes stay with Children's ministry
 });
 
+console.log('Stand-in leave approver');
+await t('a stand-in decides other people’s waiting leave between their dates – not their own, and not after', async () => {
+  await env.withSecurityRulesDisabled(async ctx => {
+    const d = ctx.firestore(), now = Date.now();
+    await d.doc('roles/sipho@example.com').update({ standInFrom: now - 86400000, standInTo: now + 86400000 });
+    await d.doc('leaveRequests/S1').set({ staffId: 'p02', type: 'AL', status: 'Pending', start: '2027-03-01', end: '2027-03-02' });
+    await d.doc('leaveRequests/S2').set({ staffId: 'p05', type: 'AL', status: 'Pending', start: '2027-03-01', end: '2027-03-02' });
+    await d.doc('leaveRequests/S3').set({ staffId: 'p02', type: 'AL', status: 'Pending', start: '2027-04-01', end: '2027-04-02' });
+  });
+  await can(read(db.rosters, 'leaveRequests/S1'));
+  await can(db.rosters.doc('leaveRequests/S1').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' }));
+  await can(db.rosters.doc('away/S1').set({ personId: 'p02', from: '2027-03-01', to: '2027-03-02' }));
+  await cannot(db.rosters.doc('leaveRequests/S2').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' }));   // their own
+  await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', type: 'SL', decidedBy: 'Sipho', decidedOn: 'x' }));   // only the decision
+  await cannot(db.rosters.doc('leave/config').update({ note: 'x' }));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('roles/sipho@example.com').update({ standInFrom: 0, standInTo: Date.now() - 1000 }); });
+  await cannot(read(db.rosters, 'leaveRequests/S3'));
+  await cannot(db.rosters.doc('leaveRequests/S3').update({ status: 'Approved', decidedBy: 'Sipho', decidedOn: '2026-11-05' }));
+});
+await t('a leave manager sets the stand-in’s dates, and nothing else on their access entry', async () => {
+  await can(db.admin.doc('roles/sipho@example.com').update({ standInFrom: 1, standInTo: 2 }));
+  await can(andile.doc('roles/sipho@example.com').update({ standInFrom: 3, standInTo: 4 }));
+  await cannot(db.pastor.doc('roles/sipho@example.com').update({ standInFrom: 5, standInTo: 6 }));
+  await cannot(andile.doc('roles/sipho@example.com').update({ standInFrom: 5, standInTo: 6, role: 'admin' }));
+});
+
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });
 
 await env.cleanup();

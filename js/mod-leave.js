@@ -17,9 +17,18 @@
     var staff = S.find('people', function (p) { return p.staff && !p.binnedAt; }).map(function (p) {
       return { id: p.id, name: H.name(p), email: p.email, level: p.staff.category, workDays: p.staff.workDays || '', role: p.appRole === 'admin' ? 'Administrator' : 'Staff', start: p.staff.start, active: p.active !== false };
     });
-    return { settings: lv.settings, rules: lv.rules, terms: lv.terms, types: lv.types, levels: lv.levels, holidays: lv.holidays, adjustments: lv.adjustments, requests: lv.requests, staff: staff };
+    var d = { settings: lv.settings, rules: lv.rules, terms: lv.terms, types: lv.types, levels: lv.levels, holidays: lv.holidays, adjustments: lv.adjustments, requests: lv.requests, staff: staff };
+    C.applyStandIn(d, H.today());   // the stand-in approver, while their dates last
+    return d;
   }
-  function actor(d) { return C.staffById(d, H.user().id) || { id: H.user().id, name: H.name(H.user()), role: H.can('leave.manage') ? 'Administrator' : 'Staff', level: 'Administrator' }; }
+  /** I approve leave for the Administrator for now (Approvals → Stand-in approver). */
+  function amStandIn(d) { return !!H.user() && C.standInId(d, H.today()) === H.user().id; }
+  function actor(d) {
+    var a = Object.assign({}, C.staffById(d, H.user().id) || { id: H.user().id, name: H.name(H.user()), role: 'Staff', level: 'Administrator' });
+    a.standIn = amStandIn(d);
+    if (H.can('leave.manage')) a.role = 'Administrator';
+    return a;
+  }
   function isLeaveAdmin() { return H.can('leave.manage'); }
   /** A Church Partner (Member access) who isn't on the staff: leave isn't theirs to see. */
   function partner() { return !H.can('*') && !H.can('people.view') && !H.can('people.basic') && !H.can('children'); }
@@ -31,7 +40,8 @@
   function tabs(d, active) {
     var t = [];
     if (takesLeave(d)) t.push(['', T('My leave')]);
-    if (isLeaveAdmin()) { t.push(['approvals', T('Approvals')]); t.push(['team', T('Team balances')]); }
+    if (isLeaveAdmin() || amStandIn(d)) t.push(['approvals', T('Approvals')]);
+    if (isLeaveAdmin()) t.push(['team', T('Team balances')]);
     t.push(['away', T('Who’s away')]);
     if (isLeaveAdmin()) { t.push(['settings', T('Settings')]); t.push(['elvanto', 'Elvanto']); }
     return t.length > 1 ? '<nav class="seg" aria-label="' + esc(T('Leave')) + '" style="margin-bottom:18px">' + t.map(function (x) { return '<a href="#/leave' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === active ? 'on' : '') + '">' + x[1] + '</a>'; }).join('') + '</nav>' : '';
@@ -55,13 +65,27 @@
   }
 
   function renderApprovals(d) {
-    var pend = d.requests.filter(function (r) { return r.status === 'Pending'; }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
+    var me = H.user().id, pend = d.requests.filter(function (r) { return r.status === 'Pending' && (isLeaveAdmin() || r.staffId !== me); }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
     return '<section class="block"><h2>' + T('Waiting for your decision') + '</h2>' + (pend.length ? '<div class="list">' + pend.map(function (r) {
       var st = C.staffById(d, r.staffId), t = typeOf(d, r.type), w = st ? C.requestWarnings(d, st, r, r.id, true) : [];
       return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + (st ? '<a href="#/leave/staff/' + st.id + '">' + esc(st.name) + '</a>' : '?') + ' · ' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + amt(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small>' +
         (w.length ? '<span class="note warn" style="display:block;margin:8px 0 0;font-size:13px">⚠ ' + w.map(esc).join('<br>⚠ ') + '</span>' : '') + '</span>' +
         '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">' + T('Decline') + '</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved"' + (C.allowanceWarning(d, st, r, r.id, true) ? ' data-over="1"' : '') + '>' + T('Approve') + '</button></span></div>';
-    }).join('') + '</div>' : '<p class="empty">' + T('Nothing is waiting for approval.') + '</p>') + '</section>';
+    }).join('') + '</div>' : '<p class="empty">' + T('Nothing is waiting for approval.') + '</p>') + '</section>' + (isLeaveAdmin() ? renderStandIn(d) : '');
+  }
+
+  /** Stand-in approver: someone who approves and declines leave (not their own) between two dates, e.g. while the
+   *  Administrator is away. Same settings as Leave Manager (StandInID/From/To); the database rules check the dates too. */
+  function renderStandIn(d) {
+    var st = d.settings || {}, id = String(st.StandInID || ''), p = id ? S.get('people', id) : null, today = H.today();
+    var on = !!p && String(st.StandInTo || '') >= today;
+    var choices = S.find('people', function (x) { return x.active !== false && x.email && x.appRole === 'pastor' && x.id !== H.user().id && !x.binnedAt; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
+    return '<section class="panel" id="standin" style="margin-top:16px"><h2>' + T('Stand-in approver') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('Going away? Choose someone to approve or decline leave between two dates. They can’t decide their own leave, and their access ends by itself after the last day.') + ' ' + T('A stand-in must be a Pastor, who can already see staff details.') + '</p>' +
+      (on ? '<p class="note info"><b>' + esc(H.name(p)) + '</b> · ' + esc(H.fmt(st.StandInFrom) + ' – ' + H.fmt(st.StandInTo, true)) + ' <button class="btn small" data-act="leave:standinoff">' + T('Remove') + '</button></p>' : '') +
+      '<div class="two"><label class="field">' + T('Person') + '<select id="si-who"><option value="">' + T('Choose…') + '</option>' + choices.map(function (x) { return '<option value="' + x.id + '"' + (on && x.id === id ? ' selected' : '') + '>' + esc(H.name(x)) + '</option>'; }).join('') + '</select></label>' +
+      '<div class="two"><label class="field">' + T('From') + '<input type="date" id="si-from" value="' + esc(on ? st.StandInFrom : today) + '"></label><label class="field">' + T('To') + '<input type="date" id="si-to" value="' + esc(on ? st.StandInTo : '') + '"></label></div></div>' +
+      '<button class="btn small primary" data-act="leave:standin">' + T('Set stand-in') + '</button></section>';
   }
 
   function renderTeam(d) {
@@ -220,6 +244,8 @@
       }).join('') + '</tbody></table></div>' +
       '<div class="btns"><button class="btn small" data-act="leave:addlevel">' + H.icon(H.ICON.plus, 16) + T('Add a category') + '</button><button class="btn small primary" data-act="leave:savelevels">' + T('Save categories') + '</button></div></section>';
 
+    html += renderRules(lv);
+
     // Leave types
     html += '<section class="panel"><h2>' + T('Kinds of leave') + '</h2><div class="list">' + lv.types.map(function (t, i) {
       return '<div class="item" style="flex-wrap:wrap"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow" style="min-width:160px"><input class="ls-tname" data-i="' + i + '" value="' + esc(t.name) + '" aria-label="' + esc(T('Name')) + '" style="width:100%"><small>' + esc(t.code) + ' · ' + T(t.deducts ? 'uses an allowance' : 'no allowance') + (t.perTerm ? ' · ' + T('{n} per term', { n: t.perTerm }) : '') + '</small></span>' +
@@ -239,6 +265,51 @@
       (lv.holidays.some(function (h) { return +h.date.slice(0, 4) === y + 2 && !h.church; }) ? '' : ' <button class="link" data-act="leave:addsa" data-y="' + (y + 2) + '">' + T('Add public holidays for {year}', { year: y + 2 }) + '</button>') +
       '</section>';
     return html + '</div>';
+  }
+  /** Cover rules and blocked days (Leave Manager's Cover Rules tab): "Minimum on duty" (e.g. a pastor every Sunday) or
+   *  "No leave" (Christmas, Easter, a camp), for all staff or some categories, set to warn or block. */
+  var PRESETS = {
+    sunday: { name: 'Sunday cover', kind: 'Minimum on duty', category: 'Pastoral Staff', days: 'Sun', from: '', to: '', min: 1, action: 'Warn', message: '', active: true },
+    christmas: { name: 'Christmas services', kind: 'No leave', category: '', days: '', from: '24 Dec', to: '26 Dec', min: 1, action: 'Block', message: '', active: true },
+    easter: { name: 'Easter services', kind: 'No leave', category: '', days: '', from: 'Easter-2', to: 'Easter+1', min: 1, action: 'Block', message: '', active: true },
+    blank: { name: '', kind: 'No leave', category: '', days: '', from: '', to: '', min: 1, action: 'Warn', message: '', active: true }
+  };
+  function renderRules(lv) {
+    var today = H.today(), cats = lv.levels.map(function (l) { return l.level; });
+    return '<section class="panel" id="ls-rules" style="grid-column:1/-1"><h2>' + T('Cover rules and blocked days') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('Stop the church being left without the people it needs. “At least … on duty” checks how many are still working; “No leave” blocks days such as Christmas. Warn lets the request through with a warning; Block stops staff sending it. Administrators can always approve anyway.') + '</p>' +
+      (lv.rules || []).map(function (r, i) {
+        var next = r.from ? C.nextOccurrence(r, today) : null, min = /min/i.test(String(r.kind));
+        return '<div class="ls-rule" data-i="' + i + '"><div class="ls-rule-row">' +
+          '<label class="field">' + T('Name') + '<input class="lr-name" value="' + esc(r.name || '') + '" placeholder="' + esc(T('e.g. Christmas services')) + '"></label>' +
+          '<label class="field">' + T('Rule') + '<select class="lr-kind"><option value="Minimum on duty"' + (min ? ' selected' : '') + '>' + T('At least … on duty') + '</option><option value="No leave"' + (min ? '' : ' selected') + '>' + T('No leave') + '</option></select></label>' +
+          '<label class="field">' + T('Who') + '<select class="lr-cat"><option value="">' + T('All staff') + '</option>' + cats.map(function (c) { return '<option' + (String(r.category || '') === c ? ' selected' : '') + '>' + esc(c) + '</option>'; }).join('') + '</select></label>' +
+          '<label class="field lr-minf">' + T('How many') + '<input class="lr-min" type="number" min="1" value="' + esc(r.min || 1) + '"></label>' +
+          '<label class="field">' + T('If broken') + '<select class="lr-act"><option value="Warn"' + (/block/i.test(String(r.action)) ? '' : ' selected') + '>' + T('Warn') + '</option><option value="Block"' + (/block/i.test(String(r.action)) ? ' selected' : '') + '>' + T('Block') + '</option></select></label></div>' +
+          '<div class="ls-rule-row"><div class="field">' + T('Days of the week') + '<br>' + dayBoxes('lr-day', r.days) + '<small>' + T('None ticked = every day.') + '</small></div>' +
+          '<label class="field">' + T('From') + '<input class="lr-from" value="' + esc(r.from || '') + '" placeholder="24 Dec"></label>' +
+          '<label class="field">' + T('To') + '<input class="lr-to" value="' + esc(r.to || '') + '" placeholder="26 Dec"></label>' +
+          '<label class="field grow">' + T('Message for staff') + '<input class="lr-msg" value="' + esc(r.message || '') + '"></label></div>' +
+          '<div class="ls-rule-row" style="align-items:center"><label class="check" style="margin:0"><input type="checkbox" class="lr-on"' + (r.active === false ? '' : ' checked') + '><span>' + T('On') + '</span></label>' +
+          (next ? '<span class="muted small grow">' + esc(T('Next: {dates}', { dates: next.start === next.end ? H.fmt(next.start, true) : H.fmt(next.start) + ' – ' + H.fmt(next.end, true) })) + '</span>' : '<span class="grow"></span>') +
+          '<button class="icon-btn ghost" data-act="leave:delrule" data-i="' + i + '" aria-label="' + esc(T('Remove this rule')) + '">' + H.icon(H.ICON.trash, 18) + '</button></div></div>';
+      }).join('') +
+      '<p class="hint">' + T('From and To: a date every year (24 Dec), Easter-based (Easter-2 is Good Friday, Easter+1 Family Day), or one date (2026-11-27). Leave both empty for all year.') + '</p>' +
+      '<div class="btns"><button class="btn small" data-act="leave:addrule" data-preset="sunday">' + H.icon(H.ICON.plus, 16) + T('A pastor every Sunday') + '</button>' +
+      '<button class="btn small" data-act="leave:addrule" data-preset="christmas">' + H.icon(H.ICON.plus, 16) + T('Christmas') + '</button>' +
+      '<button class="btn small" data-act="leave:addrule" data-preset="easter">' + H.icon(H.ICON.plus, 16) + T('Easter') + '</button>' +
+      '<button class="btn small" data-act="leave:addrule" data-preset="blank">' + H.icon(H.ICON.plus, 16) + T('Another rule') + '</button>' +
+      '<button class="btn small primary" data-act="leave:saverules">' + T('Save') + '</button></div></section>';
+  }
+  /** The rules as typed on the page (so adding or removing one keeps what was typed in the others). */
+  function typedRules() {
+    var out = [];
+    document.querySelectorAll('.ls-rule').forEach(function (row) {
+      var v = function (c) { var e = row.querySelector('.' + c); return e ? e.value.trim() : ''; };
+      out.push({ name: v('lr-name'), kind: v('lr-kind'), category: v('lr-cat'), days: picked('lr-day', row), from: v('lr-from'), to: v('lr-to'),
+        min: Math.max(1, +v('lr-min') || 1), action: v('lr-act'), message: v('lr-msg'), active: !!(row.querySelector('.lr-on') || {}).checked });
+    });
+    return out;
   }
   function termRow(t) {
     return '<div class="ls-term"><label class="field" style="margin:0 0 6px">' + T('Name') + '<input class="ls-tn" value="' + esc(t.name || '') + '" placeholder="' + esc(T('e.g. Term 1 2027')) + '"></label>' +
@@ -317,7 +388,7 @@
       if (partner() && !takesLeave(data())) return '<h1>' + T('Leave') + '</h1><p class="empty">' + T('Leave is for church staff.') + '</p>';
       var d = data(), v = p[0] || (takesLeave(d) ? '' : isLeaveAdmin() ? 'approvals' : 'away');
       if (v === 'staff' && isLeaveAdmin()) return renderStaff(d, p[1], p[2]);
-      var body = v === 'elvanto' && isLeaveAdmin() ? renderElvanto(d) : v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && isLeaveAdmin() ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);
+      var body = v === 'elvanto' && isLeaveAdmin() ? renderElvanto(d) : v === 'settings' && isLeaveAdmin() ? renderSettings(d) : v === 'approvals' && (isLeaveAdmin() || amStandIn(d)) ? renderApprovals(d) : v === 'team' && isLeaveAdmin() ? renderTeam(d) : v === 'away' ? renderAway(d) : takesLeave(d) ? renderMine(d) : renderAway(d);
       return '<div class="page-head"><div><h1>' + T('Leave') + '</h1><p class="lead">' + T('Staff leave with the same rules as Leave Manager: only working days count, public holidays are free, and approved leave keeps people off the roster.') + '</p></div>' +
         (takesLeave(d) || isLeaveAdmin() ? '<button class="btn primary" data-act="leave:request">' + H.icon(H.ICON.plus, 18) + (takesLeave(d) ? T('Request leave') : T('Book leave')) + '</button>' : '') + '</div>' + tabs(d, v) + body;
     },
@@ -407,6 +478,32 @@
         S.saveLeave('Added staff category ' + n); H.render(); H.toast(T('Added – now fill in its days and allowances'));
       },
       dellevel: function (el) { if (!H.confirmBtn(el, '✕?')) return; var lv = S.leave(), l = lv.levels.splice(+el.dataset.i, 1)[0]; S.saveLeave('Removed staff category ' + l.level); H.render(); },
+      addrule: function (el) {
+        var lv = S.leave(); lv.rules = document.querySelector('.ls-rule') ? typedRules() : (lv.rules || []);
+        lv.rules.push(JSON.parse(JSON.stringify(PRESETS[el.dataset.preset] || PRESETS.blank)));
+        H.render(); var rows = document.querySelectorAll('.ls-rule'); if (rows.length) rows[rows.length - 1].scrollIntoView({ block: 'center' });
+        H.toast(T('Added – check it and Save'));
+      },
+      delrule: function (el) { var lv = S.leave(); lv.rules = typedRules(); lv.rules.splice(+el.dataset.i, 1); S.saveLeave('Removed a cover rule'); H.render(); H.toast(T('Removed')); },
+      saverules: function () {
+        var rules = typedRules(), bad = rules.filter(function (r) { return !r.name || (r.from && !C.ruleDate(r.from, 2026)) || (r.to && !C.ruleDate(r.to, 2026)); })[0];
+        if (bad) { H.toast(bad.name ? T('Check the From and To dates of “{name}”', { name: bad.name }) : T('Every rule needs a name.'), true); return; }
+        var lv = S.leave(); lv.rules = rules; S.saveLeave('Saved the cover rules (' + rules.length + ')'); H.render(); H.toast(T('Saved'));
+      },
+      standin: function () {
+        var who = document.getElementById('si-who').value, from = document.getElementById('si-from').value, to = document.getElementById('si-to').value;
+        if (!who || !from || !to || to < from) { H.toast(T('Choose the person and both dates'), true); return; }
+        var lv = S.leave(), was = lv.settings.StandInID;
+        if (was && was !== who) S.setStandIn(was, '', '');
+        lv.settings.StandInID = who; lv.settings.StandInFrom = from; lv.settings.StandInTo = to;
+        S.saveLeave('Stand-in approver: ' + H.name(S.get('people', who)) + ' from ' + from + ' to ' + to);
+        S.setStandIn(who, from, to); H.render(); H.toast(T('Stand-in set'));
+      },
+      standinoff: function () {
+        var lv = S.leave(), was = lv.settings.StandInID; if (!was) return;
+        lv.settings.StandInID = ''; lv.settings.StandInFrom = ''; lv.settings.StandInTo = '';
+        S.saveLeave('Removed the stand-in approver'); S.setStandIn(was, '', ''); H.render(); H.toast(T('Removed'));
+      },
       savetypes: function () {
         var lv = S.leave(), bad = '';
         document.querySelectorAll('.ls-tname').forEach(function (inp) { var n = inp.value.trim(); if (!n) bad = T('Every kind of leave needs a name.'); else lv.types[+inp.dataset.i].name = n; });

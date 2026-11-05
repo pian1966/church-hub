@@ -121,6 +121,10 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .list { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
 .item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; color: var(--ink); text-decoration: none; min-height: 60px; }
 .item + .item { border-top: 1px solid var(--line-2); }
+.ls-rule { border: 1px solid var(--line-2); border-radius: 12px; padding: 12px; margin: 0 0 10px; }
+.ls-rule-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+.ls-rule-row .field { margin: 0 0 6px; min-width: 120px; }
+.ls-rule-row .lr-min { width: 70px; }
 .pf-top { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin: -4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-2); }
 .pf-top .btn { gap: 6px; }
 .pp-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: 0 1 auto; }

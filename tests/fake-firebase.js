@@ -16,7 +16,8 @@
   function ctx() {
     var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
     return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', me: r && r.personId ? r.personId : '',
-      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [] };
+      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [],
+      standIn: !!(r && (r.standInFrom || 0) <= Date.now() && Date.now() <= (r.standInTo || 0)) };
   }
   function is(c, list) { return c.signedIn && !!c.role && list.indexOf(c.role) >= 0; }
   /** What Pastors can do: Administrators always; Pastors with the tick on their access-list entry. */
@@ -38,6 +39,7 @@
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
       write: function (c, op, id, b, a) {
         if (is(c, ['admin'])) return op === 'delete' || ANY.concat(['robot']).indexOf(a.role) >= 0;
+        if (op === 'update' && may(c, 'leave') && onlyChanges(b, a, ['standInFrom', 'standInTo'])) return true;   // the stand-in approver's dates
         if (!may(c, 'access')) return false;
         if (op === 'delete') return SMALL.indexOf(b.role) >= 0;
         return (op === 'create' || SMALL.indexOf(b.role) >= 0) && SMALL.indexOf(a.role) >= 0 && onlyKeys(a, ['role', 'personId', 'name']);
@@ -48,8 +50,8 @@
       write: function (c, op, id, b, a) {
         if (may(c, 'import')) return true;
         if (op === 'delete') return false;
-        if (op === 'create') return mine(c, a.personId) && a.status === 'Waiting' && onlyKeys(a, ['personId', 'name', 'start', 'end', 'want', 'have', 'haveNote', 'status', 'note', 'createdAt', 'updatedAt']);
-        if (mine(c, b.personId) && a.personId === b.personId && a.status === 'Waiting' && onlyChanges(b, a, ['name', 'start', 'end', 'want', 'status', 'note', 'updatedAt'])) return true;
+        if (op === 'create') return (mine(c, a.personId) || c.standIn) && a.status === 'Waiting' && onlyKeys(a, ['personId', 'name', 'start', 'end', 'want', 'have', 'haveNote', 'status', 'note', 'createdAt', 'updatedAt']);
+        if ((mine(c, b.personId) || c.standIn) && a.personId === b.personId && a.status === 'Waiting' && onlyChanges(b, a, ['name', 'start', 'end', 'want', 'status', 'note', 'updatedAt'])) return true;
         return c.robot && onlyChanges(b, a, ['status', 'note', 'have', 'haveNote', 'doneAt']);
       } },
     robotStatus: { read: function (c) { return may(c, 'import'); }, write: function (c) { return c.robot; } },
@@ -115,12 +117,13 @@
     blockouts: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) { return rosterer(c) || mine(c, op === 'delete' ? b.personId : a.personId); } },
     away: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return may(c, 'leave') || (op === 'delete' ? mine(c, b.personId) : mine(c, a.personId) && onlyKeys(a, ['personId', 'from', 'to'])); } },
+      write: function (c, op, id, b, a) { return may(c, 'leave') || (op === 'delete' ? mine(c, b.personId) : (mine(c, a.personId) || c.standIn) && onlyKeys(a, ['personId', 'from', 'to'])); } },
     leave: { read: function (c) { return is(c, ANY); }, write: function (c) { return may(c, 'leave'); } },
-    leaveRequests: { read: function (c, id, d) { return may(c, 'leave') || (!!d && mine(c, d.staffId)); },
+    leaveRequests: { read: function (c, id, d) { return may(c, 'leave') || c.standIn || (!!d && mine(c, d.staffId)); },
       write: function (c, op, id, b, a) {
         if (may(c, 'leave')) return true;
         if (op === 'create') return mine(c, a.staffId) && (a.status === 'Pending' || (a.status === 'Approved' && ((docs['leave/config'] || {}).autoApprove || []).indexOf(a.type) >= 0));
+        if (op === 'update' && c.standIn && b.staffId !== c.me && b.status === 'Pending' && ['Approved', 'Declined'].indexOf(a.status) >= 0 && onlyChanges(b, a, ['status', 'decidedBy', 'decidedOn'])) return true;
         return op === 'update' && mine(c, b.staffId) && a.status === 'Cancelled' && onlyChanges(b, a, ['status', 'cancelledBy']);
       } },
     leaveAdjustments: { read: function (c, id, d) { return may(c, 'leave') || (!!d && mine(c, d.staffId)); }, write: function (c) { return may(c, 'leave'); } },
@@ -173,6 +176,11 @@
   };
   DocRef.prototype.set = function (data) { return apply([{ path: this.path, data: data }]); };
   DocRef.prototype.delete = function () { return apply([{ path: this.path, data: null }]); };
+  /** Firestore's update: merges the fields into a document that must exist (a missing one fails, as in Firestore). */
+  DocRef.prototype.update = function (fields) {
+    if (docs[this.path] === undefined) { var e = new Error('No document to update'); e.code = 'not-found'; return Promise.reject(e); }
+    return apply([{ path: this.path, data: Object.assign(JSON.parse(JSON.stringify(docs[this.path])), fields) }]);
+  };
   DocRef.prototype.onSnapshot = function (cb, errCb) { return listen({ doc: this.path, cb: cb, err: errCb }); };
   function Query(coll, filters, order, lim) { this.coll = coll; this.filters = filters || []; this.order = order; this.lim = lim; }
   Query.prototype.where = function (f, op, v) { return new Query(this.coll, this.filters.concat([[f, op, v]]), this.order, this.lim); };

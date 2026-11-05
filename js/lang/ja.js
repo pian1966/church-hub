@@ -1442,6 +1442,7 @@ I18n.add('ja', {
     "Lives in {place}, an area of this group": "このグループの地域である{place}に在住",
     "Lives in {place}, like others in this group": "このグループの他の人と同じ{place}に在住",
     "No home address": "住所なし",
+    "Lives in {place} – which part? Closest groups: {groups}": "{place}に在住 – どの地区？近いグループ：{groups}",
     "No care group in {place} yet": "{place}にはまだケアグループがありません",
     "The people they live with are in different groups: {groups}": "同居している人が別々のグループにいます：{groups}",
     "Close to more than one group: {groups}": "複数のグループに近い：{groups}",

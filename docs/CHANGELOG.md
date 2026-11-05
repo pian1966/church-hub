@@ -183,3 +183,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 4 Nov 2026: **Chinese, Japanese and American English** (version 0.9.0): added Simplified Chinese, Traditional Chinese,
   Japanese (in a new Asia section in the language picker), and American English (in Americas).
 - ✅ 4 Nov 2026 (0.10.0): the two 0.9.0 changes above released together; the new duplicate-check sentences added to Chinese, Japanese and American English.
+- ✅ 5 Nov 2026 (0.10.1): Care groups – the large “Not a carer / Make carer” button beside each member is now a small star: faint until you point at it, filled green for a carer (the words show when you hover).

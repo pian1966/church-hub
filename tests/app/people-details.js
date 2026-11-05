@@ -83,6 +83,19 @@ module.exports = async function (ctx) {
   check(await s.page.isVisible('#pf-email-dup') && (await s.page.textContent('#pf-email-dup')).includes('Tim Jacobs'), 'an email already on someone’s record is flagged under the box, before any name is typed');
   await s.page.fill('#pf-mobile', docs['people/p15'].mobile); await s.page.waitForTimeout(300);
   check((await s.page.textContent('#pf-mobile-dup')).includes('Clare Jacobs'), '…and so is a mobile number');
+  // Partly typed: the start of a mobile number (7 digits), an email (6 characters) or a street address (number and 3 letters)
+  const clareMob = docs['people/p15'].mobile.replace(/\D/g, ''), clareLocal = clareMob.startsWith('27') ? '0' + clareMob.slice(2) : clareMob;
+  await s.page.fill('#pf-mobile', clareLocal.slice(0, 3) + ' ' + clareLocal.slice(3, 9)); await s.page.waitForTimeout(300);
+  check(/starting like this/.test(await s.page.textContent('#pf-mobile-dup')) && (await s.page.textContent('#pf-mobile-dup')).includes('Clare Jacobs'), 'the start of a mobile number already shows whose number starts that way');
+  await s.page.fill('#pf-email', docs['people/p14'].email.slice(0, 7)); await s.page.waitForTimeout(300);
+  check(/starting like this/.test(await s.page.textContent('#pf-email-dup')) && (await s.page.textContent('#pf-email-dup')).includes('Tim Jacobs'), 'the start of an email shows whose email starts that way');
+  await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p14'))); p.address = { street: '14 Hilton Road', city: 'Howick' }; Store.put('people', p); }); await s.settle();
+  const home = { lastName: 'Jacobs' }, timStreet = '14 Hilton Road', timStart = '14 Hil';
+  await s.page.fill('#pf-street', timStart); await s.page.waitForTimeout(300);
+  check(!!timStart && await s.page.isVisible('#pf-street-dup') && /starting like this/.test(await s.page.textContent('#pf-street-dup')) && (await s.page.textContent('#pf-street-dup')).includes(home.lastName), 'a house number and three letters of a street show who lives at an address starting that way');
+  await s.page.fill('#pf-street', timStreet.replace(/\bRoad\b/, 'Rd').replace(/\bStreet\b/, 'St')); await s.page.waitForTimeout(300);
+  check(/This address is already used by/.test(await s.page.textContent('#pf-street-dup')), 'the whole address (Rd for Road, St for Street) is “already used”');
+  await s.page.fill('#pf-street', '');
   await s.page.fill('#pf-email', ''); await s.page.fill('#pf-mobile', ''); await s.page.fill('#pf-first', 'Ti'); await s.page.fill('#pf-last', 'Ja'); await s.page.waitForTimeout(300);
   check(await s.page.isVisible('#pf-dup') && (await s.page.textContent('#pf-dup')).includes('Tim Jacobs') && !(await s.page.isVisible('#pf-email-dup')), 'two letters of each name already show similar names');
   await s.page.click('[data-act="hub:close"]');

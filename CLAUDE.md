@@ -26,7 +26,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
 | Settings, countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
-| Language engine, 18 more languages | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
+| Language engine, 22 more languages | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
 | Demo data | `js/sample.js` | – | |
 
@@ -42,7 +42,7 @@ GitHub runs every test, including the rules against the Firestore emulator, on e
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
-  that uses it (`common.js` if several parts use it). Every new line also goes in all 18 `js/lang/<code>.js` files: these are large,
+  that uses it (`common.js` if several parts use it). Every new line also goes in all 22 `js/lang/<code>.js` files: these are large,
   so don't read them – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js` fails if any language misses a line.
 - Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"`; never write "(optional)".
 - Changing who sees what means changing, together: `firestore.rules`, `plan()` in `js/store.js`, the POLICY copy in `tests/fake-firebase.js`,

@@ -216,7 +216,9 @@ people). The Add / Edit window warns as each letter is typed (`Duplicates.live`)
 similar names (an unfinished name matches the start of a longer one, or a long form of a short name: "Timoth" → Tim), names
 that sound alike (Stephen/Steven, Pillay/Pillai) and "vd Merwe" = "van der Merwe"; an email or mobile already on someone
 else's record is shown right under that box whatever the names (only when typed or changed there, and only for those who may
-see everyone). **Sensitivity** (`settings.dupSensitivity` 1–5, default 3; slider on Find duplicates, Administrators change it)
+see everyone) – and so is one that *starts* like what has been typed so far: a mobile from 7 digits ("+27 82…" read as "082…"
+in the church's own country), an email from 6 characters (or 2 and an "@"), and a street address from a house number and 3
+letters (Rd/Road, St/Street… the same; people in the household chosen for this person left out). **Sensitivity** (`settings.dupSensitivity` 1–5, default 3; slider on Find duplicates, Administrators change it)
 moves the "possibly" and "similar" lines and, at 4–5, starts after one letter of the surname; 70+ and the rule that a different
 first name never counts stay the same at every level. A match of 70+ can't be saved unless they tick "I've checked: this is a
 different person". That, and "Not the same person", is kept on both people (`notSame: [ids]`, in their private details).

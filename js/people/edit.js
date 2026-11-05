@@ -137,7 +137,7 @@
       (admin ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
       (admin ? '<label class="field">' + T('App access') + '<select id="pf-role">' + Object.keys(H.ROLES).map(function (r) { return '<option value="' + r + '"' + (p.appRole === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
-      '<div class="dlg-foot">' + (!isNew && admin ? '<button class="btn" style="margin-right:auto" data-act="people:archive" data-id="' + p.id + '">' + T('Mark as left') + '</button>' : '') +
+      '<div class="dlg-foot">' + (!isNew && admin ? '<span style="margin-right:auto;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" data-act="people:archive" data-id="' + p.id + '">' + T('Mark as left') + '</button><button class="btn" data-act="people:bin" data-id="' + p.id + '" title="' + esc(T('For a test person or someone added by mistake. They can be restored for 30 days.')) + '">' + H.icon(H.ICON.trash, 16) + T('Move to Bin') + '</button></span>' : '') +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:save">' + T(isNew ? 'Add person' : 'Save') + '</button></div>';
     H.modal(html, T(isNew ? 'Add a person' : 'Edit details'));
     if (!isNew && (deceased(p) || p.category === 'Deceased')) {   // someone who has died: only first and last name must be filled in

@@ -131,7 +131,7 @@
       if (!idNums) return { error: T('Press Search to look up ID numbers.') };
     }
     var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; });
-    var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted'; }) : visiblePeople();
+    var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted' && !p.binnedAt; }) : visiblePeople();
     if (!usesStatus) people = people.filter(function (p) { return p.active !== false; });
     var recs = people.map(function (p) { var v = {}, al = {}; F.forEach(function (f) { v[f.key] = f.get(p); if (f.alts) al[f.key] = f.alts(p); }); return { id: p.id, p: p, values: v, alts: al }; });
     var r = PS.run(recs, A, byKey, H.today());

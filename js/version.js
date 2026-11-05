@@ -4,7 +4,7 @@
  * About → Check for updates reads this file again from the website and compares, so keep the same layout:
  * version: three numbers (major.minor.patch), date: YYYY-MM-DD. */
 var ChurchHubVersion = {
-  version: '0.12.2',
+  version: '0.13.0',
   date: '2026-11-05',
   developer: 'pian1966',
   repo: 'pian1966/church-hub'

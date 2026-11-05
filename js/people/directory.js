@@ -42,7 +42,7 @@
     var famSize = {}; act.forEach(function (p) { if (p.familyId) famSize[p.familyId] = (famSize[p.familyId] || 0) + 1; });
     var fams = Object.keys(famSize), withKids = fams.filter(function (f) { return kids.some(function (k) { return k.familyId === f; }); }).length;
     var newPeople = count(act, function (p) { return (p.createdAt || '').slice(0, 10) >= yearAgo; });
-    var left = count(all, function (p) { return p.active === false && !p.deceasedAt && (p.archivedAt || '') >= yearAgo; }), died = count(all, function (p) { return (p.deceasedAt || '') >= yearAgo; });
+    var left = count(all, function (p) { return p.active === false && !p.deceasedAt && !p.binnedAt && (p.archivedAt || '') >= yearAgo; }), died = count(all, function (p) { return (p.deceasedAt || '') >= yearAgo; });
     // ages
     var ages = AGE_BANDS.map(function (b) { return [b[2], 0]; }), noAge = 0;
     act.forEach(function (p) { var a = age(p); if (a === '') { noAge++; return; } AGE_BANDS.forEach(function (b, i) { if (a >= b[0] && a <= b[1]) ages[i][1]++; }); });
@@ -164,13 +164,13 @@
     if (!canBasic()) filters = [['all', T('Directory')]];
     if (!filters.some(function (f) { return f[0] === state.f; })) state.f = 'all';
     var dead = state.f === 'deceased', q = state.q.trim().toLowerCase();
-    var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto; }) : visiblePeople();
+    var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto && !p.binnedAt; }) : visiblePeople();
     var shown = list.filter(function (p) {
       if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
       return matchesPerson(p, q);
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : T('People who agreed to be in the church directory.')) + '</p></div>' +
-      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
+      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + P.binLink() + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
       '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + T('Search by name, household, email or phone') + '" value="' + esc(state.q) + '"></label>' +
         (canBasic() ? '<a class="adv-link" href="#/people/search">' + T('Advanced search') + '</a>' : '') + '</div>' +

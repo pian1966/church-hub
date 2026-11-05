@@ -59,7 +59,7 @@
     var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>';
     if (!H.can('*')) return back + '<p class="empty">' + T('This is for Administrators.') + '</p>';
     var sug = lateSuggestions();
-    var open = S.find('people', function (p) { return p.familyRole !== 'child' && !p.mergedInto && p.maritalStatus === 'Widowed' && !isDead(p) && !lateSpouse(p) && !p.lateSpouseName && !sug.some(function (x) { return x.a === p.id; }); });
+    var open = S.find('people', function (p) { return p.familyRole !== 'child' && !p.mergedInto && !p.binnedAt && p.maritalStatus === 'Widowed' && !isDead(p) && !lateSpouse(p) && !p.lateSpouseName && !sug.some(function (x) { return x.a === p.id; }); });
     var died = function (p) { return p.deceasedAt ? T('died {date}', { date: H.fmt(p.deceasedAt, true) }) : T('has died'); };
     var card = function (p, note) { return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc(note) + '</small></span></a>'; };
     return back + '<div class="page-head"><div><h1>' + T('Late spouses') + '</h1><p class="lead">' + T('Widows and widowers – and people who have died – who were probably married to someone who has died. Church Hub compares households, wedding dates, email addresses, phone numbers, surnames and ages. Please check each one: these are only suggestions.') + '</p></div></div>' +

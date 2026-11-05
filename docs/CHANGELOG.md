@@ -186,3 +186,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 5 Nov 2026 (0.10.1): Care groups – the large “Not a carer / Make carer” button beside each member is now a small star: faint until you point at it, filled green for a carer (the words show when you hover).
 - ✅ 5 Nov 2026 (0.10.2): “Help improve the … wording on this page” now sits at the very bottom of each page, smaller and in a lighter grey.
 - ✅ 5 Nov 2026 (0.10.3): “Help improve the … wording” is now a small footnote at the bottom right of each page.
+- ✅ 5 Nov 2026 (0.10.4): details lists (Me, a person's page…) – the labels column is only as wide as its longest label in the language being used (at most 45%), so long email addresses get more room.

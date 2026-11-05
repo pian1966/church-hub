@@ -1595,6 +1595,8 @@ I18n.add('ts', {
     "Short form of the same first name ({a} / {b})": "Xivumbeko xo koma xa vito leri fanaka ({a} / {b})",
     "First names differ by a letter or two": "Mavito yo sungula ma hambana hi letere rin'we kumbe mambirhi",
     "First name given as an initial": "Vito ro sungula ri nyikiwile tanihi letere ro sungula",
+    "One first name is the start of the other ({a} / {b})": "Vito rin'wana ro sungula i masungulo ya rin'wana ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Vanhu vambirhi vo hambana eka Elvanto – languta na kona",
     "Same surname": "Xivongo lexi fanaka",
     "Surnames differ by a letter or two": "Swivongo swi hambana hi letere rin'we kumbe mambirhi",
     "Part of the surname matches": "Xiphemu xa xivongo xa fana",

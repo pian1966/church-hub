@@ -780,6 +780,8 @@ I18n.add('en-US', {
     "Short form of the same first name ({a} / {b})": "Short form of the same first name ({a} / {b})",
     "First names differ by a letter or two": "First names differ by a letter or two",
     "First name given as an initial": "First name given as an initial",
+    "One first name is the start of the other ({a} / {b})": "One first name is the start of the other ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Two separate people in Elvanto – check there too",
     "Same surname": "Same surname",
     "Surnames differ by a letter or two": "Surnames differ by a letter or two",
     "Part of the surname matches": "Part of the surname matches",

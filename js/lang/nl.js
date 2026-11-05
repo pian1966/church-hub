@@ -1595,6 +1595,8 @@ I18n.add('nl', {
     "Short form of the same first name ({a} / {b})": "Korte vorm van dezelfde voornaam ({a} / {b})",
     "First names differ by a letter or two": "Voornamen verschillen een of twee letters",
     "First name given as an initial": "Voornaam als initiaal gegeven",
+    "One first name is the start of the other ({a} / {b})": "De ene voornaam is het begin van de andere ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Twee aparte personen in Elvanto – kijk daar ook",
     "Same surname": "Zelfde achternaam",
     "Surnames differ by a letter or two": "Achternamen verschillen een of twee letters",
     "Part of the surname matches": "Een deel van de achternaam komt overeen",

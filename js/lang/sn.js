@@ -1595,6 +1595,8 @@ I18n.add('sn', {
     "Short form of the same first name ({a} / {b})": "Zita rimwe chete rakapfupikiswa ({a} / {b})",
     "First names differ by a letter or two": "Mazita anosiyana netsamba imwe kana mbiri",
     "First name given as an initial": "Zita rapihwa setsamba yekutanga chete",
+    "One first name is the start of the other ({a} / {b})": "Rimwe zita rekutanga ndiko kutanga kwerimwe ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Vanhu vaviri vakasiyana muElvanto – tarisai ipapo zvakare",
     "Same surname": "Zita remhuri rimwe chete",
     "Surnames differ by a letter or two": "Mazita emhuri anosiyana netsamba imwe kana mbiri",
     "Part of the surname matches": "Chikamu chezita remhuri chinoenderana",

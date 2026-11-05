@@ -1595,6 +1595,8 @@ I18n.add('it', {
     "Short form of the same first name ({a} / {b})": "Forma breve dello stesso nome ({a} / {b})",
     "First names differ by a letter or two": "I nomi differiscono di una o due lettere",
     "First name given as an initial": "Nome indicato con l’iniziale",
+    "One first name is the start of the other ({a} / {b})": "Un nome è l’inizio dell’altro ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Due persone distinte in Elvanto: controlla anche lì",
     "Same surname": "Stesso cognome",
     "Surnames differ by a letter or two": "I cognomi differiscono di una o due lettere",
     "Part of the surname matches": "Una parte del cognome corrisponde",

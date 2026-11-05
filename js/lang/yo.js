@@ -1595,6 +1595,8 @@ I18n.add('yo', {
     "Short form of the same first name ({a} / {b})": "Ìkékúrú orúkọ àkọ́kọ́ kan náà ({a} / {b})",
     "First names differ by a letter or two": "Àwọn orúkọ àkọ́kọ́ yàtọ̀ ní lẹ́tà kan tàbí méjì",
     "First name given as an initial": "A fi lẹ́tà àkọ́kọ́ nìkan sí orúkọ àkọ́kọ́",
+    "One first name is the start of the other ({a} / {b})": "Orúkọ àkọ́kọ́ kan ni ìbẹ̀rẹ̀ èkejì ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Ènìyàn méjì ọ̀tọ̀ọ̀tọ̀ nínú Elvanto – ṣàyẹ̀wò níbẹ̀ pẹ̀lú",
     "Same surname": "Orúkọ ìdílé kan náà",
     "Surnames differ by a letter or two": "Àwọn orúkọ ìdílé yàtọ̀ ní lẹ́tà kan tàbí méjì",
     "Part of the surname matches": "Apá kan orúkọ ìdílé bá a mu",

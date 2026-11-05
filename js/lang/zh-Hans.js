@@ -780,6 +780,8 @@ I18n.add('zh-Hans', {
     "Short form of the same first name ({a} / {b})": "同名的缩写形式 ({a} /{b})",
     "First names differ by a letter or two": "名字相差一两个字母",
     "First name given as an initial": "作为首字母给出的名字",
+    "One first name is the start of the other ({a} / {b})": "一个名字是另一个名字的开头 ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Elvanto 中是两个不同的人——也请在那里核对",
     "Same surname": "同姓",
     "Surnames differ by a letter or two": "姓氏相差一两个字母",
     "Part of the surname matches": "部分姓氏匹配",

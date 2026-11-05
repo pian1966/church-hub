@@ -1595,6 +1595,8 @@ I18n.add('nso', {
     "Short form of the same first name ({a} / {b})": "Sebopego se sekopana sa leina le le swanago ({a} / {b})",
     "First names differ by a letter or two": "Maina a mathomo a fapana ka tlhaka e tee goba tše pedi",
     "First name given as an initial": "Leina la mathomo le filwe bjalo ka tlhaka ya mathomo",
+    "One first name is the start of the other ({a} / {b})": "Leina le lengwe la mathomo ke mathomo a le lengwe ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Batho ba babedi ba go fapana go Elvanto – lebelela le moo",
     "Same surname": "Sefane se se swanago",
     "Surnames differ by a letter or two": "Difane di fapana ka tlhaka e tee goba tše pedi",
     "Part of the surname matches": "Karolo ya sefane e a swana",

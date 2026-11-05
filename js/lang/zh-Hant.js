@@ -780,6 +780,8 @@ I18n.add('zh-Hant', {
     "Short form of the same first name ({a} / {b})": "同名的縮寫形式 ({a} /{b})",
     "First names differ by a letter or two": "名字相差一兩個字母",
     "First name given as an initial": "作為首字母給出的名字",
+    "One first name is the start of the other ({a} / {b})": "一個名字是另一個名字的開頭 ({a} / {b})",
+    "Two separate people in Elvanto – check there too": "Elvanto 中是兩個不同的人——也請在那裡核對",
     "Same surname": "同姓",
     "Surnames differ by a letter or two": "姓氏相差一兩個字母",
     "Part of the surname matches": "部分姓氏匹配",

@@ -20,13 +20,12 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out
 - ⬜ Church: set up the robot (docs/ELVANTO-ROBOT.md steps 1–5; **re-publish the rules**), switch over with step 6
 - ⬜ Later: Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)
-- ⬜ Leave Manager features not yet in Church Hub (checked 29 Oct 2026 against leave-manager's README and guides):
-  wallchart, month calendar and year planner; printable leave reports with signature lines, all-staff summary and the
-  payroll (unpaid leave) report; Dashboard insights (who's away today, leave still to take, cover problems in the next 8
-  weeks, busiest months, sick-leave patterns); editing cover rules / blocked days (imported rules are already enforced);
-  stand-in approver; a leave History page (the audit log has the events); emails (new request with a Review button,
-  decision, cancelled, Monday "Who's away this week", "use it or lose it" reminders); holidays and school terms updating
-  themselves; Google Calendar mirror; the Google Form; help videos; dark mode.
+- ⬜ Leave Manager features still not in Church Hub (rechecked 5 Nov 2026; the wallchart, calendar, year planner, reports,
+  payroll, Dashboard, cover rules, stand-in, Change and the email prompts were added in 0.16–0.19): emails sent
+  automatically (today they open ready to send) and approving from the email without signing in; a leave History page
+  (the audit log has the events); holidays and school terms updating themselves; the Google Calendar mirror; the Google
+  Form; help videos; dark mode.
+- ⬜ Church: check the “lost on 1 February” rule (no carry-over) against the Basic Conditions of Employment Act with a labour adviser.
 - ⬜ Church: remove the first Elvanto import (Import page), re-export (fewer columns), import again and check
 - ⬜ Church: trial the Leave Manager import, compare balances, then re-import at switch-over and retire Leave Manager (archive the sheet)
 - ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)

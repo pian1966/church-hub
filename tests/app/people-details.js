@@ -160,4 +160,23 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('#pf-dup-ok')), 'a Pastor can also confirm “a different person” when adding someone');
   await finish(s);
 
+
+  console.log('A home address from the family:');
+  const addrSeed = seedDocs();
+  addrSeed['details/p10'].address = { street: '4 Cormorant Close', street2: 'Amberfield', city: 'Howick', postcode: '3290', province: 'KwaZulu-Natal', country: 'South Africa' };
+  delete addrSeed['details/p11'].address; delete addrSeed['details/p12'].address;
+  addrSeed['families/f1'].couples = ['p10|p11'];
+  s = await session('thandi.mokoena@example.com', addrSeed); await s.go('people/p/p11');
+  check((await s.text()).includes('Probably the same as Jason Naidoo') && (await s.text()).includes('4 Cormorant Close, Amberfield'), 'a confirmed spouse with no address: their page suggests the spouse’s address');
+  await s.page.click('[data-act="people:copyaddress"][data-id="p11"]'); await s.settle(); await s.page.waitForTimeout(300); let dd = await s.docsNow();
+  check(dd['details/p11'].address && dd['details/p11'].address.street === '4 Cormorant Close' && !(await s.text()).includes('Probably the same as'), '“Use this address” copies it, and the suggestion goes');
+  check(Object.values(dd).some(d => d.action && /Home address of Priya Naidoo copied from Jason Naidoo/.test(d.action)), '…written in the history log');
+  await s.go('people/p/p12');
+  check((await s.text()).includes('Probably the same as') && (await s.text()).includes('4 Cormorant Close'), 'a child with no address: their parents’ address is suggested (once, though both parents have it)');
+  check((await s.page.$$('[data-act="people:copyaddress"][data-id="p12"]')).length === 1, '…one button, as both parents share one address');
+  await finish(s);
+  s = await session('grace.ndlovu@example.com', addrSeed); await s.go('people/p/p12');
+  check(!(await s.page.$('[data-act="people:copyaddress"]')), 'Children’s ministry (who can’t change addresses) isn’t offered it');
+  await finish(s);
+
 };

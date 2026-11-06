@@ -145,7 +145,7 @@
     }
     if (canBasic()) parts = parts.concat(householdNames(p));
     if (addr) parts.push(addr);
-    var text = parts.join(' ');
+    var text = parts.join(' | ');   // a quoted phrase must sit within one part (a name, the address…)
     if (H.matches(text, q)) return true;
     // A phone number typed with its digits only, and "+27 82…" and "082…" finding each other (the church's own country)
     var qDigits = localDigits(q);

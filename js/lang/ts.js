@@ -173,6 +173,7 @@ I18n.add('ts', {
     "Quick menu": "Nxaxamelo wo hatlisa",
     "Language": "Ririmi",
     "Close": "Pfala",
+    "Type or choose a field…": "Thayipa kumbe u hlawula xivandla…",
     "Only where it’s empty – leave anything already filled in": "Ntsena laha ku nga riki na nchumu – siya leswi se swi tataka",
     "already filled in": "se swi tatisiwile",
     "people with no home address": "vanhu lava nga riki na adiresi ya le kaya",

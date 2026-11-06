@@ -173,6 +173,7 @@ I18n.add('ss', {
     "Quick menu": "Imenyu lesheshako",
     "Language": "Lulwimi",
     "Close": "Vala",
+    "Type or choose a field…": "Bhala noma ukhetse sikhala…",
     "Only where it’s empty – leave anything already filled in": "Lapho kungenalutfo kuphela – shiya lokusegcwalisiwe",
     "already filled in": "sekugcwalisiwe",
     "people with no home address": "bantfu labangenalo likheli lasekhaya",

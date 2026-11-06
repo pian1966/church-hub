@@ -173,6 +173,7 @@ I18n.add('nl', {
     "Quick menu": "Snelmenu",
     "Language": "Taal",
     "Close": "Sluiten",
+    "Type or choose a field…": "Typ of kies een veld…",
     "Only where it’s empty – leave anything already filled in": "Alleen waar het leeg is – wat al ingevuld is blijft",
     "already filled in": "al ingevuld",
     "people with no home address": "mensen zonder huisadres",

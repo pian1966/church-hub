@@ -2,6 +2,7 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Type or choose a field…", "Tik of kies ’n veld…", "Thayipha noma ukhethe inkambu…", "Chwetheza okanye ukhethe intsimi…"],
     ["Only where it’s empty – leave anything already filled in", "Net waar dit leeg is – los wat reeds ingevul is", "Lapho kungenalutho kuphela – shiya okuseligcwalisiwe", "Apho kungenanto kuphela – shiya okuseligcwalisiwe"],
     ["already filled in", "reeds ingevul", "sekugcwalisiwe", "sele kuzalisiwe"],
     ["people with no home address", "mense sonder ’n huisadres", "abantu abangenalo ikheli lasekhaya", "abantu abangenayo idilesi yasekhaya"],

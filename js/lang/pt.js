@@ -173,6 +173,7 @@ I18n.add('pt', {
     "Quick menu": "Menu rápido",
     "Language": "Idioma",
     "Close": "Fechar",
+    "Type or choose a field…": "Escreva ou escolha um campo…",
     "Only where it’s empty – leave anything already filled in": "Só onde está vazio – o que já está preenchido fica",
     "already filled in": "já preenchido",
     "people with no home address": "pessoas sem morada",

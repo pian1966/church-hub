@@ -173,6 +173,7 @@ I18n.add('ve', {
     "Quick menu": "Mutevhe wa u ṱavhanya",
     "Language": "Luambo",
     "Close": "Vala",
+    "Type or choose a field…": "Thaipani kana ni nange tshikhala…",
     "Only where it’s empty – leave anything already filled in": "Fhedzi hune ha vha hu si na tshithu – siani zwo no ḓadzwaho",
     "already filled in": "zwo no ḓadzwa",
     "people with no home address": "vhathu vha si na ḓiresi ya hayani",

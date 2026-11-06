@@ -173,6 +173,7 @@ I18n.add('st', {
     "Quick menu": "Lenane le potlakileng",
     "Language": "Puo",
     "Close": "Kwala",
+    "Type or choose a field…": "Ngola kapa kgetha sebaka…",
     "Only where it’s empty – leave anything already filled in": "Feela moo ho se nang letho – tlohela tse seng di tladitswe",
     "already filled in": "di se di tladitswe",
     "people with no home address": "batho ba se nang aterese ya lapeng",

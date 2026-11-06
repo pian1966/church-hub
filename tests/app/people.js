@@ -138,6 +138,25 @@ module.exports = async function (ctx) {
   const onames = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.getAttribute('href')));
   check(onames.length === 1 && onames[0].endsWith('/p16'), 'Advanced search finds people by their church office notes');
   check(!(await s.page.$$eval('.adv-field[data-i="0"] option', o => o.map(x => x.textContent))).some(x => /pastoral|medical/i.test(x)), 'pastoral and medical notes are never searchable');
+  // Add a column: type part of a field's name
+  await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
+  await s.page.click('.adv-fbtn[data-i="col"]'); await s.page.keyboard.type('marit');
+  const colHits = await s.page.$$eval('.adv-fpick[data-i="col"] .adv-fo', o => o.filter(x => x.offsetParent).map(x => x.textContent));
+  check(JSON.stringify(colHits) === '["Marital status"]', 'Add a column: typing “marit” narrows the list to Marital status');
+  await s.page.keyboard.press('Enter'); await s.settle();
+  check((await s.page.$$eval('.adv-col', c => c.map(x => x.textContent))).some(x => /Marital status/.test(x)) && !(await s.page.$('.adv-fpick[data-i="col"] .adv-fo[data-key="marital"]')),
+    '…Enter adds it as a column (and it leaves the list of columns to add)');
+  // Quotes: an exact phrase
+  await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p16'))); p.address = { street: '4 Amber Glen', city: 'Howick' }; Store.put('people', p);
+    const q = JSON.parse(JSON.stringify(Store.get('people', 'p17'))); q.address = { street: '9 Glen Rd', street2: 'Amber Valley', city: 'Howick' }; Store.put('people', q); }); await s.settle();
+  await s.page.selectOption('.adv-field[data-i="0"]', 'address'); await s.page.fill('input.adv-v[data-i="0"]', 'amber glen'); await s.page.click('[data-act="people:advrun"]');
+  const loose = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.getAttribute('href').split('/').pop()));
+  await s.page.fill('input.adv-v[data-i="0"]', '"amber glen"'); await s.page.click('[data-act="people:advrun"]');
+  const exact = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.getAttribute('href').split('/').pop()));
+  check(loose.includes('p16') && loose.includes('p17') && exact.join() === 'p16', 'Advanced search: amber glen finds both words anywhere; "amber glen" in quotes only the exact phrase');
+  await s.go('people'); await s.page.fill('#pp-q', '"amber glen"'); await s.page.waitForTimeout(600);
+  const listHits = await s.page.$$eval('a[href^="#/people/p/p1"]', as => as.map(a => a.getAttribute('href').split('/').pop()));
+  check(listHits.includes('p16') && !listHits.includes('p17'), 'the People list search understands quotes too');
   // Changing many people at once
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]');

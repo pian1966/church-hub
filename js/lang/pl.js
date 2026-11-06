@@ -173,6 +173,7 @@ I18n.add('pl', {
     "Quick menu": "Szybkie menu",
     "Language": "Język",
     "Close": "Zamknij",
+    "Type or choose a field…": "Wpisz lub wybierz pole…",
     "Only where it’s empty – leave anything already filled in": "Tylko gdzie jest puste – to, co wypełnione, zostaje",
     "already filled in": "już wypełnione",
     "people with no home address": "osoby bez adresu domowego",

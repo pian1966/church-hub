@@ -173,6 +173,7 @@ I18n.add('am', {
     "Quick menu": "ፈጣን ምናሌ",
     "Language": "ቋንቋ",
     "Close": "ዝጋ",
+    "Type or choose a field…": "መስክ ይተይቡ ወይም ይምረጡ…",
     "Only where it’s empty – leave anything already filled in": "ባዶ በሆነበት ብቻ – አስቀድሞ የተሞላውን ተወው",
     "already filled in": "አስቀድሞ የተሞላ",
     "people with no home address": "የቤት አድራሻ የሌላቸው ሰዎች",

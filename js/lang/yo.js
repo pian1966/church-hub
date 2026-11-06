@@ -173,6 +173,7 @@ I18n.add('yo', {
     "Quick menu": "Àkójọ àṣàyàn kíákíá",
     "Language": "Èdè",
     "Close": "Pa á dé",
+    "Type or choose a field…": "Tẹ tàbí yan ààyè kan…",
     "Only where it’s empty – leave anything already filled in": "Níbi tí ó ṣófo nìkan – fi èyí tí a ti kún sílẹ̀",
     "already filled in": "a ti kún un tẹ́lẹ̀",
     "people with no home address": "àwọn tí kò ní àdírẹ́sì ilé",

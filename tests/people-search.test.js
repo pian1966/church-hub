@@ -37,6 +37,14 @@ check(run([F('first', 'nhas', 'a')]) === 'bd', 'does not contain');
 check(run([F('cat', 'eq', 'Partner')]) === 'ac', 'choice is');
 check(run([F('first', 'has', 'ann')]) === 'a' && run([F('first', 'has', 'an n')]) === 'a' && run([F('first', 'has', 'ann x')]) === '', 'contains: every word typed must appear (“an n”), in any order');
 check(run([F('cat', 'ne', 'Partner')]) === 'bd', 'choice is not');
+check(JSON.stringify(PS.words('"amber glen" pike')) === '["amber glen","pike"]' && JSON.stringify(PS.words('\u201cSt  Johns\u201d')) === '["St Johns"]' && JSON.stringify(PS.words('"open quote')) === '["open quote"]', 'words in quotes stay together (straight or curly quotes, an unfinished quote too)');
+{
+  const ppl = [{ id: 'g', values: { addr: '4 Amber Glen, Howick' } }, { id: 'r', values: { addr: '9 Glen Rd, Amber Valley' } }, { id: 'o', values: { addr: '2 Amberglen' } }];
+  const has = q => PS.run(ppl, { filters: [F('addr', 'has', q)], match: 'all' }, { addr: { type: 'text', label: 'Address' } }, TODAY).ids.join('');
+  check(has('amber glen') === 'gro' && has('"amber glen"') === 'g' && has('"Amber  Glen" howick') === 'g', 'contains "amber glen" in quotes: only the exact phrase (not Glen Rd, Amber Valley, nor Amberglen)');
+  const eq = q => PS.run(ppl, { filters: [F('addr', 'eq', q)], match: 'all' }, { addr: { type: 'text', label: 'Address' } }, TODAY).ids.join('');
+  check(eq('"2 Amberglen"') === 'o', 'equals with quotes round the value: the value itself');
+}
 
 console.log('Lists, numbers, yes/no');
 check(run([F('teams', 'inc', 'welcome')]) === 'ac', 'list includes');

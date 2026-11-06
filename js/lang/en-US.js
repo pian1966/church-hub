@@ -172,6 +172,7 @@ I18n.add('en-US', {
     "Main menu": "Main menu",
     "Quick menu": "Quick menu",
     "Close": "Close",
+    "Type or choose a field…": "Type or choose a field…",
     "Only where it’s empty – leave anything already filled in": "Only where it’s empty – leave anything already filled in",
     "already filled in": "already filled in",
     "people with no home address": "people with no home address",

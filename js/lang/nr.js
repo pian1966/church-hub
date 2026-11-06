@@ -173,6 +173,7 @@ I18n.add('nr', {
     "Quick menu": "Imenyu erhabako",
     "Language": "Ilimi",
     "Close": "Vala",
+    "Type or choose a field…": "Tayipha namkha ukhethe isiphande…",
     "Only where it’s empty – leave anything already filled in": "Lapho kungenalutho kwaphela – tjhiya okusele kugcwalisiwe",
     "already filled in": "sekugcwalisiwe",
     "people with no home address": "abantu abangenalo ikheli lekhaya",

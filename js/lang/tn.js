@@ -173,6 +173,7 @@ I18n.add('tn', {
     "Quick menu": "Lenaane le le bonako",
     "Language": "Puo",
     "Close": "Tswala",
+    "Type or choose a field…": "Kwala kgotsa tlhopha lefelo…",
     "Only where it’s empty – leave anything already filled in": "Fela fa go se na sepe – tlogela tse di setseng di tladitswe",
     "already filled in": "di setse di tladitswe",
     "people with no home address": "batho ba ba senang aterese ya legae",

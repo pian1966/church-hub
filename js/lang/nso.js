@@ -173,6 +173,7 @@ I18n.add('nso', {
     "Quick menu": "Lenaneo le le akgofilego",
     "Language": "Polelo",
     "Close": "Tswalela",
+    "Type or choose a field…": "Tlanya goba kgetha lefelo…",
     "Only where it’s empty – leave anything already filled in": "Fela moo go se nago selo – tlogela tšeo di šetšego di tladitšwe",
     "already filled in": "di šetše di tladitšwe",
     "people with no home address": "batho bao ba se nago aterese ya legae",

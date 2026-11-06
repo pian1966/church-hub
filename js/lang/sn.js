@@ -173,6 +173,7 @@ I18n.add('sn', {
     "Quick menu": "Menyu inokurumidza",
     "Language": "Mutauro",
     "Close": "Vhara",
+    "Type or choose a field…": "Nyora kana sarudza munda…",
     "Only where it’s empty – leave anything already filled in": "Chete pasina chinhu – siya zvakatozadzwa",
     "already filled in": "zvakatozadzwa",
     "people with no home address": "vanhu vasina kero yekumba",

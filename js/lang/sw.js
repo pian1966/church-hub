@@ -173,6 +173,7 @@ I18n.add('sw', {
     "Quick menu": "Menyu ya haraka",
     "Language": "Lugha",
     "Close": "Funga",
+    "Type or choose a field…": "Andika au chagua sehemu…",
     "Only where it’s empty – leave anything already filled in": "Pale tu palipo tupu – acha kilichojazwa tayari",
     "already filled in": "imejazwa tayari",
     "people with no home address": "watu wasio na anwani ya nyumbani",

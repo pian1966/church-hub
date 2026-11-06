@@ -169,19 +169,20 @@
     var A = state.adv, F = searchFields(), byKey = {}, groups = [];
     F.forEach(function (f) { byKey[f.key] = f; if (groups.indexOf(f.group) < 0) groups.push(f.group); });
     A.cols = A.cols.filter(function (k) { return byKey[k] && !byKey[k].noCol && k !== 'name'; });
-    var fieldSelect = function (f, i) {   // like Elvanto: open the list, then type part of a field's name ("marit") to narrow it down
-      var cur = byKey[f.field];
+    // like Elvanto: open the list, then type part of a field's name ("marit") to narrow it down. Also for Add a column (i = 'col').
+    var fieldSelect = function (f, i, list, label) {
+      var cur = byKey[f.field], col = i === 'col', FL = list || F;
       return '<span class="adv-fpick" data-i="' + i + '">' +
-        '<button type="button" class="adv-fbtn" data-i="' + i + '" aria-haspopup="listbox" aria-expanded="false" aria-label="' + esc(T('Filter {n}: search on {field}', { n: i + 1, field: cur ? cur.label : T('nothing yet') })) + '">' +
-          '<span>' + esc(cur ? cur.label : T('Choose a field…')) + '</span></button>' +
+        '<button type="button" class="adv-fbtn" data-i="' + i + '" aria-haspopup="listbox" aria-expanded="false" aria-label="' + esc(col ? T('Add a column') : T('Filter {n}: search on {field}', { n: i + 1, field: cur ? cur.label : T('nothing yet') })) + '">' +
+          '<span>' + esc(label || (cur ? cur.label : T('Choose a field…'))) + '</span></button>' +
         '<span class="adv-fpop" hidden><input type="search" class="adv-ff" data-i="' + i + '" placeholder="' + esc(T('Type to find a field…')) + '" autocomplete="off" aria-label="' + esc(T('Type to find a field')) + '" aria-controls="adv-fl' + i + '">' +
-          '<span class="adv-flist" id="adv-fl' + i + '" role="listbox">' + groups.map(function (g) {
-            return '<span class="adv-fg" role="group" aria-label="' + esc(g) + '"><span class="adv-fgh">' + esc(g) + '</span>' + F.filter(function (x) { return x.group === g; }).map(function (x) {
+          '<span class="adv-flist" id="adv-fl' + i + '" role="listbox">' + groups.filter(function (g) { return FL.some(function (x) { return x.group === g; }); }).map(function (g) {
+            return '<span class="adv-fg" role="group" aria-label="' + esc(g) + '"><span class="adv-fgh">' + esc(g) + '</span>' + FL.filter(function (x) { return x.group === g; }).map(function (x) {
               return '<button type="button" class="adv-fo' + (x.key === f.field ? ' on' : '') + '" role="option" aria-selected="' + (x.key === f.field) + '" data-i="' + i + '" data-key="' + x.key + '" data-text="' + esc(x.label) + '">' + esc(x.label) + '</button>';
             }).join('') + '</span>';
           }).join('') + '<span class="adv-fnone muted" hidden>' + T('No field matches') + '</span></span></span>' +
-        '<select class="adv-field sr-only" data-i="' + i + '" tabindex="-1" aria-hidden="true">' + (cur ? '' : '<option value="">' + T('Choose…') + '</option>') + groups.map(function (g) {   // the same list, for the tests and screen readers
-          return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g; }).map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
+        '<select class="' + (col ? '' : 'adv-field ') + 'sr-only"' + (col ? ' id="adv-addcol"' : '') + ' data-i="' + i + '" tabindex="-1" aria-hidden="true">' + (cur ? '' : '<option value="">' + T('Choose…') + '</option>') + groups.map(function (g) {   // the same list, for the tests and screen readers
+          return '<optgroup label="' + esc(g) + '">' + FL.filter(function (x) { return x.group === g; }).map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
         }).join('') + '</select></span>';
     };
     var word = A.match === 'any' ? 'OR' : 'AND', logicNote = '';
@@ -209,9 +210,8 @@
           '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="1"' + (i < A.cols.length - 1 ? '' : ' disabled') + ' aria-label="' + esc(T('Move {column} right', { column: byKey[k].label })) + '">›</button>' +
           '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="0" aria-label="' + esc(T('Remove column {column}', { column: byKey[k].label })) + '">' + H.icon(H.ICON.x, 14) + '</button></span>';
       }).join('') + '</div>' +
-      '<label class="field" style="max-width:320px;margin-top:12px">' + T('Add a column') + '<select id="adv-addcol"><option value="">' + T('Choose…') + '</option>' + groups.map(function (g) {
-        return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g && x.key !== 'name' && !x.noCol && A.cols.indexOf(x.key) < 0; }).map(function (x) { return '<option value="' + x.key + '">' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
-      }).join('') + '</select></label></section>' +
+      '<div class="field adv-addcol-w" style="max-width:320px;margin-top:12px"><span>' + T('Add a column') + '</span>' +
+        fieldSelect({ field: '' }, 'col', F.filter(function (x) { return x.key !== 'name' && !x.noCol && A.cols.indexOf(x.key) < 0; }), T('Type or choose a field…')) + '</div></section>' +
       '<div class="btns" style="margin:4px 0 18px"><button class="btn primary" data-act="people:advrun">' + H.icon(H.ICON.search, 18) + T('Search') + '</button><button class="btn" data-act="people:advreset">' + T('Start again') + '</button></div></div>';
     if (!A.ran) return html;
     var r = advRun(F);
@@ -336,7 +336,9 @@
     fieldActive(pop, q ? first : pop.querySelector('.adv-fo.on') || first);
   }
   function fieldPick(o) {
-    var i = o.dataset.i, sel = document.querySelector('.adv-field[data-i="' + i + '"]'); if (!sel) return;
+    var i = o.dataset.i;
+    if (i === 'col') { fieldClose(); state.adv.cols.push(o.dataset.key); H.render(); var cb = document.querySelector('.adv-fbtn[data-i="col"]'); if (cb) cb.focus(); return; }
+    var sel = document.querySelector('.adv-field[data-i="' + i + '"]'); if (!sel) return;
     fieldClose();
     if (sel.value !== o.dataset.key) { sel.value = o.dataset.key; advSync(sel); H.render(); }
     var b = document.querySelector('.adv-fbtn[data-i="' + i + '"]'); if (b) b.focus();

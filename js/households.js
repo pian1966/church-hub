@@ -185,7 +185,35 @@ var Households = (function () {
     return couples(people, families).filter(function (c) { return !c.confirmed || c.copy || c.differ || c.mark; });
   }
 
-  return { RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
+  /**
+   * Someone with no home address probably lives where their family does. The addresses that could be theirs, to suggest:
+   *  - an adult: their confirmed spouse or partner's (couples from couples(), confirmed by a person);
+   *  - a child: the adults in their household(s) and the adults linked to them (parents, guardians).
+   * Returns [{ from: personId, address }], one per different address (a child of separated parents may have two), at most 3.
+   */
+  function addressSuggestions(p, people, couplesList, links) {
+    var has = function (x) { var a = x && x.address; return !!(a && (String(a.street || '').trim() || String(a.street2 || '').trim() || String(a.city || '').trim())); };
+    var alive = function (x) { return x && x.active !== false && !x.deceasedAt && x.category !== 'Deceased' && !x.mergedInto; };
+    if (!alive(p) || has(p)) return [];
+    var byId = {}; (people || []).forEach(function (x) { byId[x.id] = x; });
+    var from = [];
+    if (p.familyRole === 'child') {
+      householdsOf(p).forEach(function (h) { (people || []).forEach(function (x) { if (x.familyRole !== 'child' && inHousehold(x, h)) from.push(x); }); });
+      linksOf(p.id, links).forEach(function (l) { if (l.adultId && byId[l.adultId]) from.push(byId[l.adultId]); });
+    } else {
+      (couplesList || []).forEach(function (c) { if (c.confirmed && (c.a === p.id || c.b === p.id)) from.push(byId[c.a === p.id ? c.b : c.a]); });
+    }
+    var key = function (a) { return ['street', 'street2', 'city', 'postcode'].map(function (k) { return String(a[k] || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }).join('|'); };
+    var seen = {}, out = [];
+    from.forEach(function (x) {
+      if (!alive(x) || !has(x) || x.id === p.id) return;
+      var k = key(x.address); if (seen[k]) return; seen[k] = 1;
+      out.push({ from: x.id, address: JSON.parse(JSON.stringify(x.address)) });
+    });
+    return out.slice(0, 3);
+  }
+
+  return { addressSuggestions: addressSuggestions, RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
     consentAdults: consentAdults, childrenOf: childrenOf, defaultsFor: defaultsFor, suggestedLinks: suggestedLinks, needs: needs,
     couples: couples, couplesToCheck: couplesToCheck, pairKey: pairKey, weddingOf: weddingOf, lateSpouseSuggestions: lateSpouseSuggestions };
 })();

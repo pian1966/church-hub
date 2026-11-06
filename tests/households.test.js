@@ -131,5 +131,27 @@ console.log('Late spouses: who a widow or widower was probably married to');
   ok(!s4.some(x => x.a === 'jo' || x.a === 'al'), 'not someone whose married partner is alive in their household');
 }
 
+console.log('A home address from the family');
+{
+  const ad = (st, sub) => ({ street: st, street2: sub || '', city: 'Howick', postcode: '3290', province: 'KwaZulu-Natal' });
+  const ppl = [
+    { id: 'pete', familyRole: 'adult', familyId: 'w', address: ad('4 Cormorant Close', 'Amberfield') }, { id: 'ann', familyRole: 'adult', familyId: 'w' },
+    { id: 'kim', familyRole: 'child', familyId: 'w' }, { id: 'sam', familyRole: 'child', familyId: 'w', householdIds: ['x'] },
+    { id: 'max', familyRole: 'adult', familyId: 'x', address: ad('9 Link Road', 'Greendale') }, { id: 'liz', familyRole: 'adult', familyId: 'y' },
+    { id: 'tom', familyRole: 'adult', familyId: 'y', address: ad('1 Oak Rd') }, { id: 'bea', familyRole: 'adult', familyId: 'z', deceasedAt: '2024-01-01' },
+    { id: 'kai', familyRole: 'child', familyId: '' }, { id: 'nan', familyRole: 'adult', familyId: 'q', address: ad('3 Elm St') }
+  ];
+  const cps = [{ a: 'pete', b: 'ann', confirmed: true }, { a: 'liz', b: 'tom', confirmed: false }];
+  const links = [{ childId: 'kai', adultId: 'nan' }];
+  const sug = id => HS.addressSuggestions(ppl.find(x => x.id === id), ppl, cps, links);
+  ok(sug('ann').length === 1 && sug('ann')[0].from === 'pete' && sug('ann')[0].address.street === '4 Cormorant Close', 'a confirmed spouse with no address: their spouse’s address');
+  ok(sug('liz').length === 0, 'a couple not yet confirmed: no suggestion');
+  ok(sug('kim').length === 1 && sug('kim')[0].from === 'pete', 'a child: the address of the adults in their household (same address only once)');
+  ok(sug('sam').map(x => x.from).join() === 'pete,max', 'a child living in two homes: both addresses');
+  ok(sug('kai').length === 1 && sug('kai')[0].from === 'nan', 'a child with no household: their linked parent or guardian’s address');
+  ok(sug('pete').length === 0 && sug('bea').length === 0, 'not for someone who has an address, or who has died');
+  const copy = sug('ann')[0].address; copy.street = 'changed'; ok(ppl[0].address.street === '4 Cormorant Close', 'the suggestion is a copy (changing it leaves the original alone)');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');
 process.exit(fails ? 1 : 0);

@@ -112,7 +112,7 @@
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
       (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + ' ' + H.mapLink(addressLines(p).join(', ')) + '</dd>' :
-        !full && P.contactHtml(p, 'address') ? '<dt>' + T('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : '') +
+        !full && P.contactHtml(p, 'address') ? '<dt>' + T('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
       (!child && (canSeeAll() || me) ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
       // Everyone else: only what Settings shares with their role, of people who agreed (Contact details)
@@ -362,7 +362,27 @@
   }
 
 
+  /** No home address, but their confirmed spouse or partner (or, for a child, their parents) has one: they probably live
+   *  there too. Offered to Administrators and Pastors, who copy it with one tap (Households.addressSuggestions). */
+  function sameAddress(p) {
+    if (!(H.can('*') || H.can('people.edit')) || !window.Households) return '';
+    var sug = Households.addressSuggestions(p, S.list('people'), P.allCouples(), S.list('guardians'));
+    if (!sug.length) return '';
+    return '<dt>' + T('Home address') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' + sug.map(function (x) {
+      var o = S.get('people', x.from), lines = addressLines({ address: x.address });
+      return '<div class="note info" style="margin:6px 0 0;padding:8px 10px">' + esc(T('Probably the same as {name}:', { name: H.name(o) })) + '<br><b>' + lines.map(esc).join(', ') + '</b><br>' +
+        '<button class="btn small" style="margin-top:6px" data-act="people:copyaddress" data-id="' + esc(p.id) + '" data-from="' + esc(x.from) + '">' + T('Use this address') + '</button></div>';
+    }).join('') + '</dd>';
+  }
   Object.assign(P.actions, {
+    copyaddress: function (el) {
+      var p = S.get('people', el.dataset.id), o = S.get('people', el.dataset.from);
+      if (!p || !o || !o.address || !(H.can('*') || H.can('people.edit'))) return;
+      var x = JSON.parse(JSON.stringify(p)); x.address = JSON.parse(JSON.stringify(o.address));
+      S.put('people', x, 'Home address of ' + H.name(p) + ' copied from ' + H.name(o) + ' (same home)');
+      if (window.CareUI) CareUI.sync(p.id);   // their care group card shows the address
+      H.render(); H.toast(T('Address copied'));
+    },
     photo: function () { var f = document.getElementById('pp-photo'); if (f) f.click(); },
     nophoto: function (el) {
         var p = S.get('people', el.dataset.id); if (!p) return;

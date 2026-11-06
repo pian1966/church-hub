@@ -173,6 +173,8 @@ I18n.add('yo', {
     "Quick menu": "Àkójọ àṣàyàn kíákíá",
     "Language": "Èdè",
     "Close": "Pa á dé",
+    "Suggest again": "Dábàá lẹ́ẹ̀kan sí i",
+    "Church Partners not in a care group": "Àwọn Alábàáṣiṣẹ́ Ìjọ tí kò sí nínú ẹgbẹ́ ìtọ́jú",
     "Leave Church Hub?": "Ṣé o fẹ́ fi Church Hub sílẹ̀?",
     "Are you sure you want to close Church Hub?": "Ṣé ó dá ọ lójú pé o fẹ́ pa Church Hub dé?",
     "Stay": "Dúró",

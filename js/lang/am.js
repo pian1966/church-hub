@@ -173,6 +173,8 @@ I18n.add('am', {
     "Quick menu": "ፈጣን ምናሌ",
     "Language": "ቋንቋ",
     "Close": "ዝጋ",
+    "Suggest again": "እንደገና ጠቁም",
+    "Church Partners not in a care group": "በእንክብካቤ ቡድን ውስጥ የሌሉ የቤተ ክርስቲያን አጋሮች",
     "Leave Church Hub?": "ከChurch Hub ይውጡ?",
     "Are you sure you want to close Church Hub?": "Church Hubን መዝጋት እንደሚፈልጉ እርግጠኛ ነዎት?",
     "Stay": "ቆይ",

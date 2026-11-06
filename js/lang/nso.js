@@ -173,6 +173,8 @@ I18n.add('nso', {
     "Quick menu": "Lenaneo le le akgofilego",
     "Language": "Polelo",
     "Close": "Tswalela",
+    "Suggest again": "Šišinya gape",
+    "Church Partners not in a care group": "Balekane ba Kereke bao ba se nago sehlopha sa tlhokomelo",
     "Leave Church Hub?": "Tlogela Church Hub?",
     "Are you sure you want to close Church Hub?": "Na o kgonthišiša gore o nyaka go tswalela Church Hub?",
     "Stay": "Dula",

@@ -173,6 +173,8 @@ I18n.add('fr', {
     "Quick menu": "Menu rapide",
     "Language": "Langue",
     "Close": "Fermer",
+    "Suggest again": "Suggérer à nouveau",
+    "Church Partners not in a care group": "Partenaires de l’église sans groupe de soin",
     "Leave Church Hub?": "Quitter Church Hub ?",
     "Are you sure you want to close Church Hub?": "Voulez-vous vraiment fermer Church Hub ?",
     "Stay": "Rester",

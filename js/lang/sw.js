@@ -173,6 +173,8 @@ I18n.add('sw', {
     "Quick menu": "Menyu ya haraka",
     "Language": "Lugha",
     "Close": "Funga",
+    "Suggest again": "Pendekeza tena",
+    "Church Partners not in a care group": "Washirika wa Kanisa wasio katika kikundi cha malezi",
     "Leave Church Hub?": "Uondoke Church Hub?",
     "Are you sure you want to close Church Hub?": "Una uhakika unataka kufunga Church Hub?",
     "Stay": "Baki",

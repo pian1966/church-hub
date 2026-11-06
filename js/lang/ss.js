@@ -173,6 +173,8 @@ I18n.add('ss', {
     "Quick menu": "Imenyu lesheshako",
     "Language": "Lulwimi",
     "Close": "Vala",
+    "Suggest again": "Phakamisa futsi",
+    "Church Partners not in a care group": "Balingani beLibandla labangekho eculweni lekunakekela",
     "Leave Church Hub?": "Uyaphuma ku-Church Hub?",
     "Are you sure you want to close Church Hub?": "Uciniseke yini kutsi ufuna kuvala Church Hub?",
     "Stay": "Hlala",

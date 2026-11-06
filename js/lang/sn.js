@@ -173,6 +173,8 @@ I18n.add('sn', {
     "Quick menu": "Menyu inokurumidza",
     "Language": "Mutauro",
     "Close": "Vhara",
+    "Suggest again": "Kurudzira zvakare",
+    "Church Partners not in a care group": "Vadyidzani veChechi vasina boka rekuchengetana",
     "Leave Church Hub?": "Kubuda muChurch Hub?",
     "Are you sure you want to close Church Hub?": "Une chokwadi here kuti unoda kuvhara Church Hub?",
     "Stay": "Gara",

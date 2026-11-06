@@ -173,6 +173,8 @@ I18n.add('ve', {
     "Quick menu": "Mutevhe wa u ṱavhanya",
     "Language": "Luambo",
     "Close": "Vala",
+    "Suggest again": "Tikedza hafhu",
+    "Church Partners not in a care group": "Vhafarisi vha Kereke vhane vha si vhe kha tshigwada tsha ndondolo",
     "Leave Church Hub?": "Ni khou bva kha Church Hub?",
     "Are you sure you want to close Church Hub?": "Naa ni na vhungoho uri ni ṱoḓa u vala Church Hub?",
     "Stay": "Dzulani",

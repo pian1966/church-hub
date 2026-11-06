@@ -2,6 +2,8 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Suggest again", "Stel weer voor", "Phakamisa futhi", "Phakamisa kwakhona"],
+    ["Church Partners not in a care group", "Kerkvennote wat nie in ’n selgroep is nie", "Abalingani beBandla abangekho eqenjini lokunakekelana", "Amaqabane eCawa angekho kwiqela lokukhathalelana"],
     ['My care group', 'My selgroep', 'Iqembu lami lokunakekelana', 'Iqela lam lokukhathalelana'],
     ['People in your care group see your details only if you agreed (under Consent).', 'Mense in jou selgroep sien jou besonderhede net as jy ingestem het (onder Toestemming).', 'Abantu abaseqenjini lakho lokunakekelana babona imininingwane yakho kuphela uma uvumile (ngaphansi kwemvume).', 'Abantu abakwiqela lakho lokukhathalelana babona iinkcukacha zakho kuphela ukuba uvumile (phantsi kwemvume).'],
     ['A new member', '’n Nuwe lid', 'Ilungu elisha', 'Ilungu elitsha'],

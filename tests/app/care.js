@@ -48,12 +48,15 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="care:lead"][data-id="p14"]'); await s.settle();
   await s.page.fill('.cg-q[data-for="g-' + cgId + '"]', 'clare'); await s.page.press('.cg-q[data-for="g-' + cgId + '"]', 'Enter'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
   check(docs['careGroups/' + cgId].memberIds.join() === 'p14,p15' && docs['careGroups/' + cgId].leaderIds.join() === 'p14', 'an Administrator sets up a care group with a carer and members');
-  const card = '.panel:has([data-act="care:rename"][data-id="' + cgId + '"])';
-  check(await s.page.$eval(card, e => { const f = e.querySelector('.cg-fold'); return !!e.querySelector(':scope > .list [data-act="care:lead"][data-id="p14"]') && !!f && !!f.querySelector('[data-id="p15"]') && /1 other member/.test(f.querySelector('summary').textContent) && f.open; }),
-    'the group card shows its carer, with the other members folded under “1 other member” (open after adding someone)');
-  await s.page.click(card + ' .cg-fold summary'); await s.page.waitForTimeout(100); await s.go('home'); await s.go('care');
-  check(await s.page.$eval(card + ' .cg-fold', f => !f.open) && !(await s.page.isVisible(card + ' .cg-fold [data-id="p15"]')), 'tapping “1 other member” folds them away (and they stay folded when the page is drawn again)');
-  await s.page.click(card + ' .cg-fold summary'); await s.page.waitForTimeout(100); check(await s.page.isVisible(card + ' .cg-fold [data-act="care:out"][data-id="p15"]'), 'tapping it again shows the members');
+  const card = '.panel:has([data-act="care:rename"][data-id="' + cgId + '"])', foldC = card + ' .cg-fold[data-k$=":c"]', foldM = card + ' .cg-fold[data-k$=":m"]';
+  check(await s.page.$eval(card, e => { const c = e.querySelector('.cg-fold[data-k$=":c"]'), m = e.querySelector('.cg-fold[data-k$=":m"]');
+    return !!c && /1 carer · Tim Jacobs/.test(c.querySelector('summary').textContent) && !!c.querySelector('[data-id="p14"]') && !!m && /1 other member/.test(m.querySelector('summary').textContent) && !!m.querySelector('[data-id="p15"]') && !!m.querySelector('.cg-q'); }),
+    'the group card has two folds: “1 carer · Tim Jacobs”, then “1 other member” with the Add someone box');
+  await s.page.click(foldC + ' summary'); await s.page.click(foldM + ' summary'); await s.page.waitForTimeout(100); await s.go('home'); await s.go('care');
+  check(!(await s.page.isVisible(card + ' [data-id="p15"]')) && !(await s.page.isVisible(card + ' [data-act="care:lead"][data-id="p14"]')) && await s.page.isVisible(foldC + ' summary'),
+    'folded, only the group’s name, its carers’ names and the number of members show (and they stay folded when the page is drawn again)');
+  await s.page.click(foldC + ' summary'); await s.page.click(foldM + ' summary'); await s.page.waitForTimeout(100);
+  check(await s.page.isVisible(foldM + ' [data-act="care:out"][data-id="p15"]') && await s.page.isVisible(foldC + ' [data-act="care:lead"][data-id="p14"]'), 'tapping them shows the carers and the members');
   const card15 = docs['careGroups/' + cgId + '/share/p15'];
   check(card15 && card15.firstName === 'Clare' && card15.ok === false && !card15.mobile && !card15.email, 'without “Care group” consent the group sees only the name');
   await s.page.fill('#cg-new', 'Prayer chain'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();

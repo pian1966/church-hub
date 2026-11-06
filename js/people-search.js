@@ -18,8 +18,13 @@ var PeopleSearch = (function () {
     return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in v ? String(v[k]) : m; }) : s;
   }
   function TX(s) { return s; }
-  /** The words someone typed, e.g. "andr pi" → ['andr', 'pi']. */
-  function words(q) { return String(q || '').trim().split(/\s+/).filter(Boolean); }
+  /** The words someone typed, e.g. "andr pi" → ['andr', 'pi']. Words in quotes stay together as one exact phrase:
+   *  '"amber glen" pike' → ['amber glen', 'pike'] (straight or curly quotes, as phones type them). */
+  function words(q) {
+    var out = [], re = /["“”„]([^"“”„]*)["“”„]?|(\S+)/g, m, str = String(q || '').trim();
+    while ((m = re.exec(str))) { var w = (m[1] !== undefined ? m[1] : m[2]).replace(/\s+/g, ' ').trim(); if (w) out.push(w); }
+    return out;
+  }
   var OPS = {
     text: [['eq', TX('Equals')], ['ne', TX('Does not equal')], ['has', TX('Contains')], ['nhas', TX('Does not contain')], ['starts', TX('Starts with')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
     choice: [['eq', TX('Is')], ['ne', TX('Is not')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
@@ -76,12 +81,13 @@ var PeopleSearch = (function () {
     if (f.op === 'nempty') return !empty(v);
     if (type === 'yesno') return f.op === 'yes' ? !!v : !v;
     var want = low(f.value);
+    if (f.op === 'eq' || f.op === 'ne' || f.op === 'starts') want = want.replace(/^["\u201c\u201d\u201e]+|["\u201c\u201d\u201e]+$/g, '').trim();   // quotes typed round a value: the value itself
     if (type === 'list') {
       var has = (v || []).some(function (x) { return low(x) === want; });
       return f.op === 'inc' ? has : !has;
     }
     if (type === 'text' || type === 'choice') {
-      var s = low(Array.isArray(v) ? v.join(', ') : v);
+      var s = low(Array.isArray(v) ? v.join(', ') : v).replace(/\s+/g, ' ');
       if (f.op === 'eq') return s === want;
       if (f.op === 'ne') return s !== want;
       if (f.op === 'has') return words(want).every(function (w) { return s.indexOf(w) >= 0; });   // "andr pi" finds Andrew Pike
@@ -233,7 +239,7 @@ var PeopleSearch = (function () {
     return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
   }
 
-  return { OPS: OPS, UNITS: UNITS, MONTHS: MONTHS, opsFor: opsFor, opLabel: opLabel, valueKind: valueKind, test: test, parseLogic: parseLogic,
+  return { words: words, OPS: OPS, UNITS: UNITS, MONTHS: MONTHS, opsFor: opsFor, opLabel: opLabel, valueKind: valueKind, test: test, parseLogic: parseLogic,
     incomplete: incomplete, run: run, describe: describe, compare: compare, md: md };
 })();
 if (typeof module !== 'undefined') module.exports = PeopleSearch;

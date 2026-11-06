@@ -96,6 +96,8 @@
     add(all, TX('Personal'), 'lateSpouse', TX('Late spouse'), 'text', function (p) { var l = lateSpouse(p); return l ? H.name(l) : p.lateSpouseName || ''; });
     add(all, TX('Name and contact'), 'postcode', TX('Postcode'), 'text', function (p) { return (p.address || {}).postcode || ''; });
     add(all, TX('Name and contact'), 'province', TX('Province'), 'text', function (p) { return (p.address || {}).province || ''; });
+    add(all, TX('Name and contact'), 'country', TX('Country'), 'choice', function (p) { return String((p.address || {}).country || '').trim(); },
+      uniq([Countries.church(S.settings()).name].concat(S.list('people').map(function (p) { return String((p.address || {}).country || '').trim(); }).filter(Boolean))).sort());
     add(H.can('*'), TX('Church'), 'elvantoId', TX('Elvanto ID'), 'text', function (p) { return p.elvantoId || ''; });
     // ID numbers (Administrators): a filter only – never a column, a download or on screen. Fetched when Search is pressed.
     add(H.can('idnumbers'), TX('Privacy'), 'idNumber', TX('ID number'), 'text', function (p) { return idNums ? idNums[p.id] || '' : ''; }, null, null, { noCol: true });
@@ -167,19 +169,20 @@
     var A = state.adv, F = searchFields(), byKey = {}, groups = [];
     F.forEach(function (f) { byKey[f.key] = f; if (groups.indexOf(f.group) < 0) groups.push(f.group); });
     A.cols = A.cols.filter(function (k) { return byKey[k] && !byKey[k].noCol && k !== 'name'; });
-    var fieldSelect = function (f, i) {   // like Elvanto: open the list, then type part of a field's name ("marit") to narrow it down
-      var cur = byKey[f.field];
+    // like Elvanto: open the list, then type part of a field's name ("marit") to narrow it down. Also for Add a column (i = 'col').
+    var fieldSelect = function (f, i, list, label) {
+      var cur = byKey[f.field], col = i === 'col', FL = list || F;
       return '<span class="adv-fpick" data-i="' + i + '">' +
-        '<button type="button" class="adv-fbtn" data-i="' + i + '" aria-haspopup="listbox" aria-expanded="false" aria-label="' + esc(T('Filter {n}: search on {field}', { n: i + 1, field: cur ? cur.label : T('nothing yet') })) + '">' +
-          '<span>' + esc(cur ? cur.label : T('Choose a field…')) + '</span></button>' +
+        '<button type="button" class="adv-fbtn" data-i="' + i + '" aria-haspopup="listbox" aria-expanded="false" aria-label="' + esc(col ? T('Add a column') : T('Filter {n}: search on {field}', { n: i + 1, field: cur ? cur.label : T('nothing yet') })) + '">' +
+          '<span>' + esc(label || (cur ? cur.label : T('Choose a field…'))) + '</span></button>' +
         '<span class="adv-fpop" hidden><input type="search" class="adv-ff" data-i="' + i + '" placeholder="' + esc(T('Type to find a field…')) + '" autocomplete="off" aria-label="' + esc(T('Type to find a field')) + '" aria-controls="adv-fl' + i + '">' +
-          '<span class="adv-flist" id="adv-fl' + i + '" role="listbox">' + groups.map(function (g) {
-            return '<span class="adv-fg" role="group" aria-label="' + esc(g) + '"><span class="adv-fgh">' + esc(g) + '</span>' + F.filter(function (x) { return x.group === g; }).map(function (x) {
+          '<span class="adv-flist" id="adv-fl' + i + '" role="listbox">' + groups.filter(function (g) { return FL.some(function (x) { return x.group === g; }); }).map(function (g) {
+            return '<span class="adv-fg" role="group" aria-label="' + esc(g) + '"><span class="adv-fgh">' + esc(g) + '</span>' + FL.filter(function (x) { return x.group === g; }).map(function (x) {
               return '<button type="button" class="adv-fo' + (x.key === f.field ? ' on' : '') + '" role="option" aria-selected="' + (x.key === f.field) + '" data-i="' + i + '" data-key="' + x.key + '" data-text="' + esc(x.label) + '">' + esc(x.label) + '</button>';
             }).join('') + '</span>';
           }).join('') + '<span class="adv-fnone muted" hidden>' + T('No field matches') + '</span></span></span>' +
-        '<select class="adv-field sr-only" data-i="' + i + '" tabindex="-1" aria-hidden="true">' + (cur ? '' : '<option value="">' + T('Choose…') + '</option>') + groups.map(function (g) {   // the same list, for the tests and screen readers
-          return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g; }).map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
+        '<select class="' + (col ? '' : 'adv-field ') + 'sr-only"' + (col ? ' id="adv-addcol"' : '') + ' data-i="' + i + '" tabindex="-1" aria-hidden="true">' + (cur ? '' : '<option value="">' + T('Choose…') + '</option>') + groups.map(function (g) {   // the same list, for the tests and screen readers
+          return '<optgroup label="' + esc(g) + '">' + FL.filter(function (x) { return x.group === g; }).map(function (x) { return '<option value="' + x.key + '"' + (x.key === f.field ? ' selected' : '') + '>' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
         }).join('') + '</select></span>';
     };
     var word = A.match === 'any' ? 'OR' : 'AND', logicNote = '';
@@ -207,9 +210,8 @@
           '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="1"' + (i < A.cols.length - 1 ? '' : ' disabled') + ' aria-label="' + esc(T('Move {column} right', { column: byKey[k].label })) + '">›</button>' +
           '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="0" aria-label="' + esc(T('Remove column {column}', { column: byKey[k].label })) + '">' + H.icon(H.ICON.x, 14) + '</button></span>';
       }).join('') + '</div>' +
-      '<label class="field" style="max-width:320px;margin-top:12px">' + T('Add a column') + '<select id="adv-addcol"><option value="">' + T('Choose…') + '</option>' + groups.map(function (g) {
-        return '<optgroup label="' + esc(g) + '">' + F.filter(function (x) { return x.group === g && x.key !== 'name' && !x.noCol && A.cols.indexOf(x.key) < 0; }).map(function (x) { return '<option value="' + x.key + '">' + esc(x.label) + '</option>'; }).join('') + '</optgroup>';
-      }).join('') + '</select></label></section>' +
+      '<div class="field adv-addcol-w" style="max-width:320px;margin-top:12px"><span>' + T('Add a column') + '</span>' +
+        fieldSelect({ field: '' }, 'col', F.filter(function (x) { return x.key !== 'name' && !x.noCol && A.cols.indexOf(x.key) < 0; }), T('Type or choose a field…')) + '</div></section>' +
       '<div class="btns" style="margin:4px 0 18px"><button class="btn primary" data-act="people:advrun">' + H.icon(H.ICON.search, 18) + T('Search') + '</button><button class="btn" data-act="people:advreset">' + T('Start again') + '</button></div></div>';
     if (!A.ran) return html;
     var r = advRun(F);
@@ -239,18 +241,29 @@
   function bulkFields() {
     var dead = function (p) { return deceased(p) || p.category === 'Deceased'; };
     var plain = function (key) { return function (q, v) { if (v) q[key] = v; else delete q[key]; }; };
+    var noHome = function (p) { var a = p.address || {}; return !(a.street || a.street2 || a.city || a.postcode); };
+    /** One part of the home address. A country or province on its own isn't an address, so people with none are left out of those. */
+    function addr(part, label, o) {
+      return Object.assign({ key: 'addr-' + part, label: label, keys: ['address'], get: function (p) { return (p.address || {})[part]; },
+        set: function (q, v) { var a = Object.assign({}, q.address || {}); if (v) a[part] = v; else delete a[part]; if (Object.keys(a).some(function (k) { return a[k]; })) q.address = a; else delete q.address; },
+        skip: o.needs ? function (p) { return noHome(p) && TX('people with no home address'); } : null, note: o.needs ? TX('People with no home address are left out.') : '' }, o);
+    }
     return [
-      { key: 'maritalStatus', label: TX('Marital status'), options: MARITAL, keys: ['maritalStatus'], set: plain('maritalStatus'),
+      { key: 'maritalStatus', label: TX('Marital status'), options: MARITAL, keys: ['maritalStatus'], set: plain('maritalStatus'), get: function (p) { return p.maritalStatus; },
         skip: function (p) { return p.familyRole === 'child' && TX('children'); }, note: TX('Children are left out: they have no marital status.') },
-      { key: 'category', label: TX('Category'), options: CATS.filter(function (c) { return c !== 'Deceased'; }), keys: ['category'], set: plain('category'),
+      { key: 'category', label: TX('Category'), options: CATS.filter(function (c) { return c !== 'Deceased'; }), keys: ['category'], set: plain('category'), get: function (p) { return p.category; },
         skip: function (p) { return dead(p) && TX('people who have died'); } },
-      { key: 'gender', label: TX('Gender'), options: GENDERS, blank: TX('Not recorded'), keys: ['gender'], set: plain('gender') },
-      { key: 'partnerSince', label: TX('Date accepted as Church Partner'), date: true, keys: ['partnerSince'], set: plain('partnerSince') },
-      { key: 'partnerUpdated', label: TX('Partnership last updated'), date: true, keys: ['partnerUpdated'], set: plain('partnerUpdated') },
+      { key: 'gender', label: TX('Gender'), options: GENDERS, blank: TX('Not recorded'), keys: ['gender'], set: plain('gender'), get: function (p) { return p.gender; } },
+      { key: 'partnerSince', label: TX('Date accepted as Church Partner'), date: true, keys: ['partnerSince'], set: plain('partnerSince'), get: function (p) { return p.partnerSince; } },
+      { key: 'partnerUpdated', label: TX('Partnership last updated'), date: true, keys: ['partnerUpdated'], set: plain('partnerUpdated'), get: function (p) { return p.partnerUpdated; } },
       { key: 'email', label: TX('Email (where it’s missing)'), options: [TX('Unknown')], keys: ['emailUnknown'], set: function (q) { q.emailUnknown = true; },
         skip: function (p) { return p.email ? TX('already have an email address') : p.familyRole === 'child' ? TX('children') : ''; }, note: TX('Only for adults with no email address. Anyone who has one is left alone.') },
       { key: 'mobile', label: TX('Mobile (where it’s missing)'), options: [TX('Unknown')], keys: ['mobileUnknown'], set: function (q) { q.mobileUnknown = true; },
         skip: function (p) { return p.mobile ? TX('already have a mobile number') : p.familyRole === 'child' ? TX('children') : ''; }, note: TX('Only for adults with no mobile number. Anyone who has one is left alone.') },
+      addr('city', TX('Town or city'), { text: true }),
+      addr('postcode', TX('Postcode'), { text: true }),
+      addr('province', TX('Province, state or region'), { text: true, list: (Countries.church(S.settings()).regions || []).slice(), needs: true }),
+      addr('country', TX('Country'), { options: [Countries.church(S.settings()).name].concat(Countries.all().map(function (c) { return c.name; }).filter(function (n) { return n !== Countries.church(S.settings()).name; })), raw: true, needs: true }),
       { key: 'household', label: TX('Household (where it’s missing)'), options: [TX('+ New household for each person')], keys: ['familyId'],
         skip: function (p) { return (p.familyId || (p.householdIds || []).length) ? TX('already in a household') : ''; },
         set: function (q, v, made) { var f = S.put('families', { name: q.lastName + ' family', custom: false }); made.push(f.id); q.familyId = f.id; if (!q.familyRole) q.familyRole = 'adult'; },
@@ -268,12 +281,14 @@
     if (!ids.length) return;
     var valueBox = function (fd) {
       return fd.date ? '<input type="date" id="bk-v" max="' + H.today() + '">' :
-        '<select id="bk-v">' + (fd.blank ? '<option value="">' + esc(T(fd.blank)) + '</option>' : '<option value="">' + T('Choose…') + '</option>') + fd.options.map(function (o) { return '<option value="' + esc(o) + '">' + esc(T(o)) + '</option>'; }).join('') + '</select>';
+        fd.text ? '<input id="bk-v" autocomplete="off"' + (fd.list && fd.list.length ? ' list="bk-list"><datalist id="bk-list">' + fd.list.map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>' : '>') :
+        '<select id="bk-v">' + (fd.blank ? '<option value="">' + esc(T(fd.blank)) + '</option>' : '<option value="">' + T('Choose…') + '</option>') + fd.options.map(function (o) { return '<option value="' + esc(o) + '">' + esc(fd.raw ? o : T(o)) + '</option>'; }).join('') + '</select>';
     };
     H.modal(H.dialogHead(TN('Change {n} person', 'Change {n} people', ids.length), T('The same change for everyone you ticked. You can undo it straight after.')) + '<div class="dlg-body">' +
       '<div class="two"><label class="field req">' + T('What to change') + '<select id="bk-f">' + F.map(function (x) { return '<option value="' + x.key + '">' + esc(T(x.label)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field req" id="bk-v-f">' + T('New value') + valueBox(f) + '</label></div>' +
       '<p class="hint" id="bk-note">' + esc(f.note ? T(f.note) : '') + '</p>' +
+      '<label class="check" id="bk-empty-w"' + (f.get ? '' : ' hidden') + '><input type="checkbox" id="bk-empty"><span>' + T('Only where it’s empty – leave anything already filled in') + '</span></label>' +
       '<details><summary class="small">' + T('Who will change ({n})', { n: ids.length }) + '</summary><p class="small muted" style="margin:6px 0 0">' + esc(ids.map(function (id) { return H.name(S.get('people', id)); }).join(', ')) + '</p></details>' +
       '<p id="bk-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:bulksave">' + TN('Change {n} person', 'Change {n} people', ids.length) + '</button></div>', T('Change many people'));
@@ -282,6 +297,7 @@
       var fd = F.filter(function (x) { return x.key === fs.value; })[0], box = document.getElementById('bk-v-f');
       box.innerHTML = T('New value') + valueBox(fd); box.classList.toggle('req', !fd.blank);
       document.getElementById('bk-note').textContent = fd.note ? T(fd.note) : '';
+      document.getElementById('bk-empty-w').hidden = !fd.get; if (!fd.get) document.getElementById('bk-empty').checked = false;
       H.markRequired();
     });
     H.markRequired();
@@ -320,7 +336,9 @@
     fieldActive(pop, q ? first : pop.querySelector('.adv-fo.on') || first);
   }
   function fieldPick(o) {
-    var i = o.dataset.i, sel = document.querySelector('.adv-field[data-i="' + i + '"]'); if (!sel) return;
+    var i = o.dataset.i;
+    if (i === 'col') { fieldClose(); state.adv.cols.push(o.dataset.key); H.render(); var cb = document.querySelector('.adv-fbtn[data-i="col"]'); if (cb) cb.focus(); return; }
+    var sel = document.querySelector('.adv-field[data-i="' + i + '"]'); if (!sel) return;
     fieldClose();
     if (sel.value !== o.dataset.key) { sel.value = o.dataset.key; advSync(sel); H.render(); }
     var b = document.querySelector('.adv-fbtn[data-i="' + i + '"]'); if (b) b.focus();
@@ -363,7 +381,9 @@
     bulk: function () { if (canBulk()) bulkDialog(); },
     bulksave: function (el) {
         if (!canBulk()) return;
-        var fd = bulkFields().filter(function (x) { return x.key === document.getElementById('bk-f').value; })[0], v = document.getElementById('bk-v').value, err = document.getElementById('bk-err');
+        var fd = bulkFields().filter(function (x) { return x.key === document.getElementById('bk-f').value; })[0], v = document.getElementById('bk-v').value.trim(), err = document.getElementById('bk-err');
+        var onlyEmpty = !!fd.get && document.getElementById('bk-empty').checked;
+        if (fd.key === 'addr-province' && v) v = Countries.region(v, Countries.church(S.settings()).code);   // "kzn" → KwaZulu-Natal
         if (!v && !fd.blank) { err.textContent = T('Choose the new value.'); err.hidden = false; return; }
         var ids = Object.keys(state.adv.sel || {}), items = [], skipped = {}, made = [];
         if (!H.confirmBtn(el, TN('Click again to change {n} person', 'Click again to change {n} people', ids.length))) return;
@@ -371,7 +391,7 @@
         H.busy('Changing ' + ids.length + (ids.length === 1 ? ' person' : ' people') + '…', function () {
           ids.forEach(function (id) {
             var p = S.get('people', id); if (!p) return;
-            var why = fd.skip && fd.skip(p); if (why) { skipped[why] = (skipped[why] || 0) + 1; return; }
+            var why = (fd.skip && fd.skip(p)) || (onlyEmpty && String(fd.get(p) || '').trim() && TX('already filled in')); if (why) { skipped[why] = (skipped[why] || 0) + 1; return; }
             var before = {}; fd.keys.forEach(function (k) { before[k] = p.hasOwnProperty(k) ? { v: p[k] } : null; });
             var q = JSON.parse(JSON.stringify(p)); fd.set(q, v, made);
             if (fd.keys.every(function (k) { return JSON.stringify(q[k]) === JSON.stringify(p[k]); })) return;   // nothing to change

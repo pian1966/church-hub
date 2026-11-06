@@ -10,6 +10,8 @@ var Wording = (function () {
   // key: [singular, plural] as Church Hub says it, and what it is
   var TERMS = [
     ['pastor', ['Pastor', 'Pastors'], 'The role that keeps pastoral notes'],
+    ['senior', ['Senior Pastor', 'Senior Pastors'], 'The Pastor who leads the church (chosen in Settings → What Pastors can do)'],
+    ['assistant', ['Assistant Pastor', 'Assistant Pastors'], 'The other Pastors, who work with the Senior Pastor'],
     ['partner', ['Church Partner', 'Church Partners'], 'A committed member of the church (a category)'],
     ['attender', ['Attender', 'Attenders'], 'Someone who comes regularly but isn’t a member (a category)'],
     ['visiting', ['Visiting Minister', 'Visiting Ministers'], 'A preacher or minister from elsewhere (a category)'],
@@ -30,13 +32,13 @@ var Wording = (function () {
   };
   var SETS = {
     general: { name: 'General (as Church Hub comes)', words: {} },
-    anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Home group leader', 'Home group leaders'] } },
-    catholic: { name: 'Catholic', words: { pastor: ['Priest', 'Priests'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Priest', 'Visiting Priests'], kids: ['Children’s catechesis', 'Children’s catechesis'], office: ['Parish office', 'Parish offices'], care: ['Small Christian Community', 'Small Christian Communities'], carer: ['Leader', 'Leaders'] } },
+    anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], senior: ['Rector', 'Rectors'], assistant: ['Assistant Minister', 'Assistant Ministers'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Home group leader', 'Home group leaders'] } },
+    catholic: { name: 'Catholic', words: { pastor: ['Priest', 'Priests'], senior: ['Parish Priest', 'Parish Priests'], assistant: ['Assistant Priest', 'Assistant Priests'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Priest', 'Visiting Priests'], kids: ['Children’s catechesis', 'Children’s catechesis'], office: ['Parish office', 'Parish offices'], care: ['Small Christian Community', 'Small Christian Communities'], carer: ['Leader', 'Leaders'] } },
     methodist: { name: 'Methodist', words: { pastor: ['Minister', 'Ministers'], partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Class', 'Classes'], carer: ['Class leader', 'Class leaders'] } },
-    presbyterian: { name: 'Presbyterian / Reformed', words: { pastor: ['Minister', 'Ministers'], partner: ['Communicant Member', 'Communicant Members'], attender: ['Adherent', 'Adherents'], care: ['Elder’s district', 'Elders’ districts'], carer: ['Elder', 'Elders'] } },
-    baptist: { name: 'Baptist', words: { partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Small group', 'Small groups'], carer: ['Group leader', 'Group leaders'] } },
-    pentecostal: { name: 'Pentecostal / Charismatic', words: { partner: ['Member', 'Members'], visiting: ['Guest Speaker', 'Guest Speakers'], care: ['Cell group', 'Cell groups'], carer: ['Cell leader', 'Cell leaders'] } },
-    lutheran: { name: 'Lutheran', words: { partner: ['Member', 'Members'], visiting: ['Visiting Pastor', 'Visiting Pastors'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Group leader', 'Group leaders'] } }
+    presbyterian: { name: 'Presbyterian / Reformed', words: { pastor: ['Minister', 'Ministers'], assistant: ['Associate Minister', 'Associate Ministers'], partner: ['Communicant Member', 'Communicant Members'], attender: ['Adherent', 'Adherents'], care: ['Elder’s district', 'Elders’ districts'], carer: ['Elder', 'Elders'] } },
+    baptist: { name: 'Baptist', words: { assistant: ['Associate Pastor', 'Associate Pastors'], partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Small group', 'Small groups'], carer: ['Group leader', 'Group leaders'] } },
+    pentecostal: { name: 'Pentecostal / Charismatic', words: { assistant: ['Associate Pastor', 'Associate Pastors'], partner: ['Member', 'Members'], visiting: ['Guest Speaker', 'Guest Speakers'], care: ['Cell group', 'Cell groups'], carer: ['Cell leader', 'Cell leaders'] } },
+    lutheran: { name: 'Lutheran', words: { assistant: ['Associate Pastor', 'Associate Pastors'], partner: ['Member', 'Members'], visiting: ['Visiting Pastor', 'Visiting Pastors'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Group leader', 'Group leaders'] } }
   };
 
   /** The words in use: { key: [singular, plural] } from the chosen set and any the Administrator renamed. */
@@ -45,6 +47,13 @@ var Wording = (function () {
     TERMS.forEach(function (t) {
       var c = w.custom && w.custom[t[0]], s = set.words[t[0]];
       out[t[0]] = (c && c[0] ? [c[0], c[1] || (c[0] === t[1][0] ? t[1][1] : c[0])] : null) || (s ? s.slice() : t[1].slice());
+    });
+    // Senior and Assistant Pastor follow the word for Pastor unless they were named themselves ("Minister" → "Senior Minister")
+    ['senior', 'assistant'].forEach(function (k) {
+      var c = w.custom && w.custom[k];
+      if (c && c[0] || set.words[k]) return;
+      var base = TERMS.filter(function (t) { return t[0] === k; })[0][1][0].split(' ')[0];
+      out[k] = [base + ' ' + out.pastor[0], base + ' ' + out.pastor[1]];
     });
     return out;
   }

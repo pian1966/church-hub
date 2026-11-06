@@ -179,14 +179,30 @@
   }
 
   /** What Pastors can do: an Administrator ticks the Administrator abilities Pastors may have (settings.pastorCan).
-   *  Church Hub copies them onto each Pastor's access-list entry, and the database rules check them there. */
+   *  They may also choose the Senior Pastor (Rector, settings.seniorPastorId), who gets their own ticks (settings.seniorCan);
+   *  the other Pastors are then shown as Assistant Pastors (Assistant Ministers). Church Hub copies the ticks onto each
+   *  Pastor's access-list entry, and the database rules check them there. */
   function renderPastorCan(st) {
-    var on = st.pastorCan || [], admin = H.can('*');
+    var on = st.pastorCan || [], son = st.seniorCan || [], admin = H.can('*'), dis = admin ? '' : ' disabled';
+    var pastors = S.find('people', function (p) { return p.appRole === 'pastor' && p.active !== false; }).sort(function (x, y) { return H.name(x) < H.name(y) ? -1 : 1; });
+    var sid = st.seniorPastorId || '', senior = sid && pastors.some(function (p) { return p.id === sid; }) ? sid : '';
+    var box = function (cls, a, list, label) {
+      return '<input type="checkbox" class="' + cls + '" value="' + a[0] + '"' + (list.indexOf(a[0]) >= 0 ? ' checked' : '') + dis + ' aria-label="' + esc(label + ': ' + T(a[1])) + '">';
+    };
+    var ticks = senior
+      ? '<div class="table-wrap"><table class="simple"><thead><tr><th></th><th>' + T('Senior Pastor') + '</th><th>' + T('Assistant Pastors') + '</th></tr></thead><tbody>' +
+        H.PASTOR_CAN.map(function (a) {
+          return '<tr><td>' + esc(T(a[1])) + '</td><td>' + box('st-sc', a, son, T('Senior Pastor')) + '</td><td>' + box('st-pc', a, on, T('Assistant Pastors')) + '</td></tr>';
+        }).join('') + '</tbody></table></div>'
+      : '<div class="pc-list">' + H.PASTOR_CAN.map(function (a) {
+        return '<label class="check"><input type="checkbox" class="st-pc" value="' + a[0] + '"' + (on.indexOf(a[0]) >= 0 ? ' checked' : '') + dis + '><span>' + esc(T(a[1])) + '</span></label>';
+      }).join('') + '</div>';
     return '<section class="panel" id="pastor-can" style="grid-column:1/-1"><h2>' + T('What Pastors can do') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Pastors always see and edit everyone’s details, households, children and pastoral notes. Tick what else they may do – up to everything an Administrator does. Medical notes stay with Children’s ministry.') + '</p>' +
-      '<div class="pc-list">' + H.PASTOR_CAN.map(function (a) {
-        return '<label class="check"><input type="checkbox" class="st-pc" value="' + a[0] + '"' + (on.indexOf(a[0]) >= 0 ? ' checked' : '') + (admin ? '' : ' disabled') + '><span>' + esc(T(a[1])) + '</span></label>';
-      }).join('') + '</div>' +
+      '<label class="field" style="max-width:420px">' + T('Senior Pastor') + '<select id="st-senior"' + dis + '><option value="">' + T('Nobody – all Pastors the same') + '</option>' +
+        pastors.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === senior ? ' selected' : '') + '>' + esc(H.name(p)) + '</option>'; }).join('') + '</select>' +
+        '<small>' + T('The Pastor who leads the church can have more than the others. The other Pastors are then called Assistant Pastors.') + '</small></label>' +
+      ticks +
       (admin ? '<div class="btns"><button class="btn small" data-autosave data-act="settings:pastorcan">' + T('Save') + '</button><button class="btn small ghost" data-act="settings:pastorall">' + T('Tick everything') + '</button></div>' +
         '<p class="hint">' + T('Pastors get the change the next time they open Church Hub.') + (Store.isLive() ? ' ' + T('If you have changed the database rules file, publish it again first (FIREBASE-SETUP step 7).') : '') + '</p>'
         : '<p class="hint">' + T('Only an Administrator can change this.') + '</p>') + '</section>';
@@ -356,12 +372,22 @@
       },
       pastorcan: function () {
         if (!H.can('*')) return;
-        var on = [].slice.call(document.querySelectorAll('.st-pc:checked')).map(function (c) { return c.value; });
-        var names = H.PASTOR_CAN.filter(function (a) { return on.indexOf(a[0]) >= 0; }).map(function (a) { return a[0]; });
-        S.setSettings({ pastorCan: names }, 'What Pastors can do: ' + (names.join(', ') || 'nothing extra'));
+        var ticked = function (cls) {
+          var on = [].slice.call(document.querySelectorAll('.' + cls + ':checked')).map(function (c) { return c.value; });
+          return H.PASTOR_CAN.filter(function (a) { return on.indexOf(a[0]) >= 0; }).map(function (a) { return a[0]; });
+        };
+        var st = S.settings() || {}, sel = document.getElementById('st-senior'), sid = sel ? sel.value : '', names = ticked('st-pc');
+        var upd = { pastorCan: names, seniorPastorId: sid }, say = (sid ? 'Assistant Pastors' : 'What Pastors can do') + ': ' + (names.join(', ') || 'nothing extra');
+        if (sid) {
+          // A Senior Pastor just chosen starts with what the Pastors could already do; after that, their own ticks
+          upd.seniorCan = document.querySelector('.st-sc') ? ticked('st-sc') : (st.seniorCan && st.seniorPastorId ? st.seniorCan : names).slice();
+          var sp = S.get('people', sid);
+          say = 'Senior Pastor: ' + (sp ? H.name(sp) : sid) + ' (' + (upd.seniorCan.join(', ') || 'nothing extra') + '); ' + say;
+        } else upd.seniorCan = [];
+        S.setSettings(upd, say);
         S.syncPastors(); H.render(); H.toast(T('Saved'));
       },
-      pastorall: function () { document.querySelectorAll('.st-pc').forEach(function (c) { c.checked = true; }); var c = document.querySelector('.st-pc'); if (c) c.dispatchEvent(new Event('change', { bubbles: true })); },
+      pastorall: function () { document.querySelectorAll('.st-pc, .st-sc').forEach(function (c) { c.checked = true; }); var c = document.querySelector('.st-pc'); if (c) c.dispatchEvent(new Event('change', { bubbles: true })); },
       see: function () {
         var see = {}; window.PeopleParts.TIERS.forEach(function (t) { see[t[0]] = []; });
         document.querySelectorAll('.st-see').forEach(function (b) { if (b.checked) see[b.dataset.t].push(b.value); });

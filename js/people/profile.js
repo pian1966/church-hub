@@ -140,7 +140,7 @@
         return '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('Married {n} year', 'Married {n} years', n)) + '</span>' : '') + '</dd>';
       }).join('') : '') +
       (p.staff && full ? '<dt>' + T('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
-      (H.can('access.manage') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.roleLabel(p.appRole || 'member')) + '</dd>' : '') +
+      (H.can('access.manage') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.personRole(p)) + '</dd>' : '') +
       '</dl></section>';
     if (/<dt>/.test(contact)) html += contact;
     // Households (where they live) – a child can live in more than one

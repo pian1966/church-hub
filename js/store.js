@@ -519,7 +519,7 @@ var Store = (function () {
       // Remove sign-in when the email changes or access ends – also if someone else (e.g. a Pastor recording a death) changed the record first.
       if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) del('roles/' + was);
       var langs = (p.reviewLangs || []).slice().sort(), wasLangs = ((prev && prev.reviewLangs) || []).slice().sort();
-      var can = r === 'pastor' ? pastorCan() : [], had = known('roles/' + email);
+      var can = r === 'pastor' ? pastorCan(p.id) : [], had = known('roles/' + email);
       var canChanged = !!had && JSON.stringify(had.can || []) !== JSON.stringify(can);
       if (email && r && (email !== was || r !== wasR || !prev || langs.join() !== wasLangs.join() || canChanged)) {
         var acc = { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }; if (langs.length) acc.langs = langs;   // languages they check (translations)
@@ -529,12 +529,16 @@ var Store = (function () {
         write('roles/' + email, acc);
       }
     }
-    function pastorCan() { return ((db.settings && db.settings.pastorCan) || []).slice().sort(); }
-    /** After an Administrator changes what Pastors can do: every Pastor's access-list entry gets the new ticks. */
+    /** What a Pastor can do (Settings): the Senior Pastor's own ticks (seniorCan), or the other Pastors' (pastorCan). */
+    function pastorCan(pid) {
+      var st = db.settings || {}, senior = !!st.seniorPastorId && st.seniorPastorId === pid;
+      return ((senior ? st.seniorCan : st.pastorCan) || []).slice().sort();
+    }
+    /** After an Administrator changes what Pastors can do, or who the Senior Pastor is: every Pastor's access-list entry gets the new ticks. */
     function syncPastors() {
       if (!is('admin')) return;
       find('people', function (p) { return p.appRole === 'pastor' && p.active !== false && p.email; }).forEach(function (p) {
-        var email = p.email.trim().toLowerCase(), acc = { role: 'pastor', personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }, can = pastorCan();
+        var email = p.email.trim().toLowerCase(), acc = { role: 'pastor', personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }, can = pastorCan(p.id);
         if (p.reviewLangs && p.reviewLangs.length) acc.langs = p.reviewLangs.slice().sort();
         if (can.length) acc.can = can;
         write('roles/' + email, acc);

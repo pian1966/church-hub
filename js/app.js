@@ -25,6 +25,17 @@ var Hub = (function () {
    *  not even Administrators see them (the database rules enforce the same). */
   var RESTRICTED = ['medical', 'notes'];
   function roleLabel(r) { return T((ROLES[r] || ROLES.member).label); }
+  /** The Senior Pastor (Rector), chosen by an Administrator in Settings → What Pastors can do: a Pastor with their own abilities. */
+  function seniorId() { return (Store.settings() || {}).seniorPastorId || ''; }
+  function isSenior(p) { return !!p && !!seniorId() && p.id === seniorId() && (p.appRole || 'member') === 'pastor' && p.active !== false; }
+  /** Someone's app access as the church says it: once a Senior Pastor is chosen, the other Pastors are Assistant Pastors. */
+  function personRole(p) {
+    var r = (p && p.appRole) || 'member';
+    if (r !== 'pastor' || !seniorId()) return roleLabel(r);
+    return T(isSenior(p) ? 'Senior Pastor' : 'Assistant Pastor');
+  }
+  /** The signed-in person's own label (or the role being viewed with "View as"). */
+  function myLabel() { return Store.preview() || !user ? roleLabel(myRole()) : personRole(Store.get('people', user.id) || user); }
   /** The role the screens follow: normally the person's own; while an Administrator uses "View as", the role being viewed. */
   function myRole() { return Store.preview() || (user && user.appRole) || 'member'; }
   /** Really an Administrator (also while viewing as someone else), so "View as" is offered. */
@@ -46,8 +57,10 @@ var Hub = (function () {
     ['import', TX('Import from Elvanto and Leave Manager, and the Elvanto robot'), ['import.manage']],
     ['words', TX('Approve better wording in every language'), ['words.manage']]
   ];
+  /** The Senior Pastor's ticks (settings.seniorCan) or the other Pastors' (settings.pastorCan). "View as Pastor" shows the other Pastors'. */
   function pastorPerms() {
-    var on = (Store.settings() || {}).pastorCan || [], out = [];
+    var st = Store.settings() || {}, me = user && !Store.preview() ? Store.get('people', user.id) || user : null;
+    var on = (isSenior(me) ? st.seniorCan : st.pastorCan) || [], out = [];
     PASTOR_CAN.forEach(function (a) { if (on.indexOf(a[0]) >= 0) out = out.concat(a[2]); });
     return out;
   }
@@ -319,7 +332,7 @@ var Hub = (function () {
     return '<div class="app">' +
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '</div>' +
-      '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(roleLabel(myRole())) + '</small></span>' +
+      '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
       (realAdmin() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button></div>' : '') +
@@ -341,7 +354,7 @@ var Hub = (function () {
     var todos = [];
     enabled().forEach(function (m) { if (m.todos) (m.todos(user) || []).forEach(function (t) { t.mod = m; todos.push(t); }); });
     var hour = new Date().getHours(), hello = T(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening');
-    return '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(roleLabel(myRole())) + '</p></div></div>' +
+    return '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' +
       '<section class="block"><h2>' + T('To do') + '</h2>' + (todos.length ? '<ul class="todo">' + todos.slice(0, 8).map(function (t) {
         return '<li><a href="' + esc(t.href) + '"><span class="dot" style="--c:' + t.mod.tint + '"></span><span class="grow">' + esc(t.text) + '</span><span class="tag" style="--c:' + t.mod.tint + '">' + esc(T(t.tag || t.mod.name)) + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="empty">' + T('Nothing needs you right now.') + '</p>') + '</section>' +
@@ -774,5 +787,5 @@ var Hub = (function () {
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
-    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
+    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

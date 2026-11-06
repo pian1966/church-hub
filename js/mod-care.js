@@ -58,6 +58,18 @@
   }
   function birthday(mmdd) { if (!mmdd) return ''; var m = +mmdd.slice(0, 2), d = +mmdd.slice(3, 5); return d + ' ' + I18n.mon()[m - 1]; }
 
+  /* ---------- a group's people: the carers always shown, the other members folded away until opened ---------- */
+  var opened = {};   // which groups' member lists are open (kept while the page is redrawn)
+  /** rows: the people's lines, in order (carers first); leads: whether each is a carer. */
+  function fold(key, leads, rows) {
+    var top = rows.filter(function (r, i) { return leads[i]; }), rest = rows.filter(function (r, i) { return !leads[i]; });
+    return '<div class="list" style="margin-top:8px">' + (top.length ? top.join('') : '<p class="muted small" style="margin:4px 0">' + T('No carer yet.') + '</p>') + '</div>' +
+      (rest.length ? '<details class="sub cg-fold" data-k="' + esc(key) + '"' + (opened[key] ? ' open' : '') + '><summary>' + TN('{n} other member', '{n} other members', rest.length) + '</summary><div class="list">' + rest.join('') + '</div></details>' : '');
+  }
+  if (typeof document !== 'undefined') document.addEventListener('toggle', function (ev) {
+    var d = ev.target; if (d && d.classList && d.classList.contains('cg-fold')) opened[d.dataset.k] = d.open;
+  }, true);
+
   /* ---------- a member's own care group (on their Me page) ---------- */
   function mePanel() {
     var u = me(); if (!u) return '';
@@ -72,8 +84,8 @@
       return String((g.names || {})[a] || '').localeCompare(String((g.names || {})[b] || ''));
     });
     return '<section class="panel my-care" data-g="' + esc(g.id) + '"><div class="row"><h2 class="grow" style="margin:0">' + T('My care group') + ': ' + esc(g.name) + '</h2>' + H.icon(HEART, 18) + '</div>' +
-      '<p class="hint" style="margin:4px 0 10px">' + T('People in your care group see your details only if you agreed (under Consent).') + '</p><div class="list">' +
-      ids.map(function (pid) {
+      '<p class="hint" style="margin:4px 0 10px">' + T('People in your care group see your details only if you agreed (under Consent).') + '</p>' +
+      fold('me-' + g.id, ids.map(function (pid) { return Care.isLeader(g, pid); }), ids.map(function (pid) {
         var c = cards[pid] || { firstName: ((g.names || {})[pid] || '').split(' ')[0], lastName: ((g.names || {})[pid] || '').split(' ').slice(1).join(' ') }, isL = Care.isLeader(g, pid), you = pid === u.id;
         var name = ((c.preferredName || c.firstName || '') + ' ' + (c.lastName || '')).trim() || T('A new member');
         var bits = [];
@@ -84,7 +96,7 @@
         return '<div class="item" style="align-items:flex-start">' + pic(c, 44) + '<span class="grow"><b>' + esc(name) + (you ? ' <span class="muted">(' + T('you') + ')</span>' : '') + (isL ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + '</b>' +
           '<small>' + (bits.length ? bits.join(' · ') : (cards[pid] ? T('Details not shared') : T('Details appear when they next sign in'))) + '</small></span>' +
           (lead && !you && !isL ? '<button class="icon-btn ghost" data-act="care:mineout" data-g="' + esc(g.id) + '" data-id="' + esc(pid) + '" aria-label="' + esc(T('Take {name} out of the group', { name: name })) + '" title="' + esc(T('Take {name} out of the group', { name: name })) + '">' + H.icon(H.ICON.x, 16) + '</button>' : '') + '</div>';
-      }).join('') + '</div>' +
+      })) +
       (lead ? '<div class="btns" style="margin-top:12px"><button class="btn" data-act="care:mineadd" data-g="' + esc(g.id) + '">' + H.icon(H.ICON.plus, 16) + T('Add someone to the group') + '</button>' +
         (window.Msg ? '<a class="btn" href="#/messages/send/care/' + esc(g.id) + '">' + H.icon('M4 5h16v11H9l-5 4z', 16) + T('Send the group a message') + '</a>' : '') + '</div>' : '') + '</section>';
   }
@@ -166,12 +178,12 @@
           '<button class="icon-btn ghost" data-act="care:rename" data-id="' + g.id + '" aria-label="' + esc(T('Rename {name}', { name: g.name })) + '" title="' + esc(T('Rename')) + '">' + H.icon('M4 20h4L20 8l-4-4L4 16zM14 6l4 4', 16) + '</button>' +
           '<button class="icon-btn ghost" data-act="care:copy" data-id="' + g.id + '" aria-label="' + esc(T('Duplicate {name}', { name: g.name })) + '" title="' + esc(T('Duplicate the group, with all its members')) + '">' + H.icon('M9 9h11v11H9zM5 15H4V4h11v1', 16) + '</button>' +
           '<button class="icon-btn ghost" data-act="care:delgroup" data-id="' + g.id + '" aria-label="' + esc(T('Delete {name}', { name: g.name })) + '" title="' + esc(T('Delete the group')) + '">' + H.icon(H.ICON.trash, 16) + '</button></span></div>' +
-          (ms.length ? '<div class="list" style="margin-top:8px">' + ms.map(function (p) {
+          (ms.length ? fold('g-' + g.id, ms.map(function (p) { return Care.isLeader(g, p.id); }), ms.map(function (p) {
             var isL = Care.isLeader(g, p.id);
             return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><a class="name-chip" href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>' + (isL ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + (consented(p.id) ? '' : ' <small class="muted">' + T('details not shared (no consent yet)') + '</small>') + '</span>' +
               '<button class="icon-btn ghost cg-lead' + (isL ? ' on' : '') + '" data-act="care:lead" data-g="' + g.id + '" data-id="' + p.id + '" aria-pressed="' + isL + '" aria-label="' + esc(T(isL ? 'Not a carer' : 'Make carer') + ': ' + H.name(p)) + '" title="' + esc(T(isL ? 'Not a carer' : 'Make carer')) + '">' + H.icon(STAR, 16) + '</button>' +
               '<button class="icon-btn ghost" data-act="care:out" data-g="' + g.id + '" data-id="' + p.id + '" aria-label="' + esc(T('Take {name} out', { name: H.name(p) })) + '" title="' + esc(T('Take out of the group')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
-          }).join('') + '</div>' : '<p class="muted">' + T('No one yet.') + '</p>') +
+          })) : '<p class="muted">' + T('No one yet.') + '</p>') +
           '<div style="margin-top:10px">' + finder('g-' + g.id, adults(g.memberIds || []), 'care:add', { g: g.id }, function (p) { return inAny[p.id] ? T('Also in {groups}', { groups: inAny[p.id].join(', ') }) : ''; }, T('Add someone: type part of their name')) + '</div></section>';
       }).join('') + '</div>' : '<p class="empty">' + T('No care groups yet.') + '</p>') +
       (gs.length ? '<p class="hint">' + T('Members’ cards update when their details or consent change.') + ' <button class="link" data-act="care:syncall">' + T('Update everyone’s cards now') + '</button></p>' : '');
@@ -260,7 +272,7 @@
       },
       add: function (el) {
         var p = S.get('people', el.dataset.id); if (!p) { H.toast(T('Choose someone to add'), true); return; }
-        place(p, el.dataset.g, false); H.render(); H.toast(T('{name} added to the group', { name: H.name(p) }));
+        place(p, el.dataset.g, false); opened['g-' + el.dataset.g] = true; H.render(); H.toast(T('{name} added to the group', { name: H.name(p) }));
         var again = document.querySelector('.cg-q[data-for="g-' + el.dataset.g + '"]'); if (again) again.focus();   // ready for the next name
       },
       lead: function (el) {   // "Not a carer" stops them being a carer in every group; "Make carer" is for this group
@@ -305,7 +317,7 @@
         var u = me(), g = S.get('careGroups', el.dataset.g), id = el.dataset.id, p = S.get('people', id); if (!g || !Care.isLeader(g, u.id)) return;
         if (!p) { var e = document.getElementById('cg-err'); e.textContent = T('Choose someone to add.'); e.hidden = false; return; }
         var x = JSON.parse(JSON.stringify(g)); x.memberIds.push(p.id); x.names = x.names || {}; x.names[p.id] = Care.nameOf(p);
-        S.put('careGroups', x, 'Carer added ' + H.name(p) + ' to the care group ' + g.name); H.closeModal(); H.render(); H.toast(T('Added to the group'));
+        S.put('careGroups', x, 'Carer added ' + H.name(p) + ' to the care group ' + g.name); opened['me-' + g.id] = true; H.closeModal(); H.render(); H.toast(T('Added to the group'));
       },
       mineout: function (el) {
         var u = me(), g = S.get('careGroups', el.dataset.g), pid = el.dataset.id; if (!g || !Care.isLeader(g, u.id) || !H.confirmBtn(el, '✕?')) return;

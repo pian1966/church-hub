@@ -88,5 +88,31 @@ ok(C.areasOf({ areas: ' Hilton , 3245,, Howick North ' }).towns.join() === 'hilt
 const withAreas = JSON.parse(JSON.stringify(groups[0])); withAreas.areas = ['Hilton'];
 ok(!C.leaderMayChange(groups[0], withAreas, 'a'), 'a carer can’t change the group’s areas');
 
+
+// Addresses as people really type them
+const real = C.suggest([{ id: 'AG', name: 'Amber Glen Tuesday', memberIds: [] }, { id: 'GD', name: 'Greendale', memberIds: [] }, { id: 'HO', name: 'Howick Central', memberIds: ['h1'] }],
+  [P('s1', 'Selwyn', A('12 Huntley Lane', 'Amberglen', 'Howick', '3290')), P('l1', 'Lizette', A('1 A Link Road, Greendale', '', '', '')),
+   P('o1', 'Olga', A('3 Oak Rd, Merrivale', '', '', '')), P('h1', 'Hal', A('5 Oak Rd', '', 'Merrivale', ''))]);
+const rc = id => real.clear.filter(x => x.id === id)[0];
+ok(rc('s1') && rc('s1').groupId === 'AG' && rc('s1').why === 'area', '“Amberglen” written as one word → the Amber Glen group');
+ok(rc('l1') && rc('l1').groupId === 'GD', 'an address all on one line (“1 A Link Road, Greendale”) still finds Greendale');
+ok(rc('o1') && rc('o1').groupId === 'HO' && rc('o1').why === 'neighbours', '…and with no town box, the part after the comma counts as the town (a neighbour on Oak Rd, Merrivale)');
+const oneWord = C.suggest([{ id: 'AG', name: 'Amberglen', memberIds: [] }], [P('z', 'Zed', A('4 Amber Glen', '', 'Howick', '3290'))]);
+ok(oneWord.clear[0] && oneWord.clear[0].groupId === 'AG', 'and the other way round: a group called “Amberglen” finds “Amber Glen”');
+ok(C.suggest([{ id: 'AG', name: 'Amber Glen', memberIds: [] }], [P('z', 'Zed', A('4 Amberfield', '', 'Howick', '3290'))]).clear.length === 0, 'Amberfield is not Amber Glen');
+
+const sj = C.suggest([{ id: 'SJ', name: 'Saint Johns Thursday', memberIds: [] }, { id: 'HC', name: 'Howick Central', memberIds: [] }],
+  [P('b1', 'Bob', A('18 Meadow Ridge', 'St John’s Village', 'Howick', '')), P('b2', 'Bea', A('2 Meadow Ridge', 'St. John\'s', 'Howick', ''))]);
+ok(sj.clear.length === 2 && sj.clear.every(x => x.groupId === 'SJ'), 'St John’s Village = St. John\'s = Saint Johns (apostrophes and “Saint” don’t matter)');
+
+// The church's own groups: St Johns, and the Amber estates written with or without a space, in any capitals
+const AMB = ['Amber Glen', 'Amber Field', 'Amber Valley', 'Amber Lakes', 'Amber Ridge', 'Amber Lee'];
+const ambG = AMB.map((n, i) => ({ id: 'G' + i, name: n, memberIds: [] })).concat([{ id: 'SJ', name: 'St Johns', memberIds: [] }]);
+const ambP = ['AMBERGLEN', 'Amberfield', 'amber valley', 'Amberlakes', 'AmberRidge', 'amberlee'].map((e, i) => P('q' + i, 'Q' + i, A((i + 1) + ' Some Rd', e, 'Howick', '3290')))
+  .concat([P('bob', 'Bob', A('18 Meadow Ridge', 'St John\'s Village', 'Howick', ''))]);
+const amb = C.suggest(ambG, ambP);
+ok(AMB.every((n, i) => { const x = amb.clear.filter(c => c.id === 'q' + i)[0]; return x && x.groupId === 'G' + i; }), 'Amberglen, Amberfield, amber valley, Amberlakes, AmberRidge, amberlee → each its own Amber group');
+ok((amb.clear.filter(c => c.id === 'bob')[0] || {}).groupId === 'SJ', 'St John’s Village → the St Johns group');
+
 if (fails) { console.log('\n' + fails + ' care group test(s) FAILED'); process.exit(1); }
 console.log('\nAll care group tests passed');

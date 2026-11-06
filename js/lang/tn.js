@@ -166,6 +166,8 @@ I18n.add('tn', {
     "Quick menu": "Lenaane le le bonako",
     "Language": "Puo",
     "Close": "Tswala",
+    "Suggest again": "Tshitshinya gape",
+    "Church Partners not in a care group": "Balekane ba Kereke ba ba senang setlhopha sa tlhokomelo",
     "Leave Church Hub?": "Tlogela Church Hub?",
     "Are you sure you want to close Church Hub?": "A o tlhomamisa gore o batla go tswala Church Hub?",
     "Stay": "Nna",

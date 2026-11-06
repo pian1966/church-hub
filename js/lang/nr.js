@@ -166,6 +166,8 @@ I18n.add('nr', {
     "Quick menu": "Imenyu erhabako",
     "Language": "Ilimi",
     "Close": "Vala",
+    "Suggest again": "Phakamisa godu",
+    "Church Partners not in a care group": "Abalingani beSonto abangekho eqenjini lokunakekela",
     "Leave Church Hub?": "Uyaphuma ku-Church Hub?",
     "Are you sure you want to close Church Hub?": "Uqinisekile na ukuthi ufuna ukuvala i-Church Hub?",
     "Stay": "Hlala",

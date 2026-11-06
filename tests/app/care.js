@@ -118,6 +118,8 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', areaSeed); await s.go('care');
   await s.page.click('[data-act="care:rename"][data-id="cgM"]'); await s.page.fill('#cg-areas', 'Merrivale, 3291'); await s.page.click('[data-act="care:saverename"]'); await s.settle(); docs = await s.docsNow();
   check(docs['careGroups/cgM'].areas.join('|') === 'Merrivale|3291' && (await s.text()).includes('Areas: Merrivale, 3291'), 'Rename: “Areas it covers” saved on the group and shown under its name');
+  const waitingN = await s.page.$eval('[data-act="care:suggest"] .count', e => +e.textContent).catch(() => 0);
+  check(waitingN >= 3, 'the Suggest button shows how many Church Partners are in no care group (' + waitingN + ')');
   await s.page.click('[data-act="care:suggest"]'); await s.settle();
   const sel = id => s.page.$eval('.cgs-g[data-id="' + id + '"]', e => e.value).catch(() => null), on = id => s.page.$eval('.cgs-on[data-id="' + id + '"]', e => e.checked).catch(() => null);
   check(await sel(a1) === 'cgH' && await on(a1) && await sel(a2) === 'cgM' && await on(a2), 'suggestions: Hilton → the group named after Hilton; Merrivale → the group covering it; both ticked');
@@ -127,7 +129,10 @@ module.exports = async function (ctx) {
   await s.page.uncheck('.cgs-on[data-id="' + a2 + '"]');
   await s.page.selectOption('.cgs-g[data-id="' + a3 + '"]', 'cgM'); check(await on(a3), 'choosing a group for an unclear person ticks them');
   await s.page.click('[data-act="care:suggestsave"]'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
-  check(docs['careGroups/cgH'].memberIds.join() === a1 && docs['careGroups/cgM'].memberIds.join() === a3 && !(await s.page.$('#cg-suggest')), 'confirming puts only the ticked people in their chosen groups');
+  check(docs['careGroups/cgH'].memberIds.join() === a1 && docs['careGroups/cgM'].memberIds.join() === a3, 'confirming puts only the ticked people in their chosen groups');
+  check(await sel(a2) === 'cgM' && await sel(a1) === null && await sel(a3) === null, '…and the suggestions are made again for the people still without a group');
+  await s.page.click('[data-act="care:suggestclose"]'); await s.settle();
+  check(!(await s.page.$('#cg-suggest')) && await s.page.$eval('[data-act="care:suggest"] .count', e => +e.textContent) === waitingN - 2, 'Close; the number on the button went down by the two placed');
   check(Object.values(docs).some(d => d.action && /Suggested by area: In care group Hilton Tuesday evening/.test(d.action)), 'each placement is in the audit log');
   await finish(s);
 

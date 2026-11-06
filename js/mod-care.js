@@ -157,7 +157,7 @@
     var gs = groups(), inAny = {};
     gs.forEach(function (g) { (g.memberIds || []).forEach(function (m) { (inAny[m] = inAny[m] || []).push(g.name); }); });
     return '<div class="page-head"><div><h1>' + T('Care groups') + '</h1><p class="lead">' + T('Small groups that care for one another. A person can be in more than one group. Members see each other’s photo, phone, email, address and birthday – only if they agreed (consent “Care group”). Carers can add and remove members of their own group.') + '</p></div></div>' +
-      (gs.length ? (review ? reviewPanel(gs) : '<div class="btns" style="margin:0 0 14px"><button class="btn" data-act="care:suggest">' + H.icon('M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', 16) + T('Suggest groups by where people live') + '</button></div>') : '') +
+      (gs.length ? (review ? reviewPanel(gs) : '<div class="btns" style="margin:0 0 14px"><button class="btn" data-act="care:suggest">' + H.icon('M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 12a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', 16) + T('Suggest groups by where people live') + (function (n) { return n ? ' <span class="count" title="' + esc(T('Church Partners not in a care group')) + '">' + n + '</span>' : ''; })(waiting()) + '</button></div>') : '') +
       '<section class="panel"><h2>' + T('Add a care group') + '</h2><div class="row" style="gap:10px;flex-wrap:wrap"><label class="field req grow" style="margin:0">' + T('Name') + '<input id="cg-new" placeholder="' + esc(T('e.g. Hilton Tuesday evening')) + '"></label><button class="btn primary" data-act="care:addgroup" style="align-self:end">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div></section>' +
       (gs.length ? '<div class="grid2">' + gs.map(function (g) {
         var ms = (g.memberIds || []).map(function (id) { return S.get('people', id) || { id: id, firstName: (g.names || {})[id] || T('Someone'), lastName: '' }; }).sort(function (a, b) {
@@ -179,6 +179,8 @@
 
   /* ---------- suggestions by where people live: nothing changes until an Administrator or Pastor confirms ---------- */
   var review = null;   // { clear, unclear } from Care.suggest, while the page shows it
+  /** How many Church Partners are in no care group yet (the number on the Suggest button). */
+  function waiting() { var r = Care.suggest(S.list('careGroups'), S.list('people')); return r.clear.length + r.unclear.length; }
   function whyText(r) {
     var w = r.with && S.get('people', r.with), place = r.place || T('their area');
     if (r.why === 'household') return T('Lives with {name}, who is in this group', { name: w ? H.name(w) : T('Someone') });
@@ -206,7 +208,7 @@
       (r.clear.length || r.unclear.length ? '' : '<p class="empty">' + T('Every Church Partner is already in a care group.') + '</p>') +
       (r.clear.length ? '<h3>' + TN('{n} suggestion', '{n} suggestions', r.clear.length) + '</h3><div class="list">' + r.clear.map(function (x) { return reviewRow(x, gs, true); }).join('') + '</div>' : '') +
       (r.unclear.length ? '<h3 style="margin-top:18px">' + T('Not clear – choose a group yourself') + ' (' + r.unclear.length + ')</h3><p class="hint">' + T('★ marks the groups that are closest.') + '</p><div class="list">' + r.unclear.map(function (x) { return reviewRow(x, gs, false); }).join('') + '</div>' : '') +
-      '<div class="btns" style="margin-top:14px">' + (r.clear.length || r.unclear.length ? '<button class="btn primary" data-act="care:suggestsave">' + T('Put the ticked people in their groups') + '</button>' : '') + '<button class="btn" data-act="care:suggestclose">' + T('Close') + '</button></div></section>';
+      '<div class="btns" style="margin-top:14px">' + (r.clear.length || r.unclear.length ? '<button class="btn primary" data-act="care:suggestsave">' + T('Put the ticked people in their groups') + '</button>' : '') + '<button class="btn" data-act="care:suggest">' + T('Suggest again') + '</button><button class="btn" data-act="care:suggestclose">' + T('Close') + '</button></div></section>';
   }
   if (typeof document !== 'undefined') document.addEventListener('change', function (ev) {   // choosing a group ticks the person
     var el = ev.target; if (!el.classList || !el.classList.contains('cgs-g')) return;
@@ -281,7 +283,9 @@
           if (p && sel && sel.value && place(p, sel.value, false, 'Suggested by area: ')) n++;
         });
         if (!n) { H.toast(T('Tick at least one person and choose their group'), true); return; }
-        review = null; H.render(); H.toast(TN('{n} person put in a care group', '{n} people put in care groups', n));
+        // suggest again for those still without a group: placing someone can make their household's group clear
+        review = Care.suggest(S.list('careGroups'), S.list('people'));
+        H.render(); H.toast(TN('{n} person put in a care group', '{n} people put in care groups', n));
       },
       syncall: function () {
         var all = []; S.list('careGroups').forEach(function (g) { (g.memberIds || []).forEach(function (m) { if (all.indexOf(m) < 0) all.push(m); }); });

@@ -166,6 +166,8 @@ I18n.add('nl', {
     "Quick menu": "Snelmenu",
     "Language": "Taal",
     "Close": "Sluiten",
+    "Suggest again": "Opnieuw voorstellen",
+    "Church Partners not in a care group": "Kerkpartners zonder kring",
     "Leave Church Hub?": "Church Hub verlaten?",
     "Are you sure you want to close Church Hub?": "Weet u zeker dat u Church Hub wilt sluiten?",
     "Stay": "Blijven",

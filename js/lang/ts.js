@@ -166,6 +166,8 @@ I18n.add('ts', {
     "Quick menu": "Nxaxamelo wo hatlisa",
     "Language": "Ririmi",
     "Close": "Pfala",
+    "Suggest again": "Ringanyeta nakambe",
+    "Church Partners not in a care group": "Vanghana va Kereke lava nga riki eka ntlawa wa nkhathalelo",
     "Leave Church Hub?": "U huma eka Church Hub?",
     "Are you sure you want to close Church Hub?": "Xana u tiyisekile leswaku u lava ku pfala Church Hub?",
     "Stay": "Tshama",

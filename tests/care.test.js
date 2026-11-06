@@ -101,5 +101,9 @@ const oneWord = C.suggest([{ id: 'AG', name: 'Amberglen', memberIds: [] }], [P('
 ok(oneWord.clear[0] && oneWord.clear[0].groupId === 'AG', 'and the other way round: a group called “Amberglen” finds “Amber Glen”');
 ok(C.suggest([{ id: 'AG', name: 'Amber Glen', memberIds: [] }], [P('z', 'Zed', A('4 Amberfield', '', 'Howick', '3290'))]).clear.length === 0, 'Amberfield is not Amber Glen');
 
+const sj = C.suggest([{ id: 'SJ', name: 'Saint Johns Thursday', memberIds: [] }, { id: 'HC', name: 'Howick Central', memberIds: [] }],
+  [P('b1', 'Bob', A('18 Meadow Ridge', 'St John’s Village', 'Howick', '')), P('b2', 'Bea', A('2 Meadow Ridge', 'St. John\'s', 'Howick', ''))]);
+ok(sj.clear.length === 2 && sj.clear.every(x => x.groupId === 'SJ'), 'St John’s Village = St. John\'s = Saint Johns (apostrophes and “Saint” don’t matter)');
+
 if (fails) { console.log('\n' + fails + ' care group test(s) FAILED'); process.exit(1); }
 console.log('\nAll care group tests passed');

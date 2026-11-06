@@ -88,7 +88,8 @@ var Care = (function () {
 
 
   /* ---------- suggesting groups by where people live (an Administrator or Pastor confirms) ---------- */
-  function norm(s) { return String(s || '').toLowerCase().replace(/[^a-z0-9À-ɏ]+/g, ' ').trim(); }
+  // Capitals, apostrophes and "Saint"/"St." don't matter: "St John's Village" = "Saint Johns village" = "st johns village".
+  function norm(s) { return String(s || '').toLowerCase().replace(/['’`]/g, '').replace(/[^a-z0-9À-ɏ]+/g, ' ').trim().replace(/(^| )saint(?= |$)/g, '$1st'); }
   function codeOf(s) { return String(s || '').replace(/\s+/g, '').toUpperCase(); }
   function hasAddress(p) { var a = p && p.address; return !!(a && (norm(a.street) || norm(a.street2) || norm(a.city) || codeOf(a.postcode))); }
   /** A group's areas, typed by an Administrator: "Hilton, 3245, Howick North" → { towns, codes } (anything with a digit is a postal code). */

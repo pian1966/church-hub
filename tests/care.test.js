@@ -105,5 +105,14 @@ const sj = C.suggest([{ id: 'SJ', name: 'Saint Johns Thursday', memberIds: [] },
   [P('b1', 'Bob', A('18 Meadow Ridge', 'St John’s Village', 'Howick', '')), P('b2', 'Bea', A('2 Meadow Ridge', 'St. John\'s', 'Howick', ''))]);
 ok(sj.clear.length === 2 && sj.clear.every(x => x.groupId === 'SJ'), 'St John’s Village = St. John\'s = Saint Johns (apostrophes and “Saint” don’t matter)');
 
+// The church's own groups: St Johns, and the Amber estates written with or without a space, in any capitals
+const AMB = ['Amber Glen', 'Amber Field', 'Amber Valley', 'Amber Lakes', 'Amber Ridge', 'Amber Lee'];
+const ambG = AMB.map((n, i) => ({ id: 'G' + i, name: n, memberIds: [] })).concat([{ id: 'SJ', name: 'St Johns', memberIds: [] }]);
+const ambP = ['AMBERGLEN', 'Amberfield', 'amber valley', 'Amberlakes', 'AmberRidge', 'amberlee'].map((e, i) => P('q' + i, 'Q' + i, A((i + 1) + ' Some Rd', e, 'Howick', '3290')))
+  .concat([P('bob', 'Bob', A('18 Meadow Ridge', 'St John\'s Village', 'Howick', ''))]);
+const amb = C.suggest(ambG, ambP);
+ok(AMB.every((n, i) => { const x = amb.clear.filter(c => c.id === 'q' + i)[0]; return x && x.groupId === 'G' + i; }), 'Amberglen, Amberfield, amber valley, Amberlakes, AmberRidge, amberlee → each its own Amber group');
+ok((amb.clear.filter(c => c.id === 'bob')[0] || {}).groupId === 'SJ', 'St John’s Village → the St Johns group');
+
 if (fails) { console.log('\n' + fails + ' care group test(s) FAILED'); process.exit(1); }
 console.log('\nAll care group tests passed');

@@ -427,3 +427,11 @@ When an Administrator saves it, `Store.syncPastors()` copies the list onto every
 except `pastorCan`; with "access" they give and take away only Basic access, Roster coordinator and Children's ministry,
 never Administrator or Pastor, and never abilities. Medical notes stay with Children's ministry whatever is ticked.
 `plan()` in `js/store.js`, the POLICY in `tests/fake-firebase.js` and `tests/rules.test.mjs` follow the same ticks.
+
+**Senior Pastor (Rector) and Assistant Pastors.** An Administrator may choose one Pastor as Senior Pastor
+(`settings.seniorPastorId`), who then gets their own ticks (`settings.seniorCan`); `pastorCan` becomes the other Pastors'
+ticks, and those Pastors are shown as Assistant Pastors (`Hub.personRole`). `pastorCan(pid)` in `js/store.js` picks the
+right list for each Pastor's `roles/{email}.can`, so `may('…')` in the rules needs no change; a Pastor with "settings"
+can't change `seniorPastorId` or `seniorCan` either. All Pastors keep the Pastor role (pastoral notes, everyone's details).
+The words come from Terminology (`senior`, `assistant` in `js/wording.js`: Anglican Rector / Assistant Minister,
+Catholic Parish Priest / Assistant Priest; otherwise "Senior" / "Assistant" + the church's word for Pastor).

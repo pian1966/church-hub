@@ -501,6 +501,8 @@ await t('a Pastor with every tick can do what an Administrator does', async () =
 });
 await t('…but can’t change what Pastors can do, or give Administrator or Pastor access', async () => {
   await cannot(andile.doc('settings/church').update({ pastorCan: ['settings'] }));
+  await cannot(andile.doc('settings/church').update({ seniorCan: ['settings'] }));                  // nor what the Senior Pastor can do
+  await cannot(andile.doc('settings/church').update({ seniorPastorId: 'p97' }));                     // nor who the Senior Pastor is
   await cannot(andile.doc('roles/andile@example.com').update({ role: 'admin' }));
   await cannot(andile.doc('roles/new2@example.com').set({ role: 'admin', personId: 'p98' }));
   await cannot(andile.doc('roles/new2@example.com').set({ role: 'pastor', personId: 'p98' }));

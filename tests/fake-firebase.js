@@ -45,7 +45,7 @@
         return (op === 'create' || SMALL.indexOf(b.role) >= 0) && SMALL.indexOf(a.role) >= 0 && onlyKeys(a, ['role', 'personId', 'name']);
       } },
     settings: { read: function (c) { return is(c, ANY) || c.robot; },
-      write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || [])); } },
+      write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || '')); } },
     elvantoSync: { read: function (c, id, d) { return may(c, 'import') || c.robot || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
         if (may(c, 'import')) return true;

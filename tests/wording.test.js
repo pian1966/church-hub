@@ -23,6 +23,14 @@ const meth = W.changer({ wording: { set: 'methodist' } });
 ok(meth('My care group · Carer') === 'My class · Class leader' && meth('Care group member') === 'Class member', 'Methodist: care groups are classes, carers class leaders');
 ok(W.pairs({ wording: { set: 'anglican' } }).every((p, i, a) => i === 0 || a[i - 1][0].length >= p[0].length), 'longest words are changed first (Visiting Minister before Minister)');
 
+ok(ang('Senior Pastor') === 'Rector' && ang('the Assistant Pastors') === 'the Assistant Ministers' && ang('Pastors') === 'Clergy', 'Anglican: Senior Pastor → Rector, Assistant Pastors → Assistant Ministers');
+ok(cat('Senior Pastor and Assistant Pastor') === 'Parish Priest and Assistant Priest', 'Catholic: Parish Priest and Assistant Priest');
+ok(meth('Senior Pastor · Assistant Pastors') === 'Senior Minister · Assistant Ministers', 'Methodist: Senior and Assistant follow the word for Pastor');
+const ownP = W.changer({ wording: { custom: { pastor: ['Elder', 'Elders'] } } });
+ok(ownP('Senior Pastor and Assistant Pastors') === 'Senior Elder and Assistant Elders', '…also when the church renamed Pastor itself');
+const ownS = W.changer({ wording: { set: 'methodist', custom: { senior: ['Superintendent', 'Superintendents'] } } });
+ok(ownS('Senior Pastor') === 'Superintendent' && ownS('Assistant Pastor') === 'Assistant Minister', 'the Senior Pastor can be renamed on its own');
+
 const mus = W.changer({ wording: { custom: W.MUSIC.Music } });
 ok(mus('Worship team') === 'Music team' && mus('Worship Team') === 'Music Team' && mus('the worship leader') === 'the music leader' && mus('Worship') === 'Music', 'Worship → Music, Worship team → Music team, worship leader → music leader');
 const pr = W.changer({ wording: { custom: Object.assign({}, W.MUSIC.Praise, { worshipLeader: ['Band leader', 'Band leaders'] }) } });

@@ -29,7 +29,7 @@ service cloud.firestore {
     function mine(personId) { return anyone() && me() != '' && personId == me(); }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
     // What Pastors can do (Settings): an Administrator ticks abilities, which Church Hub copies onto each Pastor's
-    // access-list entry as "can". may('leave') is true for Administrators, and for Pastors with that tick.
+    // access-list entry as "can". The Senior Pastor (Rector), if one is chosen, gets their own ticks (seniorCan). may('leave') is true for Administrators, and for Pastors with that tick.
     // Abilities: settings, access, people, idnumbers, leave, rosters, privacy, import, words.
     function may(x) { return admin() || (isRole(['pastor']) && x in access().get('can', [])); }
     function rosterer() { return isRole(['admin', 'rosters']) || may('rosters'); }
@@ -59,8 +59,12 @@ service cloud.firestore {
     match /settings/{doc} {
       allow read: if anyone() || robot();
       allow create, delete: if admin();
-      // A Pastor with "settings" may change everything except what Pastors can do
-      allow update: if admin() || (may('settings') && request.resource.data.get('pastorCan', []) == resource.data.get('pastorCan', []));
+      // A Pastor with "settings" may change everything except what Pastors can do, what the Senior Pastor can do,
+      // and who the Senior Pastor is (only an Administrator sets those)
+      allow update: if admin() || (may('settings')
+        && request.resource.data.get('pastorCan', []) == resource.data.get('pastorCan', [])
+        && request.resource.data.get('seniorCan', []) == resource.data.get('seniorCan', [])
+        && request.resource.data.get('seniorPastorId', '') == resource.data.get('seniorPastorId', ''));
     }
 
     // ---------- people ----------

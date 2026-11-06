@@ -26,4 +26,41 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(JSON.stringify(docs['settings/church'].pastorCan) === '["settings","leave"]', '…but not what Pastors can do (the rules refuse it)');
   check((await s.denied()).length === 1, 'that one refused change is the only thing refused'); await s.close();
+
+  console.log('The Senior Pastor (Rector) and the other Pastors:');
+  s = await session('linda.pillay@example.com', docs); await s.go('settings');
+  check(!(await s.page.$('.st-sc')), 'until a Senior Pastor is chosen, all Pastors have the same ticks');
+  await s.page.selectOption('#st-senior', 'p02');
+  await s.page.waitForTimeout(800); await s.settle(); await s.page.waitForSelector('.st-sc'); await s.page.waitForTimeout(300);
+  docs = await s.docsNow();
+  check(docs['settings/church'].seniorPastorId === 'p02' && JSON.stringify(docs['settings/church'].seniorCan) === '["settings","leave"]',
+    'choosing Thandi as Senior Pastor saves it, and she starts with what the Pastors could already do');
+  await s.page.check('.st-sc[value="privacy"]'); await s.page.check('.st-sc[value="access"]'); await s.page.uncheck('.st-pc[value="settings"]');
+  await s.page.waitForTimeout(1200); await s.settle(); await s.page.waitForTimeout(300);
+  docs = await s.docsNow();
+  check(JSON.stringify(docs['roles/thandi.mokoena@example.com'].can) === '["access","leave","privacy","settings"]' && JSON.stringify(docs['roles/pieter.vanwyk@example.com'].can) === '["leave"]',
+    'the Senior Pastor and the Assistant Pastors each get their own ticks on their access entries');
+  await s.go('people/p/p03');
+  check((await s.text()).includes('Assistant Pastor'), 'Pieter’s page calls him an Assistant Pastor');
+  await s.page.evaluate(() => Store.setSettings({ wording: { set: 'anglican' } }, 'x')); await s.settle(); await s.go('people/p/p02'); await s.page.waitForTimeout(300);
+  check((await s.text()).includes('Rector'), 'with Anglican words, Thandi is the Rector');
+  await s.go('people/p/p03'); await s.page.waitForTimeout(300);
+  check((await s.text()).includes('Assistant Minister'), '…and Pieter an Assistant Minister');
+  docs = await s.docsNow(); await finish(s);
+  s = await session('thandi.mokoena@example.com', docs); await s.go('home');
+  check(await s.page.evaluate(() => Hub.can('privacy.manage') && Hub.can('access.manage') && Hub.can('settings.manage')), 'the Senior Pastor has her own abilities');
+  await s.page.evaluate(() => Store.setSettings({ seniorPastorId: 'p03' }, 'x')); await s.settle(); await s.page.waitForTimeout(300);
+  await s.page.evaluate(() => Store.setSettings({ seniorCan: ['settings'] }, 'x')); await s.settle(); await s.page.waitForTimeout(300);
+  docs = await s.docsNow();
+  check(docs['settings/church'].seniorPastorId === 'p02' && docs['settings/church'].seniorCan.length === 4, '…but can’t choose another Senior Pastor or change her own ticks (the rules refuse it)');
+  check((await s.denied()).length === 2, 'those two refused changes are the only things refused'); await s.close();
+  s = await session('pieter.vanwyk@example.com', docs); await s.go('home');
+  check(await s.page.evaluate(() => Hub.can('leave.manage') && !Hub.can('settings.manage') && !Hub.can('privacy.manage')), 'an Assistant Pastor has only the Assistant Pastors’ ticks');
+  await finish(s);
+  s = await session('linda.pillay@example.com', docs); await s.go('settings');
+  await s.page.selectOption('#st-senior', ''); await s.page.waitForTimeout(800); await s.settle(); await s.page.waitForTimeout(300);
+  docs = await s.docsNow();
+  check(!docs['settings/church'].seniorPastorId && JSON.stringify(docs['roles/thandi.mokoena@example.com'].can) === '["leave"]' && !(await s.page.$('.st-sc')),
+    'choosing nobody makes all Pastors the same again');
+  await finish(s);
 };

@@ -96,6 +96,8 @@
     add(all, TX('Personal'), 'lateSpouse', TX('Late spouse'), 'text', function (p) { var l = lateSpouse(p); return l ? H.name(l) : p.lateSpouseName || ''; });
     add(all, TX('Name and contact'), 'postcode', TX('Postcode'), 'text', function (p) { return (p.address || {}).postcode || ''; });
     add(all, TX('Name and contact'), 'province', TX('Province'), 'text', function (p) { return (p.address || {}).province || ''; });
+    add(all, TX('Name and contact'), 'country', TX('Country'), 'choice', function (p) { return String((p.address || {}).country || '').trim(); },
+      uniq([Countries.church(S.settings()).name].concat(S.list('people').map(function (p) { return String((p.address || {}).country || '').trim(); }).filter(Boolean))).sort());
     add(H.can('*'), TX('Church'), 'elvantoId', TX('Elvanto ID'), 'text', function (p) { return p.elvantoId || ''; });
     // ID numbers (Administrators): a filter only – never a column, a download or on screen. Fetched when Search is pressed.
     add(H.can('idnumbers'), TX('Privacy'), 'idNumber', TX('ID number'), 'text', function (p) { return idNums ? idNums[p.id] || '' : ''; }, null, null, { noCol: true });
@@ -239,18 +241,29 @@
   function bulkFields() {
     var dead = function (p) { return deceased(p) || p.category === 'Deceased'; };
     var plain = function (key) { return function (q, v) { if (v) q[key] = v; else delete q[key]; }; };
+    var noHome = function (p) { var a = p.address || {}; return !(a.street || a.street2 || a.city || a.postcode); };
+    /** One part of the home address. A country or province on its own isn't an address, so people with none are left out of those. */
+    function addr(part, label, o) {
+      return Object.assign({ key: 'addr-' + part, label: label, keys: ['address'], get: function (p) { return (p.address || {})[part]; },
+        set: function (q, v) { var a = Object.assign({}, q.address || {}); if (v) a[part] = v; else delete a[part]; if (Object.keys(a).some(function (k) { return a[k]; })) q.address = a; else delete q.address; },
+        skip: o.needs ? function (p) { return noHome(p) && TX('people with no home address'); } : null, note: o.needs ? TX('People with no home address are left out.') : '' }, o);
+    }
     return [
-      { key: 'maritalStatus', label: TX('Marital status'), options: MARITAL, keys: ['maritalStatus'], set: plain('maritalStatus'),
+      { key: 'maritalStatus', label: TX('Marital status'), options: MARITAL, keys: ['maritalStatus'], set: plain('maritalStatus'), get: function (p) { return p.maritalStatus; },
         skip: function (p) { return p.familyRole === 'child' && TX('children'); }, note: TX('Children are left out: they have no marital status.') },
-      { key: 'category', label: TX('Category'), options: CATS.filter(function (c) { return c !== 'Deceased'; }), keys: ['category'], set: plain('category'),
+      { key: 'category', label: TX('Category'), options: CATS.filter(function (c) { return c !== 'Deceased'; }), keys: ['category'], set: plain('category'), get: function (p) { return p.category; },
         skip: function (p) { return dead(p) && TX('people who have died'); } },
-      { key: 'gender', label: TX('Gender'), options: GENDERS, blank: TX('Not recorded'), keys: ['gender'], set: plain('gender') },
-      { key: 'partnerSince', label: TX('Date accepted as Church Partner'), date: true, keys: ['partnerSince'], set: plain('partnerSince') },
-      { key: 'partnerUpdated', label: TX('Partnership last updated'), date: true, keys: ['partnerUpdated'], set: plain('partnerUpdated') },
+      { key: 'gender', label: TX('Gender'), options: GENDERS, blank: TX('Not recorded'), keys: ['gender'], set: plain('gender'), get: function (p) { return p.gender; } },
+      { key: 'partnerSince', label: TX('Date accepted as Church Partner'), date: true, keys: ['partnerSince'], set: plain('partnerSince'), get: function (p) { return p.partnerSince; } },
+      { key: 'partnerUpdated', label: TX('Partnership last updated'), date: true, keys: ['partnerUpdated'], set: plain('partnerUpdated'), get: function (p) { return p.partnerUpdated; } },
       { key: 'email', label: TX('Email (where it’s missing)'), options: [TX('Unknown')], keys: ['emailUnknown'], set: function (q) { q.emailUnknown = true; },
         skip: function (p) { return p.email ? TX('already have an email address') : p.familyRole === 'child' ? TX('children') : ''; }, note: TX('Only for adults with no email address. Anyone who has one is left alone.') },
       { key: 'mobile', label: TX('Mobile (where it’s missing)'), options: [TX('Unknown')], keys: ['mobileUnknown'], set: function (q) { q.mobileUnknown = true; },
         skip: function (p) { return p.mobile ? TX('already have a mobile number') : p.familyRole === 'child' ? TX('children') : ''; }, note: TX('Only for adults with no mobile number. Anyone who has one is left alone.') },
+      addr('city', TX('Town or city'), { text: true }),
+      addr('postcode', TX('Postcode'), { text: true }),
+      addr('province', TX('Province, state or region'), { text: true, list: (Countries.church(S.settings()).regions || []).slice(), needs: true }),
+      addr('country', TX('Country'), { options: [Countries.church(S.settings()).name].concat(Countries.all().map(function (c) { return c.name; }).filter(function (n) { return n !== Countries.church(S.settings()).name; })), raw: true, needs: true }),
       { key: 'household', label: TX('Household (where it’s missing)'), options: [TX('+ New household for each person')], keys: ['familyId'],
         skip: function (p) { return (p.familyId || (p.householdIds || []).length) ? TX('already in a household') : ''; },
         set: function (q, v, made) { var f = S.put('families', { name: q.lastName + ' family', custom: false }); made.push(f.id); q.familyId = f.id; if (!q.familyRole) q.familyRole = 'adult'; },
@@ -268,12 +281,14 @@
     if (!ids.length) return;
     var valueBox = function (fd) {
       return fd.date ? '<input type="date" id="bk-v" max="' + H.today() + '">' :
-        '<select id="bk-v">' + (fd.blank ? '<option value="">' + esc(T(fd.blank)) + '</option>' : '<option value="">' + T('Choose…') + '</option>') + fd.options.map(function (o) { return '<option value="' + esc(o) + '">' + esc(T(o)) + '</option>'; }).join('') + '</select>';
+        fd.text ? '<input id="bk-v" autocomplete="off"' + (fd.list && fd.list.length ? ' list="bk-list"><datalist id="bk-list">' + fd.list.map(function (o) { return '<option value="' + esc(o) + '">'; }).join('') + '</datalist>' : '>') :
+        '<select id="bk-v">' + (fd.blank ? '<option value="">' + esc(T(fd.blank)) + '</option>' : '<option value="">' + T('Choose…') + '</option>') + fd.options.map(function (o) { return '<option value="' + esc(o) + '">' + esc(fd.raw ? o : T(o)) + '</option>'; }).join('') + '</select>';
     };
     H.modal(H.dialogHead(TN('Change {n} person', 'Change {n} people', ids.length), T('The same change for everyone you ticked. You can undo it straight after.')) + '<div class="dlg-body">' +
       '<div class="two"><label class="field req">' + T('What to change') + '<select id="bk-f">' + F.map(function (x) { return '<option value="' + x.key + '">' + esc(T(x.label)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field req" id="bk-v-f">' + T('New value') + valueBox(f) + '</label></div>' +
       '<p class="hint" id="bk-note">' + esc(f.note ? T(f.note) : '') + '</p>' +
+      '<label class="check" id="bk-empty-w"' + (f.get ? '' : ' hidden') + '><input type="checkbox" id="bk-empty"><span>' + T('Only where it’s empty – leave anything already filled in') + '</span></label>' +
       '<details><summary class="small">' + T('Who will change ({n})', { n: ids.length }) + '</summary><p class="small muted" style="margin:6px 0 0">' + esc(ids.map(function (id) { return H.name(S.get('people', id)); }).join(', ')) + '</p></details>' +
       '<p id="bk-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:bulksave">' + TN('Change {n} person', 'Change {n} people', ids.length) + '</button></div>', T('Change many people'));
@@ -282,6 +297,7 @@
       var fd = F.filter(function (x) { return x.key === fs.value; })[0], box = document.getElementById('bk-v-f');
       box.innerHTML = T('New value') + valueBox(fd); box.classList.toggle('req', !fd.blank);
       document.getElementById('bk-note').textContent = fd.note ? T(fd.note) : '';
+      document.getElementById('bk-empty-w').hidden = !fd.get; if (!fd.get) document.getElementById('bk-empty').checked = false;
       H.markRequired();
     });
     H.markRequired();
@@ -363,7 +379,9 @@
     bulk: function () { if (canBulk()) bulkDialog(); },
     bulksave: function (el) {
         if (!canBulk()) return;
-        var fd = bulkFields().filter(function (x) { return x.key === document.getElementById('bk-f').value; })[0], v = document.getElementById('bk-v').value, err = document.getElementById('bk-err');
+        var fd = bulkFields().filter(function (x) { return x.key === document.getElementById('bk-f').value; })[0], v = document.getElementById('bk-v').value.trim(), err = document.getElementById('bk-err');
+        var onlyEmpty = !!fd.get && document.getElementById('bk-empty').checked;
+        if (fd.key === 'addr-province' && v) v = Countries.region(v, Countries.church(S.settings()).code);   // "kzn" → KwaZulu-Natal
         if (!v && !fd.blank) { err.textContent = T('Choose the new value.'); err.hidden = false; return; }
         var ids = Object.keys(state.adv.sel || {}), items = [], skipped = {}, made = [];
         if (!H.confirmBtn(el, TN('Click again to change {n} person', 'Click again to change {n} people', ids.length))) return;
@@ -371,7 +389,7 @@
         H.busy('Changing ' + ids.length + (ids.length === 1 ? ' person' : ' people') + '…', function () {
           ids.forEach(function (id) {
             var p = S.get('people', id); if (!p) return;
-            var why = fd.skip && fd.skip(p); if (why) { skipped[why] = (skipped[why] || 0) + 1; return; }
+            var why = (fd.skip && fd.skip(p)) || (onlyEmpty && String(fd.get(p) || '').trim() && TX('already filled in')); if (why) { skipped[why] = (skipped[why] || 0) + 1; return; }
             var before = {}; fd.keys.forEach(function (k) { before[k] = p.hasOwnProperty(k) ? { v: p[k] } : null; });
             var q = JSON.parse(JSON.stringify(p)); fd.set(q, v, made);
             if (fd.keys.every(function (k) { return JSON.stringify(q[k]) === JSON.stringify(p[k]); })) return;   // nothing to change

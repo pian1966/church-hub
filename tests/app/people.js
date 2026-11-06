@@ -169,6 +169,34 @@ module.exports = async function (ctx) {
   check(newFam && docs['families/' + newFam] && docs['families/' + newFam].name === 'Peters family', 'no household → “+ New household” for each person, named after their surname');
   await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
   check(!docs['people/p19'].familyId && !docs['families/' + newFam], 'Undo takes them out again and removes the new household');
+  // Empty country → South Africa (people with no home address left out); Only where it's empty; town as typed
+  await s.page.evaluate(() => {
+    const set = (id, a) => { const p = JSON.parse(JSON.stringify(Store.get('people', id))); if (a) p.address = a; else delete p.address; Store.put('people', p); };
+    set('p14', { street: '7 Oak Rd', city: 'Howick', postcode: '3290' }); set('p15', { street: '7 Oak Rd', city: 'Howick', postcode: '3290', country: 'Namibia' });
+    set('p16', { street: '2 Elm St', city: '' }); set('p17', null); }); await s.settle();
+  await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'country'); await s.page.selectOption('.adv-op[data-i="0"]', 'empty'); await s.page.click('[data-act="people:advrun"]');
+  let found = await s.page.$$eval('.adv-sel', b => b.map(x => x.value));
+  check(found.includes('p14') && found.includes('p16') && !found.includes('p15'), 'Country can be searched: “Country is empty” finds people with no country');
+  await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'addr-country');
+  check(await s.page.inputValue('#bk-v') === '' && (await s.page.$eval('#bk-v option:nth-child(2)', o => o.value)) === 'South Africa', 'Country is a choice, with the church’s country first');
+  await s.page.selectOption('#bk-v', 'South Africa'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p14'].address.country === 'South Africa' && docs['details/p14'].address.street === '7 Oak Rd' && docs['details/p16'].address.country === 'South Africa' && !(docs['details/p17'] || {}).address && tt.includes('people with no home address'),
+    'empty country → South Africa for everyone ticked with an address (the rest of their address kept); people with no address left out');
+  await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['details/p14'].address.country && docs['details/p14'].address.street === '7 Oak Rd', 'Undo takes the country off again');
+  await s.page.fill('input.adv-v[data-i="0"]', '').catch(() => {}); await s.page.click('[data-act="people:advreset"]');
+  await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall'); await s.page.click('#adv-bulk');
+  await s.page.selectOption('#bk-f', 'addr-country'); await s.page.selectOption('#bk-v', 'South Africa'); await s.page.check('#bk-empty');
+  await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p15'].address.country === 'Namibia' && docs['details/p14'].address.country === 'South Africa' && tt.includes('already filled in'), '“Only where it’s empty” leaves a country already there (Namibia) alone');
+  await s.page.click('#adv-selall').catch(() => {}); await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'addr-province');
+  check(await s.page.$eval('#bk-v', e => e.tagName === 'INPUT' && !!e.list), 'Province is typed, with the country’s provinces to pick from');
+  await s.page.fill('#bk-v', 'kzn'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p14'].address.province === 'KwaZulu-Natal', 'typing “kzn” saves KwaZulu-Natal');
+  await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'addr-city'); await s.page.fill('#bk-v', ' Hilton ');
+  await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p14'].address.city === 'Hilton' && docs['details/p14'].address.street === '7 Oak Rd', 'Town or city can be changed for many people too (spaces trimmed)');
   await s.go('settings');
   const pastors = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.appRole === 'pastor' && p.familyRole !== 'child').map(p => p.lastName));
   const tip = await s.page.getAttribute('.who-has[data-role="pastor"] summary', 'title');

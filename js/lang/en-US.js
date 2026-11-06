@@ -165,6 +165,8 @@ I18n.add('en-US', {
     "Main menu": "Main menu",
     "Quick menu": "Quick menu",
     "Close": "Close",
+    "Suggest again": "Suggest again",
+    "Church Partners not in a care group": "Church Partners not in a care group",
     "Leave Church Hub?": "Leave Church Hub?",
     "Are you sure you want to close Church Hub?": "Are you sure you want to close Church Hub?",
     "Stay": "Stay",

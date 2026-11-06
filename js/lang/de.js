@@ -166,6 +166,8 @@ I18n.add('de', {
     "Quick menu": "Schnellmenü",
     "Language": "Sprache",
     "Close": "Schließen",
+    "Suggest again": "Erneut vorschlagen",
+    "Church Partners not in a care group": "Gemeindepartner ohne Hauskreis",
     "Leave Church Hub?": "Church Hub verlassen?",
     "Are you sure you want to close Church Hub?": "Möchten Sie Church Hub wirklich schließen?",
     "Stay": "Bleiben",

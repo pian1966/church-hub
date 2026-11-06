@@ -166,6 +166,8 @@ I18n.add('st', {
     "Quick menu": "Lenane le potlakileng",
     "Language": "Puo",
     "Close": "Kwala",
+    "Suggest again": "Sisinya hape",
+    "Church Partners not in a care group": "Balekane ba Kereke ba se nang sehlopha sa tlhokomelo",
     "Leave Church Hub?": "Tlohela Church Hub?",
     "Are you sure you want to close Church Hub?": "Na o na le bonnete ba hore o batla ho kwala Church Hub?",
     "Stay": "Dula",

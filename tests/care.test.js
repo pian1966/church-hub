@@ -88,5 +88,18 @@ ok(C.areasOf({ areas: ' Hilton , 3245,, Howick North ' }).towns.join() === 'hilt
 const withAreas = JSON.parse(JSON.stringify(groups[0])); withAreas.areas = ['Hilton'];
 ok(!C.leaderMayChange(groups[0], withAreas, 'a'), 'a carer can’t change the group’s areas');
 
+
+// Addresses as people really type them
+const real = C.suggest([{ id: 'AG', name: 'Amber Glen Tuesday', memberIds: [] }, { id: 'GD', name: 'Greendale', memberIds: [] }, { id: 'HO', name: 'Howick Central', memberIds: ['h1'] }],
+  [P('s1', 'Selwyn', A('12 Huntley Lane', 'Amberglen', 'Howick', '3290')), P('l1', 'Lizette', A('1 A Link Road, Greendale', '', '', '')),
+   P('o1', 'Olga', A('3 Oak Rd, Merrivale', '', '', '')), P('h1', 'Hal', A('5 Oak Rd', '', 'Merrivale', ''))]);
+const rc = id => real.clear.filter(x => x.id === id)[0];
+ok(rc('s1') && rc('s1').groupId === 'AG' && rc('s1').why === 'area', '“Amberglen” written as one word → the Amber Glen group');
+ok(rc('l1') && rc('l1').groupId === 'GD', 'an address all on one line (“1 A Link Road, Greendale”) still finds Greendale');
+ok(rc('o1') && rc('o1').groupId === 'HO' && rc('o1').why === 'neighbours', '…and with no town box, the part after the comma counts as the town (a neighbour on Oak Rd, Merrivale)');
+const oneWord = C.suggest([{ id: 'AG', name: 'Amberglen', memberIds: [] }], [P('z', 'Zed', A('4 Amber Glen', '', 'Howick', '3290'))]);
+ok(oneWord.clear[0] && oneWord.clear[0].groupId === 'AG', 'and the other way round: a group called “Amberglen” finds “Amber Glen”');
+ok(C.suggest([{ id: 'AG', name: 'Amber Glen', memberIds: [] }], [P('z', 'Zed', A('4 Amberfield', '', 'Howick', '3290'))]).clear.length === 0, 'Amberfield is not Amber Glen');
+
 if (fails) { console.log('\n' + fails + ' care group test(s) FAILED'); process.exit(1); }
 console.log('\nAll care group tests passed');

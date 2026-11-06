@@ -115,9 +115,22 @@ var Care = (function () {
   }
   function live(p) { return p && p.active !== false && !p.mergedInto && p.firstName !== 'Deleted' && p.category !== 'Deceased' && !p.deathDate; }
   /** Does this place ("amber glen") appear, as whole words, in this text ("12 amber glen howick")? */
-  function within(text, place) { return !!place && (' ' + text + ' ').indexOf(' ' + place + ' ') >= 0; }
-  /** The street without the house number ("12a Main Rd" → "main rd"): people on the same street, estate or complex are near neighbours. */
-  function streetOf(s) { return norm(s).replace(/^(unit |flat |no |nr )?\d+[a-z]?\s+/, ''); }
+  // Spaces don't matter: "Amberglen" is "Amber Glen", and "Amber Glen" is a group called "Amberglen".
+  function within(text, place) {
+    if (!place) return false;
+    if ((' ' + text + ' ').indexOf(' ' + place + ' ') >= 0) return true;
+    var want = place.replace(/ /g, ''), w = text.split(' ');
+    for (var i = 0; i < w.length; i++) for (var j = i, joined = ''; j < w.length && j < i + 4; j++) { joined += w[j]; if (joined === want) return true; if (joined.length >= want.length) break; }
+    return false;
+  }
+  /** The street without the house number ("12a Main Rd", "1 A Link Road" → "main rd", "link road"): people on the same street, estate or complex are near neighbours. */
+  function streetOf(s) { return norm(String(s || '').split(',')[0]).replace(/^(unit |flat |no |nr )?\d+( ?[a-z])?\s+/, ''); }
+  /** An address typed on one line ("1 A Link Road, Greendale, Howick") with no town: the last part after a comma is the town. */
+  function townOf(a) {
+    if (norm(a.city)) return norm(a.city);
+    var parts = [a.street, a.street2].join(',').split(',').map(norm).filter(Boolean);
+    return parts.length > 1 ? parts[parts.length - 1] : '';
+  }
   /**
    * Suggest a care group for every Church Partner (adult, active) who isn't in one yet. Looks, in order, at:
    *  1. the people they live with (same household) – if they are in a group, the same group;
@@ -143,7 +156,7 @@ var Care = (function () {
       (g.memberIds || []).forEach(function (m) { var p = byId[m]; if (p && hasAddress(p)) near.push(p.address); });
       return { g: g, places: places, codes: a.codes, near: near };
     });
-    function nameOfPlace(a) { return [String(a.city || '').trim(), String(a.postcode || '').trim()].filter(Boolean).join(' '); }
+    function nameOfPlace(a) { return [String(a.city || '').trim() || title(townOf(a)), String(a.postcode || '').trim()].filter(Boolean).join(' '); }
     function title(s) { return s.replace(/\b\w/g, function (c) { return c.toUpperCase(); }); }
     var clear = [], unclear = [];
     adults.forEach(function (p) {
@@ -154,7 +167,7 @@ var Care = (function () {
       if (gs.length > 1) { unclear.push({ id: p.id, why: 'households', groupIds: gs, place: '' }); return; }
       // 2. where they live
       var a = addressFor(p); if (!a) { unclear.push({ id: p.id, why: 'noAddress', groupIds: [], place: '' }); return; }
-      var deep = norm([a.street, a.street2].join(' ')), town = norm(a.city), code = codeOf(a.postcode), street = streetOf(a.street), estate = norm(a.street2);
+      var deep = norm([a.street, a.street2].join(' ')), town = townOf(a), code = codeOf(a.postcode), street = streetOf(a.street), estate = norm(a.street2);
       var scored = info.map(function (x) {
         // how specifically the group's name (or areas) matches: 2 = street/estate/suburb line, 1 = town or postal code
         var level = 0, len = 0, hit = '';
@@ -165,14 +178,14 @@ var Care = (function () {
         if (!level && code && x.codes.indexOf(code) >= 0) { level = 1; len = 1; hit = code; }
         var close = 0, sameTown = 0;
         x.near.forEach(function (n) {
-          if ((estate && norm(n.street2) === estate) || (street && streetOf(n.street) === street && norm(n.city) === town)) close++;
-          else if (town ? norm(n.city) === town : code && codeOf(n.postcode) === code) sameTown++;   // a postal code often covers several parts of town
+          if ((estate && (norm(n.street2) === estate || within(norm(n.street2), estate))) || (street && streetOf(n.street) === street && townOf(n) === town)) close++;
+          else if (town ? townOf(n) === town : code && codeOf(n.postcode) === code) sameTown++;   // a postal code often covers several parts of town
         });
         return { id: x.g.id, level: level, len: len, hit: hit, close: close, town: sameTown };
       }).filter(function (x) { return x.level || x.close || x.town; });
       // only their town is known ("Howick") and groups are named after parts of it ("Howick West", "Howick Central"): which part?
       var parts = town ? info.filter(function (x) { return x.places.some(function (pl) { return pl !== town && within(pl, town); }); }) : [];
-      if (!scored.some(function (x) { return x.level; }) && parts.length) { unclear.push({ id: p.id, why: 'whichPart', groupIds: parts.map(function (x) { return x.g.id; }).slice(0, 4), place: String(a.city || '').trim() }); return; }
+      if (!scored.some(function (x) { return x.level; }) && parts.length) { unclear.push({ id: p.id, why: 'whichPart', groupIds: parts.map(function (x) { return x.g.id; }).slice(0, 4), place: String(a.city || '').trim() || title(townOf(a)) }); return; }
       if (!scored.length) { unclear.push({ id: p.id, why: 'noGroup', groupIds: [], place: nameOfPlace(a) }); return; }
       function by(k) { return function (x, y) { return y[k] - x[k]; }; }
       // the best named match: deepest line first, then the longest place name

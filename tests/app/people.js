@@ -259,7 +259,7 @@ module.exports = async function (ctx) {
   await s.page.fill('#sl-time', '09:30'); await s.page.fill('#sl-label', '9:30am'); await s.page.fill('#sl-venue', 'Hilton hall'); await s.page.click('[data-act="settings:addslot"]'); await s.settle(); docs = await s.docsNow();
   const slotsNow = docs['settings/church'].serviceSlots || [];
   const hilton = slotsNow.filter(x => x.venue === 'Hilton hall')[0];
-  check(slotsNow.length === 4 && hilton && hilton.time === '09:30' && hilton.id !== '09:30' && (await s.text()).includes('Hilton hall'), 'an Administrator can add a service at another time and venue');
+  check(slotsNow.filter(x => !x.special).length === 4 && hilton && hilton.time === '09:30' && hilton.id !== '09:30' && (await s.text()).includes('Hilton hall'), 'an Administrator can add a service at another time and venue');
   await s.page.selectOption('#sv-slot', hilton.id); await s.page.selectOption('#sv-n', '4'); await s.page.click('[data-act="settings:addsvc"]'); await s.settle(); docs = await s.docsNow();
   const hs = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].slot === hilton.id);
   check(hs.length === 4 && hs.every(k => docs[k].time === '09:30' && docs[k].venue === 'Hilton hall'), 'services that need a roster can be added for the new service and venue');
@@ -283,7 +283,7 @@ module.exports = async function (ctx) {
   await finish(s);
   s = await session('tim.jacobs@example.com', (() => { const d = seedDocs(); d['settings/church'] = Object.assign({}, d['settings/church'], { serviceSlots: slotsNow }); return d; })());
   await s.go('me/serve'); await s.page.click('[data-act="me:offer"][data-p="tea"]');
-  check(await s.page.$$eval('.mo-t', b => b.length === 4 && b.every(x => x.checked)) && (await s.page.textContent('body')).includes('Hilton hall'), 'offering to help asks at which services – the new venue included');
+  check(await s.page.$$eval('.mo-t', b => b.length === 4 && b.filter(x => x.checked).length === 1) && (await s.page.textContent('body')).includes('Hilton hall'), 'offering to help asks at which services – the new venue included, the service they chose ticked');
   await s.page.uncheck('.mo-t[value="08:00"]'); await s.page.uncheck('.mo-t[value="10:00"]'); await s.page.uncheck('.mo-t[value="17:00"]'); await s.page.uncheck('.mo-t[value="' + hilton.id + '"]');
   await s.page.check('input[name=mo-f][value=monthly]'); await s.page.click('[data-act="me:send"]');
   check((await s.page.textContent('body')).includes('Please tick at least one service'), 'at least one service must be ticked');

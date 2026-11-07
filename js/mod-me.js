@@ -13,6 +13,7 @@
   var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Care group', 'Photos'];
   var APK = 'https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk';   // built by .github/workflows/build-android.yml
 
+  var pickSlot = '';   // the service chosen under Me → Serving (Where would you like to help?)
   function me() { return H.user(); }
   function pos(id) { return S.get('positions', id); }
   function team(id) { return S.get('teams', id); }
@@ -132,20 +133,43 @@
         (o ? '<button class="btn small" data-act="me:withdraw" data-id="' + esc(o.id) + '">' + (o.status === 'waiting' ? T('Withdraw') : T('OK')) + '</button>' :
           '<button class="btn small" data-act="me:change" data-p="' + esc(k.positionId) + '">' + T('Change') + '</button>') + '</div>';
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on a serving team yet. Choose below where you’d like to help.') + '</p>') + '</section>';
-    // Where I'd like to help
-    var teams = S.list('teams').map(function (t) { return { t: t, ps: S.find('positions', function (p) { return p.teamId === t.id && skillPos.indexOf(p.id) < 0; }) }; }).filter(function (x) { return x.ps.length; });
-    html += '<section class="block"><h2>' + T('Where would you like to help?') + '</h2><p class="muted" style="margin-top:0">' + T('Choose a place to serve. The roster coordinator will be in touch before you’re put on the roster.') + '</p>' +
-      (teams.length ? '<div class="grid2">' + teams.map(function (x) {
-        return '<section class="panel"><h3 style="margin:0 0 8px">' + esc(x.t.name) + '</h3><div class="list">' + x.ps.map(function (p) {
-          var o = offerFor(p.id);
-          return '<div class="item"><span class="grow"><b>' + esc(p.name) + '</b>' + offerLine(o) + '</span>' +
-            (!o ? '<button class="btn small" data-act="me:offer" data-p="' + esc(p.id) + '">' + H.icon(H.ICON.plus, 16) + T('I’d like to help') + '</button>' :
-              '<button class="btn small" data-act="me:withdraw" data-id="' + esc(o.id) + '">' + (o.status === 'waiting' ? T('Withdraw') : T('OK')) + '</button>') + '</div>';
-        }).join('') + '</div></section>';
-      }).join('') + '</div>' : '<p class="empty">' + T('You’re already on every team. Thank you!') + '</p>') + '</section>';
-    html += '<section class="panel"><h2>' + T('Serve with family or friends') + '</h2><p class="muted" style="margin-top:0">' + T('Tell us who you’d like to serve with, and the roster will keep you together.') + '</p><a class="btn" href="#/rosters/together">' + T('Serving together') + '</a></section>';
-    return html;
+    // Where I'd like to help: first the service, then a department and its positions (in that service's colours)
+    var sl = Serving.allSlots(S.settings()).map(function (x) { return { x: x, d: Serving.structure(x, S.list('teams'), S.list('positions')) }; }).filter(function (y) { return y.d.length; });
+    html += '<section class="block"><h2>' + T('Where would you like to help?') + '</h2><p class="muted" style="margin-top:0">' + T('First choose which Sunday service you come to (or a special service), then tap a position you’d like to help with. The roster coordinator will be in touch before you’re put on the roster.') + '</p>';
+    if (!sl.length) return html + '<p class="empty">' + T('Nothing to sign up for yet.') + '</p></section>' + together();
+    var cur = sl.filter(function (y) { return y.x.id === pickSlot; })[0] || sl.filter(function (y) { return !y.x.special && sk.some(function (k) { return servesAt(k, y.x); }); })[0] || sl[0];
+    pickSlot = cur.x.id;
+    function cards(list, label) {
+      return list.length ? '<h3 class="svc-kind">' + esc(label) + '</h3><div class="svc-grid" role="group" aria-label="' + esc(label) + '">' + list.map(function (y) {
+        var n = sk.filter(function (k) { return servesAt(k, y.x); }).length;
+        return RosterServices.serviceCard(y.x, 'data-act="me:slot" data-s="' + esc(y.x.id) + '"', y.x.id === cur.x.id, n ? esc(T('You serve here')) : '');
+      }).join('') + '</div>' : '';
+    }
+    // First which Sunday service (8am, 10am or 5pm); special services (Christmas, Good Friday…) on their own below
+    html += cards(sl.filter(function (y) { return !y.x.special; }), T('Which Sunday service?')) + cards(sl.filter(function (y) { return y.x.special; }), T('Special services'));
+    html += '<h3 class="svc-kind" style="margin-top:18px">' + esc(T('Where at {service}?', { service: cur.x.label })) + '</h3>';
+    html += '<div class="svc-page" style="' + RosterServices.themeStyle(Serving.themeOf(cur.x)) + '"><div class="dept-grid">' + cur.d.map(function (d) {
+      return '<div class="dept"><b>' + esc(d.team.name) + '</b><div class="pchips">' + d.positions.map(function (p) {
+        var k = sk.filter(function (y) { return y.positionId === p.id; })[0], o = offerFor(p.id), here = k && servesAt(k, cur.x);
+        var tag = here ? H.icon(H.ICON.check, 15) : o ? '<span class="tag warn">' + T('Asked') + '</span>' : H.icon(H.ICON.plus, 15);
+        var act = here || k ? 'data-act="me:change" data-p="' + esc(p.id) + '" data-s="' + esc(cur.x.id) + '"' : o ? 'data-act="me:asked" data-id="' + esc(o.id) + '"' : 'data-act="me:offer" data-p="' + esc(p.id) + '" data-s="' + esc(cur.x.id) + '"';
+        return '<button class="pchip' + (here ? ' on' : '') + '" ' + act + ' title="' + esc(here ? T('You serve here') : o ? T('Waiting for the roster coordinator') : T('I’d like to help')) + '">' + tag + esc(p.name) + '</button>';
+      }).join('') + '</div></div>';
+    }).join('') + '</div></div>';
+    if (sl.length > 1) html += '<p class="hint">' + T('Serve at more than one service? Choose another one above.') + '</p>';
+    // Offers to join a team, with the roster coordinator's answer
+    var asked = myOffers().filter(function (o) { return skillPos.indexOf(o.positionId) < 0; });
+    if (asked.length) html += '<div class="list" style="margin-top:12px">' + asked.map(function (o) {
+      return '<div class="item"><span class="grow"><b>' + esc(posName(o.positionId)) + '</b>' + offerLine(o) + '</span><button class="btn small" data-act="me:withdraw" data-id="' + esc(o.id) + '">' + (o.status === 'waiting' ? T('Withdraw') : T('OK')) + '</button></div>';
+    }).join('') + '</div>';
+    html += '</section>';
+    return html + together();
   }
+  function together() {
+    return '<section class="panel"><h2>' + T('Serve with family or friends') + '</h2><p class="muted" style="margin-top:0">' + T('Tell us who you’d like to serve with, and the roster will keep you together.') + '</p><a class="btn" href="#/rosters/together">' + T('Serving together') + '</a></section>';
+  }
+  /** Does this skill include that service? (No services ticked = every service the position runs at.) */
+  function servesAt(k, x) { var p = pos(k.positionId); return p && Serving.runsAtSlot(p, x) && (!k.times || !k.times.length || k.times.indexOf(x.id) >= 0); }
   /** Under a position: what the person asked for and what the roster coordinator said. */
   function offerLine(o) {
     if (!o) return '';
@@ -156,12 +180,13 @@
 
   /** The services this position runs at (all the church's regular services when it isn't narrowed down). */
   function slotsFor(positionId) {
-    var p = pos(positionId), all = Serving.slots(S.settings());
-    return p && p.times && p.times.length ? all.filter(function (x) { return p.times.indexOf(x.id) >= 0; }) : all;
+    var p = pos(positionId);
+    return p ? Serving.allSlots(S.settings()).filter(function (x) { return Serving.runsAtSlot(p, x); }) : [];
   }
-  function offerDialog(positionId, current) {
+  function offerDialog(positionId, current, slotId) {
     var title = current ? T('Change how you serve') : T('Offer to help'), sl = slotsFor(positionId);
-    var mine = current && current.times && current.times.length ? current.times : sl.map(function (x) { return x.id; });
+    var mine = current && current.times && current.times.length ? current.times.slice() : current || !slotId ? sl.map(function (x) { return x.id; }) : [slotId];
+    if (current && slotId && mine.indexOf(slotId) < 0) mine.push(slotId);   // chose another service for a position they already serve in
     H.modal(H.dialogHead(title, posName(positionId)) + '<div class="dlg-body">' +
       (sl.length > 1 ? '<fieldset class="field" style="border:0;padding:0;margin:0 0 12px" id="mo-slots"><legend style="margin-bottom:6px">' + T('At which services?') + '</legend>' +
         sl.map(function (x) { return '<label class="check"><input type="checkbox" class="mo-t" value="' + esc(x.id) + '"' + (mine.indexOf(x.id) >= 0 ? ' checked' : '') + '><span>' + esc(Serving.slotLabel(x.id, S.settings())) + '</span></label>'; }).join('') + '</fieldset>' : '') +
@@ -193,8 +218,13 @@
       return renderDetails();
     },
     actions: {
-      offer: function (el) { offerDialog(el.dataset.p, null); },
-      change: function (el) { offerDialog(el.dataset.p, mySkills().filter(function (k) { return k.positionId === el.dataset.p; })[0] || null); },
+      offer: function (el) { offerDialog(el.dataset.p, null, el.dataset.s); },
+      change: function (el) { offerDialog(el.dataset.p, mySkills().filter(function (k) { return k.positionId === el.dataset.p; })[0] || null, el.dataset.s); },
+      slot: function (el) { pickSlot = el.dataset.s; H.render(); },
+      asked: function (el) {
+        var o = S.get('serveOffers', el.dataset.id); if (!o) return;
+        H.modal(H.dialogHead(posName(o.positionId)) + '<div class="dlg-body">' + offerLine(o) + '</div><div class="dlg-foot"><button class="btn" data-act="me:withdraw" data-id="' + esc(o.id) + '">' + (o.status === 'waiting' ? T('Withdraw') : T('OK')) + '</button><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', posName(o.positionId));
+      },
       send: function (el) {
         var u = me(), pid = el.dataset.p, f = document.querySelector('input[name=mo-f]:checked'), err = document.getElementById('mo-err');
         var current = mySkills().filter(function (k) { return k.positionId === pid; })[0];
@@ -212,7 +242,7 @@
         H.closeModal(); H.render();
         H.toast(T('Sent – the roster coordinator will be in touch'));
       },
-      withdraw: function (el) { S.remove('serveOffers', el.dataset.id); H.render(); }
+      withdraw: function (el) { S.remove('serveOffers', el.dataset.id); H.closeModal(); H.render(); }
     }
   });
 })();

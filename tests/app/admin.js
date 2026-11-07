@@ -148,6 +148,25 @@ module.exports = async function (ctx) {
     'Rosters → Teams adds the church’s 8 departments and 26 positions (Creche Duty only at 8:00): ' + posDocs.length);
   check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
   check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && (await s.text()).includes('8am only'), 'once added, the offer goes, and 8am-only positions say so');
+  check(docs['teams/dept-operational'].name === 'Service Leading', 'the department for preaching, hosting, reading and prayer is called Service Leading');
+  // Rosters → Services: each service's look, mood, departments and positions
+  await s.go('rosters/services'); tt = await s.text();
+  check((await s.page.$$('.svc-card')).length === 4 && tt.includes('Memorial') && tt.includes('Sunday school') && tt.includes('Seniors') && tt.includes('Young adults'), 'Rosters → Services shows 8am, 10am, 5pm and Memorial, each with its mood');
+  await s.go('rosters/services/08%3A00'); tt = await s.text();
+  check(tt.includes('Sunrise') && tt.includes('Service Leading') && (await s.page.$eval('.theme-pick.on', b => b.textContent)).includes('Sunrise'), '8am looks like sunrise to start with');
+  await s.page.click('[data-act="rosters:svctheme"][data-t="midday"]'); await s.settle();
+  await s.page.click('[data-act="rosters:svcmood"][data-m="Quiet"]'); await s.settle();
+  await s.page.fill('#sv-mood', 'Bilingual'); await s.page.click('[data-act="rosters:svcmoodadd"]'); await s.settle(); docs = await s.docsNow();
+  const eight = docs['settings/church'].serviceSlots.find(x => x.id === '08:00');
+  check(eight.theme === 'midday' && eight.moods.includes('Quiet') && eight.moods.includes('Bilingual') && eight.moods.includes('Sunday school'), 'tapping a look and mood words saves them (and the church can add its own word)');
+  await s.go('rosters/services/10%3A00');
+  await s.page.click('[data-act="rosters:svcpos"][data-p="pos-creche"]'); await s.settle();
+  await s.page.click('[data-act="rosters:svcpos"][data-p="pos-host"]'); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['positions/pos-creche'].times) === '["08:00","10:00"]' && JSON.stringify(docs['positions/pos-host'].times) === '["08:00","17:00"]', 'tapping a position switches it on or off at that service');
+  await s.page.click('[data-act="rosters:svcpos"][data-p="pos-host"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['positions/pos-host'].times.length === 0, 'and back on: every service again');
+  await s.go('rosters/services/memorial'); tt = await s.text();
+  check(tt.includes('Held now and then') && (await s.page.$('[data-act="rosters:svcpos"][data-p="pos-memorial-teas"][aria-pressed="true"]')) && (await s.page.$('[data-act="rosters:svcpos"][data-p="pos-host"][aria-pressed="false"]')), 'Memorial has only memorial teas');
   await s.go('people/p/p15'); await s.page.click('[data-act="people:volunteer"]');
   await s.page.check('input[name="vol"][value="yes"]'); await s.page.check('.vol-t[value="08:00"]'); await s.page.check('.vol-t[value="10:00"]'); await s.page.uncheck('.vol-t[value="17:00"]');
   await s.page.check('.vol-d[data-t="dept-music"]'); await s.page.check('.vol-p[value="pos-sound"]'); await s.page.check('.vol-p[value="pos-drums"]');

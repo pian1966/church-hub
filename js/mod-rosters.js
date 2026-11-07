@@ -47,7 +47,7 @@
   }
 
   function tabs(active) {
-    var t = manager() ? [['', T('Roster')], ['teams', T('Teams')], ['together', T('Serving together')], ['away', T('Away dates')], ['mine', T('My serving')]] : [['mine', T('My serving')], ['together', T('Serving together')], ['away', T('Away dates')]];
+    var t = manager() ? [['', T('Roster')], ['teams', T('Teams')], ['services', T('Services')], ['together', T('Serving together')], ['away', T('Away dates')], ['mine', T('My serving')]] : [['mine', T('My serving')], ['together', T('Serving together')], ['away', T('Away dates')]];
     return '<nav class="seg" aria-label="' + T('Rosters') + '" style="margin-bottom:18px">' + t.map(function (x) { return '<a href="#/rosters' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === active ? 'on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + x[1] + '</a>'; }).join('') + '</nav>';
   }
   function head(title, lead, btns) { return '<div class="page-head"><div><h1>' + esc(title) + '</h1><p class="lead">' + lead + '</p></div>' + (btns ? '<div class="btns">' + btns + '</div>' : '') + '</div>'; }
@@ -131,20 +131,111 @@
       '<div class="dlg-foot"><a class="btn" href="#/rosters/teams" data-act="hub:close">' + T('Manage teams') + '</a><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Add someone'));
   }
 
+  /* ---------- services: look, mood, departments and positions (Rosters → Services) ---------- */
+  function canLook() { return H.can('settings.manage'); }   // the look and mood are church settings (Administrators, Pastors with that tick)
+  function slotById(id) { return Serving.savedSlots(S.settings()).filter(function (x) { return x.id === id; })[0]; }
+  /** The colours of a service's theme, for style="…" on a card or page. */
+  function themeStyle(th) { return '--svc-ink:' + th.ink + ';--svc-line:' + th.line + ';--svc-soft:' + th.soft; }
+  function slotWhen(x) { return x.occasional ? T('Held now and then (memorials and funerals)') : (x.time + (x.venue ? ' · ' + x.venue : '')); }
+  function moodChips(x, n) {
+    var m = Serving.moodsOf(x), more = n && m.length > n ? m.length - n : 0;
+    return m.length ? '<span class="moods">' + m.slice(0, n || m.length).map(function (w) { return '<span class="mood">' + esc(T(w)) + '</span>'; }).join('') + (more ? '<span class="mood">+' + more + '</span>' : '') + '</span>' : '';
+  }
+  /** A service as a card (Rosters → Services and Me → Serving): its picture, name, time and mood. */
+  function serviceCard(x, attrs, on, foot) {
+    var th = Serving.themeOf(x);
+    return '<' + (attrs.indexOf('href=') >= 0 ? 'a' : 'button') + ' class="svc-card' + (on ? ' on' : '') + '" style="' + themeStyle(th) + '" ' + attrs + (attrs.indexOf('href=') < 0 ? ' aria-pressed="' + !!on + '"' : '') + '>' +
+      '<span class="svc-top"><span class="svc-ico">' + H.icon(th.icon, 22) + '</span><span class="grow"><b>' + esc(x.label) + '</b><small>' + esc(slotWhen(x)) + '</small></span></span>' +
+      moodChips(x, 3) + (foot ? '<small class="svc-foot">' + foot + '</small>' : '') + '</' + (attrs.indexOf('href=') >= 0 ? 'a' : 'button') + '>';
+  }
+  function renderServices() {
+    var sl = Serving.allSlots(S.settings()), gone = Serving.savedSlots(S.settings()).filter(function (x) { return x.removed; });
+    var html = head(T('Services'), T('How each service looks and feels, and which departments and positions it needs. Volunteers choose from this when they offer to help.')) + tabs('services');
+    html += '<div class="svc-grid">' + sl.map(function (x) {
+      var n = Serving.structure(x, S.list('teams'), S.list('positions')).reduce(function (a, d) { return a + d.positions.length; }, 0);
+      return serviceCard(x, 'href="#/rosters/services/' + encodeURIComponent(x.id) + '"', false, esc(TN('{n} position', '{n} positions', n)) + ' ›');
+    }).join('') + '</div>';
+    if (gone.length && canLook()) html += '<p class="hint" style="margin-top:14px">' + gone.map(function (x) { return '<button class="link" data-act="rosters:svcback" data-s="' + esc(x.id) + '">' + esc(T('Bring back {name}', { name: x.label })) + '</button>'; }).join(' · ') + '</p>';
+    html += '<p class="hint" style="margin-top:14px">' + T('Add another time, or another campus or venue, under Settings → Services and venues.') + '</p>';
+    return html;
+  }
+  function renderService(id) {
+    var x = slotById(id); if (!x || x.removed) return renderServices();
+    var th = Serving.themeOf(x), moods = Serving.moodsOf(x), look = canLook();
+    var html = '<div class="svc-page" style="' + themeStyle(th) + '"><p style="margin:0 0 10px"><a href="#/rosters/services">‹ ' + T('Services') + '</a></p>' +
+      '<div class="svc-hero"><span class="svc-ico big">' + H.icon(th.icon, 30) + '</span><div><h1>' + esc(x.label) + '</h1><p class="lead" style="margin:0">' + esc(slotWhen(x)) + ' · ' + esc(T(th.name)) + '</p></div></div>';
+    // Look
+    html += '<section class="panel"><h2>' + T('Look') + '</h2><p class="hint" style="margin-top:0">' + T('Volunteers see this colour and picture, so each service is easy to tell apart.') + '</p><div class="theme-grid">' +
+      Serving.THEMES.map(function (t) {
+        return '<button class="theme-pick' + (t.id === th.id ? ' on' : '') + '" style="' + themeStyle(t) + '" aria-pressed="' + (t.id === th.id) + '"' + (look ? ' data-act="rosters:svctheme" data-s="' + esc(x.id) + '" data-t="' + t.id + '"' : ' disabled') + '>' +
+          '<span class="svc-ico">' + H.icon(t.icon, 20) + '</span>' + esc(T(t.name)) + '</button>';
+      }).join('') + '</div></section>';
+    // Mood
+    var words = Serving.MOODS.concat(moods.filter(function (m) { return Serving.MOODS.indexOf(m) < 0; }));
+    html += '<section class="panel"><h2>' + T('Mood') + '</h2><p class="hint" style="margin-top:0">' + T('Tap the words that describe this service. Volunteers see them too.') + '</p><div class="pchips">' +
+      words.map(function (w) {
+        var on = moods.indexOf(w) >= 0;
+        return '<button class="pchip' + (on ? ' on' : '') + '" aria-pressed="' + on + '"' + (look ? ' data-act="rosters:svcmood" data-s="' + esc(x.id) + '" data-m="' + esc(w) + '"' : ' disabled') + '>' + (on ? H.icon(H.ICON.check, 15) : '') + esc(T(w)) + '</button>';
+      }).join('') + '</div>' +
+      (look ? '<div class="row" style="margin-top:12px;gap:8px;align-items:flex-end"><label class="field grow" style="margin:0"><span class="sr">' + T('Add your own') + '</span><input id="sv-mood" maxlength="30" placeholder="' + esc(T('e.g. Bilingual')) + '"></label><button class="btn" data-act="rosters:svcmoodadd" data-s="' + esc(x.id) + '">' + H.icon(H.ICON.plus, 16) + T('Add your own') + '</button></div>'
+        : '<p class="hint">' + T('Only Administrators can change the look and mood.') + '</p>') + '</section>';
+    // Departments and positions
+    var teams = S.list('teams');
+    html += '<section class="panel"><h2>' + T('Departments and positions') + '</h2><p class="hint" style="margin-top:0">' + T('Tap a position to switch it on or off at this service. Its volunteers stay on the team.') + '</p>' +
+      (teams.length ? '<div class="dept-grid">' + teams.map(function (t) {
+        var ps = S.find('positions', function (p) { return p.teamId === t.id; }); if (!ps.length) return '';
+        var onN = ps.filter(function (p) { return Serving.runsAtSlot(p, x); }).length;
+        return '<div class="dept' + (onN ? '' : ' off') + '"><div class="row"><b class="grow">' + esc(t.name) + '</b>' +
+          '<button class="link small" data-act="rosters:svcdept" data-s="' + esc(x.id) + '" data-t="' + esc(t.id) + '" data-on="' + (onN < ps.length ? 1 : 0) + '">' + (onN < ps.length ? T('Switch all on') : T('Switch all off')) + '</button></div><div class="pchips">' +
+          ps.map(function (p) {
+            var on = Serving.runsAtSlot(p, x);
+            return '<button class="pchip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="rosters:svcpos" data-s="' + esc(x.id) + '" data-p="' + esc(p.id) + '">' + (on ? H.icon(H.ICON.check, 15) : '') + esc(p.name) + '</button>';
+          }).join('') + '</div></div>';
+      }).join('') + '</div>' : '<p class="empty">' + T('No departments yet. Add them under Teams.') + ' <a href="#/rosters/teams">' + T('Teams') + '</a></p>') + '</section>';
+    if (x.occasional && look) html += '<p style="margin-top:16px"><button class="btn" data-act="rosters:svcremove" data-s="' + esc(x.id) + '">' + H.icon(H.ICON.trash, 16) + T('Remove this service') + '</button></p>';
+    return html + '</div>';
+  }
+  function saveSlot(id, patch, what) { S.setSettings({ serviceSlots: Serving.updateSlot(S.settings(), id, patch) }, what); H.render(); }
+  function setTimes(p, times, x) { p = JSON.parse(JSON.stringify(p)); p.times = times; S.put('positions', p, 'Positions at the ' + x.label + ' service: ' + p.name + (Serving.runsAtSlot(p, x) ? ' on' : ' off')); }
+  var serviceActions = {
+    svctheme: function (el) { var x = slotById(el.dataset.s); saveSlot(x.id, { theme: el.dataset.t }, 'Look of the ' + x.label + ' service: ' + el.dataset.t); },
+    svcmood: function (el) {
+      var x = slotById(el.dataset.s), m = Serving.moodsOf(x), w = el.dataset.m;
+      saveSlot(x.id, { moods: m.indexOf(w) >= 0 ? m.filter(function (y) { return y !== w; }) : m.concat([w]) }, 'Mood of the ' + x.label + ' service');
+    },
+    svcmoodadd: function (el) {
+      var x = slotById(el.dataset.s), m = Serving.moodsOf(x), w = document.getElementById('sv-mood').value.trim().slice(0, 30);
+      if (!w) { H.toast(T('Type a word first'), true); return; }
+      if (m.some(function (y) { return y.toLowerCase() === w.toLowerCase(); })) { H.toast(T('That one is already there'), true); return; }
+      saveSlot(x.id, { moods: m.concat([w]) }, 'Mood of the ' + x.label + ' service');
+    },
+    svcpos: function (el) { var x = slotById(el.dataset.s), p = pos(el.dataset.p); setTimes(p, Serving.toggleTimes(p, x.id, S.settings()), x); H.render(); },
+    svcdept: function (el) {
+      var x = slotById(el.dataset.s), want = el.dataset.on === '1';
+      S.find('positions', function (p) { return p.teamId === el.dataset.t; }).forEach(function (p) {
+        if (Serving.runsAtSlot(p, x) !== want) setTimes(p, Serving.toggleTimes(p, x.id, S.settings()), x);
+      });
+      H.render();
+    },
+    svcremove: function (el) { var x = slotById(el.dataset.s); if (!H.confirmBtn(el)) return; S.setSettings({ serviceSlots: Serving.updateSlot(S.settings(), x.id, { removed: true }) }, 'Removed the ' + x.label + ' service'); H.go('rosters/services'); },
+    svcback: function (el) { var x = slotById(el.dataset.s); saveSlot(x.id, { removed: false }, 'Brought back the ' + x.label + ' service'); H.toast(T('Saved')); }
+  };
+  window.RosterServices = { serviceCard: serviceCard, themeStyle: themeStyle };
+
   /* ---------- teams ---------- */
   function renderTeams() {
     var html = head(T('Teams'), T('Who can serve in each position, and how often they’d like to.'), '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + T('New team') + '</button>') + tabs('teams');
     html += renderOffers();
     var add = window.Serving ? Serving.missing(S.list('teams'), S.list('positions')) : { teams: [], positions: [] };
     if (add.positions.length && (H.can('*') || H.can('rosters.manage'))) html += '<div class="note info" style="margin-bottom:16px"><b>' + T('Set up the church’s departments.') + '</b> ' +
-      (add.teams.length ? T('Adds {d} and {p} as in Elvanto (Operational, Extra Slot, Hospitality, Music, Teens, Children, Creche, Memorial Service), each marked with the services it runs at.', { d: TN('{n} department', '{n} departments', add.teams.length), p: TN('{n} position', '{n} positions', add.positions.length) })
+      (add.teams.length ? T('Adds {d} and {p} as in Elvanto (Service Leading, Extra Slot, Hospitality, Music, Teens, Children, Creche, Memorial Service), each marked with the services it runs at.', { d: TN('{n} department', '{n} departments', add.teams.length), p: TN('{n} position', '{n} positions', add.positions.length) })
         : T('Adds {p} as in Elvanto, each marked with the services it runs at.', { p: TN('{n} position', '{n} positions', add.positions.length) })) + ' ' + T('Nothing here is changed or removed.') + ' ' +
       '<button class="btn small primary" data-act="rosters:setupdepts">' + T('Add them') + '</button></div>';
     html += '<div class="grid2">' + S.list('teams').map(function (t) {
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
       return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; });
-        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + T('{n} per service', { n: p.needed }) + (p.times && p.times.length && p.times.length < Serving.slots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
+        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
             return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc(T((FREQ.filter(function (f) { return f[0] === k.frequency; })[0] || ['', k.frequency])[1])) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
@@ -273,12 +364,13 @@
     render: function (p) {
       var v = p[0] || (manager() ? '' : 'mine');
       if (v === 'teams' && manager()) return renderTeams();
+      if (v === 'services' && manager()) return p[1] ? renderService(decodeURIComponent(p[1])) : renderServices();
       if (v === 'together') return renderTogether();
       if (v === 'away') return renderAway();
       if (v === 'mine' || !manager()) return renderMine();
       return renderMatrix();
     },
-    actions: {
+    actions: Object.assign({
       setupdepts: function () {
         var add = Serving.missing(S.list('teams'), S.list('positions'));
         H.busy(T('Adding the departments…'), function () {
@@ -405,7 +497,7 @@
         H.closeModal(); H.render(); H.toast(T('Reply sent'));
       },
       unskill: function (el) { S.remove('skills', el.dataset.id, 'Removed from a team'); H.render(); }
-    }
+    }, serviceActions)
   });
   window.RosterHelpers = { awayList: awayList };
 })();

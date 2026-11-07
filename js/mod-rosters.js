@@ -28,14 +28,16 @@
   }
   function engineData(extra) {
     return { people: S.list('people'), positions: orderedPositions(), skills: S.list('skills'), services: S.list('services'),
-      assignments: S.list('assignments').concat(extra || []), groups: S.list('groups'), away: awayList() };
+      assignments: S.list('assignments').concat(extra || []), groups: S.list('groups'), away: awayList(), specialSlots: specialIds() };
   }
   function orderedPositions() {
     var t = S.list('teams').map(function (x) { return x.id; });
     return S.list('positions').slice().sort(function (a, b) { return t.indexOf(a.teamId) - t.indexOf(b.teamId); });
   }
   /** A position only runs at some services (e.g. Creche Duty at 8:00): elsewhere its cell is shown as not needed. */
-  function runsAt(p, s) { var k = Serving.slotOf(s); return !(p.times && p.times.length && k && p.times.indexOf(k) < 0); }
+  /** A special service (Good Friday…) only has the positions chosen for it; a Sunday one every position unless narrowed down. */
+  function specialIds() { return Serving.specialSlots(S.settings()).map(function (x) { return x.id; }); }
+  function runsAt(p, s) { return R.runsAt(p, s, specialIds()); }
   function slotName(id) { return Serving.slotLabel(id, S.settings()); }
   function narrow() { return window.innerWidth < 700; }
   function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; }); }
@@ -136,7 +138,12 @@
   function slotById(id) { return Serving.savedSlots(S.settings()).filter(function (x) { return x.id === id; })[0]; }
   /** The colours of a service's theme, for style="…" on a card or page. */
   function themeStyle(th) { return '--svc-ink:' + th.ink + ';--svc-line:' + th.line + ';--svc-soft:' + th.soft; }
-  function slotWhen(x) { return x.occasional ? T('Held now and then (memorials and funerals)') : (x.time + (x.venue ? ' · ' + x.venue : '')); }
+  function slotWhen(x) {
+    if (!x.special) return x.time + (x.venue ? ' · ' + x.venue : '');
+    if (x.id === 'memorial') return T('Held now and then (memorials and funerals)');
+    var d = x.feast ? Serving.specialDate(x.feast, H.today()) : '';
+    return d ? T('Next: {date}', { date: H.fmt(d, true) }) : T('Special service');
+  }
   function moodChips(x, n) {
     var m = Serving.moodsOf(x), more = n && m.length > n ? m.length - n : 0;
     return m.length ? '<span class="moods">' + m.slice(0, n || m.length).map(function (w) { return '<span class="mood">' + esc(T(w)) + '</span>'; }).join('') + (more ? '<span class="mood">+' + more + '</span>' : '') + '</span>' : '';
@@ -149,15 +156,27 @@
       moodChips(x, 3) + (foot ? '<small class="svc-foot">' + foot + '</small>' : '') + '</' + (attrs.indexOf('href=') >= 0 ? 'a' : 'button') + '>';
   }
   function renderServices() {
-    var sl = Serving.allSlots(S.settings()), gone = Serving.savedSlots(S.settings()).filter(function (x) { return x.removed; });
+    var all = Serving.allSlots(S.settings()), gone = Serving.savedSlots(S.settings()).filter(function (x) { return x.removed; });
     var html = head(T('Services'), T('How each service looks and feels, and which departments and positions it needs. Volunteers choose from this when they offer to help.')) + tabs('services');
-    html += '<div class="svc-grid">' + sl.map(function (x) {
-      var n = Serving.structure(x, S.list('teams'), S.list('positions')).reduce(function (a, d) { return a + d.positions.length; }, 0);
-      return serviceCard(x, 'href="#/rosters/services/' + encodeURIComponent(x.id) + '"', false, esc(TN('{n} position', '{n} positions', n)) + ' ›');
-    }).join('') + '</div>';
-    if (gone.length && canLook()) html += '<p class="hint" style="margin-top:14px">' + gone.map(function (x) { return '<button class="link" data-act="rosters:svcback" data-s="' + esc(x.id) + '">' + esc(T('Bring back {name}', { name: x.label })) + '</button>'; }).join(' · ') + '</p>';
-    html += '<p class="hint" style="margin-top:14px">' + T('Add another time, or another campus or venue, under Settings → Services and venues.') + '</p>';
-    return html;
+    function cards(list) {
+      return '<div class="svc-grid">' + list.map(function (x) {
+        var n = Serving.structure(x, S.list('teams'), S.list('positions')).reduce(function (a, d) { return a + d.positions.length; }, 0);
+        return serviceCard(x, 'href="#/rosters/services/' + encodeURIComponent(x.id) + '"', false, esc(n ? TN('{n} position', '{n} positions', n) : T('Choose its positions')) + ' ›');
+      }).join('') + '</div>';
+    }
+    html += '<section class="block"><h2>' + T('Sunday services') + '</h2>' + cards(all.filter(function (x) { return !x.special; })) +
+      '<p class="hint" style="margin-top:10px">' + T('Add another time, or another campus or venue, under Settings → Services and venues.') + '</p></section>';
+    html += '<section class="block"><h2>' + T('Special services') + '</h2><p class="hint" style="margin-top:0">' + T('Each special service only has the departments and positions you switch on for it.') + '</p>' +
+      cards(all.filter(function (x) { return x.special; }));
+    if (canLook()) {
+      var have = all.map(function (x) { return (x.feast || x.label).toLowerCase(); });
+      html += '<div class="row" style="margin-top:12px;gap:8px;align-items:flex-end;max-width:520px"><label class="field grow" style="margin:0">' + T('Add a special service') +
+        '<input id="sv-special" list="sv-special-list" maxlength="40" autocomplete="off" placeholder="' + esc(T('e.g. Palm Sunday')) + '"><datalist id="sv-special-list">' +
+        Serving.specials(+H.today().slice(0, 4)).filter(function (x) { return have.indexOf(x.name.toLowerCase()) < 0; }).map(function (x) { return '<option value="' + esc(x.name) + '">'; }).join('') + '</datalist></label>' +
+        '<button class="btn" data-act="rosters:svcadd">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>';
+      if (gone.length) html += '<p class="hint" style="margin-top:10px">' + gone.map(function (x) { return '<button class="link" data-act="rosters:svcback" data-s="' + esc(x.id) + '">' + esc(T('Bring back {name}', { name: x.label })) + '</button>'; }).join(' · ') + '</p>';
+    }
+    return html + '</section>';
   }
   function renderService(id) {
     var x = slotById(id); if (!x || x.removed) return renderServices();
@@ -192,7 +211,7 @@
             return '<button class="pchip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="rosters:svcpos" data-s="' + esc(x.id) + '" data-p="' + esc(p.id) + '">' + (on ? H.icon(H.ICON.check, 15) : '') + esc(p.name) + '</button>';
           }).join('') + '</div></div>';
       }).join('') + '</div>' : '<p class="empty">' + T('No departments yet. Add them under Teams.') + ' <a href="#/rosters/teams">' + T('Teams') + '</a></p>') + '</section>';
-    if (x.occasional && look) html += '<p style="margin-top:16px"><button class="btn" data-act="rosters:svcremove" data-s="' + esc(x.id) + '">' + H.icon(H.ICON.trash, 16) + T('Remove this service') + '</button></p>';
+    if (x.special && look) html += '<p style="margin-top:16px"><button class="btn" data-act="rosters:svcremove" data-s="' + esc(x.id) + '">' + H.icon(H.ICON.trash, 16) + T('Remove this service') + '</button></p>';
     return html + '</div>';
   }
   function saveSlot(id, patch, what) { S.setSettings({ serviceSlots: Serving.updateSlot(S.settings(), id, patch) }, what); H.render(); }
@@ -217,7 +236,15 @@
       });
       H.render();
     },
-    svcremove: function (el) { var x = slotById(el.dataset.s); if (!H.confirmBtn(el)) return; S.setSettings({ serviceSlots: Serving.updateSlot(S.settings(), x.id, { removed: true }) }, 'Removed the ' + x.label + ' service'); H.go('rosters/services'); },
+    svcremove: function (el) { var x = slotById(el.dataset.s); if (!H.confirmBtn(el)) return; S.setSettings({ serviceSlots: Serving.removeSlot(S.settings(), x.id) }, 'Removed the special service ' + x.label); H.go('rosters/services'); },
+    svcadd: function () {
+      var n = document.getElementById('sv-special').value.trim().slice(0, 40);
+      if (!n) { H.toast(T('Type the name of the service first'), true); return; }
+      if (Serving.findSpecial(n, S.settings())) { H.toast(T('That one is already there'), true); return; }
+      var list = Serving.addSpecialSlot(S.settings(), n), x = Serving.findSpecial(n, { serviceSlots: list });
+      S.setSettings({ serviceSlots: list }, 'Added the special service ' + n);
+      H.go('rosters/services/' + encodeURIComponent(x.id)); H.toast(T('Added – now choose its departments and positions'));
+    },
     svcback: function (el) { var x = slotById(el.dataset.s); saveSlot(x.id, { removed: false }, 'Brought back the ' + x.label + ' service'); H.toast(T('Saved')); }
   };
   window.RosterServices = { serviceCard: serviceCard, themeStyle: themeStyle };

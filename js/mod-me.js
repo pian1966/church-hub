@@ -135,15 +135,20 @@
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on a serving team yet. Choose below where you’d like to help.') + '</p>') + '</section>';
     // Where I'd like to help: first the service, then a department and its positions (in that service's colours)
     var sl = Serving.allSlots(S.settings()).map(function (x) { return { x: x, d: Serving.structure(x, S.list('teams'), S.list('positions')) }; }).filter(function (y) { return y.d.length; });
-    html += '<section class="block"><h2>' + T('Where would you like to help?') + '</h2><p class="muted" style="margin-top:0">' + T('Choose a service, then tap a position you’d like to help with. The roster coordinator will be in touch before you’re put on the roster.') + '</p>';
+    html += '<section class="block"><h2>' + T('Where would you like to help?') + '</h2><p class="muted" style="margin-top:0">' + T('First choose which Sunday service you come to (or a special service), then tap a position you’d like to help with. The roster coordinator will be in touch before you’re put on the roster.') + '</p>';
     if (!sl.length) return html + '<p class="empty">' + T('Nothing to sign up for yet.') + '</p></section>' + together();
-    var cur = sl.filter(function (y) { return y.x.id === pickSlot; })[0] || sl.filter(function (y) { return sk.some(function (k) { return servesAt(k, y.x); }); })[0] || sl[0];
+    var cur = sl.filter(function (y) { return y.x.id === pickSlot; })[0] || sl.filter(function (y) { return !y.x.special && sk.some(function (k) { return servesAt(k, y.x); }); })[0] || sl[0];
     pickSlot = cur.x.id;
-    html += '<div class="svc-grid" role="group" aria-label="' + esc(T('Services')) + '">' + sl.map(function (y) {
-      var n = sk.filter(function (k) { return servesAt(k, y.x); }).length;
-      return RosterServices.serviceCard(y.x, 'data-act="me:slot" data-s="' + esc(y.x.id) + '"', y.x.id === cur.x.id, n ? esc(T('You serve here')) : '');
-    }).join('') + '</div>';
-    html += '<div class="svc-page" style="' + RosterServices.themeStyle(Serving.themeOf(cur.x)) + ';margin-top:16px"><div class="dept-grid">' + cur.d.map(function (d) {
+    function cards(list, label) {
+      return list.length ? '<h3 class="svc-kind">' + esc(label) + '</h3><div class="svc-grid" role="group" aria-label="' + esc(label) + '">' + list.map(function (y) {
+        var n = sk.filter(function (k) { return servesAt(k, y.x); }).length;
+        return RosterServices.serviceCard(y.x, 'data-act="me:slot" data-s="' + esc(y.x.id) + '"', y.x.id === cur.x.id, n ? esc(T('You serve here')) : '');
+      }).join('') + '</div>' : '';
+    }
+    // First which Sunday service (8am, 10am or 5pm); special services (Christmas, Good Friday…) on their own below
+    html += cards(sl.filter(function (y) { return !y.x.special; }), T('Which Sunday service?')) + cards(sl.filter(function (y) { return y.x.special; }), T('Special services'));
+    html += '<h3 class="svc-kind" style="margin-top:18px">' + esc(T('Where at {service}?', { service: cur.x.label })) + '</h3>';
+    html += '<div class="svc-page" style="' + RosterServices.themeStyle(Serving.themeOf(cur.x)) + '"><div class="dept-grid">' + cur.d.map(function (d) {
       return '<div class="dept"><b>' + esc(d.team.name) + '</b><div class="pchips">' + d.positions.map(function (p) {
         var k = sk.filter(function (y) { return y.positionId === p.id; })[0], o = offerFor(p.id), here = k && servesAt(k, cur.x);
         var tag = here ? H.icon(H.ICON.check, 15) : o ? '<span class="tag warn">' + T('Asked') + '</span>' : H.icon(H.ICON.plus, 15);

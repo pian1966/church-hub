@@ -527,3 +527,4 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
   .svc-card .moods { display: none; }
   .svc-card .svc-ico { width: 32px; height: 32px; }
 }
+.svc-kind { font-size: 14px; margin: 14px 0 8px; color: var(--muted); font-weight: 700; }

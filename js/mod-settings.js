@@ -53,7 +53,8 @@
       '<label class="field req">' + T('Name') + '<input id="sp-name" list="sp-list" autocomplete="off" placeholder="' + esc(T('e.g. Good Friday')) + '"><datalist id="sp-list">' + specials.map(function (x) { return '<option value="' + esc(x.name) + '">' + esc((x.date ? H.fmt(Serving.specialDate(x.name, H.today()), true) + ' · ' : '') + (x.used || x.when)) + '</option>'; }).join('') + '</datalist></label>' +
       '<div class="two"><label class="field req">' + T('Date') + '<input type="date" id="sp-date" min="' + H.today() + '"></label><label class="field req">' + T('Time') + '<input type="time" id="sp-time" value="' + esc((sl[0] || {}).time || '09:00') + '"></label></div>' +
       '<div class="two"><label class="field">' + T('Campus or venue') + '<input id="sp-venue" placeholder="' + esc(T('Leave empty for the church itself')) + '"></label>' +
-      '<label class="field">' + T('Teams like') + '<select id="sp-like">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select><small>' + T('Positions that only serve some services follow this one.') + '</small></label></div>' +
+      '<label class="field">' + T('Teams like') + '<select id="sp-like">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') +
+        Serving.specialSlots(st).map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(x.label) + '</option>'; }).join('') + '</select><small>' + T('Its positions are the ones chosen for this service under Rosters → Services.') + '</small></label></div>' +
       '<button class="btn small" data-act="settings:addspecial">' + H.icon(H.ICON.plus, 16) + T('Add special service') + '</button>' +
       '<details class="sub"><summary>' + T('Ideas by kind of church') + '</summary><div class="hint">' + groups.map(function (g) {
         return '<p style="margin:8px 0 2px"><b>' + esc(g) + '</b></p><p style="margin:0">' + specials.filter(function (x) { return x.when === g; }).map(function (x) { return esc(x.name) + (x.used ? ' <span class="muted">(' + esc(x.used) + ')</span>' : ''); }).join(' · ') + '</p>';
@@ -297,7 +298,10 @@
     },
     after: function () {
       var sn = document.getElementById('sp-name'), sd = document.getElementById('sp-date');
-      if (sn && sd) sn.addEventListener('input', function () { var d = Serving.specialDate(sn.value.trim(), H.today()); if (d) sd.value = d; });   // a suggestion fills in its date
+      if (sn && sd) sn.addEventListener('input', function () {
+        var d = Serving.specialDate(sn.value.trim(), H.today()); if (d) sd.value = d;   // a suggestion fills in its date
+        var sp = Serving.findSpecial(sn.value, S.settings()), like = document.getElementById('sp-like'); if (sp && like) like.value = sp.id;   // and its positions (Good Friday → Good Friday)
+      });
       var ws = document.getElementById('wd-set');
       if (ws) ws.addEventListener('change', function () {   // fill in the set's words, to save or change
         var w = Wording.words({ wording: { set: ws.value } });

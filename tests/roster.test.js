@@ -121,5 +121,17 @@ console.log('Service times: positions that run at one service, volunteers who se
   ok(at('h') === 'a' && at('m') === 'b', 'another campus or venue: volunteers serve where they said (older services without a venue still work)');
 }
 
+console.log('Special services');
+ok(R.runsAt({ times: [] }, { slot: '08:00' }, ['good-friday']) && !R.runsAt({ times: [] }, { slot: 'good-friday' }, ['good-friday']) && R.runsAt({ times: ['good-friday'] }, { slot: 'good-friday' }, ['good-friday']),
+  'a special service (Good Friday) only gets the positions chosen for it; Sunday services get every position as before');
+{
+  const P = [{ id: 'a', firstName: 'A', lastName: 'A' }, { id: 'b', firstName: 'B', lastName: 'B' }];
+  const pos = [{ id: 'host', name: 'Host', needed: 1, times: [] }, { id: 'reader', name: 'Reading', needed: 1, times: ['good-friday'] }];
+  const sk = [{ personId: 'a', positionId: 'host', frequency: 'weekly' }, { personId: 'b', positionId: 'reader', frequency: 'weekly' }];
+  const sv = [{ id: 'gf', date: '2027-03-26', time: '09:00', slot: 'good-friday' }];
+  const r = R.autoFill({ people: P, positions: pos, skills: sk, services: sv, assignments: [], groups: [], away: [], specialSlots: ['good-friday'] }, ['gf']);
+  ok(r.assignments.map(x => x.positionId).join() === 'reader' && !r.gaps.length, 'filling a Good Friday roster asks only for its positions');
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

@@ -259,7 +259,7 @@ module.exports = async function (ctx) {
   await s.page.fill('#sl-time', '09:30'); await s.page.fill('#sl-label', '9:30am'); await s.page.fill('#sl-venue', 'Hilton hall'); await s.page.click('[data-act="settings:addslot"]'); await s.settle(); docs = await s.docsNow();
   const slotsNow = docs['settings/church'].serviceSlots || [];
   const hilton = slotsNow.filter(x => x.venue === 'Hilton hall')[0];
-  check(slotsNow.filter(x => !x.occasional).length === 4 && hilton && hilton.time === '09:30' && hilton.id !== '09:30' && (await s.text()).includes('Hilton hall'), 'an Administrator can add a service at another time and venue');
+  check(slotsNow.filter(x => !x.special).length === 4 && hilton && hilton.time === '09:30' && hilton.id !== '09:30' && (await s.text()).includes('Hilton hall'), 'an Administrator can add a service at another time and venue');
   await s.page.selectOption('#sv-slot', hilton.id); await s.page.selectOption('#sv-n', '4'); await s.page.click('[data-act="settings:addsvc"]'); await s.settle(); docs = await s.docsNow();
   const hs = Object.keys(docs).filter(k => k.startsWith('services/') && docs[k].slot === hilton.id);
   check(hs.length === 4 && hs.every(k => docs[k].time === '09:30' && docs[k].venue === 'Hilton hall'), 'services that need a roster can be added for the new service and venue');

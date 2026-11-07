@@ -54,6 +54,11 @@ module.exports = async function (ctx) {
   await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('assignments/') && docs[k].personId === 'p20' && docs[k].status === 'pending' && docs[k].source === 'manual'), 'adding someone to the roster saves it');
   await s.go('home'); check((await s.text()).includes('offered to serve'), 'Home: a to-do to answer offers to serve');
+  await s.go('rosters/services/17%3A00');
+  check(!!(await s.page.$('.theme-pick[disabled]')) && (await s.text()).includes('Only Administrators can change the look and mood.'), 'a Roster coordinator sees each service’s look and mood but can’t change them');
+  await s.page.click('[data-act="rosters:svcpos"][data-p="door"]'); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['positions/door'].times) === '["08:00","10:00"]', '… and switches positions on or off at a service');
+  await s.page.click('[data-act="rosters:svcpos"][data-p="door"]'); await s.settle();
   await s.go('rosters/teams'); t = await s.text();
   check(t.includes('at 10am') && t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
   await s.page.click('[data-act="rosters:offeryes"][data-id="so1"]'); await s.settle(); docs = await s.docsNow();
@@ -123,6 +128,12 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); let offs = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14');
   check(offs.length === 1 && docs[offs[0]].kind === 'join' && docs[offs[0]].positionId === 'tea' && docs[offs[0]].frequency === 'monthly' && docs[offs[0]].note === 'After the 9:30' && docs[offs[0]].status === 'waiting', 'offering to help saves an offer for the roster coordinator');
   check((await s.text()).includes('Waiting for the roster coordinator'), 'the offer shows as waiting');
+  check((await s.page.$$('.svc-card')).length >= 3 && (await s.page.$('.svc-card.on[aria-pressed="true"]')), 'first they choose a service (cards in each service’s colours)');
+  await s.page.click('.svc-card[data-s="17:00"]'); await s.settle();
+  check(await s.page.$('.svc-card.on[data-s="17:00"]'), 'tapping another service shows its departments and positions');
+  await s.page.click('[data-act="me:offer"][data-p="door"]');
+  check(await s.page.$$eval('.mo-t', b => b.filter(x => x.checked).map(x => x.value).join() === '17:00'), 'offering from the 5pm service ticks 5pm');
+  await s.page.click('[data-act="hub:close"]');
   await s.page.click('[data-act="me:change"][data-p="sound"]'); await s.page.check('input[name=mo-f][value=stop]'); await s.page.click('[data-act="me:send"]'); await s.settle();
   docs = await s.docsNow(); offs = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14');
   check(offs.some(k => docs[k].kind === 'stop' && docs[k].positionId === 'sound') && docs['skills/kp14sound'], 'asking to stop is a request – the team is unchanged until the coordinator says yes');

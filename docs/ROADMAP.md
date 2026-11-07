@@ -37,6 +37,10 @@ Members see their own family (and give consent for their children), smart lists 
 
 ## Phase 3 – Rostering and services (complete)
 Accept/decline by email and app, swap requests, reminders, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).
+- ⬜ Church: Rosters → Services – check each service's look, mood and positions (Teens/Children/Creche are 8am only, as in Elvanto); rename "Operational" to Service Leading if it was added before 0.29.0 (teams can't be renamed yet)
+- ⬜ Decide: rename "Extra Slot" (e.g. Special Items, or Communion on its own and Features for Interview, Missions, Doctrine)
+- ⬜ Later: rename a team; rostering a dated memorial service uses only Memorial's positions (today a service with slot "memorial" still gets positions that run at every service)
+- ⬜ Later: a "See everything" map of services → departments → positions for the curious
 
 ## Phase 4 – Groups, attendance and check-in
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.

@@ -415,15 +415,15 @@
         H.render(); H.toast(T('Wording saved'));
       },
       addslot: function () {
-        var sl = Serving.slots(S.settings()), time = document.getElementById('sl-time').value, label = document.getElementById('sl-label').value.trim(), venue = document.getElementById('sl-venue').value.trim(), day = +document.getElementById('sl-day').value;
+        var sl = Serving.savedSlots(S.settings()), time = document.getElementById('sl-time').value, label = document.getElementById('sl-label').value.trim(), venue = document.getElementById('sl-venue').value.trim(), day = +document.getElementById('sl-day').value;
         if (!time || !label) { H.toast(T('Give the service a time and a name'), true); return; }
-        if (sl.some(function (x) { return x.time === time && (x.day || 0) === day && (x.venue || '').toLowerCase() === venue.toLowerCase(); })) { H.toast(T('That service is already there'), true); return; }
+        if (sl.some(function (x) { return !x.removed && x.time === time && (x.day || 0) === day && (x.venue || '').toLowerCase() === venue.toLowerCase(); })) { H.toast(T('That service is already there'), true); return; }
         sl.push({ id: Serving.newSlotId(time, venue, sl), label: label, day: day, time: time, venue: venue });
         S.setSettings({ serviceSlots: sl }, 'Added a regular service: ' + label + (venue ? ' at ' + venue : ''));
         H.render(); H.toast(T('Service added'));
       },
       delslot: function (el) {
-        var sl = Serving.slots(S.settings()), x = sl.filter(function (y) { return y.id === el.dataset.id; })[0]; if (!x) return;
+        var sl = Serving.savedSlots(S.settings()), x = sl.filter(function (y) { return y.id === el.dataset.id; })[0]; if (!x) return;
         if (!H.confirmBtn(el, '✕?')) return;
         S.setSettings({ serviceSlots: sl.filter(function (y) { return y.id !== x.id; }) }, 'Removed the regular service ' + x.label + (x.venue ? ' at ' + x.venue : '') + ' (rosters already made stay)');
         H.render(); H.toast(T('Removed'));

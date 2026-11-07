@@ -540,6 +540,45 @@ await t('a leave manager sets the stand-in’s dates, and nothing else on their 
   await cannot(andile.doc('roles/sipho@example.com').update({ standInFrom: 5, standInTo: 6, role: 'admin' }));
 });
 
+console.log('One sign-in shared by a couple (one email address)');
+await env.withSecurityRulesDisabled(async ctx => {
+  const d = ctx.firestore(), set = (p, x) => d.doc(p).set(x);
+  // Ben (p30, member) and Ann (p31, Children's ministry) share couple@example.com
+  await set('roles/couple@example.com', { role: 'member', personId: 'p30', roles: ['member', 'kids'], also: ['p31'], people: { p30: { role: 'member', name: 'Ben' }, p31: { role: 'kids', name: 'Ann' } } });
+  await set('people/p30', { firstName: 'Ben', lastName: 'Made-up', familyRole: 'adult' });
+  await set('people/p31', { firstName: 'Ann', lastName: 'Made-up', familyRole: 'adult' });
+  await set('details/p31', { familyRole: 'adult' });
+  await set('assignments/a31', { personId: 'p31', serviceId: 's1', positionId: 'door', status: 'pending' });
+  await set('messages/ms31', { kind: 'staff', groupId: '', audience: 'Staff', title: '', body: 'Hi Ann', fromId: 'p01', fromName: 'Linda', to: ['p31'], readBy: ['p01'] });
+  await set('careGroups/cg31', { name: 'Ann’s group', leaderIds: ['p31'], memberIds: ['p31', 'p15'], names: {} });
+  // Gus (p32, member) shares a sign-in with Pastor Pam (p33)
+  await set('roles/manse@example.com', { role: 'member', personId: 'p32', roles: ['member', 'pastor'], also: ['p33'] });
+});
+const couple = env.authenticatedContext('uid-couple', { email: 'couple@example.com', email_verified: true }).firestore();
+await t('shared sign-in: each person’s own record, serving and messages (the other person in it too)', async () => {
+  await can(read(couple, 'details/p31'));
+  await can(couple.doc('assignments/a31').update({ status: 'accepted', updatedAt: 'x' }));
+  await can(list(couple.collection('assignments').where('personId', '==', 'p31')));
+  await can(list(couple.collection('messages').where('to', 'array-contains', 'p31')));
+  await can(couple.doc('messages/ms31').update({ readBy: ['p01', 'p31'] }));
+  await can(list(couple.collection('careGroups').where('memberIds', 'array-contains', 'p31')));
+  await can(list(couple.collection('careGroups/cg31/share')));
+});
+await t('shared sign-in: what either person’s role allows (Children’s ministry: medical notes), nothing more', async () => {
+  await can(read(couple, 'medical/p12'));
+  await cannot(read(couple, 'notes/p15'));
+  await cannot(read(couple, 'details/p15'));
+  await cannot(couple.doc('assignments/a15').update({ status: 'accepted', updatedAt: 'x' }));
+});
+await t('shared sign-in: Pastors with “access” give and change it for the smaller roles only', async () => {
+  await can(andile.doc('roles/two@example.com').set({ role: 'member', personId: 'p34', name: 'C', roles: ['member', 'rosters'], also: ['p35'], people: { p34: { role: 'member', name: 'C' }, p35: { role: 'rosters', name: 'D' } } }));
+  await cannot(andile.doc('roles/three@example.com').set({ role: 'member', personId: 'p36', name: 'E', roles: ['member', 'pastor'], also: ['p37'] }));
+  await cannot(andile.doc('roles/manse@example.com').update({ also: [] }));
+  await cannot(andile.doc('roles/manse@example.com').delete());
+  await cannot(andile.doc('roles/four@example.com').set({ role: 'member', personId: 'p38', name: 'F', roles: ['member'], also: ['a', 'b', 'c', 'd'] }));
+  await can(db.admin.doc('roles/manse@example.com').update({ also: ['p33'], name: 'Gus' }));
+});
+
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });
 
 await env.cleanup();

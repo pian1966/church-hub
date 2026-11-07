@@ -15,34 +15,40 @@
   var ANY = ['admin', 'pastor', 'rosters', 'kids', 'member'], STAFF = ['admin', 'pastor', 'rosters', 'kids'];
   function ctx() {
     var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
-    return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', me: r && r.personId ? r.personId : '',
+    // A sign-in shared by several people (one email address): every role they have, and every one of them
+    var ids = (r && r.personId ? [r.personId] : []).concat((r && r.also) || []);
+    return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', roles: r ? r.roles || [r.role] : [], me: r && r.personId ? r.personId : '', ids: ids,
       robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [],
       standIn: !!(r && (r.standInFrom || 0) <= Date.now() && Date.now() <= (r.standInTo || 0)) };
   }
-  function is(c, list) { return c.signedIn && !!c.role && list.indexOf(c.role) >= 0; }
+  function is(c, list) { return c.signedIn && !!c.role && c.roles.some(function (x) { return list.indexOf(x) >= 0; }); }
   /** What Pastors can do: Administrators always; Pastors with the tick on their access-list entry. */
   function may(c, x) { return is(c, ['admin']) || (is(c, ['pastor']) && c.can.indexOf(x) >= 0); }
   function rosterer(c) { return is(c, ['admin', 'rosters']) || may(c, 'rosters'); }
   var SMALL = ['rosters', 'kids', 'member'];
-  function mine(c, pid) { return is(c, ANY) && c.me !== '' && pid === c.me; }
+  function smallRoles(d) { return SMALL.indexOf(d.role) >= 0 && (d.roles || [d.role]).every(function (x) { return SMALL.indexOf(x) >= 0; }); }
+  function okRoles(d) { return (d.roles || []).every(function (x) { return ANY.indexOf(x) >= 0; }) && Array.isArray(d.also || []) && (d.also || []).length <= 3; }
+  function isMe(c, pid) { return !!pid && c.ids.indexOf(pid) >= 0; }
+  function meIn(c, list) { return c.ids.some(function (x) { return (list || []).indexOf(x) >= 0; }); }
+  function mine(c, pid) { return is(c, ANY) && isMe(c, pid); }
   function onlyChanges(b, a, keys) {
     var all = {}; Object.keys(b || {}).concat(Object.keys(a || {})).forEach(function (k) { all[k] = 1; });
     return Object.keys(all).every(function (k) { return JSON.stringify((b || {})[k]) === JSON.stringify((a || {})[k]) || keys.indexOf(k) >= 0; });
   }
   function onlyKeys(a, keys) { return Object.keys(a || {}).every(function (k) { return keys.indexOf(k) >= 0; }); }
   var KIDS_CONSENTS = ['Children’s medical notes', 'Photos'];
-  function inCare(c, gid) { return is(c, ANY) && c.me !== '' && docs['careGroups/' + gid].memberIds.indexOf(c.me) >= 0; }   // a missing group fails
-  function leadsCare(c, gid) { return is(c, ANY) && c.me !== '' && (docs['careGroups/' + gid].leaderIds || []).indexOf(c.me) >= 0; }
+  function inCare(c, gid) { return is(c, ANY) && meIn(c, docs['careGroups/' + gid].memberIds); }   // a missing group fails
+  function leadsCare(c, gid) { return is(c, ANY) && meIn(c, (docs['careGroups/' + gid].leaderIds || [])); }
   function checks(c, lang) { return is(c, ANY) && c.langs.indexOf(lang) >= 0; }   // checks translations in that language
   function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
       write: function (c, op, id, b, a) {
-        if (is(c, ['admin'])) return op === 'delete' || ANY.concat(['robot']).indexOf(a.role) >= 0;
+        if (is(c, ['admin'])) return op === 'delete' || (ANY.concat(['robot']).indexOf(a.role) >= 0 && okRoles(a));
         if (op === 'update' && may(c, 'leave') && onlyChanges(b, a, ['standInFrom', 'standInTo'])) return true;   // the stand-in approver's dates
         if (!may(c, 'access')) return false;
-        if (op === 'delete') return SMALL.indexOf(b.role) >= 0;
-        return (op === 'create' || SMALL.indexOf(b.role) >= 0) && SMALL.indexOf(a.role) >= 0 && onlyKeys(a, ['role', 'personId', 'name']);
+        if (op === 'delete') return smallRoles(b);
+        return (op === 'create' || smallRoles(b)) && smallRoles(a) && okRoles(a) && onlyKeys(a, ['role', 'personId', 'name', 'roles', 'also', 'people']);
       } },
     settings: { read: function (c) { return is(c, ANY) || c.robot; },
       write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || '')); } },
@@ -94,11 +100,11 @@
         if (rosterer(c)) return true;
         return op === 'update' && mine(c, b.personId) && onlyChanges(b, a, ['status', 'updatedAt']) && ['accepted', 'declined'].indexOf(a.status) >= 0;
       } },
-    groups: { read: function (c, id, d) { return is(c, STAFF) || (mine(c, c.me) && !!d && d.memberIds.indexOf(c.me) >= 0); },
+    groups: { read: function (c, id, d) { return is(c, STAFF) || (is(c, ANY) && !!d && meIn(c, d.memberIds)); },
       write: function (c, op, id, b, a) {
         if (rosterer(c)) return true;
-        if (!mine(c, c.me)) return false;
-        return (op === 'create' || b.memberIds.indexOf(c.me) >= 0) && (op === 'delete' || a.memberIds.indexOf(c.me) >= 0);
+        if (!is(c, ANY)) return false;
+        return (op === 'create' || meIn(c, b.memberIds)) && (op === 'delete' || meIn(c, a.memberIds));
       } },
     serveOffers: { read: function (c, id, d) { return rosterer(c) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
@@ -123,15 +129,15 @@
       write: function (c, op, id, b, a) {
         if (may(c, 'leave')) return true;
         if (op === 'create') return mine(c, a.staffId) && (a.status === 'Pending' || (a.status === 'Approved' && ((docs['leave/config'] || {}).autoApprove || []).indexOf(a.type) >= 0));
-        if (op === 'update' && c.standIn && b.staffId !== c.me && b.status === 'Pending' && ['Approved', 'Declined'].indexOf(a.status) >= 0 && onlyChanges(b, a, ['status', 'decidedBy', 'decidedOn'])) return true;
+        if (op === 'update' && c.standIn && !isMe(c, b.staffId) && b.status === 'Pending' && ['Approved', 'Declined'].indexOf(a.status) >= 0 && onlyChanges(b, a, ['status', 'decidedBy', 'decidedOn'])) return true;
         return op === 'update' && mine(c, b.staffId) && a.status === 'Cancelled' && onlyChanges(b, a, ['status', 'cancelledBy']);
       } },
     leaveAdjustments: { read: function (c, id, d) { return may(c, 'leave') || (!!d && mine(c, d.staffId)); }, write: function (c) { return may(c, 'leave'); } },
-    careGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && c.me !== '' && !!d && (d.memberIds || []).indexOf(c.me) >= 0); },
+    careGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && meIn(c, (d.memberIds || []))); },
       write: function (c, op, id, b, a) {
         if (is(c, ['admin', 'pastor'])) return true;
-        if (op !== 'update' || !is(c, ANY) || c.me === '' || (b.leaderIds || []).indexOf(c.me) < 0) return false;
-        return onlyChanges(b, a, ['memberIds', 'names', 'updatedAt']) && a.memberIds.indexOf(c.me) >= 0 && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
+        if (op !== 'update' || !is(c, ANY) || !meIn(c, (b.leaderIds || []))) return false;
+        return onlyChanges(b, a, ['memberIds', 'names', 'updatedAt']) && meIn(c, a.memberIds) && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
       } },
     'careGroups/share': { read: function (c, pid, d, gid) { return is(c, ['admin', 'pastor']) || inCare(c, gid); },
       write: function (c, op, pid, b, a, gid) {
@@ -139,28 +145,28 @@
         return (is(c, ['admin', 'pastor']) || (mine(c, pid) && inCare(c, gid))) && onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
           && (a.photo === undefined || (typeof a.photo === 'string' && a.photo.length < 40000));
       } },
-    messages: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && c.me !== '' && !!d && ((d.to || []).indexOf(c.me) >= 0 || d.fromId === c.me)); },
+    messages: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && (meIn(c, (d.to || [])) || isMe(c, d.fromId))); },
       write: function (c, op, id, b, a) {
         var mgr = is(c, ['admin', 'pastor']);
-        if (op === 'delete') return mgr || (is(c, ANY) && c.me !== '' && b.fromId === c.me);
+        if (op === 'delete') return mgr || (is(c, ANY) && isMe(c, b.fromId));
         if (op === 'update') {
-          if (!is(c, ANY) || c.me === '' || (b.to || []).indexOf(c.me) < 0 || !onlyChanges(b, a, ['readBy'])) return false;
+          if (!is(c, ANY) || !meIn(c, (b.to || [])) || !onlyChanges(b, a, ['readBy'])) return false;
           var was = b.readBy || [], now = a.readBy || [];
-          return was.every(function (x) { return now.indexOf(x) >= 0; }) && now.filter(function (x) { return was.indexOf(x) < 0; }).every(function (x) { return x === c.me; });
+          return was.every(function (x) { return now.indexOf(x) >= 0; }) && now.filter(function (x) { return was.indexOf(x) < 0; }).every(function (x) { return isMe(c, x); });
         }
-        if (!is(c, ANY) || c.me === '' || a.fromId !== c.me) return false;
+        if (!is(c, ANY) || !isMe(c, a.fromId)) return false;
         if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])) return false;
         if (a.some !== undefined && typeof a.some !== 'boolean') return false;
         if (['care', 'group', 'staff', 'partners', 'people'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
-        if (!Array.isArray(a.to) || !a.to.length || a.to.length > 3000 || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return x === c.me; })) return false;
+        if (!Array.isArray(a.to) || !a.to.length || a.to.length > 3000 || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
         if (mgr) return true;
         var g = a.kind === 'care' ? docs['careGroups/' + a.groupId] : a.kind === 'group' ? docs['msgGroups/' + a.groupId] : null;
-        if (!g || (g.leaderIds || []).indexOf(c.me) < 0) return false;
+        if (!g || !meIn(c, (g.leaderIds || []))) return false;
         var ok = (g.memberIds || []).concat(a.kind === 'group' ? g.leaderIds || [] : []);
         return a.to.every(function (x) { return ok.indexOf(x) >= 0; });
       } },
-    msgGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && c.me !== '' && !!d && (d.memberIds || []).indexOf(c.me) >= 0); },
+    msgGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && meIn(c, (d.memberIds || []))); },
       write: function (c) { return is(c, ['admin', 'pastor']); } },
     words: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (may(c, 'words') || checks(c, id)) && (op === 'delete' || (onlyKeys(a, ['words', 'updatedAt', 'createdAt', 'by']) && !!a.words && typeof a.words === 'object' && !Array.isArray(a.words))); } },

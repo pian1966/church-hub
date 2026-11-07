@@ -132,13 +132,14 @@ var Store = (function () {
   var Live = (function () {
     var VERSION = '13.1.0';
     var SDK = ['app', 'auth', 'firestore'].map(function (m) { return 'https://www.gstatic.com/firebasejs/' + VERSION + '/firebase-' + m + '-compat.js'; });
-    var EMAIL_KEY = 'church_hub_signin_email';
+    var EMAIL_KEY = 'church_hub_signin_email', WHO_KEY = 'church_hub_who:';
     // Fields that live in people/{id}; everything else (except medical) goes to details/{id}.
     var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
       'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs'];
     var DIRECTORY = 'Church directory';
     var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false;
     var savedLeave = { requests: {}, adjustments: {}, config: '' }, remoteTimer = null;
+    var MAX_SHARED = 4;   // people who may share one sign-in (one email address); the rules allow the first and 3 others
     var local = {};   // path → what we last wrote (null = deleted), until the server confirms it
 
     function err(e, what) {
@@ -256,6 +257,8 @@ var Store = (function () {
       stop();
       // Let the last saves (e.g. the "Signed out" audit entry) reach the database first – but don't wait forever offline.
       var flushed = fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, 3000); })]) : Promise.resolve();
+      // A shared sign-in: the next person signing in on this device chooses again
+      try { if (session && session.household.length) localStorage.removeItem(WHO_KEY + session.email); } catch (x) {}
       return flushed.then(function () { session = null; db = blank(); return auth ? auth.signOut() : null; });
     }
 
@@ -267,7 +270,19 @@ var Store = (function () {
       doc('roles/' + email).get().then(function (snap) {
         if (!snap.exists) return onState({ stage: 'noAccess', email: email });
         var r = snap.data();
-        session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [], can: r.can || [], standInFrom: r.standInFrom || 0, standInTo: r.standInTo || 0 };
+        session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [], can: r.can || [], standInFrom: r.standInFrom || 0, standInTo: r.standInTo || 0, household: [] };
+        // One sign-in shared by several people (one email address): they choose who is using Church Hub (remembered on this device)
+        if (session.personId && (r.also || []).length) {
+          var ppl = r.people || {};
+          session.household = [r.personId].concat(r.also).map(function (pid) {
+            var x = ppl[pid] || {};
+            return { personId: pid, name: x.name || (pid === r.personId ? r.name : '') || '', role: x.role || r.role, langs: x.langs || [], can: x.can || [] };
+          });
+          var chosen = ''; try { chosen = localStorage.getItem(WHO_KEY + email) || ''; } catch (x) {}
+          var pick = session.household.filter(function (h) { return h.personId === chosen; })[0];
+          if (!pick) return onState({ stage: 'choosePerson', email: email, people: session.household.slice() });
+          return usePerson(pick);
+        }
         if (!session.personId) {
           if (r.role !== 'admin') return onState({ stage: 'noAccess', email: email, reason: 'noPerson' });
           // An Administrator added by hand: set up the church only if nobody has yet, otherwise just their own record.
@@ -278,6 +293,21 @@ var Store = (function () {
         onState(e && e.code === 'permission-denied' ? { stage: 'noAccess', email: email } : { stage: 'error', message: 'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
       });
     }
+
+    /** Someone sharing the sign-in chose who they are (or switched): load Church Hub as that person. */
+    function usePerson(h) {
+      session.role = h.role; session.personId = h.personId; session.langs = h.langs; session.can = h.can;
+      try { localStorage.setItem(WHO_KEY + session.email, h.personId); } catch (x) {}
+      subscribe();
+    }
+    function choose(pid) {
+      var h = session && session.household.filter(function (x) { return x.personId === pid; })[0]; if (!h) return;
+      stop(); previewRole = ''; previewCare = '';
+      onState({ stage: 'loading', email: session.email });
+      usePerson(h);
+    }
+    /** The people sharing this sign-in (empty when it is just one person). */
+    function household() { return session ? session.household.slice() : []; }
 
     /** What to load for each role – mirrors firestore.rules, so no request is refused. */
     function plan() {
@@ -513,30 +543,78 @@ var Store = (function () {
     function syncRole(p, prev) {
       var SMALL = ['rosters', 'kids', 'member'], small = function (x) { return !x || SMALL.indexOf(x) >= 0; };
       if (!is('admin') && (!small(p.appRole === 'none' ? '' : p.appRole) || !small(prev && prev.appRole === 'none' ? '' : prev && prev.appRole))) return;   // a Pastor with "access": the smaller roles only
-      var email = (p.email || '').trim().toLowerCase(), was = prev ? (prev.email || '').trim().toLowerCase() : '';
-      var r = p.appRole && p.appRole !== 'none' && p.active !== false ? p.appRole : '';
-      var wasR = prev && prev.appRole && prev.appRole !== 'none' && prev.active !== false ? prev.appRole : '';
-      // Remove sign-in when the email changes or access ends – also if someone else (e.g. a Pastor recording a death) changed the record first.
-      if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) dropRole(was, p.id);
-      var langs = (p.reviewLangs || []).slice().sort(), wasLangs = ((prev && prev.reviewLangs) || []).slice().sort();
-      var can = r === 'pastor' ? pastorCan(p.id) : [], had = known('roles/' + email);
-      var canChanged = !!had && JSON.stringify(had.can || []) !== JSON.stringify(can);
-      if (email && r && (email !== was || r !== wasR || !prev || langs.join() !== wasLangs.join() || canChanged)) {
-        var acc = { role: r, personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }; if (langs.length) acc.langs = langs;   // languages they check (translations)
-        if (can.length) acc.can = can;   // what Pastors can do (Settings), checked by the rules
-        var ls = (db.leave && db.leave.settings) || {};
-        if (ls.StandInID === p.id && ls.StandInFrom && ls.StandInTo) { acc.standInFrom = dayMs(ls.StandInFrom); acc.standInTo = dayMs(ls.StandInTo, true); }
-        write('roles/' + email, acc);
+      var email = mailOf(p), was = prev ? mailOf(prev) : '';
+      var r = roleOf(p), wasR = prev ? roleOf(prev) : '';
+      var langs = (p.reviewLangs || []).slice().sort().join(), wasLangs = ((prev && prev.reviewLangs) || []).slice().sort().join();
+      var named = function (x) { return x ? ((x.firstName || '') + ' ' + (x.lastName || '')).trim() : ''; };
+      if (r && prev && email === was && r === wasR && langs === wasLangs && named(p) === named(prev)) {
+        // Nothing about their sign-in changed – unless what Pastors can do changed since it was written this session
+        var had = r === 'pastor' ? local['roles/' + email] : null;
+        if (!had || JSON.stringify(had) === JSON.stringify(clean(accessEntry(email, signers(email))))) return;
       }
+      // Each address they have or had: write its sign-in again if they sign in with it (or did); otherwise only make sure
+      // it isn't theirs – someone else may have ended their access first (e.g. a Pastor recording a death).
+      [was, email].forEach(function (e, i) {
+        if (!e || (i && e === was)) return;
+        if ((r && e === email) || (wasR && e === was)) shareRole(e, p.id);
+        else if (local['roles/' + e] !== null) dropRole(e, p.id);
+      });
     }
-    /** Take away a sign-in only if it is this person's: a couple often share one email address, and saving the one
-     *  without sign-in must not remove the other's (or fail with "no permission" when it belongs to a Pastor). */
+    function mailOf(p) { return ((p && p.email) || '').trim().toLowerCase(); }
+    function roleOf(p) { return p && p.appRole && p.appRole !== 'none' && p.active !== false ? p.appRole : ''; }
+    /** Everyone who signs in with this email address (a couple often share one): strongest role first, at most 4. */
+    var STRENGTH = ['admin', 'pastor', 'kids', 'rosters', 'member'];
+    function signers(email) {
+      return find('people', function (x) { return !!email && mailOf(x) === email && !!roleOf(x); }).sort(function (a, b) {
+        return (STRENGTH.indexOf(roleOf(a)) - STRENGTH.indexOf(roleOf(b))) || (a.id < b.id ? -1 : 1);
+      }).slice(0, MAX_SHARED);
+    }
+    /** The access-list entry for an email address: the first person's role as before; when several people share it,
+     *  every role they have (roles, which the rules check), the others (also) and each person's own role (people). */
+    function accessEntry(email, ps) {
+      var first = ps[0], name = function (x) { return ((x.firstName || '') + ' ' + (x.lastName || '')).trim(); };
+      var acc = { role: roleOf(first), personId: first.id, name: name(first) }, langs = [], can = [];
+      var ls = (db.leave && db.leave.settings) || {}, people = {};
+      ps.forEach(function (x) {
+        var mine = { role: roleOf(x), name: name(x) }, l = (x.reviewLangs || []).slice().sort(), c = roleOf(x) === 'pastor' ? pastorCan(x.id) : [];
+        if (l.length) mine.langs = l;   // languages they check (translations)
+        if (c.length) mine.can = c;     // what Pastors can do (Settings), checked by the rules
+        people[x.id] = mine;
+        l.forEach(function (y) { if (langs.indexOf(y) < 0) langs.push(y); }); c.forEach(function (y) { if (can.indexOf(y) < 0) can.push(y); });
+        if (ls.StandInID === x.id && ls.StandInFrom && ls.StandInTo) { acc.standInFrom = dayMs(ls.StandInFrom); acc.standInTo = dayMs(ls.StandInTo, true); }
+      });
+      if (langs.length) acc.langs = langs.sort();
+      if (can.length) acc.can = can.sort();
+      if (ps.length > 1) {
+        acc.roles = []; ps.forEach(function (x) { if (acc.roles.indexOf(roleOf(x)) < 0) acc.roles.push(roleOf(x)); });
+        acc.also = ps.slice(1).map(function (x) { return x.id; });
+        acc.people = people;
+      }
+      return acc;
+    }
+    /** Write (or take away) the sign-in of an email address from everyone who uses it. Only removed if it was this
+     *  person's, so saving someone without sign-in never removes their spouse's (or fails with "no permission"). */
+    function shareRole(email, pid) {
+      var ps = signers(email), path = 'roles/' + email;
+      if (!ps.length) return dropRole(email, pid);
+      writeRole(email, ps);
+    }
+    function writeRole(email, ps) {
+      var path = 'roles/' + email, acc = accessEntry(email, ps);
+      if (!is('admin') && (acc.roles || [acc.role]).some(function (x) { return ['admin', 'pastor'].indexOf(x) >= 0; })) {
+        return err({ code: 'permission-denied' }, 'change a sign-in shared with a Pastor or Administrator – ask an Administrator');
+      }
+      if (local[path] && JSON.stringify(local[path]) === JSON.stringify(clean(acc))) return;
+      write(path, acc);
+    }
     function dropRole(email, pid) {
-      var path = 'roles/' + email;
-      if (local[path]) { if (!local[path].personId || local[path].personId === pid) del(path); return; }   // written this session
+      var path = 'roles/' + email, ours = function (d) { return !d.personId || d.personId === pid || (d.also || []).indexOf(pid) >= 0; };
+      // Theirs: removed – or, if others share it, written again without them
+      var drop = function () { var ps = signers(email); if (ps.length) writeRole(email, ps); else del(path); };
+      if (local[path]) { if (ours(local[path])) drop(); return; }   // written this session
       doc(path).get().then(function (s) {
         var d = s.exists ? s.data() || {} : null;
-        if (d && (!d.personId || d.personId === pid)) del(path);
+        if (d && ours(d)) drop();
       }, function (e) { console.error('check sign-in before removing it', e); });
     }
     /** What a Pastor can do (Settings): the Senior Pastor's own ticks (seniorCan), or the other Pastors' (pastorCan). */
@@ -547,11 +625,10 @@ var Store = (function () {
     /** After an Administrator changes what Pastors can do, or who the Senior Pastor is: every Pastor's access-list entry gets the new ticks. */
     function syncPastors() {
       if (!is('admin')) return;
-      find('people', function (p) { return p.appRole === 'pastor' && p.active !== false && p.email; }).forEach(function (p) {
-        var email = p.email.trim().toLowerCase(), acc = { role: 'pastor', personId: p.id, name: (p.firstName + ' ' + p.lastName).trim() }, can = pastorCan(p.id);
-        if (p.reviewLangs && p.reviewLangs.length) acc.langs = p.reviewLangs.slice().sort();
-        if (can.length) acc.can = can;
-        write('roles/' + email, acc);
+      var done = {};
+      find('people', function (p) { return roleOf(p) === 'pastor' && p.email; }).forEach(function (p) {
+        var email = mailOf(p); if (done[email]) return; done[email] = 1;
+        write('roles/' + email, accessEntry(email, signers(email)));
       });
     }
     function putNotes(pid, c) {   // pastoral notes or church office notes: one document per person holding all their notes
@@ -647,7 +724,7 @@ var Store = (function () {
       if (email && uid) return write('roles/' + email, { role: 'robot', uid: String(uid).trim(), name: 'Elvanto robot' });
       return Promise.resolve();
     }
-    return { boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
+    return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -749,6 +826,6 @@ var Store = (function () {
     onRemoteChange: function (fn) { remoteListeners.push(fn); }, onError: function (fn) { errorListeners.push(fn); },
     onLeaveChange: function (fn) { leaveHooks.push(fn); },
     setRobot: function (email, uid, oldEmail) { if (previewing()) return Promise.resolve(); return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
-    live: { boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
+    live: { choose: Live.choose, household: Live.household, boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
       setup: Live.setup, session: Live.session } };
 })();

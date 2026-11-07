@@ -487,3 +487,4 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .ms-list { max-height: 320px; overflow: auto; display: grid; gap: 2px; }
 .ms-list .check { margin: 0; padding: 6px 2px; }
 .ms-list .check[hidden] { display: none; }
+.who-pick { display: grid; gap: 10px; margin: 0 0 16px; }

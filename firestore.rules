@@ -8,6 +8,9 @@ rules_version = '2';
 // - People sign in with Google or an email link. Their email address must be verified.
 // - roles/{email} says what they may do: admin, pastor, rosters, kids or member, and which person record is theirs.
 //   Only Administrators can change roles (and Pastors with the "access" tick, for the smaller roles). No roles document = no access at all.
+// - People who share one email address (often a couple) share one sign-in: their roles document lists everyone's roles
+//   (roles) and the other people it is for (also, at most 3). After signing in they choose who is using Church Hub;
+//   the rules let the sign-in do what any of them may do (whoever reads that inbox can sign in as any of them anyway).
 // - Medical notes (children) are for Children's ministry only. Pastoral notes are for Pastors only.
 //   Administrators cannot read either; they can only delete them when someone asks to be deleted (POPIA s24).
 // - Members see their own details, their own serving and leave, and the church directory
@@ -21,12 +24,24 @@ service cloud.firestore {
     function roleRef() { return /databases/$(database)/documents/roles/$(request.auth.token.email.lower()); }
     function hasRole() { return signedIn() && exists(roleRef()); }
     function access() { return get(roleRef()).data; }
-    function isRole(list) { return hasRole() && access().role in list; }
+    function myRoles() { return access().get('roles', [access().role]); }
+    function isRole(list) { return hasRole() && myRoles().hasAny(list); }
     function admin() { return isRole(['admin']); }
     function staff() { return isRole(['admin', 'pastor', 'rosters', 'kids']); }
     function anyone() { return isRole(['admin', 'pastor', 'rosters', 'kids', 'member']); }
     function me() { return access().get('personId', ''); }
-    function mine(personId) { return anyone() && me() != '' && personId == me(); }
+    // The other people who share this sign-in (a shared email address), and "is this one of us?"
+    function also() { return access().get('also', []); }
+    function myIds() { return [me()].concat(also()); }
+    function isMe(pid) {
+      return pid != '' && (pid == me() || (also().size() > 0 && pid == also()[0])
+        || (also().size() > 1 && pid == also()[1]) || (also().size() > 2 && pid == also()[2]));
+    }
+    function meIn(list) {
+      return (me() != '' && me() in list) || (also().size() > 0 && also()[0] in list)
+        || (also().size() > 1 && also()[1] in list) || (also().size() > 2 && also()[2] in list);
+    }
+    function mine(personId) { return anyone() && isMe(personId); }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
     // What Pastors can do (Settings): an Administrator ticks abilities, which Church Hub copies onto each Pastor's
     // access-list entry as "can". The Senior Pastor (Rector), if one is chosen, gets their own ticks (seniorCan). may('leave') is true for Administrators, and for Pastors with that tick.
@@ -37,6 +52,12 @@ service cloud.firestore {
     function standIn() { return anyone() && access().get('standInFrom', 0) <= request.time.toMillis() && request.time.toMillis() <= access().get('standInTo', 0); }
     // The roles a Pastor with "access" may give or take away (never Administrator or Pastor, never abilities)
     function smallRole(r) { return r in ['rosters', 'kids', 'member']; }
+    function smallRoles(d) { return smallRole(d.role) && d.get('roles', [d.role]).hasOnly(['rosters', 'kids', 'member']); }
+    // A roles document: its roles, and at most 3 other people sharing the sign-in
+    function okRoles(d) {
+      return d.get('roles', []).hasOnly(['admin', 'pastor', 'rosters', 'kids', 'member'])
+        && d.get('also', []) is list && d.get('also', []).size() <= 3;
+    }
     // The Elvanto robot (GitHub Actions) signs in with its own account. Its access-list entry names its account ID (uid),
     // so nobody else can use that email address. It can only read church settings and work on the Elvanto list.
     function robot() {
@@ -47,12 +68,12 @@ service cloud.firestore {
     // ---------- access list (Administrators manage it from People > Edit details) ----------
     match /roles/{email} {
       allow read: if signedIn() && (email == request.auth.token.email.lower() || may('access'));
-      allow create: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'])
-        || (may('access') && smallRole(request.resource.data.role) && request.resource.data.keys().hasOnly(['role', 'personId', 'name']));
-      allow update: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'])
-        || (may('access') && smallRole(resource.data.role) && smallRole(request.resource.data.role) && request.resource.data.keys().hasOnly(['role', 'personId', 'name']))
+      allow create: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'] && okRoles(request.resource.data))
+        || (may('access') && smallRoles(request.resource.data) && okRoles(request.resource.data) && request.resource.data.keys().hasOnly(['role', 'personId', 'name', 'roles', 'also', 'people']));
+      allow update: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'] && okRoles(request.resource.data))
+        || (may('access') && smallRoles(resource.data) && smallRoles(request.resource.data) && okRoles(request.resource.data) && request.resource.data.keys().hasOnly(['role', 'personId', 'name', 'roles', 'also', 'people']))
         || (may('leave') && onlyChanges(['standInFrom', 'standInTo']) && request.resource.data.standInFrom is int && request.resource.data.standInTo is int);
-      allow delete: if admin() || (may('access') && smallRole(resource.data.role));
+      allow delete: if admin() || (may('access') && smallRoles(resource.data));
     }
 
     // ---------- church settings ----------
@@ -174,24 +195,24 @@ service cloud.firestore {
     }
     // Serve together / keep apart. Members may set up groups they are part of.
     match /groups/{id} {
-      allow read: if staff() || (mine(me()) && me() in resource.data.memberIds);
-      allow create: if rosterer() || (mine(me()) && me() in request.resource.data.memberIds);
+      allow read: if staff() || (anyone() && meIn(resource.data.memberIds));
+      allow create: if rosterer() || (anyone() && meIn(request.resource.data.memberIds));
       allow update: if rosterer()
-        || (mine(me()) && me() in resource.data.memberIds && me() in request.resource.data.memberIds);
-      allow delete: if rosterer() || (mine(me()) && me() in resource.data.memberIds);
+        || (anyone() && meIn(resource.data.memberIds) && meIn(request.resource.data.memberIds));
+      allow delete: if rosterer() || (anyone() && meIn(resource.data.memberIds));
     }
     // Care groups. Administrators and Pastors set them up; a group's carers (leaderIds) may add and remove its members.
     // Members read their own group, and each member's card in it (share/{person}): their name, and the rest only
     // if they agreed (consent "Care group"). Each person keeps their own card up to date.
     function careRef(gid) { return /databases/$(database)/documents/careGroups/$(gid); }
-    function inCare(gid) { return anyone() && me() != '' && me() in get(careRef(gid)).data.get('memberIds', []); }
-    function leadsCare(gid) { return anyone() && me() != '' && me() in get(careRef(gid)).data.get('leaderIds', []); }
+    function inCare(gid) { return anyone() && meIn(get(careRef(gid)).data.get('memberIds', [])); }
+    function leadsCare(gid) { return anyone() && meIn(get(careRef(gid)).data.get('leaderIds', [])); }
     match /careGroups/{gid} {
-      allow read: if isRole(['admin', 'pastor']) || (anyone() && me() != '' && me() in resource.data.get('memberIds', []));
+      allow read: if isRole(['admin', 'pastor']) || (anyone() && meIn(resource.data.get('memberIds', [])));
       allow create, delete: if isRole(['admin', 'pastor']);
       allow update: if isRole(['admin', 'pastor'])
-        || (anyone() && me() != '' && me() in resource.data.get('leaderIds', []) && onlyChanges(['memberIds', 'names', 'updatedAt'])
-            && me() in request.resource.data.memberIds && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])));
+        || (anyone() && meIn(resource.data.get('leaderIds', [])) && onlyChanges(['memberIds', 'names', 'updatedAt'])
+            && meIn(request.resource.data.memberIds) && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])));
       match /share/{pid} {
         allow read: if isRole(['admin', 'pastor']) || inCare(gid);
         allow create, update: if (isRole(['admin', 'pastor']) || (mine(pid) && inCare(gid)))
@@ -209,28 +230,28 @@ service cloud.firestore {
     function manager() { return isRole(['admin', 'pastor']); }
     function maySendTo(m) {
       return manager()
-        || (m.kind == 'care' && me() in get(careRef(m.groupId)).data.get('leaderIds', []) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
-        || (m.kind == 'group' && me() in get(msgGroupRef(m.groupId)).data.get('leaderIds', []) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))));
+        || (m.kind == 'care' && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
+        || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))));
     }
     match /messages/{id} {
-      allow read: if manager() || (anyone() && me() != '' && (me() in resource.data.get('to', []) || resource.data.get('fromId', '') == me()));
-      allow create: if anyone() && me() != '' && request.resource.data.fromId == me()
+      allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
+      allow create: if anyone() && isMe(request.resource.data.fromId)
         && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])
         && request.resource.data.kind in ['care', 'group', 'staff', 'partners', 'people']
         && request.resource.data.get('some', false) is bool
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 4000
         && request.resource.data.get('title', '') is string && request.resource.data.get('title', '').size() <= 120
         && request.resource.data.to is list && request.resource.data.to.size() > 0 && request.resource.data.to.size() <= 3000
-        && request.resource.data.readBy is list && request.resource.data.readBy.hasOnly([me()])
+        && request.resource.data.readBy is list && request.resource.data.readBy.hasOnly(myIds())
         && maySendTo(request.resource.data);
-      allow update: if anyone() && me() != '' && me() in resource.data.get('to', []) && onlyChanges(['readBy'])
+      allow update: if anyone() && meIn(resource.data.get('to', [])) && onlyChanges(['readBy'])
         && request.resource.data.readBy.hasAll(resource.data.get('readBy', []))
-        && request.resource.data.readBy.removeAll(resource.data.get('readBy', [])).hasOnly([me()]);
-      allow delete: if manager() || (anyone() && me() != '' && resource.data.get('fromId', '') == me());
+        && request.resource.data.readBy.removeAll(resource.data.get('readBy', [])).hasOnly(myIds());
+      allow delete: if manager() || (anyone() && isMe(resource.data.get('fromId', '')));
     }
     // Message groups (e.g. Worship team leaders): Administrators and Pastors set them up; members see the groups they are in.
     match /msgGroups/{gid} {
-      allow read: if manager() || (anyone() && me() != '' && me() in resource.data.get('memberIds', []));
+      allow read: if manager() || (anyone() && meIn(resource.data.get('memberIds', [])));
       allow write: if manager();
     }
     // Offers to serve: a person asks to join a position, change how often, or stop; the roster coordinator answers.
@@ -282,7 +303,7 @@ service cloud.firestore {
       allow update: if may('leave')
         || (mine(resource.data.staffId) && request.resource.data.status == 'Cancelled'
             && onlyChanges(['status', 'cancelledBy']))
-        || (standIn() && resource.data.staffId != me() && resource.data.status == 'Pending'
+        || (standIn() && !isMe(resource.data.staffId) && resource.data.status == 'Pending'
             && request.resource.data.status in ['Approved', 'Declined'] && onlyChanges(['status', 'decidedBy', 'decidedOn']));
       allow delete: if may('leave');
     }

@@ -162,7 +162,7 @@ function serve() {
   const TESTS = __dirname;
   const ctx = { Serving, fs, path, vm, http, chromium, ROOT, sampleData, PNG, PNG2, CARD, seedDocs, serve, srv, BASE, browser, check, fake, demo, session, ROUTES, fillHome, tour, finish, TESTS };
   // The parts, in order (tests/app/*.js); each signs in afresh with the made-up church.
-  for (const part of (process.env.PARTS ? process.env.PARTS.split(',') : ['admin', 'pastors', 'leave-more', 'people', 'care', 'messages', 'people-details', 'languages', 'imports', 'roles', 'elvanto-leave', 'signin'])) await require('./app/' + part + '.js')(ctx);
+  for (const part of (process.env.PARTS ? process.env.PARTS.split(',') : ['admin', 'pastors', 'leave-more', 'people', 'care', 'messages', 'people-details', 'household', 'languages', 'imports', 'roles', 'elvanto-leave', 'signin'])) await require('./app/' + part + '.js')(ctx);
 
   await browser.close(); srv.close();
   console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nLive mode: all checks passed');

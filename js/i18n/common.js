@@ -32,6 +32,8 @@ I18n.rows([
     ['Demo with made-up people. Changes stay in this browser.', 'Demonstrasie met opgemaakte mense. Veranderinge bly in hierdie blaaier.', 'Umboniso onabantu abaqanjiwe. Izinguquko zihlala kulesi siphequluli.', 'Umboniso onabantu abayilwayo. Iinguqu zihlala kwesi sikhangeli.'],
     ['Reset demo', 'Begin demonstrasie oor', 'Qala umboniso kabusha', 'Qala umboniso kwakhona'],
     ['Switch person', 'Ruil persoon', 'Shintsha umuntu', 'Tshintsha umntu'],
+    ['Who is using Church Hub?', 'Wie gebruik Church Hub?', 'Ubani osebenzisa i-Church Hub?', 'Ngubani osebenzisa iChurch Hub?'],
+    ['{email} is shared by more than one person. Choose who you are – you can switch at any time.', '{email} word deur meer as een persoon gedeel. Kies wie jy is – jy kan enige tyd omruil.', '{email} isetshenziswa ngabantu abangaphezu koyedwa. Khetha ukuthi ungubani – ungashintsha noma nini.', '{email} isetyenziswa ngabantu abangaphezu komnye. Khetha ukuba ungubani – unokutshintsha nanini na.'],
     ['Good morning', 'Goeiemôre', 'Sawubona ekuseni', 'Molo kusasa'],
     ['Good afternoon', 'Goeiemiddag', 'Sawubona ntambama', 'Molo emva kwemini'],
     ['Good evening', 'Goeienaand', 'Sawubona kusihlwa', 'Molo ngokuhlwa'],

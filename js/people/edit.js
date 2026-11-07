@@ -14,6 +14,11 @@
   function hasConsent() { return P.hasConsent.apply(this, arguments); }
   function householdNames() { return P.householdNames.apply(this, arguments); }
   function isMe() { return P.isMe.apply(this, arguments); }
+  /** Other people with access who sign in with the same email address as p (a couple often share one): they share a sign-in. */
+  function signsInWith(p) {
+    var e = (p.email || '').trim().toLowerCase();
+    return e ? S.list('people').filter(function (o) { return o.id !== p.id && (o.email || '').trim().toLowerCase() === e && o.appRole && o.appRole !== 'none' && o.active !== false; }) : [];
+  }
   function keyDate() { return P.keyDate.apply(this, arguments); }
   function known() { return P.known.apply(this, arguments); }
   function lateSpouse() { return P.lateSpouse.apply(this, arguments); }
@@ -139,7 +144,8 @@
           })(p.address || {}) +
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Wedding anniversary') + '<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
-      (roleChoices(p).length ? '<label class="field">' + T('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') + '</small></label>' : '') +
+      (roleChoices(p).length ? '<label class="field">' + T('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') +
+        (Store.isLive() && signsInWith(p).length ? ' <b>' + esc(T('{names} also signs in with this email address: after signing in, they choose who is using Church Hub.', { names: signsInWith(p).map(H.name).join(', ') })) + '</b>' : '') + '</small></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:save">' + T(isNew ? 'Add person' : 'Save') + '</button></div>';
@@ -325,6 +331,11 @@
           }
         }
         if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = T('To give someone access to Church Hub, add their email address – that’s how they sign in.'); err.hidden = false; return; }
+        var sharers = p.appRole && p.appRole !== 'none' && p.active !== false ? signsInWith(p) : [];
+        if (Store.isLive() && sharers.length >= 4) { err.textContent = T('At most 4 people can share one email address to sign in. Give this person an email address of their own.'); err.hidden = false; return; }
+        if (Store.isLive() && !(H.can('*')) && sharers.some(function (o) { return o.appRole === 'admin' || o.appRole === 'pastor'; })) {
+          err.textContent = T('{names} also signs in with this email address. Only an Administrator can give access on an email address shared with a Pastor or Administrator.', { names: sharers.map(H.name).join(', ') }); err.hidden = false; return;
+        }
         var fam = g('pf-fam');
         if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family', custom: false }, 'Created a household for ' + p.firstName + ' ' + p.lastName); fam = f.id; }
         if (fam !== null) p.familyId = fam;

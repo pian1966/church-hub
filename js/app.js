@@ -334,6 +334,7 @@ var Hub = (function () {
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '</div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
+      (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
       (realAdmin() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button></div>' : '') +
@@ -366,6 +367,13 @@ var Hub = (function () {
 
   /* ---------- live sign-in (Firebase) ---------- */
   var live = { stage: 'loading' };
+  /** Several people share this sign-in (one email address, e.g. a couple): they can switch between themselves. */
+  function shared() { return Store.isLive() && Store.live.household().length > 1; }
+  function whoButtons(people, current) {
+    return '<div class="who-pick">' + people.map(function (h) {
+      return '<button class="btn big-btn' + (h.personId === current ? '' : ' primary') + '" data-act="hub:choose" data-id="' + esc(h.personId) + '"' + (h.personId === current ? ' disabled' : '') + '>' + esc(h.name || '?') + '</button>';
+    }).join('') + '</div>';
+  }
   function liveCard(inner) {
     return '<div class="signin"><div class="signin-card">' +
       '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
@@ -382,6 +390,8 @@ var Hub = (function () {
     else if (st.stage === 'linkSent') html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p><button class="btn" data-act="hub:restart">' + T('Use a different way') + '</button>';
     else if (st.stage === 'needEmail') html = '<h1>' + T('Confirm your email') + '</h1><p class="lead">' + T('For your safety, type the email address you asked the sign-in link for.') + '</p>' +
       '<form id="si-form" novalidate><label class="field">' + T('Email') + '<input id="si-email" type="email" autocomplete="email" required></label><p id="si-err" class="note bad" hidden></p><button class="btn primary" data-act="hub:finishlink">' + T('Sign in') + '</button></form>';
+    else if (st.stage === 'choosePerson') html = '<h1>' + T('Who is using Church Hub?') + '</h1><p class="lead">' + T('{email} is shared by more than one person. Choose who you are – you can switch at any time.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
+      whoButtons(st.people, '') + '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button>';
     else if (st.stage === 'noAccess') html = '<h1>' + T('No access yet') + '</h1><p class="lead">' + ({
       unverified: T('Your email address ({email}) hasn’t been verified. Sign in with Google or an email link instead.', { email: esc(st.email) }),
       notReady: T('Church Hub hasn’t been set up yet. Please try again later.'),
@@ -583,6 +593,14 @@ var Hub = (function () {
       modal(dialogHead(T('Sign out of Church Hub?')) + '<div class="dlg-body"><p style="margin:0">' + T('You will need to sign in again next time.') + '</p></div>' +
         '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="hub:signoutyes">' + T('Sign out') + '</button></div>', T('Sign out'));
     },
+    /** Someone sharing the sign-in: choose who is using Church Hub now. */
+    switchwho: function () {
+      modal(dialogHead(T('Who is using Church Hub?')) + '<div class="dlg-body">' + whoButtons(Store.live.household(), user && user.id) + '</div>', T('Switch person'));
+    },
+    choose: function (el) {
+      if (user) Store.audit('Switched to someone else sharing this sign-in', 'people/' + user.id);
+      closeModal(); Store.live.choose(el.dataset.id);
+    },
     signoutyes: function () {
       if (Store.preview() && !Store.isLive()) Store.preview('');
       if (user) Store.audit('Signed out', 'people/' + user.id);
@@ -642,7 +660,8 @@ var Hub = (function () {
         return '<a class="appcard" href="#/' + m.id + '" data-act="hub:close"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(T(m.desc)) + '</span></a>';
       }).join('') + '</div>' +
         (realAdmin() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + T('Back to Administrator') + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
-        '<div class="dlg-foot" style="justify-content:space-between">' + I18n.picker('lang-menu') + '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button></div>', T('All apps'));
+        '<div class="dlg-foot" style="justify-content:space-between">' + I18n.picker('lang-menu') + '<span>' + (shared() ? '<button class="btn" data-act="hub:switchwho">' + icon(ICON.people, 18) + T('Switch person') + '</button> ' : '') +
+        '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button></span></div>', T('All apps'));
       langWire();
     },
     notice: function (el, ev) { ev.preventDefault(); modal(dialogHead(T('Privacy notice'), T('How we use your information')) + '<div class="dlg-body"><p>' + esc(Store.settings().privacyNotice) + '</p><p class="muted">' + T('Information Officer') + ': ' + esc(Store.settings().informationOfficer.name) + '</p></div>', T('Privacy notice')); },

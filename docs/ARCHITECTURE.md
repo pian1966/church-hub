@@ -60,6 +60,13 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 **Live mode**: Firebase Authentication (Google or email link) and Firestore in Johannesburg. Setup: `docs/FIREBASE-SETUP.md`.
 - *Access list* `roles/{email}` = `{ role, personId }`. Only Administrators write it, from People → Edit details → App access
   (`No access` deletes it). The first Administrator is added by hand in the console, then Church Hub asks them to set up the church.
+- *A shared sign-in*: people who share one email address (often a couple, up to 4) share `roles/{email}`. It keeps the first
+  person (strongest role) in `role`/`personId`, and adds `roles` (every role among them, which the rules check), `also` (the others'
+  ids, at most 3; the rules' `isMe()`/`meIn()` accept any of them) and `people` ({ id: { role, name, can, langs } }). After signing
+  in they choose who is using Church Hub (`stage: 'choosePerson'`, remembered on that device until sign-out) and can switch
+  (Switch person); Church Hub then loads as that person with their own role. `syncRole` rebuilds the entry from every person record
+  with that email and access, and only removes it when it was that person's. Only Administrators can share a Pastor's or
+  Administrator's sign-in. Security: the inbox is the key, so whoever reads it can be any of them – the rules allow the union.
 - *One person, several documents*, because security rules protect whole documents, not fields. `store.js` splits on save and
   joins on load, so modules still see one person object:
 

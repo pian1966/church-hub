@@ -174,3 +174,9 @@ This document describes POPIA; churches elsewhere should check the same points a
 4. Train people with Pastor / Children's ministry access.
 5. Sign an operator agreement with the hosting provider (s21): accept Google's data processing terms for the Firebase project (see `FIREBASE-SETUP.md`).
 6. Decide who gets which access, and review the access list (People → App access) every few months.
+
+## Shared sign-in (one email address for a couple)
+- Several people with one email address share one sign-in and choose who they are after signing in. Whoever reads that inbox
+  can act as any of them, so the rules allow what any of them may do – no more than they could do before by signing in with
+  the shared address. Church Hub says so on Edit details; staff roles (Administrator, Pastor) on a shared address are best
+  avoided, and only an Administrator can set them up. Switching is written in the history log.

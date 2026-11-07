@@ -166,11 +166,18 @@ module.exports = async function (ctx) {
   addrSeed['details/p10'].address = { street: '4 Cormorant Close', street2: 'Amberfield', city: 'Howick', postcode: '3290', province: 'KwaZulu-Natal', country: 'South Africa' };
   delete addrSeed['details/p11'].address; delete addrSeed['details/p12'].address;
   addrSeed['families/f1'].couples = ['p10|p11'];
+  // A couple sharing one email address: only Jason signs in (as a Pastor); saving Priya must leave his sign-in alone.
+  const jEmail = addrSeed['people/p10'].email.toLowerCase(), pEmail = addrSeed['people/p11'].email && addrSeed['people/p11'].email.toLowerCase();
+  if (pEmail) delete addrSeed['roles/' + pEmail];
+  addrSeed['people/p11'].email = addrSeed['people/p10'].email; addrSeed['people/p11'].appRole = 'none';
+  addrSeed['people/p10'].appRole = 'pastor'; addrSeed['roles/' + jEmail] = { role: 'pastor', personId: 'p10' };
+  addrSeed['roles/thandi.mokoena@example.com'].can = ['access'];   // a Pastor who gives sign-in access (the rules refuse her removing a Pastor's)
   s = await session('thandi.mokoena@example.com', addrSeed); await s.go('people/p/p11');
   check((await s.text()).includes('Probably the same as Jason Naidoo') && (await s.text()).includes('4 Cormorant Close, Amberfield'), 'a confirmed spouse with no address: their page suggests the spouse’s address');
   await s.page.click('[data-act="people:copyaddress"][data-id="p11"]'); await s.settle(); await s.page.waitForTimeout(300); let dd = await s.docsNow();
   check(dd['details/p11'].address && dd['details/p11'].address.street === '4 Cormorant Close' && !(await s.text()).includes('Probably the same as'), '“Use this address” copies it, and the suggestion goes');
   check(Object.values(dd).some(d => d.action && /Home address of Priya Naidoo copied from Jason Naidoo/.test(d.action)), '…written in the history log');
+  check(dd['roles/' + jEmail] && dd['roles/' + jEmail].personId === 'p10' && !(await s.denied()).length, '…and when the couple share an email address, his sign-in stays (nothing refused)');
   await s.go('people/p/p12');
   check((await s.text()).includes('Probably the same as') && (await s.text()).includes('4 Cormorant Close'), 'a child with no address: their parents’ address is suggested (once, though both parents have it)');
   check((await s.page.$$('[data-act="people:copyaddress"][data-id="p12"]')).length === 1, '…one button, as both parents share one address');

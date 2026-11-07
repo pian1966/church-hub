@@ -517,7 +517,7 @@ var Store = (function () {
       var r = p.appRole && p.appRole !== 'none' && p.active !== false ? p.appRole : '';
       var wasR = prev && prev.appRole && prev.appRole !== 'none' && prev.active !== false ? prev.appRole : '';
       // Remove sign-in when the email changes or access ends – also if someone else (e.g. a Pastor recording a death) changed the record first.
-      if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) del('roles/' + was);
+      if (was && (was !== email || !r) && (wasR || local['roles/' + was] !== null)) dropRole(was, p.id);
       var langs = (p.reviewLangs || []).slice().sort(), wasLangs = ((prev && prev.reviewLangs) || []).slice().sort();
       var can = r === 'pastor' ? pastorCan(p.id) : [], had = known('roles/' + email);
       var canChanged = !!had && JSON.stringify(had.can || []) !== JSON.stringify(can);
@@ -528,6 +528,16 @@ var Store = (function () {
         if (ls.StandInID === p.id && ls.StandInFrom && ls.StandInTo) { acc.standInFrom = dayMs(ls.StandInFrom); acc.standInTo = dayMs(ls.StandInTo, true); }
         write('roles/' + email, acc);
       }
+    }
+    /** Take away a sign-in only if it is this person's: a couple often share one email address, and saving the one
+     *  without sign-in must not remove the other's (or fail with "no permission" when it belongs to a Pastor). */
+    function dropRole(email, pid) {
+      var path = 'roles/' + email;
+      if (local[path]) { if (!local[path].personId || local[path].personId === pid) del(path); return; }   // written this session
+      doc(path).get().then(function (s) {
+        var d = s.exists ? s.data() || {} : null;
+        if (d && (!d.personId || d.personId === pid)) del(path);
+      }, function (e) { console.error('check sign-in before removing it', e); });
     }
     /** What a Pastor can do (Settings): the Senior Pastor's own ticks (seniorCan), or the other Pastors' (pastorCan). */
     function pastorCan(pid) {

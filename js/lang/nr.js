@@ -1311,6 +1311,8 @@ I18n.add('nr', {
     "View as another role": "Bona njengomunye umsebenzi",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Uqala njenge-{role} – lokhu kilokho abakubonako. Akukho okwenzako lapha okulondolozwako.",
     "Back to Administrator": "Buyela ku-Mlawuli",
+    "You’re offline – Church Hub is view-only until you’re back online.": "Awuhlanganiswanga ne-inthanethi – ku-Church Hub ungaqala kwaphela bona bekube uhlanganiswa godu.",
+    "Back online – you can make changes again.": "Uhlanganiswe godu – ungatjhugulula izinto godu.",
     "Set up Church Hub": "Lungiselela i-Church Hub",
     "Welcome": "Wamukelekile",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "UnguMlawuli wokuthoma. Lokhu kwakha iinlungiselelo zesonto, imithetho yelivi namanye amaqembu wokuthoma wesikhonzo (ungawatjhugulula woke ngemva kwalokho).",

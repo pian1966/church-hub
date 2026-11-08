@@ -7,7 +7,7 @@
 (function () {
   'use strict';
   var docs = {}, listeners = [], authCbs = [], currentUser = null;
-  var F = window.__fake = { docs: docs, denied: [], sentLinks: [], credentials: [], linkSignIns: [], nextUser: null, pending: 0,
+  var F = window.__fake = { docs: docs, denied: [], sentLinks: [], credentials: [], linkSignIns: [], nextUser: null, pending: 0, kept: 0, wiped: 0, sources: [],
     seed: function (all) { Object.keys(all).forEach(function (k) { docs[k] = JSON.parse(JSON.stringify(all[k])); }); },
     setUser: function (u) { currentUser = u; } };
 
@@ -199,8 +199,8 @@
   function serverTs(o) { Object.keys(o).forEach(function (k) { if (o[k] && o[k].__serverTs) o[k] = { seconds: Date.now() / 1000 }; }); return o; }
   function DocSnap(path) { var d = docs[path]; this.id = lastId(path); this.exists = d !== undefined; this.metadata = { hasPendingWrites: false }; this.data = function () { return d === undefined ? undefined : JSON.parse(JSON.stringify(d)); }; }
   function DocRef(path) { this.path = path; this.id = lastId(path); }
-  DocRef.prototype.get = function () {
-    var p = this.path;
+  DocRef.prototype.get = function (opts) {
+    var p = this.path; F.sources.push((opts && opts.source) || 'default');
     return new Promise(function (res, rej) { setTimeout(function () { canRead(p, docs[p]) ? res(new DocSnap(p)) : rej(denied('get ' + p)); }, 0); });
   };
   DocRef.prototype.set = function (data) { return apply([{ path: this.path, data: data }]); };
@@ -262,6 +262,10 @@
   /* ---------- the firebase global (compat API, only what Church Hub uses) ---------- */
   var fs = { doc: function (p) { return new DocRef(p); }, collection: function (c) { return new Query(c); },
     waitForPendingWrites: function () { return new Promise(function (r) { setTimeout(r, 20); }); },
+    // The copy kept on the device for offline use (js/store.js): counted, so the tests can see it is made and wiped
+    enablePersistence: function () { F.kept++; return Promise.resolve(); },
+    terminate: function () { return Promise.resolve(); },
+    clearPersistence: function () { F.wiped++; return Promise.resolve(); },
     batch: function () { var ops = []; return { set: function (ref, data) { ops.push({ path: ref.path, data: data }); }, commit: function () { return apply(ops); } }; } };
   function notifyAuth() { authCbs.forEach(function (cb) { setTimeout(function () { cb(currentUser); }, 0); }); }
   var auth = {

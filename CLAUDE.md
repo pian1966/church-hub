@@ -11,6 +11,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 |---|---|---|---|
 | Shell: sign-in, roles, router, Home, UI helpers | `js/app.js` | `js/i18n/common.js` | `tests/app/admin.js`, `signin.js` |
 | Data layer (demo or Firestore), who may ask for what (`plan()`) | `js/store.js`, `js/firebase-config.js` | – | `tests/rules.test.mjs`, `tests/fake-firebase.js` |
+| Offline (view only): files kept on the device, the data copy, the notice | `sw.js`, `js/store.js` (`wipe`, `blocked`), `js/app.js` (`workOffline`) | `js/i18n/common.js` | `tests/app/offline.js` |
 | People: registers the page, to-do list, upgrades, events | `js/mod-people.js` (loads last) | `js/i18n/people.js` | `tests/app/people.js` |
 | People: shared helpers (who sees what, consent, ages, couples) | `js/people/core.js` | `js/i18n/people.js` | |
 | People: the list and Church at a glance | `js/people/directory.js` | `js/i18n/people.js` | |

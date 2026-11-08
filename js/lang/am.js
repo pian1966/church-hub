@@ -1311,6 +1311,8 @@ I18n.add('am', {
     "View as another role": "እንደ ሌላ ሚና እይ",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "እንደ {role} እያዩ ነው – እነሱ የሚያዩት ይህ ነው። እዚህ የሚያደርጉት ምንም አይቀመጥም።",
     "Back to Administrator": "ወደ አስተዳዳሪ ተመለስ",
+    "You’re offline – Church Hub is view-only until you’re back online.": "ከበይነመረብ ውጭ ነዎት – መልሰው እስኪገናኙ ድረስ Church Hub ማየት ብቻ ይቻላል።",
+    "Back online – you can make changes again.": "ተመልሰው ተገናኝተዋል – አሁን እንደገና መቀየር ይችላሉ።",
     "Set up Church Hub": "Church Hubን አዋቅር",
     "Welcome": "እንኳን ደህና መጡ",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "እርስዎ የመጀመሪያው አስተዳዳሪ ነዎት። ይህ የቤተ ክርስቲያኑን ቅንብሮች፣ የፈቃድ ደንቦችንና አንዳንድ የመጀመሪያ የአገልግሎት ቡድኖችን ይፈጥራል (ሁሉንም በኋላ መቀየር ይችላሉ)።",

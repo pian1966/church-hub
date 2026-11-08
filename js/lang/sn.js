@@ -1311,6 +1311,8 @@ I18n.add('sn', {
     "View as another role": "Ona serimwe basa",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Uri kuona se{role} – izvi ndizvo zvavanoona. Hapana chaunoita pano chinochengetwa.",
     "Back to Administrator": "Dzokera kuMutungamiri",
+    "You’re offline – Church Hub is view-only until you’re back online.": "Hamusi painternet – Church Hub inongotarisika chete kusvikira madzokera painternet.",
+    "Back online – you can make changes again.": "Madzokera painternet – munogona kuchinja zvinhu zvakare.",
     "Set up Church Hub": "Gadzira Church Hub",
     "Welcome": "Mauya",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "Ndimi Mutungamiri wekutanga. Izvi zvinogadzira marongero echechi, mitemo yezororo nezvimwe zvikwata zvekutanga zvebasa (munogona kuzvichinja zvese gare gare).",

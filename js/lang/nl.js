@@ -1311,6 +1311,8 @@ I18n.add('nl', {
     "View as another role": "Bekijken als een andere rol",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Je kijkt als {role} – dit is wat zij zien. Niets wat je hier doet, wordt bewaard.",
     "Back to Administrator": "Terug naar beheerder",
+    "You’re offline – Church Hub is view-only until you’re back online.": "Je bent offline – Church Hub is alleen te bekijken tot je weer online bent.",
+    "Back online – you can make changes again.": "Weer online – je kunt weer wijzigingen maken.",
     "Set up Church Hub": "Church Hub instellen",
     "Welcome": "Welkom",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "Je bent de eerste beheerder. Dit maakt de instellingen van de kerk, de verlofregels en enkele eerste dienstteams aan (je kunt alles later veranderen).",

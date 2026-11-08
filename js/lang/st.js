@@ -1311,6 +1311,8 @@ I18n.add('st', {
     "View as another role": "Bona jwalo ka karolo e nngwe",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "O sheba jwalo ka {role} – sena ke seo ba se bonang. Ha ho letho leo o le etsang mona le bolokwang.",
     "Back to Administrator": "Kgutlela ho Motsamaisi",
+    "You’re offline – Church Hub is view-only until you’re back online.": "Ha o a hokahana le inthanete – Church Hub e ka shejwa feela ho fihlela o hokahana hape.",
+    "Back online – you can make changes again.": "O hokahane hape – o ka fetola dintho hape.",
     "Set up Church Hub": "Hlophisa Church Hub",
     "Welcome": "Rea o amohela",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "O Motsamaisi wa pele. Sena se theha disetting tsa kereke, melao ya phomolo le dihlopha tse ding tsa pele tsa tshebeletso (o ka di fetola kaofela hamorao).",

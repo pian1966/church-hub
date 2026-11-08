@@ -164,7 +164,14 @@ This document describes POPIA; churches elsewhere should check the same points a
 ## Other POPIA points covered
 - **Direct marketing by email/SMS (s69):** only to people with consent for that channel; every message will include an opt-out (Phase 5).
 - **Cross-border transfers (s72):** the church's data (Firestore) is stored in Johannesburg. **Sign-in accounts** (the email addresses of people given access, and their Google name) are kept by Firebase Authentication on Google's global servers – the privacy notice should say so. Any other overseas service (e.g. an SMS gateway) is also listed in the privacy notice.
-- **Data on devices:** Church Hub doesn't keep a copy of church data on the phone or computer after the browser tab is closed (no offline cache). Remind people to sign out on shared computers.
+- **Data on devices (offline copy, from 0.30.0):** so that Church Hub opens without the internet, it keeps a copy on the phone or
+  computer of what the signed-in person may see (Firebase's offline copy in the browser's storage, `js/store.js`) – nothing more
+  than they could see by opening Church Hub there while signed in. Safeguards: the copy is **wiped when they sign out**, when an
+  Administrator takes their access away (the next time the device is online), and before anyone else signs in on that device;
+  offline Church Hub is **view-only**, so nothing is changed from an old copy. Phones' own screen lock and encryption protect it
+  further. Remind people to sign out on shared computers (a copy left by another Church Hub tab still open is wiped at the next
+  sign-in). Viewing sensitive information offline is still audit-logged: the entry is sent when the device is next online
+  (it is lost if they sign out before that).
 - **Information Officer registration:** the church registers its Information Officer with the Information Regulator (outside the app; recorded in Settings).
 
 ## What the church must do outside the app

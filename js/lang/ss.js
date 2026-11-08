@@ -1311,6 +1311,8 @@ I18n.add('ss', {
     "View as another role": "Bona njengalomunye umsebenti",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Ubuka njenge-{role} – loku kuloko labakubonako. Kute lokwentako lapha lokugcinwako.",
     "Back to Administrator": "Buyela ku-Mphatsi",
+    "You’re offline – Church Hub is view-only until you’re back online.": "Awuchumananga ne-inthanethi – ku-Church Hub ungabuka kuphela uze uchumane futsi.",
+    "Back online – you can make changes again.": "Usuchumene futsi – ungashintja tintfo futsi.",
     "Set up Church Hub": "Lungiselela i-Church Hub",
     "Welcome": "Wemukelekile",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "UnguMphatsi wekucala. Loku kwakha tilungiselelo telibandla, imitsetfo yelikhefu nalamanye emacembu ekucala elusito (ungawagucula onkhe ngemuva kwaloko).",

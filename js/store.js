@@ -24,7 +24,19 @@ var Store = (function () {
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
   var previewRole = '', previewCare = '', PREVIEW_MSG = 'You’re only viewing Church Hub as another role – nothing is saved. Switch back to Administrator to make changes.';
-  function previewing() { if (!previewRole) return false; errorListeners.forEach(function (fn) { try { fn(PREVIEW_MSG); } catch (x) { console.error(x); } }); return true; }
+  function previewing() { if (!previewRole) return false; tell(PREVIEW_MSG); return true; }
+  function tell(msg) { errorListeners.forEach(function (fn) { try { fn(msg); } catch (x) { console.error(x); } }); }
+  /** No internet (live mode): Church Hub shows the copy kept on this device and is view-only – nothing can be changed,
+   *  so nobody's change waits on a phone and later overwrites someone else's. The demo keeps working as normal. */
+  var OFFLINE_MSG = 'You’re offline – Church Hub is view-only until you’re back online.', toldOffline = 0;
+  function offline() { return LIVE && typeof navigator !== 'undefined' && navigator.onLine === false; }
+  /** Saving isn't possible now (viewing as another role, or offline): says why, at most every few seconds for offline. */
+  function blocked() {
+    if (previewing()) return true;
+    if (!offline()) return false;
+    if (Date.now() - toldOffline > 4000) { toldOffline = Date.now(); tell(OFFLINE_MSG); }
+    return true;
+  }
 
   var cfg = (typeof window !== 'undefined' && window.CHURCH_HUB_FIREBASE) || {};
   var LIVE = !!(cfg.apiKey && cfg.projectId) && !/[?&]demo(=|&|$)/.test(location.search);
@@ -58,7 +70,7 @@ var Store = (function () {
   function get(c, id) { return list(c).filter(function (x) { return x.id === id; })[0] || null; }
   function find(c, fn) { return list(c).filter(fn); }
   function put(c, obj, auditText) {
-    if (previewing()) return obj;
+    if (blocked()) return obj;
     if (!obj.id) obj.id = uid(c.slice(0, 2));
     var arr = list(c), i = arr.findIndex(function (x) { return x.id === obj.id; }), prev = i >= 0 ? copy(arr[i]) : null;
     obj.updatedAt = now();
@@ -69,7 +81,7 @@ var Store = (function () {
     return obj;
   }
   function remove(c, id, auditText) {
-    if (previewing()) return;
+    if (blocked()) return;
     var prev = get(c, id);
     db[c] = list(c).filter(function (x) { return x.id !== id; });
     if (LIVE && prev) Live.remove(c, prev);
@@ -79,7 +91,7 @@ var Store = (function () {
   /** Delete a person's restricted information (medical and pastoral notes) – used for POPIA deletion requests.
    *  Works even for an Administrator, who cannot read these notes. */
   function purge(personId) {
-    if (previewing()) return;
+    if (blocked()) return;
     db.notes = list('notes').filter(function (n) { return n.personId !== personId; });
     db.officeNotes = list('officeNotes').filter(function (n) { return n.personId !== personId; });
     if (db.idNumbers) db.idNumbers = db.idNumbers.filter(function (x) { return x.id !== personId; });
@@ -98,7 +110,7 @@ var Store = (function () {
   }
   function settings() { return db.settings; }
   function setSettings(patch, auditText) {
-    if (previewing()) return;
+    if (blocked()) return;
     Object.assign(db.settings, patch);
     if (LIVE) Live.write('settings/church', db.settings);
     if (auditText) audit(auditText, 'settings');
@@ -107,7 +119,7 @@ var Store = (function () {
   function leave() { return db.leave; }
   /** Save leave. Tells onLeaveChange listeners which requests changed (e.g. to update Elvanto), unless opts.quiet (imports). */
   function saveLeave(auditText, opts) {
-    if (previewing()) return;
+    if (blocked()) return;
     var changes = [];
     ((db.leave && db.leave.requests) || []).forEach(function (r) {
       if (r.synthetic) return;
@@ -132,7 +144,7 @@ var Store = (function () {
   var Live = (function () {
     var VERSION = '13.1.0';
     var SDK = ['app', 'auth', 'firestore'].map(function (m) { return 'https://www.gstatic.com/firebasejs/' + VERSION + '/firebase-' + m + '-compat.js'; });
-    var EMAIL_KEY = 'church_hub_signin_email', WHO_KEY = 'church_hub_who:';
+    var EMAIL_KEY = 'church_hub_signin_email', WHO_KEY = 'church_hub_who:', OWNER_KEY = 'church_hub_offline_owner';
     // Fields that live in people/{id}; everything else (except medical) goes to details/{id}.
     var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
       'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs'];
@@ -186,6 +198,28 @@ var Store = (function () {
       })();
     }
 
+    /* ---------- the copy kept on this device, for when there is no internet ---------- */
+    /** Firestore keeps what this person may see on the device (IndexedDB), so Church Hub opens and shows it offline.
+     *  It is wiped when they sign out, and before someone else signs in on the same device (docs/POPIA.md, Data on devices). */
+    function openDb() {
+      fs = fb.firestore();
+      if (fs.enablePersistence) fs.enablePersistence({ synchronizeTabs: true }).catch(function (e) { console.warn('No offline copy on this device', e && e.code); });
+    }
+    function wipe() {
+      try { localStorage.removeItem(OWNER_KEY); } catch (x) {}
+      if (!fs || !fs.clearPersistence) return Promise.resolve();
+      var old = fs;
+      // Another Church Hub tab still open keeps the copy in use: it is wiped at the next sign-in instead (OWNER_KEY)
+      return old.terminate().then(function () { return old.clearPersistence(); }).catch(function (e) { console.warn('Couldn’t wipe the offline copy yet', e && e.code); })
+        .then(function () { openDb(); });
+    }
+    /** The offline copy belongs to one sign-in: wipe it first if someone else's is still there. */
+    function ownCopy(email) {
+      var was = ''; try { was = localStorage.getItem(OWNER_KEY) || ''; } catch (x) {}
+      return (was && was !== email ? wipe() : Promise.resolve()).then(function () { try { localStorage.setItem(OWNER_KEY, email); } catch (x) {} });
+    }
+    function offlineNow() { return typeof navigator !== 'undefined' && navigator.onLine === false; }
+
     /* ---------- sign-in ---------- */
     function boot(stateFn) {
       onState = stateFn;
@@ -194,7 +228,7 @@ var Store = (function () {
         if (e) return onState({ stage: 'error', message: 'Church Hub couldn’t connect. Check your internet connection and refresh the page.' });
         fb = window.firebase;
         if (!fb.apps.length) fb.initializeApp(cfg);
-        auth = fb.auth(); fs = fb.firestore();
+        auth = fb.auth(); openDb();
         if (auth.isSignInWithEmailLink(location.href)) {
           var email = ''; try { email = localStorage.getItem(EMAIL_KEY) || ''; } catch (x) {}
           // Opened somewhere that doesn't remember the address (e.g. Gmail's own browser): ask for it.
@@ -259,7 +293,7 @@ var Store = (function () {
       var flushed = fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, 3000); })]) : Promise.resolve();
       // A shared sign-in: the next person signing in on this device chooses again
       try { if (session && session.household.length) localStorage.removeItem(WHO_KEY + session.email); } catch (x) {}
-      return flushed.then(function () { session = null; db = blank(); return auth ? auth.signOut() : null; });
+      return flushed.then(function () { session = null; db = blank(); return auth ? auth.signOut() : null; }).then(wipe);
     }
 
     /* ---------- session: who is this, and what may they see ---------- */
@@ -267,8 +301,13 @@ var Store = (function () {
       var email = (u.email || '').toLowerCase();
       onState({ stage: 'loading', email: email });
       if (!u.emailVerified) return onState({ stage: 'noAccess', email: email, reason: 'unverified' });
-      doc('roles/' + email).get().then(function (snap) {
-        if (!snap.exists) return onState({ stage: 'noAccess', email: email });
+      // Offline: straight from the copy on this device (otherwise Firestore first waits to be sure there's no connection)
+      var role = function () { return offlineNow() ? doc('roles/' + email).get({ source: 'cache' }).catch(function () { return doc('roles/' + email).get(); }) : doc('roles/' + email).get(); };
+      ownCopy(email).then(role).then(function (snap) {
+        if (!snap.exists) {   // their access was taken away: the copy on this device goes too
+          if (!(snap.metadata && snap.metadata.fromCache)) wipe();
+          return onState({ stage: 'noAccess', email: email });
+        }
         var r = snap.data();
         session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [], can: r.can || [], standInFrom: r.standInFrom || 0, standInTo: r.standInTo || 0, household: [] };
         // One sign-in shared by several people (one email address): they choose who is using Church Hub (remembered on this device)
@@ -290,7 +329,9 @@ var Store = (function () {
         }
         subscribe();
       }).catch(function (e) {
-        onState(e && e.code === 'permission-denied' ? { stage: 'noAccess', email: email } : { stage: 'error', message: 'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
+        onState(e && e.code === 'permission-denied' ? { stage: 'noAccess', email: email } : { stage: 'error', message: offlineNow() ?
+          'You’re offline, and this device has no copy of Church Hub yet. Connect to the internet once, then it will open offline too.' :
+          'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
       });
     }
 
@@ -729,7 +770,7 @@ var Store = (function () {
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
-      whenSaved: function (ms) { return fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, ms || 60000); })]) : Promise.resolve(); },
+      whenSaved: function (ms) { return fs && !offlineNow() ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, ms || 60000); })]) : Promise.resolve(); },
       session: function () { return session; } };
   })();
 
@@ -738,10 +779,12 @@ var Store = (function () {
   /** What Pastors can do changed: copy it onto every Pastor's access-list entry (live only; the demo has no rules). */
   function syncPastors() { if (LIVE) Live.syncPastors(); }
   /** The stand-in leave approver's dates, for the database rules (live only). */
-  function setStandIn(pid, from, to) { if (LIVE && !previewing()) Live.setStandIn(pid, from, to); }
+  function setStandIn(pid, from, to) { if (LIVE && !blocked()) Live.setStandIn(pid, from, to); }
   return { resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
+    offline: offline, OFFLINE_MSG: OFFLINE_MSG,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */
     reviewLangs: function () {
       if (previewRole) return [];
@@ -762,7 +805,7 @@ var Store = (function () {
     },
     /** Someone left a care group: their card there goes (careGroups/{gid}/share/{pid}). */
     careUnshare: function (gid, pid) {
-      if (previewing()) return;
+      if (blocked()) return;
       db.careShare = list('careShare').filter(function (x) { return !(x.personId === pid && x.groupId === gid); });
       if (LIVE) Live.unshare(gid, pid); save(); changed();
     },
@@ -803,14 +846,14 @@ var Store = (function () {
       var o = {}; ((db && db.idNumbers) || []).forEach(function (x) { o[x.id] = x.value; }); return Promise.resolve(o);
     },
     setIdNumber: function (pid, v, auditText) {
-      if (previewing()) return Promise.resolve();
+      if (blocked()) return Promise.resolve();
       v = String(v || '').replace(/\s+/g, '');
       if (!LIVE) { db.idNumbers = (db.idNumbers || []).filter(function (o) { return o.id !== pid; }); if (v) db.idNumbers.push({ id: pid, value: v }); save(); }
       if (auditText) audit(auditText, 'people/' + pid);
       return LIVE ? Live.idSet(pid, v) : Promise.resolve();
     },
     setPhoto: function (pid, data, auditText) {
-      if (previewing()) return Promise.resolve();
+      if (blocked()) return Promise.resolve();
       var p = get('people', pid); if (!p) return Promise.resolve();
       p = copy(p); if (data) p.photo = now() + ' ' + Math.random().toString(36).slice(2, 6); else delete p.photo;
       var done = LIVE ? Live.photoSet(pid, data) : Promise.resolve((function () {
@@ -825,7 +868,7 @@ var Store = (function () {
     },
     onRemoteChange: function (fn) { remoteListeners.push(fn); }, onError: function (fn) { errorListeners.push(fn); },
     onLeaveChange: function (fn) { leaveHooks.push(fn); },
-    setRobot: function (email, uid, oldEmail) { if (previewing()) return Promise.resolve(); return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
+    setRobot: function (email, uid, oldEmail) { if (blocked()) return Promise.resolve(); return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
     live: { choose: Live.choose, household: Live.household, boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
       setup: Live.setup, session: Live.session } };
 })();

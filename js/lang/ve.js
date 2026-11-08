@@ -1311,6 +1311,8 @@ I18n.add('ve', {
     "View as another role": "Vhonani sa mushumo muṅwe",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Ni khou sedza sa {role} – izwi ndi zwine vha zwi vhona. A hu na zwine na zwi ita fhano zwine zwa vhulungwa.",
     "Back to Administrator": "Humelani kha Mulanguli",
+    "You’re offline – Church Hub is view-only until you’re back online.": "A no ngo ṱumana na inthanethe – Church Hub i nga sedzwa fhedzi u swika no ṱumana hafhu.",
+    "Back online – you can make changes again.": "No ṱumana hafhu – ni nga shandukisa zwithu hafhu.",
     "Set up Church Hub": "Dzudzanyani Church Hub",
     "Welcome": "Ni a ṱanganedzwa",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "Ni Mulanguli wa u thoma. Izwi zwi sika zwiimiswa zwa kereke, milayo ya mpumulo na zwigwada zwiṅwe zwa u thoma zwa tshumelo (ni nga zwi shandukisa zwoṱhe nga murahu).",

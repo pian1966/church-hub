@@ -42,6 +42,7 @@ js/mod-*.js               one file per module: me, people, rosters, leave, care,
 js/people/*.js            the People module in parts: core, directory, profile, edit, households, search (mod-people.js puts them together)
 android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
 manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
+sw.js                     service worker: keeps Church Hub's files on the device so it opens without the internet (see Offline)
 firestore.rules           database security rules: who may read/write what (POPIA)
 tests/*.test.js           one per pure rules file above (roster, leave-import, elvanto-import, elvanto-sync, households,
                           people-search, duplicates, i18n, countries, privacy-law, wording, serving, care, messages) and the robot
@@ -89,6 +90,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
   **When changing who sees what, change `firestore.rules`, `plan()` in `store.js`, the POLICY copy in `tests/fake-firebase.js`
   and the tests together.**
 - Saves are written in the background; if the database refuses one, the person sees a plain-English message.
+  Without the internet Church Hub shows the copy kept on the device and is view-only (see Offline).
   Changes made by others appear automatically (unless the person is typing or has a dialog open).
 
 ### Collections
@@ -284,6 +286,21 @@ Unavailable Volunteers list (all pages) – each row's name and dates, never the
 unread, pages } (robot writes only those fields; Administrators read/delete). Import → *Unavailable dates from Elvanto*
 matches names with `ElvantoImport.matchFound` (tested: known-as names, "Surname, First", several/no match → choose) and adds
 `blockouts` with `source: 'elvanto'`; entries made for leave (note "Church Hub …"/"Leave Manager …") count as already there.
+
+## Offline (view only)
+- **Files** (`sw.js`): every file Church Hub uses (its own, the Firebase library, the font) is fetched fresh when online and a
+  copy kept; offline – or after 7 seconds on a weak signal – the copy is used. One copy per file (without `?v=`). `keepFiles()`
+  in `js/app.js` tells it what the page loaded, so the first visit is already kept. Not intercepted: the database, sign-in, and
+  anything fetched with `cache: 'no-store'` (About → Check for updates).
+- **Data** (live mode, `js/store.js`): Firestore's offline copy (`enablePersistence`, shared between tabs). Offline, the
+  sign-in comes from Firebase Auth's own storage and the access list from the copy, so Church Hub loads as usual. Wiped
+  (`wipe()`: terminate, `clearPersistence`, open again) at sign-out, when the access list says they have no access, and when
+  another email address's copy is still there (`church_hub_offline_owner`).
+- **View-only**: `Store.offline()` (live mode and `navigator.onLine === false`); `blocked()` refuses every save as it does
+  for "View as", with one message every few seconds. Audit entries and "read" marks are still queued and sent later.
+  `js/app.js` shows the notice (`.offline-bar`) and redraws when the connection changes.
+- The demo works offline as it always did (saved in the browser).
+- Tests: `tests/app/offline.js` (the other parts block the service worker).
 
 ## Phone apps and prompts
 `phoneApp()` in `js/app.js` = the Android app or a home-screen app (`navigator.standalone` / display-mode standalone): starts

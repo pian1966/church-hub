@@ -1311,6 +1311,8 @@ I18n.add('pl', {
     "View as another role": "Zobacz jako inna rola",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Oglądasz jako: {role} – tak to widzą. Nic, co tu zrobisz, nie zostanie zapisane.",
     "Back to Administrator": "Wróć do roli administratora",
+    "You’re offline – Church Hub is view-only until you’re back online.": "Jesteś offline – Church Hub jest tylko do odczytu, dopóki nie wrócisz do sieci.",
+    "Back online – you can make changes again.": "Znowu online – możesz ponownie wprowadzać zmiany.",
     "Set up Church Hub": "Skonfiguruj Church Hub",
     "Welcome": "Witaj",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "Jesteś pierwszym administratorem. To utworzy ustawienia kościoła, zasady urlopów i kilka pierwszych zespołów służby (wszystko możesz później zmienić).",

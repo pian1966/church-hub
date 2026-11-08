@@ -422,6 +422,8 @@ body.is-busy { cursor: progress; }
 .viewas { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 16px; background: #FFF4D6; color: #5C4300; border-bottom: 1px solid #F0D98A; font-size: 14px; }
 .viewas span { flex: 1 1 220px; }
 .viewas .btn { margin-left: auto; }
+/* No internet: view only (js/app.js shell) */
+.offline-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #E8EEF6; color: #1F3A5C; border-bottom: 1px solid #C3D2E6; font-size: 14px; }
 .viewas-pick { display: grid; gap: 8px; }
 .viewas-pick .btn { justify-content: flex-start; width: 100%; }
 /* Small fold-out sections inside a panel */

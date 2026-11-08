@@ -342,6 +342,7 @@ var Hub = (function () {
       '<span class="top-r">' + (realAdmin() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
+      (Store.offline() ? '<div class="offline-bar" role="status">' + icon(ICON.eye, 18) + '<span>' + T('You’re offline – Church Hub is view-only until you’re back online.') + '</span></div>' : '') +
       (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>' + T('Viewing as {role} – this is what they see. Nothing you do here is saved.', { role: '<b>' + esc(viewingAs()) + '</b>' }) + '</span>' +
         '<button class="btn small" data-act="hub:viewas" data-r="admin">' + T('Back to Administrator') + '</button></div>' : '') +
       '<main id="main" tabindex="-1"><div class="page-body">' + body + '</div>' + improveLink(mod) + '</main></div>' +
@@ -421,6 +422,7 @@ var Hub = (function () {
       user = st.person; Store.setUser(user);
       Store.audit('Signed in', 'people/' + user.id);
       runUpgrades();
+      keepFiles();
       if (!location.hash || location.hash === '#') location.hash = phoneApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
       render();
     } else { user = null; Store.setUser(null); renderLive(); }
@@ -769,11 +771,40 @@ var Hub = (function () {
     });
   }
 
+  /* ---------- without the internet ---------- */
+  /** Church Hub opens without the internet: sw.js keeps a copy of its files on this device (the church's information is
+   *  kept by Store, live mode). Not for a copy opened straight from a computer's files. Offline, live mode is view-only. */
+  function workOffline() {
+    window.addEventListener('offline', onlineChanged);
+    window.addEventListener('online', onlineChanged);
+    if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(keepFiles, function (e) { console.warn('Church Hub can’t keep a copy for offline use here', e && e.message); });
+  }
+  /** Tell sw.js every file this page has loaded (scripts, styles, icons, the chosen language, the Firebase library), so
+   *  they are kept from the very first visit. */
+  function keepFiles() {
+    if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
+    navigator.serviceWorker.getRegistration().then(function (reg) {
+      var sw = reg && (reg.active || reg.waiting || reg.installing); if (!sw || !window.performance || !performance.getEntriesByType) return;
+      var urls = [location.href.split('#')[0]].concat(performance.getEntriesByType('resource').filter(function (r) {
+        return /^(script|link|css|img|other)$/.test(r.initiatorType);
+      }).map(function (r) { return r.name; }));
+      sw.postMessage({ keep: urls });
+    }).catch(function () {});
+  }
+  function onlineChanged() {
+    if (!Store.isLive() || !user) return;
+    if (!Store.offline()) toast(T('Back online – you can make changes again.'));
+    var a = document.activeElement;
+    if (!document.querySelector('#modal .overlay') && !(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) render();
+    else { var bar = document.querySelector('.offline-bar'); if (bar && !Store.offline()) bar.remove(); }
+  }
+
   function start() {
     root = document.getElementById('app');
     if (inApp()) document.documentElement.classList.add('in-app');
     if (homeScreen()) document.documentElement.classList.add('home-screen');
-    I18n.onLoad(function () { if (document.querySelector('#modal .overlay')) closeModal(); render(); });
+    I18n.onLoad(function () { if (document.querySelector('#modal .overlay')) closeModal(); render(); keepFiles(); });
     I18n.set(Store.pref('lang') || 'en');
     document.addEventListener('click', onClick);
     document.addEventListener('keydown', onKey);
@@ -785,7 +816,8 @@ var Hub = (function () {
     });
     window.addEventListener('hashchange', function () { if (!user) return; closeModal(); render(); var m = document.getElementById('main'); if (m) m.focus({ preventScroll: true }); window.scrollTo(0, 0); });
     Store.onChange(function () { if (user) user = Store.get('people', user.id) || user; });
-    Store.onError(function (msg) { toast(msg, true); });
+    Store.onError(function (msg) { toast(msg === Store.OFFLINE_MSG ? T('You’re offline – Church Hub is view-only until you’re back online.') : msg, true); });
+    workOffline();
     if (Store.isLive()) {
       // Someone else changed something: refresh the screen, unless this person is typing or has a dialog open.
       Store.onRemoteChange(function () {

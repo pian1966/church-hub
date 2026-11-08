@@ -473,6 +473,8 @@ I18n.add('en-US', {
     "View as another role": "View as another role",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Viewing as {role} – this is what they see. Nothing you do here is saved.",
     "Back to Administrator": "Back to Administrator",
+    "You’re offline – Church Hub is view-only until you’re back online.": "You’re offline – Church Hub is view-only until you’re back online.",
+    "Back online – you can make changes again.": "Back online – you can make changes again.",
     "Set up Church Hub": "Set up Church Hub",
     "Welcome": "Welcome",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).",

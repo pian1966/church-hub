@@ -1311,6 +1311,8 @@ I18n.add('sw', {
     "View as another role": "Tazama kama jukumu lingine",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "Unatazama kama {role} – hiki ndicho wanachoona. Hakuna unachofanya hapa kinachohifadhiwa.",
     "Back to Administrator": "Rudi kwa Msimamizi",
+    "You’re offline – Church Hub is view-only until you’re back online.": "Huko mtandaoni – Church Hub ni ya kutazama tu hadi utakaporudi mtandaoni.",
+    "Back online – you can make changes again.": "Umerudi mtandaoni – unaweza kufanya mabadiliko tena.",
     "Set up Church Hub": "Sanidi Church Hub",
     "Welcome": "Karibu",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "Wewe ni Msimamizi wa kwanza. Hii inaunda mipangilio ya kanisa, sheria za likizo na baadhi ya timu za huduma za kuanzia (unaweza kuzibadilisha zote baadaye).",

@@ -1311,6 +1311,8 @@ I18n.add('yo', {
     "View as another role": "Wò ó bí ipa mìíràn",
     "Viewing as {role} – this is what they see. Nothing you do here is saved.": "O ń wò ó bí {role} – ohun tí wọ́n ń rí nìyí. Kò sí ohun tí o ṣe níbí tí a ó fi pamọ́.",
     "Back to Administrator": "Padà sí Alábòójútó",
+    "You’re offline – Church Hub is view-only until you’re back online.": "O kò sí lórí ayélujára – Church Hub wà fún wíwò nìkan títí o fi padà sórí ayélujára.",
+    "Back online – you can make changes again.": "O ti padà sórí ayélujára – o lè ṣe àyípadà lẹ́ẹ̀kan sí i.",
     "Set up Church Hub": "Ṣètò Church Hub",
     "Welcome": "Káàbọ̀",
     "You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).": "Ìwọ ni Alábòójútó àkọ́kọ́. Èyí yóò ṣẹ̀dá ètò ìjọ, àwọn òfin ìsinmi àti àwọn ẹgbẹ́ iṣẹ́ ìsìn díẹ̀ fún ìbẹ̀rẹ̀ (o lè yí gbogbo wọn padà lẹ́yìn náà).",

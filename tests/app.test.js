@@ -98,7 +98,7 @@ function serve() {
 
   /* ---------- Demo (no Firebase) ---------- */
   async function demo(who, id) {
-    const context = await browser.newContext(), page = await context.newPage(), errs = [];
+    const context = await browser.newContext({ serviceWorkers: 'block' }), page = await context.newPage(), errs = [];
     page.on('pageerror', e => errs.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errs.push(m.text()); });
     await page.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());
@@ -113,7 +113,8 @@ function serve() {
   }
 
   async function session(email, docs, opts) {
-    const context = await browser.newContext(opts && opts.ua ? { userAgent: opts.ua, viewport: { width: 390, height: 844 } } : {}), page = await context.newPage(), errs = [];
+    // No service worker (sw.js) here: it would keep its own copies and step around page.route; tests/app/offline.js tests it
+    const context = await browser.newContext(Object.assign({ serviceWorkers: 'block' }, opts && opts.ua ? { userAgent: opts.ua, viewport: { width: 390, height: 844 } } : {})), page = await context.newPage(), errs = [];
     page.on('pageerror', e => errs.push(e.message));
     page.on('console', m => { if (m.type() === 'error' && !m.text().includes('ERR_FAILED')) errs.push(m.text()); });
     await page.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());       // no internet: fonts, Firebase CDN
@@ -162,7 +163,7 @@ function serve() {
   const TESTS = __dirname;
   const ctx = { Serving, fs, path, vm, http, chromium, ROOT, sampleData, PNG, PNG2, CARD, seedDocs, serve, srv, BASE, browser, check, fake, demo, session, ROUTES, fillHome, tour, finish, TESTS };
   // The parts, in order (tests/app/*.js); each signs in afresh with the made-up church.
-  for (const part of (process.env.PARTS ? process.env.PARTS.split(',') : ['admin', 'pastors', 'leave-more', 'people', 'care', 'messages', 'people-details', 'household', 'languages', 'imports', 'roles', 'elvanto-leave', 'signin'])) await require('./app/' + part + '.js')(ctx);
+  for (const part of (process.env.PARTS ? process.env.PARTS.split(',') : ['admin', 'pastors', 'leave-more', 'people', 'care', 'messages', 'people-details', 'household', 'languages', 'imports', 'roles', 'elvanto-leave', 'signin', 'offline'])) await require('./app/' + part + '.js')(ctx);
 
   await browser.close(); srv.close();
   console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nLive mode: all checks passed');

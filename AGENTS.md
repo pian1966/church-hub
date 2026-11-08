@@ -9,7 +9,7 @@ The rules people most often miss:
 - Every change that reaches the website raises the version in `js/version.js` (and its date) and puts the same number
   after every `?v=` in `index.html`. `node tests/versions.test.js` must pass.
 - Changing who may see what means changing `firestore.rules`, `plan()` in `js/store.js`, `tests/fake-firebase.js` and
-  the tests together – and telling the church to re-publish the rules.
+  the tests together – GitHub then publishes the rules after the merge (docs/RULES-AUTOPUBLISH.md, once set up; otherwise tell the church to re-publish them).
 - The repository is public: never add real church data, names, emails, keys or passwords.
 - The church is not technical: explain changes in plain English, without code words.
 

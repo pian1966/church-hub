@@ -78,7 +78,8 @@ These decide who can see what (POPIA). Without them nobody can use Church Hub.
 3. Select everything in the editor (Ctrl+A, or ⌘+A on a Mac) and paste (Ctrl+V / ⌘+V), replacing what was there.
 4. Click **Publish**.
 
-Whenever `firestore.rules` changes on GitHub, repeat this step.
+Whenever `firestore.rules` changes on GitHub, repeat this step – or let GitHub do it for you after every merge: see
+**RULES-AUTOPUBLISH.md** (a one-time setup of about 10 minutes).
 
 ## Step 8 – Only let the church's website use the key
 1. Open **https://console.cloud.google.com/apis/credentials** (signed in as the church's account) and choose the

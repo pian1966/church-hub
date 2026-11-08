@@ -48,7 +48,8 @@ GitHub runs every test, including the rules against the Firestore emulator, on e
   so don't read them – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js` fails if any language misses a line.
 - Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"`; never write "(optional)".
 - Changing who sees what means changing, together: `firestore.rules`, `plan()` in `js/store.js`, the POLICY copy in `tests/fake-firebase.js`,
-  and `tests/rules.test.mjs` / `tests/app/*.js`. Tell the church to re-publish the rules (FIREBASE-SETUP.md step 7).
+  and `tests/rules.test.mjs` / `tests/app/*.js`. Once merged, `.github/workflows/publish-rules.yml` tests and publishes the rules (when the church has set up
+  `docs/RULES-AUTOPUBLISH.md`); until then, tell the church to re-publish them (FIREBASE-SETUP.md step 7).
   Keep `firestore.rules` to plain keyboard characters (no curly quotes or dashes): the Firebase console rejects them.
 - `js/leave-core.js` is a copy of `assets/core.js` in the `leave-manager` repository (also used by its Apps Script). Change both together.
 - The robot's log is public: never print names, dates or emails.

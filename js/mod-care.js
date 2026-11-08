@@ -6,6 +6,25 @@
   var HEART = 'M12 20s-7-4.4-9.3-8.6A4.8 4.8 0 0 1 12 6.3a4.8 4.8 0 0 1 9.3 5.1C19 15.6 12 20 12 20z';
 
   function manager() { return H.can('*') || H.can('people.edit'); }   // Administrators and Pastors
+  /** Only looking: Roster coordinators, Children's ministry or Church Partners, when Settings → Who can see what allows it. */
+  function viewer() { return !manager() && H.can('care.view'); }
+  /** Church Partners (Basic access) see only the people in the church directory, and their groups by name. */
+  function partnerView() { return viewer() && !H.can('people.basic'); }
+  /** Settings → Who can see what: may members see everyone in their own group? (On unless switched off.) */
+  function ownGroupOn() { return (S.settings() || {}).seeCareOwn !== false; }
+  /** The groups as a Church Partner may see them: [{ id, name, people: [{ p, carer }] }] – people in the church directory only
+   *  (live: their directory entry lists their groups; demo: worked out from the groups). */
+  function partnerGroups() {
+    var P = window.PeopleParts, people = P ? P.visiblePeople() : [], out = {}, add = function (g, p, carer) {
+      var x = out[g.id] = out[g.id] || { id: g.id, name: g.name, people: [] }; x.people.push({ p: p, carer: !!carer });
+    };
+    if (S.isLive()) people.forEach(function (p) { (p.care || []).forEach(function (c) { add(c, p, c.carer); }); });
+    else {
+      var vis = {}; people.forEach(function (p) { if (p.familyRole !== 'child') vis[p.id] = p; });
+      groups().forEach(function (g) { (g.memberIds || []).forEach(function (id) { if (vis[id]) add(g, vis[id], Care.isLeader(g, id)); }); });
+    }
+    return Object.keys(out).map(function (k) { return out[k]; }).sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
+  }
   function me() { return H.user(); }
   function groups() { return S.list('careGroups').slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); }); }
   function consented(pid) {
@@ -86,12 +105,13 @@
   function oneGroup(g, u, asCarer) {
     var lead = asCarer || Care.isLeader(g, u.id), cards = {};   // "View as" a carer: an Administrator sees the group as its carer does
     S.list('careShare').forEach(function (c) { if (c.groupId === g.id) cards[c.personId] = c; });
-    var ids = (g.memberIds || []).slice().sort(function (a, b) {
+    var all = lead || ownGroupOn();   // Settings: switched off, members see only their carers (and themselves)
+    var ids = (g.memberIds || []).filter(function (pid) { return all || pid === u.id || Care.isLeader(g, pid); }).sort(function (a, b) {
       var la = Care.isLeader(g, a) ? 0 : 1, lb = Care.isLeader(g, b) ? 0 : 1; if (la !== lb) return la - lb;
       return String((g.names || {})[a] || '').localeCompare(String((g.names || {})[b] || ''));
     });
     return '<section class="panel my-care" data-g="' + esc(g.id) + '"><div class="row"><h2 class="grow" style="margin:0">' + T('My care group') + ': ' + esc(g.name) + '</h2>' + H.icon(HEART, 18) + '</div>' +
-      '<p class="hint" style="margin:4px 0 10px">' + T('People in your care group see your details only if you agreed (under Consent).') + '</p>' +
+      '<p class="hint" style="margin:4px 0 10px">' + T('People in your care group see your details only if you agreed (under Consent).') + (all ? '' : ' ' + T('The church shows you your carers here; they can see everyone in the group.')) + '</p>' +
       fold('me-' + g.id, ids.map(function (pid) { return Care.isLeader(g, pid); }), ids.map(function (pid) {
         var c = cards[pid] || { firstName: ((g.names || {})[pid] || '').split(' ')[0], lastName: ((g.names || {})[pid] || '').split(' ').slice(1).join(' ') }, isL = Care.isLeader(g, pid), you = pid === u.id;
         var name = ((c.preferredName || c.firstName || '') + ' ' + (c.lastName || '')).trim() || T('A new member');
@@ -138,8 +158,10 @@
   function apply(p, v) { return setFrom(p, v); }
   /** The tags on a person: Care group member or Carer, with each group's name. */
   function tag(p) {
-    if (!manager()) return '';
-    return Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return ' <span class="tag">' + T(Care.isLeader(g, p.id) ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>'; }).join('');
+    if (!manager() && !viewer()) return '';
+    var mine = partnerView() ? (S.isLive() ? (p.care || []) : partnerGroups().filter(function (g) { return g.people.some(function (x) { return x.p.id === p.id; }); }).map(function (g) { return { name: g.name, carer: g.people.some(function (x) { return x.p.id === p.id && x.carer; }) }; }))
+      : Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return { name: g.name, carer: Care.isLeader(g, p.id) }; });
+    return mine.map(function (g) { return ' <span class="tag">' + T(g.carer ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>'; }).join('');
   }
 
   /* ---------- finding someone to add: type part of a name ("dar ben" finds Darren Bennett) ---------- */
@@ -196,6 +218,37 @@
       (gs.length ? '<p class="hint">' + T('Members’ cards update when their details or consent change.') + ' <button class="link" data-act="care:syncall">' + T('Update everyone’s cards now') + '</button></p>' : '');
   }
 
+  /** Roster coordinators and Children's ministry (Settings → Who can see what): every group, its carers and members –
+   *  names only, nothing to change. The members' cards (phone, address…) stay with their own group. */
+  function viewOnly() {
+    if (partnerView()) return partnerOnly();
+    var gs = groups();
+    return '<div class="page-head"><div><h1>' + T('Care groups') + '</h1><p class="lead">' + T('Who is in which care group, and who their carers are. Only Administrators and Pastors can change the groups.') + '</p></div></div>' +
+      (gs.length ? '<div class="grid2">' + gs.map(function (g) {
+        var ms = (g.memberIds || []).map(function (id) { return S.get('people', id) || { id: id, firstName: (g.names || {})[id] || T('Someone'), lastName: '', missing: true }; }).sort(function (a, b) {
+          var la = Care.isLeader(g, a.id) ? 0 : 1, lb = Care.isLeader(g, b.id) ? 0 : 1; return la - lb || H.name(a).localeCompare(H.name(b)); });
+        return '<section class="panel cg-view"><h2 style="margin:0">' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} person', '{n} people', ms.length) + '</span>' +
+          fold('v-' + g.id, ms.map(function (p) { return Care.isLeader(g, p.id); }), ms.map(function (p) {
+            return '<div class="item">' + H.avatar(p, 32) + '<span class="grow">' + (p.missing ? esc(H.name(p)) : '<a class="name-chip" href="#/people/p/' + p.id + '">' + esc(H.name(p)) + '</a>') +
+              (Care.isLeader(g, p.id) ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + '</span></div>';
+          }), ms.map(function (p) { return H.name(p); })) + '</section>';
+      }).join('') + '</div>' : '<p class="empty">' + T('No care groups yet.') + '</p>');
+  }
+
+  /** Church Partners: which care group each person in the church directory is in (names only). */
+  function partnerOnly() {
+    var gs = partnerGroups();
+    return '<div class="page-head"><div><h1>' + T('Care groups') + '</h1><p class="lead">' + T('Which care group each person in the church directory is in, and who the carers are.') + '</p></div></div>' +
+      (gs.length ? '<div class="grid2">' + gs.map(function (g) {
+        var ms = g.people.slice().sort(function (a, b) { return (a.carer ? 0 : 1) - (b.carer ? 0 : 1) || H.name(a.p).localeCompare(H.name(b.p)); });
+        return '<section class="panel cg-view"><h2 style="margin:0">' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} person', '{n} people', ms.length) + '</span>' +
+          fold('pv-' + g.id, ms.map(function (x) { return x.carer; }), ms.map(function (x) {
+            return '<div class="item">' + H.avatar(x.p, 32) + '<span class="grow"><a class="name-chip" href="#/people/p/' + esc(x.p.id) + '">' + esc(H.name(x.p)) + '</a>' +
+              (x.carer ? ' <span class="tag ok">' + T('Carer') + '</span>' : '') + '</span></div>';
+          }), ms.map(function (x) { return H.name(x.p); })) + '</section>';
+      }).join('') + '</div>' : '<p class="empty">' + T('No care groups yet.') + '</p>');
+  }
+
   /* ---------- suggestions by where people live: nothing changes until an Administrator or Pastor confirms ---------- */
   var review = null;   // { clear, unclear } from Care.suggest, while the page shows it
   /** How many Church Partners are in no care group yet (the number on the Suggest button). */
@@ -235,9 +288,9 @@
   });
 
   H.register({
-    id: 'care', name: 'Care groups', desc: 'Small groups that care for one another', icon: HEART, tint: '#B4436C', roles: ['admin', 'pastor'],
-    render: function () { return render(); },
-    stat: function () { return manager() ? TN('{n} group', '{n} groups', S.list('careGroups').length) : ''; },
+    id: 'care', name: 'Care groups', desc: 'Small groups that care for one another', icon: HEART, tint: '#B4436C', roles: ['admin', 'pastor'], perm: 'care.view',
+    render: function () { return viewer() ? viewOnly() : render(); },
+    stat: function () { return manager() || viewer() ? TN('{n} group', '{n} groups', S.list('careGroups').length) : ''; },
     /** After signing in: keep my own card in my care group up to date (carers may have added me). */
     signedIn: function (u) { if (u && !manager() && Care.groupsOf(S.list('careGroups'), u.id).length) sync(u.id); },
     actions: {

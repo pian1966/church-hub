@@ -115,6 +115,82 @@ module.exports = async function (ctx) {
   await s.page.selectOption('.side-lang select', 'en'); await s.settle();
   await finish(s);
 
+  console.log('Care groups: Settings → Who can see what lets Roster coordinators see them');
+  const seeSeed = seedDocs();
+  seeSeed['careGroups/cgS'] = { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
+  seeSeed['careGroups/cgS/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555' };
+  s = await session('sipho.dlamini@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('home');
+  check(!(await s.page.$('nav a[href="#/care"]')) && await s.page.evaluate(() => !Store.list('careGroups').length), 'Roster coordinator: no Care groups until Settings allows it');
+  await finish(s);
+  s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('settings');
+  check(await s.page.$$eval('.st-care', b => b.map(x => x.value).join()) === 'rosters,kids,member', 'Settings → Who can see what: a Care groups tick for Roster coordinator, Children’s ministry and Basic access');
+  await s.page.check('.st-care[value="rosters"]'); await s.page.waitForTimeout(1200); await s.settle();   // saved as you go
+  docs = await s.docsNow();
+  check(JSON.stringify(docs['settings/church'].seeCare) === '["rosters"]' && Object.values(docs).some(d => d.action && /Care groups: rosters/.test(d.action)), 'saved (settings.seeCare) and in the audit log');
+  await finish(s);
+  seeSeed['settings/church'].seeCare = ['rosters'];
+  s = await session('sipho.dlamini@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('care'); await s.page.waitForTimeout(300);
+  t = await s.text();
+  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('Hilton') && t.includes('Who is in which care group'), 'Roster coordinator: Care groups in the menu, every group shown');
+  await s.page.click('.cg-fold summary').catch(() => {}); t = await s.text();
+  check(t.includes('Tim') && !t.includes('082 000 1555') && !(await s.page.$('[data-act^="care:"]')) && !(await s.page.$('#cg-new')), 'only who is in each group – no phone numbers or other card details, and nothing to change');
+  check(await s.page.evaluate(() => !Store.list('careShare').length), 'the members’ cards are not loaded');
+  await finish(s);
+  s = await session('grace.ndlovu@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('home');
+  check(!(await s.page.$('nav a[href="#/care"]')), 'Children’s ministry: not ticked, so no Care groups');
+  await finish(s);
+
+  console.log('Care groups: what Church Partners see (Settings → Who can see what)');
+  const pSeed = seedDocs();   // Tim is a member of Clare's group; Megan isn't in the church directory, David is
+  pSeed['careGroups/cgP'] = { name: 'Hilton', leaderIds: ['p15'], memberIds: ['p14', 'p15', 'p17', 'p18'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs', p17: 'Megan Smith', p18: 'David Smith' } };
+  pSeed['careGroups/cgP/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555', leader: true };
+  pSeed['careGroups/cgP/share/p18'] = { firstName: 'David', lastName: 'Smith', ok: true, mobile: '082 000 1888' };
+  s = await session('tim.jacobs@example.com', JSON.parse(JSON.stringify(pSeed))); await s.go('me'); await s.page.waitForTimeout(400);
+  await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));
+  t = await s.page.textContent('#my-care').catch(() => '');
+  check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888') && !(await s.page.$('nav a[href="#/care"]')), 'by default: everyone in their own group, and no page of all the groups');
+  await finish(s);
+  s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(pSeed))); await s.go('settings');
+  check(await s.page.$eval('.st-careown', b => b.checked) && !(await s.page.$eval('.st-care[value="member"]', b => b.checked)), 'Basic access: “See everyone in their own care group” on, “which care group each person is in” off, to start with');
+  await s.page.uncheck('.st-careown'); await s.page.check('.st-care[value="member"]'); await s.page.waitForTimeout(1200); await s.settle();
+  docs = await s.docsNow();
+  check(docs['settings/church'].seeCareOwn === false && docs['settings/church'].seeCare.join() === 'member', 'both choices saved');
+  check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true && !docs['directory/p17'], 'the church directory shows each person’s care group (carers marked); someone not in the directory isn’t listed');
+  const after = docs;
+  await finish(s);
+  s = await session('tim.jacobs@example.com', JSON.parse(JSON.stringify(after))); await s.go('me'); await s.page.waitForTimeout(400);
+  await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));
+  t = await s.page.textContent('#my-care').catch(() => '');
+  check(t.includes('Clare') && t.includes('082 000 1555') && !t.includes('David') && t.includes('your carers'), 'switched off: a member sees only their carers (and themselves) in their own group');
+  check(await s.page.evaluate(() => !Store.list('careShare').some(c => c.personId === 'p18')), '… and the other members’ cards aren’t loaded');
+  await s.go('care'); await s.page.$$eval('main details', d => d.forEach(x => { x.open = true; })); t = await s.text();
+  check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888'), 'Care groups page: which group each person in the church directory is in – names only');
+  await s.go('people'); t = await s.text();
+  check(t.includes('Care group member · Hilton'), 'the People list shows their care group');
+  await finish(s);
+  s = await session('clare.jacobs@example.com', JSON.parse(JSON.stringify(after))); await s.go('me'); await s.page.waitForTimeout(400);
+  await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));
+  t = await s.page.textContent('#my-care').catch(() => '');
+  check(t.includes('David') && t.includes('082 000 1888'), 'the carer still sees everyone in the group');
+  await finish(s);
+
+  console.log('Becoming a Church Partner includes Contact details (church directory)');
+  const jSeed = seedDocs();
+  jSeed['people/p17'].category = 'Attender';   // Megan: not in the church directory
+  Object.keys(jSeed).filter(k => k.startsWith('consents/') && jSeed[k].personId === 'p20' && jSeed[k].purpose === 'Church directory').forEach(k => delete jSeed[k]);
+  jSeed['people/p20'].category = 'Church Partner';   // Kavi: a Church Partner never asked in Church Hub
+  s = await session('linda.pillay@example.com', jSeed);
+  await s.go('people/p/p17'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-cat', 'Church Partner');
+  await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
+  const cm = Object.values(docs).filter(d => d.personId === 'p17' && d.purpose === 'Church directory' && !d.withdrawnAt);
+  check(cm.length === 1 && cm[0].given === true && cm[0].method === 'Agreed on becoming a Church Partner' && !!docs['directory/p17'], 'made a Church Partner: Contact details recorded as agreed, and they are in the church directory');
+  await s.go('people/p/p17'); check((await s.text()).includes('Agreed on becoming a Church Partner'), '… shown under their consent');
+  await s.go('settings'); t = await s.page.textContent('#see-others');
+  check(/\d+ Church Partners? ha(s|ve) no Contact details answer recorded/.test(t), 'Settings: Church Partners never asked about Contact details are counted');
+  await s.page.click('[data-act="settings:partnersagree"]'); await s.page.click('[data-act="settings:partnersagree"]'); await s.settle(); docs = await s.docsNow();
+  check(Object.values(docs).some(d => d.personId === 'p20' && d.purpose === 'Church directory' && d.given) && !!docs['directory/p20'] && !(await s.page.$('[data-act="settings:partnersagree"]')), '“Record that they agreed” records it for them');
+  await finish(s);
+
   console.log('Care groups: suggest groups by where people live');
   const areaSeed = seedDocs();
   const adultsSeed = Object.keys(areaSeed).filter(k => /^people\/[^/]+$/.test(k) && areaSeed[k].category === 'Church Partner' && areaSeed[k].familyRole !== 'child').map(k => k.split('/')[1]);

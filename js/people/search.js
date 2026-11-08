@@ -397,6 +397,7 @@
             if (fd.keys.every(function (k) { return JSON.stringify(q[k]) === JSON.stringify(p[k]); })) return;   // nothing to change
             items.push({ id: id, before: before });
             S.put('people', q, 'Changed ' + fd.label.toLowerCase() + ' of ' + H.name(q) + ' to ' + (v || 'nothing') + ' (changing many people at once)');
+            if (fd.key === 'category') P.partnerAgrees(q, p.category);   // becoming a Church Partner: Contact details agreed
           });
           S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (Advanced search)' + (made.length ? '; ' + made.length + ' households created' : ''), 'people');
           state.bulkUndo = { key: fd.key, keys: fd.keys, label: fd.label, value: v, items: items, skipped: skipped, made: made };

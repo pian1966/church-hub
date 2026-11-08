@@ -15,7 +15,7 @@ var Hub = (function () {
   /* ---------- roles and permissions (UI now; database security rules when on Firebase) ---------- */
   var ROLES = {
     admin: { label: 'Administrator', perms: ['*'] },          // everything except the two restricted kinds of notes below
-    pastor: { label: 'Pastor', perms: ['people.view', 'people.edit', 'notes', 'children', 'rosters.view'] },
+    pastor: { label: 'Pastor', perms: ['people.view', 'people.edit', 'notes', 'children', 'rosters.view', 'care.view'] },
     rosters: { label: 'Roster coordinator', perms: ['people.basic', 'rosters.manage', 'rosters.view'] },
     kids: { label: 'Children’s ministry', perms: ['people.basic', 'children', 'medical', 'rosters.view'] },
     member: { label: 'Basic access', perms: [] },
@@ -68,6 +68,9 @@ var Hub = (function () {
     if (!user) return false;
     var p = (ROLES[myRole()] || ROLES.member).perms;
     if (myRole() === 'pastor' && pastorPerms().indexOf(perm) >= 0) return true;
+    // Settings → Who can see what: Roster coordinators, Children's ministry and Church Partners may see the care groups
+    // (settings.seeCare; Church Partners only the people in the church directory)
+    if (perm === 'care.view' && !Store.previewCare() && (((Store.settings() || {}).seeCare) || []).indexOf(myRole()) >= 0) return true;
     return p.indexOf(perm) >= 0 || (p.indexOf('*') >= 0 && RESTRICTED.indexOf(perm) < 0);
   }
 

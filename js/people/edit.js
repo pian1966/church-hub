@@ -282,6 +282,7 @@
           p.keyDates = (p.keyDates || []).filter(function (k) { return !WEDDING.test(k.label || ''); });
           if (g('pf-wed') && g('pf-frole') !== 'child') p.keyDates.push({ label: 'Wedding anniversary', date: g('pf-wed') });
         }
+        var wasCat = id ? p.category : '';
         if (g('pf-cat') !== null) p.category = g('pf-cat');
         if (g('pf-died') !== null) {   // correcting the date someone died (and the funeral)
           var dd = g('pf-died'), fu = g('pf-funeral');
@@ -343,6 +344,7 @@
         var care = window.CareUI ? CareUI.read() : null;
         if (care && care.error && !dead) { err.textContent = care.error; err.hidden = false; return; }
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
+        P.partnerAgrees(p, wasCat);   // becoming a Church Partner: Contact details agreed
         if (window.CareUI) { if (!(care && CareUI.setFrom(p, care))) CareUI.sync(p.id); }
         dups.forEach(function (m) { markNotSame(p.id, m.id); });
         H.closeModal();

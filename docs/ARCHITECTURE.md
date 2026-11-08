@@ -172,6 +172,7 @@ empty, the default). `Store` syncDirectory writes `directory/{id}` (name, photo 
 (address, spouse – if Roster coordinators or Children's ministry may see them) for adults with the "Church directory"
 consent; Settings → Save rewrites everyone (`Store.resyncDirectory()`). Screens use `PeopleParts.mayShare(p, field)` and
 `contactHtml(p, field)`: links for staff and leaders, `textPicture()` (a canvas image) for Church Partners.
+The same table has a **Care groups** tick for Roster coordinators and Children's ministry (`settings.seeCare`, see Care groups).
 
 ## About (`js/mod-about.js`, `js/version.js`)
 For everyone, and can't be switched off. Shows the version and its date from `js/version.js`, the Android app's version
@@ -404,6 +405,18 @@ Later: direct import through the Elvanto API (server side, with the church's API
   delete a card when they take someone out. Members load their group (`where memberIds array-contains me`), then its cards
   (`Store` follows `careGroups/{id}/share` once the group is known). Rules: `firestore.rules` (careGroups, share).
 - Shown: members – "My care group" on their Me page; staff – a "Care group member / Carer · group" tag on profiles.
+- **Settings → Who can see what → Care groups** (`settings.seeCare`, e.g. `['rosters']`): Roster coordinators and/or
+  Children's ministry may see every group, its carers and members (names only, a read-only Care groups page; `can('care.view')`).
+  Not the members' cards. `Store` adds a listener on all of `careGroups` once the settings have loaded (`careAll()`, merged
+  with their own groups as `careGroupsAll`). Rules: `seesCare()` reads `settings/church` (only these two roles can be allowed).
+- **Church Partners (Basic access)**, same table:
+  - *See everyone in their own care group* (`settings.seeCareOwn`, on unless switched off). Off: a member who isn't a carer of
+    the group sees only its carers and themselves on the Me page; `Store.shares()` then follows only those cards, one document
+    each (rules: `careOwn()`, `careCarer()`). Carers always see everyone. The group record's names are hidden on screen only.
+  - *See which care group each person in the church directory is in* (`seeCare` includes `member`): `directory/{id}.care` =
+    [{ id, name, carer }] (names only), written by `syncDirectory` (Administrators and Pastors when a group changes or Settings
+    are saved; each person for themselves at sign-in). A read-only Care groups page built from the directory, and the tag on
+    the People list. People not in the directory aren't shown.
   Church wording renames them (Home group, Cell group, Class and Class leader, Small Christian Community…).
 - Suggest groups by where people live (`Care.suggest`, tested): for every Church Partner (adult, active) in no group yet –
   first the group of the people they live with (same household); otherwise the whole address (or a household member's): the

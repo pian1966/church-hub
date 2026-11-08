@@ -376,6 +376,30 @@ await t('audit log: anyone adds entries about themselves; only Administrators re
   await only('audit/a1', ['admin']);
   await cannot(db.admin.doc('audit/a1').update({ action: 'changed' })); await cannot(db.admin.doc('audit/a1').delete());
 });
+await t('care groups: Roster coordinators and Children\u2019s ministry see every group only when Settings allows it (seeCare), never the cards', async () => {
+  await cannot(list(db.rosters.collection('careGroups'))); await cannot(list(db.kids.collection('careGroups')));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ seeCare: ['rosters'] }); });
+  await can(list(db.rosters.collection('careGroups'))); await can(read(db.rosters, 'careGroups/cg1'));
+  await cannot(read(db.rosters, 'careGroups/cg1/share/p15')); await cannot(list(db.rosters.collection('careGroups/cg1/share')));
+  await cannot(db.rosters.doc('careGroups/cg1').update({ name: 'x' }));
+  await cannot(list(db.kids.collection('careGroups'))); await cannot(list(db.member.collection('careGroups')));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ seeCare: ['member'] }); });
+  await cannot(list(db.member.collection('careGroups')));   // only Roster coordinators and Children's ministry can be allowed
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ seeCare: [] }); });
+  await cannot(list(db.rosters.collection('careGroups')));
+});
+await t('care groups: "See everyone in their own care group" switched off - members see only the carers\' cards and their own; carers still see everyone', async () => {
+  // cg3: carer p15, members p15 and p14 (Tim, member); cg1: Tim is its carer
+  await env.withSecurityRulesDisabled(async ctx => { const d = ctx.firestore(); await d.doc('settings/church').update({ seeCareOwn: false }); await d.doc('careGroups/cg3/share/p15').set({ firstName: 'Clare', ok: true }); await d.doc('careGroups/cg3/share/p14').set({ firstName: 'Tim', ok: true }); });
+  await can(read(db.member, 'careGroups/cg3/share/p15')); await can(read(db.member, 'careGroups/cg3/share/p14'));
+  await cannot(list(db.member.collection('careGroups/cg3/share')));
+  await can(list(db.member.collection('careGroups/cg1/share')));   // Tim leads cg1
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ seeCareOwn: true }); });
+  await can(list(db.member.collection('careGroups/cg3/share')));
+  // the church directory may list someone's care groups (names only)
+  await can(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', care: [{ id: 'cg1', name: 'Hilton', carer: true }] }));
+  await cannot(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', medical: 'x' }));
+});
 await t('care groups: members see their own group and its cards; carers add and remove members', async () => {
   await can(read(db.member, 'careGroups/cg1')); await cannot(read(db.member, 'careGroups/cg2'));
   await can(list(db.member.collection('careGroups').where('memberIds', 'array-contains', 'p14')));

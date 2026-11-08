@@ -161,6 +161,7 @@
    *  (only adults who agreed to be in the directory; name only unless ticked), and who has it. Administrators and
    *  Pastors always see everything; No access can't sign in. Saved as settings.seeOthers = { member, rosters, kids }. */
   var ACCESS = [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']];
+  var CARE_SEE = ['rosters', 'kids'];   // may be allowed to see the care groups (firestore.rules: seesCare)
   function renderAccess(st, byRole) {
     var P = window.PeopleParts, see = st.seeOthers || {};
     return '<section class="panel" id="see-others" style="grid-column:1/-1"><h2>' + T('Who can see what') + '</h2>' +
@@ -172,8 +173,19 @@
           var on = (see[r[0]] || []).indexOf(f[0]) >= 0;
           return '<label><input type="checkbox" class="st-see" data-t="' + r[0] + '" value="' + f[0] + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T(f[1])) + '">' + esc(T(f[1])) + '</label>';
         }).join('') : '<span class="small">' + T('All, always') + '</span>') + '</div>';
+        // Care groups (settings.seeCare): who is in which group – Roster coordinators and Children's ministry when ticked
+        if (P && CARE_SEE.indexOf(r[0]) >= 0) opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><label><input type="checkbox" class="st-care" value="' + r[0] + '"' +
+          ((st.seeCare || []).indexOf(r[0]) >= 0 ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T('See the care groups and who is in them')) + '">' + T('See the care groups and who is in them') + '</label></div>';
+        else if (P && r[0] === 'member') opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span>' +
+          '<label><input type="checkbox" class="st-careown"' + (st.seeCareOwn !== false ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel('member') + ': ' + T('See everyone in their own care group')) + '">' + T('See everyone in their own care group') + '</label>' +
+          '<label><input type="checkbox" class="st-care" value="member"' + ((st.seeCare || []).indexOf('member') >= 0 ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel('member') + ': ' + T('See which care group each person in the church directory is in')) + '">' + T('See which care group each person in the church directory is in') + '</label></div>';
+        else if (P && (r[0] === 'admin' || r[0] === 'pastor')) opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><span class="small">' + T('All, always') + '</span></div>';
         return '<tr><td><b>' + esc(H.roleLabel(r[0])) + '</b></td><td>' + esc(T(r[1])) + opts + '</td><td>' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>';
       }).join('') + '</tbody></table></div>' +
+      (function (n) {   // Church Partners never asked about Contact details: they agreed when they became Church Partners
+        return P && n && H.can('*') ? '<p class="hint">' + TN('{n} Church Partner has no Contact details answer recorded. If they agreed when they became a Church Partner, record it here.', '{n} Church Partners have no Contact details answer recorded. If they agreed when they became Church Partners, record it here.', n) +
+          ' <button class="btn small" data-act="settings:partnersagree">' + T('Record that they agreed') + '</button></p>' : '';
+      })(P && P.partnersUnrecorded ? P.partnersUnrecorded().length : 0) +
       (P ? '<p class="hint">' + T('People with Basic access see these as pictures: they can read them, but can’t tap or copy them. Care group leaders see more of their own group (Care groups).') + '</p>' : '') +
       '<p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p>' +
       (P ? '<button class="btn small" data-autosave data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
@@ -392,11 +404,21 @@
         S.syncPastors(); H.render(); H.toast(T('Saved'));
       },
       pastorall: function () { document.querySelectorAll('.st-pc, .st-sc').forEach(function (c) { c.checked = true; }); var c = document.querySelector('.st-pc'); if (c) c.dispatchEvent(new Event('change', { bubbles: true })); },
+      /** Church Partners with no Contact details answer recorded: they agreed when they became Church Partners. */
+      partnersagree: function (el) {
+        var ps = window.PeopleParts.partnersUnrecorded(); if (!ps.length) return;
+        if (!H.confirmBtn(el, T('Click again: record it for them'))) return;
+        ps.forEach(function (p) { window.PeopleParts.partnerAgrees(p, ''); });
+        H.render(); H.toast(T('Recorded.'));
+      },
       see: function () {
         var see = {}; window.PeopleParts.TIERS.forEach(function (t) { see[t[0]] = []; });
         document.querySelectorAll('.st-see').forEach(function (b) { if (b.checked) see[b.dataset.t].push(b.value); });
         var say = window.PeopleParts.TIERS.map(function (t) { return t[0] + ': ' + (see[t[0]].length ? see[t[0]].join(', ') : 'name only'); }).join('; ');
-        S.setSettings({ seeOthers: see }, 'Who can see what (contact details): ' + say);
+        var care = [].slice.call(document.querySelectorAll('.st-care:checked')).map(function (b) { return b.value; });
+        var ownBox = document.querySelector('.st-careown'), own = ownBox ? ownBox.checked : (S.settings() || {}).seeCareOwn !== false;
+        S.setSettings({ seeOthers: see, seeCare: care, seeCareOwn: own }, 'Who can see what (contact details): ' + say + '. Care groups: ' + (care.join(', ') || 'Administrators and Pastors only') +
+          '; members see ' + (own ? 'everyone in their own group' : 'only the carers of their own group'));
         S.resyncDirectory();   // everyone's shared contact details, as now allowed
         H.render(); H.toast(T('Saved'));
       },

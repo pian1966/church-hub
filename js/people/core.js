@@ -37,6 +37,25 @@ var PeopleParts = { actions: {} };
     return S.find('consents', function (c) { return c.personId === pid && c.purpose === purpose && !c.withdrawnAt; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0];
   }
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
+  /** Becoming a Church Partner includes agreeing to be in the church directory (consent "Church directory", shown as Contact
+   *  details): recorded when someone becomes a Church Partner and hasn't agreed yet. They can still say no later (Consent). */
+  var PARTNER_AGREED = TX('Agreed on becoming a Church Partner');
+  function partnerAgrees(p, was) {
+    if (!p || p.category !== 'Church Partner' || was === 'Church Partner' || p.familyRole === 'child' || p.active === false) return false;
+    if (!(H.can('*') || H.can('people.edit')) || hasConsent(p.id, 'Church directory')) return false;
+    var old = consentFor(p.id, 'Church directory');
+    if (old) { old = JSON.parse(JSON.stringify(old)); old.withdrawnAt = H.today(); S.put('consents', old); }
+    S.put('consents', { personId: p.id, purpose: 'Church directory', given: true, date: H.today(), method: PARTNER_AGREED, recordedBy: H.name(H.user()), guardianId: '' },
+      'Contact details agreed on becoming a Church Partner: ' + H.name(p));
+    return true;
+  }
+  /** Church Partners with no Contact details answer recorded at all (never asked in Church Hub): an Administrator may record
+   *  that they agreed when they became Church Partners (Settings → Who can see what). Someone who said no is left alone. */
+  function partnersUnrecorded() {
+    return S.find('people', function (p) {
+      return p.category === 'Church Partner' && p.active !== false && p.familyRole !== 'child' && !S.find('consents', function (c) { return c.personId === p.id && c.purpose === 'Church directory'; }).length;
+    });
+  }
   function familyOf(p) { return p && p.familyId ? S.get('families', p.familyId) : null; }
   /** The category, plus "Staff" when they work for the church – a Church Partner can be on the staff too. */
   /** A home address as lines to show ("1 Main Road", "Howick 3290", "KwaZulu-Natal"); the church's own country isn't repeated. */
@@ -163,5 +182,5 @@ var PeopleParts = { actions: {} };
   function keyDate(p, re) { var k = (p.keyDates || []).filter(function (x) { return re.test(x.label || ''); })[0]; return k ? k.date : ''; }
   function uniq(a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }).sort(function (x, y) { return String(x).localeCompare(String(y)); }); }
 
-  Object.assign(P, { purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
+  Object.assign(P, { partnerAgrees: partnerAgrees, partnersUnrecorded: partnersUnrecorded, PARTNER_AGREED: PARTNER_AGREED, purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
 })(PeopleParts);

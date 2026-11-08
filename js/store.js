@@ -425,6 +425,7 @@ var Store = (function () {
           else if (snap.exists) m[snap.id] = snap.data();
           raw[s.key] = m;
           if (s.key === 'careGroups' && !is('admin', 'pastor')) shares(Object.keys(m));
+          if (s.key === 'settings') { careAll(m.church); if (!is('admin', 'pastor') && raw.careGroups) shares(Object.keys(raw.careGroups)); }
           if (!snap.metadata.hasPendingWrites) forget(s.coll);
           if (first) { first = false; if (--pending === 0) whenLoaded(); }
           else if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
@@ -437,18 +438,53 @@ var Store = (function () {
     }
     /** The cards of the people in my care group(s): careGroups/{id}/share, followed as my groups change. */
     var shareSubs = {};
+    /** Settings → Who can see what → "See who else is in their own care group" switched off (settings.seeCareOwn false):
+     *  someone who isn't a carer of the group loads only the carers' cards and their own (one document each). */
+    var shareKeys = {};
+    function shareIds(g) {
+      var st = (raw.settings && raw.settings.church) || {}, grp = (raw.careGroups || {})[g] || {}, leaders = grp.leaderIds || [];
+      if (st.seeCareOwn !== false || leaders.indexOf(session.personId) >= 0) return null;   // the whole group
+      return leaders.concat([session.personId]).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).sort();
+    }
     function shares(gids) {
-      Object.keys(shareSubs).forEach(function (g) { if (gids.indexOf(g) < 0) { try { shareSubs[g](); } catch (e) {} delete shareSubs[g]; delete raw['share:' + g]; } });
+      var stopOne = function (g) { try { shareSubs[g](); } catch (e) {} delete shareSubs[g]; delete shareKeys[g]; delete raw['share:' + g]; };
+      Object.keys(shareSubs).forEach(function (g) { if (gids.indexOf(g) < 0) stopOne(g); });
       gids.forEach(function (g) {
-        if (shareSubs[g]) return;
-        shareSubs[g] = fs.collection('careGroups/' + g + '/share').onSnapshot(function (snap) {
-          var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw['share:' + g] = m;
-          if (ready) { rebuild(); remoteChanged(); }
-        }, function (e) { console.error('Could not load care group ' + g, e); });
+        var ids = shareIds(g), k = ids ? ids.join() : '*';
+        if (shareSubs[g] && shareKeys[g] === k) return;
+        if (shareSubs[g]) stopOne(g);
+        shareKeys[g] = k;
+        var changed = function () { if (ready) { rebuild(); remoteChanged(); } };
+        if (!ids) {
+          shareSubs[g] = fs.collection('careGroups/' + g + '/share').onSnapshot(function (snap) {
+            var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw['share:' + g] = m; changed();
+          }, function (e) { console.error('Could not load care group ' + g, e); });
+          return;
+        }
+        raw['share:' + g] = {};
+        var offs = ids.map(function (pid) {
+          return doc('careGroups/' + g + '/share/' + pid).onSnapshot(function (snap) {
+            var m = Object.assign({}, raw['share:' + g] || {}); if (snap.exists) m[pid] = snap.data(); else delete m[pid];
+            raw['share:' + g] = m; changed();
+          }, function (e) { console.error('Could not load a card in care group ' + g, e); });
+        });
+        shareSubs[g] = function () { offs.forEach(function (o) { try { o(); } catch (e) {} }); };
       });
     }
+    /** Settings → Who can see what: Roster coordinators and Children's ministry may see every care group (settings.seeCare).
+     *  Known only once the settings have loaded, so followed here (not in plan()); the members' cards stay with the group. */
+    var careAllSub = null;
+    function careAll(st) {
+      var want = (is('rosters') || is('kids')) && !previewCare && ((st && st.seeCare) || []).indexOf(role()) >= 0;
+      if (!want && careAllSub) { try { careAllSub(); } catch (e) {} careAllSub = null; delete raw.careGroupsAll; if (ready) { rebuild(); remoteChanged(); } }
+      if (!want || careAllSub) return;
+      careAllSub = fs.collection('careGroups').onSnapshot(function (snap) {
+        var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw.careGroupsAll = m;
+        if (ready) { rebuild(); remoteChanged(); }
+      }, function (e) { console.warn('Could not load every care group (re-publish the database rules?)', e && e.code); careAllSub = null; });
+    }
     function forget(coll) { Object.keys(local).forEach(function (k) { if (k.split('/')[0] === coll) delete local[k]; }); }
-    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); ready = false; }
+    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); careAll(null); ready = false; }
     function remoteChanged() {
       clearTimeout(remoteTimer);
       remoteTimer = setTimeout(function () { remoteListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }, 300);
@@ -460,6 +496,9 @@ var Store = (function () {
       if (!db.settings) return onState({ stage: 'noAccess', email: session.email, reason: 'notReady' });
       if (!meP) return onState(role() === 'admin' ? { stage: 'setup', email: session.email } : { stage: 'noAccess', email: session.email, reason: 'noPerson' });
       ready = true;
+      // My own directory entry shows my care groups when Settings asks for it (carers may have added me)
+      var dirMe = (raw.directory || {})[session.personId];
+      if (!previewRole && !offlineNow() && (((db.settings.seeCare || []).indexOf('member') >= 0) || (dirMe && dirMe.care))) syncDirectory(session.personId);
       onState({ stage: 'ready', person: meP, email: session.email, role: role() });
     }
 
@@ -484,7 +523,9 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'careGroups', 'detailChanges', 'emailPrompts', 'msgGroups'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups'].forEach(function (c) { db[c] = arr(c); });
+      var cgs = merged('careGroupsAll', 'careGroups');   // my own groups, and every group when Settings allows (careAll)
+      db.careGroups = Object.keys(cgs).map(function (id) { var o = copy(cgs[id]); o.id = id; return o; });
       var msgs = merged('messages', 'messagesTo', 'messagesFrom');
       db.messages = Object.keys(msgs).map(function (id) { var o = copy(msgs[id]); o.id = id; return o; });
       db.words = arr('words');
@@ -559,6 +600,8 @@ var Store = (function () {
         if (allows('member', 'email') && p.email) want.email = p.email;
         if (allows('member', 'address') && addr) want.shareAddress = addr;
         if (allows('member', 'spouse') && spouse) want.shareSpouse = spouse;
+        // Settings → Who can see what → Care groups: Church Partners see which group everyone in the directory is in
+        if (((db.settings && db.settings.seeCare) || []).indexOf('member') >= 0) { var cg = careOf(pid); if (cg.length) want.care = cg; }
       }
       if (!same(want, known('directory/' + pid))) { if (want) write('directory/' + pid, want); else del('directory/' + pid); }
       var lead = {};
@@ -566,6 +609,12 @@ var Store = (function () {
       if (ok && spouse && (allows('rosters', 'spouse') || allows('kids', 'spouse'))) lead.shareSpouse = spouse;
       if (!Object.keys(lead).length) lead = null;
       if (!same(lead, known('contacts/' + pid))) { if (lead) write('contacts/' + pid, lead); else del('contacts/' + pid); }
+    }
+    /** Someone's care groups for the directory: [{ id, name, carer }] (names only – the cards stay with the group). */
+    function careOf(pid) {
+      return list('careGroups').filter(function (g) { return (g.memberIds || []).indexOf(pid) >= 0; }).map(function (g) {
+        var c = { id: g.id, name: g.name || '' }; if ((g.leaderIds || []).indexOf(pid) >= 0) c.carer = true; return c;
+      }).sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
     }
     /** "12 Oak Street, Howick, 3290" from the home address fields (empty when there is none or it can't be read). */
     function addressOf(p) { return window.PeopleParts && PeopleParts.addressLines ? PeopleParts.addressLines(p).join(', ') : ''; }
@@ -682,13 +731,20 @@ var Store = (function () {
       if (c === 'careShare') { var d = copy(obj); delete d.groupId; delete d.personId; return write('careGroups/' + obj.groupId + '/share/' + obj.personId, d); }   // one card per group: id = group:person
       if (c === 'notes' || c === 'officeNotes') return putNotes(obj.personId, c);
       write(c + '/' + obj.id, obj);
+      if (c === 'careGroups') careDirectory(prev, obj);
       if (c === 'consents' && obj.purpose === DIRECTORY) syncDirectory(obj.personId);
     }
     function remove(c, prev) {
       if (c === 'careShare') return del('careGroups/' + prev.groupId + '/share/' + prev.personId);
       if (c === 'notes' || c === 'officeNotes') return putNotes(prev.personId, c);
+      if (c === 'careGroups') { del(c + '/' + prev.id); careDirectory(prev, null); return; }
       if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       del(c + '/' + prev.id);
+    }
+    /** A care group changed: its people's directory entries show their groups (only where this person may write them). */
+    function careDirectory(prev, now) {
+      var ids = ((prev && prev.memberIds) || []).concat((now && now.memberIds) || []);
+      ids.filter(function (x, i) { return ids.indexOf(x) === i; }).forEach(function (pid) { if (get('people', pid)) syncDirectory(pid); });
     }
     /** I opened a message: add me to its readBy (arrayUnion, so two people opening it at once don't undo each other). */
     function markRead(id) {

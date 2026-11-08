@@ -13,6 +13,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate
   staff screens too
 - ⬜ Later (if wanted): changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in
+- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7) so Settings → Who can see what → Care groups works (Roster coordinators, Children's ministry and Church Partners)
 - ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
 - ⬜ Later: other countries' public holidays for Leave (Leave still uses South Africa's); translations checked by fluent
   speakers; church wording in the other languages too.

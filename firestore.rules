@@ -130,7 +130,7 @@ service cloud.firestore {
     match /directory/{id} {
       allow read: if anyone();
       allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
-        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo']);
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care']);
       allow delete: if isRole(['admin', 'pastor']) || mine(id);
     }
     match /contacts/{id} {
@@ -207,14 +207,22 @@ service cloud.firestore {
     function careRef(gid) { return /databases/$(database)/documents/careGroups/$(gid); }
     function inCare(gid) { return anyone() && meIn(get(careRef(gid)).data.get('memberIds', [])); }
     function leadsCare(gid) { return anyone() && meIn(get(careRef(gid)).data.get('leaderIds', [])); }
+    // Settings -> Who can see what: Roster coordinators and Children's ministry may see every group and who is in it
+    // (settings seeCare), but not the members' cards
+    function seeCare() { return get(/databases/$(database)/documents/settings/church).data.get('seeCare', []); }
+    // Settings -> Who can see what: may members see everyone in their own group (seeCareOwn, on unless switched off)?
+    // When off they see their carers' cards and their own; the carers still see everyone in their group.
+    function careOwn() { return get(/databases/$(database)/documents/settings/church).data.get('seeCareOwn', true) != false; }
+    function careCarer(gid, pid) { return pid in get(careRef(gid)).data.get('leaderIds', []); }
+    function seesCare() { return (isRole(['rosters']) && 'rosters' in seeCare()) || (isRole(['kids']) && 'kids' in seeCare()); }
     match /careGroups/{gid} {
-      allow read: if isRole(['admin', 'pastor']) || (anyone() && meIn(resource.data.get('memberIds', [])));
+      allow read: if isRole(['admin', 'pastor']) || seesCare() || (anyone() && meIn(resource.data.get('memberIds', [])));
       allow create, delete: if isRole(['admin', 'pastor']);
       allow update: if isRole(['admin', 'pastor'])
         || (anyone() && meIn(resource.data.get('leaderIds', [])) && onlyChanges(['memberIds', 'names', 'updatedAt'])
             && meIn(request.resource.data.memberIds) && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])));
       match /share/{pid} {
-        allow read: if isRole(['admin', 'pastor']) || inCare(gid);
+        allow read: if isRole(['admin', 'pastor']) || (inCare(gid) && (careOwn() || mine(pid) || leadsCare(gid) || careCarer(gid, pid)));
         allow create, update: if (isRole(['admin', 'pastor']) || (mine(pid) && inCare(gid)))
           && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
           && (request.resource.data.get('photo', '') is string) && request.resource.data.get('photo', '').size() < 40000;

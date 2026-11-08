@@ -38,6 +38,8 @@
   function onlyKeys(a, keys) { return Object.keys(a || {}).every(function (k) { return keys.indexOf(k) >= 0; }); }
   var KIDS_CONSENTS = ['Children’s medical notes', 'Photos'];
   function inCare(c, gid) { return is(c, ANY) && meIn(c, docs['careGroups/' + gid].memberIds); }   // a missing group fails
+  /** Settings -> Who can see what: Roster coordinators and Children's ministry may see every care group (settings seeCare). */
+  function seesCare(c) { var on = (docs['settings/church'] || {}).seeCare || []; return ['rosters', 'kids'].some(function (r) { return is(c, [r]) && on.indexOf(r) >= 0; }); }
   function leadsCare(c, gid) { return is(c, ANY) && meIn(c, (docs['careGroups/' + gid].leaderIds || [])); }
   function checks(c, lang) { return is(c, ANY) && c.langs.indexOf(lang) >= 0; }   // checks translations in that language
   function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
@@ -75,7 +77,7 @@
     medical: { read: function (c) { return is(c, ['kids']); }, write: function (c, op) { return is(c, ['kids']) || (op === 'delete' && may(c, 'people')); } },
     notes: { read: function (c) { return is(c, ['pastor']); }, write: function (c, op) { return is(c, ['pastor']) || (op === 'delete' && may(c, 'people')); } },
     directory: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo'])); } },
+      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care'])); } },
     contacts: { read: function (c) { return is(c, STAFF); },
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['shareAddress', 'shareSpouse'])); } },
     photos: { read: function (c, id) { return child(id) ? is(c, ['admin', 'pastor', 'kids']) : is(c, STAFF) || mine(c, id) || (is(c, ANY) && docs['directory/' + id] !== undefined); },
@@ -133,13 +135,16 @@
         return op === 'update' && mine(c, b.staffId) && a.status === 'Cancelled' && onlyChanges(b, a, ['status', 'cancelledBy']);
       } },
     leaveAdjustments: { read: function (c, id, d) { return may(c, 'leave') || (!!d && mine(c, d.staffId)); }, write: function (c) { return may(c, 'leave'); } },
-    careGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && meIn(c, (d.memberIds || []))); },
+    careGroups: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || seesCare(c) || (is(c, ANY) && !!d && meIn(c, (d.memberIds || []))); },
       write: function (c, op, id, b, a) {
         if (is(c, ['admin', 'pastor'])) return true;
         if (op !== 'update' || !is(c, ANY) || !meIn(c, (b.leaderIds || []))) return false;
         return onlyChanges(b, a, ['memberIds', 'names', 'updatedAt']) && meIn(c, a.memberIds) && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
       } },
-    'careGroups/share': { read: function (c, pid, d, gid) { return is(c, ['admin', 'pastor']) || inCare(c, gid); },
+    'careGroups/share': { read: function (c, pid, d, gid) {
+        var own = (docs['settings/church'] || {}).seeCareOwn !== false;
+        return is(c, ['admin', 'pastor']) || (inCare(c, gid) && (own || mine(c, pid) || leadsCare(c, gid) || (docs['careGroups/' + gid].leaderIds || []).indexOf(pid) >= 0));
+      },
       write: function (c, op, pid, b, a, gid) {
         if (op === 'delete') return is(c, ['admin', 'pastor']) || mine(c, pid) || leadsCare(c, gid);
         return (is(c, ['admin', 'pastor']) || (mine(c, pid) && inCare(c, gid))) && onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])

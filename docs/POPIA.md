@@ -130,6 +130,18 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   card per person in their group (`careGroups/{id}/share/{person}`), not their record. Only members of that group,
   Administrators and Pastors can read it (database rules, tested). Carers may add and remove members; every change is in
   the audit log. Leaving a group removes the person's card from it; after a death they are taken out.
+- Roster coordinators and Children's ministry see **which group each person is in and who the carers are** (names only)
+  only if an Administrator ticks it in Settings → Who can see what (`settings.seeCare`; off by default; the change is in the
+  audit log). Purpose: arranging serving and children's work around the groups. They never see the cards (phone, address…),
+  which stay with the group the person agreed to share with (database rules, tested).
+- Church Partners: by default they see everyone in their own group (name always; the card only with consent). An Administrator
+  can switch that off, so they see only their group's carers (enforced by the database rules for the cards). An Administrator can
+  also let them see which group each person **in the church directory** is in (names only, on the directory entry): people
+  in the directory agreed to share their details with members (consent "Church directory", shown as Contact details). The
+  church's policy is that becoming a Church Partner includes this agreement: when someone is made a Church Partner (Edit details
+  or Change selected…) Church Hub records it ("Agreed on becoming a Church Partner"), and Settings → Who can see what offers to
+  record it for existing Church Partners who were never asked in Church Hub (anyone who said no is left alone). People can
+  still say no later under Consent. Anyone not in the directory isn't shown.
 - Suggesting groups by area (Care groups → Suggest groups by where people live): Administrators and Pastors only, who already
   see home addresses. It reads the suburb/town and postal code the church already holds, for the same purpose (care and
   fellowship); nothing is shown to the group or changed until they confirm, and opening the suggestions and every placement

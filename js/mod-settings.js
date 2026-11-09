@@ -208,8 +208,10 @@
   /** The church's colours (settings.theme = { id: 'custom', color } – older choices { id } still work): buttons, links,
    *  the turning cross, the logo and the menu, for everyone. Like Leave Manager's "My colour": a live sample at the top,
    *  round swatches, any colour by its code, and a Save button – nothing changes for anyone until it is saved. */
-  var SWATCHES = ['#E8590C', '#C2410C', '#B91C1C', '#BE185D', '#A3283B', '#9333EA', '#6D3FC0', '#4F46E5',
-    '#1D5FB8', '#3B78C2', '#13809A', '#0F7C80', '#2AA198', '#2E7D4F', '#4D7C0F', '#A86A12', '#475569', '#57534E'];
+  // Bright colours that well-known churches use for their buttons and logos (Nov 2026: Alpha, Life.Church, Elevation, The Creek,
+  // UCC, Jesus People and others), with Church Hub's own orange first. Light ones get dark writing on buttons (Hub.themeFrom).
+  var SWATCHES = ['#E8590C', '#F49A0D', '#F8A91F', '#FDC830', '#E42312', '#A6192E', '#E84A8A', '#6D3FC0', '#27375E',
+    '#007EA9', '#00A8D8', '#2ABACC', '#71C5E8', '#9ECDC9', '#598D7F', '#2E7D4F', '#606951', '#1E1F23'];
   var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
   function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   function renderTheme(st) {

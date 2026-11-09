@@ -5,6 +5,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 ## Phase 1 – Foundation 🟡 – built and live (pre-release v0.1.0, 25 Oct 2026); church trial and Leave Manager import next
 - 🟡 Church to do: tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
 - ⬜ Confirm step 8 (key restricted to the website) is done
+- ⬜ Church: set up automatic publishing of the database rules (docs/RULES-AUTOPUBLISH.md, about 10 minutes) and run it once – this also does every "re-publish the rules" below
 - ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7) so Church Partners can ask for changes to their family details and contact details are shared by role
 - ⬜ Church: Settings → What others can see – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
 - ⬜ Decide: should Church Partners who aren't staff stop receiving colleagues' away dates at all (now hidden on screen only)?

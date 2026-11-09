@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!-- Church Hub brochures: ?for=members (our congregation) or ?for=churches (other churches). Opened from About (admins).
+     KEEP UP TO DATE: when a release adds a feature (the middle number in js/version.js goes up), read both brochures, add or
+     change what members or other churches would notice, then set reviewed-for below to that version's first two numbers.
+     node tests/versions.test.js fails until you do. Keep each panel to what fits on its A4 third (check Print preview). -->
+<meta name="reviewed-for" content="0.39">
+<title>Church Hub brochure</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&amp;display=swap" rel="stylesheet">
+<style>
+  :root { --accent: #E8590C; --ink: #B8430A; --soft: #FFE8D9; --paper: #FFF8F2; --text: #22201E; --grey: #4A4440; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #E9E4DF; font-family: 'Nunito', system-ui, sans-serif; color: var(--text); }
+  .bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; background: #fff; border-bottom: 1px solid #ddd; font-size: 15px; }
+  .bar b { margin-right: auto; }
+  .bar a, .bar button { font: inherit; font-weight: 800; padding: 9px 16px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: var(--text); text-decoration: none; cursor: pointer; }
+  .bar a.on { background: var(--soft); border-color: var(--ink); color: var(--ink); }
+  .bar button.go { background: var(--ink); border-color: var(--ink); color: #fff; }
+  .bar small { flex-basis: 100%; color: var(--grey); }
+  .sheets { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 28px 12px 60px; }
+  .sheet { width: 1123px; height: 794px; display: grid; grid-template-columns: 374px 375px 374px; background: var(--paper); overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.15); flex: none; }
+  .pn { height: 794px; padding: 52px 40px 44px; display: flex; flex-direction: column; gap: 22px; position: relative; }
+  .pn.fold { border-right: 1px dashed #EAD6C6; }
+  .eyebrow { margin: 0; font-size: 13px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
+  h2 { margin: 0; font-size: 32px; line-height: 1.12; font-weight: 900; text-wrap: balance; }
+  h3 { margin: 2px 0 3px; font-size: 17px; font-weight: 800; }
+  p { margin: 0; font-size: 16px; line-height: 1.42; color: var(--grey); text-wrap: pretty; }
+  .item, .step { display: flex; gap: 14px; align-items: flex-start; }
+  .ic { flex: 0 0 46px; height: 46px; border-radius: 14px; background: var(--soft); color: var(--ink); display: flex; align-items: center; justify-content: center; }
+  .ic svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .num { flex: 0 0 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 19px; }
+  .url { font-weight: 800; color: var(--ink); overflow-wrap: anywhere; }
+  .step .url { display: block; }
+  .box { margin-top: auto; background: var(--soft); border-radius: 18px; padding: 20px 22px; }
+  .box h3 { margin: 0 0 6px; }
+  .card { margin-top: auto; background: var(--ink); border-radius: 18px; padding: 22px 24px; }
+  .card h3 { margin: 0 0 6px; font-size: 24px; line-height: 1.15; font-weight: 900; color: #fff; }
+  .card p { color: #fff; font-weight: 600; }
+  .demo { background: #fff; border: 2px solid var(--ink); border-radius: 18px; padding: 18px 20px; }
+  .demo p { font-size: 18px; line-height: 1.35; }
+  .cover { background: var(--accent); color: #fff; justify-content: space-between; overflow: hidden; }
+  .cover .o1, .cover .o2 { position: absolute; border-radius: 50%; background: rgba(255,255,255,.10); }
+  .cover .o1 { width: 340px; height: 340px; right: -120px; top: -110px; }
+  .cover .o2 { width: 220px; height: 220px; left: -80px; bottom: 120px; background: rgba(255,255,255,.08); }
+  .cover > * { position: relative; }
+  .logo { width: 88px; height: 88px; border-radius: 24px; background: #fff; display: flex; align-items: center; justify-content: center; margin-top: 30px; }
+  .cover h1 { margin: 0 0 18px; font-size: 64px; line-height: 1; font-weight: 900; letter-spacing: -.02em; }
+  .cover .tag { font-size: 30px; line-height: 1.2; font-weight: 800; color: #fff; text-wrap: balance; }
+  .cover .strip { background: var(--ink); border-radius: 16px; padding: 16px 20px; }
+  .cover .strip p { color: #fff; font-weight: 600; }
+  .cover .who { font-size: 20px; font-weight: 900; color: #fff; }
+  [contenteditable] { outline: 2px dashed var(--ink); outline-offset: 2px; border-radius: 4px; }
+  [hidden] { display: none !important; }
+  @page { size: A4 landscape; margin: 0; }
+  @media print {
+    body { background: none; }
+    .bar { display: none; }
+    .sheets { padding: 0; gap: 0; display: block; }
+    .sheet { box-shadow: none; width: 297mm; height: 210mm; break-after: page; zoom: 1; }
+    [contenteditable] { outline: none; }
+    * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+  @media screen and (max-width: 1160px) { .sheet { zoom: .5; } }
+</style>
+</head>
+<body>
+<div class="bar">
+  <b>Church Hub brochure</b>
+  <a href="?for=members" data-for="members">For our members</a>
+  <a href="?for=churches" data-for="churches">For other churches</a>
+  <button class="go" type="button" onclick="window.print()">Print or save as PDF</button>
+  <small>Click the dashed text to type your own contact details first. Print on A4, landscape, both sides, flipping on the short edge, then fold in three.</small>
+</div>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></symbol>
+  <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></symbol>
+  <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 20s-7-4.4-9-9a4.5 4.5 0 0 1 9-2 4.5 4.5 0 0 1 9 2c-2 4.6-9 9-9 9z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2 20c0-3.5 3-5.5 7-5.5s7 2 7 5.5M16 4.5a3.5 3.5 0 0 1 0 7M18 14.8c2.4.6 4 2.4 4 5.2"/></symbol>
+  <symbol id="i-book" viewBox="0 0 24 24"><path d="M4 4h12a2 2 0 0 1 2 2v14H6a2 2 0 0 1-2-2zM8 9h6M8 13h6M18 8h2v12"/></symbol>
+  <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z"/><path d="M8.5 12l2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+  <symbol id="i-house" viewBox="0 0 24 24"><path d="M3 21h18M5 21V8l7-5 7 5v13"/><path d="M10 21v-6h4v6"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+</svg>
+
+<main class="sheets">
+<!-- ================= For our members ================= -->
+<section class="sheet" data-show="members" aria-label="Outside">
+  <div class="pn fold">
+    <p class="eyebrow">Good to know</p>
+    <h2>Your questions, answered</h2>
+    <div><h3>Who can see my details?</h3><p>Only the people whose job at church needs them. Other members see you only if you agree to be in the church directory.</p></div>
+    <div><h3>Can I change my mind?</h3><p>Yes, any time. Your choices are on your own Me page.</p></div>
+    <div><h3>No signal?</h3><p>You can still look things up. Changes wait until you're back online.</p></div>
+    <div><h3>In your language</h3><p>English, Afrikaans, isiZulu, isiXhosa and more than 15 others, in light or dark.</p></div>
+  </div>
+  <div class="pn fold">
+    <p class="eyebrow">Getting started</p>
+    <h2>Three easy steps</h2>
+    <div class="step"><span class="num">1</span><div><h3>Open Church Hub</h3><p>On your phone or computer: <span class="url" data-fill="link">pian1966.github.io/church-hub</span>. Android phones can also get the app.</p></div></div>
+    <div class="step"><span class="num">2</span><div><h3>Sign in</h3><p>Use the email address the church office has for you.</p></div></div>
+    <div class="step"><span class="num">3</span><div><h3>Check your page</h3><p>Open <b>Me</b>, make sure your details are right, and choose what others may see.</p></div></div>
+    <div class="box"><h3>Need a hand?</h3><p contenteditable="true" spellcheck="false">Speak to the church office: [phone] · [email]</p></div>
+  </div>
+  <div class="pn cover">
+    <span class="o1"></span><span class="o2"></span>
+    <div class="logo"><svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <div><h1>Church Hub</h1><p class="tag">Our church family, in your pocket.</p></div>
+    <div class="strip"><p>Your details, your serving days and your care group – all in one friendly place.</p></div>
+    <p class="who" data-fill="church">Christ Church Howick</p>
+  </div>
+</section>
+
+<section class="sheet" data-show="members" aria-label="Inside">
+  <div class="pn fold">
+    <p class="eyebrow">Your own page</p>
+    <h2>Everything about you, in one place</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-user"/></svg></span><div><h3>Keep your details up to date</h3><p>Change your phone number, address or household yourself – no forms to fill in.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-cal"/></svg></span><div><h3>Away for a Sunday?</h3><p>Add the days you'll be away, so nobody rosters you by mistake.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-heart"/></svg></span><div><h3>See when you're serving</h3><p>Your dates on the roster, and a simple way to offer to help.</p></div></div>
+  </div>
+  <div class="pn fold">
+    <p class="eyebrow">Stay connected</p>
+    <h2>Closer to your church family</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-users"/></svg></span><div><h3>Your care group</h3><p>See who's in your group and how to reach them.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-book"/></svg></span><div><h3>Church directory</h3><p>Find fellow members who've chosen to be listed.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-msg"/></svg></span><div><h3>Messages</h3><p>News from the church and your groups, right inside the app.</p></div></div>
+  </div>
+  <div class="pn">
+    <p class="eyebrow">Safe and private</p>
+    <h2>Your information, your choice</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-lock"/></svg></span><div><h3>You decide what's shared</h3><p>Each person sees only what their role needs, and what you've agreed to.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-shield"/></svg></span><div><h3>Built for POPIA</h3><p>Made to follow South Africa's privacy law, with a clear record of who has looked at sensitive details.</p></div></div>
+    <div class="card"><h3>Light or dark, in your language</h3><p>Switch to dark mode in the evening, and use Church Hub in English, Afrikaans, isiZulu, isiXhosa and more.</p></div>
+  </div>
+</section>
+
+<!-- ================= For other churches ================= -->
+<section class="sheet" data-show="churches" aria-label="Outside">
+  <div class="pn fold">
+    <p class="eyebrow">Moving from Elvanto?</p>
+    <h2>Switch without the stress</h2>
+    <div class="step"><span class="num">1</span><div><h3>Bring your people across</h3><p>Import your members, households and staff leave from Elvanto and Leave Manager.</p></div></div>
+    <div class="step"><span class="num">2</span><div><h3>Run both for a while</h3><p>Keep Church Hub up to date with Elvanto's changes while everyone settles in.</p></div></div>
+    <div class="step"><span class="num">3</span><div><h3>Leave goes across too</h3><p>Approved staff leave can be sent to Elvanto automatically, so rosters stay right.</p></div></div>
+  </div>
+  <div class="pn fold">
+    <p class="eyebrow">See it for yourself</p>
+    <h2>Try the demo today</h2>
+    <p>Explore a full church of made-up people – nothing to install, and nothing you change is kept.</p>
+    <div class="demo"><p class="eyebrow">Demo</p><p class="url" style="color:var(--text)"><span data-fill="link">pian1966.github.io/church-hub</span>/?demo</p></div>
+    <div><h3>Your data stays yours</h3><p>Church Hub runs on your church's own Google Firebase project. Nobody else holds your members' details.</p></div>
+    <div class="box"><h3>Let's talk</h3><p contenteditable="true" spellcheck="false">[your name] · [phone] · [email]</p></div>
+  </div>
+  <div class="pn cover">
+    <span class="o1"></span><span class="o2"></span>
+    <div class="logo"><svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <div><h1>Church Hub</h1><p class="tag">Everything your church runs on, in one friendly place.</p></div>
+    <div class="strip"><p>People · Care groups · Rosters · Staff leave · Privacy</p></div>
+    <p class="who">Built at <span data-fill="church">Christ Church Howick</span></p>
+  </div>
+</section>
+
+<section class="sheet" data-show="churches" aria-label="Inside">
+  <div class="pn fold">
+    <p class="eyebrow">People and care</p>
+    <h2>Know and care for your people</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-users"/></svg></span><div><h3>A directory that makes sense</h3><p>Households and couples kept together, with each person's consent recorded.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-heart"/></svg></span><div><h3>Care groups</h3><p>See every group at a glance, and find anyone's group in seconds.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-search"/></svg></span><div><h3>Tidy records, fast</h3><p>Find duplicates, search on anything you're allowed to see, and update many people at once.</p></div></div>
+  </div>
+  <div class="pn fold">
+    <p class="eyebrow">Serving and staff</p>
+    <h2>Sundays that run smoothly</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-cal"/></svg></span><div><h3>Rosters that keep families together</h3><p>Families and friends serve on the same Sunday, and nobody is rostered while away.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-phone"/></svg></span><div><h3>Members help themselves</h3><p>Everyone updates their own details, days away and serving – on the web or the Android app.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-house"/></svg></span><div><h3>Staff leave built in</h3><p>Requests, approvals and balances, with Leave Manager built right in.</p></div></div>
+  </div>
+  <div class="pn">
+    <p class="eyebrow">Made to fit</p>
+    <h2>Your church, your way</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-globe"/></svg></span><div><h3>Your colours and words</h3><p>Choose your church's colour and the names you use, in more than 20 languages.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-shield"/></svg></span><div><h3>Privacy built in</h3><p>Access by role, consent for each person, and privacy pages for your country's law, including POPIA.</p></div></div>
+    <div class="card"><h3>Works even offline</h3><p>No signal in the hall? Church Hub still opens, so you can look up who's who.</p></div>
+  </div>
+</section>
+</main>
+
+<script>
+  // ?for=members|churches, &church=<name> (from Settings), &link=<the church's Church Hub address>. Only text is filled in.
+  (function () {
+    var q = new URLSearchParams(location.search), who = q.get('for') === 'churches' ? 'churches' : 'members';
+    document.querySelectorAll('[data-show]').forEach(function (s) { s.hidden = s.getAttribute('data-show') !== who; });
+    document.querySelectorAll('.bar a[data-for]').forEach(function (a) {
+      var p = new URLSearchParams(location.search); p.set('for', a.getAttribute('data-for'));
+      a.href = '?' + p.toString(); a.classList.toggle('on', a.getAttribute('data-for') === who);
+    });
+    var fill = { church: (q.get('church') || '').slice(0, 80), link: (q.get('link') || '').replace(/^https?:\/\//, '').replace(/\/+$/, '').slice(0, 120) };
+    Object.keys(fill).forEach(function (k) { if (fill[k]) document.querySelectorAll('[data-fill="' + k + '"]').forEach(function (e) { e.textContent = fill[k]; }); });
+    document.title = who === 'churches' ? 'Church Hub – brochure for other churches' : 'Church Hub – brochure for our members';
+  })();
+</script>
+</body>
+</html>

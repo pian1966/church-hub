@@ -181,6 +181,7 @@ module.exports = async function (ctx) {
   await s.go('about'); await s.page.waitForSelector('.note.ok, .note.warn, .note.bad'); t = await s.text();
   check(t.includes('About Church Hub') && t.includes('0.') && t.includes('Developed by') && t.includes('You have the latest version.'), 'About shows the version, date and developer, and checks for updates by itself');
   check(!!(await s.page.$('nav a[href="#/about"]')), 'About is in everyone’s menu');
+  check(!(await s.page.$('#about-brochures')), 'a member doesn’t see the brochures (they’re for admins)');
   const newer = u => /js\/version\.js\?t=/.test(u.href);
   await s.page.route(newer, r => r.fulfill({ contentType: 'text/javascript', body: "var ChurchHubVersion = { version: '9.9.9', date: '2030-01-01' };" }));
   await s.page.click('[data-act="about:check"]'); await s.page.waitForSelector('[data-act="about:reload"]');

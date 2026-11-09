@@ -12,5 +12,9 @@ const tags = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))(\?v=([^"]*))?"
 const wrong = tags.filter(m => m[3] !== v).map(m => m[1] + (m[2] || ' (no ?v=)'));
 ok(tags.length > 40, 'found the files index.html loads (' + tags.length + ')');
 ok(!wrong.length, 'every file is loaded with ?v=' + v + (wrong.length ? ' – change these: ' + wrong.join(', ') : ''));
+// The brochures (brochure.html, opened from About) are read again whenever a feature is added (the middle number goes up).
+const bro = fs.readFileSync(path.join(root, 'brochure.html'), 'utf8'), rv = (/name="reviewed-for" content="(\d+\.\d+)"/.exec(bro) || [])[1];
+ok(rv === (v || '').split('.').slice(0, 2).join('.'), 'brochure.html was checked for version ' + (v || '').split('.').slice(0, 2).join('.') +
+  (rv === (v || '').split('.').slice(0, 2).join('.') ? '' : ' – it says ' + rv + '. Read both brochures, add what this version brings that members or other churches would notice, then change reviewed-for'));
 if (fails) { console.log('\n' + fails + ' version test(s) FAILED'); process.exit(1); }
 console.log('\nAll version tests passed');

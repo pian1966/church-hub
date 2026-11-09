@@ -20,8 +20,8 @@ var Wording = (function () {
     ['office', ['Church office', 'Church offices'], 'Where the administration is done'],
     ['care', ['Care group', 'Care groups'], 'A small group that cares for one another'],
     ['carer', ['Carer', 'Carers'], 'Someone who leads a care group'],
-    ['life', ['Life group', 'Life groups'], 'A Bible study, life group or midweek group (each one named by its leaders)'],
-    ['lifeLeader', ['Group leader', 'Group leaders'], 'Someone who leads a life group'],
+    ['life', ['Midweek group', 'Midweek groups'], 'A Bible study, life group or Connect Group (as named by the group leader)'],
+    ['lifeLeader', ['Group leader', 'Group leaders'], 'Someone who leads a midweek group'],
     ['worship', ['Worship', 'Worship'], 'Music in services (also teams and positions named after it)'],
     ['worshipTeam', ['Worship team', 'Worship teams'], 'The team that leads music in services'],
     ['worshipLeader', ['Worship leader', 'Worship leaders'], 'Who leads the music in a service']

@@ -20,7 +20,7 @@
   function audLong(m) {
     var n = (m.to || []).length;
     if (m.kind === 'people') return m.audience ? esc(m.audience) : esc(TN('{n} person', '{n} people', n));
-    var base = m.kind === 'care' ? T('Care group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Life group') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
+    var base = m.kind === 'care' ? T('Care group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Midweek group') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
     return base + (m.some ? ' · ' + esc(TN('{n} person', '{n} people', n)) : '');
   }
   function unreadCount() { var u = me(); return u ? Msg.unread(S.list('messages'), u.id).length : 0; }
@@ -104,7 +104,7 @@
     var cur = as.filter(function (a) { return key(a) === draft.to; })[0] || as[0]; draft.to = key(cur);
     var opt = function (a) { return '<option value="' + esc(key(a)) + '"' + (key(a) === draft.to ? ' selected' : '') + '>' + esc(audName(a.kind, a.name)) + '</option>'; };
     var groupOf = function (k) { return as.filter(function (a) { return a.kind === k; }); };
-    var sel = [['', groupOf('people').concat(groupOf('staff'), groupOf('partners'))], [T('Care groups'), groupOf('care')], [T('Life groups'), groupOf('life')], [T('Message groups'), groupOf('group')]].map(function (g) {
+    var sel = [['', groupOf('people').concat(groupOf('staff'), groupOf('partners'))], [T('Care groups'), groupOf('care')], [T('Midweek groups'), groupOf('life')], [T('Message groups'), groupOf('group')]].map(function (g) {
       if (!g[1].length) return ''; return g[0] ? '<optgroup label="' + esc(g[0]) + '">' + g[1].map(opt).join('') + '</optgroup>' : g[1].map(opt).join('');
     }).join('');
     return head(T('Send a message to a group. Everyone in it sees it here, in Church Hub.'), 'send') +

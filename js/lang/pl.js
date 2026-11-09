@@ -231,6 +231,7 @@ I18n.add('pl', {
     "Signing you in…": "Logowanie…",
     "Something went wrong": "Coś poszło nie tak",
     "Try again": "Spróbuj ponownie",
+    "Back to the top": "Wróć na górę",
     "Appearance": "Wygląd",
     "Light": "Jasny",
     "Dark": "Ciemny",

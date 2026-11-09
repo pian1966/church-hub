@@ -610,3 +610,18 @@ html[data-mode=dark] .legend i[style*="#F2EEEA"] { background: #2B2521 !importan
 .splash h1 { margin: 4px 0 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
 .splash-cross { width: 30px; height: 30px; margin-top: 10px; fill: color-mix(in srgb, var(--accent) 45%, #fff); }
 .splash p { margin: 0; color: var(--side-muted); font-size: 13px; min-height: 1em; }
+/* Dark: each service's look (its pale shade and dark writing are set per service, so they are mixed here instead) */
+html[data-mode=dark] .svc-card.on, html[data-mode=dark] .svc-ico, html[data-mode=dark] .mood, html[data-mode=dark] .svc-hero { background: color-mix(in srgb, var(--svc-line) 20%, var(--surface)); }
+html[data-mode=dark] .svc-card.on .svc-ico, html[data-mode=dark] .svc-card.on .mood { background: color-mix(in srgb, var(--svc-line) 32%, var(--surface)); }
+html[data-mode=dark] .svc-top b, html[data-mode=dark] .svc-ico, html[data-mode=dark] .mood, html[data-mode=dark] .svc-foot, html[data-mode=dark] .svc-hero h1, html[data-mode=dark] .svc-page .panel > h2 { color: color-mix(in srgb, var(--svc-line) 50%, #fff); }
+/* Dark: plain boxes that have no style of their own (e.g. Terminology's words) */
+html[data-mode=dark] input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), html[data-mode=dark] select, html[data-mode=dark] textarea { background-color: var(--surface); color: var(--ink); border-color: var(--line-strong); }
+/* Dark: small round add / remove buttons (Advanced search filters) */
+html[data-mode=dark] .icon-btn.ok { background: #237A4B; color: #fff; } html[data-mode=dark] .icon-btn.bad { background: #A83A34; color: #fff; }
+
+/* Back to the top (js/app.js toTop): bottom right, once well down a long page; above the phone's tab bar */
+#to-top { position: fixed; right: 18px; bottom: 22px; z-index: 55; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent-ink);
+  display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.14); opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; }
+#to-top.show { opacity: .92; transform: none; } #to-top:hover, #to-top:focus-visible { opacity: 1; background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--surface)); }
+@media (max-width: 860px) { #to-top { bottom: 84px; right: 14px; } }
+@media (prefers-reduced-motion: reduce) { #to-top { transition: none; } }

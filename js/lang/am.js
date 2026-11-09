@@ -231,6 +231,7 @@ I18n.add('am', {
     "Signing you in…": "እያስገባንዎት ነው…",
     "Something went wrong": "የሆነ ችግር ተፈጥሯል",
     "Try again": "እንደገና ይሞክሩ",
+    "Back to the top": "ወደ ላይ ተመለስ",
     "Appearance": "ገጽታ",
     "Light": "ብሩህ",
     "Dark": "ጨለማ",

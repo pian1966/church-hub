@@ -231,6 +231,7 @@ I18n.add('sw', {
     "Signing you in…": "Unaingizwa…",
     "Something went wrong": "Hitilafu imetokea",
     "Try again": "Jaribu tena",
+    "Back to the top": "Rudi juu",
     "Appearance": "Mwonekano",
     "Light": "Mwanga",
     "Dark": "Giza",

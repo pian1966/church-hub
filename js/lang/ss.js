@@ -231,6 +231,7 @@ I18n.add('ss', {
     "Signing you in…": "Siyakungenisa…",
     "Something went wrong": "Kukhona lokungakahambi kahle",
     "Try again": "Phindza uzame",
+    "Back to the top": "Buyela etulu",
     "Appearance": "Kubonakala",
     "Light": "Lokukhanyako",
     "Dark": "Lokumnyama",

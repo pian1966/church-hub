@@ -231,6 +231,7 @@ I18n.add('st', {
     "Signing you in…": "Re a o kenya…",
     "Something went wrong": "Ho na le se sa tsamaeng hantle",
     "Try again": "Leka hape",
+    "Back to the top": "Kgutlela hodimo",
     "Appearance": "Ponahalo",
     "Light": "Kganya",
     "Dark": "Lefifi",

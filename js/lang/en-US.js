@@ -227,6 +227,7 @@ I18n.add('en-US', {
     "Signing you in…": "Signing you in…",
     "Something went wrong": "Something went wrong",
     "Try again": "Try again",
+    "Back to the top": "Back to the top",
     "Appearance": "Appearance",
     "Light": "Light",
     "Dark": "Dark",

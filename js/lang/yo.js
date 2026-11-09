@@ -231,6 +231,7 @@ I18n.add('yo', {
     "Signing you in…": "À ń mú ọ wọlé…",
     "Something went wrong": "Nǹkan kan kò lọ dáadáa",
     "Try again": "Tún gbìyànjú",
+    "Back to the top": "Padà sí òkè",
     "Appearance": "Ìrísí",
     "Light": "Ìmọ́lẹ̀",
     "Dark": "Òkùnkùn",

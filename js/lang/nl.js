@@ -231,6 +231,7 @@ I18n.add('nl', {
     "Signing you in…": "U wordt aangemeld…",
     "Something went wrong": "Er ging iets mis",
     "Try again": "Opnieuw proberen",
+    "Back to the top": "Terug naar boven",
     "Appearance": "Weergave",
     "Light": "Licht",
     "Dark": "Donker",

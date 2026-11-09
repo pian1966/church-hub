@@ -231,6 +231,7 @@ I18n.add('sn', {
     "Signing you in…": "Tiri kukupinza…",
     "Something went wrong": "Pane chakakanganisika",
     "Try again": "Edza zvakare",
+    "Back to the top": "Dzokera kumusoro",
     "Appearance": "Chitarisiko",
     "Light": "Chiedza",
     "Dark": "Rima",

@@ -231,6 +231,7 @@ I18n.add('ve', {
     "Signing you in…": "Ri khou ni dzhenisa…",
     "Something went wrong": "Hu na zwi songo tshimbila zwavhuḓi",
     "Try again": "Lingedzani hafhu",
+    "Back to the top": "Humelani nṱha",
     "Appearance": "Mbonalelo",
     "Light": "Tshedza",
     "Dark": "Swiswi",

@@ -231,6 +231,7 @@ I18n.add('de', {
     "Signing you in…": "Sie werden angemeldet…",
     "Something went wrong": "Etwas ist schiefgelaufen",
     "Try again": "Erneut versuchen",
+    "Back to the top": "Nach oben",
     "Appearance": "Darstellung",
     "Light": "Hell",
     "Dark": "Dunkel",

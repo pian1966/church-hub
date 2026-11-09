@@ -231,6 +231,7 @@ I18n.add('nso', {
     "Signing you in…": "Re a go tsenya…",
     "Something went wrong": "Go na le seo se sa sepelego gabotse",
     "Try again": "Leka gape",
+    "Back to the top": "Boela godimo",
     "Appearance": "Ponagalo",
     "Light": "Seetša",
     "Dark": "Leswiswi",

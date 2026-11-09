@@ -334,11 +334,14 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 /* Language picker (sidebar, menu, sign-in) */
 .lang-pick { display: inline-flex; align-items: center; gap: 6px; position: relative; }
 .lang-pick svg { position: absolute; left: 10px; pointer-events: none; opacity: .75; }
-.lang-sel { appearance: none; -webkit-appearance: none; font: inherit; font-size: 13.5px; min-height: 36px; padding: 6px 28px 6px 32px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236B625A' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; color: var(--ink); cursor: pointer; }
+.lang-sel, .mode-sel { appearance: none; -webkit-appearance: none; font: inherit; font-size: 13.5px; min-height: 36px; padding: 6px 28px 6px 32px; border-radius: 10px; border: 1px solid var(--line); background: var(--surface) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%236B625A' stroke-width='1.6'/%3E%3C/svg%3E") no-repeat right 10px center; color: var(--ink); cursor: pointer; }
 .side-lang { padding: 10px 6px 0; }
 .side-lang .lang-pick { width: 100%; }
-.side-lang .lang-sel { width: 100%; background-color: transparent; color: var(--side-ink); border-color: #3A322C; }
-.side-lang .lang-sel option { color: #222; }
+.side-lang .lang-sel, .side-lang .mode-sel { width: 100%; background-color: transparent; color: var(--side-ink); border-color: #3A322C; }
+.side-lang .lang-sel option, .side-lang .mode-sel option { color: #222; }
+.side-mode { margin-top: 6px; } .side-mode .mode-sel { min-height: 32px; font-size: 12.5px; color: var(--side-muted); border-color: transparent; }
+.side-mode .mode-sel:hover, .side-mode .mode-sel:focus-visible { border-color: var(--side-2); color: var(--side-ink); }
+.mode-pick { width: 100%; }
 .signin-lang { display: flex; justify-content: flex-end; margin: -6px 0 6px; }
 
 .signin-card { position: relative; }
@@ -588,11 +591,6 @@ html[data-mode=dark] .just-saved { animation-name: just-saved-dark; }
 @keyframes just-saved-dark { 0%, 30% { background: #1E4A30; box-shadow: 0 0 0 3px #1E4A30; } 100% { background: transparent; box-shadow: 0 0 0 3px transparent; } }
 html[data-mode=dark] .th-pmain { background: var(--bg); }
 html[data-mode=dark] img.photo, html[data-mode=dark] .av.pic { filter: brightness(.92); }
-/* Appearance: Light / Dark / Same as this device (side menu and All apps) */
-.mode-pick { display: inline-flex; border: 1px solid var(--side-2, #3A322C); border-radius: 10px; overflow: hidden; }
-.mode-pick button { background: none; border: 0; color: var(--side-muted, #B7ADA4); font: inherit; font-size: 12.5px; font-weight: 600; padding: 6px 10px; cursor: pointer; }
-.mode-pick button.on { background: var(--side-2, #3A322C); color: #fff; }
-.dlg-foot .mode-pick { border-color: var(--line); } .dlg-foot .mode-pick button { color: var(--muted); } .dlg-foot .mode-pick button.on { background: var(--accent-soft); color: var(--accent-ink); }
 /* Dark: roster slots and their key, green buttons */
 html[data-mode=dark] .chip { color: #CFEBD9; }
 html[data-mode=dark] .chip.pending { color: #F3DC9B; }

@@ -268,12 +268,22 @@
         skip: function (p) { return (p.familyId || (p.householdIds || []).length) ? TX('already in a household') : ''; },
         set: function (q, v, made) { var f = S.put('families', { name: q.lastName + ' family', custom: false }); made.push(f.id); q.familyId = f.id; if (!q.familyRole) q.familyRole = 'adult'; },
         note: TX('Each person with no household gets one of their own, named after their surname. People who live together can be moved into one household afterwards.') }
-    ];
+    ].concat(CONSENT_BULK.map(function (pur) {
+      // Consent (POPIA): a new record for each person – today's date, how it was given, who recorded it – never a change to an old one
+      return { key: 'consent-' + pur, consent: pur, label: 'Consent: ' + pur, show: function () { return T('Consent') + ': ' + T(P.purposeName(pur)); },
+        options: [TX('Yes'), TX('No')], keys: [], get: function (p) { var c = P.consentFor(p.id, pur); return c ? (c.given ? 'Yes' : 'No') : ''; },
+        skip: function (p) { return p.familyRole === 'child' ? TX('children') : dead(p) ? TX('people who have died') : ''; },
+        note: TX('A new consent record for each person, dated today, with how it was given (POPIA). Children are left out: a parent or guardian answers for them on the child’s page.') };
+    }));
   }
+  /** Consents an Administrator may record for many adults at once (Children's medical notes stay with Children's ministry). */
+  var CONSENT_BULK = ['Church records', 'Email', 'SMS', 'Church directory', 'Care group', 'Photos'];
+  var CONSENT_HOW = [TX('Paper connect card'), TX('Online form'), TX('In person (verbal)'), TX('Email')];
+  function fieldName(x) { return x.show ? x.show() : T(x.label); }
   function bulkUndoNote() {
     var u = state.bulkUndo; if (!u) return '';
     var why = Object.keys(u.skipped || {}).map(function (k) { return u.skipped[k] + ' ' + T(k); });
-    return '<div class="note ok" role="status" style="margin-bottom:12px">' + TN('Changed {field} to {value} for {n} person', 'Changed {field} to {value} for {n} people', u.items.length, { field: '<b>' + esc(T(u.label)) + '</b>', value: '<b>' + esc(u.value ? T(u.value) : T('nothing')) + '</b>' }) +
+    return '<div class="note ok" role="status" style="margin-bottom:12px">' + TN('Changed {field} to {value} for {n} person', 'Changed {field} to {value} for {n} people', u.items.length, { field: '<b>' + esc(u.show || T(u.label)) + '</b>', value: '<b>' + esc(u.value ? T(u.value) : T('nothing')) + '</b>' }) +
       (why.length ? ' (' + esc(T('left out: {who}', { who: why.join(', ') })) + ')' : '') + '. <button class="link" data-act="people:bulkundo">' + T('Undo') + '</button></div>';
   }
   function bulkDialog() {
@@ -285,8 +295,9 @@
         '<select id="bk-v">' + (fd.blank ? '<option value="">' + esc(T(fd.blank)) + '</option>' : '<option value="">' + T('Choose…') + '</option>') + fd.options.map(function (o) { return '<option value="' + esc(o) + '">' + esc(fd.raw ? o : T(o)) + '</option>'; }).join('') + '</select>';
     };
     H.modal(H.dialogHead(TN('Change {n} person', 'Change {n} people', ids.length), T('The same change for everyone you ticked. You can undo it straight after.')) + '<div class="dlg-body">' +
-      '<div class="two"><label class="field req">' + T('What to change') + '<select id="bk-f">' + F.map(function (x) { return '<option value="' + x.key + '">' + esc(T(x.label)) + '</option>'; }).join('') + '</select></label>' +
+      '<div class="two"><label class="field req">' + T('What to change') + '<select id="bk-f">' + F.map(function (x) { return '<option value="' + x.key + '">' + esc(fieldName(x)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field req" id="bk-v-f">' + T('New value') + valueBox(f) + '</label></div>' +
+      '<label class="field req" id="bk-m-f" hidden>' + T('How it was given') + '<select id="bk-m"><option value="">' + T('Choose…') + '</option>' + CONSENT_HOW.map(function (m) { return '<option value="' + esc(m) + '">' + esc(T(m)) + '</option>'; }).join('') + '</select></label>' +
       '<p class="hint" id="bk-note">' + esc(f.note ? T(f.note) : '') + '</p>' +
       '<label class="check" id="bk-empty-w"' + (f.get ? '' : ' hidden') + '><input type="checkbox" id="bk-empty"><span>' + T('Only where it’s empty – leave anything already filled in') + '</span></label>' +
       '<details><summary class="small">' + T('Who will change ({n})', { n: ids.length }) + '</summary><p class="small muted" style="margin:6px 0 0">' + esc(ids.map(function (id) { return H.name(S.get('people', id)); }).join(', ')) + '</p></details>' +
@@ -298,6 +309,7 @@
       box.innerHTML = T('New value') + valueBox(fd); box.classList.toggle('req', !fd.blank);
       document.getElementById('bk-note').textContent = fd.note ? T(fd.note) : '';
       document.getElementById('bk-empty-w').hidden = !fd.get; if (!fd.get) document.getElementById('bk-empty').checked = false;
+      document.getElementById('bk-m-f').hidden = !fd.consent;
       H.markRequired();
     });
     H.markRequired();
@@ -385,6 +397,8 @@
         var onlyEmpty = !!fd.get && document.getElementById('bk-empty').checked;
         if (fd.key === 'addr-province' && v) v = Countries.region(v, Countries.church(S.settings()).code);   // "kzn" → KwaZulu-Natal
         if (!v && !fd.blank) { err.textContent = T('Choose the new value.'); err.hidden = false; return; }
+        var how = fd.consent ? document.getElementById('bk-m').value : '';
+        if (fd.consent && !how) { err.textContent = T('Choose how it was given.'); err.hidden = false; return; }
         var ids = Object.keys(state.adv.sel || {}), items = [], skipped = {}, made = [];
         if (!H.confirmBtn(el, TN('Click again to change {n} person', 'Click again to change {n} people', ids.length))) return;
         H.closeModal();
@@ -393,6 +407,16 @@
             var p = S.get('people', id); if (!p) return;
             var why = (fd.skip && fd.skip(p)) || (onlyEmpty && String(fd.get(p) || '').trim() && TX('already filled in')); if (why) { skipped[why] = (skipped[why] || 0) + 1; return; }
             var before = {}; fd.keys.forEach(function (k) { before[k] = p.hasOwnProperty(k) ? { v: p[k] } : null; });
+            if (fd.consent) {   // a new consent record; the old answer is kept, marked as replaced (withdrawnAt), for the audit trail
+              var old = P.consentFor(p.id, fd.consent), want = v === 'Yes';
+              if (old && !!old.given === want) { skipped[TX('already recorded')] = (skipped[TX('already recorded')] || 0) + 1; return; }
+              if (old) { old = JSON.parse(JSON.stringify(old)); old.withdrawnAt = H.today(); S.put('consents', old); }
+              var c = S.put('consents', { personId: p.id, purpose: fd.consent, given: want, date: H.today(), method: how, recordedBy: H.name(H.user()), guardianId: '' },
+                'Consent ' + fd.consent + ': ' + (want ? 'agreed' : 'declined') + ' – ' + H.name(p) + ' (' + how + ', changing many people at once)');
+              items.push({ id: id, newId: c.id, oldId: old ? old.id : '' });
+              if (window.CareUI && fd.consent === 'Care group') CareUI.sync(id);   // their care group card follows their consent
+              return;
+            }
             var q = JSON.parse(JSON.stringify(p)); fd.set(q, v, made);
             if (fd.keys.every(function (k) { return JSON.stringify(q[k]) === JSON.stringify(p[k]); })) return;   // nothing to change
             items.push({ id: id, before: before });
@@ -400,7 +424,7 @@
             if (fd.key === 'category') P.partnerAgrees(q, p.category);   // becoming a Church Partner: Contact details agreed
           });
           S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (Advanced search)' + (made.length ? '; ' + made.length + ' households created' : ''), 'people');
-          state.bulkUndo = { key: fd.key, keys: fd.keys, label: fd.label, value: v, items: items, skipped: skipped, made: made };
+          state.bulkUndo = { key: fd.key, keys: fd.keys, label: fd.label, show: fieldName(fd), consent: fd.consent || '', value: v, items: items, skipped: skipped, made: made };
           state.adv.sel = {}; H.render(); H.toast(TN('{n} person changed', '{n} people changed', items.length));
         });
       },
@@ -408,6 +432,12 @@
         var u = state.bulkUndo; if (!u || !canBulk()) return;
         H.busy(T('Undoing…'), function () {
           u.items.forEach(function (it) {
+            if (u.consent) {   // take the new record away and bring the old answer back
+              S.remove('consents', it.newId, 'Undid consent ' + u.consent + ' for ' + H.name(S.get('people', it.id)));
+              var o = it.oldId && S.get('consents', it.oldId); if (o) { o = JSON.parse(JSON.stringify(o)); delete o.withdrawnAt; S.put('consents', o); }
+              if (window.CareUI && u.consent === 'Care group') CareUI.sync(it.id);
+              return;
+            }
             var p = S.get('people', it.id); if (!p) return;
             var q = JSON.parse(JSON.stringify(p));
             u.keys.forEach(function (k) { if (it.before[k]) q[k] = it.before[k].v; else delete q[k]; });

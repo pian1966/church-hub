@@ -7,7 +7,7 @@ module.exports = async function (ctx) {
   console.log('Life groups (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
   check(!(await s.page.$('nav a[href="#/life"]')), 'Life groups are off until an Administrator switches them on');
-  await s.go('settings'); await s.page.check('.st-mod[value="life"]'); await s.settle();
+  await s.go('settings/apps'); await s.page.check('.st-mod[value="life"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].modules.life === true && !!(await s.page.$('nav a[href="#/life"]')), 'switched on under Settings → Apps: the Life groups page appears');
   await s.go('life'); await s.page.fill('#lg-new', 'Tuesday Bible study'); await s.page.click('[data-act="life:addgroup"]'); await s.settle();
@@ -22,7 +22,7 @@ module.exports = async function (ctx) {
   check(!t.includes('Tuesday Bible study'), 'a life group isn’t listed with the care groups');
   await s.go('people/p/p14'); t = await s.text();
   check(t.includes('Group leader · Tuesday Bible study'), 'a person’s page shows their life group');
-  await s.go('settings'); await s.page.uncheck('.st-mod[value="care"]'); await s.settle();
+  await s.go('settings/apps'); await s.page.uncheck('.st-mod[value="care"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].modules.care === false && !(await s.page.$('nav a[href="#/care"]')) && !!(await s.page.$('nav a[href="#/life"]')), 'care groups can be switched off on their own, life groups stay');
   await finish(s);

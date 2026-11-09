@@ -60,25 +60,59 @@
         return '<p style="margin:8px 0 2px"><b>' + esc(g) + '</b></p><p style="margin:0">' + specials.filter(function (x) { return x.when === g; }).map(function (x) { return esc(x.name) + (x.used ? ' <span class="muted">(' + esc(x.used) + ')</span>' : ''); }).join(' · ') + '</p>';
       }).join('') + '</div></details></section>';
   }
-  function tabs(a) {
-    return '<nav class="seg" aria-label="' + esc(T('Settings')) + '" style="margin-bottom:18px">' +
-      [['', T('Settings')], ['terminology', T('Terminology (Church Words)')], ['emails', T('Email templates')]].map(function (x) {
-        return '<a href="#/settings' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === a ? 'on' : '') + '">' + esc(x[1]) + '</a>';
-      }).join('') + '</nav>';
+  /** Settings is a set of pages, one per topic, with the list of topics (and a search) down the left – on phones a strip
+   *  across the top. Each: [id, title, short description, group, icon, extra words the search finds it by]. */
+  var GROUPS = [['church', TX('Church')], ['features', TX('Features')], ['access', TX('People and access')], ['comms', TX('Communication')]];
+  var SECTIONS = [
+    ['general', TX('General'), TX('Name and country'), 'church', 'M3 21h18M5 21V8l7-5 7 5v13M10 21v-6h4v6', 'church name country address province state county privacy law'],
+    ['colours', TX('Colours'), TX('The church’s colour'), 'church', 'M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.7-1.2-.7-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11h.01M10 7.5h.01M14 7.5h.01', 'colour color theme brand logo cross buttons'],
+    ['terminology', TX('Terminology (Church Words)'), TX('The words your church uses'), 'church', 'M4 7V5h16v2M9 19h6M12 5v14', 'words wording terms names music worship praise leader'],
+    ['apps', TX('Apps'), TX('Switch parts of Church Hub on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations'],
+    ['services', TX('Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
+    ['access', TX('Who can see what'), TX('What each access level can see'), 'access', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'see contact details directory care groups consent roles access level basic church partner roster children'],
+    ['pastors', TX('What Pastors can do'), TX('Extra abilities for Pastors'), 'access', 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', 'pastor senior rector assistant minister abilities permissions'],
+    ['emails', TX('Email templates'), TX('Birthday, anniversary and welcome emails'), 'comms', 'M3 5h18v14H3zM3 6l9 7 9-7', 'email emails template birthday anniversary welcome newcomer gmail signed sign off']
+  ];
+  function sectionOf(id) { return SECTIONS.filter(function (x) { return x[0] === id; })[0] || SECTIONS[0]; }
+  /** The list of topics: grouped, with a search box that narrows it as you type (Enter opens the first one). */
+  function setNav(a) {
+    return '<nav class="set-nav" aria-label="' + esc(T('Settings')) + '"><label class="set-q"><span class="sr">' + T('Search settings') + '</span>' + H.icon('M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4', 16) +
+      '<input id="set-q" type="search" autocomplete="off" placeholder="' + esc(T('Search settings')) + '"></label>' +
+      GROUPS.map(function (g) {
+        return '<div class="set-grp"><p class="set-gl">' + esc(T(g[1])) + '</p>' + SECTIONS.filter(function (x) { return x[3] === g[0]; }).map(function (x) {
+          var k = [x[1], x[2], T(x[1]), T(x[2]), x[5]].join(' ').toLowerCase();
+          return '<a href="#/settings/' + x[0] + '" class="set-link' + (x[0] === a ? ' on' : '') + '"' + (x[0] === a ? ' aria-current="page"' : '') + ' data-k="' + esc(k) + '">' + H.icon(x[4], 18) + '<span>' + esc(T(x[1])) + '</span></a>';
+        }).join('') + '</div>';
+      }).join('') + '<p class="set-none muted small" hidden>' + T('No settings match that.') + '</p></nav>';
   }
-  function renderTerminologyCard(st) {
-    var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', custom = w.custom || {};
-    var renamed = Object.keys(custom).filter(function (k) { return custom[k] && custom[k][0]; });
-    return '<section class="panel"><h2>' + T('Terminology (Church Words)') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + '</p>' +
-      '<p><b>' + T('Kind of church') + ':</b> ' + esc(Wording.SETS[cur].name) + (renamed.length ? ' <span class="muted">(' + esc(renamed.map(function (k) { return custom[k][0]; }).join(', ')) + ')</span>' : '') + '</p>' +
-      '<p><a href="#/settings/terminology" class="btn small">' + T('Change') + '</a></p></section>';
+  /** One topic's page: the topic list, then its title, what it's for, and its panels. A topic with one panel shows the
+   *  title once (the panel's own heading is dropped). */
+  function layout(a, body) {
+    var x = sectionOf(a), one = (body.match(/<section class="panel/g) || []).length === 1;
+    if (one) body = body.replace(/<h2>[\s\S]*?<\/h2>/, '');
+    return '<div class="page-head"><div><h1>' + T('Settings') + '</h1></div></div>' +
+      '<div class="set-wrap">' + setNav(x[0]) + '<div class="set-main" id="set-' + x[0] + '"><header class="set-head"><h2>' + esc(T(x[1])) + '</h2><p>' + esc(T(x[2])) + '</p></header>' + body + '</div></div>';
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', function (ev) {
+      if (!ev.target || ev.target.id !== 'set-q') return;
+      var q = ev.target.value.trim().toLowerCase().split(/\s+/).filter(Boolean), any = false;
+      [].forEach.call(document.querySelectorAll('.set-grp'), function (g) {
+        var shown = 0;
+        [].forEach.call(g.querySelectorAll('.set-link'), function (l) { var k = l.dataset.k, hit = q.every(function (w) { return k.indexOf(w) >= 0; }); l.hidden = !hit; if (hit) shown++; });
+        g.hidden = !shown; if (shown) any = true;
+      });
+      var none = document.querySelector('.set-none'); if (none) none.hidden = any;
+    });
+    document.addEventListener('keydown', function (ev) {
+      if (ev.key !== 'Enter' || !ev.target || ev.target.id !== 'set-q') return;
+      var first = document.querySelector('.set-link:not([hidden])'); if (first) { ev.preventDefault(); location.hash = first.getAttribute('href'); }
+    });
   }
   /** Terminology (Church Words): a ready-made set for the kind of church, and any word renamed (js/wording.js). Full-width page. */
   function renderTerminology(st) {
     var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', words = Wording.words(st);
-    return '<div class="page-head"><div><h1>' + T('Terminology (Church Words)') + '</h1><p class="lead">' + T('The words your church uses for people and roles.') + '</p></div></div>' +
-      tabs('terminology') +
-      '<section class="panel" data-own-words><p class="hint" style="margin-top:0">' +
+    return '<section class="panel" data-own-words><h2>' + T('Terminology (Church Words)') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + ' ' +
       T('The screens change (in English – the other languages keep their own words); everyone’s records stay as they are.') + '</p>' +
       '<div class="two"><label class="field">' + T('Kind of church') + '<select id="wd-set">' + Object.keys(Wording.SETS).map(function (k) { return '<option value="' + k + '"' + (k === cur ? ' selected' : '') + '>' + esc(Wording.SETS[k].name) + '</option>'; }).join('') + '</select><small>' + T('Choosing one fills in its words below; you can still change any of them.') + '</small></label>' +
       '<label class="field">' + T('Music in services is called') + '<select id="wd-music"><option value="">–</option>' + Object.keys(Wording.MUSIC).map(function (k) {
@@ -110,8 +144,7 @@
       welcomeThreeWeeks: TX('Sent to a newcomer 3 weeks after their first visit. Placeholders: {firstName}, {lastName}, {fullName}, {churchName}.')
     };
 
-    return '<div class="page-head"><div><h1>' + T('Email templates') + '</h1><p class="lead">' + T('Editable email templates for birthdays, anniversaries, late spouse remembrance, and newcomer welcome messages.') + '</p></div></div>' +
-      tabs('emails') + '<div data-autoscope>' +
+    return '<div data-autoscope><p class="hint set-lead">' + T('Editable email templates for birthdays, anniversaries, late spouse remembrance, and newcomer welcome messages.') + '</p>' +
       '<section class="panel"><h2>' + T('Sending email') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Choose how Church Hub opens emails to send.') + '</p>' +
       '<div class="two"><label class="field">' + T('Church email address') + '<input id="em-office" type="email" value="' + esc(st.emailOffice || '') + '"></label>' +
@@ -133,28 +166,39 @@
       '<button class="btn" data-act="settings:resetemails">' + T('Reset to defaults') + '</button></div></div>';
   }
 
-  function render(parts) {
-    var st = S.settings();
-    if (parts && parts[0] === 'terminology') return renderTerminology(st);
-    if (parts && parts[0] === 'emails') return renderEmailTemplates(st);
-    var on = st.modules || {};
-    var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
-    var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(function (a, b) { return a.date < b.date ? -1 : 1; });
-    return '<div class="page-head"><div><h1>' + T('Settings') + '</h1><p class="lead">' + T('Church details, which apps are switched on, who can see what, and service times.') + '</p></div></div>' +
-      tabs('') +
-      '<div class="grid2">' +
-      '<section class="panel"><h2>' + T('Church') + '</h2><label class="field req">' + T('Church name') + '<input id="st-name" value="' + esc(st.churchName) + '"></label>' +
-        '<label class="field req">' + T('Country') + '<select id="st-country">' + Countries.grouped().map(function (g) {
+  /** General: the church's name and country, as label-and-box rows. */
+  function renderGeneral(st) {
+    return '<section class="panel"><h2>' + T('Church') + '</h2><div class="set-rows">' +
+      '<div class="set-row"><label class="set-l req" for="st-name"><b>' + T('Church name') + '</b></label><div class="set-c"><input id="st-name" value="' + esc(st.churchName) + '"></div></div>' +
+      '<div class="set-row"><label class="set-l req" for="st-country"><b>' + T('Country') + '</b><small>' + T('Sets the usual country for addresses (with its provinces, states or counties) and which privacy law the Privacy pages follow.') + '</small></label>' +
+        '<div class="set-c"><select id="st-country">' + Countries.grouped().map(function (g) {
           return '<optgroup label="' + esc(g.continent) + '">' + g.countries.map(function (x) { return '<option value="' + x.code + '"' + (x.code === Countries.church(st).code ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</optgroup>';
-        }).join('') + '</select><small>' + T('Sets the usual country for addresses (with its provinces, states or counties) and which privacy law the Privacy pages follow.') + '</small></label>' +
-        '<button class="btn small" data-autosave data-act="settings:name">' + T('Save') + '</button></section>' +
-      renderTerminologyCard(st) +
-      '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p>' + MODS.map(function (m) {
-        return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (H.isOn(m[0]) ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
-      }).join('') + '<p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' +
-      renderTheme(st) + renderAccess(st, byRole) + renderPastorCan(st) +
-      renderSlots() +
-      renderServices(st, svcs) + '</div>';
+        }).join('') + '</select></div></div></div>' +
+      '<button class="btn small" data-autosave data-act="settings:name">' + T('Save') + '</button></section>';
+  }
+  /** Apps: each part of Church Hub with a switch. Switching off hides it for everyone; nothing is deleted. */
+  function renderApps(st) {
+    return '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p><div class="set-rows">' + MODS.map(function (m) {
+      return '<label class="set-row"><span class="set-l"><b>' + esc(T(m[1])) + '</b><small>' + esc(T(m[2])) + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" class="st-mod" value="' + m[0] + '"' + (H.isOn(m[0]) ? ' checked' : '') + ' aria-label="' + esc(T(m[1])) + '"></span></label>';
+    }).join('') + '</div><p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>';
+  }
+
+  function render(parts) {
+    var st = S.settings(), a = sectionOf((parts && parts[0]) || 'general')[0];
+    var body;
+    if (a === 'terminology') body = renderTerminology(st);
+    else if (a === 'emails') body = renderEmailTemplates(st);
+    else if (a === 'colours') body = renderTheme(st);
+    else if (a === 'apps') body = renderApps(st);
+    else if (a === 'pastors') body = renderPastorCan(st);
+    else if (a === 'access') {
+      var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
+      body = renderAccess(st, byRole);
+    } else if (a === 'services') {
+      var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(function (x, y) { return x.date < y.date ? -1 : 1; });
+      body = renderSlots() + renderServices(st, svcs);
+    } else body = renderGeneral(st);
+    return layout(a, body);
   }
 
   /** Who can see what: each access level, what it can use, which of other people's contact details it sees
@@ -170,7 +214,7 @@
   function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   function renderTheme(st) {
     var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex);
-    return '<section class="panel" id="st-theme" data-noauto style="grid-column:1/-1"><h2>' + T('Colours') + '</h2>' +
+    return '<section class="panel" id="st-theme" data-noauto><h2>' + T('Colours') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.') + '</p>' +
       // The live sample: the menu with the logo, a button, a Save button, a link and the turning cross
       '<div class="th-prev" id="th-prev" style="' + themeVars(shown) + '">' +
@@ -204,7 +248,7 @@
   var CARE_SEE = ['rosters', 'kids'];   // may be allowed to see the care groups (firestore.rules: seesCare)
   function renderAccess(st, byRole) {
     var P = window.PeopleParts, see = st.seeOthers || {};
-    return '<section class="panel" id="see-others" style="grid-column:1/-1"><h2>' + T('Who can see what') + '</h2>' +
+    return '<section class="panel" id="see-others"><h2>' + T('Who can see what') + '</h2>' +
       (P ? '<p class="hint" style="margin-top:0">' + T('Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.') + '</p>' : '') +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th><th>' + T('Can') + '</th><th>' + T('People') + '</th></tr></thead><tbody>' +
       ACCESS.map(function (r) {
@@ -273,7 +317,7 @@
       : '<div class="pc-list">' + H.PASTOR_CAN.map(function (a) {
         return '<label class="check"><input type="checkbox" class="st-pc" value="' + a[0] + '"' + (on.indexOf(a[0]) >= 0 ? ' checked' : '') + dis + '><span>' + esc(T(a[1])) + '</span></label>';
       }).join('') + '</div>';
-    return '<section class="panel" id="pastor-can" style="grid-column:1/-1"><h2>' + T('What Pastors can do') + '</h2>' +
+    return '<section class="panel" id="pastor-can"><h2>' + T('What Pastors can do') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Pastors always see and edit everyone’s details, households, children and pastoral notes. Tick what else they may do – up to everything an Administrator does. Medical notes stay with Children’s ministry.') + '</p>' +
       '<label class="field" style="max-width:420px">' + T('Senior Pastor') + '<select id="st-senior"' + dis + '><option value="">' + T('Nobody – all Pastors the same') + '</option>' +
         pastors.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === senior ? ' selected' : '') + '>' + esc(H.name(p)) + '</option>'; }).join('') + '</select>' +
@@ -372,6 +416,8 @@
       return H.can('settings.manage') ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>';
     },
     after: function () {
+      var on = document.querySelector('.set-link.on');   // phones: the topic strip shows the open topic
+      if (on && window.matchMedia && matchMedia('(max-width: 860px)').matches && on.scrollIntoView) on.scrollIntoView({ block: 'nearest', inline: 'center' });
       var sn = document.getElementById('sp-name'), sd = document.getElementById('sp-date');
       if (sn && sd) sn.addEventListener('input', function () {
         var d = Serving.specialDate(sn.value.trim(), H.today()); if (d) sd.value = d;   // a suggestion fills in its date

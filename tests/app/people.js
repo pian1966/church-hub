@@ -230,13 +230,13 @@ module.exports = async function (ctx) {
   await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'addr-city'); await s.page.fill('#bk-v', ' Hilton ');
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
   check(docs['details/p14'].address.city === 'Hilton' && docs['details/p14'].address.street === '7 Oak Rd', 'Town or city can be changed for many people too (spaces trimmed)');
-  await s.go('settings');
+  await s.go('settings/access');
   const pastors = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.appRole === 'pastor' && p.familyRole !== 'child').map(p => p.lastName));
   const tip = await s.page.getAttribute('.who-has[data-role="pastor"] summary', 'title');
   await s.page.click('.who-has[data-role="pastor"] summary');
   const shown = await s.page.textContent('.who-has[data-role="pastor"] .who-list');
   check(pastors.length > 0 && pastors.every(n => tip.includes(n) && shown.includes(n)), 'Settings: pointing at (or tapping) the number of Pastors shows their names: ' + tip);
-  check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
+  await s.go('settings'); check(await s.page.inputValue('#st-country') === 'ZA', 'Settings: the church is in South Africa to start with');
   for (let i = 0; i < 3 && (await s.docsNow())['settings/church'].country !== 'KE'; i++) {   // the screen may redraw between choosing and saving
     await s.settle(); await s.page.selectOption('#st-country', 'KE'); await s.page.waitForTimeout(1200);
     await s.page.waitForFunction(() => window.__fake.docs['settings/church'].country === 'KE', null, { timeout: 3000 }).catch(() => {});
@@ -260,7 +260,7 @@ module.exports = async function (ctx) {
   await s.page.fill('.wd-1[data-k="pastor"]', 'Rector'); await s.page.fill('.wd-2[data-k="pastor"]', 'Rectors'); await s.page.waitForTimeout(1200);
   await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'anglican', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].wording.set === 'anglican' && docs['settings/church'].wording.custom.pastor[0] === 'Rector', 'the set and own words are saved');
-  await s.go('settings');
+  await s.go('settings/access');
   t = await s.page.textContent('#see-others');
   check(/Rector/.test(t) && !/\bPastor\b/.test(t), 'the screens use the church’s words (Who can see what: Rector)');
   const someP = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].category === 'Church Partner').split('/')[1];
@@ -269,7 +269,7 @@ module.exports = async function (ctx) {
   await s.go('settings/terminology'); await s.page.selectOption('#wd-set', 'general'); await s.page.waitForTimeout(1200);
   await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'general', null, { timeout: 5000 }).catch(() => {}); await s.settle();
   check((await s.text()).includes('Church Partner'), 'back to General, the usual words return');
-  await s.go('settings');
+  await s.go('settings/services');
   t = await s.text(); check(t.includes('Services and venues') && t.includes('8am') && t.includes('10am') && t.includes('5pm'), 'Settings lists the regular services (8am, 10am, 5pm to start with)');
   await s.page.fill('#sl-time', '09:30'); await s.page.fill('#sl-label', '9:30am'); await s.page.fill('#sl-venue', 'Hilton hall'); await s.page.click('[data-act="settings:addslot"]'); await s.settle(); docs = await s.docsNow();
   const slotsNow = docs['settings/church'].serviceSlots || [];
@@ -330,6 +330,20 @@ module.exports = async function (ctx) {
 
   console.log('The church’s colours (Settings → Colours)');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings');
+  check(await s.page.$$eval('.set-link', a => a.length) === 8 && await s.page.isVisible('.set-link.on[href="#/settings/general"]') && await s.page.isVisible('#st-name') && !(await s.page.$('#see-others')),
+    'Settings: a list of topics down the left, and one topic at a time (General first)');
+  await s.page.fill('#set-q', 'birthday'); await s.page.waitForTimeout(100);
+  check(JSON.stringify(await s.page.$$eval('.set-link', a => a.filter(x => !x.hidden).map(x => x.getAttribute('href')))) === '["#/settings/emails"]', 'searching the settings for “birthday” leaves Email templates');
+  await s.page.press('#set-q', 'Enter'); await s.page.waitForSelector('#em-sub-birthday');
+  check(await s.page.isVisible('.set-link.on[href="#/settings/emails"]'), '…and Enter opens it');
+  await s.page.fill('#set-q', 'zzzz'); await s.page.waitForTimeout(100); check(await s.page.isVisible('.set-none'), 'no match says so');
+  await s.go('settings/apps'); await s.page.uncheck('.st-mod[value="import"]'); await s.settle();
+  check((await s.docsNow())['settings/church'].modules.import === false && await s.page.$$eval('.st-mod', b => b.every(x => x.getAttribute('role') === 'switch')), 'Apps are switches; switching one off saves straight away');
+  await s.page.check('.st-mod[value="import"]'); await s.settle();
+  await s.page.setViewportSize({ width: 390, height: 800 }); await s.go('settings/emails'); await s.page.waitForTimeout(300);
+  check(await s.page.evaluate(() => { const n = document.querySelector('.set-nav'), on = document.querySelector('.set-link.on').getBoundingClientRect(), r = n.getBoundingClientRect(); return n.scrollWidth > n.clientWidth && on.left >= r.left - 1 && on.right <= r.right + 1; }), 'on a phone the topics are a strip across the top, scrolled to the open one');
+  await s.page.setViewportSize({ width: 1280, height: 900 });
+  await s.go('settings/colours');
   const accent = () => s.page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toUpperCase());
   check(await s.page.$$eval('.th-sw', b => b.length) >= 16 && await s.page.isVisible('#th-prev .th-pcross svg') && await s.page.isVisible('#st-th-c'), 'round colour swatches, any colour, and a live sample with the turning cross');
   await s.page.click('.th-sw[data-c="#2E7D4F"]');
@@ -354,7 +368,7 @@ module.exports = async function (ctx) {
   check(await s.page.evaluate(() => document.documentElement.getAttribute('data-mode')) === 'light' && await s.page.evaluate(() => getComputedStyle(document.body).backgroundColor) === 'rgb(246, 244, 241)', 'Light again');
   check(!Object.values(await s.docsNow()).some(d => d && d.action && /mode|dark/i.test(d.action)), 'a personal choice: nothing saved for the church');
   // Back to the top, on a long page
-  await s.go('settings'); await s.page.evaluate(() => window.scrollTo(0, 0)); await s.page.waitForTimeout(400); check(!(await s.page.isVisible('#to-top')), 'at the top of a page: no “back to the top” button');
+  await s.go('settings/services'); await s.page.evaluate(() => window.scrollTo(0, 0)); await s.page.waitForTimeout(400); check(!(await s.page.isVisible('#to-top')), 'at the top of a page: no “back to the top” button');
   await s.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await s.page.waitForTimeout(400);
   check(await s.page.isVisible('#to-top'), 'well down a long page (Settings): a round arrow at the bottom right');
   await s.page.click('#to-top'); await s.page.waitForFunction(() => window.scrollY < 5, null, { timeout: 3000 }).catch(() => {});

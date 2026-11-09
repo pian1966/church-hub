@@ -232,6 +232,7 @@ I18n.add('ve', {
     "Something went wrong": "Hu na zwi songo tshimbila zwavhuḓi",
     "Try again": "Lingedzani hafhu",
     "Back to the top": "Humelani nṱha",
+    "Go to the bottom": "Iyani fhasi",
     "Appearance": "Mbonalelo",
     "Light": "Tshedza",
     "Dark": "Swiswi",

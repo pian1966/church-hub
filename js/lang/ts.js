@@ -231,6 +231,7 @@ I18n.add('ts', {
     "Signing you in…": "Hi ku nghenisa…",
     "Something went wrong": "Ku na leswi nga fambangiki kahle",
     "Try again": "Ringeta nakambe",
+    "Back to the top": "Tlhelela ehenhla",
     "Appearance": "Mavonekelo",
     "Light": "Ku vonakala",
     "Dark": "Munyama",

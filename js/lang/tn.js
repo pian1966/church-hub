@@ -231,6 +231,7 @@ I18n.add('tn', {
     "Signing you in…": "Re a go tsenya…",
     "Something went wrong": "Go na le se se sa tsamaeng sentle",
     "Try again": "Leka gape",
+    "Back to the top": "Boela kwa godimo",
     "Appearance": "Ponalo",
     "Light": "Lesedi",
     "Dark": "Lefifi",

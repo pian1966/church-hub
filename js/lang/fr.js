@@ -231,6 +231,7 @@ I18n.add('fr', {
     "Signing you in…": "Connexion en cours…",
     "Something went wrong": "Un problème est survenu",
     "Try again": "Réessayer",
+    "Back to the top": "Retour en haut",
     "Appearance": "Apparence",
     "Light": "Clair",
     "Dark": "Sombre",

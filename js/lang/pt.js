@@ -231,6 +231,7 @@ I18n.add('pt', {
     "Signing you in…": "A iniciar sessão…",
     "Something went wrong": "Algo correu mal",
     "Try again": "Tentar novamente",
+    "Back to the top": "Voltar ao topo",
     "Appearance": "Aspeto",
     "Light": "Claro",
     "Dark": "Escuro",

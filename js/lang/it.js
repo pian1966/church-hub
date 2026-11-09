@@ -231,6 +231,7 @@ I18n.add('it', {
     "Signing you in…": "Accesso in corso…",
     "Something went wrong": "Qualcosa è andato storto",
     "Try again": "Riprova",
+    "Back to the top": "Torna su",
     "Appearance": "Aspetto",
     "Light": "Chiaro",
     "Dark": "Scuro",

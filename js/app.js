@@ -907,8 +907,28 @@ var Hub = (function () {
     else { var bar = document.querySelector('.offline-bar'); if (bar && !Store.offline()) bar.remove(); }
   }
 
+  /** Back to the top: a small round arrow at the bottom right, once someone has scrolled well down a long page. */
+  function toTop() {
+    var b = document.createElement('button'); b.type = 'button'; b.id = 'to-top'; b.hidden = true;
+    b.innerHTML = icon('M12 19V5M5 12l7-7 7 7', 20);
+    var label = function () { var t = T('Back to the top'); b.setAttribute('aria-label', t); b.title = t; };
+    label(); document.body.appendChild(b);
+    var shown = false, check = function () {
+      var on = window.scrollY > 600; if (on === shown) return; shown = on;
+      if (on) { label(); b.hidden = false; requestAnimationFrame(function () { b.classList.add('show'); }); } else { b.classList.remove('show'); setTimeout(function () { if (!shown) b.hidden = true; }, 200); }
+    };
+    window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('hashchange', function () { setTimeout(check, 50); });
+    b.addEventListener('click', function () {
+      var smooth = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+      window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+      var m = document.getElementById('main'); if (m) m.focus({ preventScroll: true });
+    });
+  }
+
   function start() {
     root = document.getElementById('app');
+    toTop();
     if (inApp()) document.documentElement.classList.add('in-app');
     if (homeScreen()) document.documentElement.classList.add('home-screen');
     I18n.onLoad(function () { if (document.querySelector('#modal .overlay')) closeModal(); render(); keepFiles(); });

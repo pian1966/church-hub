@@ -56,6 +56,7 @@ I18n.rows([
     ['Signing you in…', 'Meld jou aan…', 'Siyakungenisa…', 'Siyakungenisa…'],
     ['Something went wrong', 'Iets het skeefgeloop', 'Kukhona okungahambanga kahle', 'Kukho into engahambanga kakuhle'],
     ['Try again', 'Probeer weer', 'Zama futhi', 'Zama kwakhona'],
+    ['Back to the top', 'Terug na bo', 'Buyela phezulu', 'Buyela phezulu'],
     ['Appearance', 'Voorkoms', 'Ukubukeka', 'Inkangeleko'],
     ['Light', 'Lig', 'Kukhanyayo', 'Ekhanyayo'],
     ['Dark', 'Donker', 'Kumnyama', 'Emnyama'],

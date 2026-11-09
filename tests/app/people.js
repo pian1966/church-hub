@@ -350,5 +350,11 @@ module.exports = async function (ctx) {
   await s.page.selectOption('.side .mode-sel', 'light');
   check(await s.page.evaluate(() => document.documentElement.getAttribute('data-mode')) === 'light' && await s.page.evaluate(() => getComputedStyle(document.body).backgroundColor) === 'rgb(246, 244, 241)', 'Light again');
   check(!Object.values(await s.docsNow()).some(d => d && d.action && /mode|dark/i.test(d.action)), 'a personal choice: nothing saved for the church');
+  // Back to the top, on a long page
+  await s.go('settings'); await s.page.evaluate(() => window.scrollTo(0, 0)); await s.page.waitForTimeout(400); check(!(await s.page.isVisible('#to-top')), 'at the top of a page: no “back to the top” button');
+  await s.page.evaluate(() => window.scrollTo(0, document.body.scrollHeight)); await s.page.waitForTimeout(400);
+  check(await s.page.isVisible('#to-top'), 'well down a long page (Settings): a round arrow at the bottom right');
+  await s.page.click('#to-top'); await s.page.waitForFunction(() => window.scrollY < 5, null, { timeout: 3000 }).catch(() => {});
+  check(await s.page.evaluate(() => window.scrollY) < 5, '… which goes back to the top');
   await finish(s);
 };

@@ -74,13 +74,21 @@ self.addEventListener('fetch', function (e) {
       // Outside files (the Firebase library, the font) don't change at the same address: the kept copy is used straight away
       if (have && !ours(req.url)) return have;
       var net = fetch(req).then(function (r) { if (!keeping[k]) e.waitUntil(store(c, k, r.clone())); return r; });
-      // No copy found and no connection: look again for a few seconds (a copy being swapped in is briefly missing)
-      if (!have) return net.catch(function (err) {
-        var tries = 0;
-        return (function again() {
-          return new Promise(function (res) { setTimeout(res, 400); }).then(function () { return c.match(k); }).then(function (r) {
-            if (r) return r; if (++tries < 8) return again(); throw err;
-          });
+      // No copy found: while the download is on its way (offline it may fail, or simply hang), keep looking in the copy –
+      // one being swapped in is briefly missing – and use whichever comes first
+      if (!have) return new Promise(function (resolve, reject) {
+        var done = false, failed = null, left = 50;
+        var use = function (r) { if (!done && r) { done = true; resolve(r); } };
+        net.then(use, function (err) { failed = err; });
+        (function look() {
+          setTimeout(function () {
+            if (done) return;
+            c.match(k).then(function (r) {
+              if (r) return use(r);
+              if (--left > 0 && !(failed && left < 42)) return look();   // after a failed download, look for about 3 more seconds
+              if (!done) { done = true; reject(failed || new Error('offline')); }
+            });
+          }, 400);
         })();
       });
       var slow = new Promise(function (res) { setTimeout(function () { res(have); }, SLOW_MS); });

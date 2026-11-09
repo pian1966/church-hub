@@ -60,7 +60,7 @@ var Store = (function () {
     try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
     if (!db || !db.version) { db = sampleFactory(); save(); }
     COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; });
-    snapLeave();
+    snapLeave(); rev++;
     return db;
   }
   function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; }); snapLeave(); save(); changed(); }
@@ -135,7 +135,11 @@ var Store = (function () {
   }
   function setUser(u) { user = u; }
   function onChange(fn) { listeners.push(fn); }
-  function changed() { listeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
+  function changed() { rev++; listeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
+  /** A number that goes up whenever anything changes (here or, live, from someone else), so screens can keep work they
+   *  worked out (couples, consents by person, duplicates) until it does – see memo() in js/people/core.js. */
+  var rev = 0;
+  function version() { return rev + ':' + list('people').length + ':' + list('consents').length + ':' + list('families').length; }
   function exportAll() { return copy(db); }
   /** Role given to people added from now on: in the demo everyone can sign in; live, an Administrator gives access. */
   function defaultRole() { return LIVE ? 'none' : 'member'; }
@@ -513,6 +517,7 @@ var Store = (function () {
     function arr(key) { var m = raw[key] || {}; return Object.keys(m).map(function (id) { var o = copy(m[id]); o.id = id; return o; }); }
     function merged() { var out = {}; Array.prototype.slice.call(arguments).forEach(function (k) { var m = raw[k] || {}; Object.keys(m).forEach(function (id) { out[id] = m[id]; }); }); return out; }
     function rebuild() {
+      rev++;
       var details = merged('details', 'detailsMe'), med = raw.medical || {}, dir = raw.directory || {}, cards = raw.people || {}, shared = raw.contacts || {};
       var people = Object.keys(cards).map(function (id) {
         var p = Object.assign({ keyDates: [] }, copy(details[id] || {}), copy(cards[id]));
@@ -853,7 +858,7 @@ var Store = (function () {
   function setStandIn(pid, from, to) { if (LIVE && !blocked()) Live.setStandIn(pid, from, to); }
   return { resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
-    isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */

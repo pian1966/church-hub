@@ -27,8 +27,9 @@ const sandbox = {
       return a;
     },
     matches: (text, query) => {
-      const t = String(text || '').toLowerCase();
-      return String(query || '').toLowerCase().trim().split(/\s+/).filter(Boolean).every(w => t.indexOf(w) >= 0);
+      const t = String(text || '').toLowerCase().replace(/\s+/g, ' ');
+      const PS = require('../js/people-search.js');
+      return PS.words(String(query || '').toLowerCase()).every(w => PS.found(t, w));   // the same as Hub.matches
     }
   },
   I18n: {
@@ -140,6 +141,22 @@ check(!matchesPerson(secretPerson, '082555'), 'does not match mobile when sharin
 check(!matchesPerson(secretPerson, 'example.com'), 'does not match email when sharing is not allowed');
 check(!matchesPerson(secretPerson, 'Kloof'), 'does not match address when sharing is not allowed');
 check(matchesPerson(secretPerson, 'Lerato'), 'still matches by name when contact details are not shared');
+
+// Punctuation slip and short name / nickname matching
+const dougPerson = { firstName: 'Doug', lastName: 'Pike' };
+const douglasPerson = { firstName: 'Douglas', lastName: 'Pike' };
+check(matchesPerson(dougPerson, 'dougl;as'), 'dougl;as matches a person named Doug');
+check(matchesPerson(douglasPerson, 'dougl;as'), 'dougl;as matches a person named Douglas');
+check(matchesPerson(dougPerson, 'douglas'), 'douglas matches Doug');
+check(matchesPerson(douglasPerson, 'doug'), 'doug matches Douglas');
+const billPerson = { firstName: 'William', lastName: 'Botha' };
+check(matchesPerson(billPerson, 'bill;'), 'bill; matches William');
+check(matchesPerson(billPerson, 'bill'), 'bill matches William');
+// Short forms only as whole words, and apostrophes as phones type them
+check(!matchesPerson({ firstName: 'Amy', lastName: 'Robinson' }, 'robert'), 'robert doesn’t find Amy Robinson (rob only as a whole word)');
+check(!matchesPerson({ firstName: 'John', lastName: 'Crawford' }, 'joseph') && !matchesPerson({ firstName: 'Fred', lastName: 'Botha' }, 'edward'), 'joseph doesn’t find John; edward doesn’t find Fred');
+check(matchesPerson({ firstName: 'Rob', lastName: 'Pike' }, 'robert'), 'robert finds Rob');
+check(matchesPerson({ firstName: 'Sean', lastName: 'O’Neill' }, 'o’neill') && matchesPerson({ firstName: 'Sean', lastName: "O'Neill" }, "o'neill"), 'o’neill (curly, as phones type) and o\'neill find O’Neill / O\'Neill');
 
 if (fails) {
   console.log('\n' + fails + ' directory search test(s) FAILED');

@@ -18,13 +18,43 @@ var PeopleSearch = (function () {
     return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in v ? String(v[k]) : m; }) : s;
   }
   function TX(s) { return s; }
+  /** Characters that never appear in names or contact details are removed without splitting the word ("dougl;as" →
+   *  "douglas"). Kept: letters, digits, spaces, apostrophes (straight and curly, as phones type: O’Neill), hyphens,
+   *  @ . + for emails and phone numbers, and quotes for exact phrases. */
+  function clean(s) { return String(s || '').replace(/[^\p{L}\p{M}\p{N}\s'’‘\-@.+"“”„]/gu, ''); }
   /** The words someone typed, e.g. "andr pi" → ['andr', 'pi']. Words in quotes stay together as one exact phrase:
    *  '"amber glen" pike' → ['amber glen', 'pike'] (straight or curly quotes, as phones type them). */
   function words(q) {
-    var out = [], re = /["“”„]([^"“”„]*)["“”„]?|(\S+)/g, m, str = String(q || '').trim();
+    var out = [], re = /["“”„]([^"“”„]*)["“”„]?|(\S+)/g, m, str = clean(q).trim();
     while ((m = re.exec(str))) { var w = (m[1] !== undefined ? m[1] : m[2]).replace(/\s+/g, ' ').trim(); if (w) out.push(w); }
     return out;
   }
+  /** Short forms and full names, both ways, from the duplicate finder's list (Duplicates.SHORT): douglas ↔ doug, bill ↔ william. */
+  var ALTS = null;
+  function alts(w) {
+    if (!ALTS) {
+      ALTS = {};
+      var D = (typeof window !== 'undefined' && window.Duplicates) || null;
+      if (!D && typeof require !== 'undefined') { try { D = require('./duplicates.js'); } catch (e) { D = null; } }
+      ((D && D.SHORT) || []).forEach(function (line) {
+        var ws = line.split(' ');
+        ws.forEach(function (k) { ALTS[k] = ALTS[k] || []; ws.forEach(function (o) { if (o !== k && ALTS[k].indexOf(o) < 0) ALTS[k].push(o); }); });
+      });
+    }
+    return ALTS[String(w || '').toLowerCase()] || [];
+  }
+  /** Is a whole word in the text? ("rob" is in "rob pike" but not in "amy robinson") */
+  function wholeWord(t, a) {
+    var i = t.indexOf(a), letter = /[\p{L}\p{M}]/u;
+    while (i >= 0) {
+      if (!letter.test(t.charAt(i - 1) || ' ') && !letter.test(t.charAt(i + a.length) || ' ')) return true;
+      i = t.indexOf(a, i + 1);
+    }
+    return false;
+  }
+  /** One word typed, found in a (lower-case) text: anywhere as typed ("andr" in Andrew), or another form of the name as a
+   *  whole word ("bill" finds William; "robert" finds Rob, but not Robinson). */
+  function found(t, w) { return t.indexOf(w) >= 0 || alts(w).some(function (a) { return wholeWord(t, a); }); }
   var OPS = {
     text: [['eq', TX('Equals')], ['ne', TX('Does not equal')], ['has', TX('Contains')], ['nhas', TX('Does not contain')], ['starts', TX('Starts with')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
     choice: [['eq', TX('Is')], ['ne', TX('Is not')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
@@ -90,8 +120,8 @@ var PeopleSearch = (function () {
       var s = low(Array.isArray(v) ? v.join(', ') : v).replace(/\s+/g, ' ');
       if (f.op === 'eq') return s === want;
       if (f.op === 'ne') return s !== want;
-      if (f.op === 'has') return words(want).every(function (w) { return s.indexOf(w) >= 0; });   // "andr pi" finds Andrew Pike
-      if (f.op === 'nhas') return !words(want).every(function (w) { return s.indexOf(w) >= 0; });
+      if (f.op === 'has') return words(want).every(function (w) { return found(s, w); });   // "andr pi" finds Andrew Pike; "bill" finds William
+      if (f.op === 'nhas') return !words(want).every(function (w) { return found(s, w); });
       if (f.op === 'starts') return s.indexOf(want) === 0;
       return false;
     }
@@ -239,7 +269,7 @@ var PeopleSearch = (function () {
     return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
   }
 
-  return { words: words, OPS: OPS, UNITS: UNITS, MONTHS: MONTHS, opsFor: opsFor, opLabel: opLabel, valueKind: valueKind, test: test, parseLogic: parseLogic,
+  return { words: words, alts: alts, found: found, OPS: OPS, UNITS: UNITS, MONTHS: MONTHS, opsFor: opsFor, opLabel: opLabel, valueKind: valueKind, test: test, parseLogic: parseLogic,
     incomplete: incomplete, run: run, describe: describe, compare: compare, md: md };
 })();
 if (typeof module !== 'undefined') module.exports = PeopleSearch;

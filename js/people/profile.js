@@ -85,7 +85,7 @@
       if (seeMedical && p.medical) S.audit('Viewed children’s medical notes of ' + H.name(p), 'people/' + id);
     }
     var tags = catTags(p) + (child ? ' <span class="tag" style="--c:#0E7490">' + T('Child') + (age(p) !== '' ? ', ' + age(p) : '') + '</span>' : '') +
-      (p.source === 'elvanto' ? ' <span class="tag" style="--c:#7C3AED">' + T('From Elvanto') + '</span>' : '') +
+      (p.source === 'elvanto' && H.can('*') ? ' <span class="tag" style="--c:#7C3AED">' + T('From Elvanto') + '</span>' : '') +   // where the record came from: Administrators only
       (deceased(p) ? ' <span class="tag grey">' + esc(T('Died {date}', { date: H.fmt(p.deceasedAt, true) })) + '</span>' : '');
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
       '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div></div></div>' +

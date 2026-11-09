@@ -416,10 +416,11 @@ Later: direct import through the Elvanto API (server side, with the church's API
   Not the members' cards. `Store` adds a listener on all of `careGroups` once the settings have loaded (`careAll()`, merged
   with their own groups as `careGroupsAll`). Rules: `seesCare()` reads `settings/church` (only these two roles can be allowed).
 - **Church Partners (Basic access)**, same table:
-  - *See everyone in their own care group* (`settings.seeCareOwn`, on unless switched off). Off: a member who isn't a carer of
+  - Care groups is in their menu when either box is ticked (`can('care.view')`): their own group(s), then all groups if allowed.
+  - *Their own group: see all its members* (`settings.seeCareOwn`, on unless switched off). Off: a member who isn't a carer of
     the group sees only its carers and themselves on the Me page; `Store.shares()` then follows only those cards, one document
     each (rules: `careOwn()`, `careCarer()`). Carers always see everyone. The group record's names are hidden on screen only.
-  - *See which care group each person in the church directory is in* (`seeCare` includes `member`): `directory/{id}.care` =
+  - *All groups: see who is in each group* (`seeCare` includes `member`): `directory/{id}.care` =
     [{ id, name, carer }] (names only), written by `syncDirectory` (Administrators and Pastors when a group changes or Settings
     are saved; each person for themselves at sign-in; Administrators and Pastors re-check everyone's entry 1.5 s after opening Church Hub – only differences are written). A read-only Care groups page built from the directory, and the tag on
     the People list. People not in the directory aren't shown.

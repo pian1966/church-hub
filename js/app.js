@@ -41,6 +41,21 @@ var Hub = (function () {
   /** Really an Administrator (also while viewing as someone else), so "View as" is offered. */
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
   var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
+  /** Really the Senior Pastor (Rector), also while viewing as someone else: they may use "View as" for the roles below theirs. */
+  function realRector() {
+    if (!user) return false;
+    if (Store.isLive()) { var s = Store.live.session() || {}; return s.role === 'pastor' && !!s.personId && s.personId === seniorId(); }
+    var p = Store.get('people', user.id) || user; return p.appRole === 'pastor' && p.id === seniorId() && p.active !== false;
+  }
+  /** Who may use "View as", and the role they come back to: Administrators, and the Rector. */
+  function viewHome() { return realAdmin() ? 'admin' : realRector() ? 'pastor' : ''; }
+  function canViewAs() { return !!viewHome(); }
+  function viewChoices() { return viewHome() === 'admin' ? VIEW_AS : VIEW_AS.filter(function (r) { return r !== 'pastor'; }); }
+  /** "Back to Administrator", or for the Rector "Back to Senior Pastor" (the church's own word, e.g. Rector). */
+  function backLabel() {
+    if (viewHome() === 'admin') return T('Back to Administrator');
+    return T('Back to {role}', { role: personRole(Object.assign({}, Store.get('people', user.id) || user, { appRole: 'pastor', active: true })) });
+  }
   function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
   function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
   /** What Pastors can do (Settings → What Pastors can do): each tick, the permissions it adds. The database rules check the same
@@ -69,8 +84,12 @@ var Hub = (function () {
     var p = (ROLES[myRole()] || ROLES.member).perms;
     if (myRole() === 'pastor' && pastorPerms().indexOf(perm) >= 0) return true;
     // Settings → Who can see what: Roster coordinators, Children's ministry and Church Partners may see the care groups
-    // (settings.seeCare; Church Partners only the people in the church directory)
-    if (perm === 'care.view' && !Store.previewCare() && (((Store.settings() || {}).seeCare) || []).indexOf(myRole()) >= 0) return true;
+    // (settings.seeCare; Church Partners only the people in the church directory). Church Partners also get the Care groups
+    // page for their own group when "Their own group: see all its members" is ticked (settings.seeCareOwn).
+    if (perm === 'care.view' && !Store.previewCare()) {
+      var cst = Store.settings() || {};
+      if ((cst.seeCare || []).indexOf(myRole()) >= 0 || (myRole() === 'member' && cst.seeCareOwn !== false)) return true;
+    }
     return p.indexOf(perm) >= 0 || (p.indexOf('*') >= 0 && RESTRICTED.indexOf(perm) < 0);
   }
 
@@ -86,10 +105,16 @@ var Hub = (function () {
   function today() { return LeaveCore.iso(new Date()); }
   function name(p) { return p ? ((p.preferredName || p.firstName) + ' ' + p.lastName) : ''; }
   /** Search: every word typed appears somewhere, in any order – "andr pi" finds Andrew Pike, "pike and" too.
-   *  Words in quotes must appear together, exactly: '"amber glen"' finds Amber Glen but not "Glen Amber" or "Amberglen". */
+   *  Words in quotes must appear together, exactly: '"amber glen"' finds Amber Glen but not "Glen Amber" or "Amberglen".
+   *  Punctuation that doesn't appear in names/contacts is ignored ("dougl;as" → "douglas"), and common short
+   *  forms and full names match both ways (Douglas ↔ Doug, William ↔ Bill). */
   function matches(text, query) {
     var t = String(text || '').toLowerCase().replace(/\s+/g, ' ');
-    return PeopleSearch.words(String(query || '').toLowerCase()).every(function (w) { return t.indexOf(w) >= 0; });
+    return PeopleSearch.words(String(query || '').toLowerCase()).every(function (w) {
+      if (t.indexOf(w) >= 0) return true;
+      var alts = PeopleSearch.alts ? PeopleSearch.alts(w) : [];
+      return alts.some(function (a) { return t.indexOf(a) >= 0; });
+    });
   }
   /** Every way to write someone's name, for searching: "Douglas Pike" and, if different, what they're known as ("Doug Pike"). */
   function names(p) {
@@ -340,14 +365,14 @@ var Hub = (function () {
       (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
-      (realAdmin() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button></div>' : '') +
+      (canViewAs() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button></div>' : '') +
       '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>' + 'Church Hub' + '</b></a>' +
-      '<span class="top-r">' + (realAdmin() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
+      '<span class="top-r">' + (canViewAs() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
       (Store.offline() ? '<div class="offline-bar" role="status">' + icon(ICON.eye, 18) + '<span>' + T('You’re offline – Church Hub is view-only until you’re back online.') + '</span></div>' : '') +
       (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>' + T('Viewing as {role} – this is what they see. Nothing you do here is saved.', { role: '<b>' + esc(viewingAs()) + '</b>' }) + '</span>' +
-        '<button class="btn small" data-act="hub:viewas" data-r="admin">' + T('Back to Administrator') + '</button></div>' : '') +
+        '<button class="btn small" data-act="hub:viewas" data-r="admin">' + esc(backLabel()) + '</button></div>' : '') +
       '<main id="main" tabindex="-1"><div class="page-body">' + body + '</div>' + improveLink(mod) + '</main></div>' +
       '<nav class="tabbar" aria-label="' + T('Quick menu') + '">' + tabs.map(function (id) {
         var m = id === 'home' ? { name: 'Home', icon: ICON.home } : moduleById(id);
@@ -491,7 +516,7 @@ var Hub = (function () {
   /* ---------- saving as you go (like Google Docs) ----------
    * A panel whose save button has data-autosave saves by itself: straight after a tick or a choice, and once typing pauses.
    * The button stays hidden; a small "Saved" note shows it worked (or what is still missing). Pop-up windows keep their buttons. */
-  var autoT = null, autoQuiet = false, autoNoteT = null;
+  var autoT = null, autoQuiet = false, autoNoteT = null, autoSaid = '';
   function autoBtn(el) {
     if (!el || !el.closest || el.closest('.dialog') || el.type === 'search' || el.closest('[data-noauto]')) return null;
     var sec = el.closest('[data-autoscope]') || el.closest('section, .panel');   // a scope: several panels saved by one button
@@ -514,18 +539,28 @@ var Hub = (function () {
   function autoNote(msg, bad) {
     var n = document.getElementById('autosaved');
     if (!n) { n = document.createElement('div'); n.id = 'autosaved'; n.setAttribute('role', 'status'); document.body.appendChild(n); }
-    var wf = words(); n.textContent = bad ? '⚠ ' + (wf ? wf(String(msg)) : msg) : '✓ ' + T('Saved');
+    var wf = words();
+    n.innerHTML = '<span class="as-ic" aria-hidden="true">' + (bad ? '!' : '✓') + '</span><span>' + esc(bad ? (wf ? wf(String(msg)) : msg) : T('Saved')) + '</span>';
+    n.className = ''; void n.offsetWidth;   // start the pop again, also when saving twice in a row
     n.className = 'show' + (bad ? ' bad' : '');
-    clearTimeout(autoNoteT); autoNoteT = setTimeout(function () { n.className = ''; }, bad ? 5000 : 1800);
+    if (!bad && autoSaid !== 'bad') autoSaid = 'ok'; else autoSaid = 'bad';
+    clearTimeout(autoNoteT); autoNoteT = setTimeout(function () { n.className = ''; }, bad ? 5000 : 2600);
+  }
+  /** The tick, choice or box just saved lights up green for a moment, so it is clear what was saved. */
+  function flashSaved(el) {
+    var row = el && el.closest && (el.closest('label, .field, .check, .item, td') || el); if (!row) return;
+    row.classList.remove('just-saved'); void row.offsetWidth; row.classList.add('just-saved');
+    setTimeout(function () { row.classList.remove('just-saved'); }, 1600);
   }
   function autoRun(btn, wait) {
     clearTimeout(autoT);
     autoT = setTimeout(function () {
       if (!document.body.contains(btn)) return;
       var k = focusKey(document.activeElement);
-      autoQuiet = true;
+      autoQuiet = true; autoSaid = '';
       try { btn.click(); } finally { autoQuiet = false; }
       refocus(k);
+      if (autoSaid === 'ok' && k) flashSaved(document.querySelectorAll(k.sel)[k.n]);
     }, wait);
   }
   document.addEventListener('change', function (ev) { var b = autoBtn(ev.target); if (b) autoRun(b, 0); });
@@ -664,7 +699,7 @@ var Hub = (function () {
       modal(dialogHead(T('All apps')) + '<div class="cards in-dialog">' + [{ id: 'home', name: 'Home', icon: ICON.home, tint: '#6B625A', desc: 'Your to-do list' }].concat(enabled()).map(function (m) {
         return '<a class="appcard" href="#/' + m.id + '" data-act="hub:close"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(T(m.desc)) + '</span></a>';
       }).join('') + '</div>' +
-        (realAdmin() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + T('Back to Administrator') + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
+        (canViewAs() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + esc(backLabel()) + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
         '<div class="dlg-foot" style="justify-content:space-between">' + I18n.picker('lang-menu') + '<span>' + (shared() ? '<button class="btn" data-act="hub:switchwho">' + icon(ICON.people, 18) + T('Switch person') + '</button> ' : '') +
         '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button></span></div>', T('All apps'));
       langWire();
@@ -672,17 +707,17 @@ var Hub = (function () {
     notice: function (el, ev) { ev.preventDefault(); modal(dialogHead(T('Privacy notice'), T('How we use your information')) + '<div class="dlg-body"><p>' + esc(Store.settings().privacyNotice) + '</p><p class="muted">' + T('Information Officer') + ': ' + esc(Store.settings().informationOfficer.name) + '</p></div>', T('Privacy notice')); },
     /** "View as": an Administrator sees Church Hub the way a Pastor, Roster coordinator, Children's ministry or a Member would. */
     viewaspick: function () {
-      if (!realAdmin()) return;
-      var cur = Store.previewCare() ? 'carer' : Store.preview() || 'admin';
+      var home = viewHome(); if (!home) return;
+      var cur = Store.previewCare() ? 'carer' : Store.preview() || home;
       modal(dialogHead(T('View as another role'), T('See what other people see when they sign in')) + '<div class="dlg-body"><p class="muted" style="margin-top:0">' + T('You stay signed in as yourself, but Church Hub shows only what that role may see.') + ' ' +
         T('Nothing you do is saved while you’re viewing. Pastoral and medical notes stay hidden – only Pastors and Children’s ministry may see those.') + '</p><div class="viewas-pick">' +
-        ['admin'].concat(VIEW_AS).map(function (r) {
-          return '<button class="btn' + (r === cur ? ' primary' : '') + '" data-act="hub:viewas" data-r="' + r + '"' + (r === cur ? ' aria-current="true"' : '') + '>' + esc(viewLabel(r)) + (r === 'admin' ? ' (' + T('you') + ')' : '') + '</button>';
+        [home].concat(viewChoices()).map(function (r) {
+          return '<button class="btn' + (r === cur ? ' primary' : '') + '" data-act="hub:viewas" data-r="' + (r === home ? 'admin' : r) + '"' + (r === cur ? ' aria-current="true"' : '') + '>' + esc(viewLabel(r)) + (r === home ? ' (' + T('you') + ')' : '') + '</button>';
         }).join('') + '</div></div>', T('View as another role'));
     },
     viewas: function (el) {
       var r = el.dataset.r === 'admin' ? '' : el.dataset.r, g = el.dataset.g || '';
-      if (!realAdmin() || (r && VIEW_AS.indexOf(r) < 0)) { closeModal(); return; }
+      if (!canViewAs() || (r && viewChoices().indexOf(r) < 0)) { closeModal(); return; }
       if (r === 'carer' && !g) {   // a carer of which group?
         var gs = Store.list('careGroups').slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
         if (!gs.length) { closeModal(); toast(T('There are no care groups yet – add them on the Care groups page'), true); return; }
@@ -694,9 +729,9 @@ var Hub = (function () {
       if (role === Store.preview() && g === Store.previewCare()) { closeModal(); return; }
       closeModal();
       var label = r === 'carer' ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(r);
-      var after = function () { location.hash = r === 'carer' ? '#/me' : '#/home'; render(); toast(r ? T('Viewing as {role} – nothing is saved', { role: label }) : T('Back to Administrator')); };
+      var after = function () { location.hash = r === 'carer' ? '#/me' : '#/home'; render(); toast(r ? T('Viewing as {role} – nothing is saved', { role: label }) : backLabel()); };
       if (!Store.isLive()) { Store.preview(role, g); after(); return; }
-      busy(r ? T('Loading what {role} sees…', { role: label }) : T('Back to Administrator…'), function () {
+      busy(r ? T('Loading what {role} sees…', { role: label }) : backLabel() + '…', function () {
         return new Promise(function (done) { switching = done; Store.preview(role, g); });
       }).then(after);
     },

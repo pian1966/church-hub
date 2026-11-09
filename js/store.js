@@ -60,7 +60,7 @@ var Store = (function () {
     try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
     if (!db || !db.version) { db = sampleFactory(); save(); }
     COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; });
-    snapLeave();
+    snapLeave(); rev++;
     return db;
   }
   function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; }); snapLeave(); save(); changed(); }
@@ -135,7 +135,11 @@ var Store = (function () {
   }
   function setUser(u) { user = u; }
   function onChange(fn) { listeners.push(fn); }
-  function changed() { listeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
+  function changed() { rev++; listeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }
+  /** A number that goes up whenever anything changes (here or, live, from someone else), so screens can keep work they
+   *  worked out (couples, consents by person, duplicates) until it does – see memo() in js/people/core.js. */
+  var rev = 0;
+  function version() { return rev + ':' + list('people').length + ':' + list('consents').length + ':' + list('families').length; }
   function exportAll() { return copy(db); }
   /** Role given to people added from now on: in the demo everyone can sign in; live, an Administrator gives access. */
   function defaultRole() { return LIVE ? 'none' : 'member'; }
@@ -378,7 +382,9 @@ var Store = (function () {
       if (is('admin', 'pastor')) { add('messages', coll('messages')); add('msgGroups', coll('msgGroups')); }
       else { add('messagesTo', coll('messages').where('to', 'array-contains', me)); add('messagesFrom', own('messages', 'fromId')); add('msgGroups', coll('msgGroups').where('memberIds', 'array-contains', me)); }
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
-      add('serveOffers', is('admin', 'rosters') || may('rosters') ? coll('serveOffers') : own('serveOffers'));
+      // ("View as" by the Rector: everyone's offers only if they may answer them themselves – the rules check their own sign-in)
+      var realRoster = !previewRole || session.role === 'admin' || (session.can || []).indexOf('rosters') >= 0;
+      add('serveOffers', (is('admin', 'rosters') || may('rosters')) && realRoster ? coll('serveOffers') : own('serveOffers'));
       // Changes to family details people asked for: Administrators check them all; everyone else sees their own
       add('detailChanges', may('people') ? coll('detailChanges') : own('detailChanges'));
       // Translations: the approved wording for everyone; suggestions – Administrators all, checkers their languages, everyone their own
@@ -498,7 +504,12 @@ var Store = (function () {
       ready = true;
       // My own directory entry shows my care groups when Settings asks for it (carers may have added me)
       var dirMe = (raw.directory || {})[session.personId];
-      if (!previewRole && !offlineNow() && (((db.settings.seeCare || []).indexOf('member') >= 0) || (dirMe && dirMe.care))) syncDirectory(session.personId);
+      var careDir = (db.settings.seeCare || []).indexOf('member') >= 0 || Object.keys(raw.directory || {}).some(function (id) { return raw.directory[id].care; });
+      if (!previewRole && !offlineNow() && (careDir || (dirMe && dirMe.care))) {
+        // Administrators and Pastors: everyone's entry, in case a change was missed (e.g. saved before the rules allowed it)
+        if (is('admin', 'pastor')) setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
+        else syncDirectory(session.personId);
+      }
       onState({ stage: 'ready', person: meP, email: session.email, role: role() });
     }
 
@@ -506,6 +517,7 @@ var Store = (function () {
     function arr(key) { var m = raw[key] || {}; return Object.keys(m).map(function (id) { var o = copy(m[id]); o.id = id; return o; }); }
     function merged() { var out = {}; Array.prototype.slice.call(arguments).forEach(function (k) { var m = raw[k] || {}; Object.keys(m).forEach(function (id) { out[id] = m[id]; }); }); return out; }
     function rebuild() {
+      rev++;
       var details = merged('details', 'detailsMe'), med = raw.medical || {}, dir = raw.directory || {}, cards = raw.people || {}, shared = raw.contacts || {};
       var people = Object.keys(cards).map(function (id) {
         var p = Object.assign({ keyDates: [] }, copy(details[id] || {}), copy(cards[id]));
@@ -628,7 +640,15 @@ var Store = (function () {
       return (dirWas && dirWas.shareSpouse) || (leadWas && leadWas.shareSpouse) || '';
     }
     /** Administrators: bring everyone's shared contact details in line with Settings (after changing what each role sees). */
-    function resyncDirectory() { if (!is('admin')) return 0; var n = 0; list('people').forEach(function (p) { syncDirectory(p.id); n++; }); return n; }
+    /** Administrators and Pastors (Ministers): bring everyone's directory entry in line with Settings. Only entries that
+     *  differ are written; one unusual record is skipped (and logged) rather than stopping the rest. */
+    function resyncDirectory() {
+      if (!is('admin', 'pastor') || previewRole) return 0;
+      var n = 0, bad = 0;
+      list('people').forEach(function (p) { try { syncDirectory(p.id); n++; } catch (e) { bad++; console.warn('Couldn’t update the directory entry of ' + p.id, e); } });
+      if (bad) console.warn(bad + ' directory entries couldn’t be updated');
+      return n;
+    }
     /** Administrators give sign-in access from the person's record: roles/{email} = { role, personId }. */
     function syncRole(p, prev) {
       var SMALL = ['rosters', 'kids', 'member'], small = function (x) { return !x || SMALL.indexOf(x) >= 0; };
@@ -838,7 +858,7 @@ var Store = (function () {
   function setStandIn(pid, from, to) { if (LIVE && !blocked()) Live.setStandIn(pid, from, to); }
   return { resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
-    isLive: function () { return LIVE; }, defaultRole: defaultRole,
+    isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */
@@ -871,7 +891,9 @@ var Store = (function () {
     preview: function (r, careGroup) {
       if (arguments.length) {
         var was = previewRole, wasCare = previewCare; r = r === 'admin' ? '' : r || ''; careGroup = r ? careGroup || '' : '';
-        if (r && LIVE && (Live.session() || {}).role !== 'admin') return previewRole;
+        // Administrators, and the Senior Pastor (Rector, Settings → What Pastors can do) – only for roles below their own
+        var real = LIVE ? Live.session() || {} : {}, rector = real.role === 'pastor' && !!real.personId && real.personId === ((db.settings || {}).seniorPastorId || '');
+        if (r && LIVE && real.role !== 'admin' && !(rector && r !== 'pastor')) return previewRole;
         if (r !== was || careGroup !== wasCare) {
           var who = function (x, g) { return g ? 'carer of the care group ' + ((get('careGroups', g) || {}).name || g) : x; };
           if (was) audit('Stopped viewing as ' + who(was, wasCare), 'settings');

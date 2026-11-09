@@ -174,11 +174,16 @@
           return '<label><input type="checkbox" class="st-see" data-t="' + r[0] + '" value="' + f[0] + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T(f[1])) + '">' + esc(T(f[1])) + '</label>';
         }).join('') : '<span class="small">' + T('All, always') + '</span>') + '</div>';
         // Care groups (settings.seeCare): who is in which group – Roster coordinators and Children's ministry when ticked
-        if (P && CARE_SEE.indexOf(r[0]) >= 0) opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><label><input type="checkbox" class="st-care" value="' + r[0] + '"' +
-          ((st.seeCare || []).indexOf(r[0]) >= 0 ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T('See the care groups and who is in them')) + '">' + T('See the care groups and who is in them') + '</label></div>';
-        else if (P && r[0] === 'member') opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span>' +
-          '<label><input type="checkbox" class="st-careown"' + (st.seeCareOwn !== false ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel('member') + ': ' + T('See everyone in their own care group')) + '">' + T('See everyone in their own care group') + '</label>' +
-          '<label><input type="checkbox" class="st-care" value="member"' + ((st.seeCare || []).indexOf('member') >= 0 ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel('member') + ': ' + T('See which care group each person in the church directory is in')) + '">' + T('See which care group each person in the church directory is in') + '</label></div>';
+        // Each box: what it covers first ("Their own group" / "All groups"), the detail in grey
+        var careBox = function (cls, val, on, main, more) {
+          return '<label class="see-care"><input type="checkbox" class="' + cls + '"' + (val ? ' value="' + val + '"' : '') + (on ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T(main) + ' ' + T(more)) + '">' +
+            '<span>' + esc(T(main)) + ' <span class="muted">' + esc(T(more)) + '</span></span></label>';
+        };
+        if (P && CARE_SEE.indexOf(r[0]) >= 0) opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><div class="see-col">' +
+          careBox('st-care', r[0], (st.seeCare || []).indexOf(r[0]) >= 0, TX('All groups: see who is in each group'), TX('(names only, on a Care groups page)')) + '</div></div>';
+        else if (P && r[0] === 'member') opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><div class="see-col">' +
+          careBox('st-careown', '', st.seeCareOwn !== false, TX('Their own group: see all its members'), TX('(not just the carers)')) +
+          careBox('st-care', 'member', (st.seeCare || []).indexOf('member') >= 0, TX('All groups: see who is in each group'), TX('(names only, on a Care groups page)')) + '</div></div>';
         else if (P && (r[0] === 'admin' || r[0] === 'pastor')) opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><span class="small">' + T('All, always') + '</span></div>';
         return '<tr><td><b>' + esc(H.roleLabel(r[0])) + '</b></td><td>' + esc(T(r[1])) + opts + '</td><td>' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>';
       }).join('') + '</tbody></table></div>' +

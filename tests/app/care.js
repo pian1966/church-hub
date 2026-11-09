@@ -38,6 +38,41 @@ module.exports = async function (ctx) {
   check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'only Administrators can use “View as”');
   await finish(s);
 
+  console.log('View as: the Senior Pastor (Rector)');
+  const rSeed = seedDocs(); rSeed['settings/church'].seniorPastorId = 'p02';   // Thandi leads the church
+  rSeed['careGroups/cgR'] = { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
+  s = await session('thandi.mokoena@example.com', rSeed); await s.go('home');
+  check(await s.page.isVisible('[data-act="hub:viewaspick"]'), 'the Senior Pastor has a “View as” switch');
+  await s.page.click('[data-act="hub:viewaspick"]');
+  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,rosters,kids,carer,member', 'they can view as a Roster coordinator, Children’s ministry, a carer or a Member (not as an Administrator)');
+  await s.page.click('[data-act="hub:viewas"][data-r="rosters"]'); await s.page.waitForSelector('.viewas'); await s.settle();
+  t = await s.page.textContent('.viewas');
+  check(t.includes('Roster coordinator') && t.includes('Back to Senior Pastor') && await s.page.evaluate(() => Hub.can('rosters.manage') && !Hub.can('notes') && !Store.list('notes').length), 'as a Roster coordinator: what they see, pastoral notes hidden, and “Back to Senior Pastor”');
+  await s.page.evaluate(() => Store.put('teams', { name: 'Changed while viewing' })); await s.settle(); docs = await s.docsNow();
+  check(!Object.values(docs).some(d => d.name === 'Changed while viewing'), 'nothing is saved while viewing');
+  await s.page.click('.viewas [data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' }); await s.settle();
+  check(await s.page.evaluate(() => Hub.can('notes') && Store.list('notes').length > 0), 'back to Senior Pastor: their pastoral notes again');
+  await s.page.click('[data-act="hub:viewaspick"]'); await s.page.click('[data-act="hub:viewas"][data-r="member"]'); await s.page.waitForSelector('.viewas'); await s.settle();
+  check(await s.page.evaluate(() => !Hub.can('people.basic')), 'as a Member too');
+  await s.page.click('.viewas [data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' });
+  await finish(s);
+  s = await session('pieter.vanwyk@example.com', rSeed); await s.go('home');
+  check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'another Pastor (an Assistant Pastor) can’t use “View as”');
+  await finish(s);
+
+  console.log('Care groups: find a group, or which group someone is in');
+  const fSeed = seedDocs();
+  fSeed['careGroups/cgA'] = { name: 'Hilton Tuesday evening', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: {} };
+  fSeed['careGroups/cgB'] = { name: 'Howick Town', leaderIds: ['p18'], memberIds: ['p17', 'p18'], names: {} };
+  s = await session('linda.pillay@example.com', fSeed); await s.go('care');
+  const shown = () => s.page.$$eval('.cg-panel', ps => ps.filter(p => p.style.display !== 'none').map(p => p.querySelector('h2').textContent).join('|'));
+  await s.page.fill('#cg-q', 'hil tue'); check(await shown() === 'Hilton Tuesday evening', 'part of a group’s name (“hil tue”) shows just that group');
+  await s.page.fill('#cg-q', 'megan'); await s.page.waitForTimeout(50);
+  check(await shown() === 'Howick Town' && await s.page.$eval('.cg-hit', e => e.textContent.includes('Megan') && e.closest('details').open), 'a person’s name shows the group they are in, opened, with them marked');
+  await s.page.fill('#cg-q', 'zzz'); check(await shown() === '' && await s.page.isVisible('#cg-none'), 'nothing matching: says so');
+  await s.page.fill('#cg-q', ''); check(await shown() === 'Hilton Tuesday evening|Howick Town' && !(await s.page.$('.cg-hit')), 'clearing the box shows every group again');
+  await finish(s);
+
   console.log('Care groups:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('care');
   await s.page.fill('#cg-new', 'Hilton Tuesday'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();
@@ -124,7 +159,9 @@ module.exports = async function (ctx) {
   await finish(s);
   s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('settings');
   check(await s.page.$$eval('.st-care', b => b.map(x => x.value).join()) === 'rosters,kids,member', 'Settings → Who can see what: a Care groups tick for Roster coordinator, Children’s ministry and Basic access');
-  await s.page.check('.st-care[value="rosters"]'); await s.page.waitForTimeout(1200); await s.settle();   // saved as you go
+  await s.page.check('.st-care[value="rosters"]');   // saved as you go
+  check(await s.page.waitForSelector('.just-saved', { timeout: 1500 }).then(() => true, () => false) && await s.page.isVisible('#autosaved.show'), 'saving as you go: a large “Saved” notice, and the tick just saved lights up');
+  await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow();
   check(JSON.stringify(docs['settings/church'].seeCare) === '["rosters"]' && Object.values(docs).some(d => d.action && /Care groups: rosters/.test(d.action)), 'saved (settings.seeCare) and in the audit log');
   await finish(s);
@@ -145,13 +182,26 @@ module.exports = async function (ctx) {
   pSeed['careGroups/cgP'] = { name: 'Hilton', leaderIds: ['p15'], memberIds: ['p14', 'p15', 'p17', 'p18'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs', p17: 'Megan Smith', p18: 'David Smith' } };
   pSeed['careGroups/cgP/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555', leader: true };
   pSeed['careGroups/cgP/share/p18'] = { firstName: 'David', lastName: 'Smith', ok: true, mobile: '082 000 1888' };
+  pSeed['people/p14'].source = 'elvanto';   // imported from Elvanto: only Administrators see that chip
   s = await session('tim.jacobs@example.com', JSON.parse(JSON.stringify(pSeed))); await s.go('me'); await s.page.waitForTimeout(400);
   await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));
   t = await s.page.textContent('#my-care').catch(() => '');
-  check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888') && !(await s.page.$('nav a[href="#/care"]')), 'by default: everyone in their own group, and no page of all the groups');
+  check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888'), 'by default: everyone in their own group');
+  check((await s.page.textContent('.me-chips').catch(() => '')).includes('Care group member · Hilton'), 'their Me page shows chips like the staff see: their care group');
+  await s.go('care'); t = await s.text();
+  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('My care group: Hilton') && !t.includes('All care groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
+  await s.go('people/p/p14'); check(!(await s.text()).includes('From Elvanto'), 'no “From Elvanto” chip for anyone but Administrators');
+  await finish(s);
+  const neither = JSON.parse(JSON.stringify(pSeed)); neither['settings/church'].seeCareOwn = false; neither['settings/church'].seeCare = [];
+  s = await session('tim.jacobs@example.com', neither); await s.go('home');
+  check(!(await s.page.$('nav a[href="#/care"]')), 'neither box ticked: no Care groups in the menu');
   await finish(s);
   s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(pSeed))); await s.go('settings');
-  check(await s.page.$eval('.st-careown', b => b.checked) && !(await s.page.$eval('.st-care[value="member"]', b => b.checked)), 'Basic access: “See everyone in their own care group” on, “which care group each person is in” off, to start with');
+  await s.go('people/p/p14'); check((await s.text()).includes('From Elvanto'), 'an Administrator sees where a record came from (From Elvanto)');
+  await s.go('settings');
+  check(await s.page.$eval('.st-careown', b => b.checked) && !(await s.page.$eval('.st-care[value="member"]', b => b.checked)), 'Basic access: “Their own group” on, “All groups” off, to start with');
+  t = await s.page.textContent('#see-others');
+  check(t.includes('Their own group: see all its members (not just the carers)') && t.includes('All groups: see who is in each group (names only, on a Care groups page)'), 'the boxes say what they cover first, then the detail');
   await s.page.uncheck('.st-careown'); await s.page.check('.st-care[value="member"]'); await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].seeCareOwn === false && docs['settings/church'].seeCare.join() === 'member', 'both choices saved');
@@ -164,9 +214,16 @@ module.exports = async function (ctx) {
   check(t.includes('Clare') && t.includes('082 000 1555') && !t.includes('David') && t.includes('your carers'), 'switched off: a member sees only their carers (and themselves) in their own group');
   check(await s.page.evaluate(() => !Store.list('careShare').some(c => c.personId === 'p18')), '… and the other members’ cards aren’t loaded');
   await s.go('care'); await s.page.$$eval('main details', d => d.forEach(x => { x.open = true; })); t = await s.text();
-  check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888'), 'Care groups page: which group each person in the church directory is in – names only');
+  check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888') && t.includes('All care groups'), 'Care groups page: their own group, then which group each person in the church directory is in – names only');
   await s.go('people'); t = await s.text();
   check(t.includes('Care group member · Hilton'), 'the People list shows their care group');
+  await finish(s);
+  // The setting was saved but the directory entries never got their groups (e.g. saved before the rules allowed it):
+  // the next time a Pastor (Minister) or Administrator opens Church Hub, the entries are brought up to date
+  const missed = JSON.parse(JSON.stringify(after));
+  Object.keys(missed).filter(k => k.startsWith('directory/')).forEach(k => delete missed[k].care);
+  s = await session('thandi.mokoena@example.com', missed); await s.page.waitForTimeout(2500); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true, 'a missed update is repaired when a Pastor opens Church Hub');
   await finish(s);
   s = await session('clare.jacobs@example.com', JSON.parse(JSON.stringify(after))); await s.go('me'); await s.page.waitForTimeout(400);
   await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));

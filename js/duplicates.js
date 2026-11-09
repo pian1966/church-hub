@@ -363,6 +363,6 @@ var Duplicates = (function () {
   }
 
   return { compare: compare, find: find, matches: matches, live: live, sound: sound, level: level, SENS: SENS, pair: pair, phone: phone, email: email, phoneStart: phoneStart, street: street, streetLike: streetLike, plain: plain,
-    mergeFields: mergeFields, ignored: ignored };
+    mergeFields: mergeFields, ignored: ignored, SHORT: SHORT };
 })();
 if (typeof module !== 'undefined') module.exports = Duplicates;

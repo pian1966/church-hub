@@ -229,7 +229,8 @@ module.exports = async function (ctx) {
   }
   await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
-  check(await s.page.$$eval('[data-act="settings:name"]', b => b.every(x => !x.offsetParent)) && /Saved/.test(await s.page.textContent('#autosaved').catch(() => '')), 'Settings save as you go: no Save button, a small “Saved” note instead');
+  check(await s.page.$$eval('[data-act="settings:name"]', b => b.every(x => !x.offsetParent)) && /Saved/.test(await s.page.textContent('#autosaved').catch(() => '')), 'Settings save as you go: no Save button, a large “Saved” notice instead');
+  check(await s.page.$eval('#autosaved', e => { const c = getComputedStyle(e); return parseFloat(c.fontSize) >= 16 && c.backgroundColor !== 'rgba(0, 0, 0, 0)'; }), 'the “Saved” notice is large and solid green');
   await s.go('privacy'); t = await s.text();
   check(t.includes('Privacy (Data Protection Act)') && t.includes('Office of the Data Protection Commissioner') && !t.includes('POPIA') && !t.includes('Information Regulator'), 'Privacy follows the country’s law (Kenya: Data Protection Act, ODPC)');
   await s.page.evaluate(() => Store.setSettings({ country: 'DE' })); await s.settle(); await s.go('privacy/breaches'); t = await s.text();
@@ -301,4 +302,15 @@ module.exports = async function (ctx) {
   await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
   await finish(s);
 
+
+  console.log('Home stays quick for an Administrator (the duplicate check runs just after)');
+  const dSeed = seedDocs();
+  dSeed['people/pDup'] = Object.assign({}, dSeed['people/p14']); dSeed['details/pDup'] = Object.assign({}, dSeed['details/p14']);   // Tim entered twice
+  delete dSeed['people/pDup'].email;
+  s = await session('linda.pillay@example.com', dSeed); await s.go('home');
+  const dupLine = await s.page.waitForFunction(() => /look(s)? entered twice/.test(document.querySelector('main').textContent), null, { timeout: 4000 }).then(() => true, () => false);
+  check(dupLine, 'Home still shows “… entered twice” for an Administrator (worked out just after Home appears)');
+  const ms = await s.page.evaluate(() => { Store.setSettings({}); const a = performance.now(); Hub.render(); return performance.now() - a; });
+  check(ms < 1500, 'drawing Home again is quick (' + Math.round(ms) + ' ms)');
+  await finish(s);
 };

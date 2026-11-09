@@ -18,12 +18,39 @@ var PeopleSearch = (function () {
     return v ? s.replace(/\{(\w+)\}/g, function (m, k) { return k in v ? String(v[k]) : m; }) : s;
   }
   function TX(s) { return s; }
+  /** Characters that never appear in names or contact details are removed (keep letters, digits, spaces,
+   *  apostrophes, hyphens, and @ . + for emails and phones; quotes stay so exact phrases work), without splitting. */
+  function clean(s) {
+    return String(s || '').replace(/[^\p{L}\p{N}\s'\-@.+"“”„]/gu, '');
+  }
+
   /** The words someone typed, e.g. "andr pi" → ['andr', 'pi']. Words in quotes stay together as one exact phrase:
    *  '"amber glen" pike' → ['amber glen', 'pike'] (straight or curly quotes, as phones type them). */
   function words(q) {
-    var out = [], re = /["“”„]([^"“”„]*)["“”„]?|(\S+)/g, m, str = String(q || '').trim();
+    var out = [], re = /["“”„]([^"“”„]*)["“”„]?|(\S+)/g, m, str = clean(q).trim();
     while ((m = re.exec(str))) { var w = (m[1] !== undefined ? m[1] : m[2]).replace(/\s+/g, ' ').trim(); if (w) out.push(w); }
     return out;
+  }
+
+  /** Alternative short forms and full names from Duplicates.SHORT (both ways: douglas ↔ doug, william ↔ bill). */
+  var ALTS = null;
+  function alts(w) {
+    if (!ALTS) {
+      ALTS = {};
+      var D = (typeof window !== 'undefined' && window.Duplicates) || (typeof global !== 'undefined' && global.Duplicates);
+      if (!D && typeof require !== 'undefined') { try { D = require('./duplicates.js'); } catch (e) {} }
+      var list = (D && D.SHORT) || [];
+      list.forEach(function (line) {
+        var ws = line.split(' ');
+        ws.forEach(function (k) {
+          ALTS[k] = ALTS[k] || [];
+          ws.forEach(function (o) {
+            if (o !== k && ALTS[k].indexOf(o) < 0) ALTS[k].push(o);
+          });
+        });
+      });
+    }
+    return ALTS[String(w || '').toLowerCase()] || [];
   }
   var OPS = {
     text: [['eq', TX('Equals')], ['ne', TX('Does not equal')], ['has', TX('Contains')], ['nhas', TX('Does not contain')], ['starts', TX('Starts with')], ['empty', TX('Is empty')], ['nempty', TX('Is not empty')]],
@@ -90,8 +117,8 @@ var PeopleSearch = (function () {
       var s = low(Array.isArray(v) ? v.join(', ') : v).replace(/\s+/g, ' ');
       if (f.op === 'eq') return s === want;
       if (f.op === 'ne') return s !== want;
-      if (f.op === 'has') return words(want).every(function (w) { return s.indexOf(w) >= 0; });   // "andr pi" finds Andrew Pike
-      if (f.op === 'nhas') return !words(want).every(function (w) { return s.indexOf(w) >= 0; });
+      if (f.op === 'has') return words(want).every(function (w) { return s.indexOf(w) >= 0 || alts(w).some(function (a) { return s.indexOf(a) >= 0; }); });   // "andr pi" finds Andrew Pike
+      if (f.op === 'nhas') return !words(want).every(function (w) { return s.indexOf(w) >= 0 || alts(w).some(function (a) { return s.indexOf(a) >= 0; }); });
       if (f.op === 'starts') return s.indexOf(want) === 0;
       return false;
     }
@@ -239,7 +266,7 @@ var PeopleSearch = (function () {
     return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
   }
 
-  return { words: words, OPS: OPS, UNITS: UNITS, MONTHS: MONTHS, opsFor: opsFor, opLabel: opLabel, valueKind: valueKind, test: test, parseLogic: parseLogic,
+  return { words: words, alts: alts, OPS: OPS, UNITS: UNITS, MONTHS: MONTHS, opsFor: opsFor, opLabel: opLabel, valueKind: valueKind, test: test, parseLogic: parseLogic,
     incomplete: incomplete, run: run, describe: describe, compare: compare, md: md };
 })();
 if (typeof module !== 'undefined') module.exports = PeopleSearch;

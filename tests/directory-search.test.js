@@ -27,8 +27,13 @@ const sandbox = {
       return a;
     },
     matches: (text, query) => {
-      const t = String(text || '').toLowerCase();
-      return String(query || '').toLowerCase().trim().split(/\s+/).filter(Boolean).every(w => t.indexOf(w) >= 0);
+      const t = String(text || '').toLowerCase().replace(/\s+/g, ' ');
+      const PS = require('../js/people-search.js');
+      return PS.words(String(query || '').toLowerCase()).every(w => {
+        if (t.indexOf(w) >= 0) return true;
+        const alts = PS.alts ? PS.alts(w) : [];
+        return alts.some(a => t.indexOf(a) >= 0);
+      });
     }
   },
   I18n: {
@@ -140,6 +145,17 @@ check(!matchesPerson(secretPerson, '082555'), 'does not match mobile when sharin
 check(!matchesPerson(secretPerson, 'example.com'), 'does not match email when sharing is not allowed');
 check(!matchesPerson(secretPerson, 'Kloof'), 'does not match address when sharing is not allowed');
 check(matchesPerson(secretPerson, 'Lerato'), 'still matches by name when contact details are not shared');
+
+// Punctuation slip and short name / nickname matching
+const dougPerson = { firstName: 'Doug', lastName: 'Pike' };
+const douglasPerson = { firstName: 'Douglas', lastName: 'Pike' };
+check(matchesPerson(dougPerson, 'dougl;as'), 'dougl;as matches a person named Doug');
+check(matchesPerson(douglasPerson, 'dougl;as'), 'dougl;as matches a person named Douglas');
+check(matchesPerson(dougPerson, 'douglas'), 'douglas matches Doug');
+check(matchesPerson(douglasPerson, 'doug'), 'doug matches Douglas');
+const billPerson = { firstName: 'William', lastName: 'Botha' };
+check(matchesPerson(billPerson, 'bill;'), 'bill; matches William');
+check(matchesPerson(billPerson, 'bill'), 'bill matches William');
 
 if (fails) {
   console.log('\n' + fails + ' directory search test(s) FAILED');

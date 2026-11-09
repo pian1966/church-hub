@@ -33,9 +33,43 @@ var PeopleParts = { actions: {} };
   function canSeeAll() { return H.can('people.view') || H.can('*'); }
   function canBasic() { return canSeeAll() || H.can('people.basic'); }
   function isMe(p) { var u = H.user(); return u && p && u.id === p.id; }
-  function consentFor(pid, purpose) {
-    return S.find('consents', function (c) { return c.personId === pid && c.purpose === purpose && !c.withdrawnAt; }).sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0];
+  /** Work that takes long with a big church (every couple, everyone's consents) is done once and kept until anything changes
+   *  (Store.version()). Without it, Home took seconds for an Administrator with 1,000+ people. */
+  var memos = {};
+  function memo(key, make) {
+    var v = S.version ? S.version() : '', m = memos[key];
+    if (m && m.v === v) return m.value;
+    var value = make(); memos[key] = { v: v, value: value }; return value;
   }
+  /** Like memo, but slow work is done just after the page has appeared: until then it gives null, and once ready the page
+   *  is drawn again (unless someone is typing or has a dialog open – then it shows the next time). */
+  var later = {};
+  function memoLater(key, make) {
+    var v = S.version ? S.version() : '', m = memos[key];
+    if (m && m.v === v) return m.value;
+    if (later[key] === v) return null;
+    later[key] = v;
+    setTimeout(function () {
+      if ((S.version ? S.version() : '') !== v) { delete later[key]; return; }
+      memo(key, make); delete later[key];
+      var a = document.activeElement;
+      if (!document.querySelector('#modal .overlay') && !(a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) H.render();
+    }, 30);
+    return null;
+  }
+  /** Each person's current answer for each purpose: { personId: { purpose: latest consent record } }. */
+  function consentIndex() {
+    return memo('consents', function () {
+      var ix = {};
+      S.list('consents').forEach(function (c) {
+        if (c.withdrawnAt) return;
+        var m = ix[c.personId] = ix[c.personId] || {}, was = m[c.purpose];
+        if (!was || !(c.date < was.date)) m[c.purpose] = c;   // the latest (the last one listed when dates are equal, as before)
+      });
+      return ix;
+    });
+  }
+  function consentFor(pid, purpose) { return (consentIndex()[pid] || {})[purpose]; }
   function hasConsent(pid, purpose) { var c = consentFor(pid, purpose); return !!(c && c.given); }
   /** Becoming a Church Partner includes agreeing to be in the church directory (consent "Church directory", shown as Contact
    *  details): recorded when someone becomes a Church Partner and hasn't agreed yet. They can still say no later (Consent). */
@@ -106,9 +140,13 @@ var PeopleParts = { actions: {} };
   /* ---------- couples: spouses and partners, worked out from each household (rules in js/households.js) ---------- */
   // Marital status and anniversaries are private details: only Administrators and Pastors see and change them.
   function canCouples() { return canSeeAll() && (H.can('*') || H.can('people.edit')); }
-  function allCouples() { return canCouples() ? HS.couples(S.list('people'), S.list('families')) : []; }
-  function couplesToCheck() { return canCouples() ? HS.couplesToCheck(S.list('people'), S.list('families')) : []; }
-  function coupleOf(pid) { return allCouples().filter(function (c) { return c.a === pid || c.b === pid; })[0] || null; }
+  function allCouples() { return canCouples() ? memo('couples', function () { return HS.couples(S.list('people'), S.list('families')); }) : []; }
+  function couplesToCheck() { return canCouples() ? memo('couplesToCheck', function () { return HS.couplesToCheck(S.list('people'), S.list('families')); }) : []; }
+  function coupleOf(pid) {
+    if (!canCouples()) return null;
+    var by = memo('coupleOf', function () { var m = {}; allCouples().forEach(function (c) { if (!m[c.a]) m[c.a] = c; if (!m[c.b]) m[c.b] = c; }); return m; });
+    return by[pid] || null;
+  }
   /* ---------- contact details: what each role sees of other people (Settings → Who can see what) ----------
    * Administrators and Pastors see everything; everyone sees their own. Church Partners, Roster coordinators and
    * Children's ministry see a name only, plus what Settings ticks for their role – and only of adults who agreed
@@ -182,5 +220,5 @@ var PeopleParts = { actions: {} };
   function keyDate(p, re) { var k = (p.keyDates || []).filter(function (x) { return re.test(x.label || ''); })[0]; return k ? k.date : ''; }
   function uniq(a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }).sort(function (x, y) { return String(x).localeCompare(String(y)); }); }
 
-  Object.assign(P, { partnerAgrees: partnerAgrees, partnersUnrecorded: partnersUnrecorded, PARTNER_AGREED: PARTNER_AGREED, purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
+  Object.assign(P, { memo: memo, memoLater: memoLater, partnerAgrees: partnerAgrees, partnersUnrecorded: partnersUnrecorded, PARTNER_AGREED: PARTNER_AGREED, purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
 })(PeopleParts);

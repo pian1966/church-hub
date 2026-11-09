@@ -329,10 +329,10 @@ var Hub = (function () {
   function mix(c, to, t) { return c.map(function (x, i) { return x + (to[i] - x) * t; }); }
   function lum(c) { var f = c.map(function (x) { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2]; }
   /** A theme from any colour, kept exactly as chosen (bright yellow stays bright yellow). If white writing on it would be
-   *  hard to read (contrast under 4.5), the writing on buttons turns dark instead (on). Links and writing on light
+   *  hard to read (contrast under 3 – button writing is bold), the writing on buttons turns dark instead (on). Links and writing on light
    *  backgrounds (ink) use a darker shade of the colour, so they stay readable on white. */
   function themeFrom(hex) {
-    var c = hexRgb(hex) || hexRgb('#E8590C'), d = c, light = 1.05 / (lum(c) + 0.05) < 4.5;
+    var c = hexRgb(hex) || hexRgb('#E8590C'), d = c, light = 1.05 / (lum(c) + 0.05) < 3;   // bold button writing: 3 is enough (as on the built-in orange)
     for (var i = 0; i < 20 && 1.05 / (lum(d) + 0.05) < 4.5; i++) d = mix(d, [0, 0, 0], 0.08);
     return { id: 'custom', accent: rgbHex(c), on: light ? '#1C1814' : '#FFFFFF', ink: rgbHex(mix(d, [0, 0, 0], 0.22)), soft: rgbHex(mix(c, [255, 255, 255], 0.86)),
       side: rgbHex(mix(d, [22, 20, 18], 0.86)), side2: rgbHex(mix(d, [40, 36, 32], 0.78)), light: light };

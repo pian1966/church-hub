@@ -362,13 +362,21 @@ var Hub = (function () {
     var meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', t.side);
     Store.pref('theme', JSON.stringify({ accent: t.accent, ink: t.ink, soft: t.soft, side: t.side, side2: t.side2 }));
   }
-  /** Light / Dark / Automatic (same as this device) – each person's own choice, remembered on this device. */
+  /** Light / Dark / Automatic (same as this device) – each person's own choice, remembered on this device. A quiet
+   *  drop-down like the language one, with a half-shaded circle. */
   function modePicker() {
     var m = modeChoice();
-    return '<div class="mode-pick" role="radiogroup" aria-label="' + esc(T('Appearance')) + '">' + [['light', TX('Light')], ['dark', TX('Dark')], ['', TX('Automatic')]].map(function (x) {
-      return '<button type="button" data-act="hub:mode" data-m="' + x[0] + '" role="radio" aria-checked="' + (m === x[0]) + '"' + (m === x[0] ? ' class="on"' : '') + (x[0] ? '' : ' title="' + esc(T('Same as this device')) + '"') + '>' + esc(T(x[1])) + '</button>';
-    }).join('') + '</div>';
+    return '<label class="lang-pick mode-pick"><span class="sr">' + T('Appearance') + '</span>' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>' +
+      '<select class="mode-sel" aria-label="' + esc(T('Appearance')) + '">' + [['', TX('Automatic')], ['light', TX('Light')], ['dark', TX('Dark')]].map(function (x) {
+        return '<option value="' + x[0] + '"' + (m === x[0] ? ' selected' : '') + '>' + esc(T(x[1])) + (x[0] ? '' : ' (' + esc(T('Same as this device')) + ')') + '</option>';
+      }).join('') + '</select></label>';
   }
+  if (typeof document !== 'undefined') document.addEventListener('change', function (ev) {
+    var sel = ev.target; if (!sel.classList || !sel.classList.contains('mode-sel')) return;
+    Store.pref('mode', sel.value || ''); applyMode();
+    var inMenu = !!sel.closest('#modal'); render(); if (inMenu) { closeModal(); hubActions.menu(); }
+  });
   function render() {
     if (switching) return;   // "View as": the right information is still loading
     if (!document.documentElement.getAttribute('data-mode')) applyMode();
@@ -419,7 +427,7 @@ var Hub = (function () {
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
-      '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div style="margin-top:8px">' + modePicker() + '</div></div>' +
+      '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div class="side-mode">' + modePicker() + '</div></div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
       (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +

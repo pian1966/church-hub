@@ -343,11 +343,11 @@ module.exports = async function (ctx) {
   check(docs['settings/church'].theme.color === '#FFE14D' && 1.05 / (lum(a2) + 0.05) >= 4.5, '… and it is: white writing on buttons stays readable');
   check(await s.page.evaluate(() => JSON.parse(localStorage.getItem('church_hub_pref_theme') || '{}').accent) === a2, 'remembered on the device for the sign-in screen');
   // Light or dark: each person's own choice on this device
-  check(await s.page.$$eval('.side .mode-pick button', b => b.map(x => x.dataset.m).join()) === 'light,dark,', 'Light, Dark or Automatic (same as this device) in the menu');
-  await s.page.click('.side [data-act="hub:mode"][data-m="dark"]');
+  check(await s.page.$$eval('.side .mode-sel option', o => o.map(x => x.value).join()) === ',light,dark', 'a quiet Appearance drop-down in the menu: Automatic (same as this device), Light or Dark');
+  await s.page.selectOption('.side .mode-sel', 'dark');
   const dark = await s.page.evaluate(() => ({ mode: document.documentElement.getAttribute('data-mode'), bg: getComputedStyle(document.body).backgroundColor, pref: localStorage.getItem('church_hub_pref_mode') }));
-  check(dark.mode === 'dark' && dark.bg === 'rgb(19, 17, 15)' && dark.pref === 'dark' && await s.page.$eval('.side [data-m="dark"]', b => b.classList.contains('on')), 'Dark: dark pages, remembered on this device');
-  await s.page.click('.side [data-act="hub:mode"][data-m="light"]');
+  check(dark.mode === 'dark' && dark.bg === 'rgb(19, 17, 15)' && dark.pref === 'dark' && await s.page.$eval('.side .mode-sel', e => e.value) === 'dark', 'Dark: dark pages, remembered on this device');
+  await s.page.selectOption('.side .mode-sel', 'light');
   check(await s.page.evaluate(() => document.documentElement.getAttribute('data-mode')) === 'light' && await s.page.evaluate(() => getComputedStyle(document.body).backgroundColor) === 'rgb(246, 244, 241)', 'Light again');
   check(!Object.values(await s.docsNow()).some(d => d && d.action && /mode|dark/i.test(d.action)), 'a personal choice: nothing saved for the church');
   await finish(s);

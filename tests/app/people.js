@@ -342,6 +342,8 @@ module.exports = async function (ctx) {
   const a2 = await accent(), lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
   check(docs['settings/church'].theme.color === '#FFE14D' && 1.05 / (lum(a2) + 0.05) >= 4.5, '… and it is: white writing on buttons stays readable');
   check(await s.page.evaluate(() => JSON.parse(localStorage.getItem('church_hub_pref_theme') || '{}').accent) === a2, 'remembered on the device for the sign-in screen');
+  await s.page.$eval('#st-th-c', e => { e.value = '#9333ea'; e.dispatchEvent(new Event('change', { bubbles: true })); });
+  check(await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#9333EA')) && (await s.page.textContent('#th-hex')) === '#9333EA', 'any colour: the sample and the turning cross change straight away, also where the colour window only says when it closes');
   // Light or dark: each person's own choice on this device
   check(await s.page.$$eval('.side .mode-sel option', o => o.map(x => x.value).join()) === ',light,dark', 'a quiet Appearance drop-down in the menu: Automatic (same as this device), Light or Dark');
   await s.page.selectOption('.side .mode-sel', 'dark');

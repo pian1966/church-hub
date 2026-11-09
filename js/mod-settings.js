@@ -188,13 +188,18 @@
   function themeTry(hex) {
     hex = String(hex || '').toUpperCase(); var t = H.themeFrom(hex), prev = document.getElementById('th-prev'); if (!prev) return;
     prev.setAttribute('style', themeVars(t));
-    document.getElementById('th-hex').textContent = hex; document.getElementById('st-th-c').value = hex.toLowerCase();
+    document.getElementById('th-hex').textContent = hex;
+    var box = document.getElementById('st-th-c'); if (box.value.toLowerCase() !== hex.toLowerCase()) box.value = hex.toLowerCase();   // not while it is being dragged
     document.getElementById('th-dark').hidden = !t.darkened;
     [].forEach.call(document.querySelectorAll('.th-sw'), function (b) { var on = b.dataset.c === hex; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
   }
   if (typeof document !== 'undefined') {
     document.addEventListener('click', function (ev) { var b = ev.target.closest && ev.target.closest('.th-sw'); if (b) themeTry(b.dataset.c); });
-    document.addEventListener('input', function (ev) { if (ev.target && ev.target.id === 'st-th-c') themeTry(ev.target.value); });
+    // "Or pick any colour": the sample follows straight away while the colour window is open ('input'); some browsers,
+    // phones and the Android app only say when it closes ('change'), so listen for both
+    ['input', 'change'].forEach(function (k) {
+      document.addEventListener(k, function (ev) { if (ev.target && ev.target.id === 'st-th-c') themeTry(ev.target.value); });
+    });
   }
   var CARE_SEE = ['rosters', 'kids'];   // may be allowed to see the care groups (firestore.rules: seesCare)
   function renderAccess(st, byRole) {

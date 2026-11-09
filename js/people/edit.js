@@ -346,6 +346,7 @@
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
         P.partnerAgrees(p, wasCat);   // becoming a Church Partner: Contact details agreed
         if (window.CareUI) { if (!(care && CareUI.setFrom(p, care))) CareUI.sync(p.id); }
+        if (window.LifeUI) LifeUI.sync(p.id);   // their life group cards show their details
         dups.forEach(function (m) { markNotSame(p.id, m.id); });
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();
@@ -363,6 +364,7 @@
             (box.checked ? 'Consent given: ' : 'Consent withdrawn: ') + pur + ' for ' + H.name(p));
         });
         if (window.CareUI) CareUI.sync(p.id);   // their care group card follows their consent
+        if (window.LifeUI) LifeUI.sync(p.id);   // their life group cards follow their Contact details consent
         H.closeModal(); H.render(); H.toast(T('Consent saved'));
       },
     death: function (el) {

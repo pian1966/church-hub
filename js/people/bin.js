@@ -36,11 +36,13 @@
     ['guardians', 'noCollect'].forEach(function (c) { S.find(c, function (l) { return l.childId === p.id || l.adultId === p.id || l.personId === p.id; }).forEach(function (l) { S.remove(c, l.id); }); });
     ['consents', 'notes', 'skills', 'blockouts', 'serveOffers', 'detailChanges', 'wordIdeas'].forEach(function (c) { S.find(c, function (x) { return x.personId === p.id; }).forEach(function (x) { S.remove(c, x.id); }); });
     S.list('groups').slice().forEach(function (g) { if ((g.memberIds || []).indexOf(p.id) >= 0) { g = JSON.parse(JSON.stringify(g)); g.memberIds = g.memberIds.filter(function (m) { return m !== p.id; }); if (g.memberIds.length < 2) S.remove('groups', g.id); else S.put('groups', g); } });
-    S.list('careGroups').slice().forEach(function (g) {
-      if ((g.memberIds || []).indexOf(p.id) < 0) return;
-      S.find('careShare', function (c) { return c.groupId === g.id && c.personId === p.id; }).forEach(function (c) { S.remove('careShare', c.id); });
-      g = JSON.parse(JSON.stringify(g)); g.memberIds = g.memberIds.filter(function (m) { return m !== p.id; }); g.leaderIds = (g.leaderIds || []).filter(function (m) { return m !== p.id; });
-      if (g.names) delete g.names[p.id]; S.put('careGroups', g);
+    [['careGroups', 'careShare'], ['lifeGroups', 'lifeShare']].forEach(function (k) {   // care groups and life groups
+      S.list(k[0]).slice().forEach(function (g) {
+        if ((g.memberIds || []).indexOf(p.id) < 0) return;
+        S.find(k[1], function (c) { return c.groupId === g.id && c.personId === p.id; }).forEach(function (c) { S.remove(k[1], c.id); });
+        g = JSON.parse(JSON.stringify(g)); g.memberIds = g.memberIds.filter(function (m) { return m !== p.id; }); g.leaderIds = (g.leaderIds || []).filter(function (m) { return m !== p.id; });
+        if (g.names) delete g.names[p.id]; S.put(k[0], g);
+      });
     });
     S.remove('people', p.id, 'Deleted forever from the Bin (' + why + '): ' + name);
   }

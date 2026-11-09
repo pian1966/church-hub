@@ -4,7 +4,7 @@
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var MODS = [['people', TX('People'), TX('Directory, households and consent')], ['rosters', TX('Rosters'), TX('Serving rosters, teams and serving together')], ['leave', TX('Leave'), TX('Staff leave (Leave Manager built in)')],
-    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['messages', TX('Messages'), TX('Messages from the church to you and your groups')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
+    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['life', TX('Life groups'), TX('Bible studies, life groups and midweek groups – their leaders name them')], ['messages', TX('Messages'), TX('Messages from the church to you and your groups')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
     ['words', TX('Translations'), TX('Members suggest better wording in their language')]];
 
   /** The number of people with an access level; point at it (or tap it) to see who they are. Long lists (e.g. "No access") stay a number. */
@@ -150,7 +150,7 @@
         '<button class="btn small" data-autosave data-act="settings:name">' + T('Save') + '</button></section>' +
       renderTerminologyCard(st) +
       '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p>' + MODS.map(function (m) {
-        return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
+        return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (H.isOn(m[0]) ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
       }).join('') + '<p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' +
       renderTheme(st) + renderAccess(st, byRole) + renderPastorCan(st) +
       renderSlots() +

@@ -220,6 +220,10 @@ service cloud.firestore {
       allow create, delete: if isRole(['admin', 'pastor']);
       allow update: if isRole(['admin', 'pastor'])
         || (anyone() && meIn(resource.data.get('leaderIds', [])) && onlyChanges(['memberIds', 'names', 'updatedAt'])
+            && meIn(request.resource.data.memberIds) && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])))
+        // a life group's leaders (type life: Bible studies, midweek groups) may also name their group
+        || (anyone() && resource.data.get('type', '') == 'life' && meIn(resource.data.get('leaderIds', [])) && onlyChanges(['name', 'memberIds', 'names', 'updatedAt'])
+            && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
             && meIn(request.resource.data.memberIds) && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])));
       match /share/{pid} {
         allow read: if isRole(['admin', 'pastor']) || (inCare(gid) && (careOwn() || mine(pid) || leadsCare(gid) || careCarer(gid, pid)));
@@ -230,7 +234,7 @@ service cloud.firestore {
       }
     }
     // Messages inside the app (js/messages.js). A message lists the people it went to (to), worked out when it was sent.
-    // Administrators and Pastors send to anyone (a group, or people they tick: kind people); a care group's carers to
+    // Administrators and Pastors send to anyone (a group, or people they tick: kind people); a care group's carers (or a life group's leaders: kind life) to
     // their group and a message group's leaders to theirs - all of it, or only some of its people (to is checked).
     // Read by the people it went to, its sender, Administrators and Pastors. The only change anyone else may make is to
     // add themselves to readBy (they opened it). The sender, Administrators and Pastors may delete it.
@@ -238,14 +242,14 @@ service cloud.firestore {
     function manager() { return isRole(['admin', 'pastor']); }
     function maySendTo(m) {
       return manager()
-        || (m.kind == 'care' && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
+        || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
         || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))));
     }
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)
         && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])
-        && request.resource.data.kind in ['care', 'group', 'staff', 'partners', 'people']
+        && request.resource.data.kind in ['care', 'life', 'group', 'staff', 'partners', 'people']
         && request.resource.data.get('some', false) is bool
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 4000
         && request.resource.data.get('title', '') is string && request.resource.data.get('title', '').size() <= 120

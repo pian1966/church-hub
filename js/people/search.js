@@ -415,6 +415,7 @@
                 'Consent ' + fd.consent + ': ' + (want ? 'agreed' : 'declined') + ' – ' + H.name(p) + ' (' + how + ', changing many people at once)');
               items.push({ id: id, newId: c.id, oldId: old ? old.id : '' });
               if (window.CareUI && fd.consent === 'Care group') CareUI.sync(id);   // their care group card follows their consent
+              if (window.LifeUI && fd.consent === 'Church directory') LifeUI.sync(id);   // their life group cards follow Contact details
               return;
             }
             var q = JSON.parse(JSON.stringify(p)); fd.set(q, v, made);
@@ -436,6 +437,7 @@
               S.remove('consents', it.newId, 'Undid consent ' + u.consent + ' for ' + H.name(S.get('people', it.id)));
               var o = it.oldId && S.get('consents', it.oldId); if (o) { o = JSON.parse(JSON.stringify(o)); delete o.withdrawnAt; S.put('consents', o); }
               if (window.CareUI && u.consent === 'Care group') CareUI.sync(it.id);
+              if (window.LifeUI && u.consent === 'Church directory') LifeUI.sync(it.id);
               return;
             }
             var p = S.get('people', it.id); if (!p) return;

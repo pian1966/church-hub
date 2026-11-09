@@ -5,23 +5,21 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 ## Phase 1 – Foundation 🟡 – built and live (pre-release v0.1.0, 25 Oct 2026); church trial and Leave Manager import next
 - 🟡 Church to do: tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
 - ⬜ Confirm step 8 (key restricted to the website) is done
-- ⬜ Church: set up automatic publishing of the database rules (docs/RULES-AUTOPUBLISH.md, about 10 minutes) and run it once – this also does every "re-publish the rules" below
-- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7) so Church Partners can ask for changes to their family details and contact details are shared by role
 - ⬜ Church: Settings → What others can see – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
 - ⬜ Decide: should Church Partners who aren't staff stop receiving colleagues' away dates at all (now hidden on screen only)?
 - ⬜ Church: fill in Leave → Settings (terms, allowances) and mark staff; try Leave alongside the old Leave Manager
-- ⬜ Church: Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), re-publish rules, try it, send the link
+- ⬜ Church: Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
 - ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate
   staff screens too
 - ⬜ Later (if wanted): changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in
-- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7) so Settings → Who can see what → Care groups works (Roster coordinators, Children's ministry and Church Partners)
+- ⬜ Church: choose the Care groups ticks in Settings → Who can see what, and click **Record that they agreed** for existing Church Partners if it appears
 - ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
 - ⬜ Later: other countries' public holidays for Leave (Leave still uses South Africa's); translations checked by fluent
   speakers; church wording in the other languages too.
 - ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
-- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7), then check the parents/guardians of each child (Home to-do)
+- ⬜ Church: check the parents/guardians of each child (Home to-do)
 - ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out
-- ⬜ Church: set up the robot (docs/ELVANTO-ROBOT.md steps 1–5; **re-publish the rules**), switch over with step 6
+- ⬜ Church: set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
 - ⬜ Later: Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)
 - ⬜ Leave Manager features still not in Church Hub (rechecked 5 Nov 2026; the wallchart, calendar, year planner, reports,
   payroll, Dashboard, cover rules, stand-in, Change and the email prompts were added in 0.16–0.19): emails sent
@@ -52,7 +50,6 @@ Groups and attendance, kids check-in on a tablet with medical alerts and leader 
 ## Phase 5 – Communication and calendar
 First step done (0.12.0): email prompts for birthdays, anniversaries and welcomes, opened in the church’s email program. Next: sending them automatically (formatted, with the church logo) through Afrihost or Gmail behind the scenes; then email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
 Messages inside the app done (0.21.0, Messages page). Next for messages:
-- ⬜ Church: re-publish the rules (FIREBASE-SETUP step 7) so Messages works for everyone
 - ⬜ Phone notifications ("push") when a message arrives, even with Church Hub closed: Firebase Cloud Messaging in the
   Android app and the home-screen app (iPhone: iOS 16.4 or later, added to the home screen), sent by a small server step
   (a Firebase Cloud Function on the Blaze plan, or the GitHub robot with a service-account secret). Ask permission

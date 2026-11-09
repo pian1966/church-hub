@@ -7,7 +7,7 @@
 #
 # Repository secret (Settings → Secrets and variables → Actions) – see docs/RULES-AUTOPUBLISH.md:
 #   FIREBASE_RULES_KEY – the key of a Google Cloud service account that may only publish security rules
-#                        (roles: Firebase Rules Admin, Service Account User).
+#                        (roles: Firebase Rules Admin, Service Account User, Service Usage Consumer).
 # Without it the rules are still tested, and the log says they weren't published. The repository is public: the key
 # is never printed, and is deleted from the runner straight after use.
 name: Publish database rules
@@ -34,12 +34,12 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with: { node-version: 22 }
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v5
         with: { distribution: temurin, java-version: 21 }
 
       - name: Install test tools

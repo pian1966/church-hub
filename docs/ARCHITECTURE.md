@@ -434,7 +434,7 @@ Later: direct import through the Elvanto API (server side, with the church's API
   "Not clear" (no address, no group nearby, several groups, household split) with the nearest groups starred. Nothing is
   saved until the Administrator or Pastor ticks and confirms.
 
-## Life groups (Life groups page; `js/mod-life.js`) – plan and next steps in `docs/GROUPS-PLAN.md`
+## Midweek groups (shown as "Midweek groups" – code and data still say life; the Midweek groups page; `js/mod-life.js`) – plan and next steps in `docs/GROUPS-PLAN.md`
 - Bible studies, life groups and midweek meetings. A life group is a `careGroups/{id}` record with `type: 'life'`; `Store`
   hands the two kinds out separately (`list('careGroups')` / `list('lifeGroups')`, cards `careShare` / `lifeShare`) and
   writes both to `careGroups`, so the care-group code never sees life groups. Same rules, cards and loading as care groups.

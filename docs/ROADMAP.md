@@ -3,40 +3,49 @@
 Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed here; finished work moves to `docs/CHANGELOG.md` (no need to read it).
 
 ## Phase 1 – Foundation 🟡 – built and live (pre-release v0.1.0, 25 Oct 2026); church trial and Leave Manager import next
-- 🟡 Church to do: tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
+
+**Church to do – setup**
+- 🟡 Tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
 - ⬜ Confirm step 8 (key restricted to the website) is done
-- ⬜ Church: Settings → What others can see – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
-- ⬜ Decide: should Church Partners who aren't staff stop receiving colleagues' away dates at all (now hidden on screen only)?
-- ⬜ Church: fill in Leave → Settings (terms, allowances) and mark staff; try Leave alongside the old Leave Manager
-- ⬜ Church: Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
-- ⬜ Church: fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate
-  staff screens too
-- ⬜ Later (if wanted): changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in
-- ⬜ Church: choose the Care groups ticks in Settings → Who can see what, and click **Record that they agreed** for existing Church Partners if it appears
-- ⬜ Church: switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
-- ⬜ Later: other countries' public holidays for Leave (Leave still uses South Africa's); translations checked by fluent
-  speakers; church wording in the other languages too.
-- ⬜ Later (Phase 2): save searches as smart lists; use them for emails and SMS
-- ⬜ Church: check the parents/guardians of each child (Home to-do)
-- ⬜ Later (Phase 4 check-in): show "Not allowed to collect" and allowed collectors at sign-out
-- ⬜ Church: set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
-- ⬜ Later: Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)
-- ⬜ Leave Manager features still not in Church Hub (rechecked 5 Nov 2026; the wallchart, calendar, year planner, reports,
-  payroll, Dashboard, cover rules, stand-in, Change and the email prompts were added in 0.16–0.19): emails sent
-  automatically (today they open ready to send) and approving from the email without signing in; a leave History page
-  (the audit log has the events); holidays and school terms updating themselves; the Google Calendar mirror; the Google
-  Form; help videos; dark mode.
-- ⬜ Church: check the “lost on 1 February” rule (no carry-over) against the Basic Conditions of Employment Act with a labour adviser.
-- ⬜ Church: remove the first Elvanto import (Import page), re-export (fewer columns), import again and check
-- ⬜ Church: trial the Leave Manager import, compare balances, then re-import at switch-over and retire Leave Manager (archive the sheet)
-- ⬜ Check the first GitHub test run is green (Actions tab) – the rules tests couldn't run in the Claude session (emulator download blocked there)
+- ⬜ Switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
+- ⬜ Settings → What others can see – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
+- ⬜ Choose the Care groups ticks in Settings → Who can see what, and click **Record that they agreed** for existing Church Partners if it appears
+- ⬜ Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
+- ⬜ Set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
+- ⬜ Fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate staff screens too
+
+**Church to do – people and Leave**
+- ⬜ Remove the first Elvanto import (Import page), re-export (fewer columns), import again and check
+- ⬜ Check the parents/guardians of each child (Home to-do)
+- ⬜ Fill in Leave → Settings (terms, allowances) and mark staff; try Leave alongside the old Leave Manager
+- ⬜ Trial the Leave Manager import, compare balances, then re-import at switch-over and retire Leave Manager (archive the sheet)
+- ⬜ Check the “lost on 1 February” rule (no carry-over) against the Basic Conditions of Employment Act with a labour adviser
+
+**Going live**
 - ⬜ Trial with 2–3 staff and made-up people; Information Officer approves privacy notice (mention sign-in accounts are held by Google outside SA) and accepts Google's data processing terms
 - ⬜ Then: import real people from Elvanto (Import) and give access
 
+**Decide**
+- ⬜ Should Church Partners who aren't staff stop receiving colleagues' away dates at all (now hidden on screen only)?
+
+**Later (if wanted)**
+- ⬜ Changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in
+- ⬜ Leave: other countries' public holidays (Leave still uses South Africa's); Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)
+- ⬜ Leave Manager features still not in Church Hub (rechecked 5 Nov 2026; the wallchart, calendar, year planner, reports,
+  payroll, Dashboard, cover rules, stand-in, Change and the email prompts were added in 0.16–0.19, dark mode in 0.37.0): emails sent
+  automatically (today they open ready to send) and approving from the email without signing in; a leave History page
+  (the audit log has the events); holidays and school terms updating themselves; the Google Calendar mirror; the Google
+  Form; help videos.
+- ⬜ Languages: translations checked by fluent speakers; church wording in the other languages too
+- ⬜ Chinese (Simplified, Traditional) and Japanese: add back once translated with the church meaning (Leave, Pastoral notes,
+  Household, Rosters, Care groups…) and checked by a speaker; the earlier files are in the history at 0.10.0 (js/lang/zh-Hans.js,
+  zh-Hant.js, ja.js). Put "Asia" back in the language list (js/i18n.js) and in tests/app/care.js.
+
 ## Phase 2 – People and pastoral care
 Members see their own family (and give consent for their children), smart lists (leave out people who have died), follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
+- ⬜ Save searches as smart lists; use them for emails and SMS
 
-## Phase 3 – Rostering and services (complete)
+## Phase 3 – Rostering and services (built; follow-ups below)
 Accept/decline by email and app, swap requests, reminders, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).
 - ⬜ Church: Rosters → Services – check each service's look, mood and positions (Teens/Children/Creche are 8am only, as in Elvanto); rename "Operational" to Service Leading if it was added before 0.29.0 (teams can't be renamed yet)
 - ⬜ Decide: rename "Extra Slot" (e.g. Special Items, or Communion on its own and Features for Interview, Missions, Doctrine)
@@ -46,6 +55,7 @@ Accept/decline by email and app, swap requests, reminders, sign-up sheets, run s
 
 ## Phase 4 – Groups, attendance and check-in
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.
+- ⬜ At sign-out, show "Not allowed to collect" and the allowed collectors
 
 ## Phase 5 – Communication and calendar
 First step done (0.12.0): email prompts for birthdays, anniversaries and welcomes, opened in the church’s email program. Next: sending them automatically (formatted, with the church logo) through Afrihost or Gmail behind the scenes; then email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
@@ -121,7 +131,5 @@ each church gives what it chooses once a year, with a small minimum. Today each 
 - ⬜ Which countries are on the "don't serve" list.
 
 ## Working method
-One phase per fresh chat in the Claude Project "Church Hub", with the repository attached. Update this file at the end of each session.
-- ⬜ Chinese (Simplified, Traditional) and Japanese: add back once translated with the church meaning (Leave, Pastoral notes,
-  Household, Rosters, Care groups…) and checked by a speaker; the earlier files are in the history at 0.10.0 (js/lang/zh-Hans.js,
-  zh-Hant.js, ja.js). Put "Asia" back in the language list (js/i18n.js) and in tests/app/care.js.
+One phase per fresh chat in the Claude Project "Church Hub", with the repository attached (Jules and Antigravity work here too – see AGENTS.md).
+Update this file at the end of each session: finished work moves to `docs/CHANGELOG.md`.

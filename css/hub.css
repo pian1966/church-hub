@@ -565,9 +565,21 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .th-sw:hover { transform: scale(1.08); }
 .th-sw.on { box-shadow: 0 0 0 3px var(--surface), 0 0 0 5px var(--c); }
 .th-sw:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
-.th-any { display: flex; align-items: center; gap: 12px; margin: 16px 0 6px; font-size: 14px; font-weight: 600; }
-.th-any input[type=color] { width: 44px; height: 30px; padding: 2px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
-.th-any code { color: var(--muted); font-size: 14px; }
+.th-any { margin: 20px 0 6px; font-size: 14px; font-weight: 600; } .th-any > label { display: block; margin-bottom: 10px; }
+/* "Or pick any colour": our own picker – a colour area (the shade's colours from soft to strong, light to dark), a rainbow bar, the code */
+.th-pick { --h: 20; max-width: 360px; display: grid; gap: 14px; padding: 14px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+.th-sv { position: relative; height: 170px; border-radius: 12px; cursor: crosshair; touch-action: none; user-select: none;
+  background: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, hsl(var(--h), 100%, 50%)); }
+.th-sv:focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; }
+.th-svk { position: absolute; width: 24px; height: 24px; margin: -12px 0 0 -12px; border-radius: 50%; border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.3); pointer-events: none; }
+.th-hue { -webkit-appearance: none; appearance: none; width: 100%; height: 16px; margin: 0; border-radius: 999px; cursor: pointer; outline-offset: 4px;
+  background: linear-gradient(to right, #f00 0%, #ff0 16.6%, #0f0 33.3%, #0ff 50%, #00f 66.6%, #f0f 83.3%, #f00 100%); }
+.th-hue::-webkit-slider-thumb { -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%; background: hsl(var(--h), 100%, 50%); border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.3); }
+.th-hue::-moz-range-thumb { width: 18px; height: 18px; border-radius: 50%; background: hsl(var(--h), 100%, 50%); border: 3px solid #fff; box-shadow: 0 0 0 1px rgba(0,0,0,.25), 0 2px 6px rgba(0,0,0,.3); }
+.th-hue::-moz-range-track { background: transparent; }
+.th-hexrow { display: flex; align-items: center; gap: 10px; }
+.th-chip { width: 40px; height: 40px; border-radius: 10px; flex: 0 0 auto; box-shadow: inset 0 0 0 1px rgba(0,0,0,.12); }
+.th-hexin { flex: 1; min-width: 0; font: 600 15px/1 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; letter-spacing: .04em; text-transform: uppercase; padding: 11px 12px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--ink); }
 #st-theme .btn.save { margin-top: 10px; }
 
 /* ---------- Dark (html[data-mode=dark]; js/app.js applyMode – each person chooses: Light, Dark or Same as this device) ----------
@@ -590,6 +602,7 @@ html[data-mode=dark] .chip.gap { border-color: #7A4540; }
 html[data-mode=dark] .just-saved { animation-name: just-saved-dark; }
 @keyframes just-saved-dark { 0%, 30% { background: #1E4A30; box-shadow: 0 0 0 3px #1E4A30; } 100% { background: transparent; box-shadow: 0 0 0 3px transparent; } }
 html[data-mode=dark] .th-pmain { background: var(--bg); }
+html[data-mode=dark] .th-sw:not(.on) { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3px rgba(255,255,255,.22); }
 html[data-mode=dark] img.photo, html[data-mode=dark] .av.pic { filter: brightness(.92); }
 /* Dark: roster slots and their key, green buttons */
 html[data-mode=dark] .chip { color: #CFEBD9; }

@@ -355,10 +355,21 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="settings:theme"]'); await s.settle(); docs = await s.docsNow();
   const a2 = await accent();
   check(docs['settings/church'].theme.color === '#FFE14D' && a2 === '#FFE14D' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).backgroundColor) === 'rgb(255, 225, 77)' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).color) === 'rgb(28, 24, 20)', '… Save: the logo and buttons are that exact yellow, with dark writing so it stays readable');
-  check(await s.page.$eval('#th-hex', e => e.textContent) === '#FFE14D' && await s.page.$eval('#st-th-c', e => e.value) === '#ffe14d' && await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#FFE14D')), '… and Settings still shows the yellow that was saved');
+  check(await s.page.$eval('#th-hex', e => e.textContent) === '#FFE14D' && await s.page.$eval('#st-th-c', e => e.value) === '#FFE14D' && await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#FFE14D')), '… and Settings still shows the yellow that was saved');
   check(await s.page.evaluate(() => JSON.parse(localStorage.getItem('church_hub_pref_theme') || '{}').accent) === a2, 'remembered on the device for the sign-in screen');
   await s.page.$eval('#st-th-c', e => { e.value = '#9333ea'; e.dispatchEvent(new Event('change', { bubbles: true })); });
   check(await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#9333EA')) && (await s.page.textContent('#th-hex')) === '#9333EA', 'any colour: the sample and the turning cross change straight away, also where the colour window only says when it closes');
+  // Our own picker (not the phone's colour window): drag across the colour area, slide the rainbow bar, type a code
+  check(await s.page.$eval('#st-th-c', e => e.type) === 'text' && !(await s.page.$('#st-theme input[type=color]')), 'any colour: Church Hub’s own picker, not the phone’s colour window');
+  await s.page.fill('#th-hue', '0'); await s.page.$eval('#th-hue', e => e.dispatchEvent(new Event('input', { bubbles: true })));
+  const sv = await s.page.$('#th-sv'); await sv.scrollIntoViewIfNeeded(); const box = await sv.boundingBox();
+  await s.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await s.page.mouse.down(); await s.page.mouse.move(box.x + box.width + 30, box.y - 30, { steps: 4 }); await s.page.mouse.up();
+  const dragged = (await s.page.textContent('#th-hex')).trim();
+  check(/^#F[C-F]0[0-4]0[0-4]$/.test(dragged) && await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:' + e.ownerDocument.getElementById('th-hex').textContent)) && await s.page.$eval('#st-th-c', e => e.value) === dragged, 'dragging from the middle past the strong, light corner (rainbow bar on red): a bright red (' + dragged + '), in the sample and the code box');
+  await s.page.fill('#th-hue', '120'); await s.page.$eval('#th-hue', e => e.dispatchEvent(new Event('input', { bubbles: true })));
+  check(/^#0[0-4]F[C-F]0[0-4]$/.test((await s.page.textContent('#th-hex')).trim()), 'sliding the rainbow bar to green: the same strength of green');
+  await s.page.fill('#st-th-c', '27375e'); await s.page.$eval('#st-th-c', e => e.dispatchEvent(new Event('change', { bubbles: true })));
+  check((await s.page.textContent('#th-hex')) === '#27375E' && await s.page.$eval('#st-th-c', e => e.value) === '#27375E' && await s.page.$eval('.th-sw[data-c="#27375E"]', e => e.classList.contains('on')), 'typing a code (even without #): the sample, the code box and the matching round swatch follow');
   // Light or dark: each person's own choice on this device
   check(await s.page.$$eval('.side .mode-sel option', o => o.map(x => x.value).join()) === ',light,dark', 'a quiet Appearance drop-down in the menu: Automatic (same as this device), Light or Dark');
   await s.page.selectOption('.side .mode-sel', 'dark');

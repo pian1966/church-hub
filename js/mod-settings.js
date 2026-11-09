@@ -215,7 +215,8 @@
   var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
   function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   function renderTheme(st) {
-    var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex);
+    var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex), hsv = toHsv(hex);
+    pick = { h: hsv.h, s: hsv.s, v: hsv.v };
     return '<section class="panel" id="st-theme" data-noauto><h2>' + T('Colours') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.') + '</p>' +
       // The live sample: the menu with the logo, a button, a Save button, a link and the turning cross
@@ -226,25 +227,79 @@
       '<div class="th-sws" role="radiogroup" aria-label="' + esc(T('Colours')) + '">' + SWATCHES.map(function (c) {
         return '<button type="button" class="th-sw' + (c === hex ? ' on' : '') + '" data-c="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === hex) + '" aria-label="' + c + '"></button>';
       }).join('') + '</div>' +
-      '<div class="th-any"><label for="st-th-c">' + T('Or pick any colour') + '</label><input type="color" id="st-th-c" value="' + esc(hex.toLowerCase()) + '"><code id="th-hex">' + esc(hex) + '</code></div>' +
+      // "Or pick any colour": our own picker (the phones' built-in colour windows look rough) – a colour area to drag
+      // across, a rainbow bar for the shade, and the colour's code to type in
+      '<div class="th-any"><label for="st-th-c">' + T('Or pick any colour') + '</label>' +
+        '<div class="th-pick" id="th-pick" style="--h:' + Math.round(hsv.h) + '">' +
+          '<div class="th-sv" id="th-sv" tabindex="0" role="slider" aria-label="' + esc(T('Or pick any colour')) + '" aria-valuetext="' + esc(hex) + '">' +
+            '<span class="th-svk" id="th-svk" style="left:' + (hsv.s * 100).toFixed(1) + '%;top:' + ((1 - hsv.v) * 100).toFixed(1) + '%;background:' + esc(hex) + '"></span></div>' +
+          '<input type="range" class="th-hue" id="th-hue" min="0" max="359" step="1" value="' + Math.round(hsv.h) + '" aria-label="' + esc(T('Colours')) + '">' +
+          '<div class="th-hexrow"><span class="th-chip" id="th-chip" style="background:' + esc(hex) + '"></span>' +
+            '<input id="st-th-c" class="th-hexin" value="' + esc(hex) + '" maxlength="7" spellcheck="false" autocomplete="off" autocapitalize="characters" inputmode="text"></div>' +
+        '</div><code id="th-hex" hidden>' + esc(hex) + '</code></div>' +
       '<p class="hint" id="th-dark"' + (shown.light ? '' : ' hidden') + '>' + T('Writing on buttons will be dark, so it stays easy to read.') + '</p>' +
       '<button class="btn save" data-act="settings:theme">' + T('Save the church’s colour') + '</button></section>';
   }
-  /** Trying a colour: only the sample changes, until Save. */
-  function themeTry(hex) {
-    hex = String(hex || '').toUpperCase(); var t = H.themeFrom(hex), prev = document.getElementById('th-prev'); if (!prev) return;
+  /** Colours as hue (0–360), saturation and brightness (0–1), for the picker. */
+  function toHsv(hex) {
+    var n = parseInt(String(hex).slice(1), 16), r = (n >> 16 & 255) / 255, g = (n >> 8 & 255) / 255, b = (n & 255) / 255;
+    var mx = Math.max(r, g, b), mn = Math.min(r, g, b), d = mx - mn, h = 0;
+    if (d) h = mx === r ? ((g - b) / d) % 6 : mx === g ? (b - r) / d + 2 : (r - g) / d + 4;
+    return { h: (h * 60 + 360) % 360, s: mx ? d / mx : 0, v: mx };
+  }
+  function fromHsv(h, s, v) {
+    var f = function (n) { var k = (n + h / 60) % 6; return v - v * s * Math.max(0, Math.min(k, 4 - k, 1)); };
+    return '#' + [f(5), f(3), f(1)].map(function (x) { return ('0' + Math.round(x * 255).toString(16)).slice(-2); }).join('').toUpperCase();
+  }
+  var pick = { h: 0, s: 0, v: 0 };   // where the picker is (kept, so a grey doesn't lose its hue)
+  function cleanHex(v) { v = String(v || '').trim().toUpperCase(); if (v[0] !== '#') v = '#' + v; return /^#[0-9A-F]{6}$/.test(v) ? v : ''; }
+  /** Trying a colour: only the sample changes, until Save. from: what was used ('sv', 'hue', 'code'), so it isn't moved under the finger. */
+  function themeTry(hex, from) {
+    hex = cleanHex(hex); var prev = document.getElementById('th-prev'); if (!hex || !prev) return;
+    var t = H.themeFrom(hex);
     prev.setAttribute('style', themeVars(t));
     document.getElementById('th-hex').textContent = hex;
-    var box = document.getElementById('st-th-c'); if (box.value.toLowerCase() !== hex.toLowerCase()) box.value = hex.toLowerCase();   // not while it is being dragged
     document.getElementById('th-dark').hidden = !t.light;
     [].forEach.call(document.querySelectorAll('.th-sw'), function (b) { var on = b.dataset.c === hex; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+    if (from !== 'sv' && from !== 'hue') { var p = toHsv(hex); pick.s = p.s; pick.v = p.v; if (p.s && p.v) pick.h = p.h; }
+    var box = document.getElementById('st-th-c'), area = document.getElementById('th-pick'), knob = document.getElementById('th-svk'), hue = document.getElementById('th-hue');
+    if (from !== 'code' && box) box.value = hex;
+    if (area) area.style.setProperty('--h', Math.round(pick.h));
+    if (hue && from !== 'hue') hue.value = Math.round(pick.h);
+    if (knob) { knob.style.left = (pick.s * 100).toFixed(1) + '%'; knob.style.top = ((1 - pick.v) * 100).toFixed(1) + '%'; knob.style.background = hex; }
+    var chip = document.getElementById('th-chip'); if (chip) chip.style.background = hex;
+    var sv = document.getElementById('th-sv'); if (sv) sv.setAttribute('aria-valuetext', hex);
+  }
+  function svAt(el, x, y) {
+    var r = el.getBoundingClientRect();
+    pick.s = Math.max(0, Math.min(1, (x - r.left) / r.width)); pick.v = 1 - Math.max(0, Math.min(1, (y - r.top) / r.height));
+    themeTry(fromHsv(pick.h, pick.s, pick.v), 'sv');
   }
   if (typeof document !== 'undefined') {
     document.addEventListener('click', function (ev) { var b = ev.target.closest && ev.target.closest('.th-sw'); if (b) themeTry(b.dataset.c); });
-    // "Or pick any colour": the sample follows straight away while the colour window is open ('input'); some browsers,
-    // phones and the Android app only say when it closes ('change'), so listen for both
+    // The colour area: press and drag (finger or mouse); the page doesn't scroll while dragging (touch-action: none)
+    var dragging = null;
+    document.addEventListener('pointerdown', function (ev) {
+      var el = ev.target.closest && ev.target.closest('#th-sv'); if (!el) return;
+      pick.h = +document.getElementById('th-hue').value;
+      dragging = el; try { el.setPointerCapture(ev.pointerId); } catch (e) { /* older browsers */ }
+      ev.preventDefault(); svAt(el, ev.clientX, ev.clientY);
+    });
+    document.addEventListener('pointermove', function (ev) { if (dragging) { ev.preventDefault(); svAt(dragging, ev.clientX, ev.clientY); } });
+    ['pointerup', 'pointercancel'].forEach(function (k) { document.addEventListener(k, function () { dragging = null; }); });
+    document.addEventListener('keydown', function (ev) {   // arrows on the colour area: lighter, darker, softer, stronger
+      if (!ev.target || ev.target.id !== 'th-sv') return;
+      var d = { ArrowLeft: [-0.05, 0], ArrowRight: [0.05, 0], ArrowUp: [0, 0.05], ArrowDown: [0, -0.05] }[ev.key]; if (!d) return;
+      ev.preventDefault(); pick.h = +document.getElementById('th-hue').value;
+      pick.s = Math.max(0, Math.min(1, pick.s + d[0])); pick.v = Math.max(0, Math.min(1, pick.v + d[1]));
+      themeTry(fromHsv(pick.h, pick.s, pick.v), 'sv');
+    });
     ['input', 'change'].forEach(function (k) {
-      document.addEventListener(k, function (ev) { if (ev.target && ev.target.id === 'st-th-c') themeTry(ev.target.value); });
+      document.addEventListener(k, function (ev) {
+        var t = ev.target; if (!t) return;
+        if (t.id === 'th-hue') { pick.h = +t.value; if (!pick.s && !pick.v) pick.v = 1; if (!pick.s) pick.s = 1; themeTry(fromHsv(pick.h, pick.s, pick.v), 'hue'); }
+        else if (t.id === 'st-th-c') { var h = cleanHex(t.value); if (h) themeTry(h, k === 'change' ? '' : 'code'); else if (k === 'change') t.value = document.getElementById('th-hex').textContent; }
+      });
     });
   }
   var CARE_SEE = ['rosters', 'kids'];   // may be allowed to see the care groups (firestore.rules: seesCare)

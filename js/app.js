@@ -108,7 +108,7 @@ var Hub = (function () {
    *  Words in quotes must appear together, exactly: '"amber glen"' finds Amber Glen but not "Glen Amber" or "Amberglen". */
   function matches(text, query) {
     var t = String(text || '').toLowerCase().replace(/\s+/g, ' ');
-    return PeopleSearch.words(String(query || '').toLowerCase()).every(function (w) { return t.indexOf(w) >= 0; });
+    return PeopleSearch.words(String(query || '').toLowerCase()).every(function (w) { return PeopleSearch.found(t, w); });   // also short names: "bill" finds William
   }
   /** Every way to write someone's name, for searching: "Douglas Pike" and, if different, what they're known as ("Doug Pike"). */
   function names(p) {

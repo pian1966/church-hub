@@ -40,6 +40,18 @@ check(PS.run([{ id: 'p1', values: { marital: '' } }, { id: 'p2', values: { marit
 check(run([F('first', 'has', 'ann')]) === 'a' && run([F('first', 'has', 'an n')]) === 'a' && run([F('first', 'has', 'ann x')]) === '', 'contains: every word typed must appear (“an n”), in any order');
 check(run([F('cat', 'ne', 'Partner')]) === 'bd', 'choice is not');
 check(JSON.stringify(PS.words('"amber glen" pike')) === '["amber glen","pike"]' && JSON.stringify(PS.words('\u201cSt  Johns\u201d')) === '["St Johns"]' && JSON.stringify(PS.words('"open quote')) === '["open quote"]', 'words in quotes stay together (straight or curly quotes, an unfinished quote too)');
+check(JSON.stringify(PS.words('dougl;as')) === '["douglas"]' && JSON.stringify(PS.words('doug;las!')) === '["douglas"]', 'characters that never appear in names or contact details are removed without splitting');
+check(JSON.stringify(PS.words('user+tag@example.com (082) 555-1234')) === '["user+tag@example.com","082","555-1234"]', 'keeps letters, digits, spaces, hyphens, and @ . + for emails and phones');
+check(PS.alts('douglas').includes('doug') && PS.alts('doug').includes('douglas'), 'alts finds short form and full name bidirectionally');
+check(run([F('first', 'has', 'dougl;as')]) === '', 'has with typo in first name does not match Anna');
+{
+  const D = [{ id: 'd1', values: { first: 'Douglas' } }, { id: 'd2', values: { first: 'Doug' } }, { id: 'd3', values: { first: 'William' } }];
+  const hasFirst = q => PS.run(D, { filters: [F('first', 'has', q)], match: 'all' }, { first: { type: 'text', label: 'First name' } }, TODAY).ids.join('');
+  check(hasFirst('dougl;as') === 'd1d2', 'dougl;as matches both Douglas and Doug');
+  check(hasFirst('doug') === 'd1d2', 'doug matches Douglas and Doug');
+  check(hasFirst('bill') === 'd3', 'bill matches William via short form');
+  check(hasFirst('william') === 'd3', 'william matches William');
+}
 {
   const ppl = [{ id: 'g', values: { addr: '4 Amber Glen, Howick' } }, { id: 'r', values: { addr: '9 Glen Rd, Amber Valley' } }, { id: 'o', values: { addr: '2 Amberglen' } }];
   const has = q => PS.run(ppl, { filters: [F('addr', 'has', q)], match: 'all' }, { addr: { type: 'text', label: 'Address' } }, TODAY).ids.join('');

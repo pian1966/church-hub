@@ -250,7 +250,7 @@ I18n.add('yo', {
     "Colours": "Àwọ̀",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "Àwọ̀ ìjọ fún àwọn bọ́tìnnì, àwọn ìjápọ̀, àgbélébùú tó ń yí àti àkójọ àṣàyàn – gbogbo ènìyàn ló ń rí i.",
     "Your own colour": "Àwọ̀ tìrẹ",
-    "Made a little darker, so white writing on buttons stays easy to read.": "A ṣe é ní dúdú díẹ̀, kí ọ̀rọ̀ funfun lórí àwọn bọ́tìnnì lè rọrùn láti kà.",
+    "Writing on buttons will be dark, so it stays easy to read.": "Ọ̀rọ̀ lórí àwọn bọ́tìnnì yóò dúdú, kí ó lè rọrùn láti kà.",
     "Check your email": "Wo ímeèlì rẹ",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "A ti fi ìjápọ̀ ìwọlé ránṣẹ́ sí {email}. Ṣí i lórí ẹ̀rọ yìí láti wọlé. Ó lè gba ìṣẹ́jú kan, ó sì lè bọ́ sínú fódà spam.",
     "Use a different way": "Lo ọ̀nà mìíràn",

@@ -246,7 +246,7 @@ I18n.add('en-US', {
     "Colours": "Colors",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "The church’s color for buttons, links, the turning cross and the menu – everyone sees it.",
     "Your own colour": "Your own color",
-    "Made a little darker, so white writing on buttons stays easy to read.": "Made a little darker, so white writing on buttons stays easy to read.",
+    "Writing on buttons will be dark, so it stays easy to read.": "Writing on buttons will be dark, so it stays easy to read.",
     "Check your email": "Check your email",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.",
     "Use a different way": "Use a different way",

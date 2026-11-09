@@ -250,7 +250,7 @@ I18n.add('am', {
     "Colours": "ቀለሞች",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "የቤተ ክርስቲያኑ ቀለም ለአዝራሮች፣ ለአገናኞች፣ ለሚዞረው መስቀል እና ለምናሌው – ሁሉም ያየዋል።",
     "Your own colour": "የራስዎ ቀለም",
-    "Made a little darker, so white writing on buttons stays easy to read.": "በአዝራሮች ላይ ያለው ነጭ ጽሑፍ በቀላሉ እንዲነበብ ትንሽ ጠቆር ተደርጓል።",
+    "Writing on buttons will be dark, so it stays easy to read.": "በአዝራሮች ላይ ያለው ጽሑፍ በቀላሉ እንዲነበብ ጥቁር ይሆናል።",
     "Check your email": "ኢሜይልዎን ይመልከቱ",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "የመግቢያ ማስፈንጠሪያ ወደ {email} ልከናል። ለመግባት በዚህ መሣሪያ ላይ ይክፈቱት። አንድ ደቂቃ ሊወስድ ይችላል፣ እና ወደ spam አቃፊ ሊገባ ይችላል።",
     "Use a different way": "ሌላ መንገድ ይጠቀሙ",

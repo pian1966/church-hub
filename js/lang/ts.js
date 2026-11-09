@@ -250,7 +250,7 @@ I18n.add('ts', {
     "Colours": "Mivala",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "Muvala wa kereke wa tikinoho, swihlanganisi, xihambano lexi rhendzelekaka na menyu – hinkwavo va wu vona.",
     "Your own colour": "Muvala wa wena",
-    "Made a little darker, so white writing on buttons stays easy to read.": "Wu endliwile wu dzwihala kutsongo, leswaku matsalwa yo basa eka tikinoho ma hlayeka hi ku olova.",
+    "Writing on buttons will be dark, so it stays easy to read.": "Matsalwa eka tikinoho ma ta va ya ntima, leswaku ma hlayeka hi ku olova.",
     "Check your email": "Languta imeyili ya wena",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "Hi rhumele vuhlanganisi byo nghena eka {email}. Byi pfule eka xitirho lexi ku nghena. Swi nga teka nimitsu, naswona byi nga nghena eka folidara ya spam.",
     "Use a different way": "Tirhisa ndlela yin’wana",

@@ -167,7 +167,7 @@
   var SWATCHES = ['#E8590C', '#C2410C', '#B91C1C', '#BE185D', '#A3283B', '#9333EA', '#6D3FC0', '#4F46E5',
     '#1D5FB8', '#3B78C2', '#13809A', '#0F7C80', '#2AA198', '#2E7D4F', '#4D7C0F', '#A86A12', '#475569', '#57534E'];
   var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
-  function themeVars(t) { return '--a:' + t.accent + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
+  function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   function renderTheme(st) {
     var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex);
     return '<section class="panel" id="st-theme" data-noauto style="grid-column:1/-1"><h2>' + T('Colours') + '</h2>' +
@@ -181,7 +181,7 @@
         return '<button type="button" class="th-sw' + (c === hex ? ' on' : '') + '" data-c="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === hex) + '" aria-label="' + c + '"></button>';
       }).join('') + '</div>' +
       '<div class="th-any"><label for="st-th-c">' + T('Or pick any colour') + '</label><input type="color" id="st-th-c" value="' + esc(hex.toLowerCase()) + '"><code id="th-hex">' + esc(hex) + '</code></div>' +
-      '<p class="hint" id="th-dark"' + (shown.darkened ? '' : ' hidden') + '>' + T('Made a little darker, so white writing on buttons stays easy to read.') + '</p>' +
+      '<p class="hint" id="th-dark"' + (shown.light ? '' : ' hidden') + '>' + T('Writing on buttons will be dark, so it stays easy to read.') + '</p>' +
       '<button class="btn save" data-act="settings:theme">' + T('Save the church’s colour') + '</button></section>';
   }
   /** Trying a colour: only the sample changes, until Save. */
@@ -190,7 +190,7 @@
     prev.setAttribute('style', themeVars(t));
     document.getElementById('th-hex').textContent = hex;
     var box = document.getElementById('st-th-c'); if (box.value.toLowerCase() !== hex.toLowerCase()) box.value = hex.toLowerCase();   // not while it is being dragged
-    document.getElementById('th-dark').hidden = !t.darkened;
+    document.getElementById('th-dark').hidden = !t.light;
     [].forEach.call(document.querySelectorAll('.th-sw'), function (b) { var on = b.dataset.c === hex; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
   }
   if (typeof document !== 'undefined') {

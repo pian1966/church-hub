@@ -250,7 +250,7 @@ I18n.add('ss', {
     "Colours": "Imibala",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "Umbala welibandla wetinkinobho, tixhumanisi, siphambano lesitjikelekako nemenyu – wonkhe umuntfu uyawubona.",
     "Your own colour": "Umbala wakho",
-    "Made a little darker, so white writing on buttons stays easy to read.": "Wentiwe waba mnyama kancane, kute kubhala lokumhlophe etinkinobhweni kufundzeke kalula.",
+    "Writing on buttons will be dark, so it stays easy to read.": "Kubhala etinkinobhweni kutawuba mnyama, kute kufundzeke kalula.",
     "Check your email": "Bheka i-imeyili yakho",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "Sitfumele sixhumanisi sekungena ku-{email}. Sivule kulesisetjentiswa kute ungene. Kungatsatsa umzuzu, futsi singangena kufolda ye-spam.",
     "Use a different way": "Sebentisa lenye indlela",

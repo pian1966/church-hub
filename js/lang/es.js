@@ -250,7 +250,7 @@ I18n.add('es', {
     "Colours": "Colores",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "El color de la iglesia para botones, enlaces, la cruz que gira y el menú: todos lo ven.",
     "Your own colour": "Tu propio color",
-    "Made a little darker, so white writing on buttons stays easy to read.": "Un poco más oscuro, para que el texto blanco de los botones se lea bien.",
+    "Writing on buttons will be dark, so it stays easy to read.": "El texto de los botones será oscuro, para que se lea bien.",
     "Check your email": "Revisa tu correo",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "Enviamos un enlace de acceso a {email}. Ábrelo en este dispositivo para entrar. Puede tardar un minuto y podría llegar a la carpeta de spam.",
     "Use a different way": "Usar otra forma",

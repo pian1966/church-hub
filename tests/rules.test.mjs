@@ -62,6 +62,7 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('careGroups/cg1', { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim', p15: 'Clare' } });
   await set('careGroups/cg2', { name: 'Howick', leaderIds: ['p05'], memberIds: ['p05', 'p01'], names: {} });
   await set('careGroups/cg3', { name: 'Merrivale', leaderIds: ['p15'], memberIds: ['p15', 'p14'], names: {} });
+  await set('careGroups/lg1', { type: 'life', name: 'Tuesday Bible study', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: {} });
   await set('careGroups/cg1/share/p15', { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082', birthday: '07-14' });
   await set('careGroups/cg2/share/p05', { firstName: 'Sipho', lastName: 'Dlamini', ok: false });
   // Messages: a message group Tim leads, one Clare leads; a message to Tim and Clare, and one to Thandi only
@@ -421,6 +422,12 @@ await t('care groups: members see their own group and its cards; carers add and 
   await cannot(db.member.doc('careGroups/cg1').update({ leaderIds: ['p14', 'p16'] }));
   await cannot(db.member.doc('careGroups/cg1').update({ memberIds: ['p15', 'p16'] }));   // a carer can't take themself out
   await cannot(db.member.doc('careGroups/cg3').update({ memberIds: ['p15', 'p14', 'p16'] }));
+  // a life group's leader may also name the group (not blank), still not change its leaders or kind
+  await can(db.member.doc('careGroups/lg1').update({ name: 'Hilton life group' }));
+  await cannot(db.member.doc('careGroups/lg1').update({ name: '' }));
+  await cannot(db.member.doc('careGroups/lg1').update({ type: 'care' }));
+  await cannot(db.member.doc('careGroups/lg1').update({ leaderIds: ['p14', 'p15'] }));
+  await cannot(db.member.doc('careGroups/cg3').update({ type: 'life', name: 'Mine' }));   // Tim is only a member of cg3
   await can(db.member.doc('careGroups/cg1/share/p15').delete());   // a carer removes a card when taking someone out
   await cannot(db.member.doc('careGroups/cg4').set({ name: 'New', leaderIds: ['p14'], memberIds: ['p14'] }));
   await can(db.pastor.doc('careGroups/cg4').set({ name: 'New', leaderIds: [], memberIds: [] })); await can(db.admin.doc('careGroups/cg4').delete());
@@ -444,6 +451,8 @@ await t('messages: who may send to whom', async () => {
   await can(db.member.doc('messages/n5').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p14', 'p15'], readBy: ['p14'] })));   // Tim leads cg1
   await cannot(db.member.doc('messages/n6').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p14', 'p02'] })));    // someone not in the group
   await cannot(db.member.doc('messages/n7').set(m({ kind: 'care', groupId: 'cg3', fromId: 'p14', to: ['p15'] })));          // a group he doesn't lead
+  await can(db.member.doc('messages/n7b').set(m({ kind: 'life', groupId: 'lg1', fromId: 'p14', to: ['p14', 'p15'], readBy: ['p14'] })));   // Tim leads life group lg1
+  await cannot(db.member.doc('messages/n7c').set(m({ kind: 'life', groupId: 'lg1', fromId: 'p14', to: ['p02'] })));            // someone not in it
   await can(db.member.doc('messages/n8').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'] })));
   await cannot(db.member.doc('messages/n9').set(m({ kind: 'group', groupId: 'mg2', fromId: 'p14', to: ['p15'] })));
   await cannot(db.member.doc('messages/n10').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], readBy: ['p15'] })));   // can't mark others as having read it

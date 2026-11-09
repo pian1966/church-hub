@@ -351,10 +351,11 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="settings:theme"]'); await s.settle(); docs = await s.docsNow();
   check(JSON.stringify(docs['settings/church'].theme) === '{"id":"custom","color":"#2E7D4F"}' && await accent() === '#2E7D4F' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).backgroundColor) === 'rgb(46, 125, 79)', 'Save: buttons, the cross, the logo and the menu turn that colour, for everyone');
   await s.page.$eval('#st-th-c', e => { e.value = '#ffe14d'; e.dispatchEvent(new Event('input', { bubbles: true })); });
-  check(await s.page.isVisible('#th-dark'), 'a pale colour (yellow): it says it will be made a little darker');
+  check(await s.page.isVisible('#th-dark') && await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#FFE14D')) && await s.page.$eval('#th-prev .th-pbtn', e => getComputedStyle(e).backgroundColor) === 'rgb(255, 225, 77)' && await s.page.$eval('#th-prev .th-pbtn', e => getComputedStyle(e).color) === 'rgb(28, 24, 20)', 'a pale colour (yellow) chosen with the picker: the sample shows that very yellow at once, with dark writing on the button');
   await s.page.click('[data-act="settings:theme"]'); await s.settle(); docs = await s.docsNow();
-  const a2 = await accent(), lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
-  check(docs['settings/church'].theme.color === '#FFE14D' && 1.05 / (lum(a2) + 0.05) >= 4.5, '… and it is: white writing on buttons stays readable');
+  const a2 = await accent();
+  check(docs['settings/church'].theme.color === '#FFE14D' && a2 === '#FFE14D' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).backgroundColor) === 'rgb(255, 225, 77)' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).color) === 'rgb(28, 24, 20)', '… Save: the logo and buttons are that exact yellow, with dark writing so it stays readable');
+  check(await s.page.$eval('#th-hex', e => e.textContent) === '#FFE14D' && await s.page.$eval('#st-th-c', e => e.value) === '#ffe14d' && await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#FFE14D')), '… and Settings still shows the yellow that was saved');
   check(await s.page.evaluate(() => JSON.parse(localStorage.getItem('church_hub_pref_theme') || '{}').accent) === a2, 'remembered on the device for the sign-in screen');
   await s.page.$eval('#st-th-c', e => { e.value = '#9333ea'; e.dispatchEvent(new Event('change', { bubbles: true })); });
   check(await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#9333EA')) && (await s.page.textContent('#th-hex')) === '#9333EA', 'any colour: the sample and the turning cross change straight away, also where the colour window only says when it closes');

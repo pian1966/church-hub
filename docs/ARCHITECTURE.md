@@ -434,6 +434,19 @@ Later: direct import through the Elvanto API (server side, with the church's API
   "Not clear" (no address, no group nearby, several groups, household split) with the nearest groups starred. Nothing is
   saved until the Administrator or Pastor ticks and confirms.
 
+## Life groups (Life groups page; `js/mod-life.js`) – plan and next steps in `docs/GROUPS-PLAN.md`
+- Bible studies, life groups and midweek meetings. A life group is a `careGroups/{id}` record with `type: 'life'`; `Store`
+  hands the two kinds out separately (`list('careGroups')` / `list('lifeGroups')`, cards `careShare` / `lifeShare`) and
+  writes both to `careGroups`, so the care-group code never sees life groups. Same rules, cards and loading as care groups.
+- Differences from care groups: each group's **leaders may rename it** (`Care.leaderMayChange`, rules: the life clause on
+  `careGroups` – name 1 to 80 characters, still not the type or the leaders); a member's card follows the **"Church directory"
+  consent** (Contact details, agreed on becoming a Church Partner), not "Care group"; no areas or Suggest by area yet.
+- Administrators and Pastors: add, rename, delete, put people in and make leaders (star, per group). Leaders (Life groups
+  page and Me): rename, add people from the church directory, take members out, message the group (`kind: 'life'`).
+  Members: their life groups on the Life groups page and their Me page. Tag on a person's page for staff and themselves.
+- **Switching on and off** (Settings → Apps): Life groups are `optIn` – off until switched on (`Hub.isOn('life')`). Care groups
+  can now be switched off too: the page, Me panel, tags, Edit details box and message audiences all go; nothing is deleted.
+
 ## Messages (Messages page; `js/messages.js`, `js/mod-messages.js`)
 - Audiences (`Msg.audiences`, tested): Administrators and Pastors – **Chosen people** (ticked one by one on a checklist of
   adults still in the church; "Send a message" on a person's page opens it with them ticked, `#/messages/send/people/<id>`), **Staff** (people with staff details), **Church Partners**

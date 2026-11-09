@@ -23,6 +23,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Leave (Leave Manager built in) | `js/mod-leave.js`, `js/leave-core.js`, `js/leave-import.js` | `js/i18n/leave.js` | `tests/leave-import.test.js`, `tests/app/admin.js` |
 | Me (members' own page) | `js/mod-me.js` | `js/i18n/me.js` | `tests/app/roles.js` |
 | Care groups | `js/mod-care.js`, `js/care.js` | `js/i18n/care.js` | `tests/care.test.js`, `tests/app/care.js` |
+| Life groups (Bible studies, midweek groups; care-group records with `type: 'life'`) | `js/mod-life.js`, `js/care.js` | `js/i18n/life.js` | `tests/care.test.js`, `tests/app/life.js` |
 | Messages (inside the app; message groups) | `js/mod-messages.js`, `js/messages.js` | `js/i18n/messages.js` | `tests/messages.test.js`, `tests/app/messages.js` |
 | Privacy pages, law by country | `js/mod-privacy.js`, `js/privacy-law.js` | `js/i18n/privacy.js` | `tests/privacy-law.test.js` |
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |

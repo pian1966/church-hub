@@ -16,21 +16,25 @@ const people = [
 ];
 const careGroups = [{ id: 'cg1', name: 'Hilton', leaderIds: ['c'], memberIds: ['c', 'd'] }];
 const msgGroups = [{ id: 'mg1', name: 'Worship leaders', leaderIds: ['b'], memberIds: ['b', 'h'] }, { id: 'mg2', name: 'Alpha team', leaderIds: [], memberIds: ['a'] }];
-const d = { people, careGroups, msgGroups };
+const lifeGroups = [{ id: 'lg1', type: 'life', name: 'Tuesday Bible study', leaderIds: ['d'], memberIds: ['d', 'b'] }];
+const d = { people, careGroups, lifeGroups, msgGroups };
 
 console.log('Who a message goes to');
 ok(M.recipients('staff', '', d).join() === 'a,b', 'staff: everyone with staff details who is still active (a Church Partner on the staff too)');
 ok(M.recipients('partners', '', d).join() === 'b,c,d', 'Church Partners: active adults only – not children, people who left or died, or Attenders');
 ok(M.recipients('care', 'cg1', d).join() === 'c,d', 'a care group: its carers and members');
 ok(M.recipients('group', 'mg1', d).join() === 'b,h', 'a message group: its leaders and members');
+ok(M.recipients('life', 'lg1', d).join() === 'd,b' && M.recipients('care', 'lg1', d).length === 0, 'a life group: its leaders and members (not as a care group)');
 ok(M.recipients('group', 'nope', d).length === 0 && M.recipients('odd', '', d).length === 0, 'nobody for a group that doesn’t exist');
 
 console.log('Who may send to whom');
 const pastor = { id: 'a', manager: true }, carer = { id: 'c', manager: false }, leader = { id: 'b', manager: false }, member = { id: 'd', manager: false };
-ok(M.audiences(pastor, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'people:Chosen people,staff:Staff,partners:Church Partners,care:cg1,group:mg2,group:mg1', 'Administrators and Pastors: chosen people, staff, Church Partners, every care group and message group (by name)');
+ok(M.audiences(pastor, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'people:Chosen people,staff:Staff,partners:Church Partners,care:cg1,life:lg1,group:mg2,group:mg1', 'Administrators and Pastors: chosen people, staff, Church Partners, every care group, life group and message group (by name)');
 ok(M.audiences(carer, d).map(x => x.groupId).join() === 'cg1', 'a carer: only their own care group');
 ok(M.audiences(leader, d).map(x => x.groupId).join() === 'mg1', 'a group leader: only their own group');
-ok(M.audiences(member, d).length === 0, 'a member: nobody');
+ok(M.audiences(member, d).map(x => x.kind + ':' + x.groupId).join() === 'life:lg1', 'a life group leader: only their own life group');
+ok(M.audiences({ id: 'h', manager: false }, d).length === 0, 'a member: nobody');
+ok(M.maySend(member, 'life', 'lg1', d) && !M.maySend(carer, 'life', 'lg1', d), 'a life group\u2019s leader may send to it; others may not');
 ok(!M.maySend(carer, 'people', '', d) && M.maySend(pastor, 'people', '', d), 'only Administrators and Pastors choose people one by one');
 ok(M.maySend(carer, 'care', 'cg1', d) && !M.maySend(carer, 'staff', '', d) && !M.maySend(member, 'care', 'cg1', d) && !M.maySend(leader, 'group', 'mg2', d) && M.maySend(pastor, 'partners', '', d) && !M.maySend(pastor, 'everyone', '', d), 'maySend agrees');
 

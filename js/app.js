@@ -295,9 +295,13 @@ var Hub = (function () {
   /** Modules may do something for everyone once they are signed in (e.g. keep their care group card up to date). */
   function signedInHooks() { var u = user; setTimeout(function () { if (!u || !user || user.id !== u.id) return; u = user; modules.forEach(function (m) { if (m.signedIn) { try { m.signedIn(u); } catch (e) { console.error('signedIn', m.id, e); } } }); }, 1500); }
   function runUpgrades() { signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
+  /** Is this app switched on (Settings → Apps)? Most are on until switched off; a few (optIn, e.g. Life groups) are off until switched on. */
+  function isOn(id) {
+    var on = ((Store.settings() || {}).modules || {}), m = moduleById(id);
+    return m && m.optIn ? on[id] === true : on[id] !== false;
+  }
   function enabled() {
-    var on = (Store.settings().modules || {});
-    return modules.filter(function (m) { return on[m.id] !== false && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); });
+    return modules.filter(function (m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); });
   }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
 
@@ -324,12 +328,14 @@ var Hub = (function () {
   function rgbHex(c) { return '#' + c.map(function (x) { return ('0' + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2); }).join('').toUpperCase(); }
   function mix(c, to, t) { return c.map(function (x, i) { return x + (to[i] - x) * t; }); }
   function lum(c) { var f = c.map(function (x) { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2]; }
-  /** A theme from any colour: darkened until white writing on it is easy to read (contrast 4.5 or more). */
+  /** A theme from any colour, kept exactly as chosen (bright yellow stays bright yellow). If white writing on it would be
+   *  hard to read (contrast under 4.5), the writing on buttons turns dark instead (on). Links and writing on light
+   *  backgrounds (ink) use a darker shade of the colour, so they stay readable on white. */
   function themeFrom(hex) {
-    var c = hexRgb(hex) || hexRgb('#E8590C'), darkened = false;
-    for (var i = 0; i < 20 && 1.05 / (lum(c) + 0.05) < 4.5; i++) { c = mix(c, [0, 0, 0], 0.08); darkened = true; }
-    return { id: 'custom', accent: rgbHex(c), ink: rgbHex(mix(c, [0, 0, 0], 0.22)), soft: rgbHex(mix(c, [255, 255, 255], 0.86)),
-      side: rgbHex(mix(c, [22, 20, 18], 0.86)), side2: rgbHex(mix(c, [40, 36, 32], 0.78)), darkened: darkened };
+    var c = hexRgb(hex) || hexRgb('#E8590C'), d = c, light = 1.05 / (lum(c) + 0.05) < 4.5;
+    for (var i = 0; i < 20 && 1.05 / (lum(d) + 0.05) < 4.5; i++) d = mix(d, [0, 0, 0], 0.08);
+    return { id: 'custom', accent: rgbHex(c), on: light ? '#1C1814' : '#FFFFFF', ink: rgbHex(mix(d, [0, 0, 0], 0.22)), soft: rgbHex(mix(c, [255, 255, 255], 0.86)),
+      side: rgbHex(mix(d, [22, 20, 18], 0.86)), side2: rgbHex(mix(d, [40, 36, 32], 0.78)), light: light };
   }
   function themeOf(st) {
     var t = (st && st.theme) || {};
@@ -353,14 +359,14 @@ var Hub = (function () {
   function applyTheme(t) {
     if (!t) { try { t = JSON.parse(Store.pref('theme') || 'null'); } catch (e) { t = null; } if (!t) t = THEMES[0]; }
     var dark = document.documentElement.getAttribute('data-mode') === 'dark';
-    var k = t.accent + t.side + dark; if (k === themeKey) return; themeKey = k;
+    var k = t.accent + t.side + (t.on || '') + dark; if (k === themeKey) return; themeKey = k;
     var r = document.documentElement.style, a = hexRgb(t.accent);
     // On dark backgrounds the church's colour gets a lighter shade for writing and a dark pale shade for soft buttons
     var ink = dark && a ? rgbHex(mix(a, [255, 255, 255], 0.45)) : t.ink, soft = dark && a ? rgbHex(mix(a, [30, 26, 23], 0.76)) : t.soft;
-    r.setProperty('--accent', t.accent); r.setProperty('--accent-ink', ink); r.setProperty('--accent-soft', soft);
+    r.setProperty('--accent', t.accent); r.setProperty('--accent-on', t.on || '#FFFFFF'); r.setProperty('--accent-ink', ink); r.setProperty('--accent-soft', soft);
     r.setProperty('--side', t.side); r.setProperty('--side-2', t.side2);
     var meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', t.side);
-    Store.pref('theme', JSON.stringify({ accent: t.accent, ink: t.ink, soft: t.soft, side: t.side, side2: t.side2 }));
+    Store.pref('theme', JSON.stringify({ accent: t.accent, on: t.on || '#FFFFFF', ink: t.ink, soft: t.soft, side: t.side, side2: t.side2 }));
   }
   /** Light / Dark / Automatic (same as this device) – each person's own choice, remembered on this device. A quiet
    *  drop-down like the language one, with a half-shaded circle. */
@@ -964,7 +970,7 @@ var Hub = (function () {
     render();
   }
 
-  return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
+  return { register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };

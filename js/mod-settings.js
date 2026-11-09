@@ -4,7 +4,7 @@
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var MODS = [['people', TX('People'), TX('Directory, households and consent')], ['rosters', TX('Rosters'), TX('Serving rosters, teams and serving together')], ['leave', TX('Leave'), TX('Staff leave (Leave Manager built in)')],
-    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['messages', TX('Messages'), TX('Messages from the church to you and your groups')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
+    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['life', TX('Life groups'), TX('Bible studies, life groups and midweek groups – their leaders name them')], ['messages', TX('Messages'), TX('Messages from the church to you and your groups')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
     ['words', TX('Translations'), TX('Members suggest better wording in their language')]];
 
   /** The number of people with an access level; point at it (or tap it) to see who they are. Long lists (e.g. "No access") stay a number. */
@@ -178,9 +178,8 @@
   }
   /** Apps: each part of Church Hub with a switch. Switching off hides it for everyone; nothing is deleted. */
   function renderApps(st) {
-    var on = st.modules || {};
     return '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p><div class="set-rows">' + MODS.map(function (m) {
-      return '<label class="set-row"><span class="set-l"><b>' + esc(T(m[1])) + '</b><small>' + esc(T(m[2])) + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + ' aria-label="' + esc(T(m[1])) + '"></span></label>';
+      return '<label class="set-row"><span class="set-l"><b>' + esc(T(m[1])) + '</b><small>' + esc(T(m[2])) + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" class="st-mod" value="' + m[0] + '"' + (H.isOn(m[0]) ? ' checked' : '') + ' aria-label="' + esc(T(m[1])) + '"></span></label>';
     }).join('') + '</div><p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>';
   }
 
@@ -212,7 +211,7 @@
   var SWATCHES = ['#E8590C', '#C2410C', '#B91C1C', '#BE185D', '#A3283B', '#9333EA', '#6D3FC0', '#4F46E5',
     '#1D5FB8', '#3B78C2', '#13809A', '#0F7C80', '#2AA198', '#2E7D4F', '#4D7C0F', '#A86A12', '#475569', '#57534E'];
   var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
-  function themeVars(t) { return '--a:' + t.accent + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
+  function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   function renderTheme(st) {
     var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex);
     return '<section class="panel" id="st-theme" data-noauto><h2>' + T('Colours') + '</h2>' +
@@ -226,7 +225,7 @@
         return '<button type="button" class="th-sw' + (c === hex ? ' on' : '') + '" data-c="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === hex) + '" aria-label="' + c + '"></button>';
       }).join('') + '</div>' +
       '<div class="th-any"><label for="st-th-c">' + T('Or pick any colour') + '</label><input type="color" id="st-th-c" value="' + esc(hex.toLowerCase()) + '"><code id="th-hex">' + esc(hex) + '</code></div>' +
-      '<p class="hint" id="th-dark"' + (shown.darkened ? '' : ' hidden') + '>' + T('Made a little darker, so white writing on buttons stays easy to read.') + '</p>' +
+      '<p class="hint" id="th-dark"' + (shown.light ? '' : ' hidden') + '>' + T('Writing on buttons will be dark, so it stays easy to read.') + '</p>' +
       '<button class="btn save" data-act="settings:theme">' + T('Save the church’s colour') + '</button></section>';
   }
   /** Trying a colour: only the sample changes, until Save. */
@@ -235,7 +234,7 @@
     prev.setAttribute('style', themeVars(t));
     document.getElementById('th-hex').textContent = hex;
     var box = document.getElementById('st-th-c'); if (box.value.toLowerCase() !== hex.toLowerCase()) box.value = hex.toLowerCase();   // not while it is being dragged
-    document.getElementById('th-dark').hidden = !t.darkened;
+    document.getElementById('th-dark').hidden = !t.light;
     [].forEach.call(document.querySelectorAll('.th-sw'), function (b) { var on = b.dataset.c === hex; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
   }
   if (typeof document !== 'undefined') {

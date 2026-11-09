@@ -10,7 +10,8 @@
   function me() { return H.user(); }
   function manager() { return H.can('*') || H.can('people.edit'); }   // Administrators and Pastors
   function who() { var u = me(); return { id: u ? u.id : '', manager: manager() }; }
-  function data() { return { people: S.list('people'), careGroups: S.list('careGroups'), msgGroups: S.list('msgGroups') }; }
+  /** Care groups and life groups only while switched on (Settings → Apps). */
+  function data() { return { people: S.list('people'), careGroups: H.isOn('care') ? S.list('careGroups') : [], lifeGroups: H.isOn('life') ? S.list('lifeGroups') : [], msgGroups: S.list('msgGroups') }; }
   function audiences() { return Msg.audiences(who(), data()); }
   function key(a) { return a.kind + (a.groupId ? '/' + a.groupId : ''); }
   /** The audience's name as shown: Staff and Church Partners in the chosen language, groups as they are called. */
@@ -19,7 +20,7 @@
   function audLong(m) {
     var n = (m.to || []).length;
     if (m.kind === 'people') return m.audience ? esc(m.audience) : esc(TN('{n} person', '{n} people', n));
-    var base = m.kind === 'care' ? T('Care group') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
+    var base = m.kind === 'care' ? T('Care group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Life group') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
     return base + (m.some ? ' · ' + esc(TN('{n} person', '{n} people', n)) : '');
   }
   function unreadCount() { var u = me(); return u ? Msg.unread(S.list('messages'), u.id).length : 0; }
@@ -82,7 +83,7 @@
   /** A person's name for the checklist: from their record, or the name the group keeps (carers and leaders who aren't staff). */
   function personName(id, a) {
     var p = S.get('people', id); if (p) return H.name(p);
-    var g = a.kind === 'care' ? S.get('careGroups', a.groupId) : a.kind === 'group' ? S.get('msgGroups', a.groupId) : null;
+    var g = a.kind === 'care' ? S.get('careGroups', a.groupId) : a.kind === 'life' ? S.get('lifeGroups', a.groupId) : a.kind === 'group' ? S.get('msgGroups', a.groupId) : null;
     return (g && g.names && g.names[id]) || T('Someone');
   }
   function reach(a) {
@@ -103,7 +104,7 @@
     var cur = as.filter(function (a) { return key(a) === draft.to; })[0] || as[0]; draft.to = key(cur);
     var opt = function (a) { return '<option value="' + esc(key(a)) + '"' + (key(a) === draft.to ? ' selected' : '') + '>' + esc(audName(a.kind, a.name)) + '</option>'; };
     var groupOf = function (k) { return as.filter(function (a) { return a.kind === k; }); };
-    var sel = [['', groupOf('people').concat(groupOf('staff'), groupOf('partners'))], [T('Care groups'), groupOf('care')], [T('Message groups'), groupOf('group')]].map(function (g) {
+    var sel = [['', groupOf('people').concat(groupOf('staff'), groupOf('partners'))], [T('Care groups'), groupOf('care')], [T('Life groups'), groupOf('life')], [T('Message groups'), groupOf('group')]].map(function (g) {
       if (!g[1].length) return ''; return g[0] ? '<optgroup label="' + esc(g[0]) + '">' + g[1].map(opt).join('') + '</optgroup>' : g[1].map(opt).join('');
     }).join('');
     return head(T('Send a message to a group. Everyone in it sees it here, in Church Hub.'), 'send') +

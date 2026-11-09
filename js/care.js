@@ -1,6 +1,7 @@
 /*
  * Church Hub – care groups (the church may call them home groups, cell groups, classes…: Settings → Terminology (Church Words)).
- * A care group: careGroups/{id} = { name, leaderIds, memberIds, names: { personId: 'First Last' } } – leaders (carers)
+ * A care group: careGroups/{id} = { name, leaderIds, memberIds, names: { personId: 'First Last' }, type } – type 'life' for a
+ * life group (Bible study, midweek group: js/mod-life.js), which works the same way. Leaders (carers)
  * are members too. A person may be in several care groups (and a carer in one, a member in another). Administrators
  * and Pastors set up groups; a group's carers may add and remove its members.
  * What the group sees of each member is that member's card, careGroups/{id}/share/{personId}: their name always, and –
@@ -72,11 +73,12 @@ var Care = (function () {
     }
     return c;
   }
-  /** A carer may change only who is in their own group (not its name or carers), and stays in it. */
+  /** A carer may change only who is in their own group (not its name or carers), and stays in it. A life group's leaders
+   *  (type 'life': Bible studies, midweek groups) may also name their group. */
   function leaderMayChange(before, after, pid) {
     if (!before || !after || !isLeader(before, pid)) return false;
     var same = function (k) { return JSON.stringify(before[k] || null) === JSON.stringify(after[k] || null); };
-    return same('name') && same('leaderIds') && same('areas') && (after.memberIds || []).indexOf(pid) >= 0 &&
+    return (same('name') || (before.type === 'life' && String(after.name || '').trim() !== '')) && same('type') && same('leaderIds') && same('areas') && (after.memberIds || []).indexOf(pid) >= 0 &&
       (after.leaderIds || []).every(function (l) { return (after.memberIds || []).indexOf(l) >= 0; });
   }
   /** People in more than one group. */

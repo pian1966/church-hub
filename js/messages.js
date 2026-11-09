@@ -17,7 +17,7 @@
  */
 var Msg = (function () {
   'use strict';
-  var KINDS = ['care', 'group', 'staff', 'partners', 'people'];
+  var KINDS = ['care', 'life', 'group', 'staff', 'partners', 'people'];
   var MAX_BODY = 4000, MAX_TITLE = 120;
 
   function alive(p) {
@@ -28,14 +28,14 @@ var Msg = (function () {
   function byId(list, id) { return (list || []).filter(function (x) { return x.id === id; })[0] || null; }
   function leads(g, pid) { return !!g && (g.leaderIds || []).indexOf(pid) >= 0; }
 
-  /** Who a message to this audience goes to (person ids). d = { people, careGroups, msgGroups }. "Chosen people": everyone
+  /** Who a message to this audience goes to (person ids). d = { people, careGroups, lifeGroups, msgGroups }. "Chosen people": everyone
    *  who may be chosen (adults still in the church). */
   function recipients(kind, groupId, d) {
     d = d || {};
     if (kind === 'staff') return (d.people || []).filter(function (p) { return alive(p) && !!p.staff; }).map(function (p) { return p.id; });
     if (kind === 'people') return (d.people || []).filter(alive).map(function (p) { return p.id; });
     if (kind === 'partners') return (d.people || []).filter(function (p) { return alive(p) && p.category === 'Church Partner'; }).map(function (p) { return p.id; });
-    var g = byId(kind === 'care' ? d.careGroups : kind === 'group' ? d.msgGroups : [], groupId);
+    var g = byId(kind === 'care' ? d.careGroups : kind === 'life' ? d.lifeGroups : kind === 'group' ? d.msgGroups : [], groupId);
     return g ? uniq((g.memberIds || []).concat(g.leaderIds || [])) : [];
   }
 
@@ -47,6 +47,7 @@ var Msg = (function () {
     d = d || {}; var out = [], name = function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); };
     if (who.manager) { out.push({ kind: 'people', groupId: '', name: 'Chosen people' }); out.push({ kind: 'staff', groupId: '', name: 'Staff' }); out.push({ kind: 'partners', groupId: '', name: 'Church Partners' }); }
     (d.careGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'care', groupId: g.id, name: g.name }); });
+    (d.lifeGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'life', groupId: g.id, name: g.name }); });
     (d.msgGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'group', groupId: g.id, name: g.name }); });
     return out;
   }
@@ -55,6 +56,7 @@ var Msg = (function () {
     if (KINDS.indexOf(kind) < 0) return false;
     if (who.manager) return true;
     if (kind === 'care') return leads(byId((d || {}).careGroups, groupId), who.id);
+    if (kind === 'life') return leads(byId((d || {}).lifeGroups, groupId), who.id);
     if (kind === 'group') return leads(byId((d || {}).msgGroups, groupId), who.id);
     return false;
   }

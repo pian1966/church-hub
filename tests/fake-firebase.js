@@ -139,7 +139,8 @@
       write: function (c, op, id, b, a) {
         if (is(c, ['admin', 'pastor'])) return true;
         if (op !== 'update' || !is(c, ANY) || !meIn(c, (b.leaderIds || []))) return false;
-        return onlyChanges(b, a, ['memberIds', 'names', 'updatedAt']) && meIn(c, a.memberIds) && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
+        var life = b.type === 'life' && typeof a.name === 'string' && a.name.length > 0 && a.name.length <= 80;   // a life group's leaders may name it
+        return onlyChanges(b, a, life ? ['name', 'memberIds', 'names', 'updatedAt'] : ['memberIds', 'names', 'updatedAt']) && meIn(c, a.memberIds) && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
       } },
     'careGroups/share': { read: function (c, pid, d, gid) {
         var own = (docs['settings/church'] || {}).seeCareOwn !== false;
@@ -162,11 +163,11 @@
         if (!is(c, ANY) || !isMe(c, a.fromId)) return false;
         if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])) return false;
         if (a.some !== undefined && typeof a.some !== 'boolean') return false;
-        if (['care', 'group', 'staff', 'partners', 'people'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
+        if (['care', 'life', 'group', 'staff', 'partners', 'people'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
         if (!Array.isArray(a.to) || !a.to.length || a.to.length > 3000 || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
         if (mgr) return true;
-        var g = a.kind === 'care' ? docs['careGroups/' + a.groupId] : a.kind === 'group' ? docs['msgGroups/' + a.groupId] : null;
+        var g = a.kind === 'care' || a.kind === 'life' ? docs['careGroups/' + a.groupId] : a.kind === 'group' ? docs['msgGroups/' + a.groupId] : null;
         if (!g || !meIn(c, (g.leaderIds || []))) return false;
         var ok = (g.memberIds || []).concat(a.kind === 'group' ? g.leaderIds || [] : []);
         return a.to.every(function (x) { return ok.indexOf(x) >= 0; });

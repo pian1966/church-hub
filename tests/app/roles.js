@@ -144,7 +144,7 @@ module.exports = async function (ctx) {
 
   console.log('Administrator: what others can see of contact details');
   s = await session('linda.pillay@example.com', seedDocs());
-  await s.go('settings'); check(await s.page.$$eval('.st-see', b => b.length === 12 && b.every(x => !x.checked)), 'Settings → Who can see what: name only for every role by default');
+  await s.go('settings/access'); check(await s.page.$$eval('.st-see', b => b.length === 12 && b.every(x => !x.checked)), 'Settings → Who can see what: name only for every role by default');
   await s.page.check('.st-see[data-t="member"][value="email"]'); await s.page.check('.st-see[data-t="rosters"][value="email"]'); await s.page.check('.st-see[data-t="rosters"][value="mobile"]');
   await s.page.waitForTimeout(1200); await s.settle(); docs = await s.docsNow();
   const shareWho = Object.keys(docs).filter(k => k.startsWith('directory/') && k !== 'directory/p14').map(k => k.split('/')[1]).filter(id => docs['people/' + id] && docs['people/' + id].email)[0];

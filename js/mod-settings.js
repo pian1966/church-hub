@@ -161,23 +161,40 @@
    *  (only adults who agreed to be in the directory; name only unless ticked), and who has it. Administrators and
    *  Pastors always see everything; No access can't sign in. Saved as settings.seeOthers = { member, rosters, kids }. */
   var ACCESS = [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']];
-  /** The church's colours (settings.theme = { id } or { id: 'custom', color }): buttons, links, the turning cross, the logo
-   *  and the menu, for everyone. Each choice shows a small sample: a button, the cross on the menu colour. */
-  var CROSS = 'M12 3v18M6 9h12';
+  /** The church's colours (settings.theme = { id: 'custom', color } – older choices { id } still work): buttons, links,
+   *  the turning cross, the logo and the menu, for everyone. Like Leave Manager's "My colour": a live sample at the top,
+   *  round swatches, any colour by its code, and a Save button – nothing changes for anyone until it is saved. */
+  var SWATCHES = ['#E8590C', '#C2410C', '#B91C1C', '#BE185D', '#A3283B', '#9333EA', '#6D3FC0', '#4F46E5',
+    '#1D5FB8', '#3B78C2', '#13809A', '#0F7C80', '#2AA198', '#2E7D4F', '#4D7C0F', '#A86A12', '#475569', '#57534E'];
+  var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
+  function themeVars(t) { return '--a:' + t.accent + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   function renderTheme(st) {
-    var cur = (st.theme || {}).id || 'orange', custom = (st.theme || {}).color || '#2F6FB3', mine = H.themeFrom(custom);
-    var sample = function (t) {
-      return '<span class="th-sample" style="--a:' + t.accent + ';--s:' + t.side + '"><span class="th-side"><span class="th-mark">' + H.icon(CROSS, 14) + '</span></span><span class="th-btn">' + T('Save') + '</span></span>';
-    };
-    return '<section class="panel" id="st-theme" style="grid-column:1/-1"><h2>' + T('Colours') + '</h2>' +
+    var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex);
+    return '<section class="panel" id="st-theme" data-noauto style="grid-column:1/-1"><h2>' + T('Colours') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.') + '</p>' +
-      '<div class="th-grid" role="radiogroup" aria-label="' + esc(T('Colours')) + '">' + H.THEMES.map(function (t) {
-        return '<label class="th-opt"><input type="radio" name="st-th" value="' + t.id + '"' + (cur === t.id ? ' checked' : '') + '>' + sample(t) + '<span>' + esc(T(t.name)) + '</span></label>';
-      }).join('') +
-      '<label class="th-opt"><input type="radio" name="st-th" value="custom"' + (cur === 'custom' ? ' checked' : '') + '>' + sample(mine) +
-        '<span>' + T('Your own colour') + ' <input type="color" id="st-th-c" value="' + esc(custom) + '" aria-label="' + esc(T('Your own colour')) + '"></span></label></div>' +
-      (cur === 'custom' && mine.darkened ? '<p class="hint">' + T('Made a little darker, so white writing on buttons stays easy to read.') + '</p>' : '') +
-      '<button class="btn small" data-autosave data-act="settings:theme">' + T('Save') + '</button></section>';
+      // The live sample: the menu with the logo, a button, a Save button, a link and the turning cross
+      '<div class="th-prev" id="th-prev" style="' + themeVars(shown) + '">' +
+        '<div class="th-pside"><span class="th-pmark">' + H.icon('M12 3v18M6 9h12', 18) + '</span><span class="th-pnav"></span><span class="th-pnav on"></span><span class="th-pnav"></span></div>' +
+        '<div class="th-pmain"><span class="th-pbtn">' + H.icon(H.ICON.plus, 16) + T('Add') + '</span><span class="th-psave">' + T('Save') + '</span>' +
+        '<span class="th-plink">Church Hub</span><span class="th-pcross">' + CROSS_SVG + '</span></div></div>' +
+      '<div class="th-sws" role="radiogroup" aria-label="' + esc(T('Colours')) + '">' + SWATCHES.map(function (c) {
+        return '<button type="button" class="th-sw' + (c === hex ? ' on' : '') + '" data-c="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === hex) + '" aria-label="' + c + '"></button>';
+      }).join('') + '</div>' +
+      '<div class="th-any"><label for="st-th-c">' + T('Or pick any colour') + '</label><input type="color" id="st-th-c" value="' + esc(hex.toLowerCase()) + '"><code id="th-hex">' + esc(hex) + '</code></div>' +
+      '<p class="hint" id="th-dark"' + (shown.darkened ? '' : ' hidden') + '>' + T('Made a little darker, so white writing on buttons stays easy to read.') + '</p>' +
+      '<button class="btn save" data-act="settings:theme">' + T('Save the church’s colour') + '</button></section>';
+  }
+  /** Trying a colour: only the sample changes, until Save. */
+  function themeTry(hex) {
+    hex = String(hex || '').toUpperCase(); var t = H.themeFrom(hex), prev = document.getElementById('th-prev'); if (!prev) return;
+    prev.setAttribute('style', themeVars(t));
+    document.getElementById('th-hex').textContent = hex; document.getElementById('st-th-c').value = hex.toLowerCase();
+    document.getElementById('th-dark').hidden = !t.darkened;
+    [].forEach.call(document.querySelectorAll('.th-sw'), function (b) { var on = b.dataset.c === hex; b.classList.toggle('on', on); b.setAttribute('aria-checked', on); });
+  }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('click', function (ev) { var b = ev.target.closest && ev.target.closest('.th-sw'); if (b) themeTry(b.dataset.c); });
+    document.addEventListener('input', function (ev) { if (ev.target && ev.target.id === 'st-th-c') themeTry(ev.target.value); });
   }
   var CARE_SEE = ['rosters', 'kids'];   // may be allowed to see the care groups (firestore.rules: seesCare)
   function renderAccess(st, byRole) {
@@ -477,11 +494,10 @@
         H.render(); H.toast(T('Saved'));
       },
       theme: function () {
-        var on = document.querySelector('input[name="st-th"]:checked'), c = document.getElementById('st-th-c');
-        if (c && document.activeElement === c && on && on.value !== 'custom') { var r = document.querySelector('input[name="st-th"][value="custom"]'); if (r) { r.checked = true; on = r; } }   // picking a colour chooses "Your own colour"
-        var id = on ? on.value : 'orange', theme = id === 'custom' ? { id: 'custom', color: (c && c.value) || '#2F6FB3' } : { id: id };
-        if (JSON.stringify(theme) === JSON.stringify(S.settings().theme || { id: 'orange' })) return;
-        S.setSettings({ theme: theme }, 'Colours: ' + (id === 'custom' ? 'own colour ' + theme.color : id));
+        var hex = (document.getElementById('th-hex').textContent || '').trim().toUpperCase(); if (!/^#[0-9A-F]{6}$/.test(hex)) return;
+        var cur = S.settings().theme || {};
+        if (cur.id === 'custom' && String(cur.color).toUpperCase() === hex) { H.toast(T('Saved')); return; }
+        S.setSettings({ theme: { id: 'custom', color: hex } }, 'Colours: the church’s colour is now ' + hex);
         H.applyTheme(H.themeOf(S.settings())); H.render(); H.toast(T('Saved'));
       },
       name: function () {

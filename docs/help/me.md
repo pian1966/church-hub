@@ -84,4 +84,4 @@ Yes – **Get the Church Hub app for Android** is on the Me page. See [getting-s
 For: Members
 
 If you're in one, **My care group** and **My life groups** show on the Me page. See [care-groups.md](care-groups.md)
-and [life-groups.md](life-groups.md).
+and [midweek-groups.md](midweek-groups.md).

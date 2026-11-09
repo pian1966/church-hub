@@ -16,7 +16,7 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: teams, services, filling the roster, together/apart |
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |
 | [care-groups.md](care-groups.md) | Care groups for members, carers and staff |
-| [life-groups.md](life-groups.md) | Life groups / Bible studies for members, leaders and staff |
+| [midweek-groups.md](midweek-groups.md) | Life groups / Bible studies for members, leaders and staff |
 | [messages.md](messages.md) | Reading and sending messages inside Church Hub |
 | [people.md](people.md) | For staff: adding and editing people, households, children, duplicates, searching, a death |
 | [privacy.md](privacy.md) | Consent, what others can see, and the Privacy pages for Administrators |

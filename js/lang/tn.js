@@ -250,7 +250,7 @@ I18n.add('tn', {
     "Colours": "Mebala",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "Mmala wa kereke wa dikonopo, dikgokagano, sefapaano se se dikologang le menyu – botlhe ba a o bona.",
     "Your own colour": "Mmala wa gago",
-    "Made a little darker, so white writing on buttons stays easy to read.": "O dirilwe o fifale go le gonnye, gore mokwalo o mosweu mo dikonopong o balege motlhofo.",
+    "Writing on buttons will be dark, so it stays easy to read.": "Mokwalo mo dikonopong o tla nna montsho, gore o balege motlhofo.",
     "Check your email": "Leba imeile ya gago",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "Re rometse kgokagano ya go tsena kwa {email}. E bule mo sedirisiweng se go tsena. Go ka tsaya motsotso, mme e ka wela mo foldareng ya spam.",
     "Use a different way": "Dirisa tsela e nngwe",

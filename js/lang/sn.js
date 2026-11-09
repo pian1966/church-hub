@@ -250,7 +250,7 @@ I18n.add('sn', {
     "Colours": "Mavara",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "Ruvara rwechechi rwemabhatani, zvinongedzo, muchinjikwa unotenderera nemenyu – munhu wese anoruona.",
     "Your own colour": "Ruvara rwenyu",
-    "Made a little darker, so white writing on buttons stays easy to read.": "Rwakasvibiswa zvishoma, kuti mavara machena ari pamabhatani averengeke zviri nyore.",
+    "Writing on buttons will be dark, so it stays easy to read.": "Mavara ari pamabhatani achave matema, kuti averengeke zviri nyore.",
     "Check your email": "Tarisa email yako",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "Takutumira link yekupinda ku{email}. Ivhure pamuchina uyu kuti upinde. Zvinogona kutora miniti, uye inogona kuwira mufoda yespam.",
     "Use a different way": "Shandisa imwe nzira",

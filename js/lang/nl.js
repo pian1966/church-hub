@@ -250,7 +250,7 @@ I18n.add('nl', {
     "Colours": "Kleuren",
     "The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.": "De kleur van de kerk voor knoppen, links, het draaiende kruis en het menu – iedereen ziet die.",
     "Your own colour": "Eigen kleur",
-    "Made a little darker, so white writing on buttons stays easy to read.": "Iets donkerder gemaakt, zodat witte tekst op knoppen goed leesbaar blijft.",
+    "Writing on buttons will be dark, so it stays easy to read.": "Tekst op knoppen wordt donker, zodat die goed leesbaar blijft.",
     "Check your email": "Kijk in uw e-mail",
     "We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.": "We hebben een aanmeldlink gestuurd naar {email}. Open die op dit apparaat om u aan te melden. Het kan een minuut duren, en hij kan in uw spammap terechtkomen.",
     "Use a different way": "Een andere manier gebruiken",

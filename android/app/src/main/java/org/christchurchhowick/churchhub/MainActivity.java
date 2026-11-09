@@ -11,6 +11,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.speech.RecognizerIntent;
+import java.util.ArrayList;
 import android.os.CancellationSignal;
 import android.os.SystemClock;
 import android.webkit.JavascriptInterface;
@@ -61,6 +63,7 @@ public class MainActivity extends Activity {
     /** Reload when the app comes back after this long in the background, so rosters are fresh. */
     private static final long REFRESH_AFTER_MS = 10 * 60 * 1000;
     private static final int PICK_FILE = 41;
+    private static final int LISTEN = 42;
 
     private WebView web;
     private long pausedAt = 0;
@@ -160,6 +163,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == LISTEN) { heard(resultCode, data); return; }
         if (requestCode != PICK_FILE || fileCallback == null) return;
         Uri[] picked = null;
         boolean fromCamera = cameraFile != null && cameraFile.length() > 0
@@ -331,6 +335,13 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> startGoogleSignIn(webClientId));
         }
 
+        /** The microphone in Advanced search ("Ask in your own words"): Android's own speech window turns speech into text,
+         *  which goes back to the page (window.churchHubHeard). The app itself never records or keeps anything. */
+        @JavascriptInterface
+        public void listen(String lang) {
+            runOnUiThread(() -> startListening(lang));
+        }
+
         @JavascriptInterface
         public void retry() {
             runOnUiThread(() -> web.loadUrl(APP_URL));
@@ -375,6 +386,26 @@ public class MainActivity extends Activity {
     }
 
     /** Calls window.<fn>(text) in the page, with the text safely quoted. */
+    private void startListening(String lang) {
+        Intent talk = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
+        talk.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
+        talk.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang == null || lang.trim().isEmpty() ? "en-ZA" : lang.trim());
+        talk.putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask Church Hub");
+        talk.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
+        try { startActivityForResult(talk, LISTEN); }
+        catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Speech to text isn't available on this phone.", Toast.LENGTH_LONG).show();
+            web.evaluateJavascript("window.churchHubHeard && window.churchHubHeard(null)", null);
+        }
+    }
+
+    /** What Android's speech window heard → the page; nothing heard (or cancelled) → null, so the page says so. */
+    private void heard(int resultCode, Intent data) {
+        ArrayList<String> said = resultCode == RESULT_OK && data != null ? data.getStringArrayListExtra(RecognizerIntent.EXTRA_RESULTS) : null;
+        String text = said != null && !said.isEmpty() ? said.get(0) : null;
+        web.evaluateJavascript("window.churchHubHeard && window.churchHubHeard(" + (text == null ? "null" : JSONObject.quote(text)) + ")", null);
+    }
+
     private void sendToPage(String fn, String text) {
         String arg = JSONObject.quote(text == null ? "" : text);
         web.evaluateJavascript("window." + fn + " && window." + fn + "(" + arg + ")", null);

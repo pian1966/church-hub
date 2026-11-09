@@ -688,3 +688,18 @@ label.set-row { cursor: pointer; }
 }
 html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .panel > .hint + .set-rows { margin-top: 12px; }
+
+/* Advanced search: ask in your own words (js/people/search.js askPanel, js/ask.js) */
+.ask-row { display: flex; gap: 8px; align-items: center; margin: 0; }
+.ask-row input[type=search] { flex: 1; min-width: 0; font-size: 16px; padding: 12px 14px; border-radius: 12px; }
+.ask-mic { width: 46px; height: 46px; flex: 0 0 auto; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; }
+.ask-mic.on { background: var(--accent); color: var(--accent-on, #fff); border-color: var(--accent); animation: ask-pulse 1.2s ease-in-out infinite; }
+@keyframes ask-pulse { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); } 50% { box-shadow: 0 0 0 10px color-mix(in srgb, var(--accent) 0%, transparent); } }
+@media (prefers-reduced-motion: reduce) { .ask-mic.on { animation: none; } }
+.ask-live { margin: 8px 0 0; font-weight: 600; color: var(--accent-ink); }
+.ask-ex { display: flex; flex-wrap: wrap; gap: 8px; }
+.ask-chip { text-align: left; font: inherit; font-size: 13.5px; line-height: 1.35; padding: 7px 12px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); color: var(--ink); cursor: pointer; }
+.ask-chip:hover, .ask-chip:focus-visible { border-color: var(--accent); color: var(--accent-ink); }
+.ask-said { margin-top: 14px; } .ask-said .tag { margin: 2px 4px 2px 0; display: inline-block; }
+.ask-exw summary { cursor: pointer; margin: 12px 0 8px; } .ask-exw[open] summary { margin-bottom: 10px; }
+@media (max-width: 520px) { .ask-row { flex-wrap: wrap; } .ask-row input[type=search] { flex-basis: 100%; } .ask-row .btn.primary { flex: 1; justify-content: center; } }

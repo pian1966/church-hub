@@ -268,6 +268,17 @@ gender, Church Partner dates, or filling gaps (email or mobile → Unknown, hous
 marital status, people who died out of category; each person changed is audit-logged, and **Undo** puts everyone back
 (and removes households it made). Long jobs show the turning cross (`Hub.busy`) until everything is saved.
 
+**Ask in your own words** (top of Advanced search; `js/ask.js`, `tests/ask.test.js`, `tests/app/ask.js`): a question in plain
+English, typed or spoken, is turned into the filters below (people – the same search, so the same role limits, ID-number look-up
+and audit) or into a list of services from the roster (date range, which services or time of day, gaps, a position nobody fills,
+a person serving – also at a morning and an evening service, or twice, on the same day). No outside service: a set of rules, so it
+shows **Understood as …** and any words it didn't understand rather than guessing; fields the role may not use are named and left
+out. The church's own words (Church Words, e.g. Parishioners) and its service names (10am, Memorial) are understood. "or" between
+two of the same kind becomes your own logic ("(1 OR 2) AND 3"). Dates without a year are this year, or next year when long gone
+or when the range runs past December. Each question is audit-logged. **Microphone**: the browser's speech-to-text (Chrome, Edge,
+Safari) or, in the Android app, Android's own speech window (`ChurchHubApp.listen(lang)` → `window.churchHubHeard(text)`);
+hidden where neither exists (e.g. Firefox). The words heard are only put in the box; nothing is recorded or kept.
+
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,
 and "change spouse to Widowed" for a married spouse in the same family). The person stays on the records as category *Deceased*

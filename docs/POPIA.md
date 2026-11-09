@@ -76,6 +76,9 @@ This is a design checklist, not legal advice – the church's Information Office
 Advanced search only offers the details a role may already see, and never medical notes, pastoral notes or collection
 restrictions. Downloading results (CSV) is recorded in the audit log with how many people and which columns. Downloads
 should stay on church computers and be deleted once used.
+**Ask in your own words** uses the same search and limits, and each question is written in the audit log. The microphone uses
+the phone's or browser's own speech-to-text (Google's or Apple's speech service turns the sound into words); Church Hub keeps no
+recording, and the hint on the button says so. People who'd rather not can type instead.
 
 ## Offers to serve
 When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, at which services, their optional note and the

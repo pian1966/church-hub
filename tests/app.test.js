@@ -82,7 +82,8 @@ function seedDocs(opts) {
 function serve() {
   return new Promise(res => {
     const srv = http.createServer((req, rsp) => {
-      const f = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
+      let f = path.join(ROOT, decodeURIComponent(req.url.split('?')[0]));
+      if (f.startsWith(ROOT) && fs.existsSync(f) && fs.statSync(f).isDirectory()) f = path.join(f, 'index.html');   // like GitHub Pages: a folder shows its index.html (sw.js keeps ./)
       if (!f.startsWith(ROOT) || !fs.existsSync(f) || fs.statSync(f).isDirectory()) { rsp.writeHead(404); return rsp.end(); }
       rsp.writeHead(200, { 'Content-Type': { '.html': 'text/html', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png' }[path.extname(f)] || 'application/octet-stream' });
       fs.createReadStream(f).pipe(rsp);

@@ -330,14 +330,25 @@ module.exports = async function (ctx) {
 
   console.log('The church’s colours (Settings → Colours)');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings');
-  check(await s.page.$$eval('input[name="st-th"]', r => r.map(x => x.value).join()) === 'orange,blue,green,purple,burgundy,teal,gold,slate,custom', 'eight colour themes and “Your own colour”');
-  await s.page.check('input[name="st-th"][value="green"]'); await s.page.waitForTimeout(1200); await s.settle(); docs = await s.docsNow();
   const accent = () => s.page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toUpperCase());
-  check(JSON.stringify(docs['settings/church'].theme) === '{"id":"green"}' && await accent() === '#2E7D4F' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).backgroundColor) === 'rgb(46, 125, 79)', 'choosing Green saves it, and buttons, the cross and the logo turn green');
-  await s.page.$eval('#st-th-c', e => { e.value = '#FFE14D'; e.focus(); e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
-  await s.page.waitForTimeout(1200); await s.settle(); docs = await s.docsNow();
+  check(await s.page.$$eval('.th-sw', b => b.length) >= 16 && await s.page.isVisible('#th-prev .th-pcross svg') && await s.page.isVisible('#st-th-c'), 'round colour swatches, any colour, and a live sample with the turning cross');
+  await s.page.click('.th-sw[data-c="#2E7D4F"]');
+  check(await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#2E7D4F')) && await accent() === '#E8590C' && (await s.page.textContent('#th-hex')) === '#2E7D4F', 'picking a colour changes only the sample until Save');
+  await s.page.click('[data-act="settings:theme"]'); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['settings/church'].theme) === '{"id":"custom","color":"#2E7D4F"}' && await accent() === '#2E7D4F' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).backgroundColor) === 'rgb(46, 125, 79)', 'Save: buttons, the cross, the logo and the menu turn that colour, for everyone');
+  await s.page.$eval('#st-th-c', e => { e.value = '#ffe14d'; e.dispatchEvent(new Event('input', { bubbles: true })); });
+  check(await s.page.isVisible('#th-dark'), 'a pale colour (yellow): it says it will be made a little darker');
+  await s.page.click('[data-act="settings:theme"]'); await s.settle(); docs = await s.docsNow();
   const a2 = await accent(), lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
-  check(docs['settings/church'].theme.id === 'custom' && docs['settings/church'].theme.color.toUpperCase() === '#FFE14D' && 1.05 / (lum(a2) + 0.05) >= 4.5 && (await s.text()).includes('Made a little darker'), 'a pale own colour (yellow) is darkened so white writing on buttons stays readable');
+  check(docs['settings/church'].theme.color === '#FFE14D' && 1.05 / (lum(a2) + 0.05) >= 4.5, '… and it is: white writing on buttons stays readable');
   check(await s.page.evaluate(() => JSON.parse(localStorage.getItem('church_hub_pref_theme') || '{}').accent) === a2, 'remembered on the device for the sign-in screen');
+  // Light or dark: each person's own choice on this device
+  check(await s.page.$$eval('.side .mode-pick button', b => b.map(x => x.dataset.m).join()) === 'light,dark,', 'Light, Dark or Automatic (same as this device) in the menu');
+  await s.page.click('.side [data-act="hub:mode"][data-m="dark"]');
+  const dark = await s.page.evaluate(() => ({ mode: document.documentElement.getAttribute('data-mode'), bg: getComputedStyle(document.body).backgroundColor, pref: localStorage.getItem('church_hub_pref_mode') }));
+  check(dark.mode === 'dark' && dark.bg === 'rgb(19, 17, 15)' && dark.pref === 'dark' && await s.page.$eval('.side [data-m="dark"]', b => b.classList.contains('on')), 'Dark: dark pages, remembered on this device');
+  await s.page.click('.side [data-act="hub:mode"][data-m="light"]');
+  check(await s.page.evaluate(() => document.documentElement.getAttribute('data-mode')) === 'light' && await s.page.evaluate(() => getComputedStyle(document.body).backgroundColor) === 'rgb(246, 244, 241)', 'Light again');
+  check(!Object.values(await s.docsNow()).some(d => d && d.action && /mode|dark/i.test(d.action)), 'a personal choice: nothing saved for the church');
   await finish(s);
 };

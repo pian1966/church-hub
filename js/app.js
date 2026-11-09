@@ -336,18 +336,42 @@ var Hub = (function () {
     if (t.id === 'custom' && hexRgb(t.color)) return themeFrom(t.color);
     return THEMES.filter(function (x) { return x.id === t.id; })[0] || THEMES[0];
   }
+  /** Light or dark: each person's own choice on each device (Store.pref('mode'): 'light', 'dark' or '' = same as the device). */
+  function modeChoice() { return Store.pref('mode') || ''; }
+  function isDark() {
+    var m = modeChoice();
+    return m === 'dark' || (!m && !!(window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches));
+  }
+  function applyMode() {
+    var dark = isDark(); document.documentElement.setAttribute('data-mode', dark ? 'dark' : 'light');
+    themeKey = ''; applyTheme(Store.settings && Store.settings() ? themeOf(Store.settings()) : null);
+  }
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (!modeChoice()) applyMode(); }); } catch (e) { /* older browsers */ }
+  }
   var themeKey = '';
   function applyTheme(t) {
-    if (!t) { try { t = JSON.parse(Store.pref('theme') || 'null'); } catch (e) { t = null; } if (!t) return; }
-    var k = t.accent + t.side; if (k === themeKey) return; themeKey = k;
-    var r = document.documentElement.style;
-    r.setProperty('--accent', t.accent); r.setProperty('--accent-ink', t.ink); r.setProperty('--accent-soft', t.soft);
+    if (!t) { try { t = JSON.parse(Store.pref('theme') || 'null'); } catch (e) { t = null; } if (!t) t = THEMES[0]; }
+    var dark = document.documentElement.getAttribute('data-mode') === 'dark';
+    var k = t.accent + t.side + dark; if (k === themeKey) return; themeKey = k;
+    var r = document.documentElement.style, a = hexRgb(t.accent);
+    // On dark backgrounds the church's colour gets a lighter shade for writing and a dark pale shade for soft buttons
+    var ink = dark && a ? rgbHex(mix(a, [255, 255, 255], 0.45)) : t.ink, soft = dark && a ? rgbHex(mix(a, [30, 26, 23], 0.76)) : t.soft;
+    r.setProperty('--accent', t.accent); r.setProperty('--accent-ink', ink); r.setProperty('--accent-soft', soft);
     r.setProperty('--side', t.side); r.setProperty('--side-2', t.side2);
     var meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', t.side);
     Store.pref('theme', JSON.stringify({ accent: t.accent, ink: t.ink, soft: t.soft, side: t.side, side2: t.side2 }));
   }
+  /** Light / Dark / Automatic (same as this device) – each person's own choice, remembered on this device. */
+  function modePicker() {
+    var m = modeChoice();
+    return '<div class="mode-pick" role="radiogroup" aria-label="' + esc(T('Appearance')) + '">' + [['light', TX('Light')], ['dark', TX('Dark')], ['', TX('Automatic')]].map(function (x) {
+      return '<button type="button" data-act="hub:mode" data-m="' + x[0] + '" role="radio" aria-checked="' + (m === x[0]) + '"' + (m === x[0] ? ' class="on"' : '') + (x[0] ? '' : ' title="' + esc(T('Same as this device')) + '"') + '>' + esc(T(x[1])) + '</button>';
+    }).join('') + '</div>';
+  }
   function render() {
     if (switching) return;   // "View as": the right information is still loading
+    if (!document.documentElement.getAttribute('data-mode')) applyMode();
     if (Store.settings && Store.settings()) applyTheme(themeOf(Store.settings())); else applyTheme();
     if (!user) return renderSignIn();
     modules.forEach(function (m) { if (m.beforeRender) { try { m.beforeRender(); } catch (e) { console.error(m.id, e); } } });   // e.g. approved translations
@@ -395,7 +419,7 @@ var Hub = (function () {
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
-      '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '</div>' +
+      '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div style="margin-top:8px">' + modePicker() + '</div></div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
       (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
@@ -730,11 +754,13 @@ var Hub = (function () {
         .catch(function (e) { el.disabled = false; errEl.textContent = T('Setting up didn’t work ({code}). Check the rules were published (setup guide, step 7).', { code: (e && e.code) || 'error' }); errEl.hidden = false; });
     },
     reset: function () { if (confirmBtn(this)) { Store.reset(makeSampleData); user = Store.get('people', user.id) || null; render(); toast(T('Demo data reset')); } },
+    mode: function (el) { Store.pref('mode', el.dataset.m || ''); applyMode(); var inMenu = !!el.closest('#modal'); if (inMenu) closeModal(); render(); if (inMenu) hubActions.menu(); },
     menu: function () {
       modal(dialogHead(T('All apps')) + '<div class="cards in-dialog">' + [{ id: 'home', name: 'Home', icon: ICON.home, tint: '#6B625A', desc: 'Your to-do list' }].concat(enabled()).map(function (m) {
         return '<a class="appcard" href="#/' + m.id + '" data-act="hub:close"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(T(m.desc)) + '</span></a>';
       }).join('') + '</div>' +
         (canViewAs() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + esc(backLabel()) + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
+        '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + modePicker() + '</div>' +
         '<div class="dlg-foot" style="justify-content:space-between">' + I18n.picker('lang-menu') + '<span>' + (shared() ? '<button class="btn" data-act="hub:switchwho">' + icon(ICON.people, 18) + T('Switch person') + '</button> ' : '') +
         '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button></span></div>', T('All apps'));
       langWire();

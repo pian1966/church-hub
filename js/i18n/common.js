@@ -56,6 +56,7 @@ I18n.rows([
     ['Signing you in…', 'Meld jou aan…', 'Siyakungenisa…', 'Siyakungenisa…'],
     ['Something went wrong', 'Iets het skeefgeloop', 'Kukhona okungahambanga kahle', 'Kukho into engahambanga kakuhle'],
     ['Try again', 'Probeer weer', 'Zama futhi', 'Zama kwakhona'],
+    ['Back to {role}', 'Terug na {role}', 'Buyela ku-{role}', 'Buyela ku-{role}'],
     ['You’re offline – Church Hub is view-only until you’re back online.', 'Jy is van lyn af – Church Hub kan net bekyk word totdat jy weer aanlyn is.', 'Awuxhunyiwe ku-inthanethi – ku-Church Hub ungabuka kuphela uze uxhumeke futhi.', 'Awudibananga ne-intanethi – kwi-Church Hub ungajonga kuphela de uphinde udibanise.'],
     ['Back online – you can make changes again.', 'Weer aanlyn – jy kan weer veranderinge maak.', 'Usuxhumekile futhi – ungashintsha izinto futhi.', 'Uphinde wadibanisa – ungatshintsha izinto kwakhona.'],
     ['Check your email', 'Kyk in jou e-pos', 'Hlola i-imeyili yakho', 'Jonga i-imeyile yakho'],

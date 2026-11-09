@@ -130,7 +130,10 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 
 Leave approval follows Leave Manager: Administrators approve.
 
-### View as another role (Administrators)
+### View as another role (Administrators and the Senior Pastor)
+The **Senior Pastor** (Rector; Settings → What Pastors can do) can also use it, for the roles below their own: Roster coordinator,
+Children's ministry, a carer or a Member (`viewHome()`/`viewChoices()` in `js/app.js`; `Store.preview` checks their sign-in is the
+Senior Pastor's). Offers to serve are only loaded for all if they may answer them themselves (the rules check their own sign-in).
 An Administrator can switch to **View as** Pastor, Roster coordinator, Children's ministry or Member (the eye next to their name,
 or More on a phone) to see what that role sees. `Store.preview(role)` makes `role()` in `js/store.js` the viewed role, so `plan()`
 loads only what that role would load – less than an Administrator, never more: pastoral notes (Pastors) and medical notes
@@ -405,6 +408,9 @@ Later: direct import through the Elvanto API (server side, with the church's API
   delete a card when they take someone out. Members load their group (`where memberIds array-contains me`), then its cards
   (`Store` follows `careGroups/{id}/share` once the group is known). Rules: `firestore.rules` (careGroups, share).
 - Shown: members – "My care group" on their Me page; staff – a "Care group member / Carer · group" tag on profiles.
+- **Find a care group or a person** (every Care groups page): typing part of a group's name, its areas or a person's name (any
+  way they're known) shows only the matching groups; for a person, their fold opens and their line is marked (`applySearch`,
+  no redraw while typing).
 - **Settings → Who can see what → Care groups** (`settings.seeCare`, e.g. `['rosters']`): Roster coordinators and/or
   Children's ministry may see every group, its carers and members (names only, a read-only Care groups page; `can('care.view')`).
   Not the members' cards. `Store` adds a listener on all of `careGroups` once the settings have loaded (`careAll()`, merged

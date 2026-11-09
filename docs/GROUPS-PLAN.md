@@ -1,6 +1,16 @@
 # Plan: Life groups / Bible studies / small groups (and switching each kind of group on or off)
 
-Status: plan, nothing built yet (Nov 2026). Decisions still open are marked **Decide**.
+Status: plan (Nov 2026); step 1 being built. The church's decisions are in **Decided** below.
+
+## Decided (9 Nov 2026)
+- Christ Church Howick keeps **care groups and adds life groups** – each kind switched on or off on its own.
+- The new kind covers life groups, Bible studies and midweek meetings, so **each group's leaders name their own group**
+  ("Tuesday Bible study", "Hilton life group"). The heading for the kind is set in Settings (Christ Church Howick: "Life groups").
+- People may be in **several** life groups (as with care groups).
+- **No new consent**: Church Partners already agreed, on becoming Partners, that their details are shared (the "Church directory"
+  consent). A life group's member cards follow that consent; someone who hasn't given it shows by name only.
+- The map shows the **exact meeting place** to everyone signed in. Whoever enters a host's home as the meeting place ticks
+  that the host agreed to it being shown.
 
 ## What the church asked for
 - A second kind of group beside care groups: Bible studies, small groups, life groups, midweek groups – the church
@@ -15,7 +25,8 @@ Care groups already do most of this: leaders and members, member cards shared on
 removing people, messages to the group, "Suggest groups by where people live", the directory tag, the rules and the tests.
 So the new groups are **care-group records with a type**, not a new system:
 
-- `careGroups/{id}.type` = `'care'` (or missing – every existing group) or `'small'` (the new kind).
+- `careGroups/{id}.type` = `'care'` (or missing – every existing group) or `'life'` (the new kind). `Store` hands them out as two
+  lists (`careGroups` and `lifeGroups`), so the care-group code keeps seeing only care groups.
 - Everything that works for care groups works for the new kind straight away: cards (`share/{person}`), messages
   (`kind: 'care'` with the group's id already works for any group in `careGroups`), the leaders' permissions, Suggest by area.
 - Screens filter by type, so care groups and life groups each get their own page and their own wording.
@@ -26,16 +37,13 @@ and every fix would have to be made twice. One code path stays safer.
 ## 1. Settings: names and switches
 - **Settings → Groups** (new box, Administrators):
   - *Care groups* – On / Off.
-  - *Small groups* – On / Off, with a quick choice of name: Life group, Bible study, Small group, Midweek group,
-    Home group, Connect group, or type your own (singular and plural), plus the leader's name (Group leader, Bible study
-    leader…) and whether groups have a **Host**.
-- Wording (`js/wording.js`): new terms `small` ['Small group', 'Small groups'], `smallLeader` ['Group leader', 'Group leaders'],
-  `host` ['Host', 'Hosts']. The church-type sets get sensible defaults (Baptist: Small group, Pentecostal: Connect group…).
+  - *Life groups* – On / Off (off until switched on). Its name and its leaders' name are in Terminology (Church Words).
+- Wording (`js/wording.js`): new terms `life` ['Life group', 'Life groups'] and `lifeLeader` ['Group leader', 'Group leaders'].
   The existing `care`/`carer` terms stay as they are.
 - Switching a kind **off** hides: its page and menu entry, its card on Me, its tag on profiles and the People list, its
   message audiences, its Home to-dos, its consent line. Nothing is deleted – switching it back on brings everything back.
 - The page switch already exists (`settings.modules[id] = false`, `js/app.js enabled()`); the new page is its own module
-  (`id: 'groups'`) so it can be switched off on its own. The Settings box also tidies the other places listed above.
+  (`id: 'life'`) so it can be switched off on its own. The Settings box also tidies the other places listed above.
 
 ## 2. Meeting details on each group
 New fields on a group (the leaders may change them, as well as Administrators and Pastors):
@@ -47,7 +55,7 @@ open: true        // taking new people (shown on Find a group); false = full or 
 ```
 - Choosing a **host** from the people list fills the place with the host's home address (can be changed – e.g. a group that
   meets at church or a coffee shop).
-- Leaders may change `meets` and `open`, but still not the name, the type or who leads (rules: add these fields to the
+- Leaders may change `meets` and `open` (and, for life groups, the name), but still not the type or who leads (rules: add these fields to the
   leader's `onlyChanges` list; `Care.leaderMayChange` the same – tested).
 
 ## 3. The map
@@ -57,17 +65,14 @@ open: true        // taking new people (shown on Find a group); false = full or 
   address and stores `lat`/`lng` on the group. If it can't find it (common for estates and new streets), the leader
   drops the pin by tapping the map. Only the group's meeting place is ever looked up – never members' addresses.
 - **What people see on the map**:
-  - Members of a group, its leaders, Administrators and Pastors: the exact pin and address.
-  - Everyone else (Church Partners looking for a group): an **approximate** circle (about 500 m) and the suburb only,
-    unless the host has agreed to show their address (**Decide**). Tapping a pin shows the group's name, day, time,
+  - Everyone signed in: the exact pin and address (decided). Tapping a pin shows the group's name, day, time,
     how often, leaders' names, "Taking new people", and **Ask to join**.
 - A list view under the map (sorted by suburb, or by distance if the person allows their phone's location for that
   moment – not stored).
 
 ## 4. Find a group and Ask to join
 - Non-members can't read a group record today (the rules only let its members read it). So a small public summary is
-  kept for each group that is taking people: `groupsOpen/{id}` = { type, name, day, time, often, suburb, approximate
-  lat/lng, leader names, open }. Written by Administrators, Pastors and the group's leaders whenever the group changes
+  kept for each group that is taking people: `groupsOpen/{id}` = { type, name, day, time, often, address, lat/lng, leader names, open }. Written by Administrators, Pastors and the group's leaders whenever the group changes
   (like `directory/` is kept today). Readable by anyone signed in. Nothing personal except leaders' names.
 - **Ask to join** writes `groupRequests/{id}` = { groupId, personId, name, note, createdAt }. The group's leaders (and
   Administrators and Pastors) see it as a Home to-do: **Add to the group** or **Not now** (with a kind message back).
@@ -88,11 +93,9 @@ open: true        // taking new people (shown on Find a group); false = full or 
 
 ## 7. Privacy (POPIA) – to add to docs/POPIA.md when built
 - Purpose: fellowship and Bible study in small groups; finding a group to join.
-- Member cards: **Decide** – share the existing "Care group" consent for both kinds, or a separate "Small group" consent.
-  Recommended: a separate consent, because people often join a Bible study with people they don't know yet, and the
-  card shows phone, email and home address.
-- The host's address: shown exactly only to the group, Administrators and Pastors, unless the host agrees to show it to
-  everyone signed in; otherwise an approximate circle. The host's agreement is a consent, recorded and in the audit log.
+- Member cards: follow the "Church directory" consent (agreed on becoming a Church Partner); without it, the name only.
+- The meeting place: shown exactly to everyone signed in; the person entering a host's home ticks that the host agreed
+  (recorded, in the audit log).
 - Address search: only the meeting place is sent to OpenStreetMap, once, when it is saved – name it in the privacy notice.
 - Join requests: kept until answered, then deleted.
 
@@ -103,14 +106,6 @@ open: true        // taking new people (shown on Find a group); false = full or 
 2. **Meeting details and host** – `meets`, `open`, leaders may edit them; shown on the group page and on Me.
    Rules + `plan()` + fake-firebase POLICY + `rules.test.mjs` together.
 3. **Find a group and Ask to join** – `groupsOpen`, `groupRequests`, the list, the Home to-dos, the Me card.
-4. **The map** – Leaflet in `assets/`, placing pins (search, or tap the map), approximate circles, the host's consent.
+4. **The map** – Leaflet in `assets/`, placing pins (search, or tap the map), the "host agreed" tick.
 5. **Every Church Partner in a group** – the to-do, Suggest by area per type, the figures on Church at a glance.
 6. Later (Phase 4): attendance at each meeting, and a leader's short report after a meeting.
-
-## Decisions for the church
-1. Does Christ Church Howick want the new kind as well as care groups, or will the life groups *be* the care groups?
-   (Either works: switch care groups off and use only the new kind, or keep both.)
-2. One consent for both kinds of group, or a separate one (recommended: separate)?
-3. On the map, may people who aren't in the group see the host's exact address if the host agrees, or always only the
-   approximate area?
-4. Name for Christ Church Howick: Life group, Bible study, Small group, or something else?

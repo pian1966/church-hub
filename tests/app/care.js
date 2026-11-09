@@ -124,7 +124,9 @@ module.exports = async function (ctx) {
   await finish(s);
   s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('settings');
   check(await s.page.$$eval('.st-care', b => b.map(x => x.value).join()) === 'rosters,kids,member', 'Settings → Who can see what: a Care groups tick for Roster coordinator, Children’s ministry and Basic access');
-  await s.page.check('.st-care[value="rosters"]'); await s.page.waitForTimeout(1200); await s.settle();   // saved as you go
+  await s.page.check('.st-care[value="rosters"]');   // saved as you go
+  check(await s.page.waitForSelector('.just-saved', { timeout: 1500 }).then(() => true, () => false) && await s.page.isVisible('#autosaved.show'), 'saving as you go: a large “Saved” notice, and the tick just saved lights up');
+  await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow();
   check(JSON.stringify(docs['settings/church'].seeCare) === '["rosters"]' && Object.values(docs).some(d => d.action && /Care groups: rosters/.test(d.action)), 'saved (settings.seeCare) and in the audit log');
   await finish(s);
@@ -167,6 +169,13 @@ module.exports = async function (ctx) {
   check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888'), 'Care groups page: which group each person in the church directory is in – names only');
   await s.go('people'); t = await s.text();
   check(t.includes('Care group member · Hilton'), 'the People list shows their care group');
+  await finish(s);
+  // The setting was saved but the directory entries never got their groups (e.g. saved before the rules allowed it):
+  // the next time a Pastor (Minister) or Administrator opens Church Hub, the entries are brought up to date
+  const missed = JSON.parse(JSON.stringify(after));
+  Object.keys(missed).filter(k => k.startsWith('directory/')).forEach(k => delete missed[k].care);
+  s = await session('thandi.mokoena@example.com', missed); await s.page.waitForTimeout(2500); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true, 'a missed update is repaired when a Pastor opens Church Hub');
   await finish(s);
   s = await session('clare.jacobs@example.com', JSON.parse(JSON.stringify(after))); await s.go('me'); await s.page.waitForTimeout(400);
   await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));

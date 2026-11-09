@@ -36,10 +36,23 @@ function key(url) {
 }
 function ours(url) { return new URL(url).origin === self.location.origin; }
 function wanted(url) { return ours(url) || OUTSIDE.some(function (r) { return r.test(url); }); }
-/** Fetch a file and keep it (outside files as the browser fetched them). */
+/** Keep a downloaded file. Our own files are read to the end first and only then swapped in: putting a file that is still
+ *  downloading takes the old copy away at once, and if the connection drops halfway the file would be lost for offline use. */
+function store(c, k, r) {
+  if (r.type === 'opaque') return c.put(k, r).catch(function () {});
+  if (!r.ok || r.redirected) return Promise.resolve();
+  return r.blob().then(function (b) {
+    return c.put(k, new Response(b, { status: r.status, statusText: r.statusText, headers: r.headers }));
+  }).catch(function () {});
+}
+/** Fetch a file and keep it (outside files as the browser fetched them). Each file once at a time: the page may ask twice
+ *  in quick succession, and two copies of the same file being swapped in at once can leave a gap. */
+var keeping = {};
 function keep(c, url) {
+  var k = key(url); if (keeping[k]) return keeping[k];
   var req = ours(url) ? new Request(url, { cache: 'no-cache' }) : new Request(url, { mode: 'no-cors' });
-  return fetch(req).then(function (r) { if ((r.ok && !r.redirected) || r.type === 'opaque') return c.put(key(url), r); }).catch(function () {});
+  return (keeping[k] = fetch(req).then(function (r) { return store(c, k, r); }).catch(function () {})
+    .then(function () { delete keeping[k]; }));
 }
 
 self.addEventListener('message', function (e) {
@@ -57,12 +70,19 @@ self.addEventListener('fetch', function (e) {
   if (req.method !== 'GET' || req.cache === 'no-store' || !wanted(req.url)) return;   // e.g. "Check for updates": always the internet
   var k = key(req.url);
   e.respondWith(caches.open(CACHE).then(function (c) {
-    var net = fetch(req).then(function (r) {
-      if ((r.ok && !r.redirected) || r.type === 'opaque') c.put(k, r.clone()).catch(function () {});
-      return r;
-    });
     return c.match(k).then(function (have) {
-      if (!have) return net;
+      // Outside files (the Firebase library, the font) don't change at the same address: the kept copy is used straight away
+      if (have && !ours(req.url)) return have;
+      var net = fetch(req).then(function (r) { if (!keeping[k]) e.waitUntil(store(c, k, r.clone())); return r; });
+      // No copy found and no connection: look again for a few seconds (a copy being swapped in is briefly missing)
+      if (!have) return net.catch(function (err) {
+        var tries = 0;
+        return (function again() {
+          return new Promise(function (res) { setTimeout(res, 400); }).then(function () { return c.match(k); }).then(function (r) {
+            if (r) return r; if (++tries < 8) return again(); throw err;
+          });
+        })();
+      });
       var slow = new Promise(function (res) { setTimeout(function () { res(have); }, SLOW_MS); });
       e.waitUntil(net.catch(function () {}));
       return Promise.race([net.catch(function () { return have; }), slow]);

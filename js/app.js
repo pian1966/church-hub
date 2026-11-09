@@ -491,7 +491,7 @@ var Hub = (function () {
   /* ---------- saving as you go (like Google Docs) ----------
    * A panel whose save button has data-autosave saves by itself: straight after a tick or a choice, and once typing pauses.
    * The button stays hidden; a small "Saved" note shows it worked (or what is still missing). Pop-up windows keep their buttons. */
-  var autoT = null, autoQuiet = false, autoNoteT = null;
+  var autoT = null, autoQuiet = false, autoNoteT = null, autoSaid = '';
   function autoBtn(el) {
     if (!el || !el.closest || el.closest('.dialog') || el.type === 'search' || el.closest('[data-noauto]')) return null;
     var sec = el.closest('[data-autoscope]') || el.closest('section, .panel');   // a scope: several panels saved by one button
@@ -514,18 +514,28 @@ var Hub = (function () {
   function autoNote(msg, bad) {
     var n = document.getElementById('autosaved');
     if (!n) { n = document.createElement('div'); n.id = 'autosaved'; n.setAttribute('role', 'status'); document.body.appendChild(n); }
-    var wf = words(); n.textContent = bad ? '⚠ ' + (wf ? wf(String(msg)) : msg) : '✓ ' + T('Saved');
+    var wf = words();
+    n.innerHTML = '<span class="as-ic" aria-hidden="true">' + (bad ? '!' : '✓') + '</span><span>' + esc(bad ? (wf ? wf(String(msg)) : msg) : T('Saved')) + '</span>';
+    n.className = ''; void n.offsetWidth;   // start the pop again, also when saving twice in a row
     n.className = 'show' + (bad ? ' bad' : '');
-    clearTimeout(autoNoteT); autoNoteT = setTimeout(function () { n.className = ''; }, bad ? 5000 : 1800);
+    if (!bad && autoSaid !== 'bad') autoSaid = 'ok'; else autoSaid = 'bad';
+    clearTimeout(autoNoteT); autoNoteT = setTimeout(function () { n.className = ''; }, bad ? 5000 : 2600);
+  }
+  /** The tick, choice or box just saved lights up green for a moment, so it is clear what was saved. */
+  function flashSaved(el) {
+    var row = el && el.closest && (el.closest('label, .field, .check, .item, td') || el); if (!row) return;
+    row.classList.remove('just-saved'); void row.offsetWidth; row.classList.add('just-saved');
+    setTimeout(function () { row.classList.remove('just-saved'); }, 1600);
   }
   function autoRun(btn, wait) {
     clearTimeout(autoT);
     autoT = setTimeout(function () {
       if (!document.body.contains(btn)) return;
       var k = focusKey(document.activeElement);
-      autoQuiet = true;
+      autoQuiet = true; autoSaid = '';
       try { btn.click(); } finally { autoQuiet = false; }
       refocus(k);
+      if (autoSaid === 'ok' && k) flashSaved(document.querySelectorAll(k.sel)[k.n]);
     }, wait);
   }
   document.addEventListener('change', function (ev) { var b = autoBtn(ev.target); if (b) autoRun(b, 0); });

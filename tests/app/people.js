@@ -229,7 +229,8 @@ module.exports = async function (ctx) {
   }
   await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].country === 'KE' && Object.values(docs).some(d => d.action && /Country: Kenya/.test(d.action)), 'an Administrator can change the church’s country (logged)');
-  check(await s.page.$$eval('[data-act="settings:name"]', b => b.every(x => !x.offsetParent)) && /Saved/.test(await s.page.textContent('#autosaved').catch(() => '')), 'Settings save as you go: no Save button, a small “Saved” note instead');
+  check(await s.page.$$eval('[data-act="settings:name"]', b => b.every(x => !x.offsetParent)) && /Saved/.test(await s.page.textContent('#autosaved').catch(() => '')), 'Settings save as you go: no Save button, a large “Saved” notice instead');
+  check(await s.page.$eval('#autosaved', e => { const c = getComputedStyle(e); return parseFloat(c.fontSize) >= 16 && c.backgroundColor !== 'rgba(0, 0, 0, 0)'; }), 'the “Saved” notice is large and solid green');
   await s.go('privacy'); t = await s.text();
   check(t.includes('Privacy (Data Protection Act)') && t.includes('Office of the Data Protection Commissioner') && !t.includes('POPIA') && !t.includes('Information Regulator'), 'Privacy follows the country’s law (Kenya: Data Protection Act, ODPC)');
   await s.page.evaluate(() => Store.setSettings({ country: 'DE' })); await s.settle(); await s.go('privacy/breaches'); t = await s.text();

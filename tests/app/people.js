@@ -302,4 +302,15 @@ module.exports = async function (ctx) {
   await s.go('people/search'); check((await s.text()).includes('isn’t available'), 'and can’t open it');
   await finish(s);
 
+
+  console.log('Home stays quick for an Administrator (the duplicate check runs just after)');
+  const dSeed = seedDocs();
+  dSeed['people/pDup'] = Object.assign({}, dSeed['people/p14']); dSeed['details/pDup'] = Object.assign({}, dSeed['details/p14']);   // Tim entered twice
+  delete dSeed['people/pDup'].email;
+  s = await session('linda.pillay@example.com', dSeed); await s.go('home');
+  const dupLine = await s.page.waitForFunction(() => /look(s)? entered twice/.test(document.querySelector('main').textContent), null, { timeout: 4000 }).then(() => true, () => false);
+  check(dupLine, 'Home still shows “… entered twice” for an Administrator (worked out just after Home appears)');
+  const ms = await s.page.evaluate(() => { Store.setSettings({}); const a = performance.now(); Hub.render(); return performance.now() - a; });
+  check(ms < 1500, 'drawing Home again is quick (' + Math.round(ms) + ' ms)');
+  await finish(s);
 };

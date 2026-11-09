@@ -156,8 +156,8 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:fixdup"][data-a="' + d1 + '"], [data-act="people:fixdup"][data-b="' + d1 + '"]'); await s.page.waitForSelector('#modal [data-act="people:fixkeep"]');
   await s.page.click('[data-act="people:fixkeep"][data-keep="p17"]'); await s.page.waitForTimeout(100); await s.page.click('[data-act="people:fixdo"]'); await s.settle();
   check((await s.docsNow())['details/' + d1].mergedInto === 'p17' && !(await s.denied()).length, 'a Pastor can fix a simple duplicate (nothing refused by the security rules)');
-  await s.go('people'); await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Tim'); await s.page.fill('#pf-last', 'Jacobs'); await s.page.fill('#pf-mobile', timMobile); await s.page.waitForTimeout(400);
-  check(!!(await s.page.$('#pf-dup-ok')), 'a Pastor can also confirm “a different person” when adding someone');
+  await s.go('people'); await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Tim'); await s.page.fill('#pf-last', 'Jacobs'); await s.page.fill('#pf-mobile', timMobile);
+  check(await s.page.waitForSelector('#pf-dup-ok', { timeout: 4000 }).then(() => true, () => false), 'a Pastor can also confirm “a different person” when adding someone');
   await finish(s);
 
 

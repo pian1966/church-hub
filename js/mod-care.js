@@ -98,7 +98,7 @@
 
   /* ---------- a member's own care group (on their Me page) ---------- */
   function mePanel() {
-    var u = me(); if (!u) return '';
+    var u = me(); if (!u || !H.isOn('care')) return '';
     var pc = S.previewCare(), gs = pc ? [S.get('careGroups', pc)].filter(Boolean) : Care.groupsOf(S.list('careGroups'), u.id); if (!gs.length) return '';
     return '<div id="my-care">' + gs.map(function (g) { return oneGroup(g, u, !!pc); }).join('') + '</div>';
   }
@@ -130,7 +130,7 @@
 
   /* ---------- Edit details (Administrators and Pastors) ---------- */
   function fields(p) {
-    if (!manager() || !p || p.familyRole === 'child') return '';
+    if (!manager() || !p || p.familyRole === 'child' || !H.isOn('care')) return '';
     var gs = groups(), mine = p.id ? Care.groupsOf(gs, p.id) : [], on = mine.length > 0, inIt = {};
     mine.forEach(function (g) { inIt[g.id] = Care.isLeader(g, p.id); });
     return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-care"' + (on ? ' checked' : '') + '><span><b>' + T('Care group member') + '</b><br><span class="muted small">' + T('In one or more of the church’s care groups (tick which).') + '</span></span></label>' +
@@ -158,6 +158,7 @@
   function apply(p, v) { return setFrom(p, v); }
   /** The tags on a person: Care group member or Carer, with each group's name. */
   function tag(p) {
+    if (!H.isOn('care')) return '';   // Settings → Apps: care groups switched off
     var u = me(), self = !!(u && p && u.id === p.id);
     if (!manager() && !viewer() && !self) return '';
     // Your own groups are always yours to see (your Me page, your profile); others' only as Settings allows

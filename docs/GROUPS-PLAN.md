@@ -1,6 +1,6 @@
 # Plan: Life groups / Bible studies / small groups (and switching each kind of group on or off)
 
-Status: plan (Nov 2026); step 1 being built. The church's decisions are in **Decided** below.
+Status: step 1 built (0.40.0, Nov 2026); steps 2–5 to do. The church's decisions are in **Decided** below.
 
 ## Decided (9 Nov 2026)
 - Christ Church Howick keeps **care groups and adds life groups** – each kind switched on or off on its own.

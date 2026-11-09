@@ -330,6 +330,7 @@
     var p = S.get('people', id); if (!p) return;
     var d = p.deceasedAt || H.today(), n = 0;
     if (window.CareUI) CareUI.place(p, '', false, 'After a death: ');
+    if (window.LifeUI) LifeUI.leaveAll(p, 'After a death: ');
     S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === id && (!s || s.date >= d); }).forEach(function (a) { S.remove('assignments', a.id); n++; });
     S.find('skills', function (k) { return k.personId === id; }).forEach(function (k) { S.remove('skills', k.id); });
     S.find('serveOffers', function (o) { return o.personId === id; }).forEach(function (o) { S.remove('serveOffers', o.id); });

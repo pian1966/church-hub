@@ -147,6 +147,16 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   fellowship); nothing is shown to the group or changed until they confirm, and opening the suggestions and every placement
   are in the audit log. A group's "areas" are place names, not personal information.
 
+## Life groups (Bible studies, midweek groups)
+- Purpose: fellowship and Bible study in small groups. Basis: **consent** – the "Church directory" consent (Contact details),
+  which Church Partners give on becoming Partners (the church decided no extra consent is needed, Nov 2026). Without it,
+  the group sees only the person's name.
+- The same card as a care group (photo, mobile, email, address, birthday without the year), one per group, read only by
+  that group's members, Administrators and Pastors (database rules, tested). Leaders add and remove members and rename
+  the group; every change is in the audit log. Leaving a group removes the card; after a death they are taken out.
+- Coming (`docs/GROUPS-PLAN.md`): a map of meeting places – the exact place, shown to everyone signed in (church's decision),
+  with a tick that the host agreed.
+
 ## Messages inside the app
 - Purpose: keeping in touch with the people the church cares for (notices, care-group and team news). Basis: the church's
   legitimate interest – a message goes only to a group the person belongs to (their care group, a message group an

@@ -66,13 +66,26 @@ var Store = (function () {
   function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; }); snapLeave(); save(); changed(); }
   function snapLeave() { leaveSnap = {}; ((db && db.leave && db.leave.requests) || []).forEach(function (r) { if (!r.synthetic) leaveSnap[r.id] = JSON.stringify(r); }); }
 
-  function list(c) { return (db && db[c]) || []; }
+  function all(c) { return (db && db[c]) || []; }
+  /** Care groups and life groups (Bible studies, midweek groups) are kept together in careGroups – a life group has
+   *  type 'life' – but handed out as two lists, so each page sees only its own kind; their cards likewise (careShare / lifeShare). */
+  var KIND = { careGroups: ['careGroups', false], lifeGroups: ['careGroups', true], careShare: ['careShare', false], lifeShare: ['careShare', true] };
+  function isLife(g) { return !!g && g.type === 'life'; }
+  function lifeIds() { var m = {}; all('careGroups').forEach(function (g) { if (isLife(g)) m[g.id] = 1; }); return m; }
+  function real(c) { return KIND[c] ? KIND[c][0] : c; }
+  function list(c) {
+    var k = KIND[c]; if (!k) return all(c);
+    if (k[0] === 'careGroups') return all('careGroups').filter(function (g) { return isLife(g) === k[1]; });
+    var life = lifeIds(); return all('careShare').filter(function (x) { return !!life[x.groupId] === k[1]; });
+  }
   function get(c, id) { return list(c).filter(function (x) { return x.id === id; })[0] || null; }
   function find(c, fn) { return list(c).filter(fn); }
   function put(c, obj, auditText) {
     if (blocked()) return obj;
     if (!obj.id) obj.id = uid(c.slice(0, 2));
-    var arr = list(c), i = arr.findIndex(function (x) { return x.id === obj.id; }), prev = i >= 0 ? copy(arr[i]) : null;
+    if (c === 'lifeGroups') obj.type = 'life';
+    c = real(c);
+    var arr = all(c), i = arr.findIndex(function (x) { return x.id === obj.id; }), prev = i >= 0 ? copy(arr[i]) : null;
     obj.updatedAt = now();
     if (i >= 0) arr[i] = obj; else { obj.createdAt = obj.createdAt || now(); arr.push(obj); }
     if (LIVE) Live.put(c, obj, prev);
@@ -82,8 +95,8 @@ var Store = (function () {
   }
   function remove(c, id, auditText) {
     if (blocked()) return;
-    var prev = get(c, id);
-    db[c] = list(c).filter(function (x) { return x.id !== id; });
+    var prev = get(c, id); c = real(c);
+    db[c] = all(c).filter(function (x) { return x.id !== id; });
     if (LIVE && prev) Live.remove(c, prev);
     if (auditText) audit(auditText, c + '/' + id);
     save(); changed();
@@ -882,7 +895,7 @@ var Store = (function () {
     /** Someone left a care group: their card there goes (careGroups/{gid}/share/{pid}). */
     careUnshare: function (gid, pid) {
       if (blocked()) return;
-      db.careShare = list('careShare').filter(function (x) { return !(x.personId === pid && x.groupId === gid); });
+      db.careShare = all('careShare').filter(function (x) { return !(x.personId === pid && x.groupId === gid); });
       if (LIVE) Live.unshare(gid, pid); save(); changed();
     },
     /** "View as": an Administrator sees Church Hub as another role would (Pastor, Roster coordinator, Children's ministry, Member).

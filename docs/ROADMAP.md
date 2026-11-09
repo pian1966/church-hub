@@ -56,8 +56,9 @@ Accept/decline by email and app, swap requests, reminders, sign-up sheets, run s
 ## Phase 4 – Groups, attendance and check-in
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.
 - ⬜ Life groups / Bible studies / small groups beside care groups, each kind switched on or off – full plan in `docs/GROUPS-PLAN.md`:
-  1. group types and switches (Settings → Groups, church's own name); 2. meeting day, time and host; 3. Find a group and
-  Ask to join; 4. a map of where groups meet; 5. a to-do so every Church Partner is in a group
+  1. ✅ done in 0.40.0 (see CHANGELOG); next: 2. meeting day, time and host; 3. Find a group and Ask to join; 4. a map of where
+  groups meet; 5. a to-do so every Church Partner is in a group
+- ⬜ Church: Settings → Apps – switch on **Life groups**, then add the groups and their leaders (leaders can rename them)
 - ⬜ At sign-out, show "Not allowed to collect" and the allowed collectors
 
 ## Phase 5 – Communication and calendar

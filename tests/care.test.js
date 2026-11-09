@@ -35,6 +35,10 @@ const renamed = JSON.parse(JSON.stringify(after)); renamed.name = 'Mine';
 const promoted = JSON.parse(JSON.stringify(after)); promoted.leaderIds.push('d');
 const left = JSON.parse(JSON.stringify(after)); left.memberIds = ['b', 'd'];
 ok(!C.leaderMayChange(groups[0], renamed, 'a') && !C.leaderMayChange(groups[0], promoted, 'a') && !C.leaderMayChange(groups[0], left, 'a'), 'a carer can’t rename the group, make carers, or take themself out');
+const life = Object.assign(JSON.parse(JSON.stringify(groups[0])), { type: 'life' }), lifeRenamed = Object.assign(JSON.parse(JSON.stringify(life)), { name: 'Tuesday Bible study' });
+ok(C.leaderMayChange(life, lifeRenamed, 'a') && !C.leaderMayChange(life, lifeRenamed, 'b'), 'a life group\u2019s leader may name the group; a member may not');
+ok(!C.leaderMayChange(life, Object.assign({}, lifeRenamed, { name: ' ' }), 'a') && !C.leaderMayChange(life, Object.assign({}, lifeRenamed, { type: 'care' }), 'a'), 'not to a blank name, and not into a care group');
+ok(!C.leaderMayChange(groups[0], Object.assign({}, groups[0], { type: 'life', name: 'Mine' }), 'a'), 'a carer can\u2019t turn a care group into a life group to rename it');
 ok(C.inSeveral(groups).length === 0 && C.inSeveral(groups.concat([{ id: 'g3', memberIds: ['b'] }])).join() === 'b', 'finds anyone in two or more groups');
 
 console.log('Suggesting groups by where people live');

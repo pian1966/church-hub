@@ -10,6 +10,8 @@ module.exports = async function (ctx) {
   await s.go('settings/apps'); await s.page.check('.st-mod[value="life"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].modules.life === true && !!(await s.page.$('nav a[href="#/life"]')), 'switched on under Settings → Apps: the Life groups page appears');
+  await s.go('settings/terminology'); t = await s.page.textContent('main');
+  check(t.includes('Midweek group') && t.includes('A Bible study, life group or Connect Group (as named by the group leader)'), 'Church Words: “Midweek group” – a Bible study, life group or Connect Group (as named by the group leader)');
   await s.go('life'); await s.page.fill('#lg-new', 'Tuesday Bible study'); await s.page.click('[data-act="life:addgroup"]'); await s.settle();
   docs = await s.docsNow();
   const key = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Tuesday Bible study'), gid = key ? key.split('/')[1] : '';
@@ -39,7 +41,7 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(docs['careGroups/lg1'].name === 'Thursday Bible study' && docs['careGroups/lg1'].type === 'life', 'the leader names their own group');
   await s.go('me'); await s.page.waitForTimeout(300); t = await s.text();
-  check(t.includes('My life groups') && t.includes('Thursday Bible study'), 'their life groups are on their Me page');
+  check(t.includes('My midweek groups') && t.includes('Thursday Bible study'), 'their life groups are on their Me page');
   await s.go('messages/send'); await s.page.waitForTimeout(200);
   const to = await s.page.$$eval('#ms-to option', o => o.map(x => x.value));
   check(to.includes('life/lg1') && to.includes('care/cg1'), 'they can send a message to their life group (and their care group)');

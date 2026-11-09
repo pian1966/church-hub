@@ -53,7 +53,7 @@
       var was = S.get('lifeGroups', g.id) || {}, wasIn = (was.memberIds || []).indexOf(p.id) >= 0, isIn = g.memberIds.indexOf(p.id) >= 0;
       S.put('lifeGroups', g);
       if (wasIn && !isIn) S.careUnshare(g.id, p.id);
-      S.audit((why || '') + (isIn ? (Care.isLeader(g, p.id) ? 'Leader of life group ' : 'In life group ') + g.name : 'Taken out of life group ' + g.name) + ': ' + H.name(p), 'people/' + p.id);
+      S.audit((why || '') + (isIn ? (Care.isLeader(g, p.id) ? 'Leader of midweek group ' : 'In midweek group ') + g.name : 'Taken out of midweek group ' + g.name) + ': ' + H.name(p), 'people/' + p.id);
     });
     sync(p.id);
     return true;
@@ -93,7 +93,7 @@
         (lead && !you && !isL ? '<button class="icon-btn ghost" data-act="life:mineout" data-g="' + esc(g.id) + '" data-id="' + esc(pid) + '" aria-label="' + esc(T('Take {name} out of the group', { name: name })) + '" title="' + esc(T('Take {name} out of the group', { name: name })) + '">' + H.icon(H.ICON.x, 16) + '</button>' : '') + '</div>';
     });
     return '<section class="panel my-life" data-g="' + esc(g.id) + '"><div class="row cg-head"><h2 class="grow" style="margin:0" data-own-words>' + esc(g.name) + '</h2>' + tools(g, lead, false) + '</div>' +
-      '<p class="hint" style="margin:4px 0 10px">' + T('People in your life group see your details only if you are in the church directory (under Consent).') + '</p>' +
+      '<p class="hint" style="margin:4px 0 10px">' + T('People in your midweek group see your details only if you are in the church directory (under Consent).') + '</p>' +
       '<div class="list">' + rows.join('') + '</div>' +
       (lead ? '<div class="btns" style="margin-top:12px"><button class="btn" data-act="life:mineadd" data-g="' + esc(g.id) + '">' + H.icon(H.ICON.plus, 16) + T('Add someone to the group') + '</button></div>' : '') + '</section>';
   }
@@ -101,20 +101,20 @@
   /** On the Me page: their life groups, if they are in any (and life groups are switched on). */
   function mePanel() {
     var u = me(); if (!u || !on() || S.previewCare()) return '';
-    var html = minePanels(u); return html ? '<h2 style="margin:22px 0 10px">' + T('My life groups') + '</h2><div id="my-life">' + html + '</div>' : '';
+    var html = minePanels(u); return html ? '<h2 style="margin:22px 0 10px">' + T('My midweek groups') + '</h2><div id="my-life">' + html + '</div>' : '';
   }
   /** The tags on a person: Life group or Group leader, with each group's name – for Administrators and Pastors, and on your own page. */
   function tag(p) {
     var u = me(); if (!on() || !p || !(manager() || (u && u.id === p.id))) return '';
-    return mine(p.id).sort(byName).map(function (g) { return ' <span class="tag">' + T(Care.isLeader(g, p.id) ? 'Group leader' : 'Life group') + ' · ' + esc(g.name) + '</span>'; }).join('');
+    return mine(p.id).sort(byName).map(function (g) { return ' <span class="tag">' + T(Care.isLeader(g, p.id) ? 'Group leader' : 'Midweek group') + ' · ' + esc(g.name) + '</span>'; }).join('');
   }
 
   /* ---------- the Life groups page ---------- */
   function managerPage() {
     var gs = groups(), inAny = {}, finder = window.CareUI && CareUI.finder;
     gs.forEach(function (g) { (g.memberIds || []).forEach(function (m) { (inAny[m] = inAny[m] || []).push(g.name); }); });
-    return '<div class="page-head"><div><h1>' + T('Life groups') + '</h1><p class="lead">' + T('Bible studies, life groups and midweek meetings. A person can be in more than one. Members see each other’s photo, phone, email, address and birthday if they are in the church directory. Group leaders can name their group and add and remove members.') + '</p></div></div>' +
-      '<section class="panel"><h2>' + T('Add a life group') + '</h2><div class="row" style="gap:10px;flex-wrap:wrap"><label class="field req grow" style="margin:0">' + T('Name') + '<input id="lg-new" placeholder="' + esc(T('e.g. Tuesday Bible study')) + '"></label><button class="btn primary" data-act="life:addgroup" style="align-self:end">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div></section>' +
+    return '<div class="page-head"><div><h1>' + T('Midweek groups') + '</h1><p class="lead">' + T('Bible studies, life groups, Connect Groups and other midweek groups. A person can be in more than one. Members see each other’s photo, phone, email, address and birthday if they are in the church directory. Group leaders can name their group and add and remove members.') + '</p></div></div>' +
+      '<section class="panel"><h2>' + T('Add a midweek group') + '</h2><div class="row" style="gap:10px;flex-wrap:wrap"><label class="field req grow" style="margin:0">' + T('Name') + '<input id="lg-new" placeholder="' + esc(T('e.g. Tuesday Bible study')) + '"></label><button class="btn primary" data-act="life:addgroup" style="align-self:end">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div></section>' +
       (gs.length ? '<div class="grid2">' + gs.map(function (g) {
         var ms = (g.memberIds || []).map(function (id) { return S.get('people', id) || { id: id, firstName: (g.names || {})[id] || T('Someone'), lastName: '' }; }).sort(function (a, b) {
           var la = Care.isLeader(g, a.id) ? 0 : 1, lb = Care.isLeader(g, b.id) ? 0 : 1; return la - lb || H.name(a).localeCompare(H.name(b)); });
@@ -126,17 +126,17 @@
               '<button class="icon-btn ghost" data-act="life:out" data-g="' + esc(g.id) + '" data-id="' + esc(p.id) + '" aria-label="' + esc(T('Take {name} out', { name: H.name(p) })) + '" title="' + esc(T('Take out of the group')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
           }).join('') + '</div>' : '<p class="muted small" style="margin:8px 0 0">' + T('No one yet.') + '</p>') +
           (finder ? '<div style="margin-top:10px">' + finder('lg-' + g.id, adults(g.memberIds || []), 'life:add', { g: g.id }, function (p) { return inAny[p.id] ? T('Also in {groups}', { groups: inAny[p.id].join(', ') }) : ''; }, T('Add someone: type part of their name')) + '</div>' : '') + '</section>';
-      }).join('') + '</div>' : '<p class="empty">' + T('No life groups yet.') + '</p>');
+      }).join('') + '</div>' : '<p class="empty">' + T('No midweek groups yet.') + '</p>');
   }
   function memberPage() {
     var u = me(), html = u ? minePanels(u) : '';
-    return '<div class="page-head"><div><h1>' + T('Life groups') + '</h1></div></div>' +
-      (html ? '<div id="my-life">' + html + '</div>' : '<p class="empty">' + T('You’re not in a life group yet. Ask the church office or a group leader to add you.') + '</p>');
+    return '<div class="page-head"><div><h1>' + T('Midweek groups') + '</h1></div></div>' +
+      (html ? '<div id="my-life">' + html + '</div>' : '<p class="empty">' + T('You’re not in a midweek group yet. Ask the church office or a group leader to add you.') + '</p>');
   }
   function leaderOf(gid) { var u = me(), g = S.get('lifeGroups', gid); return g && u && Care.isLeader(g, u.id) ? g : null; }
 
   H.register({
-    id: 'life', name: 'Life groups', desc: 'Bible studies, life groups and midweek groups – their leaders name them', icon: BOOK, tint: '#3E7D5A', optIn: true,
+    id: 'life', name: 'Midweek groups', desc: 'Bible studies, life groups, Connect Groups – their leaders name them', icon: BOOK, tint: '#3E7D5A', optIn: true,
     render: function () { return manager() ? managerPage() : memberPage(); },
     stat: function () { var u = me(); return manager() ? TN('{n} group', '{n} groups', S.list('lifeGroups').length) : u ? TN('{n} group', '{n} groups', mine(u.id).length) : ''; },
     /** After signing in: keep my own cards in my life groups up to date (leaders may have added me). */
@@ -145,7 +145,7 @@
       addgroup: function () {
         var n = document.getElementById('lg-new').value.trim(); if (!n) { H.toast(T('Give the group a name'), true); return; }
         if (S.list('lifeGroups').some(function (g) { return String(g.name).toLowerCase() === n.toLowerCase(); })) { H.toast(T('There is already a group with that name'), true); return; }
-        S.put('lifeGroups', { name: n, leaderIds: [], memberIds: [], names: {} }, 'Added the life group ' + n); H.render(); H.toast(T('Life group added'));
+        S.put('lifeGroups', { name: n, leaderIds: [], memberIds: [], names: {} }, 'Added the midweek group ' + n); H.render(); H.toast(T('Midweek group added'));
       },
       rename: function (el) {
         var g = S.get('lifeGroups', el.dataset.id); if (!g || !(manager() || leaderOf(g.id))) return;
@@ -158,12 +158,12 @@
         if (!(manager() || leaderOf(g.id))) return;
         if (S.list('lifeGroups').some(function (x) { return x.id !== g.id && String(x.name).toLowerCase() === n.toLowerCase(); })) { H.toast(T('There is already a group with that name'), true); return; }
         var x = JSON.parse(JSON.stringify(g)), was = x.name; x.name = n;
-        S.put('lifeGroups', x, 'Renamed the life group ' + was + ' to ' + n); H.closeModal(); H.render(); H.toast(T('Saved'));
+        S.put('lifeGroups', x, 'Renamed the midweek group ' + was + ' to ' + n); H.closeModal(); H.render(); H.toast(T('Saved'));
       },
       delgroup: function (el) {
         var g = S.get('lifeGroups', el.dataset.id); if (!g || !manager() || !H.confirmBtn(el, '✕?')) return;
         (g.memberIds || []).forEach(function (pid) { S.careUnshare(g.id, pid); });
-        S.remove('lifeGroups', g.id, 'Deleted the life group ' + g.name + ' (' + (g.memberIds || []).length + ' people)'); H.render(); H.toast(T('Life group deleted'));
+        S.remove('lifeGroups', g.id, 'Deleted the midweek group ' + g.name + ' (' + (g.memberIds || []).length + ' people)'); H.render(); H.toast(T('Midweek group deleted'));
       },
       add: function (el) {
         var p = S.get('people', el.dataset.id); if (!p) { H.toast(T('Choose someone to add'), true); return; }
@@ -192,13 +192,13 @@
         var g = leaderOf(el.dataset.g), p = S.get('people', el.dataset.id); if (!g) return;
         if (!p) { var e = document.getElementById('lg-err'); e.textContent = T('Choose someone to add.'); e.hidden = false; return; }
         var x = JSON.parse(JSON.stringify(g)); x.memberIds.push(p.id); x.names = x.names || {}; x.names[p.id] = Care.nameOf(p);
-        S.put('lifeGroups', x, 'Group leader added ' + H.name(p) + ' to the life group ' + g.name); H.closeModal(); H.render(); H.toast(T('Added to the group'));
+        S.put('lifeGroups', x, 'Group leader added ' + H.name(p) + ' to the midweek group ' + g.name); H.closeModal(); H.render(); H.toast(T('Added to the group'));
       },
       mineout: function (el) {
         var g = leaderOf(el.dataset.g), pid = el.dataset.id; if (!g || Care.isLeader(g, pid) || !H.confirmBtn(el, '✕?')) return;
         var x = JSON.parse(JSON.stringify(g)), name = (x.names || {})[pid] || '';
         x.memberIds = x.memberIds.filter(function (m) { return m !== pid; }); if (x.names) delete x.names[pid];
-        S.put('lifeGroups', x, 'Group leader took ' + name + ' out of the life group ' + g.name);
+        S.put('lifeGroups', x, 'Group leader took ' + name + ' out of the midweek group ' + g.name);
         S.careUnshare(g.id, pid);
         H.render(); H.toast(T('Taken out of the group'));
       }

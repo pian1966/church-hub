@@ -191,9 +191,27 @@
         return P && n && H.can('*') ? '<p class="hint">' + TN('{n} Church Partner has no Contact details answer recorded. If they agreed when they became a Church Partner, record it here.', '{n} Church Partners have no Contact details answer recorded. If they agreed when they became Church Partners, record it here.', n) +
           ' <button class="btn small" data-act="settings:partnersagree">' + T('Record that they agreed') + '</button></p>' : '';
       })(P && P.partnersUnrecorded ? P.partnersUnrecorded().length : 0) +
+      (function (n) {   // "All groups" for Church Partners shows only people in the church directory: say how many are left out
+        return n ? '<p class="hint care-hidden">' + TN('{n} person in a care group isn’t in the church directory, so Church Partners don’t see them on the Care groups page.', '{n} people in care groups aren’t in the church directory, so Church Partners don’t see them on the Care groups page.', n) +
+          ' <button class="btn small" data-act="settings:carehidden">' + T('Show them') + '</button></p>' : '';
+      })(P && (H.can('*') || H.can('settings.manage')) && (st.seeCare || []).indexOf('member') >= 0 ? careHidden().length : 0) +
       (P ? '<p class="hint">' + T('People with Basic access see these as pictures: they can read them, but can’t tap or copy them. Care group leaders see more of their own group (Care groups).') + '</p>' : '') +
       '<p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p>' +
       (P ? '<button class="btn small" data-autosave data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
+  }
+
+  /** People in a care group whom Church Partners don't see on the Care groups page (it lists only the church directory),
+   *  and why: [{ p, why: 'notAsked' | 'saidNo' | 'inactive' | 'child' }]. */
+  function careHidden() {
+    var P = window.PeopleParts, ids = {}, out = [];
+    S.list('careGroups').forEach(function (g) { (g.memberIds || []).forEach(function (id) { ids[id] = 1; }); });
+    Object.keys(ids).forEach(function (id) {
+      var p = S.get('people', id); if (!p || p.firstName === 'Deleted' || p.mergedInto) return;
+      var c = P.consentFor(p.id, 'Church directory');
+      var why = p.familyRole === 'child' ? 'child' : p.active === false ? 'inactive' : !c ? 'notAsked' : !c.given ? 'saidNo' : '';
+      if (why) out.push({ p: p, why: why });
+    });
+    return out.sort(function (a, b) { return H.name(a.p).localeCompare(H.name(b.p)); });
   }
 
   /** What Pastors can do: an Administrator ticks the Administrator abilities Pastors may have (settings.pastorCan).
@@ -409,6 +427,19 @@
         S.syncPastors(); H.render(); H.toast(T('Saved'));
       },
       pastorall: function () { document.querySelectorAll('.st-pc, .st-sc').forEach(function (c) { c.checked = true; }); var c = document.querySelector('.st-pc'); if (c) c.dispatchEvent(new Event('change', { bubbles: true })); },
+      /** Who is in a care group but not in the church directory, by reason, with a link to each. */
+      carehidden: function () {
+        var all = careHidden();
+        var groups = [['notAsked', TX('Contact details not asked yet'), TX('“Record that they agreed” records it for Church Partners; for anyone else, record their answer on their profile (Consent).')],
+          ['saidNo', TX('Said no to sharing their contact details'), TX('They stay hidden unless they change their mind (their profile → Consent).')],
+          ['inactive', TX('No longer active'), TX('Take them out of their care group, or mark them active again.')],
+          ['child', TX('Children'), TX('Children are never shown to other members.')]];
+        H.modal(H.dialogHead(T('In care groups, but not in the church directory'), TN('{n} person', '{n} people', all.length)) + '<div class="dlg-body">' + groups.map(function (gr) {
+          var ps = all.filter(function (x) { return x.why === gr[0]; }); if (!ps.length) return '';
+          return '<h3 style="margin:14px 0 4px">' + esc(T(gr[1])) + ' (' + ps.length + ')</h3><p class="hint" style="margin:0 0 6px">' + esc(T(gr[2])) + '</p><div class="list">' +
+            ps.map(function (x) { return '<a class="item" href="#/people/p/' + esc(x.p.id) + '" data-act="hub:close">' + H.avatar(x.p, 28) + '<span class="grow"><b>' + esc(H.name(x.p)) + '</b>' + (x.p.category ? '<small>' + esc(T(x.p.category)) + '</small>' : '') + '</span></a>'; }).join('') + '</div>';
+        }).join('') + '</div>', T('In care groups, but not in the church directory'));
+      },
       /** Church Partners with no Contact details answer recorded: they agreed when they became Church Partners. */
       partnersagree: function (el) {
         var ps = window.PeopleParts.partnersUnrecorded(); if (!ps.length) return;

@@ -207,6 +207,11 @@ module.exports = async function (ctx) {
   check(docs['settings/church'].seeCareOwn === false && docs['settings/church'].seeCare.join() === 'member', 'both choices saved');
   check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true && !docs['directory/p17'], 'the church directory shows each person’s care group (carers marked); someone not in the directory isn’t listed');
   const after = docs;
+  await s.go('settings'); t = await s.page.textContent('#see-others');
+  check(t.includes('1 person in a care group isn’t in the church directory'), 'Settings says how many people in care groups Church Partners can’t see (not in the church directory)');
+  await s.page.click('[data-act="settings:carehidden"]'); t = await s.page.textContent('#modal');
+  check(/Said no to sharing their contact details \(1\)[\s\S]*Megan Smith/.test(t) && !t.includes('David Smith'), '“Show them” lists them by reason (Megan said no), linked to their profile');
+  await s.page.click('[data-act="hub:close"]');
   await finish(s);
   s = await session('tim.jacobs@example.com', JSON.parse(JSON.stringify(after))); await s.go('me'); await s.page.waitForTimeout(400);
   await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));

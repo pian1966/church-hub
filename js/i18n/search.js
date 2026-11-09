@@ -2,6 +2,9 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ['A new consent record for each person, dated today, with how it was given (POPIA). Children are left out: a parent or guardian answers for them on the child’s page.', '’n Nuwe toestemmingsrekord vir elke persoon, met vandag se datum en hoe dit gegee is (POPIA). Kinders word uitgelaat: ’n ouer of voog antwoord vir hulle op die kind se blad.', 'Irekhodi elisha lemvume lomuntu ngamunye, linosuku lwanamuhla, nendlela enikezwe ngayo (POPIA). Izingane azifakwa: umzali noma umbheki uyaziphendulela ekhasini lengane.', 'Irekhodi elitsha lemvume lomntu ngamnye, elinomhla wanamhlanje, nendlela enikwe ngayo (POPIA). Abantwana abafakwanga: umzali okanye umgcini uyabaphendulela kwiphepha lomntwana.'],
+    ['Choose how it was given.', 'Kies hoe dit gegee is.', 'Khetha indlela enikezwe ngayo.', 'Khetha indlela enikwe ngayo.'],
+    ['already recorded', 'reeds aangeteken', 'sekubhaliwe', 'sele kubhaliwe'],
     ["Type or choose a field…", "Tik of kies ’n veld…", "Thayipha noma ukhethe inkambu…", "Chwetheza okanye ukhethe intsimi…"],
     ["Only where it’s empty – leave anything already filled in", "Net waar dit leeg is – los wat reeds ingevul is", "Lapho kungenalutho kuphela – shiya okuseligcwalisiwe", "Apho kungenanto kuphela – shiya okuseligcwalisiwe"],
     ["already filled in", "reeds ingevul", "sekugcwalisiwe", "sele kuzalisiwe"],

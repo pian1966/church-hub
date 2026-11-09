@@ -188,6 +188,20 @@ module.exports = async function (ctx) {
   check(newFam && docs['families/' + newFam] && docs['families/' + newFam].name === 'Peters family', 'no household → “+ New household” for each person, named after their surname');
   await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
   check(!docs['people/p19'].familyId && !docs['families/' + newFam], 'Undo takes them out again and removes the new household');
+  // Consent for many people at once: a new record each (today, how it was given), children left out, undo brings the old answer back
+  await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'consent-Photos');
+  check(await s.page.isVisible('#bk-m-f') && (await s.page.textContent('#bk-f')).includes('Consent: Photos'), 'Change selected… offers each kind of consent, and asks how it was given');
+  await s.page.selectOption('#bk-v', 'No'); await s.page.click('[data-act="people:bulksave"]');
+  check((await s.page.textContent('#bk-err')).includes('how it was given'), 'how it was given must be chosen (POPIA)');
+  await s.page.selectOption('#bk-m', 'Paper connect card'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  const photo = pid => Object.entries(docs).filter(([k, d]) => k.startsWith('consents/') && d.personId === pid && d.purpose === 'Photos');
+  const nowP14 = photo('p14').filter(([, d]) => !d.withdrawnAt);
+  check(nowP14.length === 1 && nowP14[0][1].given === false && nowP14[0][1].method === 'Paper connect card' && photo('p14').some(([, d]) => d.withdrawnAt && d.given), 'Tim: a new “No” for Photos (paper connect card); his old “Yes” is kept, marked as replaced');
+  check(!photo('p16').some(([, d]) => !d.withdrawnAt && d.method === 'Paper connect card') && tt.includes('children'), 'their child is left out');
+  await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
+  const back = photo('p14').filter(([, d]) => !d.withdrawnAt);
+  check(back.length === 1 && back[0][1].given === true, 'Undo brings back the answer they had');
   // Empty country → South Africa (people with no home address left out); Only where it's empty; town as typed
   await s.page.evaluate(() => {
     const set = (id, a) => { const p = JSON.parse(JSON.stringify(Store.get('people', id))); if (a) p.address = a; else delete p.address; Store.put('people', p); };

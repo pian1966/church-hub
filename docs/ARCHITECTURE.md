@@ -415,7 +415,7 @@ Later: direct import through the Elvanto API (server side, with the church's API
     each (rules: `careOwn()`, `careCarer()`). Carers always see everyone. The group record's names are hidden on screen only.
   - *See which care group each person in the church directory is in* (`seeCare` includes `member`): `directory/{id}.care` =
     [{ id, name, carer }] (names only), written by `syncDirectory` (Administrators and Pastors when a group changes or Settings
-    are saved; each person for themselves at sign-in). A read-only Care groups page built from the directory, and the tag on
+    are saved; each person for themselves at sign-in; Administrators and Pastors re-check everyone's entry 1.5 s after opening Church Hub – only differences are written). A read-only Care groups page built from the directory, and the tag on
     the People list. People not in the directory aren't shown.
   Church wording renames them (Home group, Cell group, Class and Class leader, Small Christian Community…).
 - Suggest groups by where people live (`Care.suggest`, tested): for every Church Partner (adult, active) in no group yet –

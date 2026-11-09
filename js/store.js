@@ -498,7 +498,12 @@ var Store = (function () {
       ready = true;
       // My own directory entry shows my care groups when Settings asks for it (carers may have added me)
       var dirMe = (raw.directory || {})[session.personId];
-      if (!previewRole && !offlineNow() && (((db.settings.seeCare || []).indexOf('member') >= 0) || (dirMe && dirMe.care))) syncDirectory(session.personId);
+      var careDir = (db.settings.seeCare || []).indexOf('member') >= 0 || Object.keys(raw.directory || {}).some(function (id) { return raw.directory[id].care; });
+      if (!previewRole && !offlineNow() && (careDir || (dirMe && dirMe.care))) {
+        // Administrators and Pastors: everyone's entry, in case a change was missed (e.g. saved before the rules allowed it)
+        if (is('admin', 'pastor')) setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
+        else syncDirectory(session.personId);
+      }
       onState({ stage: 'ready', person: meP, email: session.email, role: role() });
     }
 
@@ -628,7 +633,15 @@ var Store = (function () {
       return (dirWas && dirWas.shareSpouse) || (leadWas && leadWas.shareSpouse) || '';
     }
     /** Administrators: bring everyone's shared contact details in line with Settings (after changing what each role sees). */
-    function resyncDirectory() { if (!is('admin')) return 0; var n = 0; list('people').forEach(function (p) { syncDirectory(p.id); n++; }); return n; }
+    /** Administrators and Pastors (Ministers): bring everyone's directory entry in line with Settings. Only entries that
+     *  differ are written; one unusual record is skipped (and logged) rather than stopping the rest. */
+    function resyncDirectory() {
+      if (!is('admin', 'pastor') || previewRole) return 0;
+      var n = 0, bad = 0;
+      list('people').forEach(function (p) { try { syncDirectory(p.id); n++; } catch (e) { bad++; console.warn('Couldn’t update the directory entry of ' + p.id, e); } });
+      if (bad) console.warn(bad + ' directory entries couldn’t be updated');
+      return n;
+    }
     /** Administrators give sign-in access from the person's record: roles/{email} = { role, personId }. */
     function syncRole(p, prev) {
       var SMALL = ['rosters', 'kids', 'member'], small = function (x) { return !x || SMALL.indexOf(x) >= 0; };

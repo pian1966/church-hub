@@ -602,3 +602,11 @@ html[data-mode=dark] .legend i[style*="#E6EEF7"] { background: #1B2636 !importan
 html[data-mode=dark] .legend i[style*="background:#fff"], html[data-mode=dark] .legend i[style*="background: #fff"] { background: var(--surface) !important; }
 html[data-mode=dark] .btn.ok { background: #237A4B; border-color: #237A4B; color: #fff; }
 html[data-mode=dark] .legend i[style*="#F2EEEA"] { background: #2B2521 !important; }
+
+/* The loading screen (index.html), before Church Hub's code has run: the menu colour, the logo and the turning cross */
+.splash { min-height: 100vh; display: grid; place-items: center; background: var(--side); color: #fff; padding: 24px; text-align: center; }
+.splash-in { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.splash-mark { width: 56px; height: 56px; border-radius: 14px; }
+.splash h1 { margin: 4px 0 0; font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+.splash-cross { width: 30px; height: 30px; margin-top: 10px; fill: color-mix(in srgb, var(--accent) 45%, #fff); }
+.splash p { margin: 0; color: var(--side-muted); font-size: 13px; min-height: 1em; }

@@ -26,7 +26,7 @@ Not yet – replies are planned. For now, contact the sender another way.
 For: Everyone
 Also asked: Why can't I write a message?
 
-Administrators and Pastors (to anyone), carers (to their care group), life group leaders (to their life group) and
+Administrators and Pastors (to anyone), carers (to their care group), midweek group leaders (to their midweek group) and
 message-group leaders (to their message group). Members can read messages but not send them.
 
 ## How do I send a message?
@@ -34,7 +34,7 @@ For: Administrators, Pastors, carers, group leaders
 Also asked: Send a notice to staff. Message all Church Partners. Message one person.
 
 1. Open **Messages → Write** (carers and leaders can also use **Send the group a message** on their Me page).
-2. Choose who it's for: **Chosen people** (tick them one by one), **Staff**, **Church Partners**, a care group, a life group
+2. Choose who it's for: **Chosen people** (tick them one by one), **Staff**, **Church Partners**, a care group, a midweek group
    or a message group. To leave some people out, choose **Only some of them** and untick them.
 3. Write a **Subject** and the **Message**, then **Send**. Church Hub confirms how many people it goes to.
 

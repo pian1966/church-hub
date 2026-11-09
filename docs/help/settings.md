@@ -5,9 +5,9 @@ at the top of Settings to jump to one.
 
 ## How do I switch an app on or off?
 For: Administrators
-Also asked: Turn on life groups. Hide Leave. Switch off care groups.
+Also asked: Turn on midweek groups / Bible studies. Hide Leave. Switch off care groups.
 
-**Settings → Apps**. Switching an app off hides it; nothing is deleted. Life groups start off until you switch them on.
+**Settings → Apps**. Switching an app off hides it; nothing is deleted. Midweek groups start off until you switch them on.
 
 ## How do I change the church's name, country or colour?
 For: Administrators

@@ -80,8 +80,8 @@ For: Everyone
 
 Yes – **Get the Church Hub app for Android** is on the Me page. See [getting-started.md](getting-started.md).
 
-## Where is my care group / life group?
+## Where is my care group / midweek group?
 For: Members
 
-If you're in one, **My care group** and **My life groups** show on the Me page. See [care-groups.md](care-groups.md)
+If you're in one, **My care group** and **My midweek groups** show on the Me page. See [care-groups.md](care-groups.md)
 and [midweek-groups.md](midweek-groups.md).

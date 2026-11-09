@@ -27,6 +27,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Privacy pages, law by country | `js/mod-privacy.js`, `js/privacy-law.js` | `js/i18n/privacy.js` | `tests/privacy-law.test.js` |
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
+| Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
 | Settings, countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
 | Language engine, 19 more languages | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
@@ -59,6 +60,9 @@ GitHub runs every test, including the rules against the Firestore emulator, on e
 - Every change that reaches the website raises the version in `js/version.js` (and its date): the middle number for new
   features, the last for fixes. Put the same number after every `?v=` in `index.html` (one find-and-replace), or browsers
   and phones keep their old copies; `node tests/versions.test.js` checks it. Language files follow automatically.
+- Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
+  would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
+  Never claim anything the app doesn't do, and no prices.
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.
   Work on your own branch from the latest `main`; on a conflict in `js/version.js` / `index.html`, take the higher version.
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

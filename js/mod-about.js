@@ -67,7 +67,21 @@
         '<a class="item" href="#" data-act="hub:notice"><span class="grow"><b>' + T('Privacy notice') + '</b></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '/blob/main/docs/CHANGELOG.md" target="_blank" rel="noopener"><span class="grow"><b>' + T('What’s new') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '" target="_blank" rel="noopener"><span class="grow"><b>' + T('Source code') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +
-      '</div></section></div>';
+      '</div></section>' + brochures() + '</div>';
+  }
+
+  /** Admins: the two printable brochures (brochure.html), filled in with the church's name and this Church Hub's address. */
+  function brochures() {
+    if (!H.can('*')) return '';
+    var st = Store.settings() || {}, link = location.origin + location.pathname.replace(/index\.html$/, '');
+    function a(who, title, sub) {
+      var q = 'for=' + who + '&v=' + encodeURIComponent(V.version) + (st.churchName ? '&church=' + encodeURIComponent(st.churchName) : '') + '&link=' + encodeURIComponent(link);
+      return '<a class="item" href="brochure.html?' + esc(q) + '" target="_blank" rel="noopener"><span class="grow"><b>' + title + '</b><small>' + sub + '</small></span></a>';
+    }
+    return '<section class="panel" id="about-brochures"><h2>' + T('Brochures') + '</h2><p class="hint">' + T('Fold-out A4 brochures about Church Hub to print or save as PDF. They are kept up to date as new features are added.') + '</p><div class="list">' +
+      a('members', T('For our members'), T('How to start, and what members can do')) +
+      a('churches', T('For other churches'), T('What Church Hub offers, and the demo')) +
+      '</div></section>';
   }
 
   H.register({

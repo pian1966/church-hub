@@ -232,6 +232,17 @@ module.exports = async function (ctx) {
   check(!docs['notes/p10'] && !docs['directory/p10'] && docs['people/p10'].firstName === 'Deleted' && !docs['roles/jason.naidoo@example.com'], 'deleting Jason removes his pastoral notes, directory entry and sign-in (Admin can’t read the notes)');
   check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].byEmail === 'linda.pillay@example.com' && /Deleted the personal information/.test(docs[k].action)), 'the deletion is in the audit log');
   await s.go('privacy/audit'); check((await s.text()).includes('Signed in'), 'audit log shows sign-ins');
+  await s.go('about'); await s.page.waitForSelector('#about-brochures');
+  const bro = await s.page.$$eval('#about-brochures a', as => as.map(a => a.getAttribute('href')));
+  check(bro.length === 2 && /for=members/.test(bro[0]) && /for=churches/.test(bro[1]) && bro.every(h => /&link=/.test(h)), 'About offers an Administrator both brochures, with this Church Hub’s address');
+  const bp = await s.page.context().newPage(); await bp.goto(new URL(bro[0], s.page.url()).href);
+  const bt = await bp.evaluate(() => [...document.querySelectorAll('.sheet')].filter(e => !e.hidden).map(e => e.innerText).join(' '));
+  check(/Three easy steps/.test(bt) && !/Switch without the stress/.test(bt) && /127\.0\.0\.1/.test(bt), 'the members’ brochure opens with the church’s address in it, and only the members’ pages');
+  const fits = await bp.evaluate(() => [...document.querySelectorAll('.sheet:not([hidden]) .pn')].every(p => p.scrollHeight <= p.clientHeight + 1));
+  check(fits, 'everything on the brochure fits on its page');
+  await bp.goto(new URL(bro[1], s.page.url()).href);
+  check(await bp.evaluate(() => [...document.querySelectorAll('.pn')].every(p => p.closest('.sheet').hidden || p.scrollHeight <= p.clientHeight + 1) && /Switch without the stress/.test(document.body.innerText)), 'the brochure for other churches opens and fits too');
+  await bp.close();
   await finish(s);
 
   /* ---------- Households, parents and guardians, collection ---------- */

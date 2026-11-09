@@ -152,7 +152,7 @@
       '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p>' + MODS.map(function (m) {
         return '<label class="check"><input type="checkbox" class="st-mod" value="' + m[0] + '"' + (on[m[0]] !== false ? ' checked' : '') + '><span><b>' + esc(T(m[1])) + '</b><br><span class="muted small">' + esc(T(m[2])) + '</span></span></label>';
       }).join('') + '<p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' +
-      renderAccess(st, byRole) + renderPastorCan(st) +
+      renderTheme(st) + renderAccess(st, byRole) + renderPastorCan(st) +
       renderSlots() +
       renderServices(st, svcs) + '</div>';
   }
@@ -161,6 +161,24 @@
    *  (only adults who agreed to be in the directory; name only unless ticked), and who has it. Administrators and
    *  Pastors always see everything; No access can't sign in. Saved as settings.seeOthers = { member, rosters, kids }. */
   var ACCESS = [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']];
+  /** The church's colours (settings.theme = { id } or { id: 'custom', color }): buttons, links, the turning cross, the logo
+   *  and the menu, for everyone. Each choice shows a small sample: a button, the cross on the menu colour. */
+  var CROSS = 'M12 3v18M6 9h12';
+  function renderTheme(st) {
+    var cur = (st.theme || {}).id || 'orange', custom = (st.theme || {}).color || '#2F6FB3', mine = H.themeFrom(custom);
+    var sample = function (t) {
+      return '<span class="th-sample" style="--a:' + t.accent + ';--s:' + t.side + '"><span class="th-side"><span class="th-mark">' + H.icon(CROSS, 14) + '</span></span><span class="th-btn">' + T('Save') + '</span></span>';
+    };
+    return '<section class="panel" id="st-theme" style="grid-column:1/-1"><h2>' + T('Colours') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.') + '</p>' +
+      '<div class="th-grid" role="radiogroup" aria-label="' + esc(T('Colours')) + '">' + H.THEMES.map(function (t) {
+        return '<label class="th-opt"><input type="radio" name="st-th" value="' + t.id + '"' + (cur === t.id ? ' checked' : '') + '>' + sample(t) + '<span>' + esc(T(t.name)) + '</span></label>';
+      }).join('') +
+      '<label class="th-opt"><input type="radio" name="st-th" value="custom"' + (cur === 'custom' ? ' checked' : '') + '>' + sample(mine) +
+        '<span>' + T('Your own colour') + ' <input type="color" id="st-th-c" value="' + esc(custom) + '" aria-label="' + esc(T('Your own colour')) + '"></span></label></div>' +
+      (cur === 'custom' && mine.darkened ? '<p class="hint">' + T('Made a little darker, so white writing on buttons stays easy to read.') + '</p>' : '') +
+      '<button class="btn small" data-autosave data-act="settings:theme">' + T('Save') + '</button></section>';
+  }
   var CARE_SEE = ['rosters', 'kids'];   // may be allowed to see the care groups (firestore.rules: seesCare)
   function renderAccess(st, byRole) {
     var P = window.PeopleParts, see = st.seeOthers || {};
@@ -457,6 +475,14 @@
           '; members see ' + (own ? 'everyone in their own group' : 'only the carers of their own group'));
         S.resyncDirectory();   // everyone's shared contact details, as now allowed
         H.render(); H.toast(T('Saved'));
+      },
+      theme: function () {
+        var on = document.querySelector('input[name="st-th"]:checked'), c = document.getElementById('st-th-c');
+        if (c && document.activeElement === c && on && on.value !== 'custom') { var r = document.querySelector('input[name="st-th"][value="custom"]'); if (r) { r.checked = true; on = r; } }   // picking a colour chooses "Your own colour"
+        var id = on ? on.value : 'orange', theme = id === 'custom' ? { id: 'custom', color: (c && c.value) || '#2F6FB3' } : { id: id };
+        if (JSON.stringify(theme) === JSON.stringify(S.settings().theme || { id: 'orange' })) return;
+        S.setSettings({ theme: theme }, 'Colours: ' + (id === 'custom' ? 'own colour ' + theme.color : id));
+        H.applyTheme(H.themeOf(S.settings())); H.render(); H.toast(T('Saved'));
       },
       name: function () {
         var st = S.settings(), n = document.getElementById('st-name').value.trim(), c = document.getElementById('st-country').value, say = [];

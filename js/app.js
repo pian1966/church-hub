@@ -306,8 +306,49 @@ var Hub = (function () {
   function go(path) { location.hash = '#/' + path; }
 
   /* ---------- rendering ---------- */
+  /* ---------- the church's colours (Settings → Colours) ----------
+   * Each theme: the accent (buttons, links, the turning cross, the logo), a darker shade for writing on light backgrounds,
+   * a pale shade, and the menu's own dark colour. "Your own colour" works out the shades, darkened if needed so white
+   * writing on buttons stays readable. Remembered on each device (Store.pref) so the sign-in screen has it too. */
+  var THEMES = [
+    { id: 'orange', name: TX('Orange'), accent: '#E8590C', ink: '#B8430A', soft: '#FFE8D9', side: '#231E1A', side2: '#3A322C' },
+    { id: 'blue', name: TX('Blue'), accent: '#1D5FB8', ink: '#164A8F', soft: '#E1ECFA', side: '#16202D', side2: '#26354A' },
+    { id: 'green', name: TX('Green'), accent: '#2E7D4F', ink: '#23613D', soft: '#E0F2E7', side: '#17241C', side2: '#263A2D' },
+    { id: 'purple', name: TX('Purple'), accent: '#6D3FC0', ink: '#55309A', soft: '#EEE6FB', side: '#1F1A2B', side2: '#332A47' },
+    { id: 'burgundy', name: TX('Burgundy'), accent: '#A3283B', ink: '#7F1F2E', soft: '#FBE3E7', side: '#251619', side2: '#3D252A' },
+    { id: 'teal', name: TX('Teal'), accent: '#0F7C80', ink: '#0B6064', soft: '#DDF3F3', side: '#142224', side2: '#223839' },
+    { id: 'gold', name: TX('Gold'), accent: '#A86A12', ink: '#7E500E', soft: '#FBEFD9', side: '#241E15', side2: '#3B3224' },
+    { id: 'slate', name: TX('Slate grey'), accent: '#475569', ink: '#334155', soft: '#E7EBF0', side: '#1B1F26', side2: '#2C333D' }
+  ];
+  function hexRgb(h) { var m = /^#?([0-9a-f]{6})$/i.exec(String(h || '')); if (!m) return null; var n = parseInt(m[1], 16); return [n >> 16 & 255, n >> 8 & 255, n & 255]; }
+  function rgbHex(c) { return '#' + c.map(function (x) { return ('0' + Math.max(0, Math.min(255, Math.round(x))).toString(16)).slice(-2); }).join('').toUpperCase(); }
+  function mix(c, to, t) { return c.map(function (x, i) { return x + (to[i] - x) * t; }); }
+  function lum(c) { var f = c.map(function (x) { x /= 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); }); return 0.2126 * f[0] + 0.7152 * f[1] + 0.0722 * f[2]; }
+  /** A theme from any colour: darkened until white writing on it is easy to read (contrast 4.5 or more). */
+  function themeFrom(hex) {
+    var c = hexRgb(hex) || hexRgb('#E8590C'), darkened = false;
+    for (var i = 0; i < 20 && 1.05 / (lum(c) + 0.05) < 4.5; i++) { c = mix(c, [0, 0, 0], 0.08); darkened = true; }
+    return { id: 'custom', accent: rgbHex(c), ink: rgbHex(mix(c, [0, 0, 0], 0.22)), soft: rgbHex(mix(c, [255, 255, 255], 0.86)),
+      side: rgbHex(mix(c, [22, 20, 18], 0.86)), side2: rgbHex(mix(c, [40, 36, 32], 0.78)), darkened: darkened };
+  }
+  function themeOf(st) {
+    var t = (st && st.theme) || {};
+    if (t.id === 'custom' && hexRgb(t.color)) return themeFrom(t.color);
+    return THEMES.filter(function (x) { return x.id === t.id; })[0] || THEMES[0];
+  }
+  var themeKey = '';
+  function applyTheme(t) {
+    if (!t) { try { t = JSON.parse(Store.pref('theme') || 'null'); } catch (e) { t = null; } if (!t) return; }
+    var k = t.accent + t.side; if (k === themeKey) return; themeKey = k;
+    var r = document.documentElement.style;
+    r.setProperty('--accent', t.accent); r.setProperty('--accent-ink', t.ink); r.setProperty('--accent-soft', t.soft);
+    r.setProperty('--side', t.side); r.setProperty('--side-2', t.side2);
+    var meta = document.querySelector('meta[name="theme-color"]'); if (meta) meta.setAttribute('content', t.side);
+    Store.pref('theme', JSON.stringify({ accent: t.accent, ink: t.ink, soft: t.soft, side: t.side, side2: t.side2 }));
+  }
   function render() {
     if (switching) return;   // "View as": the right information is still loading
+    if (Store.settings && Store.settings()) applyTheme(themeOf(Store.settings())); else applyTheme();
     if (!user) return renderSignIn();
     modules.forEach(function (m) { if (m.beforeRender) { try { m.beforeRender(); } catch (e) { console.error(m.id, e); } } });   // e.g. approved translations
     var p = parts(), mod = p[0] === 'home' ? null : moduleById(p[0]);
@@ -871,5 +912,6 @@ var Hub = (function () {
 
   return { register: register, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
+    THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

@@ -70,7 +70,7 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid #D6CDC4; background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14.5px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .btn:hover { border-color: #B9AEA3; }
 .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
-.btn.primary:hover { background: #D14F09; }
+.btn.primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
 .btn.danger, .btn.primary.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
 .btn.small { min-height: 36px; padding: 0 12px; font-size: 13.5px; border-radius: 10px; }
 .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
@@ -175,8 +175,8 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 @keyframes just-saved { 0%, 30% { background: #CDEFD9; box-shadow: 0 0 0 3px #CDEFD9; } 100% { background: transparent; box-shadow: 0 0 0 3px transparent; } }
 @media (prefers-reduced-motion: reduce) { #autosaved { transition: opacity .2s; transform: translate(-50%, 0); } .just-saved { animation: none; background: #CDEFD9; } }
 /* The save buttons that remain (pop-up windows, notes): pale orange */
-.btn.save { background: #FFE9D9; color: #9A3412; border-color: #F7C9A8; }
-.btn.save:hover, .btn.save:focus-visible { background: #FFDCC2; border-color: #EE9E66; }
+.btn.save { background: var(--accent-soft); color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 35%, #fff); }
+.btn.save:hover, .btn.save:focus-visible { background: color-mix(in srgb, var(--accent) 22%, #fff); border-color: color-mix(in srgb, var(--accent) 60%, #fff); }
 .pf-top { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin: -4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-2); }
 .pf-top .btn { gap: 6px; }
 .pp-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: 0 1 auto; }
@@ -545,3 +545,14 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
   .svc-card .svc-ico { width: 32px; height: 32px; }
 }
 .svc-kind { font-size: 14px; margin: 14px 0 8px; color: var(--muted); font-weight: 700; }
+
+/* Settings → Colours (js/mod-settings.js renderTheme): a sample of each choice – the menu with the cross, and a button */
+.th-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.th-opt { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: 8px; padding: 10px; border: 1px solid var(--line); border-radius: 12px; cursor: pointer; font-size: 13.5px; font-weight: 600; position: relative; }
+.th-opt:has(input:checked) { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.th-opt > input[type=radio] { margin: 0; } .th-opt > .th-sample { grid-column: 1 / -1; order: -1; }
+.th-sample { display: flex; height: 44px; border-radius: 8px; overflow: hidden; border: 1px solid var(--line-2); }
+.th-side { width: 44px; background: var(--s); display: grid; place-items: center; }
+.th-mark { width: 24px; height: 24px; border-radius: 7px; background: var(--a); color: #fff; display: grid; place-items: center; }
+.th-btn { flex: 1; margin: 9px; border-radius: 7px; background: var(--a); color: #fff; display: grid; place-items: center; font-size: 12px; }
+.th-opt input[type=color] { width: 30px; height: 22px; padding: 0; border: 1px solid var(--line); border-radius: 5px; vertical-align: middle; margin-left: 4px; background: none; }

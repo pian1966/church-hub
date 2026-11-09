@@ -261,7 +261,7 @@ module.exports = async function (ctx) {
   await s.page.waitForFunction(() => (window.__fake.docs['settings/church'].wording || {}).set === 'anglican', null, { timeout: 5000 }).catch(() => {}); await s.settle(); docs = await s.docsNow();
   check(docs['settings/church'].wording.set === 'anglican' && docs['settings/church'].wording.custom.pastor[0] === 'Rector', 'the set and own words are saved');
   await s.go('settings');
-  t = await s.page.textContent('.grid2 > section:nth-of-type(4)');
+  t = await s.page.textContent('#see-others');
   check(/Rector/.test(t) && !/\bPastor\b/.test(t), 'the screens use the church’s words (Who can see what: Rector)');
   const someP = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].category === 'Church Partner').split('/')[1];
   await s.go('people/p/' + someP); t = await s.text();
@@ -326,5 +326,18 @@ module.exports = async function (ctx) {
   check(dupLine, 'Home still shows “… entered twice” for an Administrator (worked out just after Home appears)');
   const ms = await s.page.evaluate(() => { Store.setSettings({}); const a = performance.now(); Hub.render(); return performance.now() - a; });
   check(ms < 1500, 'drawing Home again is quick (' + Math.round(ms) + ' ms)');
+  await finish(s);
+
+  console.log('The church’s colours (Settings → Colours)');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings');
+  check(await s.page.$$eval('input[name="st-th"]', r => r.map(x => x.value).join()) === 'orange,blue,green,purple,burgundy,teal,gold,slate,custom', 'eight colour themes and “Your own colour”');
+  await s.page.check('input[name="st-th"][value="green"]'); await s.page.waitForTimeout(1200); await s.settle(); docs = await s.docsNow();
+  const accent = () => s.page.evaluate(() => getComputedStyle(document.documentElement).getPropertyValue('--accent').trim().toUpperCase());
+  check(JSON.stringify(docs['settings/church'].theme) === '{"id":"green"}' && await accent() === '#2E7D4F' && await s.page.evaluate(() => getComputedStyle(document.querySelector('.mark')).backgroundColor) === 'rgb(46, 125, 79)', 'choosing Green saves it, and buttons, the cross and the logo turn green');
+  await s.page.$eval('#st-th-c', e => { e.value = '#FFE14D'; e.focus(); e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); });
+  await s.page.waitForTimeout(1200); await s.settle(); docs = await s.docsNow();
+  const a2 = await accent(), lum = h => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16) / 255).map(x => x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4)); return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]; };
+  check(docs['settings/church'].theme.id === 'custom' && docs['settings/church'].theme.color.toUpperCase() === '#FFE14D' && 1.05 / (lum(a2) + 0.05) >= 4.5 && (await s.text()).includes('Made a little darker'), 'a pale own colour (yellow) is darkened so white writing on buttons stays readable');
+  check(await s.page.evaluate(() => JSON.parse(localStorage.getItem('church_hub_pref_theme') || '{}').accent) === a2, 'remembered on the device for the sign-in screen');
   await finish(s);
 };

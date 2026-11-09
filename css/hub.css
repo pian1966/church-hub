@@ -433,6 +433,9 @@ body.is-busy { cursor: progress; }
 /* No internet: view only (js/app.js shell) */
 .offline-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #E8EEF6; color: #1F3A5C; border-bottom: 1px solid #C3D2E6; font-size: 14px; }
 .viewas-pick { display: grid; gap: 8px; }
+/* Care groups: finding a group or a person (js/mod-care.js) */
+.cg-search { max-width: 520px; margin: 0 0 14px; } .cg-search .empty { margin-top: 10px; }
+.cg-hit { background: #FFF1C2; border-radius: 8px; box-shadow: 0 0 0 2px #F5D46B inset; }
 .viewas-pick .btn { justify-content: flex-start; width: 100%; }
 /* Small fold-out sections inside a panel */
 details.sub { margin: 12px 0 4px; border: 1px solid var(--line-2); border-radius: 10px; padding: 8px 12px; }

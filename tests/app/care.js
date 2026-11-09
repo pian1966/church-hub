@@ -38,6 +38,41 @@ module.exports = async function (ctx) {
   check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'only Administrators can use “View as”');
   await finish(s);
 
+  console.log('View as: the Senior Pastor (Rector)');
+  const rSeed = seedDocs(); rSeed['settings/church'].seniorPastorId = 'p02';   // Thandi leads the church
+  rSeed['careGroups/cgR'] = { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
+  s = await session('thandi.mokoena@example.com', rSeed); await s.go('home');
+  check(await s.page.isVisible('[data-act="hub:viewaspick"]'), 'the Senior Pastor has a “View as” switch');
+  await s.page.click('[data-act="hub:viewaspick"]');
+  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,rosters,kids,carer,member', 'they can view as a Roster coordinator, Children’s ministry, a carer or a Member (not as an Administrator)');
+  await s.page.click('[data-act="hub:viewas"][data-r="rosters"]'); await s.page.waitForSelector('.viewas'); await s.settle();
+  t = await s.page.textContent('.viewas');
+  check(t.includes('Roster coordinator') && t.includes('Back to Senior Pastor') && await s.page.evaluate(() => Hub.can('rosters.manage') && !Hub.can('notes') && !Store.list('notes').length), 'as a Roster coordinator: what they see, pastoral notes hidden, and “Back to Senior Pastor”');
+  await s.page.evaluate(() => Store.put('teams', { name: 'Changed while viewing' })); await s.settle(); docs = await s.docsNow();
+  check(!Object.values(docs).some(d => d.name === 'Changed while viewing'), 'nothing is saved while viewing');
+  await s.page.click('.viewas [data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' }); await s.settle();
+  check(await s.page.evaluate(() => Hub.can('notes') && Store.list('notes').length > 0), 'back to Senior Pastor: their pastoral notes again');
+  await s.page.click('[data-act="hub:viewaspick"]'); await s.page.click('[data-act="hub:viewas"][data-r="member"]'); await s.page.waitForSelector('.viewas'); await s.settle();
+  check(await s.page.evaluate(() => !Hub.can('people.basic')), 'as a Member too');
+  await s.page.click('.viewas [data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' });
+  await finish(s);
+  s = await session('pieter.vanwyk@example.com', rSeed); await s.go('home');
+  check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'another Pastor (an Assistant Pastor) can’t use “View as”');
+  await finish(s);
+
+  console.log('Care groups: find a group, or which group someone is in');
+  const fSeed = seedDocs();
+  fSeed['careGroups/cgA'] = { name: 'Hilton Tuesday evening', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: {} };
+  fSeed['careGroups/cgB'] = { name: 'Howick Town', leaderIds: ['p18'], memberIds: ['p17', 'p18'], names: {} };
+  s = await session('linda.pillay@example.com', fSeed); await s.go('care');
+  const shown = () => s.page.$$eval('.cg-panel', ps => ps.filter(p => p.style.display !== 'none').map(p => p.querySelector('h2').textContent).join('|'));
+  await s.page.fill('#cg-q', 'hil tue'); check(await shown() === 'Hilton Tuesday evening', 'part of a group’s name (“hil tue”) shows just that group');
+  await s.page.fill('#cg-q', 'megan'); await s.page.waitForTimeout(50);
+  check(await shown() === 'Howick Town' && await s.page.$eval('.cg-hit', e => e.textContent.includes('Megan') && e.closest('details').open), 'a person’s name shows the group they are in, opened, with them marked');
+  await s.page.fill('#cg-q', 'zzz'); check(await shown() === '' && await s.page.isVisible('#cg-none'), 'nothing matching: says so');
+  await s.page.fill('#cg-q', ''); check(await shown() === 'Hilton Tuesday evening|Howick Town' && !(await s.page.$('.cg-hit')), 'clearing the box shows every group again');
+  await finish(s);
+
   console.log('Care groups:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('care');
   await s.page.fill('#cg-new', 'Hilton Tuesday'); await s.page.click('[data-act="care:addgroup"]'); await s.settle(); docs = await s.docsNow();

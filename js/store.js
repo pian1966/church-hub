@@ -378,7 +378,9 @@ var Store = (function () {
       if (is('admin', 'pastor')) { add('messages', coll('messages')); add('msgGroups', coll('msgGroups')); }
       else { add('messagesTo', coll('messages').where('to', 'array-contains', me)); add('messagesFrom', own('messages', 'fromId')); add('msgGroups', coll('msgGroups').where('memberIds', 'array-contains', me)); }
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
-      add('serveOffers', is('admin', 'rosters') || may('rosters') ? coll('serveOffers') : own('serveOffers'));
+      // ("View as" by the Rector: everyone's offers only if they may answer them themselves – the rules check their own sign-in)
+      var realRoster = !previewRole || session.role === 'admin' || (session.can || []).indexOf('rosters') >= 0;
+      add('serveOffers', (is('admin', 'rosters') || may('rosters')) && realRoster ? coll('serveOffers') : own('serveOffers'));
       // Changes to family details people asked for: Administrators check them all; everyone else sees their own
       add('detailChanges', may('people') ? coll('detailChanges') : own('detailChanges'));
       // Translations: the approved wording for everyone; suggestions – Administrators all, checkers their languages, everyone their own
@@ -884,7 +886,9 @@ var Store = (function () {
     preview: function (r, careGroup) {
       if (arguments.length) {
         var was = previewRole, wasCare = previewCare; r = r === 'admin' ? '' : r || ''; careGroup = r ? careGroup || '' : '';
-        if (r && LIVE && (Live.session() || {}).role !== 'admin') return previewRole;
+        // Administrators, and the Senior Pastor (Rector, Settings → What Pastors can do) – only for roles below their own
+        var real = LIVE ? Live.session() || {} : {}, rector = real.role === 'pastor' && !!real.personId && real.personId === ((db.settings || {}).seniorPastorId || '');
+        if (r && LIVE && real.role !== 'admin' && !(rector && r !== 'pastor')) return previewRole;
         if (r !== was || careGroup !== wasCare) {
           var who = function (x, g) { return g ? 'carer of the care group ' + ((get('careGroups', g) || {}).name || g) : x; };
           if (was) audit('Stopped viewing as ' + who(was, wasCare), 'settings');

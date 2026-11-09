@@ -84,8 +84,12 @@ var Hub = (function () {
     var p = (ROLES[myRole()] || ROLES.member).perms;
     if (myRole() === 'pastor' && pastorPerms().indexOf(perm) >= 0) return true;
     // Settings → Who can see what: Roster coordinators, Children's ministry and Church Partners may see the care groups
-    // (settings.seeCare; Church Partners only the people in the church directory)
-    if (perm === 'care.view' && !Store.previewCare() && (((Store.settings() || {}).seeCare) || []).indexOf(myRole()) >= 0) return true;
+    // (settings.seeCare; Church Partners only the people in the church directory). Church Partners also get the Care groups
+    // page for their own group when "Their own group: see all its members" is ticked (settings.seeCareOwn).
+    if (perm === 'care.view' && !Store.previewCare()) {
+      var cst = Store.settings() || {};
+      if ((cst.seeCare || []).indexOf(myRole()) >= 0 || (myRole() === 'member' && cst.seeCareOwn !== false)) return true;
+    }
     return p.indexOf(perm) >= 0 || (p.indexOf('*') >= 0 && RESTRICTED.indexOf(perm) < 0);
   }
 

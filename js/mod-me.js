@@ -51,7 +51,10 @@
   function renderDetails() {
     var u = me(), p = S.get('people', u.id) || u, child = p.familyRole === 'child';
     var none = function (unknown) { return '<span class="muted">' + (unknown ? T('Not known') : '—') + '</span>'; };
-    var html = '<div class="me-who">' + H.avatar(p, 56) + '<div><h1>' + esc(H.name(p)) + '</h1><p class="lead">' + T('Keep your details up to date, so the church can reach you.') + '</p></div></div>' + tabs('');
+    // The same chips staff see on their profile: Church Partner, staff, their care group(s) – not where the record came from
+    var chips = window.PeopleParts ? PeopleParts.catTags(p) : '';
+    var html = '<div class="me-who">' + H.avatar(p, 56) + '<div><h1>' + esc(H.name(p)) + '</h1>' + (chips ? '<div class="row me-chips">' + chips + '</div>' : '') +
+      '<p class="lead">' + T('Keep your details up to date, so the church can reach you.') + '</p></div></div>' + tabs('');
     html += '<div class="grid2">';
     // Contact details: the person can change these themselves (security rules allow name, email and mobile)
     html += '<section class="panel"><h2>' + T('Contact details') + '</h2><dl class="kv">' +

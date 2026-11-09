@@ -158,8 +158,11 @@
   function apply(p, v) { return setFrom(p, v); }
   /** The tags on a person: Care group member or Carer, with each group's name. */
   function tag(p) {
-    if (!manager() && !viewer()) return '';
-    var mine = partnerView() ? (S.isLive() ? (p.care || []) : partnerGroups().filter(function (g) { return g.people.some(function (x) { return x.p.id === p.id; }); }).map(function (g) { return { name: g.name, carer: g.people.some(function (x) { return x.p.id === p.id && x.carer; }) }; }))
+    var u = me(), self = !!(u && p && u.id === p.id);
+    if (!manager() && !viewer() && !self) return '';
+    // Your own groups are always yours to see (your Me page, your profile); others' only as Settings allows
+    var mine = self && !manager() ? Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return { name: g.name, carer: Care.isLeader(g, p.id) }; })
+      : partnerView() ? (!seeAllGroups() ? [] : S.isLive() ? (p.care || []) : partnerGroups().filter(function (g) { return g.people.some(function (x) { return x.p.id === p.id; }); }).map(function (g) { return { name: g.name, carer: g.people.some(function (x) { return x.p.id === p.id && x.carer; }) }; }))
       : Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return { name: g.name, carer: Care.isLeader(g, p.id) }; });
     return mine.map(function (g) { return ' <span class="tag">' + T(g.carer ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>'; }).join('');
   }
@@ -264,10 +267,16 @@
   }
 
   /** Church Partners: which care group each person in the church directory is in (names only). */
+  /** Settings → All groups for Church Partners (settings.seeCare has 'member'). */
+  function seeAllGroups() { return ((S.settings() || {}).seeCare || []).indexOf('member') >= 0; }
   function partnerOnly() {
-    var gs = partnerGroups();
-    return '<div class="page-head"><div><h1>' + T('Care groups') + '</h1><p class="lead">' + T('Which care group each person in the church directory is in, and who the carers are.') + '</p></div></div>' +
-      (gs.length ? searchBox() + '<div class="grid2">' + gs.map(function (g) {
+    var u = me(), mine = u ? Care.groupsOf(S.list('careGroups'), u.id) : [], all = seeAllGroups(), gs = all ? partnerGroups() : [];
+    // Their own group(s) first, as on the Me page; then every group when Settings allows it
+    var own = mine.length ? '<div id="my-care">' + mine.map(function (g) { return oneGroup(g, u, false); }).join('') + '</div>'
+      : '<p class="empty">' + T('You’re not in a care group yet.') + '</p>';
+    return '<div class="page-head"><div><h1>' + T('Care groups') + '</h1>' + (all ? '<p class="lead">' + T('Which care group each person in the church directory is in, and who the carers are.') + '</p>' : '') + '</div></div>' +
+      own + (!all ? '' : '<h2 style="margin:22px 0 10px">' + T('All care groups') + '</h2>') +
+      (!all ? '' : gs.length ? searchBox() + '<div class="grid2">' + gs.map(function (g) {
         var ms = g.people.slice().sort(function (a, b) { return (a.carer ? 0 : 1) - (b.carer ? 0 : 1) || H.name(a.p).localeCompare(H.name(b.p)); });
         return '<section class="panel cg-view cg-panel" data-find="' + esc(g.name) + '"><h2 style="margin:0">' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} person', '{n} people', ms.length) + '</span>' +
           fold('pv-' + g.id, ms.map(function (x) { return x.carer; }), ms.map(function (x) {

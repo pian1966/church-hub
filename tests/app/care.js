@@ -182,13 +182,26 @@ module.exports = async function (ctx) {
   pSeed['careGroups/cgP'] = { name: 'Hilton', leaderIds: ['p15'], memberIds: ['p14', 'p15', 'p17', 'p18'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs', p17: 'Megan Smith', p18: 'David Smith' } };
   pSeed['careGroups/cgP/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555', leader: true };
   pSeed['careGroups/cgP/share/p18'] = { firstName: 'David', lastName: 'Smith', ok: true, mobile: '082 000 1888' };
+  pSeed['people/p14'].source = 'elvanto';   // imported from Elvanto: only Administrators see that chip
   s = await session('tim.jacobs@example.com', JSON.parse(JSON.stringify(pSeed))); await s.go('me'); await s.page.waitForTimeout(400);
   await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));
   t = await s.page.textContent('#my-care').catch(() => '');
-  check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888') && !(await s.page.$('nav a[href="#/care"]')), 'by default: everyone in their own group, and no page of all the groups');
+  check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888'), 'by default: everyone in their own group');
+  check((await s.page.textContent('.me-chips').catch(() => '')).includes('Care group member · Hilton'), 'their Me page shows chips like the staff see: their care group');
+  await s.go('care'); t = await s.text();
+  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('My care group: Hilton') && !t.includes('All care groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
+  await s.go('people/p/p14'); check(!(await s.text()).includes('From Elvanto'), 'no “From Elvanto” chip for anyone but Administrators');
+  await finish(s);
+  const neither = JSON.parse(JSON.stringify(pSeed)); neither['settings/church'].seeCareOwn = false; neither['settings/church'].seeCare = [];
+  s = await session('tim.jacobs@example.com', neither); await s.go('home');
+  check(!(await s.page.$('nav a[href="#/care"]')), 'neither box ticked: no Care groups in the menu');
   await finish(s);
   s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(pSeed))); await s.go('settings');
-  check(await s.page.$eval('.st-careown', b => b.checked) && !(await s.page.$eval('.st-care[value="member"]', b => b.checked)), 'Basic access: “See everyone in their own care group” on, “which care group each person is in” off, to start with');
+  await s.go('people/p/p14'); check((await s.text()).includes('From Elvanto'), 'an Administrator sees where a record came from (From Elvanto)');
+  await s.go('settings');
+  check(await s.page.$eval('.st-careown', b => b.checked) && !(await s.page.$eval('.st-care[value="member"]', b => b.checked)), 'Basic access: “Their own group” on, “All groups” off, to start with');
+  t = await s.page.textContent('#see-others');
+  check(t.includes('Their own group: see all its members (not just the carers)') && t.includes('All groups: see who is in each group (names only, on a Care groups page)'), 'the boxes say what they cover first, then the detail');
   await s.page.uncheck('.st-careown'); await s.page.check('.st-care[value="member"]'); await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].seeCareOwn === false && docs['settings/church'].seeCare.join() === 'member', 'both choices saved');
@@ -201,7 +214,7 @@ module.exports = async function (ctx) {
   check(t.includes('Clare') && t.includes('082 000 1555') && !t.includes('David') && t.includes('your carers'), 'switched off: a member sees only their carers (and themselves) in their own group');
   check(await s.page.evaluate(() => !Store.list('careShare').some(c => c.personId === 'p18')), '… and the other members’ cards aren’t loaded');
   await s.go('care'); await s.page.$$eval('main details', d => d.forEach(x => { x.open = true; })); t = await s.text();
-  check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888'), 'Care groups page: which group each person in the church directory is in – names only');
+  check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888') && t.includes('All care groups'), 'Care groups page: their own group, then which group each person in the church directory is in – names only');
   await s.go('people'); t = await s.text();
   check(t.includes('Care group member · Hilton'), 'the People list shows their care group');
   await finish(s);

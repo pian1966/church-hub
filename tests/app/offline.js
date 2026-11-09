@@ -3,7 +3,7 @@
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
-  const { BASE, browser, check, finish, seedDocs, session } = ctx;
+  const { BASE, check, finish, seedDocs, session } = ctx;
   let s, docs, t;
 
   console.log('Offline (live mode, Tim – member):');
@@ -38,7 +38,8 @@ module.exports = async function (ctx) {
   await finish(s);
 
   console.log('Opening Church Hub with no internet (sw.js, demo):');
-  const context = await browser.newContext(), page = await context.newPage(), errs = [];
+  // A fresh browser of its own: after the long run before it, the shared test browser's offline switch gets unreliable
+  const own = await ctx.chromium.launch(), context = await own.newContext(), page = await context.newPage(), errs = [];
   page.on('pageerror', e => errs.push(e.message));
   await context.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());
   const DEMO = BASE + '?demo';
@@ -64,5 +65,5 @@ module.exports = async function (ctx) {
   if (ok) { await page.selectOption('#si-any', 'p14'); await page.click('[data-act="hub:signinany"]'); }
   check(ok && !!(await page.$('.app')) && !(await page.$('.offline-bar')), 'the demo works as usual offline (it is kept in the browser)');
   check(errs.length === 0, 'no errors' + (errs.length ? ': ' + errs.slice(0, 3).join(' | ') : ''));
-  await context.close();
+  await context.close(); await own.close();
 };

@@ -16,7 +16,7 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
-  var WEDDING = P.WEDDING;
+  var WEDDING = P.WEDDING, state = P.state;
   function keyDate() { return P.keyDate.apply(this, arguments); }
   function canReview() { return H.can('*') || H.can('people.edit'); }   // Administrators and Pastors
 
@@ -140,32 +140,89 @@
 
   /* ---------- name badges ---------- */
   function badgesWaiting() { return canReview() ? S.find('people', function (p) { return p.badgeWanted && !p.badgePrinted && p.active !== false; }).sort(P.SORTS.first.cmp) : []; }
-  function renderBadges() {
+  function renderBadges(sub) {
+    if (sub === 'layout') return renderLayout();
+    state.badgeDraft = null;
     var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>';
     if (!canReview()) return back + '<p class="empty">' + T('This is for Administrators and Pastors.') + '</p>';
     var list = badgesWaiting();
-    return back + '<div class="page-head"><div><h1>' + T('Name badges') + '</h1><p class="lead">' + T('Print them on A4, cut along the lines and slide them into the laminate pouches.') + '</p></div>' +
+    return back + '<div class="page-head"><div><h1>' + T('Name badges') + '</h1><p class="lead">' + (onLabels(badgeLayout()) ? T('Print them on label paper and stick them on.') : T('Print them on A4, cut along the lines and slide them into the laminate pouches.')) + '</p></div>' +
       (list.length ? '<div class="btns"><button class="btn primary" data-act="people:badgeprint">' + H.icon('M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z', 18) + TN('Print {n} badge', 'Print {n} badges', list.length) + '</button>' +
-        '<button class="btn" data-act="people:badgedone">' + T('Mark as printed') + '</button></div>' : '') + '</div>' +
+        '<button class="btn" data-act="people:badgedone">' + T('Mark as printed') + '</button>' : '<div class="btns">') + (H.can('*') ? '<a class="btn" href="#/people/badges/layout">' + T('Badge layout') + '</a>' : '') + '</div></div>' +
       (list.length ? '<div class="badge-prev">' + list.map(function (p) {
         return '<div class="badge"><b>' + esc(p.preferredName || p.firstName) + '</b><span>' + esc(p.lastName) + '</span><button class="icon-btn ghost" data-act="people:badgeoff" data-id="' + p.id + '" aria-label="' + esc(T('Remove') + ': ' + H.name(p)) + '" title="' + esc(T('Remove')) + '">' + H.icon(H.ICON.x, 14) + '</button></div>';
       }).join('') + '</div><p class="hint">' + T('Printing works best from a computer.') + '</p>' : '<p class="empty">' + T('No name badges waiting. Tick “Make a name badge” when you add someone, or use the button on their page.') + '</p>');
   }
-  /** A4 sheets of 10 badges, as in the church's Google Doc. */
-  function badgeSheets(list) {
-    var out = '';
-    for (var i = 0; i < list.length; i += 10) {
-      var cells = list.slice(i, i + 10), rows = '';
-      for (var r = 0; r < 5; r++) {
-        rows += '<tr>' + [0, 1].map(function (c) {
-          var p = cells[r * 2 + c]; if (!p) return '<td class="empty"></td>';
-          var f = p.preferredName || p.firstName || '', l = p.lastName || '', size = function (t, a, b) { return t.length > b ? ' class="longer"' : t.length > a ? ' class="long"' : ''; };   // long names: smaller, so they fit
-          return '<td><b' + size(f, 9, 12) + '>' + esc(f) + '</b><span' + size(l, 13, 17) + '>' + esc(l) + '</span></td>';
-        }).join('') + '</tr>';
-      }
-      out += '<div class="sheet"><table>' + rows + '</table></div>';
+  /** The church's badge layout (People → Name badges → Badge layout; js/badges.js): its own A4 sheet, or label paper. */
+  function badgeLayout() { return Badges.layout((S.settings() || {}).badgeLayout); }
+  function onLabels(L) { return L.lines !== 'thick'; }   // label paper (or a layout of their own): a sheet may be partly used
+  /** The sheets to print for these people (first name or the name they go by, then surname). */
+  function badgeSheets(list, opts, L) {
+    return Badges.sheets(list.map(function (p) { return { first: p.preferredName || p.firstName || '', last: p.lastName || '' }; }), L || badgeLayout(), opts);
+  }
+  /** Print badges for these people: on label paper, first ask which label to start at (a partly used sheet). why: for the audit log. */
+  function printBadges(list, why) {
+    if (!list.length) return;
+    var L = badgeLayout(), go = function (start) { if (why) S.audit(why + ': ' + list.length, 'people'); printOnly(badgeSheets(list, { start: start }, L), 'badges'); };
+    if (!onLabels(L)) return go(1);
+    state.badgeQueue = list;
+    var n = Badges.perPage(L);
+    H.modal(H.dialogHead(TN('Print {n} badge', 'Print {n} badges', list.length), T('On label paper: {n} labels to a sheet.', { n: n })) + '<div class="dlg-body">' +
+      '<label class="field">' + T('Start at label') + '<input type="number" id="bp-start" min="1" max="' + n + '" value="1" inputmode="numeric"><small>' + T('1 is the top-left label; they are counted across, then down. Use a later one if some labels on the sheet are used.') + '</small></label>' +
+      '</div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:badgego" data-why="' + esc(why || '') + '">' + T('Print') + '</button></div>', T('Print'));
+  }
+  /** People → Name badges → Badge layout (Administrators): the size of each badge and how they sit on the page. */
+  var LAYOUT_FIELDS = [['cols', 'Labels across', 1], ['rows', 'Labels down', 1], ['w', 'Label width (mm)', 0.1], ['h', 'Label height (mm)', 0.1],
+    ['top', 'Top margin (mm)', 0.01], ['left', 'Left margin (mm)', 0.01], ['gapX', 'Gap between columns (mm)', 0.01], ['gapY', 'Gap between rows (mm)', 0.01]];
+  function renderLayout() {
+    var back = '<a class="crumb" href="#/people/badges">' + H.icon(H.ICON.back, 16) + T('Name badges') + '</a>';
+    if (!H.can('*')) return back + '<p class="empty">This is for Administrators.</p>';
+    var L = state.badgeDraft || (state.badgeDraft = badgeLayout());
+    var opt = function (v, t, on) { return '<option value="' + esc(v) + '"' + (on ? ' selected' : '') + '>' + esc(t) + '</option>'; };
+    return back + '<div class="page-head"><div><h1>Badge layout</h1><p class="lead">The size of each name badge and where it sits on the page: the church’s own sheet to cut and laminate, or sticky label paper (with or without gaps between the labels).</p></div></div>' +
+      '<div class="grid2"><section class="panel" id="bl-form" data-noauto>' +
+      '<label class="field">Paper<select id="bl-preset">' + Object.keys(Badges.PRESETS).map(function (k) { return opt(k, Badges.PRESETS[k].name, L.preset === k); }).join('') + opt('custom', 'My own measurements', L.preset === 'custom') + '</select>' +
+      '<small>For other label paper, choose My own measurements and copy them from the label packet (or measure a sheet with a ruler).</small></label>' +
+      '<div class="two">' + LAYOUT_FIELDS.map(function (f) { return '<label class="field">' + f[1] + '<input type="number" id="bl-' + f[0] + '" min="0" step="' + f[2] + '" value="' + L[f[0]] + '" inputmode="decimal"></label>'; }).join('') + '</div>' +
+      '<div class="two"><label class="field">Page size<select id="bl-page">' + Object.keys(Badges.PAGES).map(function (k) { return opt(k, Badges.PAGES[k].label + ' (' + Badges.PAGES[k].w + ' × ' + Badges.PAGES[k].h + ' mm)', L.page === k); }).join('') + '</select></label>' +
+      '<label class="field">Lines around each badge<select id="bl-lines">' + opt('thick', 'Thick lines to cut along (3 pt)', L.lines === 'thick') + opt('thin', 'Thin lines', L.lines === 'thin') + opt('none', 'No lines (label paper)', L.lines === 'none') + '</select></label></div>' +
+      '<div class="note warn" id="bl-err" role="alert"' + (Badges.problems(L).length ? '' : ' hidden') + '>' + esc(Badges.problems(L).join(' ')) + '</div>' +
+      '<p class="hint">Before printing a batch on label paper, print a test page on plain paper and hold it against a sheet of labels up to the light.</p>' +
+      '<div class="btns"><button class="btn primary" data-act="people:layoutsave">Save</button><button class="btn" data-act="people:layouttest">Print a test page</button>' +
+      '<button class="btn" data-act="people:layoutreset">Back to the church’s layout</button></div></section>' +
+      '<section class="panel"><h2>How a sheet will look</h2><div class="bl-prev" id="bl-prev">' + layoutPreview(L) + '</div><p class="hint" id="bl-count">' + layoutCount(L) + '</p></section></div>';
+  }
+  function layoutCount(L) { return Badges.perPage(L) + ' badges to a sheet, each ' + L.w + ' × ' + L.h + ' mm.'; }
+  /** A small drawing of one sheet, with example names (dashed outlines where there are no lines: the edges of the labels). */
+  function layoutPreview(L) {
+    var pg = Badges.PAGES[L.page] || Badges.PAGES.A4, scale = 300 / (pg.w * 96 / 25.4), ex = [['Thandi', 'Mokoena'], ['Pieter', 'van Wyk'], ['Christopher', 'Abrahamse'], ['Jo', 'Smith']];
+    if (Badges.problems(L).length) return '<p class="muted">Fix the measurements to see the sheet.</p>';
+    var names = []; for (var i = 0; i < Badges.perPage(L); i++) names.push({ first: ex[i % 4][0], last: ex[i % 4][1] });
+    var html = Badges.sheets(names, L).replace(/class="lab"/g, 'class="lab' + (L.lines === 'none' ? ' paper' : '') + '"').replace('class="sheet', 'style="transform:scale(' + scale.toFixed(4) + ')" class="sheet');
+    return '<div class="bl-page" style="width:' + (pg.w * 96 / 25.4 * scale).toFixed(1) + 'px;height:' + (pg.h * 96 / 25.4 * scale).toFixed(1) + 'px">' + html + '</div>';
+  }
+  /** The layout as typed in the boxes. */
+  function layoutTyped() {
+    var g = function (id) { var e = document.getElementById('bl-' + id); return e ? e.value : ''; }, out = { preset: g('preset'), page: g('page'), lines: g('lines') };
+    LAYOUT_FIELDS.forEach(function (f) { out[f[0]] = g(f[0]); });
+    return Badges.layout(out);
+  }
+  /** A box changed: choosing a paper fills in its measurements; changing a measurement makes it your own. Redraw the preview. */
+  function layoutChanged(t) {
+    var L;
+    if (t.id === 'bl-preset' && t.value !== 'custom') {
+      L = Badges.layout({ preset: t.value });
+      LAYOUT_FIELDS.forEach(function (f) { document.getElementById('bl-' + f[0]).value = L[f[0]]; });
+      document.getElementById('bl-page').value = L.page; document.getElementById('bl-lines').value = L.lines;
+    } else if (t.id !== 'bl-preset' && t.id !== 'bl-lines') {
+      var pr = document.getElementById('bl-preset'), base = pr.value !== 'custom' && Badges.layout({ preset: pr.value });
+      if (base && t.id !== 'bl-page' ? +t.value !== base[t.id.slice(3)] : base && t.value !== base.page) pr.value = 'custom';
     }
-    return out;
+    L = state.badgeDraft = layoutTyped();
+    var pb = Badges.problems(L), err = document.getElementById('bl-err');
+    err.textContent = pb.join(' '); err.hidden = !pb.length;
+    document.getElementById('bl-prev').innerHTML = layoutPreview(L);
+    document.getElementById('bl-count').textContent = pb.length ? '' : layoutCount(L);
   }
   /** On a person's page (Administrators and Pastors): their name badge. */
   function badgeLine(p) {
@@ -328,7 +385,22 @@
     },
     badgeon: function (el) { var p = S.get('people', el.dataset.id); if (p && canReview()) { setBadge(p, H.today(), '', 'Name badge to print: ' + H.name(p)); H.render(); H.toast(T('Added to the name badges to print')); } },
     badgeoff: function (el) { var p = S.get('people', el.dataset.id); if (p && canReview()) { setBadge(p, '', p.badgePrinted || '', 'Name badge taken off the list: ' + H.name(p)); H.render(); } },
-    badgeprint: function () { var list = badgesWaiting(); if (list.length) printOnly(badgeSheets(list), 'badges'); },
+    badgeprint: function () { printBadges(badgesWaiting()); },
+    badgego: function (el) {
+      var list = state.badgeQueue || [], L = badgeLayout(), n = Badges.perPage(L), v = Math.round(+document.getElementById('bp-start').value) || 1;
+      v = Math.max(1, Math.min(n, v)); H.closeModal(); state.badgeQueue = null;
+      if (el.dataset.why) S.audit(el.dataset.why + ': ' + list.length, 'people');
+      if (list.length) printOnly(badgeSheets(list, { start: v }, L), 'badges');
+    },
+    layoutsave: function () {
+      if (!H.can('*')) return;
+      var L = layoutTyped(), pb = Badges.problems(L);
+      if (pb.length) { H.toast(pb[0], true); return; }
+      S.setSettings({ badgeLayout: L }, 'Changed the name badge layout');
+      state.badgeDraft = null; H.toast('Saved'); H.go('people/badges');
+    },
+    layouttest: function () { var L = layoutTyped(); if (Badges.problems(L).length) return; printOnly(Badges.sheets([], L, { test: true }), 'badges'); },
+    layoutreset: function () { state.badgeDraft = Badges.layout({ preset: 'church' }); H.render(); },
     badgedone: function () {
       var list = badgesWaiting(); if (!list.length) return;
       list.forEach(function (p) { setBadge(p, p.badgeWanted, H.today(), ''); });
@@ -337,5 +409,5 @@
     }
   });
 
-  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
+  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, layoutChanged: layoutChanged, printBadges: printBadges, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
 })(PeopleParts);

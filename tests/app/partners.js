@@ -69,17 +69,49 @@ module.exports = async function (ctx) {
   // Printing: only the badge sheets, laid out like the church's Google Doc
   await s.page.evaluate(() => { window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
   await s.page.click('[data-act="people:badgeprint"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
-  check(await s.page.evaluate(() => (window.__printed || '').includes('<b>Grace</b><span>Newcombe</span>') && document.getElementById('print-only').classList.contains('badges')), 'Print: an A4 sheet with each badge (first name, then surname)');
+  check(await s.page.evaluate(() => /<b [^>]*>Grace<\/b><span [^>]*>Newcombe<\/span>/.test(window.__printed || '') && document.getElementById('print-only').classList.contains('badges')), 'Print: an A4 sheet with each badge (first name, then surname)');
   await s.page.evaluate(() => { const b = document.getElementById('print-only'); b.className = 'badges'; b.innerHTML = window.__printed; document.documentElement.classList.add('printing'); });
   await s.page.emulateMedia({ media: 'print' });
-  const size = await s.page.evaluate(() => { const td = document.querySelector('#print-only td'), r = td.getBoundingClientRect(), cs = getComputedStyle(td), b = document.querySelector('#print-only td b');
+  const size = await s.page.evaluate(() => { const td = document.querySelector('#print-only .lab'), r = td.getBoundingClientRect(), cs = getComputedStyle(td), b = document.querySelector('#print-only .lab b');
     return { w: r.width / 96 * 25.4, h: r.height / 96 * 25.4, border: cs.borderTopWidth, first: getComputedStyle(b).fontSize, weight: getComputedStyle(b).fontWeight }; });
-  check(Math.abs(size.w - 72.8) < 1.5 && Math.abs(size.h - 41) < 1.5 && size.border === '4px' && size.first === '46.6667px' && +size.weight >= 700,
+  check(Math.abs(size.w - 72.8) < 1.5 && Math.abs(size.h - 41) < 1.5 && Math.abs(parseFloat(size.border) - 4) < 0.5 && size.first === '46.6667px' && +size.weight >= 700,
     'badges as in the Google Doc: about 73 × 41 mm with 3 pt lines, first name bold 35 pt (' + size.w.toFixed(1) + ' × ' + size.h.toFixed(1) + ' mm)');
   await s.page.emulateMedia({ media: 'screen' }); await s.page.evaluate(() => { document.documentElement.classList.remove('printing'); document.getElementById('print-only').innerHTML = ''; });
   await s.page.click('[data-act="people:badgedone"]'); await s.settle(); docs = await s.docsNow();
   check(docs['details/' + gid].badgePrinted && docs['details/p14'].badgePrinted && /No name badges waiting/.test(await s.text()), 'Mark as printed: off the list, with the date printed kept');
   await s.go('people/p/' + gid); check(/Name badge printed on/.test(await s.text()), 'her page says when her badge was printed (and can make another)');
+  await finish(s);
+
+  console.log('Badge layout (label paper):');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/badges');
+  await s.page.click('a[href="#/people/badges/layout"]'); await s.page.waitForSelector('#bl-preset');
+  check((await s.page.$$('#bl-prev .lab')).length === 10, 'Badge layout: the church’s sheet of 10 to start with, drawn as a preview');
+  await s.page.selectOption('#bl-preset', 'l7163'); await s.page.waitForTimeout(400);
+  check(await s.page.inputValue('#bl-rows') === '7' && await s.page.inputValue('#bl-lines') === 'none' && (await s.page.$$('#bl-prev .lab')).length === 14, 'choosing Avery L7163 fills in its measurements: 14 labels, no lines');
+  await s.page.fill('#bl-gapY', '5'); await s.page.dispatchEvent('#bl-gapY', 'change'); await s.page.waitForTimeout(400);
+  check(await s.page.inputValue('#bl-preset') === 'custom' && /Too long for A4/.test(await s.page.textContent('#bl-err')), 'a gap between rows makes it my own – and too long for A4, so it says so');
+  await s.page.fill('#bl-gapY', '0'); await s.page.fill('#bl-rows', '6'); await s.page.dispatchEvent('#bl-rows', 'change'); await s.page.waitForTimeout(400);
+  check(await s.page.isHidden('#bl-err') && /12 badges to a sheet/.test(await s.page.textContent('#bl-count')), '6 rows: fits, 12 to a sheet');
+  await s.page.evaluate(() => { window.__printed = ''; window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
+  await s.page.click('[data-act="people:layouttest"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
+  check(await s.page.evaluate(() => (window.__printed.match(/class="lab"/g) || []).length === 12 && />12<\/b>/.test(window.__printed)), 'Print a test page: every label numbered and outlined');
+  await s.page.click('[data-act="people:layoutsave"]'); await s.settle(); docs = await s.docsNow();
+  const bl = docs['settings/church'].badgeLayout;
+  check(bl && bl.preset === 'custom' && bl.rows === 6 && bl.w === 99.1 && bl.lines === 'none', 'Save: kept for the church');
+  check(/Print them on label paper/.test(await s.text()), 'the Name badges page now speaks of label paper');
+  await s.go('people/search'); await s.page.waitForSelector('#adv');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'category'); await s.page.selectOption('.adv-v[data-i="0"]', 'Attender');
+  await s.page.click('[data-act="people:advrun"]'); await s.page.waitForSelector('[data-act="people:advbadges"]');
+  await s.page.evaluate(() => { window.__printed = ''; window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
+  await s.page.click('[data-act="people:advbadges"]'); await s.page.waitForSelector('#bp-start');
+  check(/12 labels to a sheet/.test(await s.page.textContent('#modal')), 'printing on label paper: asks which label to start at');
+  await s.page.fill('#bp-start', '4'); await s.page.click('[data-act="people:badgego"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
+  check(await s.page.evaluate(() => (window.__printed.match(/class="lab"/g) || []).length === 4 && /left:106.25mm;top:53.25mm/.test(window.__printed) && !/top:15.15mm/.test(window.__printed)), 'start at label 4: the first row is skipped, the badges begin on the second');
+  docs = await s.docsNow();
+  check(Object.values(docs).some(d => d && d.action && /Printed name badges from Advanced search: 4/.test(d.action)), 'printing is in the audit log');
+  await finish(s);
+  s = await session('pieter.vanwyk@example.com', seedDocs()); await s.go('people/badges');
+  check(!(await s.page.$('a[href="#/people/badges/layout"]')), 'a Pastor prints badges but doesn’t change the layout');
   await finish(s);
 
   console.log('Name badges and invitations from Advanced search:');
@@ -90,7 +122,7 @@ module.exports = async function (ctx) {
   check(/Name badges for everyone found/.test(await s.page.textContent('[data-act="people:advbadges"]')) && /Invite everyone found to apply/.test(await s.page.textContent('[data-act="people:advinvite"]')), 'search results: “Name badges for everyone found” and “Invite everyone found to apply”');
   await s.page.evaluate(() => { window.__printed = ''; window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
   await s.page.click('[data-act="people:advbadges"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
-  check(await s.page.evaluate(() => (window.__printed.match(/<td><b/g) || []).length === 4 && window.__printed.indexOf('<b>Aisha</b>') < window.__printed.indexOf('<b>Jason</b>')), 'name badges for the 4 found, on an A4 sheet, in first-name order');
+  check(await s.page.evaluate(() => (window.__printed.match(/class="lab"/g) || []).length === 4 && window.__printed.indexOf('>Aisha</b>') < window.__printed.indexOf('>Jason</b>')), 'name badges for the 4 found, on an A4 sheet, in first-name order');
   await s.page.check('.adv-sel[value="p10"]'); await s.settle();
   check(/Name badges for 1 ticked/.test(await s.page.textContent('[data-act="people:advbadges"]')), 'tick someone: the buttons are for those ticked');
   await s.page.uncheck('.adv-sel[value="p10"]'); await s.settle();
@@ -124,7 +156,7 @@ module.exports = async function (ctx) {
   check(/2 people selected/.test(await s.page.textContent('#pp-pickn')), 'Select people: ticks stay from one search to the next (2 selected)');
   await s.page.evaluate(() => { window.__printed = ''; window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
   await s.page.click('[data-act="people:pickbadges"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
-  check(await s.page.evaluate(() => /<b>Jason<\/b>/.test(window.__printed) && /<b>Tim<\/b>/.test(window.__printed) && (window.__printed.match(/<td><b/g) || []).length === 2), 'Name badges: just the 2 ticked');
+  check(await s.page.evaluate(() => />Jason<\/b>/.test(window.__printed) && />Tim<\/b>/.test(window.__printed) && (window.__printed.match(/class="lab"/g) || []).length === 2), 'Name badges: just the 2 ticked');
   await s.page.click('[data-act="people:pickinvite"]'); await s.page.waitForSelector('#iv-body');
   check(/1 person is left out/.test(await s.page.textContent('#modal')), 'Invite to apply: Tim (already a Church Partner) is left out');
   await s.page.click('[data-act="hub:close"]').catch(() => s.page.keyboard.press('Escape')); await s.page.waitForTimeout(200);

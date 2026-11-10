@@ -2,6 +2,11 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Print them on label paper and stick them on.", "Druk hulle op etiketpapier en plak hulle op.", "Ziphrinte ephepheni lamalebula bese uzinamathisela.", "Zishicilele kwiphepha leelebhile uze uzincamathisele."],
+    ["Badge layout", "Kenteken-uitleg", "Ukuhlelwa kwamabheji", "Ulungiselelo lweebheji"],
+    ["On label paper: {n} labels to a sheet.", "Op etiketpapier: {n} etikette op ’n vel.", "Ephepheni lamalebula: amalebula angu-{n} ephepheni elilodwa.", "Kwiphepha leelebhile: iilebhile ezi-{n} kwiphepha elinye."],
+    ["Start at label", "Begin by etiket", "Qala kulebula", "Qala kwilebhile"],
+    ["1 is the top-left label; they are counted across, then down. Use a later one if some labels on the sheet are used.", "1 is die etiket links bo; hulle word dwars getel, dan af. Gebruik ’n latere een as sommige etikette op die vel al gebruik is.", "U-1 yilebula engenhla kwesobunxele; abalwa ngokuwela, bese kwehla. Sebenzisa elilandelayo uma amanye amalebula ephepheni esesetshenzisiwe.", "U-1 yilebhile ephezulu ngasekhohlo; zibalwa ngokunqumla, emva koko ezantsi. Sebenzisa elilandelayo ukuba ezinye iilebhile ephepheni sele zisetyenzisiwe."],
     ["Selected people", "Gekose mense", "Abantu abakhethiwe", "Abantu abakhethiweyo"],
     ["{n} person selected", "{n} persoon gekies", "Umuntu o-{n} ukhethiwe", "Umntu o-{n} ukhethiwe"],
     ["{n} people selected", "{n} mense gekies", "Abantu abangu-{n} bakhethiwe", "Abantu abangu-{n} bakhethiwe"],

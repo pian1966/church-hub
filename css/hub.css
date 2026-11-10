@@ -788,11 +788,19 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .qr-box svg { display: block; border-radius: 6px; box-shadow: 0 0 0 1px var(--line); }
 .qr-box .qr-link { margin: 0; font-size: .82rem; color: var(--muted); word-break: break-all; max-width: 280px; text-align: center; }
 
-/* People list: ticking people (Administrators and the Senior Pastor) */
+/* People list: tick boxes (Administrators and the Senior Pastor); the rest of the row still opens the person */
 .pick-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: var(--shadow); }
+.pick-bar[hidden] { display: none; }
 .pick-bar .pick-n { font-weight: 600; }
-.list.picking label.pp-row { display: flex; cursor: pointer; margin: 0; font-weight: normal; }
-.list.picking .pp-row input.pp-sel { width: 20px; height: 20px; flex: 0 0 auto; margin: 0 4px 0 0; accent-color: var(--accent); }
-.list.picking .pp-row.on { background: var(--accent-soft); }
-@media (max-width: 600px) { .list.picking .pp-row .pp-tags { padding-left: 80px; } }   /* in line with the name (box + picture) */
+.pp-row.pickable { padding: 0 16px 0 0; gap: 0; flex-wrap: nowrap; }
+.pp-tick { display: flex; align-items: center; justify-content: center; align-self: stretch; padding: 0 8px 0 14px; cursor: pointer; flex: 0 0 auto; }
+.pp-tick input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); cursor: pointer; }
+.pp-tickall { display: inline-flex; padding: 0 8px 0 0; vertical-align: middle; }
+.pp-link { display: flex; align-items: center; gap: 12px; flex: 1 1 0; min-width: 0; padding: 12px 0 12px 4px; color: inherit; text-decoration: none; }
+.pp-row.pickable:hover { background: var(--surface-2); }
+.pp-row.pickable.on { background: var(--accent-soft); }
+@media (max-width: 600px) {
+  .pp-link { flex-wrap: wrap; row-gap: 6px; } .pp-link .grow { flex: 1 1 0; }
+  .pp-link .pp-tags { flex: 1 0 100%; justify-content: flex-start; padding-left: 48px; }
+}
 @media print { .pick-bar { display: none; } }

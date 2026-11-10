@@ -108,6 +108,14 @@ Badges printed from Advanced search are for people the church office chose (newc
 the names, printing is audit-logged, and the sheets should be destroyed once the badges are cut. The same goes for badges
 for people ticked on the People list (Administrators and the Senior Pastor).
 
+## Coming to the church since, and the birthday on the application
+**Coming to the church since** (`attendingSince`, a month) is on the person's details: Administrators and Pastors (and the
+person). Purpose: knowing how long someone has been part of the church (membership asks for six months' regular worship).
+It comes from their application, or is typed in. The **birthday** on the application is asked only when none is on record,
+to confirm they are 18 or older; in South Africa it is read from the ID number they type (nothing is sent anywhere). It is
+copied to their details on Accept. The **declaration of loyalty**, when the church asks for one, is kept in the application
+with the other declaration (the person's own statement, same access).
+
 ## Invitations to become a Church Partner
 Administrators and Pastors can email an invitation to apply. Kept: the date invited (`partnerInvited`, on the person's details –
 Administrators and Pastors; purpose: not inviting the same person twice; basis: the church's legitimate interest in its own

@@ -125,7 +125,8 @@
         '<div class="two" id="pf-partner-f"' + (p.category === 'Church Partner' ? '' : ' hidden') + '><label class="field">' + T('Date accepted as Church Partner') + '<input id="pf-psince" type="date" max="' + H.today() + '" value="' + esc(p.partnerSince || '') + '"></label>' +
         '<label class="field">' + T('Partnership last updated') + '<input id="pf-pupd" type="date" max="' + H.today() + '" value="' + esc(/^\d{4}$/.test(p.partnerUpdated || '') ? '' : p.partnerUpdated || '') + '">' +
           (/^\d{4}$/.test(p.partnerUpdated || '') ? '<small>' + esc(T('Elvanto only says {year}. Leave empty to keep that, or choose the date.', { year: p.partnerUpdated })) + '</small>' : '') + '</label></div>' +
-        '<label class="field">' + T('Gender') + '<select id="pf-gender"><option value="">' + T('Not recorded') + '</option>' + GENDERS.map(function (g) { return '<option value="' + g + '"' + (p.gender === g ? ' selected' : '') + '>' + esc(T(g)) + '</option>'; }).join('') + '</select></label>' +
+        '<div class="two"><label class="field">' + T('Gender') + '<select id="pf-gender"><option value="">' + T('Not recorded') + '</option>' + GENDERS.map(function (g) { return '<option value="' + g + '"' + (p.gender === g ? ' selected' : '') + '>' + esc(T(g)) + '</option>'; }).join('') + '</select></label>' +
+        '<label class="field">' + T('Coming to the church since') + '<input id="pf-attsince" type="month" max="' + H.today().slice(0, 7) + '" value="' + esc(String(p.attendingSince || '').slice(0, 7)) + '"></label></div>' +
         '<div class="two"><label class="field req" id="pf-fam-f">' + T('Household') + '<select class="findable" id="pf-fam"><option value="">' + T('Choose…') + '</option><option value="__new">' + T('+ New household…') + '</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field req">' + T('In the household as') + '<select id="pf-frole">' + (p.familyRole ? '' : '<option value="" selected>' + T('Choose…') + '</option>') + '<option value="adult"' + (p.familyRole === 'adult' ? ' selected' : '') + '>' + T('Adult') + '</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>' + T('Child (under 18)') + '</option></select></label></div>' +
         '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Marital status') + '<select id="pf-marital"><option value="">' + T('Choose…') + '</option>' + MARITAL.map(function (m) { return '<option value="' + m + '"' + (p.maritalStatus === m ? ' selected' : '') + '>' + esc(T(m)) + '</option>'; }).join('') + '</select><small>' + T('For pastoral care. Choose “Not known” if you don’t know.') + '</small></label>' +
@@ -327,6 +328,7 @@
           if (ps) p.partnerSince = ps; else delete p.partnerSince;
           if (pu) p.partnerUpdated = pu; else if (!/^\d{4}$/.test(p.partnerUpdated || '')) delete p.partnerUpdated;   // keep a year from Elvanto
         }
+        if (g('pf-attsince') !== null) { if (g('pf-attsince')) p.attendingSince = g('pf-attsince'); else delete p.attendingSince; }
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
         if (g('pf-marital') !== null) {
           if (p.familyRole === 'child') delete p.maritalStatus;

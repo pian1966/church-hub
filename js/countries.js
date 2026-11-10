@@ -99,8 +99,21 @@ var Countries = (function () {
     return hit || s;
   }
   /** A phone number to compare two records by: its last 9 digits, so "+27 82 000 1234", "0820001234" and "082 000 1234" match. */
+  /** The date of birth in a national ID number, where the number carries one: South Africa (13 digits, YYMMDD first, last
+   * digit a Luhn check). today ('YYYY-MM-DD') decides the century. '' when the number doesn't say (or isn't valid). */
+  function birthFromId(id, code, today) {
+    var d = String(id || '').replace(/\s+/g, '');
+    if ((code || DEFAULT) !== 'ZA' || !/^\d{13}$/.test(d)) return '';
+    var sum = 0; for (var i = 0; i < 13; i++) { var n = +d.charAt(12 - i); if (i % 2) { n *= 2; if (n > 9) n -= 9; } sum += n; }
+    if (sum % 10) return '';
+    today = today || new Date().toISOString().slice(0, 10);
+    var yy = +d.slice(0, 2), y = (yy <= +today.slice(2, 4) ? 2000 : 1900) + yy, iso = y + '-' + d.slice(2, 4) + '-' + d.slice(4, 6);
+    var dt = new Date(iso + 'T00:00:00Z');
+    if (isNaN(dt) || dt.toISOString().slice(0, 10) !== iso || iso > today) return '';
+    return iso;
+  }
   function phoneKey(s) { var d = String(s || '').replace(/\D/g, ''); return d.length >= 9 ? d.slice(-9) : ''; }
 
-  return { DEFAULT: DEFAULT, CONTINENTS: CONTINENTS, find: find, church: church, ofAddress: ofAddress, all: all, grouped: grouped, region: region, phoneKey: phoneKey };
+  return { DEFAULT: DEFAULT, CONTINENTS: CONTINENTS, find: find, church: church, ofAddress: ofAddress, all: all, grouped: grouped, region: region, phoneKey: phoneKey, birthFromId: birthFromId };
 })();
 if (typeof module !== 'undefined') module.exports = Countries;

@@ -2,6 +2,8 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Add {n} ticked to name badges", "Voeg {n} gemerktes by die naamkentekens", "Engeza abangu-{n} abamakiwe kumabheji amagama", "Yongeza aba-{n} abaphawuliweyo kwiibheji zamagama"],
+    ["Add everyone found to name badges", "Voeg almal wat gevind is by die naamkentekens", "Engeza bonke abatholakele kumabheji amagama", "Yongeza bonke abafunyenweyo kwiibheji zamagama"],
     ["Name badges for {n} ticked", "Naamplaatjies vir {n} gemerk", "Amabheji amagama ka-{n} amakiwe", "Iibheji zamagama zaba-{n} abaphawuliweyo"],
     ["Name badges for everyone found", "Naamplaatjies vir almal gevind", "Amabheji amagama abo bonke abatholakele", "Iibheji zamagama zabo bonke abafunyenweyo"],
     ["Invite {n} ticked to apply", "Nooi {n} gemerk uit om aansoek te doen", "Mema {n} abamakiwe ukuthi bafake isicelo", "Mema aba-{n} abaphawuliweyo ukuba bafake isicelo"],

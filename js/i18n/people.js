@@ -2,6 +2,16 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Please read before you apply", "Lees asseblief voordat jy aansoek doen", "Sicela ufunde ngaphambi kokufaka isicelo", "Nceda ufunde phambi kokuba ufake isicelo"],
+    ["Declaration of loyalty", "Verklaring van lojaliteit", "Isimemezelo sokwethembeka", "Isibhengezo sokuthembeka"],
+    ["I make this declaration.", "Ek maak hierdie verklaring.", "Ngenza lesi simemezelo.", "Ndenza esi sibhengezo."],
+    ["Worked out from your ID number.", "Uit jou ID-nommer bereken.", "Kubalwe kusuka kunombolo yakho kamazisi.", "Kubalwe kwinombolo yakho yesazisi."],
+    ["Please give your date of birth.", "Gee asseblief jou geboortedatum.", "Sicela unikeze usuku lwakho lokuzalwa.", "Nceda unike umhla wakho wokuzalwa."],
+    ["You need to be 18 or older to become a Church Partner.", "Jy moet 18 of ouer wees om ’n Kerkvennoot te word.", "Kumele ube neminyaka engu-18 noma ngaphezulu ukuze ube nguMlingani weSonto.", "Kufuneka ube neminyaka eli-18 nangaphezulu ukuze ube nguMlingane weCawe."],
+    ["Please tick that you make the declaration of loyalty.", "Merk asseblief dat jy die verklaring van lojaliteit maak.", "Sicela umake ukuthi wenza isimemezelo sokwethembeka.", "Nceda uphawule ukuba wenza isibhengezo sokuthembeka."],
+    ["Add to name badges", "Voeg by naamkentekens", "Engeza kumabheji amagama", "Yongeza kwiibheji zamagama"],
+    ["Tick everyone shown", "Merk almal wat gewys word", "Maka bonke ababoniswayo", "Phawula bonke ababonisiweyo"],
+    ["{n} added to the name badges to print", "{n} bygevoeg by die naamkentekens om te druk", "Abangu-{n} bengezwe kumabheji amagama okumele aphrintwe", "Aba-{n} bongezwe kwiibheji zamagama eziza kushicilelwa"],
     ["Print them on label paper and stick them on.", "Druk hulle op etiketpapier en plak hulle op.", "Ziphrinte ephepheni lamalebula bese uzinamathisela.", "Zishicilele kwiphepha leelebhile uze uzincamathisele."],
     ["Badge layout", "Kenteken-uitleg", "Ukuhlelwa kwamabheji", "Ulungiselelo lweebheji"],
     ["On label paper: {n} labels to a sheet.", "Op etiketpapier: {n} etikette op ’n vel.", "Ephepheni lamalebula: amalebula angu-{n} ephepheni elilodwa.", "Kwiphepha leelebhile: iilebhile ezi-{n} kwiphepha elinye."],

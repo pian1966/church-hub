@@ -316,9 +316,19 @@ hidden where neither exists (e.g. Firefox). The words heard are only put in the 
   The Partnership applications page has the QR code (`js/qr.js`, our own encoder – byte mode, level M, versions 1–10, checked
   against segno in `tests/qr.test.js`), Copy the link, an A4 poster and a paper form with the same questions.
 - **Ticking people on the People list** (Administrators and the Senior Pastor; `canPick()` in `js/people/directory.js`):
-  Select people turns the rows into tick boxes; the ticks (`state.pick`) stay through searches and filters until Done. The bar
-  offers Name badges, Invite to apply and (Administrators, as in Advanced search) Change selected…, which uses
-  `bulkDialog(ids)` – the audit log says whether a change came from the People list or Advanced search.
+  every row has a tick box (the rest of the row still opens the person), with one to tick everyone shown. Ticks
+  (`state.pick`) stay through searches and filters; once someone is ticked a bar offers Add to name badges, Invite to
+  apply and (Administrators, as in Advanced search) Change selected…, which uses `bulkDialog(ids)` – the audit log says
+  whether a change came from the People list or Advanced search.
+- **Adding to name badges** from the People list or Advanced search (`addBadges`) puts people on the Name badges list
+  (`badgeWanted`), like "Make a name badge" on their page; the badges are printed together from People → Name badges.
+- **On the form, from the church** (Administrators, on Partnership applications): links to documents to read first
+  (`partnerApp.links` – the church's and the denomination's constitutions, statements of faith; https only) and an
+  optional declaration of loyalty (`partnerApp.loyalty`), which applicants must tick; both are on the paper form too.
+- **Birthday and "coming since"**: if the person has no birthday on record the form asks for it; a South African ID
+  number fills it in (`Countries.birthFromId`: YYMMDD and the check digit). Under 18 can't send. The application keeps
+  `birthDate` and `since`; on Accept they are copied to the person's details (`birthDate` if empty, `attendingSince`),
+  which can also be edited (Edit details → Coming to the church since) and searched.
 
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,

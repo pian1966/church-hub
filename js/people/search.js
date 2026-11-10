@@ -71,6 +71,7 @@
     add(all, TX('Name and contact'), 'town', TX('Town or city'), 'text', function (p) { return (p.address || {}).city || ''; });
     add(all, TX('Name and contact'), 'address', TX('Home address'), 'text', function (p) { return addressLines(p).join(', '); });
     add(all, TX('Church'), 'partnerSince', TX('Date accepted as Church Partner'), 'date', function (p) { return p.partnerSince || ''; });
+    add(all, TX('Church'), 'attendingSince', TX('Coming to the church since'), 'date', function (p) { return p.attendingSince ? (p.attendingSince.length === 7 ? p.attendingSince + '-01' : p.attendingSince) : ''; });
     add(all, TX('Church'), 'partnerUpdated', TX('Partnership last updated'), 'date', function (p) { return p.partnerUpdated || ''; });
     add(all, TX('Personal'), 'marital', TX('Marital status'), 'choice', function (p) { return p.familyRole === 'child' ? '' : p.maritalStatus; }, MARITAL);
     add(all, TX('Personal'), 'wedding', TX('Wedding anniversary'), 'anniv', function (p) { return keyDate(p, /wedding/i); });
@@ -364,7 +365,7 @@
       '<div class="btns">' + (bulk && r.rows.length ? '<button class="btn small' + (nSel ? ' primary' : '') + '" data-act="people:bulk"' + (nSel ? '' : ' disabled') + ' id="adv-bulk">' + (nSel ? T('Change {n} selected…', { n: nSel }) : T('Change selected…')) + '</button>' : '') +
       (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + T('Download (CSV)') + '</button>' : '') +
       // For the ticked people, or everyone found: name badges to print, and an invitation to become a Church Partner
-      (r.rows.length && (H.can('*') || H.can('people.edit')) ? '<button class="btn small" data-act="people:advbadges">' + (nSel ? T('Name badges for {n} ticked', { n: nSel }) : T('Name badges for everyone found')) + '</button>' +
+      (r.rows.length && (H.can('*') || H.can('people.edit')) ? '<button class="btn small" data-act="people:advbadges">' + (nSel ? T('Add {n} ticked to name badges', { n: nSel }) : T('Add everyone found to name badges')) + '</button>' +
         (P.invite && window.QR ? '<button class="btn small" data-act="people:advinvite">' + (nSel ? T('Invite {n} ticked to apply', { n: nSel }) : T('Invite everyone found to apply')) + '</button>' : '') : '') + '</div></div>' +
       (r.rows.length > 1 ? '<div style="margin-top:8px">' + sortSwitch() + '</div>' : '') +
       '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · ' + T('and') + ' ' : A.match === 'any' ? ' · ' + T('or') + ' ' : ' · ')) + (A.match === 'logic' ? ' · ' + esc(T('Logic: {logic}', { logic: A.logic })) : '') : T('Everyone')) +
@@ -546,8 +547,8 @@
     /** Advanced search → Name badges / Invite: the ticked people, or everyone found. */
     advbadges: function () {
       var list = advPicked(); if (!list.length) return;
-      list.sort(P.SORTS.first.cmp);
-      P.printBadges(list, 'Printed name badges from Advanced search');
+      var n = P.addBadges(list, 'Advanced search');
+      H.toast(TN('{n} added to the name badges to print', '{n} added to the name badges to print', n));
     },
     advinvite: function () { var list = advPicked(); if (list.length) P.invite(list.map(function (p) { return p.id; })); },
     advcsv: function () { advCsv(); },

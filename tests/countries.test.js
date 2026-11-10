@@ -22,5 +22,10 @@ ok(C.find('ZA').law === 'popia' && C.find('DE').law === 'gdpr' && C.find('GB').l
 ok(C.grouped().map(g => g.continent).join() === 'Africa,Europe,Americas,Oceania' && C.grouped().reduce((n, g) => n + g.countries.length, 0) === all.length, 'grouped by continent');
 ok(C.phoneKey('+27 82 000 1234') === C.phoneKey('082 000 1234') && C.phoneKey('+44 7700 900123') === C.phoneKey('07700 900123') && C.phoneKey('123') === '', 'phone numbers compare across ways of writing them');
 
+ok(C.birthFromId('8001015009087', 'ZA', '2026-11-10') === '1980-01-01' && C.birthFromId('800101 5009 087', 'ZA', '2026-11-10') === '1980-01-01', 'a South African ID number gives the date of birth (spaces are fine)');
+ok(C.birthFromId('0505055009086', 'ZA', '2026-11-10') === '2005-05-05', '… born in 2005: this century');
+ok(C.birthFromId('8001015009086', 'ZA', '2026-11-10') === '' && C.birthFromId('8002305009087', 'ZA', '2026-11-10') === '' && C.birthFromId('80010150090', 'ZA') === '', 'not when the check digit is wrong, the date doesn’t exist, or it is too short');
+ok(C.birthFromId('8001015009087', 'GB', '2026-11-10') === '', 'other countries: not from the number (ask for the birthday)');
+
 if (fails) { console.log('\n' + fails + ' country test(s) FAILED'); process.exit(1); }
 console.log('\nAll country tests passed');

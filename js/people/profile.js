@@ -123,6 +123,7 @@
       (full && (p.category === 'Church Partner' || p.partnerSince || p.partnerUpdated) ? '<dt>' + T('Church Partner') + '</dt><dd>' +
         (p.partnerSince ? esc(T('Accepted {date}', { date: H.fmt(p.partnerSince, true) })) : '<span class="muted">' + T('Date accepted not recorded') + '</span>') +
         (p.partnerUpdated ? '<span class="kv-sub">' + esc(T('Partnership last updated {date}', { date: /^\d{4}$/.test(p.partnerUpdated) ? p.partnerUpdated : H.fmt(p.partnerUpdated, true) })) + '</span>' : '') + '</dd>' : '') +
+      (full && p.attendingSince ? '<dt>' + T('Coming to the church since') + '</dt><dd>' + esc(P.monthYear(p.attendingSince)) + '</dd>' : '') +
       (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (!child ? coupleLine(p) : '') +
       (!child && lateSpouse(p) ? '<dt>' + T('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +

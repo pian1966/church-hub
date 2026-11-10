@@ -66,7 +66,8 @@ For: Everyone
 Also asked: Can I use Church Hub in Afrikaans / isiZulu / isiXhosa / another language?
 
 Use the **globe** drop-down: on a computer at the bottom of the menu on the left, on a phone under **More**, and on the
-sign-in screen. English, Afrikaans, isiZulu and isiXhosa are built in, with 18 more languages to choose from. The choice
+sign-in screen. UK English, Afrikaans, isiZulu and isiXhosa are built in, with 19 more languages to choose from (including
+American English). The choice
 is kept on that device. Some screens for staff stay in English for now. See also [translations.md](translations.md).
 
 ## How do I switch to dark mode?

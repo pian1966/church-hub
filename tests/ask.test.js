@@ -3,12 +3,12 @@
 const A = require('../js/ask.js');
 let fails = 0;
 function ok(c, what) { if (!c) { fails++; console.log('  ✗ ' + what); } else console.log('  ✓ ' + what); }
-const keys = 'name firstName lastName category gender birthday birthDate age idNumber volunteer address email mobile adultChild staff marital positions teams serviceTimes town household directory status added awaySoon wedding';
+const keys = 'spouse careGroup midweekGroup name firstName lastName category gender birthday birthDate age idNumber volunteer address email mobile adultChild staff marital positions teams serviceTimes town household directory status added awaySoon wedding';
 const ALL = {}; keys.split(' ').forEach(k => { ALL[k] = true; });
 const SLOTS = [{ id: '08:00', label: '8am', time: '08:00' }, { id: '10:00', label: '10am', time: '10:00' }, { id: '17:00', label: '5pm', time: '17:00' }, { id: 'memorial', label: 'Memorial', time: '' }];
 const ctx = (more) => Object.assign({ today: '2026-11-09', fields: ALL, services: true, words: { partner: ['Church Partner', 'Church Partners'], attender: ['Attender', 'Attenders'] },
   slots: SLOTS, slotLabel: id => (SLOTS.find(s => s.id === id) || {}).label || id, positions: ['Sound desk', 'Door', 'Keys', 'Tea & coffee'], teams: ['Kids', 'Worship'],
-  towns: ['Howick', 'Hilton'], people: [{ id: 'p1', names: ['Andy Pike', 'Andrew Pike'] }, { id: 'p2', names: ['Sam Peters'] }] }, more || {});
+  towns: ['Howick', 'Hilton'], careGroups: ['Hilton North', 'Howick West'], midweekGroups: ['Tuesday Bible study'], people: [{ id: 'p1', names: ['Andy Pike', 'Andrew Pike'] }, { id: 'p2', names: ['Sam Peters'] }] }, more || {});
 const f = (q, c) => A.parse(q, ctx(c));
 const fl = r => r.filters.map(x => x.field + ' ' + x.op + (x.value !== '' ? ' ' + x.value : '') + (x.value2 ? '–' + x.value2 : '') + (x.unit ? ' ' + x.unit : '')).join(' | ');
 
@@ -58,6 +58,27 @@ r = f('people whose last name is Pike');
 ok(fl(r) === 'lastName eq pike', 'whose last name is Pike: ' + fl(r));
 r = f('members with the first name Andy');
 ok(fl(r) === 'category eq Church Partner | firstName eq andy', 'with the first name Andy: ' + fl(r));
+
+r = f('find all partners whose wives names begin with the letter a');
+ok(fl(r) === 'category eq Church Partner | spouse starts a' && !r.unknown.length, 'partners whose wives’ names begin with A: ' + fl(r) + ' / left: ' + r.unknown.join());
+r = f('find all church partners whose spouses first names begin with the letter a');
+ok(fl(r) === 'category eq Church Partner | spouse starts a' && !r.unknown.length, 'Church Partners whose spouses’ first names begin with A: ' + fl(r) + ' / left: ' + r.unknown.join());
+r = f("men whose wife's name starts with M");
+ok(fl(r) === 'gender eq Male | spouse starts m', 'men whose wife’s name starts with M: ' + fl(r));
+r = f('people married to Megan');
+ok(fl(r) === 'spouse has megan', 'married to Megan: ' + fl(r));
+r = f("list all church partners who don't belong to a care group");
+ok(fl(r) === 'category eq Church Partner | careGroup empty' && !r.unknown.length, 'Church Partners who don’t belong to a care group: ' + fl(r) + ' / left: ' + r.unknown.join());
+r = f('women who are in a care group');
+ok(fl(r) === 'gender eq Female | careGroup nempty', 'women in a care group: ' + fl(r));
+r = f('people in the Hilton North care group');
+ok(fl(r) === 'careGroup inc Hilton North', 'in the Hilton North care group: ' + fl(r));
+r = f('church partners not in a bible study');
+ok(fl(r) === 'category eq Church Partner | midweekGroup empty' && !r.unknown.length, 'not in a Bible study: ' + fl(r) + ' / left: ' + r.unknown.join());
+r = f('members of the tuesday bible study');
+ok(fl(r) === 'midweekGroup inc Tuesday Bible study', 'members of the Tuesday Bible study: ' + fl(r));
+r = f('people without a care group', { fields: { name: true } });
+ok(!r.filters.length && r.refused.join() === 'careGroup', 'care groups refused for a role that can’t see them');
 
 console.log('Services');
 r = f('Show me all 10am services between 12 November and 2 Feb that do not have all necessary volunteer positions filled');

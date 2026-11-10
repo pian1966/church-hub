@@ -264,9 +264,9 @@ var Duplicates = (function () {
         if (lv) out.push({ a: b[i].id, b: b[j].id, score: c.score, level: lv, reasons: c.reasons });
       }
     });
-    return out.sort(function (x, y) { return y.score - x.score || nm(byId(list, x.a)).localeCompare(nm(byId(list, y.a))); });
+    var names = {}; list.forEach(function (p) { if (!(p.id in names)) names[p.id] = nm(p); });   // by id once, not a search for each comparison
+    return out.sort(function (x, y) { return y.score - x.score || (names[x.a] || '').localeCompare(names[y.a] || ''); });
   }
-  function byId(list, id) { return list.filter(function (p) { return p.id === id; })[0] || {}; }
   function pair(a, b) { return [a, b].sort().join('|'); }
 
   /**

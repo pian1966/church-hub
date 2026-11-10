@@ -46,6 +46,19 @@ ok(!r.filters.length && r.refused.join() === 'idNumber', 'a field this role may 
 r = f('with birthdays in April');
 ok(fl(r) === 'birthday month 4', '“with birthdays in April” isn’t read as “has a birthday”');
 
+r = f('all firstnames beginning with m');
+ok(fl(r) === 'firstName starts m' && !r.unknown.length, '“all firstnames beginning with m”: ' + fl(r) + ' / left: ' + r.unknown.join());
+r = f('women whose surname starts with van der');
+ok(fl(r) === 'gender eq Female | lastName starts van der' && !r.unknown.length, 'surname starts with “van der”: ' + fl(r));
+r = f('people with first names starting with the letter J who are men');
+ok(fl(r) === 'firstName starts j | gender eq Male' && !r.unknown.length, 'first names starting with the letter J, men: ' + fl(r));
+r = f('names beginning with a');
+ok(fl(r) === 'firstName starts a', '“beginning with a” is the letter a: ' + fl(r));
+r = f('people whose last name is Pike');
+ok(fl(r) === 'lastName eq pike', 'whose last name is Pike: ' + fl(r));
+r = f('members with the first name Andy');
+ok(fl(r) === 'category eq Church Partner | firstName eq andy', 'with the first name Andy: ' + fl(r));
+
 console.log('Services');
 r = f('Show me all 10am services between 12 November and 2 Feb that do not have all necessary volunteer positions filled');
 ok(r.kind === 'services' && r.q.from === '2026-11-12' && r.q.to === '2027-02-02' && r.q.slots.join() === '10:00' && r.q.gaps === 'some' && !r.unknown.length, '10am services, 12 Nov to 2 Feb (next year), not all filled');

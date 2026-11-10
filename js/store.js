@@ -78,7 +78,21 @@ var Store = (function () {
     if (k[0] === 'careGroups') return all('careGroups').filter(function (g) { return isLife(g) === k[1]; });
     var life = lifeIds(); return all('careShare').filter(function (x) { return !!life[x.groupId] === k[1]; });
   }
-  function get(c, id) { return list(c).filter(function (x) { return x.id === id; })[0] || null; }
+  /** One record by id. Pages ask for thousands of these (a household, a position, a person), so each collection keeps a
+   *  look-up table, made again when the collection's list is replaced or grows; a hit is checked against the list itself. */
+  var byIdCache = {};
+  function get(c, id) {
+    if (KIND[c]) return list(c).filter(function (x) { return x.id === id; })[0] || null;   // care / life groups: small lists, split by kind
+    var arr = all(c), ix = byIdCache[c];
+    if (!ix || ix.arr !== arr || ix.len !== arr.length) {
+      ix = byIdCache[c] = { arr: arr, len: arr.length, at: Object.create(null) };
+      for (var i = 0; i < arr.length; i++) if (arr[i] && !(arr[i].id in ix.at)) ix.at[arr[i].id] = i;
+    }
+    var k = ix.at[id], x = k === undefined ? null : arr[k];
+    if (x && x.id === id) return x;
+    if (k === undefined && ix.len === arr.length) return null;
+    delete byIdCache[c]; return list(c).filter(function (y) { return y.id === id; })[0] || null;   // the list changed in place: look the slow way, table made afresh next time
+  }
   function find(c, fn) { return list(c).filter(fn); }
   function put(c, obj, auditText) {
     if (blocked()) return obj;

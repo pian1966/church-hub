@@ -130,7 +130,9 @@ var PeopleParts = { actions: {} };
 
   /* ---------- list ---------- */
   // How the list is ordered: by first name, by the name they're known as, or by surname. Remembered on this device.
-  function cmp(x, y) { return String(x || '').localeCompare(String(y || ''), undefined, { sensitivity: 'base' }); }
+  // One collator for every comparison: localeCompare with options sets one up each time, which is slow for long lists
+  var COLL = typeof Intl !== 'undefined' && Intl.Collator ? new Intl.Collator(undefined, { sensitivity: 'base' }) : null;
+  function cmp(x, y) { x = String(x || ''); y = String(y || ''); return COLL ? COLL.compare(x, y) : x.localeCompare(y); }
   function known(p) { return p.preferredName || p.firstName; }
   var SORTS = {
     first: { label: 'First name', cmp: function (a, b) { return cmp(a.firstName, b.firstName) || cmp(a.lastName, b.lastName); } },

@@ -76,7 +76,7 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
-- ⬜ Church: set up AI for Ask in your own words (`docs/AI-SEARCH-SETUP.md`: privacy notice, Firebase AI Logic, App Check key) and switch it on in Settings → Apps
+- 🟡 Church: set up AI for Ask in your own words (`docs/AI-SEARCH-SETUP.md`) – App Check key added (0.45.1); still to do: privacy notice, App Check enforced for AI Logic, switch it on in Settings → Apps and try a question
 - ⬜ **Help: ask a question** – a Help page where people type or dictate (phone keyboard microphone, or a mic button using the
   browser's speech recognition) a question about using Church Hub, and get an answer written for their question and role.
   The answers come only from the help pages in `docs/help/` (first draft done, Nov 2026): find the matching answers, send them

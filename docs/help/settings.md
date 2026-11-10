@@ -99,6 +99,20 @@ Straight after it was slow, open **About** and look at **Speed check**: how long
 to draw, how long the browser was too busy to respond, and how many records were loaded. Send a screenshot of it to whoever
 looks after Church Hub. Closing other Church Hub tabs and using **Update now** under About can also help.
 
+## How do I change the brochures?
+For: Administrators
+Also asked: Edit the brochure. Change the brochure colour. Put our phone number on the brochure. Print the brochure.
+
+Open **About → Brochures** and choose **For our members** or **For other churches**.
+- **Edit the wording**: click any heading or text on the brochure and type – for example your office's phone and email in
+  **Need a hand?**. **Hide** takes away a block you don't want; **Show** brings it back. Changes save by themselves; tap
+  **Done editing** when you've finished.
+- **Colour** and **Font**: Church Hub orange, your church's own colour (Settings → Colours) or any colour, and a choice of fonts.
+- **Print or save as PDF**: A4 landscape, both sides, flipping on the short edge, then fold in three.
+If a red warning says a panel doesn't fit, shorten its text or hide a block. **Back to the original wording** and **Back to
+Church Hub's colour and font** undo your changes. When Church Hub updates a brochure's wording, any change you made to that
+line is listed so you can redo it.
+
 ## How do I check which version we're on?
 For: Everyone
 

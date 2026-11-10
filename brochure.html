@@ -6,15 +6,18 @@
 <!-- Church Hub brochures: ?for=members (our congregation) or ?for=churches (other churches). Opened from About (admins).
      KEEP UP TO DATE: when a release adds a feature (the middle number in js/version.js goes up), read both brochures, add or
      change what members or other churches would notice, then set reviewed-for below to that version's first two numbers.
-     node tests/versions.test.js fails until you do. Keep each panel to what fits on its A4 third (check Print preview). -->
-<meta name="reviewed-for" content="0.45">
+     node tests/versions.test.js fails until you do. Keep each panel to what fits on its A4 third (check Print preview).
+     The church can change the wording, hide blocks, and choose the colour and font in Church Hub (About → Brochures → Edit;
+     js/brochure-kit.js, js/mod-about.js). Their edits are matched by place AND the original wording, so changing a line here makes
+     their edit of that line stop applying (Church Hub then lists it for them). Shown inside Church Hub with ?embed=1. -->
+<meta name="reviewed-for" content="0.46">
 <title>Church Hub brochure</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&amp;display=swap" rel="stylesheet">
 <style>
-  :root { --accent: #E8590C; --ink: #B8430A; --soft: #FFE8D9; --paper: #FFF8F2; --text: #22201E; --grey: #4A4440; }
+  :root { --accent: #E8590C; --ink: #B8430A; --soft: #FFE8D9; --paper: #FFF8F2; --text: #22201E; --grey: #4A4440; --on-accent: #fff; --font: 'Nunito'; }
   * { box-sizing: border-box; }
-  body { margin: 0; background: #E9E4DF; font-family: 'Nunito', system-ui, sans-serif; color: var(--text); }
+  body { margin: 0; background: #E9E4DF; font-family: var(--font), 'Nunito', system-ui, sans-serif; color: var(--text); }
   .bar { position: sticky; top: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 12px 16px; background: #fff; border-bottom: 1px solid #ddd; font-size: 15px; }
   .bar b { margin-right: auto; }
   .bar a, .bar button { font: inherit; font-weight: 800; padding: 9px 16px; border-radius: 10px; border: 1px solid #ccc; background: #fff; color: var(--text); text-decoration: none; cursor: pointer; }
@@ -42,17 +45,18 @@
   .card p { color: #fff; font-weight: 600; }
   .demo { background: #fff; border: 2px solid var(--ink); border-radius: 18px; padding: 18px 20px; }
   .demo p { font-size: 18px; line-height: 1.35; }
-  .cover { background: var(--accent); color: #fff; justify-content: space-between; overflow: hidden; }
+  .cover { background: var(--accent); color: var(--on-accent); justify-content: space-between; overflow: hidden; }
+  .logo path { stroke: var(--accent); }
   .cover .o1, .cover .o2 { position: absolute; border-radius: 50%; background: rgba(255,255,255,.10); }
   .cover .o1 { width: 340px; height: 340px; right: -120px; top: -110px; }
   .cover .o2 { width: 220px; height: 220px; left: -80px; bottom: 120px; background: rgba(255,255,255,.08); }
   .cover > * { position: relative; }
   .logo { width: 88px; height: 88px; border-radius: 24px; background: #fff; display: flex; align-items: center; justify-content: center; margin-top: 30px; }
   .cover h1 { margin: 0 0 18px; font-size: 64px; line-height: 1; font-weight: 900; letter-spacing: -.02em; }
-  .cover .tag { font-size: 30px; line-height: 1.2; font-weight: 800; color: #fff; text-wrap: balance; }
+  .cover .tag { font-size: 30px; line-height: 1.2; font-weight: 800; color: var(--on-accent); text-wrap: balance; }
   .cover .strip { background: var(--ink); border-radius: 16px; padding: 16px 20px; }
   .cover .strip p { color: #fff; font-weight: 600; }
-  .cover .who { font-size: 20px; font-weight: 900; color: #fff; }
+  .cover .who { font-size: 20px; font-weight: 900; color: var(--on-accent); }
   [contenteditable] { outline: 2px dashed var(--ink); outline-offset: 2px; border-radius: 4px; }
   [hidden] { display: none !important; }
   @page { size: A4 landscape; margin: 0; }
@@ -65,6 +69,10 @@
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
   @media screen and (max-width: 1160px) { .sheet { zoom: .5; } }
+  /* Inside Church Hub (?embed=1): no bar of its own; Church Hub's page has the buttons */
+  .embed .bar { display: none; }
+  .embed .sheets { padding: 12px 0 20px; gap: 18px; background: none; }
+  .embed body, body.embed { background: none; }
 </style>
 </head>
 <body>
@@ -197,6 +205,7 @@
   // ?for=members|churches, &church=<name> (from Settings), &link=<the church's Church Hub address>. Only text is filled in.
   (function () {
     var q = new URLSearchParams(location.search), who = q.get('for') === 'churches' ? 'churches' : 'members';
+    if (q.get('embed')) { document.body.classList.add('embed'); document.querySelectorAll('[contenteditable]').forEach(function (e) { e.removeAttribute('contenteditable'); }); }
     document.querySelectorAll('[data-show]').forEach(function (s) { s.hidden = s.getAttribute('data-show') !== who; });
     document.querySelectorAll('.bar a[data-for]').forEach(function (a) {
       var p = new URLSearchParams(location.search); p.set('for', a.getAttribute('data-for'));

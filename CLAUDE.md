@@ -71,6 +71,8 @@ changes to logic, `js/store.js`, `firestore.rules`, who sees what, the Android a
 - Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.
+  The church can reword the brochures (About → Brochures → Edit): their edits are tied to the original wording, so a line you
+  change stops carrying their edit of it (Church Hub lists it for them) – change wording only where the feature changed.
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.
   Work on your own branch from the latest `main`; on a conflict in `js/version.js` / `index.html`, take the higher version.
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

@@ -94,23 +94,179 @@
     if (!H.can('*')) return '';
     var st = Store.settings() || {}, link = location.origin + location.pathname.replace(/index\.html$/, '');
     function a(who, title, sub) {
-      var q = 'for=' + who + '&v=' + encodeURIComponent(V.version) + (st.churchName ? '&church=' + encodeURIComponent(st.churchName) : '') + '&link=' + encodeURIComponent(link);
-      return '<a class="item" href="brochure.html?' + esc(q) + '" target="_blank" rel="noopener"><span class="grow"><b>' + title + '</b><small>' + sub + '</small></span></a>';
+      return '<a class="item" href="#/about/brochure/' + who + '"><span class="grow"><b>' + title + '</b><small>' + sub + '</small></span></a>';
     }
     return '<section class="panel" id="about-brochures"><h2>' + T('Brochures') + '</h2><p class="hint">' + T('Fold-out A4 brochures about Church Hub to print or save as PDF. They are kept up to date as new features are added.') + '</p><div class="list">' +
       a('members', T('For our members'), T('How to start, and what members can do')) +
       a('churches', T('For other churches'), T('What Church Hub offers, and the demo')) +
-      '</div></section>';
+      '</div><p class="hint" style="margin-bottom:0">Open one to print it, or to change its wording, colour and font (Edit).' +
+      (window.BrochureKit && BrochureKit.changed(st.brochures) ? ' <b>Your church has changed them.</b>' : '') + '</p></section>';
+  }
+
+  function broSetDesign(patch) {
+    var b = broSaved(); Object.assign(b.design, patch); b = BrochureKit.tidy(b);
+    Store.setSettings({ brochures: b });
+    var fr = document.getElementById('bro-frame'); if (fr && fr.contentDocument) broDesign(fr.contentDocument, b.design);
+    document.querySelectorAll('.bro-sw').forEach(function (x) { x.classList.toggle('on', x.dataset.c === b.design.accent); });
+    var pick = document.getElementById('bro-colour'); if (pick) pick.value = b.design.accent;
+    setTimeout(function () { var d = fr && fr.contentDocument; if (d) broCheck(d, null); }, 400);
+  }
+  if (typeof document !== 'undefined') document.addEventListener('change', function (e) {
+    if (e.target.id === 'bro-colour') broSetDesign({ accent: e.target.value });
+    if (e.target.id === 'bro-font') broSetDesign({ font: e.target.value });
+  });
+
+  /* ---------- Brochures: shown and edited inside Church Hub (Administrators; in English, like other admin screens) ----------
+   * brochure.html is shown in a frame (?embed=1); the church's wording, hidden blocks, colour and font (settings.brochures,
+   * rules in js/brochure-kit.js) are laid over it. Editing: click a text and type; the eye hides or shows a block. Changes save
+   * by themselves. The page isn't redrawn while it is open (data-keep), so typing isn't lost. */
+  var bro = { edit: false };
+  function broSaved() { return BrochureKit.tidy((Store.settings() || {}).brochures); }
+  function broSrc(who) {
+    var st = Store.settings() || {}, link = location.origin + location.pathname.replace(/index\.html$/, '');
+    return 'brochure.html?for=' + who + '&embed=1&v=' + encodeURIComponent(V.version) + (st.churchName ? '&church=' + encodeURIComponent(st.churchName) : '') + '&link=' + encodeURIComponent(link);
+  }
+  function renderBrochure(who) {
+    who = who === 'churches' ? 'churches' : 'members';
+    var b = broSaved(), d = b.design, st = Store.settings() || {}, own = st.theme && st.theme.id === 'custom' && st.theme.color ? String(st.theme.color).toUpperCase() : '';
+    var sw = function (c, label) { return '<button type="button" class="bro-sw' + (d.accent === c ? ' on' : '') + '" data-act="about:brocolour" data-c="' + c + '" style="--c:' + c + '" title="' + esc(label) + '" aria-label="' + esc(label) + '"></button>'; };
+    return '<div class="page-head"><div><h1>' + T('Brochures') + '</h1><p class="lead">Fold-out A4 brochures to print or save as PDF. Change the wording, colour and font to suit your church.</p></div>' +
+      '<div class="btns"><a class="btn" href="#/about">' + H.icon(H.ICON.back, 18) + T('About') + '</a></div></div>' +
+      '<nav class="seg" style="margin-bottom:14px"><a href="#/about/brochure/members" class="' + (who === 'members' ? 'on' : '') + '">' + T('For our members') + '</a><a href="#/about/brochure/churches" class="' + (who === 'churches' ? 'on' : '') + '">' + T('For other churches') + '</a></nav>' +
+      '<section class="panel bro-tools" data-noauto>' +
+        '<div class="btns" style="margin:0"><button class="btn' + (bro.edit ? '' : ' primary') + '" data-act="about:broedit">' + (bro.edit ? H.icon(H.ICON.check, 18) + 'Done editing' : 'Edit the wording') + '</button>' +
+        '<button class="btn' + (bro.edit ? '' : ' primary') + '" data-act="about:broprint">Print or save as PDF</button></div>' +
+        (bro.edit ? '<p class="note info" style="margin:12px 0 0">Click any heading or text on the brochure and type. Use <b>Hide</b> on a block you don’t want, and <b>Show</b> to bring it back. Changes save by themselves. Keep an eye on the red warning: everything must fit on its third of the page.</p>' : '') +
+        '<div class="bro-design"><span class="bro-l">Colour</span>' + sw(BrochureKit.DEFAULT.accent, 'Church Hub orange') + (own && own !== BrochureKit.DEFAULT.accent ? sw(own, 'The church’s colour (Settings → Colours)') : '') +
+          '<label class="bro-pick" title="Any colour"><input type="color" id="bro-colour" value="' + esc(d.accent) + '" aria-label="Any colour"></label>' +
+          '<span class="bro-l">Font</span><select id="bro-font" aria-label="Font">' + BrochureKit.FONTS.map(function (f) { return '<option value="' + esc(f[0]) + '"' + (d.font === f[0] ? ' selected' : '') + '>' + esc(f[1]) + '</option>'; }).join('') + '</select></div>' +
+        '<p class="hint" id="bro-note" style="margin:10px 0 0" aria-live="polite"></p>' +
+        '<div class="btns" style="margin:10px 0 0">' +
+          (BrochureKit.changed(b, who) ? '<button class="btn small" data-act="about:broreset" data-w="' + who + '">Back to the original wording</button>' : '') +
+          (d.accent !== BrochureKit.DEFAULT.accent || d.font !== BrochureKit.DEFAULT.font ? '<button class="btn small" data-act="about:brodesign">Back to Church Hub’s colour and font</button>' : '') + '</div>' +
+      '</section>' +
+      '<div class="bro-wrap" data-keep><iframe id="bro-frame" title="' + esc(who === 'members' ? T('For our members') : T('For other churches')) + '" src="' + esc(broSrc(who)) + '"></iframe></div>';
+  }
+
+  /** The brochure in the frame: remember Church Hub's own wording, lay the church's over it, and (editing) make it editable. */
+  function broLoad(who) {
+    var fr = document.getElementById('bro-frame'), doc = fr && fr.contentDocument; if (!doc || !doc.body) return;
+    var K = BrochureKit, b = broSaved(), mine = b[who], stale = [];
+    broFill(doc);   // the church's name and address first, so they aren't counted as edits
+    var sheets = [].slice.call(doc.querySelectorAll('.sheet')).filter(function (x) { return x.getAttribute('data-show') === who; });
+    sheets.forEach(function (sh, si) {
+      [].slice.call(sh.querySelectorAll('.pn h1, .pn h2, .pn h3, .pn p')).forEach(function (el, i) {
+        var key = who[0] + si + ':' + i, saved = mine.texts[key];
+        el.setAttribute('data-bk', key); el.setAttribute('data-bo', K.norm(el.textContent)); el.setAttribute('data-bh', K.clean(el.innerHTML));
+        if (saved) { if (saved.o === el.getAttribute('data-bo')) el.innerHTML = saved.h; else stale.push(saved.o); }
+      });
+      [].slice.call(sh.querySelectorAll('.pn > div:not(.logo)')).forEach(function (el, i) {
+        var key = who[0] + si + ':b' + i, o = K.norm(el.textContent);
+        el.setAttribute('data-bb', key); el.setAttribute('data-bo', o);
+        if (mine.hidden[key] !== undefined) { if (mine.hidden[key] === o) el.classList.add('bro-off'); else stale.push(mine.hidden[key]); }
+      });
+    });
+    broFill(doc); broDesign(doc, b.design);
+    var css = doc.getElementById('bro-css') || doc.head.appendChild(doc.createElement('style')); css.id = 'bro-css';
+    css.textContent = '.bro-off{display:none!important}' + (bro.edit ?
+      '.bro-off{display:block!important;opacity:.28}.pn>div[data-bb]{position:relative}[contenteditable]{outline:none}' +
+      '[data-bk]{cursor:text;border-radius:4px}[data-bk]:hover{outline:2px dashed var(--ink);outline-offset:3px}[data-bk]:focus{outline:2px solid var(--ink);outline-offset:3px}' +
+      '.bro-eye{position:absolute;top:-10px;right:-10px;z-index:3;font:800 12px/1 system-ui,sans-serif;padding:5px 9px;border-radius:999px;border:1px solid var(--ink);background:#fff;color:var(--ink);cursor:pointer;opacity:.85}' +
+      '.bro-eye:hover{opacity:1}.pn.bro-over{outline:4px solid #D92D20;outline-offset:-4px}' +
+      '@media print{.bro-eye{display:none}.bro-off{display:none!important}[data-bk]{outline:none!important}.pn.bro-over{outline:none}}' : '');
+    if (bro.edit) broEditable(doc, who);
+    var fit = function () { fr.style.height = Math.max(400, doc.documentElement.scrollHeight) + 'px'; broCheck(doc, stale); };
+    fit(); setTimeout(fit, 300); if (doc.fonts && doc.fonts.ready) doc.fonts.ready.then(fit);
+  }
+  function broFill(doc) {
+    var st = Store.settings() || {}, link = (location.origin + location.pathname.replace(/index\.html$/, '')).replace(/^https?:\/\//, '').replace(/\/+$/, '');
+    doc.querySelectorAll('[data-fill="church"]').forEach(function (e) { if (st.churchName) e.textContent = st.churchName; });
+    doc.querySelectorAll('[data-fill="link"]').forEach(function (e) { e.textContent = link; });
+  }
+  function broDesign(doc, d) {
+    var c = BrochureKit.colours(d.accent), r = doc.documentElement.style;
+    r.setProperty('--accent', c.accent); r.setProperty('--ink', c.ink); r.setProperty('--soft', c.soft); r.setProperty('--paper', c.paper); r.setProperty('--on-accent', c.onAccent);
+    var f = BrochureKit.font(d.font), link = doc.getElementById('bro-font-css');
+    if (f !== BrochureKit.DEFAULT.font) { if (!link) { link = doc.createElement('link'); link.id = 'bro-font-css'; link.rel = 'stylesheet'; doc.head.appendChild(link); } link.href = BrochureKit.fontHref(f); }
+    r.setProperty('--font', "'" + f + "'");
+  }
+  /** Warnings under the buttons: text that no longer fits its panel, and edits to wording Church Hub has since changed. */
+  function broCheck(doc, stale) {
+    var over = [].slice.call(doc.querySelectorAll('.sheet:not([hidden]) .pn')).filter(function (p) { var o = p.scrollHeight > p.clientHeight + 1; p.classList.toggle('bro-over', o); return o; });
+    var n = document.getElementById('bro-note'); if (!n) return;
+    n.innerHTML = (over.length ? '<span class="note bad" style="display:block;margin:0 0 6px">' + (over.length === 1 ? 'One panel has' : over.length + ' panels have') + ' more than fits on its third of the page (marked in red when editing): shorten its text or hide a block.</span>' : '') +
+      (stale && stale.length ? '<span class="note warn" style="display:block;margin:0">' + stale.length + ' of your changes ' + (stale.length === 1 ? 'is' : 'are') + ' to wording Church Hub has since changed, so ' + (stale.length === 1 ? 'it isn’t' : 'they aren’t') + ' shown: ' +
+        stale.slice(0, 3).map(function (x) { return '“' + esc(x.slice(0, 60)) + '”'; }).join(', ') + '. Edit the new wording if you still want to change it. <button class="btn small" data-act="about:brostale">Forget them</button></span>' : '');
+  }
+  function broEditable(doc, who) {
+    var timer = null, save = function () { clearTimeout(timer); timer = setTimeout(function () { broSave(doc, who); }, 600); };
+    doc.querySelectorAll('[data-bk]').forEach(function (el) {
+      el.setAttribute('contenteditable', 'true'); el.setAttribute('spellcheck', 'true');
+      el.addEventListener('input', save); el.addEventListener('blur', function () { clearTimeout(timer); broSave(doc, who); });
+      el.addEventListener('keydown', function (e) {
+        if (e.key !== 'Enter') return; e.preventDefault();
+        if (!/^H/.test(el.tagName)) doc.execCommand('insertLineBreak');   // headings stay on one line
+      });
+      el.addEventListener('paste', function (e) { e.preventDefault(); var t = (e.clipboardData || window.clipboardData).getData('text/plain'); doc.execCommand('insertText', false, t); });
+    });
+    doc.querySelectorAll('[data-bb]').forEach(function (el) {
+      var eye = doc.createElement('button'); eye.type = 'button'; eye.className = 'bro-eye'; eye.setAttribute('contenteditable', 'false');
+      var label = function () { eye.textContent = el.classList.contains('bro-off') ? 'Show' : 'Hide'; };
+      label(); el.appendChild(eye);
+      eye.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); el.classList.toggle('bro-off'); label(); broSave(doc, who); });
+    });
+  }
+  /** Save what is on the brochure now: each text that differs from Church Hub's own, and the hidden blocks. */
+  function broSave(doc, who) {
+    var K = BrochureKit, b = broSaved(), texts = {}, hidden = {};
+    // Edits to wording that isn't on the page any more are kept (they were listed) until “Forget them”
+    Object.keys(b[who].texts).forEach(function (k) { var el = doc.querySelector('[data-bk="' + k + '"]'); if (!el || el.getAttribute('data-bo') !== b[who].texts[k].o) texts[k] = b[who].texts[k]; });
+    Object.keys(b[who].hidden).forEach(function (k) { var el = doc.querySelector('[data-bb="' + k + '"]'); if (!el || el.getAttribute('data-bo') !== b[who].hidden[k]) hidden[k] = b[who].hidden[k]; });
+    doc.querySelectorAll('[data-bk]').forEach(function (el) {
+      var copy = el.cloneNode(true); copy.querySelectorAll('.bro-eye').forEach(function (x) { x.remove(); });
+      var h = K.clean(copy.innerHTML);
+      if (K.norm(h) !== K.norm(el.getAttribute('data-bh'))) texts[el.getAttribute('data-bk')] = { o: el.getAttribute('data-bo'), h: h };
+    });
+    doc.querySelectorAll('[data-bb]').forEach(function (el) { if (el.classList.contains('bro-off')) hidden[el.getAttribute('data-bb')] = el.getAttribute('data-bo'); });
+    b[who] = { texts: texts, hidden: hidden };
+    var before = JSON.stringify(broSaved());
+    b = K.tidy(b); if (JSON.stringify(b) === before) return;
+    Store.setSettings({ brochures: b });
+    broCheck(doc, null);
+    H.toast('Saved');
   }
 
   H.register({
     id: 'about', name: 'About', desc: 'Version, updates and who made Church Hub', tint: '#475569',
     icon: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-5M12 8h.01',
     stat: function () { return T('Version {v}', { v: V.version }); },
-    render: render,
-    after: function () { if (!check.state) runCheck(); },   // check as soon as the page opens
+    render: function (parts) { return parts && parts[0] === 'brochure' && H.can('*') && window.BrochureKit ? renderBrochure(parts[1]) : render(); },
+    after: function (parts) {
+      if (parts && parts[0] === 'brochure') {
+        var fr = document.getElementById('bro-frame'), who = parts[1] === 'churches' ? 'churches' : 'members';
+        if (fr) fr.addEventListener('load', function () { broLoad(who); });
+        return;
+      }
+      bro.edit = false;
+      if (!check.state) runCheck();   // check as soon as the page opens
+    },
     actions: {
       check: function () { runCheck(); },
+      broedit: function () { bro.edit = !bro.edit; if (!bro.edit) Store.audit('Changed the brochures (wording, colour or font)', 'settings'); H.render(); },
+      broprint: function () { var fr = document.getElementById('bro-frame'); if (fr && fr.contentWindow) { fr.contentWindow.focus(); fr.contentWindow.print(); } },
+      brocolour: function (el) { broSetDesign({ accent: el.dataset.c }); },
+      brodesign: function () { broSetDesign({ accent: BrochureKit.DEFAULT.accent, font: BrochureKit.DEFAULT.font }); H.render(); },
+      broreset: function (el) {
+        if (!H.confirmBtn(el, 'Click again: back to the original wording')) return;
+        var b = broSaved(); b[el.dataset.w] = { texts: {}, hidden: {} }; Store.setSettings({ brochures: b }, 'Brochure for ' + el.dataset.w + ': back to the original wording'); H.render(); H.toast('Back to the original wording');
+      },
+      brostale: function () {
+        var fr = document.getElementById('bro-frame'), doc = fr && fr.contentDocument, who = /churches/.test(location.hash) ? 'churches' : 'members', b = broSaved(), mine = b[who];
+        if (!doc) return;
+        Object.keys(mine.texts).forEach(function (k) { var e = doc.querySelector('[data-bk="' + k + '"]'); if (!e || e.getAttribute('data-bo') !== mine.texts[k].o) delete mine.texts[k]; });
+        Object.keys(mine.hidden).forEach(function (k) { var e = doc.querySelector('[data-bb="' + k + '"]'); if (!e || e.getAttribute('data-bo') !== mine.hidden[k]) delete mine.hidden[k]; });
+        Store.setSettings({ brochures: b }); H.render();
+      },
       // Load the page again under a new address, so neither the browser nor the phone uses its saved copy
       reload: function () { var q = cleanSearch().replace(/^\?/, ''); location.replace(location.pathname + '?' + (q ? q + '&' : '') + 'u=' + Date.now() + location.hash); }
     }

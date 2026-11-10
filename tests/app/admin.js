@@ -234,15 +234,48 @@ module.exports = async function (ctx) {
   await s.go('privacy/audit'); check((await s.text()).includes('Signed in'), 'audit log shows sign-ins');
   await s.go('about'); await s.page.waitForSelector('#about-brochures');
   const bro = await s.page.$$eval('#about-brochures a', as => as.map(a => a.getAttribute('href')));
-  check(bro.length === 2 && /for=members/.test(bro[0]) && /for=churches/.test(bro[1]) && bro.every(h => /&link=/.test(h)), 'About offers an Administrator both brochures, with this Church Hub’s address');
-  const bp = await s.page.context().newPage(); await bp.goto(new URL(bro[0], s.page.url()).href);
+  check(bro.length === 2 && bro[0] === '#/about/brochure/members' && bro[1] === '#/about/brochure/churches', 'About offers an Administrator both brochures, opened inside Church Hub');
+  // The brochure on its own (as the frame shows it), with this Church Hub's address: it fits
+  const link = encodeURIComponent(new URL('.', s.page.url()).href), bp = await s.page.context().newPage();
+  await bp.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());
+  await bp.goto(new URL('brochure.html?for=members&link=' + link, s.page.url()).href);
   const bt = await bp.evaluate(() => [...document.querySelectorAll('.sheet')].filter(e => !e.hidden).map(e => e.innerText).join(' '));
   check(/Three easy steps/.test(bt) && !/Switch without the stress/.test(bt) && /127\.0\.0\.1/.test(bt), 'the members’ brochure opens with the church’s address in it, and only the members’ pages');
   const fits = await bp.evaluate(() => [...document.querySelectorAll('.sheet:not([hidden]) .pn')].every(p => p.scrollHeight <= p.clientHeight + 1));
   check(fits, 'everything on the brochure fits on its page');
-  await bp.goto(new URL(bro[1], s.page.url()).href);
+  await bp.goto(new URL('brochure.html?for=churches&link=' + link, s.page.url()).href);
   check(await bp.evaluate(() => [...document.querySelectorAll('.pn')].every(p => p.closest('.sheet').hidden || p.scrollHeight <= p.clientHeight + 1) && /Switch without the stress/.test(document.body.innerText)), 'the brochure for other churches opens and fits too');
   await bp.close();
+  // The brochure editor (About → Brochures): change a heading and a contact box, hide a block, choose a colour and font
+  await s.go('about/brochure/members');
+  const frame = async () => { await s.page.waitForFunction(() => { const f = document.getElementById('bro-frame'); return f && f.contentDocument && f.contentDocument.querySelector('[data-bk]'); }, null, { timeout: 15000 }); return s.page.frameLocator('#bro-frame'); };
+  let f = await frame();
+  check(await f.locator('body.embed').count() === 1 && /127\.0\.0\.1/.test(await f.locator('body').innerText()), 'the brochure shows inside Church Hub, without its own bar, with this Church Hub’s address');
+  await s.page.click('[data-act="about:broedit"]'); f = await frame();
+  await f.locator('h2', { hasText: 'Three easy steps' }).click(); await s.page.keyboard.press('End'); await s.page.keyboard.type(' to start');
+  await f.locator('.box p').first().click(); await s.page.keyboard.press('Control+A'); await s.page.keyboard.type('Phone the office: 033 330 0000');
+  await f.locator('[data-bb] .bro-eye').nth(3).click();
+  await s.page.evaluate(() => { const i = document.getElementById('bro-colour'); i.value = '#2e7d4f'; i.dispatchEvent(new Event('change', { bubbles: true })); });
+  await s.page.selectOption('#bro-font', 'Lora'); await s.page.waitForTimeout(1200); await s.settle();
+  let b = (await s.docsNow())['settings/church'].brochures || {};
+  const texts = Object.values((b.members || {}).texts || {});
+  check(texts.some(t => t.o === 'Three easy steps' && t.h === 'Three easy steps to start') && texts.some(t => t.h === 'Phone the office: 033 330 0000') && Object.keys((b.members || {}).hidden || {}).length === 1 &&
+    b.design.accent === '#2E7D4F' && b.design.font === 'Lora', 'editing: wording, a hidden block, the colour and the font are saved for the church: ' + JSON.stringify(b.design));
+  await s.page.click('[data-act="about:broedit"]'); f = await frame();
+  const shown = await f.locator('body').innerText();
+  check(/Three easy steps to start/.test(shown) && /033 330 0000/.test(shown) && !/In your language/.test(shown) && await f.locator('.bro-eye').count() === 0 &&
+    await s.page.evaluate(() => getComputedStyle(document.getElementById('bro-frame').contentDocument.querySelector('.cover')).backgroundColor) === 'rgb(46, 125, 79)', 'done: the brochure shows the church’s wording, without the hidden block, in their colour');
+  // Typed markup can't get in
+  await s.page.evaluate(() => { const b = Store.settings().brochures; b.members.texts['m0:0'] = { o: 'Good to know', h: '<img src=x onerror="window.__bad=1">Hello<script>window.__bad=1</script>' }; Store.setSettings({ brochures: b }); });
+  await s.go('about'); await s.go('about/brochure/members'); f = await frame(); await s.page.waitForTimeout(300);
+  check(await s.page.evaluate(() => !window.__bad && !document.getElementById('bro-frame').contentDocument.querySelector('.pn img')), 'anything saved is made safe: no pictures or scripts');
+  // When Church Hub's own wording changes, the church's old edit of it doesn't land on the wrong line
+  await s.page.evaluate(() => { const b = Store.settings().brochures; b.members.texts['m0:11'] = { o: 'An older heading', h: 'Should not show' }; Store.setSettings({ brochures: b }); });
+  await s.go('about'); await s.go('about/brochure/members'); f = await frame(); await s.page.waitForTimeout(500);
+  check(!/Should not show/.test(await f.locator('body').innerText()) && /to wording Church Hub has since changed/.test(await s.page.textContent('#bro-note')), 'an edit of wording that has since changed isn’t used, and is listed');
+  await s.page.click('[data-act="about:broreset"]'); await s.page.click('[data-act="about:broreset"]'); await s.settle();
+  b = (await s.docsNow())['settings/church'].brochures;
+  check(!Object.keys(b.members.texts).length && !Object.keys(b.members.hidden).length && b.design.font === 'Lora', '“Back to the original wording” clears this brochure’s changes (the design stays)');
   await finish(s);
 
   /* ---------- Households, parents and guardians, collection ---------- */

@@ -757,3 +757,13 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   #print-only.badges td span { display: block; font-size: 25pt; font-weight: 400; line-height: 1.2; }
 }
 @page badges { size: A4 portrait; margin: 0; }   /* only the badge sheets: the 20 mm margins are in .sheet itself */
+/* About → Brochures: the brochure in a frame, and its colour and font */
+.bro-wrap { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+.bro-wrap iframe { display: block; width: 100%; min-height: 400px; border: 0; background: transparent; }
+.bro-design { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; margin-top: 14px; }
+.bro-design .bro-l { font-weight: 600; font-size: .9rem; color: var(--muted); }
+.bro-design select { max-width: 260px; }
+.bro-sw { width: 30px; height: 30px; border-radius: 50%; border: 2px solid var(--surface); box-shadow: 0 0 0 1px var(--line-strong); background: var(--c); cursor: pointer; padding: 0; }
+.bro-sw.on { box-shadow: 0 0 0 3px var(--ink); }
+.bro-pick input { width: 34px; height: 34px; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: none; cursor: pointer; }
+.bro-design .bro-l + select, .bro-pick { margin-right: 6px; }

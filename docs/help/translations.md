@@ -3,9 +3,9 @@
 ## Which languages can I use?
 For: Everyone
 
-English, Afrikaans, isiZulu and isiXhosa are built in, and 18 more can be chosen (Sesotho, Setswana, Sepedi, Xitsonga,
+UK English, Afrikaans, isiZulu and isiXhosa are built in, and 19 more can be chosen (Sesotho, Setswana, Sepedi, Xitsonga,
 siSwati, Tshivenḓa, isiNdebele, chiShona, Kiswahili, Amharic, Yorùbá, French, Portuguese, Spanish, German, Dutch, Italian,
-Polish). Choose with the **globe** drop-down – see [getting-started.md](getting-started.md). The translations were drafted
+Polish, American English). Choose with the **globe** drop-down – see [getting-started.md](getting-started.md). The translations were drafted
 by AI, so some may read oddly; staff-only screens and the church's own words stay in English for now.
 
 ## The wording in my language is wrong. How do I fix it?

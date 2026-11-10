@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups'];
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
@@ -456,6 +456,8 @@ var Store = (function () {
       add('serveOffers', (is('admin', 'rosters') || may('rosters')) && realRoster ? coll('serveOffers') : own('serveOffers'));
       // Changes to family details people asked for: Administrators check them all; everyone else sees their own
       add('detailChanges', may('people') ? coll('detailChanges') : own('detailChanges'));
+      // Applications to become a Church Partner: Administrators and Pastors read them all; everyone else their own
+      add('partnerApps', is('admin', 'pastor') ? coll('partnerApps') : own('partnerApps'));
       // Translations: the approved wording for everyone; suggestions – Administrators all, checkers their languages, everyone their own
       add('words', coll('words'));
       if (may('words')) add('wordIdeas', coll('wordIdeas'));
@@ -610,7 +612,7 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps'].forEach(function (c) { db[c] = arr(c); });
       var cgs = merged('careGroupsAll', 'careGroups');   // my own groups, and every group when Settings allows (careAll)
       db.careGroups = Object.keys(cgs).map(function (id) { var o = copy(cgs[id]); o.id = id; return o; });
       var msgs = merged('messages', 'messagesTo', 'messagesFrom');

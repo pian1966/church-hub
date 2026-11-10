@@ -722,3 +722,38 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 /* Who can see what: a grid of ticks, one column per kind of access */
 .see-grid td.c, .see-grid th.c, #access-kinds .c { text-align: center; }
 .see-grid td:first-child { min-width: 180px; }
+
+/* Applying to become a Church Partner (js/people/apply.js) */
+.yn { border: 0; padding: 0; margin: 0 0 14px; } .yn legend { margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+.yn.field { display: flex; flex-direction: row; flex-wrap: wrap; align-items: center; gap: 0 28px; } .yn legend { width: 100%; float: left; }
+.yn .check.inline { display: inline-flex; padding: 6px 0; }
+.decl { margin: 0 0 14px; padding: 12px 16px; border-left: 4px solid var(--accent); background: var(--surface-2); border-radius: 0 10px 10px 0; line-height: 1.55; font-size: 14.5px; }
+.app-kv dt { white-space: normal; }
+/* Name badges: a preview on screen (People → Name badges) */
+.badge-prev { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 12px; }
+.badge-prev .badge { position: relative; width: 210px; height: 118px; border: 2px solid var(--ink); border-radius: 6px; background: #fff; color: #111; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 6px; font-family: "Open Sans", Inter, sans-serif; }
+.badge-prev .badge b { font-size: 28px; line-height: 1.15; } .badge-prev .badge span { font-size: 20px; line-height: 1.2; }
+.badge-prev .badge .icon-btn { position: absolute; top: 2px; right: 2px; }
+.badge-line { margin: 8px 0 0; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* Printing only one part (an application, or sheets of name badges): everything else is hidden */
+#print-only { display: none; }
+@media print {
+  html.printing body > *:not(#print-only) { display: none !important; }
+  html.printing #print-only { display: block; }
+  html.printing, html.printing body { background: #fff !important; }
+  #print-only.app { font-family: Inter, sans-serif; color: #000; padding: 4mm 2mm; } #print-only.app .no-print, #print-only.app .icon-btn { display: none !important; }
+  #print-only.app h1 { font-size: 18pt; margin: 0 0 10pt; } #print-only.app .panel { border: 0; box-shadow: none; padding: 0; }
+  #print-only.app dl.kv { display: grid; grid-template-columns: 38% 1fr; gap: 4pt 12pt; font-size: 10.5pt; } #print-only.app dt { font-weight: 700; }
+  /* Name badges, as in the church's Google Doc: A4, 20 mm margins, 2 × 5 badges of 72.8 / 73.8 × 41 mm, 3 pt lines */
+  #print-only.badges .sheet { page: badges; width: 210mm; height: 296mm; padding: 32mm 20mm 0; box-sizing: border-box; page-break-after: always; break-after: page; }
+  #print-only.badges .sheet:last-child { page-break-after: auto; break-after: auto; }
+  #print-only.badges table { border-collapse: collapse; table-layout: fixed; width: 146.6mm; }
+  #print-only.badges td { width: 72.8mm; height: 41mm; border: 3pt solid #000; text-align: center; vertical-align: middle; padding: 0 2mm; font-family: "Open Sans", Inter, Arial, sans-serif; color: #000; }
+  #print-only.badges td + td { width: 73.8mm; }
+  #print-only.badges td.empty { border-color: transparent; }
+  #print-only.badges td, #print-only.badges tr { background: none !important; }
+  #print-only.badges td b { display: block; font-size: 35pt; font-weight: 700; line-height: 1.15; }
+  #print-only.badges td span { display: block; font-size: 25pt; font-weight: 400; line-height: 1.2; }
+}
+@page badges { size: A4 portrait; margin: 0; }   /* only the badge sheets: the 20 mm margins are in .sheet itself */

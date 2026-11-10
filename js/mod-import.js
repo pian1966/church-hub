@@ -354,7 +354,7 @@
         H.busy('Removing ' + go.length + ' people…', function () {
         go.forEach(function (p) {
           S.find('consents', function (c) { return c.personId === p.id; }).forEach(function (c) { S.remove('consents', c.id); });
-          ['skills', 'blockouts', 'serveOffers', 'detailChanges'].forEach(function (c) { S.find(c, function (x) { return x.personId === p.id; }).forEach(function (x) { S.remove(c, x.id); }); });
+          ['skills', 'blockouts', 'serveOffers', 'detailChanges', 'partnerApps'].forEach(function (c) { S.find(c, function (x) { return x.personId === p.id; }).forEach(function (x) { S.remove(c, x.id); }); });
           S.find('assignments', function (a) { return a.personId === p.id; }).forEach(function (a) { S.remove('assignments', a.id); });
           S.purge(p.id);
           S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }).forEach(function (l) { S.remove('guardians', l.id); });

@@ -5,7 +5,7 @@ For: Everyone
 
 UK English, Afrikaans, isiZulu and isiXhosa are built in, and 19 more can be chosen (Sesotho, Setswana, Sepedi, Xitsonga,
 siSwati, Tshivenḓa, isiNdebele, chiShona, Kiswahili, Amharic, Yorùbá, French, Portuguese, Spanish, German, Dutch, Italian,
-Polish, American English). Choose with the **globe** drop-down – see [getting-started.md](getting-started.md). The translations were drafted
+Polish, US English). Choose with the **globe** drop-down – see [getting-started.md](getting-started.md). The translations were drafted
 by AI, so some may read oddly; staff-only screens and the church's own words stay in English for now.
 
 ## The wording in my language is wrong. How do I fix it?

@@ -25,7 +25,7 @@ var I18n = (function () {
     ['fr', 'Français', 'French', ['Africa', 'Europe', 'Americas']], ['pt', 'Português', 'Portuguese', ['Africa', 'Europe', 'Americas']],
     ['es', 'Español', 'Spanish', ['Europe', 'Americas']], ['de', 'Deutsch', 'German', ['Europe']], ['nl', 'Nederlands', 'Dutch', ['Europe']],
     ['it', 'Italiano', 'Italian', ['Europe']], ['pl', 'Polski', 'Polish', ['Europe']],
-    ['en-US', 'American English', 'American English', ['Americas']]
+    ['en-US', 'US English', 'US English', ['Americas']]
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
   var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'life', 'messages', 'privacy', 'import', 'settings'];

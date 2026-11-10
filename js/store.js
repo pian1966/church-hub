@@ -574,7 +574,7 @@ var Store = (function () {
       ready = true; stats.loaded = Date.now();
       // My own directory entry shows my care groups when Settings asks for it (carers may have added me)
       var dirMe = (raw.directory || {})[session.personId];
-      var careDir = (db.settings.seeCare || []).indexOf('member') >= 0 || Object.keys(raw.directory || {}).some(function (id) { return raw.directory[id].care; });
+      var careDir = careForMembers(db.settings) || Object.keys(raw.directory || {}).some(function (id) { return raw.directory[id].care; });
       if (!previewRole && !offlineNow() && (careDir || (dirMe && dirMe.care))) {
         // Administrators and Pastors: everyone's entry, in case a change was missed (e.g. saved before the rules allowed it)
         if (is('admin', 'pastor')) setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
@@ -688,7 +688,8 @@ var Store = (function () {
         if (allows('member', 'address') && addr) want.shareAddress = addr;
         if (allows('member', 'spouse') && spouse) want.shareSpouse = spouse;
         // Settings → Who can see what → Care groups: Church Partners see which group everyone in the directory is in
-        if (((db.settings && db.settings.seeCare) || []).indexOf('member') >= 0) { var cg = careOf(pid); if (cg.length) want.care = cg; }
+        // … or which group each person is in, on their page in People (settings.careOnPeople)
+        if (careForMembers(db.settings)) { var cg = careOf(pid); if (cg.length) want.care = cg; }
       }
       if (!same(want, known('directory/' + pid))) { if (want) write('directory/' + pid, want); else del('directory/' + pid); }
       var lead = {};
@@ -697,6 +698,9 @@ var Store = (function () {
       if (!Object.keys(lead).length) lead = null;
       if (!same(lead, known('contacts/' + pid))) { if (lead) write('contacts/' + pid, lead); else del('contacts/' + pid); }
     }
+    /** Do Church Partners (Basic access) see anyone's care groups: all groups on the Care groups page, or a person's groups on
+     *  their page in People? Then each directory entry carries the person's groups (names only). */
+    function careForMembers(st) { st = st || {}; return (st.seeCare || []).indexOf('member') >= 0 || careOnPeople(st); }
     /** Someone's care groups for the directory: [{ id, name, carer }] (names only – the cards stay with the group). */
     function careOf(pid) {
       return list('careGroups').filter(function (g) { return (g.memberIds || []).indexOf(pid) >= 0; }).map(function (g) {
@@ -940,10 +944,13 @@ var Store = (function () {
     out.counts = {}; COLLECTIONS.forEach(function (c) { var n = all(c).length; if (n) out.counts[c] = n; });
     return out;
   }
+  /** Settings → Who can see what: Church Partners (Basic access) see which care group someone is in, on their page in People.
+   *  Not chosen yet (before 0.44): the same as "All groups: see who is in each group", as it was then. */
+  function careOnPeople(st) { st = st || {}; return st.careOnPeople === undefined ? (st.seeCare || []).indexOf('member') >= 0 : !!st.careOnPeople; }
   /** Ask in your own words, with AI: switched on in Settings → Apps, set up (a reCAPTCHA key in firebase-config.js), live and online. */
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
   function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
-  return { aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
+  return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */

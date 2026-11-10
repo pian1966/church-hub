@@ -159,11 +159,11 @@
   /** The tags on a person: Care group member or Carer, with each group's name. */
   function tag(p) {
     if (!H.isOn('care')) return '';   // Settings → Apps: care groups switched off
-    var u = me(), self = !!(u && p && u.id === p.id);
-    if (!manager() && !viewer() && !self) return '';
+    var u = me(), self = !!(u && p && u.id === p.id), member = !manager() && !H.can('people.basic');
+    if (!manager() && !viewer() && !self && !(member && S.careOnPeople())) return '';
     // Your own groups are always yours to see (your Me page, your profile); others' only as Settings allows
     var mine = self && !manager() ? Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return { name: g.name, carer: Care.isLeader(g, p.id) }; })
-      : partnerView() ? (!seeAllGroups() ? [] : S.isLive() ? (p.care || []) : partnerGroups().filter(function (g) { return g.people.some(function (x) { return x.p.id === p.id; }); }).map(function (g) { return { name: g.name, carer: g.people.some(function (x) { return x.p.id === p.id && x.carer; }) }; }))
+      : member ? (!S.careOnPeople() ? [] : S.isLive() ? (p.care || []) : partnerGroups().filter(function (g) { return g.people.some(function (x) { return x.p.id === p.id; }); }).map(function (g) { return { name: g.name, carer: g.people.some(function (x) { return x.p.id === p.id && x.carer; }) }; }))
       : Care.groupsOf(S.list('careGroups'), p.id).map(function (g) { return { name: g.name, carer: Care.isLeader(g, p.id) }; });
     return mine.map(function (g) { return ' <span class="tag">' + T(g.carer ? 'Carer' : 'Care group member') + ' · ' + esc(g.name) + '</span>'; }).join('');
   }

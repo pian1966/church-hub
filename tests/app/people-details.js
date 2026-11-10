@@ -12,6 +12,13 @@ module.exports = async function (ctx) {
   check(await s.page.evaluate(() => document.activeElement && document.activeElement.id === 'pf-wed'), '“Add” opens Edit details at the anniversary box');
   await s.page.fill('#pf-wed', '2000-06-10'); await s.page.click('[data-act="people:save"]'); await s.settle();
   check(/Wedding anniversary\s*\S+ 10 Jun 2000\s*Married \d+ years/.test(await s.text()), 'then it shows the date and years married');
+  // Boxes that don't apply are greyed out, with the reason; what was saved stays
+  await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-marital', 'Single');
+  check(await s.page.$eval('#pf-wed', e => e.disabled) && /Not needed – marital status is Single/.test(await s.page.textContent('#pf-wed-f')) && await s.page.$eval('#pf-wed-f', e => e.classList.contains('is-off')),
+    'Edit details: Single → the wedding anniversary is greyed out, saying why');
+  await s.page.selectOption('#pf-marital', 'Widowed');
+  check(!(await s.page.$eval('#pf-wed', e => e.disabled)) && await s.page.inputValue('#pf-wed') === '2000-06-10', '… Widowed → it is back, with the date kept');
+  await s.page.click('[data-act="hub:close"]');
   await finish(s);
 
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p14');

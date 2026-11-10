@@ -158,7 +158,7 @@ module.exports = async function (ctx) {
   check(!(await s.page.$('nav a[href="#/care"]')) && await s.page.evaluate(() => !Store.list('careGroups').length), 'Roster coordinator: no Care groups until Settings allows it');
   await finish(s);
   s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('settings/access');
-  check(await s.page.$$eval('.st-care', b => b.map(x => x.value).join()) === 'rosters,kids,member', 'Settings → Who can see what: a Care groups tick for Roster coordinator, Children’s ministry and Basic access');
+  check(await s.page.$$eval('.st-care', b => b.map(x => x.value).join()) === 'member,rosters,kids', 'Settings → Who can see what: a Care groups tick for Basic access, Roster coordinator and Children’s ministry');
   await s.page.check('.st-care[value="rosters"]');   // saved as you go
   check(await s.page.waitForSelector('.just-saved', { timeout: 1500 }).then(() => true, () => false) && await s.page.isVisible('#autosaved.show'), 'saving as you go: a large “Saved” notice, and the tick just saved lights up');
   await s.page.waitForTimeout(1200); await s.settle();
@@ -200,14 +200,15 @@ module.exports = async function (ctx) {
   await s.go('people/p/p14'); check((await s.text()).includes('From Elvanto'), 'an Administrator sees where a record came from (From Elvanto)');
   await s.go('settings/access');
   check(await s.page.$eval('.st-careown', b => b.checked) && !(await s.page.$eval('.st-care[value="member"]', b => b.checked)), 'Basic access: “Their own group” on, “All groups” off, to start with');
-  t = await s.page.textContent('#see-others');
-  check(t.includes('Their own group: see all its members (not just the carers)') && t.includes('All groups: see who is in each group (names only, on a Care groups page)'), 'the boxes say what they cover first, then the detail');
+  t = await s.page.textContent('#see-care');
+  check(t.includes('See all care groups and who is in each') && t.includes('See which care group someone is in, on their page in People') && t.includes('See everyone in their own care group, not just the carers') &&
+    (await s.page.$$('#see-care .tip')).length === 3, 'the care group choices say plainly what each allows, each with an “i” that explains more');
   await s.page.uncheck('.st-careown'); await s.page.check('.st-care[value="member"]'); await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].seeCareOwn === false && docs['settings/church'].seeCare.join() === 'member', 'both choices saved');
   check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true && !docs['directory/p17'], 'the church directory shows each person’s care group (carers marked); someone not in the directory isn’t listed');
   const after = docs;
-  await s.go('settings/access'); t = await s.page.textContent('#see-others');
+  await s.go('settings/access'); t = await s.page.textContent('#see-care');
   check(t.includes('1 person in a care group isn’t in the church directory'), 'Settings says how many people in care groups Church Partners can’t see (not in the church directory)');
   await s.page.click('[data-act="settings:carehidden"]'); t = await s.page.textContent('#modal');
   check(/Said no to sharing their contact details \(1\)[\s\S]*Megan Smith/.test(t) && !t.includes('David Smith'), '“Show them” lists them by reason (Megan said no), linked to their profile');
@@ -222,6 +223,20 @@ module.exports = async function (ctx) {
   check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888') && t.includes('All care groups'), 'Care groups page: their own group, then which group each person in the church directory is in – names only');
   await s.go('people'); t = await s.text();
   check(t.includes('Care group member · Hilton'), 'the People list shows their care group');
+  await finish(s);
+  // "See which care group someone is in, on their page in People" off, "All groups" still on: the Care groups page stays, the tags go
+  const noTags = JSON.parse(JSON.stringify(after)); noTags['settings/church'].careOnPeople = false;
+  s = await session('tim.jacobs@example.com', noTags); await s.go('people/p/p18'); t = await s.text();
+  check(t.includes('David') && !t.includes('Care group member · Hilton'), 'Basic access, with “on their page in People” off: no care group tag on someone else’s page');
+  await s.go('care'); check((await s.text()).includes('All care groups'), '… but the Care groups page still lists all groups');
+  await finish(s);
+  // On by itself (no Care groups page): the tags show, and the directory entries carry the groups
+  const tagsOnly = JSON.parse(JSON.stringify(after)); tagsOnly['settings/church'].seeCare = []; tagsOnly['settings/church'].careOnPeople = true;
+  s = await session('linda.pillay@example.com', tagsOnly); await s.page.waitForTimeout(2500); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]), '“on their page in People” alone: directory entries still carry each person’s care group');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', docs); await s.go('people/p/p18'); t = await s.text();
+  check(t.includes('Care group member · Hilton') && !(await s.page.$('nav a[href="#/care"]')) === !(docs['settings/church'].seeCare || []).length, '… and Basic access sees the tags in People');
   await finish(s);
   // The setting was saved but the directory entries never got their groups (e.g. saved before the rules allowed it):
   // the next time a Pastor (Minister) or Administrator opens Church Hub, the entries are brought up to date
@@ -248,7 +263,7 @@ module.exports = async function (ctx) {
   check(cm.length === 1 && cm[0].given === true && cm[0].method === 'Agreed on becoming a Church Partner' && !!docs['directory/p17'], 'made a Church Partner: Contact details recorded as agreed, and they are in the church directory');
   await s.go('people/p/p17'); check((await s.text()).includes('Agreed on becoming a Church Partner'), '… shown under their consent');
   await s.go('settings/access'); t = await s.page.textContent('#see-others');
-  check(/\d+ Church Partners? ha(s|ve) no Contact details answer recorded/.test(t), 'Settings: Church Partners never asked about Contact details are counted');
+  check(/\d+ Church Partners? ha(s|ve) no Church directory answer recorded/.test(t), 'Settings: Church Partners never asked about the church directory are counted');
   await s.page.click('[data-act="settings:partnersagree"]'); await s.page.click('[data-act="settings:partnersagree"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.personId === 'p20' && d.purpose === 'Church directory' && d.given) && !!docs['directory/p20'] && !(await s.page.$('[data-act="settings:partnersagree"]')), '“Record that they agreed” records it for them');
   await finish(s);

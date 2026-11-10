@@ -315,43 +315,50 @@
       });
     });
   }
-  var CARE_SEE = ['rosters', 'kids'];   // may be allowed to see the care groups (firestore.rules: seesCare)
   function renderAccess(st, byRole) {
-    var P = window.PeopleParts, see = st.seeOthers || {};
-    return '<section class="panel" id="see-others"><h2>' + T('Who can see what') + '</h2>' +
-      (P ? '<p class="hint" style="margin-top:0">' + T('Everyone sees the names of people who agreed to share their contact details. Tick what else each role may see. Administrators and Pastors always see everything.') + '</p>' : '') +
-      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th><th>' + T('Can') + '</th><th>' + T('People') + '</th></tr></thead><tbody>' +
-      ACCESS.map(function (r) {
-        var choose = P && P.TIERS.some(function (t) { return t[0] === r[0]; }), opts = '';
-        if (P && r[0] !== 'none') opts = '<div class="see-opts"><span class="muted small">' + T('Others’ contact details') + ':</span>' + (choose ? P.SHARE.map(function (f) {
-          var on = (see[r[0]] || []).indexOf(f[0]) >= 0;
-          return '<label><input type="checkbox" class="st-see" data-t="' + r[0] + '" value="' + f[0] + '"' + (on ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T(f[1])) + '">' + esc(T(f[1])) + '</label>';
-        }).join('') : '<span class="small">' + T('All, always') + '</span>') + '</div>';
-        // Care groups (settings.seeCare): who is in which group – Roster coordinators and Children's ministry when ticked
-        // Each box: what it covers first ("Their own group" / "All groups"), the detail in grey
-        var careBox = function (cls, val, on, main, more) {
-          return '<label class="see-care"><input type="checkbox" class="' + cls + '"' + (val ? ' value="' + val + '"' : '') + (on ? ' checked' : '') + ' aria-label="' + esc(H.roleLabel(r[0]) + ': ' + T(main) + ' ' + T(more)) + '">' +
-            '<span>' + esc(T(main)) + ' <span class="muted">' + esc(T(more)) + '</span></span></label>';
-        };
-        if (P && CARE_SEE.indexOf(r[0]) >= 0) opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><div class="see-col">' +
-          careBox('st-care', r[0], (st.seeCare || []).indexOf(r[0]) >= 0, TX('All groups: see who is in each group'), TX('(names only, on a Care groups page)')) + '</div></div>';
-        else if (P && r[0] === 'member') opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><div class="see-col">' +
-          careBox('st-careown', '', st.seeCareOwn !== false, TX('Their own group: see all its members'), TX('(not just the carers)')) +
-          careBox('st-care', 'member', (st.seeCare || []).indexOf('member') >= 0, TX('All groups: see who is in each group'), TX('(names only, on a Care groups page)')) + '</div></div>';
-        else if (P && (r[0] === 'admin' || r[0] === 'pastor')) opts += '<div class="see-opts"><span class="muted small">' + T('Care groups') + ':</span><span class="small">' + T('All, always') + '</span></div>';
-        return '<tr><td><b>' + esc(H.roleLabel(r[0])) + '</b></td><td>' + esc(T(r[1])) + opts + '</td><td>' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>';
-      }).join('') + '</tbody></table></div>' +
-      (function (n) {   // Church Partners never asked about Contact details: they agreed when they became Church Partners
-        return P && n && H.can('*') ? '<p class="hint">' + TN('{n} Church Partner has no Contact details answer recorded. If they agreed when they became a Church Partner, record it here.', '{n} Church Partners have no Contact details answer recorded. If they agreed when they became Church Partners, record it here.', n) +
+    var P = window.PeopleParts, see = st.seeOthers || {}, care = st.seeCare || [];
+    var roleHead = function (r) { return '<th scope="col" class="c">' + esc(H.roleLabel(r)) + '</th>'; };
+    var always = '<p class="hint" style="margin:6px 0 0">' + T('Administrators and Pastors always see everything.') + '</p>';
+    var box = function (cls, val, on, label) { return '<td class="c"><input type="checkbox" class="' + cls + '"' + (val ? ' value="' + val + '"' : '') + (on ? ' checked' : '') + ' aria-label="' + esc(label) + '"></td>'; };
+    var none = '<td class="c muted">–</td>';
+    // 1. What each kind of access can do, and who has it
+    var html = '<section class="panel" id="access-kinds"><h2>' + T('What each kind of access can do') + '</h2>' +
+      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th><th>' + T('Can') + '</th><th class="c">' + T('People') + '</th></tr></thead><tbody>' +
+      ACCESS.map(function (r) { return '<tr><td><b>' + esc(H.roleLabel(r[0])) + '</b></td><td>' + esc(T(r[1])) + '</td><td class="c">' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>'; }).join('') +
+      '</tbody></table></div><p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p></section>';
+    if (!P) return html;
+    // 2. Contact details of people in the church directory
+    html += '<div data-autoscope>' +   // both panels below save together, by themselves
+      '<section class="panel" id="see-others"><h2>' + T('Other people’s contact details') + ' ' + H.tip(T('Only people who agreed to “Church directory” are shown to others. People with Basic access see contact details as pictures: they can read them, but can’t tap or copy them.')) + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('Everyone who signs in sees the name and photo of people in the church directory. Tick which of their contact details each kind of access may also see.') + '</p>' +
+      '<div class="table-wrap"><table class="simple see-grid"><thead><tr><th>' + T('Contact detail') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
+      P.SHARE.map(function (f) {
+        return '<tr><td>' + esc(T(f[1])) + (f[0] === 'spouse' ? ' ' + H.tip(T('The name of their husband, wife or partner, when both are in Church Hub.')) : '') + '</td>' + P.TIERS.map(function (t) {
+          return box('st-see" data-t="' + t[0], f[0], (see[t[0]] || []).indexOf(f[0]) >= 0, H.roleLabel(t[0]) + ': ' + T(f[1]));
+        }).join('') + '</tr>';
+      }).join('') + '</tbody></table></div>' + always +
+      (function (n) {   // Church Partners never asked about the church directory: they agreed when they became Church Partners
+        return n && H.can('*') ? '<p class="hint">' + TN('{n} Church Partner has no Church directory answer recorded. If they agreed when they became a Church Partner, record it here.', '{n} Church Partners have no Church directory answer recorded. If they agreed when they became Church Partners, record it here.', n) +
           ' <button class="btn small" data-act="settings:partnersagree">' + T('Record that they agreed') + '</button></p>' : '';
-      })(P && P.partnersUnrecorded ? P.partnersUnrecorded().length : 0) +
+      })(P.partnersUnrecorded ? P.partnersUnrecorded().length : 0) + '</section>';
+    // 3. Care groups
+    var row = function (label, tip, cells) { return '<tr><td>' + esc(label) + ' ' + H.tip(tip) + '</td>' + cells + '</tr>'; };
+    html += '<section class="panel" id="see-care"><h2>' + T('Care groups') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('What each kind of access sees of the care groups. Carers always see everyone in their own group.') + '</p>' +
+      '<div class="table-wrap"><table class="simple see-grid"><thead><tr><th>' + T('They may') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
+      row(T('See all care groups and who is in each'), T('Names only, on the Care groups page. Church Partners see only people who are in the church directory.'),
+        P.TIERS.map(function (t) { return box('st-care', t[0], care.indexOf(t[0]) >= 0, H.roleLabel(t[0]) + ': ' + T('See all care groups and who is in each')); }).join('')) +
+      row(T('See which care group someone is in, on their page in People'), T('A “Care group member” or “Carer” tag with the group’s name, on the person’s page and in the directory.'),
+        box('st-careppl', '', S.careOnPeople(), H.roleLabel('member') + ': ' + T('See which care group someone is in, on their page in People')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">' + T('when they may see all care groups') + '</td>') +
+      row(T('See everyone in their own care group, not just the carers'), T('Members of a care group see each other’s cards (photo, phone, email, address, birthday) if each one agreed to “Care group”.'),
+        box('st-careown', '', st.seeCareOwn !== false, H.roleLabel('member') + ': ' + T('See everyone in their own care group, not just the carers')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">–</td>') +
+      '</tbody></table></div>' + always +
       (function (n) {   // "All groups" for Church Partners shows only people in the church directory: say how many are left out
         return n ? '<p class="hint care-hidden">' + TN('{n} person in a care group isn’t in the church directory, so Church Partners don’t see them on the Care groups page.', '{n} people in care groups aren’t in the church directory, so Church Partners don’t see them on the Care groups page.', n) +
           ' <button class="btn small" data-act="settings:carehidden">' + T('Show them') + '</button></p>' : '';
-      })(P && (H.can('*') || H.can('settings.manage')) && (st.seeCare || []).indexOf('member') >= 0 ? careHidden().length : 0) +
-      (P ? '<p class="hint">' + T('People with Basic access see these as pictures: they can read them, but can’t tap or copy them. Care group leaders see more of their own group (Care groups).') + '</p>' : '') +
-      '<p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p>' +
-      (P ? '<button class="btn small" data-autosave data-act="settings:see">' + T('Save') + '</button>' : '') + '</section>';
+      })((H.can('*') || H.can('settings.manage')) && care.indexOf('member') >= 0 ? careHidden().length : 0) +
+      '<button class="btn small" data-autosave data-act="settings:see">' + T('Save') + '</button></section></div>';
+    return html;
   }
 
   /** People in a care group whom Church Partners don't see on the Care groups page (it lists only the church directory),
@@ -593,7 +600,7 @@
       /** Who is in a care group but not in the church directory, by reason, with a link to each. */
       carehidden: function () {
         var all = careHidden();
-        var groups = [['notAsked', TX('Contact details not asked yet'), TX('“Record that they agreed” records it for Church Partners; for anyone else, record their answer on their profile (Consent).')],
+        var groups = [['notAsked', TX('Church directory not asked yet'), TX('“Record that they agreed” records it for Church Partners; for anyone else, record their answer on their profile (Consent).')],
           ['saidNo', TX('Said no to sharing their contact details'), TX('They stay hidden unless they change their mind (their profile → Consent).')],
           ['inactive', TX('No longer active'), TX('Take them out of their care group, or mark them active again.')],
           ['child', TX('Children'), TX('Children are never shown to other members.')]];
@@ -616,8 +623,9 @@
         var say = window.PeopleParts.TIERS.map(function (t) { return t[0] + ': ' + (see[t[0]].length ? see[t[0]].join(', ') : 'name only'); }).join('; ');
         var care = [].slice.call(document.querySelectorAll('.st-care:checked')).map(function (b) { return b.value; });
         var ownBox = document.querySelector('.st-careown'), own = ownBox ? ownBox.checked : (S.settings() || {}).seeCareOwn !== false;
-        S.setSettings({ seeOthers: see, seeCare: care, seeCareOwn: own }, 'Who can see what (contact details): ' + say + '. Care groups: ' + (care.join(', ') || 'Administrators and Pastors only') +
-          '; members see ' + (own ? 'everyone in their own group' : 'only the carers of their own group'));
+        var pplBox = document.querySelector('.st-careppl'), ppl = pplBox ? pplBox.checked : S.careOnPeople();
+        S.setSettings({ seeOthers: see, seeCare: care, seeCareOwn: own, careOnPeople: ppl }, 'Who can see what (contact details): ' + say + '. Care groups: ' + (care.join(', ') || 'Administrators and Pastors only') +
+          '; members see ' + (own ? 'everyone in their own group' : 'only the carers of their own group') + '; members ' + (ppl ? 'see' : 'don’t see') + ' a person’s care group on their page');
         S.resyncDirectory();   // everyone's shared contact details, as now allowed
         H.render(); H.toast(T('Saved'));
       },

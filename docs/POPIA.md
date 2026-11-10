@@ -148,8 +148,9 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   which stay with the group the person agreed to share with (database rules, tested).
 - Church Partners: by default they see everyone in their own group (name always; the card only with consent). An Administrator
   can switch that off, so they see only their group's carers (enforced by the database rules for the cards). An Administrator can
-  also let them see which group each person **in the church directory** is in (names only, on the directory entry): people
-  in the directory agreed to share their details with members (consent "Church directory", shown as Contact details). The
+  also let them see which group each person **in the church directory** is in (names only, on the directory entry) – as a list of
+  all groups on the Care groups page, and/or as a tag on each person's page in People (`settings.careOnPeople`, a separate tick);
+  people in the directory agreed to share their details with members (consent "Church directory"). The
   church's policy is that becoming a Church Partner includes this agreement: when someone is made a Church Partner (Edit details
   or Change selected…) Church Hub records it ("Agreed on becoming a Church Partner"), and Settings → Who can see what offers to
   record it for existing Church Partners who were never asked in Church Hub (anyone who said no is left alone). People can

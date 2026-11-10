@@ -66,6 +66,13 @@ Also asked: Church Partners without a group. Suggest groups by area.
 On **Care groups**, **Church Partners not in a care group** lists them. **Suggest groups by where people live** suggests
 the nearest groups (★ marks the closest). Tick people, check their group, then **Put the ticked people in their groups**.
 
+## Can members see which care group someone is in?
+For: Administrators (and the Rector, if allowed to change Settings)
+Also asked: Show care group on the person's page. Hide care groups from members.
+
+Yes, if you choose so: **Settings → Who can see what → Care groups → See which care group someone is in, on their page in
+People** (Basic access). It's separate from letting them see the list of all groups on the Care groups page.
+
 ## Who can see the care groups?
 For: Administrators
 Also asked: Can roster coordinators see care groups? Can members see other groups?

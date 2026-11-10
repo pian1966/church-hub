@@ -11,7 +11,7 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(docs['settings/church'].modules.life === true && !!(await s.page.$('nav a[href="#/life"]')), 'switched on under Settings → Apps: the Life groups page appears');
   await s.go('settings/terminology'); t = await s.page.textContent('main');
-  check(t.includes('Midweek group') && t.includes('A Bible study, life group or Connect Group (as named by the group leader)'), 'Church Words: “Midweek group” – a Bible study, life group or Connect Group (as named by the group leader)');
+  check(t.includes('Midweek group') && t.includes('A Bible Study, Life Group or Connect Group (etc) that meets during the week for teaching and fellowship'), 'Church Words: “Midweek group” – a Bible Study, Life Group or Connect Group (etc) that meets during the week');
   await s.go('life'); await s.page.fill('#lg-new', 'Tuesday Bible study'); await s.page.click('[data-act="life:addgroup"]'); await s.settle();
   docs = await s.docsNow();
   const key = Object.keys(docs).find(k => /^careGroups\/[^/]+$/.test(k) && docs[k].name === 'Tuesday Bible study'), gid = key ? key.split('/')[1] : '';

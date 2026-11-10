@@ -789,7 +789,7 @@ I18n.add('am', {
     "People in your midweek group see your details only if you are in the church directory (under Consent).": "በሕይወት ቡድንዎ ያሉ ሰዎች ዝርዝሮችዎን የሚያዩት በቤተ ክርስቲያን ማውጫ ውስጥ ካሉ ብቻ ነው (በፈቃድ ስር)።",
     "Bible studies, life groups, Connect Groups and other midweek groups. A person can be in more than one. Members see each other’s photo, phone, email, address and birthday if they are in the church directory. Group leaders can name their group and add and remove members.": "የመጽሐፍ ቅዱስ ጥናቶች፣ የሕይወት ቡድኖች እና የሳምንቱ አጋማሽ ስብሰባዎች። አንድ ሰው ከአንድ በላይ ውስጥ ሊሆን ይችላል። አባላት በቤተ ክርስቲያን ማውጫ ውስጥ ካሉ የአንዳቸው የሌላውን ፎቶ፣ ስልክ፣ ኢሜይል፣ አድራሻ እና የልደት ቀን ያያሉ። የቡድን መሪዎች ቡድናቸውን መሰየም እና አባላትን መጨመርና ማስወጣት ይችላሉ።",
     "Bible studies, life groups, Connect Groups – their leaders name them": "የመጽሐፍ ቅዱስ ጥናቶች፣ የሕይወት ቡድኖች እና የሳምንቱ አጋማሽ ቡድኖች – መሪዎቻቸው ይሰይሟቸዋል",
-    "A Bible study, life group or Connect Group (as named by the group leader)": "የመጽሐፍ ቅዱስ ጥናት፣ የሕይወት ቡድን ወይም Connect Group (በቡድኑ መሪ እንደተሰየመ)",
+    "A Bible Study, Life Group or Connect Group (etc) that meets during the week for teaching and fellowship": "የመጽሐፍ ቅዱስ ጥናት፣ የሕይወት ቡድን ወይም Connect Group (ወዘተ) በሳምንቱ መካከል ለትምህርትና ለኅብረት የሚሰበሰብ",
     "Someone who leads a midweek group": "የሕይወት ቡድንን የሚመራ ሰው",
     "{n} person in a care group isn’t in the church directory, so Church Partners don’t see them on the Care groups page.": "በእንክብካቤ ቡድን ውስጥ ያለ {n} ሰው በቤተ ክርስቲያኑ ማውጫ ውስጥ የለም፤ ስለዚህ የቤተ ክርስቲያን አጋሮች በእንክብካቤ ቡድኖች ገጽ ላይ አያዩትም።",
     "{n} people in care groups aren’t in the church directory, so Church Partners don’t see them on the Care groups page.": "በእንክብካቤ ቡድኖች ውስጥ ያሉ {n} ሰዎች በቤተ ክርስቲያኑ ማውጫ ውስጥ የሉም፤ ስለዚህ የቤተ ክርስቲያን አጋሮች በእንክብካቤ ቡድኖች ገጽ ላይ አያዩዋቸውም።",

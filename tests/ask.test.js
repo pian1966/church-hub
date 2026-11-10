@@ -3,7 +3,7 @@
 const A = require('../js/ask.js');
 let fails = 0;
 function ok(c, what) { if (!c) { fails++; console.log('  ✗ ' + what); } else console.log('  ✓ ' + what); }
-const keys = 'spouse careGroup midweekGroup name firstName lastName category gender birthday birthDate age idNumber volunteer address email mobile adultChild staff marital positions teams serviceTimes town household directory status added awaySoon wedding';
+const keys = 'spouse spouseCategory spouseGender spouseAge careGroup midweekGroup name firstName lastName category gender birthday birthDate age idNumber volunteer address email mobile adultChild staff marital positions teams serviceTimes town household directory status added awaySoon wedding';
 const ALL = {}; keys.split(' ').forEach(k => { ALL[k] = true; });
 const SLOTS = [{ id: '08:00', label: '8am', time: '08:00' }, { id: '10:00', label: '10am', time: '10:00' }, { id: '17:00', label: '5pm', time: '17:00' }, { id: 'memorial', label: 'Memorial', time: '' }];
 const ctx = (more) => Object.assign({ today: '2026-11-09', fields: ALL, services: true, words: { partner: ['Church Partner', 'Church Partners'], attender: ['Attender', 'Attenders'] },
@@ -79,6 +79,15 @@ r = f('members of the tuesday bible study');
 ok(fl(r) === 'midweekGroup inc Tuesday Bible study', 'members of the Tuesday Bible study: ' + fl(r));
 r = f('people without a care group', { fields: { name: true } });
 ok(!r.filters.length && r.refused.join() === 'careGroup', 'care groups refused for a role that can’t see them');
+
+r = f('all men who are church partners whose wives are not church partners');
+ok(fl(r) === 'gender eq Male | category eq Church Partner | spouse nempty | spouseCategory ne Church Partner' && !r.unknown.length, 'men who are Church Partners whose wives are not: ' + fl(r) + ' / left: ' + r.unknown.join());
+r = f('people married to an attender');
+ok(fl(r) === 'spouseCategory eq Attender', 'married to an Attender: ' + fl(r));
+r = f('women whose husbands are over 70');
+ok(fl(r) === 'gender eq Female | spouseAge gt 70', 'women whose husbands are over 70: ' + fl(r));
+r = f('Parishioners whose spouse is not a Parishioner', { words: { partner: ['Parishioner', 'Parishioners'] } });
+ok(fl(r) === 'category eq Church Partner | spouse nempty | spouseCategory ne Church Partner', 'the church’s own word for the spouse too: ' + fl(r));
 
 console.log('Services');
 r = f('Show me all 10am services between 12 November and 2 Feb that do not have all necessary volunteer positions filled');

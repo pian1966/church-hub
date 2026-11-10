@@ -91,6 +91,17 @@ var Ask = (function () {
   var THING_LABEL = { idNumber: 'ID number', email: 'Email', mobile: 'Mobile', address: 'Home address', household: 'Household', birthDate: 'Date of birth', gender: 'Gender', middleName: 'Middle name', postcode: 'Postcode', town: 'Town or city' };
   var NOT = '(not |non[- ]?|aren\'t |are not |isn\'t |is not |who are not |who aren\'t |that are not |excluding |except |but not |no )?';
 
+  /** The categories and the words people use for them, the church's own words first: [[category, [regex parts]]]. */
+  function catWords(ctx) {
+    var cats = [['Former member', ['former members?', 'ex-?members?', 'past members?']], ['Visiting Minister', ['visiting ministers?', 'guest speakers?', 'visiting preachers?']],
+      ['Church Partner', ['official (?:church )?partners?', 'church partners?', 'partners?', 'members?', 'official members?']], ['Attender', ['attenders?', 'regular attenders?', 'regulars?', 'visitors?']]];
+    var W = ctx.words || {}, own = { 'Church Partner': W.partner, Attender: W.attender, 'Visiting Minister': W.visiting };
+    return cats.map(function (c) {
+      var o = own[c[0]], list = c[1].slice();
+      if (o) o.forEach(function (x) { if (x) list.unshift(rx(x.toLowerCase())); });
+      return [c[0], list];
+    });
+  }
   function people(R, ctx, out) {
     var F = ctx.fields || {}, add = function (field, op, value, off, extra) {
       if (!F[field]) { if (out.refused.indexOf(field) < 0) out.refused.push(field); return; }
@@ -104,6 +115,17 @@ var Ask = (function () {
       function (a, off) { add('spouse', 'starts', a[1], off); });
     R.take(new RegExp('\\b(?:(?:whose|with a|with|who have a|that have a)\\s+' + MATE + '(?:\\s+is)?\\s+(?:called|named)|married to|(?:whose|with a)\\s+' + MATE + '\\s+is)\\s+([a-z\'\\-]+(?:\\s+[a-z\'\\-]+)?)\\b', 'g'),
       function (a, off) { if (/^(a|an|the|not|in|over|under)$/.test(a[1].split(' ')[0])) return false; add('spouse', 'has', a[1].replace(/\s+(who|that|and|with|in|on)$/, ''), off); });
+    // What their spouse or partner is: "whose wives are not Church Partners", "married to an Attender", "whose husbands are over 60"
+    var MATE_IS = '\\b(?:(?:whose|with|with a|who have a|that have a)\\s+' + MATE + '(?:\\s+(?:who|that))?\\s+(?:is|are)|married to)\\s+';
+    catWords(ctx).forEach(function (c) {
+      R.take(new RegExp(MATE_IS + '(not\\s+|also\\s+not\\s+|also\\s+)?(?:an?\\s+|a\\s+fellow\\s+)?(?:' + c[1].join('|') + ')\\b', 'g'), function (a, off) {
+        var not = !!(a[1] && /not/.test(a[1]));
+        if (not) add('spouse', 'nempty', '', off);   // "wives are not Church Partners": only people who have a wife
+        add('spouseCategory', not ? 'ne' : 'eq', c[0], off + 1);
+      });
+    });
+    R.take(new RegExp(MATE_IS + '(over|older than|above|under|younger than|below)\\s+(\\d{1,3})\\b', 'g'), function (a, off) { add('spouseAge', /over|older|above/.test(a[1]) ? 'gt' : 'lt', a[2], off); });
+    R.take(new RegExp(MATE_IS + '(?:an?\\s+)?(men|man|males?|women|woman|females?)\\b', 'g'), function (a, off) { add('spouseGender', 'eq', /^(men|man|male)/.test(a[1]) ? 'Male' : 'Female', off); });
     // Care groups and midweek groups: "who don't belong to a care group", "in a Bible study", "in the Hilton care group"
     [['careGroup', '(?:care\\s*groups?)', ctx.careGroups], ['midweekGroup', '(?:midweek\\s+groups?|bible\\s+stud(?:y|ies)(?:\\s+groups?)?|life\\s*groups?|connect\\s+groups?|small\\s+groups?|home\\s+groups?|cell\\s+groups?)', ctx.midweekGroups]].forEach(function (x) {
       var f = x[0], w = x[1];
@@ -182,12 +204,8 @@ var Ask = (function () {
       R.take(new RegExp('\\b(?:who\\s+)?(?:live|lives|living|staying|stay|from|based)\\s+(?:in\\s+)?' + rx(t.toLowerCase()) + '\\b', 'g'), function (a, off) { add('town', 'has', t, off); });
     });
     // Category, with the church's own words ("Parishioners") and the usual ones ("official partners", "members")
-    var cats = [['Former member', ['former members?', 'ex-?members?', 'past members?']], ['Visiting Minister', ['visiting ministers?', 'guest speakers?', 'visiting preachers?']],
-      ['Church Partner', ['official (?:church )?partners?', 'church partners?', 'partners?', 'members?', 'official members?']], ['Attender', ['attenders?', 'regular attenders?', 'regulars?', 'visitors?']]];
-    var W = ctx.words || {}, own = { 'Church Partner': W.partner, Attender: W.attender, 'Visiting Minister': W.visiting };
-    cats.forEach(function (c) {
-      var o = own[c[0]], list = c[1].slice();
-      if (o) o.forEach(function (x) { if (x) list.unshift(rx(x.toLowerCase())); });
+    catWords(ctx).forEach(function (c) {
+      var list = c[1];
       R.take(new RegExp('\\b' + NOT + '(?:' + list.join('|') + ')\\b', 'g'), function (a, off) { add('category', a[1] ? 'ne' : 'eq', c[0], off); });
     });
     // Gender, and adults or children

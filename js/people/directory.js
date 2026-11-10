@@ -158,12 +158,27 @@
     var dial = window.Countries ? String(window.Countries.church(S.settings()).dial || '') : '';
     return intl && dial && d.indexOf(dial) === 0 ? '0' + d.slice(dial.length) : d;
   }
+  /** Administrators and the Senior Pastor (Rector) can tick people on the list – across several searches – for name badges,
+   * an invitation to apply, or (Administrators) one change for all of them. */
+  function canPick() { var me = H.user() && S.get('people', H.user().id); return H.can('*') || (H.can('people.edit') && H.isSenior(me)); }
+  function pickBar(shown) {
+    var sel = state.pick, n = Object.keys(sel).length, allOn = shown.length && shown.every(function (p) { return sel[p.id]; });
+    return '<div class="pick-bar" id="pp-pickbar" role="region" aria-label="' + esc(T('Selected people')) + '"><span class="pick-n" id="pp-pickn">' + TN('{n} person selected', '{n} people selected', n) + '</span>' +
+      '<div class="btns">' + (shown.length ? '<button class="btn small" data-act="people:pickall">' + (allOn ? T('Untick the {n} shown', { n: shown.length }) : T('Tick the {n} shown', { n: shown.length })) + '</button>' : '') +
+      '<button class="btn small" data-act="people:pickclear"' + (n ? '' : ' disabled') + '>' + T('Clear') + '</button>' +
+      '<button class="btn small pick-do" data-act="people:pickbadges"' + (n ? '' : ' disabled') + '>' + T('Name badges') + '</button>' +
+      (P.invite && window.QR ? '<button class="btn small pick-do" data-act="people:pickinvite"' + (n ? '' : ' disabled') + '>' + T('Invite to apply') + '</button>' : '') +
+      (P.canBulk && P.canBulk() ? '<button class="btn small pick-do" data-act="people:pickchange"' + (n ? '' : ' disabled') + '>' + T('Change selected…') + '</button>' : '') +
+      '<button class="btn small primary" data-act="people:pickdone">' + T('Done') + '</button></div>' +
+      '<p class="hint" style="margin:6px 0 0;flex-basis:100%">' + T('Tap people to tick them. Ticks stay while you search for someone else.') + '</p></div>';
+  }
   function renderList() {
     var filters = [['all', 'Everyone'], ['Church Partner', 'Church Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
     if (canSeeAll()) filters.push(['deceased', 'Deceased']);   // people who have died are kept for the records, out of the other lists
     if (!canBasic()) filters = [['all', T('Directory')]];
     if (!filters.some(function (f) { return f[0] === state.f; })) state.f = 'all';
-    var dead = state.f === 'deceased', q = state.q.trim().toLowerCase();
+    if (state.pick && !canPick()) state.pick = null;
+    var dead = state.f === 'deceased', q = state.q.trim().toLowerCase(), pick = state.pick;
     var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto && !p.binnedAt; }) : visiblePeople();
     var shown = list.filter(function (p) {
       if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
@@ -176,22 +191,55 @@
         (canBasic() ? '<a class="adv-link" href="#/people/search">' + T('Advanced search') + '</a>' : '') + '</div>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="' + T('Show') + '">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + T(f[1]) + '</button>'; }).join('') + '</div>' : '') + '</div>' +
       '<div class="row pp-sortrow"><p class="muted small" id="pp-count">' + TN('{n} person', '{n} people', shown.length) + '</p>' +
-        sortSwitch() + '</div>' +
-      (shown.length ? '<div class="list">' + shown.map(function (p) {
+        (canPick() && !pick && !dead ? '<button class="btn small" data-act="people:pickstart">' + T('Select people') + '</button>' : '') + sortSwitch() + '</div>' +
+      (pick ? (P.bulkUndoNote ? P.bulkUndoNote() : '') + pickBar(shown) : '') +
+      (shown.length ? '<div class="list' + (pick ? ' picking' : '') + '" id="pp-list">' + shown.map(function (p) {
         var fam = familyOf(p), tags = '';
         if (p.familyRole === 'child') tags += '<span class="tag" style="--c:#0E7490">' + T('Child') + (age(p) !== '' ? ', ' + age(p) : '') + '</span>';
         else if (dead) tags += '<span class="tag grey">' + esc(p.deceasedAt ? T('Died {date}', { date: H.fmt(p.deceasedAt, true) }) : T('Deceased')) + '</span>';
         else tags += catTags(p);
         if (canSeeAll() && !hasConsent(p.id, 'Church records')) tags += ' <span class="tag bad">' + T('No consent') + '</span>';
-        return '<a class="item pp-row" href="#/people/p/' + p.id + '">' + H.avatar(p) + '<span class="grow"><b>' + listName(p) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', (P.seeTier() !== 'member' || isMe(p)) && P.mayShare(p, 'mobile') ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + (tags ? '<span class="pp-tags">' + tags + '</span>' : '') + '</a>';
+        var inner = H.avatar(p) + '<span class="grow"><b>' + listName(p) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', (P.seeTier() !== 'member' || isMe(p)) && P.mayShare(p, 'mobile') ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + (tags ? '<span class="pp-tags">' + tags + '</span>' : '');
+        if (pick) return '<label class="item pp-row pick' + (pick[p.id] ? ' on' : '') + '"><input type="checkbox" class="pp-sel" value="' + p.id + '"' + (pick[p.id] ? ' checked' : '') + ' aria-label="' + esc(T('Tick {name}', { name: H.name(p) })) + '">' + inner + '</label>';
+        return '<a class="item pp-row" href="#/people/p/' + p.id + '">' + inner + '</a>';
       }).join('') + '</div>' : '<p class="empty">' + T('No one matches. Try another name, or clear the search.') + '</p>');
   }
 
 
   Object.assign(P.actions, {
     filter: function (el) { state.f = el.dataset.f; H.render(); },
+    pickstart: function () { if (canPick()) { state.pick = {}; H.render(); } },
+    pickdone: function () { state.pick = null; H.render(); },
+    pickclear: function () { if (state.pick) { state.pick = {}; H.render(); } },
+    pickall: function () {
+      var sel = state.pick; if (!sel) return;
+      var boxes = [].slice.call(document.querySelectorAll('.pp-sel')), on = !boxes.every(function (b) { return b.checked; });
+      boxes.forEach(function (b) { if (on) sel[b.value] = 1; else delete sel[b.value]; });
+      H.render();
+    },
+    pickbadges: function () {
+      var list = picked(); if (!list.length) return;
+      list.sort(SORTS.first.cmp);
+      S.audit('Printed name badges from the People list: ' + list.length, 'people');
+      P.printOnly(P.badgeSheets(list), 'badges');
+    },
+    pickinvite: function () { var list = picked(); if (list.length && P.invite) P.invite(list.map(function (p) { return p.id; })); },
+    pickchange: function () { var list = picked(); if (list.length && P.canBulk && P.canBulk()) P.bulkDialog(list.map(function (p) { return p.id; })); },
     sort: function (el) { state.sort = el.dataset.k; Store.pref('peopleSort', state.sort); if (state.adv) { state.adv.sort = 'name'; state.adv.dir = 1; } H.render(); }
   });
 
-  Object.assign(P, { AGE_BANDS: AGE_BANDS, bars: bars, listName: listName, matchesPerson: matchesPerson, pct: pct, renderList: renderList, renderStats: renderStats, sortKey: sortKey, sortSwitch: sortSwitch, tidyDeathDates: tidyDeathDates, tidyIdNames: tidyIdNames });
+  /** The people ticked on the list (still at the church or not – whoever was ticked). */
+  function picked() { return Object.keys(state.pick || {}).map(function (id) { return S.get('people', id); }).filter(Boolean); }
+  /** A tick on the list: keep it, and update the count and buttons without redrawing (the search box keeps its place). */
+  function pickChanged(box) {
+    var sel = state.pick; if (!sel) return;
+    if (box.checked) sel[box.value] = 1; else delete sel[box.value];
+    box.closest('.pp-row').classList.toggle('on', box.checked);
+    var n = Object.keys(sel).length, c = document.getElementById('pp-pickn');
+    if (c) c.textContent = TN('{n} person selected', '{n} people selected', n);
+    document.querySelectorAll('#pp-pickbar .pick-do, [data-act="people:pickclear"]').forEach(function (b) { b.disabled = !n; });
+    var boxes = [].slice.call(document.querySelectorAll('.pp-sel')), all = document.querySelector('[data-act="people:pickall"]');
+    if (all) all.textContent = boxes.every(function (b) { return b.checked; }) ? T('Untick the {n} shown', { n: boxes.length }) : T('Tick the {n} shown', { n: boxes.length });
+  }
+  Object.assign(P, { pickChanged: pickChanged, canPick: canPick, AGE_BANDS: AGE_BANDS, bars: bars, listName: listName, matchesPerson: matchesPerson, pct: pct, renderList: renderList, renderStats: renderStats, sortKey: sortKey, sortSwitch: sortSwitch, tidyDeathDates: tidyDeathDates, tidyIdNames: tidyIdNames });
 })(PeopleParts);

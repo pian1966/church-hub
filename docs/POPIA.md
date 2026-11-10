@@ -105,7 +105,8 @@ The application is included in "export everything held about a person" and delet
 For a newcomer who asks for one: the date asked for and the date printed, on the person's details (Administrators and Pastors).
 Only their first name (or the name they're known by) and surname are printed. Purpose: welcoming people by name; basis: they asked.
 Badges printed from Advanced search are for people the church office chose (newcomers at a welcome event, a group): still only
-the names, printing is audit-logged, and the sheets should be destroyed once the badges are cut.
+the names, printing is audit-logged, and the sheets should be destroyed once the badges are cut. The same goes for badges
+for people ticked on the People list (Administrators and the Senior Pastor).
 
 ## Invitations to become a Church Partner
 Administrators and Pastors can email an invitation to apply. Kept: the date invited (`partnerInvited`, on the person's details –

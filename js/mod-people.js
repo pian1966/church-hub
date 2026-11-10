@@ -121,6 +121,8 @@
       if (fq) fq.addEventListener('input', H.pause(function () { var f0 = document.getElementById('fm-q'); if (!f0) return; state.fq = f0.value; var pos = f0.selectionStart; H.render(); var n = document.getElementById('fm-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));
       var st = document.getElementById('pp-stats');
       if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
+      var ppl = document.getElementById('pp-list');
+      if (ppl && state.pick) ppl.addEventListener('change', function (ev) { if (ev.target.classList.contains('pp-sel')) P.pickChanged(ev.target); });
       var res = document.getElementById('adv-result');
       if (res && state.adv) res.addEventListener('change', function (ev) {
         var t = ev.target, sel = state.adv.sel || (state.adv.sel = {});

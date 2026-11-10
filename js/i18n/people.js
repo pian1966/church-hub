@@ -2,6 +2,15 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Selected people", "Gekose mense", "Abantu abakhethiwe", "Abantu abakhethiweyo"],
+    ["{n} person selected", "{n} persoon gekies", "Umuntu o-{n} ukhethiwe", "Umntu o-{n} ukhethiwe"],
+    ["{n} people selected", "{n} mense gekies", "Abantu abangu-{n} bakhethiwe", "Abantu abangu-{n} bakhethiwe"],
+    ["Untick the {n} shown", "Ontmerk die {n} wat gewys word", "Susa umaka kwabangu-{n} ababoniswayo", "Susa uphawu kwaba-{n} ababonisiweyo"],
+    ["Tick the {n} shown", "Merk die {n} wat gewys word", "Maka abangu-{n} ababoniswayo", "Phawula aba-{n} ababonisiweyo"],
+    ["Clear", "Maak skoon", "Sula", "Cima"],
+    ["Invite to apply", "Nooi om aansoek te doen", "Mema ukuthi afake isicelo", "Mema ukuba afake isicelo"],
+    ["Tap people to tick them. Ticks stay while you search for someone else.", "Tik op mense om hulle te merk. Die merke bly terwyl jy na iemand anders soek.", "Thepha abantu ukuze ubamake. Omaka bahlala ngenkathi usesha omunye umuntu.", "Cofa abantu ukuze ubaphawule. Iimpawu zihlala ngoxa ukhangela omnye umntu."],
+    ["Select people", "Kies mense", "Khetha abantu", "Khetha abantu"],
     ["Thank you for being part of {church}. We would love to invite you to become a {partner}: you can vote at church meetings, and lead or teach in the church.", "Dankie dat jy deel is van {church}. Ons nooi jou graag uit om ’n {partner} te word: jy kan by kerkvergaderings stem, en in die kerk lei of onderrig.", "Siyabonga ngokuba yingxenye ye-{church}. Singathanda ukukumema ukuthi ube {partner}: ungavota emihlanganweni yebandla, futhi uhole noma ufundise ebandleni.", "Enkosi ngokuba yinxalenye ye-{church}. Singathanda ukukumema ukuba ube yi-{partner}: unokuvota kwiintlanganiso zecawa, ukhokele okanye ufundise ecaweni."],
     ["You can apply in Church Hub, on your phone or computer:", "Jy kan in Church Hub aansoek doen, op jou foon of rekenaar:", "Ungafaka isicelo kuChurch Hub, efonini noma ekhompyutheni yakho:", "Ungafaka isicelo kwiChurch Hub, kwifowuni okanye kwikhompyutha yakho:"],
     ["Sign in with your email address, answer a few questions and send it. A Pastor will be in touch.", "Meld aan met jou e-posadres, beantwoord ’n paar vrae en stuur dit. ’n Pastoor sal met jou in verbinding tree.", "Ngena nge-imeyili yakho, uphendule imibuzo embalwa bese uyithumela. UMfundisi uzoxhumana nawe.", "Ngena nge-imeyile yakho, uphendule imibuzo embalwa uze uyithumele. UMfundisi uya kuqhagamshelana nawe."],

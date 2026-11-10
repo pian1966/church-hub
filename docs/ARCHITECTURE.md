@@ -309,6 +309,10 @@ hidden where neither exists (e.g. Firefox). The words heard are only put in the 
   The link is the site address + `#/people/apply`; `app.js` remembers it through signing in (pref `afterSignIn`, for a day).
   The Partnership applications page has the QR code (`js/qr.js`, our own encoder – byte mode, level M, versions 1–10, checked
   against segno in `tests/qr.test.js`), Copy the link, an A4 poster and a paper form with the same questions.
+- **Ticking people on the People list** (Administrators and the Senior Pastor; `canPick()` in `js/people/directory.js`):
+  Select people turns the rows into tick boxes; the ticks (`state.pick`) stay through searches and filters until Done. The bar
+  offers Name badges, Invite to apply and (Administrators, as in Advanced search) Change selected…, which uses
+  `bulkDialog(ids)` – the audit log says whether a change came from the People list or Advanced search.
 
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,

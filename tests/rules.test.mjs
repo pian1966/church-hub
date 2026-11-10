@@ -246,7 +246,7 @@ await t('away dates: members add their own only', async () => {
 });
 await t('partnership applications: people apply themselves; Administrators and Pastors read and answer them', async () => {
   const app = { personId: 'p14', spouse: '', anniversary: '', children: '', since: '2025-11', faith: 'yes', story: 'Grew up in a Christian home', otherChurch: 'no', otherWhich: '',
-    classOk: 'yes', study: '', questions: '', serve: 'Tea after church', declaration: 'I declare…', directory: true, status: 'waiting', createdAt: 'x', updatedAt: 'x' };
+    classOk: 'yes', study: '', questions: '', serve: 'Tea after church', declaration: 'I declare…', loyalty: 'I declare my loyalty…', birthDate: '1981-01-01', directory: true, status: 'waiting', createdAt: 'x', updatedAt: 'x' };
   await can(db.member.doc('partnerApps/a14').set(app));
   await can(list(db.member.collection('partnerApps').where('personId', '==', 'p14')));
   await cannot(list(db.member.collection('partnerApps')));                                              // not anyone else's

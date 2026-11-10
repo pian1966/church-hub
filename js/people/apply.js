@@ -30,6 +30,18 @@
     return d.replace(/\{church\}/g, st.churchName || '');
   }
 
+  /** What the church asks people to read before applying (its constitution, the denomination's, statements of faith): [{label, url}]. */
+  function readLinks() {
+    return ((S.settings() || {}).partnerApp || {}).links ? S.settings().partnerApp.links.filter(function (l) { return l && /^https?:\/\/\S+$/i.test(l.url || ''); }) : [];
+  }
+  /** The declaration of loyalty to the denomination or affiliation, when the church asks for one ('' if not). */
+  function loyalty() {
+    var st = S.settings() || {}, d = ((st.partnerApp || {}).loyalty || '').trim();
+    return d.replace(/\{church\}/g, st.churchName || '');
+  }
+  /** The country whose ID numbers give a date of birth: the church's. */
+  function idCountry() { return window.Countries ? Countries.church(S.settings()).code : 'ZA'; }
+
   /* ---------- the person's own page: apply, and where it stands ---------- */
   function mine() { var u = H.user(); return u ? S.find('partnerApps', function (a) { return a.personId === u.id; })[0] || null : null; }
   function mayApply(p) { return p && p.familyRole !== 'child' && p.active !== false && p.category !== 'Church Partner' && p.category !== 'Deceased' && !P.deceased(p); }
@@ -60,7 +72,8 @@
     return back + '<div class="page-head"><div><h1>' + T('Apply to become a Church Partner') + '</h1><p class="lead">' + T('You’ve been coming to the church for a while. As a Church Partner you join in its life more closely: you can vote at church meetings, and lead or teach.') + '</p></div></div>' +
       '<form id="app-form" onsubmit="return false" data-noauto>' +
       '<section class="panel"><h2>' + T('About you') + '</h2>' + kv + '<p class="hint">' + T('From your details. If anything is wrong, change it under My details first.') + '</p>' +
-        '<label class="field req">' + T('ID number') + '<input id="ap-id" inputmode="numeric" autocomplete="off" maxlength="20"><small>' + T('You need to be 18 or older. Only Administrators can see it.') + '</small></label>' +
+        '<div class="two"><label class="field req">' + T('ID number') + '<input id="ap-id" inputmode="numeric" autocomplete="off" maxlength="20"><small>' + T('You need to be 18 or older. Only Administrators can see it.') + '</small></label>' +
+        (p.birthDate ? '' : '<label class="field req" id="ap-birth-f">' + T('Birthday') + '<input id="ap-birth" type="date" max="' + H.today() + '"><small id="ap-birth-n" aria-live="polite"></small></label>') + '</div>' +
         '<div class="two"><label class="field">' + T('Spouse’s name') + '<input id="ap-spouse" maxlength="80"></label><label class="field">' + T('Wedding anniversary') + '<input id="ap-wed" type="date" max="' + H.today() + '" value="' + esc(wed) + '"></label></div>' +
         '<label class="field">' + T('Children’s names') + '<input id="ap-kids" maxlength="300"></label>' +
         '<label class="field req">' + T('Coming to the church since') + '<input id="ap-since" type="month" max="' + H.today().slice(0, 7) + '"></label></section>' +
@@ -72,11 +85,25 @@
         '<label class="field">' + T('Do you go to a Bible study or midweek group? Which one?') + '<input id="ap-study" maxlength="200"></label>' +
         '<label class="field">' + T('Any questions about the church?') + '<textarea id="ap-q" rows="2" maxlength="1000"></textarea></label>' +
         '<label class="field">' + T('How would you like to serve in the church?') + '<textarea id="ap-serve" rows="2" maxlength="1000"></textarea></label></section>' +
+      (readLinks().length ? '<section class="panel" id="ap-read"><h2>' + T('Please read before you apply') + '</h2><ul class="ap-links">' + readLinks().map(function (l) {
+        return '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a></li>'; }).join('') + '</ul></section>' : '') +
       '<section class="panel"><h2>' + T('Declaration') + '</h2><blockquote class="decl" data-own-words>' + esc(declaration()) + '</blockquote>' +
         '<label class="check"><input type="checkbox" id="ap-decl"><span>' + T('I agree with the declaration above.') + '</span></label>' +
+        (loyalty() ? '<h3 class="ap-loy-h">' + T('Declaration of loyalty') + '</h3><blockquote class="decl" data-own-words>' + esc(loyalty()) + '</blockquote>' +
+          '<label class="check"><input type="checkbox" id="ap-loyal"><span>' + T('I make this declaration.') + '</span></label>' : '') +
         '<label class="check"><input type="checkbox" id="ap-dir"><span>' + T('I agree to be in the church directory, so other members can see my contact details.') + '</span></label>' +
         '<p id="ap-err" class="note bad" role="alert" hidden></p>' +
         '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="people:appsend">' + T('Send my application') + '</button><a class="btn" href="#/me">' + T('Cancel') + '</a></div></section></form>';
+  }
+
+  /** On the form: an ID number that carries a date of birth (South Africa) fills in the birthday. */
+  function formHook() {
+    var id = document.getElementById('ap-id'), b = document.getElementById('ap-birth'); if (!id || !b || !window.Countries) return;
+    id.addEventListener('input', function () {
+      var d = Countries.birthFromId(id.value, idCountry(), H.today()), n = document.getElementById('ap-birth-n');
+      if (d && (!b.value || b.dataset.fromId)) { b.value = d; b.dataset.fromId = '1'; if (n) n.textContent = T('Worked out from your ID number.'); }
+    });
+    b.addEventListener('input', function () { delete b.dataset.fromId; var n = document.getElementById('ap-birth-n'); if (n) n.textContent = ''; });
   }
 
   /* ---------- Administrators and Pastors: People → Partnership applications ---------- */
@@ -84,12 +111,12 @@
   function answers(a) {
     var yn = function (v) { return v === 'yes' ? T('Yes') : v === 'no' ? T('No') : '–'; }, row = function (l, v) { return '<dt>' + esc(l) + '</dt><dd>' + (v ? esc(v).replace(/\n/g, '<br>') : '–') + '</dd>'; };
     return '<dl class="kv app-kv">' + row(T('Spouse’s name'), a.spouse) + row(T('Wedding anniversary'), a.anniversary ? H.fmt(a.anniversary, true) : '') + row(T('Children’s names'), a.children) +
-      row(T('Coming to the church since'), a.since ? H.mon()[+a.since.slice(5, 7) - 1] + ' ' + a.since.slice(0, 4) : '') +
+      row(T('Coming to the church since'), a.since ? P.monthYear(a.since) : '') + row(T('Birthday'), a.birthDate ? H.fmt(a.birthDate, true) : '') +
       row(T('Have you put your trust in the Lord Jesus Christ for forgiveness and eternal life?'), yn(a.faith)) + row(T('How did you come to faith?'), a.story) +
       row(T('Are you a member of another church?'), yn(a.otherChurch)) + row(T('If so, which one – and should we contact them about moving your membership?'), a.otherWhich) +
       row(T('Would you come to a membership class?'), yn(a.classOk)) + row(T('Do you go to a Bible study or midweek group? Which one?'), a.study) +
       row(T('Any questions about the church?'), a.questions) + row(T('How would you like to serve in the church?'), a.serve) +
-      row(T('Declaration'), a.declaration) + row(T('I agree to be in the church directory, so other members can see my contact details.'), a.directory ? T('Yes') : T('No')) + '</dl>';
+      row(T('Declaration'), a.declaration) + (a.loyalty ? row(T('Declaration of loyalty'), a.loyalty) : '') + row(T('I agree to be in the church directory, so other members can see my contact details.'), a.directory ? T('Yes') : T('No')) + '</dl>';
   }
   function appCard(a, full) {
     var p = S.get('people', a.personId); if (!p) return '';
@@ -122,7 +149,21 @@
     return '<section class="panel" data-noauto><h2>' + T('Declaration on the form') + '</h2><p class="hint" style="margin-top:0">' + T('The words people agree to when they apply. {church} becomes your church’s name.') + '</p>' +
       '<div class="btns" style="margin-bottom:8px"><button class="btn small" data-act="people:appdecl" data-k="general">' + T('General wording') + '</button><button class="btn small" data-act="people:appdecl" data-k="reach">REACH South Africa</button></div>' +
       '<label class="field"><span class="sr">' + T('Declaration on the form') + '</span><textarea id="ap-decltext" rows="6" data-own-words>' + esc(d) + '</textarea></label>' +
-      '<button class="btn small save" data-act="people:appdeclsave">' + T('Save') + '</button></section>';
+      '<button class="btn small save" data-act="people:appdeclsave">' + T('Save') + '</button></section>' + docsPanel();
+  }
+  /** Administrators: the documents people should read (links), and a declaration of loyalty if the denomination asks for one. Admin-only words. */
+  function docsPanel() {
+    var pa = (S.settings() || {}).partnerApp || {}, links = (pa.links || []).slice(), eg = ['Constitution of ' + ((S.settings() || {}).churchName || 'the church'), 'Constitution of the denomination', 'Statement of faith'];
+    while (links.length < Math.max(3, (pa.links || []).length + 1) && links.length < 8) links.push({ label: '', url: '' });
+    return '<section class="panel" id="ap-docs" data-noauto><h2>Documents and loyalty</h2>' +
+      '<p class="hint" style="margin-top:0">Links shown on the form under “Please read before you apply”: your church’s constitution, the denomination’s or affiliation’s constitution, statements of faith. Put the documents online first (your website, or Google Drive shared with “Anyone with the link”) and paste the links here.</p>' +
+      links.map(function (l, i) {
+        return '<div class="two ap-doc"><label class="field">Name of the document<input class="ap-dl" data-i="' + i + '" maxlength="100" value="' + esc(l.label || '') + '" placeholder="' + esc(eg[i] || '') + '"></label>' +
+          '<label class="field">Link<input class="ap-du" data-i="' + i + '" type="url" maxlength="500" value="' + esc(l.url || '') + '" placeholder="https://…"></label></div>';
+      }).join('') +
+      '<label class="field">Declaration of loyalty (leave empty if not needed)<textarea id="ap-loytext" rows="4" maxlength="3000" data-own-words placeholder="e.g. I declare my loyalty to … and accept the authority of its Synod.">' + esc(pa.loyalty || '') + '</textarea>' +
+      '<small>If you fill this in, people tick “I make this declaration” on the form. {church} becomes your church’s name.</small></label>' +
+      '<p id="ap-docerr" class="note bad" role="alert" hidden></p><button class="btn small save" data-act="people:appdocssave">Save</button></section>';
   }
 
   /* ---------- printing: only the part asked for, on A4 (an application, or a sheet of name badges) ---------- */
@@ -230,6 +271,16 @@
     var s = p.badgeWanted && !p.badgePrinted ? '<span class="tag warn">' + T('Name badge waiting to be printed') + '</span>' : p.badgePrinted ? '<span class="muted small">' + T('Name badge printed on {date}', { date: esc(H.fmt(p.badgePrinted)) }) + '</span>' : '';
     return '<p class="badge-line">' + s + ' ' + (p.badgeWanted && !p.badgePrinted ? '<a class="btn small" href="#/people/badges">' + T('Name badges') + '</a>' : '<button class="btn small" data-act="people:badgeon" data-id="' + p.id + '">' + T('Make a name badge') + '</button>') + '</p>';
   }
+  /** Put these people on the list of name badges to print (People → Name badges), from a search or the People list. How many were added. */
+  function addBadges(list, from) {
+    var today = H.today(), n = 0;
+    list.forEach(function (p) {
+      if (!p || p.active === false || P.deceased(p) || (p.badgeWanted && !p.badgePrinted)) return;   // already waiting
+      setBadge(p, today, p.badgePrinted || '', ''); n++;
+    });
+    if (n) S.audit('Added ' + n + ' name badge' + (n === 1 ? '' : 's') + ' to print (' + from + ')', 'people');
+    return n;
+  }
   function setBadge(p, wanted, printed, why) {
     p = JSON.parse(JSON.stringify(p));
     if (wanted) p.badgeWanted = wanted; else delete p.badgeWanted;
@@ -293,12 +344,14 @@
     var st = S.settings() || {}, line = function (l, n) { return '<div class="pf-q"><b>' + esc(l) + '</b>' + new Array((n || 1) + 1).join('<span class="pf-line"></span>') + '</div>'; };
     var yn = function (l) { return '<div class="pf-q"><b>' + esc(l) + '</b> <span class="pf-yn">☐ ' + esc(T('Yes')) + ' &nbsp; ☐ ' + esc(T('No')) + '</span></div>'; };
     return '<div class="sheet paper-form"><div class="pf-head"><div><h1>' + esc(T('Apply to become a {partner}', { partner: partnerWord() })) + '</h1><p>' + esc(st.churchName || '') + '</p></div>' + QR.svg(applyLink(), { px: 90 }) + '</div>' +
-      line(T('Name')) + line(T('Home address'), 2) + '<div class="two">' + line(T('Mobile')) + line(T('Email')) + '</div>' + '<div class="two">' + line(T('ID number')) + line(T('Coming to the church since')) + '</div>' +
+      line(T('Name')) + line(T('Home address'), 2) + '<div class="two">' + line(T('Mobile')) + line(T('Email')) + '</div>' + '<div class="two">' + line(T('ID number')) + line(T('Birthday')) + '</div>' + line(T('Coming to the church since')) +
       '<div class="two">' + line(T('Spouse’s name')) + line(T('Wedding anniversary')) + '</div>' + line(T('Children’s names')) +
       yn(T('Have you put your trust in the Lord Jesus Christ for forgiveness and eternal life?')) + line(T('How did you come to faith?'), 3) +
       yn(T('Are you a member of another church?')) + line(T('If so, which one – and should we contact them about moving your membership?')) +
       yn(T('Would you come to a membership class?')) + line(T('Do you go to a Bible study or midweek group? Which one?')) + line(T('How would you like to serve in the church?'), 2) +
+      (readLinks().length ? '<div class="pf-q"><b>' + esc(T('Please read before you apply')) + '</b><ul class="pf-links">' + readLinks().map(function (l) { return '<li>' + esc(l.label || '') + (l.label ? ': ' : '') + esc(l.url) + '</li>'; }).join('') + '</ul></div>' : '') +
       '<div class="pf-q"><b>' + esc(T('Declaration')) + '</b><p class="decl">' + esc(declaration()) + '</p><p>☐ ' + esc(T('I agree with the declaration above.')) + '<br>☐ ' + esc(T('I agree to be in the church directory, so other members can see my contact details.')) + '</p></div>' +
+      (loyalty() ? '<div class="pf-q"><b>' + esc(T('Declaration of loyalty')) + '</b><p class="decl">' + esc(loyalty()) + '</p><p>☐ ' + esc(T('I make this declaration.')) + '</p></div>' : '') +
       '<div class="two">' + line(T('Signed')) + line(T('Date')) + '</div></div>';
   }
 
@@ -334,13 +387,18 @@
     appsend: function () {
       var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, r = function (n) { var e = document.querySelector('input[name="' + n + '"]:checked'); return e ? e.value : ''; };
       var err = document.getElementById('ap-err'), u = H.user(), p = S.get('people', u.id), id = g('ap-id').replace(/\s+/g, '');
+      var born = p.birthDate || g('ap-birth') || (window.Countries ? Countries.birthFromId(id, idCountry(), H.today()) : '');
       var bad = function (msg) { err.textContent = msg; err.hidden = false; return true; };
-      if ((!/^\d{6,20}$/.test(id) && bad(T('Please type your ID number (numbers only).'))) || (!g('ap-since') && bad(T('When did you start coming to the church?'))) ||
+      if ((!/^\d{6,20}$/.test(id) && bad(T('Please type your ID number (numbers only).'))) || (!born && bad(T('Please give your date of birth.'))) ||
+        (born && H.today().slice(0, 4) - born.slice(0, 4) - (H.today().slice(5) < born.slice(5) ? 1 : 0) < 18 && bad(T('You need to be 18 or older to become a Church Partner.'))) || (!g('ap-since') && bad(T('When did you start coming to the church?'))) ||
         ((!r('ap-faith') || !r('ap-other') || !r('ap-class')) && bad(T('Please answer Yes or No to each question.'))) || (!g('ap-story') && bad(T('Please tell us briefly how you came to faith.'))) ||
         (!document.getElementById('ap-decl').checked && bad(T('Please tick that you agree with the declaration.'))) ||
-        (!document.getElementById('ap-dir').checked && bad(T('Church Partners are in the church directory – please tick that you agree.')))) return;
+        (!document.getElementById('ap-dir').checked && bad(T('Church Partners are in the church directory – please tick that you agree.'))) ||
+        (document.getElementById('ap-loyal') && !document.getElementById('ap-loyal').checked && bad(T('Please tick that you make the declaration of loyalty.')))) return;
       var a = { personId: p.id, spouse: g('ap-spouse'), anniversary: g('ap-wed'), children: g('ap-kids'), since: g('ap-since'), faith: r('ap-faith'), story: g('ap-story'), otherChurch: r('ap-other'), otherWhich: g('ap-which'),
         classOk: r('ap-class'), study: g('ap-study'), questions: g('ap-q'), serve: g('ap-serve'), declaration: declaration(), directory: true, status: 'waiting' };
+      if (!p.birthDate && born) a.birthDate = born;   // copied to their details when accepted
+      if (loyalty()) a.loyalty = loyalty();
       S.idNumber(p.id).then(function (have) { return have ? null : S.setIdNumber(p.id, id, 'Gave their ID number when applying to become a Church Partner'); }).catch(function () { /* the church office can add it */ }).then(function () {
         S.put('partnerApps', a, 'Applied to become a Church Partner');
         H.go('me'); H.toast(T('Sent – a Pastor will be in touch'));
@@ -360,6 +418,8 @@
       var d = document.getElementById('aa-date').value || H.today(), was = S.get('people', a.personId); if (!was) return;
       var p = JSON.parse(JSON.stringify(was)), wasCat = p.category;
       p.category = 'Church Partner'; p.partnerSince = d;
+      if (a.since && !p.attendingSince) p.attendingSince = a.since;   // from the form
+      if (a.birthDate && !p.birthDate) p.birthDate = a.birthDate;
       S.put('people', p, 'Accepted as a Church Partner (application): ' + H.name(p));
       P.partnerAgrees(p, wasCat);   // Contact details: agreed on the form
       a = JSON.parse(JSON.stringify(a)); a.status = 'accepted'; a.approvedOn = d; a.approvedBy = document.getElementById('aa-by').value.trim().slice(0, 80); a.note = document.getElementById('aa-note').value.trim().slice(0, 300);
@@ -377,6 +437,20 @@
       H.closeModal(); H.render();
     },
     appprint: function () { var b = document.getElementById('app-print'); if (b) printOnly('<h1>' + esc(T('Partnership application')) + ' – ' + esc((S.settings() || {}).churchName || '') + '</h1>' + b.innerHTML, 'app'); },
+    appdocssave: function () {
+      if (!H.can('*')) return;
+      var labels = document.querySelectorAll('.ap-dl'), urls = document.querySelectorAll('.ap-du'), links = [], err = document.getElementById('ap-docerr'), wrong = '';
+      for (var i = 0; i < urls.length; i++) {
+        var l = labels[i].value.trim(), u = urls[i].value.trim();
+        if (!u && !l) continue;
+        if (!/^https?:\/\/\S+$/i.test(u)) { wrong = wrong || (l || u || 'A document') + ': the link must start with https://'; continue; }
+        links.push({ label: l || u, url: u });
+      }
+      if (wrong) { err.textContent = wrong; err.hidden = false; return; }
+      var loy = document.getElementById('ap-loytext').value.trim().slice(0, 3000);
+      S.setSettings({ partnerApp: Object.assign({}, (S.settings() || {}).partnerApp, { links: links, loyalty: loy }) }, 'Partnership applications: changed the documents to read and the declaration of loyalty');
+      H.render(); H.toast(T('Saved'));
+    },
     appdecl: function (el) { var t = document.getElementById('ap-decltext'); if (t) t.value = DECL[el.dataset.k]; },
     appdeclsave: function () {
       if (!H.can('*')) return; var v = document.getElementById('ap-decltext').value.trim().slice(0, 3000);
@@ -409,5 +483,5 @@
     }
   });
 
-  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, layoutChanged: layoutChanged, printBadges: printBadges, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
+  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, appFormHook: formHook, addBadges: addBadges, layoutChanged: layoutChanged, printBadges: printBadges, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
 })(PeopleParts);

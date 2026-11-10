@@ -131,7 +131,7 @@
         if (is(c, ['admin', 'pastor'])) return true;
         if (op === 'delete') return mine(c, b.personId);
         return op === 'create' && mine(c, a.personId) && a.status === 'waiting'
-          && onlyKeys(a, ['personId', 'spouse', 'anniversary', 'children', 'since', 'faith', 'story', 'otherChurch', 'otherWhich', 'classOk', 'study', 'questions', 'serve', 'declaration', 'directory', 'status', 'createdAt', 'updatedAt']);
+          && onlyKeys(a, ['personId', 'spouse', 'anniversary', 'children', 'since', 'faith', 'story', 'otherChurch', 'otherWhich', 'classOk', 'study', 'questions', 'serve', 'declaration', 'loyalty', 'birthDate', 'directory', 'status', 'createdAt', 'updatedAt']);
       } },
     blockouts: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) { return rosterer(c) || mine(c, op === 'delete' ? b.personId : a.personId); } },

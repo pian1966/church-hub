@@ -121,10 +121,13 @@
       if (fq) fq.addEventListener('input', H.pause(function () { var f0 = document.getElementById('fm-q'); if (!f0) return; state.fq = f0.value; var pos = f0.selectionStart; H.render(); var n = document.getElementById('fm-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));
       var st = document.getElementById('pp-stats');
       if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
+      if (document.getElementById('app-form')) P.appFormHook();
       var blf = document.getElementById('bl-form');
       if (blf) { var blc = function (ev) { if (/^bl-/.test(ev.target.id || '')) P.layoutChanged(ev.target); }; blf.addEventListener('change', blc); blf.addEventListener('input', H.pause(blc, 250)); }
       var ppl = document.getElementById('pp-list');
-      if (ppl && state.pick) ppl.addEventListener('change', function (ev) { if (ev.target.classList.contains('pp-sel')) P.pickChanged(ev.target); });
+      var ppTick = function (ev) { if (ev.target.classList.contains('pp-sel') || ev.target.id === 'pp-selall') P.pickChanged(ev.target); };
+      if (ppl && state.pick) ppl.addEventListener('change', ppTick);
+      var ppAll = document.getElementById('pp-selall'); if (ppAll) ppAll.addEventListener('change', ppTick);
       var res = document.getElementById('adv-result');
       if (res && state.adv) res.addEventListener('change', function (ev) {
         var t = ev.target, sel = state.adv.sel || (state.adv.sel = {});
@@ -134,7 +137,7 @@
         var n = Object.keys(sel).length, b = document.getElementById('adv-bulk');
         if (b) { b.disabled = !n; b.classList.toggle('primary', !!n); b.textContent = n ? T('Change {n} selected…', { n: n }) : T('Change selected…'); }
         var nb = document.querySelector('[data-act="people:advbadges"]'), ni = document.querySelector('[data-act="people:advinvite"]');   // for those ticked, or everyone found
-        if (nb) nb.textContent = n ? T('Name badges for {n} ticked', { n: n }) : T('Name badges for everyone found');
+        if (nb) nb.textContent = n ? T('Add {n} ticked to name badges', { n: n }) : T('Add everyone found to name badges');
         if (ni) ni.textContent = n ? T('Invite {n} ticked to apply', { n: n }) : T('Invite everyone found to apply');
         var all = document.getElementById('adv-selall'); if (all) all.checked = n && n === document.querySelectorAll('.adv-sel').length;
       });

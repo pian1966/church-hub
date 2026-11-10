@@ -296,7 +296,7 @@ service cloud.firestore {
       allow create: if isRole(['admin', 'pastor'])
         || (mine(request.resource.data.personId) && request.resource.data.status == 'waiting'
             && request.resource.data.keys().hasOnly(['personId', 'spouse', 'anniversary', 'children', 'since', 'faith', 'story', 'otherChurch', 'otherWhich',
-              'classOk', 'study', 'questions', 'serve', 'declaration', 'directory', 'status', 'createdAt', 'updatedAt']));
+              'classOk', 'study', 'questions', 'serve', 'declaration', 'loyalty', 'birthDate', 'directory', 'status', 'createdAt', 'updatedAt']));
       allow update: if isRole(['admin', 'pastor']);
       allow delete: if isRole(['admin', 'pastor']) || mine(resource.data.personId);
     }

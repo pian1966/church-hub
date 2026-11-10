@@ -78,6 +78,7 @@
     html += '<section class="panel"><h2>' + T('Kept by the church office') + '</h2>' + (office ? '<dl class="kv">' + office + '</dl>' : '') +
       '<p class="hint">' + T(child ? 'Something wrong or missing here? Please tell the church office and they will change it.' : 'Something wrong or missing, such as your marriage or children? Ask to change it, and the church office will check it.') + '</p>' +
       (window.PeopleParts ? PeopleParts.changesMePanel() : '') + '</section>';
+    html += window.PeopleParts && PeopleParts.applyMePanel ? PeopleParts.applyMePanel() : '';   // apply to become a Church Partner
     html += window.CareUI ? CareUI.mePanel() : '';   // their care group, if they are in one
     html += window.LifeUI ? LifeUI.mePanel() : '';   // their life groups (Bible studies, midweek groups)
     // Consent (POPIA): what they agreed to

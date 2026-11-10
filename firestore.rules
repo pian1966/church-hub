@@ -160,6 +160,9 @@ service cloud.firestore {
       allow read: if may('idnumbers') || mine(personId);
       allow create, update: if may('idnumbers') && request.resource.data.keys().hasOnly(['value', 'updatedAt'])
         && request.resource.data.value is string && request.resource.data.value.size() <= 20;
+      // Someone applying to become a Church Partner may give their own ID number once (never change one already kept)
+      allow create: if mine(personId) && request.resource.data.keys().hasOnly(['value', 'updatedAt'])
+        && request.resource.data.value is string && request.resource.data.value.size() <= 20;
       allow delete: if may('idnumbers') || may('people');
     }
     match /families/{id} {
@@ -285,6 +288,17 @@ service cloud.firestore {
             && request.resource.data.keys().hasOnly(['personId', 'maritalStatus', 'anniversary', 'spouse', 'children', 'note', 'status', 'createdAt', 'updatedAt']));
       allow update: if may('people');
       allow delete: if may('people') || mine(resource.data.personId);
+    }
+    // Applications to become a Church Partner, sent from the person's own page. Administrators and Pastors read and answer
+    // them (how someone came to faith is religious information: special personal information, kept for the church's members).
+    match /partnerApps/{id} {
+      allow read: if isRole(['admin', 'pastor']) || mine(resource.data.personId);
+      allow create: if isRole(['admin', 'pastor'])
+        || (mine(request.resource.data.personId) && request.resource.data.status == 'waiting'
+            && request.resource.data.keys().hasOnly(['personId', 'spouse', 'anniversary', 'children', 'since', 'faith', 'story', 'otherChurch', 'otherWhich',
+              'classOk', 'study', 'questions', 'serve', 'declaration', 'directory', 'status', 'createdAt', 'updatedAt']));
+      allow update: if isRole(['admin', 'pastor']);
+      allow delete: if isRole(['admin', 'pastor']) || mine(resource.data.personId);
     }
     // Away dates people enter themselves.
     match /blockouts/{id} {

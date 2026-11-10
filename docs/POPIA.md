@@ -89,6 +89,22 @@ requests to improve its products). Gemini's answer is checked on the device: onl
 search on are used (`js/ask-ai.js`, tested). The audit log marks such searches “(AI)”. Requests need App Check (reCAPTCHA),
 so only Church Hub can use the church's AI allowance. Switching it off stops all of it.
 
+## Applying to become a Church Partner
+Someone signed in (an adult who isn't a Church Partner yet) applies from their own page (Me → Become a Church Partner).
+Kept in `partnerApps`: their answers (spouse's and children's names, since when they've come, other church membership, Bible
+study, questions, how they'd like to serve), the declaration they agreed to, and **how they came to faith** – religious
+information, special personal information under POPIA. Purpose: deciding on membership (the church's constitution asks for it).
+Basis: the person's own application to a religious body, about its members (POPIA s 28), and their consent in sending it.
+Only the person, Administrators and Pastors can read it (database rules); opening an application is audit-logged. The **ID
+number** asked for (to confirm they are 18 or older) never goes into the application: it is saved in `idNumbers` (Administrators
+only; the person may give their own once, never change one already kept). On **Accept** they become a Church Partner from the
+date approved, and their Contact details consent (being in the church directory, which they ticked on the form) is recorded.
+The application is included in "export everything held about a person" and deleted with the person.
+
+## Name badges
+For a newcomer who asks for one: the date asked for and the date printed, on the person's details (Administrators and Pastors).
+Only their first name (or the name they're known by) and surname are printed. Purpose: welcoming people by name; basis: they asked.
+
 ## Offers to serve
 When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, at which services, their optional note and the
 roster coordinator's reply. Purpose: planning rosters; basis: the person asked themselves. Only the person, Roster

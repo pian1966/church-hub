@@ -53,6 +53,9 @@
         if (nd.noConsenter.length) out.push({ text: TN('{n} child has no parent or guardian who can give consent', '{n} children have no parent or guardian who can give consent', nd.noConsenter.length), href: '#/people/p/' + nd.noConsenter[0].id, tag: 'Children' });
         if (nd.unconfirmed.length) out.push({ text: TN('Confirm the parents and guardians of {n} child', 'Confirm the parents and guardians of {n} children', nd.unconfirmed.length), href: '#/people/p/' + nd.unconfirmed[0].id, tag: 'Children' });
       }
+      var apps = P.appsWaiting(), badges = P.badgesWaiting();
+      if (apps.length) out.push({ text: TN('{n} partnership application to review', '{n} partnership applications to review', apps.length), href: apps.length === 1 ? '#/people/applications/' + apps[0].id : '#/people/applications' });
+      if (badges.length) out.push({ text: TN('{n} name badge to print', '{n} name badges to print', badges.length), href: '#/people/badges' });
       var asked = P.changesToCheck();
       if (asked.length) out.push({ text: TN('{n} change to family details to check', '{n} changes to family details to check', asked.length), href: '#/people/changes' });
       var noMarital = all ? S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; }) : [];
@@ -108,6 +111,9 @@
       if (p[0] === 'late') return renderLate();
       if (p[0] === 'bin') return P.renderBin();
       if (p[0] === 'changes') return renderChanges();
+      if (p[0] === 'apply') return P.renderApplyForm();
+      if (p[0] === 'applications') return P.renderApps(p[1]);
+      if (p[0] === 'badges') return P.renderBadges();
       return renderList();
     },
     after: function () {

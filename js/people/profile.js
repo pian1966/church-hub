@@ -88,7 +88,7 @@
       (p.source === 'elvanto' && H.can('*') ? ' <span class="tag" style="--c:#7C3AED">' + T('From Elvanto') + '</span>' : '') +   // where the record came from: Administrators only
       (deceased(p) ? ' <span class="tag grey">' + esc(T('Died {date}', { date: H.fmt(p.deceasedAt, true) })) + '</span>' : '');
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
-      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div></div></div>' +
+      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + '</div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +
       (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
         (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +
@@ -355,7 +355,7 @@
     var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (' + PrivacyLaw.forChurch(S.settings()).copyRight + ').',
       restricted: H.can('notes') && H.can('medical') ? '' : 'Pastoral notes and children’s medical notes are kept separately and only Pastors / Children’s ministry can read them. Ask them to add these if the request covers them.',
       person: p, family: familyOf(p), households: HS.householdsOf(p).map(function (h) { return S.get('families', h); }),
-      responsibleAdults: S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }), consents: pick('consents'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts'), offersToServe: pick('serveOffers') }, translationSuggestions: pick('wordIdeas'), changesAskedFor: pick('detailChanges'),
+      responsibleAdults: S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }), consents: pick('consents'), partnershipApplications: pick('partnerApps'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts'), offersToServe: pick('serveOffers') }, translationSuggestions: pick('wordIdeas'), changesAskedFor: pick('detailChanges'),
       leave: lv ? lv.requests.filter(function (r) { return r.staffId === p.id; }) : [], auditEntries: S.find('audit', function (a) { return a.target === 'people/' + p.id; }) };
     S.audit('Exported all data held about ' + H.name(p), 'people/' + p.id);
     H.download('church-hub-' + (p.firstName + '-' + p.lastName).toLowerCase().replace(/\W+/g, '-') + '.json', JSON.stringify(data, null, 2));

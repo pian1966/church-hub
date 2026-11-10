@@ -244,6 +244,28 @@ await t('away dates: members add their own only', async () => {
   await cannot(db.member.doc('blockouts/b16').set({ personId: 'p15', from: '2027-02-01', to: '2027-02-01' }));
   await cannot(read(db.member, 'blockouts/b15'));
 });
+await t('partnership applications: people apply themselves; Administrators and Pastors read and answer them', async () => {
+  const app = { personId: 'p14', spouse: '', anniversary: '', children: '', since: '2025-11', faith: 'yes', story: 'Grew up in a Christian home', otherChurch: 'no', otherWhich: '',
+    classOk: 'yes', study: '', questions: '', serve: 'Tea after church', declaration: 'I declare…', directory: true, status: 'waiting', createdAt: 'x', updatedAt: 'x' };
+  await can(db.member.doc('partnerApps/a14').set(app));
+  await can(list(db.member.collection('partnerApps').where('personId', '==', 'p14')));
+  await cannot(list(db.member.collection('partnerApps')));                                              // not anyone else's
+  await cannot(db.member.doc('partnerApps/a15').set(Object.assign({}, app, { personId: 'p15' })));      // not for someone else
+  await cannot(db.member.doc('partnerApps/a16').set(Object.assign({}, app, { status: 'accepted' })));   // can't accept their own
+  await cannot(db.member.doc('partnerApps/a17').set(Object.assign({}, app, { idNumber: '8101015009086' })));   // ID numbers never in it
+  await cannot(db.member.doc('partnerApps/a14').update({ status: 'accepted' }));
+  await cannot(list(db.rosters.collection('partnerApps')));                                             // faith answers: not for every role
+  await can(list(db.pastor.collection('partnerApps')));
+  await can(list(db.admin.collection('partnerApps')));
+  await can(db.pastor.doc('partnerApps/a14').update({ status: 'accepted', approvedOn: '2026-11-10', approvedBy: 'Church Council', note: '' }));
+  await can(db.member.doc('partnerApps/a14').delete());                                                // withdraw (or OK after "not now")
+  // Their own ID number: given once on the form; never changed by them afterwards, and still only Administrators read it
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('idNumbers/p14').delete(); });
+  await can(db.member.doc('idNumbers/p14').set({ value: '8101015009086', updatedAt: 'x' }));
+  await cannot(db.member.doc('idNumbers/p14').set({ value: '1', updatedAt: 'y' }));
+  await cannot(db.member.doc('idNumbers/p15').set({ value: '1', updatedAt: 'y' }));
+  await cannot(read(db.pastor, 'idNumbers/p14'));
+});
 await t('family details: people ask for changes; only Administrators check and make them', async () => {
   const ask = { personId: 'p14', maritalStatus: 'Married', anniversary: '2010-04-17', spouse: 'Clare Jacobs', children: 'Sam, 3 May 2015', note: '', status: 'waiting', createdAt: 'x', updatedAt: 'x' };
   await can(db.member.doc('detailChanges/d14').set(ask));

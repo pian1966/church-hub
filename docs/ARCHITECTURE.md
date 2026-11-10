@@ -286,6 +286,21 @@ or when the range runs past December. Each question is audit-logged. **Microphon
 Safari) or, in the Android app, Android's own speech window (`ChurchHubApp.listen(lang)` → `window.churchHubHeard(text)`);
 hidden where neither exists (e.g. Firefox). The words heard are only put in the box; nothing is recorded or kept.
 
+## Partnership applications and name badges (`js/people/apply.js`; tests: `tests/app/partners.js`, `tests/rules.test.mjs`)
+- **Apply** (Me → Become a Church Partner, `#/people/apply`): adults who aren't Church Partners (nor have died). The church's
+  form: about you (details from their record; ID number → `idNumbers`, given once by themselves), spouse, anniversary, children,
+  since when; faith (yes/no and how they came to faith); other church; membership class, Bible study, questions, serving; the
+  declaration and Contact details (directory). Saved in `partnerApps` as `waiting`; they can withdraw it.
+- **Review** (People → Partnership applications, `#/people/applications/<id>`, and a Home to-do): Administrators and Pastors.
+  **Accept** (date approved, approved by, note) → category Church Partner, `partnerSince`, Contact details consent
+  (`PeopleParts.partnerAgrees`). **Not now** sends a short reply. **Print** gives a clean copy (`#print-only`, the rest hidden).
+- **The declaration** is the church's (Administrators, at the foot of the list): general wording or REACH South Africa's, or
+  their own; `{church}` becomes the church's name. Settings: `partnerApp.declaration`.
+- **Name badges** (People → Name badges, a Home to-do): "Make a name badge" when adding someone, or the button on their page
+  (`badgeWanted`, `badgePrinted` on their details). Print lays them out like the church's Google Doc – A4, 20 mm margins,
+  2 × 5 badges of 72.8 / 73.8 × 41 mm with 3 pt lines, first name bold 35 pt and surname 25 pt in Open Sans (`@page badges`).
+  Mark as printed takes them off the list.
+
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,
 and "change spouse to Widowed" for a married spouse in the same family). The person stays on the records as category *Deceased*

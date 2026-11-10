@@ -148,6 +148,8 @@
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
       (roleChoices(p).length ? '<label class="field">' + T('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') +
         (Store.isLive() && signsInWith(p).length ? ' <b>' + esc(T('{names} also signs in with this email address: after signing in, they choose who is using Church Hub.', { names: signsInWith(p).map(H.name).join(', ') })) + '</b>' : '') + '</small></label>' : '') +
+      // A newcomer who would like a name badge (laminated, printed with others under People → Name badges)
+      (isNew && (admin || H.can('people.edit')) ? '<label class="check"><input type="checkbox" id="pf-badge"><span>' + T('Make a name badge') + '</span></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:save">' + T(isNew ? 'Add person' : 'Save') + '</button></div>';
@@ -366,7 +368,9 @@
         if (p.familyRole === 'child' && !p.familyId && !dead) { err.textContent = T('Children must be in a household, so the church knows who they live with.'); err.hidden = false; return; }
         var care = window.CareUI ? CareUI.read() : null;
         if (care && care.error && !dead) { err.textContent = care.error; err.hidden = false; return; }
-        S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName);
+        var wantBadge = document.getElementById('pf-badge');
+        if (!id && wantBadge && wantBadge.checked) p.badgeWanted = H.today();
+        S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName + (p.badgeWanted && !id ? ' (name badge to print)' : ''));
         P.partnerAgrees(p, wasCat);   // becoming a Church Partner: Contact details agreed
         if (window.CareUI) { if (!(care && CareUI.setFrom(p, care))) CareUI.sync(p.id); }
         if (window.LifeUI) LifeUI.sync(p.id);   // their life group cards show their details

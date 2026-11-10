@@ -87,7 +87,11 @@
       } },
     officeNotes: { read: function (c) { return is(c, ['admin', 'pastor']); }, write: function (c) { return is(c, ['admin', 'pastor']); } },
     idNumbers: { read: function (c, id) { return may(c, 'idnumbers') || mine(c, id); },
-      write: function (c, op, id, b, a) { return op === 'delete' ? may(c, 'idnumbers') || may(c, 'people') : may(c, 'idnumbers') && onlyKeys(a, ['value', 'updatedAt']) && typeof a.value === 'string' && a.value.length <= 20; } },
+      write: function (c, op, id, b, a) {
+        if (op === 'delete') return may(c, 'idnumbers') || may(c, 'people');
+        var ok = onlyKeys(a, ['value', 'updatedAt']) && typeof a.value === 'string' && a.value.length <= 20;
+        return ok && (may(c, 'idnumbers') || (op === 'create' && mine(c, id)));   // applying to become a Church Partner: their own, once
+      } },
     families: { read: function (c) { return is(c, STAFF); }, write: function (c) { return is(c, ['admin', 'pastor']); } },
     consents: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (!!d && mine(c, d.personId)) || (is(c, ['kids']) && !!d && KIDS_CONSENTS.indexOf(d.purpose) >= 0); },
       write: function (c, op, id, b, a) {
@@ -121,6 +125,13 @@
         if (op === 'delete') return mine(c, b.personId);
         return op === 'create' && mine(c, a.personId) && a.status === 'waiting'
           && onlyKeys(a, ['personId', 'maritalStatus', 'anniversary', 'spouse', 'children', 'note', 'status', 'createdAt', 'updatedAt']);
+      } },
+    partnerApps: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (!!d && mine(c, d.personId)); },
+      write: function (c, op, id, b, a) {
+        if (is(c, ['admin', 'pastor'])) return true;
+        if (op === 'delete') return mine(c, b.personId);
+        return op === 'create' && mine(c, a.personId) && a.status === 'waiting'
+          && onlyKeys(a, ['personId', 'spouse', 'anniversary', 'children', 'since', 'faith', 'story', 'otherChurch', 'otherWhich', 'classOk', 'study', 'questions', 'serve', 'declaration', 'directory', 'status', 'createdAt', 'updatedAt']);
       } },
     blockouts: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) { return rosterer(c) || mine(c, op === 'delete' ? b.personId : a.personId); } },

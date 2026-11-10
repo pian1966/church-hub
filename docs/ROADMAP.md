@@ -75,6 +75,15 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
+- ⬜ **Help: ask a question** – a Help page where people type or dictate (phone keyboard microphone, or a mic button using the
+  browser's speech recognition) a question about using Church Hub, and get an answer written for their question and role.
+  The answers come only from the help pages in `docs/help/` (first draft done, Nov 2026): find the matching answers, send them
+  with the question and the person's role to an AI model through a Firebase Cloud Function (key never in the app; e.g. Gemini
+  through Firebase AI Logic), and show the reply with a link to the help page. Use the church's own words (Terminology) and the
+  person's language. A monthly limit per church; without AI (switched off or limit reached), a plain searchable FAQ of the same
+  pages. Never send personal information with the question.
+- ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request (add to CLAUDE.md rules
+  once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
 
 ## Phase 7 – Church Hub for other churches (hosted, gift-based) ⬜
 Goal: any church can start using Church Hub in minutes, with no Firebase, Google console or anything technical. We host it;

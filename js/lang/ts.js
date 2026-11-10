@@ -232,6 +232,7 @@ I18n.add('ts', {
     "Something went wrong": "Ku na leswi nga fambangiki kahle",
     "Try again": "Ringeta nakambe",
     "Back to the top": "Tlhelela ehenhla",
+    "Go to the bottom": "Ya ehansi",
     "Appearance": "Mavonekelo",
     "Light": "Ku vonakala",
     "Dark": "Munyama",

@@ -232,6 +232,7 @@ I18n.add('tn', {
     "Something went wrong": "Go na le se se sa tsamaeng sentle",
     "Try again": "Leka gape",
     "Back to the top": "Boela kwa godimo",
+    "Go to the bottom": "Ya kwa tlase",
     "Appearance": "Ponalo",
     "Light": "Lesedi",
     "Dark": "Lefifi",

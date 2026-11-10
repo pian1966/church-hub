@@ -384,5 +384,14 @@ module.exports = async function (ctx) {
   check(await s.page.isVisible('#to-top'), 'well down a long page (Settings): a round arrow at the bottom right');
   await s.page.click('#to-top'); await s.page.waitForFunction(() => window.scrollY < 5, null, { timeout: 3000 }).catch(() => {});
   check(await s.page.evaluate(() => window.scrollY) < 5, '… which goes back to the top');
+  // …and to the bottom: shown at the top of a long page, gone once there
+  await s.page.waitForTimeout(400);
+  check(await s.page.isVisible('#to-bottom') && !(await s.page.isVisible('#to-top')), 'at the top of a long page: a round arrow to go to the bottom (and none to the top)');
+  await s.page.click('#to-bottom'); await s.page.waitForFunction(() => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 5, null, { timeout: 3000 }).catch(() => {});
+  await s.page.waitForTimeout(400);
+  check(await s.page.evaluate(() => window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 5) && !(await s.page.isVisible('#to-bottom')) && await s.page.isVisible('#to-top'),
+    '… which goes to the bottom, and then only the arrow back to the top shows');
+  await s.go('home'); await s.page.evaluate(() => window.scrollTo(0, 0)); await s.page.waitForTimeout(400);
+  check(await s.page.evaluate(() => document.documentElement.scrollHeight - window.innerHeight < 600) ? !(await s.page.isVisible('#to-bottom')) : true, 'a short page: no arrows');
   await finish(s);
 };

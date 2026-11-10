@@ -232,6 +232,7 @@ I18n.add('yo', {
     "Something went wrong": "Nǹkan kan kò lọ dáadáa",
     "Try again": "Tún gbìyànjú",
     "Back to the top": "Padà sí òkè",
+    "Go to the bottom": "Lọ sí ìsàlẹ̀",
     "Appearance": "Ìrísí",
     "Light": "Ìmọ́lẹ̀",
     "Dark": "Òkùnkùn",

@@ -632,12 +632,15 @@ html[data-mode=dark] input:not([type=checkbox]):not([type=radio]):not([type=colo
 /* Dark: small round add / remove buttons (Advanced search filters) */
 html[data-mode=dark] .icon-btn.ok { background: #237A4B; color: #fff; } html[data-mode=dark] .icon-btn.bad { background: #A83A34; color: #fff; }
 
-/* Back to the top (js/app.js toTop): bottom right, once well down a long page; above the phone's tab bar */
-#to-top { position: fixed; right: 18px; bottom: 22px; z-index: 55; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent-ink);
+/* Back to the top / to the bottom (js/app.js jumpButtons): bottom right of a long page, up above down; above the phone's tab bar */
+#jump { position: fixed; right: 18px; bottom: 22px; z-index: 55; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+#to-top, #to-bottom { pointer-events: auto; width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--line); background: var(--surface); color: var(--accent-ink);
   display: grid; place-items: center; cursor: pointer; box-shadow: 0 4px 14px rgba(0,0,0,.14); opacity: 0; transform: translateY(8px); transition: opacity .2s, transform .2s; }
-#to-top.show { opacity: .92; transform: none; } #to-top:hover, #to-top:focus-visible { opacity: 1; background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--surface)); }
-@media (max-width: 860px) { #to-top { bottom: 84px; right: 14px; } }
-@media (prefers-reduced-motion: reduce) { #to-top { transition: none; } }
+#to-top[hidden], #to-bottom[hidden] { display: none; }
+#to-top.show, #to-bottom.show { opacity: .92; transform: none; }
+#to-top:hover, #to-top:focus-visible, #to-bottom:hover, #to-bottom:focus-visible { opacity: 1; background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 40%, var(--surface)); }
+@media (max-width: 860px) { #jump { bottom: 84px; right: 14px; } }
+@media (prefers-reduced-motion: reduce) { #to-top, #to-bottom { transition: none; } }
 
 /* ---------- Settings: a page per topic, the topics down the left (a strip across the top on phones) ---------- */
 .set-wrap { display: grid; grid-template-columns: 232px minmax(0, 1fr); gap: 32px; align-items: start; }

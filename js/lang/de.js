@@ -232,6 +232,7 @@ I18n.add('de', {
     "Something went wrong": "Etwas ist schiefgelaufen",
     "Try again": "Erneut versuchen",
     "Back to the top": "Nach oben",
+    "Go to the bottom": "Nach unten",
     "Appearance": "Darstellung",
     "Light": "Hell",
     "Dark": "Dunkel",

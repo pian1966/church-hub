@@ -232,6 +232,7 @@ I18n.add('nl', {
     "Something went wrong": "Er ging iets mis",
     "Try again": "Opnieuw proberen",
     "Back to the top": "Terug naar boven",
+    "Go to the bottom": "Naar beneden",
     "Appearance": "Weergave",
     "Light": "Licht",
     "Dark": "Donker",

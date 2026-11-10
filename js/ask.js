@@ -178,6 +178,15 @@ var Ask = (function () {
     R.take(/\b(teenagers?|teens?)\b/g, function (a, off) { add('adultChild', 'eq', 'Child', off); add('age', 'between', '13', off, { value2: '19' }); });
     R.take(/\b(children|child|kids?|youth|young people)\b/g, function (a, off) { add('adultChild', 'eq', 'Child', off); });
     R.take(/\badults?\b/g, function (a, off) { add('adultChild', 'eq', 'Adult', off); });
+    // How a name starts: "first names beginning with M", "surname starts with van", "names starting with the letter J"
+    var NAME_PART = '(first\\s*names?|forenames?|given names?|christian names?|sur\\s*names?|last\\s*names?|family names?|names?)';
+    var partField = function (w) { return /^(sur|last|family)/.test(w) ? 'lastName' : 'firstName'; };
+    R.take(new RegExp('\\b(?:(?:whose|with|with a|with the|that have|who have|having|has a|have a)\\s+)?' + NAME_PART +
+      '\\s+(?:that\\s+|which\\s+|is\\s+|are\\s+)?(?:begins?|beginning|starts?|starting|start)\\s+with\\s+(?:the\\s+letters?\\s+|letters?\\s+)?([a-z\'\\-]+(?:\\s+(?:der|den|de|la|le))?)\\b', 'g'),
+      function (a, off) { add(partField(a[1]), 'starts', a[2], off); });
+    // "whose surname is Pike", "with the first name Andy"
+    R.take(new RegExp('\\b(?:whose|with the|with a|with)\\s+' + NAME_PART.replace('|names?)', ')') + '\\s+(?:is\\s+)?([a-z\'\\-]+)\\b', 'g'),
+      function (a, off) { add(partField(a[1]), 'eq', a[2], off); });
     // A name: "called Andy", "named Pike", "with the surname Pike"
     R.take(/\b(?:called|named|with the (?:sur|last |first )?name|whose (?:sur|last |first )?name is)\s+([a-z'\-]+(?:\s+[a-z'\-]+)?)\b/g, function (a, off) { add('name', 'has', a[1], off); });
 

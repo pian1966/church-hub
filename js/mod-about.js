@@ -67,7 +67,26 @@
         '<a class="item" href="#" data-act="hub:notice"><span class="grow"><b>' + T('Privacy notice') + '</b></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '/blob/main/docs/CHANGELOG.md" target="_blank" rel="noopener"><span class="grow"><b>' + T('What’s new') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '" target="_blank" rel="noopener"><span class="grow"><b>' + T('Source code') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +
-      '</div></section>' + brochures() + '</div>';
+      '</div></section>' + brochures() + speedPanel() + '</div>';
+  }
+
+  /** Administrators: how fast Church Hub is on this computer or phone – to send to whoever looks after Church Hub when it
+   *  feels slow. In English, like the other Administrator-only screens. Nothing here is personal information. */
+  function speedPanel() {
+    if (!H.can('*') || !H.speed) return '';
+    var sp = H.speed(), st = Store.stats ? Store.stats() : {}, sec = function (ms) { return (Math.round(ms / 100) / 10) + ' s'; };
+    var rows = [];
+    var began = (window.performance && performance.timeOrigin) || sp.opened;
+    if (st.start) rows.push(['Opening, until ready', st.loaded ? sec(st.loaded - began) + ' (getting everything from the database: ' + sec(st.loaded - st.start) + ')' : 'still loading…']);
+    rows.push(['Browser too busy to respond', sec(sp.busyMs) + ' in all since opening' + (sp.busyLongest ? ' · longest ' + sec(sp.busyLongest) : '')]);
+    if (st.start) rows.push(['Updates from the database', st.snaps + ' · redone ' + st.rebuilds + ' times, ' + sec(st.rebuildMs) + ' in all, slowest ' + sec(st.slowestRebuild)]);
+    if (st.start) rows.push(['Saved from this device', String(st.writes)]);
+    rows.push(['Open for', sec(Date.now() - sp.opened)]);
+    var c = st.counts || {}, big = Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).slice(0, 8).map(function (k) { return k + ' ' + c[k]; }).join(' · ');
+    var pages = sp.pages.filter(function (x) { return x.page !== '#/about'; }).map(function (x) { return '<tr><td>' + esc(x.page) + '</td><td style="text-align:right">' + x.ms + ' ms</td></tr>'; }).join('');
+    return '<section class="panel"><h2>Speed check</h2><p class="hint" style="margin-top:0">If Church Hub feels slow, open this page straight afterwards and send a screenshot to whoever looks after Church Hub.</p>' +
+      '<dl class="kv">' + rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '<dt>Records</dt><dd>' + esc(big) + '</dd></dl>' +
+      (pages ? '<h3 style="margin:14px 0 6px">Last pages drawn</h3><table class="table small"><tbody>' + pages + '</tbody></table>' : '') + '</section>';
   }
 
   /** Admins: the two printable brochures (brochure.html), filled in with the church's name and this Church Hub's address. */

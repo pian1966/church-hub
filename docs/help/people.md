@@ -74,6 +74,16 @@ Also asked: List of everyone with a birthday this month. Export to Excel. Filter
 the columns, then **Download (CSV)** (opens in Excel). You only see fields your role may see. Searches can't be
 saved yet.
 
+## Can I just type or say what I'm looking for?
+For: Administrators, Pastors, Roster coordinators, Children's ministry
+Also asked: Search in plain English. Voice search. Ask a question about people.
+
+Yes – at the top of **People → Advanced search**, use **Ask in your own words**. Type (or tap the microphone and say) what
+you want, in English, then tap **Ask**. For example: *Church Partners who are men, with birthdays in April*, *women over 60
+who live in Howick*, *first names beginning with M*, *people without an ID number*, or *10am services between 12 November
+and 2 February that don't have all positions filled*. Church Hub fills in the filters and shows what it understood, and any
+words it didn't – you can then change the filters by hand. It only searches what your role may see.
+
 ## How do I change many people at once?
 For: Administrators
 Also asked: Bulk update. Change category for everyone.

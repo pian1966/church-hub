@@ -42,5 +42,9 @@
         <intent>
             <action android:name="android.media.action.IMAGE_CAPTURE" />
         </intent>
+        <!-- So the microphone in Advanced search can open the phone's speech-to-text window (Android 11 and later). -->
+        <intent>
+            <action android:name="android.speech.action.RECOGNIZE_SPEECH" />
+        </intent>
     </queries>
 </manifest>

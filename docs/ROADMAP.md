@@ -44,6 +44,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 ## Phase 2 – People and pastoral care
 Members see their own family (and give consent for their children), smart lists (leave out people who have died), follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
 - ⬜ Save searches as smart lists; use them for emails and SMS
+- ⬜ Ask in your own words: more kinds of questions (leave, care and midweek groups, messages), and save an asked question as a smart list
 
 ## Phase 3 – Rostering and services (built; follow-ups below)
 Accept/decline by email and app, swap requests, reminders, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).

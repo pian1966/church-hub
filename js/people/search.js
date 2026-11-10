@@ -163,6 +163,108 @@
       '<select' + ia + ' data-k="unit" aria-label="' + esc(T('Days, weeks, months or years')) + '">' + PS.UNITS.map(function (u) { return '<option value="' + u[0] + '"' + ((f.unit || 'days') === u[0] ? ' selected' : '') + '>' + esc(T(u[1])) + '</option>'; }).join('') + '</select></span>';
     return one('value', f.value);
   }
+  /* ---------- search in your own words (js/ask.js): typed or spoken, turned into the filters below or into a list of services ---------- */
+  // Examples in English: the rules understand English (the church's own words too, e.g. Parishioners)
+  var ASK_EX = ['Church Partners who are men, with birthdays in April', 'People without an ID number who are volunteers and have a home address',
+    '10am services between 12 November and 2 February that don’t have all positions filled', 'Women over 60 who live in Howick'];
+  function canRoster() { return H.can('*') || H.can('rosters.view'); }
+  function timeOf(sv) { var id = Serving.slotOf(sv), x = Serving.savedSlots(S.settings()).filter(function (y) { return y.id === id; })[0]; return (x && x.time) || sv.time || ''; }
+  function askCtx(F) {
+    var st = S.settings(), fields = {}; F.forEach(function (f) { fields[f.key] = true; });
+    var roster = canRoster();
+    return { today: H.today(), fields: fields, services: roster, words: Wording.words(st), slotLabel: function (id) { return Serving.slotLabel(id, st); },
+      slots: Serving.allSlots(st).map(function (x) { return { id: x.id, label: x.label, time: x.time }; }),
+      positions: roster ? uniq(S.list('positions').map(function (x) { return x.name; })) : [], teams: roster ? uniq(S.list('teams').map(function (x) { return x.name; })) : [],
+      towns: fields.town ? uniq(S.list('people').map(function (p) { return String((p.address || {}).city || '').trim(); }).filter(Boolean)) : [],
+      people: roster ? S.list('people').filter(function (p) { return !p.deletedAt; }).map(function (p) { return { id: p.id, names: H.names(p) }; }) : [] };
+  }
+  /** Ask: understand the question, then fill in the filters and search (people) or list the services. */
+  function ask(text) {
+    text = String(text || '').trim(); if (!text) return;
+    var F = searchFields(), r = Ask.parse(text, askCtx(F)), byKey = {}; F.forEach(function (f) { byKey[f.key] = f; });
+    state.ask = { text: text, r: r };
+    if (r.kind === 'people' && r.filters.length) {
+      var A = state.adv = emptyAdv();
+      A.filters = r.filters.map(function (f) { return { field: f.field, op: f.op, value: f.value, value2: f.value2 || '', unit: f.unit || '' }; });
+      A.match = r.match; A.logic = r.logic || '';
+      r.filters.forEach(function (f) { if (f.field !== 'name' && byKey[f.field] && !byKey[f.field].noCol && A.cols.indexOf(f.field) < 0) A.cols.push(f.field); });
+      S.audit('Searched in their own words: ' + text, 'people');
+      return P.actions.advrun();
+    }
+    H.render();
+    var el = document.getElementById('ask-result'); if (el) el.scrollIntoView({ block: 'start', behavior: 'smooth' });
+  }
+  function fieldNames(keys, byKey) { return keys.map(function (k) { return k === 'services' ? T('Rosters') : byKey[k] ? byKey[k].label : T(Ask.THING_LABEL[k] || k); }).join(', '); }
+  function askPanel(F, byKey) {
+    var a = state.ask, r = a && a.r, mic = askMicOk();
+    var html = '<section class="panel ask" id="ask" data-noauto><h2>' + T('Ask in your own words') + '</h2>' +
+      '<form class="ask-row" onsubmit="return false"><input type="search" id="ask-q" value="' + esc(a ? a.text : '') + '" placeholder="' + esc('e.g. ' + ASK_EX[0]) + '" autocomplete="off" enterkeyhint="search" aria-label="' + esc(T('Ask in your own words')) + '">' +
+        (mic ? '<button type="button" class="icon-btn ask-mic" id="ask-mic" data-act="people:askmic" aria-label="' + esc(T('Speak your question – your phone or browser’s speech service turns it into text')) + '" title="' + esc(T('Speak your question – your phone or browser’s speech service turns it into text')) + '">' +
+          H.icon('M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM19 11a7 7 0 0 1-14 0M12 18v3', 20) + '</button>' : '') +
+        '<button type="submit" class="btn primary" data-act="people:ask">' + H.icon(H.ICON.search, 18) + T('Ask') + '</button></form>' +
+      '<p class="ask-live" id="ask-live" role="status" aria-live="polite" hidden></p>' +
+      // The examples: open until something has been asked, then folded away (tap to open again)
+      '<details class="ask-exw"' + (a ? '' : ' open') + '><summary class="hint">' + T('Type or say what you’re looking for, in English. Tap an example to try it:') + '</summary><div class="ask-ex">' +
+        ASK_EX.filter(function (x, i) { return i !== 2 || canRoster(); }).map(function (x) { return '<button type="button" class="ask-chip" data-act="people:askex">' + esc(x) + '</button>'; }).join('') + '</div></details>';
+    if (r) {
+      var said = r.kind === 'people' ? state.adv.filters.map(function (f) { return PS.describe(f, byKey[f.field], function (v) { return advShow({ type: byKey[f.field] && byKey[f.field].type === 'date' ? 'date' : 'text' }, v); }); })
+        : (r.said || []).map(function (x) { return T(x[0], x[1] || undefined); });
+      var none = r.kind === 'people' ? !r.filters.length : false;
+      html += '<div class="ask-said" id="ask-said">' + (none ? '<p class="note bad" role="alert">' + T('Nothing in that was understood. Try one of the examples.') + '</p>' :
+        '<p><b>' + T('Understood as') + ':</b> ' + said.map(function (x) { return '<span class="tag">' + esc(x) + '</span>'; }).join(r.kind === 'people' && state.adv.match === 'logic' ? ' ' : ' ') +
+        (r.kind === 'people' && state.adv.match === 'logic' ? ' <span class="muted small">(' + esc(state.adv.logic) + ')</span>' : '') + '</p>') +
+        (r.noPerson ? '<p class="note bad">' + T('No one called “{name}” was found.', { name: esc(r.noPerson) }) + '</p>' : '') +
+        (r.refused.length ? '<p class="note bad">' + (r.refused.indexOf('services') >= 0 ? T('You can’t see the rosters, so services can’t be searched.') : T('Your role can’t search on: {fields}', { fields: esc(fieldNames(r.refused, byKey)) })) + '</p>' : '') +
+        (r.unknown.length ? '<p class="hint">' + T('Not understood: {words}', { words: esc(r.unknown.join(' ')) }) + '</p>' : '') + '</div>';
+      if (r.kind === 'services' && r.q && canRoster() && !r.noPerson) html += servicesResult(r.q);
+    }
+    return html + '</section>';
+  }
+  function servicesResult(q) {
+    var st = S.settings(), special = Serving.specialSlots(st).map(function (x) { return x.id; });
+    var rows = Ask.services({ services: S.list('services'), assignments: S.list('assignments'), positions: S.list('positions'), timeOf: timeOf,
+      runsAt: function (p, s) { return RosterCore.runsAt(p, s, special); } }, q);
+    return '<div id="ask-result"><h3 style="margin:16px 0 8px">' + TN('{n} service found', '{n} services found', rows.length) + '</h3>' + (rows.length ? '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Date') + '</th><th>' + T('Service') + '</th>' +
+      (q.personId ? '<th>' + T('Serving') + '</th>' : '') + '<th>' + T('Still needed') + '</th></tr></thead><tbody>' + rows.map(function (x) {
+        var s = x.service;
+        return '<tr><td><a href="#/rosters">' + esc(H.fmt(s.date)) + '</a></td><td>' + esc(Serving.slotLabel(Serving.slotOf(s), st)) + '</td>' +
+          (q.personId ? '<td>' + esc(x.mine.map(function (p) { return p.name; }).join(', ')) + '</td>' : '') +
+          '<td>' + (x.gaps.length ? esc(x.gaps.map(function (g) { return g.position.name + (g.missing > 1 ? ' ×' + g.missing : ''); }).join(', ')) : '<span class="muted">' + T('All filled') + '</span>') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' : '<p class="empty">' + T('No services match.') + '</p>') + '</div>';
+  }
+  /* ---------- the microphone: the browser's own speech-to-text, or the Android app's (ChurchHubApp.listen) ---------- */
+  function speechApi() { return typeof window !== 'undefined' && (window.SpeechRecognition || window.webkitSpeechRecognition); }
+  function appListens() { return typeof window !== 'undefined' && window.ChurchHubApp && typeof window.ChurchHubApp.listen === 'function'; }
+  function askMicOk() { return !!(appListens() || speechApi()); }
+  function speechLang() { return 'en-' + (Countries.church(S.settings()).code || 'ZA'); }
+  var rec = null;
+  function micState(on, msg) {
+    var b = document.getElementById('ask-mic'), live = document.getElementById('ask-live');
+    if (b) { b.classList.toggle('on', !!on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); }
+    if (live) { live.textContent = msg || ''; live.hidden = !msg; }
+  }
+  /** What was heard: into the box, then asked (the Android app calls this too, with null when nothing was heard). */
+  window.churchHubHeard = function (text, final) {
+    var box = document.getElementById('ask-q');
+    if (text == null) { micState(false, T('Couldn’t hear that – try again.')); return; }
+    if (box) box.value = text;
+    if (final !== false) { micState(false, ''); ask(text); }
+  };
+  function listen() {
+    if (rec) { try { rec.stop(); } catch (e) { /* already stopped */ } return; }
+    if (appListens()) { micState(true, T('Listening… speak now')); window.ChurchHubApp.listen(speechLang()); return; }
+    var SR = speechApi(); if (!SR) return;
+    var got = '', r = rec = new SR();
+    r.lang = speechLang(); r.interimResults = true; r.maxAlternatives = 1; r.continuous = false;
+    r.onresult = function (ev) {
+      var t = ''; for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript;
+      got = t; window.churchHubHeard(t, false);
+    };
+    r.onerror = function (ev) { rec = null; micState(false, ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ? T('Allow the microphone for Church Hub in your browser’s settings.') : T('Couldn’t hear that – try again.')); };
+    r.onend = function () { var had = rec; rec = null; if (had && got.trim()) window.churchHubHeard(got.trim(), true); else if (had) micState(false, ''); };
+    micState(true, T('Listening… speak now'));
+    try { r.start(); } catch (e) { rec = null; micState(false, T('Couldn’t hear that – try again.')); }
+  }
   function renderSearch() {
     var crumb = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>';
     if (!canBasic()) return crumb + '<p class="empty">' + T('Advanced search isn’t available to you.') + '</p>';
@@ -188,6 +290,7 @@
     var word = A.match === 'any' ? 'OR' : 'AND', logicNote = '';
     if (A.match === 'logic' && A.logic.trim()) { var pl = PS.parseLogic(A.logic, A.filters.length); if (!pl.error && pl.unused.length) logicNote = '<p class="hint">' + T('Not used in your logic: filter {list}.', { list: pl.unused.join(', ') }) + '</p>'; }
     var html = crumb + '<div class="page-head"><div><h1>' + T('Advanced search') + '</h1><p class="lead">' + T('Find people by any mix of details, as in Elvanto. You can only search on what your role may see.') + '</p></div></div>' +
+      askPanel(F, byKey) +
       '<div id="adv"><section class="panel"><h2>' + T('Filters') + '</h2>' +
       '<label class="field" style="max-width:420px">' + T('Match') + '<select id="adv-match">' + [['all', TX('All of the following filters')], ['any', TX('Any of the following filters')], ['logic', TX('Advanced: your own logic')]].map(function (m) {
         return '<option value="' + m[0] + '"' + (A.match === m[0] ? ' selected' : '') + '>' + esc(T(m[1])) + '</option>'; }).join('') + '</select></label>' +
@@ -376,6 +479,9 @@
         if (!m) c.splice(i, 1); else if (c[i + m]) { c[i] = c[i + m]; c[i + m] = el.dataset.k; }
         H.render();
       },
+    ask: function () { var b = document.getElementById('ask-q'); if (b) ask(b.value); },
+    askex: function (el) { var b = document.getElementById('ask-q'); if (b) b.value = el.textContent; ask(el.textContent); },
+    askmic: function () { listen(); },
     advrun: function () {
       var go = function () { state.adv.ran = true; H.render(); var r = document.getElementById('adv-result'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
       var idf = idFilters(); idf.forEach(function (f) { f.value = String(f.value || '').replace(/\s+/g, ''); });
@@ -387,7 +493,7 @@
         S.audit('Searched by ID number (advanced search): ' + (names.length ? names.length + ' found – ' + names.slice(0, 10).join(', ') + (names.length > 10 ? ', …' : '') : 'nobody found'), 'people');
       }, function () { H.toast(T('Couldn’t load the ID numbers'), true); });
     },
-    advreset: function () { state.adv = emptyAdv(); idNums = null; H.render(); },
+    advreset: function () { state.adv = emptyAdv(); state.ask = null; idNums = null; H.render(); },
     advsort: function (el) { var A = state.adv; if (A.sort === el.dataset.k) A.dir = -A.dir; else { A.sort = el.dataset.k; A.dir = 1; } H.render(); },
     advcsv: function () { advCsv(); },
     bulk: function () { if (canBulk()) bulkDialog(); },

@@ -1002,7 +1002,8 @@ var Hub = (function () {
         user = Store.get('people', user.id) || user;
         var a = document.activeElement;
         // Not while a dialog is open, someone is typing, or a "click again to confirm" button is waiting for its second click
-        if (document.querySelector('#modal .overlay') || document.querySelector('[data-sure]') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
+        // … or a page holds work that a redraw would lose (data-keep: the brochure editor's brochure)
+        if (document.querySelector('#modal .overlay') || document.querySelector('[data-sure]') || document.querySelector('[data-keep]') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
         render();
       });
       Store.live.boot(onLiveState);

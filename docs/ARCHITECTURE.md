@@ -550,3 +550,17 @@ form, a person's page and Me.
 `offBox()` in `js/people/edit.js` greys out a box (disabled, with the reason) when it doesn't apply: the wedding anniversary for
 Single, Engaged, Partner and Divorced; the late spouse for Single and Engaged. A greyed-out box isn't saved, so what was there stays.
 The wedding anniversary sits right under marital status.
+
+## Brochures and the brochure editor (About → Brochures; `brochure.html`, `js/brochure-kit.js`, `js/mod-about.js`)
+- About links to `#/about/brochure/members|churches` (Administrators). The page shows `brochure.html?for=…&embed=1` in a frame
+  (same site), with Church Hub's own buttons: **Edit the wording / Done editing**, **Print or save as PDF** (the frame prints),
+  colour (Church Hub orange, the church's colour from Settings → Colours, or any colour) and font (a short list of Google Fonts).
+- The church's changes are `settings.brochures` (`BrochureKit.tidy`): `design { accent, font }` and, per brochure,
+  `texts { key: { o: Church Hub's original text, h: their wording } }` and `hidden { key: original text }`. Keys are places
+  (`m0:11` = members, sheet 0, 12th text; `m0:b3` = a block). An edit is only used while the original there is unchanged, so
+  when Church Hub's wording changes in a release the old edit is listed ("Forget them") instead of landing on the wrong line.
+- Editing: each heading and paragraph is contenteditable (plain paste; Enter in a heading does nothing), blocks get Hide/Show;
+  saves by itself (600 ms after typing, and on leaving a text). Typed wording goes through `BrochureKit.clean` (bold, italic,
+  line breaks and the church's name/address spans only). Colours come from one colour (`BrochureKit.colours`: ink dark enough
+  for white writing; dark writing on a light cover). A panel that no longer fits its A4 third is marked and warned about.
+- The page isn't redrawn while open (`data-keep` stops remote-change redraws), so typing isn't lost.

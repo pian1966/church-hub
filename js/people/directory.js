@@ -220,8 +220,7 @@
     pickbadges: function () {
       var list = picked(); if (!list.length) return;
       list.sort(SORTS.first.cmp);
-      S.audit('Printed name badges from the People list: ' + list.length, 'people');
-      P.printOnly(P.badgeSheets(list), 'badges');
+      P.printBadges(list, 'Printed name badges from the People list');
     },
     pickinvite: function () { var list = picked(); if (list.length && P.invite) P.invite(list.map(function (p) { return p.id; })); },
     pickchange: function () { var list = picked(); if (list.length && P.canBulk && P.canBulk()) P.bulkDialog(list.map(function (p) { return p.id; })); },

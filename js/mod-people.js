@@ -113,7 +113,7 @@
       if (p[0] === 'changes') return renderChanges();
       if (p[0] === 'apply') return P.renderApplyForm();
       if (p[0] === 'applications') return P.renderApps(p[1]);
-      if (p[0] === 'badges') return P.renderBadges();
+      if (p[0] === 'badges') return P.renderBadges(p[1]);
       return renderList();
     },
     after: function () {
@@ -121,6 +121,8 @@
       if (fq) fq.addEventListener('input', H.pause(function () { var f0 = document.getElementById('fm-q'); if (!f0) return; state.fq = f0.value; var pos = f0.selectionStart; H.render(); var n = document.getElementById('fm-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));
       var st = document.getElementById('pp-stats');
       if (st) st.addEventListener('toggle', function () { state.statsOpen = st.open; });
+      var blf = document.getElementById('bl-form');
+      if (blf) { var blc = function (ev) { if (/^bl-/.test(ev.target.id || '')) P.layoutChanged(ev.target); }; blf.addEventListener('change', blc); blf.addEventListener('input', H.pause(blc, 250)); }
       var ppl = document.getElementById('pp-list');
       if (ppl && state.pick) ppl.addEventListener('change', function (ev) { if (ev.target.classList.contains('pp-sel')) P.pickChanged(ev.target); });
       var res = document.getElementById('adv-result');

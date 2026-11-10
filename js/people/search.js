@@ -547,8 +547,7 @@
     advbadges: function () {
       var list = advPicked(); if (!list.length) return;
       list.sort(P.SORTS.first.cmp);
-      S.audit('Printed name badges from Advanced search: ' + list.length, 'people');
-      P.printOnly(P.badgeSheets(list), 'badges');
+      P.printBadges(list, 'Printed name badges from Advanced search');
     },
     advinvite: function () { var list = advPicked(); if (list.length) P.invite(list.map(function (p) { return p.id; })); },
     advcsv: function () { advCsv(); },

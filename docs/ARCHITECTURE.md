@@ -297,8 +297,14 @@ hidden where neither exists (e.g. Firefox). The words heard are only put in the 
 - **The declaration** is the church's (Administrators, at the foot of the list): general wording or REACH South Africa's, or
   their own; `{church}` becomes the church's name. Settings: `partnerApp.declaration`.
 - **Name badges** (People → Name badges, a Home to-do): "Make a name badge" when adding someone, or the button on their page
-  (`badgeWanted`, `badgePrinted` on their details). Print lays them out like the church's Google Doc – A4, 20 mm margins,
-  2 × 5 badges of 72.8 / 73.8 × 41 mm with 3 pt lines, first name bold 35 pt and surname 25 pt in Open Sans (`@page badges`).
+  (`badgeWanted`, `badgePrinted` on their details). Printing uses the church's **Badge layout** (`js/badges.js`, pure and tested
+  by `tests/badges.test.js`; Administrators set it at People → Name badges → Badge layout, kept in `settings.badgeLayout`).
+  The default is the church's Google Doc – A4, 2 × 5 badges of 73.3 × 41 mm, 32 mm from the top and 20 mm from the left, 3 pt
+  lines; or Avery label sheets (L7160, L7163, L7165, L7173) or their own measurements: labels across and down, width,
+  height, top and left margins, gaps between columns and rows (0 = no gap: neighbours share one line), A4 or US Letter,
+  thick / thin / no lines. Each badge is placed in millimetres (`.lab`, `@page badges` / `badgesLetter`); names are sized to
+  fit (35 pt / 25 pt on a 41 mm badge, smaller for long names or small labels) in Open Sans. With no thick lines (label
+  paper) printing first asks which label to start at, for a partly used sheet. Print a test page numbers every label.
   Mark as printed takes them off the list. From **Advanced search**, Administrators and Pastors print badges for the people
   ticked (or everyone found), sorted by first name, on the same sheets (long names get a smaller size so they fit).
 - **Inviting people to apply**: from a person's page (Invite to become a Church Partner) or Advanced search (Invite … to apply).

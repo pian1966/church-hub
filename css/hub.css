@@ -745,18 +745,10 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   #print-only.app { font-family: Inter, sans-serif; color: #000; padding: 4mm 2mm; } #print-only.app .no-print, #print-only.app .icon-btn { display: none !important; }
   #print-only.app h1 { font-size: 18pt; margin: 0 0 10pt; } #print-only.app .panel { border: 0; box-shadow: none; padding: 0; }
   #print-only.app dl.kv { display: grid; grid-template-columns: 38% 1fr; gap: 4pt 12pt; font-size: 10.5pt; } #print-only.app dt { font-weight: 700; }
-  /* Name badges, as in the church's Google Doc: A4, 20 mm margins, 2 × 5 badges of 72.8 / 73.8 × 41 mm, 3 pt lines */
-  #print-only.badges .sheet { page: badges; width: 210mm; height: 296mm; padding: 32mm 20mm 0; box-sizing: border-box; page-break-after: always; break-after: page; }
+  /* Name badges (js/badges.js): each sheet is one page, each label placed in millimetres from the top-left corner */
+  #print-only.badges .sheet { position: relative; overflow: hidden; page-break-after: always; break-after: page; }
+  #print-only.badges .sheet.a4 { page: badges; } #print-only.badges .sheet.letter { page: badgesLetter; }
   #print-only.badges .sheet:last-child { page-break-after: auto; break-after: auto; }
-  #print-only.badges table { border-collapse: collapse; table-layout: fixed; width: 146.6mm; }
-  #print-only.badges td { width: 72.8mm; height: 41mm; border: 3pt solid #000; text-align: center; vertical-align: middle; padding: 0 2mm; font-family: "Open Sans", Inter, Arial, sans-serif; color: #000; }
-  #print-only.badges td + td { width: 73.8mm; }
-  #print-only.badges td.empty { border-color: transparent; }
-  #print-only.badges td, #print-only.badges tr { background: none !important; }
-  #print-only.badges td b { display: block; font-size: 35pt; font-weight: 700; line-height: 1.15; }
-  #print-only.badges td span { display: block; font-size: 25pt; font-weight: 400; line-height: 1.2; }
-  #print-only.badges td b.long { font-size: 27pt; } #print-only.badges td b.longer { font-size: 21pt; }
-  #print-only.badges td span.long { font-size: 19pt; } #print-only.badges td span.longer { font-size: 15pt; }
   /* Invitation to become a Church Partner: an A4 poster with the QR code, and a paper form */
   #print-only.invite { font-family: Inter, Arial, sans-serif; color: #000; }
   #print-only.invite .poster { width: 190mm; margin: 12mm auto 0; text-align: center; }
@@ -771,7 +763,16 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   #print-only.invite .pf-yn { font-weight: 400; } #print-only.invite .pf-q .decl { font-size: 9pt; font-style: italic; margin: 1mm 0; }
   #print-only.invite .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8mm; }
 }
-@page badges { size: A4 portrait; margin: 0; }   /* only the badge sheets: the 20 mm margins are in .sheet itself */
+@page badges { size: A4 portrait; margin: 0; }   /* only the badge sheets: the margins are in the layout itself */
+@page badgesLetter { size: letter portrait; margin: 0; }
+/* A badge, printed or in the layout preview (People → Name badges → Badge layout) */
+.lab { position: absolute; box-sizing: border-box; border: 0 solid #000; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; padding: 0 2mm; overflow: hidden;
+  font-family: "Open Sans", Inter, Arial, sans-serif; color: #000; background: none; }
+.lab b { display: block; font-weight: 700; line-height: 1.15; white-space: nowrap; } .lab span { display: block; font-weight: 400; line-height: 1.2; white-space: nowrap; }
+.bl-prev { background: var(--surface-2); border: 1px solid var(--line); border-radius: 12px; padding: 14px; display: flex; justify-content: center; overflow: hidden; }
+.bl-page { position: relative; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.18); flex: 0 0 auto; }
+.bl-page .sheet { position: absolute; top: 0; left: 0; transform-origin: 0 0; }
+.bl-page .lab.paper { outline: 0.2mm dashed #9aa; }
 /* About → Brochures: the brochure in a frame, and its colour and font */
 .bro-wrap { background: var(--surface-2); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
 .bro-wrap iframe { display: block; width: 100%; min-height: 400px; border: 0; background: transparent; }

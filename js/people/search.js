@@ -97,6 +97,9 @@
     var mate = {};
     if (all) HS.couples(S.list('people'), S.list('families')).forEach(function (c) { var a = S.get('people', c.a), b = S.get('people', c.b); if (a && b) { mate[a.id] = mate[a.id] || b; mate[b.id] = mate[b.id] || a; } });
     add(all, TX('Personal'), 'spouse', TX('Spouse or partner'), 'text', function (p) { return mate[p.id] ? H.name(mate[p.id]) : ''; }, null, function (p) { return mate[p.id] ? H.names(mate[p.id]) : []; });
+    add(all, TX('Personal'), 'spouseCategory', TX('Spouse or partner’s category'), 'choice', function (p) { return mate[p.id] ? mate[p.id].category || '' : ''; }, CATS);
+    add(all, TX('Personal'), 'spouseGender', TX('Spouse or partner’s gender'), 'choice', function (p) { return mate[p.id] ? mate[p.id].gender || '' : ''; }, GENDERS);
+    add(all, TX('Personal'), 'spouseAge', TX('Spouse or partner’s age'), 'number', function (p) { return mate[p.id] ? age(mate[p.id]) : ''; });
     // Their care groups and midweek groups (names), for those who may see the groups: "Church Partners who aren't in a care group"
     var groupsOf = function (kind) {
       var m = {}; S.list(kind).forEach(function (g) { (g.memberIds || []).concat(g.leaderIds || []).forEach(function (id) { var l = m[id] = m[id] || []; if (l.indexOf(g.name) < 0) l.push(g.name); }); });

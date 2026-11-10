@@ -93,6 +93,18 @@
     add(roster, TX('Serving'), 'volunteer', TX('Volunteer'), 'yesno', function (p) { return sv(p).pos.length > 0; });
     add(roster, TX('Serving'), 'serviceTimes', TX('Volunteers at service'), 'list', function (p) { return serveInfoTimes(p.id); }, slotIds().map(slotName));
     add(roster, TX('Serving'), 'awaySoon', TX('Away in the next 8 weeks'), 'yesno', function (p) { return awaySoon(p.id); });
+    // Their spouse or partner (couples worked out from each household, as on their page): "partners whose wives' names begin with A"
+    var mate = {};
+    if (all) HS.couples(S.list('people'), S.list('families')).forEach(function (c) { var a = S.get('people', c.a), b = S.get('people', c.b); if (a && b) { mate[a.id] = mate[a.id] || b; mate[b.id] = mate[b.id] || a; } });
+    add(all, TX('Personal'), 'spouse', TX('Spouse or partner'), 'text', function (p) { return mate[p.id] ? H.name(mate[p.id]) : ''; }, null, function (p) { return mate[p.id] ? H.names(mate[p.id]) : []; });
+    // Their care groups and midweek groups (names), for those who may see the groups: "Church Partners who aren't in a care group"
+    var groupsOf = function (kind) {
+      var m = {}; S.list(kind).forEach(function (g) { (g.memberIds || []).concat(g.leaderIds || []).forEach(function (id) { var l = m[id] = m[id] || []; if (l.indexOf(g.name) < 0) l.push(g.name); }); });
+      return m;
+    };
+    var seesCare = all || H.can('care.view'), care = seesCare && H.isOn('care') ? groupsOf('careGroups') : null, life = all && H.isOn('life') ? groupsOf('lifeGroups') : null;
+    add(!!care, TX('Church'), 'careGroup', TX('Care group'), 'list', function (p) { return care[p.id] || []; }, care ? uniq(S.list('careGroups').map(function (g) { return g.name; })) : []);
+    add(!!life, TX('Church'), 'midweekGroup', TX('Midweek group'), 'list', function (p) { return life[p.id] || []; }, life ? uniq(S.list('lifeGroups').map(function (g) { return g.name; })) : []);
     add(all, TX('Personal'), 'lateSpouse', TX('Late spouse'), 'text', function (p) { var l = lateSpouse(p); return l ? H.name(l) : p.lateSpouseName || ''; });
     add(all, TX('Name and contact'), 'postcode', TX('Postcode'), 'text', function (p) { return (p.address || {}).postcode || ''; });
     add(all, TX('Name and contact'), 'province', TX('Province'), 'text', function (p) { return (p.address || {}).province || ''; });
@@ -175,6 +187,8 @@
     return { today: H.today(), fields: fields, services: roster, words: Wording.words(st), slotLabel: function (id) { return Serving.slotLabel(id, st); },
       slots: Serving.allSlots(st).map(function (x) { return { id: x.id, label: x.label, time: x.time }; }),
       positions: roster ? uniq(S.list('positions').map(function (x) { return x.name; })) : [], teams: roster ? uniq(S.list('teams').map(function (x) { return x.name; })) : [],
+      careGroups: fields.careGroup ? uniq(S.list('careGroups').map(function (g) { return g.name; })) : [],
+      midweekGroups: fields.midweekGroup ? uniq(S.list('lifeGroups').map(function (g) { return g.name; })) : [],
       towns: fields.town ? uniq(S.list('people').map(function (p) { return String((p.address || {}).city || '').trim(); }).filter(Boolean)) : [],
       people: roster ? S.list('people').filter(function (p) { return !p.deletedAt; }).map(function (p) { return { id: p.id, names: H.names(p) }; }) : [] };
   }

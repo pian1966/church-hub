@@ -181,6 +181,8 @@ var Store = (function () {
       'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs'];
     var DIRECTORY = 'Church directory';
     var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false;
+    /** For About → Speed check (Administrators): how long loading took and how much the database sent and was sent. */
+    var stats = { start: 0, loaded: 0, snaps: 0, rebuilds: 0, rebuildMs: 0, slowestRebuild: 0, writes: 0, sizes: {} };
     var savedLeave = { requests: {}, adjustments: {}, config: '' }, remoteTimer = null;
     var MAX_SHARED = 4;   // people who may share one sign-in (one email address); the rules allow the first and 3 others
     var local = {};   // path → what we last wrote (null = deleted), until the server confirms it
@@ -450,13 +452,14 @@ var Store = (function () {
     function subscribe() {
       db = blank(); raw = {}; ready = false; local = {};
       var sources = plan(); pending = sources.length;
+      stats.start = Date.now(); stats.loaded = 0;
       sources.forEach(function (s) {
         var first = true;
         unsubs.push(s.ref.onSnapshot(function (snap) {
           var m = {};
           if (snap.docs) snap.docs.forEach(function (d) { m[d.id] = d.data(); });
           else if (snap.exists) m[snap.id] = snap.data();
-          raw[s.key] = m;
+          raw[s.key] = m; stats.snaps++; stats.sizes[s.key] = Object.keys(m).length;
           if (s.key === 'careGroups' && !is('admin', 'pastor')) shares(Object.keys(m));
           if (s.key === 'settings') { careAll(m.church); if (!is('admin', 'pastor') && raw.careGroups) shares(Object.keys(raw.careGroups)); }
           if (!snap.metadata.hasPendingWrites) forget(s.coll);
@@ -528,7 +531,7 @@ var Store = (function () {
       if (!db.settings && role() === 'admin') return onState({ stage: 'setup', email: session.email, needChurch: true });
       if (!db.settings) return onState({ stage: 'noAccess', email: session.email, reason: 'notReady' });
       if (!meP) return onState(role() === 'admin' ? { stage: 'setup', email: session.email } : { stage: 'noAccess', email: session.email, reason: 'noPerson' });
-      ready = true;
+      ready = true; stats.loaded = Date.now();
       // My own directory entry shows my care groups when Settings asks for it (carers may have added me)
       var dirMe = (raw.directory || {})[session.personId];
       var careDir = (db.settings.seeCare || []).indexOf('member') >= 0 || Object.keys(raw.directory || {}).some(function (id) { return raw.directory[id].care; });
@@ -544,6 +547,11 @@ var Store = (function () {
     function arr(key) { var m = raw[key] || {}; return Object.keys(m).map(function (id) { var o = copy(m[id]); o.id = id; return o; }); }
     function merged() { var out = {}; Array.prototype.slice.call(arguments).forEach(function (k) { var m = raw[k] || {}; Object.keys(m).forEach(function (id) { out[id] = m[id]; }); }); return out; }
     function rebuild() {
+      var t0 = Date.now();
+      rebuildAll();
+      var ms = Date.now() - t0; stats.rebuilds++; stats.rebuildMs += ms; if (ms > stats.slowestRebuild) stats.slowestRebuild = ms;
+    }
+    function rebuildAll() {
       rev++;
       var details = merged('details', 'detailsMe'), med = raw.medical || {}, dir = raw.directory || {}, cards = raw.people || {}, shared = raw.contacts || {};
       var people = Object.keys(cards).map(function (id) {
@@ -774,6 +782,7 @@ var Store = (function () {
       if (entries.length) write(c + '/' + pid, { entries: entries }); else del(c + '/' + pid);
     }
     function put(c, obj, prev) {
+      stats.writes++;
       if (c === 'people') return putPerson(obj);
       if (c === 'careShare') { var d = copy(obj); delete d.groupId; delete d.personId; return write('careGroups/' + obj.groupId + '/share/' + obj.personId, d); }   // one card per group: id = group:person
       if (c === 'notes' || c === 'officeNotes') return putNotes(obj.personId, c);
@@ -869,6 +878,7 @@ var Store = (function () {
       return Promise.resolve();
     }
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
+      stats: function () { return JSON.parse(JSON.stringify(stats)); },
       put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -883,7 +893,13 @@ var Store = (function () {
   function syncPastors() { if (LIVE) Live.syncPastors(); }
   /** The stand-in leave approver's dates, for the database rules (live only). */
   function setStandIn(pid, from, to) { if (LIVE && !blocked()) Live.setStandIn(pid, from, to); }
-  return { resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
+  /** About → Speed check: loading and update counts (live mode), and how many records each list holds. */
+  function stats() {
+    var out = LIVE && Live.stats ? Live.stats() : {};
+    out.counts = {}; COLLECTIONS.forEach(function (c) { var n = all(c).length; if (n) out.counts[c] = n; });
+    return out;
+  }
+  return { stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */

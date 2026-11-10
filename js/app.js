@@ -383,7 +383,20 @@ var Hub = (function () {
     Store.pref('mode', sel.value || ''); applyMode();
     var inMenu = !!sel.closest('#modal'); render(); if (inMenu) { closeModal(); hubActions.menu(); }
   });
+  /** About → Speed check (Administrators): how long each page took to draw, and how long the browser was too busy to respond. */
+  var speed = { pages: [], busyMs: 0, busyLongest: 0, opened: Date.now() };
+  try {
+    if (typeof PerformanceObserver !== 'undefined' && (PerformanceObserver.supportedEntryTypes || []).indexOf('longtask') >= 0)
+      new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { speed.busyMs += e.duration; if (e.duration > speed.busyLongest) speed.busyLongest = e.duration; }); }).observe({ entryTypes: ['longtask'] });
+  } catch (e) { /* not in this browser */ }
   function render() {
+    var t0 = Date.now();
+    try { draw(); } finally {
+      var ms = Date.now() - t0;
+      if (user) { speed.pages.unshift({ page: location.hash.split('?')[0] || '#/home', ms: ms, at: Date.now() }); speed.pages.length = Math.min(speed.pages.length, 12); }
+    }
+  }
+  function draw() {
     if (switching) return;   // "View as": the right information is still loading
     if (!document.documentElement.getAttribute('data-mode')) applyMode();
     if (Store.settings && Store.settings()) applyTheme(themeOf(Store.settings())); else applyTheme();
@@ -980,7 +993,7 @@ var Hub = (function () {
     render();
   }
 
-  return { register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
+  return { speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };

@@ -78,6 +78,14 @@ For: Administrators
 Match staff to people, check the balances in the preview, and import. Running it again updates rather than doubles, so you
 can trial it and import again at switch-over.
 
+## Church Hub feels slow. What can I do?
+For: Administrators
+Also asked: It takes ages to load. Pages are slow.
+
+Straight after it was slow, open **About** and look at **Speed check**: how long opening took, how long each recent page took
+to draw, how long the browser was too busy to respond, and how many records were loaded. Send a screenshot of it to whoever
+looks after Church Hub. Closing other Church Hub tabs and using **Update now** under About can also help.
+
 ## How do I check which version we're on?
 For: Everyone
 

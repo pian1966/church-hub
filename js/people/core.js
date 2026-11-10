@@ -29,7 +29,7 @@ var PeopleParts = { actions: {} };
   var CARE_WEEKS = 8;                         // pastors see "care for the family" on their to-do list this long after a death
   function canRecordDeath() { return H.can('*') || H.can('people.edit'); }
   function deceased(p) { return !!(p && p.deceasedAt); }
-  var state = { q: '', f: 'all', audited: '', statsOpen: false, fq: '', ncAudited: '', adv: null };
+  var state = { q: '', f: 'all', audited: '', statsOpen: false, fq: '', ncAudited: '', adv: null, pick: null };   // pick: the people ticked on the People list (Administrators and the Senior Pastor), while selecting
   function canSeeAll() { return H.can('people.view') || H.can('*'); }
   function canBasic() { return canSeeAll() || H.can('people.basic'); }
   function isMe(p) { var u = H.user(); return u && p && u.id === p.id; }

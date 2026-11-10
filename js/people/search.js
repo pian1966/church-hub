@@ -435,8 +435,10 @@
     return '<div class="note ok" role="status" style="margin-bottom:12px">' + TN('Changed {field} to {value} for {n} person', 'Changed {field} to {value} for {n} people', u.items.length, { field: '<b>' + esc(u.show || T(u.label)) + '</b>', value: '<b>' + esc(u.value ? T(u.value) : T('nothing')) + '</b>' }) +
       (why.length ? ' (' + esc(T('left out: {who}', { who: why.join(', ') })) + ')' : '') + '. <button class="link" data-act="people:bulkundo">' + T('Undo') + '</button></div>';
   }
-  function bulkDialog() {
-    var ids = Object.keys(state.adv.sel || {}), F = bulkFields(), f = F[0];
+  /** ids: the people to change (Advanced search's ticked people, or those ticked on the People list). */
+  function bulkDialog(ids) {
+    state.bulkFrom = ids ? 'list' : 'adv'; ids = ids || Object.keys((state.adv && state.adv.sel) || {}); state.bulkIds = ids;
+    var F = bulkFields(), f = F[0];
     if (!ids.length) return;
     var valueBox = function (fd) {
       return fd.date ? '<input type="date" id="bk-v" max="' + H.today() + '">' :
@@ -559,7 +561,7 @@
         if (!v && !fd.blank) { err.textContent = T('Choose the new value.'); err.hidden = false; return; }
         var how = fd.consent ? document.getElementById('bk-m').value : '';
         if (fd.consent && !how) { err.textContent = T('Choose how it was given.'); err.hidden = false; return; }
-        var ids = Object.keys(state.adv.sel || {}), items = [], skipped = {}, made = [];
+        var ids = state.bulkIds || [], from = state.bulkFrom === 'list' ? 'People list' : 'Advanced search', items = [], skipped = {}, made = [];
         if (!H.confirmBtn(el, TN('Click again to change {n} person', 'Click again to change {n} people', ids.length))) return;
         H.closeModal();
         H.busy('Changing ' + ids.length + (ids.length === 1 ? ' person' : ' people') + '…', function () {
@@ -584,9 +586,9 @@
             S.put('people', q, 'Changed ' + fd.label.toLowerCase() + ' of ' + H.name(q) + ' to ' + (v || 'nothing') + ' (changing many people at once)');
             if (fd.key === 'category') P.partnerAgrees(q, p.category);   // becoming a Church Partner: Contact details agreed
           });
-          S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (Advanced search)' + (made.length ? '; ' + made.length + ' households created' : ''), 'people');
+          S.audit('Changed ' + fd.label.toLowerCase() + ' to ' + (v || 'nothing') + ' for ' + items.length + ' people at once (' + from + ')' + (made.length ? '; ' + made.length + ' households created' : ''), 'people');
           state.bulkUndo = { key: fd.key, keys: fd.keys, label: fd.label, show: fieldName(fd), consent: fd.consent || '', value: v, items: items, skipped: skipped, made: made };
-          state.adv.sel = {}; H.render(); H.toast(TN('{n} person changed', '{n} people changed', items.length));
+          if (state.bulkFrom === 'list') { if (state.pick) state.pick = {}; } else if (state.adv) state.adv.sel = {}; state.bulkIds = null; H.render(); H.toast(TN('{n} person changed', '{n} people changed', items.length));
         });
       },
     bulkundo: function () {

@@ -786,3 +786,12 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .qr-box { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
 .qr-box svg { display: block; border-radius: 6px; box-shadow: 0 0 0 1px var(--line); }
 .qr-box .qr-link { margin: 0; font-size: .82rem; color: var(--muted); word-break: break-all; max-width: 280px; text-align: center; }
+
+/* People list: ticking people (Administrators and the Senior Pastor) */
+.pick-bar { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px 12px; margin-bottom: 10px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: var(--radius); box-shadow: var(--shadow); }
+.pick-bar .pick-n { font-weight: 600; }
+.list.picking label.pp-row { display: flex; cursor: pointer; margin: 0; font-weight: normal; }
+.list.picking .pp-row input.pp-sel { width: 20px; height: 20px; flex: 0 0 auto; margin: 0 4px 0 0; accent-color: var(--accent); }
+.list.picking .pp-row.on { background: var(--accent-soft); }
+@media (max-width: 600px) { .list.picking .pp-row .pp-tags { padding-left: 80px; } }   /* in line with the name (box + picture) */
+@media print { .pick-bar { display: none; } }

@@ -94,6 +94,27 @@ var Hub = (function () {
   }
 
   /* ---------- helpers ---------- */
+  /** A small "i" that explains something: shown when the mouse is over it, when it has the keyboard's focus, or when tapped
+   *  (phones). The text floats above the page (wireTips), so tables that scroll don't cut it off. */
+  function tip(text) { return '<span class="tip" tabindex="0" role="button" aria-label="' + esc(text) + '" data-tip="' + esc(text) + '">i</span>'; }
+  var tipBox = null, tipFor = null;
+  function tipShow(el) {
+    if (!el || !el.getAttribute) return;
+    if (!tipBox) { tipBox = document.createElement('div'); tipBox.className = 'tip-box'; tipBox.setAttribute('role', 'tooltip'); document.body.appendChild(tipBox); }
+    tipFor = el; tipBox.textContent = el.getAttribute('data-tip'); tipBox.hidden = false;
+    var r = el.getBoundingClientRect(), w = Math.min(280, window.innerWidth - 24); tipBox.style.maxWidth = w + 'px';
+    var bw = tipBox.offsetWidth, bh = tipBox.offsetHeight, left = Math.max(12, Math.min(window.innerWidth - bw - 12, r.left + r.width / 2 - bw / 2));
+    var top = r.top - bh - 8 < 8 ? r.bottom + 8 : r.top - bh - 8;
+    tipBox.style.left = left + 'px'; tipBox.style.top = (top + window.scrollY) + 'px';
+  }
+  function tipHide() { if (tipBox) tipBox.hidden = true; tipFor = null; }
+  if (typeof document !== 'undefined') {
+    document.addEventListener('mouseover', function (e) { var t = e.target.closest && e.target.closest('.tip'); if (t) tipShow(t); else if (tipFor && !tipFor.contains(document.activeElement)) tipHide(); });
+    document.addEventListener('focusin', function (e) { if (e.target.classList && e.target.classList.contains('tip')) tipShow(e.target); else tipHide(); });
+    document.addEventListener('click', function (e) { var t = e.target.closest && e.target.closest('.tip'); if (t) { e.preventDefault(); e.stopPropagation(); if (tipFor === t && tipBox && !tipBox.hidden) tipHide(); else tipShow(t); } else tipHide(); }, true);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') tipHide(); });
+    window.addEventListener('scroll', tipHide, { passive: true });
+  }
   function esc(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   var DOW = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -993,7 +1014,7 @@ var Hub = (function () {
     render();
   }
 
-  return { speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
+  return { tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };

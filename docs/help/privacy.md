@@ -16,6 +16,19 @@ Also asked: Can other members see my phone number? Is my information safe?
   ministry only.
 - Read the church's **Privacy notice** (on the Me page, the sign-in screen and About).
 
+## What is the difference between Church records, Church directory and Care group?
+For: Everyone
+Also asked: What does each consent mean? Contact details consent. Do I need all of them?
+
+Tap or point at the **i** next to each one for an explanation. In short:
+- **Church records** – the basic one: the church may keep your details in Church Hub at all. It shows nothing to other members.
+- **Church directory** – your name and photo appear in the directory that everyone who signs in can see, with the contact
+  details the church allows. Church Partners agree to this when they become Church Partners.
+- **Care group** – the people in your care group may see your photo, phone, email, address and birthday.
+- **Email**, **SMS** and **Photos** – news by email or SMS, and photos of you at church events.
+Each is separate: you can agree to Church records without being in the directory, for example. Your own phone and email on
+the Me page (**Contact details**) are just your details, not a consent.
+
 ## How do I change or withdraw my consent?
 For: Everyone
 Also asked: Take me out of the directory. Unsubscribe. Stop messages.

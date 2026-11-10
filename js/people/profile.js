@@ -171,12 +171,12 @@
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Consent') + '</h2>' + H.icon(H.ICON.privacy, 18) + '</div><p class="hint" style="margin:4px 0 10px">' + (me ? T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) : esc(T('What {name} has agreed to, as {law} requires.', { name: p.firstName, law: PrivacyLaw.forChurch(S.settings()).short }))) + (child ? ' ' + T('A parent or guardian gives consent for children.') : '') + '</p>' +
         '<div class="list">' + PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; }).map(function (pur) {
           var c = consentFor(p.id, pur);
-          return '<div class="item"><span class="grow"><b>' + esc(T(P.purposeName(pur))) + '</b><small>' + (c ? esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) }) + ' · ' + T(c.method) + (c.guardianId ? ' · ' + T('by {name}', { name: H.name(S.get('people', c.guardianId)) }) : '')) : T('Not asked yet')) + '</small></span>' +
+          return '<div class="item"><span class="grow"><b>' + esc(T(P.purposeName(pur))) + '</b> ' + P.purposeTip(pur) + '<small>' + (c ? esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) }) + ' · ' + T(c.method) + (c.guardianId ? ' · ' + T('by {name}', { name: H.name(S.get('people', c.guardianId)) }) : '')) : T('Not asked yet')) + '</small></span>' +
             (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag bad">' + T('Missing') + '</span>') + '</div>';
         }).join('') + '</div>' +
         (child ? '' : '<h3 style="margin:16px 0 6px;font-size:.95rem">' + T('Would like to receive') + '</h3><div class="list">' + RECEIVE_P.map(function (pur) {
           var c = consentFor(p.id, pur);
-          return '<div class="item"><span class="grow"><b>' + esc(T(P.purposeName(pur))) + '</b>' + (c ? '<small>' + esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) })) + '</small>' : '') + '</span>' +
+          return '<div class="item"><span class="grow"><b>' + esc(T(P.purposeName(pur))) + '</b> ' + P.purposeTip(pur) + '' + (c ? '<small>' + esc(T(c.given ? 'Agreed {date}' : 'Declined {date}', { date: H.fmt(c.date, true) })) + '</small>' : '') + '</span>' +
             (c && c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : c ? '<span class="tag grey">' + T('No') + '</span>' : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
         }).join('') + '</div>') +
         '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="people:consent" data-id="' + p.id + '">' + T(me ? 'Change my choices' : 'Record consent') + '</button></div></section>';

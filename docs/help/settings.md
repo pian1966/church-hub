@@ -27,9 +27,14 @@ screens use your words (in English); stored records don't change.
 For: Administrators
 Also asked: Can members see phone numbers? Who can see what.
 
-**Settings → Who can see what**. Everyone sees the names of people who agreed to share their contact details. Tick what
-else each role may see (mobile, email, address, spouse). Administrators and Pastors always see everything. The **Care
-groups** ticks are here too ([care-groups.md](care-groups.md)).
+**Settings → Who can see what** has three parts:
+1. **What each kind of access can do** – and how many people have each (tap the number to see who).
+2. **Other people's contact details** – a grid: tick which details (mobile, email, home address, spouse) each kind of access
+   sees of people in the church directory. Everyone sees their name and photo.
+3. **Care groups** – what each kind of access sees of the care groups: all groups and who is in each, which group someone is
+   in on their page in People, and everyone in their own group.
+Ticks save by themselves. Point at or tap an **i** for an explanation. Administrators and Pastors always see everything.
+The Rector (Senior Pastor) can change these too if **What Pastors can do** gives them **Settings**.
 
 ## What can Pastors do? Who is the Senior Pastor (Rector)?
 For: Administrators

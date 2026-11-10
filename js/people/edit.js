@@ -129,6 +129,8 @@
         '<div class="two"><label class="field req" id="pf-fam-f">' + T('Household') + '<select class="findable" id="pf-fam"><option value="">' + T('Choose…') + '</option><option value="__new">' + T('+ New household…') + '</option>' + fams.slice().sort(function (a, b) { return H.familyName(a).localeCompare(H.familyName(b)); }).map(function (f) { return '<option value="' + f.id + '"' + (p.familyId === f.id ? ' selected' : '') + '>' + esc(H.familyName(f)) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field req">' + T('In the household as') + '<select id="pf-frole">' + (p.familyRole ? '' : '<option value="" selected>' + T('Choose…') + '</option>') + '<option value="adult"' + (p.familyRole === 'adult' ? ' selected' : '') + '>' + T('Adult') + '</option><option value="child"' + (p.familyRole === 'child' ? ' selected' : '') + '>' + T('Child (under 18)') + '</option></select></label></div>' +
         '<label class="field req" id="pf-marital-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Marital status') + '<select id="pf-marital"><option value="">' + T('Choose…') + '</option>' + MARITAL.map(function (m) { return '<option value="' + m + '"' + (p.maritalStatus === m ? ' selected' : '') + '>' + esc(T(m)) + '</option>'; }).join('') + '</select><small>' + T('For pastoral care. Choose “Not known” if you don’t know.') + '</small></label>' +
+        // Next to marital status: the wedding anniversary and late spouse, greyed out when they don't apply (offBox)
+        '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Wedding anniversary') + '<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' +
         (admin ? lateSpouseField(p) : '') +
         (!isNew && canRecordDeath() && (deceased(p) || p.category === 'Deceased') ? '<div class="two"><label class="field req">' + T('Date of death') + '<input type="date" id="pf-died" max="' + H.today() + '" value="' + esc(p.deceasedAt || '') + '"></label>' +
           '<label class="field">' + T('Funeral or memorial') + '<input type="date" id="pf-funeral" value="' + esc(keyDate(p, /^funeral$/i)) + '"></label></div>' : '') +
@@ -142,7 +144,7 @@
               '<div class="two"><label class="field"><span id="pf-region-l">' + T(c ? c.regionLabel : 'Province, state or region') + '</span><span id="pf-region-w">' + regionControl(c, a.province || '') + '</span></label>' +
               '<label class="field">' + T('Country') + countrySelect(a.country || '') + '</label></div></fieldset>';
           })(p.address || {}) +
-        '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Wedding anniversary') + '<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' : '') +
+        '' : '') +
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
       (roleChoices(p).length ? '<label class="field">' + T('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') +
         (Store.isLive() && signsInWith(p).length ? ' <b>' + esc(T('{names} also signs in with this email address: after signing in, they choose who is using Church Hub.', { names: signsInWith(p).map(H.name).join(', ') })) + '</b>' : '') + '</small></label>' : '') +
@@ -184,8 +186,29 @@
     };
     [bi, wi, mi].forEach(function (x) { if (x) { x.addEventListener('input', live); x.addEventListener('change', live); } });
     live();
+    // Boxes that don't apply are greyed out, with the reason: no wedding anniversary for someone single, engaged, living with a
+    // partner or divorced; no late spouse for someone single or engaged. What was saved before is kept, not wiped.
+    var fit = function () {
+      var m = mi ? mi.value : '', child = fr && fr.value === 'child';
+      offBox('pf-wed', !child && NO_WEDDING.indexOf(m) >= 0, m);
+      if (wi && wi.disabled) { var wn = document.getElementById('pf-wed-n'); if (wn) wn.textContent = ''; } else live();
+      offBox('pf-late', !child && NO_LATE.indexOf(m) >= 0, m);
+      if (mi && ltf && m === 'Widowed') ltf.hidden = false;
+    };
+    if (mi) mi.addEventListener('change', fit);
+    if (fr) fr.addEventListener('change', fit);
+    fit();
   }
 
+  var NO_WEDDING = ['Single', 'Engaged', 'Partner', 'Divorced'], NO_LATE = ['Single', 'Engaged'];
+  /** Grey a box out (and say why) when it doesn't apply to this person, or bring it back. */
+  function offBox(id, off, status) {
+    var el = document.getElementById(id), lab = el && el.closest('.field'); if (!lab) return;
+    el.disabled = off; lab.classList.toggle('is-off', off);
+    var why = lab.querySelector('.off-why');
+    if (off && !why) { why = document.createElement('small'); why.className = 'off-why'; lab.appendChild(why); }
+    if (why) { why.hidden = !off; why.textContent = off ? T('Not needed – marital status is {status}.', { status: T(status) }) : ''; }
+  }
   /** Administrators: who a widow or widower was married to – someone in Church Hub who has died, or a name. */
   function lateSpouseField(p) {
     var cur = lateSpouse(p), show = p.familyRole !== 'child' && (p.maritalStatus === 'Widowed' || cur || p.lateSpouseName);
@@ -231,7 +254,7 @@
     var purposes = PURPOSES.filter(function (x) { return child ? (x === 'Church records' || x === 'Photos' || x === 'Children’s medical notes') : x !== 'Children’s medical notes'; });
     H.modal(H.dialogHead(me ? T('My privacy choices') : T('Consent for {name}', { name: H.name(p) }), T(me ? 'Tick what you agree to. Unticking withdraws consent from today.' : 'Tick what they agree to. Unticking withdraws consent from today.')) +
       '<div class="dlg-body">' + purposes.map(function (pur, i) {
-        return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(pur) + '"' + (hasConsent(p.id, pur) ? ' checked' : '') + '><span><b>' + esc(T(P.purposeName(pur))) + '</b><br><span class="muted small">' + esc(T({
+        return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(pur) + '"' + (hasConsent(p.id, pur) ? ' checked' : '') + '><span><b>' + esc(T(P.purposeName(pur))) + '</b> ' + P.purposeTip(pur) + '<br><span class="muted small">' + esc(T({
           'Church records': 'Keep their details on the church database.', 'Email': 'Church news and information by email.', 'SMS': 'Reminders and urgent news by SMS.',
           'Church directory': 'My name, phone, email and home address may be seen by church staff and leaders, and by members as far as the church allows.', 'Care group': 'Photo, phone, email, address and birthday shared with my care group.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
       }).join('') +
@@ -277,7 +300,7 @@
         if (unknown(em)) p.emailUnknown = true; else delete p.emailUnknown;
         if (unknown(mo)) p.mobileUnknown = true; else delete p.mobileUnknown;
         if (g('pf-birth') !== null) p.birthDate = g('pf-birth');
-        if (g('pf-wed') !== null) {
+        if (g('pf-wed') !== null && !document.getElementById('pf-wed').disabled) {   // greyed out (e.g. Single): left as it was
           if (g('pf-wed') > H.today()) { err.textContent = T('The wedding anniversary can’t be in the future.'); err.hidden = false; return; }
           p.keyDates = (p.keyDates || []).filter(function (k) { return !WEDDING.test(k.label || ''); });
           if (g('pf-wed') && g('pf-frole') !== 'child') p.keyDates.push({ label: 'Wedding anniversary', date: g('pf-wed') });

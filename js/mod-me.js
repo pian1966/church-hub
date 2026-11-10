@@ -85,7 +85,7 @@
     html += '<section class="panel"><h2>' + T('Consent') + '</h2><p class="hint" style="margin:0 0 10px">' + T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) + '</p><div class="list">' +
       PURPOSES.map(function (pur) {
         var c = cf(p.id, pur);
-        return '<div class="item"><span class="grow"><b>' + esc(T(window.PeopleParts ? PeopleParts.purposeName(pur) : pur)) + '</b></span>' + (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
+        return '<div class="item"><span class="grow"><b>' + esc(T(window.PeopleParts ? PeopleParts.purposeName(pur) : pur)) + '</b> ' + (window.PeopleParts ? PeopleParts.purposeTip(pur) : '') + '</span>' + (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
       }).join('') + '</div><div class="btns" style="margin-top:12px"><button class="btn" data-act="people:consent" data-id="' + esc(p.id) + '">' + T('Change my choices') + '</button> <button class="btn" data-act="hub:notice">' + T('Privacy notice') + '</button></div></section>';
     // Signing out and the language are in the menu (left on a computer, ☰ on a phone); here only notes about this device
     var device = (I18n.isDraft() ? '<p class="hint">' + T('This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.') + '</p>' : '') +

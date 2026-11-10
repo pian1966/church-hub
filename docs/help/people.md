@@ -23,7 +23,9 @@ type if a similar person is already there.
 ## How do I change someone's details?
 For: Administrators, Pastors
 
-Open the person and tap **Edit details**. Save when you're done.
+Open the person and tap **Edit details**. Save when you're done. Boxes that don't apply are greyed out with the reason –
+for example **Wedding anniversary** when the marital status is Single, Engaged, Partner or Divorced. Whatever was saved in a
+greyed-out box is kept.
 
 ## How do I give someone access to Church Hub?
 For: Administrators (Pastors if allowed)

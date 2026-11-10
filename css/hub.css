@@ -709,3 +709,16 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 
 /* reCAPTCHA (App Check for Ask with AI): its badge is hidden; Ask shows Google's notice in words instead, as Google allows */
 .grecaptcha-badge { visibility: hidden !important; }
+/* Edit details: a box that doesn't apply to this person (e.g. a wedding anniversary for someone single) */
+.field.is-off { opacity: .55; }
+.field.is-off input, .field.is-off select { cursor: not-allowed; }
+.field .off-why { display: block; font-style: italic; }
+/* "i" tips (Hub.tip): a small round mark; the explanation floats above the page */
+.tip { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; border: 1px solid var(--line-strong);
+  color: var(--muted); font: italic 700 11px/1 Georgia, serif; cursor: help; vertical-align: 2px; margin-left: 2px; user-select: none; }
+.tip:hover, .tip:focus { color: var(--ink); border-color: var(--ink); outline: none; }
+.tip-box { position: absolute; z-index: 1000; background: var(--ink); color: var(--surface); padding: 8px 11px; border-radius: 8px; font-size: 13px; line-height: 1.45;
+  box-shadow: 0 6px 20px rgba(0,0,0,.18); pointer-events: none; }
+/* Who can see what: a grid of ticks, one column per kind of access */
+.see-grid td.c, .see-grid th.c, #access-kinds .c { text-align: center; }
+.see-grid td:first-child { min-width: 180px; }

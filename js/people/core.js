@@ -192,7 +192,18 @@ var PeopleParts = { actions: {} };
     return f === 'email' ? '<a href="mailto:' + esc(v) + '" target="_blank" rel="noopener">' + esc(v) + '</a>' : '<a href="tel:' + esc(v.replace(/\s/g, '')) + '">' + esc(v) + '</a>';
   }
   /** Consent "Church directory" is shown as Contact details (name, phone, email and address shared with staff and leaders). */
-  function purposeName(pur) { return pur === 'Church directory' ? 'Contact details' : pur; }
+  function purposeName(pur) { return pur; }   // (until 0.44 "Church directory" was shown as "Contact details", which was easy to mix up)
+  /** What each consent means, for the "i" next to it (Hub.tip) – how they differ, and what each one does in Church Hub. */
+  var PURPOSE_TIP = {
+    'Church records': TX('The basic agreement: the church may keep their details in Church Hub at all. It doesn’t show anything to other members.'),
+    'Email': TX('Church news and information by email. The weekly notices and prayer emails are chosen separately, under “Would like to receive”.'),
+    'SMS': TX('Reminders and urgent news by SMS.'),
+    'Church directory': TX('Puts their name and photo in the church directory that everyone who signs in can see, with the contact details the church allows (Settings → Who can see what). Church Partners agree to this when they become Church Partners.'),
+    'Care group': TX('Lets the people in their care group see their photo, phone, email, address and birthday. Without it the group sees only their name.'),
+    'Photos': TX('Photos of them taken at church events may be used, e.g. in the notices or on the website. Not the same as their own photo in Church Hub.'),
+    'Children’s medical notes': TX('Allergies and medical notes kept so that leaders can keep the child safe. Only Children’s ministry can see them.')
+  };
+  function purposeTip(pur) { return PURPOSE_TIP[pur] ? H.tip(T(PURPOSE_TIP[pur])) : ''; }
   function first(id) { var q = S.get('people', id); return q ? (q.preferredName || q.firstName) : ''; }
   /* ---------- volunteering ---------- */
   function slotName(id) { return Serving.slotLabel(id, S.settings()); }
@@ -222,5 +233,5 @@ var PeopleParts = { actions: {} };
   function keyDate(p, re) { var k = (p.keyDates || []).filter(function (x) { return re.test(x.label || ''); })[0]; return k ? k.date : ''; }
   function uniq(a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }).sort(function (x, y) { return String(x).localeCompare(String(y)); }); }
 
-  Object.assign(P, { memo: memo, memoLater: memoLater, partnerAgrees: partnerAgrees, partnersUnrecorded: partnersUnrecorded, PARTNER_AGREED: PARTNER_AGREED, purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
+  Object.assign(P, { purposeTip: purposeTip, memo: memo, memoLater: memoLater, partnerAgrees: partnerAgrees, partnersUnrecorded: partnersUnrecorded, PARTNER_AGREED: PARTNER_AGREED, purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
 })(PeopleParts);

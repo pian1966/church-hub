@@ -170,6 +170,13 @@ the link from the email (Google's sign-in pop-up and email links can't open insi
 `window.churchHubBack()` lets the back button close a dialog first.
 
 ## Contact details by role (Settings → Who can see what)
+The page has three panels (0.44): *What each kind of access can do* (with who has it), *Other people's contact details* (a grid:
+rows = mobile, email, address, spouse; columns = Basic access, Roster coordinator, Children's ministry) and *Care groups* (a grid of
+what each may see). The last two save together by themselves (`data-autoscope`). Each choice has an "i" tip (`Hub.tip`).
+**Care group on a person's page** (`settings.careOnPeople`, Basic access): the "Care group member · …" tag on people's pages and in
+the directory, decided separately from the Care groups page (`seeCare` has 'member'); not set yet = follows `seeCare` as before.
+Either one makes `syncDirectory` put the groups (names only) on `directory/{id}.care` (`careForMembers` in `js/store.js`).
+
 `settings.seeOthers` = { member: [...], rosters: [...], kids: [...] } with any of mobile, email, address, spouse (name only when
 empty, the default). `Store` syncDirectory writes `directory/{id}` (name, photo + the member list) and `contacts/{id}`
 (address, spouse – if Roster coordinators or Children's ministry may see them) for adults with the "Church directory"
@@ -517,3 +524,14 @@ Catholic Parish Priest / Assistant Priest; otherwise "Senior" / "Assistant" + th
   options, real dates and numbers, and logic that fits; everything else goes to `refused` / `unknown`. People named in
   service questions are matched on the device. The result has the same shape as `Ask.parse`, so `people/search.js` uses it the
   same way (`useAnswer`); if the call fails, `Ask.parse` is used and the screen says so.
+
+## Explanations ("i" tips) and the consent names
+`Hub.tip(text)` draws a small "i"; its text floats above the page on hover, keyboard focus or a tap (`tipShow` in `js/app.js`).
+Consents use their own names everywhere – "Church directory" is no longer shown as "Contact details" (which was also the name of
+a person's own phone and email on the Me page) – and each has an explanation (`PURPOSE_TIP` in `js/people/core.js`), on the consent
+form, a person's page and Me.
+
+## Edit details: boxes that don't apply
+`offBox()` in `js/people/edit.js` greys out a box (disabled, with the reason) when it doesn't apply: the wedding anniversary for
+Single, Engaged, Partner and Divorced; the late spouse for Single and Engaged. A greyed-out box isn't saved, so what was there stays.
+The wedding anniversary sits right under marital status.

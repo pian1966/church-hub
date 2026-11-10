@@ -14,6 +14,7 @@
  *   words: Wording.words(settings) – e.g. partner: ['Parishioner', 'Parishioners']
  *   slots: [{ id, label, time }] – the church's services; positions, teams: [names]; towns: [names]
  *   people: [{ id, names: ['Andy Pike', 'Andrew Pike'] }] – for "where Andy Pike is serving"
+ *   careGroups, midweekGroups: [names] – for "in the Hilton care group"
  *   today: 'yyyy-mm-dd'
  * said: what was understood, as [text, values] pairs for the screen (translated there); refused: fields this role can't use.
  */
@@ -95,6 +96,23 @@ var Ask = (function () {
       if (!F[field]) { if (out.refused.indexOf(field) < 0) out.refused.push(field); return; }
       out.filters.push(Object.assign({ field: field, op: op, value: value == null ? '' : value, at: off }, extra || {}));
     };
+    // Their spouse or partner: "whose wives' names begin with A", "whose spouse's first name starts with the letter J",
+    // "married to Megan", "whose husband is called David" (before the categories, so "partner's name" isn't read as Church Partner)
+    var MATE = '(?:wives|wife|husbands?|spouses?|partners?)';
+    R.take(new RegExp('\\b(?:(?:whose|with|who have|that have|having)\\s+)?(?:their\\s+|a\\s+)?' + MATE + '(?:\'s|s\'|\')?\\s+(?:first\\s*|given\\s+|christian\\s+)?names?\\s+' +
+      '(?:that\\s+|which\\s+|is\\s+|are\\s+)?(?:begins?|beginning|starts?|starting|start)\\s+with\\s+(?:the\\s+letters?\\s+|letters?\\s+)?([a-z\'\\-]+)\\b', 'g'),
+      function (a, off) { add('spouse', 'starts', a[1], off); });
+    R.take(new RegExp('\\b(?:(?:whose|with a|with|who have a|that have a)\\s+' + MATE + '(?:\\s+is)?\\s+(?:called|named)|married to|(?:whose|with a)\\s+' + MATE + '\\s+is)\\s+([a-z\'\\-]+(?:\\s+[a-z\'\\-]+)?)\\b', 'g'),
+      function (a, off) { if (/^(a|an|the|not|in|over|under)$/.test(a[1].split(' ')[0])) return false; add('spouse', 'has', a[1].replace(/\s+(who|that|and|with|in|on)$/, ''), off); });
+    // Care groups and midweek groups: "who don't belong to a care group", "in a Bible study", "in the Hilton care group"
+    [['careGroup', '(?:care\\s*groups?)', ctx.careGroups], ['midweekGroup', '(?:midweek\\s+groups?|bible\\s+stud(?:y|ies)(?:\\s+groups?)?|life\\s*groups?|connect\\s+groups?|small\\s+groups?|home\\s+groups?|cell\\s+groups?)', ctx.midweekGroups]].forEach(function (x) {
+      var f = x[0], w = x[1];
+      (x[2] || []).slice().sort(function (a, b) { return b.length - a.length; }).forEach(function (n) {
+        R.take(new RegExp('\\b' + NOT + '(?:in|belong(?:s|ing)? to|part of|members? of|attend(?:s|ing)?|go(?:es)? to)\\s+(?:the\\s+)?' + rx(String(n).toLowerCase()) + '(?:\\s+' + w + ')?\\b', 'g'), function (a, off) { add(f, a[1] ? 'ninc' : 'inc', n, off); });
+      });
+      R.take(new RegExp('\\b(?:(?:don\'t|do not|doesn\'t|does not|who don\'t|who do not|that don\'t|that do not|not|aren\'t|are not|isn\'t|is not|without|with no|have no|has no|never)\\s+(?:yet\\s+)?(?:belong(?:ing|s)?\\s+to|in|part of|members? of|attend(?:ing)?|go(?:ing)? to|have|has|got)?\\s*(?:an?\\s+|any\\s+)?' + w + '|(?:no|not in a|not in any)\\s+' + w + ')\\b', 'g'), function (a, off) { add(f, 'empty', '', off); });
+      R.take(new RegExp('\\b(?:(?:who|that)\\s+)?(?:are\\s+|is\\s+)?(?:belong(?:ing|s)?\\s+to|in|part of|members? of|attend(?:s|ing)?|go(?:es|ing)? to|with|have|has)\\s+(?:an?\\s+|any\\s+)' + w + '\\b', 'g'), function (a, off) { add(f, 'nempty', '', off); });
+    });
     // Has / hasn't got something: "without an ID number", "do have a home address", "no email"
     R.take(new RegExp('\\b(?:(without|with no|with out|not having|don\'t have|do not have|does not have|doesn\'t have|dont have|have no|has no|missing|lacking|lack|no)|(with|having|who have|that have|do have|does have|have|has|who has|that has))\\s+(?:an?\\s+|any\\s+|their\\s+|a valid\\s+|valid\\s+)?' + HAS_THING + '\\b(?!\\s+(?:in|on|this|next|during|coming|between|before|after|later|of)\\b)', 'g'), function (a, off) {
       var thing = a[3], f = (THING_FIELD.filter(function (x) { return x[0].test(thing); })[0] || [])[1]; if (!f) return false;

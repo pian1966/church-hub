@@ -299,7 +299,16 @@ hidden where neither exists (e.g. Firefox). The words heard are only put in the 
 - **Name badges** (People → Name badges, a Home to-do): "Make a name badge" when adding someone, or the button on their page
   (`badgeWanted`, `badgePrinted` on their details). Print lays them out like the church's Google Doc – A4, 20 mm margins,
   2 × 5 badges of 72.8 / 73.8 × 41 mm with 3 pt lines, first name bold 35 pt and surname 25 pt in Open Sans (`@page badges`).
-  Mark as printed takes them off the list.
+  Mark as printed takes them off the list. From **Advanced search**, Administrators and Pastors print badges for the people
+  ticked (or everyone found), sorted by first name, on the same sheets (long names get a smaller size so they fit).
+- **Inviting people to apply**: from a person's page (Invite to become a Church Partner) or Advanced search (Invite … to apply).
+  The dialog leaves out Church Partners, children and people no longer at the church, names those without an email address,
+  and can give Basic access to those who can't sign in yet (Administrators, and Pastors who may give access). The email goes
+  through the church's email choice (Gmail or the computer's mail app, `Emails.makeSendUrl`); several people go in Bcc, with the
+  office address as To. Each invited person gets `partnerInvited` (the date) on their details, shown on their page.
+  The link is the site address + `#/people/apply`; `app.js` remembers it through signing in (pref `afterSignIn`, for a day).
+  The Partnership applications page has the QR code (`js/qr.js`, our own encoder – byte mode, level M, versions 1–10, checked
+  against segno in `tests/qr.test.js`), Copy the link, an A4 poster and a paper form with the same questions.
 
 ## When someone dies
 Administrators and Pastors use **Record a death** on the person's profile (date, optional funeral date, optional pastoral note,

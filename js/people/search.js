@@ -362,7 +362,10 @@
     var nSel = Object.keys(sel).length;
     return html + '<section class="panel" id="adv-result">' + bulkUndoNote() + '<div class="row" style="justify-content:space-between;flex-wrap:wrap;gap:8px"><h2 style="margin:0">' + TN('{n} person found', '{n} people found', r.rows.length) + '</h2>' +
       '<div class="btns">' + (bulk && r.rows.length ? '<button class="btn small' + (nSel ? ' primary' : '') + '" data-act="people:bulk"' + (nSel ? '' : ' disabled') + ' id="adv-bulk">' + (nSel ? T('Change {n} selected…', { n: nSel }) : T('Change selected…')) + '</button>' : '') +
-      (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + T('Download (CSV)') + '</button>' : '') + '</div></div>' +
+      (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + T('Download (CSV)') + '</button>' : '') +
+      // For the ticked people, or everyone found: name badges to print, and an invitation to become a Church Partner
+      (r.rows.length && (H.can('*') || H.can('people.edit')) ? '<button class="btn small" data-act="people:advbadges">' + (nSel ? T('Name badges for {n} ticked', { n: nSel }) : T('Name badges for everyone found')) + '</button>' +
+        (P.invite && window.QR ? '<button class="btn small" data-act="people:advinvite">' + (nSel ? T('Invite {n} ticked to apply', { n: nSel }) : T('Invite everyone found to apply')) + '</button>' : '') : '') + '</div></div>' +
       (r.rows.length > 1 ? '<div style="margin-top:8px">' + sortSwitch() + '</div>' : '') +
       '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · ' + T('and') + ' ' : A.match === 'any' ? ' · ' + T('or') + ' ' : ' · ')) + (A.match === 'logic' ? ' · ' + esc(T('Logic: {logic}', { logic: A.logic })) : '') : T('Everyone')) +
       (A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; }) ? '' : ' · ' + T('people who have left or died are left out unless you search on Status')) + '</p>' +
@@ -376,6 +379,12 @@
   }
   /* ---------- changing many people at once (Administrators): tick people in the results, then one field for all of them ---------- */
   function canBulk() { return H.can('*'); }
+  /** The people an action on the results is for: those ticked, or everyone found. */
+  function advPicked() {
+    var r = advRun(searchFields()); if (r.error) return [];
+    var sel = state.adv.sel || {}, ticked = r.rows.filter(function (x) { return sel[x.id]; });
+    return (ticked.length ? ticked : r.rows).map(function (x) { return x.p; });
+  }
   /** What can be changed for many people at once. Things with their own steps (a death, sign-in access, households) can't. */
   /** What can be changed for many people at once. Each says which people it leaves alone (skip) and how it changes a person (set). */
   function bulkFields() {
@@ -532,6 +541,14 @@
     },
     advreset: function () { state.adv = emptyAdv(); state.ask = null; idNums = null; H.render(); },
     advsort: function (el) { var A = state.adv; if (A.sort === el.dataset.k) A.dir = -A.dir; else { A.sort = el.dataset.k; A.dir = 1; } H.render(); },
+    /** Advanced search → Name badges / Invite: the ticked people, or everyone found. */
+    advbadges: function () {
+      var list = advPicked(); if (!list.length) return;
+      list.sort(P.SORTS.first.cmp);
+      S.audit('Printed name badges from Advanced search: ' + list.length, 'people');
+      P.printOnly(P.badgeSheets(list), 'badges');
+    },
+    advinvite: function () { var list = advPicked(); if (list.length) P.invite(list.map(function (p) { return p.id; })); },
     advcsv: function () { advCsv(); },
     bulk: function () { if (canBulk()) bulkDialog(); },
     bulksave: function (el) {

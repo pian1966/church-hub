@@ -112,6 +112,7 @@
     }
     var list = S.list('partnerApps').slice().sort(function (x, y) { return (x.status === 'waiting') !== (y.status === 'waiting') ? (x.status === 'waiting' ? -1 : 1) : (y.createdAt || '') < (x.createdAt || '') ? -1 : 1; });
     return back + '<div class="page-head"><div><h1>' + T('Partnership applications') + '</h1><p class="lead">' + T('Sent from people’s own page. Accepting makes them a Church Partner.') + '</p></div></div>' +
+      invitePanel() +
       (list.length ? list.map(function (a) { return appCard(a, false); }).join('') : '<p class="empty">' + T('No applications yet.') + '</p>') +
       (H.can('*') ? declPanel() : '');
   }
@@ -156,7 +157,11 @@
     for (var i = 0; i < list.length; i += 10) {
       var cells = list.slice(i, i + 10), rows = '';
       for (var r = 0; r < 5; r++) {
-        rows += '<tr>' + [0, 1].map(function (c) { var p = cells[r * 2 + c]; return p ? '<td><b>' + esc(p.preferredName || p.firstName) + '</b><span>' + esc(p.lastName) + '</span></td>' : '<td class="empty"></td>'; }).join('') + '</tr>';
+        rows += '<tr>' + [0, 1].map(function (c) {
+          var p = cells[r * 2 + c]; if (!p) return '<td class="empty"></td>';
+          var f = p.preferredName || p.firstName || '', l = p.lastName || '', size = function (t, a, b) { return t.length > b ? ' class="longer"' : t.length > a ? ' class="long"' : ''; };   // long names: smaller, so they fit
+          return '<td><b' + size(f, 9, 12) + '>' + esc(f) + '</b><span' + size(l, 13, 17) + '>' + esc(l) + '</span></td>';
+        }).join('') + '</tr>';
       }
       out += '<div class="sheet"><table>' + rows + '</table></div>';
     }
@@ -175,7 +180,100 @@
     S.put('people', p, why);
   }
 
+  /* ---------- inviting people to apply: by email, a QR code to scan, a poster and a paper form ----------
+   * The form is on the person's own page, so they need to be able to sign in: inviting someone without access can give them
+   * Basic access (Administrators, and Pastors who may give access). Their details get partnerInvited (the date), shown on
+   * their page. The link is this Church Hub's address + #/people/apply; it is remembered through signing in (app.js). */
+  function applyLink() { return location.origin + location.pathname.replace(/index\.html$/, '') + '#/people/apply'; }
+  function canGiveAccess() { return H.can('*') || H.can('access.manage'); }
+  function signsIn(p) { return !!(p.email && p.appRole && p.appRole !== 'none'); }
+  function partnerWord() { var w = (window.Wording && Wording.words(S.settings() || {}).partner) || []; return w[0] || T('Church Partner'); }
+  function inviteText(names) {
+    var st = S.settings() || {};
+    return T('Dear {name},', { name: names }) + '\n\n' + T('Thank you for being part of {church}. We would love to invite you to become a {partner}: you can vote at church meetings, and lead or teach in the church.', { church: st.churchName || '', partner: partnerWord() }) +
+      '\n\n' + T('You can apply in Church Hub, on your phone or computer:') + '\n' + applyLink() + '\n\n' + T('Sign in with your email address, answer a few questions and send it. A Pastor will be in touch.') + '\n\n' + T('With love,') + '\n' + (st.churchName || '');
+  }
+  /** The invitation for one or more people (ids): who it reaches, Basic access for those who can't sign in yet, the email. */
+  function invite(ids) {
+    var all = ids.map(function (id) { return S.get('people', id); }).filter(Boolean), can = all.filter(mayApply), skip = all.length - can.length;
+    var noEmail = can.filter(function (p) { return !p.email; }), noAccess = can.filter(function (p) { return p.email && !signsIn(p); });
+    var to = can.filter(function (p) { return p.email; }), one = to.length === 1;
+    var who = one ? (to[0].preferredName || to[0].firstName) : T('friends');
+    H.modal(H.dialogHead(T('Invite to become a {partner}', { partner: partnerWord() }), TN('{n} person', '{n} people', can.length)) + '<div class="dlg-body" data-noauto>' +
+      (skip ? '<p class="hint" style="margin-top:0">' + TN('{n} person is left out: already a Church Partner, a child, or no longer at the church.', '{n} people are left out: already Church Partners, children, or no longer at the church.', skip) + '</p>' : '') +
+      (noEmail.length ? '<p class="note warn" style="margin-top:0">' + TN('{n} has no email address, so can’t get the email or sign in: {names}. Show them the QR code, or give them a paper form.', '{n} have no email address, so can’t get the email or sign in: {names}. Show them the QR code, or give them a paper form.', noEmail.length).replace('{names}', esc(noEmail.map(H.name).join(', '))) + '</p>' : '') +
+      (noAccess.length ? (canGiveAccess() ? '<label class="check"><input type="checkbox" id="iv-access" checked><span>' + TN('Give {n} person Basic access, so they can sign in with their email address and apply', 'Give {n} people Basic access, so they can sign in with their email address and apply', noAccess.length) + '</span></label>'
+        : '<p class="note warn">' + TN('{n} can’t sign in yet. Ask an Administrator to give them Basic access first.', '{n} can’t sign in yet. Ask an Administrator to give them Basic access first.', noAccess.length) + '</p>') : '') +
+      (to.length ? '<label class="field">' + T('Subject') + '<input id="iv-sub" value="' + esc(T('Become a {partner} at {church}', { partner: partnerWord(), church: (S.settings() || {}).churchName || '' })) + '"></label>' +
+        '<label class="field">' + T('Message') + '<textarea id="iv-body" rows="9">' + esc(inviteText(who)) + '</textarea>' + (one ? '' : '<small>' + T('Sent as one email, with everyone in Bcc so they don’t see each other’s addresses.') + '</small>') + '</label>' : '') +
+      '</div><div class="dlg-foot"><button class="btn" data-act="people:inviteqr">' + T('Show the QR code') + '</button>' +
+      (to.length ? '<button class="btn primary" data-act="people:invitesend" data-ids="' + esc(can.map(function (p) { return p.id; }).join(',')) + '">' + T('Email the invitation') + '</button>' : '') + '</div>', T('Invite'));
+  }
+  /** The QR code for the form (to scan with a phone camera) and the link, with a button to copy it. */
+  function qrBlock(px) { return '<div class="qr-box">' + QR.svg(applyLink(), { px: px || 200 }) + '<p class="qr-link">' + esc(applyLink()) + '</p></div>'; }
+  function invitePanel() {
+    if (!canReview() || !window.QR) return '';
+    return '<section class="panel" id="app-invite" data-noauto><h2>' + T('Invite people') + '</h2><p class="hint" style="margin-top:0">' + T('Send the form by email from someone’s page, or tick people in Advanced search and choose Invite. For the welcome desk: the QR code below, a poster, or a paper form. To apply in Church Hub, people need to be able to sign in.') + '</p>' +
+      '<div class="row" style="gap:18px;flex-wrap:wrap;align-items:center">' + qrBlock(150) + '<div class="btns" style="flex-direction:column;align-items:stretch">' +
+      '<button class="btn" data-act="people:invitecopy">' + T('Copy the link') + '</button><button class="btn" data-act="people:invitposter">' + T('Print a poster') + '</button><button class="btn" data-act="people:invitepaper">' + T('Print a paper form') + '</button></div></div></section>';
+  }
+  /** On a person's page (Administrators and Pastors): invite them, or when they were invited. */
+  function inviteLine(p) {
+    if (!canReview() || !mayApply(p) || !window.QR) return '';
+    var a = S.find('partnerApps', function (x) { return x.personId === p.id; })[0];
+    if (a && a.status === 'waiting') return '';
+    return '<p class="badge-line">' + (p.partnerInvited ? '<span class="muted small">' + T('Invited to become a Church Partner on {date}', { date: esc(H.fmt(p.partnerInvited, true)) }) + '</span> ' : '') +
+      '<button class="btn small" data-act="people:invite" data-id="' + p.id + '">' + T(p.partnerInvited ? 'Invite again' : 'Invite to become a Church Partner') + '</button></p>';
+  }
+  /** A4 poster for the welcome desk, and a paper form (the same questions as Church Hub's, with lines to write on). */
+  function posterHtml() {
+    var st = S.settings() || {};
+    return '<div class="sheet poster"><h1>' + esc(T('Become a {partner}', { partner: partnerWord() })) + '</h1><p class="big">' + esc(st.churchName || '') + '</p>' + qrBlock(380) +
+      '<ol><li>' + esc(T('Scan the code with your phone’s camera (or type the address).')) + '</li><li>' + esc(T('Sign in with the email address the church office has for you.')) + '</li><li>' + esc(T('Answer a few questions and send it. A Pastor will be in touch.')) + '</li></ol>' +
+      '<p class="small">' + esc(T('No email address on file, or rather use paper? Ask the church office for a form.')) + '</p></div>';
+  }
+  function paperHtml() {
+    var st = S.settings() || {}, line = function (l, n) { return '<div class="pf-q"><b>' + esc(l) + '</b>' + new Array((n || 1) + 1).join('<span class="pf-line"></span>') + '</div>'; };
+    var yn = function (l) { return '<div class="pf-q"><b>' + esc(l) + '</b> <span class="pf-yn">☐ ' + esc(T('Yes')) + ' &nbsp; ☐ ' + esc(T('No')) + '</span></div>'; };
+    return '<div class="sheet paper-form"><div class="pf-head"><div><h1>' + esc(T('Apply to become a {partner}', { partner: partnerWord() })) + '</h1><p>' + esc(st.churchName || '') + '</p></div>' + QR.svg(applyLink(), { px: 90 }) + '</div>' +
+      line(T('Name')) + line(T('Home address'), 2) + '<div class="two">' + line(T('Mobile')) + line(T('Email')) + '</div>' + '<div class="two">' + line(T('ID number')) + line(T('Coming to the church since')) + '</div>' +
+      '<div class="two">' + line(T('Spouse’s name')) + line(T('Wedding anniversary')) + '</div>' + line(T('Children’s names')) +
+      yn(T('Have you put your trust in the Lord Jesus Christ for forgiveness and eternal life?')) + line(T('How did you come to faith?'), 3) +
+      yn(T('Are you a member of another church?')) + line(T('If so, which one – and should we contact them about moving your membership?')) +
+      yn(T('Would you come to a membership class?')) + line(T('Do you go to a Bible study or midweek group? Which one?')) + line(T('How would you like to serve in the church?'), 2) +
+      '<div class="pf-q"><b>' + esc(T('Declaration')) + '</b><p class="decl">' + esc(declaration()) + '</p><p>☐ ' + esc(T('I agree with the declaration above.')) + '<br>☐ ' + esc(T('I agree to be in the church directory, so other members can see my contact details.')) + '</p></div>' +
+      '<div class="two">' + line(T('Signed')) + line(T('Date')) + '</div></div>';
+  }
+
   Object.assign(P.actions, {
+    invite: function (el) { invite([el.dataset.id]); },
+    inviteqr: function () {
+      H.modal(H.dialogHead(T('Scan to apply'), T('Point a phone’s camera at the code.')) + '<div class="dlg-body" style="text-align:center">' + qrBlock(260) + '</div>' +
+        '<div class="dlg-foot"><button class="btn" data-act="people:invitecopy">' + T('Copy the link') + '</button><button class="btn primary" data-act="hub:close">' + T('Close') + '</button></div>', T('Scan to apply'));
+    },
+    invitecopy: function () {
+      var done = function () { H.toast(T('Link copied')); };
+      if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(applyLink()).then(done, function () { window.prompt(T('Copy the link'), applyLink()); });
+      else window.prompt(T('Copy the link'), applyLink());
+    },
+    invitposter: function () { printOnly(posterHtml(), 'invite'); },
+    invitepaper: function () { printOnly(paperHtml(), 'invite'); },
+    invitesend: function (el) {
+      var ids = String(el.dataset.ids || '').split(',').filter(Boolean), ppl = ids.map(function (id) { return S.get('people', id); }).filter(Boolean);
+      var give = document.getElementById('iv-access'), today = H.today(), granted = 0;
+      ppl.forEach(function (p0) {
+        var p = JSON.parse(JSON.stringify(p0)), why = [];
+        if (give && give.checked && p.email && !signsIn(p) && canGiveAccess()) { p.appRole = 'member'; granted++; why.push('given Basic access'); }
+        p.partnerInvited = today;
+        S.put('people', p, 'Invited to become a Church Partner' + (why.length ? ' (' + why.join(', ') + ')' : '') + ': ' + H.name(p));
+      });
+      var mail = ppl.filter(function (p) { return p.email; }).map(function (p) { return p.email; }), st = S.settings() || {}, E = window.Emails, method = E ? E.getMethod(st) : 'mail';
+      var opts = { subject: document.getElementById('iv-sub').value, body: document.getElementById('iv-body').value, from: st.emailGmail || '' };
+      if (mail.length === 1) opts.to = mail[0]; else { opts.to = st.emailOffice || st.emailGmail || ''; opts.bcc = mail.join(','); }
+      var url = E.makeSendUrl(method, opts);
+      H.closeModal(); H.render(); H.toast(granted ? TN('{n} given Basic access – now send the email', '{n} given Basic access – now send the email', granted) : T('Now send the email'));
+      if (method === 'gmail') window.open(url, '_blank', 'noopener,noreferrer'); else location.href = url;
+    },
     appsend: function () {
       var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, r = function (n) { var e = document.querySelector('input[name="' + n + '"]:checked'); return e ? e.value : ''; };
       var err = document.getElementById('ap-err'), u = H.user(), p = S.get('people', u.id), id = g('ap-id').replace(/\s+/g, '');
@@ -239,5 +337,5 @@
     }
   });
 
-  Object.assign(P, { appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
+  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
 })(PeopleParts);

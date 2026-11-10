@@ -196,16 +196,33 @@
       people: roster ? S.list('people').filter(function (p) { return !p.deletedAt; }).map(function (p) { return { id: p.id, names: H.names(p) }; }) : [] };
   }
   /** Ask: understand the question, then fill in the filters and search (people) or list the services. */
+  /** Ask: with AI when it is switched on (Settings → Apps), otherwise – or if the AI can't be reached – Church Hub's own rules. */
+  var askTurn = 0;
   function ask(text) {
     text = String(text || '').trim(); if (!text) return;
-    var F = searchFields(), r = Ask.parse(text, askCtx(F)), byKey = {}; F.forEach(function (f) { byKey[f.key] = f; });
+    var F = searchFields(), ctx = askCtx(F);
+    if (!(S.aiReady && S.aiReady() && window.AskAI)) return useAnswer(text, Ask.parse(text, ctx), F);
+    var turn = ++askTurn;
+    state.ask = { text: text, thinking: true, r: state.ask && state.ask.r }; H.render();
+    S.ai(AskAI.request(text, F, ctx)).then(function (resp) {
+      var r = AskAI.check(AskAI.read(resp), F, ctx);
+      if (r.failed) throw new Error('No answer from the AI');
+      return r;
+    }).then(function (r) { if (turn === askTurn) useAnswer(text, r, F); }, function (e) {
+      if (turn !== askTurn) return;
+      console.warn('Ask with AI', e);
+      var r = Ask.parse(text, ctx); r.aiFailed = true; useAnswer(text, r, F);
+    });
+  }
+  function useAnswer(text, r, F) {
+    var byKey = {}; F.forEach(function (f) { byKey[f.key] = f; });
     state.ask = { text: text, r: r };
     if (r.kind === 'people' && r.filters.length) {
       var A = state.adv = emptyAdv();
       A.filters = r.filters.map(function (f) { return { field: f.field, op: f.op, value: f.value, value2: f.value2 || '', unit: f.unit || '' }; });
       A.match = r.match; A.logic = r.logic || '';
       r.filters.forEach(function (f) { if (f.field !== 'name' && byKey[f.field] && !byKey[f.field].noCol && A.cols.indexOf(f.field) < 0) A.cols.push(f.field); });
-      S.audit('Searched in their own words: ' + text, 'people');
+      S.audit('Searched in their own words' + (r.ai ? ' (AI)' : '') + ': ' + text, 'people');
       return P.actions.advrun();
     }
     H.render();
@@ -219,7 +236,9 @@
         (mic ? '<button type="button" class="icon-btn ask-mic" id="ask-mic" data-act="people:askmic" aria-label="' + esc(T('Speak your question – your phone or browser’s speech service turns it into text')) + '" title="' + esc(T('Speak your question – your phone or browser’s speech service turns it into text')) + '">' +
           H.icon('M12 3a3 3 0 0 0-3 3v6a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3zM19 11a7 7 0 0 1-14 0M12 18v3', 20) + '</button>' : '') +
         '<button type="submit" class="btn primary" data-act="people:ask">' + H.icon(H.ICON.search, 18) + T('Ask') + '</button></form>' +
-      '<p class="ask-live" id="ask-live" role="status" aria-live="polite" hidden></p>' +
+      '<p class="ask-live" id="ask-live" role="status" aria-live="polite"' + (a && a.thinking ? '>' + T('Asking the AI…') : ' hidden>') + '</p>' +
+      (S.aiReady && S.aiReady() ? '<p class="hint ask-ai-note">' + T('Your question is sent to Google’s Gemini AI to be understood. No church records are sent.') +
+        ' <small>Protected by reCAPTCHA: Google’s <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">Privacy Policy</a> and <a href="https://policies.google.com/terms" target="_blank" rel="noopener">Terms</a> apply.</small></p>' : '') +
       // The examples: open until something has been asked, then folded away (tap to open again)
       '<details class="ask-exw"' + (a ? '' : ' open') + '><summary class="hint">' + T('Type or say what you’re looking for, in English. Tap an example to try it:') + '</summary><div class="ask-ex">' +
         ASK_EX.filter(function (x, i) { return i !== 2 || canRoster(); }).map(function (x) { return '<button type="button" class="ask-chip" data-act="people:askex">' + esc(x) + '</button>'; }).join('') + '</div></details>';
@@ -228,7 +247,8 @@
         : (r.said || []).map(function (x) { return T(x[0], x[1] || undefined); });
       var none = r.kind === 'people' ? !r.filters.length : false;
       html += '<div class="ask-said" id="ask-said">' + (none ? '<p class="note bad" role="alert">' + T('Nothing in that was understood. Try one of the examples.') + '</p>' :
-        '<p><b>' + T('Understood as') + ':</b> ' + said.map(function (x) { return '<span class="tag">' + esc(x) + '</span>'; }).join(r.kind === 'people' && state.adv.match === 'logic' ? ' ' : ' ') +
+        (r.aiFailed ? '<p class="hint">' + T('The AI couldn’t be reached, so Church Hub’s own rules were used.') + '</p>' : '') +
+        '<p><b>' + T(r.ai ? 'Understood by AI as' : 'Understood as') + ':</b> ' + said.map(function (x) { return '<span class="tag">' + esc(x) + '</span>'; }).join(r.kind === 'people' && state.adv.match === 'logic' ? ' ' : ' ') +
         (r.kind === 'people' && state.adv.match === 'logic' ? ' <span class="muted small">(' + esc(state.adv.logic) + ')</span>' : '') + '</p>') +
         (r.noPerson ? '<p class="note bad">' + T('No one called “{name}” was found.', { name: esc(r.noPerson) }) + '</p>' : '') +
         (r.refused.length ? '<p class="note bad">' + (r.refused.indexOf('services') >= 0 ? T('You can’t see the rosters, so services can’t be searched.') : T('Your role can’t search on: {fields}', { fields: esc(fieldNames(r.refused, byKey)) })) + '</p>' : '') +

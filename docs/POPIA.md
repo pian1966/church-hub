@@ -79,6 +79,15 @@ should stay on church computers and be deleted once used.
 **Ask in your own words** uses the same search and limits, and each question is written in the audit log. The microphone uses
 the phone's or browser's own speech-to-text (Google's or Apple's speech service turns the sound into words); Church Hub keeps no
 recording, and the hint on the button says so. People who'd rather not can type instead.
+**With AI** (only when an Administrator switches it on in Settings → Apps, after the setup in `docs/AI-SEARCH-SETUP.md`):
+the question goes to Google's Gemini through the church's Firebase project (Firebase AI Logic, Gemini Developer API), with
+today's date, the names of the search fields and their safe choices (categories, positions, teams, service times, care group
+names). **No records are sent** – no names from the church, households, contact details or results; a person named in a
+service question is matched on the device. The question may contain a name if someone types one, so the Information Officer
+agrees first, the privacy notice says so, and staff are asked not to type private matters (on the free tier Google may use
+requests to improve its products). Gemini's answer is checked on the device: only fields and values that person's role may
+search on are used (`js/ask-ai.js`, tested). The audit log marks such searches “(AI)”. Requests need App Check (reCAPTCHA),
+so only Church Hub can use the church's AI allowance. Switching it off stops all of it.
 
 ## Offers to serve
 When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, at which services, their optional note and the

@@ -78,6 +78,14 @@ For: Administrators
 Match staff to people, check the balances in the preview, and import. Running it again updates rather than doubles, so you
 can trial it and import again at switch-over.
 
+## How do I make "Ask in your own words" understand questions better?
+For: Administrators
+Also asked: Use AI for search. Gemini. The search doesn't understand my question.
+
+Switch on AI in **Settings → Apps → AI for “Ask in your own words”**. It needs a one-time setup of about 15 minutes in the
+church's Firebase project first (the setup guide is linked there: docs/AI-SEARCH-SETUP.md), and the Information Officer
+should agree, because questions go to Google's Gemini. No church records are sent – only the question.
+
 ## Church Hub feels slow. What can I do?
 For: Administrators
 Also asked: It takes ages to load. Pages are slow.

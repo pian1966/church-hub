@@ -413,6 +413,6 @@ var Ask = (function () {
     return rows;
   }
 
-  return { parse: parse, services: services, tidy: tidy, readDate: readDate, slotWords: slotWords, partOf: partOf, THING_LABEL: THING_LABEL };
+  return { sayServices: sayServices, parse: parse, services: services, tidy: tidy, readDate: readDate, slotWords: slotWords, partOf: partOf, THING_LABEL: THING_LABEL };
 })();
 if (typeof module !== 'undefined') module.exports = Ask;

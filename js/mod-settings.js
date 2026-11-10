@@ -67,7 +67,7 @@
     ['general', TX('General'), TX('Name and country'), 'church', 'M3 21h18M5 21V8l7-5 7 5v13M10 21v-6h4v6', 'church name country address province state county privacy law'],
     ['colours', TX('Colours'), TX('The church’s colour'), 'church', 'M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.7-1.2-.7-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11h.01M10 7.5h.01M14 7.5h.01', 'colour color theme brand logo cross buttons'],
     ['terminology', TX('Terminology (Church Words)'), TX('The words your church uses'), 'church', 'M4 7V5h16v2M9 19h6M12 5v14', 'words wording terms names music worship praise leader'],
-    ['apps', TX('Apps'), TX('Switch parts of Church Hub on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations'],
+    ['apps', TX('Apps'), TX('Switch parts of Church Hub on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask'],
     ['services', TX('Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
     ['access', TX('Who can see what'), TX('What each access level can see'), 'access', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'see contact details directory care groups consent roles access level basic church partner roster children'],
     ['pastors', TX('What Pastors can do'), TX('Extra abilities for Pastors'), 'access', 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', 'pastor senior rector assistant minister abilities permissions'],
@@ -180,7 +180,20 @@
   function renderApps(st) {
     return '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p><div class="set-rows">' + MODS.map(function (m) {
       return '<label class="set-row"><span class="set-l"><b>' + esc(T(m[1])) + '</b><small>' + esc(T(m[2])) + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" class="st-mod" value="' + m[0] + '"' + (H.isOn(m[0]) ? ' checked' : '') + ' aria-label="' + esc(T(m[1])) + '"></span></label>';
-    }).join('') + '</div><p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>';
+    }).join('') + '</div><p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' + renderAi(st);
+  }
+  /** Ask in your own words, with AI (Gemini through the church's Firebase project). In English, like other Administrator-only
+   *  settings. Needs the one-time setup in docs/AI-SEARCH-SETUP.md (a reCAPTCHA key in js/firebase-config.js). */
+  function renderAi(st) {
+    var ai = st.ai || {}, cfg = window.CHURCH_HUB_FIREBASE || {}, live = S.isLive(), ready = !!cfg.appCheckKey;
+    var guide = 'https://github.com/pian1966/church-hub/blob/main/docs/AI-SEARCH-SETUP.md';
+    return '<section class="panel" id="set-ai"><h2>AI for “Ask in your own words”</h2>' +
+      '<p class="hint" style="margin-top:0">People → Advanced search understands questions much better with AI: the question (and the list of search fields – never anyone’s records) goes to Google’s Gemini, which turns it into filters. Church Hub checks them and runs the search as usual. If the AI can’t be reached, Church Hub’s own rules are used.</p>' +
+      '<div class="set-rows"><label class="set-row"><span class="set-l"><b>Use AI to understand questions</b><small>' +
+        (!live ? 'Only when Church Hub is connected to the church’s Firebase project (not in the demo).' : ready ? 'Set up – switch on to use it.' : 'Not set up yet – follow the setup guide first (about 15 minutes).') +
+      '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="st-ai"' + (ai.on ? ' checked' : '') + (live ? '' : ' disabled') + '></span></label>' +
+      '<label class="set-row"><span class="set-l"><b>Model</b><small>Change only if Google retires this one (the setup guide says how to check).</small></span><span class="set-c"><input id="st-ai-model" value="' + esc(ai.model || AskAI.MODEL) + '" style="max-width:220px"></span></label></div>' +
+      '<p class="hint"><a href="' + guide + '" target="_blank" rel="noopener">Setup guide (docs/AI-SEARCH-SETUP.md)</a> · Before switching on, the Information Officer should agree and the privacy notice should say questions go to Google’s Gemini.</p></section>';
   }
 
   function render(parts) {
@@ -491,6 +504,13 @@
         var m = Wording.MUSIC[wm.value]; if (!m) return;
         Object.keys(m).forEach(function (k) { var a = document.querySelector('.wd-1[data-k="' + k + '"]'), b = document.querySelector('.wd-2[data-k="' + k + '"]'); if (a) a.value = m[k][0]; if (b) b.value = m[k][1]; });
       });
+      var aiOn = document.getElementById('st-ai'), aiModel = document.getElementById('st-ai-model');
+      var saveAi = function () {
+        var m = String(aiModel.value || '').trim(); if (!/^[a-z0-9][a-z0-9.\-]{2,60}$/i.test(m)) { aiModel.value = (S.settings().ai || {}).model || AskAI.MODEL; return; }
+        S.setSettings({ ai: { on: aiOn.checked, model: m } }, (aiOn.checked ? 'AI for Ask switched on' : 'AI for Ask switched off') + ' (' + m + ')'); H.toast(aiOn.checked ? 'AI switched on' : 'AI switched off');
+      };
+      if (aiOn) aiOn.addEventListener('change', saveAi);
+      if (aiModel) aiModel.addEventListener('change', saveAi);
       document.querySelectorAll('.st-mod').forEach(function (b) {
         b.addEventListener('change', function () { var m = Object.assign({}, S.settings().modules); m[b.value] = b.checked; S.setSettings({ modules: m }, (b.checked ? 'Switched on ' : 'Switched off ') + b.value); H.toast(T(b.checked ? 'Switched on' : 'Switched off – its card is hidden')); H.render(); });
       });

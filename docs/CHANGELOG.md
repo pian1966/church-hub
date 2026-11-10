@@ -249,3 +249,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 10 Nov 2026 (0.42.3): the language list says **UK English** (beside American English)
 - ✅ 10 Nov 2026 (0.42.4): Advanced search has **Spouse or partner**, **Care group** and **Midweek group**; **Ask in your own words** understands *partners whose wives' names begin with A*, *married to Megan*, *Church Partners who don't belong to a care group*, *in the Hilton care group*, *not in a Bible study*
 - ✅ 10 Nov 2026 (0.42.5): the language list says **US English** (was American English)
+- ✅ 10 Nov 2026 (0.42.6): Advanced search has **Spouse or partner's category, gender and age**; Ask understands *men who are Church Partners whose wives are not Church Partners*, *married to an Attender*, *whose husbands are over 70*

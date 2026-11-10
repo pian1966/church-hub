@@ -15,7 +15,7 @@
  */
 var I18n = (function () {
   'use strict';
-  var LANGS = [['en', 'English'], ['af', 'Afrikaans'], ['zu', 'isiZulu'], ['xh', 'isiXhosa']];
+  var LANGS = [['en', 'UK English'], ['af', 'Afrikaans'], ['zu', 'isiZulu'], ['xh', 'isiXhosa']];
   /** More languages, each in its own file (js/lang/<code>.js), loaded only when someone chooses it:
    *  [code, its own name, English name, continents]. Drafted by Claude (AI): fluent speakers should check them. */
   var MORE = [
@@ -107,7 +107,7 @@ var I18n = (function () {
     var cur = loading && Object.keys(loading).filter(function (k) { return loading[k] === 'wanted'; })[0] || lang, done = false;
     var opt = function (code, name, en) { var sel = code === cur && !done; if (sel) done = true; return '<option value="' + code + '"' + (sel ? ' selected' : '') + '>' + name + (en && en !== name ? ' (' + en + ')' : '') + '</option>'; };
     var ZA = LANGS.slice(1).map(function (l) { return [l[0], l[1], '', ['Africa']]; });   // Afrikaans, isiZulu, isiXhosa sit with Africa's languages
-    return opt('en', 'English') + ['Africa', 'Europe', 'Americas'].map(function (c) {
+    return opt('en', 'UK English') + ['Africa', 'Europe', 'Americas'].map(function (c) {
       return '<optgroup label="' + t(c) + '">' + (c === 'Africa' ? ZA : []).concat(MORE.filter(function (m) { return m[3].indexOf(c) >= 0; })).map(function (m) { return opt(m[0], m[1], m[2]); }).join('') + '</optgroup>';
     }).join('');
   }

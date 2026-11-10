@@ -20,6 +20,6 @@ window.CHURCH_HUB_FIREBASE = window.CHURCH_HUB_FIREBASE || {
   // For "Ask in your own words" with AI: the reCAPTCHA site key registered in Firebase → App Check (docs/AI-SEARCH-SETUP.md).
   // Empty = no AI; Ask uses Church Hub's own rules. appCheckEnterprise: true if the key is a reCAPTCHA Enterprise key.
   // Not a password either: every visitor's browser receives it.
-  appCheckKey: '',
-  appCheckEnterprise: false
+  appCheckKey: '6LdLIhkuAAAAAHvT7dL7BUAZkTOc76NgGYWl8N0G',
+  appCheckEnterprise: true
 };

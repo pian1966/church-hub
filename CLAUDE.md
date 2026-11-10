@@ -37,6 +37,13 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 The browser test is `node tests/app.test.js` (needs Playwright); it starts the browser and runs each part in `tests/app/` in turn.
 GitHub runs every test, including the rules against the Firestore emulator, on every push (`.github/workflows/tests.yml`).
 
+**Small changes – quick checks only.** For wording, translations, labels, help pages and docs, colours or spacing in
+`css/hub.css`, and version numbers – no change to how anything works – don't run the browser test yourself: run the quick
+ones (`for t in tests/*.test.js; do [ $t = tests/app.test.js ] || node $t > /dev/null || echo FAIL $t; done`, a few
+seconds) and push. GitHub runs the full browser test on the pull request, and main can't be merged until it passes (the
+"Protect main" ruleset requires it). If GitHub's test fails, fix it on the same branch. Anything else – new features,
+changes to logic, `js/store.js`, `firestore.rules`, who sees what, the Android app – gets the full browser test before pushing.
+
 ## Rules
 - New features are modules (`js/mod-*.js`) registered with `Hub.register`; a big module can be split like People
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).

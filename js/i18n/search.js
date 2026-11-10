@@ -2,6 +2,10 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Name badges for {n} ticked", "Naamplaatjies vir {n} gemerk", "Amabheji amagama ka-{n} amakiwe", "Iibheji zamagama zaba-{n} abaphawuliweyo"],
+    ["Name badges for everyone found", "Naamplaatjies vir almal gevind", "Amabheji amagama abo bonke abatholakele", "Iibheji zamagama zabo bonke abafunyenweyo"],
+    ["Invite {n} ticked to apply", "Nooi {n} gemerk uit om aansoek te doen", "Mema {n} abamakiwe ukuthi bafake isicelo", "Mema aba-{n} abaphawuliweyo ukuba bafake isicelo"],
+    ["Invite everyone found to apply", "Nooi almal gevind uit om aansoek te doen", "Mema bonke abatholakele ukuthi bafake isicelo", "Mema bonke abafunyenweyo ukuba bafake isicelo"],
     ['A new consent record for each person, dated today, with how it was given (POPIA). Children are left out: a parent or guardian answers for them on the child’s page.', '’n Nuwe toestemmingsrekord vir elke persoon, met vandag se datum en hoe dit gegee is (POPIA). Kinders word uitgelaat: ’n ouer of voog antwoord vir hulle op die kind se blad.', 'Irekhodi elisha lemvume lomuntu ngamunye, linosuku lwanamuhla, nendlela enikezwe ngayo (POPIA). Izingane azifakwa: umzali noma umbheki uyaziphendulela ekhasini lengane.', 'Irekhodi elitsha lemvume lomntu ngamnye, elinomhla wanamhlanje, nendlela enikwe ngayo (POPIA). Abantwana abafakwanga: umzali okanye umgcini uyabaphendulela kwiphepha lomntwana.'],
     ['Choose how it was given.', 'Kies hoe dit gegee is.', 'Khetha indlela enikezwe ngayo.', 'Khetha indlela enikwe ngayo.'],
     ['already recorded', 'reeds aangeteken', 'sekubhaliwe', 'sele kubhaliwe'],

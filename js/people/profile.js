@@ -88,7 +88,7 @@
       (p.source === 'elvanto' && H.can('*') ? ' <span class="tag" style="--c:#7C3AED">' + T('From Elvanto') + '</span>' : '') +   // where the record came from: Administrators only
       (deceased(p) ? ' <span class="tag grey">' + esc(T('Died {date}', { date: H.fmt(p.deceasedAt, true) })) + '</span>' : '');
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
-      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + '</div></div>' +
+      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + '</div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +
       (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
         (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +

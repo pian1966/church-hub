@@ -162,15 +162,15 @@ var Emails = (function () {
 
   /**
    * The link that opens the email ready to send. method: 'mail' or 'gmail'.
-   * opts: { to, subject, body, from } – from: the church's Gmail address, so Gmail opens in that account when signed in to it.
+   * opts: { to, bcc, subject, body, from } – bcc: addresses everyone gets without seeing each other's; from: the church's Gmail address, so Gmail opens in that account when signed in to it.
    */
   function makeSendUrl(method, opts) {
     var subject = encodeURIComponent(opts.subject || ''), body = encodeURIComponent(opts.body || '');
     if (method === 'gmail') {
       return 'https://mail.google.com/mail/' + (opts.from ? '?authuser=' + encodeURIComponent(opts.from) + '&' : '?') +
-        'view=cm&fs=1&to=' + encodeURIComponent(opts.to || '') + '&su=' + subject + '&body=' + body;
+        'view=cm&fs=1&to=' + encodeURIComponent(opts.to || '') + (opts.bcc ? '&bcc=' + encodeURIComponent(opts.bcc) : '') + '&su=' + subject + '&body=' + body;
     }
-    return 'mailto:' + String(opts.to || '').split(/\s*,\s*/).filter(Boolean).join(',') + '?subject=' + subject + '&body=' + body;
+    return 'mailto:' + String(opts.to || '').split(/\s*,\s*/).filter(Boolean).join(',') + '?' + (opts.bcc ? 'bcc=' + encodeURIComponent(opts.bcc).replace(/%2C/g, ',') + '&' : '') + 'subject=' + subject + '&body=' + body;
   }
 
   /** Prompts older than today – no longer needed (they are removed so the list never grows). */

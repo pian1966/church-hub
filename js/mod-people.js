@@ -129,6 +129,9 @@
         else return;
         var n = Object.keys(sel).length, b = document.getElementById('adv-bulk');
         if (b) { b.disabled = !n; b.classList.toggle('primary', !!n); b.textContent = n ? T('Change {n} selected…', { n: n }) : T('Change selected…'); }
+        var nb = document.querySelector('[data-act="people:advbadges"]'), ni = document.querySelector('[data-act="people:advinvite"]');   // for those ticked, or everyone found
+        if (nb) nb.textContent = n ? T('Name badges for {n} ticked', { n: n }) : T('Name badges for everyone found');
+        if (ni) ni.textContent = n ? T('Invite {n} ticked to apply', { n: n }) : T('Invite everyone found to apply');
         var all = document.getElementById('adv-selall'); if (all) all.checked = n && n === document.querySelectorAll('.adv-sel').length;
       });
       var adv = document.getElementById('adv');

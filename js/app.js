@@ -517,6 +517,9 @@ var Hub = (function () {
   }
   function renderLive() {
     var st = live, html;
+    // A link to a page (e.g. the invitation to become a Church Partner, #/people/apply) is remembered through signing in,
+    // also when the sign-in link from the email opens Church Hub again without it
+    if (/^#\/\w/.test(location.hash) && location.hash !== '#/home') Store.pref('afterSignIn', location.hash + '|' + Date.now());
     if (st.stage === 'loading') html = '<h1>' + 'Church Hub' + '</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
     else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
     else if (st.stage === 'linkSent' && phoneApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
@@ -558,6 +561,8 @@ var Hub = (function () {
       Store.audit('Signed in', 'people/' + user.id);
       runUpgrades();
       keepFiles();
+      var after = (Store.pref('afterSignIn') || '').split('|'); Store.pref('afterSignIn', '');
+      if ((!location.hash || location.hash === '#' || location.hash === '#/home') && after[0] && Date.now() - (+after[1] || 0) < 864e5) location.hash = after[0];   // within a day
       if (!location.hash || location.hash === '#') location.hash = phoneApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
       render();
     } else { user = null; Store.setUser(null); renderLive(); }

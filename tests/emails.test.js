@@ -148,6 +148,10 @@ const asChurch = Emails.makeSendUrl('gmail', { to: 'a@example.com', subject: 's'
 check(asChurch.indexOf('https://mail.google.com/mail/?authuser=church%40gmail.com&view=cm') === 0, 'Gmail opens in the church’s account when signed in to it');
 check(Emails.makeSendUrl('mail', { to: 'john@example.com, mary@example.com', subject: 's', body: 'b' }).indexOf('mailto:john@example.com,mary@example.com?') === 0, 'one email to both of a couple');
 
+const many = Emails.makeSendUrl('mail', { to: 'office@example.com', bcc: 'a@example.com,b@example.com', subject: 's', body: 'b' });
+check(many.indexOf('mailto:office@example.com?bcc=a%40example.com,b%40example.com&subject=s') === 0, 'to many people at once: Bcc, so they don’t see each other’s addresses');
+check(Emails.makeSendUrl('gmail', { to: '', bcc: 'a@example.com,b@example.com', subject: 's', body: 'b' }).indexOf('&bcc=a%40example.com%2Cb%40example.com&su=s') > 0, '… and in Gmail');
+
 if (fails) {
   console.log('\n' + fails + ' email test(s) FAILED');
   process.exit(1);

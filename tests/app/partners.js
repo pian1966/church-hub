@@ -81,4 +81,36 @@ module.exports = async function (ctx) {
   check(docs['details/' + gid].badgePrinted && docs['details/p14'].badgePrinted && /No name badges waiting/.test(await s.text()), 'Mark as printed: off the list, with the date printed kept');
   await s.go('people/p/' + gid); check(/Name badge printed on/.test(await s.text()), 'her page says when her badge was printed (and can make another)');
   await finish(s);
+
+  console.log('Name badges and invitations from Advanced search:');
+  const seed2 = seedDocs(); seed2['people/p11'].appRole = 'none';   // Priya can't sign in yet
+  s = await session('linda.pillay@example.com', seed2); await s.go('people/search'); await s.page.waitForSelector('#adv');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'category'); await s.page.selectOption('.adv-v[data-i="0"]', 'Attender');
+  await s.page.click('[data-act="people:advrun"]'); await s.page.waitForSelector('[data-act="people:advbadges"]');
+  check(/Name badges for everyone found/.test(await s.page.textContent('[data-act="people:advbadges"]')) && /Invite everyone found to apply/.test(await s.page.textContent('[data-act="people:advinvite"]')), 'search results: “Name badges for everyone found” and “Invite everyone found to apply”');
+  await s.page.evaluate(() => { window.__printed = ''; window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
+  await s.page.click('[data-act="people:advbadges"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
+  check(await s.page.evaluate(() => (window.__printed.match(/<td><b/g) || []).length === 4 && window.__printed.indexOf('<b>Aisha</b>') < window.__printed.indexOf('<b>Jason</b>')), 'name badges for the 4 found, on an A4 sheet, in first-name order');
+  await s.page.check('.adv-sel[value="p10"]'); await s.settle();
+  check(/Name badges for 1 ticked/.test(await s.page.textContent('[data-act="people:advbadges"]')), 'tick someone: the buttons are for those ticked');
+  await s.page.uncheck('.adv-sel[value="p10"]'); await s.settle();
+  await s.page.click('[data-act="people:advinvite"]'); await s.page.waitForSelector('#iv-body');
+  t = await s.page.textContent('#modal');
+  check(/2 people are left out/.test(t) && await s.page.isChecked('#iv-access') && /Give 1 person Basic access/.test(t), 'Invite: the 2 children are left out; Priya can be given Basic access to sign in');
+  check(/#\/people\/apply/.test(await s.page.inputValue('#iv-body')), 'the email has the link to the form');
+  await s.page.evaluate(() => { Emails.getMethod = () => 'gmail'; window.open = u => { window.__opened = u; }; });
+  await s.page.click('[data-act="people:invitesend"]'); await s.settle(); docs = await s.docsNow();
+  const opened = await s.page.evaluate(() => window.__opened || '');
+  check(docs['people/p11'].appRole === 'member' && docs['details/p10'].partnerInvited && docs['details/p11'].partnerInvited, 'Email the invitation: Priya gets Basic access, and both are marked as invited');
+  check(/bcc=jason\.naidoo%40example\.com%2Cpriya\.naidoo%40example\.com|bcc=jason\.naidoo@example\.com,priya\.naidoo@example\.com/.test(opened), 'one email, with both in Bcc');
+  await s.go('people/p/p10'); check(/Invited to become a Church Partner on/.test(await s.text()) && await s.page.isVisible('[data-act="people:invite"]'), 'his page says when he was invited, and can invite him again');
+  await s.go('people/applications'); await s.page.waitForSelector('#app-invite svg');
+  check(await s.page.isVisible('#app-invite svg') && /#\/people\/apply/.test(await s.page.textContent('#app-invite')), 'Partnership applications: a QR code and the link for the welcome desk');
+  await s.page.evaluate(() => { window.__printed = ''; window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
+  await s.page.click('[data-act="people:invitposter"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
+  check(await s.page.evaluate(() => /class="sheet poster"/.test(window.__printed) && /<svg/.test(window.__printed)), 'Print a poster: an A4 poster with the QR code');
+  await s.page.evaluate(() => { window.__printed = ''; });
+  await s.page.click('[data-act="people:invitepaper"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 4000 }).catch(() => {});
+  check(await s.page.evaluate(() => /paper-form/.test(window.__printed) && /How did you come to faith/.test(window.__printed)), 'Print a paper form: the same questions, with lines to write on');
+  await finish(s);
 };

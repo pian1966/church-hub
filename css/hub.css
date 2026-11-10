@@ -755,6 +755,21 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   #print-only.badges td, #print-only.badges tr { background: none !important; }
   #print-only.badges td b { display: block; font-size: 35pt; font-weight: 700; line-height: 1.15; }
   #print-only.badges td span { display: block; font-size: 25pt; font-weight: 400; line-height: 1.2; }
+  #print-only.badges td b.long { font-size: 27pt; } #print-only.badges td b.longer { font-size: 21pt; }
+  #print-only.badges td span.long { font-size: 19pt; } #print-only.badges td span.longer { font-size: 15pt; }
+  /* Invitation to become a Church Partner: an A4 poster with the QR code, and a paper form */
+  #print-only.invite { font-family: Inter, Arial, sans-serif; color: #000; }
+  #print-only.invite .poster { width: 190mm; margin: 12mm auto 0; text-align: center; }
+  #print-only.invite .poster h1 { font-size: 34pt; margin: 0 0 4mm; } #print-only.invite .poster .big { font-size: 18pt; margin: 0 0 8mm; }
+  #print-only.invite .poster .qr-box svg { width: 110mm; height: 110mm; box-shadow: none; } #print-only.invite .poster .qr-link { font-size: 12pt; margin: 3mm 0 8mm; word-break: break-all; max-width: none; color: #000; }
+  #print-only.invite .poster ol { text-align: left; font-size: 15pt; line-height: 1.5; margin: 0 auto 6mm; max-width: 150mm; } #print-only.invite .poster .small { font-size: 11pt; }
+  #print-only.invite .paper-form { font-size: 10pt; padding: 2mm 4mm; }
+  #print-only.invite .pf-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8mm; margin-bottom: 4mm; }
+  #print-only.invite .pf-head h1 { font-size: 17pt; margin: 0; } #print-only.invite .pf-head p { margin: 1mm 0 0; }
+  #print-only.invite .pf-q { margin: 0 0 3.2mm; break-inside: avoid; } #print-only.invite .pf-q b { display: block; font-weight: 600; margin-bottom: 1mm; }
+  #print-only.invite .pf-line { display: block; border-bottom: 0.6pt solid #555; height: 7mm; }
+  #print-only.invite .pf-yn { font-weight: 400; } #print-only.invite .pf-q .decl { font-size: 9pt; font-style: italic; margin: 1mm 0; }
+  #print-only.invite .two { display: grid; grid-template-columns: 1fr 1fr; gap: 0 8mm; }
 }
 @page badges { size: A4 portrait; margin: 0; }   /* only the badge sheets: the 20 mm margins are in .sheet itself */
 /* About → Brochures: the brochure in a frame, and its colour and font */
@@ -767,3 +782,7 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .bro-sw.on { box-shadow: 0 0 0 3px var(--ink); }
 .bro-pick input { width: 34px; height: 34px; padding: 0; border: 1px solid var(--line-strong); border-radius: 8px; background: none; cursor: pointer; }
 .bro-design .bro-l + select, .bro-pick { margin-right: 6px; }
+/* The QR code for the partnership form (People → Partnership applications, and the Invite window) */
+.qr-box { display: inline-flex; flex-direction: column; align-items: center; gap: 6px; }
+.qr-box svg { display: block; border-radius: 6px; box-shadow: 0 0 0 1px var(--line); }
+.qr-box .qr-link { margin: 0; font-size: .82rem; color: var(--muted); word-break: break-all; max-width: 280px; text-align: center; }

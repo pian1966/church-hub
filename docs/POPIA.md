@@ -104,6 +104,15 @@ The application is included in "export everything held about a person" and delet
 ## Name badges
 For a newcomer who asks for one: the date asked for and the date printed, on the person's details (Administrators and Pastors).
 Only their first name (or the name they're known by) and surname are printed. Purpose: welcoming people by name; basis: they asked.
+Badges printed from Advanced search are for people the church office chose (newcomers at a welcome event, a group): still only
+the names, printing is audit-logged, and the sheets should be destroyed once the badges are cut.
+
+## Invitations to become a Church Partner
+Administrators and Pastors can email an invitation to apply. Kept: the date invited (`partnerInvited`, on the person's details –
+Administrators and Pastors; purpose: not inviting the same person twice; basis: the church's legitimate interest in its own
+members). Several people are sent one email in Bcc, so nobody sees the others' addresses. Inviting can give someone Basic access
+so they can sign in and apply; that is recorded in the audit log like any other change of access. Children, people who have left
+and those who have died are never invited. The QR code, poster and paper form carry only the link – no personal information.
 
 ## Offers to serve
 When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, at which services, their optional note and the

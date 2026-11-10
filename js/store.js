@@ -231,6 +231,46 @@ var Store = (function () {
       })();
     }
 
+    /* ---------- Ask in your own words, with AI: Gemini through the church's Firebase project (docs/AI-SEARCH-SETUP.md) ----------
+     * Firebase AI Logic only answers apps that prove they are Church Hub (App Check, with a reCAPTCHA key in firebase-config.js).
+     * The App Check library is loaded the first time someone asks, not before. js/ask-ai.js decides what is sent. */
+    var appCheckOn = null;
+    function appCheck() {
+      if (appCheckOn) return appCheckOn;
+      appCheckOn = new Promise(function (ok, no) {
+        var key = cfg.appCheckKey; if (!key || !fb) return no(new Error('AI search isn’t set up'));
+        var go = function () {
+          try {
+            var P = fb.appCheck, provider = cfg.appCheckEnterprise ? new P.ReCaptchaEnterpriseProvider(key) : new P.ReCaptchaV3Provider(key);
+            var ac = fb.appCheck(); ac.activate(provider, true); ok(ac);
+          } catch (e) { no(e); }
+        };
+        if (fb.appCheck) return go();
+        var s = document.createElement('script'); s.src = 'https://www.gstatic.com/firebasejs/' + VERSION + '/firebase-app-check-compat.js';
+        s.onload = go; s.onerror = function () { no(new Error('Could not load App Check')); };
+        document.head.appendChild(s);
+      });
+      appCheckOn.catch(function () { appCheckOn = null; });
+      return appCheckOn;
+    }
+    /** Send a request to Gemini's generateContent; resolves with its JSON reply (15 seconds at most). */
+    function aiAsk(body, model) {
+      if (!session || offlineNow()) return Promise.reject(new Error('offline'));
+      var me = auth && auth.currentUser;
+      return Promise.all([appCheck().then(function (ac) { return ac.getToken(false); }), me ? me.getIdToken() : Promise.resolve('')]).then(function (t) {
+        if (!t[0] || !t[0].token) throw new Error('No App Check token');
+        var h = { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.apiKey, 'X-Firebase-AppCheck': t[0].token, 'x-goog-api-client': 'gl-js/' + VERSION + ' fire/' + VERSION };
+        if (t[1]) h.Authorization = 'Firebase ' + t[1];
+        var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, timer = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : null;
+        var url = 'https://firebasevertexai.googleapis.com/v1beta/projects/' + encodeURIComponent(cfg.projectId) + '/models/' + encodeURIComponent(model) + ':generateContent';
+        return fetch(url, { method: 'POST', headers: h, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined }).then(function (r) {
+          clearTimeout(timer);
+          if (!r.ok) return r.text().then(function (x) { throw new Error('Gemini ' + r.status + ': ' + String(x).slice(0, 300)); });
+          return r.json();
+        }, function (e) { clearTimeout(timer); throw e; });
+      });
+    }
+
     /* ---------- the copy kept on this device, for when there is no internet ---------- */
     /** Firestore keeps what this person may see on the device (IndexedDB), so Church Hub opens and shows it offline.
      *  It is wiped when they sign out, and before someone else signs in on the same device (docs/POPIA.md, Data on devices). */
@@ -879,6 +919,7 @@ var Store = (function () {
     }
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
+      aiAsk: aiAsk,
       put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -899,7 +940,10 @@ var Store = (function () {
     out.counts = {}; COLLECTIONS.forEach(function (c) { var n = all(c).length; if (n) out.counts[c] = n; });
     return out;
   }
-  return { stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
+  /** Ask in your own words, with AI: switched on in Settings → Apps, set up (a reCAPTCHA key in firebase-config.js), live and online. */
+  function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
+  function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
+  return { aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */

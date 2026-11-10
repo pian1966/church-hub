@@ -84,6 +84,8 @@ who live in Howick*, *first names beginning with M*, *Church Partners whose wive
 don't belong to a care group*, *people without an ID number*, or *10am services between 12 November
 and 2 February that don't have all positions filled*. Church Hub fills in the filters and shows what it understood, and any
 words it didn't – you can then change the filters by hand. It only searches what your role may see.
+If the church has switched on AI (Settings → Apps), the question is understood by Google's Gemini AI and it says
+**Understood by AI as**; only your question is sent, never the church's records. Don't type private matters into it.
 
 ## How do I change many people at once?
 For: Administrators

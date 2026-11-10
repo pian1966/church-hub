@@ -53,4 +53,42 @@ module.exports = async function (ctx) {
   await s.page.evaluate(() => window.churchHubHeard(null));
   check(/Couldn’t hear that/.test(await s.page.textContent('#ask-live')), 'nothing heard: “Couldn’t hear that – try again.”');
   await finish(s);
+
+  // With AI (js/ask-ai.js): switched on in Settings, App Check set up; Gemini is a stand-in that answers with filters
+  console.log('Ask in your own words, with AI:');
+  const seed2 = seedDocs(); seed2['settings/church'].ai = { on: true, model: 'gemini-test' };
+  const a = await session('linda.pillay@example.com', seed2), sent = [];
+  let reply = null;
+  await a.page.route(u => u.href.startsWith('https://firebasevertexai.googleapis.com/'), r => {
+    sent.push({ url: r.request().url(), headers: r.request().headers(), body: r.request().postData() });
+    if (!reply) return r.abort();   // the AI can't be reached
+    r.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ candidates: [{ content: { parts: [{ text: JSON.stringify(reply) }] } }] }) });
+  });
+  await a.page.evaluate(() => {
+    window.CHURCH_HUB_FIREBASE.appCheckKey = 'test-site-key';
+    window.firebase.appCheck = function () { return { activate: function () {}, getToken: function () { return Promise.resolve({ token: 'app-check-token' }); } }; };
+    window.firebase.appCheck.ReCaptchaV3Provider = function (k) { this.k = k; }; window.firebase.appCheck.ReCaptchaEnterpriseProvider = function (k) { this.k = k; };
+  });
+  await a.go('people/search');
+  const askA = async q => { await a.page.fill('#ask-q', q); await a.page.press('#ask-q', 'Enter'); await a.page.waitForTimeout(500); await a.settle(); };
+  const saidA = () => a.page.$$eval('#ask-said .tag', t => t.map(x => x.textContent));
+  check(/sent to Google’s Gemini AI/.test(await a.page.textContent('#ask')), 'with AI on: the box says the question goes to Gemini, and no records');
+  reply = { kind: 'people', filters: [{ field: 'gender', op: 'eq', value: 'male' }, { field: 'category', op: 'eq', value: 'Church Partner' }, { field: 'age', op: 'gt', value: '60' },
+    { field: 'pastoralNotes', op: 'has', value: 'x' }], match: 'all', notUnderstood: [] };
+  await askA('church partners who are men older than sixty');
+  let ta = await saidA(), req = sent[sent.length - 1], body = JSON.parse(req.body);
+  check(/Understood by AI as/.test(await a.page.textContent('#ask-said')) && ta.length === 3 && /Gender is “Male”/.test(ta[0]) && /Age is more than “60”/.test(ta[2]) && await a.page.isVisible('#adv-result'),
+    'the AI’s filters are used and the search runs: ' + ta.join(' · '));
+  check(/Your role can’t search on/.test(await a.page.textContent('#ask-said')), '… a field the role doesn’t have (pastoral notes) is refused, not used');
+  check(/\/projects\/demo-church-hub\/models\/gemini-test:generateContent$/.test(req.url) && req.headers['x-firebase-appcheck'] === 'app-check-token' && req.headers['x-goog-api-key'] === 'test-only',
+    'sent to Firebase AI Logic with the App Check token and the church’s model');
+  const what = JSON.stringify(body);
+  check(what.includes('men older than sixty') && !/Jacobs|Naidoo|Pillay|example\.com/.test(what), '… with the question and the search’s fields – no names, households or emails from the church');
+  const audit = Object.values(await a.docsNow()).some(d => d && /Searched in their own words \(AI\): church partners/.test(d.what || d.action || JSON.stringify(d)));
+  check(audit, '… and written in the audit log as an AI search');
+  reply = null;
+  await askA('women over 60');
+  ta = await saidA();
+  check(/couldn’t be reached/.test(await a.page.textContent('#ask-said')) && ta.length === 2 && /Gender is “Female”/.test(ta[0]), 'the AI can’t be reached: Church Hub’s own rules are used, and it says so');
+  await finish(a);
 };

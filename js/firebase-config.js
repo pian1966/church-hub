@@ -16,5 +16,10 @@ window.CHURCH_HUB_FIREBASE = window.CHURCH_HUB_FIREBASE || {
   appId: '1:659353710254:web:dd14380a312ad037ccc73f',
   // For "Sign in with Google" in the Android app: the project's Web client ID (docs/ANDROID.md, step 3).
   // Empty = the app offers only the email link. This is not a password either.
-  googleWebClientId: ''
+  googleWebClientId: '',
+  // For "Ask in your own words" with AI: the reCAPTCHA site key registered in Firebase → App Check (docs/AI-SEARCH-SETUP.md).
+  // Empty = no AI; Ask uses Church Hub's own rules. appCheckEnterprise: true if the key is a reCAPTCHA Enterprise key.
+  // Not a password either: every visitor's browser receives it.
+  appCheckKey: '',
+  appCheckEnterprise: false
 };

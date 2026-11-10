@@ -503,3 +503,17 @@ right list for each Pastor's `roles/{email}.can`, so `may('…')` in the rules n
 can't change `seniorPastorId` or `seniorCan` either. All Pastors keep the Pastor role (pastoral notes, everyone's details).
 The words come from Terminology (`senior`, `assistant` in `js/wording.js`: Anglican Rector / Assistant Minister,
 Catholic Parish Priest / Assistant Priest; otherwise "Senior" / "Assistant" + the church's word for Pastor).
+
+## Ask in your own words, with AI (`js/ask-ai.js`; setup `docs/AI-SEARCH-SETUP.md`)
+- Off unless `settings.ai.on` and `appCheckKey` is in `js/firebase-config.js` (`Store.aiReady()`: live, online, not "View as").
+- `AskAI.request(question, fields, ctx)` builds a Gemini `generateContent` body: rules, a JSON schema, and a description of
+  the search – field keys, English labels, types, ops (`PeopleSearch.OPS`) and choices only for choice fields and safe lists
+  (positions, teams, service times, consents, care/midweek group names, country). Never households, people or records.
+- `Store.ai(body)` (live: `aiAsk` in `js/store.js`) loads the App Check compat library on first use, activates reCAPTCHA
+  Enterprise (or v3) with `appCheckKey`, and POSTs to `firebasevertexai.googleapis.com/v1beta/projects/{id}/models/{model}:generateContent`
+  with the web API key, the App Check token and the user's ID token – as the Firebase AI Logic SDK does (the compat SDK has no AI
+  module). 15-second limit. Model: `settings.ai.model`, default `AskAI.MODEL`.
+- `AskAI.check(answer, fields, ctx)` keeps only fields this person has, ops of that field's type, choices spelt as in its
+  options, real dates and numbers, and logic that fits; everything else goes to `refused` / `unknown`. People named in
+  service questions are matched on the device. The result has the same shape as `Ask.parse`, so `people/search.js` uses it the
+  same way (`useAnswer`); if the call fails, `Ask.parse` is used and the screen says so.

@@ -706,3 +706,6 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .ask-said { margin-top: 14px; } .ask-said .tag { margin: 2px 4px 2px 0; display: inline-block; }
 .ask-exw summary { cursor: pointer; margin: 12px 0 8px; } .ask-exw[open] summary { margin-bottom: 10px; }
 @media (max-width: 520px) { .ask-row { flex-wrap: wrap; } .ask-row input[type=search] { flex-basis: 100%; } .ask-row .btn.primary { flex: 1; justify-content: center; } }
+
+/* reCAPTCHA (App Check for Ask with AI): its badge is hidden; Ask shows Google's notice in words instead, as Google allows */
+.grecaptcha-badge { visibility: hidden !important; }

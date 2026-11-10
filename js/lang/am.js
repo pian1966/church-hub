@@ -232,6 +232,7 @@ I18n.add('am', {
     "Something went wrong": "የሆነ ችግር ተፈጥሯል",
     "Try again": "እንደገና ይሞክሩ",
     "Back to the top": "ወደ ላይ ተመለስ",
+    "Go to the bottom": "ወደ ታች ይሂዱ",
     "Appearance": "ገጽታ",
     "Light": "ብሩህ",
     "Dark": "ጨለማ",

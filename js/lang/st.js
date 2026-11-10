@@ -232,6 +232,7 @@ I18n.add('st', {
     "Something went wrong": "Ho na le se sa tsamaeng hantle",
     "Try again": "Leka hape",
     "Back to the top": "Kgutlela hodimo",
+    "Go to the bottom": "Eya tlase",
     "Appearance": "Ponahalo",
     "Light": "Kganya",
     "Dark": "Lefifi",

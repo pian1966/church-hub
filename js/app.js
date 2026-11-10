@@ -913,28 +913,38 @@ var Hub = (function () {
     else { var bar = document.querySelector('.offline-bar'); if (bar && !Store.offline()) bar.remove(); }
   }
 
-  /** Back to the top: a small round arrow at the bottom right, once someone has scrolled well down a long page. */
-  function toTop() {
-    var b = document.createElement('button'); b.type = 'button'; b.id = 'to-top'; b.hidden = true;
-    b.innerHTML = icon('M12 19V5M5 12l7-7 7 7', 20);
-    var label = function () { var t = T('Back to the top'); b.setAttribute('aria-label', t); b.title = t; };
-    label(); document.body.appendChild(b);
-    var shown = false, check = function () {
-      var on = window.scrollY > 600; if (on === shown) return; shown = on;
-      if (on) { label(); b.hidden = false; requestAnimationFrame(function () { b.classList.add('show'); }); } else { b.classList.remove('show'); setTimeout(function () { if (!shown) b.hidden = true; }, 200); }
+  /** Back to the top and to the bottom: two small round arrows at the bottom right of a long page – up once someone has
+   *  scrolled well down, down while there is still a long way to go (e.g. a long list, or Settings). */
+  function jumpButtons() {
+    var box = document.createElement('div'); box.id = 'jump';
+    var make = function (id, path) { var b = document.createElement('button'); b.type = 'button'; b.id = id; b.hidden = true; b.innerHTML = icon(path, 20); box.appendChild(b); return b; };
+    var up = make('to-top', 'M12 19V5M5 12l7-7 7 7'), down = make('to-bottom', 'M12 5v14M19 12l-7 7-7-7');
+    var label = function () { [[up, T('Back to the top')], [down, T('Go to the bottom')]].forEach(function (x) { x[0].setAttribute('aria-label', x[1]); x[0].title = x[1]; }); };
+    label(); document.body.appendChild(box);
+    var shown = { 'to-top': false, 'to-bottom': false };
+    var show = function (b, on) {
+      if (on === shown[b.id]) return; shown[b.id] = on;
+      if (on) { label(); b.hidden = false; requestAnimationFrame(function () { b.classList.add('show'); }); } else { b.classList.remove('show'); setTimeout(function () { if (!shown[b.id]) b.hidden = true; }, 200); }
+    };
+    var check = function () {
+      var y = window.scrollY, h = document.documentElement.scrollHeight, left = h - (y + window.innerHeight);
+      show(up, y > 600); show(down, left > 600);
     };
     window.addEventListener('scroll', check, { passive: true });
+    window.addEventListener('resize', check, { passive: true });
     window.addEventListener('hashchange', function () { setTimeout(check, 50); });
-    b.addEventListener('click', function () {
-      var smooth = !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
-      window.scrollTo({ top: 0, behavior: smooth ? 'smooth' : 'auto' });
+    if (window.ResizeObserver) new ResizeObserver(function () { check(); }).observe(document.body);   // the page grew or shrank (drawn again, a panel opened)
+    var smooth = function () { return !(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches); };
+    up.addEventListener('click', function () {
+      window.scrollTo({ top: 0, behavior: smooth() ? 'smooth' : 'auto' });
       var m = document.getElementById('main'); if (m) m.focus({ preventScroll: true });
     });
+    down.addEventListener('click', function () { window.scrollTo({ top: document.documentElement.scrollHeight, behavior: smooth() ? 'smooth' : 'auto' }); });
   }
 
   function start() {
     root = document.getElementById('app');
-    toTop();
+    jumpButtons();
     if (inApp()) document.documentElement.classList.add('in-app');
     if (homeScreen()) document.documentElement.classList.add('home-screen');
     I18n.onLoad(function () { if (document.querySelector('#modal .overlay')) closeModal(); render(); keepFiles(); });

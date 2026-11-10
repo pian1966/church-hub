@@ -232,6 +232,7 @@ I18n.add('nr', {
     "Something went wrong": "Kukhona okungakahambi kuhle",
     "Try again": "Lingisa godu",
     "Back to the top": "Buyela phezulu",
+    "Go to the bottom": "Iya phasi",
     "Appearance": "Ukubonakala",
     "Light": "Okukhanyako",
     "Dark": "Okumnyama",

@@ -228,6 +228,7 @@ I18n.add('en-US', {
     "Something went wrong": "Something went wrong",
     "Try again": "Try again",
     "Back to the top": "Back to the top",
+    "Go to the bottom": "Go to the bottom",
     "Appearance": "Appearance",
     "Light": "Light",
     "Dark": "Dark",

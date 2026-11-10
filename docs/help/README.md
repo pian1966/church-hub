@@ -17,6 +17,9 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |
 | [care-groups.md](care-groups.md) | Care groups for members, carers and staff |
 | [midweek-groups.md](midweek-groups.md) | Midweek groups (Bible studies, life groups) for members, leaders and staff |
+| [leadership.md](leadership.md) | Leadership groups (the Council, elders, leaders): roles, titles and portfolios |
+| [archive.md](archive.md) | The Archive: minutes, plans, contracts and other church records, and who can see them |
+| [library.md](library.md) | The church Library: finding, borrowing and returning books; for librarians |
 | [messages.md](messages.md) | Reading and sending messages inside Church Hub |
 | [people.md](people.md) | For staff: adding and editing people, households, children, duplicates, searching, a death |
 | [privacy.md](privacy.md) | Consent, what others can see, and the Privacy pages for Administrators |

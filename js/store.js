@@ -19,8 +19,8 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps'];
-  var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null;
+    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans'];
+  var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
   var previewRole = '', previewCare = '', PREVIEW_MSG = 'You’re only viewing Church Hub as another role – nothing is saved. Switch back to Administrator to make changes.';
@@ -112,6 +112,7 @@ var Store = (function () {
     var prev = get(c, id); c = real(c);
     db[c] = all(c).filter(function (x) { return x.id !== id; });
     if (LIVE && prev) Live.remove(c, prev);
+    if (c === 'archive') delete demoFiles[id];
     if (auditText) audit(auditText, c + '/' + id);
     save(); changed();
   }
@@ -185,6 +186,7 @@ var Store = (function () {
     var stats = { start: 0, loaded: 0, snaps: 0, rebuilds: 0, rebuildMs: 0, slowestRebuild: 0, writes: 0, sizes: {} };
     var savedLeave = { requests: {}, adjustments: {}, config: '' }, remoteTimer = null;
     var MAX_SHARED = 4;   // people who may share one sign-in (one email address); the rules allow the first and 3 others
+    var extraSubs = {};   // the Archive and a librarian's loans: asked for once the settings are known (extras())
     var local = {};   // path → what we last wrote (null = deleted), until the server confirms it
 
     function err(e, what) {
@@ -426,7 +428,7 @@ var Store = (function () {
     /** What to load for each role – mirrors firestore.rules, so no request is refused. */
     function plan() {
       var me = session.personId, r = role(), staff = is('admin', 'pastor', 'rosters', 'kids'), p = [];
-      var COLL = { leaveConfig: 'leave', detailsMe: 'details', consentsMe: 'consents', consentsMed: 'consents', consentsPhotos: 'consents', messagesTo: 'messages', messagesFrom: 'messages' };
+      var COLL = { leaveConfig: 'leave', detailsMe: 'details', consentsMe: 'consents', consentsMed: 'consents', consentsPhotos: 'consents', messagesTo: 'messages', messagesFrom: 'messages', leaderBodiesOpen: 'leaderBodies', leaderBodiesMine: 'leaderBodies', loansMe: 'loans' };
       var add = function (key, ref) { p.push({ key: key, ref: ref, coll: COLL[key] || key }); };
       var coll = function (c) { return fs.collection(c); }, own = function (c, field) { return fs.collection(c).where(field || 'personId', '==', me); };
       add('settings', doc('settings/church'));
@@ -450,6 +452,14 @@ var Store = (function () {
       // Message groups: Administrators and Pastors all; everyone else the groups they are in.
       if (is('admin', 'pastor')) { add('messages', coll('messages')); add('msgGroups', coll('msgGroups')); }
       else { add('messagesTo', coll('messages').where('to', 'array-contains', me)); add('messagesFrom', own('messages', 'fromId')); add('msgGroups', coll('msgGroups').where('memberIds', 'array-contains', me)); }
+      // Leadership groups (js/leaders.js): Administrators and Pastors see them all; everyone else the open ones and their own.
+      // The Archive follows from them and from the settings, so it is asked for once those are known – see extras().
+      if (is('admin', 'pastor')) add('leaderBodies', coll('leaderBodies'));
+      else { add('leaderBodiesOpen', coll('leaderBodies').where('open', '==', true)); add('leaderBodiesMine', coll('leaderBodies').where('memberIds', 'array-contains', me)); }
+      // Library (js/library.js): everyone sees the books; Administrators every loan, everyone else their own
+      // (a librarian who isn't an Administrator: every loan, once the settings say who the librarians are – see extras())
+      add('books', coll('books'));
+      if (is('admin')) add('loans', coll('loans')); else add('loansMe', own('loans'));
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
       // ("View as" by the Rector: everyone's offers only if they may answer them themselves – the rules check their own sign-in)
       var realRoster = !previewRole || session.role === 'admin' || (session.can || []).indexOf('rosters') >= 0;
@@ -503,6 +513,7 @@ var Store = (function () {
           else if (snap.exists) m[snap.id] = snap.data();
           raw[s.key] = m; stats.snaps++; stats.sizes[s.key] = Object.keys(m).length;
           if (s.key === 'careGroups' && !is('admin', 'pastor')) shares(Object.keys(m));
+          if (s.key === 'settings' || s.key.indexOf('leaderBodies') === 0) extras();
           if (s.key === 'settings') { careAll(m.church); if (!is('admin', 'pastor') && raw.careGroups) shares(Object.keys(raw.careGroups)); }
           if (!snap.metadata.hasPendingWrites) forget(s.coll);
           if (first) { first = false; if (--pending === 0) whenLoaded(); }
@@ -561,8 +572,52 @@ var Store = (function () {
         if (ready) { rebuild(); remoteChanged(); }
       }, function (e) { console.warn('Could not load every care group (re-publish the database rules?)', e && e.code); careAllSub = null; });
     }
+    /** Lists that depend on the church's settings or on my leadership groups, so they can only be asked for once those
+     *  are known. The Archive (only when it is switched on): Administrators and the Senior Pastor every record; everyone
+     *  else what is for everyone, what is shown to them, their leadership groups' records, and (Pastors) the office's.
+     *  The Library: a librarian who isn't an Administrator sees every loan. Each matches a rule in firestore.rules. */
+    function myBodies() {
+      var m = merged('leaderBodies', 'leaderBodiesMine'), me = session.personId;
+      return Object.keys(m).filter(function (id) { return (m[id].memberIds || []).indexOf(me) >= 0; }).sort();
+    }
+    function extras() {
+      if (!session || !fs) return;
+      var st = (raw.settings && raw.settings.church) || {}, me = session.personId, want = {}, c = function (x) { return fs.collection(x); };
+      if ((st.modules || {}).archive === true && me) {
+        var senior = !previewRole && session.role === 'pastor' && st.seniorPastorId === me;
+        if (is('admin') || senior) want['archive:'] = c('archive');
+        else {
+          want['archive:all'] = c('archive').where('access', '==', 'all');
+          want['archive:me'] = c('archive').where('shownTo', '==', me);
+          if (is('pastor')) want['archive:office'] = c('archive').where('access', '==', 'office');
+          myBodies().forEach(function (g) { want['archive:g:' + g] = c('archive').where('bodyId', '==', g); });
+        }
+      }
+      if (!is('admin') && !previewRole && me && (st.librarianIds || []).indexOf(me) >= 0) want['loans:all'] = c('loans');
+      var gone = false;
+      Object.keys(extraSubs).forEach(function (k) { if (!want[k]) { try { extraSubs[k](); } catch (e) {} delete extraSubs[k]; delete raw[k]; gone = true; } });
+      if (gone && ready) { rebuild(); remoteChanged(); }
+      Object.keys(want).forEach(function (k) {
+        if (extraSubs[k]) return;
+        extraSubs[k] = want[k].onSnapshot(function (snap) {
+          var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw[k] = m;
+          if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
+        }, function (e) { console.warn('Could not load ' + k + ' (re-publish the database rules?)', e && e.code); delete extraSubs[k]; });
+      });
+    }
+    function stopExtras() { Object.keys(extraSubs).forEach(function (k) { try { extraSubs[k](); } catch (e) {} }); extraSubs = {}; }
+    /** A record's file, cut into parts (archive/{id}/parts/{n}); see js/archive.js. Unlike other saves these say when they fail. */
+    function fileSave(id, parts, had) {
+      var jobs = parts.map(function (data, i) { return doc('archive/' + id + '/parts/' + i).set({ data: data }); });
+      for (var i = parts.length; i < (had || 0); i++) jobs.push(doc('archive/' + id + '/parts/' + i).delete());
+      return Promise.all(jobs);
+    }
+    function fileLoad(id, n) {
+      var jobs = []; for (var i = 0; i < n; i++) jobs.push(doc('archive/' + id + '/parts/' + i).get());
+      return Promise.all(jobs).then(function (snaps) { return snaps.map(function (s) { if (!s.exists) throw new Error('A part of the file is missing'); return s.data().data || ''; }); });
+    }
     function forget(coll) { Object.keys(local).forEach(function (k) { if (k.split('/')[0] === coll) delete local[k]; }); }
-    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); careAll(null); ready = false; }
+    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); careAll(null); stopExtras(); ready = false; }
     function remoteChanged() {
       clearTimeout(remoteTimer);
       remoteTimer = setTimeout(function () { remoteListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }, 300);
@@ -612,7 +667,11 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books'].forEach(function (c) { db[c] = arr(c); });
+      [['leaderBodies', /^leaderBodies/], ['archive', /^archive:/], ['loans', /^loans/]].forEach(function (x) {   // each asked for in parts (plan(), extras())
+        var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
+        db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
+      });
       var cgs = merged('careGroupsAll', 'careGroups');   // my own groups, and every group when Settings allows (careAll)
       db.careGroups = Object.keys(cgs).map(function (id) { var o = copy(cgs[id]); o.id = id; return o; });
       var msgs = merged('messages', 'messagesTo', 'messagesFrom');
@@ -841,6 +900,7 @@ var Store = (function () {
       if (c === 'notes' || c === 'officeNotes') return putNotes(prev.personId, c);
       if (c === 'careGroups') { del(c + '/' + prev.id); careDirectory(prev, null); return; }
       if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
+      if (c === 'archive') fileSave(prev.id, [], (prev.file && prev.file.parts) || 0).catch(function (e) { console.error('delete the file', e); });   // its file goes too
       del(c + '/' + prev.id);
     }
     /** A care group changed: its people's directory entries show their groups (only where this person may write them). */
@@ -926,7 +986,7 @@ var Store = (function () {
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, fileSave: fileSave, fileLoad: fileLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -1035,6 +1095,17 @@ var Store = (function () {
       })());
       put('people', p, auditText);
       return done;
+    },
+    /** The Archive: a record's file as parts of base64 (js/archive.js). Kept apart from the record and fetched only when opened.
+     *  The demo keeps files only until the page is closed (this browser's storage is too small for them). */
+    saveFile: function (id, parts, had) {
+      if (blocked()) return Promise.reject(new Error('view only'));
+      if (LIVE) return Live.fileSave(id, parts, had);
+      demoFiles[id] = parts.slice(); if (!parts.length) delete demoFiles[id]; return Promise.resolve();
+    },
+    loadFile: function (id, n) {
+      if (LIVE) return Live.fileLoad(id, n);
+      return demoFiles[id] ? Promise.resolve(demoFiles[id].slice()) : Promise.reject(new Error('not kept'));
     },
     /** A small setting kept on this device only (e.g. the language), also before signing in. Not church data. */
     pref: function (k, v) {

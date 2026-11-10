@@ -43,6 +43,13 @@
   function leadsCare(c, gid) { return is(c, ANY) && meIn(c, (docs['careGroups/' + gid].leaderIds || [])); }
   function checks(c, lang) { return is(c, ANY) && c.langs.indexOf(lang) >= 0; }   // checks translations in that language
   function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
+  /** The Archive's keepers: Administrators and the Senior Pastor (settings seniorPastorId). */
+  function keeper(c) { return is(c, ['admin']) || (is(c, ['pastor']) && isMe(c, (docs['settings/church'] || {}).seniorPastorId || '')); }
+  function seesRecord(c, d) {
+    return keeper(c) || (d.access === 'all' && is(c, ANY)) || (d.access === 'office' && is(c, ['admin', 'pastor']))
+      || (!!(d.bodyId || '') && is(c, ANY) && meIn(c, docs['leaderBodies/' + d.bodyId].memberIds || [])) || mine(c, d.shownTo || '');
+  }
+  function librarian(c) { return is(c, ['admin']) || (is(c, ANY) && meIn(c, (docs['settings/church'] || {}).librarianIds || [])); }
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
       write: function (c, op, id, b, a) {
@@ -194,6 +201,23 @@
         if (op === 'delete') return may(c, 'words') || checks(c, b.lang) || mine(c, b.personId);
         return (may(c, 'words') || checks(c, b.lang)) && onlyChanges(b, a, ['status', 'reply', 'reviewedBy', 'reviewedAt', 'updatedAt']) && ['used', 'declined'].indexOf(a.status) >= 0;
       } },
+    // Leadership groups: Administrators and Pastors manage; an open group is read by everyone, any other by its members
+    leaderBodies: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && (d.open === true || meIn(c, d.memberIds || []))); },
+      write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || (typeof a.name === 'string' && a.name.length > 0 && a.name.length <= 80 && typeof a.open === 'boolean' && Array.isArray(a.memberIds))); } },
+    // The Archive: Administrators and the Senior Pastor everything; others by the record's access (seesRecord in firestore.rules)
+    archive: { read: function (c, id, d) { return !!d && seesRecord(c, d); },
+      write: function (c, op, id, b, a) {
+        if (!keeper(c)) return false;
+        return op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150 && ['all', 'body', 'office', 'private'].indexOf(a.access) >= 0
+          && (a.access === 'body') === !!(a.bodyId || '') && (!(a.shownTo || '') || a.shownTo === (a.aboutId || '')));
+      } },
+    'archive/parts': { read: function (c, n, d, id) { return seesRecord(c, docs['archive/' + id]); },   // a missing record fails
+      write: function (c, op, n, b, a) { return keeper(c) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
+    // The Library: everyone reads the books; librarians write; a loan is read by the librarians and its borrower
+    books: { read: function (c) { return is(c, ANY); },
+      write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150)); } },
+    loans: { read: function (c, id, d) { return librarian(c) || (!!d && mine(c, d.personId || '')); },
+      write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (typeof a.bookId === 'string' && typeof a.personId === 'string')); } },
     dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
     audit: { read: function (c) { return may(c, 'privacy'); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }

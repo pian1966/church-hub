@@ -84,6 +84,18 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   through Firebase AI Logic), and show the reply with a link to the help page. Use the church's own words (Terminology) and the
   person's language. A monthly limit per church; without AI (switched off or limit reached), a plain searchable FAQ of the same
   pages. Never send personal information with the question.
+- 🟡 **Leadership, Archive and Library** (built in 0.51, off until switched on in Settings → Apps). Church to do: switch them on,
+  set up the Council under Leadership, choose the Senior Pastor (Settings → What Pastors can do) so they can see the whole
+  Archive, name the librarians, and – if GitHub doesn't publish the database rules by itself yet – re-publish them
+  (FIREBASE-SETUP.md step 7), or the three pages stay empty. Android: a new build of the app is needed to download
+  Archive files inside the app. Follow-ups:
+  - ⬜ Leadership: show someone's roles on their page in People and on Me; send a message to a leadership group
+  - ⬜ Archive: let a group's Secretary file its own minutes; open a PDF inside Church Hub; a retention review (how long
+    each category is kept, with a reminder); a "What Pastors can do" tick for managing the Archive
+  - ⬜ Library: ask to borrow or reserve a book in the app; a reminder message when a book is overdue; my books on the Me
+    page; import a book list from a spreadsheet; the church's own loan period
+  - ⬜ Church Words (Terminology) for "Council", "Leadership" and "Library", and demo data for the three pages
+  - ⬜ Fluent speakers to check the new wording in every language (drafted by Claude)
 - ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request (add to CLAUDE.md rules
   once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
 

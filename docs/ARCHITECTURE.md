@@ -34,6 +34,9 @@ js/privacy-law.js         PrivacyLaw: the law the Privacy pages follow, from the
 js/wording.js             Wording: the church's own words (sets by denomination + renamed words), applied to the screens (tested)
 js/care.js                Care: care groups – who is in which group, carers, and the card the group sees (tested)
 js/messages.js            Msg: messages inside the app – who each audience is, who may send to whom, unread (tested)
+js/leaders.js             Leaders: leadership groups (Council, elders, leaders) – roles, titles, portfolios, served before (tested)
+js/archive.js             Archive: church records – categories, who sees a record, files cut into parts (tested)
+js/library.js             Library: the church's books – copies in and out, lending, returning, overdue (tested)
 js/sample.js              made-up church for demo mode and tests
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
 js/app.js                 shell: sign-in, roles, router, Home, module registry, UI helpers (search matching, photos and
@@ -116,6 +119,9 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `wordIdeas` | suggested better wording: { lang, en (the English text), text, note, personId, name, status waiting\|used\|declined, reply, reviewedBy, reviewedAt } |
 | `messages` | a message to a group or chosen people: { kind care\|group\|staff\|partners\|people, groupId, audience (its name, or the one chosen person's), some (only some of a group), title, body, fromId, fromName, to: [personIds worked out when sent], readBy: [personIds] } – see Messages below |
 | `msgGroups` | message groups (e.g. Worship team leaders): { name, memberIds, leaderIds, names } – Administrators and Pastors manage them |
+| `leaderBodies` | a leadership group (Council, elders…): { name, open, memberIds, names, seats: { personId: { role, title, portfolios, from, to } }, past: [served before] } – see Leadership below |
+| `archive` | a church record: { title, cat, date, note, access all\|body\|office\|private, bodyId, aboutId, aboutName, shownTo, link, file: { name, type, size, parts }, by }; its file is in `archive/{id}/parts/{n}` = { data: base64 } – see Archive below |
+| `books`, `loans` | the Library: a book { title, author, cat, copies, acquired, how, from, shelf, isbn, note, out } and a loan { bookId, title, personId, name, out, due, back } – see Library below |
 | `words` | approved wording, one document per language (`words/zu` = { words: { English: wording }, updatedAt, by }), used before the built-in translations |
 
 ### Roles (enforced in the screens and by the database security rules, `firestore.rules`)
@@ -162,6 +168,7 @@ keep My leave and Who's away. (Approved leave still reaches every signed-in pers
 **Android app** (`android/`, built by `.github/workflows/build-android.yml`, setup in `docs/ANDROID.md`): a WebView
 showing the website, built like Leave Manager's app (its own signing key). It offers the camera next to the gallery when a
 page asks for a picture (photo saved in the app's cache, shared with the camera app only through a FileProvider), and
+`ChurchHubApp.saveFileBase64(name, type, base64)` does the same for Archive files (PDFs, pictures).
 `ChurchHubApp.saveFile(name, type, text)` saves downloads in the phone's Downloads (`Hub.download()` uses it; older app
 versions are asked to update). It adds `window.ChurchHubApp`; when present,
 `Store.live.google()` asks Android's account picker for a Google ID token and signs in with
@@ -525,6 +532,47 @@ Later: direct import through the Elvanto API (server side, with the church's API
   with how many it goes to; Administrators and Pastors also see how many of them can't sign in yet. Rules: `firestore.rules`
   (messages, msgGroups) check the sender, that a carer or leader writes only to people in their group, and the sizes.
 - Not yet: phone notifications when the app is closed, email/SMS fallback, replies (see ROADMAP Phase 5).
+
+## Leadership (Leadership page; `js/leaders.js`, `js/mod-leaders.js`)
+Off until switched on (Settings → Apps; `optIn`). A leadership group is one `leaderBodies` document (like a care group):
+`memberIds` + `names`, and for each member a seat – `role` (Chair, Secretary…), `title` (Churchwarden, Elder…),
+`portfolios` (a list) and `from`/`to` dates, all the church's own words. Ending someone's time moves their seat to `past`
+("Served before"); "added by mistake" removes it without a trace. `open: true` = everyone signed in reads the group;
+otherwise only its members. Administrators and Pastors manage (rules: `manager()`). Everyone else loads two queries
+(`open == true`, and `memberIds` contains me – `plan()`); only names and roles are kept, never contact details.
+The Archive reads `memberIds` to decide who sees a group's records, so a group with records can't be deleted.
+Not built yet: showing someone's leadership roles on their page in People, and messages to a leadership group.
+
+## Archive (Archive page; `js/archive.js`, `js/mod-archive.js`)
+Off until switched on. A record has a category (`settings.archiveCats`, or `Archive.CATS`: Council minutes, Architectural
+plans, Staff contracts, Annual appraisals, Other), a date, and a file or a link.
+- **Who sees a record** is on the record (`access`, copied from its category when added): `all` everyone signed in ·
+  `body` the members of one leadership group (`bodyId`) · `office` Administrators and Pastors · `private` Administrators
+  and the Senior Pastor. A record about a person (`aboutId`) may also be shown to them (`shownTo` = their id).
+  **Keepers** – Administrators and the Senior Pastor (`settings.seniorPastorId`) – read and write everything; nobody else
+  writes. `Archive.sees()` (screens, demo), `seesRecord()` in `firestore.rules` and the copy in `tests/fake-firebase.js` say
+  the same. `Archive.clean()` keeps `bodyId` only with `access: 'body'` and `shownTo` only equal to `aboutId` (the rules
+  insist on both), so the queries below can never return a record the reader may not see.
+- **Loading** can't be planned at sign-in, because it depends on the settings (is the Archive on? who is the Senior
+  Pastor?) and on my leadership groups. `extras()` in `js/store.js` runs when the settings or my groups arrive and keeps
+  the right listeners: keepers the whole collection; everyone else `access == all`, `shownTo == me`, `bodyId == g` for each
+  of my groups, and (Pastors) `access == office`. The same function gives a librarian who isn't an Administrator every loan.
+- **Files** are kept in Firestore, not Firebase Storage (nothing extra for a church to set up): the file as base64, cut
+  into parts of 900 000 letters (`archive/{id}/parts/{n}`; a document holds 1 MB), at most 15 MB (`Archive.MAX`); bigger
+  files are linked. Parts are written before the record and fetched only on Download (`Store.saveFile` / `loadFile`), and
+  follow the record's read rule. The demo keeps files in memory only. Downloads use the browser, or
+  `ChurchHubApp.saveFileBase64(name, type, base64)` in the Android app (older apps: "please update").
+- Opening a record that isn't for everyone (download or link) is written in the audit log. Council minutes: the Archive
+  lists this year's months with nothing filed, counted from the first minutes ever filed (`Archive.missingMonths`).
+Not built yet: letting a group's secretary file its own minutes; reading a file inside Church Hub; a retention review.
+
+## Library (Library page; `js/library.js`, `js/mod-library.js`)
+Off until switched on. Everyone signed in reads `books`. **Librarians** – Administrators and `settings.librarianIds`
+(named by an Administrator on the Library page; rules: `librarian()`) – add books and write `loans`. A loan is read by the
+librarians and its borrower only, so a book carries its own count of copies out (`out`, kept in step by `Library.lend` /
+`giveBack`) for everyone else to see "Available" or "On loan". Lending defaults to three weeks (`LOAN_DAYS`); overdue loans
+show on Home (the librarians: how many; the borrower: their own). Returned loans are removed after a year (`KEEP_DAYS`,
+when a librarian opens the page). Not built yet: asking to borrow or reserve a book in the app, reminders by message.
 
 ## Services that need a roster
 - Settings lists every upcoming service with a bin to remove it (and its roster); "Stop holding a regular service…"

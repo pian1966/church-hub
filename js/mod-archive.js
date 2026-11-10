@@ -1,0 +1,219 @@
+/* Church Hub – Archive: the church's records in one safe place – Council minutes, architectural plans, staff contracts,
+ * annual appraisals and anything else. Each record has a date, a category, a file (kept in Church Hub, up to 15 MB) or a
+ * link to where it is kept, and says who can see it. Off until an Administrator switches it on (Settings → Apps).
+ * Administrators and the Senior Pastor add records and see them all; everyone else sees only what a record allows
+ * (js/archive.js: everyone / a leadership group / Administrators and Pastors / private, or shown to the person it is about).
+ * Opening a record that isn't for everyone is written in the audit log. Rules: js/archive.js (tested), firestore.rules (archive). */
+(function () {
+  'use strict';
+  var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn, A = Archive;
+  var BOX = 'M3 5h18v4H3zM5 9v10h14V9M10 13h4';
+  var PEN = 'M4 20h4L20 8l-4-4L4 16zM14 6l4 4';
+  var state = { q: '', cat: '', year: '' }, draft = null;
+
+  function me() { return H.user(); }
+  function who() {
+    var u = me(), admin = H.can('*');
+    return { admin: admin, pastor: !admin && H.can('people.edit'), senior: !S.preview() && !!u && H.isSenior(S.get('people', u.id) || u), ids: u ? [u.id] : [], bodies: u && window.LeadersUI ? LeadersUI.mine(u.id) : [] };
+  }
+  function keeper() { var w = who(); return w.admin || w.senior; }
+  function visible() { var w = who(); return S.list('archive').filter(function (r) { return A.sees(r, w); }); }
+  function cats() { return A.cats(S.settings()); }
+  function catName(id) { var c = A.cat(S.settings(), id); return c ? T(c.name) : T('Other records'); }
+  function bodies() { return S.list('leaderBodies').slice().sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); }); }
+  function val(id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }
+  function accessText(r) {
+    var b = r.bodyId ? S.get('leaderBodies', r.bodyId) : null, a = A.ACCESS.filter(function (x) { return x[0] === r.access; })[0];
+    return r.access === 'body' ? (b ? b.name : T('The members of a leadership group')) : T(a ? a[1] : 'Administrators and the Senior Pastor only');
+  }
+  function item(r, edit) {
+    var bits = [H.fmt(r.date, true)];
+    if (r.aboutName) bits.push(T('About {name}', { name: r.aboutName }));
+    if (r.file) bits.push(r.file.name + ' (' + A.sizeText(r.file.size) + ')');
+    return '<div class="item rec-item ar-item" data-find="' + esc([r.title, r.note, r.aboutName, r.file ? r.file.name : ''].join(' ')) + '">' +
+      '<span class="grow"><b data-own-words>' + esc(r.title) + '</b><small>' + bits.map(esc).join(' · ') + '</small>' + (r.note ? '<small data-own-words>' + esc(r.note) + '</small>' : '') +
+      (edit ? '<small><span class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText(r)) + '</span>' + (r.shownTo ? ' <span class="tag grey">' + esc(T('Shown to {name}', { name: r.aboutName })) + '</span>' : '') + '</small>' : '') + '</span><span class="rec-acts">' +
+      (r.file ? '<button class="btn small" data-act="archive:open" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.download, 16) + T('Download') + '</button>' : '') +
+      (A.link(r.link) ? '<a class="btn small" href="' + esc(A.link(r.link)) + '" target="_blank" rel="noopener noreferrer" data-act="archive:link" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.link, 16) + T('Open the link') + '</a>' : '') +
+      (edit ? '<button class="icon-btn ghost" data-act="archive:edit" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Edit {name}', { name: r.title })) + '" title="' + esc(T('Edit')) + '">' + H.icon(PEN, 16) + '</button>' +
+        '<button class="icon-btn ghost" data-act="archive:del" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Delete {name}', { name: r.title })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</span></div>';
+  }
+  /** Council minutes are monthly: the months of this year with nothing filed yet (up to last month), for the people who file them. */
+  function gaps(recs) {
+    var now = H.today(), yr = now.slice(0, 4), m = +now.slice(5, 7) - 1; if (m < 1 || !A.cat(S.settings(), 'minutes')) return '';
+    if (state.year && state.year !== yr) return '';
+    var miss = A.missingMonths(recs, 'minutes', yr, yr + '-' + (m < 10 ? '0' : '') + m);
+    return miss.length ? '<p class="note warn" style="margin:8px 0 0">' + esc(T('Nothing filed yet for: {months}', { months: miss.map(function (x) { return I18n.mon()[x - 1]; }).join(', ') + ' ' + yr })) + '</p>' : '';
+  }
+  function page() {
+    var edit = keeper(), all = visible(), cs = cats(), years = A.years(all);
+    if (state.cat && !A.cat(S.settings(), state.cat)) state.cat = '';
+    if (state.year && years.indexOf(state.year) < 0) state.year = '';
+    var known = {}; cs.forEach(function (c) { known[c.id] = 1; });
+    var groups = cs.filter(function (c) { return !state.cat || c.id === state.cat; }).map(function (c) { return { id: c.id, name: T(c.name), recs: A.list(all, c.id, state.year) }; });
+    var stray = state.cat ? [] : A.list(all, '', state.year).filter(function (r) { return !known[r.cat]; });   // records of a category since deleted
+    if (stray.length) groups.push({ id: '', name: T('Other records'), recs: stray });
+    var html = '<div class="page-head"><div><h1>' + T('Archive') + '</h1><p class="lead">' + T('The church’s records, kept safely in one place. Each record says who can see it.') + '</p></div>' +
+      (edit ? '<div class="btns"><button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button>' +
+        (H.can('settings.manage') ? '<button class="btn" data-act="archive:cats">' + T('Categories') + '</button>' : '') + '</div>' : '') + '</div>';
+    if (!all.length) return html + '<p class="empty">' + T('No records yet.') + '</p>';
+    html += '<div class="row" style="gap:10px;flex-wrap:wrap;margin-bottom:14px"><label class="search grow">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search the archive') + '</span><input id="ar-q" type="search" placeholder="' + esc(T('Search the archive')) + '" value="' + esc(state.q) + '" autocomplete="off"></label>' +
+      '<select class="inline" style="width:auto" id="ar-fcat" aria-label="' + esc(T('Category')) + '"><option value="">' + T('All categories') + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (state.cat === c.id ? ' selected' : '') + '>' + esc(T(c.name)) + '</option>'; }).join('') + '</select>' +
+      '<select class="inline" style="width:auto" id="ar-fyear" aria-label="' + esc(T('Year')) + '"><option value="">' + T('All years') + '</option>' + years.map(function (y) { return '<option' + (state.year === y ? ' selected' : '') + '>' + esc(y) + '</option>'; }).join('') + '</select></div>';
+    html += groups.filter(function (g) { return g.recs.length || (edit && g.id === 'minutes'); }).map(function (g) {
+      return '<section class="panel ar-panel" data-cat="' + esc(g.id) + '"><div class="row"><h2 class="grow" style="margin:0" data-own-words>' + esc(g.name) + '</h2><span class="muted small">' + TN('{n} record', '{n} records', g.recs.length) + '</span></div>' +
+        (edit && g.id === 'minutes' ? gaps(all) : '') +
+        '<div class="list" style="margin-top:8px">' + g.recs.map(function (r) { return item(r, edit); }).join('') + '</div></section>';
+    }).join('');
+    return html + '<p class="empty" id="ar-none" hidden>' + T('Nothing matches.') + '</p>';
+  }
+  function applySearch() {
+    var q = state.q.trim(), shown = 0;
+    [].forEach.call(document.querySelectorAll('.ar-panel'), function (sec) {
+      var any = false;
+      [].forEach.call(sec.querySelectorAll('.ar-item'), function (it) { var hit = !q || H.matches(it.dataset.find, q); it.hidden = !hit; if (hit) any = true; });
+      sec.hidden = !!q && !any; if (any) shown++;
+    });
+    var none = document.getElementById('ar-none'); if (none) none.hidden = !q || shown > 0;
+  }
+
+  /* ---------- adding and changing a record ---------- */
+  function staff(keep) { return S.find('people', function (p) { return p.id === keep || (p.category === 'Staff' && p.active !== false && !p.binnedAt && !p.mergedInto); }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); }); }
+  function showParts() {
+    var c = A.cat(S.settings(), val('ar-cat')), body = document.getElementById('ar-body-wrap'), about = document.getElementById('ar-about-wrap'); if (!body) return;
+    body.hidden = val('ar-access') !== 'body';
+    about.hidden = !((c && c.person) || val('ar-about'));
+  }
+  function form(r) {
+    var isNew = !r.id, cs = cats(), bs = bodies(), council = bs.filter(function (b) { return /council/i.test(b.name); })[0] || bs[0];
+    var opt = function (v, text, cur) { return '<option value="' + esc(v) + '"' + (v === cur ? ' selected' : '') + '>' + esc(text) + '</option>'; };
+    H.modal(H.dialogHead(isNew ? T('Add a record') : T('Edit {name}', { name: r.title })) + '<div class="dlg-body">' +
+      '<label class="field req">' + T('Title') + '<input id="ar-title" maxlength="150" value="' + esc(r.title || '') + '"></label>' +
+      '<div class="two"><label class="field req">' + T('Category') + '<select id="ar-cat"' + (isNew ? ' data-new="1"' : '') + '>' + cs.map(function (c) { return opt(c.id, T(c.name), r.cat); }).join('') + (r.cat && !A.cat(S.settings(), r.cat) ? opt(r.cat, T('Other records'), r.cat) : '') + '</select></label>' +
+      '<label class="field req">' + T('Date') + '<input type="date" id="ar-date" value="' + esc(r.date || H.today()) + '"></label></div>' +
+      '<label class="field req">' + T('Who can see it') + '<select id="ar-access">' + A.ACCESS.map(function (a) { return opt(a[0], T(a[1]), r.access); }).join('') + '</select><small>' + T('Administrators and the Senior Pastor see every record.') + '</small></label>' +
+      '<div id="ar-body-wrap"><label class="field req">' + T('Leadership group') + '<select id="ar-body"><option value="">' + T('Choose…') + '</option>' + bs.map(function (b) { return opt(b.id, b.name, r.bodyId || (isNew && council ? council.id : '')); }).join('') + '</select>' +
+      '<small>' + T('Leadership groups are set up on the Leadership page.') + '</small></label></div>' +
+      '<div id="ar-about-wrap"><label class="field">' + T('The staff member it is about') + '<select id="ar-about"><option value="">' + T('No one') + '</option>' + staff(r.aboutId).map(function (p) { return opt(p.id, H.name(p), r.aboutId); }).join('') + '</select></label>' +
+      '<label class="check"><input type="checkbox" id="ar-shown"' + (r.shownTo || (isNew && !r.aboutId) ? ' checked' : '') + '><span>' + T('They can see this record themselves') + '</span></label></div>' +
+      '<label class="field">' + (r.file ? T('Replace the file') + ' <span class="muted small">(' + esc(r.file.name) + ')</span>' : T('File (up to 15 MB)')) + '<input type="file" id="ar-file"></label>' +
+      '<label class="field">' + T('Or a link to where it is kept') + '<input id="ar-link" type="url" maxlength="500" value="' + esc(r.link || '') + '" placeholder="https://"></label>' +
+      '<label class="field">' + T('Note') + '<textarea id="ar-note" rows="2" maxlength="1000">' + esc(r.note || '') + '</textarea></label>' +
+      '<p id="ar-err" class="note bad" hidden></p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="archive:save" data-id="' + esc(r.id || '') + '">' + T('Save') + '</button></div>', T('Add a record'));
+    showParts();
+  }
+  function readFile(file) {
+    return new Promise(function (ok, no) {
+      var fr = new FileReader();
+      fr.onload = function () { var s = String(fr.result || ''); ok(s.slice(s.indexOf(',') + 1)); };
+      fr.onerror = function () { no(fr.error || new Error('read')); };
+      fr.readAsDataURL(file);
+    });
+  }
+  /** Hand a file (base64) to the browser or the Android app to save. */
+  function saveAs(name, type, b64) {
+    if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFileBase64 === 'function') { window.ChurchHubApp.saveFileBase64(name, type || 'application/octet-stream', b64); return; }
+    if (window.ChurchHubApp) { H.toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+    var bin = atob(b64), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([bytes], { type: type || 'application/octet-stream' }));
+    a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+  }
+  function logOpen(r) { if (r.access !== 'all') S.audit('Opened the archive record “' + r.title + '” (' + catName(r.cat) + ')', 'archive/' + r.id); }
+  function catRows() {
+    return draft.map(function (c, i) {
+      var used = S.find('archive', function (r) { return r.cat === c.id; }).length;
+      return '<div class="item ar-cat" style="gap:8px;flex-wrap:wrap" data-i="' + i + '"><input class="ar-cn grow" maxlength="60" value="' + esc(T(c.name)) + '" aria-label="' + esc(T('Name')) + '">' +
+        '<select class="ar-ca" aria-label="' + esc(T('Who can see it')) + '">' + A.ACCESS.map(function (a) { return '<option value="' + a[0] + '"' + (a[0] === c.access ? ' selected' : '') + '>' + esc(T(a[1])) + '</option>'; }).join('') + '</select>' +
+        '<button class="icon-btn ghost" data-act="archive:catdel" data-i="' + i + '"' + (used ? ' disabled title="' + esc(TN('{n} record', '{n} records', used)) + '"' : ' title="' + esc(T('Delete')) + '"') + ' aria-label="' + esc(T('Delete {name}', { name: T(c.name) })) + '">' + H.icon(H.ICON.trash, 16) + '</button></div>';
+    }).join('');
+  }
+  /** What is typed in the Categories dialog, into the draft (a starting category keeps its English name unless it was reworded). */
+  function readCats() {
+    [].forEach.call(document.querySelectorAll('.ar-cat'), function (row) {
+      var c = draft[+row.dataset.i], n = row.querySelector('.ar-cn').value.trim().slice(0, 60); if (!c) return;
+      if (n && n !== T(c.name)) c.name = n;
+      c.access = row.querySelector('.ar-ca').value;
+    });
+  }
+  function catsDialog() {
+    H.modal(H.dialogHead(T('Categories'), T('“Who can see it” is what a new record in the category starts with.')) + '<div class="dlg-body"><div class="list">' + catRows() + '</div>' +
+      '<div class="btns" style="margin-top:10px"><button class="btn" data-act="archive:catadd">' + H.icon(H.ICON.plus, 16) + T('Add a category') + '</button></div></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="archive:catsave">' + T('Save') + '</button></div>', T('Categories'), true);
+  }
+
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', function (ev) { if (ev.target.id === 'ar-q') { state.q = ev.target.value; applySearch(); } });
+    document.addEventListener('change', function (ev) {
+      var id = ev.target.id;
+      if (id === 'ar-fcat') { state.cat = ev.target.value; H.render(); }
+      else if (id === 'ar-fyear') { state.year = ev.target.value; H.render(); }
+      else if (id === 'ar-cat') {
+        var c = A.cat(S.settings(), ev.target.value), acc = document.getElementById('ar-access');
+        if (c && acc && ev.target.dataset.new) acc.value = c.access;   // a new record starts with its category's "who can see it"
+        showParts();
+      } else if (id === 'ar-access' || id === 'ar-about') showParts();
+    });
+  }
+
+  H.register({
+    id: 'archive', name: 'Archive', desc: 'Minutes, plans, contracts and other church records', icon: BOX, tint: '#7A5C3E', optIn: true,
+    show: function () { return keeper() || visible().length > 0; },
+    render: function () { return page(); },
+    after: function () { applySearch(); },
+    stat: function () { return TN('{n} record', '{n} records', visible().length); },
+    actions: {
+      add: function () {
+        if (!keeper()) return;
+        var c = A.cat(S.settings(), state.cat) || cats()[0] || { id: 'other', access: 'office' };
+        form({ cat: c.id, access: c.access });
+      },
+      edit: function (el) { var r = S.get('archive', el.dataset.id); if (r && keeper()) form(r); },
+      save: function (el) {
+        if (!keeper()) return;
+        var old = el.dataset.id ? S.get('archive', el.dataset.id) : null, err = document.getElementById('ar-err');
+        var bad = function (msg) { err.textContent = msg; err.hidden = false; };
+        var f = document.getElementById('ar-file'), file = f && f.files && f.files[0], access = val('ar-access'), about = val('ar-about') ? S.get('people', val('ar-about')) : null, typed = val('ar-link');
+        if (!val('ar-title') || !val('ar-date')) return bad(T('Shaded boxes must be filled in.'));
+        if (access === 'body' && !val('ar-body')) return bad(T('Choose the leadership group that can see it.'));
+        if (file && file.size > A.MAX) return bad(T('That file is too big (15 MB at most). Keep it somewhere like Google Drive and paste its link here.'));
+        if (typed && !A.link(typed)) return bad(T('That link doesn’t look like a web address.'));
+        if (!file && !(old && old.file) && !typed) return bad(T('Add a file or a link.'));
+        var u = me(), rec = A.clean({ id: old ? old.id : S.uid('ar'), createdAt: old && old.createdAt, title: val('ar-title'), cat: val('ar-cat'), date: val('ar-date'), note: val('ar-note'), access: access, bodyId: val('ar-body'),
+          aboutId: about ? about.id : '', aboutName: about ? H.name(about) : '', shownTo: !!about && document.getElementById('ar-shown').checked, link: A.link(typed), file: old && old.file, by: old ? old.by : (u ? H.name(u) : '') });
+        var why = (old ? 'Changed the archive record “' : 'Added to the archive: “') + rec.title + '” (' + catName(rec.cat) + '; seen by: ' + rec.access + (rec.shownTo ? ' and the person it is about' : '') + ')';
+        var done = function () { H.closeModal(); H.render(); H.toast(T('Saved')); if (file && !S.isLive()) H.toast(T('The demo keeps files only until you close the page.')); };
+        if (!file) { S.put('archive', rec, why); return done(); }
+        H.busy(T('Saving the file…'), function () {
+          return readFile(file).then(function (b64) {
+            var parts = A.split(b64);
+            return S.saveFile(rec.id, parts, (old && old.file && old.file.parts) || 0).then(function () {
+              rec.file = { name: file.name.slice(0, 150), type: file.type || '', size: file.size, parts: parts.length };
+              S.put('archive', rec, why);
+            });
+          });
+        }).then(done, function (e) { console.error(e); bad(T('Couldn’t save the file. Please try again.')); });
+      },
+      del: function (el) {
+        var r = S.get('archive', el.dataset.id); if (!r || !keeper() || !H.confirmBtn(el, '✕?')) return;
+        S.remove('archive', r.id, 'Deleted the archive record “' + r.title + '” (' + catName(r.cat) + ')'); H.render(); H.toast(T('Deleted'));
+      },
+      open: function (el) {
+        var r = S.get('archive', el.dataset.id); if (!r || !r.file || !A.sees(r, who())) return;
+        H.busy(T('Fetching the file…'), function () { return S.loadFile(r.id, r.file.parts).then(function (parts) { saveAs(r.file.name, r.file.type, A.join(parts)); logOpen(r); }); })
+          .catch(function (e) { console.error(e); H.toast(S.isLive() ? T('Couldn’t fetch the file. Please try again.') : T('The demo keeps files only until you close the page.'), true); });
+      },
+      link: function (el) { var r = S.get('archive', el.dataset.id); if (r) logOpen(r); },   // the link itself opens in a new tab
+      cats: function () { if (!H.can('settings.manage')) return; draft = A.copy(cats()); catsDialog(); },
+      catadd: function () { if (!draft) return; readCats(); draft.push({ id: S.uid('ac'), name: '', access: 'office', person: false }); catsDialog(); var all = document.querySelectorAll('.ar-cn'); if (all.length) all[all.length - 1].focus(); },
+      catdel: function (el) { if (!draft) return; readCats(); draft.splice(+el.dataset.i, 1); catsDialog(); },
+      catsave: function () {
+        if (!draft || !H.can('settings.manage')) return; readCats();
+        var list = draft.filter(function (c) { return c.name; }); if (!list.length) { H.toast(T('Keep at least one category'), true); return; }
+        S.setSettings({ archiveCats: list }, 'Changed the Archive’s categories (' + list.map(function (c) { return c.name + ': ' + c.access; }).join(', ') + ')');
+        draft = null; H.closeModal(); H.render(); H.toast(T('Saved'));
+      }
+    }
+  });
+})();

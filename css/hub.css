@@ -803,4 +803,9 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   .pp-link { flex-wrap: wrap; row-gap: 6px; } .pp-link .grow { flex: 1 1 0; }
   .pp-link .pp-tags { flex: 1 0 100%; justify-content: flex-start; padding-left: 48px; }
 }
+/* Archive and Library: a record or a book – its buttons drop below the words when there isn't room beside them (phones) */
+.rec-item { align-items: flex-start; flex-wrap: wrap; }
+.rec-item > .grow { flex: 1 1 240px; min-width: 0; overflow-wrap: anywhere; }
+.rec-item .tag { margin-top: 4px; }
+.rec-acts { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 @media print { .pick-bar { display: none; } }

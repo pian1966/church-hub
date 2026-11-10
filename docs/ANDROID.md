@@ -111,7 +111,7 @@ Church Hub reminds iPhone users in Safari how to do this. **Add photo** offers *
 - **Can we put it in the Google Play Store later?** Yes: the same app can be uploaded with a Google Play developer
   account (once-off USD 25). Then Play Protect warnings go away and updates install automatically.
 - **For developers:** `android/` is a small WebView app (`MainActivity.java`) with a bridge `window.ChurchHubApp`
-  (`version()`, `googleSignIn(webClientId)`, `retry()`, `saveFile(name, type, text)`). Picking a picture offers the camera
+  (`version()`, `googleSignIn(webClientId)`, `retry()`, `saveFile(name, type, text)`, and `saveFileBase64(name, type, base64)` for Archive files such as PDFs). Picking a picture offers the camera
   too (FileProvider `${applicationId}.files`, the app's cache only). The page answers through `window.churchHubGoogle(idToken)`,
   `churchHubGoogleError(message)` and `churchHubGoogleCancel()` (`js/store.js`), and `window.churchHubBack()` closes an
   open window before the back button goes back a page (`js/app.js`). Built by `.github/workflows/build-android.yml`.

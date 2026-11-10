@@ -24,6 +24,9 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Me (members' own page) | `js/mod-me.js` | `js/i18n/me.js` | `tests/app/roles.js` |
 | Care groups | `js/mod-care.js`, `js/care.js` | `js/i18n/care.js` | `tests/care.test.js`, `tests/app/care.js` |
 | Life groups (Bible studies, midweek groups; care-group records with `type: 'life'`) | `js/mod-life.js`, `js/care.js` | `js/i18n/life.js` | `tests/care.test.js`, `tests/app/life.js` |
+| Leadership (the Council, elders, leaders: roles, titles, portfolios; `leaderBodies`) | `js/mod-leaders.js`, `js/leaders.js` | `js/i18n/leaders.js` | `tests/leaders.test.js`, `tests/app/records.js` |
+| Archive (minutes, plans, contracts, appraisals; who sees each record; files in parts) | `js/mod-archive.js`, `js/archive.js`, `js/store.js` (`extras`, `saveFile`) | `js/i18n/archive.js` | `tests/archive.test.js`, `tests/app/records.js` |
+| Library (books, loans, librarians) | `js/mod-library.js`, `js/library.js` | `js/i18n/library.js` | `tests/library.test.js`, `tests/app/records.js` |
 | Messages (inside the app; message groups) | `js/mod-messages.js`, `js/messages.js` | `js/i18n/messages.js` | `tests/messages.test.js`, `tests/app/messages.js` |
 | Privacy pages, law by country | `js/mod-privacy.js`, `js/privacy-law.js` | `js/i18n/privacy.js` | `tests/privacy-law.test.js` |
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
@@ -49,7 +52,7 @@ changes to logic, `js/store.js`, `firestore.rules`, who sees what, the Android a
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part

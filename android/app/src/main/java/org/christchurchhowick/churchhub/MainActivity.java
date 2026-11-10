@@ -276,10 +276,13 @@ public class MainActivity extends Activity {
      * Saves a download from the page (an Advanced search CSV, someone's data export) in the phone's Downloads folder,
      * then offers to open it. Older phones (before Android 10) get the share menu instead: email, Drive, Files…
      */
-    private void saveDownload(String name, String mime, String text) {
+    private void saveDownload(String name, String mime, String text) { saveDownload(name, mime, text, null); }
+
+    /** The same for a file that isn't text (data: a PDF or picture from the Archive); text is then null. */
+    private void saveDownload(String name, String mime, String text, byte[] data) {
         String safe = (name == null || name.trim().isEmpty() ? "church-hub-download.txt" : name).replaceAll("[\\\\/:*?\"<>|]", "-");
         String type = (mime == null || mime.trim().isEmpty()) ? "text/plain" : mime;
-        byte[] bytes = (text == null ? "" : text).getBytes(StandardCharsets.UTF_8);
+        byte[] bytes = data != null ? data : (text == null ? "" : text).getBytes(StandardCharsets.UTF_8);
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             ContentResolver cr = getContentResolver();
             ContentValues v = new ContentValues();
@@ -308,6 +311,10 @@ public class MainActivity extends Activity {
                 }
             }
         }
+        if (data != null) {   // not text: nothing to put in the share menu
+            Toast.makeText(this, "This phone couldn't save " + safe + ". Please open Church Hub in a browser to download it.", Toast.LENGTH_LONG).show();
+            return;
+        }
         // Older phones, or saving didn't work: the share menu, with the file's text
         Intent send = new Intent(Intent.ACTION_SEND);
         send.setType(type.startsWith("text/") ? type : "text/plain");
@@ -327,6 +334,15 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void saveFile(String name, String mime, String text) {
             runOnUiThread(() -> saveDownload(name, mime, text));
+        }
+
+        /** A file from the Archive (a PDF, a picture…), sent as base64: saved in Downloads like saveFile (js/mod-archive.js). */
+        @JavascriptInterface
+        public void saveFileBase64(String name, String mime, String base64) {
+            final byte[] data;
+            try { data = android.util.Base64.decode(base64 == null ? "" : base64, android.util.Base64.DEFAULT); }
+            catch (IllegalArgumentException e) { return; }
+            runOnUiThread(() -> saveDownload(name, mime, null, data));
         }
 
         /** Shows Android's Google account picker; the result goes back to the page (js/store.js, appGoogle). */

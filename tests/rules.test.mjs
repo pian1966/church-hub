@@ -80,6 +80,22 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('idNumbers/p15', { value: '8001015009087' });
   await set('people/p40', { firstName: 'Test', lastName: 'Person', familyRole: 'adult' });
   await set('elvantoSync/L9', { personId: 'p15', name: 'A p15', start: '2027-02-01', end: '2027-02-02', want: 'Unavailable', have: '', haveNote: '', status: 'Done', note: '' });
+  // Leadership groups: the Council (members only; Tim is on it) and the Wardens (open; Clare)
+  await set('leaderBodies/lb1', { name: 'Church Council', open: false, memberIds: ['p14'], names: { p14: 'Tim Jacobs' }, seats: { p14: { role: 'Chair' } } });
+  await set('leaderBodies/lb2', { name: 'Wardens', open: true, memberIds: ['p15'], names: { p15: 'Clare Jacobs' }, seats: {} });
+  // The Archive: the Council's minutes, Sipho's contract (shown to him), plans for the office, a notice for everyone,
+  // and an appraisal of Tim that is not shown to him
+  await set('archive/ar1', { title: 'Minutes', cat: 'minutes', date: '2026-10-13', access: 'body', bodyId: 'lb1', aboutId: '', shownTo: '', file: { name: 'm.pdf', parts: 1 } });
+  await set('archive/ar2', { title: 'Contract', cat: 'contracts', date: '2024-02-01', access: 'private', bodyId: '', aboutId: 'p05', shownTo: 'p05', file: { name: 'c.pdf', parts: 1 } });
+  await set('archive/ar3', { title: 'Plans', cat: 'plans', date: '2019-06-20', access: 'office', bodyId: '', aboutId: '', shownTo: '' });
+  await set('archive/ar4', { title: 'Constitution', cat: 'other', date: '2001-01-01', access: 'all', bodyId: '', aboutId: '', shownTo: '' });
+  await set('archive/ar5', { title: 'Appraisal', cat: 'appraisals', date: '2026-09-01', access: 'private', bodyId: '', aboutId: 'p14', shownTo: '' });
+  await set('archive/ar1/parts/0', { data: 'AAAA' });
+  await set('archive/ar2/parts/0', { data: 'BBBB' });
+  // The Library: a book, lent to Tim and to Clare
+  await set('books/b1', { title: 'Knowing God', author: 'J. I. Packer', copies: 2, out: 2 });
+  await set('loans/l14', { bookId: 'b1', title: 'Knowing God', personId: 'p14', name: 'Tim Jacobs', out: '2026-11-01', due: '2026-11-22', back: '' });
+  await set('loans/l15', { bookId: 'b1', title: 'Knowing God', personId: 'p15', name: 'Clare Jacobs', out: '2026-11-01', due: '2026-11-22', back: '' });
 });
 
 const as = role => { const [email, pid] = USERS[role]; return env.authenticatedContext('uid-' + role, { email, email_verified: true }).firestore(); };
@@ -501,6 +517,94 @@ await t('message groups: Administrators and Pastors set them up; members see the
   await cannot(db.member.doc('msgGroups/mg1').update({ memberIds: ['p14', 'p15', 'p20'] }));
   await can(db.pastor.doc('msgGroups/mg3').set({ name: 'New', leaderIds: [], memberIds: [] })); await can(db.admin.doc('msgGroups/mg3').delete());
 });
+console.log('Leadership groups, the Archive and the Library');
+// For these: Andile (a Pastor, p03) is the Senior Pastor, and Sipho (Roster coordinator, p05) is a librarian
+await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').set({ seniorPastorId: 'p03', librarianIds: ['p05'] }, { merge: true }); });
+const rector = env.authenticatedContext('uid-rector', { email: 'andile@example.com', email_verified: true }).firestore();
+await t('leadership groups: an open one is read by everyone signed in, any other by its members, Administrators and Pastors', async () => {
+  await only('leaderBodies/lb2', roles); await cannot(read(stranger, 'leaderBodies/lb2')); await cannot(read(nobody, 'leaderBodies/lb2'));
+  await only('leaderBodies/lb1', ['admin', 'pastor', 'member']);
+  await can(list(db.member.collection('leaderBodies').where('open', '==', true)));
+  await can(list(db.member.collection('leaderBodies').where('memberIds', 'array-contains', 'p14')));
+  await cannot(list(db.member.collection('leaderBodies'))); await cannot(list(db.rosters.collection('leaderBodies').where('memberIds', 'array-contains', 'p14')));
+  await can(list(db.admin.collection('leaderBodies'))); await can(list(db.pastor.collection('leaderBodies')));
+});
+await t('leadership groups: only Administrators and Pastors set them up', async () => {
+  const g = { name: 'Elders', open: true, memberIds: [], names: {}, seats: {}, past: [] };
+  await can(db.pastor.doc('leaderBodies/lb3').set(g)); await can(db.admin.doc('leaderBodies/lb3').update({ open: false, memberIds: ['p15'] }));
+  await cannot(db.member.doc('leaderBodies/lb1').update({ memberIds: ['p14', 'p15'] })); await cannot(db.member.doc('leaderBodies/lb1').update({ open: true }));
+  await cannot(db.rosters.doc('leaderBodies/lb4').set(g)); await cannot(db.member.doc('leaderBodies/lb2').delete());
+  await cannot(db.admin.doc('leaderBodies/lb4').set({ name: '', open: true, memberIds: [] })); await cannot(db.admin.doc('leaderBodies/lb4').set({ name: 'X', memberIds: [] }));
+  await can(db.admin.doc('leaderBodies/lb3').delete());
+});
+await t('archive: Administrators and the Senior Pastor read every record', async () => {
+  for (const id of ['ar1', 'ar2', 'ar3', 'ar4', 'ar5']) { await can(read(db.admin, 'archive/' + id)); await can(read(rector, 'archive/' + id)); }
+  await can(list(db.admin.collection('archive'))); await can(list(rector.collection('archive')));
+  await cannot(read(stranger, 'archive/ar4')); await cannot(read(nobody, 'archive/ar4'));
+});
+await t('archive: everyone else only what a record allows', async () => {
+  await only('archive/ar4', roles);                                   // for everyone
+  await only('archive/ar3', ['admin', 'pastor']);                     // the office: Administrators and Pastors
+  await only('archive/ar1', ['admin', 'member']);                     // the Council's minutes: its members (Tim), not other Pastors
+  await only('archive/ar2', ['admin', 'rosters']);                    // a private contract, shown to the person it is about (Sipho)
+  await only('archive/ar5', ['admin']);                               // a private appraisal not shown to the person it is about (Tim)
+});
+await t('archive: each may ask only for the lists they may see', async () => {
+  const m = db.member.collection('archive');
+  await can(list(m.where('access', '==', 'all'))); await can(list(m.where('shownTo', '==', 'p14'))); await can(list(m.where('bodyId', '==', 'lb1')));
+  await cannot(list(m)); await cannot(list(m.where('access', '==', 'office'))); await cannot(list(m.where('access', '==', 'private')));
+  await cannot(list(m.where('bodyId', '==', 'lb2'))); await cannot(list(m.where('shownTo', '==', 'p05'))); await cannot(list(m.where('aboutId', '==', 'p14')));
+  await can(list(db.pastor.collection('archive').where('access', '==', 'office'))); await cannot(list(db.pastor.collection('archive'))); await cannot(list(db.pastor.collection('archive').where('bodyId', '==', 'lb1')));
+  await can(list(db.rosters.collection('archive').where('shownTo', '==', 'p05'))); await cannot(list(db.rosters.collection('archive').where('access', '==', 'office')));
+});
+await t('archive: a record’s file follows the record', async () => {
+  await can(read(db.member, 'archive/ar1/parts/0')); await cannot(read(db.member, 'archive/ar2/parts/0'));
+  await can(read(db.rosters, 'archive/ar2/parts/0')); await cannot(read(db.rosters, 'archive/ar1/parts/0'));
+  await cannot(read(db.pastor, 'archive/ar1/parts/0')); await cannot(read(db.pastor, 'archive/ar2/parts/0'));
+  await can(read(db.admin, 'archive/ar2/parts/0')); await can(read(rector, 'archive/ar1/parts/0'));
+  await cannot(read(db.member, 'archive/nothere/parts/0')); await cannot(read(stranger, 'archive/ar1/parts/0'));
+});
+await t('archive: only Administrators and the Senior Pastor add, change and delete records', async () => {
+  const r = o => Object.assign({ title: 'New', cat: 'other', date: '2026-11-10', note: '', access: 'office', bodyId: '', aboutId: '', aboutName: '', shownTo: '', link: 'https://example.org/x', by: 'x' }, o);
+  await can(db.admin.doc('archive/n1').set(r({}))); await can(rector.doc('archive/n2').set(r({ access: 'body', bodyId: 'lb1' })));
+  await can(db.admin.doc('archive/n3').set(r({ access: 'private', aboutId: 'p05', shownTo: 'p05' })));
+  await cannot(db.pastor.doc('archive/n4').set(r({}))); await cannot(db.member.doc('archive/n4').set(r({ access: 'all' }))); await cannot(db.rosters.doc('archive/n4').set(r({})));
+  await cannot(db.member.doc('archive/ar1').update({ title: 'Changed' })); await cannot(db.member.doc('archive/ar5').update({ shownTo: 'p14' })); await cannot(db.rosters.doc('archive/ar2').update({ access: 'all' }));
+  await cannot(db.admin.doc('archive/n4').set(r({ access: 'body' })));                       // a leadership group's record must name the group
+  await cannot(db.admin.doc('archive/n4').set(r({ access: 'office', bodyId: 'lb1' })));      // … and no other record may
+  await cannot(db.admin.doc('archive/n4').set(r({ access: 'anyone' }))); await cannot(db.admin.doc('archive/n4').set(r({ title: '' })));
+  await cannot(db.admin.doc('archive/n4').set(r({ aboutId: 'p05', shownTo: 'p14' })));       // shown only to the person it is about
+  await can(db.admin.doc('archive/n1/parts/0').set({ data: 'QUJD' })); await can(rector.doc('archive/n1/parts/1').set({ data: 'REVG' }));
+  await cannot(db.admin.doc('archive/n1/parts/2').set({ data: 'QUJD', more: 1 })); await cannot(db.admin.doc('archive/n1/parts/2').set({ data: 'A'.repeat(950001) }));
+  await cannot(db.pastor.doc('archive/n1/parts/2').set({ data: 'QUJD' })); await cannot(db.member.doc('archive/ar1/parts/0').set({ data: 'QUJD' })); await cannot(db.member.doc('archive/ar1/parts/0').delete());
+  await cannot(db.pastor.doc('archive/ar3').delete()); await cannot(db.member.doc('archive/ar4').delete());
+  await can(db.admin.doc('archive/n1/parts/0').delete()); await can(rector.doc('archive/n1/parts/1').delete());
+  for (const id of ['n1', 'n2', 'n3']) await can(db.admin.doc('archive/' + id).delete());
+});
+await t('library: everyone signed in sees the books; only librarians (Administrators and the people named) change them', async () => {
+  await only('books/b1', roles); await can(list(db.member.collection('books'))); await cannot(read(stranger, 'books/b1')); await cannot(read(nobody, 'books/b1'));
+  await can(db.admin.doc('books/b2').set({ title: 'Mere Christianity', copies: 1, out: 0 })); await can(db.rosters.doc('books/b2').update({ copies: 2 }));
+  await cannot(db.member.doc('books/b3').set({ title: 'Mine', copies: 1, out: 0 })); await cannot(db.member.doc('books/b1').update({ out: 0 })); await cannot(db.pastor.doc('books/b1').update({ out: 0 }));
+  await cannot(db.admin.doc('books/b3').set({ title: '', copies: 1 })); await cannot(db.kids.doc('books/b2').delete());
+  await can(db.rosters.doc('books/b2').delete());
+});
+await t('library: who borrowed what is seen by the librarians and the borrower only', async () => {
+  await can(read(db.member, 'loans/l14')); await cannot(read(db.member, 'loans/l15'));
+  await can(list(db.member.collection('loans').where('personId', '==', 'p14'))); await cannot(list(db.member.collection('loans'))); await cannot(list(db.member.collection('loans').where('personId', '==', 'p15')));
+  await cannot(read(db.pastor, 'loans/l14')); await cannot(read(db.kids, 'loans/l15')); await cannot(list(db.pastor.collection('loans')));
+  await can(list(db.admin.collection('loans'))); await can(list(db.rosters.collection('loans'))); await can(read(db.rosters, 'loans/l15'));
+  const l = { bookId: 'b1', title: 'Knowing God', personId: 'p14', name: 'Tim Jacobs', out: '2026-11-10', due: '2026-12-01', back: '', note: '' };
+  await can(db.rosters.doc('loans/l20').set(l)); await can(db.admin.doc('loans/l20').update({ back: '2026-11-12' }));
+  await cannot(db.member.doc('loans/l21').set(l)); await cannot(db.member.doc('loans/l14').update({ back: '2026-11-12' })); await cannot(db.member.doc('loans/l14').delete());
+  await cannot(db.admin.doc('loans/l21').set({ title: 'No book or person' }));
+  await can(db.rosters.doc('loans/l20').delete());
+});
+await t('… and a librarian or Senior Pastor is only one while the settings say so', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ seniorPastorId: firebase.firestore.FieldValue.delete(), librarianIds: firebase.firestore.FieldValue.delete() }); });
+  await cannot(read(rector, 'archive/ar5')); await cannot(list(rector.collection('archive'))); await can(read(rector, 'archive/ar3'));
+  await cannot(db.rosters.doc('books/b9').set({ title: 'X', copies: 1 })); await cannot(list(db.rosters.collection('loans')));
+});
+
 console.log('Translations');
 const checker = env.authenticatedContext('uid-nomvula', { email: 'nomvula@example.com', email_verified: true }).firestore();
 await t('everyone signed in reads the approved wording; only checkers of that language and Administrators change it', async () => {

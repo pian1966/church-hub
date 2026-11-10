@@ -218,6 +218,39 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   not to put private or medical details in a message to a group.
 - To do: how long messages are kept (ROADMAP) – until then Administrators, Pastors and senders can delete them.
 
+## Leadership groups (the Council, elders, leaders)
+- Purpose: church governance – the congregation knowing who its office-bearers are and what each looks after. Basis:
+  legitimate interest (office-bearers serve publicly). Kept: name, role, title, portfolios and the dates served – no
+  contact details (those stay under the directory's consent).
+- Who sees: everyone signed in, or only the group's own members when an Administrator or Pastor makes it "members only";
+  Administrators and Pastors manage (database rules, tested). "Served before" keeps past office-bearers as the church's
+  record; an Administrator or Pastor can delete a line (e.g. on a deletion request). Changes are in the audit log.
+
+## Archive (minutes, plans, staff contracts, appraisals)
+- Purpose: keeping the church's records – governance (minutes), property (plans) and employment (contracts, appraisals).
+  Basis: legal obligation and legitimate interest for governance and property records; the employment contract and labour
+  law for staff records. Staff records are personal information about an employee, and appraisals can be sensitive.
+- Who sees: decided on each record – everyone, one leadership group, Administrators and Pastors, or (the default for
+  staff contracts and appraisals) Administrators and the Senior Pastor only. The staff member a record is about sees it
+  only if the church ticks that; POPIA gives them the right to ask for a copy either way (Privacy → Requests).
+  Only Administrators and the Senior Pastor add, change or delete records. The database rules enforce all of this for
+  the record and for its file (tested), and people load only the records they may see.
+- Security: files are kept in the church's own database (in South Africa), not in a public file store, and are fetched
+  only when someone opens them. A **link** to a file kept elsewhere (e.g. Google Drive) is only as private as that place –
+  the church must set its sharing there. Every download or link opened of a record that isn't for everyone is in the
+  audit log, as is every record added, changed or deleted.
+- Retention: the church decides how long each kind of record is kept (minutes usually permanently; staff records for the
+  period labour and tax law require after someone leaves) and deletes records when that time is up. To do: a retention
+  review for the Archive (ROADMAP).
+- Don't file pastoral or medical information here: pastoral notes have their own, stricter place.
+
+## Library
+- Purpose: looking after the church's books. Basis: legitimate interest (someone who borrows the church's property is
+  recorded until it is back). Kept: which book, who borrowed it, the dates lent, due and returned.
+- What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators
+  and the people an Administrator names) and the borrower; everyone else sees only "On loan" (database rules, tested).
+  Loans are not written in the audit log, and a returned loan is removed after a year. Naming a librarian is logged.
+
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church Hub keeps the suggestion with their name and person ID, so the
   checker can thank them or ask what they meant. Purpose: improving the app's wording; basis: the person sends it themselves.

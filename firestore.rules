@@ -387,6 +387,68 @@ service cloud.firestore {
       allow delete: if may('words') || checks(resource.data.lang) || mine(resource.data.personId);
     }
 
+    // ---------- leadership groups (js/leaders.js): the Council, elders, ministry leaders ----------
+    // Names, roles, titles and portfolios only. Administrators and Pastors set them up. An open group is seen by everyone
+    // signed in; any other only by its own members.
+    function bodyRef(id) { return /databases/$(database)/documents/leaderBodies/$(id); }
+    function inBody(id) { return anyone() && meIn(get(bodyRef(id)).data.get('memberIds', [])); }
+    match /leaderBodies/{id} {
+      allow read: if manager() || (anyone() && (resource.data.get('open', false) == true || meIn(resource.data.get('memberIds', []))));
+      allow create, update: if manager() && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.open is bool && request.resource.data.memberIds is list;
+      allow delete: if manager();
+    }
+
+    // ---------- the Archive (js/archive.js): minutes, plans, staff contracts, appraisals ----------
+    // Administrators and the Senior Pastor (settings seniorPastorId) see and manage every record. Everyone else sees a
+    // record only if its access says so: all = everyone signed in; office = Pastors; a leadership group's record
+    // (bodyId) = that group's members; and a record shown to the person it is about (shownTo) = that person.
+    // private records (staff contracts, appraisals) are for Administrators and the Senior Pastor only.
+    // The file is kept in parts under the record and follows the record's rule. The app logs each time one is opened.
+    function seniorId() { return get(/databases/$(database)/documents/settings/church).data.get('seniorPastorId', ''); }
+    function keeper() { return admin() || (isRole(['pastor']) && isMe(seniorId())); }
+    function seesRecord(d) {
+      return keeper()
+        || (d.get('access', '') == 'all' && anyone())
+        || (d.get('access', '') == 'office' && manager())
+        || (d.get('bodyId', '') != '' && inBody(d.bodyId))
+        || mine(d.get('shownTo', ''));
+    }
+    function okRecord(d) {
+      return d.title is string && d.title.size() > 0 && d.title.size() <= 150
+        && d.access in ['all', 'body', 'office', 'private']
+        && d.get('bodyId', '') is string && (d.access == 'body') == (d.get('bodyId', '') != '')
+        && d.get('shownTo', '') is string && (d.get('shownTo', '') == '' || d.shownTo == d.get('aboutId', ''));
+    }
+    match /archive/{id} {
+      allow read: if seesRecord(resource.data);
+      allow create, update: if keeper() && okRecord(request.resource.data);
+      allow delete: if keeper();
+      match /parts/{n} {
+        allow read: if seesRecord(get(/databases/$(database)/documents/archive/$(id)).data);
+        allow create, update: if keeper() && request.resource.data.keys().hasOnly(['data'])
+          && request.resource.data.data is string && request.resource.data.data.size() <= 950000;
+        allow delete: if keeper();
+      }
+    }
+
+    // ---------- the Library (js/library.js) ----------
+    // Everyone signed in sees the books. The librarians (Administrators, and the people named in settings librarianIds)
+    // add books and record loans and returns. A loan is seen by the librarians and by the person who borrowed the book.
+    function librarian() {
+      return admin() || (anyone() && meIn(get(/databases/$(database)/documents/settings/church).data.get('librarianIds', [])));
+    }
+    match /books/{id} {
+      allow read: if anyone();
+      allow create, update: if librarian() && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 150;
+      allow delete: if librarian();
+    }
+    match /loans/{id} {
+      allow read: if librarian() || mine(resource.data.get('personId', ''));
+      allow create, update: if librarian() && request.resource.data.bookId is string && request.resource.data.personId is string;
+      allow delete: if librarian();
+    }
+
     // ---------- POPIA registers (Administrators, and Pastors with "privacy") ----------
     match /dsr/{id} { allow read, write: if may('privacy'); }
     match /breaches/{id} { allow read, write: if may('privacy'); }

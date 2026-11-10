@@ -427,5 +427,8 @@ I18n.rows([
     ['Opens on GitHub', 'Maak op GitHub oop', 'Ivula ku-GitHub', 'Ivula kwi-GitHub'],
     ['Open in Google Maps', 'Maak oop in Google Maps', 'Vula ku-Google Maps', 'Vula kwi-Google Maps'],
     ['Source code', 'Bronkode', 'Ikhodi yomthombo', 'Ikhowudi yomthombo'],
-    ['Version {v}', 'Weergawe {v}', 'Inguqulo {v}', 'Uguqulelo {v}']
+    ['Version {v}', 'Weergawe {v}', 'Inguqulo {v}', 'Uguqulelo {v}'],
+    ["Nothing matches.", "Niks pas nie.", "Akukho okufanayo.", "Akukho nto ihambelanayo."],
+    ["Title", "Titel", "Isihloko", "Isihloko"],
+    ["Deleted", "Geskrap", "Kususiwe", "Icinyiwe"]
 ]);

@@ -1,0 +1,104 @@
+# Risks, and what to send back to the architect
+
+## Hard to reverse – decide carefully, once
+
+| # | Decision | Why it is hard to undo |
+| --- | --- | --- |
+| H1 | The website's address | Sign-in links, each church's authorised domain and key restriction, installed home-screen apps and the offline copy are all tied to it. Choose it before the first other church. |
+| H2 | The Google account that owns the "Allow" window (task 001) | Moving it later means every church meets an unfamiliar window, and verification starts again. Use an account made for Church Hub, with a second person able to recover it. |
+| H3 | A church's data region (helper step 4) | Google does not allow it to be changed. Show it in words and ask "Is this right?". |
+| H4 | The shape of `public/hub` and of the church link (`?c=`) | Printed QR codes and shared links carry it. Only ever add fields. |
+| H5 | The rules-version rule (`rulesAtLeast`) | Every later website depends on it. Never remove it or lower the number. |
+| H7 | The licence format and public key list (`TARGET.md` 10.3) | Every church's stored licence must keep verifying. Only ever add keys and fields. |
+| H6 | The Android app id | A published app cannot be renamed; the any-church app is a new listing (task 041). |
+
+## Known risks
+
+**R1 – Google must verify the "Allow" window.** The permission asked for (`cloud-platform`) is one Google calls
+sensitive. Until verified, people see an "unverified app" warning and only 100 accounts in total may ever use it.
+Verification needs: the address proved in Google Search Console, a privacy policy page, a short video of the helper,
+and can take weeks to months. Start it as soon as the helper works (task 001 lists the steps).
+*If Google refuses:* ask for the narrower `firebase` permission plus fewer steps, and turn the refused steps into
+guided clicks. Escalate.
+
+**R2 – Unproven automatic steps** (task 002 settles each):
+- Switching on sign-in by API on a free project. *Fallback:* one guided click – the helper opens the church's
+  Authentication page; the person clicks **Get started**; the helper carries on.
+- Google sign-in with Church Hub's shared client id. *Fallback:* email link only for that church, plus the guided
+  click to enable Google in the console (which makes its own client id).
+- Reading `public/hub` with no key. *Fallback:* the longer church code (`TARGET.md` section 3).
+- AI Logic and App Check by API. *Fallback:* AI stays a guided setup.
+- First-time Google users accepting Google Cloud's terms. *Expected:* one guided click.
+
+**R3 – Five email-link emails a day per church (free plan).** Google's published limit; Google sign-in is not
+limited. Decided (11 Nov 2026): lead with Google sign-in and say plainly when today's emails are used up (task 031),
+and add sign-in codes for people with no email (`TARGET.md` section 9, tasks 015–017). Still worth asking in 002:
+does the church's own email (SMTP settings in the project) lift the limit? Not planned: asking churches for a bank card.
+
+**R3a – Sign-in codes: the slip is the key.** Whoever holds an unused code becomes that member. Kept to Members
+only, single use, 14 days, with a linked-phones list for the Administrator. Any wish to let a code give a staff
+role, to lengthen its life, or to reuse codes – **escalate**.
+
+**R3b – Google allows 100 new accounts an hour from one internet address.** A church linking 150 phones in an hour
+over one Wi-Fi (or one mobile network that shares addresses) may be told to wait. The screen must say "try again in
+a little while"; print slips so people can link through the week, not all at once.
+
+**R3c – A phone that forgets.** The link lives in the phone's browser storage. Clearing it, or an iPhone that has not
+opened Church Hub in the browser for a week (not added to the home screen), loses it; the person needs a new code.
+Tell people to add Church Hub to the home screen or use the Android app.
+
+**R4 – Rules lag.** A church whose Administrator never clicks Update runs old rules. The app hides what needs newer
+rules, so nothing breaks, but a security fix does not reach that church until they click. For a fix that matters,
+the banner must say so. There is no way to force it without holding churches' keys, which is ruled out.
+
+**R5 – Reads on the free plan.** A large church with busy staff could reach 50 000 reads in a day because every start
+loads whole lists. Task 030 measures first. If it is a problem, the cure is fewer, bigger documents for the lists
+everyone loads (for example the directory) – a data-shape change, so **escalate**.
+
+**R6 – Google changes its addresses or console.** The helper would stop at a step. Each step must fail with a plain
+message naming the step, and `docs/FIREBASE-SETUP.md` remains as the by-hand route.
+
+**R7 – A church loses its Google account.** The data is theirs alone; nobody else can recover it. The helper should
+say so, and suggest adding a second owner (a link to the project's access page).
+
+**R8 – Church Hub's owner is still the publisher of software that holds sensitive information.** Not the operator of
+anyone's database, but a short terms page ("each church owns and is responsible for its own information; provided
+as is") should be read by a lawyer once before the first other church. Not legal advice.
+
+**R9 – Countries not served.** With no central sign-up there is nothing to refuse. The helper can decline to create
+a database for the listed countries and explain why; a determined person could still do it by hand.
+
+**R10 – Somebody wasting a church's free allowance.** Anything readable without signing in (`public/hub`, an
+invite by id) can be requested over and over by a stranger, and each request counts towards the church's 50 000 a
+day. Unlikely, and it harms only that day's use, never the information. If it ever happens: App Check for Firestore
+– a design change, so escalate.
+
+**R11 – The licence signing key.** If it leaks, anyone can make licences (lost income, no church data at risk).
+It lives only as a GitHub secret; the website accepts a list of public keys so a new one can be added and the old
+one retired. If it is lost, make a new pair and re-issue every licence from the office records.
+
+**R12 – Churches that cannot pay by card.** Many of the churches Church Hub is for have no bank card. The grant
+(waiver) route must be easy and kind, and "someone else pays for this church" must work (the payment only needs the
+church's id). Mobile money depends on the payment company chosen (task 059).
+
+**R13 – The office record is personal information the owner is responsible for** (one email address per church).
+Small, but it needs a line in the privacy policy, and the owner's Google account must be well protected
+(two-step sign-in).
+
+**R14 – Turning on view-only by mistake.** A bug in the licence check could lock every church at once. Hence
+`LICENCE_ENFORCED` starts false, the check is pure and heavily tested, and an unreachable office never counts
+against a church.
+
+## Send back to the architect instead of deciding
+
+- 002 fails on project creation, adding Firebase, creating the database, publishing rules or writing the first
+  documents.
+- Anything that would put a church's information, keys or tokens somewhere other than that church's own project
+  and that person's own browser.
+- Any wish to add a server, Cloud Function or shared database, or to keep anything centrally beyond the office
+  record in `TARGET.md` section 10 (above all: nothing about a church's people).
+- Anything touching the licence signing key, how a licence is checked, or when Church Hub becomes view-only.
+- Any change to who can read or write what, beyond the two rules added in 011 and 012.
+- A new way of signing in (R3 d), or changing the household sign-in.
+- Changing the shape of the documents everyone loads (R5).
+- Google refusing verification (R1).

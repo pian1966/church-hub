@@ -102,6 +102,10 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
 
 ## Phase 7 – Church Hub for other churches (hosted, gift-based) ⬜
+> **Changed direction (11 Nov 2026):** each church keeps its own database in its own Google account, created for it
+> automatically – nobody hosts other churches' information. The plan and its tasks are in `docs/architecture/`
+> (start with `DECISION.md`). Steps 7.1, 7.2, 7.4, 7.5, 7.6 and 7.9 below are no longer needed; task 050 rewrites this phase.
+
 Goal: any church can start using Church Hub in minutes, with no Firebase, Google console or anything technical. We host it;
 each church gives what it chooses once a year, with a small minimum. Today each church makes its own Firebase project
 (`FIREBASE-SETUP.md`); Christ Church Howick keeps working that way until it moves across (step 7.9).

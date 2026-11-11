@@ -31,6 +31,28 @@ module.exports = async function (ctx) {
     'after adding someone the list stays, with what was typed – ready for the next person');
   await s.page.click('.cg-pick[data-id="p15"]'); await s.settle(); docs = await s.docsNow();
   check(['p14', 'p15', 'p16'].every(x => docs[key].memberIds.includes(x)), '…so a whole household is added one after another');
+  // When and where it meets; a co-leader and a host
+  await s.page.click('[data-act="life:details"][data-id="' + gid + '"]'); await s.page.waitForSelector('#lgd-day');
+  await s.page.selectOption('#lgd-day', '2'); await s.page.fill('#lgd-time', '19:00'); await s.page.selectOption('#lgd-freq', 'weekly');
+  await s.page.selectOption('#lgd-host', 'p15'); await s.page.check('.lgd-co[value="p15"]'); await s.page.uncheck('.lgd-co[value="p15"]');
+  await s.page.check('input[name="lgd-where"][value="other"]'); await s.page.fill('#lgd-place', 'Church hall'); await s.page.fill('#lgd-addr', '1 Main Road, Howick');
+  await s.page.click('[data-act="life:savedetails"]'); await s.settle(); docs = await s.docsNow();
+  check(docs[key].when.day === 2 && docs[key].when.time === '19:00' && docs[key].when.freq === 'weekly' && docs[key].venue.place === 'Church hall' && docs[key].roles.p15 === 'host', 'When and where: Tuesdays at 19:00, every week, in the church hall; Clare is the host');
+  t = await s.page.textContent('.lg-panel[data-g="' + gid + '"]');
+  check(/Tuesday · 19:00 · Every week/.test(t) && /Church hall: 1 Main Road, Howick/.test(t) && !!(await s.page.$('.lg-panel[data-g="' + gid + '"] .lg-meets a[href*="google"]')), 'the group shows when and where it meets, with a map link');
+  await s.page.click('[data-act="life:details"][data-id="' + gid + '"]'); await s.page.waitForSelector('#lgd-day');
+  await s.page.check('input[name="lgd-where"][value="host"]'); await s.page.check('.lgd-co[value="p16"]');
+  await s.page.click('[data-act="life:savedetails"]'); await s.settle(); docs = await s.docsNow();
+  t = await s.page.textContent('.lg-panel[data-g="' + gid + '"]');
+  check(docs[key].venue.atHost === true && docs[key].roles.p16 === 'coleader' && /At Clare Jacobs’s home/.test(t), 'at the host’s home instead; a co-leader too');
+  // From a person's page: the groups they are in, ticked on one list
+  await s.go('people/p/p19'); await s.page.click('[data-act="people:groups"]'); await s.page.waitForSelector('.pg-in');
+  await s.page.check('.pg-in[data-k="life"][value="' + gid + '"]'); await s.page.click('[data-act="people:groupssave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs[key].memberIds.includes('p19'), 'a person’s page: Groups puts them in a Midweek Group');
+  await s.page.click('[data-act="people:groups"]'); await s.page.waitForSelector('.pg-in');
+  check(await s.page.isChecked('.pg-in[data-k="life"][value="' + gid + '"]'), '… and shows the groups they are in');
+  await s.page.uncheck('.pg-in[data-k="life"][value="' + gid + '"]'); await s.page.click('[data-act="people:groupssave"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[key].memberIds.includes('p19'), '… and takes them out again');
   await s.go('home'); await s.go('life');
   const sum = await s.page.textContent('.lg-panel[data-g="' + gid + '"] details.cg-fold > summary');
   check(/1 leader\s*·\s*Tim Jacobs/.test(sum) && (await s.page.$$('.lg-panel[data-g="' + gid + '"] details.cg-fold')).length === 2, 'the group folds like a care group: its leaders’ names show, the other members in a second fold');

@@ -165,7 +165,7 @@
       }).join('') + '</div>';
     }
     html += '<section class="block"><h2>' + T('Sunday services') + '</h2>' + cards(all.filter(function (x) { return !x.special; })) +
-      '<p class="hint" style="margin-top:10px">' + T('Add another time, or another campus or venue, under Settings → Services and venues.') + '</p></section>';
+      '<p class="hint" style="margin-top:10px">' + T('Add another time, or another campus or venue, under Settings → Church Services.') + '</p></section>';
     html += '<section class="block"><h2>' + T('Special services') + '</h2><p class="hint" style="margin-top:0">' + T('Each special service only has the departments and positions you switch on for it.') + '</p>' +
       cards(all.filter(function (x) { return x.special; }));
     if (canLook()) {

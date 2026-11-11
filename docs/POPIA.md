@@ -203,6 +203,10 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   the group; every change is in the audit log. Leaving a group removes the card; after a death they are taken out.
 - Coming (`docs/GROUPS-PLAN.md`): a map of meeting places – the exact place, shown to everyone signed in (church's decision),
   with a tick that the host agreed.
+When and where a Midweek Group meets is on the group (seen by its members): the day, time, and a venue – either "at the
+host's home" or a place and its address. A host's home address is never copied onto the group: Administrators and Pastors
+see it from People, and the members only from the host's own card, which carries it only if the host is in the church
+directory. Co-leader and host are roles within the group, set by its leaders, Administrators and Pastors.
 
 ## Messages inside the app
 - Purpose: keeping in touch with the people the church cares for (notices, care-group and team news). Basis: the church's

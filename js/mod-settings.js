@@ -22,7 +22,7 @@
   function renderSlots() {
     var sl = Serving.slots(S.settings()), used = {};
     S.list('skills').forEach(function (k) { (k.times || []).forEach(function (t) { used[t] = (used[t] || 0) + 1; }); });
-    return '<section class="panel"><h2>' + T('Services and venues') + '</h2><p class="hint" style="margin-top:0">' + T('The church’s regular services. Volunteers say which of these they can serve at, and rostering keeps to it. Add another time, or another campus or venue, when the church starts one.') + '</p>' +
+    return '<section class="panel"><h2>' + T('Church Services and venues') + '</h2><p class="hint" style="margin-top:0">' + T('The church’s regular services. Volunteers say which of these they can serve at, and rostering keeps to it. Add another time, or another campus or venue, when the church starts one.') + '</p>' +
       '<div class="list">' + sl.map(function (x) {
         return '<div class="item"><span class="grow"><b>' + esc(x.label) + '</b><small>' + esc(T(DAYS[x.day || 0]) + ' ' + x.time + (x.venue ? ' · ' + x.venue : '')) + (used[x.id] ? ' · ' + TN('{n} volunteer place', '{n} volunteer places', used[x.id]) : '') + '</small></span>' +
           (sl.length > 1 ? '<button class="icon-btn ghost" data-act="settings:delslot" data-id="' + esc(x.id) + '" aria-label="' + esc(T('Remove {name}', { name: x.label })) + '">' + H.icon(H.ICON.trash, 18) + '</button>' : '') + '</div>';
@@ -44,10 +44,10 @@
         return '<div class="item"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + (s.special ? ' <span class="tag">' + T('Special') + '</span>' : '') + '</b><small>' + esc(s.time + ' · ' + s.name + (s.venue && s.name.indexOf(s.venue) < 0 ? ' · ' + s.venue : '')) + '</small></span>' +
           '<button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="' + esc(T('Remove the service on {date}', { date: H.fmt(s.date, true) })) + '" title="' + esc(T('Remove this service (and its roster)')) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
       }).join('') + '</div>' + (svcs.length > 8 ? '<p class="hint"><button class="link" data-act="settings:allsvc">' + (allSvcs ? T('Show fewer') : T('Show all {n}', { n: svcs.length })) + '</button></p>' : '') : '<p class="muted">' + T('None planned.') + '</p>') +
-      (svcs.some(function (s) { return !s.special; }) ? '<details class="sub"><summary>' + T('Stop holding a regular service…') + '</summary><p class="hint">' + T('Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Services and venues”.') + '</p>' +
+      (svcs.some(function (s) { return !s.special; }) ? '<details class="sub"><summary>' + T('Stop holding a regular service…') + '</summary><p class="hint">' + T('Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Church Services and venues”.') + '</p>' +
         '<div class="two"><label class="field">' + T('Service') + '<select id="sv-stop">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select></label>' +
         '<label class="field">' + T('From') + '<input type="date" id="sv-stop-from" value="' + H.today() + '"></label></div><button class="btn small" data-act="settings:stopsvc">' + T('Remove these services') + '</button></details>' : '') +
-      '<h3 style="margin:16px 0 6px">' + T('Every week') + '</h3><div class="two"><label class="field req">' + T('Service') + '<select id="sv-slot">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select><small>' + T('Add more times or venues under “Services and venues”.') + '</small></label>' +
+      '<h3 style="margin:16px 0 6px">' + T('Every week') + '</h3><div class="two"><label class="field req">' + T('Service') + '<select id="sv-slot">' + sl.map(function (x) { return '<option value="' + esc(x.id) + '">' + esc(slotText(x)) + '</option>'; }).join('') + '</select><small>' + T('Add more times or venues under “Church Services and venues”.') + '</small></label>' +
       '<label class="field">' + T('For the next') + '<select id="sv-n"><option value="4">' + T('4 weeks') + '</option><option value="8" selected>' + T('8 weeks') + '</option><option value="13">' + T('13 weeks') + '</option></select></label></div>' +
       '<button class="btn small" data-act="settings:addsvc">' + T('Add these services') + '</button>' +
       '<h3 style="margin:18px 0 6px">' + T('A special service') + '</h3><p class="hint" style="margin-top:0">' + T('E.g. Maundy Thursday, Good Friday or Christmas Day. Choose one of the suggestions (the date is filled in) or type your own.') + '</p>' +
@@ -69,7 +69,8 @@
     ['colours', TX('Colours'), TX('The church’s colour'), 'church', 'M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.7-1.2-.7-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11h.01M10 7.5h.01M14 7.5h.01', 'colour color theme brand logo cross buttons'],
     ['terminology', TX('Terminology (Church Words)'), TX('The words your church uses'), 'church', 'M4 7V5h16v2M9 19h6M12 5v14', 'words wording terms names music worship praise leader'],
     ['apps', TX('Apps'), TX('Switch parts of Church Hub on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask'],
-    ['services', TX('Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
+    ['services', TX('Church Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
+    ['application', TX('Membership application'), TX('Declaration, documents to read, loyalty'), 'features', 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5', 'partner partnership membership member application form declaration constitution statement of faith denomination affiliation loyalty links documents'],
     ['access', TX('Who can see what'), TX('What each access level can see'), 'access', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'see contact details directory care groups consent roles access level basic church partner roster children'],
     ['pastors', TX('What Pastors can do'), TX('Extra abilities for Pastors'), 'access', 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', 'pastor senior rector assistant minister abilities permissions'],
     ['emails', TX('Email templates'), TX('Birthday, anniversary and welcome emails'), 'comms', 'M3 5h18v14H3zM3 6l9 7 9-7', 'email emails template birthday anniversary welcome newcomer gmail signed sign off']
@@ -119,6 +120,9 @@
       '<label class="field">' + T('Music in services is called') + '<select id="wd-music"><option value="">–</option>' + Object.keys(Wording.MUSIC).map(function (k) {
         return '<option value="' + k + '"' + (Wording.MUSIC[k].worship[0] === words.worship[0] && Wording.MUSIC[k].worshipTeam[0] === words.worshipTeam[0] && Wording.MUSIC[k].worshipLeader[0] === words.worshipLeader[0] ? ' selected' : '') + '>' + esc(k + ' / ' + Wording.MUSIC[k].worshipTeam[0] + ' / ' + Wording.MUSIC[k].worshipLeader[0]) + '</option>';
       }).join('') + '</select><small>' + T('Fills in the three words below; you can still change each one.') + '</small></label></div>' +
+      '<div class="two"><label class="field">' + T('The church’s meetings are called') + '<select id="wd-service">' + Object.keys(Wording.SERVICE).map(function (k) {
+        return '<option value="' + k + '"' + (Wording.SERVICE[k][0] === words.service[0] ? ' selected' : '') + '>' + esc('Church ' + Wording.SERVICE[k][1]) + '</option>'; }).join('') +
+        (Wording.SERVICE[words.service[0]] ? '' : '<option value="" selected>' + esc('Church ' + words.service[1]) + '</option>') + '</select><small>' + T('For example “Church Services” in Settings, and “a service” on the rosters.') + '</small></label></div>' +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
       Wording.TERMS.map(function (t) {
         return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(T(t[2])) + '</span></td>' +
@@ -205,6 +209,7 @@
     else if (a === 'colours') body = renderTheme(st);
     else if (a === 'apps') body = renderApps(st);
     else if (a === 'pastors') body = renderPastorCan(st);
+    else if (a === 'application') body = window.PeopleParts && PeopleParts.formSettings ? PeopleParts.formSettings() : '';
     else if (a === 'access') {
       var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
       body = renderAccess(st, byRole);
@@ -506,6 +511,11 @@
         var w = Wording.words({ wording: { set: ws.value } });
         document.querySelectorAll('.wd-1').forEach(function (i) { i.value = w[i.dataset.k][0]; });
         document.querySelectorAll('.wd-2').forEach(function (i) { i.value = w[i.dataset.k][1]; });
+      });
+      var wsv = document.getElementById('wd-service');
+      if (wsv) wsv.addEventListener('change', function () {   // Service / Meeting / Gathering
+        var m = Wording.SERVICE[wsv.value]; if (!m) return;
+        var a = document.querySelector('.wd-1[data-k="service"]'), b = document.querySelector('.wd-2[data-k="service"]'); if (a) a.value = m[0]; if (b) b.value = m[1];
       });
       var wm = document.getElementById('wd-music');
       if (wm) wm.addEventListener('change', function () {   // Worship / Music / Praise: fill in the three words

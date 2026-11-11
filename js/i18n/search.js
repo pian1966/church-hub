@@ -2,6 +2,16 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["No access", "Geen toegang", "Akukho ukufinyelela", "Akukho fikelelo"],
+    ["you (change your own access under App access)", "jy (verander jou eie toegang onder Programtoegang)", "wena (shintsha ukufinyelela kwakho ngaphansi kokuthi Ukufinyelela kohlelo)", "wena (tshintsha ufikelelo lwakho phantsi kwe-Ufikelelo lwe-app)"],
+    ["people with no email address", "mense sonder ’n e-posadres", "abantu abangenalo ikheli le-imeyili", "abantu abangenayo idilesi ye-imeyile"],
+    ["People sign in with their email address, so anyone without one is left out. Children and your own access are left out too.", "Mense meld aan met hul e-posadres, so enigeen sonder een word uitgelaat. Kinders en jou eie toegang word ook uitgelaat.", "Abantu bangena ngekheli labo le-imeyili, ngakho noma ubani ongenalo uyashiywa. Izingane nokufinyelela kwakho nakho kuyashiywa.", "Abantu bangena ngedilesi yabo ye-imeyile, ngoko nabani na ongenayo uyashiywa. Abantwana kunye nofikelelo lwakho nazo ziyashiywa."],
+    ["Made {c} changes for {n} person", "{c} veranderinge gemaak vir {n} persoon", "Kwenziwe izinguquko ezingu-{c} kumuntu o-{n}", "Kwenziwe iinguqu ezi-{c} kumntu o-{n}"],
+    ["Made {c} changes for {n} people", "{c} veranderinge gemaak vir {n} mense", "Kwenziwe izinguquko ezingu-{c} kubantu abangu-{n}", "Kwenziwe iinguqu ezi-{c} kubantu abangu-{n}"],
+    ["Remove this change", "Verwyder hierdie verandering", "Susa lolu shintsho", "Susa olu tshintsho"],
+    ["The same changes for everyone you ticked. You can undo them straight after.", "Dieselfde veranderinge vir almal wat jy gemerk het. Jy kan dit dadelik ongedaan maak.", "Izinguquko ezifanayo kubo bonke obamakile. Ungazihlehlisa ngokushesha.", "Iinguqu ezifanayo kubo bonke obaphawuleyo. Ungazibuyisela kwangoko."],
+    ["Add another change", "Voeg nog ’n verandering by", "Engeza olunye ushintsho", "Yongeza olunye utshintsho"],
+    ["{field} is chosen twice.", "{field} is twee keer gekies.", "U-{field} ukhethwe kabili.", "U-{field} ukhethwe kabini."],
     ["Add {n} ticked to name badges", "Voeg {n} gemerktes by die naamkentekens", "Engeza abangu-{n} abamakiwe kumabheji amagama", "Yongeza aba-{n} abaphawuliweyo kwiibheji zamagama"],
     ["Add everyone found to name badges", "Voeg almal wat gevind is by die naamkentekens", "Engeza bonke abatholakele kumabheji amagama", "Yongeza bonke abafunyenweyo kwiibheji zamagama"],
     ["Name badges for {n} ticked", "Naamplaatjies vir {n} gemerk", "Amabheji amagama ka-{n} amakiwe", "Iibheji zamagama zaba-{n} abaphawuliweyo"],

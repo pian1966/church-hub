@@ -164,7 +164,7 @@ module.exports = async function (ctx) {
   await s.page.check('#adv-selall');
   const ticked = await s.page.$$eval('.adv-sel:checked', b => b.map(x => x.value));
   check(ticked.length >= 3 && (await s.page.textContent('#adv-bulk')).includes(ticked.length + ' selected'), 'tick everyone found: ' + ticked.length);
-  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'maritalStatus'); await s.page.selectOption('#bk-v', 'Widowed');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'maritalStatus'); await s.page.selectOption('#bk-v-0', 'Widowed');
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
   const kidsT = await s.page.evaluate(ids => ids.filter(id => Store.get('people', id).familyRole === 'child'), ticked);
   check(ticked.filter(id => !kidsT.includes(id)).every(id => docs['details/' + id].maritalStatus === 'Widowed') && kidsT.every(id => !docs['details/' + id].maritalStatus) && kidsT.length > 0,
@@ -173,16 +173,28 @@ module.exports = async function (ctx) {
   check(await s.page.evaluate(() => { const b = document.getElementById('busy'); return !!b && b.hidden && !!b.querySelector('.busy-cross'); }), 'a turning cross showed while it worked, and has gone again');
   await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
   check(docs['details/p14'].maritalStatus === 'Married' && docs['details/p15'].maritalStatus === 'Married', 'Undo puts everyone back');
+  // Several changes at once, App access among them
+  await s.page.check('#adv-selall'); await s.page.click('#adv-bulk');
+  await s.page.selectOption('.bk-f[data-i="0"]', 'gender'); await s.page.selectOption('#bk-v-0', 'Male');
+  await s.page.click('[data-act="people:bulkmore"]'); await s.page.selectOption('.bk-f[data-i="1"]', 'appRole');
+  check(/Roster coordinator/.test(await s.page.textContent('#bk-v-1')) && /email address/.test(await s.page.textContent('#bk-note-1')), 'Add another change: App access, with the roles (people need an email address)');
+  await s.page.selectOption('#bk-v-1', 'rosters');
+  await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['details/p14'].gender === 'Male' && docs['people/p14'].appRole === 'rosters' && docs['people/p15'].appRole === 'rosters' && !kidsT.some(id => docs['people/' + id].appRole === 'rosters'),
+    'both changes made for everyone ticked; children get no access');
+  check(/Made 2 changes for/.test(await s.text()), 'it says what changed');
+  await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['people/p14'].appRole === 'member' && !docs['details/p14'].gender, 'Undo puts both back');
   // Missing email → "not known"; no household → a new one each
   await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p15'))); p.email = ''; delete p.emailUnknown; Store.put('people', p);
     const q = JSON.parse(JSON.stringify(Store.get('people', 'p19'))); q.familyId = ''; q.householdIds = []; Store.put('people', q); }); await s.settle();
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
-  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'email'); await s.page.selectOption('#bk-v', 'Unknown');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'email'); await s.page.selectOption('#bk-v-0', 'Unknown');
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   check((docs['details/p15'] || {}).emailUnknown === true && !(docs['details/p14'] || {}).emailUnknown && docs['people/p14'].email && tt.includes('already have an email address'), 'missing email → “Unknown” for those without one (shown as Unknown); anyone with an email is left alone');
   await s.page.fill('input.adv-v[data-i="0"]', 'Peters'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
-  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'household'); await s.page.selectOption('#bk-v', { index: 1 });
+  await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'household'); await s.page.selectOption('#bk-v-0', { index: 1 });
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
   const newFam = docs['people/p19'].familyId;
   check(newFam && docs['families/' + newFam] && docs['families/' + newFam].name === 'Peters family', 'no household → “+ New household” for each person, named after their surname');
@@ -190,11 +202,11 @@ module.exports = async function (ctx) {
   check(!docs['people/p19'].familyId && !docs['families/' + newFam], 'Undo takes them out again and removes the new household');
   // Consent for many people at once: a new record each (today, how it was given), children left out, undo brings the old answer back
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
-  await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'consent-Photos');
-  check(await s.page.isVisible('#bk-m-f') && (await s.page.textContent('#bk-f')).includes('Consent: Photos'), 'Change selected… offers each kind of consent, and asks how it was given');
-  await s.page.selectOption('#bk-v', 'No'); await s.page.click('[data-act="people:bulksave"]');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'consent-Photos');
+  check(await s.page.isVisible('#bk-m-f-0') && (await s.page.textContent('.bk-f[data-i="0"]')).includes('Consent: Photos'), 'Change selected… offers each kind of consent, and asks how it was given');
+  await s.page.selectOption('#bk-v-0', 'No'); await s.page.click('[data-act="people:bulksave"]');
   check((await s.page.textContent('#bk-err')).includes('how it was given'), 'how it was given must be chosen (POPIA)');
-  await s.page.selectOption('#bk-m', 'Paper connect card'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  await s.page.selectOption('#bk-m-0', 'Paper connect card'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   const photo = pid => Object.entries(docs).filter(([k, d]) => k.startsWith('consents/') && d.personId === pid && d.purpose === 'Photos');
   const nowP14 = photo('p14').filter(([, d]) => !d.withdrawnAt);
   check(nowP14.length === 1 && nowP14[0][1].given === false && nowP14[0][1].method === 'Paper connect card' && photo('p14').some(([, d]) => d.withdrawnAt && d.given), 'Tim: a new “No” for Photos (paper connect card); his old “Yes” is kept, marked as replaced');
@@ -211,23 +223,23 @@ module.exports = async function (ctx) {
   await s.page.selectOption('.adv-field[data-i="0"]', 'country'); await s.page.selectOption('.adv-op[data-i="0"]', 'empty'); await s.page.click('[data-act="people:advrun"]');
   let found = await s.page.$$eval('.adv-sel', b => b.map(x => x.value));
   check(found.includes('p14') && found.includes('p16') && !found.includes('p15'), 'Country can be searched: “Country is empty” finds people with no country');
-  await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'addr-country');
-  check(await s.page.inputValue('#bk-v') === '' && (await s.page.$eval('#bk-v option:nth-child(2)', o => o.value)) === 'South Africa', 'Country is a choice, with the church’s country first');
-  await s.page.selectOption('#bk-v', 'South Africa'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
+  await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'addr-country');
+  check(await s.page.inputValue('#bk-v-0') === '' && (await s.page.$eval('#bk-v-0 option:nth-child(2)', o => o.value)) === 'South Africa', 'Country is a choice, with the church’s country first');
+  await s.page.selectOption('#bk-v-0', 'South Africa'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   check(docs['details/p14'].address.country === 'South Africa' && docs['details/p14'].address.street === '7 Oak Rd' && docs['details/p16'].address.country === 'South Africa' && !(docs['details/p17'] || {}).address && tt.includes('people with no home address'),
     'empty country → South Africa for everyone ticked with an address (the rest of their address kept); people with no address left out');
   await s.page.click('[data-act="people:bulkundo"]'); await s.settle(); docs = await s.docsNow();
   check(!docs['details/p14'].address.country && docs['details/p14'].address.street === '7 Oak Rd', 'Undo takes the country off again');
   await s.page.fill('input.adv-v[data-i="0"]', '').catch(() => {}); await s.page.click('[data-act="people:advreset"]');
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall'); await s.page.click('#adv-bulk');
-  await s.page.selectOption('#bk-f', 'addr-country'); await s.page.selectOption('#bk-v', 'South Africa'); await s.page.check('#bk-empty');
+  await s.page.selectOption('.bk-f[data-i="0"]', 'addr-country'); await s.page.selectOption('#bk-v-0', 'South Africa'); await s.page.check('#bk-empty-0');
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   check(docs['details/p15'].address.country === 'Namibia' && docs['details/p14'].address.country === 'South Africa' && tt.includes('already filled in'), '“Only where it’s empty” leaves a country already there (Namibia) alone');
-  await s.page.click('#adv-selall').catch(() => {}); await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'addr-province');
-  check(await s.page.$eval('#bk-v', e => e.tagName === 'INPUT' && !!e.list), 'Province is typed, with the country’s provinces to pick from');
-  await s.page.fill('#bk-v', 'kzn'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
+  await s.page.click('#adv-selall').catch(() => {}); await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'addr-province');
+  check(await s.page.$eval('#bk-v-0', e => e.tagName === 'INPUT' && !!e.list), 'Province is typed, with the country’s provinces to pick from');
+  await s.page.fill('#bk-v-0', 'kzn'); await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
   check(docs['details/p14'].address.province === 'KwaZulu-Natal', 'typing “kzn” saves KwaZulu-Natal');
-  await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('#bk-f', 'addr-city'); await s.page.fill('#bk-v', ' Hilton ');
+  await s.page.check('#adv-selall'); await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'addr-city'); await s.page.fill('#bk-v-0', ' Hilton ');
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();
   check(docs['details/p14'].address.city === 'Hilton' && docs['details/p14'].address.street === '7 Oak Rd', 'Town or city can be changed for many people too (spaces trimmed)');
   await s.go('settings/access');
@@ -330,7 +342,7 @@ module.exports = async function (ctx) {
 
   console.log('The church’s colours (Settings → Colours)');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings');
-  check(await s.page.$$eval('.set-link', a => a.length) === 8 && await s.page.isVisible('.set-link.on[href="#/settings/general"]') && await s.page.isVisible('#st-name') && !(await s.page.$('#see-others')),
+  check(await s.page.$$eval('.set-link', a => a.length) === 9 && await s.page.isVisible('.set-link.on[href="#/settings/general"]') && await s.page.isVisible('#st-name') && !(await s.page.$('#see-others')),
     'Settings: a list of topics down the left, and one topic at a time (General first)');
   await s.page.fill('#set-q', 'birthday'); await s.page.waitForTimeout(100);
   check(JSON.stringify(await s.page.$$eval('.set-link', a => a.filter(x => !x.hidden).map(x => x.getAttribute('href')))) === '["#/settings/emails"]', 'searching the settings for “birthday” leaves Email templates');

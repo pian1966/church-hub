@@ -160,7 +160,7 @@
         if (is(c, ['admin', 'pastor'])) return true;
         if (op !== 'update' || !is(c, ANY) || !meIn(c, (b.leaderIds || []))) return false;
         var life = b.type === 'life' && typeof a.name === 'string' && a.name.length > 0 && a.name.length <= 80;   // a life group's leaders may name it
-        return onlyChanges(b, a, life ? ['name', 'memberIds', 'names', 'updatedAt'] : ['memberIds', 'names', 'updatedAt']) && meIn(c, a.memberIds) && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
+        return onlyChanges(b, a, life ? ['name', 'memberIds', 'names', 'when', 'venue', 'roles', 'updatedAt'] : ['memberIds', 'names', 'updatedAt']) && meIn(c, a.memberIds) && (b.leaderIds || []).every(function (l) { return a.memberIds.indexOf(l) >= 0; });
       } },
     'careGroups/share': { read: function (c, pid, d, gid) {
         var own = (docs['settings/church'] || {}).seeCareOwn !== false;

@@ -463,6 +463,8 @@ await t('care groups: members see their own group and its cards; carers add and 
   // a life group's leader may also name the group (not blank), still not change its leaders or kind
   await can(db.member.doc('careGroups/lg1').update({ name: 'Hilton life group' }));
   await cannot(db.member.doc('careGroups/lg1').update({ name: '' }));
+  await can(db.member.doc('careGroups/lg1').update({ when: { day: 2, time: '19:00', freq: 'weekly' }, venue: { place: 'Church hall', address: '1 Main Rd' }, roles: { p15: 'host' } }));   // and when and where it meets
+  await cannot(db.member.doc('careGroups/cg1').update({ when: { day: 2 } }));   // not a care group's carers
   await cannot(db.member.doc('careGroups/lg1').update({ type: 'care' }));
   await cannot(db.member.doc('careGroups/lg1').update({ leaderIds: ['p14', 'p15'] }));
   await cannot(db.member.doc('careGroups/cg3').update({ type: 'life', name: 'Mine' }));   // Tim is only a member of cg3

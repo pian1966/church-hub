@@ -292,6 +292,9 @@ two of the same kind becomes your own logic ("(1 OR 2) AND 3"). Dates without a 
 or when the range runs past December. Each question is audit-logged. **Microphone**: the browser's speech-to-text (Chrome, Edge,
 Safari) or, in the Android app, Android's own speech window (`ChurchHubApp.listen(lang)` → `window.churchHubHeard(text)`);
 hidden where neither exists (e.g. Firefox). The words heard are only put in the box; nothing is recorded or kept.
+- **Change selected…** takes several changes at once (Add another change), each with its own value; one save per person,
+  one Undo for all. **App access** is one of them: people without an email address, children, people who have died and
+  your own access are left out (Store writes the access list, as for one person).
 
 ## Partnership applications and name badges (`js/people/apply.js`; tests: `tests/app/partners.js`, `tests/rules.test.mjs`)
 - **Apply** (Me → Become a Church Partner, `#/people/apply`): adults who aren't Church Partners (nor have died). The church's
@@ -465,6 +468,10 @@ Later: direct import through the Elvanto API (server side, with the church's API
   `I18n.override()` uses it before the built-in line, so it shows for everyone at once. "Go back to the original" removes it.
   "Download the changed wording" gives a JSON file to fold into `js/i18n/*.js` / `js/lang` later. Approved wording only shows
   after signing in (the sign-in screen uses the built-in files).
+- The word for a **service** (`service`: Service / Meeting / Gathering, Settings → Terminology) changes "Church Services"
+  in Settings, "a service" on the rosters, and the rest of the screens.
+- **Settings → Membership application** shows the same declaration, documents-to-read and loyalty panels as People →
+  Partnership applications (`PeopleParts.formSettings`).
 
 ## Groups (one menu entry; `js/mod-groups.js`)
 Care Groups, Midweek Groups and Leadership register with `inGroups: true`: `Hub.listed()` leaves them out of the menu, Home and
@@ -530,6 +537,14 @@ screen-wide word changer leaves "Groups" elsewhere alone).
   lending a book), and the box gets the focus back (`CareUI.again`), so several people are added from the same list.
 - **Switching on and off** (Settings → Apps): Life groups are `optIn` – off until switched on (`Hub.isOn('life')`). Care groups
   can now be switched off too: the page, Me panel, tags, Edit details box and message audiences all go; nothing is deleted.
+- **When and where, and who does what** (Administrators, Pastors and the group's leaders: the pin button on a group):
+  `when = { day 0-6, time, freq: weekly | fortnightly | monthly }`, `venue = { atHost: true }` or `{ place, address }`
+  (with a map link), `roles = { personId: 'coleader' | 'host' }` – the leaders stay `leaderIds`. Shown on the group's
+  panel and to its members; the host's home address comes from People for Administrators and Pastors, and from the
+  host's own card (only if they are in the church directory) for the group. The rules let leaders change `when`,
+  `venue` and `roles` too.
+- **From a person's page** (Administrators and Pastors): **Groups** ticks the Care Groups (adults) and Midweek Groups
+  they are in, with Carer / Group leader – the same as adding them from a group's page.
 
 ## Messages (Messages page; `js/messages.js`, `js/mod-messages.js`)
 - Audiences (`Msg.audiences`, tested): Administrators and Pastors – **Chosen people** (ticked one by one on a checklist of

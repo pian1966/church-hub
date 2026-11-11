@@ -1,7 +1,8 @@
 # Tasks
 
 One file = one pull request. Read `../DECISION.md` and `../TARGET.md` first, then the task, then `CLAUDE.md`.
-Each task names the cheapest kind of AI that should do it – see `../MODELS.md`.
+Each task names the cheapest kind of AI that should do it – see `../MODELS.md`. Before starting, check the session's
+model against the task's **Model** line; if the session is lighter than the task needs, stop and say so.
 Every task: own branch from the latest `main`; raise the version (`js/version.js` + `?v=` in `index.html`) if the
 website changes; member-facing words through `T('…')` in every language file; run the checks `CLAUDE.md` asks for.
 On a conflict in `js/version.js` / `index.html`, take the higher version.

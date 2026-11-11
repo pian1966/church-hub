@@ -47,6 +47,11 @@ seconds) and push. GitHub runs the full browser test on the pull request, and ma
 "Protect main" ruleset requires it). If GitHub's test fails, fix it on the same branch. Anything else – new features,
 changes to logic, `js/store.js`, `firestore.rules`, who sees what, the Android app – gets the full browser test before pushing.
 
+## Planned work (`docs/architecture/`)
+Before doing any task in `docs/architecture/tasks/`, read `docs/architecture/DECISION.md` and `TARGET.md`, then the task file.
+Choosing an AI for a task: `docs/architecture/MODELS.md` (which tier does what). Each task names its tier in its **Model** line.
+A session should say which tier it is running at, and stop and ask if the task's tier is stronger than the session's.
+
 ## Rules
 - New features are modules (`js/mod-*.js`) registered with `Hub.register`; a big module can be split like People
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).

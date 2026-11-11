@@ -289,3 +289,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.55.0 (11 Nov 2026) **Groups**: one menu entry for Care Groups, Midweek Groups and Leadership, as tabs, opening on
   "My groups" (the groups the person is in, with their leadership groups); each kind still switched on or off on its own and
   with its own privacy rules; the church can rename the menu entry (Terminology: "Groups"). Message groups stay under Messages.
+- ✅ 0.55.1 (11 Nov 2026) **Choosing librarians**: people who can't sign in yet (most people brought in from Elvanto) were left out of the list, so they couldn't be chosen. Now any adult can be chosen; someone who can't sign in yet gets Basic access at the same time (or the dialog says to add their email address first).

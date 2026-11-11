@@ -4,7 +4,10 @@
  * Pastor) add items with a picture of the cover, lend them – to people on the church's list or to visitors, always with a
  * mobile number so an item can be traced – and mark them as returned. Off until an Administrator switches it on
  * (Settings → Apps). Who borrowed what is seen only by the librarians and the borrower; returned loans are removed after a
- * year. Rules: js/library.js (tested), firestore.rules (books, loans, covers, libraryPolicy). */
+ * year. Three weeks after something is borrowed (and each week after that) a friendly reminder is due: the borrower sees it
+ * on their To do list and here, and a librarian can send it by WhatsApp or SMS (visitors, and people who don't use the app).
+ * The policy is typed with simple formatting (js/richtext.js). Rules: js/library.js (tested), firestore.rules (books,
+ * loans, covers, libraryPolicy). */
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn, L = Library;
@@ -27,6 +30,14 @@
   function free(b) { return librarian() ? L.free(b, loans()) : L.free(b); }
   function everyone() { return S.find('people', function (p) { return p.active !== false && p.firstName !== 'Deleted' && !p.mergedInto && !p.binnedAt && p.category !== 'Deceased'; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); }); }
   function due(l) { return '<span class="' + (L.overdue(l, H.today()) ? 'tag bad' : 'muted') + '">' + esc(T('Due {date}', { date: H.fmt(l.due, true) })) + (L.overdue(l, H.today()) ? ' · ' + T('Overdue') : '') + '</span>'; }
+  /** The formatting buttons' names (js/richtext.js). */
+  function fmtWords() { return { bar: T('Formatting'), b: T('Bold'), i: T('Italic'), u: T('Underline'), h: T('Heading'), ul: T('Bulleted list'), ol: T('Numbered list') }; }
+  function held(l) { var n = L.daysOut(l, H.today()); return TN('had for {n} day', 'had for {n} days', n); }
+  /** The friendly reminder, in words: which item, and how long they have had it. */
+  function reminderText(l) {
+    return T('Hello {name}, a friendly reminder from the church library: you have had “{title}” for {n} days. Please bring it back when you have finished with it, or let us know if you need it for longer. Thank you!',
+      { name: String(l.name || '').split(' ')[0], title: l.title, n: L.daysOut(l, H.today()) });
+  }
   function cover(b, big) {
     return '<span class="lib-cover' + (big ? ' big' : '') + '"' + (b.cover ? ' data-cover="' + esc(b.id) + '" data-v="' + esc(b.cover) + '"' : '') + ' aria-hidden="true">' + (b.cover ? '' : H.icon(BOOKS, big ? 28 : 18)) + '</span>';
   }
@@ -45,17 +56,27 @@
   function who(l) {   // the borrower, with the mobile number for the librarians to trace the item
     return esc(l.name) + (l.visitor ? ' <span class="tag grey">' + T('Visitor') + '</span>' : '') + (l.mobile ? ' · <a href="tel:' + esc(l.mobile.replace(/[^\d+]/g, '')) + '">' + esc(l.mobile) + '</a>' : '');
   }
+  /** The policy, for everyone who opens the Library: its buttons always in view (Read the policy, the file), with the
+   *  start of a short policy shown under them. */
   function policyPanel() {
     var p = policy, edit = writesPolicy();
-    if (!p && !edit) return '';
-    if (!p) return '<section class="panel" id="lib-policy"><div class="row"><h2 class="grow" style="margin:0">' + T('Library policy') + '</h2><button class="btn small" data-act="library:policy">' + T('Add the policy') + '</button></div>' +
-      '<p class="muted small" style="margin:6px 0 0">' + T('Paste in or upload the library’s policy, for everyone to read.') + '</p></section>';
-    return '<section class="panel" id="lib-policy"><details' + (p.text && p.text.length < 400 ? ' open' : '') + '><summary><b>' + T('Library policy') + '</b></summary>' +
-      (p.text ? '<div class="lib-doc lib-doc-short" data-own-words>' + L.policyHtml(p.text) + '</div>' : '') +
-      '<div class="btns" style="margin-top:8px">' + (p.text ? '<button class="btn small primary" data-act="library:policyread">' + T('Read the policy') + '</button>' : '') +
-      (p.name && p.data && viewable(p.type) ? '<button class="btn small" data-act="library:policyopen">' + esc(T('Open {name}', { name: p.name })) + '</button>' : '') +
+    if (!p) return '<section class="panel" id="lib-policy"><div class="row"><h2 class="grow" style="margin:0">' + T('Library policy') + '</h2>' + (edit ? '<button class="btn small" data-act="library:policy">' + T('Add the policy') + '</button>' : '') + '</div>' +
+      '<p class="muted small" style="margin:6px 0 0">' + (edit ? T('Paste in or upload the library’s policy, for everyone to read.') : T('No policy yet.')) + '</p></section>';
+    return '<section class="panel" id="lib-policy"><div class="row" style="gap:8px;flex-wrap:wrap"><h2 class="grow" style="margin:0">' + T('Library policy') + '</h2>' +
+      '<div class="btns">' + (p.text ? '<button class="btn small primary" data-act="library:policyread">' + T('Read the policy') + '</button>' : '') +
+      (p.name && p.data && viewable(p.type) ? '<button class="btn small' + (p.text ? '' : ' primary') + '" data-act="library:policyopen">' + esc(T('Open {name}', { name: p.name })) + '</button>' : '') +
       (p.name && p.data ? '<button class="btn small" data-act="library:policyfile">' + H.icon(H.ICON.download || H.ICON.check, 16) + esc(T('Download {name}', { name: p.name })) + '</button>' : '') +
-      (edit ? '<button class="btn small" data-act="library:policy">' + H.icon(PEN, 16) + T('Edit') + '</button>' : '') + '</div></details></section>';
+      (edit ? '<button class="btn small" data-act="library:policy">' + H.icon(PEN, 16) + T('Edit') + '</button>' : '') + '</div></div>' +
+      (p.text && p.text.length < 400 ? '<div class="lib-doc lib-doc-short" data-own-words>' + L.policyHtml(p.text) + '</div>' : '') + '</section>';
+  }
+  /** How to format the policy: what to type, and how it shows (drawn by the same code that shows the policy). */
+  function legend() {
+    var rows = [['# ' + T('Heading'), '# ' + T('Heading')], ['## ' + T('Smaller heading'), '## ' + T('Smaller heading')], [T('Library policy').toUpperCase(), null],
+      ['- ' + T('Bulleted list') + '\n- ' + T('Bulleted list'), null], ['1. ' + T('Numbered list') + '\n2. ' + T('Numbered list'), null],
+      ['**' + T('Bold') + '**', null], ['*' + T('Italic') + '*', null]];
+    return '<details class="sub lib-legend"><summary>' + T('How to format it') + '</summary><table class="lib-legend-t"><thead><tr><th>' + T('You type') + '</th><th>' + T('Shows as') + '</th></tr></thead><tbody>' +
+      rows.map(function (r) { return '<tr><td><code>' + esc(r[0]).replace(/\n/g, '<br>') + '</code></td><td class="lib-doc">' + L.policyHtml(r[1] || r[0]) + '</td></tr>'; }).join('') +
+      '</tbody></table></details>';
   }
   function page() {
     var u = me(), edit = librarian(), all = L.find(S.list('books'), ''), books = all.filter(L.inLibrary), gone = edit ? all.filter(function (b) { return !L.inLibrary(b); }) : [], mine = u ? L.mine(loans(), u.id) : [], out = edit ? L.onLoan(loans()) : [];
@@ -66,11 +87,16 @@
         (chooses() ? '<button class="btn" data-act="library:libs">' + T('Librarians') + '</button>' : '') + '</div>' : '') + '</div>';
     html += policyPanel();
     if (mine.length) html += '<section class="panel" id="lib-mine"><h2>' + T('My books') + '</h2><div class="list">' + mine.map(function (l) {
-      return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b><small>' + due(l) + '</small></span></div>'; }).join('') + '</div></section>';
+      var n = L.daysOut(l, H.today());
+      return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b><small>' + due(l) + ' · <span class="muted">' + esc(held(l)) + '</span></small>' +
+        (n >= L.REMIND_DAYS ? '<small class="note" style="margin-top:6px">' + esc(T('Friendly reminder: you have had this for {n} days. Please bring it back when you have finished with it.', { n: n })) + '</small>' : '') + '</span></div>'; }).join('') + '</div></section>';
     if (edit) html += '<section class="panel" id="lib-out"><div class="row"><h2 class="grow" style="margin:0">' + T('On loan') + '</h2><span class="muted small">' + TN('{n} item', '{n} items', out.length) + '</span></div>' +
       (out.length ? '<div class="list" style="margin-top:8px">' + out.map(function (l) {
-        return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b><small>' + who(l) + ' · ' + esc(T('Lent {date}', { date: H.fmt(l.out, true) })) + ' · ' + due(l) + '</small></span>' +
-          '<span class="rec-acts"><button class="btn small" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button>' +
+        var remind = L.remindDue(l, H.today());
+        return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (remind ? ' <span class="tag warn">' + T('Reminder due') + '</span>' : '') +
+          '<small>' + who(l) + ' · ' + esc(T('Lent {date}', { date: H.fmt(l.out, true) })) + ' · ' + esc(held(l)) + ' · ' + due(l) + (l.reminded ? ' · ' + esc(T('Reminded {date}', { date: H.fmt(l.reminded, true) })) : '') + '</small></span>' +
+          '<span class="rec-acts">' + (L.daysOut(l, H.today()) >= L.REMIND_DAYS ? '<button class="btn small" data-act="library:remind" data-id="' + esc(l.id) + '">' + T('Send a reminder') + '</button>' : '') +
+          '<button class="btn small" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button>' +
           '<button class="btn small ghost" data-act="library:lost" data-id="' + esc(l.id) + '" title="' + esc(T('It won’t come back')) + '">' + T('Lost') + '</button></span></div>';
       }).join('') + '</div>' : '<p class="muted small" style="margin:8px 0 0">' + T('Nothing on loan.') + '</p>') +
       (back.length ? '<details class="sub" style="margin-top:10px"><summary>' + T('Recently returned') + '</summary><div class="list">' + back.map(function (l) {
@@ -174,7 +200,7 @@
         '<p id="lib-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="library:lend" data-id="' + esc(b.id) + '">' + T('Back') + '</button>' +
         '<button class="btn save" data-act="library:lendto" data-b="' + esc(b.id) + '" data-id="' + esc(p.id) + '">' + T('Lend') + '</button></div>';
     } else {
-      body += '<label class="field req" style="margin-bottom:6px">' + T('Who is borrowing it') + '</label>' + finder('lib-lend', everyone(), 'library:lendto', { b: b.id }, null, T('Type part of their name')) +
+      body += '<label class="field req" style="margin-bottom:6px">' + T('Who is borrowing it') + '</label>' + finder('lib-lend', everyone(), 'library:lendto', { b: b.id }, null, T('Type part of their name'), { keep: false }) +
         '<details class="sub" style="margin-top:12px"' + (step && step.visitor ? ' open' : '') + '><summary>' + T('Someone not on the church’s list') + '</summary>' +
         '<label class="field req">' + T('Name') + '<input id="lib-vname" maxlength="100" autocomplete="off"></label>' +
         '<label class="field req">' + T('Mobile number') + '<input id="lib-vmob" type="tel" maxlength="30" autocomplete="off"></label>' +
@@ -216,7 +242,8 @@
   function policyDialog() {
     var p = policy || {}; policyDraft = p.name && p.data ? { name: p.name, type: p.type, data: p.data } : null;
     H.modal(H.dialogHead(T('Library policy'), T('Everyone who signs in can read it.')) + '<div class="dlg-body">' +
-      '<label class="field">' + T('Paste the policy here') + '<textarea id="lib-pol" rows="10" maxlength="' + L.POLICY_MAX + '">' + esc(p.text || '') + '</textarea></label>' +
+      '<div class="field"><label for="lib-pol">' + T('Paste the policy here') + '</label>' + (window.RichText ? RichText.tools('lib-pol', fmtWords(), ['b', 'i', 'h', 'ul', 'ol']) : '') + '<textarea id="lib-pol" rows="10" maxlength="' + L.POLICY_MAX + '">' + esc(p.text || '') + '</textarea>' + legend() +
+        '<details class="sub" id="lib-pol-prev-box"><summary>' + T('Preview') + '</summary><div id="lib-pol-prev" class="lib-doc" data-own-words>' + L.policyHtml(p.text || '') + '</div></details></div>' +
       '<div class="field"><span>' + T('Or attach a file (PDF, Word or a picture)') + '</span><div class="btns"><label class="btn small">' + T('Choose a file') +
         '<input id="lib-pol-file" type="file" accept=".pdf,.doc,.docx,.txt,.odt,image/*" hidden></label><span id="lib-pol-name" class="muted small"></span>' +
         '<button type="button" class="btn small ghost" id="lib-pol-rm" data-act="library:policynofile" hidden>' + T('Remove the file') + '</button></div></div>' +
@@ -224,6 +251,8 @@
       '<div class="dlg-foot">' + (policy ? '<button class="btn ghost" data-act="library:policydel">' + T('Remove the policy') + '</button>' : '') +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="library:policysave">' + T('Save') + '</button></div>', T('Library policy'));
     showPolicyFile();
+    var box = document.getElementById('lib-pol'), prev = document.getElementById('lib-pol-prev');   // the preview follows what is typed
+    if (box && prev) box.addEventListener('input', H.pause(function () { prev.innerHTML = L.policyHtml(box.value); }, 200));
     var inp = document.getElementById('lib-pol-file');
     inp.addEventListener('change', function () {
       var f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
@@ -331,9 +360,12 @@
     stat: function () { var u = me(); return librarian() ? TN('{n} on loan', '{n} on loan', L.onLoan(loans()).length) : u && L.mine(loans(), u.id).length ? TN('{n} item', '{n} items', L.mine(loans(), u.id).length) : ''; },
     todos: function (u) {
       var late = librarian() ? L.onLoan(loans()).filter(function (l) { return L.overdue(l, H.today()); }).length : 0, mine = u ? L.mine(loans(), u.id).filter(function (l) { return L.overdue(l, H.today()); }) : [];
-      var out = [];
+      var out = [], dueNow = librarian() ? L.onLoan(loans()).filter(function (l) { return L.remindDue(l, H.today()); }).length : 0;
+      var long = u ? L.mine(loans(), u.id).filter(function (l) { return L.daysOut(l, H.today()) >= L.REMIND_DAYS && !L.overdue(l, H.today()); }) : [];
       if (late) out.push({ text: TN('{n} library item is overdue', '{n} library items are overdue', late), href: '#/library', tag: T('Library') });
       else if (mine.length) out.push({ text: T('Please return “{title}” to the church library', { title: mine[0].title }), href: '#/library', tag: T('Library') });
+      if (dueNow) out.push({ text: TN('{n} borrower is due a friendly reminder', '{n} borrowers are due a friendly reminder', dueNow), href: '#/library', tag: T('Library') });
+      long.slice(0, 2).forEach(function (l) { out.push({ text: T('Friendly reminder: you have had “{title}” from the church library for {n} days', { title: l.title, n: L.daysOut(l, H.today()) }), href: '#/library', tag: T('Library') }); });
       return out;
     },
     actions: {
@@ -405,6 +437,26 @@
         var w = window.open(blobUrl(policy.type, policy.data), '_blank', 'noopener'); if (!w) saveAs(policy.name, policy.type, policy.data);
       },
       lend: function (el) { var b = S.get('books', el.dataset.id); if (b && librarian()) lendDialog(b); },
+      remind: function (el) {
+        var l = S.get('loans', el.dataset.id); if (!l || !librarian()) return;
+        var app = !!l.personId, num = l.mobile ? L.intl(l.mobile, (Countries.church(S.settings()) || {}).dial) : '';
+        H.modal(H.dialogHead(T('Send a reminder'), l.title + ' · ' + l.name) + '<div class="dlg-body">' +
+          '<p class="muted small" style="margin-top:0">' + esc(held(l)) + (l.reminded ? ' · ' + esc(T('Reminded {date}', { date: H.fmt(l.reminded, true) })) : '') + '</p>' +
+          '<label class="field">' + T('Message') + '<textarea id="lib-rem" rows="5" maxlength="600">' + esc(reminderText(l)) + '</textarea></label>' +
+          (app ? '<p class="hint">' + T('They also see it in Church Hub, on their To do list and the Library page.') + '</p>' : '') + '</div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' +
+          (num ? '<button class="btn" data-act="library:remindsend" data-how="sms" data-id="' + esc(l.id) + '">' + T('By SMS') + '</button><button class="btn save" data-act="library:remindsend" data-how="wa" data-id="' + esc(l.id) + '">' + T('By WhatsApp') + '</button>' : '') +
+          (app ? '<button class="btn' + (num ? '' : ' save') + '" data-act="library:remindsend" data-how="app" data-id="' + esc(l.id) + '">' + T('In Church Hub only') + '</button>' : '') + '</div>', T('Send a reminder'));
+      },
+      remindsend: function (el) {
+        var l = S.get('loans', el.dataset.id); if (!l || !librarian()) return;
+        var text = val('lib-rem') || reminderText(l), num = L.intl(l.mobile, (Countries.church(S.settings()) || {}).dial), how = el.dataset.how;
+        var x = JSON.parse(JSON.stringify(l)); x.reminded = H.today();
+        S.put('loans', x, 'Sent a library reminder (' + (how === 'wa' ? 'WhatsApp' : how === 'sms' ? 'SMS' : 'in the app') + ') about “' + l.title + '”');
+        if (how === 'wa') window.open('https://wa.me/' + num + '?text=' + encodeURIComponent(text), '_blank', 'noopener');
+        else if (how === 'sms') location.href = 'sms:' + (l.mobile || '').replace(/[^\d+]/g, '') + '?body=' + encodeURIComponent(text);
+        H.closeModal(); H.render(); H.toast(T('Reminder sent'));
+      },
       lendto: function (el) {
         var b = S.get('books', el.dataset.b), p = S.get('people', el.dataset.id); if (!b || !librarian()) return;
         if (!p) { H.toast(T('Choose someone to add'), true); return; }
@@ -453,4 +505,10 @@
       }
     }
   });
+  /** On the Me page: how many library items they have out now, opening the Library. */
+  window.LibraryUI = { chip: function () {
+    var u = me(); if (!u || !H.isOn('library')) return '';
+    var n = L.mine(loans(), u.id).length; if (!n) return '';
+    return ' <a class="tag tag-link" style="--c:#2F7A78" href="#/library">' + esc(TN('{n} library item borrowed', '{n} library items borrowed', n)) + '</a>';
+  } };
 })();

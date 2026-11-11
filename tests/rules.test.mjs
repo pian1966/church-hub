@@ -493,6 +493,9 @@ await t('messages: who may send to whom', async () => {
   await cannot(db.member.doc('messages/n7c').set(m({ kind: 'life', groupId: 'lg1', fromId: 'p14', to: ['p02'] })));            // someone not in it
   await can(db.member.doc('messages/n8').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'] })));
   await cannot(db.member.doc('messages/n9').set(m({ kind: 'group', groupId: 'mg2', fromId: 'p14', to: ['p15'] })));
+  await can(db.member.doc('messages/n9b').set(m({ kind: 'leaders', groupId: 'lb1', fromId: 'p14', to: ['p14'], readBy: ['p14'] })));   // Tim is on the Council (lb1)
+  await cannot(db.member.doc('messages/n9c').set(m({ kind: 'leaders', groupId: 'lb1', fromId: 'p14', to: ['p15'] })));           // someone not on it
+  await cannot(db.member.doc('messages/n9d').set(m({ kind: 'leaders', groupId: 'lb2', fromId: 'p14', to: ['p15'] })));           // a group he isn't on
   await cannot(db.member.doc('messages/n10').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], readBy: ['p15'] })));   // can't mark others as having read it
   await cannot(db.member.doc('messages/n11').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], extra: 1 })));
   await cannot(db.member.doc('messages/n12').set(m({ kind: 'group', groupId: 'mg1', fromId: 'p14', to: ['p15'], body: '' })));

@@ -82,7 +82,7 @@
       '<section class="panel"><h2>' + T('Other churches') + '</h2>' + yesNo('ap-other', T('Are you a member of another church?'), true) +
         '<label class="field">' + T('If so, which one – and should we contact them about moving your membership?') + '<input id="ap-which" maxlength="200"></label></section>' +
       '<section class="panel"><h2>' + T('You and the church') + '</h2>' + yesNo('ap-class', T('Would you come to a membership class?'), true) +
-        '<label class="field">' + T('Do you go to a Bible study or midweek group? Which one?') + '<input id="ap-study" maxlength="200"></label>' +
+        '<label class="field">' + T('Do you go to a Bible study or Midweek Group? Which one?') + '<input id="ap-study" maxlength="200"></label>' +
         '<label class="field">' + T('Any questions about the church?') + '<textarea id="ap-q" rows="2" maxlength="1000"></textarea></label>' +
         '<label class="field">' + T('How would you like to serve in the church?') + '<textarea id="ap-serve" rows="2" maxlength="1000"></textarea></label></section>' +
       (readLinks().length ? '<section class="panel" id="ap-read"><h2>' + T('Please read before you apply') + '</h2><ul class="ap-links">' + readLinks().map(function (l) {
@@ -114,7 +114,7 @@
       row(T('Coming to the church since'), a.since ? P.monthYear(a.since) : '') + row(T('Birthday'), a.birthDate ? H.fmt(a.birthDate, true) : '') +
       row(T('Have you put your trust in the Lord Jesus Christ for forgiveness and eternal life?'), yn(a.faith)) + row(T('How did you come to faith?'), a.story) +
       row(T('Are you a member of another church?'), yn(a.otherChurch)) + row(T('If so, which one – and should we contact them about moving your membership?'), a.otherWhich) +
-      row(T('Would you come to a membership class?'), yn(a.classOk)) + row(T('Do you go to a Bible study or midweek group? Which one?'), a.study) +
+      row(T('Would you come to a membership class?'), yn(a.classOk)) + row(T('Do you go to a Bible study or Midweek Group? Which one?'), a.study) +
       row(T('Any questions about the church?'), a.questions) + row(T('How would you like to serve in the church?'), a.serve) +
       row(T('Declaration'), a.declaration) + (a.loyalty ? row(T('Declaration of loyalty'), a.loyalty) : '') + row(T('I agree to be in the church directory, so other members can see my contact details.'), a.directory ? T('Yes') : T('No')) + '</dl>';
   }
@@ -348,7 +348,7 @@
       '<div class="two">' + line(T('Spouse’s name')) + line(T('Wedding anniversary')) + '</div>' + line(T('Children’s names')) +
       yn(T('Have you put your trust in the Lord Jesus Christ for forgiveness and eternal life?')) + line(T('How did you come to faith?'), 3) +
       yn(T('Are you a member of another church?')) + line(T('If so, which one – and should we contact them about moving your membership?')) +
-      yn(T('Would you come to a membership class?')) + line(T('Do you go to a Bible study or midweek group? Which one?')) + line(T('How would you like to serve in the church?'), 2) +
+      yn(T('Would you come to a membership class?')) + line(T('Do you go to a Bible study or Midweek Group? Which one?')) + line(T('How would you like to serve in the church?'), 2) +
       (readLinks().length ? '<div class="pf-q"><b>' + esc(T('Please read before you apply')) + '</b><ul class="pf-links">' + readLinks().map(function (l) { return '<li>' + esc(l.label || '') + (l.label ? ': ' : '') + esc(l.url) + '</li>'; }).join('') + '</ul></div>' : '') +
       '<div class="pf-q"><b>' + esc(T('Declaration')) + '</b><p class="decl">' + esc(declaration()) + '</p><p>☐ ' + esc(T('I agree with the declaration above.')) + '<br>☐ ' + esc(T('I agree to be in the church directory, so other members can see my contact details.')) + '</p></div>' +
       (loyalty() ? '<div class="pf-q"><b>' + esc(T('Declaration of loyalty')) + '</b><p class="decl">' + esc(loyalty()) + '</p><p>☐ ' + esc(T('I make this declaration.')) + '</p></div>' : '') +

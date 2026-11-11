@@ -242,7 +242,8 @@ service cloud.firestore {
     }
     // Messages inside the app (js/messages.js). A message lists the people it went to (to), worked out when it was sent.
     // Administrators and Pastors send to anyone (a group, or people they tick: kind people); a care group's carers (or a life group's leaders: kind life) to
-    // their group and a message group's leaders to theirs - all of it, or only some of its people (to is checked).
+    // their group, a message group's leaders to theirs and anyone on a leadership group (kind leaders) to that group - all of
+    // it, or only some of its people (to is checked).
     // Read by the people it went to, its sender, Administrators and Pastors. The only change anyone else may make is to
     // add themselves to readBy (they opened it). The sender, Administrators and Pastors may delete it.
     function msgGroupRef(gid) { return /databases/$(database)/documents/msgGroups/$(gid); }
@@ -250,13 +251,14 @@ service cloud.firestore {
     function maySendTo(m) {
       return manager()
         || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
-        || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))));
+        || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))))
+        || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])));
     }
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)
         && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])
-        && request.resource.data.kind in ['care', 'life', 'group', 'staff', 'partners', 'people']
+        && request.resource.data.kind in ['care', 'life', 'group', 'leaders', 'staff', 'partners', 'people']
         && request.resource.data.get('some', false) is bool
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 4000
         && request.resource.data.get('title', '') is string && request.resource.data.get('title', '').size() <= 120

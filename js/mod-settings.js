@@ -4,7 +4,7 @@
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var MODS = [['people', TX('People'), TX('Directory, households and consent')], ['rosters', TX('Rosters'), TX('Serving rosters, teams and serving together')], ['leave', TX('Leave'), TX('Staff leave (Leave Manager built in)')],
-    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['life', TX('Midweek groups'), TX('Bible studies, life groups, Connect Groups – their leaders name them')], ['leaders', TX('Leadership'), TX('Council, elders and leaders – their roles and portfolios')], ['archive', TX('Archive'), TX('Minutes, plans, contracts and other church records')], ['library', TX('Library'), TX('The church’s library – see what is in, and what you have borrowed')],
+    ['care', TX('Care Groups'), TX('Small groups that care for one another')], ['life', TX('Midweek Groups'), TX('Bible studies, life groups, Connect Groups – their leaders name them')], ['leaders', TX('Leadership'), TX('Council, elders and leaders – their roles and portfolios')], ['archive', TX('Archive'), TX('Minutes, plans, contracts and other church records')], ['library', TX('Library'), TX('The church’s library – see what is in, and what you have borrowed')],
     ['messages', TX('Messages'), TX('Messages from the church to you and your groups')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
     ['words', TX('Translations'), TX('Members suggest better wording in their language')]];
 
@@ -344,18 +344,18 @@
       })(P.partnersUnrecorded ? P.partnersUnrecorded().length : 0) + '</section>';
     // 3. Care groups
     var row = function (label, tip, cells) { return '<tr><td>' + esc(label) + ' ' + H.tip(tip) + '</td>' + cells + '</tr>'; };
-    html += '<section class="panel" id="see-care"><h2>' + T('Care groups') + '</h2>' +
-      '<p class="hint" style="margin-top:0">' + T('What each kind of access sees of the care groups. Carers always see everyone in their own group.') + '</p>' +
+    html += '<section class="panel" id="see-care"><h2>' + T('Care Groups') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('What each kind of access sees of the Care Groups. Carers always see everyone in their own group.') + '</p>' +
       '<div class="table-wrap"><table class="simple see-grid"><thead><tr><th>' + T('They may') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
-      row(T('See all care groups and who is in each'), T('Names only, on the Care groups page. Church Partners see only people who are in the church directory.'),
-        P.TIERS.map(function (t) { return box('st-care', t[0], care.indexOf(t[0]) >= 0, H.roleLabel(t[0]) + ': ' + T('See all care groups and who is in each')); }).join('')) +
-      row(T('See which care group someone is in, on their page in People'), T('A “Care group member” or “Carer” tag with the group’s name, on the person’s page and in the directory.'),
-        box('st-careppl', '', S.careOnPeople(), H.roleLabel('member') + ': ' + T('See which care group someone is in, on their page in People')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">' + T('when they may see all care groups') + '</td>') +
-      row(T('See everyone in their own care group, not just the carers'), T('Members of a care group see each other’s cards (photo, phone, email, address, birthday) if each one agreed to “Care group”.'),
-        box('st-careown', '', st.seeCareOwn !== false, H.roleLabel('member') + ': ' + T('See everyone in their own care group, not just the carers')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">–</td>') +
+      row(T('See all Care Groups and who is in each'), T('Names only, on the Care Groups page. Church Partners see only people who are in the church directory.'),
+        P.TIERS.map(function (t) { return box('st-care', t[0], care.indexOf(t[0]) >= 0, H.roleLabel(t[0]) + ': ' + T('See all Care Groups and who is in each')); }).join('')) +
+      row(T('See which Care Group someone is in, on their page in People'), T('A “Care Group member” or “Carer” tag with the group’s name, on the person’s page and in the directory.'),
+        box('st-careppl', '', S.careOnPeople(), H.roleLabel('member') + ': ' + T('See which Care Group someone is in, on their page in People')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">' + T('when they may see all Care Groups') + '</td>') +
+      row(T('See everyone in their own Care Group, not just the carers'), T('Members of a Care Group see each other’s cards (photo, phone, email, address, birthday) if each one agreed to “Care Group”.'),
+        box('st-careown', '', st.seeCareOwn !== false, H.roleLabel('member') + ': ' + T('See everyone in their own Care Group, not just the carers')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">–</td>') +
       '</tbody></table></div>' + always +
       (function (n) {   // "All groups" for Church Partners shows only people in the church directory: say how many are left out
-        return n ? '<p class="hint care-hidden">' + TN('{n} person in a care group isn’t in the church directory, so Church Partners don’t see them on the Care groups page.', '{n} people in care groups aren’t in the church directory, so Church Partners don’t see them on the Care groups page.', n) +
+        return n ? '<p class="hint care-hidden">' + TN('{n} person in a Care Group isn’t in the church directory, so Church Partners don’t see them on the Care Groups page.', '{n} people in Care Groups aren’t in the church directory, so Church Partners don’t see them on the Care Groups page.', n) +
           ' <button class="btn small" data-act="settings:carehidden">' + T('Show them') + '</button></p>' : '';
       })((H.can('*') || H.can('settings.manage')) && care.indexOf('member') >= 0 ? careHidden().length : 0) +
       '<button class="btn small" data-autosave data-act="settings:see">' + T('Save') + '</button></section></div>';
@@ -603,13 +603,13 @@
         var all = careHidden();
         var groups = [['notAsked', TX('Church directory not asked yet'), TX('“Record that they agreed” records it for Church Partners; for anyone else, record their answer on their profile (Consent).')],
           ['saidNo', TX('Said no to sharing their contact details'), TX('They stay hidden unless they change their mind (their profile → Consent).')],
-          ['inactive', TX('No longer active'), TX('Take them out of their care group, or mark them active again.')],
+          ['inactive', TX('No longer active'), TX('Take them out of their Care Group, or mark them active again.')],
           ['child', TX('Children'), TX('Children are never shown to other members.')]];
-        H.modal(H.dialogHead(T('In care groups, but not in the church directory'), TN('{n} person', '{n} people', all.length)) + '<div class="dlg-body">' + groups.map(function (gr) {
+        H.modal(H.dialogHead(T('In Care Groups, but not in the church directory'), TN('{n} person', '{n} people', all.length)) + '<div class="dlg-body">' + groups.map(function (gr) {
           var ps = all.filter(function (x) { return x.why === gr[0]; }); if (!ps.length) return '';
           return '<h3 style="margin:14px 0 4px">' + esc(T(gr[1])) + ' (' + ps.length + ')</h3><p class="hint" style="margin:0 0 6px">' + esc(T(gr[2])) + '</p><div class="list">' +
             ps.map(function (x) { return '<a class="item" href="#/people/p/' + esc(x.p.id) + '" data-act="hub:close">' + H.avatar(x.p, 28) + '<span class="grow"><b>' + esc(H.name(x.p)) + '</b>' + (x.p.category ? '<small>' + esc(T(x.p.category)) + '</small>' : '') + '</span></a>'; }).join('') + '</div>';
-        }).join('') + '</div>', T('In care groups, but not in the church directory'));
+        }).join('') + '</div>', T('In Care Groups, but not in the church directory'));
       },
       /** Church Partners with no Contact details answer recorded: they agreed when they became Church Partners. */
       partnersagree: function (el) {

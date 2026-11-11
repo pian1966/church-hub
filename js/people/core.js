@@ -100,8 +100,10 @@ var PeopleParts = { actions: {} };
     var c = a.country && Countries.find(a.country), home = Countries.church(S.settings());
     return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !(c && c.code === home.code) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
   }
-  function catTags(p) {
-    var t = p.category ? '<span class="tag grey">' + esc(T(p.category)) + '</span>' : '', care = (window.CareUI ? CareUI.tag(p) : '') + (window.LifeUI ? LifeUI.tag(p) : '');
+  /** plain: chips that don't open anything (inside a list row that is itself a link). */
+  function catTags(p, plain) {
+    var t = p.category ? '<span class="tag grey">' + esc(T(p.category)) + '</span>' : '', care = (window.CareUI ? CareUI.tag(p) : '') + (window.LifeUI ? LifeUI.tag(p) : '') + (window.LeadersUI && LeadersUI.tag ? LeadersUI.tag(p) : '');
+    if (plain) care = care.replace(/<a class="tag tag-link"([^>]*?) href="[^"]*">([^<]*)<\/a>/g, '<span class="tag"$1>$2</span>');
     if (!p.staff) return t + care;
     return (p.category === 'Staff' ? '<span class="tag grey">' + esc(p.staff.category || T('Staff')) + '</span>' : t + ' <span class="tag grey">' + esc(T('Staff') + (p.staff.category ? ' · ' + p.staff.category : '')) + '</span>') + care;
   }
@@ -194,14 +196,14 @@ var PeopleParts = { actions: {} };
     return f === 'email' ? '<a href="mailto:' + esc(v) + '" target="_blank" rel="noopener">' + esc(v) + '</a>' : '<a href="tel:' + esc(v.replace(/\s/g, '')) + '">' + esc(v) + '</a>';
   }
   /** Consent "Church directory" is shown as Contact details (name, phone, email and address shared with staff and leaders). */
-  function purposeName(pur) { return pur; }   // (until 0.44 "Church directory" was shown as "Contact details", which was easy to mix up)
+  function purposeName(pur) { return pur === 'Care group' ? 'Care Group' : pur; }   // stored as "Care group"; a group's name is a proper noun   // (until 0.44 "Church directory" was shown as "Contact details", which was easy to mix up)
   /** What each consent means, for the "i" next to it (Hub.tip) – how they differ, and what each one does in Church Hub. */
   var PURPOSE_TIP = {
     'Church records': TX('The basic agreement: the church may keep their details in Church Hub at all. It doesn’t show anything to other members.'),
     'Email': TX('Church news and information by email. The weekly notices and prayer emails are chosen separately, under “Would like to receive”.'),
     'SMS': TX('Reminders and urgent news by SMS.'),
     'Church directory': TX('Puts their name and photo in the church directory that everyone who signs in can see, with the contact details the church allows (Settings → Who can see what). Church Partners agree to this when they become Church Partners.'),
-    'Care group': TX('Lets the people in their care group see their photo, phone, email, address and birthday. Without it the group sees only their name.'),
+    'Care group': TX('Lets the people in their Care Group see their photo, phone, email, address and birthday. Without it the group sees only their name.'),
     'Photos': TX('Photos of them taken at church events may be used, e.g. in the notices or on the website. Not the same as their own photo in Church Hub.'),
     'Children’s medical notes': TX('Allergies and medical notes kept so that leaders can keep the child safe. Only Children’s ministry can see them.')
   };

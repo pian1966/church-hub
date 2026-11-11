@@ -183,10 +183,11 @@
         if (!is(c, ANY) || !isMe(c, a.fromId)) return false;
         if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'readBy', 'createdAt', 'updatedAt'])) return false;
         if (a.some !== undefined && typeof a.some !== 'boolean') return false;
-        if (['care', 'life', 'group', 'staff', 'partners', 'people'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
+        if (['care', 'life', 'group', 'leaders', 'staff', 'partners', 'people'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
         if (!Array.isArray(a.to) || !a.to.length || a.to.length > 3000 || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
         if (mgr) return true;
+        if (a.kind === 'leaders') { var lb = docs['leaderBodies/' + a.groupId]; return !!lb && meIn(c, lb.memberIds || []) && a.to.every(function (x) { return (lb.memberIds || []).indexOf(x) >= 0; }); }
         var g = a.kind === 'care' || a.kind === 'life' ? docs['careGroups/' + a.groupId] : a.kind === 'group' ? docs['msgGroups/' + a.groupId] : null;
         if (!g || !meIn(c, (g.leaderIds || []))) return false;
         var ok = (g.memberIds || []).concat(a.kind === 'group' ? g.leaderIds || [] : []);

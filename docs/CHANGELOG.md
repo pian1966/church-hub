@@ -269,3 +269,20 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ Library 0.53: import a list of items from a CSV spreadsheet (duplicates and rows without a title left out); mark a
   borrowed item as lost; take an item out of the library with a reason (kept for the reports, can be put back); reports of what
   was lent, returned, lost, acquired and taken out between two dates, downloadable as CSV; the policy shown as a formatted page.
+- ✅ 0.54.0 (11 Nov 2026) Groups, Leadership and Library:
+  - Midweek groups fold like care groups (only the leaders' names show until opened); children can be in a midweek group
+    (a youth group); typing part of a name keeps its list of matches after someone is added, so several people are added
+    from the same list (care groups, midweek groups, leadership groups, message groups; carers' and leaders' own Add dialogs)
+  - Me and a person's page: midweek group and leadership chips that open those pages; borrowed library items as a chip on Me
+  - Leadership: terms of office per group (years in a term, terms in a row, the break after); a bar showing which term each
+    leader is in and how far through; four months before a term ends, Administrators and the Senior Pastor (Rector) see it
+    on their To do list, with whether the person may stand again; "Start their next term"; more than one role each;
+    co-opted members; leadership groups fold to their office-bearers; members can message their whole leadership group
+  - Messages: the sender sees who has read a message and who hasn't (Sent → Read by …)
+  - Library: three weeks after borrowing, a friendly reminder naming the item and how many days they have had it – on the
+    borrower's To do list and Library page, and sent by a librarian by WhatsApp or SMS (again a week later if still out)
+  - "Care Group" and "Midweek Group" written with capitals everywhere, as names (also a church's own word for them from
+    Terminology, e.g. "Home Group"); the consent is still stored as "Care group"
+  - Library policy editor: a "How to format it" legend and a preview; everyone sees Read the policy
+  - Formatting buttons above the Library policy box (bold, italic, heading, lists); Archive notes formatted the same way
+    (headings, lists, bold, italic, underline: `js/richtext.js`, tested)

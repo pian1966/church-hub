@@ -18,10 +18,10 @@ var Wording = (function () {
     ['kids', ['Children’s ministry', 'Children’s ministry'], 'The role that looks after children (and their medical notes)'],
     ['rosters', ['Roster coordinator', 'Roster coordinators'], 'The role that makes the rosters'],
     ['office', ['Church office', 'Church offices'], 'Where the administration is done'],
-    ['care', ['Care group', 'Care groups'], 'A small group that cares for one another'],
-    ['carer', ['Carer', 'Carers'], 'Someone who leads a care group'],
-    ['life', ['Midweek group', 'Midweek groups'], 'A Bible Study, Life Group or Connect Group (etc) that meets during the week for teaching and fellowship'],
-    ['lifeLeader', ['Group leader', 'Group leaders'], 'Someone who leads a midweek group'],
+    ['care', ['Care Group', 'Care Groups'], 'A small group that cares for one another'],
+    ['carer', ['Carer', 'Carers'], 'Someone who leads a Care Group'],
+    ['life', ['Midweek Group', 'Midweek Groups'], 'A Bible Study, Life Group or Connect Group (etc) that meets during the week for teaching and fellowship'],
+    ['lifeLeader', ['Group leader', 'Group leaders'], 'Someone who leads a Midweek Group'],
     ['worship', ['Worship', 'Worship'], 'Music in services (also teams and positions named after it)'],
     ['worshipTeam', ['Worship team', 'Worship teams'], 'The team that leads music in services'],
     ['worshipLeader', ['Worship leader', 'Worship leaders'], 'Who leads the music in a service']
@@ -61,12 +61,14 @@ var Wording = (function () {
   }
   function titleCase(s) { return s.replace(/(^| )([a-z])/g, function (m, a, b) { return a + b.toUpperCase(); }); }
   function lowerFirst(s) { return s.charAt(0).toLowerCase() + s.slice(1); }
+  // Names of groups are proper nouns – a church's "Home group" shows as "Home Group", like "Care Group" and "Midweek Group"
+  var PROPER = { care: 1, life: 1 };
   /** What to change on the screen: [[from, to], …], longest first, with the lower-case forms ("pastor" → "minister") too. */
   function pairs(settings) {
     var w = words(settings), out = [];
     TERMS.forEach(function (t) {
       [0, 1].forEach(function (i) {
-        var from = t[1][i], to = w[t[0]][i];
+        var from = t[1][i], to = PROPER[t[0]] ? titleCase(w[t[0]][i]) : w[t[0]][i];
         if (from === to) return;
         out.push([from, to]);
         // "Worship Team" written with capitals (e.g. a team's name) changes too, to "Music Team"

@@ -21,6 +21,7 @@ var Wording = (function () {
     ['care', ['Care Group', 'Care Groups'], 'A small group that cares for one another'],
     ['carer', ['Carer', 'Carers'], 'Someone who leads a Care Group'],
     ['life', ['Midweek Group', 'Midweek Groups'], 'A Bible Study, Life Group or Connect Group (etc) that meets during the week for teaching and fellowship'],
+    ['groups', ['Groups', 'Groups'], 'The menu entry that holds Care Groups, Midweek Groups and Leadership', 'menu'],
     ['lifeLeader', ['Group leader', 'Group leaders'], 'Someone who leads a Midweek Group'],
     ['worship', ['Worship', 'Worship'], 'Music in services (also teams and positions named after it)'],
     ['worshipTeam', ['Worship team', 'Worship teams'], 'The team that leads music in services'],
@@ -67,6 +68,7 @@ var Wording = (function () {
   function pairs(settings) {
     var w = words(settings), out = [];
     TERMS.forEach(function (t) {
+      if (t[3] === 'menu') return;   // only the menu entry uses it (js/mod-groups.js): "Groups" elsewhere stays as it is
       [0, 1].forEach(function (i) {
         var from = t[1][i], to = PROPER[t[0]] ? titleCase(w[t[0]][i]) : w[t[0]][i];
         if (from === to) return;

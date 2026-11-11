@@ -466,6 +466,14 @@ Later: direct import through the Elvanto API (server side, with the church's API
   "Download the changed wording" gives a JSON file to fold into `js/i18n/*.js` / `js/lang` later. Approved wording only shows
   after signing in (the sign-in screen uses the built-in files).
 
+## Groups (one menu entry; `js/mod-groups.js`)
+Care Groups, Midweek Groups and Leadership register with `inGroups: true`: `Hub.listed()` leaves them out of the menu, Home and
+All apps, and the `groups` module (shown when `Hub.groupMods()` has any) stands for them. Their pages keep their addresses
+(`#/care`, `#/life`, `#/leaders`); `draw()` in `js/app.js` puts the Groups tabs (`tabs()`) above them and lights Groups in the
+menu. `#/groups` is "My groups": `CareUI.mePanel`, `LifeUI.mePanel` and `LeadersUI.mePanel`. Each kind keeps its own on/off
+switch, roles and rules. The menu entry's name is the Terminology word `groups` (`Wording.TERMS`, marked `'menu'` so the
+screen-wide word changer leaves "Groups" elsewhere alone).
+
 ## Care groups (Care groups page; `js/care.js`, `js/mod-care.js`)
 - `careGroups/{id}` = { name, leaderIds (carers), memberIds, names: { personId: name } }. A person may be in several groups (a carer in one, a member in another), with a card in each. Locally a card is `careShare` id `group:person`.
   Administrators and Pastors create, rename and delete groups and put people in them (Care groups page, or Edit details →

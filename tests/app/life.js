@@ -2,14 +2,16 @@
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
+  // Care Groups, Midweek Groups and Leadership sit under one Groups entry in the menu, as its tabs
+  const inGroups = async (x, id) => !!(await x.page.$('nav a[href="#/groups"]')) && await x.page.evaluate(i => Hub.groupMods().some(m => m.id === i), id);
   const { check, finish, seedDocs, session } = ctx;
   let docs, s, t;
   console.log('Life groups (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
-  check(!(await s.page.$('nav a[href="#/life"]')), 'Life groups are off until an Administrator switches them on');
+  check(!(await inGroups(s, 'life')), 'Life groups are off until an Administrator switches them on');
   await s.go('settings/apps'); await s.page.check('.st-mod[value="life"]'); await s.settle();
   docs = await s.docsNow();
-  check(docs['settings/church'].modules.life === true && !!(await s.page.$('nav a[href="#/life"]')), 'switched on under Settings → Apps: the Life groups page appears');
+  check(docs['settings/church'].modules.life === true && !!(await inGroups(s, 'life')), 'switched on under Settings → Apps: the Life groups page appears');
   await s.go('settings/terminology'); t = await s.page.textContent('main');
   check(t.includes('Midweek Group') && t.includes('A Bible Study, Life Group or Connect Group (etc) that meets during the week for teaching and fellowship'), 'Church Words: “Midweek group” – a Bible Study, Life Group or Connect Group (etc) that meets during the week');
   await s.go('life'); await s.page.fill('#lg-new', 'Tuesday Bible study'); await s.page.click('[data-act="life:addgroup"]'); await s.settle();
@@ -32,13 +34,17 @@ module.exports = async function (ctx) {
   await s.go('home'); await s.go('life');
   const sum = await s.page.textContent('.lg-panel[data-g="' + gid + '"] details.cg-fold > summary');
   check(/1 leader\s*·\s*Tim Jacobs/.test(sum) && (await s.page.$$('.lg-panel[data-g="' + gid + '"] details.cg-fold')).length === 2, 'the group folds like a care group: its leaders’ names show, the other members in a second fold');
+  check(!(await s.page.$('aside a[href="#/life"]')) && !(await s.page.$('aside a[href="#/care"]')) && !!(await s.page.$('aside a[href="#/groups"]')), 'the menu has one Groups entry instead of one for each kind of group');
+  check(await s.page.$$eval('.groups-tabs a', a => a.map(x => x.getAttribute('href')).join()) === '#/groups,#/care,#/life' && !!(await s.page.$('aside a.on[href="#/groups"]')), 'Midweek Groups is a tab under Groups (with My groups and Care Groups), and Groups is lit in the menu');
+  await s.go('groups'); t = await s.text();
+  check(!!(await s.page.$('.groups-tabs a.on[href="#/groups"]')) && t.includes('My groups'), 'Groups opens on My groups');
   await s.go('care'); t = await s.text();
   check(!t.includes('Tuesday Bible study'), 'a life group isn’t listed with the care groups');
   await s.go('people/p/p14'); t = await s.text();
   check(t.includes('Group leader · Tuesday Bible study') && !!(await s.page.$('a.tag-link[href="#/life"]')), 'a person’s page shows their life group – a chip that opens the Midweek groups page');
   await s.go('settings/apps'); await s.page.uncheck('.st-mod[value="care"]'); await s.settle();
   docs = await s.docsNow();
-  check(docs['settings/church'].modules.care === false && !(await s.page.$('nav a[href="#/care"]')) && !!(await s.page.$('nav a[href="#/life"]')), 'care groups can be switched off on their own, life groups stay');
+  check(docs['settings/church'].modules.care === false && !(await inGroups(s, 'care')) && !!(await inGroups(s, 'life')), 'care groups can be switched off on their own, life groups stay');
   await finish(s);
 
   console.log('Life groups (a group leader):');
@@ -54,6 +60,8 @@ module.exports = async function (ctx) {
   check(docs['careGroups/lg1'].name === 'Thursday Bible study' && docs['careGroups/lg1'].type === 'life', 'the leader names their own group');
   await s.go('me'); await s.page.waitForTimeout(300); t = await s.text();
   check(t.includes('My Midweek Groups') && t.includes('Thursday Bible study'), 'their life groups are on their Me page');
+  await s.go('groups'); t = await s.text();
+  check(t.includes('Thursday Bible study') && t.includes('Hilton'), 'Groups → My groups: their Midweek Group and their Care Group together');
   await s.go('messages/send'); await s.page.waitForTimeout(200);
   const to = await s.page.$$eval('#ms-to option', o => o.map(x => x.value));
   check(to.includes('life/lg1') && to.includes('care/cg1'), 'they can send a message to their life group (and their care group)');

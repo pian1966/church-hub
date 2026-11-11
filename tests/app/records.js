@@ -2,6 +2,8 @@
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
+  // Care Groups, Midweek Groups and Leadership sit under one Groups entry in the menu, as its tabs
+  const inGroups = async (x, id) => !!(await x.page.$('nav a[href="#/groups"]')) && await x.page.evaluate(i => Hub.groupMods().some(m => m.id === i), id);
   const { check, finish, seedDocs, session, PNG } = ctx;
   let docs, s, t, key;
   const find = (d, coll, fn) => Object.keys(d).find(k => new RegExp('^' + coll + '/[^/]+$').test(k) && fn(d[k]));
@@ -10,11 +12,11 @@ module.exports = async function (ctx) {
 
   console.log('Leadership (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
-  check(!(await s.page.$('nav a[href="#/leaders"]')) && !(await s.page.$('nav a[href="#/archive"]')) && !(await s.page.$('nav a[href="#/library"]')), 'Leadership, the Archive and the Library are off until an Administrator switches them on');
+  check(!(await inGroups(s, 'leaders')) && !(await s.page.$('nav a[href="#/archive"]')) && !(await s.page.$('nav a[href="#/library"]')), 'Leadership, the Archive and the Library are off until an Administrator switches them on');
   await s.go('settings/apps');
   for (const m of ['leaders', 'archive', 'library']) { await s.page.check('.st-mod[value="' + m + '"]'); await s.settle(); }
   docs = await s.docsNow();
-  check(['leaders', 'archive', 'library'].every(m => docs['settings/church'].modules[m] === true) && !!(await s.page.$('nav a[href="#/leaders"]')) && !!(await s.page.$('nav a[href="#/archive"]')) && !!(await s.page.$('nav a[href="#/library"]')), 'switched on under Settings → Apps: their pages appear');
+  check(['leaders', 'archive', 'library'].every(m => docs['settings/church'].modules[m] === true) && !!(await inGroups(s, 'leaders')) && !!(await s.page.$('nav a[href="#/archive"]')) && !!(await s.page.$('nav a[href="#/library"]')), 'switched on under Settings → Apps: their pages appear');
   await s.go('leaders'); await s.page.fill('#lb-new', 'Church Council'); await s.page.click('[data-act="leaders:addgroup"]'); await s.settle();
   docs = await s.docsNow(); key = find(docs, 'leaderBodies', d => d.name === 'Church Council'); const lb = key ? key.split('/')[1] : '';
   check(!!key && docs[key].open === true && docs[key].memberIds.length === 0, 'a leadership group is added, seen by everyone until that is changed');

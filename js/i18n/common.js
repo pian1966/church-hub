@@ -438,4 +438,10 @@ I18n.rows([
     ["Heading", "Opskrif", "Isihloko", "Isihloko"],
     ["Bulleted list", "Lys met kolletjies", "Uhlu olunamachashazi", "Uluhlu olunamachaphaza"],
     ["Numbered list", "Genommerde lys", "Uhlu olunezinombolo", "Uluhlu olunamanani"],
+    ["My groups", "My groepe", "Amaqembu ami", "Amaqela am"],
+    ["The groups you are in. The tabs above show every group you may see.", "Die groepe waarin jy is. Die oortjies hierbo wys elke groep wat jy mag sien.", "Amaqembu okuwo. Amathebhu angenhla akhombisa wonke amaqembu ongawabona.", "Amaqela okuwo. Iithebhu ezingentla zibonisa onke amaqela onokuwabona."],
+    ["You’re not in a group yet.", "Jy is nog nie in ’n groep nie.", "Awukabi seqenjini okwamanje.", "Akukabikho kwiqela."],
+    ["My leadership groups", "My leierskapsgroepe", "Amaqembu ami obuholi", "Amaqela am obunkokeli"],
+    ["Care Groups, Midweek Groups and Leadership in one place", "Sorggroepe, Middeweekse Groepe en Leierskap op een plek", "Amaqembu Okunakekelana, Amaqembu Aphakathi Nesonto noBuholi endaweni eyodwa", "Amaqela Okukhathalelana, Amaqela Aphakathi Kweveki noBunkokeli kwindawo enye"],
+    ["The menu entry that holds Care Groups, Midweek Groups and Leadership", "Die kieslysinskrywing wat Sorggroepe, Middeweekse Groepe en Leierskap bevat", "Okufakwe kumenyu okuqukethe Amaqembu Okunakekelana, Amaqembu Aphakathi Nesonto noBuholi", "Into esemenyu equlethe Amaqela Okukhathalelana, Amaqela Aphakathi Kweveki noBunkokeli"]
 ]);

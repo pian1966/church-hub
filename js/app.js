@@ -7,6 +7,8 @@
  *   todos(user)    → [{ text, href, tag }]       stat(user)   → short text on the Home card (optional)
  *   actions        → { name: function (el, ev) } called for clicks on [data-act="id:name"]
  *   badge(user)    → a number shown on its menu entry and phone tab, e.g. unread messages (optional; 0 = none)
+ *   inGroups       → true for the kinds of group (Care Groups, Midweek Groups, Leadership): not in the menu or on Home
+ *                    themselves but under one "Groups" entry (js/mod-groups.js), as tabs at the top of their pages
  */
 var Hub = (function () {
   'use strict';
@@ -321,10 +323,13 @@ var Hub = (function () {
     var on = ((Store.settings() || {}).modules || {}), m = moduleById(id);
     return m && m.optIn ? on[id] === true : on[id] !== false;
   }
-  function enabled() {
-    return modules.filter(function (m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); });
-  }
+  function opens(m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); }
+  function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
+  /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
+  function listed() { return enabled().filter(function (m) { return !m.inGroups; }); }
+  /** The kinds of group this person may open (Groups → its tabs), in menu order. */
+  function groupMods() { return modules.filter(function (m) { return m.inGroups && opens(m); }); }
 
   /* ---------- routing ---------- */
   function parts() { return (location.hash.replace(/^#\/?/, '') || 'home').split('/').map(decodeURIComponent); }
@@ -429,6 +434,7 @@ var Hub = (function () {
     if (p[0] === 'words') { if (!inWords && mod && mod.leaving) mod.leaving(I18n.seen()); inWords = true; I18n.page(null); }
     else { inWords = false; I18n.page(location.hash); }
     var body = mod ? mod.render(p.slice(1)) : renderHome();
+    if (mod && mod.inGroups) { var gm = moduleById('groups'); if (gm && gm.tabs) body = gm.tabs(mod.id) + body; }   // Groups: its tabs above each kind of group
     if (!mod || (mod.id === 'me' && !p[1])) body = prompts() + body;   // Home and My details
     var keyOf = function (d) { var sm = d.querySelector('summary'); return d.id || (sm ? sm.textContent.trim() : ''); };
     var wasOpen = [].map.call(root.querySelectorAll('details[open]'), keyOf).filter(Boolean), samePage = root.dataset.page === location.hash;
@@ -451,7 +457,7 @@ var Hub = (function () {
     return '<p class="improve"><a href="#/words/page">' + icon('M4 20h4L19 9l-4-4L4 16v4z', 16) + T('Help improve the {lang} wording on this page', { lang: esc(I18n.name(I18n.get())) }) + '</a></p>';
   }
   function navItems(active) {
-    var items = [{ id: 'home', name: T('Home'), icon: ICON.home }].concat(enabled().map(function (m) { return { id: m.id, name: T(m.name), icon: m.icon, n: badgeOf(m) }; }));
+    var items = [{ id: 'home', name: T('Home'), icon: ICON.home }].concat(listed().map(function (m) { return { id: m.id, name: T(m.name), icon: m.icon, n: badgeOf(m) }; }));
     return items.map(function (it) {
       return '<a href="#/' + it.id + '" class="nav' + (it.id === active ? ' on' : '') + '"' + (it.id === active ? ' aria-current="page"' : '') + '>' + icon(it.icon) + '<span class="grow">' + esc(it.name) + '</span>' + badge(it.n) + '</a>';
     }).join('');
@@ -460,7 +466,7 @@ var Hub = (function () {
   function badgeOf(m) { try { return m && m.badge ? +m.badge(user) || 0 : 0; } catch (e) { return 0; } }
   function badge(n) { return n > 0 ? '<span class="badge" aria-label="' + esc(T('{n} new', { n: n })) + '">' + (n > 99 ? '99+' : n) + '</span>' : ''; }
   function shell(mod, body) {
-    var active = mod ? mod.id : 'home', s = Store.settings();
+    var active = mod ? (mod.inGroups ? 'groups' : mod.id) : 'home', s = Store.settings();
     // Phone tab bar: members get "Me" (their details, days away, serving) first; staff get their working areas first.
     var order = can('people.basic') || can('people.view') || can('*') ? ['people', 'messages', 'rosters', 'leave', 'me'] : ['me', 'messages', 'people', 'rosters', 'leave'];
     var on = enabled().map(function (m) { return m.id; });
@@ -496,7 +502,7 @@ var Hub = (function () {
       '<section class="block"><h2>' + T('To do') + '</h2>' + (todos.length ? '<ul class="todo">' + todos.slice(0, 8).map(function (t) {
         return '<li><a href="' + esc(t.href) + '"><span class="dot" style="--c:' + t.mod.tint + '"></span><span class="grow">' + esc(t.text) + '</span><span class="tag" style="--c:' + t.mod.tint + '">' + esc(T(t.tag || t.mod.name)) + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="empty">' + T('Nothing needs you right now.') + '</p>') + '</section>' +
-      '<section class="block"><h2>' + T('Apps') + '</h2><div class="cards">' + enabled().map(function (m) {
+      '<section class="block"><h2>' + T('Apps') + '</h2><div class="cards">' + listed().map(function (m) {
         return '<a class="appcard" href="#/' + m.id + '"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(m.stat ? m.stat(user) : T(m.desc)) + '</span></a>';
       }).join('') + '</div></section>';
   }
@@ -809,7 +815,7 @@ var Hub = (function () {
     reset: function () { if (confirmBtn(this)) { Store.reset(makeSampleData); user = Store.get('people', user.id) || null; render(); toast(T('Demo data reset')); } },
     mode: function (el) { Store.pref('mode', el.dataset.m || ''); applyMode(); var inMenu = !!el.closest('#modal'); if (inMenu) closeModal(); render(); if (inMenu) hubActions.menu(); },
     menu: function () {
-      modal(dialogHead(T('All apps')) + '<div class="cards in-dialog">' + [{ id: 'home', name: 'Home', icon: ICON.home, tint: '#6B625A', desc: 'Your to-do list' }].concat(enabled()).map(function (m) {
+      modal(dialogHead(T('All apps')) + '<div class="cards in-dialog">' + [{ id: 'home', name: 'Home', icon: ICON.home, tint: '#6B625A', desc: 'Your to-do list' }].concat(listed()).map(function (m) {
         return '<a class="appcard" href="#/' + m.id + '" data-act="hub:close"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(T(m.desc)) + '</span></a>';
       }).join('') + '</div>' +
         (canViewAs() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + esc(backLabel()) + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
@@ -1020,7 +1026,7 @@ var Hub = (function () {
     render();
   }
 
-  return { tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
+  return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };

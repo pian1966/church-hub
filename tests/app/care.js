@@ -2,6 +2,8 @@
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
+  // Care Groups, Midweek Groups and Leadership sit under one Groups entry in the menu, as its tabs
+  const inGroups = async (x, id) => !!(await x.page.$('nav a[href="#/groups"]')) && await x.page.evaluate(i => Hub.groupMods().some(m => m.id === i), id);
   const { check, fillHome, finish, seedDocs, session } = ctx;
   let docs, s, t;
   console.log('View as another role (Administrator):');
@@ -158,7 +160,7 @@ module.exports = async function (ctx) {
   seeSeed['careGroups/cgS'] = { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
   seeSeed['careGroups/cgS/share/p15'] = { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082 000 1555' };
   s = await session('sipho.dlamini@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('home');
-  check(!(await s.page.$('nav a[href="#/care"]')) && await s.page.evaluate(() => !Store.list('careGroups').length), 'Roster coordinator: no Care groups until Settings allows it');
+  check(!(await inGroups(s, 'care')) && await s.page.evaluate(() => !Store.list('careGroups').length), 'Roster coordinator: no Care groups until Settings allows it');
   await finish(s);
   s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('settings/access');
   check(await s.page.$$eval('.st-care', b => b.map(x => x.value).join()) === 'member,rosters,kids', 'Settings → Who can see what: a Care groups tick for Basic access, Roster coordinator and Children’s ministry');
@@ -171,13 +173,13 @@ module.exports = async function (ctx) {
   seeSeed['settings/church'].seeCare = ['rosters'];
   s = await session('sipho.dlamini@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('care'); await s.page.waitForTimeout(300);
   t = await s.text();
-  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('Hilton') && t.includes('Who is in which Care Group'), 'Roster coordinator: Care groups in the menu, every group shown');
+  check(!!(await inGroups(s, 'care')) && t.includes('Hilton') && t.includes('Who is in which Care Group'), 'Roster coordinator: Care groups in the menu, every group shown');
   await s.page.click('.cg-fold summary').catch(() => {}); t = await s.text();
   check(t.includes('Tim') && !t.includes('082 000 1555') && !(await s.page.$('[data-act^="care:"]')) && !(await s.page.$('#cg-new')), 'only who is in each group – no phone numbers or other card details, and nothing to change');
   check(await s.page.evaluate(() => !Store.list('careShare').length), 'the members’ cards are not loaded');
   await finish(s);
   s = await session('grace.ndlovu@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('home');
-  check(!(await s.page.$('nav a[href="#/care"]')), 'Children’s ministry: not ticked, so no Care groups');
+  check(!(await inGroups(s, 'care')), 'Children’s ministry: not ticked, so no Care groups');
   await finish(s);
 
   console.log('Care groups: what Church Partners see (Settings → Who can see what)');
@@ -192,12 +194,12 @@ module.exports = async function (ctx) {
   check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888'), 'by default: everyone in their own group');
   check((await s.page.textContent('.me-chips').catch(() => '')).includes('Care Group member · Hilton'), 'their Me page shows chips like the staff see: their care group');
   await s.go('care'); t = await s.text();
-  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('My Care Group: Hilton') && !t.includes('All Care Groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
+  check(!!(await inGroups(s, 'care')) && t.includes('My Care Group: Hilton') && !t.includes('All Care Groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
   await s.go('people/p/p14'); check(!(await s.text()).includes('From Elvanto'), 'no “From Elvanto” chip for anyone but Administrators');
   await finish(s);
   const neither = JSON.parse(JSON.stringify(pSeed)); neither['settings/church'].seeCareOwn = false; neither['settings/church'].seeCare = [];
   s = await session('tim.jacobs@example.com', neither); await s.go('home');
-  check(!(await s.page.$('nav a[href="#/care"]')), 'neither box ticked: no Care groups in the menu');
+  check(!(await inGroups(s, 'care')), 'neither box ticked: no Care groups in the menu');
   await finish(s);
   s = await session('linda.pillay@example.com', JSON.parse(JSON.stringify(pSeed))); await s.go('settings');
   await s.go('people/p/p14'); check((await s.text()).includes('From Elvanto'), 'an Administrator sees where a record came from (From Elvanto)');
@@ -239,7 +241,7 @@ module.exports = async function (ctx) {
   check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]), '“on their page in People” alone: directory entries still carry each person’s care group');
   await finish(s);
   s = await session('tim.jacobs@example.com', docs); await s.go('people/p/p18'); t = await s.text();
-  check(t.includes('Care Group member · Hilton') && !(await s.page.$('nav a[href="#/care"]')) === !(docs['settings/church'].seeCare || []).length, '… and Basic access sees the tags in People');
+  check(t.includes('Care Group member · Hilton') && !(await inGroups(s, 'care')) === !(docs['settings/church'].seeCare || []).length, '… and Basic access sees the tags in People');
   await finish(s);
   // The setting was saved but the directory entries never got their groups (e.g. saved before the rules allowed it):
   // the next time a Pastor (Minister) or Administrator opens Church Hub, the entries are brought up to date

@@ -286,3 +286,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   - Library policy editor: a "How to format it" legend and a preview; everyone sees Read the policy
   - Formatting buttons above the Library policy box (bold, italic, heading, lists); Archive notes formatted the same way
     (headings, lists, bold, italic, underline: `js/richtext.js`, tested)
+- ✅ 0.55.0 (11 Nov 2026) **Groups**: one menu entry for Care Groups, Midweek Groups and Leadership, as tabs, opening on
+  "My groups" (the groups the person is in, with their leadership groups); each kind still switched on or off on its own and
+  with its own privacy rules; the church can rename the menu entry (Terminology: "Groups"). Message groups stay under Messages.

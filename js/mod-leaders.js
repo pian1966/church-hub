@@ -109,7 +109,7 @@
   function typedRoles(v) { return L.roles(v).map(function (x) { var hit = L.ROLES.filter(function (r) { return T(r).toLowerCase() === x.toLowerCase() || r.toLowerCase() === x.toLowerCase(); })[0]; return hit || x; }); }
 
   H.register({
-    id: 'leaders', name: 'Leadership', desc: 'Council, elders and leaders – their roles and portfolios', icon: TABLE, tint: '#5B4B8A', optIn: true,
+    id: 'leaders', name: 'Leadership', desc: 'Council, elders and leaders – their roles and portfolios', icon: TABLE, tint: '#5B4B8A', optIn: true, inGroups: true,
     render: function () { return page(); },
     stat: function () { return TN('{n} group', '{n} groups', bodies().length); },
     /** Four months before a term of office ends: Administrators and the Senior Pastor (Rector). */
@@ -210,5 +210,11 @@
       return ' <a class="tag tag-link" style="--c:#5B4B8A" href="#/leaders">' + esc((what.length ? what.join(', ') + ' · ' : '') + o.body.name) + '</a>';
     }).join('');
   }
-  window.LeadersUI = { tag: tag, mine: function (pid) { return L.of(S.list('leaderBodies'), pid).map(function (o) { return o.body.id; }); } };
+  /** The Groups page ("My groups"): the leadership groups this person serves on, as everyone on them sees them. */
+  function mePanel() {
+    var u = me(); if (!u || !H.isOn('leaders')) return '';
+    var bs = L.of(S.list('leaderBodies'), u.id).map(function (o) { return o.body; }); if (!bs.length) return '';
+    return '<h2 style="margin:22px 0 10px">' + T('My leadership groups') + '</h2><div class="grid2">' + bs.map(function (b) { return panel(b, manager()); }).join('') + '</div>';
+  }
+  window.LeadersUI = { mePanel: mePanel, tag: tag, mine: function (pid) { return L.of(S.list('leaderBodies'), pid).map(function (o) { return o.body.id; }); } };
 })();

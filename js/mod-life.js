@@ -155,7 +155,7 @@
     var q = document.querySelector('.cg-q[data-for="lmine"]'); if (q) q.focus();
   }
   H.register({
-    id: 'life', name: 'Midweek Groups', desc: 'Bible studies, life groups, Connect Groups – their leaders name them', icon: BOOK, tint: '#3E7D5A', optIn: true,
+    id: 'life', name: 'Midweek Groups', desc: 'Bible studies, life groups, Connect Groups – their leaders name them', icon: BOOK, tint: '#3E7D5A', optIn: true, inGroups: true,
     render: function () { return manager() ? managerPage() : memberPage(); },
     stat: function () { var u = me(); return manager() ? TN('{n} group', '{n} groups', S.list('lifeGroups').length) : u ? TN('{n} group', '{n} groups', mine(u.id).length) : ''; },
     /** After signing in: keep my own cards in my life groups up to date (leaders may have added me). */

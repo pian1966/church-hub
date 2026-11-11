@@ -360,7 +360,7 @@
     var q = document.querySelector('.cg-q[data-for="mine"]'); if (q) q.focus();
   }
   H.register({
-    id: 'care', name: 'Care Groups', desc: 'Small groups that care for one another', icon: HEART, tint: '#B4436C', roles: ['admin', 'pastor'], perm: 'care.view',
+    id: 'care', name: 'Care Groups', desc: 'Small groups that care for one another', icon: HEART, tint: '#B4436C', inGroups: true, roles: ['admin', 'pastor'], perm: 'care.view',
     render: function () { return viewer() ? viewOnly() : render(); },
     after: function () { applySearch(); },
     stat: function () { return manager() || viewer() ? TN('{n} group', '{n} groups', S.list('careGroups').length) : ''; },

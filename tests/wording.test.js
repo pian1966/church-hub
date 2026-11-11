@@ -37,5 +37,8 @@ ok(mus('Worship team') === 'Music team' && mus('Worship Team') === 'Music Team' 
 const pr = W.changer({ wording: { custom: Object.assign({}, W.MUSIC.Praise, { worshipLeader: ['Band leader', 'Band leaders'] }) } });
 ok(pr('Worship Leader and Worship team') === 'Band Leader and Praise team' && pr('Sunday worship') === 'Sunday praise', 'Praise, with the leader renamed on its own');
 ok(W.changer({})('Worship team') === 'Worship team', 'as Church Hub comes: Worship stays');
+const fel = { wording: { custom: { groups: ['Fellowship', 'Fellowships'] } } };
+ok(W.words(fel).groups.join() === 'Fellowship,Fellowships' && W.changer(fel)('Message groups · Groups · Care Groups') === 'Message groups · Groups · Care Groups', 'the church’s word for the Groups menu is used by the menu only, not changed in other texts');
+
 if (fails) { console.log('\n' + fails + ' wording test(s) FAILED'); process.exit(1); }
 console.log('\nAll wording tests passed');

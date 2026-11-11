@@ -196,14 +196,14 @@ var PeopleParts = { actions: {} };
     return f === 'email' ? '<a href="mailto:' + esc(v) + '" target="_blank" rel="noopener">' + esc(v) + '</a>' : '<a href="tel:' + esc(v.replace(/\s/g, '')) + '">' + esc(v) + '</a>';
   }
   /** Consent "Church directory" is shown as Contact details (name, phone, email and address shared with staff and leaders). */
-  function purposeName(pur) { return pur; }   // (until 0.44 "Church directory" was shown as "Contact details", which was easy to mix up)
+  function purposeName(pur) { return pur === 'Care group' ? 'Care Group' : pur; }   // stored as "Care group"; a group's name is a proper noun   // (until 0.44 "Church directory" was shown as "Contact details", which was easy to mix up)
   /** What each consent means, for the "i" next to it (Hub.tip) – how they differ, and what each one does in Church Hub. */
   var PURPOSE_TIP = {
     'Church records': TX('The basic agreement: the church may keep their details in Church Hub at all. It doesn’t show anything to other members.'),
     'Email': TX('Church news and information by email. The weekly notices and prayer emails are chosen separately, under “Would like to receive”.'),
     'SMS': TX('Reminders and urgent news by SMS.'),
     'Church directory': TX('Puts their name and photo in the church directory that everyone who signs in can see, with the contact details the church allows (Settings → Who can see what). Church Partners agree to this when they become Church Partners.'),
-    'Care group': TX('Lets the people in their care group see their photo, phone, email, address and birthday. Without it the group sees only their name.'),
+    'Care group': TX('Lets the people in their Care Group see their photo, phone, email, address and birthday. Without it the group sees only their name.'),
     'Photos': TX('Photos of them taken at church events may be used, e.g. in the notices or on the website. Not the same as their own photo in Church Hub.'),
     'Children’s medical notes': TX('Allergies and medical notes kept so that leaders can keep the child safe. Only Children’s ministry can see them.')
   };

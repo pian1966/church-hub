@@ -20,7 +20,8 @@ const own = W.changer({ wording: { set: 'anglican', custom: { pastor: ['Rector',
 ok(own('Pastors and Church Partners') === 'Rectors and Church Partners' && own('a Pastor') === 'a Rector', 'renamed words win over the set (and the set can be undone word by word)');
 ok(W.words({ wording: { set: 'methodist' } }).pastor.join() === 'Minister,Ministers' && W.words({ wording: { set: 'nope' } }).pastor.join() === 'Pastor,Pastors', 'words for a set; an unknown set is General');
 const meth = W.changer({ wording: { set: 'methodist' } });
-ok(meth('My care group · Carer') === 'My class · Class leader' && meth('Care group member') === 'Class member', 'Methodist: care groups are classes, carers class leaders');
+ok(meth('My Care Group · Carer') === 'My Class · Class leader' && meth('Care Group member') === 'Class member', 'Methodist: Care Groups are Classes (a group’s name is a proper noun), carers class leaders');
+ok(W.changer({ wording: { set: 'anglican' } })('People in your Care Group') === 'People in your Home Group' && W.changer({ wording: { custom: { life: ['Bible study', 'Bible studies'] } } })('My Midweek Groups') === 'My Bible Studies', 'the church’s own word for a group is shown with capitals too');
 ok(W.pairs({ wording: { set: 'anglican' } }).every((p, i, a) => i === 0 || a[i - 1][0].length >= p[0].length), 'longest words are changed first (Visiting Minister before Minister)');
 
 ok(ang('Senior Pastor') === 'Rector' && ang('the Assistant Pastors') === 'the Assistant Ministers' && ang('Pastors') === 'Clergy', 'Anglican: Senior Pastor → Rector, Assistant Pastors → Assistant Ministers');

@@ -20,7 +20,7 @@
   function audLong(m) {
     var n = (m.to || []).length;
     if (m.kind === 'people') return m.audience ? esc(m.audience) : esc(TN('{n} person', '{n} people', n));
-    var base = m.kind === 'care' ? T('Care group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Midweek group') + ' · ' + esc(m.audience) : m.kind === 'leaders' ? T('Leadership') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
+    var base = m.kind === 'care' ? T('Care Group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Midweek Group') + ' · ' + esc(m.audience) : m.kind === 'leaders' ? T('Leadership') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
     return base + (m.some ? ' · ' + esc(TN('{n} person', '{n} people', n)) : '');
   }
   function unreadCount() { var u = me(); return u ? Msg.unread(S.list('messages'), u.id).length : 0; }
@@ -52,7 +52,7 @@
   function renderInbox() {
     var u = me(), list = Msg.inbox(S.list('messages'), u.id);
     var html = head(T('Messages from the church to you and the groups you are in.'), '');
-    if (!list.length) return html + '<p class="empty">' + T('No messages yet. Messages from the church office, your care group and other groups you are in will appear here.') + '</p>';
+    if (!list.length) return html + '<p class="empty">' + T('No messages yet. Messages from the church office, your Care Group and other groups you are in will appear here.') + '</p>';
     return html + '<section class="panel" style="padding:0">' + list.map(function (m) {
       var isNew = Msg.isUnread(m, u.id) || justRead[m.id];
       return '<article class="msg' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b><span class="muted small">' + esc(when(m.createdAt)) + '</span></div>' +
@@ -104,7 +104,7 @@
     var cur = as.filter(function (a) { return key(a) === draft.to; })[0] || as[0]; draft.to = key(cur);
     var opt = function (a) { return '<option value="' + esc(key(a)) + '"' + (key(a) === draft.to ? ' selected' : '') + '>' + esc(audName(a.kind, a.name)) + '</option>'; };
     var groupOf = function (k) { return as.filter(function (a) { return a.kind === k; }); };
-    var sel = [['', groupOf('people').concat(groupOf('staff'), groupOf('partners'))], [T('Care groups'), groupOf('care')], [T('Midweek groups'), groupOf('life')], [T('Leadership'), groupOf('leaders')], [T('Message groups'), groupOf('group')]].map(function (g) {
+    var sel = [['', groupOf('people').concat(groupOf('staff'), groupOf('partners'))], [T('Care Groups'), groupOf('care')], [T('Midweek Groups'), groupOf('life')], [T('Leadership'), groupOf('leaders')], [T('Message groups'), groupOf('group')]].map(function (g) {
       if (!g[1].length) return ''; return g[0] ? '<optgroup label="' + esc(g[0]) + '">' + g[1].map(opt).join('') + '</optgroup>' : g[1].map(opt).join('');
     }).join('');
     return head(T('Send a message to a group. Everyone in it sees it here, in Church Hub.'), 'send') +
@@ -183,7 +183,7 @@
   function renderGroups() {
     if (!manager()) return head('', 'groups') + '<p class="empty">' + T('Only Administrators and Pastors can set up message groups.') + '</p>';
     var gs = groups(), finder = window.CareUI && CareUI.finder;
-    return head(T('Groups you can send messages to, besides care groups, the staff and Church Partners – for example Worship team leaders or the Alpha team. Leaders can send messages to their own group.'), 'groups') +
+    return head(T('Groups you can send messages to, besides Care Groups, the staff and Church Partners – for example Worship team leaders or the Alpha team. Leaders can send messages to their own group.'), 'groups') +
       '<section class="panel"><h2>' + T('Add a message group') + '</h2><div class="row" style="gap:10px;flex-wrap:wrap"><label class="field req grow" style="margin:0">' + T('Name') + '<input id="mg-new" placeholder="' + esc(T('e.g. Worship team leaders')) + '"></label><button class="btn primary" data-act="messages:addgroup" style="align-self:end">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div></section>' +
       (gs.length ? '<div class="grid2">' + gs.map(function (g) {
         var ms = (g.memberIds || []).map(function (id) { return S.get('people', id) || { id: id, firstName: T('Someone'), lastName: '' }; }).sort(function (a, b) {

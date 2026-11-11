@@ -107,8 +107,8 @@
       return m;
     };
     var seesCare = all || H.can('care.view'), care = seesCare && H.isOn('care') ? groupsOf('careGroups') : null, life = all && H.isOn('life') ? groupsOf('lifeGroups') : null;
-    add(!!care, TX('Church'), 'careGroup', TX('Care group'), 'list', function (p) { return care[p.id] || []; }, care ? uniq(S.list('careGroups').map(function (g) { return g.name; })) : []);
-    add(!!life, TX('Church'), 'midweekGroup', TX('Midweek group'), 'list', function (p) { return life[p.id] || []; }, life ? uniq(S.list('lifeGroups').map(function (g) { return g.name; })) : []);
+    add(!!care, TX('Church'), 'careGroup', TX('Care Group'), 'list', function (p) { return care[p.id] || []; }, care ? uniq(S.list('careGroups').map(function (g) { return g.name; })) : []);
+    add(!!life, TX('Church'), 'midweekGroup', TX('Midweek Group'), 'list', function (p) { return life[p.id] || []; }, life ? uniq(S.list('lifeGroups').map(function (g) { return g.name; })) : []);
     add(all, TX('Personal'), 'lateSpouse', TX('Late spouse'), 'text', function (p) { var l = lateSpouse(p); return l ? H.name(l) : p.lateSpouseName || ''; });
     add(all, TX('Name and contact'), 'postcode', TX('Postcode'), 'text', function (p) { return (p.address || {}).postcode || ''; });
     add(all, TX('Name and contact'), 'province', TX('Province'), 'text', function (p) { return (p.address || {}).province || ''; });

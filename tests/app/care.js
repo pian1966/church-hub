@@ -111,10 +111,10 @@ module.exports = async function (ctx) {
   check(tools < 110, 'Rename, Duplicate and Delete sit close together (' + Math.round(tools) + 'px)');
   await s.go('people/p/p17'); await s.page.click('[data-act="people:edit"]'); await fillHome(s);
   await s.page.check('#pf-care'); await s.page.click('[data-act="people:save"]');
-  check((await s.page.textContent('#pf-err')).includes('Tick which care group'), 'Edit details: ticking Care group member asks which group(s)');
+  check((await s.page.textContent('#pf-err')).includes('Tick which Care Group'), 'Edit details: ticking Care group member asks which group(s)');
   await s.page.check('.pf-cg[value="' + cgId + '"]'); await s.page.check('.pf-cg[value="' + cg2 + '"]'); await s.page.check('.pf-cgl[data-g="' + cg2 + '"]'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
   t = await s.text();
-  check(docs['careGroups/' + cgId].memberIds.includes('p17') && docs['careGroups/' + cg2].leaderIds.includes('p17') && !docs['careGroups/' + cgId].leaderIds.includes('p17') && t.includes('Care group member · Hilton Tuesday') && t.includes('Carer · Prayer chain'), '…tick one or more groups (a carer in one, a member in another), with a tag for each');
+  check(docs['careGroups/' + cgId].memberIds.includes('p17') && docs['careGroups/' + cg2].leaderIds.includes('p17') && !docs['careGroups/' + cgId].leaderIds.includes('p17') && t.includes('Care Group member · Hilton Tuesday') && t.includes('Carer · Prayer chain'), '…tick one or more groups (a carer in one, a member in another), with a tag for each');
   await s.page.click('[data-act="people:edit"]'); await s.page.uncheck('.pf-cg[value="' + cg2 + '"]'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
   check(!docs['careGroups/' + cg2].memberIds.includes('p17') && !docs['careGroups/' + cg2].leaderIds.includes('p17') && docs['careGroups/' + cgId].memberIds.includes('p17'), '…and untick one to leave just that group');
   await finish(s);
@@ -171,7 +171,7 @@ module.exports = async function (ctx) {
   seeSeed['settings/church'].seeCare = ['rosters'];
   s = await session('sipho.dlamini@example.com', JSON.parse(JSON.stringify(seeSeed))); await s.go('care'); await s.page.waitForTimeout(300);
   t = await s.text();
-  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('Hilton') && t.includes('Who is in which care group'), 'Roster coordinator: Care groups in the menu, every group shown');
+  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('Hilton') && t.includes('Who is in which Care Group'), 'Roster coordinator: Care groups in the menu, every group shown');
   await s.page.click('.cg-fold summary').catch(() => {}); t = await s.text();
   check(t.includes('Tim') && !t.includes('082 000 1555') && !(await s.page.$('[data-act^="care:"]')) && !(await s.page.$('#cg-new')), 'only who is in each group – no phone numbers or other card details, and nothing to change');
   check(await s.page.evaluate(() => !Store.list('careShare').length), 'the members’ cards are not loaded');
@@ -190,9 +190,9 @@ module.exports = async function (ctx) {
   await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));
   t = await s.page.textContent('#my-care').catch(() => '');
   check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888'), 'by default: everyone in their own group');
-  check((await s.page.textContent('.me-chips').catch(() => '')).includes('Care group member · Hilton'), 'their Me page shows chips like the staff see: their care group');
+  check((await s.page.textContent('.me-chips').catch(() => '')).includes('Care Group member · Hilton'), 'their Me page shows chips like the staff see: their care group');
   await s.go('care'); t = await s.text();
-  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('My care group: Hilton') && !t.includes('All care groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
+  check(!!(await s.page.$('nav a[href="#/care"]')) && t.includes('My Care Group: Hilton') && !t.includes('All Care Groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
   await s.go('people/p/p14'); check(!(await s.text()).includes('From Elvanto'), 'no “From Elvanto” chip for anyone but Administrators');
   await finish(s);
   const neither = JSON.parse(JSON.stringify(pSeed)); neither['settings/church'].seeCareOwn = false; neither['settings/church'].seeCare = [];
@@ -204,7 +204,7 @@ module.exports = async function (ctx) {
   await s.go('settings/access');
   check(await s.page.$eval('.st-careown', b => b.checked) && !(await s.page.$eval('.st-care[value="member"]', b => b.checked)), 'Basic access: “Their own group” on, “All groups” off, to start with');
   t = await s.page.textContent('#see-care');
-  check(t.includes('See all care groups and who is in each') && t.includes('See which care group someone is in, on their page in People') && t.includes('See everyone in their own care group, not just the carers') &&
+  check(t.includes('See all Care Groups and who is in each') && t.includes('See which Care Group someone is in, on their page in People') && t.includes('See everyone in their own Care Group, not just the carers') &&
     (await s.page.$$('#see-care .tip')).length === 3, 'the care group choices say plainly what each allows, each with an “i” that explains more');
   await s.page.uncheck('.st-careown'); await s.page.check('.st-care[value="member"]'); await s.page.waitForTimeout(1200); await s.settle();
   docs = await s.docsNow();
@@ -212,7 +212,7 @@ module.exports = async function (ctx) {
   check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true && !docs['directory/p17'], 'the church directory shows each person’s care group (carers marked); someone not in the directory isn’t listed');
   const after = docs;
   await s.go('settings/access'); t = await s.page.textContent('#see-care');
-  check(t.includes('1 person in a care group isn’t in the church directory'), 'Settings says how many people in care groups Church Partners can’t see (not in the church directory)');
+  check(t.includes('1 person in a Care Group isn’t in the church directory'), 'Settings says how many people in care groups Church Partners can’t see (not in the church directory)');
   await s.page.click('[data-act="settings:carehidden"]'); t = await s.page.textContent('#modal');
   check(/Said no to sharing their contact details \(1\)[\s\S]*Megan Smith/.test(t) && !t.includes('David Smith'), '“Show them” lists them by reason (Megan said no), linked to their profile');
   await s.page.click('[data-act="hub:close"]');
@@ -223,15 +223,15 @@ module.exports = async function (ctx) {
   check(t.includes('Clare') && t.includes('082 000 1555') && !t.includes('David') && t.includes('your carers'), 'switched off: a member sees only their carers (and themselves) in their own group');
   check(await s.page.evaluate(() => !Store.list('careShare').some(c => c.personId === 'p18')), '… and the other members’ cards aren’t loaded');
   await s.go('care'); await s.page.$$eval('main details', d => d.forEach(x => { x.open = true; })); t = await s.text();
-  check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888') && t.includes('All care groups'), 'Care groups page: their own group, then which group each person in the church directory is in – names only');
+  check(t.includes('Hilton') && t.includes('David Smith') && t.includes('Clare Jacobs') && !t.includes('Megan') && !t.includes('082 000 1888') && t.includes('All Care Groups'), 'Care groups page: their own group, then which group each person in the church directory is in – names only');
   await s.go('people'); t = await s.text();
-  check(t.includes('Care group member · Hilton'), 'the People list shows their care group');
+  check(t.includes('Care Group member · Hilton'), 'the People list shows their care group');
   await finish(s);
   // "See which care group someone is in, on their page in People" off, "All groups" still on: the Care groups page stays, the tags go
   const noTags = JSON.parse(JSON.stringify(after)); noTags['settings/church'].careOnPeople = false;
   s = await session('tim.jacobs@example.com', noTags); await s.go('people/p/p18'); t = await s.text();
-  check(t.includes('David') && !t.includes('Care group member · Hilton'), 'Basic access, with “on their page in People” off: no care group tag on someone else’s page');
-  await s.go('care'); check((await s.text()).includes('All care groups'), '… but the Care groups page still lists all groups');
+  check(t.includes('David') && !t.includes('Care Group member · Hilton'), 'Basic access, with “on their page in People” off: no care group tag on someone else’s page');
+  await s.go('care'); check((await s.text()).includes('All Care Groups'), '… but the Care groups page still lists all groups');
   await finish(s);
   // On by itself (no Care groups page): the tags show, and the directory entries carry the groups
   const tagsOnly = JSON.parse(JSON.stringify(after)); tagsOnly['settings/church'].seeCare = []; tagsOnly['settings/church'].careOnPeople = true;
@@ -239,7 +239,7 @@ module.exports = async function (ctx) {
   check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]), '“on their page in People” alone: directory entries still carry each person’s care group');
   await finish(s);
   s = await session('tim.jacobs@example.com', docs); await s.go('people/p/p18'); t = await s.text();
-  check(t.includes('Care group member · Hilton') && !(await s.page.$('nav a[href="#/care"]')) === !(docs['settings/church'].seeCare || []).length, '… and Basic access sees the tags in People');
+  check(t.includes('Care Group member · Hilton') && !(await s.page.$('nav a[href="#/care"]')) === !(docs['settings/church'].seeCare || []).length, '… and Basic access sees the tags in People');
   await finish(s);
   // The setting was saved but the directory entries never got their groups (e.g. saved before the rules allowed it):
   // the next time a Pastor (Minister) or Administrator opens Church Hub, the entries are brought up to date

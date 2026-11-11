@@ -834,8 +834,8 @@ var Hub = (function () {
       if (!canViewAs() || (r && viewChoices().indexOf(r) < 0)) { closeModal(); return; }
       if (r === 'carer' && !g) {   // a carer of which group?
         var gs = Store.list('careGroups').slice().sort(function (a, b) { return String(a.name).localeCompare(String(b.name)); });
-        if (!gs.length) { closeModal(); toast(T('There are no care groups yet – add them on the Care groups page'), true); return; }
-        modal(dialogHead(T('View as a carer'), T('Which care group?')) + '<div class="dlg-body"><p class="muted" style="margin-top:0">' + T('See the group the way its carer does, on their Me page.') + '</p><div class="viewas-pick">' +
+        if (!gs.length) { closeModal(); toast(T('There are no Care Groups yet – add them on the Care Groups page'), true); return; }
+        modal(dialogHead(T('View as a carer'), T('Which Care Group?')) + '<div class="dlg-body"><p class="muted" style="margin-top:0">' + T('See the group the way its carer does, on their Me page.') + '</p><div class="viewas-pick">' +
           gs.map(function (x) { return '<button class="btn" data-act="hub:viewas" data-r="carer" data-g="' + esc(x.id) + '">' + esc(x.name) + ' <span class="muted small">(' + (x.memberIds || []).length + ')</span></button>'; }).join('') + '</div></div>', T('View as a carer'));
         return;
       }

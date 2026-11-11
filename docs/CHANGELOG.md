@@ -281,5 +281,8 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   - Messages: the sender sees who has read a message and who hasn't (Sent → Read by …)
   - Library: three weeks after borrowing, a friendly reminder naming the item and how many days they have had it – on the
     borrower's To do list and Library page, and sent by a librarian by WhatsApp or SMS (again a week later if still out)
+  - "Care Group" and "Midweek Group" written with capitals everywhere, as names (also a church's own word for them from
+    Terminology, e.g. "Home Group"); the consent is still stored as "Care group"
+  - Library policy editor: a "How to format it" legend and a preview; everyone sees Read the policy
   - Formatting buttons above the Library policy box (bold, italic, heading, lists); Archive notes formatted the same way
     (headings, lists, bold, italic, underline: `js/richtext.js`, tested)

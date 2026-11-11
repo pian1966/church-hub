@@ -836,3 +836,18 @@ a.tag.tag-link:hover, a.tag.tag-link:focus-visible { outline: 2px solid color-mi
 .rich p { margin: 0 0 8px; line-height: 1.55; } .rich ul, .rich ol { margin: 0 0 8px; padding-left: 22px; } .rich li { margin: 2px 0; }
 .rt-tools { display: flex; gap: 4px; flex-wrap: wrap; margin: 2px 0 4px; }
 .rt-tools button { min-width: 34px; }
+/* Library policy shown as a document */
+.lib-doc { line-height: 1.55; overflow-wrap: anywhere; }
+.lib-doc h3 { font-size: 1.15rem; margin: 1em 0 .4em; } .lib-doc h4 { font-size: 1rem; margin: .9em 0 .3em; letter-spacing: .02em; }
+.lib-doc h5 { font-size: .95rem; margin: .8em 0 .3em; }
+.lib-doc p { margin: 0 0 .7em; } .lib-doc ul, .lib-doc ol { margin: 0 0 .7em 1.3em; padding: 0; } .lib-doc li { margin: .2em 0; }
+.lib-doc > :first-child { margin-top: 0; }
+.lib-doc-short { margin-top: 8px; max-height: 40vh; overflow: auto; }
+/* Library policy: how to format it */
+.lib-legend { margin-top: 8px; font-weight: 400; }
+.lib-legend-t { width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 14px; }
+.lib-legend-t th { text-align: left; font-weight: 600; padding: 4px 8px; border-bottom: 1px solid var(--line); }
+.lib-legend-t td { padding: 6px 8px; border-bottom: 1px solid var(--line-2); vertical-align: top; }
+.lib-legend-t td.lib-doc > * { margin: 0; } .lib-legend-t td.lib-doc h3, .lib-legend-t td.lib-doc h4, .lib-legend-t td.lib-doc h5 { margin: 0; }
+.lib-legend-t code { font-size: 13px; white-space: nowrap; }
+#lib-pol-prev { margin-top: 8px; max-height: 40vh; overflow: auto; font-weight: 400; }

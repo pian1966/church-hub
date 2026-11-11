@@ -41,10 +41,11 @@ var RichText = (function () {
   function formatted(text) { return /(^|\n)\s*(#{1,3}\s|[-*•]\s|\d{1,3}[.)]\s)|\*\*|__|(^|\W)\*\S/.test(String(text || '')); }
   /* ---------- in the browser: buttons above a text box that add the marks ---------- */
   var TOOLS = [['b', '**', '**', 'B'], ['i', '*', '*', 'I'], ['u', '__', '__', 'U'], ['h', '# ', '', 'H'], ['ul', '- ', '', '•'], ['ol', '1. ', '', '1.']];
-  /** The buttons for the text box with this id; labels = { b, i, u, h, ul, ol, hint } in the chosen language. */
-  function tools(id, labels) {
+  /** The buttons for the text box with this id; labels = { b, i, u, h, ul, ol, hint } in the chosen language; only = the
+   *  buttons wanted (e.g. ['b', 'i', 'h', 'ul', 'ol'] where underline isn't shown, as in the Library policy). */
+  function tools(id, labels, only) {
     labels = labels || {};
-    return '<div class="rt-tools" role="toolbar" aria-label="' + esc(labels.bar || 'Formatting') + '">' + TOOLS.map(function (t) {
+    return '<div class="rt-tools" role="toolbar" aria-label="' + esc(labels.bar || 'Formatting') + '">' + TOOLS.filter(function (t) { return !only || only.indexOf(t[0]) >= 0; }).map(function (t) {
       return '<button type="button" class="btn small ghost" data-rt="' + t[0] + '" data-for="' + esc(id) + '" title="' + esc(labels[t[0]] || t[0]) + '" aria-label="' + esc(labels[t[0]] || t[0]) + '">' + (t[0] === 'b' ? '<b>B</b>' : t[0] === 'i' ? '<i>I</i>' : t[0] === 'u' ? '<u>U</u>' : esc(t[3])) + '</button>';
     }).join('') + '</div>' + (labels.hint ? '<small class="muted">' + esc(labels.hint) + '</small>' : '');
   }

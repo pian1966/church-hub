@@ -8,7 +8,8 @@ until then).
 For: Everyone
 Also asked: Library rules. How long can I keep a book?
 
-Open **Library**: the policy is at the top, under **Library policy**. If it is a file, tap **Download** to read it.
+Open **Library**: the policy is at the top, under **Library policy**. Tap **Read the policy** to read it as a page. If it is
+a file, tap **Open** (a PDF or picture) or **Download**.
 
 ## How do I add or change the library's policy?
 For: Librarians, the Senior Pastor
@@ -59,6 +60,33 @@ name and pick them. Every borrower needs a mobile number so an item can be trace
 you to type one. For **someone not on the church's list**, open that part and type their name and mobile number.
 When the item comes back, tap **Returned** next to it under **On loan** – the number is then no longer kept. Overdue items
 are marked, and Home tells you how many there are.
+
+## How do I import a list of books?
+For: Librarians
+Also asked: Upload books from a spreadsheet. Bring in a book list. CSV.
+
+Save the list from Excel or Google Sheets as **CSV**. The first row must hold the headings, one of them **Title**; any of
+**Author**, **Type** (book, DVD, CD…), **Category**, **Copies**, **Shelf**, **ISBN**, **Date acquired**, **How acquired**
+(bought or donated), **Donated by** and **Note** are used too. On **Library**, tap **Import a list** and choose the file.
+Church Hub shows how many items it will add, and leaves out rows without a title and items already in the library (the same
+ISBN, or the same title and author). Tap **Import**. You can change any item afterwards with the pencil.
+
+## What if an item is lost, damaged or given away?
+For: Librarians
+Also asked: Remove a book. Delete a book. A borrower lost a book.
+
+If a borrower can't bring an item back, tap **Lost** next to it under **On loan** (tap again to be sure). The borrower's
+mobile number is kept on that loan so it can be traced. To take something off the shelf for another reason, tap the bin next to
+it, choose **Why** (lost, damaged, given away or other) and tap **Take out**. It stays in the reports and under **Taken out of
+the library**, where **Put it back** returns it if it turns up. Only something added by mistake should be deleted completely
+(under **Added by mistake?**).
+
+## How do I see what was lent, returned or lost?
+For: Librarians
+Also asked: Library report. Books acquired this year. Overdue list.
+
+On **Library**, tap **Reports**, choose the **From** and **To** dates and tap **Show**. You see what was lent, returned,
+lost, acquired and taken out in that time. **Download as a spreadsheet** saves it as a CSV file for Excel or Google Sheets.
 
 ## Who are the librarians?
 For: Administrators, the Senior Pastor

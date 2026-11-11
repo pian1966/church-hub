@@ -584,6 +584,14 @@ plans, Staff contracts, Annual appraisals, Other), a date, and a file or a link.
 Not built yet: letting a group's secretary file its own minutes; reading a file inside Church Hub; a retention review.
 
 ## Library (Library page; `js/library.js`, `js/mod-library.js`)
+**0.53:** items are never deleted except "added by mistake": taking one out sets `removed` (date), `why` (`Library.REASONS`:
+Lost, Damaged, Given away, Other) and `whyNote`; `Library.inLibrary` hides them from the list, `restore` puts one back. A loan
+marked lost (`Library.lose`) is closed with `back` = that day and `lost: true`, keeps its mobile number, and takes one copy
+off the item (the last copy: the item is taken out as Lost). `Library.report(books, loans, from, to)` gives lent / returned /
+lost / acquired / removed for the librarians (Reports, CSV via `Library.csv`, which defuses spreadsheet formulas).
+`Library.importPlan` reads a CSV (`parseCSV`, `,` or `;`), finds the columns by their headings (`COLUMNS`) and skips rows
+without a title and items already there (`sameItem`: same ISBN, else same title + author). The policy's words are shown as a
+page by `Library.policyHtml` (escapes everything, then headings, lists, **bold**, paragraphs). No rules change.
 Off until switched on. Everyone signed in reads `books` – books, DVDs, CDs, audiobooks, magazines, games (`kind`,
 `Library.KINDS`; 'Book' when not set), each with an optional cover picture in `covers/{id}` (a JPEG of at most 360 pixels,
 taken with the phone's camera or chosen; the item's `cover` is its version; fetched only when it comes into view, like
@@ -601,9 +609,9 @@ show on Home (the librarians: how many; the borrower: their own). Returned loans
 when a librarian opens the page). **Friendly reminders**: three weeks after it was borrowed (`REMIND_DAYS`) and a week after
 each reminder (`Library.remindDue`), the borrower gets a To do and a note under My books, and the librarians a "Reminder due"
 tag with *Send a reminder* – the text names the item and the days held, sent by WhatsApp (`wa.me`, with the church country's
-dialling code: `Library.intl`), SMS or in the app only; the loan keeps the date (`reminded`). The policy is typed with simple
-formatting (`js/richtext.js`: `#` headings, `-` and `1.` lists, `**bold**`, `*italic*`, `__underline__`, links; everything
-else is made safe), with buttons above the box; Archive notes use the same. `LibraryUI.chip()` shows "n library items
+dialling code: `Library.intl`), SMS or in the app only; the loan keeps the date (`reminded`). The policy box has formatting
+buttons (`RichText.tools`: bold, italic, heading, lists) for the marks `Library.policyHtml` shows; Archive notes use
+`js/richtext.js` itself (`#` headings, `-` and `1.` lists, `**bold**`, `*italic*`, `__underline__`, links; all else made safe). `LibraryUI.chip()` shows "n library items
 borrowed" on the Me page. Not built yet: asking to borrow or reserve a book in the app.
 
 ## Services that need a roster

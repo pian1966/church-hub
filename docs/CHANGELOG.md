@@ -266,7 +266,10 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   (take a photo or choose one); lending to visitors not on the church's list (name and mobile number); a mobile number for
   every loan (asked for when a member's record has none; cleared on return); one or two librarians, chosen by an
   Administrator or the Senior Pastor; the library's policy, pasted in or attached, for everyone to read.
-- ✅ 0.53.0 (11 Nov 2026) Groups, Leadership and Library:
+- ✅ Library 0.53: import a list of items from a CSV spreadsheet (duplicates and rows without a title left out); mark a
+  borrowed item as lost; take an item out of the library with a reason (kept for the reports, can be put back); reports of what
+  was lent, returned, lost, acquired and taken out between two dates, downloadable as CSV; the policy shown as a formatted page.
+- ✅ 0.54.0 (11 Nov 2026) Groups, Leadership and Library:
   - Midweek groups fold like care groups (only the leaders' names show until opened); children can be in a midweek group
     (a youth group); typing part of a name keeps its list of matches after someone is added, so several people are added
     from the same list (care groups, midweek groups, leadership groups, message groups; carers' and leaders' own Add dialogs)
@@ -278,4 +281,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   - Messages: the sender sees who has read a message and who hasn't (Sent → Read by …)
   - Library: three weeks after borrowing, a friendly reminder naming the item and how many days they have had it – on the
     borrower's To do list and Library page, and sent by a librarian by WhatsApp or SMS (again a week later if still out)
-  - Formatting for the Library policy and Archive notes: headings, lists, bold, italic, underline (`js/richtext.js`, tested)
+  - Formatting buttons above the Library policy box (bold, italic, heading, lists); Archive notes formatted the same way
+    (headings, lists, bold, italic, underline: `js/richtext.js`, tested)

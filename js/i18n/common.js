@@ -438,5 +438,4 @@ I18n.rows([
     ["Heading", "Opskrif", "Isihloko", "Isihloko"],
     ["Bulleted list", "Lys met kolletjies", "Uhlu olunamachashazi", "Uluhlu olunamachaphaza"],
     ["Numbered list", "Genommerde lys", "Uhlu olunezinombolo", "Uluhlu olunamanani"],
-    ["Formatting: # heading, - bullets, 1. numbers, **bold**, *italic*", "Formatering: # opskrif, - kolletjies, 1. nommers, **vet**, *kursief*", "Ukuhlela: # isihloko, - amachashazi, 1. izinombolo, **okugqamile**, *okutshekile*", "Ukulungisa: # isihloko, - amachaphaza, 1. amanani, **ngqindilili**, *ekekeleyo*"]
 ]);

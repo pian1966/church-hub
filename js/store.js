@@ -144,6 +144,14 @@ var Store = (function () {
     if (auditText) audit(auditText, 'settings');
     save(); changed();
   }
+  /** Choose the library's librarians: only that one setting is written, so the Senior Pastor (who may change nothing else) can. */
+  function setLibrarians(ids, auditText) {
+    if (blocked()) return;
+    db.settings.librarianIds = ids.slice();
+    if (LIVE) Live.patch('settings/church', { librarianIds: ids.slice() });
+    if (auditText) audit(auditText, 'settings');
+    save(); changed();
+  }
   function leave() { return db.leave; }
   /** Save leave. Tells onLeaveChange listeners which requests changed (e.g. to update Elvanto), unless opts.quiet (imports). */
   function saveLeave(auditText, opts) {
@@ -198,6 +206,8 @@ var Store = (function () {
     function clean(o) { var c = copy(o); if (c) delete c.id; return c; }
     function doc(path) { return fs.doc(path); }
     function write(path, data) { local[path] = clean(data); return doc(path).set(clean(data)).catch(function (e) { delete local[path]; err(e, 'save this'); }); }
+    /** Change only some fields of a document (for someone allowed to change only those, e.g. the Senior Pastor choosing librarians). */
+    function patch(path, data) { return doc(path).update(clean(data)).catch(function (e) { err(e, 'save this'); }); }
     function del(path) { local[path] = null; return doc(path).delete().catch(function (e) { delete local[path]; err(e, 'delete this'); }); }
     /** What the database holds for one document, as far as we know (our own unconfirmed writes count). */
     function known(path) {
@@ -901,6 +911,7 @@ var Store = (function () {
       if (c === 'careGroups') { del(c + '/' + prev.id); careDirectory(prev, null); return; }
       if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       if (c === 'archive') fileSave(prev.id, [], (prev.file && prev.file.parts) || 0).catch(function (e) { console.error('delete the file', e); });   // its file goes too
+      if (c === 'books' && prev.cover) del('covers/' + prev.id);   // and a library item's cover picture
       del(c + '/' + prev.id);
     }
     /** A care group changed: its people's directory entries show their groups (only where this person may write them). */
@@ -923,6 +934,11 @@ var Store = (function () {
     /** A person's photo (a small JPEG as a data: address), fetched only when it is shown. '' when there is none or it may not be seen. */
     function photoGet(pid) { return doc('photos/' + pid).get().then(function (s) { return s.exists ? (s.data().data || '') : ''; }, function () { return ''; }); }
     function photoSet(pid, data) { return data ? write('photos/' + pid, { data: data, updatedAt: now() }) : del('photos/' + pid); }
+    /** A library item's cover picture (covers/{id}), and the library's policy (libraryPolicy/policy): fetched only when shown. */
+    function coverGet(id) { return doc('covers/' + id).get().then(function (s) { return s.exists ? (s.data().data || '') : ''; }, function () { return ''; }); }
+    function coverSet(id, data) { return data ? write('covers/' + id, { data: data, updatedAt: now() }) : del('covers/' + id); }
+    function policyGet() { return doc('libraryPolicy/policy').get().then(function (s) { return s.exists ? s.data() : null; }); }
+    function policySet(p) { return p ? write('libraryPolicy/policy', p) : del('libraryPolicy/policy'); }
     function auditEntry(entry) {
       var e = clean(entry); e.byEmail = session ? session.email : ''; e.ts = fb.firestore.FieldValue.serverTimestamp();
       fs.collection('audit').doc(entry.id).set(e).catch(function (x) { console.error('audit', x); });
@@ -986,7 +1002,7 @@ var Store = (function () {
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, photoGet: photoGet, fileSave: fileSave, fileLoad: fileLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -1013,7 +1029,7 @@ var Store = (function () {
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
   function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
-    settings: settings, setSettings: setSettings, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
+    settings: settings, setSettings: setSettings, setLibrarians: setLibrarians, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,
@@ -1095,6 +1111,37 @@ var Store = (function () {
       })());
       put('people', p, auditText);
       return done;
+    },
+    /** A library item's cover picture (a small JPEG as a data: address), fetched only when it is shown. '' when there is none. */
+    cover: function (id) {
+      if (LIVE) return Live.coverGet(id);
+      var x = ((db && db.covers) || []).filter(function (o) { return o.id === id; })[0]; return Promise.resolve(x ? x.data : '');
+    },
+    /** Change a library item's cover ('' = take it away); the item records which version it has, so phones fetch the new one. */
+    setCover: function (id, data, auditText) {
+      if (blocked()) return Promise.resolve();
+      var b = get('books', id); if (!b) return Promise.resolve();
+      b = copy(b); if (data) b.cover = now() + ' ' + Math.random().toString(36).slice(2, 6); else delete b.cover;
+      var done = LIVE ? Live.coverSet(id, data) : Promise.resolve((function () {
+        db.covers = (db.covers || []).filter(function (o) { return o.id !== id; }); if (data) db.covers.push({ id: id, data: data });
+      })());
+      put('books', b, auditText);
+      return done;
+    },
+    /** The library's policy for everyone to read: { text, name, type, data } (an attached file as base64), or null. */
+    libraryPolicy: function () {
+      if (LIVE) return Live.policyGet().catch(function () { return null; });
+      var x = db && db.libraryPolicy ? copy(db.libraryPolicy) : null;
+      if (x && x.demoFile) { x.data = demoFiles.libraryPolicy || ''; delete x.demoFile; if (!x.data) { delete x.name; delete x.type; } }
+      return Promise.resolve(x);
+    },
+    setLibraryPolicy: function (p, auditText) {
+      if (blocked()) return Promise.reject(new Error('view only'));
+      if (p) { p = copy(p); p.updatedAt = now(); p.by = user ? ((user.preferredName || user.firstName) + ' ' + user.lastName) : ''; }
+      if (auditText) audit(auditText, 'libraryPolicy/policy');
+      if (LIVE) return Live.policySet(p);
+      if (p && p.data && p.data.length > 400000) { demoFiles.libraryPolicy = p.data; p = copy(p); p.data = ''; p.demoFile = true; } else delete demoFiles.libraryPolicy;   // the browser's storage is small
+      db.libraryPolicy = p; save(); changed(); return Promise.resolve();
     },
     /** The Archive: a record's file as parts of base64 (js/archive.js). Kept apart from the record and fetched only when opened.
      *  The demo keeps files only until the page is closed (this browser's storage is too small for them). */

@@ -593,11 +593,46 @@ await t('library: who borrowed what is seen by the librarians and the borrower o
   await can(list(db.member.collection('loans').where('personId', '==', 'p14'))); await cannot(list(db.member.collection('loans'))); await cannot(list(db.member.collection('loans').where('personId', '==', 'p15')));
   await cannot(read(db.pastor, 'loans/l14')); await cannot(read(db.kids, 'loans/l15')); await cannot(list(db.pastor.collection('loans')));
   await can(list(db.admin.collection('loans'))); await can(list(db.rosters.collection('loans'))); await can(read(db.rosters, 'loans/l15'));
-  const l = { bookId: 'b1', title: 'Knowing God', personId: 'p14', name: 'Tim Jacobs', out: '2026-11-10', due: '2026-12-01', back: '', note: '' };
+  const l = { bookId: 'b1', title: 'Knowing God', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1518', visitor: false, out: '2026-11-10', due: '2026-12-01', back: '', note: '' };
   await can(db.rosters.doc('loans/l20').set(l)); await can(db.admin.doc('loans/l20').update({ back: '2026-11-12' }));
   await cannot(db.member.doc('loans/l21').set(l)); await cannot(db.member.doc('loans/l14').update({ back: '2026-11-12' })); await cannot(db.member.doc('loans/l14').delete());
   await cannot(db.admin.doc('loans/l21').set({ title: 'No book or person' }));
   await can(db.rosters.doc('loans/l20').delete());
+});
+await t('library: every new loan has a mobile number; a visitor not on the church’s list has a name and no personId', async () => {
+  const base = { bookId: 'b1', title: 'Knowing God', out: '2026-11-10', due: '2026-12-01', back: '', note: '' };
+  await cannot(db.admin.doc('loans/l30').set(Object.assign({}, base, { personId: 'p14', name: 'Tim Jacobs' })));
+  await cannot(db.admin.doc('loans/l30').set(Object.assign({}, base, { personId: 'p14', name: 'Tim Jacobs', mobile: '123' })));
+  await can(db.rosters.doc('loans/l31').set(Object.assign({}, base, { personId: '', name: 'Jane Visitor', mobile: '072 555 0101', visitor: true })));
+  await cannot(db.rosters.doc('loans/l32').set(Object.assign({}, base, { personId: '', name: '', mobile: '072 555 0101', visitor: true })));
+  await cannot(db.rosters.doc('loans/l32').set(Object.assign({}, base, { personId: '', name: 'No visitor mark', mobile: '072 555 0101' })));
+  await can(db.rosters.doc('loans/l31').update({ back: '2026-11-20', mobile: '' }));   // the number is cleared when it comes back
+  await cannot(read(db.member, 'loans/l31')); await can(db.rosters.doc('loans/l31').delete());
+});
+await t('library: covers and the policy are read by everyone signed in; librarians (and the Senior Pastor, for the policy) write them', async () => {
+  const pic = { data: 'data:image/jpeg;base64,AAAA', updatedAt: '2026-11-11 10:00' };
+  await can(db.rosters.doc('covers/b1').set(pic)); await can(read(db.member, 'covers/b1')); await cannot(read(stranger, 'covers/b1'));
+  await cannot(db.member.doc('covers/b1').set(pic)); await cannot(rector.doc('covers/b1').set(pic));
+  await cannot(db.admin.doc('covers/b1').set(Object.assign({ extra: 1 }, pic))); await cannot(db.admin.doc('covers/b1').set({ data: 'x'.repeat(200001) }));
+  const pol = { text: 'Books are lent for three weeks.', updatedAt: '2026-11-11 10:00', by: 'Sipho' };
+  await can(db.rosters.doc('libraryPolicy/policy').set(pol)); await can(rector.doc('libraryPolicy/policy').update({ text: 'Three weeks, then please renew.' }));
+  await can(read(db.member, 'libraryPolicy/policy')); await cannot(read(stranger, 'libraryPolicy/policy'));
+  await cannot(db.member.doc('libraryPolicy/policy').set(pol)); await cannot(db.pastor.doc('libraryPolicy/policy').set(pol));
+  await cannot(db.admin.doc('libraryPolicy/other').set(pol)); await cannot(db.admin.doc('libraryPolicy/policy').set(Object.assign({ secret: 1 }, pol)));
+  await can(db.admin.doc('libraryPolicy/policy').set(Object.assign({ name: 'Policy.pdf', type: 'application/pdf', data: 'JVBERi0x' }, pol)));
+  await can(db.rosters.doc('covers/b1').delete());
+});
+await t('library: the Senior Pastor may choose up to two librarians, and change nothing else in the settings', async () => {
+  // (Andile also has the "settings" tick, which allows every change: take it away for this test)
+  const roleOf = async can => env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('roles/andile@example.com').update({ can }); });
+  await roleOf([]);
+  await can(rector.doc('settings/church').update({ librarianIds: ['p05', 'p14'] }));
+  await cannot(rector.doc('settings/church').update({ librarianIds: ['p05', 'p14', 'p15'] }));
+  await cannot(rector.doc('settings/church').update({ librarianIds: ['p05'], name: 'Another church' }));
+  await cannot(db.pastor.doc('settings/church').update({ librarianIds: ['p02'] }));
+  await cannot(db.member.doc('settings/church').update({ librarianIds: ['p14'] }));
+  await can(db.admin.doc('settings/church').update({ librarianIds: ['p05'] }));
+  await roleOf(['settings', 'access', 'people', 'idnumbers', 'leave', 'rosters', 'privacy', 'import', 'words']);
 });
 await t('… and a librarian or Senior Pastor is only one while the settings say so', async () => {
   await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ seniorPastorId: firebase.firestore.FieldValue.delete(), librarianIds: firebase.firestore.FieldValue.delete() }); });

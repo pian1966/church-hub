@@ -60,7 +60,9 @@
         return (op === 'create' || smallRoles(b)) && smallRoles(a) && okRoles(a) && onlyKeys(a, ['role', 'personId', 'name', 'roles', 'also', 'people']);
       } },
     settings: { read: function (c) { return is(c, ANY) || c.robot; },
-      write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || '')); } },
+      write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || ''))
+        // the Senior Pastor may choose the librarians (at most two), and change nothing else here
+        || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['librarianIds']) && Array.isArray(a.librarianIds || []) && (a.librarianIds || []).length <= 2); } },
     elvantoSync: { read: function (c, id, d) { return may(c, 'import') || c.robot || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
         if (may(c, 'import')) return true;
@@ -217,7 +219,17 @@
     books: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150)); } },
     loans: { read: function (c, id, d) { return librarian(c) || (!!d && mine(c, d.personId || '')); },
-      write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (typeof a.bookId === 'string' && typeof a.personId === 'string')); } },
+      write: function (c, op, id, b, a) {
+        if (!librarian(c)) return false; if (op === 'delete') return true;
+        var m = a.mobile === undefined ? '' : a.mobile, n = a.name === undefined ? '' : a.name;
+        var ok = typeof a.bookId === 'string' && typeof a.personId === 'string' && typeof m === 'string' && m.length <= 30 &&
+          (a.personId !== '' || (a.visitor === true && typeof n === 'string' && n.length > 0 && n.length <= 100));
+        return ok && (op !== 'create' || m.length >= 7);
+      } },
+    covers: { read: function (c) { return is(c, ANY); },
+      write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (onlyKeys(a, ['data', 'updatedAt']) && typeof a.data === 'string' && a.data.length < 200000)); } },
+    libraryPolicy: { read: function (c) { return is(c, ANY); },
+      write: function (c, op, id, b, a) { return (librarian(c) || keeper(c)) && (op === 'delete' || (id === 'policy' && onlyKeys(a, ['text', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
     dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
     audit: { read: function (c) { return may(c, 'privacy'); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }
@@ -246,6 +258,7 @@
   };
   DocRef.prototype.set = function (data) { return apply([{ path: this.path, data: data }]); };
   DocRef.prototype.delete = function () { return apply([{ path: this.path, data: null }]); };
+  DocRef.prototype.update = function (data) { var p = this.path; if (docs[p] === undefined) return Promise.reject(denied('update ' + p + ' (no such document)')); return apply([{ path: p, data: Object.assign(JSON.parse(JSON.stringify(docs[p])), data) }]); };
   /** Firestore's update: merges the fields into a document that must exist (a missing one fails, as in Firestore). */
   DocRef.prototype.update = function (fields) {
     if (docs[this.path] === undefined) { var e = new Error('No document to update'); e.code = 'not-found'; return Promise.reject(e); }

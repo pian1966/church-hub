@@ -245,11 +245,20 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
 - Don't file pastoral or medical information here: pastoral notes have their own, stricter place.
 
 ## Library
-- Purpose: looking after the church's books. Basis: legitimate interest (someone who borrows the church's property is
-  recorded until it is back). Kept: which book, who borrowed it, the dates lent, due and returned.
+- Purpose: looking after the church's books, DVDs, CDs and other items. Basis: legitimate interest (someone who borrows the
+  church's property is recorded until it is back); for a visitor who is not on the church's list, they give their name and
+  number themselves in order to borrow. Kept: which item, who borrowed it, the dates lent, due and returned, and a mobile
+  number so the item can be traced.
+- The mobile number is kept on the loan only while the item is out: it is cleared when the item comes back (`Library.giveBack`).
+  For someone on the church's list it is copied from their record; if their record has none, the librarian types one, and
+  someone who may edit people (Administrators, Pastors) may also save it in that person's details (logged).
+- Visitors who borrow are not added to the church's list: their name lives only on the loan, which is removed a year after
+  the item came back. Lending to a visitor is written in the audit log (no name or number in the entry).
 - What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators
-  and the people an Administrator names) and the borrower; everyone else sees only "On loan" (database rules, tested).
-  Loans are not written in the audit log, and a returned loan is removed after a year. Naming a librarian is logged.
+  and up to two people chosen by an Administrator or the Senior Pastor) and the borrower; everyone else sees only
+  "On loan" (database rules, tested). Other loans are not written in the audit log. Choosing a librarian is logged.
+- Cover pictures (`covers/{id}`) and the library's policy (`libraryPolicy/policy`) hold no personal information; everyone
+  signed in may read them.
 
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church Hub keeps the suggestion with their name and person ID, so the

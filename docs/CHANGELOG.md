@@ -262,3 +262,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 10 Nov 2026 (0.51.0): **Leadership**: leadership groups (the Council, elders, leaders) with each person's role, title, portfolios and dates; "Served before" keeps the history; groups for everyone or members only (`js/leaders.js`, `js/mod-leaders.js`)
 - ✅ 10 Nov 2026 (0.51.0): **Archive**: church records – Council minutes, architectural plans, staff contracts, annual appraisals and the church's own categories – each with a file (up to 15 MB, kept in the database) or a link, and its own "who can see it" (everyone / a leadership group / Administrators and Pastors / Administrators and the Senior Pastor; shown to the person it is about); opening is audit-logged; months with no minutes filed are listed (`js/archive.js`, `js/mod-archive.js`)
 - ✅ 10 Nov 2026 (0.51.0): **Library**: the church's books with how and when each was acquired; librarians lend and take back; members see what is in and their own books; overdue books on Home; returned loans removed after a year (`js/library.js`, `js/mod-library.js`)
+- ✅ 0.52.0 (11 Nov 2026) Library: DVDs, CDs, audiobooks, magazines and games as well as books; a cover picture for each
+  (take a photo or choose one); lending to visitors not on the church's list (name and mobile number); a mobile number for
+  every loan (asked for when a member's record has none; cleared on return); one or two librarians, chosen by an
+  Administrator or the Senior Pastor; the library's policy, pasted in or attached, for everyone to read.

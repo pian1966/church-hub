@@ -4,7 +4,7 @@
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var MODS = [['people', TX('People'), TX('Directory, households and consent')], ['rosters', TX('Rosters'), TX('Serving rosters, teams and serving together')], ['leave', TX('Leave'), TX('Staff leave (Leave Manager built in)')],
-    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['life', TX('Midweek groups'), TX('Bible studies, life groups, Connect Groups – their leaders name them')], ['leaders', TX('Leadership'), TX('Council, elders and leaders – their roles and portfolios')], ['archive', TX('Archive'), TX('Minutes, plans, contracts and other church records')], ['library', TX('Library'), TX('The church’s books – see what is in, and what you have borrowed')],
+    ['care', TX('Care groups'), TX('Small groups that care for one another')], ['life', TX('Midweek groups'), TX('Bible studies, life groups, Connect Groups – their leaders name them')], ['leaders', TX('Leadership'), TX('Council, elders and leaders – their roles and portfolios')], ['archive', TX('Archive'), TX('Minutes, plans, contracts and other church records')], ['library', TX('Library'), TX('The church’s library – see what is in, and what you have borrowed')],
     ['messages', TX('Messages'), TX('Messages from the church to you and your groups')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
     ['words', TX('Translations'), TX('Members suggest better wording in their language')]];
 

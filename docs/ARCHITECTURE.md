@@ -567,8 +567,17 @@ plans, Staff contracts, Annual appraisals, Other), a date, and a file or a link.
 Not built yet: letting a group's secretary file its own minutes; reading a file inside Church Hub; a retention review.
 
 ## Library (Library page; `js/library.js`, `js/mod-library.js`)
-Off until switched on. Everyone signed in reads `books`. **Librarians** – Administrators and `settings.librarianIds`
-(named by an Administrator on the Library page; rules: `librarian()`) – add books and write `loans`. A loan is read by the
+Off until switched on. Everyone signed in reads `books` – books, DVDs, CDs, audiobooks, magazines, games (`kind`,
+`Library.KINDS`; 'Book' when not set), each with an optional cover picture in `covers/{id}` (a JPEG of at most 360 pixels,
+taken with the phone's camera or chosen; the item's `cover` is its version; fetched only when it comes into view, like
+people's photos). **Librarians** – Administrators and `settings.librarianIds` (one or two, `Library.MAX_LIBRARIANS`, chosen
+on the Library page by an Administrator or the Senior Pastor; the Senior Pastor's save writes only that field –
+`Store.setLibrarians`, and the rules let them change nothing else; rules: `librarian()`) – add items and write `loans`.
+Every new loan has a mobile number (`Library.borrower`: from the person's record, or typed if it has none; rules insist on
+it); someone not on the church's list can borrow with a name and a mobile number (`personId: ''`, `visitor: true`). The number
+is cleared when the item comes back. **The library's policy** (`libraryPolicy/policy` = { text, name, type, data }: words pasted
+in and/or one file of at most 600 KB, e.g. a PDF) is read by everyone signed in and written by the librarians and the Senior
+Pastor; it is fetched once when the Library page opens. A loan is read by the
 librarians and its borrower only, so a book carries its own count of copies out (`out`, kept in step by `Library.lend` /
 `giveBack`) for everyone else to see "Available" or "On loan". Lending defaults to three weeks (`LOAN_DAYS`); overdue loans
 show on Home (the librarians: how many; the borrower: their own). Returned loans are removed after a year (`KEEP_DAYS`,

@@ -809,3 +809,12 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .rec-item .tag { margin-top: 4px; }
 .rec-acts { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 @media print { .pick-bar { display: none; } }
+
+/* Library: cover pictures (js/mod-library.js) and the policy */
+.lib-cover { width: 40px; height: 54px; flex: 0 0 auto; border-radius: 4px; display: inline-grid; place-items: center; color: var(--muted, #888);
+  background: color-mix(in srgb, var(--muted, #888) 12%, var(--surface, #fff)); background-size: cover; background-position: center; margin-right: 4px; }
+.lib-cover.pic { color: transparent; }
+.lib-cover-pick { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+.lib-cover-now { width: 72px; min-height: 96px; display: grid; place-items: center; border: 1px dashed var(--line, #ccc); border-radius: 6px; text-align: center; }
+.lib-cover-now img { max-width: 72px; max-height: 110px; border-radius: 4px; display: block; }
+.lib-policy-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; max-height: 60vh; overflow: auto; }

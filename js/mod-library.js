@@ -40,7 +40,7 @@
       (b.note ? '<small data-own-words>' + esc(b.note) + '</small>' : '') + '</span>' +
       (edit ? '<span class="rec-acts"><button class="btn small" data-act="library:lend" data-id="' + esc(b.id) + '"' + (n ? '' : ' disabled') + '>' + T('Lend') + '</button>' +
         '<button class="icon-btn ghost" data-act="library:edit" data-id="' + esc(b.id) + '" aria-label="' + esc(T('Edit {name}', { name: b.title })) + '" title="' + esc(T('Edit')) + '">' + H.icon(PEN, 16) + '</button>' +
-        '<button class="icon-btn ghost" data-act="library:del" data-id="' + esc(b.id) + '" aria-label="' + esc(T('Delete {name}', { name: b.title })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 16) + '</button></span>' : '') + '</div>';
+        '<button class="icon-btn ghost" data-act="library:remove" data-id="' + esc(b.id) + '" aria-label="' + esc(T('Take {name} out of the library', { name: b.title })) + '" title="' + esc(T('Take out of the library')) + '">' + H.icon(H.ICON.trash, 16) + '</button></span>' : '') + '</div>';
   }
   function who(l) {   // the borrower, with the mobile number for the librarians to trace the item
     return esc(l.name) + (l.visitor ? ' <span class="tag grey">' + T('Visitor') + '</span>' : '') + (l.mobile ? ' · <a href="tel:' + esc(l.mobile.replace(/[^\d+]/g, '')) + '">' + esc(l.mobile) + '</a>' : '');
@@ -51,15 +51,18 @@
     if (!p) return '<section class="panel" id="lib-policy"><div class="row"><h2 class="grow" style="margin:0">' + T('Library policy') + '</h2><button class="btn small" data-act="library:policy">' + T('Add the policy') + '</button></div>' +
       '<p class="muted small" style="margin:6px 0 0">' + T('Paste in or upload the library’s policy, for everyone to read.') + '</p></section>';
     return '<section class="panel" id="lib-policy"><details' + (p.text && p.text.length < 400 ? ' open' : '') + '><summary><b>' + T('Library policy') + '</b></summary>' +
-      (p.text ? '<div class="lib-policy-text" data-own-words>' + esc(p.text) + '</div>' : '') +
-      '<div class="btns" style="margin-top:8px">' + (p.name && p.data ? '<button class="btn small" data-act="library:policyfile">' + H.icon(H.ICON.download || H.ICON.check, 16) + esc(T('Download {name}', { name: p.name })) + '</button>' : '') +
+      (p.text ? '<div class="lib-doc lib-doc-short" data-own-words>' + L.policyHtml(p.text) + '</div>' : '') +
+      '<div class="btns" style="margin-top:8px">' + (p.text ? '<button class="btn small primary" data-act="library:policyread">' + T('Read the policy') + '</button>' : '') +
+      (p.name && p.data && viewable(p.type) ? '<button class="btn small" data-act="library:policyopen">' + esc(T('Open {name}', { name: p.name })) + '</button>' : '') +
+      (p.name && p.data ? '<button class="btn small" data-act="library:policyfile">' + H.icon(H.ICON.download || H.ICON.check, 16) + esc(T('Download {name}', { name: p.name })) + '</button>' : '') +
       (edit ? '<button class="btn small" data-act="library:policy">' + H.icon(PEN, 16) + T('Edit') + '</button>' : '') + '</div></details></section>';
   }
   function page() {
-    var u = me(), edit = librarian(), books = L.find(S.list('books'), ''), mine = u ? L.mine(loans(), u.id) : [], out = edit ? L.onLoan(loans()) : [];
+    var u = me(), edit = librarian(), all = L.find(S.list('books'), ''), books = all.filter(L.inLibrary), gone = edit ? all.filter(function (b) { return !L.inLibrary(b); }) : [], mine = u ? L.mine(loans(), u.id) : [], out = edit ? L.onLoan(loans()) : [];
     var back = edit ? loans().filter(function (l) { return !!l.back; }).sort(function (a, b) { return String(b.back).localeCompare(String(a.back)); }).slice(0, 15) : [];
     var html = '<div class="page-head"><div><h1>' + T('Library') + '</h1><p class="lead">' + (edit ? T('The church’s library: add books, DVDs and more, lend them and mark them as returned. Only librarians and the borrower see who has what.') : T('The church’s library. To borrow something, ask a librarian.')) + '</p></div>' +
-      (edit || chooses() ? '<div class="btns">' + (edit ? '<button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button>' : '') +
+      (edit || chooses() ? '<div class="btns">' + (edit ? '<button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button>' +
+        '<button class="btn" data-act="library:import">' + T('Import a list') + '</button><button class="btn" data-act="library:report">' + T('Reports') + '</button>' : '') +
         (chooses() ? '<button class="btn" data-act="library:libs">' + T('Librarians') + '</button>' : '') + '</div>' : '') + '</div>';
     html += policyPanel();
     if (mine.length) html += '<section class="panel" id="lib-mine"><h2>' + T('My books') + '</h2><div class="list">' + mine.map(function (l) {
@@ -67,11 +70,15 @@
     if (edit) html += '<section class="panel" id="lib-out"><div class="row"><h2 class="grow" style="margin:0">' + T('On loan') + '</h2><span class="muted small">' + TN('{n} item', '{n} items', out.length) + '</span></div>' +
       (out.length ? '<div class="list" style="margin-top:8px">' + out.map(function (l) {
         return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b><small>' + who(l) + ' · ' + esc(T('Lent {date}', { date: H.fmt(l.out, true) })) + ' · ' + due(l) + '</small></span>' +
-          '<span class="rec-acts"><button class="btn small" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button></span></div>';
+          '<span class="rec-acts"><button class="btn small" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button>' +
+          '<button class="btn small ghost" data-act="library:lost" data-id="' + esc(l.id) + '" title="' + esc(T('It won’t come back')) + '">' + T('Lost') + '</button></span></div>';
       }).join('') + '</div>' : '<p class="muted small" style="margin:8px 0 0">' + T('Nothing on loan.') + '</p>') +
       (back.length ? '<details class="sub" style="margin-top:10px"><summary>' + T('Recently returned') + '</summary><div class="list">' + back.map(function (l) {
-        return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b><small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + '</small></span></div>'; }).join('') +
+        return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (l.lost ? ' <span class="tag bad">' + T('Lost') + '</span>' : '') + '<small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + '</small></span></div>'; }).join('') +
         '</div><p class="hint">' + T('Returned loans are removed after a year.') + '</p></details>' : '') + '</section>';
+    if (gone.length) html += '<section class="panel" id="lib-gone"><details><summary>' + T('Taken out of the library') + ' <span class="muted small">' + TN('{n} item', '{n} items', gone.length) + '</span></summary><div class="list">' + gone.map(function (b) {
+      return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag grey">' + esc(T(b.why || 'Other')) + '</span><small>' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small></span>' +
+        '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button></span></div>'; }).join('') + '</div></details></section>';
     if (!books.length) return html + '<p class="empty">' + T('Nothing in the library yet.') + '</p>';
     return html + '<section class="panel" id="lib-books"><div class="row" style="gap:10px;flex-wrap:wrap"><label class="search grow">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search by title, author or category') + '</span>' +
       '<input id="lib-q" type="search" placeholder="' + esc(T('Search by title, author or category')) + '" value="' + esc(q) + '" autocomplete="off"></label><span class="muted small">' + TN('{n} item', '{n} items', books.length) + '</span></div>' +
@@ -240,6 +247,67 @@
 
   if (typeof document !== 'undefined') document.addEventListener('input', function (ev) { if (ev.target.id === 'lib-q') { q = ev.target.value; applySearch(); } });
 
+  function viewable(type) { return /^(application\/pdf|image\/)/.test(type || ''); }
+  function blobUrl(type, b64) { var bin = atob(b64), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i); return URL.createObjectURL(new Blob([bytes], { type: type })); }
+  /* ---------- taking an item out, and putting it back ---------- */
+  function removeDialog(b) {
+    var lent = S.find('loans', function (l) { return l.bookId === b.id; }).length;
+    H.modal(H.dialogHead(T('Take out of the library'), b.title) + '<div class="dlg-body"><p class="muted small" style="margin-top:0">' + T('It stays in the reports, and can be put back if it turns up.') + '</p>' +
+      '<label class="field req">' + T('Why') + '<select id="lib-why">' + L.REASONS.map(function (r) { return '<option value="' + esc(r) + '">' + esc(T(r)) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="field">' + T('Note') + '<input id="lib-whynote" maxlength="200"></label>' +
+      (lent ? '' : '<details class="sub"><summary>' + T('Added by mistake?') + '</summary><p class="small">' + T('Delete it completely, as if it had never been added.') + '</p><button class="btn small ghost" data-act="library:del" data-id="' + esc(b.id) + '">' + H.icon(H.ICON.trash, 16) + T('Delete') + '</button></details>') + '</div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="library:removesave" data-id="' + esc(b.id) + '">' + T('Take out') + '</button></div>', T('Take out of the library'));
+  }
+  /* ---------- importing a list (CSV) ---------- */
+  var importDraft = null;
+  function importDialog() {
+    importDraft = null;
+    H.modal(H.dialogHead(T('Import a list'), T('A spreadsheet saved as CSV, with a heading on each column: Title (needed), and any of Author, Type, Category, Copies, Shelf, ISBN, Date acquired, How acquired, Donated by, Note.')) + '<div class="dlg-body">' +
+      '<div class="btns"><label class="btn">' + T('Choose a file') + '<input id="lib-csv" type="file" accept=".csv,text/csv,text/plain" hidden></label><span id="lib-csv-name" class="muted small"></span></div>' +
+      '<div id="lib-csv-plan" class="note" hidden></div><p id="lib-csv-err" class="note bad" hidden></p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" id="lib-csv-go" data-act="library:importgo" disabled>' + T('Import') + '</button></div>', T('Import a list'));
+    var inp = document.getElementById('lib-csv');
+    inp.addEventListener('change', function () {
+      var f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+      document.getElementById('lib-csv-name').textContent = f.name;
+      f.text().then(function (txt) {
+        var plan = L.importPlan(L.parseCSV(txt), S.list('books'), H.today()), err = document.getElementById('lib-csv-err'), box = document.getElementById('lib-csv-plan'), go = document.getElementById('lib-csv-go');
+        err.hidden = true; box.hidden = true; go.disabled = true; importDraft = null;
+        if (plan.error) { err.textContent = T('Church Hub couldn’t find a Title column. The first row must hold the headings, one of them Title.'); err.hidden = false; return; }
+        importDraft = plan;
+        box.innerHTML = '<b>' + esc(TN('{n} new item will be added', '{n} new items will be added', plan.add.length)) + '</b>' +
+          (plan.dup ? '<br>' + esc(TN('{n} is already in the library and will be left out', '{n} are already in the library and will be left out', plan.dup)) : '') +
+          (plan.noTitle ? '<br>' + esc(TN('{n} row has no title and will be left out', '{n} rows have no title and will be left out', plan.noTitle)) : '') +
+          (plan.add.length ? '<ul class="small">' + plan.add.slice(0, 5).map(function (b) { return '<li data-own-words>' + esc(b.title + (b.author ? ' – ' + b.author : '') + (b.kind !== 'Book' ? ' (' + T(b.kind) + ')' : '')) + '</li>'; }).join('') + (plan.add.length > 5 ? '<li>…</li>' : '') + '</ul>' : '');
+        box.hidden = false; go.disabled = !plan.add.length;
+      });
+    });
+  }
+  /* ---------- reports ---------- */
+  var repFrom = '', repTo = '';
+  function reportDialog() {
+    var today = H.today(); repFrom = repFrom || today.slice(0, 4) + '-01-01'; repTo = repTo || today;
+    var rep = L.report(S.list('books'), loans(), repFrom, repTo);
+    var part = function (title, list, line) { return '<h3>' + esc(title) + ' <span class="muted small">' + list.length + '</span></h3>' + (list.length ? '<div class="list">' + list.map(function (x) { return '<div class="item"><span class="grow">' + line(x) + '</span></div>'; }).join('') + '</div>' : '<p class="muted small">' + T('None') + '</p>'); };
+    var t = function (x) { return '<b data-own-words>' + esc(x.title) + '</b>'; };
+    H.modal(H.dialogHead(T('Reports'), T('What happened in the library between two dates.')) + '<div class="dlg-body">' +
+      '<div class="two"><label class="field">' + T('From') + '<input type="date" id="lib-rfrom" value="' + esc(repFrom) + '"></label><label class="field">' + T('To') + '<input type="date" id="lib-rto" value="' + esc(repTo) + '"></label></div>' +
+      '<div class="btns"><button class="btn small" data-act="library:reportgo">' + T('Show') + '</button><button class="btn small" data-act="library:reportcsv">' + H.icon(H.ICON.download || H.ICON.check, 16) + T('Download as a spreadsheet') + '</button></div>' +
+      '<div id="lib-rep">' +
+      part(T('Lent'), rep.lent, function (l) { return t(l) + '<small>' + esc(H.fmt(l.out, true)) + ' · ' + who(l) + '</small>'; }) +
+      part(T('Returned'), rep.returned, function (l) { return t(l) + '<small>' + esc(H.fmt(l.back, true)) + ' · ' + esc(l.name) + '</small>'; }) +
+      part(T('Lost'), rep.lost, function (l) { return t(l) + '<small>' + esc(H.fmt(l.back, true)) + ' · ' + who(l) + '</small>'; }) +
+      part(T('Acquired'), rep.acquired, function (b) { return t(b) + '<small>' + esc([H.fmt(b.acquired, true), b.how ? T(b.how) : '', b.from].filter(Boolean).join(' · ')) + '</small>'; }) +
+      part(T('Taken out of the library'), rep.removed, function (b) { return t(b) + '<small>' + esc(H.fmt(b.removed, true) + ' · ' + T(b.why || 'Other') + (b.whyNote ? ' – ' + b.whyNote : '')) + '</small>'; }) +
+      '</div></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Reports'));
+  }
+  function readDates() { var f = val('lib-rfrom'), t = val('lib-rto'); if (f) repFrom = f; if (t) repTo = t; if (repFrom > repTo) { var x = repFrom; repFrom = repTo; repTo = x; } }
+  function policyReader() {
+    if (!policy || !policy.text) return;
+    H.modal(H.dialogHead(T('Library policy')) + '<div class="dlg-body"><article class="lib-doc" data-own-words>' + L.policyHtml(policy.text) + '</article></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Library policy'));
+  }
+
   function libsDialog() {
     var ids = ((S.settings() || {}).librarianIds || []).slice(), finder = window.CareUI && CareUI.finder;
     H.modal(H.dialogHead(T('Librarians'), T('One or two librarians add items, lend them and record when they come back. Administrators always can.')) + '<div class="dlg-body">' +
@@ -289,7 +357,52 @@
         if (L.outCount(b, loans())) { H.toast(T('This is on loan – it can’t be deleted until it is returned.'), true); return; }
         if (!H.confirmBtn(el, '✕?')) return;
         S.find('loans', function (l) { return l.bookId === b.id; }).forEach(function (l) { S.remove('loans', l.id); });
-        S.remove('books', b.id, 'Deleted “' + b.title + '” from the library'); H.render(); H.toast(T('Deleted'));
+        S.remove('books', b.id, 'Deleted “' + b.title + '” from the library'); H.closeModal(); H.render(); H.toast(T('Deleted'));
+      },
+      remove: function (el) {
+        var b = S.get('books', el.dataset.id); if (!b || !librarian()) return;
+        if (L.outCount(b, loans())) { H.toast(T('This is on loan. Mark it as returned or lost first.'), true); return; }
+        removeDialog(b);
+      },
+      removesave: function (el) {
+        var b = S.get('books', el.dataset.id); if (!b || !librarian()) return;
+        var x = L.removeItem(b, val('lib-why'), val('lib-whynote'), H.today());
+        S.put('books', x, 'Took “' + b.title + '” out of the library (' + x.why + ')'); H.closeModal(); H.render(); H.toast(T('Taken out of the library'));
+      },
+      putback: function (el) {
+        var b = S.get('books', el.dataset.id); if (!b || !librarian()) return;
+        S.put('books', L.restore(b), 'Put “' + b.title + '” back in the library'); H.render(); H.toast(T('Back in the library'));
+      },
+      lost: function (el) {
+        var l = S.get('loans', el.dataset.id); if (!l || !librarian()) return;
+        if (!H.confirmBtn(el, T('Lost?'))) return;
+        var r = L.lose(l, S.get('books', l.bookId), H.today(), loans());
+        S.put('loans', r.loan); if (r.book) S.put('books', r.book, 'Marked “' + l.title + '” as lost (lent to ' + l.name + ')');
+        H.render(); H.toast(T('Marked as lost'));
+      },
+      import: function () { if (librarian()) importDialog(); },
+      importgo: function () {
+        if (!librarian() || !importDraft || !importDraft.add.length) return;
+        var n = importDraft.add.length;
+        importDraft.add.forEach(function (b) { S.put('books', b); });
+        S.audit('Imported ' + n + ' items into the library from a spreadsheet', 'books');
+        importDraft = null; H.closeModal(); H.render(); H.toast(TN('{n} item added', '{n} items added', n));
+      },
+      report: function () { if (librarian()) reportDialog(); },
+      reportgo: function () { if (!librarian()) return; readDates(); reportDialog(); },
+      reportcsv: function () {
+        if (!librarian()) return; readDates();
+        var names = {}; ['Lent', 'Returned', 'Lost', 'Acquired', 'Removed', 'Visitor', 'Due', 'Book', 'Other'].concat(L.KINDS, L.HOW, L.REASONS).forEach(function (k) { names[k] = T(k); });
+        var rows = L.reportRows(L.report(S.list('books'), loans(), repFrom, repTo), names);
+        rows[0] = [T('What'), T('Date'), T('Title'), T('What it is'), T('Who'), T('Detail')];
+        H.download('library-' + repFrom + '-to-' + repTo + '.csv', '\uFEFF' + L.csv(rows), 'text/csv');
+        S.audit('Downloaded the library report ' + repFrom + ' to ' + repTo, 'loans');
+      },
+      policyread: function () { policyReader(); },
+      policyopen: function () {
+        if (!policy || !policy.data) return;
+        if (window.ChurchHubApp) { saveAs(policy.name, policy.type, policy.data); return; }
+        var w = window.open(blobUrl(policy.type, policy.data), '_blank', 'noopener'); if (!w) saveAs(policy.name, policy.type, policy.data);
       },
       lend: function (el) { var b = S.get('books', el.dataset.id); if (b && librarian()) lendDialog(b); },
       lendto: function (el) {

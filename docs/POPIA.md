@@ -252,6 +252,8 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
 - The mobile number is kept on the loan only while the item is out: it is cleared when the item comes back (`Library.giveBack`).
   For someone on the church's list it is copied from their record; if their record has none, the librarian types one, and
   someone who may edit people (Administrators, Pastors) may also save it in that person's details (logged).
+- An item marked **lost** keeps the borrower's mobile number on that loan, so the church can follow it up; the loan (with the
+  number) is removed a year later like any other. Library reports and their CSV download are for librarians only and logged.
 - Visitors who borrow are not added to the church's list: their name lives only on the loan, which is removed a year after
   the item came back. Lending to a visitor is written in the audit log (no name or number in the entry).
 - What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators

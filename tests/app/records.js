@@ -107,6 +107,39 @@ module.exports = async function (ctx) {
   await s.page.fill('#lib-pol', 'Items are lent for three weeks. Please return them clean.'); await s.page.click('[data-act="library:policysave"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['libraryPolicy/policy'] && docs['libraryPolicy/policy'].text === 'Items are lent for three weeks. Please return them clean.', 'the librarian pastes in the library’s policy');
+  // 0.53: lost, taken out, put back, reports, import, the policy as a page
+  await s.page.click('[data-act="library:lost"][data-id="' + loan.split('/')[1] + '"]'); await s.page.click('[data-act="library:lost"][data-id="' + loan.split('/')[1] + '"]'); await s.settle();
+  docs = await s.docsNow();
+  check(docs[loan].lost === true && !!docs[loan].back && !!docs[loan].mobile && docs[key].removed && docs[key].why === 'Lost' && !/Knowing God\s*(Available|On loan)/.test(await s.text()), 'the only copy marked lost: kept on the loan with the mobile number, and the item leaves the shelf');
+  await s.page.click('#lib-gone summary'); await s.page.click('[data-act="library:putback"][data-id="' + bk + '"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[key].removed && /Knowing God\s*Available/.test(await s.text()), 'it can be put back if it turns up');
+  await s.page.click('[data-act="library:remove"][data-id="' + dv + '"]'); await s.page.selectOption('#lib-why', 'Damaged'); await s.page.fill('#lib-whynote', 'Scratched'); await s.page.click('[data-act="library:removesave"]'); await s.settle();
+  docs = await s.docsNow();
+  check(docs[dvd].removed && docs[dvd].why === 'Damaged' && docs[dvd].whyNote === 'Scratched', 'an item is taken out of the library with why (not deleted)');
+  await s.page.click('[data-act="library:report"]'); await s.page.waitForSelector('#lib-rep'); t = await s.page.textContent('#lib-rep');
+  check(/Lent\s*2/.test(t) && /Returned\s*1/.test(t) && /Lost\s*1/.test(t) && /Acquired\s*2/.test(t) && /Taken out of the library\s*1[\s\S]*The Chosen/.test(t), 'reports: what was lent, returned, lost, acquired and taken out this year');
+  const [rdl] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="library:reportcsv"]')]);
+  const rcsv = ctx.fs.readFileSync(await rdl.path(), 'utf8');
+  check(/^﻿What,Date,Title/.test(rcsv) && /Lost,\d{4}-\d\d-\d\d,Knowing God/.test(rcsv) && /Removed,[^\n]*The Chosen[^\n]*Damaged: Scratched/.test(rcsv), 'and downloads it as a spreadsheet');
+  await s.page.click('[data-act="hub:close"]');
+  await s.page.click('[data-act="library:import"]');
+  await s.page.setInputFiles('#lib-csv', { name: 'books.csv', mimeType: 'text/csv', buffer: Buffer.from('Title,Author,Type,Copies\nMere Christianity,C. S. Lewis,book,2\nKnowing God,J. I. Packer,,\n,Nobody,,\nThe Jesus Storybook Bible,Sally Lloyd-Jones,,1\n') });
+  await s.page.waitForSelector('#lib-csv-plan:not([hidden])'); t = await s.page.textContent('#lib-csv-plan');
+  check(/2 new items will be added/.test(t) && /1 is already in the library/.test(t) && /1 row has no title/.test(t), 'importing a list: Church Hub says what it will add and what it leaves out');
+  await s.page.click('[data-act="library:importgo"]'); await s.settle(); docs = await s.docsNow();
+  const mc = find(docs, 'books', d => d.title === 'Mere Christianity');
+  check(!!mc && docs[mc].copies === 2 && docs[mc].author === 'C. S. Lewis' && !!find(docs, 'books', d => d.title === 'The Jesus Storybook Bible') && Object.keys(docs).filter(k => /^books\//.test(k) && docs[k].title === 'Knowing God').length === 1, 'the new items are added, nothing twice');
+  await s.page.click('[data-act="library:policy"]'); await s.page.waitForSelector('#lib-pol');
+  await s.page.fill('#lib-pol', '# Borrowing\nItems are lent for three weeks.\n\n1. Look after them\n2. Return them clean'); await s.page.click('[data-act="library:policysave"]'); await s.settle();
+  await s.page.click('[data-act="library:policyread"]'); await s.page.waitForSelector('article.lib-doc');
+  check(await s.page.textContent('article.lib-doc h3') === 'Borrowing' && (await s.page.$$('article.lib-doc ol li')).length === 2, 'the policy is shown as a page: a heading and a numbered list');
+  await s.page.click('[data-act="hub:close"]');
+  // put the policy back as it was, for the checks that follow
+  await s.page.click('[data-act="library:policy"]'); await s.page.waitForSelector('#lib-pol');
+  await s.page.fill('#lib-pol', 'Items are lent for three weeks. Please return them clean.'); await s.page.click('[data-act="library:policysave"]'); await s.settle();
+  // lend Knowing God to Tim again, for the checks that follow (he has it out)
+  await s.page.click('[data-act="library:lend"][data-id="' + bk + '"]'); await s.page.fill('.cg-q[data-for="lib-lend"]', 'tim jac'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
+  docs = await s.docsNow();
   const live = JSON.parse(JSON.stringify(docs));
   await finish(s);
 

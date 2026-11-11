@@ -818,3 +818,10 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .lib-cover-now { width: 72px; min-height: 96px; display: grid; place-items: center; border: 1px dashed var(--line, #ccc); border-radius: 6px; text-align: center; }
 .lib-cover-now img { max-width: 72px; max-height: 110px; border-radius: 4px; display: block; }
 .lib-policy-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; max-height: 60vh; overflow: auto; }
+/* Library policy shown as a document */
+.lib-doc { line-height: 1.55; overflow-wrap: anywhere; }
+.lib-doc h3 { font-size: 1.15rem; margin: 1em 0 .4em; } .lib-doc h4 { font-size: 1rem; margin: .9em 0 .3em; letter-spacing: .02em; }
+.lib-doc h5 { font-size: .95rem; margin: .8em 0 .3em; }
+.lib-doc p { margin: 0 0 .7em; } .lib-doc ul, .lib-doc ol { margin: 0 0 .7em 1.3em; padding: 0; } .lib-doc li { margin: .2em 0; }
+.lib-doc > :first-child { margin-top: 0; }
+.lib-doc-short { margin-top: 8px; max-height: 40vh; overflow: auto; }

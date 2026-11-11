@@ -1,0 +1,28 @@
+# Tasks
+
+One file = one pull request. Read `../DECISION.md` and `../TARGET.md` first, then the task, then `CLAUDE.md`.
+Every task: own branch from the latest `main`; raise the version (`js/version.js` + `?v=` in `index.html`) if the
+website changes; member-facing words through `T('…')` in every language file; run the checks `CLAUDE.md` asks for.
+On a conflict in `js/version.js` / `index.html`, take the higher version.
+
+| Task | What | Needs first | Touches (shared files in bold) | Can run beside |
+| --- | --- | --- | --- | --- |
+| 001 | Church Hub's Google identity (a person, guided) | – | docs only | everything |
+| 002 | Trial page proving the automatic steps | 001 | `tools/` (new), docs | everything |
+| 030 | Measure reads per start | – | docs only (maybe `js/mod-about.js`) | everything |
+| 010 | Choosing the church | – | `js/church.js` (new), **`index.html`**, `sw.js`, tests | 030, 001, 002 |
+| 013 | Per-church device keys; email link carries the church | 010 | **`js/store.js`** | not 012, 011, 031 |
+| 012 | Rules versions | 013 | **`firestore.rules`**, **`js/store.js`**, `js/app.js`, `js/version.js`, tests | not 011, 031 |
+| 011 | The public card | 012 | **`firestore.rules`**, **`js/store.js`**, tests | not 031 |
+| 031 | Plain-English quota messages | 011 | **`js/store.js`**, i18n | 014 |
+| 014 | Landing screen | 010, 011 | `js/app.js`, i18n, tests | 031, 020 |
+| 020 | Setup helper: engine | 002 | `js/provision.js` (new), `js/countries.js`, tests | 010–014, 031 |
+| 021 | Setup helper: screen + Google sign-in with the shared client | 020, 014, 011 | `js/mod-newchurch.js` (new), `js/store.js` (`google()`), i18n | 022 after |
+| 022 | "Update the database rules" | 020, 012 | `js/mod-about.js` or settings, i18n | 023 |
+| 023 | AI setup | 020, 002 | `js/provision.js`, `js/mod-settings.js` | 022 |
+| 040 | New address | 021 tried end to end | `CNAME`, docs, `robot`, Android `APP_URL` | 041 |
+| 041 | Android app for any church | 010, 040 | `android/` | 050 |
+| 050 | Guides, brochure, terms, roadmap | 021 | docs, `brochure.html` | 041 |
+
+The four tasks that change `js/store.js` (013 → 012 → 011 → 031) go **one after another**, each from the merged
+result of the one before. Give them to one agent, or wait for each merge.

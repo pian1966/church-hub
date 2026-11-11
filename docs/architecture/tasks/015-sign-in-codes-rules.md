@@ -28,6 +28,10 @@ users), `tests/app/signin.js`, `js/i18n/common.js` + all `js/lang/*.js`, `docs/P
 6. Rate limit from Google (`auth/too-many-requests` or the code recorded in `SPIKE-RESULTS.md`): "Lots of people
    are joining right now – please try again in a little while."
 
+7. `docs/FIREBASE-SETUP.md` step 3: add "**Add new provider → Anonymous → Enable → Save** (lets members without an
+   email sign in with a code from the church; on its own it lets nobody see anything)". Tell Christ Church Howick to
+   do this once; until then the code box says "Sign-in codes aren't switched on for this church yet".
+
 **Rules tests (each must be there)**
 - anonymous user, valid code → can create own `devices` doc + mark invite used in one batch; afterwards reads what
   a Member reads and nothing a Member can't.

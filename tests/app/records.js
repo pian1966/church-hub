@@ -90,6 +90,13 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="library:libs"]'); await s.page.fill('.cg-q[data-for="lib-libs"]', 'megan'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
   docs = await s.docsNow();
   check((docs['settings/church'].librarianIds || []).join() === 'p17', 'an Administrator names the librarians');
+  await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p19'))); p.appRole = 'none'; Store.put('people', p, 'test'); }); await s.settle();
+  await s.page.click('[data-act="hub:close"]'); await s.page.click('[data-act="library:libs"]');
+  await s.page.fill('.cg-q[data-for="lib-libs"]', 'sam pet'); await s.page.waitForTimeout(400);
+  check(/Can’t sign in yet – choosing them gives Basic access/.test(await s.page.textContent('.cg-hits')), 'someone who can’t sign in yet can still be chosen – it says they will get Basic access');
+  await s.page.click('.cg-hits .cg-pick'); await s.settle(); docs = await s.docsNow();
+  check((docs['settings/church'].librarianIds || []).join() === 'p17,p19' && docs['people/p19'].appRole === 'member', '… chosen: a librarian, with Basic access to sign in');
+  await s.page.click('[data-act="library:libout"][data-id="p19"]'); await s.settle();
   await s.page.click('[data-act="hub:close"]');
   await s.page.click('[data-act="library:add"]'); await s.page.waitForSelector('#lib-title');
   await s.page.selectOption('#lib-kind', 'DVD'); await s.page.fill('#lib-title', 'The Chosen'); await s.page.click('[data-act="library:save"]'); await s.settle();

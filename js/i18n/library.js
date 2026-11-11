@@ -2,6 +2,9 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["No email address yet – add one on their page first, so they can sign in", "Nog geen e-posadres nie – voeg eers een op hul bladsy by, sodat hulle kan aanmeld", "Alikho ikheli le-imeyili okwamanje – qala ulifake ekhasini labo, ukuze bakwazi ukungena", "Akukabikho dilesi ye-imeyile – qala uyongeze kwiphepha labo, ukuze bakwazi ukungena"],
+    ["Can’t sign in yet – choosing them gives Basic access", "Kan nog nie aanmeld nie – as jy hulle kies, kry hulle Basiese toegang", "Abakakwazi ukungena – ukubakhetha kubanika ukufinyelela okuyisisekelo", "Abakakwazi ukungena – ukubakhetha kubanika ufikelelo olusisiseko"],
+    ["Can’t sign in yet – ask an Administrator to give them Basic access", "Kan nog nie aanmeld nie – vra ’n Administrateur om hulle Basiese toegang te gee", "Abakakwazi ukungena – cela uMlawuli abanike ukufinyelela okuyisisekelo", "Abakakwazi ukungena – cela uMlawuli abanike ufikelelo olusisiseko"],
     ["Bought", "Gekoop", "Kuthengiwe", "Ithengiwe"],
     ["Donated", "Geskenk", "Kunikelwe", "Inikelwe"],
     ["Other", "Ander", "Okunye", "Okunye"],

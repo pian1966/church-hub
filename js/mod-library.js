@@ -345,8 +345,15 @@
         return '<div class="item">' + (p ? H.avatar(p, 32) : '') + '<span class="grow"><b>' + esc(name) + '</b></span><button class="icon-btn ghost" data-act="library:libout" data-id="' + esc(id) + '" aria-label="' + esc(T('Take {name} out', { name: name })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
       }).join('') + '</div>' : '<p class="muted small">' + T('No one yet.') + '</p>') +
       (!L.roomForLibrarian(S.settings()) ? '<p class="hint" style="margin-top:10px">' + T('There are two librarians already. Take one out to choose someone else.') + '</p>' :
-        finder ? '<div style="margin-top:10px">' + finder('lib-libs', everyone().filter(function (p) { return ids.indexOf(p.id) < 0 && p.familyRole !== 'child' && p.appRole && p.appRole !== 'none'; }), 'library:libadd', {}, null, T('Add someone: type part of their name')) + '</div>' : '') + '</div>' +
+        finder ? '<div style="margin-top:10px">' + finder('lib-libs', everyone().filter(function (p) { return ids.indexOf(p.id) < 0 && p.familyRole !== 'child'; }), 'library:libadd', {}, libNote, T('Add someone: type part of their name')) + '</div>' : '') + '</div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Librarians'));
+  }
+  /** Librarians sign in to lend and return: someone who can't sign in yet is given Basic access when chosen (if the chooser may give access). */
+  function signsIn(p) { return !!p && !!p.email && !!p.appRole && p.appRole !== 'none'; }
+  function givesAccess() { return H.can('*') || H.can('access.manage'); }
+  function libNote(p) {
+    if (signsIn(p)) return '';
+    return !p.email ? T('No email address yet – add one on their page first, so they can sign in') : givesAccess() ? T('Can’t sign in yet – choosing them gives Basic access') : T('Can’t sign in yet – ask an Administrator to give them Basic access');
   }
   function setLibs(ids, why) { S.setLibrarians(ids, why); libsDialog(); }
 
@@ -495,6 +502,11 @@
       libadd: function (el) {
         var p = S.get('people', el.dataset.id), ids = ((S.settings() || {}).librarianIds || []).slice(); if (!p || !chooses()) return;
         if (!L.roomForLibrarian(S.settings())) { libsDialog(); return; }
+        if (!signsIn(p)) {
+          if (!p.email || !givesAccess()) { H.toast(libNote(p), true); return; }
+          var q = JSON.parse(JSON.stringify(p)); q.appRole = 'member';
+          S.put('people', q, 'Gave ' + H.name(p) + ' Basic access, to be a librarian');
+        }
         if (ids.indexOf(p.id) < 0) ids.push(p.id);
         setLibs(ids, 'Made ' + H.name(p) + ' a librarian');
       },

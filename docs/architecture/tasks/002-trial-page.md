@@ -1,5 +1,7 @@
 # 002 – Trial page: prove every automatic step
 
+**Model:** Senior – the results decide the whole plan; a middle model may build the page from this file, the senior reads the results.
+
 **Goal:** know for certain which steps of `TARGET.md` section 4 work from a browser on a free project, before
 building on them. Output is knowledge, written to `docs/architecture/SPIKE-RESULTS.md`.
 

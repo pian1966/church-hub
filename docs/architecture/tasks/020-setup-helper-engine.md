@@ -1,5 +1,7 @@
 # 020 – Setup helper: the engine (`js/provision.js`)
 
+**Model:** Senior.
+
 **Goal:** the ten steps of `TARGET.md` section 4 as pure, tested, resumable code. No screen yet.
 
 **Needs:** 002's results. Build only what `SPIKE-RESULTS.md` says worked; for "worked with a guided click", the step's

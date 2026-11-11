@@ -8,8 +8,10 @@ Read this first, then `TARGET.md`. The work is in `tasks/`.
 **Every church keeps its own database, in its own Google account – and Church Hub creates it for them.**
 A church's Administrator opens Church Hub, clicks "Set up Church Hub for my church", signs in with the church's
 Google account, clicks **Allow**, and waits about a minute. Church Hub does the ten steps of `docs/FIREBASE-SETUP.md`
-by itself, in that person's browser. Nobody types anything into a Google console. Nothing runs on, or is stored in,
-any account belonging to the person who wrote Church Hub.
+by itself, in that person's browser. Nobody types anything into a Google console. Nothing about a church's people
+is ever stored in, or passes through, any account belonging to the person who wrote Church Hub. The only central
+record is a short customer list – each church's name, country and the email of the Google account that set it up –
+kept for the yearly subscription (`TARGET.md` section 10).
 
 Firebase is still underneath. What goes away is the church ever seeing it.
 
@@ -38,8 +40,10 @@ project through its public web addresses (the "Firebase Management API" and frie
 
 ## What it costs
 
-- **Each church:** nothing. Each has its own free Google allowance (50 000 reads a day, 1 GB), not a share of one.
-  No bank card is asked for.
+- **Each church:** nothing to Google – each has its own free Google allowance (50 000 reads a day, 1 GB), not a share
+  of one, and Google asks for no bank card. To Church Hub: **one Big Mac a year at the price in the church's own
+  country**, plus whatever extra the church chooses to give. A yearly reminder; after 60 days unpaid Church Hub
+  becomes view-only (never deleted, always downloadable). The first 30 days are free.
 - **Church Hub's owner:** the web address, and nothing per church.
 
 ## What Church Hub's owner still has to own (small, and holds no church data)
@@ -65,11 +69,13 @@ project through its public web addresses (the "Firebase Management API" and frie
    browser on a free project). Task 002 proves them before anything is built on them. Where a step cannot be
    automated, the fallback is one guided click with a picture, not the 30-minute guide.
 4. **The Elvanto robot** stays for Christ Church Howick only.
-5. **Giving (the yearly gift)** needs no central list of churches: the reminder lives in each church's own settings.
-   The payment page is a separate, later piece of work.
+5. **The subscription is a lock on the official website, not on the data.** Each church owns its database and the
+   code is public, so a technical person could run a copy without paying. Accepted.
+6. **Who receives the money, the tax on it, and the payment company** are decisions for people (task 059).
 
 ## What happens to the old Phase 7 in the roadmap
 
 Steps 7.1 (one database for many churches), 7.2 (a project per region), 7.4 (operator agreement), 7.5 (backups for
 a shared database), 7.6 (robot for many churches) and 7.9 (moving Christ Church Howick across) are **no longer needed**.
-7.3 (sign-up) becomes the setup helper. 7.7 (countries we don't serve), 7.8 (gifts) and 7.10 (public website) remain.
+7.3 (sign-up) becomes the setup helper. 7.8 (gifts) becomes the subscription in `TARGET.md` section 10.
+7.7 (countries we don't serve) and 7.10 (public website) remain.

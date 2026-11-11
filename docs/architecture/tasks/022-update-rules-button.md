@@ -1,5 +1,7 @@
 # 022 – "Update the database rules" for Administrators
 
+**Model:** Middle; translations light.
+
 **Goal:** when the website's rules are newer than the church's, an Administrator fixes it with one button.
 
 **Needs:** 020 (`Provision.publishRules`), 012.

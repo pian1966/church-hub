@@ -1,5 +1,7 @@
 # 014 – Landing screen
 
+**Model:** Middle; translations by a light model (`MODELS.md` rule 2).
+
 **Goal:** someone who opens the website with no church chosen knows what to do.
 
 **Needs:** 010, 011. Only shows when `Church.resolve` gives `none` **and** there is no built-in config – so it first
@@ -16,4 +18,4 @@ appears on the new address (040), never on Howick's current one.
 **Acceptance:** browser test for each button; phone width looks right; every language has the lines
 (`node tests/i18n.test.js`).
 
-**Do not:** add a search of churches (there is no list of churches, by design).
+**Do not:** add a search of churches (there is no public list of churches, by design; the office record is private).

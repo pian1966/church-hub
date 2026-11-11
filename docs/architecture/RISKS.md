@@ -9,6 +9,7 @@
 | H3 | A church's data region (helper step 4) | Google does not allow it to be changed. Show it in words and ask "Is this right?". |
 | H4 | The shape of `public/hub` and of the church link (`?c=`) | Printed QR codes and shared links carry it. Only ever add fields. |
 | H5 | The rules-version rule (`rulesAtLeast`) | Every later website depends on it. Never remove it or lower the number. |
+| H7 | The licence format and public key list (`TARGET.md` 10.3) | Every church's stored licence must keep verifying. Only ever add keys and fields. |
 | H6 | The Android app id | A published app cannot be renamed; the any-church app is a new listing (task 041). |
 
 ## Known risks
@@ -72,13 +73,31 @@ invite by id) can be requested over and over by a stranger, and each request cou
 day. Unlikely, and it harms only that day's use, never the information. If it ever happens: App Check for Firestore
 – a design change, so escalate.
 
+**R11 – The licence signing key.** If it leaks, anyone can make licences (lost income, no church data at risk).
+It lives only as a GitHub secret; the website accepts a list of public keys so a new one can be added and the old
+one retired. If it is lost, make a new pair and re-issue every licence from the office records.
+
+**R12 – Churches that cannot pay by card.** Many of the churches Church Hub is for have no bank card. The grant
+(waiver) route must be easy and kind, and "someone else pays for this church" must work (the payment only needs the
+church's id). Mobile money depends on the payment company chosen (task 059).
+
+**R13 – The office record is personal information the owner is responsible for** (one email address per church).
+Small, but it needs a line in the privacy policy, and the owner's Google account must be well protected
+(two-step sign-in).
+
+**R14 – Turning on view-only by mistake.** A bug in the licence check could lock every church at once. Hence
+`LICENCE_ENFORCED` starts false, the check is pure and heavily tested, and an unreachable office never counts
+against a church.
+
 ## Send back to the architect instead of deciding
 
 - 002 fails on project creation, adding Firebase, creating the database, publishing rules or writing the first
   documents.
 - Anything that would put a church's information, keys or tokens somewhere other than that church's own project
   and that person's own browser.
-- Any wish to add a server, Cloud Function, shared database or list of churches.
+- Any wish to add a server, Cloud Function or shared database, or to keep anything centrally beyond the office
+  record in `TARGET.md` section 10 (above all: nothing about a church's people).
+- Anything touching the licence signing key, how a licence is checked, or when Church Hub becomes view-only.
 - Any change to who can read or write what, beyond the two rules added in 011 and 012.
 - A new way of signing in (R3 d), or changing the household sign-in.
 - Changing the shape of the documents everyone loads (R5).

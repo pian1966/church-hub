@@ -1,5 +1,7 @@
 # 001 – Church Hub's own Google identity (done by a person, guided by the agent)
 
+**Model:** A person, guided by a light model (it only writes a guide).
+
 **Goal:** the "Sign in with Google / Allow" window has an owner that is not anyone's personal account.
 
 **Why now:** 002 cannot run without a client id.

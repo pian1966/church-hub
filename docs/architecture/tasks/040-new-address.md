@@ -1,5 +1,7 @@
 # 040 – The new address
 
+**Model:** A person for the clicks; a light model for the guide and the three small file changes.
+
 **Goal:** Church Hub lives at its own address; the old one forwards; nobody at Christ Church Howick is locked out.
 
 **Needs:** the address bought by the owner; 021 tried end to end.

@@ -1,5 +1,7 @@
 # 023 – AI for "Ask in your own words", set up by the helper
 
+**Model:** Middle; senior if App Check enforcement is touched.
+
 **Goal:** an Administrator switches AI on without the 15-minute guide, using the church's own Google project
 (never anyone else's).
 

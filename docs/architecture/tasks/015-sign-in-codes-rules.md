@@ -1,5 +1,7 @@
 # 015 – Sign-in codes: rules and data layer
 
+**Model:** Senior. The rules diff is read by the architect before merging.
+
 **Goal:** a phone with no email can be linked to one Member by a single-use code. No screens for giving codes yet
 (016); this task ends with a working "I have a code" box and tests.
 

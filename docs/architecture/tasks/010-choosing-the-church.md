@@ -1,5 +1,7 @@
 # 010 – Choosing the church (`js/church.js`)
 
+**Model:** Middle.
+
 **Goal:** the website can serve any church's project, chosen by `?c=<projectId>` and remembered on the device,
 while Christ Church Howick sees no change.
 

@@ -1,5 +1,7 @@
 # 050 – Guides, brochure, terms, roadmap
 
+**Model:** Light.
+
 **Goal:** the written material matches how it now works.
 
 **Files:** `docs/ROADMAP.md` (rewrite Phase 7 from `DECISION.md`; keep "The yearly gift" and "Decisions waiting",

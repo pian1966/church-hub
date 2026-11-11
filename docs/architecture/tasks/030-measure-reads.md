@@ -1,5 +1,7 @@
 # 030 – Measure how much a church reads
 
+**Model:** Middle (or light – it only measures and writes a table).
+
 **Goal:** a number, not a guess, for document reads per start by role, so we know which church sizes fit in the
 free 50 000 a day.
 

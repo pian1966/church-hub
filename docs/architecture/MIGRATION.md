@@ -44,6 +44,15 @@ Try it end to end with a made-up church on a throw-away Google account before te
 - 050 Guides, brochure, terms, roadmap. `docs/FIREBASE-SETUP.md` stays as "doing it by hand" for anyone the helper
   cannot serve (for example a Google Workspace that forbids creating projects).
 
+## Phase F – The office and the subscription
+- 059 Decisions for people (who is paid, tax, payment company, terms).
+- 060 The office project and its rules. 065 The price table. (Both can start any time.)
+- 061 The licence check – merged with enforcement **off**.
+- 062 Registering. 063 The office robot (trial and grant licences first). 064 The owner's office page.
+- 066 The Subscription screen and reminders. 067 Payments in the robot.
+- Give Christ Church Howick a grant, watch a full pretend year with a made-up church, **then** switch
+  `LICENCE_ENFORCED` on in its own small pull request. Roll back: switch it off.
+
 ## Christ Church Howick's data
 Nothing is exported, imported or copied at any point. If anything in Phase B misbehaves for Howick, reverting the
 pull request restores yesterday's behaviour, because its project and data were never touched.

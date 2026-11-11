@@ -1,5 +1,7 @@
 # 011 – The public card (`public/hub`)
 
+**Model:** Senior (security rules, `js/store.js`).
+
 **Goal:** from only a project id, the website can find a church's name and connection settings.
 
 **Read:** `TARGET.md` section 3 and `SPIKE-RESULTS.md` question a. **Needs:** 012 merged.
@@ -15,7 +17,7 @@
      allow get: if doc == 'hub';
      allow list: if false;
      allow write: if admin() && doc == 'hub'
-       && request.resource.data.keys().hasOnly(['name','country','apiKey','appId','googleClientId','appCheckKey','appCheckEnterprise','rules','updatedAt']);
+       && request.resource.data.keys().hasOnly(['name','country','apiKey','appId','googleClientId','appCheckKey','appCheckEnterprise','rules','reg','licence','updatedAt']);
    }
    ```
 2. `Store`: when an Administrator is signed in and `rulesOk(2)`, write/refresh `public/hub` from `settings/church`

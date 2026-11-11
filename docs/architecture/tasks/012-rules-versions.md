@@ -1,5 +1,7 @@
 # 012 – Rules versions
 
+**Model:** Senior (security rules, `js/store.js`).
+
 **Goal:** the website can tell how new a church's rules are, hides what needs newer rules, and never shows a member
 a permission error because their church has not updated yet.
 

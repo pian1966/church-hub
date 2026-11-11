@@ -1,5 +1,7 @@
 # 021 – Setup helper: the screen, and Google sign-in with the shared client
 
+**Model:** Middle for the screen; senior for the `google()` change in `js/store.js`; translations light.
+
 **Goal:** a church Administrator creates their church's Church Hub in about a minute.
 
 **Needs:** 020, 014, 011.

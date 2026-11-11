@@ -1,5 +1,7 @@
 # 013 – Per-church device keys; the email link carries the church
 
+**Model:** Senior (`js/store.js`, sign-in).
+
 **Goal:** two churches on one device never share sign-in leftovers, and an email link opened anywhere finds its church.
 
 **Needs:** 010.

@@ -1,5 +1,7 @@
 # 016 – Sign-in codes: giving them out
 
+**Model:** Middle for screens and `js/codes.js`; the `syncRole` change in `js/store.js` is handed up to the senior; translations light.
+
 **Goal:** an Administrator can give one person a code, print slips for many, and see and remove linked phones.
 
 **Needs:** 015.

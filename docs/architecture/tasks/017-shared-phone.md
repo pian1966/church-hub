@@ -1,5 +1,7 @@
 # 017 – One phone, several people (later)
 
+**Model:** Architect first, then senior.
+
 **Goal:** a household with one phone can link up to four people to it and choose who is using Church Hub – the
 same "who is using Church Hub?" as a shared email address.
 

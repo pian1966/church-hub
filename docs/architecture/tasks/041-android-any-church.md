@@ -1,5 +1,7 @@
 # 041 – Android app for any church
 
+**Model:** Middle.
+
 **Goal:** one Android app that asks "which church?" once (paste the link or scan the QR), then behaves as today.
 
 **Needs:** 010, 040.

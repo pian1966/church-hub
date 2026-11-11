@@ -1,5 +1,7 @@
 # 031 – Plain-English messages when Google's free limits are reached
 
+**Model:** Middle for the screens and words; the `err()` change in `js/store.js` is small but goes to the senior.
+
 **Goal:** people are told what happened and what to do, instead of "Couldn't save this".
 
 **Needs:** 011 merged (same file). Use the exact error codes recorded in `SPIKE-RESULTS.md` (question d).

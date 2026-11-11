@@ -79,7 +79,7 @@ Progress (step ids done, the project id) is saved in `localStorage` so "Continue
 | 4 | Create database | `POST firestore.googleapis.com/v1/projects/<p>/databases?databaseId=(default)` `{locationId, type:'FIRESTORE_NATIVE'}`; poll | `locationId` from the country (section 5). **Cannot be changed later.** |
 | 5 | Publish rules | `POST firebaserules.googleapis.com/v1/projects/<p>/rulesets` with the text of `firestore.rules` (fetched from the site, `cache:'no-store'`), then create or patch release `cloud.firestore` | Reused by "Update the database rules" (section 6). |
 | 6 | Register the website | `POST firebase.googleapis.com/v1beta1/projects/<p>/webApps` `{displayName}`; poll; `GET …/webApps/<id>/config` → `apiKey`, `appId` | |
-| 7 | Switch on sign-in | `PATCH identitytoolkit.googleapis.com/admin/v2/projects/<p>/config` (`signIn.email.enabled`, `passwordRequired:false`, add the hub's domain to `authorizedDomains`); `POST …/defaultSupportedIdpConfigs?idpId=google.com` `{enabled, clientId: <Church Hub's shared web client id>, clientSecret}` | **Proven by 002** – two doubts: whether sign-in can be switched on by API on a free project, and whether Google sign-in accepts a shared client id. Fallbacks in `RISKS.md` R2. |
+| 7 | Switch on sign-in | `PATCH identitytoolkit.googleapis.com/admin/v2/projects/<p>/config` (`signIn.email.enabled`, `passwordRequired:false`, `signIn.anonymous.enabled` for sign-in codes (section 9), add the hub's domain to `authorizedDomains`); `POST …/defaultSupportedIdpConfigs?idpId=google.com` `{enabled, clientId: <Church Hub's shared web client id>, clientSecret}` | **Proven by 002** – two doubts: whether sign-in can be switched on by API on a free project, and whether Google sign-in accepts a shared client id. Fallbacks in `RISKS.md` R2. |
 | 8 | Lock the key to the website | `apikeys.googleapis.com/v2`: find the browser key, set `browserKeyRestrictions.allowedReferrers` to the hub's address and `<p>.firebaseapp.com` | Replaces FIREBASE-SETUP step 8. |
 | 9 | First Administrator and the public card | Firestore REST with the same token (owner access bypasses rules): `roles/<email lower-case> = {role:'admin'}`; `public/hub` (section 3) | Email = the Google account that ran the helper, unless they type another. |
 | 10 | Finish | save the config locally, go to `?c=<p>` | The existing "Set up Church Hub" screen takes over. |
@@ -130,3 +130,86 @@ When Google refuses for quota (`resource-exhausted`), say so in plain words (tas
 
 Collections, document split (`people`/`details`/…), roles, household sign-in, "View as", offline (view-only),
 Archive files in Firestore, the demo, the Elvanto robot (Howick only; it keeps reading `js/firebase-config.js`).
+
+## 9. Signing in without an email address ("sign-in codes")
+
+For members who have a phone but no email they use. Free, no daily limit, works in every church **beside**
+Google sign-in and the email link – it replaces neither. Administrators, Pastors and other staff roles keep
+using Google or the email link; a code can only ever make someone a **Member**.
+
+### How it works for people
+- Administrator: People → a person → App access → **Give a sign-in code**. Church Hub shows a QR code, a short
+  code to type (8 letters and numbers, no look-alikes such as 0/O or 1/I), and **Send by WhatsApp**
+  (opens WhatsApp with the link ready). **Print sign-in slips** makes a page of slips for many people at once
+  (name, QR, code) – for the Sunday a church starts.
+- Member: taps the link, scans the QR, or opens Church Hub and types the code → "You're signing in as
+  **Thandi M.** – is that you?" → in. That phone stays signed in.
+- A code works once and for 14 days. A new phone, or a phone whose browser was cleared, needs a new code.
+- The Administrator sees each person's linked phones (date linked) and can remove one. **No access** and
+  **Mark as left** remove them all.
+
+### How it works underneath
+Firebase **anonymous** sign-in gives the phone a permanent, secret account id (`uid`) with no email. Two new
+collections tie that id to a person:
+
+```
+invites/{code}   = { personId, name: 'Thandi M.', role: 'member', expires: <timestamp>, by, createdAt,
+                     usedBy?: <uid>, usedAt? }
+devices/{uid}    = { role: 'member', roles: ['member'], personId, also: [], people: {}, invite: <code>,
+                     linkedAt }          // same shape as roles/{email}, so every other rule works unchanged
+```
+
+Rules (sketch – the implementer writes and tests the real thing):
+```
+function codeUser() { return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous'; }
+function signedIn() { return request.auth != null && (request.auth.token.email_verified == true || codeUser()); }
+function roleRef()  { return codeUser()
+    ? /databases/$(database)/documents/devices/$(request.auth.uid)
+    : /databases/$(database)/documents/roles/$(request.auth.token.email.lower()); }
+
+match /invites/{code} {
+  allow get: if request.auth != null;            // knowing the code is the key; never list
+  allow list: if false;
+  allow create, delete: if admin();
+  allow update: if codeUser()                    // the phone marks it used, in the same write as its link
+    && resource.data.get('usedBy', '') == '' && request.time < resource.data.expires
+    && onlyChanges(['usedBy', 'usedAt']) && request.resource.data.usedBy == request.auth.uid
+    && existsAfter(/databases/$(database)/documents/devices/$(request.auth.uid));
+}
+match /devices/{uid} {
+  allow get: if request.auth != null && request.auth.uid == uid;
+  allow read, delete: if admin();
+  allow delete: if request.auth != null && request.auth.uid == uid;      // signing out unlinks the phone
+  allow create: if codeUser() && request.auth.uid == uid
+    && request.resource.data.role == 'member' && request.resource.data.roles == ['member']
+    && request.resource.data.also == [] && request.resource.data.people == {}
+    && get(/databases/$(database)/documents/invites/$(request.resource.data.invite)).data.personId == request.resource.data.personId
+    && getAfter(/databases/$(database)/documents/invites/$(request.resource.data.invite)).data.usedBy == uid;
+  allow update: if false;
+}
+```
+The phone writes both documents in one batch, so a code can never be used twice and a link can never exist
+without a spent code.
+
+Other places that assume an email and must be handled (evidence: `firestore.rules` lines 24, 64, 70, 461;
+`js/store.js` has 11 uses of `session.email`):
+- `audit` create insists on `byEmail == token.email` → for a code user allow `byEmail == 'code:' + uid`.
+- `roles/{email}` read rule and `robot()` must not be reached with a missing email (guard with `codeUser()` first).
+- `startSession` (`js/store.js` ~375) reads `roles/{email}` → for an anonymous user read `devices/{uid}`; where
+  the session's email is used as a device key or shown, use `'code:' + uid`.
+- People → Edit details refuses access without an email (`js/people/edit.js` ~361) → allow **Member** with no
+  email, by code.
+- Sign out for a code user = delete `devices/{uid}`, sign out, wipe – after a warning that a new code is needed.
+
+Setup: the helper's step 7 also sets `signIn.anonymous.enabled: true`. Christ Church Howick: one switch in the
+console (Authentication → Sign-in method → Anonymous), documented in the task.
+
+Gated by rules version (section 6): the "Give a sign-in code" button and the "I have a code" box only appear
+when the church's rules are new enough.
+
+### What it does not protect against (say so in `docs/POPIA.md`)
+- **Whoever holds the slip is that member**, exactly as whoever reads an inbox is that email's owner today.
+  A member sees their own details, the church directory, their rosters, groups and messages – never staff-only
+  information. Cures: single use, 14 days, the "is that you?" question, the linked-phones list, and the audit log.
+- Anyone on the internet can create an anonymous account in a church's project; without a spent code it can read
+  nothing but `public/hub`, `rulesAtLeast` and (by exact id only) an invite.

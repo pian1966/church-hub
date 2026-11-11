@@ -20,6 +20,8 @@ Those are the ones with no good fallback. Steps 7 and 8 have fallbacks (`RISKS.m
 - 011 The public card.
 - 014 The landing screen.
 - 031 Plain-English quota messages.
+- 015, 016 Sign-in codes for members with no email (useful to Christ Church Howick straight away; needs the
+  Anonymous switch turned on in its console – one click, in task 015's guide).
 
 Roll back: each is one pull request; revert it. 011 and 012 change `firestore.rules` by adding rules only –
 reverting the website does not need the rules reverted.

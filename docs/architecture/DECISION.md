@@ -54,8 +54,10 @@ project through its public web addresses (the "Firebase Management API" and frie
 ## What is honestly not solved by this
 
 1. **Email-link sign-in is limited to 5 emails a day per church on Google's free plan.** Signing in with Google is
-   unlimited, and most people only sign in once per device, but a church whose members mostly do not have Google
-   accounts will feel this. Options are in `RISKS.md` (R3). This also affects Christ Church Howick today.
+   unlimited. For members with no email at all – common in the churches Church Hub is meant for – the plan adds
+   **sign-in codes**: the Administrator gives a member a code on paper or by WhatsApp, and that phone is linked from
+   then on. Free, no daily limit, members only (`TARGET.md` section 9; tasks 015–017). Every church has all three
+   ways in; none replaces another.
 2. **Security rules live in each church's project**, so when Church Hub changes them, each church's Administrator
    has to click one button ("Update") once. Church Hub will tell them when. The app is built so it keeps working
    safely in the meantime (`TARGET.md`, "Rules versions").

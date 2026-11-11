@@ -29,12 +29,22 @@ guided clicks. Escalate.
 - AI Logic and App Check by API. *Fallback:* AI stays a guided setup.
 - First-time Google users accepting Google Cloud's terms. *Expected:* one guided click.
 
-**R3 – Five email-link emails a day per church (free plan).** Google's published limit. Sign-in with Google is not
-limited. Choices, cheapest first: (a) lead with Google sign-in and say plainly when today's emails are used up;
-(b) see whether the church's own email (SMTP settings in the project) lifts the limit – untested;
-(c) the church adds a bank card to its own project (25 000 a day; still free at church sizes) – a guided, optional step;
-(d) add a second way in that needs no email from Google (for example a one-time code an Administrator reads out).
-(a) is in task 031. (b) is a question for 002. (d) changes who can get in – **escalate before building**.
+**R3 – Five email-link emails a day per church (free plan).** Google's published limit; Google sign-in is not
+limited. Decided (11 Nov 2026): lead with Google sign-in and say plainly when today's emails are used up (task 031),
+and add sign-in codes for people with no email (`TARGET.md` section 9, tasks 015–017). Still worth asking in 002:
+does the church's own email (SMTP settings in the project) lift the limit? Not planned: asking churches for a bank card.
+
+**R3a – Sign-in codes: the slip is the key.** Whoever holds an unused code becomes that member. Kept to Members
+only, single use, 14 days, with a linked-phones list for the Administrator. Any wish to let a code give a staff
+role, to lengthen its life, or to reuse codes – **escalate**.
+
+**R3b – Google allows 100 new accounts an hour from one internet address.** A church linking 150 phones in an hour
+over one Wi-Fi (or one mobile network that shares addresses) may be told to wait. The screen must say "try again in
+a little while"; print slips so people can link through the week, not all at once.
+
+**R3c – A phone that forgets.** The link lives in the phone's browser storage. Clearing it, or an iPhone that has not
+opened Church Hub in the browser for a week (not added to the home screen), loses it; the person needs a new code.
+Tell people to add Church Hub to the home screen or use the Android app.
 
 **R4 – Rules lag.** A church whose Administrator never clicks Update runs old rules. The app hides what needs newer
 rules, so nothing breaks, but a security fix does not reach that church until they click. For a fix that matters,
@@ -56,6 +66,11 @@ as is") should be read by a lawyer once before the first other church. Not legal
 
 **R9 – Countries not served.** With no central sign-up there is nothing to refuse. The helper can decline to create
 a database for the listed countries and explain why; a determined person could still do it by hand.
+
+**R10 – Somebody wasting a church's free allowance.** Anything readable without signing in (`public/hub`, an
+invite by id) can be requested over and over by a stranger, and each request counts towards the church's 50 000 a
+day. Unlikely, and it harms only that day's use, never the information. If it ever happens: App Check for Firestore
+– a design change, so escalate.
 
 ## Send back to the architect instead of deciding
 

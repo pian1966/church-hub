@@ -15,6 +15,9 @@ On a conflict in `js/version.js` / `index.html`, take the higher version.
 | 012 | Rules versions | 013 | **`firestore.rules`**, **`js/store.js`**, `js/app.js`, `js/version.js`, tests | not 011, 031 |
 | 011 | The public card | 012 | **`firestore.rules`**, **`js/store.js`**, tests | not 031 |
 | 031 | Plain-English quota messages | 011 | **`js/store.js`**, i18n | 014 |
+| 015 | Sign-in codes: rules and data layer | 031, 012 | **`firestore.rules`**, **`js/store.js`**, `js/app.js`, i18n, tests | 014, 020 |
+| 016 | Sign-in codes: giving them out | 015 | `js/people/*.js`, `js/codes.js` (new), `js/store.js` (`syncRole`), i18n | 020–023 |
+| 017 | One phone, several people (later; escalate first) | 016 | rules, `js/store.js` | – |
 | 014 | Landing screen | 010, 011 | `js/app.js`, i18n, tests | 031, 020 |
 | 020 | Setup helper: engine | 002 | `js/provision.js` (new), `js/countries.js`, tests | 010–014, 031 |
 | 021 | Setup helper: screen + Google sign-in with the shared client | 020, 014, 011 | `js/mod-newchurch.js` (new), `js/store.js` (`google()`), i18n | 022 after |
@@ -24,5 +27,5 @@ On a conflict in `js/version.js` / `index.html`, take the higher version.
 | 041 | Android app for any church | 010, 040 | `android/` | 050 |
 | 050 | Guides, brochure, terms, roadmap | 021 | docs, `brochure.html` | 041 |
 
-The four tasks that change `js/store.js` (013 → 012 → 011 → 031) go **one after another**, each from the merged
+The tasks that change `js/store.js` (013 → 012 → 011 → 031 → 015 → 016) go **one after another**, each from the merged
 result of the one before. Give them to one agent, or wait for each merge.

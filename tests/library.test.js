@@ -59,5 +59,42 @@ let pol = L.policy({ text: '  Books are lent for three weeks.\r\nPlease look aft
 ok(pol.text === 'Books are lent for three weeks.\nPlease look after them.' && pol.name === 'Policy.pdf' && pol.data === 'JVBERi0x', 'the policy: pasted words and an attached file');
 ok(L.policy({ text: 'x'.repeat(30000) }).text.length === L.POLICY_MAX && L.policy({ text: 'Only words', data: 'abc' }).name === undefined, 'a long policy is cut to size; a file needs its name');
 
+
+console.log('Lost, removed, reports');
+{
+  const bk = L.book({ id: 'b5', title: 'Knowing God', copies: 2, out: 1, acquired: '2026-02-01' }), ln = { id: 'l5', bookId: 'b5', title: 'Knowing God', personId: 'p14', name: 'Tim Jacobs', mobile: '072 555 0101', out: '2026-03-01', due: '2026-03-22', back: '' };
+  const lo = L.lose(ln, bk, '2026-04-01', [ln]);
+  ok(lo.loan.lost === true && lo.loan.back === '2026-04-01' && lo.loan.mobile === '072 555 0101' && lo.book.copies === 1 && lo.book.out === 0 && !lo.book.removed, 'a lost item: the loan is closed as lost (mobile kept to trace it) and there is one copy fewer');
+  const last = L.lose(ln, L.book({ id: 'b5', title: 'Knowing God', copies: 1, out: 1 }), '2026-04-01', [ln]).book;
+  ok(last.removed === '2026-04-01' && last.why === 'Lost' && !L.inLibrary(last), 'the last copy lost takes the item out of the library');
+  const rm = L.removeItem(L.book({ id: 'b6', title: 'Old hymn book' }), 'Damaged', 'Water damage', '2026-05-01');
+  ok(rm.removed === '2026-05-01' && rm.why === 'Damaged' && rm.whyNote === 'Water damage' && L.book(rm).why === 'Damaged' && L.removeItem(rm, 'Stolen?', '', '2026-05-01').why === 'Other', 'removing an item keeps it, with why');
+  ok(!L.restore(rm).removed && !L.restore(rm).why && L.inLibrary(L.restore(rm)), 'and it can be put back');
+  const loansR = [lo.loan, { id: 'l6', bookId: 'b6', title: 'Old hymn book', name: 'Jane Visitor', visitor: true, out: '2026-04-10', due: '2026-05-01', back: '2026-04-20' }, { id: 'l7', bookId: 'b5', title: 'Knowing God', name: 'Clare', out: '2025-12-01', back: '' }];
+  const rep = L.report([bk, rm, L.book({ id: 'b7', title: 'The Chosen', kind: 'DVD', acquired: '2027-01-01' }), last], loansR, '2026-01-01', '2026-06-30');
+  ok(rep.lent.map(x => x.id).join() === 'l5,l6' && rep.returned.map(x => x.id).join() === 'l6' && rep.lost.map(x => x.id).join() === 'l5' && rep.acquired.map(x => x.id).join() === 'b5' && rep.removed.map(x => x.title).join() === 'Old hymn book',
+    'a report for a period: lent, returned, lost, acquired and removed (a lost item is not counted twice)');
+  const rows = L.reportRows(rep);
+  ok(rows.length === 1 + 2 + 1 + 1 + 1 + 1 && rows[0][0] === 'What' && rows.some(r => r[0] === 'Lost' && /072 555 0101/.test(r[4])), 'the report as rows for a spreadsheet');
+  ok(L.csv([['=SUM(A1)', 'a,b', 'say "hi"']]) === '"\'=SUM(A1)","a,b","say ""hi"""', 'CSV: commas and quotes kept; nothing a spreadsheet would run');
+}
+console.log('Importing a spreadsheet');
+{
+  const rows = L.parseCSV('﻿Title;Author;Type;Copies;Date acquired;Donated by;ISBN\r\nKnowing God;J. I. Packer;book;2;05/03/2025;Pike family;\r\n;Nobody;;;;;\r\n"The Chosen, season 1";;DVD;;2026;;\r\nMere Christianity;C. S. Lewis;;;2024-07-09;;978-0-06-065292-0\r\n');
+  ok(rows.length === 5 && rows[3][0] === 'The Chosen, season 1', 'reads a CSV file (also with ; as Excel saves it in some countries, and quoted commas)');
+  const plan = L.importPlan(rows, [{ title: 'Mere Christianity (2nd edition)', isbn: '9780060652920' }, { title: 'Knowing God', author: 'J.I. Packer', removed: '2026-01-01' }], '2026-11-11');
+  ok(plan.add.map(b => b.title).join() === 'Knowing God,The Chosen, season 1' && plan.dup === 1 && plan.noTitle === 1, 'new items are added; one already there (same ISBN) and one without a title are skipped');
+  const kg = plan.add[0], ch = plan.add[1];
+  ok(kg.copies === 2 && kg.acquired === '2025-03-05' && kg.from === 'Pike family' && kg.kind === 'Book' && ch.kind === 'DVD' && ch.acquired === '2026-01-01', 'copies, dates (day first), donor and kind are understood');
+  ok(L.importPlan([['Author', 'Shelf'], ['x', 'y']], [], '2026-11-11').error === 'title', 'a file without a Title column is refused');
+  ok(L.kindOf('Audio book') === 'Audiobook' && L.kindOf('Blu-ray') === 'DVD' && L.kindOf('music cd') === 'CD' && L.kindOf('Poster') === 'Other' && L.isoDate('2026/7/4') === '2026-07-04' && L.isoDate('soon') === '', 'kinds and dates written in other ways');
+}
+console.log('The policy as a page');
+{
+  const h = L.policyHtml('# Borrowing\nLOANS\nYou may borrow **three** items.\nFor three weeks.\n\n1. Look after them\n2) Return them\n- Ask a librarian\n<img src=x onerror=alert(1)>');
+  ok(h.startsWith('<h3>Borrowing</h3><h4>LOANS</h4><p>You may borrow <b>three</b> items.<br>For three weeks.</p><ol><li>Look after them</li><li>Return them</li></ol><ul><li>Ask a librarian</li></ul>'), 'headings, paragraphs, bold, numbered and bulleted lists');
+  ok(!/<img/.test(h) && /&lt;img/.test(h), 'nothing typed becomes a picture, link or script');
+}
+
 if (fails) { console.log('\n' + fails + ' library test(s) FAILED'); process.exit(1); }
 console.log('\nAll library tests passed');

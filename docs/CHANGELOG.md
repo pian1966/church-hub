@@ -266,3 +266,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   (take a photo or choose one); lending to visitors not on the church's list (name and mobile number); a mobile number for
   every loan (asked for when a member's record has none; cleared on return); one or two librarians, chosen by an
   Administrator or the Senior Pastor; the library's policy, pasted in or attached, for everyone to read.
+- ✅ Library 0.53: import a list of items from a CSV spreadsheet (duplicates and rows without a title left out); mark a
+  borrowed item as lost; take an item out of the library with a reason (kept for the reports, can be put back); reports of what
+  was lent, returned, lost, acquired and taken out between two dates, downloadable as CSV; the policy shown as a formatted page.

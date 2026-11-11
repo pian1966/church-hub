@@ -54,5 +54,7 @@ I18n.rows([    ['{n} new', '{n} nuut', '{n} ezintsha', '{n} ezintsha'],
     ['Only some of them', 'Net sommige van hulle', 'Abanye babo kuphela', 'Abanye babo kuphela'],
     ['Tick who should get it.', 'Merk wie dit moet kry.', 'Khetha ukuthi ubani okufanele awuthole.', 'Phawula ukuba ngubani ofanele awufumane.'],
     ['Tick all', 'Merk almal', 'Khetha bonke', 'Phawula bonke'],
-    ['Untick all', 'Ontmerk almal', 'Susa konke ukukhetha', 'Susa zonke iimpawu']
+    ['Untick all', 'Ontmerk almal', 'Susa konke ukukhetha', 'Susa zonke iimpawu'],
+    ["Read", "Gelees", "Kufundiwe", "Kufundiwe"],
+    ["Not read yet", "Nog nie gelees nie", "Akukafundwa", "Akukafundwa"]
 ]);

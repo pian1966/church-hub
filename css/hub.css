@@ -499,6 +499,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
+.msg-read > summary { cursor: pointer; } .msg-read .tag { margin: 2px 2px 0 0; display: inline-block; }
 #ms-body { min-height: 140px; }
 /* Messages: ticking who gets a message */
 .ms-pick-box { padding: 12px 14px; margin: 0 0 14px; }
@@ -818,3 +819,20 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .lib-cover-now { width: 72px; min-height: 96px; display: grid; place-items: center; border: 1px dashed var(--line, #ccc); border-radius: 6px; text-align: center; }
 .lib-cover-now img { max-width: 72px; max-height: 110px; border-radius: 4px; display: block; }
 .lib-policy-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; max-height: 60vh; overflow: auto; }
+/* chips that open a page (a person's midweek and leadership groups, their library books) */
+a.tag.tag-link { text-decoration: none; cursor: pointer; }
+a.tag.tag-link:hover, a.tag.tag-link:focus-visible { outline: 2px solid color-mix(in srgb, var(--c) 45%, transparent); outline-offset: 1px; }
+/* Leadership: where someone is in their term of office */
+.term { display: block; margin-top: 6px; }
+.term-bar { display: flex; gap: 3px; max-width: 260px; }
+.term-bar i { flex: 1; height: 8px; border-radius: 4px; background: var(--line-2); overflow: hidden; position: relative; }
+.term-bar i.done { background: color-mix(in srgb, var(--accent) 55%, var(--surface)); }
+.term-bar i.now::before { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--w, 0%); background: var(--accent); border-radius: 4px; }
+.term.soon .term-bar i.now::before { background: #C77700; }
+.term small { display: block; margin-top: 2px; }
+.term-note { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
+/* formatted documents (js/richtext.js): the Library policy, Archive notes */
+.rich h3, .rich h4, .rich h5 { margin: 12px 0 4px; } .rich h3:first-child, .rich h4:first-child { margin-top: 0; }
+.rich p { margin: 0 0 8px; line-height: 1.55; } .rich ul, .rich ol { margin: 0 0 8px; padding-left: 22px; } .rich li { margin: 2px 0; }
+.rt-tools { display: flex; gap: 4px; flex-wrap: wrap; margin: 2px 0 4px; }
+.rt-tools button { min-width: 34px; }

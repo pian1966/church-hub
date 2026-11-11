@@ -59,5 +59,12 @@ let pol = L.policy({ text: '  Books are lent for three weeks.\r\nPlease look aft
 ok(pol.text === 'Books are lent for three weeks.\nPlease look after them.' && pol.name === 'Policy.pdf' && pol.data === 'JVBERi0x', 'the policy: pasted words and an attached file');
 ok(L.policy({ text: 'x'.repeat(30000) }).text.length === L.POLICY_MAX && L.policy({ text: 'Only words', data: 'abc' }).name === undefined, 'a long policy is cut to size; a file needs its name');
 
+// friendly reminders, three weeks after borrowing
+const lo = { bookId: 'b1', title: 'Mere Christianity', personId: 'p1', out: '2026-10-01', due: '2026-10-22', back: '' };
+ok(L.daysOut(lo, '2026-10-21') === 20 && !L.remindDue(lo, '2026-10-21') && L.remindDue(lo, '2026-10-22'), 'how many days they have had it; a reminder is due after three weeks');
+ok(!L.remindDue(Object.assign({}, lo, { reminded: '2026-10-22' }), '2026-10-28') && L.remindDue(Object.assign({}, lo, { reminded: '2026-10-22' }), '2026-10-29'), 'and again a week after the last reminder');
+ok(!L.remindDue(Object.assign({}, lo, { back: '2026-11-01' }), '2026-11-20') && L.daysOut(Object.assign({}, lo, { back: '2026-10-05' }), '2026-11-20') === 4, 'not once it is back');
+ok(L.intl('082 555 1234', '+27') === '27825551234' && L.intl('+27 82 555 1234', '+27') === '27825551234' && L.intl('0044 7700 900123', '+27') === '447700900123', 'a mobile number for WhatsApp, with the country code');
+
 if (fails) { console.log('\n' + fails + ' library test(s) FAILED'); process.exit(1); }
 console.log('\nAll library tests passed');

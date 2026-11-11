@@ -2,6 +2,7 @@
  * Church Hub – messages inside the app (Messages page; js/mod-messages.js). A message goes to everyone in one audience:
  *   care     a care group (its carers and members)               – sent by Administrators, Pastors or the group's carers
  *   group    a message group, e.g. Worship team leaders (msgGroups) – sent by Administrators, Pastors or the group's leaders
+ *   leaders  a leadership group, e.g. the Church Council (leaderBodies) – sent by Administrators, Pastors or anyone on it
  *   staff    everyone on the staff (people with staff details)   – Administrators and Pastors only
  *   partners every Church Partner (adults)                       – Administrators and Pastors only
  *   people   people chosen one by one from a checklist           – Administrators and Pastors only
@@ -17,7 +18,7 @@
  */
 var Msg = (function () {
   'use strict';
-  var KINDS = ['care', 'life', 'group', 'staff', 'partners', 'people'];
+  var KINDS = ['care', 'life', 'group', 'leaders', 'staff', 'partners', 'people'];
   var MAX_BODY = 4000, MAX_TITLE = 120;
 
   function alive(p) {
@@ -27,14 +28,16 @@ var Msg = (function () {
   function nameOf(p) { return ((p.preferredName || p.firstName || '') + ' ' + (p.lastName || '')).trim(); }
   function byId(list, id) { return (list || []).filter(function (x) { return x.id === id; })[0] || null; }
   function leads(g, pid) { return !!g && (g.leaderIds || []).indexOf(pid) >= 0; }
+  function onBody(b, pid) { return !!b && (b.memberIds || []).indexOf(pid) >= 0; }
 
-  /** Who a message to this audience goes to (person ids). d = { people, careGroups, lifeGroups, msgGroups }. "Chosen people": everyone
+  /** Who a message to this audience goes to (person ids). d = { people, careGroups, lifeGroups, msgGroups, leaderBodies }. "Chosen people": everyone
    *  who may be chosen (adults still in the church). */
   function recipients(kind, groupId, d) {
     d = d || {};
     if (kind === 'staff') return (d.people || []).filter(function (p) { return alive(p) && !!p.staff; }).map(function (p) { return p.id; });
     if (kind === 'people') return (d.people || []).filter(alive).map(function (p) { return p.id; });
     if (kind === 'partners') return (d.people || []).filter(function (p) { return alive(p) && p.category === 'Church Partner'; }).map(function (p) { return p.id; });
+    if (kind === 'leaders') { var b = byId(d.leaderBodies, groupId); return b ? uniq(b.memberIds || []) : []; }
     var g = byId(kind === 'care' ? d.careGroups : kind === 'life' ? d.lifeGroups : kind === 'group' ? d.msgGroups : [], groupId);
     return g ? uniq((g.memberIds || []).concat(g.leaderIds || [])) : [];
   }
@@ -49,6 +52,7 @@ var Msg = (function () {
     (d.careGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'care', groupId: g.id, name: g.name }); });
     (d.lifeGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'life', groupId: g.id, name: g.name }); });
     (d.msgGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'group', groupId: g.id, name: g.name }); });
+    (d.leaderBodies || []).slice().sort(name).forEach(function (b) { if (who.manager || onBody(b, who.id)) out.push({ kind: 'leaders', groupId: b.id, name: b.name }); });
     return out;
   }
   /** May this person send to this audience? (The database rules check the same.) */
@@ -58,6 +62,7 @@ var Msg = (function () {
     if (kind === 'care') return leads(byId((d || {}).careGroups, groupId), who.id);
     if (kind === 'life') return leads(byId((d || {}).lifeGroups, groupId), who.id);
     if (kind === 'group') return leads(byId((d || {}).msgGroups, groupId), who.id);
+    if (kind === 'leaders') return onBody(byId((d || {}).leaderBodies, groupId), who.id);
     return false;
   }
 
@@ -94,6 +99,11 @@ var Msg = (function () {
     var to = (m.to || []).filter(function (x) { return x !== m.fromId; });
     return { of: to.length, n: to.filter(function (x) { return (m.readBy || []).indexOf(x) >= 0; }).length };
   }
+  /** Who has read it and who hasn't (the sender doesn't count): { read: [ids], unread: [ids] }. */
+  function readers(m) {
+    var to = uniq(m.to || []).filter(function (x) { return x !== m.fromId; }), r = m.readBy || [];
+    return { read: to.filter(function (x) { return r.indexOf(x) >= 0; }), unread: to.filter(function (x) { return r.indexOf(x) < 0; }) };
+  }
   /** Of the people a message goes to, those who can open it: they can sign in to Church Hub (Administrators and Pastors know). */
   function inApp(ids, people) {
     return (ids || []).filter(function (id) { var p = byId(people, id); return !!p && !!p.email && !!p.appRole && p.appRole !== 'none'; });
@@ -119,6 +129,6 @@ var Msg = (function () {
   }
 
   return { KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
-    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, seen: seen, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
+    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();
 if (typeof module !== 'undefined') module.exports = Msg;

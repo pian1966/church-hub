@@ -138,6 +138,9 @@ module.exports = async function (ctx) {
   await s.page.click('.cg-pick[data-id="' + cand.id + '"]'); await s.settle(); docs = await s.docsNow();
   addable[0] = cand.id;
   check(docs['careGroups/cgA'].memberIds.includes(addable[0]), '…and they are added');
+  check((await s.page.inputValue('.cg-q[data-for="mine"]')) === cand.first && !(await s.page.$('.cg-hits[data-for="mine"] .cg-pick[data-id="' + cand.id + '"]')),
+    '…and the list stays open with what was typed, for the next person (whoever was added drops out of it)');
+  await s.page.click('#modal [data-act="hub:close"]'); await s.settle();
   for (let i = 0; i < 4 && (await s.docsNow())['careGroups/cgA'].memberIds.includes('p15'); i++) { await s.page.click('[data-act="care:mineout"][data-id="p15"]'); await s.settle(); }   // click, then click again to confirm
   docs = await s.docsNow();
   check(!docs['careGroups/cgA'].memberIds.includes('p15') && !docs['careGroups/cgA/share/p15'], 'a carer can take someone out (their card goes too)');

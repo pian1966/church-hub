@@ -20,10 +20,22 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="life:lead"][data-g="' + gid + '"][data-id="p14"]'); await s.settle();
   docs = await s.docsNow();
   check(docs[key].memberIds.includes('p14') && docs[key].leaderIds.includes('p14'), 'someone is added and made its group leader');
+  // a youth group: children can be added; what was typed stays, so several people are added from the same list
+  await s.go('life'); await s.page.fill('.cg-q[data-for="lg-' + gid + '"]', 'jacobs'); await s.page.waitForTimeout(400);
+  const kids = await s.page.$$eval('.cg-hits[data-for="lg-' + gid + '"] .cg-pick', b => b.map(x => x.dataset.id));
+  check(kids.includes('p16') && !kids.includes('p14'), 'children can be added to a midweek group (e.g. a youth group); people already in it aren’t offered');
+  await s.page.click('.cg-pick[data-id="p16"]'); await s.settle();
+  check((await s.page.inputValue('.cg-q[data-for="lg-' + gid + '"]')) === 'jacobs' && !!(await s.page.$('.cg-hits[data-for="lg-' + gid + '"] .cg-pick[data-id="p15"]')) && !(await s.page.$('.cg-hits[data-for="lg-' + gid + '"] .cg-pick[data-id="p16"]')),
+    'after adding someone the list stays, with what was typed – ready for the next person');
+  await s.page.click('.cg-pick[data-id="p15"]'); await s.settle(); docs = await s.docsNow();
+  check(['p14', 'p15', 'p16'].every(x => docs[key].memberIds.includes(x)), '…so a whole household is added one after another');
+  await s.go('home'); await s.go('life');
+  const sum = await s.page.textContent('.lg-panel[data-g="' + gid + '"] details.cg-fold > summary');
+  check(/1 leader\s*·\s*Tim Jacobs/.test(sum) && (await s.page.$$('.lg-panel[data-g="' + gid + '"] details.cg-fold')).length === 2, 'the group folds like a care group: its leaders’ names show, the other members in a second fold');
   await s.go('care'); t = await s.text();
   check(!t.includes('Tuesday Bible study'), 'a life group isn’t listed with the care groups');
   await s.go('people/p/p14'); t = await s.text();
-  check(t.includes('Group leader · Tuesday Bible study'), 'a person’s page shows their life group');
+  check(t.includes('Group leader · Tuesday Bible study') && !!(await s.page.$('a.tag-link[href="#/life"]')), 'a person’s page shows their life group – a chip that opens the Midweek groups page');
   await s.go('settings/apps'); await s.page.uncheck('.st-mod[value="care"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].modules.care === false && !(await s.page.$('nav a[href="#/care"]')) && !!(await s.page.$('nav a[href="#/life"]')), 'care groups can be switched off on their own, life groups stay');

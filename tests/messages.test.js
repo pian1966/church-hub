@@ -78,5 +78,13 @@ ok(g.memberIds.join() === 'a,c' && g.leaderIds.join() === 'c' && g.names.c === '
 ok(M.placeIn(g, 'c', true) === null && M.placeIn(g, 'c', false).leaderIds.length === 0, 'nothing changes when nothing changes; a leader can stop leading');
 ok(M.takeOut(g, 'c').memberIds.join() === 'a' && M.takeOut(g, 'c').leaderIds.length === 0 && !M.takeOut(g, 'c').names.c && M.takeOut(g, 'z') === null, 'taking someone out');
 
+// leadership groups (the Council): Administrators, Pastors and anyone on the group may write to it
+const dl = Object.assign({}, d, { leaderBodies: [{ id: 'lb1', name: 'Church Council', memberIds: ['c', 'd'] }] });
+ok(M.recipients('leaders', 'lb1', dl).join() === 'c,d' && M.audiences({ id: 'c', manager: false }, dl).some(x => x.kind === 'leaders' && x.groupId === 'lb1'), 'a leadership group: its members get it; a member may write to it');
+ok(!M.maySend({ id: 'h', manager: false }, 'leaders', 'lb1', dl) && M.maySend({ id: 'h', manager: true }, 'leaders', 'lb1', dl) && M.maySend({ id: 'd', manager: false }, 'leaders', 'lb1', dl), 'someone not on it can’t (Administrators and Pastors can)');
+// who has read it
+const rm = { fromId: 'c', to: ['c', 'd', 'e', 'f'], readBy: ['c', 'e'] };
+ok(M.readers(rm).read.join() === 'e' && M.readers(rm).unread.join() === 'd,f', 'the sender sees who has read it and who hasn’t');
+
 if (fails) { console.log('\n' + fails + ' test(s) FAILED'); process.exit(1); }
 console.log('\nAll message tests passed');

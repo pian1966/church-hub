@@ -430,5 +430,13 @@ I18n.rows([
     ['Version {v}', 'Weergawe {v}', 'Inguqulo {v}', 'Uguqulelo {v}'],
     ["Nothing matches.", "Niks pas nie.", "Akukho okufanayo.", "Akukho nto ihambelanayo."],
     ["Title", "Titel", "Isihloko", "Isihloko"],
-    ["Deleted", "Geskrap", "Kususiwe", "Icinyiwe"]
+    ["Deleted", "Geskrap", "Kususiwe", "Icinyiwe"],
+    ["Formatting", "Formatering", "Ukuhlela umbhalo", "Ukulungisa umbhalo"],
+    ["Bold", "Vet", "Okugqamile", "Ngqindilili"],
+    ["Italic", "Kursief", "Okutshekile", "Ekekeleyo"],
+    ["Underline", "Onderstreep", "Dwebela ngaphansi", "Krwela ngaphantsi"],
+    ["Heading", "Opskrif", "Isihloko", "Isihloko"],
+    ["Bulleted list", "Lys met kolletjies", "Uhlu olunamachashazi", "Uluhlu olunamachaphaza"],
+    ["Numbered list", "Genommerde lys", "Uhlu olunezinombolo", "Uluhlu olunamanani"],
+    ["Formatting: # heading, - bullets, 1. numbers, **bold**, *italic*", "Formatering: # opskrif, - kolletjies, 1. nommers, **vet**, *kursief*", "Ukuhlela: # isihloko, - amachashazi, 1. izinombolo, **okugqamile**, *okutshekile*", "Ukulungisa: # isihloko, - amachaphaza, 1. amanani, **ngqindilili**, *ekekeleyo*"]
 ]);

@@ -80,18 +80,22 @@
   /* ---------- a group's people, folded away so many groups fit on one page: its carers, then its other members ---------- */
   var opened = {};   // which folds are open (kept while the page is redrawn): key + ':c' carers, key + ':m' members
   /** leads: whether each person is a carer; rows: their lines (carers first); names: their names; extra: what goes at the
-   *  foot of the members' fold (the Add someone box). */
-  function fold(key, leads, rows, names, extra) {
+   *  foot of the members' fold (the Add someone box). words: what the leaders are called – { one, many, none } (the care
+   *  group's carers when not given; midweek groups and leadership groups pass their own). */
+  function fold(key, leads, rows, names, extra, words) {
+    words = words || { one: '{n} carer', many: '{n} carers', none: 'No carer yet.' };
     if (!rows.length) return '<p class="muted small" style="margin:8px 0 0">' + T('No one yet.') + '</p>' + (extra || '');   // a new group: its Add someone box in view
     var pick = function (want) { return rows.filter(function (r, i) { return leads[i] === want; }); };
     var top = pick(true), rest = pick(false), topNames = names.filter(function (n, i) { return leads[i]; });
     var one = function (k, summary, inner) {
       return '<details class="sub cg-fold" data-k="' + esc(key + k) + '"' + (opened[key + k] ? ' open' : '') + '><summary>' + summary + '</summary>' + inner + '</details>';
     };
-    return (top.length ? one(':c', TN('{n} carer', '{n} carers', top.length) + ' <span class="muted cg-names">· ' + esc(topNames.join(', ')) + '</span>', '<div class="list">' + top.join('') + '</div>')
-      : '<p class="muted small" style="margin:8px 0 0">' + T('No carer yet.') + '</p>') +
+    return (top.length ? one(':c', TN(words.one, words.many, top.length) + ' <span class="muted cg-names">· ' + esc(topNames.join(', ')) + '</span>', '<div class="list">' + top.join('') + '</div>')
+      : '<p class="muted small" style="margin:8px 0 0">' + T(words.none) + '</p>') +
       (rest.length || extra ? one(':m', rest.length ? (top.length ? TN('{n} other member', '{n} other members', rest.length) : TN('{n} member', '{n} members', rest.length)) : T('No other members yet'), (rest.length ? '<div class="list">' + rest.join('') + '</div>' : '') + (extra || '')) : '');
   }
+  /** Open a fold when the page is next drawn (someone was just added to it). */
+  function openFold(k) { opened[k] = true; }
   if (typeof document !== 'undefined') document.addEventListener('toggle', function (ev) {
     var d = ev.target; if (d && d.classList && d.classList.contains('cg-fold') && !d.dataset.so) opened[d.dataset.k] = d.open;   // not folds opened by a search
   }, true);
@@ -169,20 +173,35 @@
   }
 
   /* ---------- finding someone to add: type part of a name ("dar ben" finds Darren Bennett) ---------- */
-  var finders = {};
-  function finder(key, people, act, data, note, placeholder) {
-    finders[key] = { people: people, act: act, data: data || {}, note: note || function () { return ''; } };
-    return '<div class="cg-find"><input class="cg-q" data-for="' + esc(key) + '" placeholder="' + esc(placeholder) + '" autocomplete="off" aria-label="' + esc(placeholder) + '">' +
-      '<div class="cg-hits list" data-for="' + esc(key) + '" aria-live="polite"></div></div>';
+  // What was typed stays (with its list of matches) after someone is picked, so several people can be added one after
+  // another from the same list; whoever was added drops out of it. Cleared when the box is emptied or the page is left.
+  var finders = {}, typed = {}, lastFinder = '';
+  function finder(key, people, act, data, note, placeholder, opts) {
+    var keep = !opts || opts.keep !== false; if (!keep) delete typed[key];
+    finders[key] = { people: people, act: act, data: data || {}, note: note || function () { return ''; }, keep: keep };
+    var q = typed[key] || '';
+    return '<div class="cg-find"><input class="cg-q" data-for="' + esc(key) + '" placeholder="' + esc(placeholder) + '" autocomplete="off" aria-label="' + esc(placeholder) + '" value="' + esc(q) + '">' +
+      '<div class="cg-hits list" data-for="' + esc(key) + '" aria-live="polite">' + hitsHtml(finders[key], q) + '</div></div>';
+  }
+  function hitsHtml(f, q) {
+    q = String(q || '').trim(); if (!q) return '';
+    var hits = f.people.filter(function (p) { return H.matches(H.name(p) + ' ' + (p.firstName || '') + ' ' + (p.preferredName || '') + ' ' + (p.lastName || ''), q); });
+    var attrs = Object.keys(f.data).map(function (k) { return ' data-' + k + '="' + esc(f.data[k]) + '"'; }).join('');
+    return hits.length ? hits.slice(0, 8).map(function (p) {
+      return '<button type="button" class="item cg-pick" data-act="' + f.act + '" data-id="' + esc(p.id) + '"' + attrs + '>' + H.avatar(p, 28) + '<span class="grow"><b>' + esc(H.name(p)) + '</b>' + (f.note(p) ? '<small>' + esc(f.note(p)) + '</small>' : '') + '</span>' + H.icon(H.ICON.plus, 16) + '</button>';
+    }).join('') + (hits.length > 8 ? '<p class="hint" style="margin:4px 0 0">' + T('{n} more – type more of the name', { n: hits.length - 8 }) + '</p>' : '') : '<p class="muted small" style="margin:6px 0 0">' + T('No one matches') + '</p>';
   }
   function showHits(inp) {
     var f = finders[inp.dataset.for], box = document.querySelector('.cg-hits[data-for="' + inp.dataset.for + '"]'); if (!f || !box) return;
-    var q = inp.value.trim(); if (!q) { box.innerHTML = ''; return; }
-    var hits = f.people.filter(function (p) { return H.matches(H.name(p) + ' ' + (p.firstName || '') + ' ' + (p.preferredName || '') + ' ' + (p.lastName || ''), q); });
-    var attrs = Object.keys(f.data).map(function (k) { return ' data-' + k + '="' + esc(f.data[k]) + '"'; }).join('');
-    box.innerHTML = hits.length ? hits.slice(0, 8).map(function (p) {
-      return '<button type="button" class="item cg-pick" data-act="' + f.act + '" data-id="' + esc(p.id) + '"' + attrs + '>' + H.avatar(p, 28) + '<span class="grow"><b>' + esc(H.name(p)) + '</b>' + (f.note(p) ? '<small>' + esc(f.note(p)) + '</small>' : '') + '</span>' + H.icon(H.ICON.plus, 16) + '</button>';
-    }).join('') + (hits.length > 8 ? '<p class="hint" style="margin:4px 0 0">' + T('{n} more – type more of the name', { n: hits.length - 8 }) + '</p>' : '') : '<p class="muted small" style="margin:6px 0 0">' + T('No one matches') + '</p>';
+    var q = inp.value.trim(); if (f.keep && q) typed[inp.dataset.for] = inp.value; else delete typed[inp.dataset.for];
+    box.innerHTML = hitsHtml(f, q);
+  }
+  /** Back to the box where someone was just picked, ready for the next one (not while a dialog is open over the page). */
+  function again() {
+    var k = lastFinder; if (!k || typeof document === 'undefined') return;
+    var inp = document.querySelector('.cg-q[data-for="' + k + '"]'); if (!inp) return;
+    var dlg = document.querySelector('#modal .overlay'); if (dlg && !dlg.contains(inp)) return;
+    try { inp.focus({ preventScroll: true }); var n = inp.value.length; inp.setSelectionRange(n, n); } catch (e) { /* not every box can */ }
   }
   if (typeof document !== 'undefined') {
     var hitsLater = H.pause(showHits, 250);
@@ -192,6 +211,11 @@
       ev.preventDefault(); showHits(ev.target);   // typed fast and pressed Enter: search now
       var b = document.querySelector('.cg-hits[data-for="' + ev.target.dataset.for + '"] .cg-pick'); if (b) b.click();
     });
+    document.addEventListener('click', function (ev) {   // picked someone: come back to the same list afterwards
+      var b = ev.target.closest && ev.target.closest('.cg-pick'), box = b && b.closest('.cg-hits'); if (!box) return;
+      lastFinder = box.dataset.for; setTimeout(again, 0);
+    }, true);
+    window.addEventListener('hashchange', function () { typed = {}; lastFinder = ''; });
   }
 
   /* ---------- finding a group, or the group someone is in: type part of a group's or a person's name ---------- */
@@ -325,6 +349,16 @@
     var b = document.querySelector('.cgs-on[data-id="' + el.dataset.id + '"]'); if (b) b.checked = !!el.value;
   });
 
+  /** A group's leader adds people to their group: the list stays open for the next person. */
+  function mineAddDialog(gid) {
+    var u = me(), g = S.get('careGroups', gid); if (!g || !Care.isLeader(g, u.id)) return;
+    var choices = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (g.memberIds || []).indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); })
+      .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
+    H.modal(H.dialogHead(T('Add someone to the group'), g.name) + '<div class="dlg-body">' + (choices.length ? '<label class="field" style="margin-bottom:6px">' + T('Who') + '</label>' +
+      finder('mine', choices, 'care:mineaddsave', { g: g.id }, null, T('Type part of their name')) + '<p class="hint">' + T('People in the church directory.') + '</p>' : '<p class="muted">' + T('No one else in the church directory to add.') + '</p>') +
+      '<p id="cg-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Add someone to the group'));
+    var q = document.querySelector('.cg-q[data-for="mine"]'); if (q) q.focus();
+  }
   H.register({
     id: 'care', name: 'Care groups', desc: 'Small groups that care for one another', icon: HEART, tint: '#B4436C', roles: ['admin', 'pastor'], perm: 'care.view',
     render: function () { return viewer() ? viewOnly() : render(); },
@@ -403,20 +437,13 @@
         H.busy(T('Updating cards…'), function () { return Promise.all(all.map(sync)); }).then(function () { S.audit('Updated the care group cards of ' + all.length + ' people', 'care'); H.toast(T('Cards updated')); });
       },
       /* a carer, on their Me page */
-      mineadd: function (el) {
-        var u = me(), g = S.get('careGroups', el.dataset.g); if (!g || !Care.isLeader(g, u.id)) return;
-        var choices = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (g.memberIds || []).indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); })
-          .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
-        H.modal(H.dialogHead(T('Add someone to the group'), g.name) + '<div class="dlg-body">' + (choices.length ? '<label class="field" style="margin-bottom:6px">' + T('Who') + '</label>' +
-          finder('mine', choices, 'care:mineaddsave', { g: g.id }, null, T('Type part of their name')) + '<p class="hint">' + T('People in the church directory.') + '</p>' : '<p class="muted">' + T('No one else in the church directory to add.') + '</p>') +
-          '<p id="cg-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button></div>', T('Add someone to the group'));
-        var q = document.querySelector('.cg-q[data-for="mine"]'); if (q) q.focus();
-      },
+      mineadd: function (el) { mineAddDialog(el.dataset.g); },
       mineaddsave: function (el) {
         var u = me(), g = S.get('careGroups', el.dataset.g), id = el.dataset.id, p = S.get('people', id); if (!g || !Care.isLeader(g, u.id)) return;
         if (!p) { var e = document.getElementById('cg-err'); e.textContent = T('Choose someone to add.'); e.hidden = false; return; }
         var x = JSON.parse(JSON.stringify(g)); x.memberIds.push(p.id); x.names = x.names || {}; x.names[p.id] = Care.nameOf(p);
-        S.put('careGroups', x, 'Carer added ' + H.name(p) + ' to the care group ' + g.name); opened['me-' + g.id + ':m'] = true; H.closeModal(); H.render(); H.toast(T('Added to the group'));
+        S.put('careGroups', x, 'Carer added ' + H.name(p) + ' to the care group ' + g.name); opened['me-' + g.id + ':m'] = true; H.render(); H.toast(T('{name} added to the group', { name: H.name(p) }));
+        mineAddDialog(g.id);   // the same list stays open, for the next person
       },
       mineout: function (el) {
         var u = me(), g = S.get('careGroups', el.dataset.g), pid = el.dataset.id; if (!g || !Care.isLeader(g, u.id) || !H.confirmBtn(el, '✕?')) return;
@@ -428,5 +455,5 @@
       }
     }
   });
-  window.CareUI = { finder: finder, mePanel: mePanel, fields: fields, wireFields: wireFields, read: read, apply: apply, tag: tag, sync: sync, place: place, setFrom: setFrom };
+  window.CareUI = { finder: finder, again: again, fold: fold, openFold: openFold, mePanel: mePanel, fields: fields, wireFields: wireFields, read: read, apply: apply, tag: tag, sync: sync, place: place, setFrom: setFrom };
 })();

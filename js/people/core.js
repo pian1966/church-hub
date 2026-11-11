@@ -100,8 +100,10 @@ var PeopleParts = { actions: {} };
     var c = a.country && Countries.find(a.country), home = Countries.church(S.settings());
     return [a.street, a.street2, [a.city, a.postcode].filter(Boolean).join(' '), a.province, a.country && !(c && c.code === home.code) ? a.country : ''].filter(function (x) { return x && String(x).trim(); });
   }
-  function catTags(p) {
-    var t = p.category ? '<span class="tag grey">' + esc(T(p.category)) + '</span>' : '', care = (window.CareUI ? CareUI.tag(p) : '') + (window.LifeUI ? LifeUI.tag(p) : '');
+  /** plain: chips that don't open anything (inside a list row that is itself a link). */
+  function catTags(p, plain) {
+    var t = p.category ? '<span class="tag grey">' + esc(T(p.category)) + '</span>' : '', care = (window.CareUI ? CareUI.tag(p) : '') + (window.LifeUI ? LifeUI.tag(p) : '') + (window.LeadersUI && LeadersUI.tag ? LeadersUI.tag(p) : '');
+    if (plain) care = care.replace(/<a class="tag tag-link"([^>]*?) href="[^"]*">([^<]*)<\/a>/g, '<span class="tag"$1>$2</span>');
     if (!p.staff) return t + care;
     return (p.category === 'Staff' ? '<span class="tag grey">' + esc(p.staff.category || T('Staff')) + '</span>' : t + ' <span class="tag grey">' + esc(T('Staff') + (p.staff.category ? ' · ' + p.staff.category : '')) + '</span>') + care;
   }

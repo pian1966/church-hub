@@ -266,3 +266,16 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   (take a photo or choose one); lending to visitors not on the church's list (name and mobile number); a mobile number for
   every loan (asked for when a member's record has none; cleared on return); one or two librarians, chosen by an
   Administrator or the Senior Pastor; the library's policy, pasted in or attached, for everyone to read.
+- ✅ 0.53.0 (11 Nov 2026) Groups, Leadership and Library:
+  - Midweek groups fold like care groups (only the leaders' names show until opened); children can be in a midweek group
+    (a youth group); typing part of a name keeps its list of matches after someone is added, so several people are added
+    from the same list (care groups, midweek groups, leadership groups, message groups; carers' and leaders' own Add dialogs)
+  - Me and a person's page: midweek group and leadership chips that open those pages; borrowed library items as a chip on Me
+  - Leadership: terms of office per group (years in a term, terms in a row, the break after); a bar showing which term each
+    leader is in and how far through; four months before a term ends, Administrators and the Senior Pastor (Rector) see it
+    on their To do list, with whether the person may stand again; "Start their next term"; more than one role each;
+    co-opted members; leadership groups fold to their office-bearers; members can message their whole leadership group
+  - Messages: the sender sees who has read a message and who hasn't (Sent → Read by …)
+  - Library: three weeks after borrowing, a friendly reminder naming the item and how many days they have had it – on the
+    borrower's To do list and Library page, and sent by a librarian by WhatsApp or SMS (again a week later if still out)
+  - Formatting for the Library policy and Archive notes: headings, lists, bold, italic, underline (`js/richtext.js`, tested)

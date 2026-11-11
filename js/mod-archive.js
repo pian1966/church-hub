@@ -31,7 +31,7 @@
     if (r.aboutName) bits.push(T('About {name}', { name: r.aboutName }));
     if (r.file) bits.push(r.file.name + ' (' + A.sizeText(r.file.size) + ')');
     return '<div class="item rec-item ar-item" data-find="' + esc([r.title, r.note, r.aboutName, r.file ? r.file.name : ''].join(' ')) + '">' +
-      '<span class="grow"><b data-own-words>' + esc(r.title) + '</b><small>' + bits.map(esc).join(' · ') + '</small>' + (r.note ? '<small data-own-words>' + esc(r.note) + '</small>' : '') +
+      '<span class="grow"><b data-own-words>' + esc(r.title) + '</b><small>' + bits.map(esc).join(' · ') + '</small>' + (r.note ? (window.RichText && RichText.formatted(r.note) ? '<div class="rich small" data-own-words>' + RichText.html(r.note) + '</div>' : '<small data-own-words>' + esc(r.note) + '</small>') : '') +
       (edit ? '<small><span class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText(r)) + '</span>' + (r.shownTo ? ' <span class="tag grey">' + esc(T('Shown to {name}', { name: r.aboutName })) + '</span>' : '') + '</small>' : '') + '</span><span class="rec-acts">' +
       (r.file ? '<button class="btn small" data-act="archive:open" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.download, 16) + T('Download') + '</button>' : '') +
       (A.link(r.link) ? '<a class="btn small" href="' + esc(A.link(r.link)) + '" target="_blank" rel="noopener noreferrer" data-act="archive:link" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.link, 16) + T('Open the link') + '</a>' : '') +
@@ -98,7 +98,7 @@
       '<label class="check"><input type="checkbox" id="ar-shown"' + (r.shownTo || (isNew && !r.aboutId) ? ' checked' : '') + '><span>' + T('They can see this record themselves') + '</span></label></div>' +
       '<label class="field">' + (r.file ? T('Replace the file') + ' <span class="muted small">(' + esc(r.file.name) + ')</span>' : T('File (up to 15 MB)')) + '<input type="file" id="ar-file"></label>' +
       '<label class="field">' + T('Or a link to where it is kept') + '<input id="ar-link" type="url" maxlength="500" value="' + esc(r.link || '') + '" placeholder="https://"></label>' +
-      '<label class="field">' + T('Note') + '<textarea id="ar-note" rows="2" maxlength="1000">' + esc(r.note || '') + '</textarea></label>' +
+      '<div class="field"><label for="ar-note">' + T('Note') + '</label>' + (window.RichText ? RichText.tools('ar-note', { bar: T('Formatting'), b: T('Bold'), i: T('Italic'), u: T('Underline'), h: T('Heading'), ul: T('Bulleted list'), ol: T('Numbered list') }) : '') + '<textarea id="ar-note" rows="3" maxlength="1000">' + esc(r.note || '') + '</textarea></div>' +
       '<p id="ar-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="archive:save" data-id="' + esc(r.id || '') + '">' + T('Save') + '</button></div>', T('Add a record'));
     showParts();

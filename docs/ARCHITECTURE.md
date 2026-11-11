@@ -512,7 +512,14 @@ Later: direct import through the Elvanto API (server side, with the church's API
   consent** (Contact details, agreed on becoming a Church Partner), not "Care group"; no areas or Suggest by area yet.
 - Administrators and Pastors: add, rename, delete, put people in and make leaders (star, per group). Leaders (Life groups
   page and Me): rename, add people from the church directory, take members out, message the group (`kind: 'life'`).
-  Members: their life groups on the Life groups page and their Me page. Tag on a person's page for staff and themselves.
+  Members: their life groups on the Life groups page and their Me page. Tag on a person's page for staff and themselves
+  (a chip opening the Midweek groups page; plain inside the People list, whose rows are links: `catTags(p, true)`).
+- Unlike care groups, **children** can be in a midweek group (a youth group): Administrators and Pastors can add them (members
+  don't see children, so leaders can't). A child's card follows the same consent, so normally only their name shows.
+- Groups fold like care groups (`CareUI.fold` with the words "leader"/"leaders").
+- **Adding people** (`CareUI.finder`, used by every "type part of their name" box): what was typed and its matches stay after
+  someone is picked (`typed`, cleared when the box is emptied or the page changes; `{ keep: false }` for one-off picks like
+  lending a book), and the box gets the focus back (`CareUI.again`), so several people are added from the same list.
 - **Switching on and off** (Settings → Apps): Life groups are `optIn` – off until switched on (`Hub.isOn('life')`). Care groups
   can now be switched off too: the page, Me panel, tags, Edit details box and message audiences all go; nothing is deleted.
 
@@ -520,7 +527,8 @@ Later: direct import through the Elvanto API (server side, with the church's API
 - Audiences (`Msg.audiences`, tested): Administrators and Pastors – **Chosen people** (ticked one by one on a checklist of
   adults still in the church; "Send a message" on a person's page opens it with them ticked, `#/messages/send/people/<id>`), **Staff** (people with staff details), **Church Partners**
   (active adults), every care group and every message group; carers – their own care group; message-group leaders – their
-  own group. Members only read. Writing to a group, "Only some of them" shows its people ticked; unticking narrows `to`
+  own group; anyone on a leadership group – that group (`kind: 'leaders'`, `groupId` = the `leaderBodies` id, `to` its
+  `memberIds`). Members only read. Writing to a group, "Only some of them" shows its people ticked; unticking narrows `to`
   (`some: true`) – the rules already only let carers and leaders reach people in their own group. The people a message goes to (`to`) are worked out when it is sent, so someone added to a
   group later doesn't see older messages, and the rules can check each reader.
 - Loading (`plan()` in `js/store.js`): Administrators and Pastors load all `messages` and `msgGroups`; everyone else the
@@ -531,6 +539,7 @@ Later: direct import through the Elvanto API (server side, with the church's API
 - Writing (Messages → Write, or `#/messages/send/<kind>/<groupId>` – carers get a button on their Me page): a confirmation
   with how many it goes to; Administrators and Pastors also see how many of them can't sign in yet. Rules: `firestore.rules`
   (messages, msgGroups) check the sender, that a carer or leader writes only to people in their group, and the sizes.
+- Sent → "Read by n of m" opens to the names of who has and hasn't opened it (`Msg.readers`).
 - Not yet: phone notifications when the app is closed, email/SMS fallback, replies (see ROADMAP Phase 5).
 
 ## Leadership (Leadership page; `js/leaders.js`, `js/mod-leaders.js`)
@@ -541,7 +550,15 @@ Off until switched on (Settings → Apps; `optIn`). A leadership group is one `l
 otherwise only its members. Administrators and Pastors manage (rules: `manager()`). Everyone else loads two queries
 (`open == true`, and `memberIds` contains me – `plan()`); only names and roles are kept, never contact details.
 The Archive reads `memberIds` to decide who sees a group's records, so a group with records can't be deleted.
-Not built yet: showing someone's leadership roles on their page in People, and messages to a leadership group.
+- Each seat may have several `roles` (`role` = the first, for older readers), `kind: 'coopted'`, and – for terms of office –
+  `term` (1, 2…) and `termFrom` (when the current term started; the first starts at `from`). A group's `termYears`,
+  `maxTerms` and `breakYears` set the rules (0 = none); `to` is worked out from `termYears` when not typed.
+  `Leaders.term()` gives which term, how far through (the bar), whether it ends within four months (`NOTICE_MONTHS`), and
+  whether they may stand again; `Leaders.ending()` feeds a To do for Administrators and the Senior Pastor (Rector) and a
+  notice on the page; `Leaders.renew()` starts the next term; `Leaders.resting()` warns when someone is added again during
+  their break. All tested (`tests/leaders.test.js`).
+- Groups fold like care groups (`CareUI.fold`): office-bearers (anyone with a role) first, then the other members.
+  `LeadersUI.tag(p)` puts a chip per group on a person's page and the Me page (opening Leadership).
 
 ## Archive (Archive page; `js/archive.js`, `js/mod-archive.js`)
 Off until switched on. A record has a category (`settings.archiveCats`, or `Archive.CATS`: Council minutes, Architectural
@@ -581,7 +598,13 @@ Pastor; it is fetched once when the Library page opens. A loan is read by the
 librarians and its borrower only, so a book carries its own count of copies out (`out`, kept in step by `Library.lend` /
 `giveBack`) for everyone else to see "Available" or "On loan". Lending defaults to three weeks (`LOAN_DAYS`); overdue loans
 show on Home (the librarians: how many; the borrower: their own). Returned loans are removed after a year (`KEEP_DAYS`,
-when a librarian opens the page). Not built yet: asking to borrow or reserve a book in the app, reminders by message.
+when a librarian opens the page). **Friendly reminders**: three weeks after it was borrowed (`REMIND_DAYS`) and a week after
+each reminder (`Library.remindDue`), the borrower gets a To do and a note under My books, and the librarians a "Reminder due"
+tag with *Send a reminder* – the text names the item and the days held, sent by WhatsApp (`wa.me`, with the church country's
+dialling code: `Library.intl`), SMS or in the app only; the loan keeps the date (`reminded`). The policy is typed with simple
+formatting (`js/richtext.js`: `#` headings, `-` and `1.` lists, `**bold**`, `*italic*`, `__underline__`, links; everything
+else is made safe), with buttons above the box; Archive notes use the same. `LibraryUI.chip()` shows "n library items
+borrowed" on the Me page. Not built yet: asking to borrow or reserve a book in the app.
 
 ## Services that need a roster
 - Settings lists every upcoming service with a bin to remove it (and its roster); "Stop holding a regular service…"

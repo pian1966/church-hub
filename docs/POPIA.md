@@ -213,7 +213,10 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
 - Who may read: the people it went to, its sender, Administrators and Pastors (database rules, tested). Members load only
   their own; the list of who opened it is shown only to the sender, Administrators and Pastors. People can't change a message
   they received, only mark it as opened.
-- Who may send: Administrators and Pastors to any group or to people they tick; carers to their own care group; group leaders to their own group.
+- Who may send: Administrators and Pastors to any group or to people they tick; carers to their own care group; group leaders
+  to their own group; anyone on a leadership group (e.g. the Council) to that group.
+- Who has read it: the sender (and Administrators and Pastors) see the names of who has opened a message and who hasn't
+  (Sent → Read by …). The names come from records the sender may already see, or the group's own list of names.
   Sending and deleting are in the audit log (to whom and how many – not what the message says). The Write page asks people
   not to put private or medical details in a message to a group.
 - To do: how long messages are kept (ROADMAP) – until then Administrators, Pastors and senders can delete them.
@@ -225,7 +228,9 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
 - Who sees: everyone signed in, or only the group's own members when an Administrator or Pastor makes it "members only";
   Administrators and Pastors manage (database rules, tested). "Served before" keeps past office-bearers as the church's
   record; an Administrator or Pastor can delete a line (e.g. on a deletion request). Changes are in the audit log.
-
+- Terms of office (which term someone is in, when it started and ends) and "co-opted" are part of the office-bearer's
+  public role and follow the same access. The notice four months before a term ends, with whether the person may stand
+  again, is shown only to Administrators and the Senior Pastor (Rector).
 ## Archive (minutes, plans, staff contracts, appraisals)
 - Purpose: keeping the church's records – governance (minutes), property (plans) and employment (contracts, appraisals).
   Basis: legal obligation and legitimate interest for governance and property records; the employment contract and labour
@@ -257,6 +262,10 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
 - What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators
   and up to two people chosen by an Administrator or the Senior Pastor) and the borrower; everyone else sees only
   "On loan" (database rules, tested). Other loans are not written in the audit log. Choosing a librarian is logged.
+- Friendly reminders: three weeks after borrowing (`Library.REMIND_DAYS`) the borrower sees a reminder in the app; a
+  librarian may also send it by WhatsApp or SMS to the loan's mobile number – the reason the number is kept. Only the date
+  of the last reminder is stored on the loan (`reminded`), not the message, and sending it is in the audit log (the item's
+  title, not the borrower's name or number).
 - Cover pictures (`covers/{id}`) and the library's policy (`libraryPolicy/policy`) hold no personal information; everyone
   signed in may read them.
 

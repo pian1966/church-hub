@@ -93,6 +93,8 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   - ⬜ Archive: let a group's Secretary file its own minutes; open a PDF inside Church Hub; a retention review (how long
     each category is kept, with a reminder); a "What Pastors can do" tick for managing the Archive
   - ⬜ Library: ask to borrow or reserve a book in the app; a reminder message when a book is overdue; my books on the Me
+  - ⬜ Library (0.52 follow-ups): fluent speakers to check the new Library words in the 19 further languages (drafted by AI);
+    a text message (BulkSMS) to a borrower whose item is overdue, using the loan's mobile number; read the ISBN with the camera.
     page; import a book list from a spreadsheet; the church's own loan period
   - ⬜ Church Words (Terminology) for "Council", "Leadership" and "Library", and demo data for the three pages
   - ⬜ Fluent speakers to check the new wording in every language (drafted by Claude)

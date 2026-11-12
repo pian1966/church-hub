@@ -615,6 +615,8 @@ lost / acquired / removed for the librarians (Reports, CSV via `Library.csv`, wh
 `Library.importPlan` reads a CSV (`parseCSV`, `,` or `;`), finds the columns by their headings (`COLUMNS`) and skips rows
 without a title and items already there (`sameItem`: same ISBN, else same title + author). The policy's words are shown as a
 page by `Library.policyHtml` (escapes everything, then headings, lists, **bold**, paragraphs). No rules change.
+**0.57:** Everyone can filter the catalogue by media type, title, author and subject, and sort by each field. Returning a
+loan can save an optional condition note (`returnNote`), shown to librarians in the returned-loan list and reports.
 Off until switched on. Everyone signed in reads `books` – books, DVDs, CDs, audiobooks, magazines, games (`kind`,
 `Library.KINDS`; 'Book' when not set), each with an optional cover picture in `covers/{id}` (a JPEG of at most 360 pixels,
 taken with the phone's camera or chosen; the item's `cover` is its version; fetched only when it comes into view, like

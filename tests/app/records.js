@@ -110,8 +110,8 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); const vl = find(docs, 'loans', d => d.bookId === dv); t = await s.text();
   check(!!vl && docs[vl].personId === '' && docs[vl].visitor === true && docs[vl].name === 'Jane Visitor' && docs[vl].mobile === '072 555 0101' && /Jane Visitor\s*Visitor\s*·\s*072 555 0101/.test(t), 'someone not on the church’s list borrows it with their name and mobile number');
   check(!!loan && !!docs[loan].mobile && docs[loan].mobile === docs['people/p14'].mobile, 'a church member’s loan carries the mobile number on their record');
-  await s.page.click('[data-act="library:back"][data-id="' + vl.split('/')[1] + '"]'); await s.settle(); docs = await s.docsNow();
-  check(docs[vl].back !== '' && docs[vl].mobile === '', 'when it comes back, the mobile number is no longer kept');
+  await s.page.click('[data-act="library:back"][data-id="' + vl.split('/')[1] + '"]'); await s.page.fill('#lib-backnote', 'Case replaced'); await s.page.click('[data-act="library:backsave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs[vl].back !== '' && docs[vl].mobile === '' && docs[vl].returnNote === 'Case replaced', 'when it comes back, a condition note is kept and the mobile number is cleared');
   await s.page.click('[data-act="library:policy"]'); await s.page.waitForSelector('#lib-pol');
   await s.page.fill('#lib-pol', 'Items are lent for three weeks. Please return them clean.'); await s.page.click('[data-act="library:policysave"]'); await s.settle();
   docs = await s.docsNow();
@@ -121,12 +121,12 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(docs[loan].lost === true && !!docs[loan].back && !!docs[loan].mobile && docs[key].removed && docs[key].why === 'Lost' && !/Knowing God\s*(Available|On loan)/.test(await s.text()), 'the only copy marked lost: kept on the loan with the mobile number, and the item leaves the shelf');
   await s.page.click('#lib-gone summary'); await s.page.click('[data-act="library:putback"][data-id="' + bk + '"]'); await s.settle(); docs = await s.docsNow();
-  check(!docs[key].removed && /Knowing God\s*Available/.test(await s.text()), 'it can be put back if it turns up');
+  check(!docs[key].removed && /Knowing God\s*Book\s*Available/.test(await s.text()), 'it can be put back if it turns up');
   await s.page.click('[data-act="library:remove"][data-id="' + dv + '"]'); await s.page.selectOption('#lib-why', 'Damaged'); await s.page.fill('#lib-whynote', 'Scratched'); await s.page.click('[data-act="library:removesave"]'); await s.settle();
   docs = await s.docsNow();
   check(docs[dvd].removed && docs[dvd].why === 'Damaged' && docs[dvd].whyNote === 'Scratched', 'an item is taken out of the library with why (not deleted)');
   await s.page.click('[data-act="library:report"]'); await s.page.waitForSelector('#lib-rep'); t = await s.page.textContent('#lib-rep');
-  check(/Lent\s*2/.test(t) && /Returned\s*1/.test(t) && /Lost\s*1/.test(t) && /Acquired\s*2/.test(t) && /Removed from Library by Librarian\s*1[\s\S]*The Chosen/.test(t), 'reports: what was lent, returned, lost, acquired and taken out this year');
+  check(/Lent\s*2/.test(t) && /Returned\s*1/.test(t) && /Lost\s*1/.test(t) && /Acquired\s*2/.test(t) && /Removed from Library by Librarian\s*1[\s\S]*The Chosen/.test(t) && t.includes('Case replaced') && (await s.page.textContent('#modal')).includes('Show library activity between two dates'), 'reports: what was lent, returned, lost, acquired and taken out this year, including return notes');
   const [rdl] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="library:reportcsv"]')]);
   const rcsv = ctx.fs.readFileSync(await rdl.path(), 'utf8');
   check(/^﻿What,Date,Title/.test(rcsv) && /Lost,\d{4}-\d\d-\d\d,Knowing God/.test(rcsv) && /Removed,[^\n]*The Chosen[^\n]*Damaged: Scratched/.test(rcsv), 'and downloads it as a spreadsheet');
@@ -149,6 +149,7 @@ module.exports = async function (ctx) {
   // lend Knowing God to Tim again, for the checks that follow (he has it out)
   await s.page.click('[data-act="library:lend"][data-id="' + bk + '"]'); await s.page.fill('.cg-q[data-for="lib-lend"]', 'tim jac'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
   docs = await s.docsNow();
+  const activeLoan = find(docs, 'loans', d => d.bookId === bk && !d.back);
   const live = JSON.parse(JSON.stringify(docs));
   await finish(s);
 
@@ -163,7 +164,13 @@ module.exports = async function (ctx) {
   await s.go('leaders'); t = await s.text();
   check(t.includes('Church Council') && t.includes('Tim Jacobs') && !(await s.page.$('#lb-new')) && !(await s.page.$('[data-act="leaders:seat"]')), 'sees their own leadership group (though it is for members only), and can’t change it');
   await s.go('library'); t = await s.text();
-  check(/My books[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*On loan/.test(t), 'the Library shows the book they have out and when it is due – not the librarian’s tools');
+  check(/My books[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*Book\s*On loan/.test(t), 'the Library shows the book they have out and when it is due – not the librarian’s tools');
+  check(!!(await s.page.$('#lib-filter-kind')) && !!(await s.page.$('#lib-filter-title')) && !!(await s.page.$('#lib-filter-author')) && !!(await s.page.$('#lib-filter-cat')) && (await s.page.$$('[data-act="library:sort"]')).length === 4, 'everyone can filter and sort the library by media type, title, author and subject');
+  await s.page.selectOption('#lib-filter-kind', 'Book'); await s.page.fill('#lib-filter-title', 'Knowing God'); await s.page.fill('#lib-filter-author', 'J. I. Packer'); await s.page.fill('#lib-filter-cat', 'Theology');
+  check(await s.page.isVisible('.lib-book[data-title="Knowing God"]') && await s.page.$$eval('.lib-book:not([hidden])', rows => rows.length) === 1, 'the catalogue filters on all four fields together');
+  await s.page.selectOption('#lib-filter-kind', ''); await s.page.fill('#lib-filter-title', ''); await s.page.fill('#lib-filter-author', ''); await s.page.fill('#lib-filter-cat', '');
+  await s.page.click('[data-act="library:sort"][data-k="author"]');
+  check((await s.page.$$eval('#lib-books .lib-book', rows => rows[0].dataset.title)) === 'Mere Christianity', 'the public catalogue sorts by the selected field');
   check(t.includes('Library policy') && t.includes('Items are lent for three weeks.') && !(await s.page.$('[data-act="library:policy"]')), 'everyone can read the library’s policy; only librarians change it');
   await finish(s);
   console.log('The staff member a contract is about:');
@@ -177,8 +184,10 @@ module.exports = async function (ctx) {
   check((await sees(s)) === 'nn' && !(await s.page.$('nav a[href="#/archive"]')), 'sees no records – the Archive isn’t on their menu at all');
   await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();
   check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && !!(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('[data-act="library:libs"]')), 'as a librarian sees who has which book and can add books (but not name librarians)');
-  await s.page.click('[data-act="library:back"]'); await s.settle(); docs = await s.docsNow(); t = await s.text();
-  check(docs[loan].back !== '' && docs['books/' + bk].out === 0 && /Knowing God\s*Available/.test(t) && t.includes('Nothing on loan.'), 'marks the book as returned: it is available again');
+  await s.page.click('[data-act="library:back"][data-id="' + activeLoan.split('/')[1] + '"]'); await s.page.fill('#lib-backnote', 'Cover slightly torn'); await s.page.click('[data-act="library:backsave"]'); await s.settle(); docs = await s.docsNow(); t = await s.text();
+  check(docs[activeLoan].back !== '' && docs[activeLoan].returnNote === 'Cover slightly torn', 'the return date and condition note are saved');
+  check(docs['books/' + bk].out === 0 && /Knowing God\s*Book\s*Available/.test(t), 'the returned copy is back on the shelf');
+  check(t.includes('Nothing on loan.'), 'the librarian no longer sees the loan as outstanding');
   await finish(s);
   console.log('A Pastor, and the Senior Pastor:');
   s = await as('pieter.vanwyk@example.com');

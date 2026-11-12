@@ -5,7 +5,7 @@
  *   loan, kept by the librarian so that everyone can see whether it is in, without seeing who has it; cover = the version
  *   of its cover picture, kept apart in covers/{id} and fetched only when shown.
  * A loan: loans/{id} = { bookId, title, personId ('' for a visitor), name, mobile, visitor (true for someone not on the
- *   church's list), out (date lent), due, back (date returned, '' while out), note, reminded (the last friendly reminder) }.
+ *   church's list), out (date lent), due, back (date returned, '' while out), returnNote, reminded (the last friendly reminder) }.
  * A friendly reminder is due REMIND_DAYS (3 weeks) after an item was borrowed, and again each REMIND_AGAIN days after that. Every loan needs a mobile number so a
  *   book can be traced; the number is cleared when the book comes back.
  * Everyone who signs in sees the items and the library's policy. Loans are seen by the librarians (Administrators, and up
@@ -68,8 +68,10 @@ var Library = (function () {
     return { book: x, loan: { bookId: b.id, title: b.title, personId: who.personId, name: who.name, mobile: who.mobile, visitor: !!who.visitor, out: today, due: due && due >= today ? due : addDays(today, LOAN_DAYS), back: '', note: '' } };
   }
   /** A book came back: the loan with its return date, and the book with its new count (null if the book has gone). */
-  function giveBack(loan, b, today, loans) {
+  function giveBack(loan, b, today, loans, returnNote) {
     var l = copy(loan); l.back = today; l.mobile = '';   // no longer needed once it is back
+    returnNote = text(returnNote, 300);
+    if (returnNote) l.returnNote = returnNote; else delete l.returnNote;
     var x = b ? copy(b) : null; if (x) x.out = Math.max(0, outCount(b, loans) - (isOut(loan) ? 1 : 0));
     return { loan: l, book: x };
   }
@@ -111,7 +113,7 @@ var Library = (function () {
     names = names || {};
     var rows = [['What', 'Date', 'Title', 'Kind', 'Who', 'Detail']], nm = function (k) { return names[k] || k; };
     rep.lent.forEach(function (l) { rows.push([nm('Lent'), l.out, l.title, '', l.name + (l.visitor ? ' (' + nm('Visitor') + ')' : ''), l.due ? nm('Due') + ' ' + l.due : '']); });
-    rep.returned.forEach(function (l) { rows.push([nm('Returned'), l.back, l.title, '', l.name, nm('Lent') + ' ' + l.out]); });
+    rep.returned.forEach(function (l) { rows.push([nm('Returned'), l.back, l.title, '', l.name, [nm('Lent') + ' ' + l.out, l.returnNote ? nm('Note') + ': ' + l.returnNote : ''].filter(Boolean).join(' · ')]); });
     rep.lost.forEach(function (l) { rows.push([nm('Lost'), l.back, l.title, '', l.name + (l.mobile ? ' ' + l.mobile : ''), nm('Lent') + ' ' + l.out]); });
     rep.acquired.forEach(function (b) { rows.push([nm('Acquired'), b.acquired, b.title, nm(b.kind || 'Book'), b.from || '', [b.how ? nm(b.how) : '', (+b.copies || 1) > 1 ? b.copies + ' ×' : ''].filter(Boolean).join(' ')]); });
     rep.removed.forEach(function (b) { rows.push([nm('Removed'), b.removed, b.title, nm(b.kind || 'Book'), '', nm(b.why || 'Other') + (b.whyNote ? ': ' + b.whyNote : '')]); });

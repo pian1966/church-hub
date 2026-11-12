@@ -256,8 +256,8 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
 ## Library
 - Purpose: looking after the church's books, DVDs, CDs and other items. Basis: legitimate interest (someone who borrows the
   church's property is recorded until it is back); for a visitor who is not on the church's list, they give their name and
-  number themselves in order to borrow. Kept: which item, who borrowed it, the dates lent, due and returned, and a mobile
-  number so the item can be traced.
+  number themselves in order to borrow. Kept: which item, who borrowed it, the dates lent, due and returned, a mobile
+  number so the item can be traced while it is out, and any return note about its condition.
 - The mobile number is kept on the loan only while the item is out: it is cleared when the item comes back (`Library.giveBack`).
   For someone on the church's list it is copied from their record; if their record has none, the librarian types one, and
   someone who may edit people (Administrators, Pastors) may also save it in that person's details (logged).

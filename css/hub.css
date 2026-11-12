@@ -812,6 +812,9 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 @media print { .pick-bar { display: none; } }
 
 /* Library: cover pictures (js/mod-library.js) and the policy */
+.lib-sort { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+.lib-filters { margin-bottom: 12px; }
+.lib-filters .field { margin: 0; }
 .lib-cover { width: 40px; height: 54px; flex: 0 0 auto; border-radius: 4px; display: inline-grid; place-items: center; color: var(--muted, #888);
   background: color-mix(in srgb, var(--muted, #888) 12%, var(--surface, #fff)); background-size: cover; background-position: center; margin-right: 4px; }
 .lib-cover.pic { color: transparent; }

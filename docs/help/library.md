@@ -22,8 +22,9 @@ who signs in can read it.
 For: Everyone
 Also asked: Is a book available? Find a book. Books by an author.
 
-Open **Library** and type part of the title, the author or the category. Each book shows **Available** or **On loan**, and
-its shelf if the church filled that in.
+Open **Library** to browse the church's books, DVDs and other media. Use the filters for media type, title, author and
+subject, and choose a field to sort by. Each item shows **Available** or **On loan**, and its shelf if the church filled
+that in.
 
 ## How do I borrow a book?
 For: Everyone
@@ -58,8 +59,8 @@ Also asked: Check out a book. Return a book. Mark a book as returned.
 Tap **Lend** next to the item, check the **Date borrowed** date (three weeks unless you change it), type part of the borrower's
 name and pick them. Every borrower needs a mobile number so an item can be traced: if their record has none, Church Hub asks
 you to type one. For **someone not on the church's list**, open that part and type their name and mobile number.
-When the item comes back, tap **Returned** next to it under **On loan** – the number is then no longer kept. Overdue items
-are marked, and Home tells you how many there are.
+When the item comes back, tap **Returned** next to it under **On loan**. You can add a note about damage or anything else;
+the borrower's mobile number is then cleared. Overdue items are marked, and Home tells you how many there are.
 
 ## How do I import a list of books?
 For: Librarians

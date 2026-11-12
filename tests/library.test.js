@@ -22,6 +22,8 @@ ok(L.lend(L.book({ id: 'b9', title: 'Y' }), tim, '2026-11-12', '2026-11-01', [])
 ok(L.onLoan(loans).map(l => l.id).join() === 'l2,l1' && L.overdue(loans[1], '2026-11-21') && !L.overdue(loans[1], '2026-11-20') && L.mine(loans, 'p14').length === 1, 'on loan: due soonest first; overdue the day after it was due; my own books');
 const back = L.giveBack(loans[1], b, '2026-11-22', loans);
 ok(back.loan.mobile === '' && back.loan.back === '2026-11-22' && back.book.out === 1 && loans[1].back === '' && L.giveBack(back.loan, back.book, '2026-11-23', [loans[0], back.loan]).book.out === 1, 'returning: the date is kept and a copy is back on the shelf (not twice)');
+const notedBack = L.giveBack(loans[1], b, '2026-11-22', loans, 'Cover slightly torn');
+ok(notedBack.loan.returnNote === 'Cover slightly torn' && L.giveBack(loans[1], b, '2026-11-22', loans, '   ').loan.returnNote === undefined, 'a return can keep an optional, tidied condition note');
 ok(L.giveBack(loans[0], null, '2026-11-22', loans).book === null, 'a book since deleted: the loan is still closed');
 loans[1] = back.loan;
 ok(L.free(back.book, loans) === 1 && L.free({ id: 'b1', copies: 2, out: 1 }) === 1 && L.outCount({ id: 'b1', out: 7 }, loans) === 1, 'copies in: counted from the loans when they can be seen, else the book’s own count');
@@ -76,12 +78,12 @@ console.log('Lost, removed, reports');
   const rm = L.removeItem(L.book({ id: 'b6', title: 'Old hymn book' }), 'Damaged', 'Water damage', '2026-05-01');
   ok(rm.removed === '2026-05-01' && rm.why === 'Damaged' && rm.whyNote === 'Water damage' && L.book(rm).why === 'Damaged' && L.removeItem(rm, 'Stolen?', '', '2026-05-01').why === 'Other', 'removing an item keeps it, with why');
   ok(!L.restore(rm).removed && !L.restore(rm).why && L.inLibrary(L.restore(rm)), 'and it can be put back');
-  const loansR = [lo.loan, { id: 'l6', bookId: 'b6', title: 'Old hymn book', name: 'Jane Visitor', visitor: true, out: '2026-04-10', due: '2026-05-01', back: '2026-04-20' }, { id: 'l7', bookId: 'b5', title: 'Knowing God', name: 'Clare', out: '2025-12-01', back: '' }];
+  const loansR = [lo.loan, { id: 'l6', bookId: 'b6', title: 'Old hymn book', name: 'Jane Visitor', visitor: true, out: '2026-04-10', due: '2026-05-01', back: '2026-04-20', returnNote: 'Cover torn' }, { id: 'l7', bookId: 'b5', title: 'Knowing God', name: 'Clare', out: '2025-12-01', back: '' }];
   const rep = L.report([bk, rm, L.book({ id: 'b7', title: 'The Chosen', kind: 'DVD', acquired: '2027-01-01' }), last], loansR, '2026-01-01', '2026-06-30');
   ok(rep.lent.map(x => x.id).join() === 'l5,l6' && rep.returned.map(x => x.id).join() === 'l6' && rep.lost.map(x => x.id).join() === 'l5' && rep.acquired.map(x => x.id).join() === 'b5' && rep.removed.map(x => x.title).join() === 'Old hymn book',
     'a report for a period: lent, returned, lost, acquired and removed (a lost item is not counted twice)');
   const rows = L.reportRows(rep);
-  ok(rows.length === 1 + 2 + 1 + 1 + 1 + 1 && rows[0][0] === 'What' && rows.some(r => r[0] === 'Lost' && /072 555 0101/.test(r[4])), 'the report as rows for a spreadsheet');
+  ok(rows.length === 1 + 2 + 1 + 1 + 1 + 1 && rows[0][0] === 'What' && rows.some(r => r[0] === 'Lost' && /072 555 0101/.test(r[4])) && rows.some(r => r[0] === 'Returned' && /Cover torn/.test(r[5])), 'the report as rows for a spreadsheet, including return notes');
   ok(L.csv([['=SUM(A1)', 'a,b', 'say "hi"']]) === '"\'=SUM(A1)","a,b","say ""hi"""', 'CSV: commas and quotes kept; nothing a spreadsheet would run');
 }
 console.log('Importing a spreadsheet');

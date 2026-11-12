@@ -30,7 +30,8 @@ let m = L.place({ id: 'g3', name: 'Council', memberIds: [] }, ann, { roles: 'Tre
 ok(m.seats.a.roles.join() === 'Treasurer,Chair' && m.seats.a.role === 'Treasurer' && m.seats.a.kind === 'coopted', 'more than one role (no repeats); co-opted');
 m = L.place(m, ben, { role: 'Secretary' });
 ok(L.members(m).map(x => x.personId).join() === 'a,b', 'listed by their highest role (a Treasurer who is also Chair comes first)');
-ok(L.seat({ kind: 'boss' }).kind === '' && L.seat({ role: 'Chair' }).roles.join() === 'Chair', 'an unknown kind is a plain member; a single role still works');
+ok(L.seat({ kind: 'boss' }).kind === 'elected' && L.seat({ kind: '' }).kind === 'elected' && L.seat({ role: 'Chair' }).roles.join() === 'Chair', 'unknown and older blank membership types become elected; a single role still works');
+ok(L.seat({ kind: 'other', kindOther: '  Community   representative ' }).kindOther === 'Community representative' && L.seat({ kind: 'coopted', kindOther: 'ignored' }).kindOther === '', 'only Other keeps its tidied membership description');
 // terms of office
 let c = { id: 'g4', name: 'Council', termYears: 3, maxTerms: 2, breakYears: 1, memberIds: [] };
 c = L.place(c, ann, { from: '2024-01-15' }); c = L.place(c, ben, { from: '2022-01-15', term: 2, termFrom: '2025-01-15' }); c = L.place(c, cara, { from: '2026-01-01' });

@@ -100,6 +100,7 @@ await env.withSecurityRulesDisabled(async ctx => {
 
 const as = role => { const [email, pid] = USERS[role]; return env.authenticatedContext('uid-' + role, { email, email_verified: true }).firestore(); };
 const db = { admin: as('admin'), pastor: as('pastor'), kids: as('kids'), rosters: as('rosters'), member: as('member') };
+const settingsPastor = env.authenticatedContext('uid-settings-pastor', { email: 'andile@example.com', email_verified: true }).firestore();
 const stranger = env.authenticatedContext('uid-x', { email: 'stranger@example.com', email_verified: true }).firestore();
 const unverified = env.authenticatedContext('uid-u', { email: 'tim@example.com', email_verified: false }).firestore();
 const nobody = env.unauthenticatedContext().firestore();
@@ -124,10 +125,33 @@ async function only(path, allowed) {
 console.log('Who may sign in');
 await t('people without access, unverified emails and signed-out visitors see nothing', async () => {
   for (const d of [stranger, unverified, nobody]) { await cannot(read(d, 'settings/church')); await cannot(read(d, 'people/p15')); await cannot(read(d, 'directory/p15')); }
+  await can(read(db.admin, 'settings/not-created-yet'));
 });
 await t('everyone can read their own access entry, not other people’s', async () => {
   await can(read(stranger, 'roles/stranger@example.com')); await can(read(db.member, 'roles/tim@example.com'));
   await cannot(read(db.member, 'roles/linda@example.com')); await can(read(db.admin, 'roles/tim@example.com'));
+});
+await t('brochure content is private to Administrators, including for Pastors who can change settings', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('brochures/church').set({ design: {}, members: {} }); });
+  await can(read(db.admin, 'brochures/church'));
+  await cannot(read(db.pastor, 'brochures/church'));
+  await cannot(read(db.member, 'brochures/church'));
+  await cannot(read(stranger, 'brochures/church'));
+  await cannot(read(unverified, 'brochures/church'));
+  await cannot(read(nobody, 'brochures/church'));
+  await cannot(db.pastor.doc('brochures/church').set({ members: { texts: {} } }));
+  await cannot(db.member.doc('brochures/church').set({ members: { texts: {} } }));
+  await cannot(db.admin.doc('settings/church').update({ brochures: { members: { texts: {} } } }));
+  await cannot(settingsPastor.doc('settings/church').update({ brochures: { members: { texts: {} } } }));
+  await can(db.admin.doc('brochures/church').update({ members: { texts: { title: 'Welcome' } } }));
+});
+await t('legacy brochure settings are private until an Administrator moves them', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ brochures: { members: { texts: {} } } }); });
+  await can(read(db.admin, 'settings/church'));
+  await cannot(read(db.member, 'settings/church'));
+  await cannot(read(robotDb, 'settings/church'));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ brochures: firebase.firestore.FieldValue.delete() }); });
+  await can(read(db.member, 'settings/church'));
 });
 await t('only Administrators give access, and only known roles', async () => {
   await cannot(db.member.doc('roles/tim@example.com').set({ role: 'admin', personId: 'p14' }));

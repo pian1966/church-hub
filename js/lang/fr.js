@@ -5,6 +5,7 @@ I18n.add('fr', {
   dow: ["dim.", "lun.", "mar.", "mer.", "jeu.", "ven.", "sam."],
   words: {
     "All": "All",
+    "Made in South Africa": "Fabriqué en Afrique du Sud",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

@@ -5,6 +5,7 @@ I18n.add('yo', {
   dow: ["Àìk", "Ajé", "Ìsẹ́", "Ọjọ́r", "Ọjọ́b", "Ẹtì", "Àbá"],
   words: {
     "All": "All",
+    "Made in South Africa": "Ti a ṣe ní Gúúsù Áfíríkà",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

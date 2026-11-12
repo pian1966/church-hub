@@ -5,6 +5,7 @@ I18n.add('nl', {
   dow: ["zo", "ma", "di", "wo", "do", "vr", "za"],
   words: {
     "All": "All",
+    "Made in South Africa": "Gemaakt in Zuid-Afrika",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

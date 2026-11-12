@@ -72,8 +72,18 @@ module.exports = async function (ctx) {
 
   /* ---------- Member ---------- */
   console.log('Member (Tim):');
-  s = await session('tim.jacobs@example.com', seedDocs());
+  const memberSeed = seedDocs();
+  memberSeed['settings/church'].librarianIds = ['p14'];
+  s = await session('tim.jacobs@example.com', memberSeed);
   await tour(s, 'member');
+  await s.go('about');
+  check(!(await s.page.$('#about-brochures')), 'a member who is a librarian does not see the Administrator-only brochure editor');
+  await s.go('about/brochure/members');
+  check(!(await s.page.$('#bro-frame')) && !(await s.page.$('[data-act="about:broedit"]')), 'a member cannot open the brochure editor by entering its address');
+  const brochureAccess = await s.page.evaluate(() => ({ admin: Store.isAdmin(), data: Store.brochures(), save: Store.setBrochures({ members: { texts: {} } }) }));
+  check(!brochureAccess.admin && brochureAccess.data === null && brochureAccess.save === false, 'a librarian/member cannot read or save brochure content through Store');
+  check(!(await s.docsNow())['brochures/church'], 'the member/librarian device never loads the private brochure document');
+  await s.go('home');
   await s.go('people'); const dirText = await s.text();
   check(dirText.includes('Jacobs, Clare') && !dirText.includes('Smith, Megan') && !dirText.includes('Daniels, Ruth') && !dirText.includes('Aisha'), 'directory shows only adults who agreed to be listed');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-mobile', '082 999 0000'); await s.page.click('[data-act="people:save"]'); await s.settle();
@@ -140,6 +150,17 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="me:withdraw"]'); await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14').length === 1, 'they can withdraw an offer');
   check(await s.page.evaluate(() => Store.list('serveOffers').every(o => o.personId === 'p14')), 'they see only their own offers');
+  await finish(s);
+
+  console.log('Visitor (Jason):');
+  const visitorSeed = seedDocs();
+  visitorSeed['roles/visitor@example.com'] = { role: 'member', personId: 'p10' };
+  s = await session('visitor@example.com', visitorSeed);
+  await s.go('about');
+  check(!(await s.page.$('#about-brochures')), 'a visitor does not see the Administrator-only brochure editor');
+  await s.go('about/brochure/churches');
+  const visitorBrochure = await s.page.evaluate(() => ({ admin: Store.isAdmin(), data: Store.brochures(), save: Store.setBrochures({ members: { texts: {} } }) }));
+  check(!(await s.page.$('#bro-frame')) && !visitorBrochure.admin && visitorBrochure.data === null && visitorBrochure.save === false, 'a visitor cannot load or change brochure content, even by opening its address');
   await finish(s);
 
   console.log('Administrator: what others can see of contact details');

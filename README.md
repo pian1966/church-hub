@@ -1,6 +1,9 @@
 # Church Hub
 
-A replacement for Elvanto for Christ Church Howick – people, rosters (families and friends kept together), staff leave (Leave Manager built in) and POPIA privacy tools.
+Church Hub helps churches care for people and organise their work. It includes a people directory, households, consent and
+privacy tools; service rosters and leave; Care Groups, Midweek Groups and leadership; messages, an archive and a library;
+and a members' page for updating details, serving and days away. Access is controlled by role, and each church uses its own
+Firebase project and records.
 
 - **Try the demo:** https://pian1966.github.io/church-hub/?demo (made-up people; changes stay in your browser)
 - **Read first:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/POPIA.md](docs/POPIA.md) · [docs/ROADMAP.md](docs/ROADMAP.md) (to do) · [docs/CHANGELOG.md](docs/CHANGELOG.md) (done)

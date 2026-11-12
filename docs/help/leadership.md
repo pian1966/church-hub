@@ -25,6 +25,13 @@ For: Administrators, Pastors
 On **Leadership**, tap the pencil next to the person. A person can have one role and one title, and several portfolios –
 separate them with commas (*Finance, Buildings*).
 
+## How is someone's type of membership recorded?
+For: Administrators, Pastors
+
+When adding or editing a person in a leadership group, choose **Elected Member**, **Co-opted Member**, or **Other** under
+**Type of Membership**. If you choose **Other**, describe it. A group can also keep each person's term number and dates of
+service; its term settings show when a term is due to end.
+
 ## Someone's time on the Council has ended. What do I do?
 For: Administrators, Pastors
 Also asked: Remove someone from the Council. A warden stepped down. End of term.

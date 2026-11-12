@@ -5,6 +5,7 @@ I18n.add('ve', {
   dow: ["Swo", "Mus", "Vhi", "Rar", "Ṋa", "Ṱan", "Mug"],
   words: {
     "All": "All",
+    "Made in South Africa": "Zwi itwa Afurika Tshipembe",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

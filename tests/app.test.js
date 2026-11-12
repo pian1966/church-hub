@@ -51,6 +51,7 @@ function seedDocs(opts) {
     Object.keys(out).filter(k => k.startsWith('guardians/')).forEach(k => delete out[k]);
     Object.keys(out).filter(k => k.startsWith('people/')).forEach(k => { if (out[k].category === 'Church Partner') out[k].category = 'Member'; if (out[k].category === 'Attender') out[k].category = 'Visitor'; });
   }
+  if (opts && opts.legacyBrochure) out['settings/church'].brochures = { design: { accent: '#123456', font: 'Lora' }, members: { texts: {}, hidden: {} } };
   if (opts && opts.v2) {   // data from before "Partner" became "Church Partner"
     out['settings/church'].dataVersion = 2;
     Object.keys(out).filter(k => k.startsWith('people/')).forEach(k => { if (out[k].category === 'Church Partner') out[k].category = 'Partner'; });

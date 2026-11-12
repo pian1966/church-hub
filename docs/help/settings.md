@@ -107,11 +107,14 @@ Open **About → Brochures** and choose **For our members** or **For other churc
 - **Edit the wording**: click any heading or text on the brochure and type – for example your office's phone and email in
   **Need a hand?**. **Hide** takes away a block you don't want; **Show** brings it back. Changes save by themselves; tap
   **Done editing** when you've finished.
+- **Language**: choose a language in the brochure editor. Wording you change is saved for that language only; the original
+  brochure wording remains the fallback when you have not changed a line in that language.
 - **Colour** and **Font**: Church Hub orange, your church's own colour (Settings → Colours) or any colour, and a choice of fonts.
 - **Print or save as PDF**: A4 landscape, both sides, flipping on the short edge, then fold in three.
-If a red warning says a panel doesn't fit, shorten its text or hide a block. **Back to the original wording** and **Back to
-Church Hub's colour and font** undo your changes. When Church Hub updates a brochure's wording, any change you made to that
-line is listed so you can redo it.
+If a red warning says a panel doesn't fit, shorten its text or hide a block. **Back to the original wording** clears wording
+changes for the language you selected; **Back to Church Hub's colour and font** resets the design. When Church Hub updates
+a brochure's wording, any change you made to that line is listed so you can redo it. Only Administrators can open or change
+the editor; its saved wording is kept separately from general church settings.
 
 ## How do I check which version we're on?
 For: Everyone

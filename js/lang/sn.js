@@ -5,6 +5,7 @@ I18n.add('sn', {
   dow: ["Svo", "Muv", "Chp", "Cht", "Chn", "Chs", "Mug"],
   words: {
     "All": "All",
+    "Made in South Africa": "Yakagadzirwa muSouth Africa",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

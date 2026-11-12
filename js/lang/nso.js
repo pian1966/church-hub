@@ -5,6 +5,7 @@ I18n.add('nso', {
   dow: ["Lam", "Mos", "Lbb", "Lbr", "Lbn", "Lbh", "Mok"],
   words: {
     "All": "All",
+    "Made in South Africa": "E dirilwe Afrika Borwa",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

@@ -126,7 +126,7 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(docs[dvd].removed && docs[dvd].why === 'Damaged' && docs[dvd].whyNote === 'Scratched', 'an item is taken out of the library with why (not deleted)');
   await s.page.click('[data-act="library:report"]'); await s.page.waitForSelector('#lib-rep'); t = await s.page.textContent('#lib-rep');
-  check(/Lent\s*2/.test(t) && /Returned\s*1/.test(t) && /Lost\s*1/.test(t) && /Acquired\s*2/.test(t) && /Taken out of the library\s*1[\s\S]*The Chosen/.test(t), 'reports: what was lent, returned, lost, acquired and taken out this year');
+  check(/Lent\s*2/.test(t) && /Returned\s*1/.test(t) && /Lost\s*1/.test(t) && /Acquired\s*2/.test(t) && /Removed from Library by Librarian\s*1[\s\S]*The Chosen/.test(t), 'reports: what was lent, returned, lost, acquired and taken out this year');
   const [rdl] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="library:reportcsv"]')]);
   const rcsv = ctx.fs.readFileSync(await rdl.path(), 'utf8');
   check(/^﻿What,Date,Title/.test(rcsv) && /Lost,\d{4}-\d\d-\d\d,Knowing God/.test(rcsv) && /Removed,[^\n]*The Chosen[^\n]*Damaged: Scratched/.test(rcsv), 'and downloads it as a spreadsheet');

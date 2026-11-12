@@ -29,9 +29,14 @@
   function about(m) { return [m.title].concat(m.portfolios || []).filter(Boolean).map(esc).concat(dates(m).map(esc)).join(' · '); }
   /** Roles as shown: the suggested ones (Chair, Secretary…) in the chosen language, the church's own as typed. */
   function roleName(r) { return L.ROLES.indexOf(r) >= 0 ? T(r) : r; }
+  function membershipName(m) {
+    if (m.kind === 'coopted') return T('Co-opted Member');
+    if (m.kind === 'other') return T('Other') + (m.kindOther ? ': ' + m.kindOther : '');
+    return T('Elected Member');
+  }
   function roleTags(m) {
     return (m.roles || []).map(function (r) { return ' <span class="tag ok" data-own-words>' + esc(roleName(r)) + '</span>'; }).join('') +
-      (m.kind === 'coopted' ? ' <span class="tag">' + T('Co-opted') + '</span>' : '');
+      ' <span class="tag">' + esc(membershipName(m)) + '</span>';
   }
   /** Where someone is in their term of office: a bar per term allowed (the current one partly filled), with the dates. */
   function termBar(b, m, edit) {
@@ -68,7 +73,7 @@
         '<button class="icon-btn ghost" data-act="leaders:delgroup" data-id="' + esc(b.id) + '" aria-label="' + esc(T('Delete {name}', { name: b.name })) + '" title="' + esc(T('Delete the group')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</span></div>' + list +
       (past.length ? '<details class="sub" style="margin-top:10px"><summary>' + T('Served before ({n})', { n: past.length }) + '</summary><div class="list">' + past.map(function (p) {
         var span = [p.from ? H.fmt(p.from, true) : '', p.to ? H.fmt(p.to, true) : ''].filter(Boolean).join(' – ');
-        return '<div class="item"><span class="grow"><b>' + esc(p.name || T('Someone')) + '</b><small data-own-words>' + (p.roles && p.roles.length ? p.roles.map(roleName) : [p.role]).concat([p.title, p.kind === 'coopted' ? T('Co-opted') : '', p.term > 1 ? T('Term {n}', { n: p.term }) : '']).concat(p.portfolios || []).filter(Boolean).map(esc).concat(span ? [esc(span)] : []).join(' · ') + '</small></span>' +
+        return '<div class="item"><span class="grow"><b>' + esc(p.name || T('Someone')) + '</b><small data-own-words>' + (p.roles && p.roles.length ? p.roles.map(roleName) : [p.role]).concat([p.title, membershipName(p), p.term > 1 ? T('Term {n}', { n: p.term }) : '']).concat(p.portfolios || []).filter(Boolean).map(esc).concat(span ? [esc(span)] : []).join(' · ') + '</small></span>' +
           (edit ? '<button class="icon-btn ghost" data-act="leaders:forget" data-g="' + esc(b.id) + '" data-i="' + p.i + '" aria-label="' + esc(T('Delete {name}', { name: p.name || '' })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</div>';
       }).join('') + '</div></details>' : '') + '</section>';
   }
@@ -96,7 +101,8 @@
       (rest ? '<p class="note warn">' + esc(T('{name} served the most terms in a row allowed. Their break ends {date}.', { name: name, date: H.fmt(rest, true) })) + '</p>' : '') +
       '<label class="field">' + T('Roles') + '<input id="lb-role" maxlength="200" value="' + esc((s.roles || []).map(roleName).join(', ')) + '"><small>' + T('More than one? Separate with commas.') + '</small></label>' +
       '<div class="btns lb-roles" style="margin:-4px 0 12px">' + L.ROLES.map(function (x) { return '<button type="button" class="btn small ghost" data-act="leaders:addrole" data-r="' + esc(T(x)) + '">+ ' + esc(T(x)) + '</button>'; }).join('') + '</div>' +
-      '<label class="field">' + T('Membership') + '<select id="lb-kind"><option value="">' + T('Member') + '</option><option value="coopted"' + (s.kind === 'coopted' ? ' selected' : '') + '>' + T('Co-opted') + '</option></select></label>' +
+      '<label class="field">' + T('Type of Membership') + '<select id="lb-kind"><option value="elected"' + (s.kind !== 'coopted' && s.kind !== 'other' ? ' selected' : '') + '>' + T('Elected Member') + '</option><option value="coopted"' + (s.kind === 'coopted' ? ' selected' : '') + '>' + T('Co-opted Member') + '</option><option value="other"' + (s.kind === 'other' ? ' selected' : '') + '>' + T('Other') + '</option></select></label>' +
+      '<label class="field req" id="lb-kind-other-wrap"' + (s.kind === 'other' ? '' : ' hidden') + '>' + T('Describe the membership type') + '<input id="lb-kind-other" maxlength="80" value="' + esc(s.kindOther || '') + '"' + (s.kind === 'other' ? ' required' : '') + '></label>' +
       '<label class="field">' + T('Title') + '<input id="lb-title" maxlength="80" value="' + esc(s.title) + '" placeholder="' + esc(T('e.g. Churchwarden')) + '"></label>' +
       '<label class="field">' + T('Portfolios') + '<input id="lb-port" maxlength="400" value="' + esc(s.portfolios.join(', ')) + '" placeholder="' + esc(T('e.g. Finance, Buildings')) + '"><small>' + T('What they look after. Separate with commas.') + '</small></label>' +
       '<div class="two"><label class="field">' + T('From') + '<input type="date" id="lb-from" value="' + esc(s.from) + '"></label><label class="field">' + T('To') + '<input type="date" id="lb-to" value="' + esc(s.to) + '">' +
@@ -104,6 +110,11 @@
       '<div class="two"><label class="field">' + T('Which term of office') + '<input type="number" id="lb-term" min="1" max="20" value="' + esc(s.term || 1) + '"></label>' +
         '<label class="field">' + T('This term started') + '<input type="date" id="lb-termfrom" value="' + esc(s.termFrom || '') + '"><small>' + T('For a second or later term. Empty: the From date.') + '</small></label></div></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="leaders:saveseat" data-g="' + esc(b.id) + '" data-id="' + esc(p.id) + '"' + (isNew ? ' data-new="1"' : '') + '>' + T('Save') + '</button></div>', name);
+    var kind = document.getElementById('lb-kind'), kindOther = document.getElementById('lb-kind-other'), kindOtherWrap = document.getElementById('lb-kind-other-wrap');
+    kind.addEventListener('change', function () {
+      kindOtherWrap.hidden = kind.value !== 'other';
+      kindOther.required = kind.value === 'other';
+    });
   }
   /** Roles typed in the chosen language go back to their English names when they are one of the suggested ones. */
   function typedRoles(v) { return L.roles(v).map(function (x) { var hit = L.ROLES.filter(function (r) { return T(r).toLowerCase() === x.toLowerCase() || r.toLowerCase() === x.toLowerCase(); })[0]; return hit || x; }); }
@@ -160,7 +171,8 @@
       saveseat: function (el) {
         var b = S.get('leaderBodies', el.dataset.g), pid = el.dataset.id; if (!b || !manager()) return;
         var p = S.get('people', pid) || { id: pid, firstName: (b.names || {})[pid] || '', lastName: '' };
-        var info = { roles: typedRoles(val('lb-role')), kind: val('lb-kind'), title: val('lb-title'), portfolios: val('lb-port'), from: val('lb-from'), to: val('lb-to'), term: val('lb-term'), termFrom: val('lb-termfrom') };
+        var info = { roles: typedRoles(val('lb-role')), kind: val('lb-kind'), kindOther: val('lb-kind-other'), title: val('lb-title'), portfolios: val('lb-port'), from: val('lb-from'), to: val('lb-to'), term: val('lb-term'), termFrom: val('lb-termfrom') };
+        if (info.kind === 'other' && !info.kindOther) { H.toast(T('Describe the membership type'), true); return; }
         if (info.from && info.to && info.to < info.from) { H.toast(T('The end date is before the start date'), true); return; }
         var x = L.place(b, p, info), s = x.seats[pid];
         S.put('leaderBodies', x, (el.dataset.new ? 'Added ' + H.name(p) + ' to the leadership group ' : 'Changed ' + H.name(p) + ' on the leadership group ') + b.name + (s.roles.length ? ' (' + s.roles.join(', ') + ')' : ''));
@@ -206,7 +218,7 @@
   function tag(p) {
     var u = me(); if (!p || !H.isOn('leaders')) return '';
     return L.of(S.list('leaderBodies'), p.id).filter(function (o) { return L.sees(o.body, u && u.id, manager()); }).map(function (o) {
-      var what = (o.roles || []).map(roleName).concat(o.kind === 'coopted' ? [T('Co-opted')] : []);
+      var what = (o.roles || []).map(roleName).concat([membershipName(o)]);
       return ' <a class="tag tag-link" style="--c:#5B4B8A" href="#/leaders">' + esc((what.length ? what.join(', ') + ' · ' : '') + o.body.name) + '</a>';
     }).join('');
   }

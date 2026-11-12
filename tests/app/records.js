@@ -239,7 +239,7 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', seed2); await s.go('leaders'); t = await s.text();
   check(/terms? of office ends? soon[\s\S]*The term of Tim Jacobs on Church Council ends .*Term 1 of 2 · May stand for another term/.test(t), 'four months before a term of office ends, the Administrator is told – and that they may stand again');
   await s.page.click('.lb-panel details.cg-fold[data-k="lb-lbT:c"] > summary');
-  check(/Tim Jacobs\s*Chair\s*Treasurer/.test(t) && /Clare Jacobs\s*Co-opted/.test(t) && t.includes('3-year terms, at most 2 terms in a row, then a 1-year break'), 'more than one role on the Council; a co-opted member; the group’s term rules');
+  check(/Tim Jacobs\s*Chair\s*Treasurer/.test(t) && /Clare Jacobs\s*Co-opted Member/.test(t) && t.includes('3-year terms, at most 2 terms in a row, then a 1-year break'), 'more than one role on the Council; a co-opted member; the group’s term rules');
   check((await s.page.$$('.lb-panel .term-bar')).length === 2 && /Term 1 of 2 · \d+% through · Ends/.test(t) && !!(await s.page.$('.term.soon')), 'a bar shows how far each leader is through which term');
   await s.page.click('[data-act="leaders:renew"][data-id="p14"]'); await s.settle(); docs = await s.docsNow();
   check(docs['leaderBodies/lbT'].seats.p14.term === 2 && !!docs['leaderBodies/lbT'].seats.p14.termFrom && /Term 2 of 2/.test(await s.text()), 'their next term is started (the second of two)');
@@ -248,10 +248,16 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="leaders:saveseat"]'); await s.settle(); docs = await s.docsNow();
   check(docs['leaderBodies/lbT'].seats.p15.roles.join() === 'Secretary,Youth rep' && docs['leaderBodies/lbT'].seats.p15.kind === 'coopted', 'roles are chosen or typed, several at once; co-opted stays');
   await s.page.click('[data-act="leaders:seat"][data-id="p15"]'); await s.page.waitForSelector('#lb-kind');
-  check((await s.page.locator('#lb-kind option').allTextContents()).join('|') === 'Member|Co-opted', 'membership offers Member and Co-opted');
-  await s.page.click('#modal [data-act="hub:close"]');
+  check((await s.page.locator('#lb-kind option').allTextContents()).join('|') === 'Elected Member|Co-opted Member|Other', 'membership offers elected, co-opted and other');
+  await s.page.selectOption('#lb-kind', 'other');
+  check(await s.page.locator('#lb-kind-other-wrap').isVisible() && await s.page.locator('#lb-kind-other').getAttribute('required') !== null, 'Other opens a required description field');
+  await s.page.click('[data-act="leaders:saveseat"]'); await s.settle();
+  check((await s.docsNow())['leaderBodies/lbT'].seats.p15.kind === 'coopted', 'cannot save Other without its description');
+  await s.page.fill('#lb-kind-other', 'Community representative');
+  await s.page.click('[data-act="leaders:saveseat"]'); await s.settle(); docs = await s.docsNow(); t = await s.text();
+  check(docs['leaderBodies/lbT'].seats.p15.kind === 'other' && docs['leaderBodies/lbT'].seats.p15.kindOther === 'Community representative' && t.includes('Other: Community representative'), 'Other membership type and its description are saved and shown');
   await s.go('people/p/p14'); t = await s.text();
-  check(t.includes('Chair, Treasurer · Church Council') && !!(await s.page.$('a.tag-link[href="#/leaders"]')), 'a person’s page shows their leadership role as a chip');
+  check(t.includes('Chair, Treasurer, Elected Member · Church Council') && !!(await s.page.$('a.tag-link[href="#/leaders"]')), 'a person’s page shows their leadership role and membership type as a chip');
   await s.go('library'); t = await s.text();
   check(/Mere Christianity\s*Reminder due/.test(t) && t.includes('had for 23 days'), 'three weeks after it was borrowed, the librarian sees a reminder is due and how long they have had it');
   await s.page.click('[data-act="library:remind"][data-id="lnT"]'); await s.page.waitForSelector('#lib-rem');
@@ -275,7 +281,7 @@ module.exports = async function (ctx) {
 
   console.log('A Council member (Basic access):');
   s = await session('tim.jacobs@example.com', live2); await s.go('me'); await s.page.waitForTimeout(300); t = await s.page.textContent('.me-chips');
-  check(t.includes('Chair, Treasurer · Church Council') && t.includes('1 library item borrowed') && !!(await s.page.$('.me-chips a[href="#/library"]')) && !!(await s.page.$('.me-chips a[href="#/leaders"]')), 'the Me page shows their leadership role and their borrowed books as chips that open those pages');
+  check(t.includes('Chair, Treasurer, Elected Member · Church Council') && t.includes('1 library item borrowed') && !!(await s.page.$('.me-chips a[href="#/library"]')) && !!(await s.page.$('.me-chips a[href="#/leaders"]')), 'the Me page shows their leadership role and membership type and their borrowed books as chips that open those pages');
   await s.go('home'); t = await s.text();
   check(t.includes('Friendly reminder: you have had “Mere Christianity” from the church library for 23 days') && !t.includes('The term of'), 'a friendly reminder on their To do list (terms of office are for the Administrators and the Rector)');
   await s.go('library'); t = await s.text();

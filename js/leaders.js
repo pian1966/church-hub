@@ -1,11 +1,11 @@
 /*
  * Church Hub – leadership groups: the Church Council, the elders, ministry leaders and so on (each church names its own).
  * A leadership group: leaderBodies/{id} = { name, open, memberIds, names: { personId: 'First Last' },
- *   seats: { personId: { role, roles, title, portfolios: [..], kind, from, to, term, termFrom } },  – who serves on it now
- *   past: [{ personId, name, role, roles, title, portfolios, kind, from, to, term }],   – who served before (the church's record)
+ *   seats: { personId: { role, roles, title, portfolios: [..], kind, kindOther, from, to, term, termFrom } },  – who serves on it now
+ *   past: [{ personId, name, role, roles, title, portfolios, kind, kindOther, from, to, term }],   – who served before (the church's record)
  *   termYears, maxTerms, breakYears }   – how long a term of office is, how many terms in a row are allowed, and the break after
  * roles = what they do on the group (Chair, Secretary, Treasurer… – more than one is allowed; role = the first, for older
- * readers); kind = '' (a member) or 'coopted' (co-opted); term = which term of office they are in (1, 2…), started on
+ * readers); kind = elected, coopted or other (older blank values mean elected); kindOther describes 'other'; term = which term of office they are in (1, 2…), started on
  * termFrom (or from, for their first); to = when the current term ends (worked out from termYears when not typed);
  * title = what they are called (Churchwarden, Elder…);
  * portfolios = what they look after (Finance, Buildings, Youth…). All are the church's own words.
@@ -28,13 +28,15 @@ var Leaders = (function () {
     (Array.isArray(s) ? s : String(s || '').split(/[,;\n]/)).forEach(function (x) { x = text(x, 60); if (x && out.map(function (y) { return y.toLowerCase(); }).indexOf(x.toLowerCase()) < 0) out.push(x); });
     return out.slice(0, 8);
   }
-  var KINDS = ['', 'coopted'];
+  var KINDS = ['elected', 'coopted', 'other'];
   /** "Chair, Treasurer" or ['Chair', 'Treasurer'] → ['Chair', 'Treasurer'] (at most 4, no repeats). */
   function roles(s) { return portfolios(s).slice(0, 4); }
   function seat(info) {
     info = info || {};
     var rs = roles(info.roles && (info.roles.length || typeof info.roles === 'string') ? info.roles : info.role);
-    var out = { role: rs[0] || '', roles: rs, title: text(info.title), portfolios: portfolios(info.portfolios), kind: KINDS.indexOf(info.kind) >= 0 ? info.kind : '', from: text(info.from, 10), to: text(info.to, 10) };
+    var kind = info.kind || 'elected';
+    if (KINDS.indexOf(kind) < 0) kind = 'elected';
+    var out = { role: rs[0] || '', roles: rs, title: text(info.title), portfolios: portfolios(info.portfolios), kind: kind, kindOther: kind === 'other' ? text(info.kindOther) : '', from: text(info.from, 10), to: text(info.to, 10) };
     var t = Math.round(+info.term) || 0; if (t > 1) out.term = Math.min(t, 20);
     if (info.termFrom && t > 1) out.termFrom = text(info.termFrom, 10);
     return out;

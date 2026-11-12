@@ -102,7 +102,7 @@
       (back.length ? '<details class="sub" style="margin-top:10px"><summary>' + T('Recently returned') + '</summary><div class="list">' + back.map(function (l) {
         return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (l.lost ? ' <span class="tag bad">' + T('Lost') + '</span>' : '') + '<small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + '</small></span></div>'; }).join('') +
         '</div><p class="hint">' + T('Returned loans are removed after a year.') + '</p></details>' : '') + '</section>';
-    if (gone.length) html += '<section class="panel" id="lib-gone"><details><summary>' + T('Taken out of the library') + ' <span class="muted small">' + TN('{n} item', '{n} items', gone.length) + '</span></summary><div class="list">' + gone.map(function (b) {
+    if (gone.length) html += '<section class="panel" id="lib-gone"><details><summary>' + T('Removed from Library by Librarian') + ' <span class="muted small">' + TN('{n} item', '{n} items', gone.length) + '</span></summary><div class="list">' + gone.map(function (b) {
       return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag grey">' + esc(T(b.why || 'Other')) + '</span><small>' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small></span>' +
         '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button></span></div>'; }).join('') + '</div></details></section>';
     if (!books.length) return html + '<p class="empty">' + T('Nothing in the library yet.') + '</p>';
@@ -191,7 +191,7 @@
   /* ---------- lending: to someone on the church's list, or to a visitor – always with a mobile number ---------- */
   function lendDialog(b, step) {
     var finder = window.CareUI && CareUI.finder; if (!finder) return;
-    var body = '<label class="field req">' + T('Due back') + '<input type="date" id="lib-due" value="' + esc(val('lib-due') || L.addDays(H.today(), L.LOAN_DAYS)) + '"></label>';
+    var body = '<label class="field req">' + T('Date borrowed') + '<input type="date" id="lib-due" value="' + esc(val('lib-due') || L.addDays(H.today(), L.LOAN_DAYS)) + '"></label>';
     if (step && step.person) {
       var p = step.person;
       body += '<p>' + esc(T('{name} has no mobile number on record. Type one so the item can be traced.', { name: H.name(p) })) + '</p>' +
@@ -327,7 +327,7 @@
       part(T('Returned'), rep.returned, function (l) { return t(l) + '<small>' + esc(H.fmt(l.back, true)) + ' · ' + esc(l.name) + '</small>'; }) +
       part(T('Lost'), rep.lost, function (l) { return t(l) + '<small>' + esc(H.fmt(l.back, true)) + ' · ' + who(l) + '</small>'; }) +
       part(T('Acquired'), rep.acquired, function (b) { return t(b) + '<small>' + esc([H.fmt(b.acquired, true), b.how ? T(b.how) : '', b.from].filter(Boolean).join(' · ')) + '</small>'; }) +
-      part(T('Taken out of the library'), rep.removed, function (b) { return t(b) + '<small>' + esc(H.fmt(b.removed, true) + ' · ' + T(b.why || 'Other') + (b.whyNote ? ' – ' + b.whyNote : '')) + '</small>'; }) +
+      part(T('Removed from Library by Librarian'), rep.removed, function (b) { return t(b) + '<small>' + esc(H.fmt(b.removed, true) + ' · ' + T(b.why || 'Other') + (b.whyNote ? ' – ' + b.whyNote : '')) + '</small>'; }) +
       '</div></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Reports'));
   }
   function readDates() { var f = val('lib-rfrom'), t = val('lib-rto'); if (f) repFrom = f; if (t) repTo = t; if (repFrom > repTo) { var x = repFrom; repFrom = repTo; repTo = x; } }
@@ -406,7 +406,7 @@
       removesave: function (el) {
         var b = S.get('books', el.dataset.id); if (!b || !librarian()) return;
         var x = L.removeItem(b, val('lib-why'), val('lib-whynote'), H.today());
-        S.put('books', x, 'Took “' + b.title + '” out of the library (' + x.why + ')'); H.closeModal(); H.render(); H.toast(T('Taken out of the library'));
+        S.put('books', x, 'Took “' + b.title + '” out of the library (' + x.why + ')'); H.closeModal(); H.render(); H.toast(T('Removed from Library by Librarian'));
       },
       putback: function (el) {
         var b = S.get('books', el.dataset.id); if (!b || !librarian()) return;

@@ -55,7 +55,7 @@ shelf.
 For: Librarians
 Also asked: Check out a book. Return a book. Mark a book as returned.
 
-Tap **Lend** next to the item, check the **Due back** date (three weeks unless you change it), type part of the borrower's
+Tap **Lend** next to the item, check the **Date borrowed** date (three weeks unless you change it), type part of the borrower's
 name and pick them. Every borrower needs a mobile number so an item can be traced: if their record has none, Church Hub asks
 you to type one. For **someone not on the church's list**, open that part and type their name and mobile number.
 When the item comes back, tap **Returned** next to it under **On loan** – the number is then no longer kept. Overdue items

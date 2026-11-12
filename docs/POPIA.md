@@ -232,8 +232,9 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
 - Who sees: everyone signed in, or only the group's own members when an Administrator or Pastor makes it "members only";
   Administrators and Pastors manage (database rules, tested). "Served before" keeps past office-bearers as the church's
   record; an Administrator or Pastor can delete a line (e.g. on a deletion request). Changes are in the audit log.
-- Terms of office (which term someone is in, when it started and ends) and "co-opted" are part of the office-bearer's
-  public role and follow the same access. The notice four months before a term ends, with whether the person may stand
+- Terms of office (which term someone is in, when it started and ends) and the membership type (Elected Member,
+  Co-opted Member or Other) are part of the office-bearer's public role and follow the same access. A description for
+  "Other" is public too, so it must describe the role rather than private information. The notice four months before a term ends, with whether the person may stand
   again, is shown only to Administrators and the Senior Pastor (Rector).
 ## Archive (minutes, plans, staff contracts, appraisals)
 - Purpose: keeping the church's records – governance (minutes), property (plans) and employment (contracts, appraisals).
@@ -262,7 +263,7 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   For someone on the church's list it is copied from their record; if their record has none, the librarian types one, and
   someone who may edit people (Administrators, Pastors) may also save it in that person's details (logged).
 - An item marked **lost** keeps the borrower's mobile number on that loan, so the church can follow it up; the loan (with the
-  number) is removed a year later like any other. Library reports and their CSV download are for librarians only and logged.
+  number) is removed a year later like any other. Library reports, printing and CSV downloads are for librarians only and logged.
 - Visitors who borrow are not added to the church's list: their name lives only on the loan, which is removed a year after
   the item came back. Lending to a visitor is written in the audit log (no name or number in the entry).
 - What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators

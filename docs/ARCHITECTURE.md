@@ -119,7 +119,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `wordIdeas` | suggested better wording: { lang, en (the English text), text, note, personId, name, status waiting\|used\|declined, reply, reviewedBy, reviewedAt } |
 | `messages` | a message to a group or chosen people: { kind care\|group\|staff\|partners\|people, groupId, audience (its name, or the one chosen person's), some (only some of a group), title, body, fromId, fromName, to: [personIds worked out when sent], readBy: [personIds] } – see Messages below |
 | `msgGroups` | message groups (e.g. Worship team leaders): { name, memberIds, leaderIds, names } – Administrators and Pastors manage them |
-| `leaderBodies` | a leadership group (Council, elders…): { name, open, memberIds, names, seats: { personId: { role, title, portfolios, from, to } }, past: [served before] } – see Leadership below |
+| `leaderBodies` | a leadership group (Council, elders…): { name, open, memberIds, names, seats: { personId: { role, title, portfolios, kind: elected\|coopted\|other, kindOther, from, to } }, past: [served before] } – see Leadership below |
 | `archive` | a church record: { title, cat, date, note, access all\|body\|office\|private, bodyId, aboutId, aboutName, shownTo, link, file: { name, type, size, parts }, by }; its file is in `archive/{id}/parts/{n}` = { data: base64 } – see Archive below |
 | `books`, `loans` | the Library: a book { title, author, cat, copies, acquired, how, from, shelf, isbn, note, out } and a loan { bookId, title, personId, name, out, due, back } – see Library below |
 | `words` | approved wording, one document per language (`words/zu` = { words: { English: wording }, updatedAt, by }), used before the built-in translations |
@@ -568,12 +568,14 @@ screen-wide word changer leaves "Groups" elsewhere alone).
 ## Leadership (Leadership page; `js/leaders.js`, `js/mod-leaders.js`)
 Off until switched on (Settings → Apps; `optIn`). A leadership group is one `leaderBodies` document (like a care group):
 `memberIds` + `names`, and for each member a seat – `role` (Chair, Secretary…), `title` (Churchwarden, Elder…),
-`portfolios` (a list) and `from`/`to` dates, all the church's own words. Ending someone's time moves their seat to `past`
+`portfolios` (a list), membership type (`elected`, `coopted` or `other`; older blank values mean elected), an `other` description
+when needed, and `from`/`to` dates, all the church's own words. Ending someone's time moves their seat to `past`
 ("Served before"); "added by mistake" removes it without a trace. `open: true` = everyone signed in reads the group;
 otherwise only its members. Administrators and Pastors manage (rules: `manager()`). Everyone else loads two queries
 (`open == true`, and `memberIds` contains me – `plan()`); only names and roles are kept, never contact details.
 The Archive reads `memberIds` to decide who sees a group's records, so a group with records can't be deleted.
-- Each seat may have several `roles` (`role` = the first, for older readers), `kind: 'coopted'`, and – for terms of office –
+- Each seat may have several `roles` (`role` = the first, for older readers), a membership type and its description when set to
+  "Other", and – for terms of office –
   `term` (1, 2…) and `termFrom` (when the current term started; the first starts at `from`). A group's `termYears`,
   `maxTerms` and `breakYears` set the rules (0 = none); `to` is worked out from `termYears` when not typed.
   `Leaders.term()` gives which term, how far through (the bar), whether it ends within four months (`NOTICE_MONTHS`), and
@@ -615,6 +617,9 @@ lost / acquired / removed for the librarians (Reports, CSV via `Library.csv`, wh
 `Library.importPlan` reads a CSV (`parseCSV`, `,` or `;`), finds the columns by their headings (`COLUMNS`) and skips rows
 without a title and items already there (`sameItem`: same ISBN, else same title + author). The policy's words are shown as a
 page by `Library.policyHtml` (escapes everything, then headings, lists, **bold**, paragraphs). No rules change.
+**0.58:** the Library catalogue has tabs for all, on-loan, available, lost, being-repaired and permanently removed items.
+Librarians can mark an item as being repaired (all copies of that catalogue entry are unavailable until returned to the
+shelf). Reports use clickable activity tabs, with search, print and spreadsheet download; opening the print view is logged.
 **0.57:** Everyone can filter the catalogue by media type, title, author and subject, and sort by each field. Returning a
 loan can save an optional condition note (`returnNote`), shown to librarians in the returned-loan list and reports.
 Off until switched on. Everyone signed in reads `books` – books, DVDs, CDs, audiobooks, magazines, games (`kind`,

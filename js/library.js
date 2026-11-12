@@ -30,6 +30,7 @@ var Library = (function () {
       how: HOW.indexOf(b.how) >= 0 ? b.how : '', from: text(b.from), shelf: text(b.shelf, 60), isbn: text(b.isbn, 20), note: text(b.note, 500), out: Math.max(0, Math.round(+b.out) || 0) };
     if (b.cover) out.cover = text(b.cover, 40);
     if (b.removed) { out.removed = text(b.removed, 10); out.why = REASONS.indexOf(b.why) >= 0 ? b.why : 'Other'; if (b.whyNote) out.whyNote = text(b.whyNote, 200); }
+    if (b.repairing === true) out.repairing = true;
     ['id', 'createdAt', 'updatedAt'].forEach(function (k) { if (b[k]) out[k] = b[k]; });
     return out;
   }
@@ -40,7 +41,9 @@ var Library = (function () {
   /** How many copies of a book are on loan: counted from the loans when they can be seen (librarians), else the book's own count. */
   function outCount(b, loans) { return loans ? loans.filter(function (l) { return isOut(l) && l.bookId === b.id; }).length : Math.max(0, +b.out || 0); }
   /** How many copies are on the shelf. */
-  function free(b, loans) { return Math.max(0, (Math.max(1, +b.copies || 1)) - outCount(b, loans)); }
+  function free(b, loans) { return b && b.repairing ? 0 : Math.max(0, (Math.max(1, +b.copies || 1)) - outCount(b, loans)); }
+  /** Mark the whole catalogue item as being repaired, or return it to the shelf. */
+  function repair(b, repairing) { var x = copy(b); if (repairing) x.repairing = true; else delete x.repairing; return x; }
   /** A mobile number tidied for saving: digits, spaces, a leading + and ( ) - kept; '' unless it has 7 to 15 digits. */
   function phone(s) {
     var t = String(s || '').replace(/[^\d+()\- ]/g, '').replace(/\s+/g, ' ').trim(), d = t.replace(/\D/g, '');
@@ -88,11 +91,11 @@ var Library = (function () {
   }
   /** Take an item out of the library (lost, damaged, given away…): kept, marked removed, for the reports. */
   function removeItem(b, why, note, today) {
-    var x = copy(b); x.removed = today; x.why = REASONS.indexOf(why) >= 0 ? why : 'Other'; if (note) x.whyNote = text(note, 200); else delete x.whyNote;
+    var x = copy(b); delete x.repairing; x.removed = today; x.why = REASONS.indexOf(why) >= 0 ? why : 'Other'; if (note) x.whyNote = text(note, 200); else delete x.whyNote;
     return x;
   }
   /** Put a removed item back on the shelf (found again, or removed by mistake). */
-  function restore(b) { var x = copy(b); delete x.removed; delete x.why; delete x.whyNote; return x; }
+  function restore(b) { var x = copy(b); delete x.removed; delete x.why; delete x.whyNote; delete x.repairing; return x; }
   function inLibrary(b) { return !!b && !b.removed; }
   /** What happened between two dates (yyyy-mm-dd, both included): lent, returned, lost, acquired and removed. */
   function report(books, loans, from, to) {
@@ -112,7 +115,7 @@ var Library = (function () {
   function reportRows(rep, names) {
     names = names || {};
     var rows = [['What', 'Date', 'Title', 'Kind', 'Who', 'Detail']], nm = function (k) { return names[k] || k; };
-    rep.lent.forEach(function (l) { rows.push([nm('Lent'), l.out, l.title, '', l.name + (l.visitor ? ' (' + nm('Visitor') + ')' : ''), l.due ? nm('Due') + ' ' + l.due : '']); });
+    rep.lent.forEach(function (l) { rows.push([nm('On Loan'), l.out, l.title, '', l.name + (l.visitor ? ' (' + nm('Visitor') + ')' : ''), l.due ? nm('Due') + ' ' + l.due : '']); });
     rep.returned.forEach(function (l) { rows.push([nm('Returned'), l.back, l.title, '', l.name, [nm('Lent') + ' ' + l.out, l.returnNote ? nm('Note') + ': ' + l.returnNote : ''].filter(Boolean).join(' · ')]); });
     rep.lost.forEach(function (l) { rows.push([nm('Lost'), l.back, l.title, '', l.name + (l.mobile ? ' ' + l.mobile : ''), nm('Lent') + ' ' + l.out]); });
     rep.acquired.forEach(function (b) { rows.push([nm('Acquired'), b.acquired, b.title, nm(b.kind || 'Book'), b.from || '', [b.how ? nm(b.how) : '', (+b.copies || 1) > 1 ? b.copies + ' ×' : ''].filter(Boolean).join(' ')]); });
@@ -244,6 +247,6 @@ var Library = (function () {
   }
 
   return { intl: intl, REMIND_DAYS: REMIND_DAYS, daysOut: daysOut, remindDue: remindDue, REASONS: REASONS, lose: lose, removeItem: removeItem, restore: restore, inLibrary: inLibrary, report: report, reportRows: reportRows, csv: csv,
-    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, MAX_LIBRARIANS: MAX_LIBRARIANS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, roomForLibrarian: roomForLibrarian, policy: policy, addDays: addDays, book: book, isOut: isOut, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian };
+    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, MAX_LIBRARIANS: MAX_LIBRARIANS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, roomForLibrarian: roomForLibrarian, policy: policy, addDays: addDays, book: book, isOut: isOut, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, repair: repair, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian };
 })();
 if (typeof module !== 'undefined') module.exports = Library;

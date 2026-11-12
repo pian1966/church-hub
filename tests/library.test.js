@@ -20,6 +20,9 @@ loans.push(Object.assign({ id: 'l2' }, two.loan)); b = two.book;
 ok(L.lend(b, clare, '2026-11-12', '', loans) === null && L.free(b, loans) === 0 && L.free(b) === 0, 'no copy left: it can’t be lent');
 ok(L.lend(L.book({ id: 'b9', title: 'Y' }), tim, '2026-11-12', '2026-11-01', []).loan.due === '2026-12-03', 'a due date before today becomes three weeks');
 ok(L.onLoan(loans).map(l => l.id).join() === 'l2,l1' && L.overdue(loans[1], '2026-11-21') && !L.overdue(loans[1], '2026-11-20') && L.mine(loans, 'p14').length === 1, 'on loan: due soonest first; overdue the day after it was due; my own books');
+const repair = L.book({ id: 'repair', title: 'Repair item', repairing: true });
+ok(repair.repairing && L.free(repair) === 0 && L.lend(repair, tim, '2026-11-12', '', []) === null &&
+  !L.repair(repair, false).repairing, 'an item being repaired cannot be lent until returned to the shelf');
 const back = L.giveBack(loans[1], b, '2026-11-22', loans);
 ok(back.loan.mobile === '' && back.loan.back === '2026-11-22' && back.book.out === 1 && loans[1].back === '' && L.giveBack(back.loan, back.book, '2026-11-23', [loans[0], back.loan]).book.out === 1, 'returning: the date is kept and a copy is back on the shelf (not twice)');
 const notedBack = L.giveBack(loans[1], b, '2026-11-22', loans, 'Cover slightly torn');
@@ -83,7 +86,7 @@ console.log('Lost, removed, reports');
   ok(rep.lent.map(x => x.id).join() === 'l5,l6' && rep.returned.map(x => x.id).join() === 'l6' && rep.lost.map(x => x.id).join() === 'l5' && rep.acquired.map(x => x.id).join() === 'b5' && rep.removed.map(x => x.title).join() === 'Old hymn book',
     'a report for a period: lent, returned, lost, acquired and removed (a lost item is not counted twice)');
   const rows = L.reportRows(rep);
-  ok(rows.length === 1 + 2 + 1 + 1 + 1 + 1 && rows[0][0] === 'What' && rows.some(r => r[0] === 'Lost' && /072 555 0101/.test(r[4])) && rows.some(r => r[0] === 'Returned' && /Cover torn/.test(r[5])), 'the report as rows for a spreadsheet, including return notes');
+  ok(rows.length === 1 + 2 + 1 + 1 + 1 + 1 && rows[0][0] === 'What' && rows.some(r => r[0] === 'On Loan' && r[2] === 'Knowing God') && rows.some(r => r[0] === 'Lost' && /072 555 0101/.test(r[4])) && rows.some(r => r[0] === 'Returned' && /Cover torn/.test(r[5])), 'the report as rows for a spreadsheet, including return notes');
   ok(L.csv([['=SUM(A1)', 'a,b', 'say "hi"']]) === '"\'=SUM(A1)","a,b","say ""hi"""', 'CSV: commas and quotes kept; nothing a spreadsheet would run');
 }
 console.log('Importing a spreadsheet');

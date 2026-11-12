@@ -65,6 +65,12 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:appdocssave"]'); await s.settle(); docs = await s.docsNow();
   const pa = docs['settings/church'].partnerApp;
   check(pa.links.length === 2 && pa.links[1].label === 'Statement of faith' && pa.loyalty === '', 'saved: the constitution and the statement of faith; no declaration of loyalty when left empty');
+  await s.go('settings/application');
+  check(await s.page.isVisible('#ap-docs') && await s.page.isVisible('#ap-decltext'), 'Settings → Membership application: the declaration, the documents to read and the declaration of loyalty');
+  await s.go('settings/terminology'); await s.page.selectOption('#wd-service', 'Meeting');
+  check(await s.page.inputValue('.wd-1[data-k="service"]') === 'Meeting' && await s.page.inputValue('.wd-2[data-k="service"]') === 'Meetings', 'Church Words: “Church Meetings” fills in Meeting / Meetings');
+  await s.page.waitForTimeout(1200); await s.settle();
+  check(/Church Meetings/.test(await s.page.textContent('.set-nav')) && !/Church Services/.test(await s.page.textContent('.set-nav')), 'Settings now says “Church Meetings”');
   await s.go('people/p/p10');
   check(/Coming to the church since/.test(await s.text()) && /2025/.test(await s.page.textContent('.kv')), 'his page shows when he started coming to the church');
   await finish(s);
@@ -176,7 +182,7 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:pickinvite"]'); await s.page.waitForSelector('#iv-body');
   check(/1 person is left out/.test(await s.page.textContent('#modal')), 'Invite to apply: Tim (already a Church Partner) is left out');
   await s.page.click('[data-act="hub:close"]').catch(() => s.page.keyboard.press('Escape')); await s.page.waitForTimeout(200);
-  await s.page.click('[data-act="people:pickchange"]'); await s.page.waitForSelector('#bk-f');
+  await s.page.click('[data-act="people:pickchange"]'); await s.page.waitForSelector('.bk-f[data-i="0"]');
   check(/Change 2 people/.test(await s.page.textContent('#modal')), 'Change selected…: for the 2 ticked');
   await s.page.keyboard.press('Escape'); await s.page.waitForTimeout(200);
   await s.page.click('[data-act="people:pickbadges"]'); await s.settle(); docs = await s.docsNow();

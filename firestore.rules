@@ -228,8 +228,8 @@ service cloud.firestore {
       allow update: if isRole(['admin', 'pastor'])
         || (anyone() && meIn(resource.data.get('leaderIds', [])) && onlyChanges(['memberIds', 'names', 'updatedAt'])
             && meIn(request.resource.data.memberIds) && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])))
-        // a life group's leaders (type life: Bible studies, midweek groups) may also name their group
-        || (anyone() && resource.data.get('type', '') == 'life' && meIn(resource.data.get('leaderIds', [])) && onlyChanges(['name', 'memberIds', 'names', 'updatedAt'])
+        // a life group's leaders (type life: Bible studies, midweek groups) may also name their group and say when and where it meets
+        || (anyone() && resource.data.get('type', '') == 'life' && meIn(resource.data.get('leaderIds', [])) && onlyChanges(['name', 'memberIds', 'names', 'when', 'venue', 'roles', 'updatedAt'])
             && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
             && meIn(request.resource.data.memberIds) && request.resource.data.memberIds.hasAll(resource.data.get('leaderIds', [])));
       match /share/{pid} {

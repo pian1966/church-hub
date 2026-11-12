@@ -483,5 +483,5 @@
     }
   });
 
-  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, appFormHook: formHook, addBadges: addBadges, layoutChanged: layoutChanged, printBadges: printBadges, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
+  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, appFormHook: formHook, formSettings: function () { return H.can('*') ? declPanel() : ''; }, addBadges: addBadges, layoutChanged: layoutChanged, printBadges: printBadges, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
 })(PeopleParts);

@@ -2,6 +2,15 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Church Services and venues", "Kerkdienste en plekke", "Izinkonzo Zesonto nezindawo", "Iinkonzo zeCawe neendawo"],
+    ["Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Church Services and venues”.", "Verwyder die komendes (en hul roosters) vanaf ’n datum. Om dit glad nie meer by te voeg nie, verwyder dit onder “Kerkdienste en plekke”.", "Isusa ezizayo (nezinhlelo zazo) kusukela osukwini oluthile. Ukuze ungabe usayengeza, yisuse ngaphansi kokuthi “Izinkonzo Zesonto nezindawo”.", "Isusa ezizayo (kunye noludwe lwazo) ukususela kumhla othile. Ukuze ungaphinde uyongeze, yisuse phantsi kwe “Iinkonzo zeCawe neendawo”."],
+    ["Add more times or venues under “Church Services and venues”.", "Voeg meer tye of plekke by onder “Kerkdienste en plekke”.", "Engeza ezinye izikhathi noma izindawo ngaphansi kokuthi “Izinkonzo Zesonto nezindawo”.", "Yongeza amanye amaxesha okanye iindawo phantsi kwe “Iinkonzo zeCawe neendawo”."],
+    ["Church Services", "Kerkdienste", "Izinkonzo Zesonto", "Iinkonzo zeCawe"],
+    ["Membership application", "Lidmaatskapaansoek", "Isicelo sobulungu", "Isicelo sobulungu"],
+    ["Declaration, documents to read, loyalty", "Verklaring, dokumente om te lees, lojaliteit", "Isimemezelo, imibhalo okumele ifundwe, ukwethembeka", "Isibhengezo, amaxwebhu afundwayo, ukuthembeka"],
+    ["The church’s meetings are called", "Die kerk se byeenkomste word genoem", "Imihlangano yesonto ibizwa ngokuthi", "Iintlanganiso zecawe zibizwa ngokuba"],
+    ["For example “Church Services” in Settings, and “a service” on the rosters.", "Byvoorbeeld “Kerkdienste” in Instellings, en “’n diens” op die roosters.", "Isibonelo “Izinkonzo Zesonto” ku-Izilungiselelo, kanye “nenkonzo” ezinhlelweni.", "Umzekelo “Iinkonzo zeCawe” kwi-Iisetingi, kunye “nenkonzo” kuludwe."],
+    ["A Sunday service or other regular time the church meets (Settings → Church Services)", "’n Sondagdiens of ander gereelde tyd wat die kerk bymekaarkom (Instellings → Kerkdienste)", "Inkonzo yangeSonto noma esinye isikhathi esijwayelekile lapho isonto lihlangana khona (Izilungiselelo → Izinkonzo Zesonto)", "Inkonzo yangeCawa okanye elinye ixesha eliqhelekileyo lokudibana kwecawe (Iisetingi → Iinkonzo zeCawe)"],
     ["Administrators and Pastors always see everything.", "Administrateurs en Pastore sien altyd alles.", "Abaphathi nabeFundisi bahlala bebona konke.", "Abalawuli nabaFundisi bahlala bebona yonke into."],
     ["What each kind of access can do", "Wat elke soort toegang kan doen", "Okungenziwa uhlobo ngalunye lokufinyelela", "Oko kunokwenziwa luhlobo ngalunye lofikelelo"],
     ["Other people’s contact details", "Ander mense se kontakbesonderhede", "Imininingwane yokuxhumana yabanye abantu", "Iinkcukacha zoqhagamshelwano zabanye abantu"],

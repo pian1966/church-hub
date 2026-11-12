@@ -2,6 +2,7 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Add another time, or another campus or venue, under Settings → Church Services.", "Voeg nog ’n tyd, of nog ’n kampus of plek, by onder Instellings → Kerkdienste.", "Engeza esinye isikhathi, noma enye ikhampasi noma indawo, ngaphansi kwe-Izilungiselelo → Izinkonzo Zesonto.", "Yongeza elinye ixesha, okanye enye ikhampasi okanye indawo, phantsi kwe-Iisetingi → Iinkonzo zeCawe."],
     ['Away dates', 'Afwesigheidsdatums', 'Izinsuku ongekho ngazo', 'Imihla ongekho ngayo'],
     ['Your upcoming turns. Please reply so the roster can be planned.', 'Jou komende beurte. Antwoord asseblief sodat die rooster beplan kan word.', 'Amathuba akho azayo. Sicela uphendule ukuze uhlelo luhlelwe.', 'Amathuba akho azayo. Nceda uphendule ukuze uludwe lucwangciswe.'],
     ['My teams', 'My spanne', 'Amaqembu ami', 'Amaqela am'],

@@ -2,6 +2,23 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Co-leader", "Mede-leier", "Umholi ozakwethu", "Inkokeli encedisayo"],
+    ["Host", "Gasheer", "Umsingathi", "Umbuki zindwendwe"],
+    ["At {name}’s home", "By {name} se huis", "Ekhaya lika-{name}", "Ekhaya lika-{name}"],
+    ["At the host’s home", "By die gasheer se huis", "Ekhaya lomsingathi", "Ekhaya lombuki zindwendwe"],
+    ["When and where", "Wanneer en waar", "Nini futhi kuphi", "Nini kwaye phi"],
+    ["How often", "Hoe gereeld", "Kangaki", "Kangaphi"],
+    ["No host", "Geen gasheer", "Akekho umsingathi", "Akukho mbuki zindwendwe"],
+    ["Someone in the group who welcomes it, usually in their home.", "Iemand in die groep wat dit verwelkom, gewoonlik in hul huis.", "Umuntu oseqenjini olamukelayo, ngokuvamile ekhaya lakhe.", "Umntu oseqela olamkelayo, ngesiqhelo ekhayeni lakhe."],
+    ["Venue", "Plek", "Indawo", "Indawo"],
+    ["Somewhere else", "Iewers anders", "Kwenye indawo", "Kwenye indawo"],
+    ["Place", "Plek", "Indawo", "Indawo"],
+    ["e.g. Church hall, or a coffee shop", "bv. Kerksaal, of ’n koffiewinkel", "isib. Ihholo lesonto, noma isitolo sekhofi", "umz. Iholo lecawe, okanye ivenkile yekofu"],
+    ["Address", "Adres", "Ikheli", "Idilesi"],
+    ["A map link is shown next to it, so people can find their way.", "’n Kaartskakel word langsaan gewys, sodat mense die pad kan vind.", "Isixhumanisi sebalazwe siboniswa eceleni kwalo, ukuze abantu bathole indlela.", "Ikhonkco lemaphu libonakala ecaleni kwayo, ukuze abantu bafumane indlela."],
+    ["Co-leaders", "Mede-leiers", "Abaholi abazakwethu", "Iinkokeli ezincedisayo"],
+    ["They help the leaders. Only leaders can add and remove people.", "Hulle help die leiers. Net leiers kan mense byvoeg en verwyder.", "Basiza abaholi. Abaholi kuphela abangangeza nabangasusa abantu.", "Bancedisa iinkokeli. Ziinkokeli kuphela ezinokongeza nokususa abantu."],
+    ["Choose the host first, or choose Somewhere else.", "Kies eers die gasheer, of kies Iewers anders.", "Qala ukhethe umsingathi, noma ukhethe Kwenye indawo.", "Qala ukhethe umbuki zindwendwe, okanye ukhethe Kwenye indawo."],
     ["Midweek Groups", "Lewensgroepe", "Amaqembu empilo", "Amaqela obomi"],
     ["Midweek Group", "Lewensgroep", "Iqembu lempilo", "Iqela lobomi"],
     ["Group leader", "Groepleier", "Umholi weqembu", "Inkokeli yeqela"],

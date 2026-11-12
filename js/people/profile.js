@@ -58,6 +58,26 @@
   }
 
   /* ---------- photos: Administrators and Pastors for anyone, Children's ministry for children, adults their own ---------- */
+  /** The kinds of group someone can be put in from their page (Administrators and Pastors): Care Groups (adults), Midweek Groups. */
+  function groupKinds(p) {
+    if (!p || !(H.can('*') || H.can('people.edit')) || p.active === false || deceased(p)) return [];
+    var out = [];
+    if (window.CareUI && H.isOn('care') && p.familyRole !== 'child') out.push({ k: 'care', coll: 'careGroups', title: T('Care Groups'), lead: T('Carer (leader)') });
+    if (window.LifeUI && LifeUI.setGroups && H.isOn('life')) out.push({ k: 'life', coll: 'lifeGroups', title: T('Midweek Groups'), lead: T('Group leader') });
+    return out;
+  }
+  /** Which groups someone is in, all kinds together, ticked on one list – the same as adding them from a group's page. */
+  function groupsDialog(p) {
+    var kinds = groupKinds(p); if (!kinds.length) return;
+    H.modal(H.dialogHead(T('Groups'), H.name(p)) + '<div class="dlg-body">' + kinds.map(function (kd) {
+      var gs = S.list(kd.coll).slice().sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
+      return '<h3 style="margin:10px 0 6px">' + esc(kd.title) + '</h3>' + (gs.length ? '<div class="list">' + gs.map(function (g) {
+        var inIt = (g.memberIds || []).indexOf(p.id) >= 0, isL = (g.leaderIds || []).indexOf(p.id) >= 0;
+        return '<div class="item" style="gap:12px;flex-wrap:wrap"><label class="check grow" style="margin:0"><input type="checkbox" class="pg-in" data-k="' + kd.k + '" value="' + esc(g.id) + '"' + (inIt ? ' checked' : '') + '><span data-own-words>' + esc(g.name) + '</span></label>' +
+          '<label class="check" style="margin:0"><input type="checkbox" class="pg-lead" data-k="' + kd.k + '" data-g="' + esc(g.id) + '"' + (isL ? ' checked' : '') + '><span class="small">' + esc(kd.lead) + '</span></label></div>';
+      }).join('') + '</div>' : '<p class="muted small">' + T('None yet.') + ' <a href="#/' + kd.k + '">' + esc(kd.title) + '</a></p>');
+    }).join('') + '</div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:groupssave" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Groups'));
+  }
   function canPhoto(p) {
     if (!p || p.mergedInto) return false;
     if (H.can('*') || H.can('people.edit')) return true;
@@ -90,6 +110,7 @@
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
       '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + '</div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +
+      (groupKinds(p).length ? '<button class="btn" data-act="people:groups" data-id="' + p.id + '">' + T('Groups') + '</button>' : '') +
       (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
         (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +
         '<input type="file" id="pp-photo" data-id="' + p.id + '" accept="image/*" hidden>' : '') +
@@ -377,6 +398,18 @@
     }).join('') + '</dd>';
   }
   Object.assign(P.actions, {
+    groups: function (el) { groupsDialog(S.get('people', el.dataset.id)); },
+    groupssave: function (el) {
+      var p = S.get('people', el.dataset.id); if (!p || !groupKinds(p).length) return;
+      var want = { care: {}, life: {} };
+      Array.prototype.forEach.call(document.querySelectorAll('.pg-lead:checked'), function (c) { var b = document.querySelector('.pg-in[data-k="' + c.dataset.k + '"][value="' + c.dataset.g + '"]'); if (b) b.checked = true; });   // a leader is in the group
+      Array.prototype.forEach.call(document.querySelectorAll('.pg-in:checked'), function (c) { var l = document.querySelector('.pg-lead[data-k="' + c.dataset.k + '"][data-g="' + c.value + '"]'); want[c.dataset.k][c.value] = !!(l && l.checked); });
+      groupKinds(p).forEach(function (kd) {
+        if (kd.k === 'care') CareUI.setFrom(p, { want: want.care });
+        else LifeUI.setGroups(p, want.life, 'From their page: ');
+      });
+      H.closeModal(); H.render(); H.toast(T('Saved'));
+    },
     copyaddress: function (el) {
       var p = S.get('people', el.dataset.id), o = S.get('people', el.dataset.from);
       if (!p || !o || !o.address || !(H.can('*') || H.can('people.edit'))) return;

@@ -23,6 +23,7 @@ var Wording = (function () {
     ['life', ['Midweek Group', 'Midweek Groups'], 'A Bible Study, Life Group or Connect Group (etc) that meets during the week for teaching and fellowship'],
     ['groups', ['Groups', 'Groups'], 'The menu entry that holds Care Groups, Midweek Groups and Leadership', 'menu'],
     ['lifeLeader', ['Group leader', 'Group leaders'], 'Someone who leads a Midweek Group'],
+    ['service', ['Service', 'Services'], 'A Sunday service or other regular time the church meets (Settings → Church Services)'],
     ['worship', ['Worship', 'Worship'], 'Music in services (also teams and positions named after it)'],
     ['worshipTeam', ['Worship team', 'Worship teams'], 'The team that leads music in services'],
     ['worshipLeader', ['Worship leader', 'Worship leaders'], 'Who leads the music in a service']
@@ -33,6 +34,8 @@ var Wording = (function () {
     Music: { worship: ['Music', 'Music'], worshipTeam: ['Music team', 'Music teams'], worshipLeader: ['Music leader', 'Music leaders'] },
     Praise: { worship: ['Praise', 'Praise'], worshipTeam: ['Praise team', 'Praise teams'], worshipLeader: ['Praise leader', 'Praise leaders'] }
   };
+  /** Quick choices for what the church's meetings are called: "Church Services", "Church Meetings", "Church Gatherings". */
+  var SERVICE = { Service: ['Service', 'Services'], Meeting: ['Meeting', 'Meetings'], Gathering: ['Gathering', 'Gatherings'] };
   var SETS = {
     general: { name: 'General (as Church Hub comes)', words: {} },
     anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], senior: ['Rector', 'Rectors'], assistant: ['Assistant Minister', 'Assistant Ministers'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Home group leader', 'Home group leaders'] } },
@@ -102,6 +105,6 @@ var Wording = (function () {
     });
   }
 
-  return { TERMS: TERMS, SETS: SETS, MUSIC: MUSIC, words: words, pairs: pairs, changer: changer, apply: apply };
+  return { TERMS: TERMS, SETS: SETS, MUSIC: MUSIC, SERVICE: SERVICE, words: words, pairs: pairs, changer: changer, apply: apply };
 })();
 if (typeof module !== 'undefined') module.exports = Wording;

@@ -83,6 +83,7 @@ await env.withSecurityRulesDisabled(async ctx => {
   // Leadership groups: the Council (members only; Tim is on it) and the Wardens (open; Clare)
   await set('leaderBodies/lb1', { name: 'Church Council', open: false, memberIds: ['p14'], names: { p14: 'Tim Jacobs' }, seats: { p14: { role: 'Chair' } } });
   await set('leaderBodies/lb2', { name: 'Wardens', open: true, memberIds: ['p15'], names: { p15: 'Clare Jacobs' }, seats: {} });
+  await set('archivePreviewMembers/p14', { personId: 'p14' });
   // The Archive: the Council's minutes, Sipho's contract (shown to him), plans for the office, a notice for everyone,
   // and an appraisal of Tim that is not shown to him
   await set('archive/ar1', { title: 'Minutes', cat: 'minutes', date: '2026-10-13', access: 'body', bodyId: 'lb1', aboutId: '', shownTo: '', file: { name: 'm.pdf', parts: 1 } });
@@ -92,6 +93,9 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('archive/ar5', { title: 'Appraisal', cat: 'appraisals', date: '2026-09-01', access: 'private', bodyId: '', aboutId: 'p14', shownTo: '' });
   await set('archive/ar1/parts/0', { data: 'AAAA' });
   await set('archive/ar2/parts/0', { data: 'BBBB' });
+  await set('archivePreviews/ar1/parts/0', { data: 'AAAA' });
+  await set('archivePreviews/ar2/parts/0', { data: 'BBBB' });
+  await set('archivePreviews/ar4/parts/0', { data: 'CCCC' });
   // The Library: a book, lent to Tim and to Clare
   await set('books/b1', { title: 'Knowing God', author: 'J. I. Packer', copies: 2, out: 2 });
   await set('loans/l14', { bookId: 'b1', title: 'Knowing God', personId: 'p14', name: 'Tim Jacobs', out: '2026-11-01', due: '2026-11-22', back: '' });
@@ -592,6 +596,18 @@ await t('archive: a record’s file follows the record', async () => {
   await cannot(read(db.pastor, 'archive/ar1/parts/0')); await cannot(read(db.pastor, 'archive/ar2/parts/0'));
   await can(read(db.admin, 'archive/ar2/parts/0')); await can(read(rector, 'archive/ar1/parts/0'));
   await cannot(read(db.member, 'archive/nothere/parts/0')); await cannot(read(stranger, 'archive/ar1/parts/0'));
+});
+await t('archive: inline preview content is only for Administrators and Council members', async () => {
+  await can(read(db.admin, 'archivePreviews/ar2/parts/0'));
+  await can(read(db.member, 'archivePreviews/ar1/parts/0'));              // Tim is a Council member
+  await can(read(db.member, 'archivePreviews/ar4/parts/0'));               // Council can preview any record they may see
+  await cannot(read(db.rosters, 'archivePreviews/ar2/parts/0'));          // even though Sipho may download his contract
+  await cannot(read(rector, 'archivePreviews/ar1/parts/0'));              // Senior Pastor is not an Administrator or Council member
+  await can(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'AAAA' }));  // a Council member can only backfill an identical part
+  await cannot(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'different' }));
+  await cannot(db.rosters.doc('archivePreviews/ar2/parts/0').set({ data: 'BBBB' }));
+  await can(db.admin.doc('archivePreviewMembers/p15').set({ personId: 'p15' }));
+  await cannot(db.member.doc('archivePreviewMembers/p15').set({ personId: 'p15' }));
 });
 await t('archive: only Administrators and the Senior Pastor add, change and delete records', async () => {
   const r = o => Object.assign({ title: 'New', cat: 'other', date: '2026-11-10', note: '', access: 'office', bodyId: '', aboutId: '', aboutName: '', shownTo: '', link: 'https://example.org/x', by: 'x' }, o);

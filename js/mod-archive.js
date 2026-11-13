@@ -10,13 +10,25 @@
   var BOX = 'M3 5h18v4H3zM5 9v10h14V9M10 13h4';
   var PEN = 'M4 20h4L20 8l-4-4L4 16zM14 6l4 4';
   var state = { q: '', cat: '', year: '' }, draft = null;
+  var previewUrl = '', previewObserver = null;
 
   function me() { return H.user(); }
+  function administrator() { return H.can('*') && !S.preview(); }
   function who() {
     var u = me(), admin = H.can('*');
     return { admin: admin, pastor: !admin && H.can('people.edit'), senior: !S.preview() && !!u && H.isSenior(S.get('people', u.id) || u), ids: u ? [u.id] : [], bodies: u && window.LeadersUI ? LeadersUI.mine(u.id) : [] };
   }
   function keeper() { var w = who(); return w.admin || w.senior; }
+  function councilMember() {
+    var u = me();
+    return !!(u && !S.preview() && window.LeadersUI && LeadersUI.mine(u.id).some(function (id) {
+      var b = S.get('leaderBodies', id); return b && /council/i.test(b.name || '');
+    }));
+  }
+  function mayPreview(r) {
+    if (!r || !r.file || S.preview()) return false;
+    return administrator() || councilMember();
+  }
   function visible() { var w = who(); return S.list('archive').filter(function (r) { return A.sees(r, w); }); }
   function cats() { return A.cats(S.settings()); }
   function catName(id) { var c = A.cat(S.settings(), id); return c ? T(c.name) : T('Other records'); }
@@ -34,6 +46,7 @@
       '<span class="grow"><b data-own-words>' + esc(r.title) + '</b><small>' + bits.map(esc).join(' · ') + '</small>' + (r.note ? (window.RichText && RichText.formatted(r.note) ? '<div class="rich small" data-own-words>' + RichText.html(r.note) + '</div>' : '<small data-own-words>' + esc(r.note) + '</small>') : '') +
       (edit ? '<small><span class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText(r)) + '</span>' + (r.shownTo ? ' <span class="tag grey">' + esc(T('Shown to {name}', { name: r.aboutName })) + '</span>' : '') + '</small>' : '') + '</span><span class="rec-acts">' +
       (r.file ? '<button class="btn small" data-act="archive:open" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.download, 16) + T('Download') + '</button>' : '') +
+      (mayPreview(r) ? '<button class="btn small" data-act="archive:preview" data-id="' + esc(r.id) + '">👁 ' + T('Preview') + '</button>' : '') +
       (A.link(r.link) ? '<a class="btn small" href="' + esc(A.link(r.link)) + '" target="_blank" rel="noopener noreferrer" data-act="archive:link" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.link, 16) + T('Open the link') + '</a>' : '') +
       (edit ? '<button class="icon-btn ghost" data-act="archive:edit" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Edit {name}', { name: r.title })) + '" title="' + esc(T('Edit')) + '">' + H.icon(PEN, 16) + '</button>' +
         '<button class="icon-btn ghost" data-act="archive:del" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Delete {name}', { name: r.title })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</span></div>';
@@ -121,6 +134,63 @@
     a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
   }
   function logOpen(r) { if (r.access !== 'all') S.audit('Opened the archive record “' + r.title + '” (' + catName(r.cat) + ')', 'archive/' + r.id); }
+  function logPreview(r) { if (r.access !== 'all') S.audit('Previewed the archive record “' + r.title + '” (' + catName(r.cat) + ')', 'archive/' + r.id); }
+  function downloadRecord(r) {
+    H.busy(T('Fetching the file…'), function () {
+      return S.loadFile(r.id, r.file.parts).then(function (parts) { saveAs(r.file.name, r.file.type, A.join(parts)); logOpen(r); });
+    }).catch(function (e) { console.error(e); H.toast(S.isLive() ? T('Couldn’t fetch the file. Please try again.') : T('The demo keeps files only until you close the page.'), true); });
+  }
+  function clearPreviewUrl() {
+    if (previewObserver) { previewObserver.disconnect(); previewObserver = null; }
+    if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ''; }
+  }
+  function contentType(file) {
+    var name = String(file.name || '').toLowerCase(), ext = (name.match(/\.([a-z0-9]+)$/) || [])[1] || '';
+    var known = { pdf: 'application/pdf', jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png', webp: 'image/webp', gif: 'image/gif',
+      txt: 'text/plain', md: 'text/markdown', markdown: 'text/markdown', csv: 'text/csv' };
+    var type = String(file.type || '').toLowerCase().split(';')[0];
+    if (known[ext]) return known[ext];
+    if (/^(application\/pdf|image\/(jpeg|png|webp|gif)|text\/(plain|markdown|csv))$/.test(type)) return type;
+    return '';
+  }
+  function textFrom(b64) {
+    var bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    return new TextDecoder('utf-8').decode(bytes);
+  }
+  function previewDialog(r, b64) {
+    clearPreviewUrl();
+    var type = contentType(r.file), bin = atob(b64), bytes = new Uint8Array(bin.length);
+    for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var body, unsupported = !type;
+    if (type === 'application/pdf' || type.indexOf('image/') === 0) {
+      previewUrl = URL.createObjectURL(new Blob([bytes], { type: type }));
+      body = type === 'application/pdf'
+        ? '<iframe class="ar-preview-frame" src="' + previewUrl + '" title="' + esc(r.title) + '"></iframe>'
+        : '<div class="ar-preview-image-wrap"><img class="ar-preview-image" src="' + previewUrl + '" alt="' + esc(r.title) + '"></div>';
+    } else if (type.indexOf('text/') === 0) {
+      var text = textFrom(b64), markdown = type === 'text/markdown' || /\.markdown?$/i.test(r.file.name || '');
+      body = markdown && window.RichText
+        ? '<div class="ar-preview-text rich">' + RichText.html(text) + '</div>'
+        : '<pre class="ar-preview-text">' + esc(text) + '</pre>';
+    } else {
+      body = '<div class="ar-preview-unsupported"><p>' + T('Inline preview is not available for this file type') + '</p>' +
+        '<button class="btn primary" data-act="archive:previewdownload" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.download, 16) + T('Download file') + '</button></div>';
+    }
+    var meta = [catName(r.cat), H.fmt(r.date, true), r.file.name + ' (' + A.sizeText(r.file.size) + ')'].filter(Boolean).map(esc).join(' · ');
+    H.modal(H.dialogHead(T('Preview'), r.title) + '<div class="dlg-body ar-preview-body"><p class="ar-preview-meta">' + meta + '</p>' + body + '</div>' +
+      '<div class="dlg-foot">' + (!unsupported ? '<button class="btn" data-act="archive:previewdownload" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.download, 16) + T('Download') + '</button>' : '') +
+      '<button class="btn primary" data-act="hub:close">' + T('Close') + '</button></div>', T('Preview'), true);
+    var dialog = document.querySelector('#modal .dialog');
+    if (dialog) dialog.classList.add('ar-preview-dialog');
+    if (previewUrl) {
+      var modal = document.getElementById('modal');
+      previewObserver = new MutationObserver(function () {
+        if (!modal.querySelector('.ar-preview-dialog')) clearPreviewUrl();
+      });
+      previewObserver.observe(modal, { childList: true, subtree: true });
+    }
+  }
   function catRows() {
     return draft.map(function (c, i) {
       var used = S.find('archive', function (r) { return r.cat === c.id; }).length;
@@ -201,8 +271,19 @@
       },
       open: function (el) {
         var r = S.get('archive', el.dataset.id); if (!r || !r.file || !A.sees(r, who())) return;
-        H.busy(T('Fetching the file…'), function () { return S.loadFile(r.id, r.file.parts).then(function (parts) { saveAs(r.file.name, r.file.type, A.join(parts)); logOpen(r); }); })
-          .catch(function (e) { console.error(e); H.toast(S.isLive() ? T('Couldn’t fetch the file. Please try again.') : T('The demo keeps files only until you close the page.'), true); });
+        downloadRecord(r);
+      },
+      preview: function (el) {
+        var r = S.get('archive', el.dataset.id); if (!mayPreview(r)) return;
+        H.busy(T('Fetching the file…'), function () {
+          return S.loadArchivePreview(r.id, r.file.parts).then(function (parts) {
+            previewDialog(r, A.join(parts)); logPreview(r);
+          });
+        }).catch(function (e) { console.error(e); H.toast(T('Couldn’t fetch the file. Please try again.'), true); });
+      },
+      previewdownload: function (el) {
+        var r = S.get('archive', el.dataset.id);
+        if (r && mayPreview(r)) downloadRecord(r);
       },
       link: function (el) { var r = S.get('archive', el.dataset.id); if (r) logOpen(r); },   // the link itself opens in a new tab
       cats: function () { if (!H.can('settings.manage')) return; draft = A.copy(cats()); catsDialog(); },

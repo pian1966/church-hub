@@ -811,6 +811,8 @@ I18n.add('tn', {
     "About {name}": "Mabapi le {name}",
     "Shown to {name}": "E bontshiwa {name}",
     "Download": "Tsenya mo sedirisweng",
+    "Download file": "Tsenya faele mo sedirisweng",
+    "Inline preview is not available for this file type": "Ponelopele ga e teng mo mofuteng ono wa faele",
     "Open the link": "Bula kgolagano",
     "Nothing filed yet for: {months}": "Ga go sepe se se tsentsweng sa: {months}",
     "Archive": "Polokelo ya direkoto",

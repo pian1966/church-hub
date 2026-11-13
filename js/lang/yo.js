@@ -811,6 +811,8 @@ I18n.add('yo', {
     "About {name}": "Nípa {name}",
     "Shown to {name}": "A fi hàn {name}",
     "Download": "Gbà á sílẹ̀",
+    "Download file": "Gba fáìlì náà sílẹ̀",
+    "Inline preview is not available for this file type": "Àkọ́wò inú ìlànà kò sí fún irú fáìlì yìí",
     "Open the link": "Ṣí ìjápọ̀ náà",
     "Nothing filed yet for: {months}": "Kò tíì sí ohun tí a fi pamọ́ fún: {months}",
     "Archive": "Ibi ìpamọ́ àkọsílẹ̀",

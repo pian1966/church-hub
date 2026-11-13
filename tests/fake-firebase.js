@@ -49,6 +49,9 @@
     return keeper(c) || (d.access === 'all' && is(c, ANY)) || (d.access === 'office' && is(c, ['admin', 'pastor']))
       || (!!(d.bodyId || '') && is(c, ANY) && meIn(c, docs['leaderBodies/' + d.bodyId].memberIds || [])) || mine(c, d.shownTo || '');
   }
+  function councilMember(c) {
+    return is(c, ANY) && c.ids.some(function (pid) { return !!docs['archivePreviewMembers/' + pid]; });
+  }
   function librarian(c) { return is(c, ['admin']) || (is(c, ANY) && meIn(c, (docs['settings/church'] || {}).librarianIds || [])); }
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
@@ -217,6 +220,16 @@
       } },
     'archive/parts': { read: function (c, n, d, id) { return seesRecord(c, docs['archive/' + id]); },   // a missing record fails
       write: function (c, op, n, b, a) { return keeper(c) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
+    archivePreviewMembers: { read: function (c, id) { return is(c, ['admin', 'pastor']) || isMe(c, id); },
+      write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || (onlyKeys(a, ['personId']) && a.personId === id)); } },
+    'archivePreviews/parts': { read: function (c, n, d, id) { return is(c, ['admin']) || (councilMember(c) && seesRecord(c, docs['archive/' + id])); },
+      write: function (c, op, n, b, a, id) {
+        if (op === 'delete') return keeper(c);
+        var valid = onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000;
+        if (keeper(c)) return valid;
+        return valid && councilMember(c) && seesRecord(c, docs['archive/' + id]) &&
+          !!docs['archive/' + id + '/parts/' + n] && a.data === docs['archive/' + id + '/parts/' + n].data;
+      } },
     // The Library: everyone reads the books; librarians write; a loan is read by the librarians and its borrower
     books: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150)); } },

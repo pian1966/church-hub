@@ -440,6 +440,8 @@ I18n.add('en-US', {
     "About {name}": "About {name}",
     "Shown to {name}": "Shown to {name}",
     "Download": "Download",
+    "Download file": "Download file",
+    "Inline preview is not available for this file type": "Inline preview is not available for this file type",
     "Open the link": "Open the link",
     "Nothing filed yet for: {months}": "Nothing filed yet for: {months}",
     "Archive": "Archive",

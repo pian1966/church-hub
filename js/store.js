@@ -231,6 +231,30 @@ var Store = (function () {
     function write(path, data) { local[path] = clean(data); return doc(path).set(clean(data)).catch(function (e) { delete local[path]; err(e, 'save this'); }); }
     /** Change only some fields of a document (for someone allowed to change only those, e.g. the Senior Pastor choosing librarians). */
     function patch(path, data) { return doc(path).update(clean(data)).catch(function (e) { err(e, 'save this'); }); }
+    function syncCouncilPreviewMembers(ids) {
+      if (!session || previewRole || !is('admin', 'pastor')) return Promise.resolve();
+      var councilIds = {};
+      (db.leaderBodies || []).forEach(function (b) {
+        if (/council/i.test(b.name || '')) (b.memberIds || []).forEach(function (pid) { councilIds[pid] = true; });
+      });
+      function sync(pid) {
+        if (!pid) return Promise.resolve();
+        return councilIds[pid] ? write('archivePreviewMembers/' + pid, { personId: pid }) :
+          (local['archivePreviewMembers/' + pid] === null ? Promise.resolve() : del('archivePreviewMembers/' + pid));
+      }
+      if (ids) {
+        var unique = ids.filter(function (pid, i) { return pid && ids.indexOf(pid) === i; });
+        return Promise.all(unique.map(sync));
+      }
+      if (!is('admin')) return Promise.resolve();
+      return fs.collection('archivePreviewMembers').get().then(function (snap) {
+        var existing = {};
+        snap.docs.forEach(function (d) { existing[d.id] = true; });
+        var wanted = Object.keys(councilIds), jobs = wanted.filter(function (pid) { return !existing[pid]; }).map(sync);
+        Object.keys(existing).forEach(function (pid) { if (!councilIds[pid]) jobs.push(del('archivePreviewMembers/' + pid)); });
+        return Promise.all(jobs);
+      }).catch(function (e) { err(e, 'update Council preview access'); });
+    }
     function clearLegacyBrochure() {
       var patch = {}; patch.brochures = fb.firestore.FieldValue.delete();
       return doc('settings/church').update(patch).catch(function (e) { err(e, 'move the brochure wording to its private settings'); });
@@ -647,15 +671,43 @@ var Store = (function () {
       });
     }
     function stopExtras() { Object.keys(extraSubs).forEach(function (k) { try { extraSubs[k](); } catch (e) {} }); extraSubs = {}; }
-    /** A record's file, cut into parts (archive/{id}/parts/{n}); see js/archive.js. Unlike other saves these say when they fail. */
+    /** Archive source files remain available to each record's readers; preview copies have stricter read rules. */
     function fileSave(id, parts, had) {
-      var jobs = parts.map(function (data, i) { return doc('archive/' + id + '/parts/' + i).set({ data: data }); });
-      for (var i = parts.length; i < (had || 0); i++) jobs.push(doc('archive/' + id + '/parts/' + i).delete());
+      var jobs = [];
+      parts.forEach(function (data, i) {
+        jobs.push(doc('archive/' + id + '/parts/' + i).set({ data: data }));
+        jobs.push(doc('archivePreviews/' + id + '/parts/' + i).set({ data: data }));
+      });
+      for (var i = parts.length; i < (had || 0); i++) {
+        jobs.push(doc('archive/' + id + '/parts/' + i).delete());
+        jobs.push(doc('archivePreviews/' + id + '/parts/' + i).delete());
+      }
       return Promise.all(jobs);
     }
     function fileLoad(id, n) {
       var jobs = []; for (var i = 0; i < n; i++) jobs.push(doc('archive/' + id + '/parts/' + i).get());
       return Promise.all(jobs).then(function (snaps) { return snaps.map(function (s) { if (!s.exists) throw new Error('A part of the file is missing'); return s.data().data || ''; }); });
+    }
+    /** Preview copies are a separate endpoint, limited by Firestore rules to Administrators and Council members. */
+    function filePreviewLoad(id, n) {
+      if (offlineNow()) return Promise.reject(new Error('Preview requires an online connection'));
+      var previews = [];
+      for (var i = 0; i < n; i++) previews.push(doc('archivePreviews/' + id + '/parts/' + i).get({ source: 'server' }));
+      return Promise.all(previews).then(function (snaps) {
+        var missing = [];
+        snaps.forEach(function (snap, part) { if (!snap.exists) missing.push(part); });
+        if (!missing.length) return snaps.map(function (snap) { return snap.data().data || ''; });
+        return Promise.all(missing.map(function (part) {
+          return doc('archive/' + id + '/parts/' + part).get({ source: 'server' }).then(function (source) {
+            if (!source.exists) throw new Error('A part of the file is missing');
+            var data = source.data().data || '';
+            return doc('archivePreviews/' + id + '/parts/' + part).set({ data: data }).then(function () { return data; });
+          });
+        })).then(function (copied) {
+          var next = 0;
+          return snaps.map(function (snap) { return snap.exists ? snap.data().data || '' : copied[next++]; });
+        });
+      });
     }
     function forget(coll) { Object.keys(local).forEach(function (k) { if (k.split('/')[0] === coll) delete local[k]; }); }
     function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); careAll(null); stopExtras(); ready = false; }
@@ -676,6 +728,7 @@ var Store = (function () {
       if (!db.settings) return onState({ stage: 'noAccess', email: session.email, reason: 'notReady' });
       if (!meP) return onState(role() === 'admin' ? { stage: 'setup', email: session.email } : { stage: 'noAccess', email: session.email, reason: 'noPerson' });
       ready = true; stats.loaded = Date.now();
+      if (!previewRole && is('admin', 'pastor')) syncCouncilPreviewMembers();
       // My own directory entry shows my care groups when Settings asks for it (carers may have added me)
       var dirMe = (raw.directory || {})[session.personId];
       var careDir = careForMembers(db.settings) || Object.keys(raw.directory || {}).some(function (id) { return raw.directory[id].care; });
@@ -942,6 +995,7 @@ var Store = (function () {
       if (c === 'notes' || c === 'officeNotes') return putNotes(obj.personId, c);
       write(c + '/' + obj.id, obj);
       if (c === 'careGroups') careDirectory(prev, obj);
+      if (c === 'leaderBodies') syncCouncilPreviewMembers(((prev && prev.memberIds) || []).concat(obj.memberIds || []));
       if (c === 'consents' && obj.purpose === DIRECTORY) syncDirectory(obj.personId);
     }
     function remove(c, prev) {
@@ -950,6 +1004,7 @@ var Store = (function () {
       if (c === 'careGroups') { del(c + '/' + prev.id); careDirectory(prev, null); return; }
       if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       if (c === 'archive') fileSave(prev.id, [], (prev.file && prev.file.parts) || 0).catch(function (e) { console.error('delete the file', e); });   // its file goes too
+      if (c === 'leaderBodies') syncCouncilPreviewMembers(prev.memberIds || []);
       if (c === 'books' && prev.cover) del('covers/' + prev.id);   // and a library item's cover picture
       del(c + '/' + prev.id);
     }
@@ -1041,7 +1096,7 @@ var Store = (function () {
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -1191,6 +1246,18 @@ var Store = (function () {
     },
     loadFile: function (id, n) {
       if (LIVE) return Live.fileLoad(id, n);
+      return demoFiles[id] ? Promise.resolve(demoFiles[id].slice()) : Promise.reject(new Error('not kept'));
+    },
+    loadArchivePreview: function (id, n) {
+      if (LIVE) return Live.filePreviewLoad(id, n);
+      var record = get('archive', id), bodies = list('leaderBodies'), ids = user ? [user.id] : [];
+      var myBodies = bodies.filter(function (b) { return (b.memberIds || []).some(function (pid) { return ids.indexOf(pid) >= 0; }); });
+      var council = myBodies.some(function (b) { return /council/i.test(b.name || ''); });
+      var permitted = isAdmin() || (!previewRole && council && record && typeof Archive !== 'undefined' &&
+        Archive.sees(record, { admin: false, pastor: !!user && user.appRole === 'pastor', senior: !!user && user.id === (db.settings || {}).seniorPastorId, ids: ids, bodies: myBodies.map(function (b) { return b.id; }) }));
+      if (!permitted) {
+        var denied = new Error('Missing or insufficient permissions.'); denied.code = 'permission-denied'; return Promise.reject(denied);
+      }
       return demoFiles[id] ? Promise.resolve(demoFiles[id].slice()) : Promise.reject(new Error('not kept'));
     },
     /** A small setting kept on this device only (e.g. the language), also before signing in. Not church data. */

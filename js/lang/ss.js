@@ -811,6 +811,8 @@ I18n.add('ss', {
     "About {name}": "Mayelana na-{name}",
     "Shown to {name}": "Ikhonjiswa {name}",
     "Download": "Landza",
+    "Download file": "Dawuniloda lifayela",
+    "Inline preview is not available for this file type": "Kubuka ngaphakathi akutholakali ngalolu hlobo lwelifayela",
     "Open the link": "Vula sichumanisi",
     "Nothing filed yet for: {months}": "Kute lokufakiwe kwaleti tinyanga: {months}",
     "Archive": "Ingobo yemarekhodi",

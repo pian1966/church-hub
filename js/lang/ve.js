@@ -811,6 +811,8 @@ I18n.add('ve', {
     "About {name}": "Malugana na {name}",
     "Shown to {name}": "I sumbedzwa {name}",
     "Download": "Ḓaunilouda",
+    "Download file": "Ḓaunilouda faela",
+    "Inline preview is not available for this file type": "Mbono wa nga ngomu a u wanali kha lushaka ulu lwa faela",
     "Open the link": "Vulani ḽinki",
     "Nothing filed yet for: {months}": "A hu athu u dzheniswa tshithu tsha: {months}",
     "Archive": "Vhuvhulungelo ha rekhodo",

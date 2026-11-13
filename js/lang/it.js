@@ -811,6 +811,8 @@ I18n.add('it', {
     "About {name}": "Riguarda {name}",
     "Shown to {name}": "Visibile a {name}",
     "Download": "Scarica",
+    "Download file": "Scarica il file",
+    "Inline preview is not available for this file type": "L’anteprima non è disponibile per questo tipo di file",
     "Open the link": "Apri il link",
     "Nothing filed yet for: {months}": "Niente ancora archiviato per: {months}",
     "Archive": "Archivio",

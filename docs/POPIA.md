@@ -246,9 +246,11 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   Only Administrators and the Senior Pastor add, change or delete records. The database rules enforce all of this for
   the record and for its file (tested), and people load only the records they may see.
 - Security: files are kept in the church's own database (in South Africa), not in a public file store, and are fetched
-  only when someone opens them. A **link** to a file kept elsewhere (e.g. Google Drive) is only as private as that place –
-  the church must set its sharing there. Every download or link opened of a record that isn't for everyone is in the
-  audit log, as is every record added, changed or deleted.
+  only when someone opens them. A separate, database-protected copy supports inline previews for Administrators and
+  Council members who may already see that record; other download access is unchanged. Previewing, downloading or
+  opening a link for a record that isn't for everyone is in the audit log, as is every record added, changed or deleted.
+  A **link** to a file kept elsewhere (e.g. Google Drive) is only as private as that place – the church must set its
+  sharing there.
 - Retention: the church decides how long each kind of record is kept (minutes usually permanently; staff records for the
   period labour and tax law require after someone leaves) and deletes records when that time is up. To do: a retention
   review for the Archive (ROADMAP).

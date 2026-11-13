@@ -811,6 +811,8 @@ I18n.add('nl', {
     "About {name}": "Over {name}",
     "Shown to {name}": "Getoond aan {name}",
     "Download": "Downloaden",
+    "Download file": "Bestand downloaden",
+    "Inline preview is not available for this file type": "Inline voorbeeld is niet beschikbaar voor dit bestandstype",
     "Open the link": "De link openen",
     "Nothing filed yet for: {months}": "Nog niets gearchiveerd voor: {months}",
     "Archive": "Archief",

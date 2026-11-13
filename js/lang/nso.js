@@ -811,6 +811,8 @@ I18n.add('nso', {
     "About {name}": "Mabapi le {name}",
     "Shown to {name}": "E bontšhwa {name}",
     "Download": "Laolla",
+    "Download file": "Laolla faele",
+    "Inline preview is not available for this file type": "Ponelopele ya ka gare ga app ga e hwetšagale bakeng sa mohuta wo wa faele",
     "Open the link": "Bula kgokagano",
     "Nothing filed yet for: {months}": "Ga go selo seo se tsentšwego sa: {months}",
     "Archive": "Polokelo ya direkoto",

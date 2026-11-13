@@ -1,6 +1,6 @@
 # Church Hub – architecture
 
-Church Hub replaces Elvanto for Christ Church Howick, learning from Elvanto, Planning Center and ChurchSuite.
+Church Hub helps churches move from Elvanto, learning from tools such as Planning Center and ChurchSuite.
 It is built in phases; each phase is usable on its own. **Read this file first in every new working session.**
 
 ## Principles
@@ -617,6 +617,9 @@ lost / acquired / removed for the librarians (Reports, CSV via `Library.csv`, wh
 `Library.importPlan` reads a CSV (`parseCSV`, `,` or `;`), finds the columns by their headings (`COLUMNS`) and skips rows
 without a title and items already there (`sameItem`: same ISBN, else same title + author). The policy's words are shown as a
 page by `Library.policyHtml` (escapes everything, then headings, lists, **bold**, paragraphs). No rules change.
+**0.59:** Administrators and librarians can permanently purge individual loan activity records or a removed book (including
+its linked loan records), after confirmation; purging an active loan updates the book's count of copies out. Each purge is
+logged in the immutable audit log.
 **0.58:** the Library catalogue has tabs for all, on-loan, available, lost, being-repaired and permanently removed items.
 Librarians can mark an item as being repaired (all copies of that catalogue entry are unavailable until returned to the
 shelf). Reports use clickable activity tabs, with search, print and spreadsheet download; opening the print view is logged.

@@ -82,6 +82,10 @@ it, choose **Why** (lost, damaged, given away or other) and tap **Take out**. It
 the library**, where **Put it back** returns it if it turns up. Only something added by mistake should be deleted completely
 (under **Added by mistake?**).
 
+Administrators and librarians can also permanently **Purge** a loan or a removed book from its activity list or report.
+Church Hub asks you to confirm first. Purging a removed book also removes its linked loan records; the action is kept in the
+audit log. It cannot be undone.
+
 ## How do I see what was lent, returned or lost?
 For: Librarians
 Also asked: Library report. Books acquired this year. Overdue list.

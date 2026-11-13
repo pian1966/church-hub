@@ -613,6 +613,8 @@ await t('archive: only Administrators and the Senior Pastor add, change and dele
 await t('library: everyone signed in sees the books; only librarians (Administrators and the people named) change them', async () => {
   await only('books/b1', roles); await can(list(db.member.collection('books'))); await cannot(read(stranger, 'books/b1')); await cannot(read(nobody, 'books/b1'));
   await can(db.admin.doc('books/b2').set({ title: 'Mere Christianity', copies: 1, out: 0 })); await can(db.rosters.doc('books/b2').update({ copies: 2 }));
+  await can(db.admin.doc('books/b2').delete());
+  await can(db.rosters.doc('books/b3').set({ title: 'Purge test', copies: 1, out: 0 })); await can(db.rosters.doc('books/b3').delete());
   await cannot(db.member.doc('books/b3').set({ title: 'Mine', copies: 1, out: 0 })); await cannot(db.member.doc('books/b1').update({ out: 0 })); await cannot(db.pastor.doc('books/b1').update({ out: 0 }));
   await cannot(db.admin.doc('books/b3').set({ title: '', copies: 1 })); await cannot(db.kids.doc('books/b2').delete());
   await can(db.rosters.doc('books/b2').delete());
@@ -626,7 +628,7 @@ await t('library: who borrowed what is seen by the librarians and the borrower o
   await can(db.rosters.doc('loans/l20').set(l)); await can(db.admin.doc('loans/l20').update({ back: '2026-11-12' }));
   await cannot(db.member.doc('loans/l21').set(l)); await cannot(db.member.doc('loans/l14').update({ back: '2026-11-12' })); await cannot(db.member.doc('loans/l14').delete());
   await cannot(db.admin.doc('loans/l21').set({ title: 'No book or person' }));
-  await can(db.rosters.doc('loans/l20').delete());
+  await can(db.admin.doc('loans/l20').delete()); await can(db.rosters.doc('loans/l21').set(l)); await can(db.rosters.doc('loans/l21').delete());
 });
 await t('library: every new loan has a mobile number; a visitor not on the church’s list has a name and no personId', async () => {
   const base = { bookId: 'b1', title: 'Knowing God', out: '2026-11-10', due: '2026-12-01', back: '', note: '' };

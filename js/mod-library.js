@@ -34,6 +34,17 @@
   /** The formatting buttons' names (js/richtext.js). */
   function fmtWords() { return { bar: T('Formatting'), b: T('Bold'), i: T('Italic'), u: T('Underline'), h: T('Heading'), ul: T('Bulleted list'), ol: T('Numbered list') }; }
   function held(l) { var n = L.daysOut(l, H.today()); return TN('had for {n} day', 'had for {n} days', n); }
+  function purgeButton(kind, id) {
+    return '<button class="btn small danger" data-act="library:purge" data-kind="' + kind + '" data-id="' + esc(id) + '">' + T('Purge') + '</button>';
+  }
+  function purgeDialog(kind, record) {
+    var book = kind === 'book', warning = book ?
+      T('Permanently delete this book and its loan records? This cannot be undone.') :
+      T('Permanently delete this library record? This cannot be undone.');
+    H.modal(H.dialogHead(T('Purge library record'), record.title) + '<div class="dlg-body"><p class="hint">' + esc(warning) + '</p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' +
+      '<button class="btn danger" data-act="library:purgeconfirm" data-kind="' + kind + '" data-id="' + esc(record.id) + '">' + T('Purge') + '</button></div>', T('Purge library record'));
+  }
   /** The friendly reminder, in words: which item, and how long they have had it. */
   function reminderText(l) {
     return T('Hello {name}, a friendly reminder from the church library: you have had “{title}” for {n} days. Please bring it back when you have finished with it, or let us know if you need it for longer. Thank you!',
@@ -126,14 +137,14 @@
           '<small>' + who(l) + ' · ' + esc(T('Lent {date}', { date: H.fmt(l.out, true) })) + ' · ' + esc(held(l)) + ' · ' + due(l) + (l.reminded ? ' · ' + esc(T('Reminded {date}', { date: H.fmt(l.reminded, true) })) : '') + '</small></span>' +
           '<span class="rec-acts">' + (L.daysOut(l, H.today()) >= L.REMIND_DAYS ? '<button class="btn small" data-act="library:remind" data-id="' + esc(l.id) + '">' + T('Send a reminder') + '</button>' : '') +
           '<button class="btn small" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button>' +
-          '<button class="btn small ghost" data-act="library:lost" data-id="' + esc(l.id) + '" title="' + esc(T('It won’t come back')) + '">' + T('Lost') + '</button></span></div>';
+          '<button class="btn small ghost" data-act="library:lost" data-id="' + esc(l.id) + '" title="' + esc(T('It won’t come back')) + '">' + T('Lost') + '</button>' + purgeButton('loan', l.id) + '</span></div>';
       }).join('') + '</div>' : '<p class="muted small" style="margin:8px 0 0">' + T('Nothing on loan.') + '</p>') +
       (back.length ? '<details class="sub" style="margin-top:10px"><summary>' + T('Recently returned') + '</summary><div class="list">' + back.map(function (l) {
-        return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (l.lost ? ' <span class="tag bad">' + T('Lost') + '</span>' : '') + '<small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + (l.returnNote ? ' · ' + esc(l.returnNote) : '') + '</small></span></div>'; }).join('') +
+        return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (l.lost ? ' <span class="tag bad">' + T('Lost') + '</span>' : '') + '<small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + (l.returnNote ? ' · ' + esc(l.returnNote) : '') + '</small></span>' + purgeButton('loan', l.id) + '</div>'; }).join('') +
         '</div><p class="hint">' + T('Returned loans are removed after a year.') + '</p></details>' : '') + '</section>';
     if (gone.length) html += '<section class="panel" id="lib-gone"><h2 id="lib-gone-title">' + T('Removed from Library by Librarian') + ' <span class="muted small">' + TN('{n} item', '{n} items', gone.length) + '</span></h2><div class="list">' + gone.map(function (b) {
       return '<div class="item rec-item lib-gone-item" data-removed="' + (b.why === 'Lost' ? 'lost' : 'removed') + '"><span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag grey">' + esc(T(b.why || 'Other')) + '</span><small>' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small></span>' +
-        '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button></span></div>'; }).join('') + '</div><p class="muted small" id="lib-gone-none" hidden>' + T('None') + '</p></section>';
+        '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button>' + purgeButton('book', b.id) + '</span></div>'; }).join('') + '</div><p class="muted small" id="lib-gone-none" hidden>' + T('None') + '</p></section>';
     var sortFields = [['kind', 'Media type'], ['title', 'Title'], ['author', 'Author'], ['cat', 'Subject']];
     return html + '<section class="panel" id="lib-books">' +
       '<div class="lib-sort"><span class="muted small">' + T('Sort by') + '</span><div class="btns">' + sortFields.map(function (f) {
@@ -400,7 +411,8 @@
     reportTab = selected[0];
     var items = selected[2].map(function (x) {
       var searchable = [x.title, x.author, x.name, x.mobile, x.from, x.how, x.why, x.whyNote, x.returnNote, x.out, x.back, x.acquired, x.removed].filter(Boolean).join(' ').toLowerCase();
-      return '<div class="item lib-report-row" data-search="' + esc(searchable) + '"><span class="grow">' + selected[3](x) + '</span></div>';
+      var type = selected[0] === 'removed' ? 'book' : selected[0] === 'acquired' ? '' : 'loan';
+      return '<div class="item lib-report-row" data-search="' + esc(searchable) + '"><span class="grow">' + selected[3](x) + '</span>' + (type ? purgeButton(type, x.id) : '') + '</div>';
     }).join('');
     H.modal(H.dialogHead(T('Reports'), T('Show library activity between two dates')) + '<div class="dlg-body">' +
       '<div class="two"><label class="field">' + T('From') + '<input type="date" id="lib-rfrom" value="' + esc(repFrom) + '"></label><label class="field">' + T('To') + '<input type="date" id="lib-rto" value="' + esc(repTo) + '"></label></div>' +
@@ -497,9 +509,34 @@
       del: function (el) {
         var b = S.get('books', el.dataset.id); if (!b || !librarian()) return;
         if (L.outCount(b, loans())) { H.toast(T('This is on loan – it can’t be deleted until it is returned.'), true); return; }
-        if (!H.confirmBtn(el, '✕?')) return;
-        S.find('loans', function (l) { return l.bookId === b.id; }).forEach(function (l) { S.remove('loans', l.id); });
-        S.remove('books', b.id, 'Deleted “' + b.title + '” from the library'); H.closeModal(); H.render(); H.toast(T('Deleted'));
+        purgeDialog('book', b);
+      },
+      purge: function (el) {
+        if (!librarian()) return;
+        var type = el.dataset.kind, record = type === 'book' ? S.get('books', el.dataset.id) : type === 'loan' ? S.get('loans', el.dataset.id) : null;
+        if (record) purgeDialog(type, record);
+      },
+      purgeconfirm: function (el) {
+        if (!librarian()) return;
+        var type = el.dataset.kind, id = el.dataset.id;
+        if (type === 'loan') {
+          var l = S.get('loans', id); if (!l) return;
+          var b = S.get('books', l.bookId);
+          if (L.isOut(l) && b) {
+            var remaining = loans().filter(function (x) { return x.id !== l.id; }), updated = JSON.parse(JSON.stringify(b));
+            updated.out = L.outCount(b, remaining);
+            S.put('books', updated);
+          }
+          S.remove('loans', l.id, 'Purged library loan record for “' + l.title + '”');
+        } else if (type === 'book') {
+          var item = S.get('books', id); if (!item) return;
+          if (loans().some(function (x) { return x.bookId === item.id && L.isOut(x); })) {
+            H.toast(T('This is on loan. Mark it as returned or lost first.'), true); return;
+          }
+          S.find('loans', function (x) { return x.bookId === item.id; }).forEach(function (x) { S.remove('loans', x.id); });
+          S.remove('books', item.id, 'Purged “' + item.title + '” and its library history');
+        } else return;
+        H.closeModal(); H.render(); H.toast(T('Deleted'));
       },
       remove: function (el) {
         var b = S.get('books', el.dataset.id); if (!b || !librarian()) return;

@@ -2906,6 +2906,7 @@ I18n.add('pl', {
     "No checkouts are waiting for verification.": "No checkouts are waiting for verification.",
     "Select books missing covers": "Select books missing covers",
     "Borrower": "Borrower",
+    "All Borrowers": "Wszyscy wypożyczający",
     "ISBN / Code": "ISBN / Code",
     "Copies / Status": "Copies / Status",
     "Standardize matched items": "Standardize matched items",

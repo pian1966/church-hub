@@ -186,6 +186,19 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); const loan = find(docs, 'loans', d => d.bookId === bk); t = await s.text();
   check(!!loan && docs[loan].personId === 'p14' && docs[loan].name === 'Tim Jacobs' && docs[loan].back === '' && docs[loan].due > docs[loan].out && docs[key].out === 1, 'it is lent to someone, due back in three weeks');
   check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && await s.page.isDisabled('[data-act="library:lend"][data-id="' + bk + '"]'), 'the librarian sees who has it; the only copy can’t be lent again');
+  check(await s.page.$eval('#lib-filter-borrower', el => el.value) === 'All Borrowers' &&
+    !!(await s.page.$('#lib-borrowers option[value="Tim Jacobs"]')), 'the borrower filter defaults to All Borrowers and suggests names with books checked out');
+  await s.page.fill('#lib-filter-borrower', 'JAC');
+  check(await s.page.isVisible('.lib-out-loan') && await s.page.isVisible('[data-act="library:borrowerclear"]'),
+    'typing part of a surname, in any case, keeps that borrower’s checkout visible and offers a clear button');
+  await s.page.fill('#lib-filter-borrower', 'TIM');
+  check(await s.page.isVisible('.lib-out-loan'), 'a partial first-name search also finds the checked-out book');
+  await s.page.fill('#lib-filter-borrower', 'not a borrower');
+  check(await s.page.isHidden('.lib-out-loan') && (await s.page.textContent('#lib-out-count')).includes('0'),
+    'a borrower search with no match hides checked-out books and updates the count');
+  await s.page.click('[data-act="library:borrowerclear"]');
+  check(await s.page.$eval('#lib-filter-borrower', el => el.value) === 'All Borrowers' &&
+    await s.page.isVisible('.lib-out-loan'), 'clearing the borrower filter restores all checked-out books');
   check(await s.page.isDisabled('[data-act="library:repair"][data-id="' + bk + '"]'), 'a borrowed item cannot be marked for repair');
   await s.page.click('[data-act="library:libs"]'); await s.page.fill('.cg-q[data-for="lib-libs"]', 'megan'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
   docs = await s.docsNow();
@@ -491,6 +504,9 @@ module.exports = async function (ctx) {
   check((await sees(s)) === 'nn' && (await s.text()).includes('Restricted View — Access restricted to Council members and Administrators only.'), 'a standard member sees the restricted notice and no archive records');
   check(!(await s.page.$('[data-act="archive:preview"]')) && await deniedPreview(s, ar) && await deniedArchive(s, ar),
   'a standard member cannot preview, query, or download archive contents directly');
+  await s.go('library');
+  check(!(await s.page.$('#lib-filter-borrower')) && !(await s.page.$('#lib-borrowers')),
+    'a regular member does not see the borrower filter or its borrower suggestions');
   await s.go('leaders'); t = await s.text();
   check(!t.includes('Church Council') && t.includes('No leadership groups yet.'), 'a members-only leadership group is hidden from everyone else');
   await finish(s);

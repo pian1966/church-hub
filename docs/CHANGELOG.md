@@ -321,3 +321,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   missing covers for online lookup. The policy is now a compact header action. Me calls out borrowed items and displays a
   Librarian chip; Groups tabs now put Staff Group before Leadership. Database rules, language keys, help, architecture and
   privacy notes were updated.
+- ✅ 13 Nov 2026 (0.66.0): Librarians and Administrators can filter checked-out items by borrower name.

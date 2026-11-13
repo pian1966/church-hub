@@ -120,7 +120,9 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `messages` | a message to a group or chosen people: { kind care\|group\|staff\|partners\|people, groupId, audience (its name, or the one chosen person's), some (only some of a group), title, body, fromId, fromName, to: [personIds worked out when sent], readBy: [personIds] } – see Messages below |
 | `msgGroups` | message groups (e.g. Worship team leaders): { name, memberIds, leaderIds, names } – Administrators and Pastors manage them |
 | `leaderBodies` | a leadership group (Council, elders…): { name, open, memberIds, names, seats: { personId: { role, title, portfolios, kind: elected\|coopted\|other, kindOther, from, to } }, past: [served before] } – see Leadership below |
-| `archive` | a church record: { title, cat, date, note, access all\|body\|office\|private, bodyId, aboutId, aboutName, shownTo, link, file: { name, type, size, parts }, by }; its file is in `archive/{id}/parts/{n}` = { data: base64 } – see Archive below |
+| `customGroups` | Administrator-managed groups: { name, description, memberIds, visibility: church\|members }; the built-in Staff group is derived from staff status, not stored here |
+| `archive` | a church record: { title, cat, date, note, access all\|body\|office\|private, bodyId, aboutId, aboutName, shownTo, displayOnApplication, link, file: { name, type, size, parts }, by }; its file is in `archive/{id}/parts/{n}` = { data: base64 } – see Archive below |
+| `applicationDocuments` | a limited public copy of documents selected for the membership application form: { title, date, link, fileName, fileType, parts, fileVersion }; versioned file parts are separate from Archive files and notes |
 | `books`, `loans` | the Library: a book { title, author, cat, copies, acquired, how, from, shelf, isbn, note, out } and a loan { bookId, title, personId, name, out, due, back } – see Library below |
 | `words` | approved wording, one document per language (`words/zu` = { words: { English: wording }, updatedAt, by }), used before the built-in translations |
 
@@ -306,6 +308,10 @@ hidden where neither exists (e.g. Firefox). The words heard are only put in the 
   (`PeopleParts.partnerAgrees`). **Not now** sends a short reply. **Print** gives a clean copy (`#print-only`, the rest hidden).
 - **The declaration** is the church's (Administrators, at the foot of the list): general wording or REACH South Africa's, or
   their own; `{church}` becomes the church's name. Settings: `partnerApp.declaration`.
+- **Documents to read**: an Administrator can mark an Archive document for the membership application. Store copies only
+  its title, date, link and optional file into `applicationDocuments`; signed-in applicants can read this limited copy and
+  its current file version, but cannot read the Archive record or its private notes. Replacing or unpublishing a file
+  makes its old version inaccessible. `firestore.rules` and `tests/fake-firebase.js` enforce the same boundary.
 - **Name badges** (People → Name badges, a Home to-do): "Make a name badge" when adding someone, or the button on their page
   (`badgeWanted`, `badgePrinted` on their details). Printing uses the church's **Badge layout** (`js/badges.js`, pure and tested
   by `tests/badges.test.js`; Administrators set it at People → Name badges → Badge layout, kept in `settings.badgeLayout`).
@@ -481,6 +487,11 @@ menu. `#/groups` is "My groups": `CareUI.mePanel`, `LifeUI.mePanel` and `Leaders
 switch, roles and rules. The menu entry's name is the Terminology word `groups` (`Wording.TERMS`, marked `'menu'` so the
 screen-wide word changer leaves "Groups" elsewhere alone).
 
+## Administrator-managed groups (`js/custom-groups.js`, `js/mod-custom-groups.js`)
+Administrators can create and manage groups with a name, optional description, member IDs and church-visible or
+members-only visibility. These records contain no contact details. The built-in Staff group is computed from active
+people marked as staff (including the older Staff category); it is not a second editable copy of their membership.
+
 ## Care groups (Care groups page; `js/care.js`, `js/mod-care.js`)
 - `careGroups/{id}` = { name, leaderIds (carers), memberIds, names: { personId: name } }. A person may be in several groups (a carer in one, a member in another), with a card in each. Locally a card is `careShare` id `group:person`.
   Administrators and Pastors create, rename and delete groups and put people in them (Care groups page, or Edit details →
@@ -577,8 +588,8 @@ The Archive reads `memberIds` to decide who sees a group's records, so a group w
 - Each seat may have several `roles` (`role` = the first, for older readers), a membership type and its description when set to
   "Other", and – for terms of office –
   `term` (1, 2…) and `termFrom` (when the current term started; the first starts at `from`). A group's `termYears`,
-  `maxTerms` and `breakYears` set the rules (0 = none); `to` is worked out from `termYears` when not typed.
-  `Leaders.term()` gives which term, how far through (the bar), whether it ends within four months (`NOTICE_MONTHS`), and
+  `maxTerms` and `breakYears` set the rules (`maxTerms: 0` = unlimited); `to` is worked out from `termYears` when not typed.
+  `Leaders.term()` gives which term, how far through (the bar), whether it ends within 120 days (`NOTICE_DAYS`), and
   whether they may stand again; `Leaders.ending()` feeds a To do for Administrators and the Senior Pastor (Rector) and a
   notice on the page; `Leaders.renew()` starts the next term; `Leaders.resting()` warns when someone is added again during
   their break. All tested (`tests/leaders.test.js`).
@@ -610,6 +621,10 @@ a link.
   copied into this area the first time an authorized user previews them. Council membership is kept in step with
   Leadership by `Store`. The demo keeps files in memory only. Downloads use the browser, or
   `ChurchHubApp.saveFileBase64(name, type, base64)` in the Android app (older apps: "please update").
+- **Google Docs previews**: links to supported Google Docs, Sheets, Slides and Drive files open in an in-app preview
+  using the provider's `/preview` URL; sharing restrictions may prevent embedding, so the panel also offers an external link.
+- **Membership application**: Administrators may tick "Display on Membership Application Form". This publishes only the
+  limited `applicationDocuments` copy described above, not the Archive's access settings, notes or original file path.
 - **Storage note**: Administrators and Council members can open the informational note from the Archives header. Its
   placeholder wording is in `js/i18n/archive.js` and the language packs, ready to be replaced with the church's actual
   shelf/cabinet and cloud-folder details.

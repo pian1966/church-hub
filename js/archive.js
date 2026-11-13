@@ -38,7 +38,7 @@ var Archive = (function () {
   /** A record ready to save: only the fields the Archive keeps, and never a leadership group or "shown to" that doesn't apply. */
   function clean(rec) {
     var r = rec || {}, out = { title: String(r.title || '').trim().slice(0, 150), cat: String(r.cat || ''), date: String(r.date || '').slice(0, 10), note: String(r.note || '').trim().slice(0, 1000),
-      access: okAccess(r.access) ? r.access : 'private', bodyId: '', aboutId: String(r.aboutId || ''), aboutName: String(r.aboutName || ''), shownTo: '', link: String(r.link || '').trim().slice(0, 500), by: String(r.by || '') };
+      access: okAccess(r.access) ? r.access : 'private', bodyId: '', aboutId: String(r.aboutId || ''), aboutName: String(r.aboutName || ''), shownTo: '', link: String(r.link || '').trim().slice(0, 500), displayOnApplication: r.displayOnApplication === true, by: String(r.by || '') };
     if (out.access === 'body') { if (r.bodyId) out.bodyId = String(r.bodyId); else out.access = 'office'; }   // no group chosen: the office, never wider
     if (!out.aboutId) out.aboutName = '';
     else if (r.shownTo) out.shownTo = out.aboutId;
@@ -59,6 +59,24 @@ var Archive = (function () {
   }
   /** A safe web link (https or http), or ''. */
   function link(s) { s = String(s || '').trim(); if (s && !/^[a-z][a-z0-9+.-]*:/i.test(s)) s = 'https://' + s; return /^https?:\/\/[^\s"'<>]+$/i.test(s) ? s : ''; }
+  /** A Google Docs or Drive document link as an embeddable preview URL, or '' when it is not supported. */
+  function embedUrl(s) {
+    var safe = link(s), u;
+    if (!safe) return '';
+    try { u = new URL(safe); } catch (e) { return ''; }
+    var host = u.hostname.toLowerCase(), match, type;
+    if (host === 'docs.google.com') {
+      match = u.pathname.match(/^\/(document|spreadsheets|presentation)\/(?:u\/\d+\/)?d\/([A-Za-z0-9_-]+)(?:\/|$)/);
+      if (!match) return '';
+      type = match[1]; return 'https://docs.google.com/' + type + '/d/' + match[2] + '/preview?embedded=true';
+    }
+    if (host === 'drive.google.com') {
+      match = u.pathname.match(/^\/file\/d\/([A-Za-z0-9_-]+)(?:\/|$)/);
+      if (!match) return '';
+      return 'https://drive.google.com/file/d/' + match[1] + '/preview?embedded=true';
+    }
+    return '';
+  }
   /** Cut a file (as base64) into parts small enough for one database document each, and put them together again. */
   function split(b64, size) { var out = [], n = size || PART; for (var i = 0; i < b64.length; i += n) out.push(b64.slice(i, i + n)); return out; }
   function join(parts) { return (parts || []).join(''); }
@@ -82,6 +100,6 @@ var Archive = (function () {
     for (var m = 1; m <= 12; m++) { var ym = yr + '-' + (m < 10 ? '0' : '') + m; if (!have[m] && ym > first && (!upTo || ym <= upTo)) out.push(m); }
     return out;
   }
-  return { ACCESS: ACCESS, CATS: CATS, MAX: MAX, PART: PART, cats: cats, cat: cat, clean: clean, sees: sees, link: link, split: split, join: join, sizeText: sizeText, year: year, years: years, list: list, missingMonths: missingMonths, copy: copy };
+  return { ACCESS: ACCESS, CATS: CATS, MAX: MAX, PART: PART, cats: cats, cat: cat, clean: clean, sees: sees, link: link, embedUrl: embedUrl, split: split, join: join, sizeText: sizeText, year: year, years: years, list: list, missingMonths: missingMonths, copy: copy };
 })();
 if (typeof module !== 'undefined') module.exports = Archive;

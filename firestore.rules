@@ -220,6 +220,18 @@ service cloud.firestore {
         || (anyone() && meIn(resource.data.memberIds) && meIn(request.resource.data.memberIds));
       allow delete: if rosterer() || (anyone() && meIn(resource.data.memberIds));
     }
+    // Administrator-managed groups contain membership IDs only, never contact details.
+    match /customGroups/{id} {
+      allow read: if admin() || (anyone() && (resource.data.visibility == 'church' || meIn(resource.data.memberIds)));
+      allow create, update: if admin() && request.resource.data.keys().hasOnly(['name', 'description', 'memberIds', 'visibility', 'createdAt', 'updatedAt'])
+        && request.resource.data.name is string && request.resource.data.name.size() > 0 && request.resource.data.name.size() <= 80
+        && request.resource.data.description is string && request.resource.data.description.size() <= 500
+        && request.resource.data.memberIds is list && request.resource.data.memberIds.size() <= 5000
+        && request.resource.data.visibility in ['church', 'members']
+        && (!request.resource.data.keys().hasAny(['createdAt']) || request.resource.data.createdAt is string)
+        && (!request.resource.data.keys().hasAny(['updatedAt']) || request.resource.data.updatedAt is string);
+      allow delete: if admin();
+    }
     // Care groups. Administrators and Pastors set them up; a group's carers (leaderIds) may add and remove its members.
     // Members read their own group, and each member's card in it (share/{person}): their name, and the rest only
     // if they agreed (consent "Care group"). Each person keeps their own card up to date.
@@ -443,17 +455,43 @@ service cloud.firestore {
       return d.title is string && d.title.size() > 0 && d.title.size() <= 150
         && d.access in ['all', 'body', 'office', 'private']
         && d.get('bodyId', '') is string && (d.access == 'body') == (d.get('bodyId', '') != '')
-        && d.get('shownTo', '') is string && (d.get('shownTo', '') == '' || d.shownTo == d.get('aboutId', ''));
+        && d.get('shownTo', '') is string && (d.get('shownTo', '') == '' || d.shownTo == d.get('aboutId', ''))
+        && d.get('displayOnApplication', false) is bool;
     }
     match /archive/{id} {
       allow read: if seesRecord(resource.data);
-      allow create, update: if archiveReader() && okRecord(request.resource.data);
+      allow create: if archiveReader() && okRecord(request.resource.data) && (admin() || !request.resource.data.get('displayOnApplication', false));
+      allow update: if archiveReader() && okRecord(request.resource.data)
+        && (admin() || request.resource.data.get('displayOnApplication', false) == resource.data.get('displayOnApplication', false));
       allow delete: if archiveReader();
       match /parts/{n} {
         allow read: if seesRecord(get(/databases/$(database)/documents/archive/$(id)).data);
         allow create, update: if archiveReader() && request.resource.data.keys().hasOnly(['data'])
           && request.resource.data.data is string && request.resource.data.data.size() <= 950000;
         allow delete: if archiveReader();
+      }
+    }
+    // A deliberately limited public copy of documents an Administrator selected for the membership form.
+    // Private archive notes, access rules, staff details and source files are never copied here.
+    match /applicationDocuments/{id} {
+      allow read: if anyone();
+      allow create, update: if admin() && request.resource.data.keys().hasOnly(['title', 'date', 'link', 'fileName', 'fileType', 'parts', 'fileVersion'])
+        && request.resource.data.keys().hasAll(['title', 'date', 'link', 'fileName', 'fileType', 'parts', 'fileVersion'])
+        && request.resource.data.title is string && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 150
+        && request.resource.data.date is string && request.resource.data.date.size() <= 10
+        && request.resource.data.link is string && request.resource.data.link.size() <= 500
+        && request.resource.data.fileName is string && request.resource.data.fileName.size() <= 150
+        && request.resource.data.fileType is string && request.resource.data.fileType.size() <= 150
+        && request.resource.data.parts is int && request.resource.data.parts >= 0 && request.resource.data.parts <= 24
+        && request.resource.data.fileVersion is string && request.resource.data.fileVersion.size() <= 80
+        && ((request.resource.data.parts == 0 && request.resource.data.fileVersion == '') || (request.resource.data.parts > 0 && request.resource.data.fileVersion.size() > 0));
+      allow delete: if admin();
+      match /files/{version}/parts/{n} {
+        allow read: if anyone() && exists(/databases/$(database)/documents/applicationDocuments/$(id))
+          && get(/databases/$(database)/documents/applicationDocuments/$(id)).data.fileVersion == version;
+        allow create, update: if admin() && request.resource.data.keys().hasOnly(['data'])
+          && request.resource.data.data is string && request.resource.data.data.size() <= 950000;
+        allow delete: if admin();
       }
     }
     // Kept in step with Council membership in the Leadership page; only Administrators and Pastors maintain this list.

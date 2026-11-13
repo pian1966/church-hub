@@ -851,6 +851,7 @@ a.tag.tag-link:hover, a.tag.tag-link:focus-visible { outline: 2px solid color-mi
 .term-bar i.done { background: color-mix(in srgb, var(--accent) 55%, var(--surface)); }
 .term-bar i.now::before { content: ''; position: absolute; inset: 0 auto 0 0; width: var(--w, 0%); background: var(--accent); border-radius: 4px; }
 .term.soon .term-bar i.now::before { background: #C77700; }
+.term.urgent .term-bar i.now::before, .term.over .term-bar i.now::before { background: #B42318; }
 .term small { display: block; margin-top: 2px; }
 .term-note { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
 /* formatted documents (js/richtext.js): the Library policy, Archive notes */

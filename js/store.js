@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans'];
+    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
@@ -521,6 +521,12 @@ var Store = (function () {
       if (is('admin') && !previewRole) add('brochure', doc('brochures/church'));
       add('leaveConfig', doc('leave/config'));
       add('directory', coll('directory'));
+      if (is('admin')) add('customGroups', coll('customGroups'));
+      else {
+        add('customGroupsChurch', coll('customGroups').where('visibility', '==', 'church'));
+        add('customGroupsMine', coll('customGroups').where('memberIds', 'array-contains', me));
+      }
+      add('applicationDocuments', coll('applicationDocuments'));
       if (staff) add('contacts', coll('contacts'));   // staff and leaders: home address and spouse of people who agreed to share them
       ['teams', 'positions', 'services', 'away'].forEach(function (c) { add(c, coll(c)); });
       if (staff) {
@@ -731,6 +737,36 @@ var Store = (function () {
         });
       });
     }
+    /** Publish the deliberately limited, Administrator-approved copy used by the membership form. */
+    function applicationDocumentSave(id, data, parts, old) {
+      var jobs = [];
+      var version = data.fileVersion;
+      (parts || []).forEach(function (part, i) { jobs.push(doc('applicationDocuments/' + id + '/files/' + version + '/parts/' + i).set({ data: part })); });
+      return Promise.all(jobs).then(function () {
+        return doc('applicationDocuments/' + id).set(clean(data));
+      }).then(function () {
+        var stale = [];
+        for (var i = 0; old && old.fileVersion && i < (old.parts || 0); i++) {
+          stale.push(doc('applicationDocuments/' + id + '/files/' + old.fileVersion + '/parts/' + i).delete());
+        }
+        return Promise.all(stale);
+      }).catch(function (e) { err(e, 'publish the membership application document'); throw e; });
+    }
+    function applicationDocumentRemove(id, previous) {
+      return doc('applicationDocuments/' + id).delete().then(function () {
+        var jobs = [];
+        var old = previous || {};
+        for (var i = 0; i < (old.parts || 0); i++) if (old.fileVersion) jobs.push(doc('applicationDocuments/' + id + '/files/' + old.fileVersion + '/parts/' + i).delete());
+        return Promise.all(jobs);
+      }).catch(function (e) { err(e, 'remove the membership application document'); throw e; });
+    }
+    function applicationDocumentFile(id, version, n) {
+      var jobs = [];
+      for (var i = 0; i < n; i++) jobs.push(doc('applicationDocuments/' + id + '/files/' + version + '/parts/' + i).get());
+      return Promise.all(jobs).then(function (snaps) {
+        return snaps.map(function (s) { if (!s.exists) throw new Error('A part of the document is missing'); return s.data().data || ''; });
+      });
+    }
     function forget(coll) { Object.keys(local).forEach(function (k) { if (k.split('/')[0] === coll) delete local[k]; }); }
     function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); careAll(null); stopExtras(); ready = false; }
     function remoteChanged() {
@@ -791,7 +827,9 @@ var Store = (function () {
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
       db.brochures = role() === 'admin' && raw.brochure && raw.brochure.church ? copy(raw.brochure.church) : {};
       if (db.settings) delete db.settings.brochures;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books', 'applicationDocuments'].forEach(function (c) { db[c] = arr(c); });
+      var custom = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('customGroups') === 0; }));
+      db.customGroups = Object.keys(custom).map(function (id) { var o = copy(custom[id]); o.id = id; return o; });
       [['leaderBodies', /^leaderBodies/], ['archive', /^archive:/], ['loans', /^loans/]].forEach(function (x) {   // each asked for in parts (plan(), extras())
         var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
         db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
@@ -1118,7 +1156,7 @@ var Store = (function () {
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -1279,6 +1317,36 @@ var Store = (function () {
       }
       if (LIVE) return Live.filePreviewLoad(id, n);
       return demoFiles[id] ? Promise.resolve(demoFiles[id].slice()) : Promise.reject(new Error('not kept'));
+    },
+    publishApplicationDocument: function (record) {
+      if (blocked()) return Promise.reject(new Error('view only'));
+      if (!isAdmin()) return Promise.reject(new Error('Only an Administrator can publish a document to the membership form.'));
+      var r = copy(record), old = get('applicationDocuments', r.id), data = { title: r.title, date: r.date || '', link: r.link || '',
+        fileName: r.file ? r.file.name : '', fileType: r.file ? r.file.type || '' : '', parts: r.file ? +r.file.parts || 0 : 0,
+        fileVersion: r.file && r.file.parts ? uid('apv') : '' };
+      var loaded = r.file && r.file.parts ? Store.loadFile(r.id, r.file.parts) : Promise.resolve([]);
+      return loaded.then(function (parts) {
+        if (LIVE) return Live.applicationDocumentSave(r.id, data, parts, old || {});
+        db.applicationDocuments = all('applicationDocuments').filter(function (x) { return x.id !== r.id; }).concat([Object.assign({ id: r.id }, data)]);
+        save(); changed(); return undefined;
+      });
+    },
+    removeApplicationDocument: function (id, parts) {
+      if (blocked()) return Promise.reject(new Error('view only'));
+      if (!isAdmin()) return Promise.reject(new Error('Only an Administrator can remove a document from the membership form.'));
+      var old = get('applicationDocuments', id) || { parts: parts || 0, fileVersion: '' };
+      if (LIVE) return Live.applicationDocumentRemove(id, old);
+      db.applicationDocuments = all('applicationDocuments').filter(function (x) { return x.id !== id; });
+      save(); changed(); return Promise.resolve();
+    },
+    loadApplicationDocumentFile: function (id) {
+      var doc = get('applicationDocuments', id);
+      if (!doc || !doc.parts) return Promise.reject(new Error('This document has no published file.'));
+      if (LIVE) {
+        if (!doc.fileVersion) return Promise.reject(new Error('The published file is not available.'));
+        return Live.applicationDocumentFile(id, doc.fileVersion, doc.parts);
+      }
+      return demoFiles[id] ? Promise.resolve(demoFiles[id].slice()) : Promise.reject(new Error('The demo keeps files only until you close the page.'));
     },
     /** A small setting kept on this device only (e.g. the language), also before signing in. Not church data. */
     pref: function (k, v) {

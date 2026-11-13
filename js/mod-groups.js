@@ -20,6 +20,7 @@
     if (H.isOn('care')) n += Care.groupsOf(S.list('careGroups'), u.id).length;
     if (H.isOn('life')) n += Care.groupsOf(S.list('lifeGroups'), u.id).length;
     if (H.isOn('leaders') && window.Leaders) n += Leaders.of(S.list('leaderBodies'), u.id).length;
+    if (window.CustomGroups) n += CustomGroups.forPerson(S.list('customGroups'), u.id, H.can('*')).length;
     return n;
   }
   /** The tabs at the top of the Groups page and of each kind of group's page. */
@@ -31,14 +32,15 @@
     }).join('') + '</nav>';
   }
   function render() {
-    var html = (window.CareUI ? CareUI.mePanel() : '') + (window.LifeUI ? LifeUI.mePanel() : '') + (window.LeadersUI && LeadersUI.mePanel ? LeadersUI.mePanel() : '');
+    var html = (window.CareUI ? CareUI.mePanel() : '') + (window.LifeUI ? LifeUI.mePanel() : '') + (window.LeadersUI && LeadersUI.mePanel ? LeadersUI.mePanel() : '') +
+      (window.CustomGroupsUI ? CustomGroupsUI.section() : '');
     return tabs('groups') + '<div class="page-head"><div><h1>' + esc(label()) + '</h1><p class="lead">' + T('The groups you are in. The tabs above show every group you may see.') + '</p></div></div>' +
       (html || '<p class="empty">' + T('You’re not in a group yet.') + '</p>');
   }
 
   var mod = {
     id: 'groups', desc: 'Care Groups, Midweek Groups and Leadership in one place', icon: PEOPLE, tint: '#3E6E8E',
-    show: function () { return H.groupMods().length > 0; },
+    show: function () { return H.groupMods().length > 0 || !!(window.CustomGroupsUI && CustomGroupsUI.show()); },
     render: function () { return render(); },
     stat: function (u) { var n = count(u); return n ? TN('{n} group', '{n} groups', n) : T(this.desc); },
     tabs: tabs

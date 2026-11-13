@@ -43,11 +43,14 @@
     var t = L.term(b, m, H.today()); if (!t) return '';
     var count = Math.max(t.max || 1, t.n), segs = '';
     for (var i = 1; i <= count; i++) segs += '<i class="' + (i < t.n ? 'done' : i === t.n ? 'now' : '') + '"' + (i === t.n ? ' style="--w:' + t.pct + '%"' : '') + '></i>';
-    var words = (t.max ? T('Term {n} of {max}', { n: t.n, max: t.max }) : T('Term {n}', { n: t.n })) + ' · ' + T('{pct}% through', { pct: t.pct }) + ' · ' + (t.over ? T('Ended {date}', { date: H.fmt(t.end, true) }) : T('Ends {date}', { date: H.fmt(t.end, true) }));
+    var serving = t.max ? T('Term {n} of {max}', { n: t.n, max: t.max }) : T('Term {n} (Unlimited)', { n: t.n });
+    var timing = t.over ? T('Ended {date}', { date: H.fmt(t.end, true) }) + ' · ' + T('{n} days ago', { n: Math.abs(t.left) }) :
+      T('Ends {date}', { date: H.fmt(t.end, true) }) + ' · ' + T('{n} days left', { n: t.left });
+    var words = serving + ' · ' + T('{pct}% through', { pct: t.pct }) + ' · ' + timing;
     var note = '';
     if (edit && (t.soon || t.over)) note = '<span class="tag ' + (t.again ? 'warn' : 'bad') + '">' + (t.again ? T('May stand for another term') : t.rest ? T('Last term – a break until {date}', { date: H.fmt(t.rest, true) }) : T('Last term allowed')) + '</span>' +
       (t.again ? ' <button class="btn small" data-act="leaders:renew" data-g="' + esc(b.id) + '" data-id="' + esc(m.personId) + '">' + T('Start their next term') + '</button>' : '');
-    return '<span class="term' + (t.soon || t.over ? ' soon' : '') + '" title="' + esc(words) + '"><span class="term-bar" role="img" aria-label="' + esc(words) + '">' + segs + '</span><small>' + esc(words) + '</small>' + (note ? '<span class="term-note">' + note + '</span>' : '') + '</span>';
+    return '<span class="term' + (t.over ? ' over' : t.left <= 30 ? ' urgent' : t.soon ? ' soon' : '') + '" title="' + esc(words) + '"><span class="term-bar" role="img" aria-label="' + esc(words) + '">' + segs + '</span><small>' + esc(words) + '</small>' + (note ? '<span class="term-note">' + note + '</span>' : '') + '</span>';
   }
   function row(b, m, edit) {
     var p = S.get('people', m.personId), name = m.name || (p ? H.name(p) : T('Someone'));
@@ -77,14 +80,18 @@
           (edit ? '<button class="icon-btn ghost" data-act="leaders:forget" data-g="' + esc(b.id) + '" data-i="' + p.i + '" aria-label="' + esc(T('Delete {name}', { name: p.name || '' })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</div>';
       }).join('') + '</div></details>' : '') + '</section>';
   }
-  /** Terms ending within four months: for Administrators and the Senior Pastor (Rector). */
+  /** Terms ending within 120 days: for Administrators and the Senior Pastor (Rector). */
   function told() { var u = me(); return !S.preview() && (H.can('*') || (!!u && H.isSenior(S.get('people', u.id) || u))); }
   function endingSoon() { return L.ending(S.list('leaderBodies'), H.today()); }
+  function eligibility(t) {
+    if (t.again) return T('Eligible to stand for another term (Term {n} of {max})', { n: t.n, max: t.max || T('Unlimited') });
+    return T('Not eligible — mandatory break required after completing {max} consecutive terms', { max: t.max });
+  }
   function endingLine(x) {
     var t = x.t;
-    return T(t.over ? 'The term of {name} on {group} ended {date}.' : 'The term of {name} on {group} ends {date}.', { name: x.m.name, group: x.body.name, date: H.fmt(t.end, true) }) + ' ' +
-      (t.max ? T('Term {n} of {max}', { n: t.n, max: t.max }) : T('Term {n}', { n: t.n })) + ' · ' +
-      (t.again ? T('May stand for another term') : t.rest ? T('Last term – a break until {date}', { date: H.fmt(t.rest, true) }) : T('Last term allowed'));
+    var date = T(t.over ? 'The term of {name} on {group} ended {date}.' : 'The term of {name} on {group} expires {date}.', { name: x.m.name, group: x.body.name, date: H.fmt(t.end, true) });
+    var left = t.over ? T('{n} days ago', { n: Math.abs(t.left) }) : t.left === 0 ? T('Expires today') : T('in {n} days', { n: t.left });
+    return date + ' ' + left + ' · ' + eligibility(t);
   }
   function page() {
     var bs = bodies(), edit = manager(), soon = told() ? endingSoon() : [];
@@ -126,7 +133,7 @@
     /** Four months before a term of office ends: Administrators and the Senior Pastor (Rector). */
     todos: function () {
       if (!told()) return [];
-      return endingSoon().slice(0, 4).map(function (x) { return { text: endingLine(x), href: '#/leaders', tag: T('Leadership') }; });
+      return endingSoon().map(function (x) { return { text: endingLine(x), href: '#/leaders', tag: T('Leadership') }; });
     },
     actions: {
       addgroup: function () {
@@ -139,9 +146,9 @@
         var b = S.get('leaderBodies', el.dataset.id); if (!b || !manager()) return;
         H.modal(H.dialogHead(T('Edit {name}', { name: b.name })) + '<div class="dlg-body"><label class="field req">' + T('Name') + '<input id="lb-name" maxlength="80" value="' + esc(b.name) + '"></label>' +
           '<label class="check"><input type="checkbox" id="lb-open"' + (b.open === true ? ' checked' : '') + '><span>' + T('Everyone who signs in can see this group') + '<br><span class="muted small">' + T('Untick to show it only to its own members, Administrators and Pastors.') + '</span></span></label>' +
-          '<h3 style="margin:16px 0 6px">' + T('Terms of office') + '</h3><p class="hint" style="margin:0 0 8px">' + T('Leave at 0 if this group has no fixed terms. Administrators and the Senior Pastor are told four months before a term ends.') + '</p>' +
+          '<h3 style="margin:16px 0 6px">' + T('Terms of office') + '</h3><p class="hint" style="margin:0 0 8px">' + T('Leave at 0 if this group has no fixed terms. Administrators and the Senior Pastor are told 120 days before a term ends.') + '</p>' +
           '<div class="two"><label class="field">' + T('Years in a term') + '<input type="number" id="lb-years" min="0" max="20" value="' + esc(L.terms(b).termYears) + '"></label>' +
-          '<label class="field">' + T('Terms in a row allowed') + '<input type="number" id="lb-max" min="0" max="20" value="' + esc(L.terms(b).maxTerms) + '"></label>' +
+          '<label class="field">' + T('Maximum consecutive terms of office permissible before a mandatory break') + '<input type="number" id="lb-max" min="0" max="20" value="' + esc(L.terms(b).maxTerms) + '"><small>' + T('Enter 0 for no limit.') + '</small></label>' +
           '<label class="field">' + T('Years of break after that') + '<input type="number" id="lb-break" min="0" max="20" value="' + esc(L.terms(b).breakYears) + '"></label></div></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="leaders:savegroup" data-id="' + esc(b.id) + '">' + T('Save') + '</button></div>', T('Edit'));
       },
@@ -219,7 +226,7 @@
     var u = me(); if (!p || !H.isOn('leaders')) return '';
     return L.of(S.list('leaderBodies'), p.id).filter(function (o) { return L.sees(o.body, u && u.id, manager()); }).map(function (o) {
       var what = (o.roles || []).map(roleName).concat([membershipName(o)]);
-      return ' <a class="tag tag-link" style="--c:#5B4B8A" href="#/leaders">' + esc((what.length ? what.join(', ') + ' · ' : '') + o.body.name) + '</a>';
+      return ' <span class="leader-profile-term"><a class="tag tag-link" style="--c:#5B4B8A" href="#/leaders">' + esc((what.length ? what.join(', ') + ' · ' : '') + o.body.name) + '</a>' + termBar(o.body, o, false) + '</span>';
     }).join('');
   }
   /** The Groups page ("My groups"): the leadership groups this person serves on, as everyone on them sees them. */

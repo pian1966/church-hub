@@ -11,7 +11,7 @@
   var BOX = 'M3 5h18v4H3zM5 9v10h14V9M10 13h4';
   var PEN = 'M4 20h4L20 8l-4-4L4 16zM14 6l4 4';
   var state = { q: '', cat: '', year: '' }, draft = null;
-  var previewUrl = '', previewObserver = null;
+  var previewUrl = '', previewObserver = null, previewTimer = 0;
 
   function me() { return H.user(); }
   function administrator() { return H.can('*') && !S.preview(); }
@@ -50,6 +50,7 @@
       (edit ? '<small><span class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText(r)) + '</span>' + (r.shownTo ? ' <span class="tag grey">' + esc(T('Shown to {name}', { name: r.aboutName })) + '</span>' : '') + '</small>' : '') + '</span><span class="rec-acts">' +
       (r.file ? '<button class="btn small" data-act="archive:open" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.download, 16) + T('Download') + '</button>' : '') +
       (mayPreview(r) ? '<button class="btn small" data-act="archive:preview" data-id="' + esc(r.id) + '">👁 ' + T('Preview') + '</button>' : '') +
+      (A.embedUrl(r.link) ? '<button class="btn small" data-act="archive:linkpreview" data-id="' + esc(r.id) + '">' + T('Preview') + '</button>' : '') +
       (A.link(r.link) ? '<a class="btn small" href="' + esc(A.link(r.link)) + '" target="_blank" rel="noopener noreferrer" data-act="archive:link" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.link, 16) + T('Open the link') + '</a>' : '') +
       (edit ? '<button class="icon-btn ghost" data-act="archive:edit" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Edit {name}', { name: r.title })) + '" title="' + esc(T('Edit')) + '">' + H.icon(PEN, 16) + '</button>' +
         '<button class="icon-btn ghost" data-act="archive:del" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Delete {name}', { name: r.title })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</span></div>';
@@ -117,6 +118,7 @@
       '<label class="check"><input type="checkbox" id="ar-shown"' + (r.shownTo || (isNew && !r.aboutId) ? ' checked' : '') + '><span>' + T('They can see this record themselves') + '</span></label></div>' +
       '<label class="field">' + (r.file ? T('Replace the file') + ' <span class="muted small">(' + esc(r.file.name) + ')</span>' : T('File (up to 15 MB)')) + '<input type="file" id="ar-file"></label>' +
       '<label class="field">' + T('Or a link to where it is kept') + '<input id="ar-link" type="url" maxlength="500" value="' + esc(r.link || '') + '" placeholder="https://"></label>' +
+      (administrator() ? '<label class="check"><input type="checkbox" id="ar-app-doc"' + (r.displayOnApplication ? ' checked' : '') + '><span>' + T('Display on Membership Application Form') + '<br><small class="muted">' + T('Everyone who can sign in can read this document.') + '</small></span></label>' : '') +
       '<div class="field"><label for="ar-note">' + T('Note') + '</label>' + (window.RichText ? RichText.tools('ar-note', { bar: T('Formatting'), b: T('Bold'), i: T('Italic'), u: T('Underline'), h: T('Heading'), ul: T('Bulleted list'), ol: T('Numbered list') }) : '') + '<textarea id="ar-note" rows="3" maxlength="1000">' + esc(r.note || '') + '</textarea></div>' +
       '<p id="ar-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="archive:save" data-id="' + esc(r.id || '') + '">' + T('Save') + '</button></div>', T('Add a record'));
@@ -148,7 +150,35 @@
   }
   function clearPreviewUrl() {
     if (previewObserver) { previewObserver.disconnect(); previewObserver = null; }
+    if (previewTimer) { clearTimeout(previewTimer); previewTimer = 0; }
     if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ''; }
+  }
+  function linkedPreviewDialog(r) {
+    var embed = A.embedUrl(r.link); if (!embed) return;
+    H.modal(H.dialogHead(T('Preview'), r.title) + '<div class="dlg-body ar-preview-body"><p class="ar-preview-meta">' + esc(catName(r.cat) + ' · ' + H.fmt(r.date, true)) + '</p>' +
+      '<p id="ar-doc-loading" class="note" role="status" aria-live="polite">' + T('Loading preview…') + '</p>' +
+      '<p id="ar-doc-fallback" class="note warn" role="status" hidden>' + T('The preview did not load. Check the document’s sharing settings, or open it in Google Docs.') + '</p>' +
+      '<iframe id="ar-doc-preview" class="ar-preview-frame" src="' + esc(embed) + '" title="' + esc(r.title) + '" loading="eager" referrerpolicy="no-referrer"></iframe>' +
+      '<p class="hint">' + T('If you cannot see the document, check its sharing settings or open it in Google Docs.') + '</p></div>' +
+      '<div class="dlg-foot"><a class="btn" href="' + esc(A.link(r.link)) + '" target="_blank" rel="noopener noreferrer" data-act="archive:link" data-id="' + esc(r.id) + '">' + T('Open in Google Docs') + '</a>' +
+      '<button class="btn primary" data-act="hub:close">' + T('Close') + '</button></div>', T('Preview'), true);
+    var dialog = document.querySelector('#modal .dialog'), modal = document.getElementById('modal'), frame = document.getElementById('ar-doc-preview');
+    if (dialog) dialog.classList.add('ar-preview-dialog');
+    if (frame) frame.addEventListener('load', function () {
+      var loading = document.getElementById('ar-doc-loading'); if (loading) loading.hidden = true;
+      if (previewTimer) { clearTimeout(previewTimer); previewTimer = 0; }
+    });
+    previewTimer = setTimeout(function () {
+      var loading = document.getElementById('ar-doc-loading'), fallback = document.getElementById('ar-doc-fallback');
+      if (loading && !loading.hidden && fallback) fallback.hidden = false;
+    }, 10000);
+    if (modal) {
+      previewObserver = new MutationObserver(function () {
+        if (!modal.querySelector('.ar-preview-dialog')) clearPreviewUrl();
+      });
+      previewObserver.observe(modal, { childList: true, subtree: true });
+    }
+    logPreview(r);
   }
   function contentType(file) {
     var name = String(file.name || '').toLowerCase(), ext = (name.match(/\.([a-z0-9]+)$/) || [])[1] || '';
@@ -264,23 +294,39 @@
         if (typed && !A.link(typed)) return bad(T('That link doesn’t look like a web address.'));
         if (!file && !(old && old.file) && !typed) return bad(T('Add a file or a link.'));
         var u = me(), rec = A.clean({ id: old ? old.id : S.uid('ar'), createdAt: old && old.createdAt, title: val('ar-title'), cat: val('ar-cat'), date: val('ar-date'), note: val('ar-note'), access: access, bodyId: val('ar-body'),
-          aboutId: about ? about.id : '', aboutName: about ? H.name(about) : '', shownTo: !!about && document.getElementById('ar-shown').checked, link: A.link(typed), file: old && old.file, by: old ? old.by : (u ? H.name(u) : '') });
+            aboutId: about ? about.id : '', aboutName: about ? H.name(about) : '', shownTo: !!about && document.getElementById('ar-shown').checked, link: A.link(typed),
+            displayOnApplication: administrator() ? !!document.getElementById('ar-app-doc').checked : !!(old && old.displayOnApplication), file: old && old.file, by: old ? old.by : (u ? H.name(u) : '') });
+        if (old && old.displayOnApplication && !administrator() &&
+          (rec.title !== old.title || rec.date !== old.date || rec.link !== old.link || !!file)) {
+          return bad(T('Only an Administrator can change a document displayed on the membership form.'));
+        }
         var why = (old ? 'Changed the archive record “' : 'Added to the archive: “') + rec.title + '” (' + catName(rec.cat) + '; seen by: ' + rec.access + (rec.shownTo ? ' and the person it is about' : '') + ')';
         var done = function () { H.closeModal(); H.render(); H.toast(T('Saved')); if (file && !S.isLive()) H.toast(T('The demo keeps files only until you close the page.')); };
-        if (!file) { S.put('archive', rec, why); return done(); }
+        var syncRecord = function () {
+          if (old && old.displayOnApplication && !administrator()) { S.put('archive', rec, why); return Promise.resolve(); }
+          if (old && old.displayOnApplication && !rec.displayOnApplication) {
+            return S.removeApplicationDocument(rec.id, old.file && old.file.parts).then(function () { S.put('archive', rec, why); });
+          }
+          S.put('archive', rec, why);
+          return rec.displayOnApplication ? S.publishApplicationDocument(rec) : Promise.resolve();
+        };
+        var fail = function (e) { console.error(e); bad(T(e && e.message && e.message.indexOf('publish') >= 0 ? 'Couldn’t publish this document to the membership form. Please try again.' : 'Couldn’t save the record. Please try again.')); };
+        if (!file) { Promise.resolve(syncRecord()).then(done, fail); return; }
         H.busy(T('Saving the file…'), function () {
           return readFile(file).then(function (b64) {
             var parts = A.split(b64);
             return S.saveFile(rec.id, parts, (old && old.file && old.file.parts) || 0).then(function () {
               rec.file = { name: file.name.slice(0, 150), type: file.type || '', size: file.size, parts: parts.length };
-              S.put('archive', rec, why);
             });
           });
-        }).then(done, function (e) { console.error(e); bad(T('Couldn’t save the file. Please try again.')); });
+        }).then(syncRecord).then(done, fail);
       },
       del: function (el) {
         var r = S.get('archive', el.dataset.id); if (!r || !keeper() || !H.confirmBtn(el, '✕?')) return;
-        S.remove('archive', r.id, 'Deleted the archive record “' + r.title + '” (' + catName(r.cat) + ')'); H.render(); H.toast(T('Deleted'));
+        if (r.displayOnApplication && !administrator()) { H.toast(T('Only an Administrator can remove a document displayed on the membership form.'), true); return; }
+        var remove = r.displayOnApplication ? S.removeApplicationDocument(r.id, r.file && r.file.parts) : Promise.resolve();
+        remove.then(function () { S.remove('archive', r.id, 'Deleted the archive record “' + r.title + '” (' + catName(r.cat) + ')'); H.render(); H.toast(T('Deleted')); })
+          .catch(function (e) { console.error(e); H.toast(T('Couldn’t remove the document from the membership form. Please try again.'), true); });
       },
       open: function (el) {
         var r = S.get('archive', el.dataset.id); if (!canAccess() || !r || !r.file || !A.sees(r, who())) return;
@@ -293,6 +339,10 @@
             previewDialog(r, A.join(parts)); logPreview(r);
           });
         }).catch(function (e) { console.error(e); H.toast(T('Couldn’t fetch the file. Please try again.'), true); });
+      },
+      linkpreview: function (el) {
+        var r = S.get('archive', el.dataset.id);
+        if (canAccess() && r && A.sees(r, who()) && A.embedUrl(r.link)) linkedPreviewDialog(r);
       },
       previewdownload: function (el) {
         var r = S.get('archive', el.dataset.id);

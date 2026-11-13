@@ -418,43 +418,10 @@ service cloud.firestore {
     }
 
     // ---------- the Archive (js/archive.js): minutes, plans, staff contracts, appraisals ----------
-    // Administrators and the Senior Pastor (settings seniorPastorId) see and manage every record. Everyone else sees a
-    // record only if its access says so: all = everyone signed in; office = Pastors; a leadership group's record
-    // (bodyId) = that group's members; and a record shown to the person it is about (shownTo) = that person.
-    // private records (staff contracts, appraisals) are for Administrators and the Senior Pastor only.
-    // The file is kept in parts under the record and follows the record's rule. The app logs each time one is opened.
+    // Archive access is limited to Administrators and Council members. The record's own access rule remains an
+    // additional limit for Council members; Administrators see and manage every record. Files follow the same rule.
     function seniorId() { return get(/databases/$(database)/documents/settings/church).data.get('seniorPastorId', ''); }
     function keeper() { return admin() || (isRole(['pastor']) && isMe(seniorId())); }
-    function seesRecord(d) {
-      return keeper()
-        || (d.get('access', '') == 'all' && anyone())
-        || (d.get('access', '') == 'office' && manager())
-        || (d.get('bodyId', '') != '' && inBody(d.bodyId))
-        || mine(d.get('shownTo', ''));
-    }
-    function okRecord(d) {
-      return d.title is string && d.title.size() > 0 && d.title.size() <= 150
-        && d.access in ['all', 'body', 'office', 'private']
-        && d.get('bodyId', '') is string && (d.access == 'body') == (d.get('bodyId', '') != '')
-        && d.get('shownTo', '') is string && (d.get('shownTo', '') == '' || d.shownTo == d.get('aboutId', ''));
-    }
-    match /archive/{id} {
-      allow read: if seesRecord(resource.data);
-      allow create, update: if keeper() && okRecord(request.resource.data);
-      allow delete: if keeper();
-      match /parts/{n} {
-        allow read: if seesRecord(get(/databases/$(database)/documents/archive/$(id)).data);
-        allow create, update: if keeper() && request.resource.data.keys().hasOnly(['data'])
-          && request.resource.data.data is string && request.resource.data.data.size() <= 950000;
-        allow delete: if keeper();
-      }
-    }
-    // Kept in step with Council membership in the Leadership page; only Administrators and Pastors maintain this list.
-    match /archivePreviewMembers/{id} {
-      allow read: if manager() || isMe(id);
-      allow create, update: if manager() && request.resource.data.keys().hasOnly(['personId']) && request.resource.data.personId == id;
-      allow delete: if manager();
-    }
     function archivePreviewMember(id) {
       return id != '' && exists(/databases/$(database)/documents/archivePreviewMembers/$(id));
     }
@@ -464,16 +431,45 @@ service cloud.firestore {
         || (also().size() > 1 && archivePreviewMember(also()[1]))
         || (also().size() > 2 && archivePreviewMember(also()[2])));
     }
+    function archiveReader() { return admin() || councilMember(); }
+    function seesRecord(d) {
+      return archiveReader() && (admin()
+        || (d.get('access', '') == 'all' && anyone())
+        || (d.get('access', '') == 'office' && manager())
+        || (d.get('bodyId', '') != '' && inBody(d.bodyId))
+        || mine(d.get('shownTo', '')));
+    }
+    function okRecord(d) {
+      return d.title is string && d.title.size() > 0 && d.title.size() <= 150
+        && d.access in ['all', 'body', 'office', 'private']
+        && d.get('bodyId', '') is string && (d.access == 'body') == (d.get('bodyId', '') != '')
+        && d.get('shownTo', '') is string && (d.get('shownTo', '') == '' || d.shownTo == d.get('aboutId', ''));
+    }
+    match /archive/{id} {
+      allow read: if seesRecord(resource.data);
+      allow create, update: if archiveReader() && okRecord(request.resource.data);
+      allow delete: if archiveReader();
+      match /parts/{n} {
+        allow read: if seesRecord(get(/databases/$(database)/documents/archive/$(id)).data);
+        allow create, update: if archiveReader() && request.resource.data.keys().hasOnly(['data'])
+          && request.resource.data.data is string && request.resource.data.data.size() <= 950000;
+        allow delete: if archiveReader();
+      }
+    }
+    // Kept in step with Council membership in the Leadership page; only Administrators and Pastors maintain this list.
+    match /archivePreviewMembers/{id} {
+      allow read: if manager() || isMe(id);
+      allow create, update: if manager() && request.resource.data.keys().hasOnly(['personId']) && request.resource.data.personId == id;
+      allow delete: if manager();
+    }
     function okArchivePreviewPart(d) {
       return d.keys().hasOnly(['data']) && d.data is string && d.data.size() <= 950000;
     }
     match /archivePreviews/{id}/parts/{n} {
       allow read: if admin() || (councilMember() && seesRecord(get(/databases/$(database)/documents/archive/$(id)).data));
       allow create, update: if okArchivePreviewPart(request.resource.data)
-        && (keeper() || (councilMember() && seesRecord(get(/databases/$(database)/documents/archive/$(id)).data)
-          && exists(/databases/$(database)/documents/archive/$(id)/parts/$(n))
-          && request.resource.data.data == get(/databases/$(database)/documents/archive/$(id)/parts/$(n)).data.data));
-      allow delete: if keeper();
+        && (admin() || councilMember());
+      allow delete: if admin() || councilMember();
     }
 
     // ---------- the Library (js/library.js) ----------

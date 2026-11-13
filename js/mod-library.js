@@ -93,6 +93,17 @@
       (edit ? '<button class="btn small" data-act="library:policy">' + H.icon(PEN, 16) + T('Edit') + '</button>' : '') + '</div></div>' +
       (p.text && p.text.length < 400 ? '<div class="lib-doc lib-doc-short" data-own-words>' + L.policyHtml(p.text) + '</div>' : '') + '</section>';
   }
+  function libraryOn() { return H.isOn('library'); }
+  function sectionTabs(active) {
+    if (!H.isOn('archive')) return '';
+    var buttons = [];
+    if (libraryOn()) buttons.push(['library', 'Library', '']);
+    buttons.push(['archives', 'Archives', ArchiveUI.canAccess() ? '' : H.icon(H.ICON.lock, 14)]);
+    return '<section class="panel"><div class="lib-tabs" role="tablist" aria-label="' + esc(T('Library')) + '">' + buttons.map(function (b) {
+      return '<button type="button" class="btn small' + (active === b[0] ? ' primary' : '') + '" data-act="library:section" data-section="' + b[0] +
+        '" role="tab" aria-selected="' + (active === b[0]) + '">' + esc(T(b[1])) + (b[2] ? ' <span aria-hidden="true">' + b[2] + '</span>' : '') + '</button>';
+    }).join('') + '</div></section>';
+  }
   /** How to format the policy: what to type, and how it shows (drawn by the same code that shows the policy). */
   function legend() {
     var rows = [['# ' + T('Heading'), '# ' + T('Heading')], ['## ' + T('Smaller heading'), '## ' + T('Smaller heading')], [T('Library policy').toUpperCase(), null],
@@ -102,7 +113,9 @@
       rows.map(function (r) { return '<tr><td><code>' + esc(r[0]).replace(/\n/g, '<br>') + '</code></td><td class="lib-doc">' + L.policyHtml(r[1] || r[0]) + '</td></tr>'; }).join('') +
       '</tbody></table></details>';
   }
-  function page() {
+  function page(parts) {
+    var archiveOn = H.isOn('archive'), archivePage = archiveOn && ((parts || [])[0] === 'archives' || !libraryOn());
+    if (archivePage) return sectionTabs('archives') + ArchiveUI.page();
     var u = me(), edit = librarian(), all = L.find(S.list('books'), ''), books = all.filter(L.inLibrary), gone = edit ? all.filter(function (b) { return !L.inLibrary(b); }) : [], mine = u ? L.mine(loans(), u.id) : [], out = edit ? L.onLoan(loans()) : [];
     books.sort(function (a, b) {
       var av = sortKey === 'kind' ? a.kind || 'Book' : a[sortKey] || '', bv = sortKey === 'kind' ? b.kind || 'Book' : b[sortKey] || '';
@@ -113,6 +126,7 @@
       (edit || chooses() ? '<div class="btns">' + (edit ? '<button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button>' +
         '<button class="btn" data-act="library:import">' + T('Import a list') + '</button><button class="btn" data-act="library:report">' + T('Reports') + '</button>' : '') +
         (chooses() ? '<button class="btn" data-act="library:libs">' + T('Librarians') + '</button>' : '') + '</div>' : '') + '</div>';
+    html += sectionTabs('library');
     html += policyPanel();
     if (mine.length) html += '<section class="panel" id="lib-mine"><h2>' + T('My books') + '</h2><div class="list">' + mine.map(function (l) {
       var n = L.daysOut(l, H.today());
@@ -643,8 +657,10 @@
 
   H.register({
     id: 'library', name: 'Library', desc: 'The church’s library – see what is in, and what you have borrowed', icon: BOOKS, tint: '#2F7A78', optIn: true,
-    render: function () { return page(); },
-    after: function () {
+    show: function () { return H.isOn('library') || H.isOn('archive'); },
+    render: function (parts) { return page(parts); },
+    after: function (parts) {
+      if ((parts || [])[0] === 'archives' || !libraryOn()) { ArchiveUI.after(); return; }
       applySearch(); updateCoverControls(); loadCovers(); loadPolicy();
       if (administrator() && needsLibrarianReview() && !librarianReviewShown) {
         librarianReviewShown = true; librarianReviewDialog();
@@ -664,6 +680,11 @@
       return out;
     },
     actions: {
+      section: function (el) {
+        var section = el.dataset.section;
+        if (section === 'archives' && H.isOn('archive')) H.go('library/archives');
+        else if (section === 'library' && libraryOn()) H.go('library');
+      },
       add: function () { if (librarian()) form({}); },
       edit: function (el) { var b = S.get('books', el.dataset.id); if (b && librarian()) form(b); },
       coverrm: function () { newCover = ''; var el = document.getElementById('lib-cover-now'); if (el) el.innerHTML = '<span class="muted small">' + T('No picture yet.') + '</span>'; var rm = document.getElementById('lib-cover-rm'); if (rm) rm.hidden = true; },

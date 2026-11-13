@@ -585,20 +585,23 @@ The Archive reads `memberIds` to decide who sees a group's records, so a group w
 - Groups fold like care groups (`CareUI.fold`): office-bearers (anyone with a role) first, then the other members.
   `LeadersUI.tag(p)` puts a chip per group on a person's page and the Me page (opening Leadership).
 
-## Archive (Archive page; `js/archive.js`, `js/mod-archive.js`)
-Off until switched on. A record has a category (`settings.archiveCats`, or `Archive.CATS`: Council minutes, Architectural
-plans, Staff contracts, Annual appraisals, Other), a date, and a file or a link.
-- **Who sees a record** is on the record (`access`, copied from its category when added): `all` everyone signed in ·
-  `body` the members of one leadership group (`bodyId`) · `office` Administrators and Pastors · `private` Administrators
-  and the Senior Pastor. A record about a person (`aboutId`) may also be shown to them (`shownTo` = their id).
-  **Keepers** – Administrators and the Senior Pastor (`settings.seniorPastorId`) – read and write everything; nobody else
-  writes. `Archive.sees()` (screens, demo), `seesRecord()` in `firestore.rules` and the copy in `tests/fake-firebase.js` say
-  the same. `Archive.clean()` keeps `bodyId` only with `access: 'body'` and `shownTo` only equal to `aboutId` (the rules
-  insist on both), so the queries below can never return a record the reader may not see.
-- **Loading** can't be planned at sign-in, because it depends on the settings (is the Archive on? who is the Senior
-  Pastor?) and on my leadership groups. `extras()` in `js/store.js` runs when the settings or my groups arrive and keeps
-  the right listeners: keepers the whole collection; everyone else `access == all`, `shownTo == me`, `bodyId == g` for each
-  of my groups, and (Pastors) `access == office`. The same function gives a librarian who isn't an Administrator every loan.
+## Archive (Library → Archives; `js/archive.js`, `js/mod-archive.js`, `js/mod-library.js`)
+Off until Library is switched on. Archives is a tab inside Library, with a lock indicator and a restricted notice for
+people who are not Administrators or Council members. A record has a category (`settings.archiveCats`, or
+`Archive.CATS`: Council minutes, Architectural plans, Staff contracts, Annual appraisals, Other), a date, and a file or
+a link.
+- **Who may access it** is first limited to Administrators and Council members. Within that gate, each record's
+  `access` choice, copied from its category when added, provides an additional limit: `all` all authorized readers ·
+  `body` the members of one leadership group (`bodyId`) · `office` Administrators and Pastors · `private` the
+  Administrators and Senior Pastor. A record about a person (`aboutId`) may also be shown to them (`shownTo` = their
+  id), but this never bypasses the Administrator/Council gate. Administrators and Council members manage records and
+  files; only Administrators change the shared archive categories. `Archive.sees()` (screens, demo), `seesRecord()` in
+  `firestore.rules` and the copy in `tests/fake-firebase.js` enforce these rules. `Archive.clean()` keeps `bodyId` only
+  with `access: 'body'` and `shownTo` only equal to `aboutId` (the rules insist on both).
+- **Loading** can't be planned at sign-in, because it depends on settings (is Library on?) and Council membership.
+  `extras()` in `js/store.js` listens for Archive records only for Administrators and Council members; unauthorized
+  roles do not subscribe to Archive queries. The list/get/file APIs filter or reject unauthorized requests as well as
+  Firestore rules enforcing the same gate.
 - **Files** are kept in Firestore, not Firebase Storage (nothing extra for a church to set up): the file as base64, cut
   into parts of 900 000 letters (`archive/{id}/parts/{n}`; a document holds 1 MB), at most 15 MB (`Archive.MAX`); bigger
   files are linked. Parts are written before the record and fetched on Download (`Store.saveFile` / `loadFile`), following
@@ -607,8 +610,11 @@ plans, Staff contracts, Annual appraisals, Other), a date, and a file or a link.
   copied into this area the first time an authorized user previews them. Council membership is kept in step with
   Leadership by `Store`. The demo keeps files in memory only. Downloads use the browser, or
   `ChurchHubApp.saveFileBase64(name, type, base64)` in the Android app (older apps: "please update").
-- Opening a record that isn't for everyone (download, preview or link) is written in the audit log. Council minutes: the Archive
-  lists this year's months with nothing filed, counted from the first minutes ever filed (`Archive.missingMonths`).
+- **Storage note**: Administrators and Council members can open the informational note from the Archives header. Its
+  placeholder wording is in `js/i18n/archive.js` and the language packs, ready to be replaced with the church's actual
+  shelf/cabinet and cloud-folder details.
+- Opening a record that isn't for everyone (download, preview or link) is written in the audit log. Council minutes: the
+  Archive lists this year's months with nothing filed, counted from the first minutes ever filed (`Archive.missingMonths`).
 Not built yet: letting a group's secretary file its own minutes; a retention review.
 
 ## Library (Library page; `js/library.js`, `js/mod-library.js`)

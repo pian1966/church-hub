@@ -10,26 +10,25 @@ module.exports = async function (ctx) {
   const b64 = PNG.buffer.toString('base64');
   const on = seed => { seed['settings/church'].modules = Object.assign({}, seed['settings/church'].modules, { leaders: true, archive: true, library: true }); return seed; };
   const deniedPreview = async (x, id) => {
-    const before = (await x.denied()).length;
     const code = await x.page.evaluate(async fileId => {
       try { await Store.loadArchivePreview(fileId, 1); return ''; }
       catch (e) { return e.code || ''; }
     }, id);
-    const request = 'get archivePreviews/' + id + '/parts/0', denied = await x.denied();
-    const found = denied.indexOf(request, before);
-    if (found >= 0) await x.page.evaluate(path => {
-      const i = window.__fake.denied.indexOf(path); if (i >= 0) window.__fake.denied.splice(i, 1);
-    }, request);
-    return code === 'permission-denied' && found >= 0;
+    return code === 'permission-denied';
   };
 
   console.log('Leadership (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
-  check(!(await inGroups(s, 'leaders')) && !(await s.page.$('nav a[href="#/archive"]')) && !(await s.page.$('nav a[href="#/library"]')), 'Leadership, the Archive and the Library are off until an Administrator switches them on');
+  check(!(await inGroups(s, 'leaders')) && !(await s.page.$('nav a[href="#/archive"]')) && !(await s.page.$('nav a[href="#/library"]')), 'Leadership and the Library are off until an Administrator switches them on');
   await s.go('settings/apps');
-  for (const m of ['leaders', 'archive', 'library']) { await s.page.check('.st-mod[value="' + m + '"]'); await s.settle(); }
+  for (const m of ['leaders', 'library']) { await s.page.check('.st-mod[value="' + m + '"]'); await s.settle(); }
   docs = await s.docsNow();
-  check(['leaders', 'archive', 'library'].every(m => docs['settings/church'].modules[m] === true) && !!(await inGroups(s, 'leaders')) && !!(await s.page.$('nav a[href="#/archive"]')) && !!(await s.page.$('nav a[href="#/library"]')), 'switched on under Settings → Apps: their pages appear');
+  check(['leaders', 'archive', 'library'].every(m => docs['settings/church'].modules[m] === true) && !!(await inGroups(s, 'leaders')) && !(await s.page.$('nav a[href="#/archive"]')) && !!(await s.page.$('nav a[href="#/library"]')), 'switched on under Settings → Apps: Library includes Archives without a separate menu entry');
+  await s.page.evaluate(() => { const modules = Object.assign({}, Store.settings().modules, { archive: true, library: false }); Store.setSettings({ modules: modules }, 'Test older Archive setting'); });
+  await s.settle(); await s.go('library'); t = await s.text();
+  check(!!(await s.page.$('[data-act="library:section"][data-section="library"]')) && !!(await s.page.$('[data-act="library:section"][data-section="archives"]')) && t.includes('The church’s library'), 'older Archive-only settings still show the Library and Archives tabs together');
+  await s.page.evaluate(() => { const modules = Object.assign({}, Store.settings().modules, { archive: true, library: true }); Store.setSettings({ modules: modules }, 'Restore combined Library setting'); });
+  await s.settle();
   await s.go('leaders'); await s.page.fill('#lb-new', 'Church Council'); await s.page.click('[data-act="leaders:addgroup"]'); await s.settle();
   docs = await s.docsNow(); key = find(docs, 'leaderBodies', d => d.name === 'Church Council'); const lb = key ? key.split('/')[1] : '';
   check(!!key && docs[key].open === true && docs[key].memberIds.length === 0, 'a leadership group is added, seen by everyone until that is changed');
@@ -72,6 +71,9 @@ module.exports = async function (ctx) {
   check(!!plan && docs[plan].access === 'office' && docs[plan].link === 'https://drive.google.com/hall-plans' && !docs[plan].file, 'a record can be a link to where the file is kept');
   t = await s.text();
   check(t.includes('Council minutes – October') && t.includes('Church Council') && t.includes('Shown to Lerato Khumalo') && t.includes('Administrators and the Senior Pastor only'), 'each record says who can see it');
+  await s.page.click('[data-act="archive:storageinfo"]'); await s.page.waitForSelector('#modal .overlay');
+  check((await s.page.textContent('#modal')).includes('Uploaded files are stored in the church’s Firestore database in South Africa.') && (await s.page.textContent('#modal')).includes('Linked files stay in their cloud folder:'), 'an Administrator can open the storage information note');
+  await s.page.click('#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
   const [dl] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="archive:open"][data-id="' + ar + '"]')]);
   const got = ctx.fs.readFileSync(await dl.path()); await s.settle(); docs = await s.docsNow();
   check(dl.suggestedFilename() === 'face.png' && got.equals(PNG.buffer), 'the file downloads as it was added');
@@ -289,17 +291,31 @@ module.exports = async function (ctx) {
   await finish(covers);
 
   // What each person sees of it all, carrying on from what the Administrator set up
-  const as = async (email, senior) => { const seed = JSON.parse(JSON.stringify(live)); if (senior) seed['settings/church'].seniorPastorId = senior; const x = await session(email, seed); await x.go('archive'); await x.page.waitForTimeout(400); return x; };
-  const sees = async x => { const tx = (await x.page.$('nav a[href="#/archive"]')) ? await x.text() : ''; return ['Council minutes – October', 'Contract of employment'].map(n => tx.includes(n) ? 'y' : 'n').join(''); };
+  const as = async (email, senior) => { const seed = JSON.parse(JSON.stringify(live)); if (senior) seed['settings/church'].seniorPastorId = senior; const x = await session(email, seed); await x.go('library/archives'); await x.page.waitForTimeout(400); return x; };
+  const sees = async x => { const tx = await x.text(); return ['Council minutes – October', 'Contract of employment'].map(n => tx.includes(n) ? 'y' : 'n').join(''); };
+  const deniedArchive = async (x, id) => x.page.evaluate(async fileId => {
+    let fileDenied = false;
+    try { await Store.loadFile(fileId, 0); } catch (e) { fileDenied = e.code === 'permission-denied'; }
+    return Store.list('archive').length === 0 && Store.get('archive', fileId) === null && fileDenied;
+  }, id);
   console.log('A Council member (Basic access):');
   s = await as('tim.jacobs@example.com');
-  check((await sees(s)) === 'yn' && !(await s.page.$('[data-act="archive:add"]')) && !(await s.page.$('[data-act="archive:edit"]')), 'sees the Council’s minutes, not the staff contract, and can’t add or change records');
+  check((await sees(s)) === 'yn' && !!(await s.page.$('[data-act="archive:add"]')) && !!(await s.page.$('[data-act="archive:edit"]')), 'sees the Council’s minutes, not the staff contract, and can add or change records');
+  check(await s.page.evaluate(id => !!Store.get('archive', id) && Store.list('archive').some(r => r.id === id), ar), 'a Council member can query the archive records allowed to them');
+  await s.page.click('[data-act="archive:storageinfo"]'); await s.page.waitForSelector('#modal .overlay');
+  check((await s.page.textContent('#modal')).includes('Uploaded files are stored in the church’s Firestore database in South Africa.') && (await s.page.textContent('#modal')).includes('Linked files stay in their cloud folder:'), 'a Council member can open the storage information note');
+  await s.page.click('#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
   check(await s.page.isVisible('[data-act="archive:preview"][data-id="' + ar + '"]'), 'a Council member can preview a record they are allowed to see');
   await s.page.click('[data-act="archive:preview"][data-id="' + ar + '"]'); await s.page.waitForSelector('#modal .ar-preview-image');
   await s.page.click('#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
   check(await s.page.evaluate(async id => { try { await Store.loadArchivePreview(id, 1); return true; } catch (e) { return false; } }, ar), 'the Council member can request the restricted preview data directly');
   const [dl2] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="archive:open"][data-id="' + ar + '"]')]);
   check(ctx.fs.readFileSync(await dl2.path()).equals(PNG.buffer), 'and can download them');
+  await s.page.click('[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
+  await s.page.fill('#ar-title', 'Council filing test'); await s.page.fill('#ar-date', '2026-11-13'); await s.page.setInputFiles('#ar-file', PNG);
+  await s.page.click('[data-act="archive:save"]'); await s.settle(); docs = await s.docsNow();
+  const councilFile = find(docs, 'archive', d => d.title === 'Council filing test'), councilFileId = councilFile ? councilFile.split('/')[1] : '';
+  check(!!councilFile && !!docs['archive/' + councilFileId + '/parts/0'] && !!docs['archivePreviews/' + councilFileId + '/parts/0'], 'a Council member can add a record and its file and preview copy');
   await s.go('leaders'); t = await s.text();
   check(t.includes('Church Council') && t.includes('Tim Jacobs') && !(await s.page.$('#lb-new')) && !(await s.page.$('[data-act="leaders:seat"]')), 'sees their own leadership group (though it is for members only), and can’t change it');
   await s.go('library'); t = await s.text();
@@ -316,17 +332,17 @@ module.exports = async function (ctx) {
   await finish(s);
   console.log('The staff member a contract is about:');
   s = await as('lerato.khumalo@example.com');
-  check((await sees(s)) === 'ny', 'sees their own contract, not the Council’s minutes');
-  check(!(await s.page.$('[data-act="archive:preview"]')) && await deniedPreview(s, ar),
-  'a standard member sees no Preview button and a direct preview request is denied');
+  check((await sees(s)) === 'nn' && (await s.text()).includes('Restricted View — Access restricted to Council members and Administrators only.'), 'a standard member sees the restricted notice and no archive records');
+  check(!(await s.page.$('[data-act="archive:preview"]')) && await deniedPreview(s, ar) && await deniedArchive(s, ar),
+  'a standard member cannot preview, query, or download archive contents directly');
   await s.go('leaders'); t = await s.text();
   check(!t.includes('Church Council') && t.includes('No leadership groups yet.'), 'a members-only leadership group is hidden from everyone else');
   await finish(s);
   console.log('Someone else (Basic access), who is a librarian:');
   s = await as('megan.smith@example.com');
-  check((await sees(s)) === 'nn' && !(await s.page.$('nav a[href="#/archive"]')), 'sees no records – the Archive isn’t on their menu at all');
-  check(await deniedPreview(s, ar),
-    'a librarian is denied a direct request to the preview data');
+  check((await sees(s)) === 'nn' && !!(await s.page.$('nav a[href="#/library"]')) && !(await s.page.$('nav a[href="#/archive"]')) && (await s.text()).includes('Restricted View — Access restricted to Council members and Administrators only.'), 'a librarian sees the locked Archives tab and restricted notice, not records');
+  check(await deniedPreview(s, ar) && await deniedArchive(s, ar),
+    'a librarian cannot query, preview, or download archive contents directly');
   await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();
   check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && !!(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('[data-act="library:libs"]')), 'as a librarian sees who has which book and can add books (but not name librarians)');
   check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on borrowed records');
@@ -351,10 +367,10 @@ module.exports = async function (ctx) {
   await finish(s);
   console.log('A Pastor, and the Senior Pastor:');
   s = await as('pieter.vanwyk@example.com');
-  check((await sees(s)) === 'nn', 'a Pastor doesn’t see private records or a group’s they aren’t on');
+  check((await sees(s)) === 'nn' && (await s.text()).includes('Restricted View — Access restricted to Council members and Administrators only.'), 'a Pastor who is not a Council member sees only the restricted notice');
   await finish(s);
   s = await as('pieter.vanwyk@example.com', 'p03');
-  check((await sees(s)) === 'yy' && !!(await s.page.$('[data-act="archive:add"]')), 'the Senior Pastor sees every record and can add them');
+  check((await sees(s)) === 'nn' && (await s.text()).includes('Restricted View — Access restricted to Council members and Administrators only.') && !(await s.page.$('[data-act="archive:add"]')), 'Senior Pastor status alone does not grant Archive access or editing');
   await s.go('library'); await s.page.waitForTimeout(300);
   check(!!(await s.page.$('[data-act="library:libs"]')) && !(await s.page.$('[data-act="library:add"]')) && !!(await s.page.$('[data-act="library:policy"]')), 'the Senior Pastor chooses the librarians and may change the policy, without being a librarian');
   await s.page.click('[data-act="library:libs"]'); await s.page.fill('.cg-q[data-for="lib-libs"]', 'tim jac'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();

@@ -76,7 +76,22 @@ var Store = (function () {
   function isLife(g) { return !!g && g.type === 'life'; }
   function lifeIds() { var m = {}; all('careGroups').forEach(function (g) { if (isLife(g)) m[g.id] = 1; }); return m; }
   function real(c) { return KIND[c] ? KIND[c][0] : c; }
+  function archiveWho() {
+    var ids = user ? [user.id] : [];
+    if (LIVE && Live && Live.household) Live.household().forEach(function (h) { if (h.personId && ids.indexOf(h.personId) < 0) ids.push(h.personId); });
+    var bodies = all('leaderBodies').filter(function (b) { return (b.memberIds || []).some(function (pid) { return ids.indexOf(pid) >= 0; }); });
+    return { admin: isAdmin(), council: !previewRole && bodies.some(function (b) { return /council/i.test(b.name || ''); }),
+      pastor: !previewRole && !!user && user.appRole === 'pastor', ids: ids, bodies: bodies.map(function (b) { return b.id; }) };
+  }
+  function archiveSees(record) {
+    return !previewRole && !!record && typeof Archive !== 'undefined' && Archive.sees(record, archiveWho());
+  }
+  function archiveCanManage() {
+    var who = archiveWho();
+    return !!(who.admin || who.council);
+  }
   function list(c) {
+    if (c === 'archive') return all(c).filter(archiveSees);
     var k = KIND[c]; if (!k) return all(c);
     if (k[0] === 'careGroups') return all('careGroups').filter(function (g) { return isLife(g) === k[1]; });
     var life = lifeIds(); return all('careShare').filter(function (x) { return !!life[x.groupId] === k[1]; });
@@ -85,6 +100,7 @@ var Store = (function () {
    *  look-up table, made again when the collection's list is replaced or grows; a hit is checked against the list itself. */
   var byIdCache = {};
   function get(c, id) {
+    if (c === 'archive') return all(c).filter(function (r) { return r.id === id && archiveSees(r); })[0] || null;
     if (KIND[c]) return list(c).filter(function (x) { return x.id === id; })[0] || null;   // care / life groups: small lists, split by kind
     var arr = all(c), ix = byIdCache[c];
     if (!ix || ix.arr !== arr || ix.len !== arr.length) {
@@ -99,6 +115,7 @@ var Store = (function () {
   function find(c, fn) { return list(c).filter(fn); }
   function put(c, obj, auditText) {
     if (blocked()) return obj;
+    if (c === 'archive' && !archiveCanManage()) { tell('Only Administrators and Council members can manage Archive records.'); return obj; }
     if (!obj.id) obj.id = uid(c.slice(0, 2));
     if (c === 'lifeGroups') obj.type = 'life';
     c = real(c);
@@ -112,6 +129,7 @@ var Store = (function () {
   }
   function remove(c, id, auditText) {
     if (blocked()) return;
+    if (c === 'archive' && !archiveCanManage()) { tell('Only Administrators and Council members can manage Archive records.'); return; }
     var prev = get(c, id); c = real(c);
     db[c] = all(c).filter(function (x) { return x.id !== id; });
     if (LIVE && prev) Live.remove(c, prev);
@@ -199,7 +217,11 @@ var Store = (function () {
    *  worked out (couples, consents by person, duplicates) until it does – see memo() in js/people/core.js. */
   var rev = 0;
   function version() { return rev + ':' + list('people').length + ':' + list('consents').length + ':' + list('families').length; }
-  function exportAll() { return copy(db); }
+  function exportAll() {
+    var out = copy(db);
+    out.archive = (out.archive || []).filter(archiveSees);
+    return out;
+  }
   /** Role given to people added from now on: in the demo everyone can sign in; live, an Administrator gives access. */
   function defaultRole() { return LIVE ? 'none' : 'member'; }
 
@@ -638,8 +660,8 @@ var Store = (function () {
       }, function (e) { console.warn('Could not load every care group (re-publish the database rules?)', e && e.code); careAllSub = null; });
     }
     /** Lists that depend on the church's settings or on my leadership groups, so they can only be asked for once those
-     *  are known. The Archive (only when it is switched on): Administrators and the Senior Pastor every record; everyone
-     *  else what is for everyone, what is shown to them, their leadership groups' records, and (Pastors) the office's.
+     *  are known. Archive records are fetched only for Administrators (all records) and Council members (only records
+     *  allowed by the record's existing access setting).
      *  The Library: a librarian who isn't an Administrator sees every loan. Each matches a rule in firestore.rules. */
     function myBodies() {
       var m = merged('leaderBodies', 'leaderBodiesMine'), me = session.personId;
@@ -648,10 +670,10 @@ var Store = (function () {
     function extras() {
       if (!session || !fs) return;
       var st = (raw.settings && raw.settings.church) || {}, me = session.personId, want = {}, c = function (x) { return fs.collection(x); };
-      if ((st.modules || {}).archive === true && me) {
-        var senior = !previewRole && session.role === 'pastor' && st.seniorPastorId === me;
-        if (is('admin') || senior) want['archive:'] = c('archive');
-        else {
+      if (((st.modules || {}).archive === true || (st.modules || {}).library === true) && me) {
+        var council = !previewRole && myBodies().some(function (id) { var b = get('leaderBodies', id); return b && /council/i.test(b.name || ''); });
+        if (is('admin')) want['archive:'] = c('archive');
+        else if (council) {
           want['archive:all'] = c('archive').where('access', '==', 'all');
           want['archive:me'] = c('archive').where('shownTo', '==', me);
           if (is('pastor')) want['archive:office'] = c('archive').where('access', '==', 'office');
@@ -1241,23 +1263,21 @@ var Store = (function () {
      *  The demo keeps files only until the page is closed (this browser's storage is too small for them). */
     saveFile: function (id, parts, had) {
       if (blocked()) return Promise.reject(new Error('view only'));
+      if (!archiveCanManage()) { var denied = new Error('Missing or insufficient permissions.'); denied.code = 'permission-denied'; return Promise.reject(denied); }
       if (LIVE) return Live.fileSave(id, parts, had);
       demoFiles[id] = parts.slice(); if (!parts.length) delete demoFiles[id]; return Promise.resolve();
     },
     loadFile: function (id, n) {
+      if (!archiveSees(get('archive', id))) { var denied = new Error('Missing or insufficient permissions.'); denied.code = 'permission-denied'; return Promise.reject(denied); }
       if (LIVE) return Live.fileLoad(id, n);
       return demoFiles[id] ? Promise.resolve(demoFiles[id].slice()) : Promise.reject(new Error('not kept'));
     },
     loadArchivePreview: function (id, n) {
-      if (LIVE) return Live.filePreviewLoad(id, n);
-      var record = get('archive', id), bodies = list('leaderBodies'), ids = user ? [user.id] : [];
-      var myBodies = bodies.filter(function (b) { return (b.memberIds || []).some(function (pid) { return ids.indexOf(pid) >= 0; }); });
-      var council = myBodies.some(function (b) { return /council/i.test(b.name || ''); });
-      var permitted = isAdmin() || (!previewRole && council && record && typeof Archive !== 'undefined' &&
-        Archive.sees(record, { admin: false, pastor: !!user && user.appRole === 'pastor', senior: !!user && user.id === (db.settings || {}).seniorPastorId, ids: ids, bodies: myBodies.map(function (b) { return b.id; }) }));
-      if (!permitted) {
+      var record = get('archive', id);
+      if (!archiveSees(record)) {
         var denied = new Error('Missing or insufficient permissions.'); denied.code = 'permission-denied'; return Promise.reject(denied);
       }
+      if (LIVE) return Live.filePreviewLoad(id, n);
       return demoFiles[id] ? Promise.resolve(demoFiles[id].slice()) : Promise.reject(new Error('not kept'));
     },
     /** A small setting kept on this device only (e.g. the language), also before signing in. Not church data. */

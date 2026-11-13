@@ -240,11 +240,12 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
 - Purpose: keeping the church's records – governance (minutes), property (plans) and employment (contracts, appraisals).
   Basis: legal obligation and legitimate interest for governance and property records; the employment contract and labour
   law for staff records. Staff records are personal information about an employee, and appraisals can be sensitive.
-- Who sees: decided on each record – everyone, one leadership group, Administrators and Pastors, or (the default for
-  staff contracts and appraisals) Administrators and the Senior Pastor only. The staff member a record is about sees it
-  only if the church ticks that; POPIA gives them the right to ask for a copy either way (Privacy → Requests).
-  Only Administrators and the Senior Pastor add, change or delete records. The database rules enforce all of this for
-  the record and for its file (tested), and people load only the records they may see.
+- Who sees: only Administrators and Council members can open the Archives; each record then adds its own restriction –
+  everyone in that authorized group, one leadership group, Administrators and Pastors, or (the default for staff
+  contracts and appraisals) Administrators and the Senior Pastor. The staff member a record is about sees it only if
+  the church ticks that; POPIA gives them the right to ask for a copy either way (Privacy → Requests). Administrators
+  and Council members can add, change or delete records; only Administrators change the shared categories. Firestore
+  rules enforce the role gate for records and files, and people load only the records they may see.
 - Security: files are kept in the church's own database (in South Africa), not in a public file store, and are fetched
   only when someone opens them. A separate, database-protected copy supports inline previews for Administrators and
   Council members who may already see that record; other download access is unchanged. Previewing, downloading or

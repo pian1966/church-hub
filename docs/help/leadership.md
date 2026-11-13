@@ -51,5 +51,6 @@ are shown – never contact details.
 ## What do leadership groups have to do with the Archive?
 For: Administrators
 
-A record in the Archive can be **for a leadership group** – for example the Council's minutes. The people on that group
-can then read it. When someone joins or leaves the group, what they can read changes with it. See [archive.md](archive.md).
+A record in the Archives can be **for a leadership group** – for example the Council's minutes. Only Administrators and
+Council members can open the Archives; their access to a record also depends on the group membership. When someone joins
+or leaves the group, what they can read changes with it. See [archive.md](archive.md).

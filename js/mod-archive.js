@@ -1,8 +1,9 @@
 /* Church Hub – Archive: the church's records in one safe place – Council minutes, architectural plans, staff contracts,
  * annual appraisals and anything else. Each record has a date, a category, a file (kept in Church Hub, up to 15 MB) or a
  * link to where it is kept, and says who can see it. Off until an Administrator switches it on (Settings → Apps).
- * Administrators and the Senior Pastor add records and see them all; everyone else sees only what a record allows
- * (js/archive.js: everyone / a leadership group / Administrators and Pastors / private, or shown to the person it is about).
+ * The Archive is part of the Library and is available only to Administrators and Council members; within that group,
+ * each record keeps its existing visibility rule (everyone / a leadership group / Administrators and Pastors / private).
+ * Administrators add records and see them all.
  * Opening a record that isn't for everyone is written in the audit log. Rules: js/archive.js (tested), firestore.rules (archive). */
 (function () {
   'use strict';
@@ -15,21 +16,23 @@
   function me() { return H.user(); }
   function administrator() { return H.can('*') && !S.preview(); }
   function who() {
-    var u = me(), admin = H.can('*');
-    return { admin: admin, pastor: !admin && H.can('people.edit'), senior: !S.preview() && !!u && H.isSenior(S.get('people', u.id) || u), ids: u ? [u.id] : [], bodies: u && window.LeadersUI ? LeadersUI.mine(u.id) : [] };
+    var u = me(), admin = administrator(), bodies = u && window.LeadersUI ? LeadersUI.mine(u.id) : [];
+    return { admin: admin, council: !S.preview() && !!u && bodies.some(function (id) { var b = S.get('leaderBodies', id); return b && /council/i.test(b.name || ''); }),
+      pastor: !admin && H.can('people.edit'), ids: u ? [u.id] : [], bodies: bodies };
   }
-  function keeper() { var w = who(); return w.admin || w.senior; }
+  function keeper() { return canAccess(); }
   function councilMember() {
     var u = me();
     return !!(u && !S.preview() && window.LeadersUI && LeadersUI.mine(u.id).some(function (id) {
       var b = S.get('leaderBodies', id); return b && /council/i.test(b.name || '');
     }));
   }
+  function canAccess() { return administrator() || councilMember(); }
   function mayPreview(r) {
     if (!r || !r.file || S.preview()) return false;
     return administrator() || councilMember();
   }
-  function visible() { var w = who(); return S.list('archive').filter(function (r) { return A.sees(r, w); }); }
+  function visible() { var w = who(); return canAccess() ? S.list('archive').filter(function (r) { return A.sees(r, w); }) : []; }
   function cats() { return A.cats(S.settings()); }
   function catName(id) { var c = A.cat(S.settings(), id); return c ? T(c.name) : T('Other records'); }
   function bodies() { return S.list('leaderBodies').slice().sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); }); }
@@ -59,6 +62,8 @@
     return miss.length ? '<p class="note warn" style="margin:8px 0 0">' + esc(T('Nothing filed yet for: {months}', { months: miss.map(function (x) { return I18n.mon()[x - 1]; }).join(', ') + ' ' + yr })) + '</p>' : '';
   }
   function page() {
+    if (!canAccess()) return '<div class="page-head"><div><h1>' + T('Archives') + '</h1></div></div><p class="note warn" role="status">' +
+      T('Restricted View — Access restricted to Council members and Administrators only.') + '</p>';
     var edit = keeper(), all = visible(), cs = cats(), years = A.years(all);
     if (state.cat && !A.cat(S.settings(), state.cat)) state.cat = '';
     if (state.year && years.indexOf(state.year) < 0) state.year = '';
@@ -66,9 +71,10 @@
     var groups = cs.filter(function (c) { return !state.cat || c.id === state.cat; }).map(function (c) { return { id: c.id, name: T(c.name), recs: A.list(all, c.id, state.year) }; });
     var stray = state.cat ? [] : A.list(all, '', state.year).filter(function (r) { return !known[r.cat]; });   // records of a category since deleted
     if (stray.length) groups.push({ id: '', name: T('Other records'), recs: stray });
-    var html = '<div class="page-head"><div><h1>' + T('Archive') + '</h1><p class="lead">' + T('The church’s records, kept safely in one place. Each record says who can see it.') + '</p></div>' +
-      (edit ? '<div class="btns"><button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button>' +
-        (H.can('settings.manage') ? '<button class="btn" data-act="archive:cats">' + T('Categories') + '</button>' : '') + '</div>' : '') + '</div>';
+    var html = '<div class="page-head"><div><h1>' + T('Archives') + '</h1><p class="lead">' + T('The church’s records, kept safely in one place. Each record says who can see it.') + '</p></div>' +
+      '<div class="btns"><button class="btn" data-act="archive:storageinfo"><span aria-hidden="true">ⓘ</span> ' + T('Where are documents stored?') + '</button>' +
+      (edit ? '<button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button>' +
+        (H.can('settings.manage') ? '<button class="btn" data-act="archive:cats">' + T('Categories') + '</button>' : '') : '') + '</div></div>';
     if (!all.length) return html + '<p class="empty">' + T('No records yet.') + '</p>';
     html += '<div class="row" style="gap:10px;flex-wrap:wrap;margin-bottom:14px"><label class="search grow">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search the archive') + '</span><input id="ar-q" type="search" placeholder="' + esc(T('Search the archive')) + '" value="' + esc(state.q) + '" autocomplete="off"></label>' +
       '<select class="inline" style="width:auto" id="ar-fcat" aria-label="' + esc(T('Category')) + '"><option value="">' + T('All categories') + '</option>' + cs.map(function (c) { return '<option value="' + esc(c.id) + '"' + (state.cat === c.id ? ' selected' : '') + '>' + esc(T(c.name)) + '</option>'; }).join('') + '</select>' +
@@ -104,7 +110,7 @@
       '<label class="field req">' + T('Title') + '<input id="ar-title" maxlength="150" value="' + esc(r.title || '') + '"></label>' +
       '<div class="two"><label class="field req">' + T('Category') + '<select id="ar-cat"' + (isNew ? ' data-new="1"' : '') + '>' + cs.map(function (c) { return opt(c.id, T(c.name), r.cat); }).join('') + (r.cat && !A.cat(S.settings(), r.cat) ? opt(r.cat, T('Other records'), r.cat) : '') + '</select></label>' +
       '<label class="field req">' + T('Date') + '<input type="date" id="ar-date" value="' + esc(r.date || H.today()) + '"></label></div>' +
-      '<label class="field req">' + T('Who can see it') + '<select id="ar-access">' + A.ACCESS.map(function (a) { return opt(a[0], T(a[1]), r.access); }).join('') + '</select><small>' + T('Administrators and the Senior Pastor see every record.') + '</small></label>' +
+      '<label class="field req">' + T('Who can see it') + '<select id="ar-access">' + A.ACCESS.map(function (a) { return opt(a[0], T(a[1]), r.access); }).join('') + '</select><small>' + T('Administrators see every record. Council members see records allowed by their access.') + '</small></label>' +
       '<div id="ar-body-wrap"><label class="field req">' + T('Leadership group') + '<select id="ar-body"><option value="">' + T('Choose…') + '</option>' + bs.map(function (b) { return opt(b.id, b.name, r.bodyId || (isNew && council ? council.id : '')); }).join('') + '</select>' +
       '<small>' + T('Leadership groups are set up on the Leadership page.') + '</small></label></div>' +
       '<div id="ar-about-wrap"><label class="field">' + T('The staff member it is about') + '<select id="ar-about"><option value="">' + T('No one') + '</option>' + staff(r.aboutId).map(function (p) { return opt(p.id, H.name(p), r.aboutId); }).join('') + '</select></label>' +
@@ -212,6 +218,12 @@
       '<div class="btns" style="margin-top:10px"><button class="btn" data-act="archive:catadd">' + H.icon(H.ICON.plus, 16) + T('Add a category') + '</button></div></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="archive:catsave">' + T('Save') + '</button></div>', T('Categories'), true);
   }
+  function storageDialog() {
+    if (!canAccess()) return;
+    H.modal(H.dialogHead(T('Where are documents stored?')) + '<div class="dlg-body"><p class="hint">' +
+      esc(T('Physical documents: [add shelf/cabinet and filing details]. Uploaded files are stored in the church’s Firestore database in South Africa. Linked files stay in their cloud folder: [add provider and folder details]. Replace these placeholders with the church’s actual locations.')) +
+      '</p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Where are documents stored?'));
+  }
 
   if (typeof document !== 'undefined') {
     document.addEventListener('input', function (ev) { if (ev.target.id === 'ar-q') { state.q = ev.target.value; applySearch(); } });
@@ -227,10 +239,11 @@
     });
   }
 
+  window.ArchiveUI = { page: page, after: applySearch, canAccess: canAccess };
   H.register({
-    id: 'archive', name: 'Archive', desc: 'Minutes, plans, contracts and other church records', icon: BOX, tint: '#7A5C3E', optIn: true,
-    show: function () { return keeper() || visible().length > 0; },
-    render: function () { return page(); },
+    id: 'archive', name: 'Archives', desc: 'Minutes, plans, contracts and other church records', icon: BOX, tint: '#7A5C3E', optIn: true, inLibrary: true,
+    show: function () { return false; },
+    render: function () { return ''; },
     after: function () { applySearch(); },
     stat: function () { return TN('{n} record', '{n} records', visible().length); },
     actions: {
@@ -270,7 +283,7 @@
         S.remove('archive', r.id, 'Deleted the archive record “' + r.title + '” (' + catName(r.cat) + ')'); H.render(); H.toast(T('Deleted'));
       },
       open: function (el) {
-        var r = S.get('archive', el.dataset.id); if (!r || !r.file || !A.sees(r, who())) return;
+        var r = S.get('archive', el.dataset.id); if (!canAccess() || !r || !r.file || !A.sees(r, who())) return;
         downloadRecord(r);
       },
       preview: function (el) {
@@ -283,9 +296,10 @@
       },
       previewdownload: function (el) {
         var r = S.get('archive', el.dataset.id);
-        if (r && mayPreview(r)) downloadRecord(r);
+        if (canAccess() && r && mayPreview(r)) downloadRecord(r);
       },
-      link: function (el) { var r = S.get('archive', el.dataset.id); if (r) logOpen(r); },   // the link itself opens in a new tab
+      link: function (el) { var r = S.get('archive', el.dataset.id); if (canAccess() && r && A.sees(r, who())) logOpen(r); },   // the link itself opens in a new tab
+      storageinfo: function () { storageDialog(); },
       cats: function () { if (!H.can('settings.manage')) return; draft = A.copy(cats()); catsDialog(); },
       catadd: function () { if (!draft) return; readCats(); draft.push({ id: S.uid('ac'), name: '', access: 'office', person: false }); catsDialog(); var all = document.querySelectorAll('.ar-cn'); if (all.length) all[all.length - 1].focus(); },
       catdel: function (el) { if (!draft) return; readCats(); draft.splice(+el.dataset.i, 1); catsDialog(); },

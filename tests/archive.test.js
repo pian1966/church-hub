@@ -14,12 +14,12 @@ r = A.clean({ title: 'Contract', cat: 'contracts', access: 'private', aboutId: '
 ok(r.shownTo === 'p5' && r.file.parts === 1 && r.file.extra === undefined && A.clean({ aboutId: 'p5', shownTo: false }).shownTo === '', 'shown to the person it is about only when ticked');
 
 const minutes = { access: 'body', bodyId: 'g1' }, plans = { access: 'office' }, contract = { access: 'private', aboutId: 'p5', shownTo: 'p5' }, notice = { access: 'all' }, appraisal = { access: 'private', aboutId: 'p5', shownTo: '' };
-const member = { ids: ['p9'] }, councillor = { ids: ['p8'], bodies: ['g1'] }, pastor = { pastor: true, ids: ['p3'] }, sam = { ids: ['p5', 'p6'] };
-ok([minutes, plans, contract, notice, appraisal].every(x => A.sees(x, { admin: true })) && [minutes, plans, contract, appraisal].every(x => A.sees(x, { senior: true, pastor: true })), 'Administrators and the Senior Pastor see everything');
-ok(A.sees(notice, member) && !A.sees(minutes, member) && !A.sees(plans, member) && !A.sees(contract, member), 'a member sees only what is for everyone');
+const member = { ids: ['p9'] }, councillor = { council: true, ids: ['p8'], bodies: ['g1'] }, pastor = { pastor: true, ids: ['p3'] }, sam = { council: true, ids: ['p5', 'p6'] };
+ok([minutes, plans, contract, notice, appraisal].every(x => A.sees(x, { admin: true })) && !A.sees(appraisal, { senior: true, pastor: true }), 'Administrators see every record; a Senior Pastor without Council membership does not');
+ok(!A.sees(notice, member) && !A.sees(minutes, member) && !A.sees(plans, member) && !A.sees(contract, member), 'a member who is not on the Council cannot see Archive records, even those marked for everyone');
 ok(A.sees(minutes, councillor) && !A.sees(plans, councillor) && !A.sees(contract, councillor) && !A.sees({ access: 'body', bodyId: 'g2' }, councillor), 'a Council member also sees the Council’s records – not another group’s');
-ok(A.sees(plans, pastor) && !A.sees(minutes, pastor) && !A.sees(contract, pastor) && !A.sees(appraisal, pastor), 'a Pastor sees the office’s records, not private ones or a group’s they aren’t in');
-ok(A.sees(contract, sam) && !A.sees(appraisal, sam), 'a person sees a record about them only when it is shown to them (also on a shared sign-in)');
+ok(!A.sees(plans, pastor) && !A.sees(minutes, pastor) && !A.sees(contract, pastor) && !A.sees(appraisal, pastor), 'a Pastor who is not on the Council cannot see Archive records');
+ok(A.sees(contract, sam) && !A.sees(appraisal, sam), 'a Council member sees a record about them only when it is shown to them');
 
 const b64 = 'A'.repeat(2500), parts = A.split(b64, 1000);
 ok(parts.length === 3 && parts[2].length === 500 && A.join(parts) === b64 && A.split('', 10).length === 0 && A.PART <= 950000, 'a file is cut into parts that each fit a database document, and put together again');

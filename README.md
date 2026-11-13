@@ -1,9 +1,10 @@
 # Church Hub
 
 Church Hub helps churches care for people and organise their work. It includes a people directory, households, consent and
-privacy tools; service rosters and leave; Care Groups, Midweek Groups and leadership; messages, an archive and a library;
-including library lending, reports and permanent purging of loan and removed-item records. Members can update their details,
-serving and days away. Access is controlled by role, and each church uses its own Firebase project and records.
+privacy tools; service rosters and leave; Care Groups, Midweek Groups and leadership; messages; and a Library with
+protected Archives for Administrators and Council members, alongside lending, reports and book records. Members can
+update their details, serving and days away. Access is controlled by role, and each church uses its own Firebase project
+and records.
 
 - **Try the demo:** https://pian1966.github.io/church-hub/?demo (made-up people; changes stay in your browser)
 - **Read first:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/POPIA.md](docs/POPIA.md) · [docs/ROADMAP.md](docs/ROADMAP.md) (to do) · [docs/CHANGELOG.md](docs/CHANGELOG.md) (done)

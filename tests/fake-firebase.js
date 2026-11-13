@@ -43,11 +43,12 @@
   function leadsCare(c, gid) { return is(c, ANY) && meIn(c, (docs['careGroups/' + gid].leaderIds || [])); }
   function checks(c, lang) { return is(c, ANY) && c.langs.indexOf(lang) >= 0; }   // checks translations in that language
   function child(id) { return docs['people/' + id].familyRole === 'child'; }   // a missing person fails, as get() does in the rules
-  /** The Archive's keepers: Administrators and the Senior Pastor (settings seniorPastorId). */
+  /** The Archive's readers and record managers: Administrators and Council members. */
   function keeper(c) { return is(c, ['admin']) || (is(c, ['pastor']) && isMe(c, (docs['settings/church'] || {}).seniorPastorId || '')); }
   function seesRecord(c, d) {
-    return keeper(c) || (d.access === 'all' && is(c, ANY)) || (d.access === 'office' && is(c, ['admin', 'pastor']))
-      || (!!(d.bodyId || '') && is(c, ANY) && meIn(c, docs['leaderBodies/' + d.bodyId].memberIds || [])) || mine(c, d.shownTo || '');
+    return (is(c, ['admin']) || councilMember(c)) && (is(c, ['admin']) || (d.access === 'all' && is(c, ANY))
+      || (d.access === 'office' && is(c, ['admin', 'pastor']))
+      || (!!(d.bodyId || '') && is(c, ANY) && meIn(c, docs['leaderBodies/' + d.bodyId].memberIds || [])) || mine(c, d.shownTo || ''));
   }
   function councilMember(c) {
     return is(c, ANY) && c.ids.some(function (pid) { return !!docs['archivePreviewMembers/' + pid]; });
@@ -211,24 +212,22 @@
     // Leadership groups: Administrators and Pastors manage; an open group is read by everyone, any other by its members
     leaderBodies: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && (d.open === true || meIn(c, d.memberIds || []))); },
       write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || (typeof a.name === 'string' && a.name.length > 0 && a.name.length <= 80 && typeof a.open === 'boolean' && Array.isArray(a.memberIds))); } },
-    // The Archive: Administrators and the Senior Pastor everything; others by the record's access (seesRecord in firestore.rules)
+    // Archive access is limited to Administrators and Council members; Council keeps each record's access limit.
     archive: { read: function (c, id, d) { return !!d && seesRecord(c, d); },
       write: function (c, op, id, b, a) {
-        if (!keeper(c)) return false;
+        if (!is(c, ['admin']) && !councilMember(c)) return false;
         return op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150 && ['all', 'body', 'office', 'private'].indexOf(a.access) >= 0
           && (a.access === 'body') === !!(a.bodyId || '') && (!(a.shownTo || '') || a.shownTo === (a.aboutId || '')));
       } },
     'archive/parts': { read: function (c, n, d, id) { return seesRecord(c, docs['archive/' + id]); },   // a missing record fails
-      write: function (c, op, n, b, a) { return keeper(c) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
+      write: function (c, op, n, b, a) { return (is(c, ['admin']) || councilMember(c)) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
     archivePreviewMembers: { read: function (c, id) { return is(c, ['admin', 'pastor']) || isMe(c, id); },
       write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || (onlyKeys(a, ['personId']) && a.personId === id)); } },
     'archivePreviews/parts': { read: function (c, n, d, id) { return is(c, ['admin']) || (councilMember(c) && seesRecord(c, docs['archive/' + id])); },
       write: function (c, op, n, b, a, id) {
-        if (op === 'delete') return keeper(c);
+        if (op === 'delete') return is(c, ['admin']) || councilMember(c);
         var valid = onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000;
-        if (keeper(c)) return valid;
-        return valid && councilMember(c) && seesRecord(c, docs['archive/' + id]) &&
-          !!docs['archive/' + id + '/parts/' + n] && a.data === docs['archive/' + id + '/parts/' + n].data;
+        return valid && (is(c, ['admin']) || councilMember(c));
       } },
     // The Library: everyone reads the books; librarians write; a loan is read by the librarians and its borrower
     books: { read: function (c) { return is(c, ANY); },

@@ -104,6 +104,7 @@ await env.withSecurityRulesDisabled(async ctx => {
 
 const as = role => { const [email, pid] = USERS[role]; return env.authenticatedContext('uid-' + role, { email, email_verified: true }).firestore(); };
 const db = { admin: as('admin'), pastor: as('pastor'), kids: as('kids'), rosters: as('rosters'), member: as('member') };
+const standardMember = env.authenticatedContext('uid-nomvula', { email: 'nomvula@example.com', email_verified: true }).firestore();
 const settingsPastor = env.authenticatedContext('uid-settings-pastor', { email: 'andile@example.com', email_verified: true }).firestore();
 const stranger = env.authenticatedContext('uid-x', { email: 'stranger@example.com', email_verified: true }).firestore();
 const unverified = env.authenticatedContext('uid-u', { email: 'tim@example.com', email_verified: false }).firestore();
@@ -570,31 +571,36 @@ await t('leadership groups: only Administrators and Pastors set them up', async 
   await cannot(db.admin.doc('leaderBodies/lb4').set({ name: '', open: true, memberIds: [] })); await cannot(db.admin.doc('leaderBodies/lb4').set({ name: 'X', memberIds: [] }));
   await can(db.admin.doc('leaderBodies/lb3').delete());
 });
-await t('archive: Administrators and the Senior Pastor read every record', async () => {
-  for (const id of ['ar1', 'ar2', 'ar3', 'ar4', 'ar5']) { await can(read(db.admin, 'archive/' + id)); await can(read(rector, 'archive/' + id)); }
-  await can(list(db.admin.collection('archive'))); await can(list(rector.collection('archive')));
+await t('archive: only Administrators and Council members read records', async () => {
+  for (const id of ['ar1', 'ar2', 'ar3', 'ar4', 'ar5']) await can(read(db.admin, 'archive/' + id));
+  await can(list(db.admin.collection('archive')));
+  await cannot(read(rector, 'archive/ar4'));                           // Senior Pastor status alone is not Council membership
+  await cannot(read(db.rosters, 'archive/ar2'));                       // Librarian status and shownTo do not grant archive access
+  await cannot(read(standardMember, 'archive/ar4'));
+  await cannot(list(standardMember.collection('archive').where('access', '==', 'all')));
+  await cannot(read(standardMember, 'archive/ar1/parts/0'));
   await cannot(read(stranger, 'archive/ar4')); await cannot(read(nobody, 'archive/ar4'));
 });
-await t('archive: everyone else only what a record allows', async () => {
-  await only('archive/ar4', roles);                                   // for everyone
-  await only('archive/ar3', ['admin', 'pastor']);                     // the office: Administrators and Pastors
-  await only('archive/ar1', ['admin', 'member']);                     // the Council's minutes: its members (Tim), not other Pastors
-  await only('archive/ar2', ['admin', 'rosters']);                    // a private contract, shown to the person it is about (Sipho)
-  await only('archive/ar5', ['admin']);                               // a private appraisal not shown to the person it is about (Tim)
+await t('archive: Council members remain limited by each record’s access', async () => {
+  await only('archive/ar4', ['admin', 'member']);                      // public to the Council, not every signed-in member
+  await only('archive/ar3', ['admin']);                                // the office is not enough without Council membership
+  await only('archive/ar1', ['admin', 'member']);                      // the Council's minutes
+  await only('archive/ar2', ['admin']);                                // shownTo does not bypass the Council gate
+  await only('archive/ar5', ['admin']);                                // nor does being the person in the record
 });
-await t('archive: each may ask only for the lists they may see', async () => {
+await t('archive: Council members can ask only for records allowed by their access', async () => {
   const m = db.member.collection('archive');
-  await can(list(m.where('access', '==', 'all'))); await can(list(m.where('shownTo', '==', 'p14'))); await can(list(m.where('bodyId', '==', 'lb1')));
+  await can(list(m.where('access', '==', 'all'))); await can(list(m.where('bodyId', '==', 'lb1')));
   await cannot(list(m)); await cannot(list(m.where('access', '==', 'office'))); await cannot(list(m.where('access', '==', 'private')));
   await cannot(list(m.where('bodyId', '==', 'lb2'))); await cannot(list(m.where('shownTo', '==', 'p05'))); await cannot(list(m.where('aboutId', '==', 'p14')));
-  await can(list(db.pastor.collection('archive').where('access', '==', 'office'))); await cannot(list(db.pastor.collection('archive'))); await cannot(list(db.pastor.collection('archive').where('bodyId', '==', 'lb1')));
-  await can(list(db.rosters.collection('archive').where('shownTo', '==', 'p05'))); await cannot(list(db.rosters.collection('archive').where('access', '==', 'office')));
+  await cannot(list(db.pastor.collection('archive').where('access', '==', 'office'))); await cannot(list(db.pastor.collection('archive')));
+  await cannot(list(db.rosters.collection('archive').where('shownTo', '==', 'p05'))); await cannot(list(db.rosters.collection('archive').where('access', '==', 'office')));
 });
 await t('archive: a record’s file follows the record', async () => {
   await can(read(db.member, 'archive/ar1/parts/0')); await cannot(read(db.member, 'archive/ar2/parts/0'));
-  await can(read(db.rosters, 'archive/ar2/parts/0')); await cannot(read(db.rosters, 'archive/ar1/parts/0'));
+  await cannot(read(db.rosters, 'archive/ar2/parts/0')); await cannot(read(db.rosters, 'archive/ar1/parts/0'));
   await cannot(read(db.pastor, 'archive/ar1/parts/0')); await cannot(read(db.pastor, 'archive/ar2/parts/0'));
-  await can(read(db.admin, 'archive/ar2/parts/0')); await can(read(rector, 'archive/ar1/parts/0'));
+  await can(read(db.admin, 'archive/ar2/parts/0')); await cannot(read(rector, 'archive/ar1/parts/0'));
   await cannot(read(db.member, 'archive/nothere/parts/0')); await cannot(read(stranger, 'archive/ar1/parts/0'));
 });
 await t('archive: inline preview content is only for Administrators and Council members', async () => {
@@ -602,29 +608,35 @@ await t('archive: inline preview content is only for Administrators and Council 
   await can(read(db.member, 'archivePreviews/ar1/parts/0'));              // Tim is a Council member
   await can(read(db.member, 'archivePreviews/ar4/parts/0'));               // Council can preview any record they may see
   await cannot(read(db.rosters, 'archivePreviews/ar2/parts/0'));          // even though Sipho may download his contract
+  await cannot(read(standardMember, 'archivePreviews/ar4/parts/0'));
   await cannot(read(rector, 'archivePreviews/ar1/parts/0'));              // Senior Pastor is not an Administrator or Council member
-  await can(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'AAAA' }));  // a Council member can only backfill an identical part
-  await cannot(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'different' }));
+  await can(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'different' }));
+  await cannot(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'BBBB', extra: true }));
+  await can(db.member.doc('archivePreviews/council-new/parts/0').set({ data: 'QUJD' })); // Council can save a new file before its record
+  await can(db.member.doc('archivePreviews/council-new/parts/0').delete());
   await cannot(db.rosters.doc('archivePreviews/ar2/parts/0').set({ data: 'BBBB' }));
+  await cannot(standardMember.doc('archivePreviews/ar4/parts/0').set({ data: 'BBBB' }));
   await can(db.admin.doc('archivePreviewMembers/p15').set({ personId: 'p15' }));
   await cannot(db.member.doc('archivePreviewMembers/p15').set({ personId: 'p15' }));
 });
-await t('archive: only Administrators and the Senior Pastor add, change and delete records', async () => {
+await t('archive: only Administrators and Council members add, change and delete records', async () => {
   const r = o => Object.assign({ title: 'New', cat: 'other', date: '2026-11-10', note: '', access: 'office', bodyId: '', aboutId: '', aboutName: '', shownTo: '', link: 'https://example.org/x', by: 'x' }, o);
-  await can(db.admin.doc('archive/n1').set(r({}))); await can(rector.doc('archive/n2').set(r({ access: 'body', bodyId: 'lb1' })));
+  await can(db.admin.doc('archive/n1').set(r({}))); await can(db.member.doc('archive/n2').set(r({ access: 'body', bodyId: 'lb1' })));
+  await can(db.member.doc('archive/n5').set(r({ access: 'all' }))); await can(db.member.doc('archive/n5').delete());
   await can(db.admin.doc('archive/n3').set(r({ access: 'private', aboutId: 'p05', shownTo: 'p05' })));
-  await cannot(db.pastor.doc('archive/n4').set(r({}))); await cannot(db.member.doc('archive/n4').set(r({ access: 'all' }))); await cannot(db.rosters.doc('archive/n4').set(r({})));
-  await cannot(db.member.doc('archive/ar1').update({ title: 'Changed' })); await cannot(db.member.doc('archive/ar5').update({ shownTo: 'p14' })); await cannot(db.rosters.doc('archive/ar2').update({ access: 'all' }));
+  await cannot(db.pastor.doc('archive/n4').set(r({}))); await cannot(db.rosters.doc('archive/n4').set(r({})));
+  await can(db.member.doc('archive/ar1').update({ title: 'Updated by Council' })); await cannot(db.rosters.doc('archive/ar2').update({ access: 'all' }));
   await cannot(db.admin.doc('archive/n4').set(r({ access: 'body' })));                       // a leadership group's record must name the group
   await cannot(db.admin.doc('archive/n4').set(r({ access: 'office', bodyId: 'lb1' })));      // … and no other record may
   await cannot(db.admin.doc('archive/n4').set(r({ access: 'anyone' }))); await cannot(db.admin.doc('archive/n4').set(r({ title: '' })));
   await cannot(db.admin.doc('archive/n4').set(r({ aboutId: 'p05', shownTo: 'p14' })));       // shown only to the person it is about
-  await can(db.admin.doc('archive/n1/parts/0').set({ data: 'QUJD' })); await can(rector.doc('archive/n1/parts/1').set({ data: 'REVG' }));
+  await can(db.admin.doc('archive/n1/parts/0').set({ data: 'QUJD' })); await can(db.member.doc('archive/n2/parts/1').set({ data: 'REVG' }));
   await cannot(db.admin.doc('archive/n1/parts/2').set({ data: 'QUJD', more: 1 })); await cannot(db.admin.doc('archive/n1/parts/2').set({ data: 'A'.repeat(950001) }));
-  await cannot(db.pastor.doc('archive/n1/parts/2').set({ data: 'QUJD' })); await cannot(db.member.doc('archive/ar1/parts/0').set({ data: 'QUJD' })); await cannot(db.member.doc('archive/ar1/parts/0').delete());
-  await cannot(db.pastor.doc('archive/ar3').delete()); await cannot(db.member.doc('archive/ar4').delete());
-  await can(db.admin.doc('archive/n1/parts/0').delete()); await can(rector.doc('archive/n1/parts/1').delete());
-  for (const id of ['n1', 'n2', 'n3']) await can(db.admin.doc('archive/' + id).delete());
+  await cannot(db.pastor.doc('archive/n1/parts/2').set({ data: 'QUJD' })); await cannot(db.rosters.doc('archive/ar1/parts/0').set({ data: 'QUJD' }));
+  await cannot(db.pastor.doc('archive/ar3').delete()); await cannot(db.rosters.doc('archive/ar4').delete());
+  await can(db.admin.doc('archive/n1/parts/0').delete()); await can(db.member.doc('archive/n2/parts/1').delete());
+  for (const id of ['n1', 'n3']) await can(db.admin.doc('archive/' + id).delete());
+  await can(db.member.doc('archive/n2').delete());
 });
 await t('library: everyone signed in sees the books; only librarians (Administrators and the people named) change them', async () => {
   await only('books/b1', roles); await can(list(db.member.collection('books'))); await cannot(read(stranger, 'books/b1')); await cannot(read(nobody, 'books/b1'));
@@ -688,7 +700,7 @@ await t('library: the Senior Pastor may choose any number of librarians, record 
 });
 await t('… and a librarian or Senior Pastor is only one while the settings say so', async () => {
   await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ seniorPastorId: firebase.firestore.FieldValue.delete(), librarianIds: firebase.firestore.FieldValue.delete() }); });
-  await cannot(read(rector, 'archive/ar5')); await cannot(list(rector.collection('archive'))); await can(read(rector, 'archive/ar3'));
+  await cannot(read(rector, 'archive/ar5')); await cannot(list(rector.collection('archive'))); await cannot(read(rector, 'archive/ar3'));
   await cannot(db.rosters.doc('books/b9').set({ title: 'X', copies: 1 })); await cannot(list(db.rosters.collection('loans')));
 });
 

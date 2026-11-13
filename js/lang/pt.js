@@ -889,6 +889,7 @@ I18n.add('pt', {
     "{n} book": "{n} livro",
     "{n} books": "{n} livros",
     "Lent {date}": "Emprestado em {date}",
+    "Borrowed on": "Emprestado em",
     "Returned": "Devolvido",
     "Nothing on loan.": "Nada emprestado.",
     "Recently returned": "Devolvidos recentemente",

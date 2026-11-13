@@ -25,6 +25,7 @@ I18n.rows([
     ["Library Items I've Borrowed", "Boeke wat ek geleen het", "Izincwadi engizibolekile", "Iincwadi endizibolekileyo"],
     ["Librarian", "Bibliotekaris", "Umgcini womtapo", "Umgcini wethala"],
     ["Lent {date}", "Uitgeleen {date}", "Ibolekwe ngomhla ka-{date}", "Ibolekwe nge-{date}"],
+    ["Borrowed on", "Datum geleen", "Usuku olubolekiwe", "Umhla woboleko"],
     ["Returned", "Terugbesorg", "Ibuyisiwe", "Ibuyisiwe"],
     ["Nothing on loan.", "Niks is uitgeleen nie.", "Akukho okubolekiwe.", "Akukho nto ibolekiweyo."],
     ["Recently returned", "Onlangs terugbesorg", "Ezisanda kubuyiswa", "Ezisandul’ ukubuyiswa"],

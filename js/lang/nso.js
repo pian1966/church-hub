@@ -889,6 +889,7 @@ I18n.add('nso', {
     "{n} book": "Puku e {n}",
     "{n} books": "Dipuku tše {n}",
     "Lent {date}": "E adimilwe ka {date}",
+    "Borrowed on": "E adimilwe ka",
     "Returned": "E bušitšwe",
     "Nothing on loan.": "Ga go selo seo se adimilwego.",
     "Recently returned": "Tšeo di sa tšwago go bušwa",

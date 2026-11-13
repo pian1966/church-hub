@@ -889,6 +889,7 @@ I18n.add('nl', {
     "{n} book": "{n} boek",
     "{n} books": "{n} boeken",
     "Lent {date}": "Uitgeleend op {date}",
+    "Borrowed on": "Uitgeleend op",
     "Returned": "Teruggebracht",
     "Nothing on loan.": "Niets uitgeleend.",
     "Recently returned": "Onlangs teruggebracht",

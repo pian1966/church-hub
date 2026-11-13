@@ -14,7 +14,7 @@
   var BOOKS = 'M4 4h4v16H4zM10 4h4v16h-4zM16.5 5.5l3.5-1 3 14-3.5 1z';
   var PEN = 'M4 20h4L20 8l-4-4L4 16zM14 6l4 4';
   var POLICY_FILE_MAX = 600 * 1024;   // an attached policy file: at most 600 KB (it is kept in one database document)
-  var filters = { kind: '', title: '', author: '', cat: '', borrower: '' }, sortKey = 'title', sortDir = 1, catalogueTab = 'all', tidied = false;
+  var filters = { kind: '', title: '', author: '', cat: '', borrower: '', borrowed: '' }, sortKey = 'title', sortDir = 1, catalogueTab = 'all', tidied = false;
   var selectedBooks = {}, librarianReviewShown = false;
   var newCover;            // the cover chosen in the form: undefined = unchanged, '' = taken away, else a picture (data: address)
   var policy;              // the library's policy: undefined until fetched, then null (none) or { text, name, type, data }
@@ -42,7 +42,33 @@
     var query = String(filters.borrower || '').trim();
     return !query || query.toLowerCase() === T('All Borrowers').toLowerCase() ? '' : query.toLowerCase();
   }
-  function sortFieldsValid(k) { return ['kind', 'title', 'author', 'cat'].indexOf(k) >= 0; }
+  function itemLoans(b, records) {
+    return records.filter(function (l) {
+      if (l.bookId !== b.id || L.isPending(l)) return false;
+      if (b.why === 'Lost') return !!l.lost;
+      return b.removed ? true : L.isOut(l);
+    });
+  }
+  function itemSortValue(b, records, key) {
+    if (key === 'kind') return b.kind || 'Book';
+    if (key === 'borrower' || key === 'borrowed') {
+      var related = itemLoans(b, records);
+      if (key === 'borrower') return related.map(function (l) { return String(l.name || ''); }).sort(function (a, c) {
+        return a.localeCompare(c, undefined, { sensitivity: 'base' });
+      })[0] || '';
+      return related.map(function (l) { return String(l.out || ''); }).sort().pop() || '';
+    }
+    return b[key] || '';
+  }
+  function loanSortValue(l, key, booksById) {
+    var b = booksById[l.bookId] || {};
+    if (key === 'kind') return b.kind || 'Book';
+    if (key === 'author' || key === 'cat') return b[key] || '';
+    if (key === 'borrower') return l.name || '';
+    if (key === 'borrowed') return l.out || '';
+    return l[key] || '';
+  }
+  function sortFieldsValid(k) { return ['kind', 'title', 'author', 'cat', 'borrower', 'borrowed'].indexOf(k) >= 0 && (k !== 'borrower' && k !== 'borrowed' || librarian()); }
   function free(b) { return librarian() ? L.free(b, loans()) : L.free(b); }
   function everyone() { return S.find('people', function (p) { return p.active !== false && p.firstName !== 'Deleted' && !p.mergedInto && !p.binnedAt && p.category !== 'Deceased'; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); }); }
   function due(l) { return '<span class="' + (L.overdue(l, H.today()) ? 'tag bad' : 'muted') + '">' + esc(T('Due {date}', { date: H.fmt(l.due, true) })) + (L.overdue(l, H.today()) ? ' · ' + T('Overdue') : '') + '</span>'; }
@@ -74,9 +100,10 @@
   function cover(b, big) {
     return '<span class="lib-cover' + (big ? ' big' : '') + '"' + (b.cover ? ' data-cover="' + esc(b.id) + '" data-v="' + esc(b.cover) + '"' : '') + ' aria-hidden="true">' + (b.cover ? '' : H.icon(BOOKS, big ? 28 : 18)) + '</span>';
   }
-  function bookRow(b, edit) {
+  function bookRow(b, edit, allLoans) {
     var n = free(b), outCount = L.outCount(b, librarian() ? loans() : null), copies = Math.max(1, +b.copies || 1), bits = [b.author ? T('Author') + ': ' + b.author : '', b.cat ? T('Subject') + ': ' + b.cat : '', b.shelf ? T('Shelf {shelf}', { shelf: b.shelf }) : ''].filter(Boolean);
-    return '<div class="item rec-item lib-book" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(b.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-out="' + (!b.repairing && outCount > 0 && n === 0) + '" data-free="' + (n > 0) + '" data-repairing="' + !!b.repairing + '">' +
+    var related = edit ? itemLoans(b, allLoans) : [], borrowerNamesForBook = related.map(function (l) { return String(l.name || '').toLowerCase(); }), borrowedDates = related.map(function (l) { return String(l.out || ''); });
+    return '<div class="item rec-item lib-book" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(b.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(borrowerNamesForBook.join(' ')) + '" data-borrowed="' + esc(borrowedDates.join(' ')) + '" data-sort-borrower="' + esc(itemSortValue(b, allLoans, 'borrower')) + '" data-sort-borrowed="' + esc(itemSortValue(b, allLoans, 'borrowed')) + '" data-out="' + (!b.repairing && outCount > 0 && n === 0) + '" data-free="' + (n > 0) + '" data-repairing="' + !!b.repairing + '">' +
       (edit && (b.kind || 'Book') === 'Book' ? '<label class="check lib-select"><input type="checkbox" data-lib-select="' + esc(b.id) + '"' + (selectedBooks[b.id] ? ' checked' : '') + ' aria-label="' + esc(T('Select {name}', { name: b.title })) + '"></label>' : '') + cover(b) +
       '<span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag">' + esc(T(b.kind || 'Book')) + '</span> ' +
       '<span class="tag ' + (b.repairing ? 'warn' : n ? 'ok' : 'grey') + '">' + (b.repairing ? T('Being Repaired') : n ? T('Available') : T('On loan')) + (copies > 1 && !b.repairing ? ' · ' + esc(T('{n} of {total}', { n: n, total: copies })) : '') + '</span>' +
@@ -127,13 +154,20 @@
   function page(parts) {
     var archiveOn = H.isOn('archive'), archivePage = archiveOn && ((parts || [])[0] === 'archives' || !libraryOn());
     if (archivePage) return sectionTabs('archives') + ArchiveUI.page();
-    var u = me(), edit = librarian(), all = L.find(S.list('books'), ''), books = all.filter(L.inLibrary), gone = edit ? all.filter(function (b) { return !L.inLibrary(b); }) : [], mine = u ? L.mine(loans(), u.id) : [], pending = edit ? loans().filter(L.isPending) : mine.filter(L.isPending), out = edit ? L.onLoan(loans()).filter(function (l) { return !L.isPending(l); }) : [];
+    var u = me(), edit = librarian(), all = L.find(S.list('books'), ''), allLoans = edit ? loans() : [], books = all.filter(L.inLibrary), gone = edit ? all.filter(function (b) { return !L.inLibrary(b); }) : [], mine = u ? L.mine(loans(), u.id) : [], pending = edit ? allLoans.filter(L.isPending) : mine.filter(L.isPending), out = edit ? L.onLoan(allLoans).filter(function (l) { return !L.isPending(l); }) : [];
     var borrowers = edit ? borrowerNames(out) : [];
-    if (!edit) filters.borrower = '';
-    books.sort(function (a, b) {
-      var av = sortKey === 'kind' ? a.kind || 'Book' : a[sortKey] || '', bv = sortKey === 'kind' ? b.kind || 'Book' : b[sortKey] || '';
-      return String(av).localeCompare(String(bv), undefined, { sensitivity: 'base' }) * sortDir;
-    });
+    if (!edit) {
+      filters.borrower = ''; filters.borrowed = '';
+      if (sortKey === 'borrower' || sortKey === 'borrowed') sortKey = 'title';
+    }
+    var booksById = Object.create(null);
+    all.forEach(function (b) { booksById[b.id] = b; });
+    function compare(a, b, value) {
+      return String(value(a) || '').localeCompare(String(value(b) || ''), undefined, { sensitivity: 'base' }) * sortDir;
+    }
+    books.sort(function (a, b) { return compare(a, b, function (x) { return itemSortValue(x, allLoans, sortKey); }); });
+    gone.sort(function (a, b) { return compare(a, b, function (x) { return itemSortValue(x, allLoans, sortKey); }); });
+    out.sort(function (a, b) { return compare(a, b, function (x) { return loanSortValue(x, sortKey, booksById); }); });
     var back = edit ? loans().filter(function (l) { return !!l.back; }).sort(function (a, b) { return String(b.back).localeCompare(String(a.back)); }).slice(0, 15) : [];
     var policyActions = policyPanel();
     var html = '<div class="page-head"><div><h1>' + T('Library') + '</h1><p class="lead">' + (edit ? T('The church’s library: add books, DVDs and more, lend them and mark them as returned. Only librarians and the borrower see who has what.') : T('The church’s library. To borrow something, ask a librarian.')) + '</p></div>' +
@@ -166,13 +200,27 @@
         return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b> <span class="tag warn">' + T('Pending Verification') + '</span><small>' + who(l) + ' · ' + esc(T('Requested {date}', { date: H.fmt(l.out, true) })) + '</small></span>' +
           '<span class="rec-acts"><button class="btn small save" data-act="library:verify" data-id="' + esc(l.id) + '">' + T('Approve') + '</button><button class="btn small" data-act="library:reject" data-id="' + esc(l.id) + '">' + T('Reject') + '</button></span></div>';
       }).join('') + '</div>' : '<p class="muted small" style="margin:8px 0 0">' + T('No checkouts are waiting for verification.') + '</p>') + '</section>';
+    var sortFields = [['kind', 'Media type'], ['title', 'Title'], ['author', 'Author'], ['cat', 'Subject']];
+    if (edit) sortFields.push(['borrower', 'Borrower'], ['borrowed', 'Borrowed on']);
+    html += '<section class="panel" id="lib-controls">' +
+      '<div class="lib-sort"><span class="muted small">' + T('Sort by') + '</span><div class="btns">' + sortFields.map(function (f) {
+        var active = sortKey === f[0];
+        return '<button class="btn small' + (active ? ' primary' : '') + '" data-act="library:sort" data-k="' + f[0] + '" aria-pressed="' + active + '" title="' + esc(T('Sort by') + ' ' + T(f[1])) + '">' + T(f[1]) + (active ? (sortDir > 0 ? ' ▲' : ' ▼') : '') + '</button>';
+      }).join('') + '</div></div>' +
+      '<div class="two lib-filters">' +
+      '<label class="field">' + T('Media type') + '<select id="lib-filter-kind"><option value="">' + T('Media type') + '</option>' + L.KINDS.map(function (k) { return '<option value="' + esc(k) + '"' + (filters.kind === k ? ' selected' : '') + '>' + esc(T(k)) + '</option>'; }).join('') + '</select></label>' +
+      '<label class="field">' + T('Title') + '<input id="lib-filter-title" type="search" value="' + esc(filters.title) + '" autocomplete="off"></label>' +
+      '<label class="field">' + T('Author') + '<input id="lib-filter-author" type="search" value="' + esc(filters.author) + '" autocomplete="off"></label>' +
+      '<label class="field">' + T('Subject') + '<input id="lib-filter-cat" type="search" value="' + esc(filters.cat) + '" autocomplete="off"></label>' +
+      (edit ? '<label class="field">' + T('Borrower') + '<input id="lib-filter-borrower" type="search" list="lib-borrowers" value="' + esc(filters.borrower || T('All Borrowers')) + '" placeholder="' + esc(T('All Borrowers')) + '" autocomplete="off"></label>' +
+        '<datalist id="lib-borrowers"><option value="' + esc(T('All Borrowers')) + '"></option>' + borrowers.map(function (name) { return '<option value="' + esc(name) + '"></option>'; }).join('') + '</datalist>' +
+        '<label class="field">' + T('Borrowed on') + '<input id="lib-filter-borrowed" type="date" value="' + esc(filters.borrowed) + '"></label>' : '') +
+      '<button class="btn small" type="button" data-act="library:filtersclear"' + (Object.keys(filters).some(function (key) { return !!filters[key]; }) ? '' : ' hidden') + '>' + T('Clear') + '</button></div></section>';
     if (edit) html += '<section class="panel" id="lib-out"><div class="row"><h2 class="grow" style="margin:0">' + T('On loan') + '</h2><span class="muted small" id="lib-out-count">' + TN('{n} item', '{n} items', out.length) + '</span></div>' +
-      '<div class="row lib-filters" style="margin-top:8px"><label class="field">' + T('Borrower') + '<input id="lib-filter-borrower" type="search" list="lib-borrowers" value="' + esc(filters.borrower || T('All Borrowers')) + '" placeholder="' + esc(T('All Borrowers')) + '" autocomplete="off"></label>' +
-      '<datalist id="lib-borrowers"><option value="' + esc(T('All Borrowers')) + '"></option>' + borrowers.map(function (name) { return '<option value="' + esc(name) + '"></option>'; }).join('') + '</datalist>' +
-      '<button class="btn small" type="button" data-act="library:borrowerclear"' + (borrowerQuery() ? '' : ' hidden') + '>' + T('Clear') + '</button></div>' +
       (out.length ? '<div class="list" style="margin-top:8px">' + out.map(function (l) {
+        var b = booksById[l.bookId] || {};
         var remind = L.remindDue(l, H.today());
-        return '<div class="item rec-item lib-out-loan" data-borrower="' + esc(String(l.name || '').toLowerCase()) + '"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (remind ? ' <span class="tag warn">' + T('Reminder due') + '</span>' : '') +
+        return '<div class="item rec-item lib-out-loan" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(l.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(String(l.name || '').toLowerCase()) + '" data-borrowed="' + esc(l.out || '') + '"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (remind ? ' <span class="tag warn">' + T('Reminder due') + '</span>' : '') +
           '<small>' + who(l) + ' · ' + esc(T('Lent {date}', { date: H.fmt(l.out, true) })) + ' · ' + esc(held(l)) + ' · ' + due(l) + (l.reminded ? ' · ' + esc(T('Reminded {date}', { date: H.fmt(l.reminded, true) })) : '') + '</small></span>' +
           '<span class="rec-acts">' + (L.daysOut(l, H.today()) >= L.REMIND_DAYS ? '<button class="btn small" data-act="library:remind" data-id="' + esc(l.id) + '">' + T('Send a reminder') + '</button>' : '') +
           '<button class="btn small" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button>' +
@@ -182,62 +230,57 @@
         return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (l.lost ? ' <span class="tag bad">' + T('Lost') + '</span>' : '') + '<small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + (l.returnNote ? ' · ' + esc(l.returnNote) : '') + '</small></span>' + purgeButton('loan', l.id) + '</div>'; }).join('') +
         '</div><p class="hint">' + T('Returned loans are removed after a year.') + '</p></details>' : '') + '</section>';
     if (gone.length) html += '<section class="panel" id="lib-gone"><h2 id="lib-gone-title">' + T('Removed from Library by Librarian') + ' <span class="muted small">' + TN('{n} item', '{n} items', gone.length) + '</span></h2><div class="list">' + gone.map(function (b) {
-      return '<div class="item rec-item lib-gone-item" data-removed="' + (b.why === 'Lost' ? 'lost' : 'removed') + '"><span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag grey">' + esc(T(b.why || 'Other')) + '</span><small>' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small></span>' +
+      var related = itemLoans(b, allLoans), borrowersForItem = related.map(function (l) { return String(l.name || '').toLowerCase(); }), borrowedForItem = related.map(function (l) { return String(l.out || ''); });
+      return '<div class="item rec-item lib-gone-item" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(b.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(borrowersForItem.join(' ')) + '" data-borrowed="' + esc(borrowedForItem.join(' ')) + '" data-sort-borrower="' + esc(itemSortValue(b, allLoans, 'borrower')) + '" data-sort-borrowed="' + esc(itemSortValue(b, allLoans, 'borrowed')) + '" data-removed="' + (b.why === 'Lost' ? 'lost' : 'removed') + '"><span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag grey">' + esc(T(b.why || 'Other')) + '</span><small>' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small></span>' +
         '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button>' + purgeButton('book', b.id) + '</span></div>'; }).join('') + '</div><p class="muted small" id="lib-gone-none" hidden>' + T('None') + '</p></section>';
-    var sortFields = [['kind', 'Media type'], ['title', 'Title'], ['author', 'Author'], ['cat', 'Subject']];
     return html + '<section class="panel" id="lib-books">' +
       (edit ? '<div class="btns lib-cover-actions"><button class="btn small" data-act="library:coversselected" id="lib-covers-selected">' + T('Find covers for selected') + ' (<span id="lib-selected-count">0</span>)</button>' +
         '<button class="btn small" data-act="library:coversselectmissing">' + T('Select books missing covers') + '</button>' +
         '<button class="btn small" data-act="library:coversall">' + T('Find covers for all books') + '</button>' +
         '<button class="btn small" data-act="library:coversmissing">' + T('Find missing covers') + '</button></div>' : '') +
-      '<div class="lib-sort"><span class="muted small">' + T('Sort by') + '</span><div class="btns">' + sortFields.map(function (f) {
-        var active = sortKey === f[0];
-        return '<button class="btn small' + (active ? ' primary' : '') + '" data-act="library:sort" data-k="' + f[0] + '" aria-pressed="' + active + '" title="' + esc(T('Sort by') + ' ' + T(f[1])) + '">' + T(f[1]) + (active ? (sortDir > 0 ? ' ▲' : ' ▼') : '') + '</button>';
-      }).join('') + '</div></div>' +
-      '<div class="two lib-filters">' +
-      '<label class="field">' + T('Media type') + '<select id="lib-filter-kind"><option value="">' + T('Media type') + '</option>' + L.KINDS.map(function (k) { return '<option value="' + esc(k) + '"' + (filters.kind === k ? ' selected' : '') + '>' + esc(T(k)) + '</option>'; }).join('') + '</select></label>' +
-      '<label class="field">' + T('Title') + '<input id="lib-filter-title" type="search" value="' + esc(filters.title) + '" autocomplete="off"></label>' +
-      '<label class="field">' + T('Author') + '<input id="lib-filter-author" type="search" value="' + esc(filters.author) + '" autocomplete="off"></label>' +
-      '<label class="field">' + T('Subject') + '<input id="lib-filter-cat" type="search" value="' + esc(filters.cat) + '" autocomplete="off"></label></div>' +
       '<span class="muted small" id="lib-count">' + TN('{n} item', '{n} items', books.length) + '</span>' +
-      '<div class="list" style="margin-top:8px">' + books.map(function (b) { return bookRow(b, edit); }).join('') + '</div><p class="empty" id="lib-none" hidden>' + T('Nothing matches.') + '</p>' +
+      '<div class="list" style="margin-top:8px">' + books.map(function (b) { return bookRow(b, edit, allLoans); }).join('') + '</div><p class="empty" id="lib-none" hidden>' + T('Nothing matches.') + '</p>' +
       (!all.length ? '<p class="empty">' + T('Nothing in the library yet.') + '</p>' : '') + '</section>';
   }
   function applySearch() {
-    var shown = 0, allLoans = loans(), borrower = borrowerQuery();
+    var shown = 0, borrower = borrowerQuery(), borrowed = String(filters.borrowed || '');
+    function matches(row) {
+      return (!filters.kind || row.dataset.kind === filters.kind) &&
+        (!filters.title || row.dataset.title.toLowerCase().indexOf(filters.title.trim().toLowerCase()) >= 0) &&
+        (!filters.author || row.dataset.author.toLowerCase().indexOf(filters.author.trim().toLowerCase()) >= 0) &&
+        (!filters.cat || row.dataset.subject.toLowerCase().indexOf(filters.cat.trim().toLowerCase()) >= 0) &&
+        (!borrower || row.dataset.borrower.indexOf(borrower) >= 0) &&
+        (!borrowed || row.dataset.borrowed.split(/\s+/).indexOf(borrowed) >= 0);
+    }
     [].forEach.call(document.querySelectorAll('.lib-book'), function (it) {
       var status = catalogueTab === 'onLoan' ? it.dataset.out === 'true' :
         catalogueTab === 'available' ? it.dataset.free === 'true' && it.dataset.repairing !== 'true' :
         catalogueTab === 'repairing' ? it.dataset.repairing === 'true' :
         catalogueTab === 'lost' || catalogueTab === 'removed' ? false : true;
-      var hit = status && (!filters.kind || it.dataset.kind === filters.kind) &&
-        (!filters.title || it.dataset.title.toLowerCase().indexOf(filters.title.trim().toLowerCase()) >= 0) &&
-        (!filters.author || it.dataset.author.toLowerCase().indexOf(filters.author.trim().toLowerCase()) >= 0) &&
-        (!filters.cat || it.dataset.subject.toLowerCase().indexOf(filters.cat.trim().toLowerCase()) >= 0) &&
-        (!borrower || allLoans.some(function (l) {
-          return l.bookId === it.querySelector('[data-act="library:bookinfo"]').dataset.id && L.isOut(l) && String(l.name || '').toLowerCase().indexOf(borrower) >= 0;
-        }));
+      var hit = status && matches(it);
       it.hidden = !hit; if (hit) shown++;
     });
     var outShown = 0;
     [].forEach.call(document.querySelectorAll('.lib-out-loan'), function (row) {
-      row.hidden = !!borrower && row.dataset.borrower.indexOf(borrower) < 0;
+      row.hidden = !matches(row);
       if (!row.hidden) outShown++;
     });
     var outCount = document.getElementById('lib-out-count'); if (outCount) outCount.textContent = TN('{n} item', '{n} items', outShown);
     var outNone = document.getElementById('lib-out-none'); if (outNone) outNone.hidden = outShown > 0;
-    var borrowerClear = document.querySelector('[data-act="library:borrowerclear"]'); if (borrowerClear) borrowerClear.hidden = !borrower;
+    var filtersClear = document.querySelector('[data-act="library:filtersclear"]');
+    if (filtersClear) filtersClear.hidden = !Object.keys(filters).some(function (key) { return !!filters[key]; });
     var booksPanel = document.getElementById('lib-books'); if (booksPanel) booksPanel.hidden = catalogueTab === 'lost' || catalogueTab === 'removed';
     var outPanel = document.getElementById('lib-out'); if (outPanel) outPanel.hidden = catalogueTab !== 'all' && catalogueTab !== 'onLoan';
     var gonePanel = document.getElementById('lib-gone'); if (gonePanel) {
       gonePanel.hidden = catalogueTab !== 'all' && catalogueTab !== 'lost' && catalogueTab !== 'removed';
       var goneShown = 0;
       [].forEach.call(gonePanel.querySelectorAll('.lib-gone-item'), function (it) {
-        it.hidden = catalogueTab === 'lost' ? it.dataset.removed !== 'lost' : catalogueTab === 'removed' ? it.dataset.removed !== 'removed' : false;
+        var status = catalogueTab === 'lost' ? it.dataset.removed === 'lost' : catalogueTab === 'removed' ? it.dataset.removed === 'removed' : true;
+        it.hidden = !status || !matches(it);
         if (!it.hidden) goneShown++;
       });
       var goneNone = document.getElementById('lib-gone-none');
-      if (goneNone) goneNone.hidden = (catalogueTab !== 'lost' && catalogueTab !== 'removed') || goneShown > 0;
+      if (goneNone) { goneNone.hidden = (catalogueTab !== 'lost' && catalogueTab !== 'removed') || goneShown > 0; goneNone.textContent = Object.keys(filters).some(function (key) { return !!filters[key]; }) ? T('Nothing matches.') : T('None'); }
     }
     var none = document.getElementById('lib-none'); if (none) none.hidden = shown > 0;
     var count = document.getElementById('lib-count'); if (count) count.textContent = TN('{n} item', '{n} items', shown);
@@ -641,7 +684,7 @@
 
   if (typeof document !== 'undefined') {
     document.addEventListener('input', function (ev) {
-      var field = { 'lib-filter-title': 'title', 'lib-filter-author': 'author', 'lib-filter-cat': 'cat', 'lib-filter-borrower': 'borrower' }[ev.target.id];
+      var field = { 'lib-filter-title': 'title', 'lib-filter-author': 'author', 'lib-filter-cat': 'cat', 'lib-filter-borrower': 'borrower', 'lib-filter-borrowed': 'borrowed' }[ev.target.id];
       if (field) {
         var value = ev.target.value;
         filters[field] = field === 'borrower' && value.trim().toLowerCase() === T('All Borrowers').toLowerCase() ? '' : value;
@@ -651,6 +694,7 @@
     });
     document.addEventListener('change', function (ev) {
       if (ev.target.id === 'lib-filter-kind') { filters.kind = ev.target.value; applySearch(); }
+      if (ev.target.id === 'lib-filter-borrowed') { filters.borrowed = ev.target.value; applySearch(); }
       if (ev.target.matches && ev.target.matches('[data-lib-select]')) {
         var id = ev.target.getAttribute('data-lib-select');
         if (ev.target.checked) selectedBooks[id] = true; else delete selectedBooks[id];
@@ -893,13 +937,6 @@
         if (!librarian() && (el.dataset.tab === 'lost' || el.dataset.tab === 'removed')) return;
         catalogueTab = el.dataset.tab; H.render(); applySearch();
       },
-      borrowerclear: function () {
-        if (!librarian()) return;
-        filters.borrower = '';
-        var input = document.getElementById('lib-filter-borrower');
-        if (input) input.value = T('All Borrowers');
-        applySearch();
-      },
       lost: function (el) {
         var l = S.get('loans', el.dataset.id); if (!l || !librarian()) return;
         if (!H.confirmBtn(el, T('Lost?'))) return;
@@ -964,7 +1001,17 @@
       sort: function (el) {
         if (!sortFieldsValid(el.dataset.k)) return;
         if (sortKey === el.dataset.k) sortDir *= -1; else { sortKey = el.dataset.k; sortDir = 1; }
-        H.render();
+        H.render(); applySearch();
+      },
+      filtersclear: function () {
+        Object.keys(filters).forEach(function (key) { filters[key] = ''; });
+        ['kind', 'title', 'author', 'cat', 'borrowed'].forEach(function (key) {
+          var input = document.getElementById('lib-filter-' + key);
+          if (input) input.value = '';
+        });
+        var borrower = document.getElementById('lib-filter-borrower');
+        if (borrower) borrower.value = T('All Borrowers');
+        applySearch();
       },
       remind: function (el) {
         var l = S.get('loans', el.dataset.id); if (!l || !librarian()) return;

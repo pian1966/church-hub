@@ -322,3 +322,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   Librarian chip; Groups tabs now put Staff Group before Leadership. Database rules, language keys, help, architecture and
   privacy notes were updated.
 - ✅ 13 Nov 2026 (0.66.0): Librarians and Administrators can filter checked-out items by borrower name.
+- ✅ 13 Nov 2026 (0.67.0): Librarians and Administrators can filter and sort books in each library status by title, author, subject, borrower and date borrowed. Borrower and loan-date filters stay hidden from other members.

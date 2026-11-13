@@ -889,6 +889,7 @@ I18n.add('am', {
     "{n} book": "{n} መጽሐፍ",
     "{n} books": "{n} መጻሕፍት",
     "Lent {date}": "የተዋሰበት {date}",
+    "Borrowed on": "የተዋሰበት",
     "Returned": "ተመልሷል",
     "Nothing on loan.": "በውሰት ላይ ያለ ነገር የለም።",
     "Recently returned": "በቅርቡ የተመለሱ",

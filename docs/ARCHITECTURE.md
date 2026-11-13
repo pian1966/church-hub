@@ -634,6 +634,7 @@ a link.
 Not built yet: letting a group's secretary file its own minutes; a retention review.
 
 ## Library (Library page; `js/library.js`, `js/mod-library.js`)
+**0.67:** Librarians and Administrators can filter and sort each catalogue status by title, author, subject, borrower and date borrowed. Borrower and loan-date details remain hidden from other members.
 **0.66:** Librarians and Administrators can filter checked-out items by borrower, using the name already stored on each active loan.
 **0.53:** items are never deleted except "added by mistake": taking one out sets `removed` (date), `why` (`Library.REASONS`:
 Lost, Damaged, Given away, Other) and `whyNote`; `Library.inLibrary` hides them from the list, `restore` puts one back. A loan

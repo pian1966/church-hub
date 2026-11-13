@@ -653,16 +653,21 @@ await t('library: covers and the policy are read by everyone signed in; libraria
   await can(db.admin.doc('libraryPolicy/policy').set(Object.assign({ name: 'Policy.pdf', type: 'application/pdf', data: 'JVBERi0x' }, pol)));
   await can(db.rosters.doc('covers/b1').delete());
 });
-await t('library: the Senior Pastor may choose up to two librarians, and change nothing else in the settings', async () => {
+await t('library: the Senior Pastor may choose any number of librarians, record the review date, and change nothing else in settings', async () => {
   // (Andile also has the "settings" tick, which allows every change: take it away for this test)
   const roleOf = async can => env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('roles/andile@example.com').update({ can }); });
   await roleOf([]);
-  await can(rector.doc('settings/church').update({ librarianIds: ['p05', 'p14'] }));
-  await cannot(rector.doc('settings/church').update({ librarianIds: ['p05', 'p14', 'p15'] }));
+  const reviewed = new Date().toISOString();
+  await can(rector.doc('settings/church').update({ librarianIds: ['p05', 'p14', 'p15', 'p40'], librarianReviewedAt: reviewed }));
+  await can(db.member.doc('books/b1').update({ title: 'Updated by a third librarian' }));
+  await can(read(db.member, 'loans/l15'));
+  await can(db.member.doc('covers/b2').set({ data: 'data:image/jpeg;base64,AAAA', updatedAt: reviewed }));
   await cannot(rector.doc('settings/church').update({ librarianIds: ['p05'], name: 'Another church' }));
   await cannot(db.pastor.doc('settings/church').update({ librarianIds: ['p02'] }));
   await cannot(db.member.doc('settings/church').update({ librarianIds: ['p14'] }));
   await can(db.admin.doc('settings/church').update({ librarianIds: ['p05'] }));
+  await can(db.admin.doc('settings/church').update({ librarianReviewedAt: new Date().toISOString() }));
+  await can(rector.doc('settings/church').update({ librarianIds: ['p05'], librarianReviewedAt: new Date().toISOString() }));
   await roleOf(['settings', 'access', 'people', 'idnumbers', 'leave', 'rosters', 'privacy', 'import', 'words']);
 });
 await t('… and a librarian or Senior Pastor is only one while the settings say so', async () => {

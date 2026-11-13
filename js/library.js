@@ -8,15 +8,15 @@
  *   church's list), out (date lent), due, back (date returned, '' while out), returnNote, reminded (the last friendly reminder) }.
  * A friendly reminder is due REMIND_DAYS (3 weeks) after an item was borrowed, and again each REMIND_AGAIN days after that. Every loan needs a mobile number so a
  *   book can be traced; the number is cleared when the book comes back.
- * Everyone who signs in sees the items and the library's policy. Loans are seen by the librarians (Administrators, and up
- * to MAX_LIBRARIANS people chosen by an Administrator or the Senior Pastor: settings.librarianIds) and each borrower sees
+ * Everyone who signs in sees the items and the library's policy. Loans are seen by the librarians (Administrators, and the
+ * people chosen by an Administrator or the Senior Pastor: settings.librarianIds) and each borrower sees
  * their own. Returned loans are kept for a year (KEEP_DAYS), then removed.
  * Tested with node: tests/library.test.js. POPIA: see docs/POPIA.md, "Library".
  */
 var Library = (function () {
   'use strict';
   var TX = function (x) { return x; };   // translated where it is shown
-  var LOAN_DAYS = 21, REMIND_DAYS = 21, REMIND_AGAIN = 7, KEEP_DAYS = 365, MAX_LIBRARIANS = 2, POLICY_MAX = 20000;
+  var LOAN_DAYS = 21, REMIND_DAYS = 21, REMIND_AGAIN = 7, KEEP_DAYS = 365, LIBRARIAN_REVIEW_DAYS = 180, POLICY_MAX = 20000;
   var HOW = [TX('Bought'), TX('Donated'), TX('Other')];
   var REASONS = [TX('Lost'), TX('Damaged'), TX('Given away'), TX('Other')];   // why an item left the library
   var KINDS = [TX('Book'), TX('DVD'), TX('CD'), TX('Audiobook'), TX('Magazine'), TX('Game'), TX('Other')];
@@ -236,8 +236,11 @@ var Library = (function () {
   /** The categories in use, by name. */
   function cats(books) { var c = {}; (books || []).forEach(function (b) { if (b.cat) c[b.cat] = 1; }); return Object.keys(c).sort(function (a, b) { return a.localeCompare(b); }); }
   function isLibrarian(settings, pid, admin) { return !!admin || (!!pid && ((settings || {}).librarianIds || []).indexOf(pid) >= 0); }
-  /** May another librarian be added? At most MAX_LIBRARIANS (Administrators are librarians anyway). */
-  function roomForLibrarian(settings) { return ((settings || {}).librarianIds || []).length < MAX_LIBRARIANS; }
+  /** Is it time for the Administrator to review the librarians? Missing or invalid dates are due. */
+  function librarianReviewDue(reviewedAt, current) {
+    var reviewed = Date.parse(reviewedAt || ''), now = current == null ? Date.now() : Date.parse(current);
+    return !isFinite(reviewed) || !isFinite(now) || now - reviewed >= LIBRARIAN_REVIEW_DAYS * 86400000;
+  }
   /** The library's policy ready to save: pasted text and/or an attached file ({ name, type, data: base64 }). */
   function policy(p) {
     p = p || {};
@@ -247,6 +250,6 @@ var Library = (function () {
   }
 
   return { intl: intl, REMIND_DAYS: REMIND_DAYS, daysOut: daysOut, remindDue: remindDue, REASONS: REASONS, lose: lose, removeItem: removeItem, restore: restore, inLibrary: inLibrary, report: report, reportRows: reportRows, csv: csv,
-    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, MAX_LIBRARIANS: MAX_LIBRARIANS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, roomForLibrarian: roomForLibrarian, policy: policy, addDays: addDays, book: book, isOut: isOut, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, repair: repair, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian };
+    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, LIBRARIAN_REVIEW_DAYS: LIBRARIAN_REVIEW_DAYS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, librarianReviewDue: librarianReviewDue, policy: policy, addDays: addDays, book: book, isOut: isOut, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, repair: repair, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian };
 })();
 if (typeof module !== 'undefined') module.exports = Library;

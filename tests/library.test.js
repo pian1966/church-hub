@@ -33,7 +33,11 @@ ok(L.free(back.book, loans) === 1 && L.free({ id: 'b1', copies: 2, out: 1 }) ===
 ok(L.stale(loans, '2027-11-22').length === 0 && L.stale(loans, '2027-11-23').map(l => l.id).join() === 'l2' && L.stale([loans[0]], '2030-01-01').length === 0, 'returned loans are removed after a year; never one still out');
 const books = [b, L.book({ id: 'b2', title: 'Mere Christianity', author: 'C. S. Lewis', cat: 'Apologetics', shelf: 'B2' }), L.book({ id: 'b3', title: 'A Grief Observed', author: 'C. S. Lewis' })];
 ok(L.find(books, 'lewis').map(x => x.id).join() === 'b3,b2' && L.find(books, 'LEWIS mere').length === 1 && L.find(books, 'b2 apolog').length === 1 && L.find(books, '').length === 3 && L.cats(books).join() === 'Apologetics,Theology', 'finding books by any words; the categories in use');
-ok(L.isLibrarian({ librarianIds: ['p14'] }, 'p14') && !L.isLibrarian({ librarianIds: ['p14'] }, 'p15') && L.isLibrarian({}, 'p15', true) && !L.isLibrarian(null, ''), 'librarians: Administrators and the people named');
+ok(L.isLibrarian({ librarianIds: ['p14', 'p15', 'p17', 'p19'] }, 'p19') && !L.isLibrarian({ librarianIds: ['p14'] }, 'p15') && L.isLibrarian({}, 'p15', true) && !L.isLibrarian(null, ''), 'any named librarian and Administrators have librarian permissions');
+ok(['p14', 'p15', 'p17', 'p19'].every(id => L.isLibrarian({ librarianIds: ['p14', 'p15', 'p17', 'p19'] }, id)), 'every librarian in a list longer than two has librarian permissions');
+ok(!L.librarianReviewDue('2026-01-01T00:00:00.000Z', '2026-06-29T23:59:59.999Z') &&
+  L.librarianReviewDue('2026-01-01T00:00:00.000Z', '2026-06-30T00:00:00.000Z') &&
+  L.librarianReviewDue('', '2026-01-01T00:00:00.000Z'), 'librarians are reviewed at 180 days; a missing review date is due');
 
 // Items other than books, and their covers
 ok(L.book({ title: 'The Chosen', kind: 'DVD' }).kind === 'DVD' && L.book({ title: 'X' }).kind === 'Book' && L.book({ title: 'X', kind: 'Spaceship' }).kind === 'Book', 'an item is a book unless another kind is chosen');
@@ -56,8 +60,7 @@ ok(vl.loan.personId === '' && vl.loan.visitor === true && vl.loan.mobile === '07
 ok(L.lend(vb, L.borrower(null, { name: 'No Phone' }), '2026-11-11', '', []) === null && L.lend(vb, { id: 'p16', firstName: 'Sam' }, '2026-11-11', '', []) === null, 'never lent without a mobile number');
 ok(L.mine([Object.assign({ id: 'v1' }, vl.loan)], '').length === 1 && L.mine([Object.assign({ id: 'v1' }, vl.loan)], 'p14').length === 0, 'a visitor’s loan is nobody’s on the church’s list');
 
-// Librarians: at most two (Administrators always are)
-ok(L.MAX_LIBRARIANS === 2 && L.roomForLibrarian({ librarianIds: ['p1'] }) && !L.roomForLibrarian({ librarianIds: ['p1', 'p2'] }) && L.roomForLibrarian(null), 'one or two librarians');
+// Every appointed librarian has the same access
 
 // The library's policy
 let pol = L.policy({ text: '  Books are lent for three weeks.\r\nPlease look after them.  ', name: 'Policy.pdf', type: 'application/pdf', data: 'JVBERi0x' });

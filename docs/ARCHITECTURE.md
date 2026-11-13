@@ -617,6 +617,13 @@ lost / acquired / removed for the librarians (Reports, CSV via `Library.csv`, wh
 `Library.importPlan` reads a CSV (`parseCSV`, `,` or `;`), finds the columns by their headings (`COLUMNS`) and skips rows
 without a title and items already there (`sameItem`: same ISBN, else same title + author). The policy's words are shown as a
 page by `Library.policyHtml` (escapes everything, then headings, lists, **bold**, paragraphs). No rules change.
+**0.61:** Librarian assignments are unlimited. An Administrator or Senior Pastor can appoint and remove librarians; every
+appointment, removal, or Administrator confirmation stores `librarianReviewedAt`. Administrators see a Home reminder and a
+prompt on opening Library when that review is at least 180 days old. Librarians and Administrators can search for Google
+Books covers for selected books, all books, or books missing covers; the ISBN is tried first, then title and author. Results
+are previewed and saved individually or together. Lookups run one at a time; missing matches are skipped and a rate limit
+stops further requests without losing completed results. The API receives only bibliographic search terms, not borrower
+records. Only librarians may run or save lookups (`covers/{id}` remains readable to signed-in users).
 **0.59:** Administrators and librarians can permanently purge individual loan activity records or a removed book (including
 its linked loan records), after confirmation; purging an active loan updates the book's count of copies out. Each purge is
 logged in the immutable audit log.
@@ -628,8 +635,8 @@ loan can save an optional condition note (`returnNote`), shown to librarians in 
 Off until switched on. Everyone signed in reads `books` – books, DVDs, CDs, audiobooks, magazines, games (`kind`,
 `Library.KINDS`; 'Book' when not set), each with an optional cover picture in `covers/{id}` (a JPEG of at most 360 pixels,
 taken with the phone's camera or chosen; the item's `cover` is its version; fetched only when it comes into view, like
-people's photos). **Librarians** – Administrators and `settings.librarianIds` (one or two, `Library.MAX_LIBRARIANS`, chosen
-on the Library page by an Administrator or the Senior Pastor; the Senior Pastor's save writes only that field –
+people's photos). **Librarians** – Administrators and everyone in `settings.librarianIds` (chosen on the Library page by an
+Administrator or the Senior Pastor; the Senior Pastor's save writes only librarian settings –
 `Store.setLibrarians`, and the rules let them change nothing else; rules: `librarian()`) – add items and write `loans`.
 Every new loan has a mobile number (`Library.borrower`: from the person's record, or typed if it has none; rules insist on
 it); someone not on the church's list can borrow with a name and a mobile number (`personId: ''`, `visitor: true`). The number

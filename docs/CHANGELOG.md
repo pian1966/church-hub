@@ -296,3 +296,8 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.58.1 (12 Nov 2026) **Leadership**: membership is labelled “Type of Membership”, with Elected Member, Co-opted Member and Other choices; Other requires a description.
 - ✅ 0.59.0 (12 Nov 2026) **Library**: Administrators and librarians can permanently purge individual borrowed or returned activity records and removed books after confirmation. A removed book's linked loan records are purged too, active loan counts stay correct, and every purge is recorded in the immutable audit log.
 - ✅ 13 Nov 2026 (0.60.0): **Brochures for every church** – removed the originating church's name from the printable brochures and added generic South African attribution. Administrators can edit brochure wording separately for each language; changes are kept in an Administrator-only database document instead of general settings. Existing brochure edits are migrated automatically when an Administrator opens the app. Brochures also highlight Library record purging, alongside leadership, archiving, and other current features.
+- ✅ 13 Nov 2026 (0.61.0): **Library covers and librarians** – Administrators and librarians can find covers for selected, all
+  or uncovered books, preview results, and save individual or successful batch matches. Missing books and API limits are
+  handled without losing earlier matches. Administrators and the Senior Pastor can appoint any number of librarians, all
+  with full library permissions. Administrators are reminded every 180 days to review the list and can confirm it or edit
+  appointments. Added translations, Library help and privacy/architecture notes.

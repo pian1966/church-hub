@@ -166,11 +166,12 @@ var Store = (function () {
     save(); changed();
     return true;
   }
-  /** Choose the library's librarians: only that one setting is written, so the Senior Pastor (who may change nothing else) can. */
+  /** Save the library's librarians and review date, so the Senior Pastor can manage only these settings. */
   function setLibrarians(ids, auditText) {
     if (blocked()) return;
     db.settings.librarianIds = ids.slice();
-    if (LIVE) Live.patch('settings/church', { librarianIds: ids.slice() });
+    db.settings.librarianReviewedAt = new Date().toISOString();
+    if (LIVE) Live.patch('settings/church', { librarianIds: ids.slice(), librarianReviewedAt: db.settings.librarianReviewedAt });
     if (auditText) audit(auditText, 'settings');
     save(); changed();
   }

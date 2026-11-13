@@ -269,7 +269,7 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
 - Administrators and librarians may also permanently purge a loan or a removed item and its linked loan records when needed.
   The purge is recorded in the immutable audit log; the audit trail itself is not deleted.
 - What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators
-  and up to two people chosen by an Administrator or the Senior Pastor) and the borrower; everyone else sees only
+  and people chosen by an Administrator or the Senior Pastor) and the borrower; everyone else sees only
   "On loan" (database rules, tested). Other loans are not written in the audit log. Choosing a librarian is logged.
 - Friendly reminders: three weeks after borrowing (`Library.REMIND_DAYS`) the borrower sees a reminder in the app; a
   librarian may also send it by WhatsApp or SMS to the loan's mobile number – the reason the number is kept. Only the date
@@ -277,6 +277,10 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   title, not the borrower's name or number).
 - Cover pictures (`covers/{id}`) and the library's policy (`libraryPolicy/policy`) hold no personal information; everyone
   signed in may read them.
+- Librarians and Administrators may look up book covers from Google Books by ISBN, title and author. Only those
+  bibliographic search terms are sent to Google; borrower names, contact details and loan records are not. Each fetched
+  picture is previewed before it is saved to the church's database. The Administrator is reminded every 180 days to confirm
+  the librarian list is still current.
 
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church Hub keeps the suggestion with their name and person ID, so the

@@ -86,15 +86,18 @@ service cloud.firestore {
       allow delete: if admin();
       // A Pastor with "settings" may change everything except what Pastors can do, what the Senior Pastor can do,
       // and who the Senior Pastor is (only an Administrator sets those)
-      // The Senior Pastor may choose the librarians (at most two), and change nothing else here
+      // The Senior Pastor may choose the librarians and record the review date, and change nothing else here
       allow update: if (admin() && !request.resource.data.keys().hasAny(['brochures'])) || (may('settings')
         && request.resource.data.get('pastorCan', []) == resource.data.get('pastorCan', [])
         && request.resource.data.get('seniorCan', []) == resource.data.get('seniorCan', [])
         && request.resource.data.get('seniorPastorId', '') == resource.data.get('seniorPastorId', '')
         && request.resource.data.get('brochures', null) == resource.data.get('brochures', null))
         || (isRole(['pastor']) && isMe(resource.data.get('seniorPastorId', ''))
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['librarianIds'])
-          && request.resource.data.get('librarianIds', []) is list && request.resource.data.get('librarianIds', []).size() <= 2);
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['librarianIds', 'librarianReviewedAt'])
+          && request.resource.data.get('librarianIds', []) is list
+          && request.resource.data.get('librarianReviewedAt', '') is string
+          && request.resource.data.get('librarianReviewedAt', '').size() >= 20
+          && request.resource.data.get('librarianReviewedAt', '').size() <= 40);
     }
     // Brochure wording is visible and editable only by Administrators.
     match /brochures/{id} {

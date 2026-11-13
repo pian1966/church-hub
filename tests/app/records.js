@@ -210,6 +210,48 @@ module.exports = async function (ctx) {
   const live = JSON.parse(JSON.stringify(docs));
   await finish(s);
 
+  console.log('Library cover lookup (Administrator):');
+  const coverSeed = on(seedDocs());
+  coverSeed['books/cv-a'] = { kind: 'Book', title: 'Alpha Cover', author: 'A Writer', isbn: '9780000000001', copies: 1, out: 0 };
+  coverSeed['books/cv-b'] = { kind: 'Book', title: 'Beta Missing', author: 'B Writer', copies: 1, out: 0 };
+  coverSeed['books/cv-c'] = { kind: 'Book', title: 'Gamma Limited', author: 'C Writer', isbn: '9780000000003', copies: 1, out: 0 };
+  coverSeed['books/cv-d'] = { kind: 'Book', title: 'Delta Skipped', author: 'D Writer', copies: 1, out: 0 };
+  const covers = await session('linda.pillay@example.com', coverSeed);
+  await covers.go('library');
+  await covers.page.route('https://www.googleapis.com/books/v1/volumes**', route => {
+    const q = new URL(route.request().url()).searchParams.get('q') || '';
+    if (q.includes('9780000000003')) return route.fulfill({
+      status: 200, contentType: 'application/json',
+      body: JSON.stringify({ error: { message: 'Daily Limit Exceeded', errors: [{ reason: 'dailyLimitExceeded' }] } })
+    });
+    if (q.includes('Beta Missing')) return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [] }) });
+    const isbn = (q.match(/isbn:([0-9]+)/) || [])[1] || '9780000000001';
+    const title = isbn === '9780000000001' ? 'Alpha Cover' : 'Delta Skipped';
+    const author = isbn === '9780000000001' ? 'A Writer' : 'D Writer';
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{
+      volumeInfo: { title, authors: [author], industryIdentifiers: [{ type: 'ISBN_13', identifier: isbn }],
+        imageLinks: { thumbnail: 'https://books.google.com/books/content?id=test-cover&printsec=frontcover' } }
+    }] }) });
+  });
+  await covers.page.route('https://books.google.com/books/content**', route => route.fulfill({
+    status: 200, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' }, body: PNG.buffer
+  }));
+  await covers.page.check('[data-lib-select="cv-a"]');
+  await covers.page.click('[data-act="library:coversselected"]');
+  await covers.page.waitForSelector('#modal [data-act="library:coversave"][data-id="cv-a"]');
+  check((await covers.page.textContent('#modal')).includes('Preview each cover before saving it to the library.'), 'a librarian or Administrator previews a selectively fetched cover before saving');
+  await covers.page.click('#modal [data-act="library:coversave"][data-id="cv-a"]');
+  await covers.settle(); docs = await covers.docsNow();
+  check(!!docs['books/cv-a'].cover && /^data:image\/jpeg;base64,/.test(docs['covers/cv-a'].data), 'the selected cover is saved as a small image on the book record');
+  await covers.page.click('#modal [data-act="hub:close"]');
+  await covers.page.click('[data-act="library:coversall"]');
+  await covers.page.waitForFunction(() => document.querySelector('#lib-cover-progress') && document.querySelector('#lib-cover-progress').textContent.includes('Search complete.'), null, { timeout: 10000 });
+  t = await covers.page.textContent('#modal');
+  check(t.includes('No matching cover found') && t.includes('reached its limit') && t.includes('Alpha Cover'), 'bulk cover lookup reports missing matches and rate limits without losing earlier results');
+  await covers.page.click('#modal [data-act="library:coverssaveall"]'); await covers.settle(); docs = await covers.docsNow();
+  check(!!docs['covers/cv-a'] && !docs['covers/cv-b'] && !docs['covers/cv-c'] && !docs['covers/cv-d'], 'Save all keeps the successful covers and skips missing or rate-limited books');
+  await finish(covers);
+
   // What each person sees of it all, carrying on from what the Administrator set up
   const as = async (email, senior) => { const seed = JSON.parse(JSON.stringify(live)); if (senior) seed['settings/church'].seniorPastorId = senior; const x = await session(email, seed); await x.go('archive'); await x.page.waitForTimeout(400); return x; };
   const sees = async x => { const tx = (await x.page.$('nav a[href="#/archive"]')) ? await x.text() : ''; return ['Council minutes – October', 'Contract of employment'].map(n => tx.includes(n) ? 'y' : 'n').join(''); };
@@ -222,6 +264,7 @@ module.exports = async function (ctx) {
   check(t.includes('Church Council') && t.includes('Tim Jacobs') && !(await s.page.$('#lb-new')) && !(await s.page.$('[data-act="leaders:seat"]')), 'sees their own leadership group (though it is for members only), and can’t change it');
   await s.go('library'); t = await s.text();
   check(/My books[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*Book\s*On loan/.test(t), 'the Library shows the book they have out and when it is due – not the librarian’s tools');
+  check(!(await s.page.$('#lib-covers-selected')) && !(await s.page.$('[data-act="library:coversall"]')) && !(await s.page.$('[data-lib-select]')), 'regular members cannot run book cover searches or save covers');
   check(!(await s.page.$('[data-act="library:purge"]')), 'a regular member has no Purge controls');
   check(!!(await s.page.$('#lib-filter-kind')) && !!(await s.page.$('#lib-filter-title')) && !!(await s.page.$('#lib-filter-author')) && !!(await s.page.$('#lib-filter-cat')) && (await s.page.$$('[data-act="library:sort"]')).length === 4, 'everyone can filter and sort the library by media type, title, author and subject');
   await s.page.selectOption('#lib-filter-kind', 'Book'); await s.page.fill('#lib-filter-title', 'Knowing God'); await s.page.fill('#lib-filter-author', 'J. I. Packer'); await s.page.fill('#lib-filter-cat', 'Theology');
@@ -272,8 +315,57 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('[data-act="library:libs"]')) && !(await s.page.$('[data-act="library:add"]')) && !!(await s.page.$('[data-act="library:policy"]')), 'the Senior Pastor chooses the librarians and may change the policy, without being a librarian');
   await s.page.click('[data-act="library:libs"]'); await s.page.fill('.cg-q[data-for="lib-libs"]', 'tim jac'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
   docs = await s.docsNow(); t = (await s.page.textContent('body')) || '';
-  check((docs['settings/church'].librarianIds || []).join() === 'p17,p14' && t.includes('There are two librarians already.') && !(await s.page.$('.cg-q[data-for="lib-libs"]')), 'up to two librarians: then no one else can be added');
+  await s.page.fill('.cg-q[data-for="lib-libs"]', 'clare'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
+  await s.page.fill('.cg-q[data-for="lib-libs"]', 'kavi'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
+  docs = await s.docsNow(); t = (await s.page.textContent('body')) || '';
+  check(['p17', 'p14', 'p15', 'p20'].every(id => (docs['settings/church'].librarianIds || []).includes(id)) &&
+    (docs['settings/church'].librarianIds || []).length === 4 && !!docs['settings/church'].librarianReviewedAt &&
+    !!(await s.page.$('.cg-q[data-for="lib-libs"]')), 'more than two librarians can be appointed and each appointment saves a review date');
   await finish(s);
+
+  console.log('An additional librarian can use the full Library tools:');
+  const kaviSeed = JSON.parse(JSON.stringify(live));
+  kaviSeed['settings/church'].librarianIds = ['p17', 'p14', 'p15', 'p20'];
+  kaviSeed['settings/church'].librarianReviewedAt = new Date().toISOString();
+  s = await session('kavi.govender@example.com', kaviSeed); await s.go('library');
+  check(!!(await s.page.$('[data-act="library:add"]')) && !!(await s.page.$('[data-act="library:purge"]')) && !!(await s.page.$('#lib-covers-selected')), 'a fourth librarian gets the same manage, purge and cover lookup controls');
+  await s.page.route('https://www.googleapis.com/books/v1/volumes**', route => route.fulfill({
+    status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{
+      volumeInfo: { title: 'Knowing God', authors: ['J. I. Packer'], industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780000000004' }],
+        imageLinks: { thumbnail: 'https://books.google.com/books/content?id=kavi-cover&printsec=frontcover' } }
+    }] })
+  }));
+  await s.page.route('https://books.google.com/books/content**', route => route.fulfill({
+    status: 200, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' }, body: PNG.buffer
+  }));
+  const knowing = find(kaviSeed, 'books', b => b.title === 'Knowing God').split('/')[1];
+  await s.page.check('[data-lib-select="' + knowing + '"]');
+  await s.page.click('[data-act="library:coversselected"]');
+  await s.page.waitForSelector('#modal [data-act="library:coversave"][data-id="' + knowing + '"]');
+  await s.page.click('#modal [data-act="library:coversave"][data-id="' + knowing + '"]'); await s.settle();
+  check(!!(await s.docsNow())['covers/' + knowing], 'an assigned librarian can selectively find and save a cover');
+  await s.page.click('#modal [data-act="hub:close"]');
+  await s.page.click('[data-act="library:coversall"]');
+  await s.page.waitForFunction(() => document.querySelector('#lib-cover-progress') && document.querySelector('#lib-cover-progress').textContent.includes('Search complete.'), null, { timeout: 10000 });
+  check((await s.page.textContent('#modal')).includes('Knowing God'), 'an assigned librarian can run a cover search for all books');
+  await s.page.click('#modal [data-act="library:coverssaveall"]'); await s.settle();
+  await finish(s);
+
+  console.log('Six-month librarian review prompt (Administrator):');
+  const reviewSeed = on(seedDocs());
+  reviewSeed['settings/church'].librarianIds = ['p17', 'p14', 'p15'];
+  reviewSeed['settings/church'].librarianReviewedAt = new Date(Date.now() - 181 * 86400000).toISOString();
+  const reviewer = await session('linda.pillay@example.com', reviewSeed);
+  await reviewer.go('home');
+  check((await reviewer.text()).includes('Please review who is still a librarian'), 'the Administrator sees the due review reminder on Home');
+  await reviewer.go('library');
+  check((await reviewer.page.textContent('#modal')).includes('Review the librarians') && (await reviewer.page.textContent('#modal')).includes('Confirm All Still Active'), 'opening the Library prompts the Administrator to review the listed names');
+  await reviewer.page.click('[data-act="library:reviewconfirm"]'); await reviewer.settle(); docs = await reviewer.docsNow();
+  const reviewedAt = Date.parse(docs['settings/church'].librarianReviewedAt);
+  check(Number.isFinite(reviewedAt) && Date.now() - reviewedAt < 60000 && !(await reviewer.page.$('#modal [data-act="library:reviewconfirm"]')), 'Confirm All Still Active resets the six-month review timer');
+  await reviewer.go('home');
+  check(!(await reviewer.text()).includes('Please review who is still a librarian'), 'the review reminder is cleared after confirmation');
+  await finish(reviewer);
 
   console.log('Terms of office, roles, co-opted members, messages to the Council and library reminders:');
   const day = n => { const d = new Date(); d.setDate(d.getDate() + n); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); };

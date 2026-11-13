@@ -61,8 +61,8 @@
       } },
     settings: { read: function (c, id, d) { return (is(c, ['admin']) || ((is(c, ANY) || c.robot) && !(d && Object.prototype.hasOwnProperty.call(d, 'brochures')))); },
       write: function (c, op, id, b, a) { return is(c, ['admin']) ? op === 'delete' || !Object.prototype.hasOwnProperty.call(a || {}, 'brochures') : (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || '') && JSON.stringify(a.brochures) === JSON.stringify(b.brochures))
-        // the Senior Pastor may choose the librarians (at most two), and change nothing else here
-        || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['librarianIds']) && Array.isArray(a.librarianIds || []) && (a.librarianIds || []).length <= 2); } },
+        // the Senior Pastor may choose the librarians and record the review date, and change nothing else here
+        || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['librarianIds', 'librarianReviewedAt']) && Array.isArray(a.librarianIds || []) && typeof a.librarianReviewedAt === 'string' && a.librarianReviewedAt.length >= 20 && a.librarianReviewedAt.length <= 40); } },
     brochures: { read: function (c, id) { return is(c, ['admin']) && id === 'church'; }, write: function (c, op, id) { return is(c, ['admin']) && id === 'church'; } },
     elvantoSync: { read: function (c, id, d) { return may(c, 'import') || c.robot || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {

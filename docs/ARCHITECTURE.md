@@ -480,9 +480,10 @@ Later: direct import through the Elvanto API (server side, with the church's API
   Partnership applications (`PeopleParts.formSettings`).
 
 ## Groups (one menu entry; `js/mod-groups.js`)
-Care Groups, Midweek Groups and Leadership register with `inGroups: true`: `Hub.listed()` leaves them out of the menu, Home and
+Care Groups, Midweek Groups, the built-in Staff Group and Leadership register with `inGroups: true`: `Hub.listed()` leaves them out of the menu, Home and
 All apps, and the `groups` module (shown when `Hub.groupMods()` has any) stands for them. Their pages keep their addresses
-(`#/care`, `#/life`, `#/leaders`); `draw()` in `js/app.js` puts the Groups tabs (`tabs()`) above them and lights Groups in the
+(`#/care`, `#/life`, `#/staffgroup`, `#/leaders`); `draw()` in `js/app.js` puts the Groups tabs (`tabs()`) above them, in the
+order My Groups, Care Groups, Midweek Groups, Staff Group, Leadership, and lights Groups in the
 menu. `#/groups` is "My groups": `CareUI.mePanel`, `LifeUI.mePanel` and `LeadersUI.mePanel`. Each kind keeps its own on/off
 switch, roles and rules. The menu entry's name is the Terminology word `groups` (`Wording.TERMS`, marked `'menu'` so the
 screen-wide word changer leaves "Groups" elsewhere alone).
@@ -648,6 +649,13 @@ Books covers for selected books, all books, or books missing covers; the ISBN is
 are previewed and saved individually or together. Lookups run one at a time; missing matches are skipped and a rate limit
 stops further requests without losing completed results. The API receives only bibliographic search terms, not borrower
 records. Only librarians may run or save lookups (`covers/{id}` remains readable to signed-in users).
+**0.65:** Members request available items with a pending loan and one-copy reservation committed atomically. Firestore
+transactions prevent two members claiming the same last copy; only the borrower and librarians may read the request.
+Librarians approve or reject it; rejection closes the loan and releases the reservation. Pending totals use the existing
+Library badge and Home to-do system. `libraryDuplicateIgnores/{pair}` stores librarian-only dismissals. Duplicate
+suggestions compare normalized titles and authors; standardizing updates title, author, type, subject and ISBN across both
+records without merging copies or loan history. View / Info sends only title, author and ISBN to Google Books and offers
+direct search links. Covers dropped or selected by a librarian are reduced to JPEG before saving.
 **0.59:** Administrators and librarians can permanently purge individual loan activity records or a removed book (including
 its linked loan records), after confirmation; purging an active loan updates the book's count of copies out. Each purge is
 logged in the immutable audit log.
@@ -671,12 +679,12 @@ librarians and its borrower only, so a book carries its own count of copies out 
 `giveBack`) for everyone else to see "Available" or "On loan". Lending defaults to three weeks (`LOAN_DAYS`); overdue loans
 show on Home (the librarians: how many; the borrower: their own). Returned loans are removed after a year (`KEEP_DAYS`,
 when a librarian opens the page). **Friendly reminders**: three weeks after it was borrowed (`REMIND_DAYS`) and a week after
-each reminder (`Library.remindDue`), the borrower gets a To do and a note under My books, and the librarians a "Reminder due"
+each reminder (`Library.remindDue`), the borrower gets a To do and a note under Library Items I've Borrowed, and the librarians a "Reminder due"
 tag with *Send a reminder* – the text names the item and the days held, sent by WhatsApp (`wa.me`, with the church country's
 dialling code: `Library.intl`), SMS or in the app only; the loan keeps the date (`reminded`). The policy box has formatting
 buttons (`RichText.tools`: bold, italic, heading, lists) for the marks `Library.policyHtml` shows; Archive notes use
 `js/richtext.js` itself (`#` headings, `-` and `1.` lists, `**bold**`, `*italic*`, `__underline__`, links; all else made safe). `LibraryUI.chip()` shows "n library items
-borrowed" on the Me page. Not built yet: asking to borrow or reserve a book in the app.
+borrowed" on the Me page; `LibraryUI.roleChip()` shows Librarian there when the role applies.
 
 ## Services that need a roster
 - Settings lists every upcoming service with a bin to remove it (and its roster); "Stop holding a regular service…"

@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans'];
+    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
@@ -192,6 +192,41 @@ var Store = (function () {
     if (LIVE) Live.patch('settings/church', { librarianIds: ids.slice(), librarianReviewedAt: db.settings.librarianReviewedAt });
     if (auditText) audit(auditText, 'settings');
     save(); changed();
+  }
+  function localUpsert(collection, record) {
+    var records = all(collection), index = records.findIndex(function (x) { return x.id === record.id; });
+    if (index >= 0) records[index] = record; else records.push(record);
+    save(); changed();
+  }
+  /** Reserve one available copy for the signed-in borrower; live mode commits the loan and count together. */
+  function requestLibraryLoan(bookId, loan) {
+    if (blocked()) return Promise.reject(new Error('view only'));
+    var book = get('books', bookId);
+    if (!LIVE && (!book || book.removed || book.repairing || (+book.out || 0) >= Math.max(1, +book.copies || 1)))
+      return Promise.reject(new Error('Every copy is on loan.'));
+    var nextLoan = copy(loan), nextBook = copy(book), id = uid('ln');
+    nextLoan.id = id; nextLoan.status = 'pending'; nextLoan.requestedAt = new Date().toISOString();
+    if (LIVE) return Live.requestLibraryLoan(bookId, id, nextLoan).then(function (result) {
+      localUpsert('loans', result.loan); localUpsert('books', result.book); return result.loan;
+    });
+    nextBook.out = (+book.out || 0) + 1;
+    put('loans', nextLoan); put('books', nextBook);
+    return Promise.resolve(nextLoan);
+  }
+  /** Librarians approve a pending request or reject it and return its reserved copy. */
+  function verifyLibraryLoan(id, approved, today, verifiedBy) {
+    if (blocked()) return Promise.reject(new Error('view only'));
+    var loan = get('loans', id);
+    if (!loan || (!LIVE && (loan.status !== 'pending' || loan.back))) return Promise.reject(new Error('This checkout is no longer waiting for verification.'));
+    var nextLoan = copy(loan), book = get('books', loan.bookId), nextBook = book && copy(book);
+    nextLoan.status = approved ? 'approved' : 'rejected';
+    nextLoan.verifiedAt = new Date().toISOString(); nextLoan.verifiedBy = verifiedBy || '';
+    if (!approved) { nextLoan.back = today; nextLoan.mobile = ''; if (nextBook) nextBook.out = Math.max(0, (+nextBook.out || 0) - 1); }
+    if (LIVE) return Live.verifyLibraryLoan(id, approved, today, verifiedBy).then(function (result) {
+      localUpsert('loans', result.loan); if (result.book) localUpsert('books', result.book); return result.loan;
+    });
+    put('loans', nextLoan); if (nextBook) put('books', nextBook);
+    return Promise.resolve(nextLoan);
   }
   function leave() { return db.leave; }
   /** Save leave. Tells onLeaveChange listeners which requests changed (e.g. to update Elvanto), unless opts.quiet (imports). */
@@ -553,6 +588,7 @@ var Store = (function () {
       // (a librarian who isn't an Administrator: every loan, once the settings say who the librarians are – see extras())
       add('books', coll('books'));
       if (is('admin')) add('loans', coll('loans')); else add('loansMe', own('loans'));
+      if (is('admin')) add('libraryDuplicateIgnores', coll('libraryDuplicateIgnores'));
       // Offers to serve: roster coordinators and Administrators answer them all; everyone else sees their own
       // ("View as" by the Rector: everyone's offers only if they may answer them themselves – the rules check their own sign-in)
       var realRoster = !previewRole || session.role === 'admin' || (session.can || []).indexOf('rosters') >= 0;
@@ -686,7 +722,10 @@ var Store = (function () {
           myBodies().forEach(function (g) { want['archive:g:' + g] = c('archive').where('bodyId', '==', g); });
         }
       }
-      if (!is('admin') && !previewRole && me && (st.librarianIds || []).indexOf(me) >= 0) want['loans:all'] = c('loans');
+      if (!is('admin') && !previewRole && me && (st.librarianIds || []).indexOf(me) >= 0) {
+        want['loans:all'] = c('loans');
+        want['libraryDuplicateIgnores:all'] = c('libraryDuplicateIgnores');
+      }
       var gone = false;
       Object.keys(extraSubs).forEach(function (k) { if (!want[k]) { try { extraSubs[k](); } catch (e) {} delete extraSubs[k]; delete raw[k]; gone = true; } });
       if (gone && ready) { rebuild(); remoteChanged(); }
@@ -828,6 +867,8 @@ var Store = (function () {
       db.brochures = role() === 'admin' && raw.brochure && raw.brochure.church ? copy(raw.brochure.church) : {};
       if (db.settings) delete db.settings.brochures;
       ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books', 'applicationDocuments'].forEach(function (c) { db[c] = arr(c); });
+      var ignoredDuplicates = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('libraryDuplicateIgnores') === 0; }));
+      db.libraryDuplicateIgnores = Object.keys(ignoredDuplicates).map(function (id) { var o = copy(ignoredDuplicates[id]); o.id = id; return o; });
       var custom = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('customGroups') === 0; }));
       db.customGroups = Object.keys(custom).map(function (id) { var o = copy(custom[id]); o.id = id; return o; });
       [['leaderBodies', /^leaderBodies/], ['archive', /^archive:/], ['loans', /^loans/]].forEach(function (x) {   // each asked for in parts (plan(), extras())
@@ -1153,10 +1194,48 @@ var Store = (function () {
       if (email && uid) return write('roles/' + email, { role: 'robot', uid: String(uid).trim(), name: 'Elvanto robot' });
       return Promise.resolve();
     }
+    function requestLibraryLoan(bookId, id, loan) {
+      var bookRef = doc('books/' + bookId), loanRef = doc('loans/' + id);
+      return fs.runTransaction(function (tx) {
+        return tx.get(bookRef).then(function (snap) {
+          if (!snap.exists) throw new Error('This item is no longer in the library.');
+          var book = snap.data(), copies = Math.max(1, +book.copies || 1), out = Math.max(0, +book.out || 0);
+          if (book.removed || book.repairing || out >= copies) throw new Error('Every copy is on loan.');
+          tx.set(loanRef, clean(loan));
+          tx.update(bookRef, { out: out + 1, lastClaimId: id });
+          return { loan: Object.assign({}, clean(loan), { id: id }), book: Object.assign({}, book, { id: bookId, out: out + 1, lastClaimId: id }) };
+        });
+      }).catch(function (e) { err(e, 'request a library item'); throw e; });
+    }
+    function verifyLibraryLoan(id, approved, today, verifiedBy) {
+      var loanRef = doc('loans/' + id);
+      return fs.runTransaction(function (tx) {
+        return tx.get(loanRef).then(function (snap) {
+          if (!snap.exists || snap.data().status !== 'pending' || snap.data().back) throw new Error('This checkout is no longer waiting for verification.');
+          var loan = snap.data(), bookRef = doc('books/' + loan.bookId);
+          if (approved) {
+            var accepted = { status: 'approved', verifiedAt: new Date().toISOString(), verifiedBy: verifiedBy || '' };
+            tx.update(loanRef, accepted);
+            return { loan: Object.assign({ id: id }, loan, accepted), book: null };
+          }
+          return tx.get(bookRef).then(function (bookSnap) {
+            var rejected = { status: 'rejected', verifiedAt: new Date().toISOString(), verifiedBy: verifiedBy || '', back: today, mobile: '' };
+            tx.update(loanRef, rejected);
+            var book = bookSnap.exists ? bookSnap.data() : null, updated = null;
+            if (book) {
+              updated = Object.assign({}, book, { out: Math.max(0, (+book.out || 0) - 1) });
+              tx.update(bookRef, { out: updated.out });
+            }
+            return { loan: Object.assign({ id: id }, loan, rejected), book: updated && Object.assign({ id: loan.bookId }, updated) };
+          });
+        });
+      }).catch(function (e) { err(e, 'verify this checkout'); throw e; });
+    }
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
       put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -1183,7 +1262,7 @@ var Store = (function () {
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
   function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
-    settings: settings, setSettings: setSettings, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
+    settings: settings, setSettings: setSettings, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,

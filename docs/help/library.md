@@ -8,7 +8,7 @@ until then).
 For: Everyone
 Also asked: Library rules. How long can I keep a book?
 
-Open **Library**: the policy is at the top, under **Library policy**. Tap **Read the policy** to read it as a page. If it is
+Open **Library** and tap the compact **Library policy** button in the header. Tap **Read the policy** to read it as a page. If it is
 a file, tap **Open** (a PDF or picture) or **Download**.
 
 ## How do I add or change the library's policy?
@@ -29,13 +29,14 @@ that in.
 ## How do I borrow a book?
 For: Everyone
 
-Ask a librarian – they lend it to you in Church Hub and it then appears under **My books** with the date it is due back.
-Asking for a book inside Church Hub is planned but not built yet.
+Tap **Request to borrow** next to an available item. A copy is reserved while a librarian verifies your request. You will
+see it under **Library Items I've Borrowed** while it is waiting and after it is approved.
 
 ## Which books do I have, and when are they due?
 For: Everyone
 
-Open **Library** and look under **My books**. If a book is overdue, Home reminds you.
+Open **Library** and look under **Library Items I've Borrowed**. If a request is waiting for verification, it is marked.
+If an approved loan is overdue, Home reminds you.
 
 ## Who can see what I have borrowed?
 For: Everyone
@@ -48,11 +49,20 @@ For: Librarians
 Also asked: A book was donated. We bought new books. Record where a book came from. Add a DVD. Photograph a cover.
 
 On **Library**, tap **Add to the library**. Choose **What it is** (a book, DVD, CD, audiobook, magazine, game or other); only
-the title is needed. For the cover, tap **Take a photo** to use the phone's camera, or **Choose a picture**. You can also fill
+the title is needed. For the cover, drop a JPEG, PNG or WebP image into the cover box, or tap **Take a photo** to use the
+phone's camera or **Choose a picture**. Church Hub resizes it before saving. You can also fill
 in the author, a category, how many copies there are, how it was acquired (bought or donated), from whom, the date, and its
 shelf. For books, tick one or more books and tap **Find covers for selected**, or choose **Find covers for all books** or
 **Find missing covers**. Check the preview and save an individual cover or all the covers found. The search uses the ISBN
 first, then the title and author. A missing match or a service limit does not stop the rest of the batch.
+Use **Suggested Duplicates** to review likely title/author matches. Standardize catalogue details across a pair or ignore
+a false match; copies and loan records stay separate. Each item also has **View / Info** for a Google Books preview and
+direct search links.
+
+## Can I search for someone who borrowed a book?
+For: Librarians
+
+Use the **Borrower** filter in the catalogue. It is only shown to librarians and Administrators.
 
 ## How do I lend a book and take it back?
 For: Librarians

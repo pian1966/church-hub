@@ -54,6 +54,11 @@
     return is(c, ANY) && c.ids.some(function (pid) { return !!docs['archivePreviewMembers/' + pid]; });
   }
   function librarian(c) { return is(c, ['admin']) || (is(c, ANY) && meIn(c, (docs['settings/church'] || {}).librarianIds || [])); }
+  function pendingLibraryLoan(d, c) {
+    return !!d && d.status === 'pending' && d.back === '' && d.visitor === false && typeof d.personId === 'string' && isMe(c, d.personId) &&
+      typeof d.name === 'string' && d.name.length > 0 && d.name.length <= 100 && typeof d.mobile === 'string' && d.mobile.length >= 7 && d.mobile.length <= 30 &&
+      Object.keys(d).every(function (k) { return ['bookId', 'title', 'personId', 'name', 'mobile', 'visitor', 'out', 'due', 'back', 'note', 'status', 'requestedAt', 'createdAt', 'updatedAt'].indexOf(k) >= 0; });
+  }
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
       write: function (c, op, id, b, a) {
@@ -252,15 +257,30 @@
       } },
     // The Library: everyone reads the books; librarians write; a loan is read by the librarians and its borrower
     books: { read: function (c) { return is(c, ANY); },
-      write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150)); } },
+      write: function (c, op, id, b, a, after) {
+        if (librarian(c)) return op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150);
+        if (!is(c, ANY) || op !== 'update' || !onlyChanges(b, a, ['out', 'lastClaimId'])) return false;
+        var l = after && after['loans/' + a.lastClaimId];
+        return !!l && l.bookId === id && l.status === 'pending' && l.back === '' && isMe(c, l.personId) &&
+          a.out === (+((b || {}).out) || 0) + 1 && a.out <= Math.max(1, +((b || {}).copies) || 1) &&
+          !(b || {}).removed && !(b || {}).repairing;
+      } },
     loans: { read: function (c, id, d) { return librarian(c) || (!!d && mine(c, d.personId || '')); },
-      write: function (c, op, id, b, a) {
-        if (!librarian(c)) return false; if (op === 'delete') return true;
+      write: function (c, op, id, b, a, after) {
+        if (!librarian(c)) {
+          if (op !== 'create' || !pendingLibraryLoan(a, c)) return false;
+          var book = after && after['books/' + a.bookId], before = docs['books/' + a.bookId];
+          return !!book && !!before && book.lastClaimId === id && book.out === (+before.out || 0) + 1 &&
+            book.out <= Math.max(1, +before.copies || 1) && !before.removed && !before.repairing;
+        }
+        if (op === 'delete') return true;
         var m = a.mobile === undefined ? '' : a.mobile, n = a.name === undefined ? '' : a.name;
         var ok = typeof a.bookId === 'string' && typeof a.personId === 'string' && typeof m === 'string' && m.length <= 30 &&
           (a.personId !== '' || (a.visitor === true && typeof n === 'string' && n.length > 0 && n.length <= 100));
         return ok && (op !== 'create' || m.length >= 7);
       } },
+    libraryDuplicateIgnores: { read: function (c) { return librarian(c); },
+      write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (onlyKeys(a, ['pair', 'createdAt', 'updatedAt']) && a.pair === id && id.length <= 200)); } },
     covers: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (onlyKeys(a, ['data', 'updatedAt']) && typeof a.data === 'string' && a.data.length < 200000)); } },
     libraryPolicy: { read: function (c) { return is(c, ANY); },
@@ -285,12 +305,14 @@
       return s.length === 4 ? !!policy(s[0] + '/' + s[2]).read(ctx(), s[3], data, s[1]) : !!policy(s[0]).read(ctx(), s[1], data);
     } catch (e) { return false; }
   }
-  function canWrite(op, path, before, after) {
+  function canWrite(op, path, before, after, afterDocs) {
     var s = path.split('/');
     try {
       if (s.length === 6 && s[0] === 'applicationDocuments' && s[2] === 'files' && s[4] === 'parts')
         return !!policy('applicationDocuments/files/parts').write(ctx(), op, s[5], before, after, s[1], s[3]);
-      return s.length === 4 ? !!policy(s[0] + '/' + s[2]).write(ctx(), op, s[3], before, after, s[1]) : !!policy(s[0]).write(ctx(), op, s[1], before, after);
+      var c = ctx();
+      return s.length === 4 ? !!policy(s[0] + '/' + s[2]).write(c, op, s[3], before, after, s[1], afterDocs) :
+        !!policy(s[0]).write(c, op, s[1], before, after, afterDocs);
     } catch (e) { return false; }
   }
   function lastId(path) { return path.split('/').pop(); }
@@ -352,11 +374,13 @@
     return new Promise(function (res, rej) {
       setTimeout(function () {
         setTimeout(function () { F.pending--; }, 0);
+        var afterDocs = JSON.parse(JSON.stringify(docs));
+        ops.forEach(function (o) { if (o.data) afterDocs[o.path] = JSON.parse(JSON.stringify(o.data, function (k, v) { return v && v.__serverTs ? { __serverTs: true } : v; })); else delete afterDocs[o.path]; });
         for (var i = 0; i < ops.length; i++) {
           var o = ops[i], before = docs[o.path], after = o.data ? JSON.parse(JSON.stringify(o.data, function (k, v) { return v && v.__serverTs ? { __serverTs: true } : v; })) : null;
           var op = !o.data ? 'delete' : before === undefined ? 'create' : 'update';
-          if (op === 'delete' && before === undefined && canWrite('delete', o.path, {}, null)) continue;
-          if (!canWrite(op, o.path, before, after)) return rej(denied(op + ' ' + o.path));
+          if (op === 'delete' && before === undefined && canWrite('delete', o.path, {}, null, afterDocs)) continue;
+          if (!canWrite(op, o.path, before, after, afterDocs)) return rej(denied(op + ' ' + o.path));
         }
         ops.forEach(function (o) { if (o.data) docs[o.path] = serverTs(JSON.parse(JSON.stringify(o.data, function (k, v) { return v && v.__serverTs ? { __serverTs: true } : v; }))); else delete docs[o.path]; });
         res();
@@ -367,6 +391,18 @@
 
   /* ---------- the firebase global (compat API, only what Church Hub uses) ---------- */
   var fs = { doc: function (p) { return new DocRef(p); }, collection: function (c) { return new Query(c); },
+    runTransaction: function (fn) {
+      var ops = [], tx = {
+        get: function (ref) { return ref.get(); },
+        set: function (ref, data) { ops.push({ path: ref.path, data: data }); },
+        update: function (ref, fields) {
+          var before = docs[ref.path];
+          if (!before) throw denied('transaction update ' + ref.path);
+          ops.push({ path: ref.path, data: Object.assign(JSON.parse(JSON.stringify(before)), fields) });
+        }
+      };
+      return Promise.resolve().then(function () { return fn(tx); }).then(function (result) { return apply(ops).then(function () { return result; }); });
+    },
     waitForPendingWrites: function () { return new Promise(function (r) { setTimeout(r, 20); }); },
     // The copy kept on the device for offline use (js/store.js): counted, so the tests can see it is made and wiped
     enablePersistence: function () { F.kept++; return Promise.resolve(); },

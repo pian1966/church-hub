@@ -840,10 +840,30 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .lib-cover-pick { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
 .lib-cover-now { width: 72px; min-height: 96px; display: grid; place-items: center; border: 1px dashed var(--line, #ccc); border-radius: 6px; text-align: center; }
 .lib-cover-now img { max-width: 72px; max-height: 110px; border-radius: 4px; display: block; }
+.lib-cover-drop { display: flex; gap: 14px; align-items: center; padding: 10px; border: 1px dashed var(--line, #ccc); border-radius: 8px; }
+.lib-cover-drop.drag { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.lib-cover-drop p { margin: 0 0 8px; }
+.lib-cover-drop small { display: block; margin-top: 6px; }
+.lib-duplicate-list { display: grid; gap: 12px; }
+.lib-duplicate-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 1px solid var(--line, #ddd); border-radius: 8px; }
+.lib-duplicate-item { min-width: 0; }
+.lib-duplicate-item h3 { margin: 0 0 8px; overflow-wrap: anywhere; }
+.lib-duplicate-item dl { display: grid; grid-template-columns: minmax(80px, auto) 1fr; gap: 4px 10px; margin: 0; font-size: .9em; }
+.lib-duplicate-item dd { margin: 0; overflow-wrap: anywhere; }
+.lib-duplicate-pair > .btns { grid-column: 1 / -1; }
+.lib-info-results { display: flex; align-items: flex-start; gap: 14px; }
+.lib-info-cover { width: 96px; max-height: 144px; object-fit: contain; flex: 0 0 auto; border-radius: 4px; }
+.lib-info-description { max-height: 32vh; overflow: auto; white-space: pre-line; }
+.lib-info-links { margin: 12px 0 0; }
 .lib-policy-text { white-space: pre-wrap; overflow-wrap: anywhere; margin-top: 8px; max-height: 60vh; overflow: auto; }
 /* chips that open a page (a person's midweek and leadership groups, their library books) */
 a.tag.tag-link { text-decoration: none; cursor: pointer; }
 a.tag.tag-link:hover, a.tag.tag-link:focus-visible { outline: 2px solid color-mix(in srgb, var(--c) 45%, transparent); outline-offset: 1px; }
+@media (max-width: 600px) {
+  .lib-duplicate-pair { grid-template-columns: 1fr; }
+  .lib-duplicate-pair > .btns { grid-column: 1; }
+  .lib-cover-drop { align-items: flex-start; }
+}
 /* Leadership: where someone is in their term of office */
 .term { display: block; margin-top: 6px; }
 .term-bar { display: flex; gap: 3px; max-width: 260px; }

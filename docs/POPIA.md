@@ -289,6 +289,11 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
 - What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators
   and people chosen by an Administrator or the Senior Pastor) and the borrower; everyone else sees only
   "On loan" (database rules, tested). Other loans are not written in the audit log. Choosing a librarian is logged.
+- A member's request to borrow records the same item, borrower name and mobile number as a librarian-entered loan, for
+  the same legitimate-interest purpose. It is visible only to that borrower and the librarians. A pending request reserves
+  one copy until a librarian approves or rejects it; a rejected request is closed and its mobile number is cleared.
+  The existing Home to-do and Library badge tell librarians that verification is needed without showing borrower details
+  to other roles.
 - Friendly reminders: three weeks after borrowing (`Library.REMIND_DAYS`) the borrower sees a reminder in the app; a
   librarian may also send it by WhatsApp or SMS to the loan's mobile number – the reason the number is kept. Only the date
   of the last reminder is stored on the loan (`reminded`), not the message, and sending it is in the audit log (the item's

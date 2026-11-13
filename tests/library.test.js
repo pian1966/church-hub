@@ -35,6 +35,15 @@ const books = [b, L.book({ id: 'b2', title: 'Mere Christianity', author: 'C. S. 
 ok(L.find(books, 'lewis').map(x => x.id).join() === 'b3,b2' && L.find(books, 'LEWIS mere').length === 1 && L.find(books, 'b2 apolog').length === 1 && L.find(books, '').length === 3 && L.cats(books).join() === 'Apologetics,Theology', 'finding books by any words; the categories in use');
 ok(L.isLibrarian({ librarianIds: ['p14', 'p15', 'p17', 'p19'] }, 'p19') && !L.isLibrarian({ librarianIds: ['p14'] }, 'p15') && L.isLibrarian({}, 'p15', true) && !L.isLibrarian(null, ''), 'any named librarian and Administrators have librarian permissions');
 ok(['p14', 'p15', 'p17', 'p19'].every(id => L.isLibrarian({ librarianIds: ['p14', 'p15', 'p17', 'p19'] }, id)), 'every librarian in a list longer than two has librarian permissions');
+const dupes = [
+  L.book({ id: 'a', title: 'The Colour of Magic!', author: 'Terry Pratchett' }),
+  L.book({ id: 'b', title: 'Colour of Magik', author: 'Terry Pratchett' }),
+  L.book({ id: 'c', title: 'Colour of Magic', author: 'Ursula Le Guin' }),
+  L.book({ id: 'd', title: 'A Book', author: 'Someone', removed: '2026-01-01' })
+];
+ok(L.duplicatePairs(dupes).map(x => x.key).join() === 'a::b' &&
+  L.duplicatePairs(dupes, ['a::b']).length === 0 &&
+  L.normalizedTitle('  The: Colour, of Magic!  ') === 'colour of magic', 'duplicate suggestions normalize punctuation and leading articles, tolerate small spelling differences, and respect dismissed pairs');
 ok(!L.librarianReviewDue('2026-01-01T00:00:00.000Z', '2026-06-29T23:59:59.999Z') &&
   L.librarianReviewDue('2026-01-01T00:00:00.000Z', '2026-06-30T00:00:00.000Z') &&
   L.librarianReviewDue('', '2026-01-01T00:00:00.000Z'), 'librarians are reviewed at 180 days; a missing review date is due');

@@ -696,6 +696,47 @@ await t('library: who borrowed what is seen by the librarians and the borrower o
   await cannot(db.admin.doc('loans/l21').set({ title: 'No book or person' }));
   await can(db.admin.doc('loans/l20').delete()); await can(db.rosters.doc('loans/l21').set(l)); await can(db.rosters.doc('loans/l21').delete());
 });
+await t('library: members reserve one copy atomically; librarians approve or reject the request', async () => {
+  await env.withSecurityRulesDisabled(async ctx => {
+    await ctx.firestore().doc('books/claim1').set({ title: 'Checkout claim', copies: 1, out: 0 });
+    await ctx.firestore().doc('books/claim2').set({ title: 'Checkout rejection', copies: 1, out: 0 });
+  });
+  const pending = { bookId: 'claim1', title: 'Checkout claim', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1518',
+    visitor: false, out: '2026-11-10', due: '2026-12-01', back: '', note: '', status: 'pending', requestedAt: '2026-11-10T12:00:00.000Z' };
+  await can(db.member.runTransaction(async tx => {
+    const ref = db.member.doc('books/claim1'), snap = await tx.get(ref);
+    tx.set(db.member.doc('loans/claim1'), pending);
+    tx.update(ref, { out: snap.data().out + 1, lastClaimId: 'claim1' });
+  }));
+  await can(read(db.member, 'loans/claim1')); await can(read(db.rosters, 'loans/claim1')); await cannot(read(standardMember, 'loans/claim1'));
+  await cannot(db.member.doc('loans/claim2').set(Object.assign({}, pending, { bookId: 'claim1' })));
+  await cannot(db.member.runTransaction(async tx => {
+    const ref = db.member.doc('books/claim1'), snap = await tx.get(ref);
+    tx.set(db.member.doc('loans/claim2'), Object.assign({}, pending, { bookId: 'claim1' }));
+    tx.update(ref, { out: snap.data().out + 1, lastClaimId: 'claim2' });
+  }));
+  await can(db.rosters.doc('loans/claim1').update({ status: 'approved', verifiedAt: '2026-11-10T12:10:00.000Z', verifiedBy: 'p05' }));
+  await cannot(db.member.doc('loans/claim1').update({ status: 'approved' }));
+  const rejected = Object.assign({}, pending, { bookId: 'claim2', title: 'Checkout rejection' });
+  await can(db.member.runTransaction(async tx => {
+    const ref = db.member.doc('books/claim2'), snap = await tx.get(ref);
+    tx.set(db.member.doc('loans/claim3'), rejected);
+    tx.update(ref, { out: snap.data().out + 1, lastClaimId: 'claim3' });
+  }));
+  await can(db.rosters.runTransaction(async tx => {
+    const loanRef = db.rosters.doc('loans/claim3'), bookRef = db.rosters.doc('books/claim2');
+    const book = await tx.get(bookRef);
+    tx.update(loanRef, { status: 'rejected', verifiedAt: '2026-11-10T12:20:00.000Z', verifiedBy: 'p05', back: '2026-11-10', mobile: '' });
+    tx.update(bookRef, { out: book.data().out - 1 });
+  }));
+  await can(read(db.member, 'loans/claim3'));
+  await can(db.rosters.doc('libraryDuplicateIgnores/cv-b::cv-f').set({ pair: 'cv-b::cv-f' }));
+  await can(read(db.rosters, 'libraryDuplicateIgnores/cv-b::cv-f'));
+  await cannot(read(db.member, 'libraryDuplicateIgnores/cv-b::cv-f'));
+  await cannot(db.member.doc('libraryDuplicateIgnores/cv-b::cv-f').set({ pair: 'cv-b::cv-f' }));
+  const finalBook = await db.rosters.doc('books/claim2').get();
+  if (finalBook.data().out !== 0) throw new Error('Rejected checkout did not release its reserved copy.');
+});
 await t('library: every new loan has a mobile number; a visitor not on the church’s list has a name and no personId', async () => {
   const base = { bookId: 'b1', title: 'Knowing God', out: '2026-11-10', due: '2026-12-01', back: '', note: '' };
   await cannot(db.admin.doc('loans/l30').set(Object.assign({}, base, { personId: 'p14', name: 'Tim Jacobs' })));

@@ -450,6 +450,7 @@ I18n.rows([
     ["Description", "Beskrywing", "Incazelo", "Inkcazelo"],
     ["Only this group’s members", "Slegs lede van hierdie groep", "Amalungu aleli qembu kuphela", "Ngamalungu eli qela kuphela"],
     ["Members", "Lede", "Amalungu", "Amalungu"],
+    ["Staff Group", "Personeelgroep", "Iqembu labasebenzi", "Iqela labasebenzi"],
     ["Staff group settings", "Personeelgroepinstellings", "Izilungiselelo zeqembu labasebenzi", "Iisetingi zeqela labasebenzi"],
     ["Membership stays in sync with people marked as staff in People.", "Lidmaatskap bly gesinchroniseer met mense wat in Mense as personeel gemerk is.", "Ubulungu buhlala buhambisana nabantu abamakwe njengabasebenzi kuBantu.", "Ubulungu buhlala buhambelana nabantu abaphawulwe njengabasebenzi kuBantu."],
     ["This group follows the staff details on your profile.", "Hierdie groep volg die personeelbesonderhede op jou profiel.", "Leli qembu lilandela imininingwane yomsebenzi esephrofayilini yakho.", "Eli qela lilandela iinkcukacha zomsebenzi kwiprofayile yakho."],

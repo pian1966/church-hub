@@ -11,7 +11,7 @@
     }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
   }
   function staffSettings() {
-    return Object.assign({ name: 'Staff', description: '' }, (S.settings() || {}).staffGroup || {});
+    return Object.assign({ name: 'Staff Group', description: '' }, (S.settings() || {}).staffGroup || {});
   }
   function staffCard() {
     var st = staffSettings(), members = G.staff(S.list('people'));
@@ -40,10 +40,9 @@
       }).join('') + '</div>' : '') + '</section>';
   }
   function section() {
-    var list = G.forPerson(S.list('customGroups'), personId(), admin()), staff = staffCard(), html = list.map(card).join('');
-    if (admin()) html = staffCard() + '<section class="panel"><div class="row"><span class="grow"><h2>' + T('Church groups') + '</h2><p class="hint">' + T('Create groups for ministries, committees and other church teams.') + '</p></span>' +
+    var list = G.forPerson(S.list('customGroups'), personId(), admin()), html = list.map(card).join('');
+    if (admin()) html = '<section class="panel"><div class="row"><span class="grow"><h2>' + T('Church groups') + '</h2><p class="hint">' + T('Create groups for ministries, committees and other church teams.') + '</p></span>' +
       '<button class="btn primary" data-act="customgroups:create">' + H.icon(H.ICON.plus, 16) + T('Create a group') + '</button></div></section>' + html;
-    else html = staff + html;
     if (!html) return '';
     return '<h2 style="margin:22px 0 10px">' + T('Church groups') + '</h2><div class="grid2">' + html + '</div>';
   }
@@ -120,5 +119,12 @@
   window.CustomGroupsUI = { section: section, show: function () {
     var p = S.get('people', personId());
     return admin() || S.list('customGroups').length > 0 || !!(p && G.staff([p]).length);
-  } };
+  }, staffVisible: function () { var p = S.get('people', personId()); return admin() || !!(p && G.staff([p]).length); },
+    staffPage: staffCard };
+  H.register({
+    id: 'staffgroup', name: 'Staff Group', desc: 'This built-in group updates automatically from People staff details.', icon: 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16.5 11a2.6 2.6 0 1 0 0-5.2M2.5 19c.5-3 2.6-5 5.5-5s5 2 5.5 5M15.5 14.2c2.6.2 4.4 2 4.9 4.8',
+    tint: '#3E6E8E', inGroups: true,
+    show: function () { return CustomGroupsUI.staffVisible(); },
+    render: function () { return '<div class="page-head"><div><h1>' + T('Staff Group') + '</h1></div></div>' + CustomGroupsUI.staffPage(); }
+  });
 })();

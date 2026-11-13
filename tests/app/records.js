@@ -174,6 +174,39 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="library:lend"][data-id="' + bk + '"]'); await s.page.fill('.cg-q[data-for="lib-lend"]', 'tim jac'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits .cg-pick'); await s.settle();
   docs = await s.docsNow();
   const activeLoan = find(docs, 'loans', d => d.bookId === bk && !d.back);
+  await s.page.evaluate(() => {
+    Store.put('books', { id: 'purge-admin-book', title: 'Purge activity test', copies: 2, out: 1 });
+    Store.put('loans', { id: 'purge-admin-out', bookId: 'purge-admin-book', title: 'Purge activity test', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1518', visitor: false, out: '2026-11-10', due: '2026-12-01', back: '' });
+    Store.put('loans', { id: 'purge-admin-returned', bookId: 'purge-admin-book', title: 'Purge activity test', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1518', visitor: false, out: '2026-11-09', due: '2026-11-30', back: '2026-11-10' });
+    Store.put('books', { id: 'purge-librarian-removed', title: 'Librarian removed book', copies: 1, out: 0, removed: '2026-11-10', why: 'Damaged' });
+    Store.put('loans', { id: 'purge-librarian-history', bookId: 'purge-librarian-removed', title: 'Librarian removed book', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1518', visitor: false, out: '2026-11-08', due: '2026-11-29', back: '2026-11-09' });
+    Hub.render();
+  });
+  await s.settle();
+  check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="purge-admin-out"]')), 'an Administrator sees Purge on an active loan record');
+  await s.page.click('[data-act="library:purge"][data-kind="loan"][data-id="purge-admin-out"]'); await s.page.waitForSelector('[data-act="library:purgeconfirm"]');
+  const activePurgePrompt = await s.page.textContent('#modal');
+  check(activePurgePrompt.includes('This cannot be undone.') && !!(await s.page.evaluate(() => Store.get('loans', 'purge-admin-out'))), 'purging asks for confirmation before removing the active loan');
+  await s.page.click('[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
+  check(!find(docs, 'loans', d => d.id === 'purge-admin-out') && docs['books/purge-admin-book'].out === 0, 'purging an active loan updates the copy count immediately');
+  await s.page.evaluate(() => { Store.remove('loans', 'purge-admin-returned'); Store.remove('books', 'purge-admin-book'); });
+  await s.settle();
+  await s.page.click('#lib-out summary');
+  check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + vl.split('/')[1] + '"]')), 'an Administrator sees Purge on a returned loan');
+  await s.page.click('[data-act="library:purge"][data-kind="loan"][data-id="' + vl.split('/')[1] + '"]'); await s.page.click('[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[vl], 'an Administrator can confirm and purge a returned loan');
+  await s.page.evaluate(() => Hub.render());
+  await s.page.waitForTimeout(100);
+  await s.page.evaluate(bookId => {
+    Store.put('loans', { id: 'purge-admin-linked-history', bookId, title: 'The Chosen', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1518', visitor: false, out: '2026-11-09', due: '2026-11-30', back: '2026-11-10' });
+    Hub.render();
+  }, dv);
+  await s.settle(); await s.page.click('[data-act="library:report"]'); await s.page.click('[data-act="library:reporttab"][data-tab="removed"]'); await s.page.fill('#lib-report-filter', '');
+  check(!!(await s.page.$('#modal [data-act="library:purge"][data-kind="book"][data-id="' + dv + '"]')), 'an Administrator sees Purge on a removed book in Reports');
+  await s.page.click('#modal [data-act="library:purge"][data-kind="book"][data-id="' + dv + '"]'); await s.page.waitForSelector('[data-act="library:purgeconfirm"]');
+  check((await s.page.textContent('#modal')).includes('its loan records?'), 'purging a removed book warns that its loan records will also be deleted');
+  await s.page.click('[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[dvd] && !docs['loans/purge-admin-linked-history'], 'purging a removed book also removes its linked returned loan');
   const live = JSON.parse(JSON.stringify(docs));
   await finish(s);
 
@@ -189,6 +222,7 @@ module.exports = async function (ctx) {
   check(t.includes('Church Council') && t.includes('Tim Jacobs') && !(await s.page.$('#lb-new')) && !(await s.page.$('[data-act="leaders:seat"]')), 'sees their own leadership group (though it is for members only), and can’t change it');
   await s.go('library'); t = await s.text();
   check(/My books[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*Book\s*On loan/.test(t), 'the Library shows the book they have out and when it is due – not the librarian’s tools');
+  check(!(await s.page.$('[data-act="library:purge"]')), 'a regular member has no Purge controls');
   check(!!(await s.page.$('#lib-filter-kind')) && !!(await s.page.$('#lib-filter-title')) && !!(await s.page.$('#lib-filter-author')) && !!(await s.page.$('#lib-filter-cat')) && (await s.page.$$('[data-act="library:sort"]')).length === 4, 'everyone can filter and sort the library by media type, title, author and subject');
   await s.page.selectOption('#lib-filter-kind', 'Book'); await s.page.fill('#lib-filter-title', 'Knowing God'); await s.page.fill('#lib-filter-author', 'J. I. Packer'); await s.page.fill('#lib-filter-cat', 'Theology');
   check(await s.page.isVisible('.lib-book[data-title="Knowing God"]') && await s.page.$$eval('.lib-book:not([hidden])', rows => rows.length) === 1, 'the catalogue filters on all four fields together');
@@ -208,10 +242,25 @@ module.exports = async function (ctx) {
   check((await sees(s)) === 'nn' && !(await s.page.$('nav a[href="#/archive"]')), 'sees no records – the Archive isn’t on their menu at all');
   await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();
   check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && !!(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('[data-act="library:libs"]')), 'as a librarian sees who has which book and can add books (but not name librarians)');
+  check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on borrowed records');
   await s.page.click('[data-act="library:back"][data-id="' + activeLoan.split('/')[1] + '"]'); await s.page.fill('#lib-backnote', 'Cover slightly torn'); await s.page.click('[data-act="library:backsave"]'); await s.settle(); docs = await s.docsNow(); t = await s.text();
   check(docs[activeLoan].back !== '' && docs[activeLoan].returnNote === 'Cover slightly torn', 'the return date and condition note are saved');
   check(docs['books/' + bk].out === 0 && /Knowing God\s*Book\s*Available/.test(t), 'the returned copy is back on the shelf');
   check(t.includes('Nothing on loan.'), 'the librarian no longer sees the loan as outstanding');
+  await s.page.click('#lib-out summary');
+  check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on a returned loan');
+  await s.page.click('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]'); await s.page.click('[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[activeLoan], 'a librarian can confirm and purge a returned loan');
+  await s.page.evaluate(() => {
+    Store.put('books', { id: 'purge-librarian-out-book', title: 'Librarian borrowed test', copies: 1, out: 1 });
+    Store.put('loans', { id: 'purge-librarian-out', bookId: 'purge-librarian-out-book', title: 'Librarian borrowed test', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1518', visitor: false, out: '2026-11-10', due: '2026-12-01', back: '' });
+    Hub.render();
+  });
+  await s.settle(); await s.page.click('[data-act="library:purge"][data-kind="loan"][data-id="purge-librarian-out"]'); await s.page.click('[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
+  check(!find(docs, 'loans', d => d.id === 'purge-librarian-out') && docs['books/purge-librarian-out-book'].out === 0, 'a librarian can confirm and purge an active loan');
+  await s.go('library');
+  await s.page.click('[data-act="library:purge"][data-kind="book"][data-id="purge-librarian-removed"]'); await s.page.click('[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs['books/purge-librarian-removed'] && !find(docs, 'loans', d => d.id === 'purge-librarian-history'), 'a librarian can purge a removed book and its linked history');
   await finish(s);
   console.log('A Pastor, and the Senior Pastor:');
   s = await as('pieter.vanwyk@example.com');

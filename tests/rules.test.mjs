@@ -84,6 +84,8 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('leaderBodies/lb1', { name: 'Church Council', open: false, memberIds: ['p14'], names: { p14: 'Tim Jacobs' }, seats: { p14: { role: 'Chair' } } });
   await set('leaderBodies/lb2', { name: 'Wardens', open: true, memberIds: ['p15'], names: { p15: 'Clare Jacobs' }, seats: {} });
   await set('archivePreviewMembers/p14', { personId: 'p14' });
+  await set('customGroups/cg-private', { name: 'Worship team', description: '', memberIds: ['p14'], visibility: 'members' });
+  await set('customGroups/cg-church', { name: 'Welcome team', description: '', memberIds: [], visibility: 'church' });
   // The Archive: the Council's minutes, Sipho's contract (shown to him), plans for the office, a notice for everyone,
   // and an appraisal of Tim that is not shown to him
   await set('archive/ar1', { title: 'Minutes', cat: 'minutes', date: '2026-10-13', access: 'body', bodyId: 'lb1', aboutId: '', shownTo: '', file: { name: 'm.pdf', parts: 1 } });
@@ -91,11 +93,15 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('archive/ar3', { title: 'Plans', cat: 'plans', date: '2019-06-20', access: 'office', bodyId: '', aboutId: '', shownTo: '' });
   await set('archive/ar4', { title: 'Constitution', cat: 'other', date: '2001-01-01', access: 'all', bodyId: '', aboutId: '', shownTo: '' });
   await set('archive/ar5', { title: 'Appraisal', cat: 'appraisals', date: '2026-09-01', access: 'private', bodyId: '', aboutId: 'p14', shownTo: '' });
+  await set('archive/ar6', { title: 'Membership document', cat: 'other', date: '2026-09-01', access: 'private', bodyId: '', aboutId: '', shownTo: '', displayOnApplication: true });
   await set('archive/ar1/parts/0', { data: 'AAAA' });
   await set('archive/ar2/parts/0', { data: 'BBBB' });
   await set('archivePreviews/ar1/parts/0', { data: 'AAAA' });
   await set('archivePreviews/ar2/parts/0', { data: 'BBBB' });
   await set('archivePreviews/ar4/parts/0', { data: 'CCCC' });
+  await set('applicationDocuments/pub1', { title: 'Constitution', date: '2026-01-01', link: 'https://example.org/constitution', fileName: 'constitution.pdf', fileType: 'application/pdf', parts: 1, fileVersion: 'v1' });
+  await set('applicationDocuments/pub1/files/v1/parts/0', { data: 'AAAA' });
+  await set('applicationDocuments/pub1/files/v2/parts/0', { data: 'BBBB' });
   // The Library: a book, lent to Tim and to Clare
   await set('books/b1', { title: 'Knowing God', author: 'J. I. Packer', copies: 2, out: 2 });
   await set('loans/l14', { bookId: 'b1', title: 'Knowing God', personId: 'p14', name: 'Tim Jacobs', out: '2026-11-01', due: '2026-11-22', back: '' });
@@ -551,6 +557,19 @@ await t('message groups: Administrators and Pastors set them up; members see the
   await cannot(db.member.doc('msgGroups/mg1').update({ memberIds: ['p14', 'p15', 'p20'] }));
   await can(db.pastor.doc('msgGroups/mg3').set({ name: 'New', leaderIds: [], memberIds: [] })); await can(db.admin.doc('msgGroups/mg3').delete());
 });
+console.log('Administrator-managed groups');
+await t('custom groups: church-visible groups and a member-only group', async () => {
+  await can(read(db.member, 'customGroups/cg-private')); await cannot(read(standardMember, 'customGroups/cg-private'));
+  await can(read(standardMember, 'customGroups/cg-church')); await can(list(db.admin.collection('customGroups')));
+  await can(list(db.member.collection('customGroups').where('visibility', '==', 'church')));
+  await can(list(db.member.collection('customGroups').where('memberIds', 'array-contains', 'p14')));
+  await cannot(list(db.member.collection('customGroups')));
+  const group = { name: 'New group', description: 'Made-up group', memberIds: ['p14'], visibility: 'members', createdAt: '2026-11-13 10:00', updatedAt: '2026-11-13 10:00' };
+  await can(db.admin.doc('customGroups/cg-new').set(group)); await can(db.admin.doc('customGroups/cg-new').update({ visibility: 'church', updatedAt: '2026-11-13 10:01' }));
+  await cannot(db.member.doc('customGroups/cg-new').set(group)); await cannot(db.pastor.doc('customGroups/cg-new').delete());
+  await cannot(db.admin.doc('customGroups/cg-bad-time').set(Object.assign({}, group, { updatedAt: 1 })));
+  await cannot(db.admin.doc('customGroups/cg-bad').set(Object.assign({}, group, { contactDetails: 'private' })));
+});
 console.log('Leadership groups, the Archive and the Library');
 // For these: Andile (a Pastor, p03) is the Senior Pastor, and Sipho (Roster coordinator, p05) is a librarian
 await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').set({ seniorPastorId: 'p03', librarianIds: ['p05'] }, { merge: true }); });
@@ -637,6 +656,25 @@ await t('archive: only Administrators and Council members add, change and delete
   await can(db.admin.doc('archive/n1/parts/0').delete()); await can(db.member.doc('archive/n2/parts/1').delete());
   for (const id of ['n1', 'n3']) await can(db.admin.doc('archive/' + id).delete());
   await can(db.member.doc('archive/n2').delete());
+  await can(db.admin.doc('archive/n6').set(r({ displayOnApplication: true })));
+  await cannot(db.member.doc('archive/n1').update({ displayOnApplication: true }));
+  await cannot(db.member.doc('archive/ar6').update({ displayOnApplication: false }));
+  await can(db.admin.doc('archive/ar6').update({ displayOnApplication: false }));
+});
+await t('membership application documents: all signed-in applicants can read only the published copy and its active file version', async () => {
+  await can(read(db.member, 'applicationDocuments/pub1')); await can(list(db.member.collection('applicationDocuments')));
+  await can(read(db.member, 'applicationDocuments/pub1/files/v1/parts/0'));
+  await cannot(read(db.member, 'applicationDocuments/pub1/files/v2/parts/0'));
+  await cannot(read(stranger, 'applicationDocuments/pub1'));
+  await cannot(read(db.member, 'archive/ar2'));
+  const publicDoc = { title: 'Statement of faith', date: '2026-01-01', link: 'https://example.org/faith', fileName: 'faith.pdf', fileType: 'application/pdf', parts: 1, fileVersion: 'v3' };
+  await cannot(db.member.doc('applicationDocuments/new').set(publicDoc));
+  await cannot(db.admin.doc('applicationDocuments/bad').set(Object.assign({}, publicDoc, { note: 'private archive note' })));
+  await can(db.admin.doc('applicationDocuments/pub1').update({ fileVersion: 'v2' }));
+  await can(read(db.member, 'applicationDocuments/pub1/files/v2/parts/0'));
+  await cannot(read(db.member, 'applicationDocuments/pub1/files/v1/parts/0'));
+  await can(db.admin.doc('applicationDocuments/pub1').delete());
+  await cannot(read(db.member, 'applicationDocuments/pub1/files/v2/parts/0'));
 });
 await t('library: everyone signed in sees the books; only librarians (Administrators and the people named) change them', async () => {
   await only('books/b1', roles); await can(list(db.member.collection('books'))); await cannot(read(stranger, 'books/b1')); await cannot(read(nobody, 'books/b1'));

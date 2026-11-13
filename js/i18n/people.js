@@ -3,6 +3,7 @@
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
     ["Please read before you apply", "Lees asseblief voordat jy aansoek doen", "Sicela ufunde ngaphambi kokufaka isicelo", "Nceda ufunde phambi kokuba ufake isicelo"],
+    ["Read the document", "Lees die dokument", "Funda idokhumenti", "Funda uxwebhu"],
     ["Declaration of loyalty", "Verklaring van lojaliteit", "Isimemezelo sokwethembeka", "Isibhengezo sokuthembeka"],
     ["I make this declaration.", "Ek maak hierdie verklaring.", "Ngenza lesi simemezelo.", "Ndenza esi sibhengezo."],
     ["Worked out from your ID number.", "Uit jou ID-nommer bereken.", "Kubalwe kusuka kunombolo yakho kamazisi.", "Kubalwe kwinombolo yakho yesazisi."],

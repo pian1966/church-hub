@@ -34,6 +34,15 @@
   function readLinks() {
     return ((S.settings() || {}).partnerApp || {}).links ? S.settings().partnerApp.links.filter(function (l) { return l && /^https?:\/\/\S+$/i.test(l.url || ''); }) : [];
   }
+  function applicationDocuments() { return S.list('applicationDocuments').slice().sort(function (a, b) { return String(a.title || '').localeCompare(String(b.title || '')); }); }
+  function applicationDocumentLinks() {
+    return '<ul class="ap-links">' + applicationDocuments().map(function (d) {
+      var link = /^https?:\/\/\S+$/i.test(d.link || '') ? d.link : '';
+      return '<li><b>' + esc(d.title) + '</b>' +
+        (d.parts ? ' <button class="btn small" data-act="people:appdoc" data-id="' + esc(d.id) + '">' + T('Read the document') + '</button>' : '') +
+        (link ? ' <a href="' + esc(link) + '" target="_blank" rel="noopener noreferrer">' + T('Open the link') + '</a>' : '') + '</li>';
+    }).join('') + '</ul>';
+  }
   /** The declaration of loyalty to the denomination or affiliation, when the church asks for one ('' if not). */
   function loyalty() {
     var st = S.settings() || {}, d = ((st.partnerApp || {}).loyalty || '').trim();
@@ -85,8 +94,10 @@
         '<label class="field">' + T('Do you go to a Bible study or Midweek Group? Which one?') + '<input id="ap-study" maxlength="200"></label>' +
         '<label class="field">' + T('Any questions about the church?') + '<textarea id="ap-q" rows="2" maxlength="1000"></textarea></label>' +
         '<label class="field">' + T('How would you like to serve in the church?') + '<textarea id="ap-serve" rows="2" maxlength="1000"></textarea></label></section>' +
-      (readLinks().length ? '<section class="panel" id="ap-read"><h2>' + T('Please read before you apply') + '</h2><ul class="ap-links">' + readLinks().map(function (l) {
-        return '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener">' + esc(l.label || l.url) + '</a></li>'; }).join('') + '</ul></section>' : '') +
+      (readLinks().length || applicationDocuments().length ? '<section class="panel" id="ap-read"><h2>' + T('Please read before you apply') + '</h2>' +
+        (applicationDocuments().length ? applicationDocumentLinks() : '') +
+        (readLinks().length ? '<ul class="ap-links">' + readLinks().map(function (l) {
+          return '<li><a href="' + esc(l.url) + '" target="_blank" rel="noopener noreferrer">' + esc(l.label || l.url) + '</a></li>'; }).join('') + '</ul>' : '') + '</section>' : '') +
       '<section class="panel"><h2>' + T('Declaration') + '</h2><blockquote class="decl" data-own-words>' + esc(declaration()) + '</blockquote>' +
         '<label class="check"><input type="checkbox" id="ap-decl"><span>' + T('I agree with the declaration above.') + '</span></label>' +
         (loyalty() ? '<h3 class="ap-loy-h">' + T('Declaration of loyalty') + '</h3><blockquote class="decl" data-own-words>' + esc(loyalty()) + '</blockquote>' +
@@ -94,6 +105,21 @@
         '<label class="check"><input type="checkbox" id="ap-dir"><span>' + T('I agree to be in the church directory, so other members can see my contact details.') + '</span></label>' +
         '<p id="ap-err" class="note bad" role="alert" hidden></p>' +
         '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="people:appsend">' + T('Send my application') + '</button><a class="btn" href="#/me">' + T('Cancel') + '</a></div></section></form>';
+  }
+  function readApplicationDocument(id) {
+    var d = S.get('applicationDocuments', id);
+    if (!d || !d.parts) return;
+    H.busy(T('Fetching the file…'), function () {
+      return S.loadApplicationDocumentFile(id).then(function (parts) {
+        var b64 = parts.join(''), type = d.fileType || 'application/octet-stream', name = d.fileName || d.title || 'document';
+        if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFileBase64 === 'function') { window.ChurchHubApp.saveFileBase64(name, type, b64); return; }
+        if (window.ChurchHubApp) { H.toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+        var bin = atob(b64), bytes = new Uint8Array(bin.length);
+        for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+        var url = URL.createObjectURL(new Blob([bytes], { type: type })), a = document.createElement('a');
+        a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 1000);
+      });
+    }).catch(function (e) { console.error(e); H.toast(T('Couldn’t fetch the file. Please try again.'), true); });
   }
 
   /** On the form: an ID number that carries a date of birth (South Africa) fills in the birthday. */
@@ -405,6 +431,7 @@
       });
     },
     appwithdraw: function () { var a = mine(); if (a) S.remove('partnerApps', a.id, a.status === 'waiting' ? 'Withdrew their partnership application' : ''); H.render(); },
+    appdoc: function (el) { readApplicationDocument(el.dataset.id); },
     appaccept: function (el) {
       var a = S.get('partnerApps', el.dataset.id); if (!a || !canReview()) return;
       H.modal(H.dialogHead(T('Accept'), T('They become a Church Partner from this date, and agree to be in the church directory.')) + '<div class="dlg-body">' +

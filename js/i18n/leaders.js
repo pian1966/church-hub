@@ -64,5 +64,17 @@ I18n.rows([
     ["The term of {name} on {group} ends {date}.", "Die termyn van {name} in {group} eindig {date}.", "Ithemu lika-{name} ku-{group} liphela ngomhla ka-{date}.", "Ikota ka-{name} kwi-{group} iphela nge-{date}."],
     ["{n} office-bearer", "{n} ampsdraer", "Isikhulu esingu-{n}", "Igosa eli-{n}"],
     ["{n} office-bearers", "{n} ampsdraers", "Izikhulu ezingu-{n}", "Amagosa ali-{n}"],
-    ["No office-bearers yet.", "Nog geen ampsdraers nie.", "Azikho izikhulu okwamanje.", "Akukabikho magosa."]
+    ["No office-bearers yet.", "Nog geen ampsdraers nie.", "Azikho izikhulu okwamanje.", "Akukabikho magosa."],
+    ["Term {n} (Unlimited)", "Termyn {n} (Onbeperk)", "Ithemu {n} (Akunamkhawulo)", "Ikota {n} (Akukho mda)"],
+    ["{n} days ago", "{n} dae gelede", "{n} ezinsukwini ezedlule", "{n} kwiintsuku ezidlulileyo"],
+    ["{n} days left", "{n} dae oor", "{n} izinsuku ezisele", "{n} iintsuku eziseleyo"],
+    ["Eligible to stand for another term (Term {n} of {max})", "Geskik om vir nog ’n termyn te staan (Termyn {n} van {max})", "Ufanele ukungenela elinye ithemu (Ithemu {n} kwezingu-{max})", "Ufanele ukungenela enye ikota (Ikota {n} kwezi-{max})"],
+    ["Not eligible — mandatory break required after completing {max} consecutive terms", "Nie geskik nie — ’n verpligte breek volg ná {max} opeenvolgende termyne", "Akafanele — ikhefu eliyimpoqo liyadingeka ngemva kwamathemu angu-{max} alandelanayo", "Akafanele — kufuneka ikhefu elisisinyanzelo emva kweekota ezi-{max} zilandelelanayo"],
+    ["The term of {name} on {group} expires {date}.", "Die termyn van {name} in {group} verval {date}.", "Ithemu lika-{name} ku-{group} liphela ngomhla ka-{date}.", "Ikota ka-{name} kwi-{group} iphela nge-{date}."],
+    ["in {n} days", "oor {n} dae", "ezinsukwini ezingu-{n}", "kwiintsuku ezi-{n}"],
+    ["Expires today", "Verval vandag", "Iphela namuhla", "Iphela namhlanje"],
+    ["Unlimited", "Onbeperk", "Akunamkhawulo", "Akukho mda"],
+    ["Leave at 0 if this group has no fixed terms. Administrators and the Senior Pastor are told 120 days before a term ends.", "Laat op 0 as hierdie groep geen vaste termyne het nie. Administrateurs en die Senior Pastoor word 120 dae voor ’n termyn eindig laat weet.", "Shiya ku-0 uma leli qembu lingenawo amathemu angashintshi. Abaphathi noMfundisi Omkhulu bazotshelwa ezinsukwini ezingu-120 ngaphambi kokuphela kwethemu.", "Shiya ku-0 ukuba eli qela alinazo iikota ezizinzileyo. AbaLawuli noMfundisi oyiNtloko baxelelwa kwiintsuku ezili-120 phambi kokuphela kwekota."],
+    ["Maximum consecutive terms of office permissible before a mandatory break", "Maksimum opeenvolgende ampstermyne toegelaat voor ’n verpligte breek", "Amathemu esikhundla alandelanayo avunyelwe ngaphambi kwekhefu eliyimpoqo", "Iikota zesikhundla ezilandelelanayo ezivumelekileyo phambi kwekhefu elisisinyanzelo"],
+    ["Enter 0 for no limit.", "Tik 0 in vir geen beperking nie.", "Faka u-0 uma kungekho mkhawulo.", "Faka u-0 ukuba akukho mda."]
 ]);

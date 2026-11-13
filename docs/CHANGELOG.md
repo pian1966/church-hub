@@ -309,3 +309,8 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   and members; only Administrators and Council members can view, search, download or manage Archive content, enforced by
   Firestore rules and Store APIs. Administrators and Council members can open the storage-location note; its placeholder
   text is localized for the church to update.
+- ✅ 13 Nov 2026 (0.64.0): **Leadership, groups and membership documents** – Administrators can set consecutive-term limits;
+  leaders see their term progress and eligibility, with a 120-day reminder for Administrators and the Rector. The Staff
+  group follows staff status, and Administrators can manage additional groups and visibility. Archive documents can be
+  selected for the membership application without exposing Archive notes or access settings; supported Google documents
+  open in an in-app preview. Firestore rules and tests protect published documents and current-version file parts.

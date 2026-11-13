@@ -10,8 +10,9 @@ ok(A.cats({ archiveCats: [{ id: 'x1', name: 'Title deeds', access: 'nonsense' }]
 let r = A.clean({ title: '  October minutes ', cat: 'minutes', date: '2026-10-14T00:00', access: 'body', bodyId: 'g1', aboutId: '', aboutName: 'Nobody', shownTo: true, junk: 1, link: ' https://example.org/a ' });
 ok(r.title === 'October minutes' && r.date === '2026-10-14' && r.bodyId === 'g1' && r.aboutName === '' && r.shownTo === '' && r.junk === undefined && r.link === 'https://example.org/a', 'a record is tidied before saving');
 ok(A.clean({ access: 'body' }).access === 'office' && A.clean({ access: 'office', bodyId: 'g1' }).bodyId === '' && A.clean({}).access === 'private', 'no group chosen: Administrators and Pastors, never wider; a group only with “leadership group”; nothing chosen: private');
-r = A.clean({ title: 'Contract', cat: 'contracts', access: 'private', aboutId: 'p5', aboutName: 'Sam', shownTo: true, file: { name: 'c.pdf', type: 'application/pdf', size: 2048, parts: 1, extra: 1 } });
+r = A.clean({ title: 'Contract', cat: 'contracts', access: 'private', aboutId: 'p5', aboutName: 'Sam', shownTo: true, displayOnApplication: true, file: { name: 'c.pdf', type: 'application/pdf', size: 2048, parts: 1, extra: 1 } });
 ok(r.shownTo === 'p5' && r.file.parts === 1 && r.file.extra === undefined && A.clean({ aboutId: 'p5', shownTo: false }).shownTo === '', 'shown to the person it is about only when ticked');
+ok(r.displayOnApplication && !A.clean({ displayOnApplication: 'yes' }).displayOnApplication, 'only an explicitly checked Archive record is published to the membership form');
 
 const minutes = { access: 'body', bodyId: 'g1' }, plans = { access: 'office' }, contract = { access: 'private', aboutId: 'p5', shownTo: 'p5' }, notice = { access: 'all' }, appraisal = { access: 'private', aboutId: 'p5', shownTo: '' };
 const member = { ids: ['p9'] }, councillor = { council: true, ids: ['p8'], bodies: ['g1'] }, pastor = { pastor: true, ids: ['p3'] }, sam = { council: true, ids: ['p5', 'p6'] };
@@ -25,6 +26,10 @@ const b64 = 'A'.repeat(2500), parts = A.split(b64, 1000);
 ok(parts.length === 3 && parts[2].length === 500 && A.join(parts) === b64 && A.split('', 10).length === 0 && A.PART <= 950000, 'a file is cut into parts that each fit a database document, and put together again');
 ok(A.sizeText(300) === '1 KB' && A.sizeText(317440) === '310 KB' && A.sizeText(2516582) === '2.4 MB', 'file sizes in plain words');
 ok(A.link('drive.google.com/x') === 'https://drive.google.com/x' && A.link('http://a.b/c') === 'http://a.b/c' && A.link('javascript:alert(1)') === '' && A.link('https://a.b/"onclick') === '' && A.link('') === '', 'only ordinary web links are kept');
+ok(A.embedUrl('https://docs.google.com/document/d/Abc_123/edit?usp=sharing') === 'https://docs.google.com/document/d/Abc_123/preview?embedded=true' &&
+  A.embedUrl('https://docs.google.com/spreadsheets/u/0/d/Sheet_1/edit') === 'https://docs.google.com/spreadsheets/d/Sheet_1/preview?embedded=true' &&
+  A.embedUrl('https://drive.google.com/file/d/File-1/view') === 'https://drive.google.com/file/d/File-1/preview?embedded=true' &&
+  A.embedUrl('https://example.org/document/d/nope/edit') === '', 'Google Docs and Drive links use the right inline preview URL; unrelated links are not embeddable');
 const recs = [{ cat: 'minutes', date: '2026-01-20', title: 'Jan' }, { cat: 'minutes', date: '2026-03-17', title: 'Mar' }, { cat: 'minutes', date: '2025-11-18', title: 'Nov' }, { cat: 'plans', date: '2026-03-01', title: 'Hall' }];
 ok(A.years(recs).join() === '2026,2025' && A.list(recs, 'minutes', '2026').map(x => x.title).join() === 'Mar,Jan' && A.list(recs, '', '').length === 4, 'records by category and year, newest first');
 ok(A.missingMonths(recs, 'minutes', '2026', '2026-04').join() === '2,4' && A.missingMonths(recs, 'minutes', '2026').length === 10, 'months with no minutes yet');

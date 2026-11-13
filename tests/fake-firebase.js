@@ -126,6 +126,15 @@
         if (!is(c, ANY)) return false;
         return (op === 'create' || meIn(c, b.memberIds)) && (op === 'delete' || meIn(c, a.memberIds));
       } },
+    customGroups: { read: function (c, id, d) { return is(c, ['admin']) || (is(c, ANY) && !!d && (d.visibility === 'church' || meIn(c, d.memberIds || []))); },
+      write: function (c, op, id, b, a) {
+        return is(c, ['admin']) && (op === 'delete' || (onlyKeys(a, ['name', 'description', 'memberIds', 'visibility', 'createdAt', 'updatedAt'])
+          && typeof a.name === 'string' && a.name.trim().length > 0 && a.name.length <= 80
+          && typeof a.description === 'string' && a.description.length <= 500 && Array.isArray(a.memberIds) && a.memberIds.length <= 5000
+          && ['church', 'members'].indexOf(a.visibility) >= 0
+          && (a.createdAt === undefined || typeof a.createdAt === 'string')
+          && (a.updatedAt === undefined || typeof a.updatedAt === 'string')));
+      } },
     serveOffers: { read: function (c, id, d) { return rosterer(c) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
         if (rosterer(c)) return true;
@@ -217,10 +226,22 @@
       write: function (c, op, id, b, a) {
         if (!is(c, ['admin']) && !councilMember(c)) return false;
         return op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150 && ['all', 'body', 'office', 'private'].indexOf(a.access) >= 0
-          && (a.access === 'body') === !!(a.bodyId || '') && (!(a.shownTo || '') || a.shownTo === (a.aboutId || '')));
+          && (a.access === 'body') === !!(a.bodyId || '') && (!(a.shownTo || '') || a.shownTo === (a.aboutId || ''))
+          && typeof (a.displayOnApplication || false) === 'boolean'
+          && (is(c, ['admin']) || (op === 'create' ? !a.displayOnApplication : !!a.displayOnApplication === !!(b.displayOnApplication || false))));
       } },
     'archive/parts': { read: function (c, n, d, id) { return seesRecord(c, docs['archive/' + id]); },   // a missing record fails
       write: function (c, op, n, b, a) { return (is(c, ['admin']) || councilMember(c)) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
+    applicationDocuments: { read: function (c) { return is(c, ANY); },
+      write: function (c, op, id, b, a) {
+        return is(c, ['admin']) && (op === 'delete' || (onlyKeys(a, ['title', 'date', 'link', 'fileName', 'fileType', 'parts', 'fileVersion'])
+          && typeof a.title === 'string' && !!a.title && a.title.length <= 150 && typeof a.date === 'string' && a.date.length <= 10
+          && typeof a.link === 'string' && a.link.length <= 500 && typeof a.fileName === 'string' && a.fileName.length <= 150
+          && typeof a.fileType === 'string' && a.fileType.length <= 150 && Number.isInteger(a.parts) && a.parts >= 0 && a.parts <= 24
+          && typeof a.fileVersion === 'string' && a.fileVersion.length <= 80 && (a.parts === 0 ? !a.fileVersion : !!a.fileVersion)));
+      } },
+    'applicationDocuments/files/parts': { read: function (c, n, d, id, version) { return is(c, ANY) && !!docs['applicationDocuments/' + id] && docs['applicationDocuments/' + id].fileVersion === version; },
+      write: function (c, op, n, b, a) { return is(c, ['admin']) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
     archivePreviewMembers: { read: function (c, id) { return is(c, ['admin', 'pastor']) || isMe(c, id); },
       write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || (onlyKeys(a, ['personId']) && a.personId === id)); } },
     'archivePreviews/parts': { read: function (c, n, d, id) { return is(c, ['admin']) || (councilMember(c) && seesRecord(c, docs['archive/' + id])); },
@@ -256,8 +277,22 @@
   }
   // A rule that looks at a missing document fails (as in Firestore), hence the try/catch.
   // careGroups/{gid}/share/{pid} is checked by POLICY['careGroups/share'] with the group's id last
-  function canRead(path, data) { var s = path.split('/'); try { return s.length === 4 ? !!policy(s[0] + '/' + s[2]).read(ctx(), s[3], data, s[1]) : !!policy(s[0]).read(ctx(), s[1], data); } catch (e) { return false; } }
-  function canWrite(op, path, before, after) { var s = path.split('/'); try { return s.length === 4 ? !!policy(s[0] + '/' + s[2]).write(ctx(), op, s[3], before, after, s[1]) : !!policy(s[0]).write(ctx(), op, s[1], before, after); } catch (e) { return false; } }
+  function canRead(path, data) {
+    var s = path.split('/');
+    try {
+      if (s.length === 6 && s[0] === 'applicationDocuments' && s[2] === 'files' && s[4] === 'parts')
+        return !!policy('applicationDocuments/files/parts').read(ctx(), s[5], data, s[1], s[3]);
+      return s.length === 4 ? !!policy(s[0] + '/' + s[2]).read(ctx(), s[3], data, s[1]) : !!policy(s[0]).read(ctx(), s[1], data);
+    } catch (e) { return false; }
+  }
+  function canWrite(op, path, before, after) {
+    var s = path.split('/');
+    try {
+      if (s.length === 6 && s[0] === 'applicationDocuments' && s[2] === 'files' && s[4] === 'parts')
+        return !!policy('applicationDocuments/files/parts').write(ctx(), op, s[5], before, after, s[1], s[3]);
+      return s.length === 4 ? !!policy(s[0] + '/' + s[2]).write(ctx(), op, s[3], before, after, s[1]) : !!policy(s[0]).write(ctx(), op, s[1], before, after);
+    } catch (e) { return false; }
+  }
   function lastId(path) { return path.split('/').pop(); }
   function parentOf(path) { return path.slice(0, path.lastIndexOf('/')); }
   function denied(what) { F.denied.push(what); var e = new Error('Missing or insufficient permissions.'); e.code = 'permission-denied'; return e; }

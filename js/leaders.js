@@ -87,7 +87,7 @@ var Leaders = (function () {
 
 
   /* ---------- terms of office ---------- */
-  var NOTICE_MONTHS = 4;   // Administrators and the Rector are told this long before a term ends
+  var NOTICE_DAYS = 120;   // Administrators and the Rector are told this long before a term ends
   function parse(iso) { var p = String(iso || '').split('-'); return p.length === 3 ? Date.UTC(+p[0], +p[1] - 1, +p[2]) : NaN; }
   function addMonths(iso, n) {
     var p = String(iso).split('-'), y = +p[0], m = +p[1] - 1 + n, d = +p[2];
@@ -113,7 +113,7 @@ var Leaders = (function () {
     if (!start || !end || isNaN(parse(start)) || isNaN(parse(end))) return null;
     var n = s.term || 1, total = Math.max(1, days(start, end)), done = Math.max(0, Math.min(total, days(start, today))), left = days(today, end);
     var again = !r.maxTerms || n < r.maxTerms;
-    return { n: n, max: r.maxTerms, start: start, end: end, pct: Math.round(done / total * 100), left: left, soon: left >= 0 && today >= addMonths(end, -NOTICE_MONTHS), over: left < 0,
+    return { n: n, max: r.maxTerms, start: start, end: end, pct: Math.round(done / total * 100), left: left, soon: left >= 0 && left <= NOTICE_DAYS, over: left < 0,
       again: again, rest: !again && r.breakYears ? addMonths(end, 12 * r.breakYears) : '' };
   }
   /** Start someone's next term: the new term begins when the last one ends (or today, when no end is known). null when they
@@ -143,6 +143,6 @@ var Leaders = (function () {
     return until > today ? until : '';
   }
 
-  return { NOTICE_MONTHS: NOTICE_MONTHS, KINDS: KINDS, roles: roles, terms: terms, term: term, renew: renew, ending: ending, resting: resting, addMonths: addMonths, ROLES: ROLES, portfolios: portfolios, seat: seat, members: members, place: place, end: end, forget: forget, past: past, of: of, sees: sees, ended: ended, nameOf: nameOf };
+  return { NOTICE_DAYS: NOTICE_DAYS, KINDS: KINDS, roles: roles, terms: terms, term: term, renew: renew, ending: ending, resting: resting, addMonths: addMonths, ROLES: ROLES, portfolios: portfolios, seat: seat, members: members, place: place, end: end, forget: forget, past: past, of: of, sees: sees, ended: ended, nameOf: nameOf };
 })();
 if (typeof module !== 'undefined') module.exports = Leaders;

@@ -37,9 +37,10 @@ let c = { id: 'g4', name: 'Council', termYears: 3, maxTerms: 2, breakYears: 1, m
 c = L.place(c, ann, { from: '2024-01-15' }); c = L.place(c, ben, { from: '2022-01-15', term: 2, termFrom: '2025-01-15' }); c = L.place(c, cara, { from: '2026-01-01' });
 let t = L.term(c, c.seats.a, '2026-07-15');
 ok(t.n === 1 && t.max === 2 && t.end === '2027-01-15' && t.pct === 83 && !t.soon && t.again, 'a 3-year term: where they are in it, and they may stand again');
-ok(L.term(c, c.seats.a, '2026-09-15').soon && !L.term(c, c.seats.a, '2026-09-14').soon, 'four months before the end, the term is ending soon');
+ok(L.term(c, c.seats.a, '2026-09-17').soon && !L.term(c, c.seats.a, '2026-09-16').soon && L.NOTICE_DAYS === 120, 'a term is ending within 120 days, including the boundary but not day 121');
 t = L.term(c, c.seats.b, '2027-10-01');
 ok(t.n === 2 && t.end === '2028-01-15' && t.soon && !t.again && t.rest === '2029-01-15', 'in their last term: may not stand again until their break is over');
+ok(t.n === 2 && t.max === 2 && !t.again && L.term({ termYears: 3 }, { from: '2025-01-01' }, '2026-01-01').again, 'the current consecutive term count determines re-election eligibility, with 0 meaning unlimited');
 ok(L.term({ memberIds: [] }, { from: '2025-01-01' }, '2026-01-01') === null && L.term({}, { from: '2025-01-01', to: '2025-12-31' }, '2026-01-01').over, 'no term length and no end date: no term; past its end: over');
 ok(L.ending([c], '2026-10-01').map(x => x.m.personId).join() === 'a' && L.ending([c], '2027-10-01').map(x => x.m.personId).join() === 'a,b', 'whose terms end within four months (or have ended), the soonest first');
 let r = L.renew(c, 'a', '2026-10-01');

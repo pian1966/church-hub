@@ -47,6 +47,36 @@ module.exports = async function (ctx) {
   check(docs[key].open === false && docs[key].memberIds.join() === 'p14' && docs[key].past.length === 1 && docs[key].past[0].name === 'Clare Jacobs' && docs[key].past[0].role === 'Secretary' && docs[key].past[0].to === '2026-10-31' && t.includes('Members only') && t.includes('Served before (1)'),
     'a group can be for its members only; someone whose time has ended moves to “Served before”');
 
+  console.log('Staff and custom groups (Administrator):');
+  await s.go('groups'); t = await s.text();
+  check(t.includes('Staff') && t.includes('Group settings') && (await s.page.$$eval('.custom-group', cards => cards.length)) >= 1,
+    'the built-in Staff group is present for the Administrator and lists staff from People');
+  await s.page.click('[data-act="customgroups:create"]'); await s.page.fill('#cg-name', 'Church Council helpers');
+  await s.page.fill('.cg-q[data-for="cg-members"]', 'tim jac'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits[data-for="cg-members"] .cg-pick[data-id="p14"]');
+  await s.page.selectOption('#cg-visibility', 'members'); await s.page.click('[data-act="customgroups:save"]'); await s.settle();
+  await s.page.click('[data-act="customgroups:create"]'); await s.page.fill('#cg-name', 'Worship Team'); await s.page.fill('#cg-description', 'Music and singing');
+  await s.page.selectOption('#cg-visibility', 'church'); await s.page.click('[data-act="customgroups:save"]'); await s.settle();
+  docs = await s.docsNow();
+  const privateGroup = find(docs, 'customGroups', g => g.name === 'Church Council helpers'), churchGroup = find(docs, 'customGroups', g => g.name === 'Worship Team');
+  const privateId = privateGroup ? privateGroup.split('/')[1] : '', churchId = churchGroup ? churchGroup.split('/')[1] : '';
+  check(!!privateGroup && docs[privateGroup].memberIds.join() === 'p14' && docs[privateGroup].visibility === 'members' &&
+    !!churchGroup && docs[churchGroup].description === 'Music and singing' && docs[churchGroup].visibility === 'church',
+    'the Administrator can create groups, add members, descriptions and choose who can see them');
+  await s.close();
+  s = await session('tim.jacobs@example.com', docs); await s.go('groups'); t = await s.text();
+  check(t.includes('Church Council helpers') && t.includes('Worship Team'), 'a group member sees their private group and everyone can see a church-visible group');
+  await s.close();
+  s = await session('jason.naidoo@example.com', docs); await s.go('groups'); t = await s.text();
+  check(!t.includes('Church Council helpers') && t.includes('Worship Team'), 'a person outside a private group cannot see its name or membership');
+  await s.close();
+  s = await session('linda.pillay@example.com', docs); await s.go('groups');
+  await s.page.click('[data-act="customgroups:edit"][data-id="' + privateId + '"]'); await s.page.fill('#cg-description', 'Council meeting support');
+  await s.page.click('[data-act="customgroups:save"]'); await s.settle(); docs = await s.docsNow();
+  check(docs[privateGroup].description === 'Council meeting support', 'the Administrator can edit a custom group');
+  await s.page.click('[data-act="customgroups:delete"][data-id="' + churchId + '"]');
+  await s.page.click('[data-act="customgroups:delete"][data-id="' + churchId + '"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[churchGroup], 'the Administrator can delete a custom group');
+
   console.log('Archive (Administrator):');
   await s.go('archive'); t = await s.text();
   check(t.includes('No records yet.'), 'the Archive starts empty');
@@ -69,6 +99,35 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); const con = find(docs, 'archive', d => d.cat === 'contracts'), plan = find(docs, 'archive', d => d.cat === 'plans');
   check(!!con && docs[con].access === 'private' && docs[con].aboutId === 'p06' && docs[con].aboutName === 'Lerato Khumalo' && docs[con].shownTo === 'p06' && docs[con].bodyId === '', 'the contract is private, and shown to the staff member it is about');
   check(!!plan && docs[plan].access === 'office' && docs[plan].link === 'https://drive.google.com/hall-plans' && !docs[plan].file, 'a record can be a link to where the file is kept');
+  await s.page.click('[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
+  await s.page.selectOption('#ar-cat', 'plans'); await s.page.fill('#ar-title', 'Statement of Faith'); await s.page.fill('#ar-date', '2026-10-14');
+  await s.page.fill('#ar-link', 'https://docs.google.com/document/d/AbC123/edit?usp=sharing');
+  await s.page.setInputFiles('#ar-file', PNG); await s.page.check('#ar-app-doc'); await s.page.click('[data-act="archive:save"]'); await s.settle();
+  docs = await s.docsNow(); const statement = find(docs, 'archive', d => d.title === 'Statement of Faith'), statementId = statement ? statement.split('/')[1] : '';
+  const pub = docs['applicationDocuments/' + statementId];
+  check(!!statement && docs[statement].displayOnApplication === true && !!pub && pub.title === 'Statement of Faith' && pub.parts === 1 &&
+    !!pub.fileVersion && docs['applicationDocuments/' + statementId + '/files/' + pub.fileVersion + '/parts/0'].data === b64,
+    'an Administrator can publish a limited title, link and separately versioned file copy to the membership form');
+  await s.page.click('[data-act="archive:linkpreview"][data-id="' + statementId + '"]'); await s.page.waitForSelector('#modal #ar-doc-preview');
+  check(await s.page.getAttribute('#ar-doc-preview', 'src') === 'https://docs.google.com/document/d/AbC123/preview?embedded=true' &&
+    await s.page.$eval('#ar-doc-loading', e => e.getAttribute('role') === 'status' && e.getAttribute('aria-live') === 'polite') &&
+    await s.page.isVisible('#modal .ar-preview-body .hint') && await s.page.getAttribute('#modal .dlg-foot a', 'href') === 'https://docs.google.com/document/d/AbC123/edit?usp=sharing',
+    'Google Docs opens in an inline preview with an accessible loading state, sharing guidance and a link to the original');
+  await s.page.click('#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  await s.close();
+  s = await session('jason.naidoo@example.com', docs); await s.go('people/apply');
+  check((await s.text()).includes('Statement of Faith') && await s.page.isVisible('[data-act="people:appdoc"]') &&
+    await s.page.getAttribute('#ap-read a', 'href') === 'https://docs.google.com/document/d/AbC123/edit?usp=sharing',
+    'the membership form shows the published Archive document and its link to applicants');
+  const [publicDownload] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="people:appdoc"]')]);
+  check(publicDownload.suggestedFilename() === 'face.png' && ctx.fs.readFileSync(await publicDownload.path()).equals(PNG.buffer),
+    'an applicant can read the deliberately published uploaded document');
+  await s.close();
+  s = await session('linda.pillay@example.com', docs); await s.go('archive');
+  await s.page.click('[data-act="archive:edit"][data-id="' + statementId + '"]'); await s.page.uncheck('#ar-app-doc'); await s.page.click('[data-act="archive:save"]'); await s.settle();
+  docs = await s.docsNow();
+  check(!docs['applicationDocuments/' + statementId] && docs['archive/' + statementId].displayOnApplication === false,
+    'unpublishing removes the public copy while keeping the Archive record private');
   t = await s.text();
   check(t.includes('Council minutes – October') && t.includes('Church Council') && t.includes('Shown to Lerato Khumalo') && t.includes('Administrators and the Senior Pastor only'), 'each record says who can see it');
   await s.page.click('[data-act="archive:storageinfo"]'); await s.page.waitForSelector('#modal .overlay');
@@ -438,7 +497,7 @@ module.exports = async function (ctx) {
   seed2['books/bT'] = { kind: 'Book', title: 'Mere Christianity', author: 'C. S. Lewis', copies: 1, out: 1 };
   seed2['loans/lnT'] = { bookId: 'bT', title: 'Mere Christianity', personId: 'p14', name: 'Tim Jacobs', mobile: '082 000 1414', visitor: false, out: day(-23), due: day(5), back: '', note: '' };
   s = await session('linda.pillay@example.com', seed2); await s.go('leaders'); t = await s.text();
-  check(/terms? of office ends? soon[\s\S]*The term of Tim Jacobs on Church Council ends .*Term 1 of 2 · May stand for another term/.test(t), 'four months before a term of office ends, the Administrator is told – and that they may stand again');
+  check(/terms? of office ends? soon[\s\S]*The term of Tim Jacobs on Church Council expires .*in \d+ days · Eligible to stand for another term \(Term 1 of 2\)/.test(t), 'within 120 days of expiry, the Administrator is told the date, time remaining and re-election status');
   await s.page.click('.lb-panel details.cg-fold[data-k="lb-lbT:c"] > summary');
   check(/Tim Jacobs\s*Chair\s*Treasurer/.test(t) && /Clare Jacobs\s*Co-opted Member/.test(t) && t.includes('3-year terms, at most 2 terms in a row, then a 1-year break'), 'more than one role on the Council; a co-opted member; the group’s term rules');
   check((await s.page.$$('.lb-panel .term-bar')).length === 2 && /Term 1 of 2 · \d+% through · Ends/.test(t) && !!(await s.page.$('.term.soon')), 'a bar shows how far each leader is through which term');
@@ -477,7 +536,7 @@ module.exports = async function (ctx) {
   console.log('The Senior Pastor (Rector):');
   const seed3 = JSON.parse(JSON.stringify(seed2)); seed3['settings/church'].seniorPastorId = 'p03';
   s = await session('pieter.vanwyk@example.com', seed3); await s.go('home'); t = await s.text();
-  check(/The term of Tim Jacobs on Church Council ends .*Term 1 of 2 · May stand for another term/.test(t), 'the Rector is told on their To do list four months before a term of office ends');
+  check(/The term of Tim Jacobs on Church Council expires .*in \d+ days · Eligible to stand for another term \(Term 1 of 2\)/.test(t), 'the Rector is told the expiry date, time remaining and re-election status');
   await finish(s);
 
   console.log('A Council member (Basic access):');

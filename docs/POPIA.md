@@ -236,6 +236,15 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   Co-opted Member or Other) are part of the office-bearer's public role and follow the same access. A description for
   "Other" is public too, so it must describe the role rather than private information. The notice four months before a term ends, with whether the person may stand
   again, is shown only to Administrators and the Senior Pastor (Rector).
+  The maximum consecutive terms is a governance rule. Current term number and dates follow the same access as the public
+  office; the reminder and re-election eligibility are limited to Administrators and the Rector.
+## Administrator-managed groups
+- Purpose: organising staff and other ministry/committee groups. Membership uses the existing people records and staff
+  status; group records hold IDs, not copied names, contact details or private notes. The built-in Staff list is derived
+  from active staff status so it cannot drift out of sync.
+- Administrators manage custom groups. Church-visible groups can be read by signed-in users; members-only groups can
+  be read by their members and Administrators. This is a legitimate-interest use for church organisation; it does not
+  grant access to any additional personal details.
 ## Archive (minutes, plans, staff contracts, appraisals)
 - Purpose: keeping the church's records – governance (minutes), property (plans) and employment (contracts, appraisals).
   Basis: legal obligation and legitimate interest for governance and property records; the employment contract and labour
@@ -252,6 +261,12 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   opening a link for a record that isn't for everyone is in the audit log, as is every record added, changed or deleted.
   A **link** to a file kept elsewhere (e.g. Google Drive) is only as private as that place – the church must set its
   sharing there.
+- An Administrator may select an Archive document for the membership application. The form reads a separate,
+  minimized copy containing only the title, date, link and optional file; it does not expose Archive notes or access
+  settings. Signed-in applicants can read this copy, while Firestore denies direct reads of the source Archive record
+  unless its normal role rules permit them. File parts are available only for the currently published version.
+- Google Docs previews are embedded from the document's own sharing URL. The church must set its Google sharing
+  permissions appropriately; users can also open the document in Google Docs.
 - Retention: the church decides how long each kind of record is kept (minutes usually permanently; staff records for the
   period labour and tax law require after someone leaves) and deletes records when that time is up. To do: a retention
   review for the Archive (ROADMAP).

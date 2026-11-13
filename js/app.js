@@ -321,13 +321,14 @@ var Hub = (function () {
   /** Is this app switched on (Settings → Apps)? Most are on until switched off; a few (optIn, e.g. Life groups) are off until switched on. */
   function isOn(id) {
     var on = ((Store.settings() || {}).modules || {}), m = moduleById(id);
+    if (id === 'library' || id === 'archive') return on.library === true || on.archive === true;
     return m && m.optIn ? on[id] === true : on[id] !== false;
   }
   function opens(m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); }
   function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
-  function listed() { return enabled().filter(function (m) { return !m.inGroups; }); }
+  function listed() { return enabled().filter(function (m) { return !m.inGroups && !m.inLibrary; }); }
   /** The kinds of group this person may open (Groups → its tabs), in menu order. */
   function groupMods() { return modules.filter(function (m) { return m.inGroups && opens(m); }); }
 
@@ -428,7 +429,9 @@ var Hub = (function () {
     if (Store.settings && Store.settings()) applyTheme(themeOf(Store.settings())); else applyTheme();
     if (!user) return renderSignIn();
     modules.forEach(function (m) { if (m.beforeRender) { try { m.beforeRender(); } catch (e) { console.error(m.id, e); } } });   // e.g. approved translations
-    var p = parts(), mod = p[0] === 'home' ? null : moduleById(p[0]);
+    var p = parts();
+    if (p[0] === 'archive') { go('library/archives'); return; }
+    var mod = p[0] === 'home' ? null : moduleById(p[0]);
     if (mod && enabled().indexOf(mod) < 0) { go('home'); return; }
     // Translations: remember which texts each page shows, so people can improve exactly those (Translations → "On the page you were on")
     if (p[0] === 'words') { if (!inWords && mod && mod.leaving) mod.leaving(I18n.seen()); inWords = true; I18n.page(null); }

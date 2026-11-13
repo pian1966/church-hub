@@ -8,8 +8,9 @@
  *   body     the members of one leadership group (bodyId; js/leaders.js) – e.g. the Council for its minutes
  *   office   Administrators and Pastors
  *   private  Administrators and the Senior Pastor only – staff contracts and appraisals
- * Administrators and the Senior Pastor see and manage every record. A record about a person (aboutId) may also be
- * shown to that person (shownTo = their id). Categories are the church's own (settings.archiveCats).
+ * Opening the Archives is limited to Administrators and Council members; within that, access is limited by the
+ * record's choice above and (for a person) whether it is shown to them. Administrators and Council members manage
+ * records. Categories are the church's own (settings.archiveCats).
  * Tested with node: tests/archive.test.js. POPIA: see docs/POPIA.md, "Archive".
  */
 var Archive = (function () {
@@ -49,7 +50,8 @@ var Archive = (function () {
    *  The database rules (firestore.rules, seesRecord) say the same. */
   function sees(rec, who) {
     var r = rec || {}, w = who || {}, ids = w.ids || [];
-    if (w.admin || w.senior) return true;
+    if (!w.admin && !w.council) return false;
+    if (w.admin) return true;
     if (r.access === 'all') return true;
     if (r.access === 'office' && w.pastor) return true;
     if (r.bodyId && (w.bodies || []).indexOf(r.bodyId) >= 0) return true;

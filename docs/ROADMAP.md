@@ -85,14 +85,14 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   person's language. A monthly limit per church; without AI (switched off or limit reached), a plain searchable FAQ of the same
   pages. Never send personal information with the question.
 - 🟡 **Leadership, Archive and Library** (built in 0.51, off until switched on in Settings → Apps). Church to do: switch them on,
-  set up the Council under Leadership, choose the Senior Pastor (Settings → What Pastors can do) so they can see the whole
-  Archive, name the librarians, and – if GitHub doesn't publish the database rules by itself yet – re-publish them
-  (FIREBASE-SETUP.md step 7), or the three pages stay empty. Android: a new build of the app is needed to download
-  Archive files inside the app. Follow-ups:
+  set up the Council under Leadership, name the librarians, and – if GitHub doesn't publish the database rules by itself yet –
+  re-publish them (FIREBASE-SETUP.md step 7), or the three pages stay empty. Archives are now a Library tab; only
+  Administrators and Council members can open and manage Archive records. Android: a new build of the app is needed to
+  download Archive files inside the app. Follow-ups:
   - ⬜ Leadership (0.54 follow-ups): also send the term-of-office notice as an email to the Administrators and the Rector;
     "ex officio" as a third kind of member (beside co-opted); a group's Chair or Secretary manages its members
   - ⬜ Archive: let a group's Secretary file its own minutes; a retention review (how long
-    each category is kept, with a reminder); a "What Pastors can do" tick for managing the Archive
+    each category is kept, with a reminder)
   - ⬜ Library: ask to borrow or reserve a book in the app; send the three-week reminder by BulkSMS from Church Hub itself
   - ⬜ Library (0.52 follow-ups): fluent speakers to check the new Library words in the 19 further languages (drafted by AI);
     a text message (BulkSMS) to a borrower whose item is overdue, using the loan's mobile number; read the ISBN with the camera.

@@ -3,6 +3,7 @@
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
     ["Church Services and venues", "Kerkdienste en plekke", "Izinkonzo Zesonto nezindawo", "Iinkonzo zeCawe neendawo"],
+    ["The church’s library and Archives – books and church records in one place", "Die kerk se biblioteek en Argiewe – boeke en kerkrekords op een plek", "Umtapo wezincwadi nezingobo zomlando zesonto – izincwadi namarekhodi esonto endaweni eyodwa", "Ithala leencwadi noVimba weerekhodi zecawa – iincwadi neerekhodi zecawa kwindawo enye"],
     ["Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Church Services and venues”.", "Verwyder die komendes (en hul roosters) vanaf ’n datum. Om dit glad nie meer by te voeg nie, verwyder dit onder “Kerkdienste en plekke”.", "Isusa ezizayo (nezinhlelo zazo) kusukela osukwini oluthile. Ukuze ungabe usayengeza, yisuse ngaphansi kokuthi “Izinkonzo Zesonto nezindawo”.", "Isusa ezizayo (kunye noludwe lwazo) ukususela kumhla othile. Ukuze ungaphinde uyongeze, yisuse phantsi kwe “Iinkonzo zeCawe neendawo”."],
     ["Add more times or venues under “Church Services and venues”.", "Voeg meer tye of plekke by onder “Kerkdienste en plekke”.", "Engeza ezinye izikhathi noma izindawo ngaphansi kokuthi “Izinkonzo Zesonto nezindawo”.", "Yongeza amanye amaxesha okanye iindawo phantsi kwe “Iinkonzo zeCawe neendawo”."],
     ["Church Services", "Kerkdienste", "Izinkonzo Zesonto", "Iinkonzo zeCawe"],

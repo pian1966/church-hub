@@ -305,3 +305,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   records they may already see. PDFs, images and text/Markdown/CSV display inline; other formats offer a clear download
   option. A separate Firestore copy and role rules protect direct preview requests without changing normal downloads;
   restricted previews are audit-logged.
+- ✅ 13 Nov 2026 (0.63.0): **Archives in Library** – Archives are a Library tab with a locked restricted notice for Librarians
+  and members; only Administrators and Council members can view, search, download or manage Archive content, enforced by
+  Firestore rules and Store APIs. Administrators and Council members can open the storage-location note; its placeholder
+  text is localized for the church to update.

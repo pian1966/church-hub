@@ -1,0 +1,21 @@
+name: Sync Codebase to Google Doc
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Bundle repository with Repomix
+        run: npx repomix --output codebase.txt
+
+      - name: Push to Google Doc
+        env:
+          WEBAPP_URL: ${{ secrets.GDOC_WEBHOOK_URL }}
+          SECRET_TOKEN: ${{ secrets.GDOC_SECRET }}
+        run: |
+          jq -Rs '{secret: env.SECRET_TOKEN, content: .}' codebase.txt > payload.json
+          curl -L -X POST -H "Content-Type: application/json" -d @payload.json "$WEBAPP_URL"

@@ -414,6 +414,7 @@ I18n.rows([
     ['For our members', 'Vir ons lidmate', 'Amalungu ethu', 'Kumalungu ethu'],
     ['How to start, and what members can do', 'Hoe om te begin, en wat lidmate kan doen', 'Indlela yokuqala, nalokho amalungu angakwenza', 'Indlela yokuqalisa, nento amalungu anokuyenza'],
     ['For other churches', 'Vir ander kerke', 'Amanye amabandla', 'Kwezinye iicawa'],
+    ['Made in South Africa', 'Gemaak in Suid-Afrika', 'Kwenziwe eNingizimu Afrika', 'Yenziwe eMzantsi Afrika'],
     ['What Church Hub offers, and the demo', 'Wat Church Hub bied, en die demo', 'Lokho i-Church Hub ekunikezayo, nedemo', 'Into ebonelelwa yi-Church Hub, kunye nedemo'],
     ['Version', 'Weergawe', 'Inguqulo', 'Uguqulelo'],
     ['Released', 'Vrygestel', 'Ikhishwe', 'Ikhutshiwe'],

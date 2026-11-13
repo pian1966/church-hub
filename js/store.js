@@ -50,7 +50,7 @@ var Store = (function () {
     return JSON.stringify(x === undefined ? null : x);
   }
   function same(a, b) { return canon(a) === canon(b); }
-  function blank() { var d = { version: 1, settings: null, leave: null }; COLLECTIONS.forEach(function (c) { d[c] = []; }); return d; }
+  function blank() { var d = { version: 1, settings: null, brochures: {}, leave: null }; COLLECTIONS.forEach(function (c) { d[c] = []; }); return d; }
   var db = LIVE ? blank() : null;
 
   /* ================= shared interface ================= */
@@ -60,7 +60,10 @@ var Store = (function () {
     try { db = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { db = null; }
     if (!db || !db.version) { db = sampleFactory(); save(); }
     COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; });
+    db.brochures = db.brochures || (db.settings && db.settings.brochures) || {};
+    if (db.settings) delete db.settings.brochures;
     snapLeave(); rev++;
+    save();
     return db;
   }
   function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; }); snapLeave(); save(); changed(); }
@@ -139,10 +142,29 @@ var Store = (function () {
   function settings() { return db.settings; }
   function setSettings(patch, auditText) {
     if (blocked()) return;
+    if (Object.prototype.hasOwnProperty.call(patch || {}, 'brochures')) {
+      tell('Brochure content must be saved through the Administrator-only brochure editor.');
+      return false;
+    }
     Object.assign(db.settings, patch);
     if (LIVE) Live.write('settings/church', db.settings);
     if (auditText) audit(auditText, 'settings');
     save(); changed();
+  }
+  function isAdmin() {
+    if (previewRole) return false;
+    if (LIVE) return !!(Live.session() && Live.session().role === 'admin');
+    return !!(user && user.appRole === 'admin');
+  }
+  function brochures() { return isAdmin() ? db.brochures || {} : null; }
+  function setBrochures(value, auditText) {
+    if (blocked()) return false;
+    if (!isAdmin()) { tell('Only Administrators can change brochure content.'); return false; }
+    db.brochures = copy(value) || {};
+    if (LIVE) Live.write('brochures/church', db.brochures);
+    if (auditText) audit(auditText, 'brochures/church');
+    save(); changed();
+    return true;
   }
   /** Choose the library's librarians: only that one setting is written, so the Senior Pastor (who may change nothing else) can. */
   function setLibrarians(ids, auditText) {
@@ -208,6 +230,13 @@ var Store = (function () {
     function write(path, data) { local[path] = clean(data); return doc(path).set(clean(data)).catch(function (e) { delete local[path]; err(e, 'save this'); }); }
     /** Change only some fields of a document (for someone allowed to change only those, e.g. the Senior Pastor choosing librarians). */
     function patch(path, data) { return doc(path).update(clean(data)).catch(function (e) { err(e, 'save this'); }); }
+    function clearLegacyBrochure() {
+      var patch = {}; patch.brochures = fb.firestore.FieldValue.delete();
+      return doc('settings/church').update(patch).catch(function (e) { err(e, 'move the brochure wording to its private settings'); });
+    }
+    function migrateBrochure(value) {
+      return doc('brochures/church').set(clean(value)).then(clearLegacyBrochure, function (e) { err(e, 'move the brochure wording to its private settings'); });
+    }
     function del(path) { local[path] = null; return doc(path).delete().catch(function (e) { delete local[path]; err(e, 'delete this'); }); }
     /** What the database holds for one document, as far as we know (our own unconfirmed writes count). */
     function known(path) {
@@ -442,6 +471,7 @@ var Store = (function () {
       var add = function (key, ref) { p.push({ key: key, ref: ref, coll: COLL[key] || key }); };
       var coll = function (c) { return fs.collection(c); }, own = function (c, field) { return fs.collection(c).where(field || 'personId', '==', me); };
       add('settings', doc('settings/church'));
+      if (is('admin') && !previewRole) add('brochure', doc('brochures/church'));
       add('leaveConfig', doc('leave/config'));
       add('directory', coll('directory'));
       if (staff) add('contacts', coll('contacts'));   // staff and leaders: home address and spouse of people who agreed to share them
@@ -634,6 +664,12 @@ var Store = (function () {
     }
     function whenLoaded() {
       rebuild();
+      var legacySettings = (raw.settings || {}).church;
+      if (role() === 'admin' && legacySettings && Object.prototype.hasOwnProperty.call(legacySettings, 'brochures')) {
+        var savedBrochure = (raw.brochure || {}).church;
+        if (savedBrochure === undefined) Live.migrateBrochure(legacySettings.brochures);
+        else Live.clearLegacyBrochure();
+      }
       var meP = get('people', session.personId);
       if (!db.settings && role() === 'admin') return onState({ stage: 'setup', email: session.email, needChurch: true });
       if (!db.settings) return onState({ stage: 'noAccess', email: session.email, reason: 'notReady' });
@@ -677,6 +713,8 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
+      db.brochures = role() === 'admin' && raw.brochure && raw.brochure.church ? copy(raw.brochure.church) : {};
+      if (db.settings) delete db.settings.brochures;
       ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books'].forEach(function (c) { db[c] = arr(c); });
       [['leaderBodies', /^leaderBodies/], ['archive', /^archive:/], ['loans', /^loans/]].forEach(function (x) {   // each asked for in parts (plan(), extras())
         var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
@@ -1002,7 +1040,7 @@ var Store = (function () {
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
       preview: function () { stop(); subscribe(); },
@@ -1029,7 +1067,7 @@ var Store = (function () {
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
   function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
-    settings: settings, setSettings: setSettings, setLibrarians: setLibrarians, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
+    settings: settings, setSettings: setSettings, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,

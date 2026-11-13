@@ -59,10 +59,11 @@
         if (op === 'delete') return smallRoles(b);
         return (op === 'create' || smallRoles(b)) && smallRoles(a) && okRoles(a) && onlyKeys(a, ['role', 'personId', 'name', 'roles', 'also', 'people']);
       } },
-    settings: { read: function (c) { return is(c, ANY) || c.robot; },
-      write: function (c, op, id, b, a) { return is(c, ['admin']) || (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || ''))
+    settings: { read: function (c, id, d) { return (is(c, ['admin']) || ((is(c, ANY) || c.robot) && !(d && Object.prototype.hasOwnProperty.call(d, 'brochures')))); },
+      write: function (c, op, id, b, a) { return is(c, ['admin']) ? op === 'delete' || !Object.prototype.hasOwnProperty.call(a || {}, 'brochures') : (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || '') && JSON.stringify(a.brochures) === JSON.stringify(b.brochures))
         // the Senior Pastor may choose the librarians (at most two), and change nothing else here
         || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['librarianIds']) && Array.isArray(a.librarianIds || []) && (a.librarianIds || []).length <= 2); } },
+    brochures: { read: function (c, id) { return is(c, ['admin']) && id === 'church'; }, write: function (c, op, id) { return is(c, ['admin']) && id === 'church'; } },
     elvantoSync: { read: function (c, id, d) { return may(c, 'import') || c.robot || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
         if (may(c, 'import')) return true;
@@ -264,8 +265,11 @@
   DocRef.prototype.update = function (fields) {
     if (docs[this.path] === undefined) { var e = new Error('No document to update'); e.code = 'not-found'; return Promise.reject(e); }
     var was = JSON.parse(JSON.stringify(docs[this.path])), add = {};
-    Object.keys(fields).forEach(function (k) {   // FieldValue.arrayUnion: add what isn't there yet
-      var v = fields[k]; if (v && v.__union) { var cur = Array.isArray(was[k]) ? was[k].slice() : []; v.__union.forEach(function (x) { if (cur.indexOf(x) < 0) cur.push(x); }); add[k] = cur; } else add[k] = v;
+    Object.keys(fields).forEach(function (k) {   // FieldValue operations used by Store
+      var v = fields[k];
+      if (v && v.__delete) delete was[k];
+      else if (v && v.__union) { var cur = Array.isArray(was[k]) ? was[k].slice() : []; v.__union.forEach(function (x) { if (cur.indexOf(x) < 0) cur.push(x); }); add[k] = cur; }
+      else add[k] = v;
     });
     return apply([{ path: this.path, data: Object.assign(was, add) }]);
   };
@@ -335,7 +339,7 @@
   };
   function GoogleAuthProvider() {} GoogleAuthProvider.prototype.setCustomParameters = function () {};
   GoogleAuthProvider.credential = function (idToken) { return { providerId: 'google.com', idToken: idToken }; };
-  var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; }, arrayUnion: function () { return { __union: Array.prototype.slice.call(arguments) }; } };
+  var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; }, arrayUnion: function () { return { __union: Array.prototype.slice.call(arguments) }; }, delete: function () { return { __delete: true }; } };
   var authFn = function () { return auth; }; authFn.GoogleAuthProvider = GoogleAuthProvider;
   window.firebase = { apps: [], initializeApp: function (c) { this.apps.push(c); return {}; }, auth: authFn, firestore: firestoreFn };
 })();

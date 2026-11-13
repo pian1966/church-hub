@@ -29,7 +29,11 @@ console.log('Saved settings');
 const t = B.tidy({ design: { accent: '#123456', font: 'Lora' }, members: { texts: { 'm:0:3': { o: 'Three  easy steps', h: 'Four <i>easy</i> steps<script>' } }, hidden: { 'm:1:b2': 'Messages' } }, evil: 1 });
 ok(t.design.accent === '#123456' && t.design.font === 'Lora' && !t.evil, 'design kept; anything else dropped');
 ok(t.members.texts['m:0:3'].o === 'Three easy steps' && t.members.texts['m:0:3'].h === 'Four <i>easy</i> steps', 'a text: original tidied, wording made safe');
-ok(t.members.hidden['m:1:b2'] === 'Messages' && JSON.stringify(t.churches) === '{"texts":{},"hidden":{}}', 'hidden blocks kept; the other brochure empty');
+ok(t.members.hidden['m:1:b2'] === 'Messages' && !Object.keys(t.churches.texts).length && !Object.keys(t.churches.hidden).length, 'hidden blocks kept; the other brochure empty');
 ok(B.changed(t) && B.changed(t, 'members') && !B.changed(t, 'churches') && !B.changed({}), 'whether anything is changed, for each brochure');
+const translated = B.tidy({ members: { translations: { af: { texts: { title: { o: 'Three steps', h: '<b>Drie stappe</b>' } }, hidden: { block: 'Messages' } }, en: { texts: { bad: { o: 'x', h: 'x' } } }, invalid: { texts: { bad: { o: 'x', h: 'x' } } } } } });
+ok(translated.members.translations.af.texts.title.h === '<b>Drie stappe</b>' && translated.members.translations.af.hidden.block === 'Messages'
+  && !translated.members.translations.en && !translated.members.translations.invalid, 'language-specific text and hidden blocks are kept only for supported locale codes');
+ok(B.changed(translated, 'members') && B.changed(translated.members.translations.af, 'members'), 'language-specific changes are reported for the right brochure');
 
 if (fails) { console.log('\n' + fails + ' failed'); process.exit(1); } else console.log('\nAll brochure editor tests passed');

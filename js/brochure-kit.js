@@ -1,6 +1,6 @@
 /*
  * Church Hub – the brochure editor's rules (About → Brochures → Edit). The brochures themselves are brochure.html; the church's
- * own wording and design are kept in settings.brochures and laid over it when the brochure is shown in Church Hub:
+ * own wording and design are kept in the private `brochures/church` document and laid over it when shown in Church Hub:
  *   { design: { accent: '#E8590C', font: 'Nunito' },
  *     members:  { texts: { key: { o: original text, h: their wording } }, hidden: { key: original text } },
  *     churches: { … } }
@@ -64,18 +64,35 @@ var BrochureKit = (function () {
   function tidy(b) {
     b = b || {}; var out = { design: { accent: hex((b.design || {}).accent) || DEFAULT.accent, font: font((b.design || {}).font) } };
     ['members', 'churches'].forEach(function (w) {
-      var x = b[w] || {}, t = {}, hd = {};
-      Object.keys(x.texts || {}).forEach(function (k) { var v = x.texts[k]; if (v && typeof v.h === 'string' && typeof v.o === 'string') t[k] = { o: norm(v.o), h: clean(v.h) }; });
-      Object.keys(x.hidden || {}).forEach(function (k) { if (typeof x.hidden[k] === 'string') hd[k] = norm(x.hidden[k]); });
-      out[w] = { texts: t, hidden: hd };
+      var x = b[w] || {}, t = {}, hd = {}, translations = {};
+      function takeWords(src, target) {
+        Object.keys(src || {}).forEach(function (k) { var v = src[k]; if (v && typeof v.h === 'string' && typeof v.o === 'string') target[k] = { o: norm(v.o), h: clean(v.h) }; });
+      }
+      function takeHidden(src, target) {
+        Object.keys(src || {}).forEach(function (k) { if (typeof src[k] === 'string') target[k] = norm(src[k]); });
+      }
+      takeWords(x.texts, t); takeHidden(x.hidden, hd);
+      Object.keys(x.translations || {}).forEach(function (code) {
+        if (!/^[a-z]{2}(?:-[A-Z]{2})?$/.test(code) || code === 'en') return;
+        var tr = x.translations[code] || {}, trText = {}, trHidden = {};
+        takeWords(tr.texts, trText); takeHidden(tr.hidden, trHidden);
+        translations[code] = { texts: trText, hidden: trHidden };
+      });
+      out[w] = { texts: t, hidden: hd, translations: translations };
     });
     return out;
   }
   /** Is anything changed from Church Hub's own brochure? */
   function changed(b, who) {
+    if (who && b && !b[who] && (b.texts || b.hidden)) {
+      return !!(Object.keys(b.texts || {}).length || Object.keys(b.hidden || {}).length);
+    }
     b = tidy(b);
     if (!who) return b.design.accent !== DEFAULT.accent || b.design.font !== DEFAULT.font || changed(b, 'members') || changed(b, 'churches');
-    return !!(Object.keys(b[who].texts).length || Object.keys(b[who].hidden).length);
+    return !!(Object.keys(b[who].texts).length || Object.keys(b[who].hidden).length ||
+      Object.keys(b[who].translations).some(function (code) {
+        return Object.keys(b[who].translations[code].texts).length || Object.keys(b[who].translations[code].hidden).length;
+      }));
   }
 
   return { DEFAULT: DEFAULT, FONTS: FONTS, colours: colours, font: font, fontHref: fontHref, norm: norm, clean: clean, tidy: tidy, changed: changed, contrast: function (a, b) { return contrast(rgb(a), rgb(b)); } };

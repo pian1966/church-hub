@@ -40,8 +40,8 @@ Open **Library** and look under **My books**. If a book is overdue, Home reminds
 ## Who can see what I have borrowed?
 For: Everyone
 
-Only the librarians and you. Everyone else sees only that the book is on loan. A loan is removed a year after the book
-came back.
+Only the librarians and you. Everyone else sees only that the book is on loan. Returned-loan records are automatically
+removed after a year.
 
 ## How do I add a book, DVD or CD?
 For: Librarians
@@ -97,5 +97,5 @@ lost, acquired and taken out in that time. **Download as a spreadsheet** saves i
 For: Administrators, the Senior Pastor
 
 Administrators always are. An Administrator or the Senior Pastor chooses one or two more: open **Library → Librarians**, type
-part of the person's name and pick them. They need to be able to sign in to Church Hub; the Library then shows them the
-librarian's buttons. To choose someone else when there are two, take one out first.
+part of the person's name and pick them. Someone who cannot yet sign in can be given Basic access as part of this choice.
+The Library then shows them the librarian's buttons. To choose someone else when there are two, take one out first.

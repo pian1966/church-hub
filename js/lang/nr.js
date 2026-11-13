@@ -5,6 +5,7 @@ I18n.add('nr', {
   dow: ["Son", "Mvu", "Bil", "Tha", "Ne", "Hla", "Gqi"],
   words: {
     "All": "All",
+    "Made in South Africa": "Kwenziwe eSewula Afrika",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

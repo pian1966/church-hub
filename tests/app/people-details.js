@@ -123,7 +123,10 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('a[href="#/people/duplicates"]')), 'People has a Find duplicates button for Administrators');
   const timMobile = (await s.docsNow())['people/p14'].mobile;
   await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Timothy'); await s.page.fill('#pf-last', 'Jacobs'); await s.page.fill('#pf-mobile', timMobile);
-  await s.page.waitForTimeout(400);
+await s.page.waitForFunction(() => {
+  const box = document.querySelector('#pf-dup');
+  return box && !box.hidden && box.textContent.includes('Tim Jacobs');
+}, { timeout: 4000 });
   check(await s.page.isVisible('#pf-dup') && (await s.page.textContent('#pf-dup')).includes('Tim Jacobs'), 'typing Timothy Jacobs with Tim’s mobile warns straight away');
   await s.page.selectOption('#pf-cat', 'Attender'); await s.page.selectOption('#pf-fam', '__new'); await s.page.selectOption('#pf-frole', 'adult');
   await s.page.fill('#pf-email', 'unknown'); if (await s.page.$('#pf-marital')) await s.page.selectOption('#pf-marital', 'Married');

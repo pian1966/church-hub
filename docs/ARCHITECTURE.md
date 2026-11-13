@@ -1,6 +1,6 @@
 # Church Hub – architecture
 
-Church Hub replaces Elvanto for Christ Church Howick, learning from Elvanto, Planning Center and ChurchSuite.
+Church Hub helps churches move from Elvanto, learning from tools such as Planning Center and ChurchSuite.
 It is built in phases; each phase is usable on its own. **Read this file first in every new working session.**
 
 ## Principles
@@ -704,11 +704,18 @@ The wedding anniversary sits right under marital status.
 ## Brochures and the brochure editor (About → Brochures; `brochure.html`, `js/brochure-kit.js`, `js/mod-about.js`)
 - About links to `#/about/brochure/members|churches` (Administrators). The page shows `brochure.html?for=…&embed=1` in a frame
   (same site), with Church Hub's own buttons: **Edit the wording / Done editing**, **Print or save as PDF** (the frame prints),
-  colour (Church Hub orange, the church's colour from Settings → Colours, or any colour) and font (a short list of Google Fonts).
-- The church's changes are `settings.brochures` (`BrochureKit.tidy`): `design { accent, font }` and, per brochure,
+  a language picker, colour (Church Hub orange, the church's colour from Settings → Colours, or any colour) and font (a short
+  list of Google Fonts).
+- The church's changes are stored separately in `brochures/church`, not in the settings document. `Store.plan()` loads it only
+  for an Administrator, `Store.isAdmin()` excludes "View as", and `Store.setBrochures()` checks the role before saving. Firestore
+  rules allow only Administrators to read or write this document. Older `settings/church.brochures` data is moved to the private
+  document by an Administrator's first load; while it remains there, non-Administrators (including the robot) cannot read settings.
+- `BrochureKit.tidy` keeps `design { accent, font }` and, per brochure,
   `texts { key: { o: Church Hub's original text, h: their wording } }` and `hidden { key: original text }`. Keys are places
-  (`m0:11` = members, sheet 0, 12th text; `m0:b3` = a block). An edit is only used while the original there is unchanged, so
-  when Church Hub's wording changes in a release the old edit is listed ("Forget them") instead of landing on the wrong line.
+  (`m0:11` = members, sheet 0, 12th text; `m0:b3` = a block). Optional `translations[language]` holds the same text and hidden
+  maps for a selected language. Missing translated wording falls back to the English/default brochure; changing one language
+  does not alter another. An edit is only used while the original there is unchanged, so when Church Hub's wording changes in a
+  release the old edit is listed ("Forget them") instead of landing on the wrong line.
 - Editing: each heading and paragraph is contenteditable (plain paste; Enter in a heading does nothing), blocks get Hide/Show;
   saves by itself (600 ms after typing, and on leaving a text). Typed wording goes through `BrochureKit.clean` (bold, italic,
   line breaks and the church's name/address spans only). Colours come from one colour (`BrochureKit.colours`: ink dark enough

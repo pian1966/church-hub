@@ -78,18 +78,27 @@ service cloud.firestore {
 
     // ---------- church settings ----------
     match /settings/{doc} {
-      allow read: if anyone() || robot();
-      allow create, delete: if admin();
+      // Older versions kept brochure wording here. Keep it private until an Administrator moves it to brochures/church.
+      allow read: if admin()
+        || (anyone() && !resource.data.keys().hasAny(['brochures']))
+        || (robot() && !resource.data.keys().hasAny(['brochures']));
+      allow create: if admin() && !request.resource.data.keys().hasAny(['brochures']);
+      allow delete: if admin();
       // A Pastor with "settings" may change everything except what Pastors can do, what the Senior Pastor can do,
       // and who the Senior Pastor is (only an Administrator sets those)
       // The Senior Pastor may choose the librarians (at most two), and change nothing else here
-      allow update: if admin() || (may('settings')
+      allow update: if (admin() && !request.resource.data.keys().hasAny(['brochures'])) || (may('settings')
         && request.resource.data.get('pastorCan', []) == resource.data.get('pastorCan', [])
         && request.resource.data.get('seniorCan', []) == resource.data.get('seniorCan', [])
-        && request.resource.data.get('seniorPastorId', '') == resource.data.get('seniorPastorId', ''))
+        && request.resource.data.get('seniorPastorId', '') == resource.data.get('seniorPastorId', '')
+        && request.resource.data.get('brochures', null) == resource.data.get('brochures', null))
         || (isRole(['pastor']) && isMe(resource.data.get('seniorPastorId', ''))
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['librarianIds'])
           && request.resource.data.get('librarianIds', []) is list && request.resource.data.get('librarianIds', []).size() <= 2);
+    }
+    // Brochure wording is visible and editable only by Administrators.
+    match /brochures/{id} {
+      allow read, write: if admin() && id == 'church';
     }
 
     // ---------- people ----------

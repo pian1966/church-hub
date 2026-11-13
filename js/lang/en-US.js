@@ -5,6 +5,7 @@ I18n.add('en-US', {
   dow: ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"],
   words: {
     "All": "All",
+    "Made in South Africa": "Made in South Africa",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

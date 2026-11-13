@@ -5,6 +5,7 @@ I18n.add('am', {
   dow: ["እሑድ", "ሰኞ", "ማክሰ", "ረቡዕ", "ሐሙስ", "ዓርብ", "ቅዳሜ"],
   words: {
     "All": "All",
+    "Made in South Africa": "በደቡብ አፍሪካ የተሰራ",
     "On Loan": "On Loan",
     "Being Repaired": "Being Repaired",
     "Permanently Removed": "Permanently Removed",

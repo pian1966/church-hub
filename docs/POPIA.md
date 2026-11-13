@@ -266,6 +266,8 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   number) is removed a year later like any other. Library reports, printing and CSV downloads are for librarians only and logged.
 - Visitors who borrow are not added to the church's list: their name lives only on the loan, which is removed a year after
   the item came back. Lending to a visitor is written in the audit log (no name or number in the entry).
+- Administrators and librarians may also permanently purge a loan or a removed item and its linked loan records when needed.
+  The purge is recorded in the immutable audit log; the audit trail itself is not deleted.
 - What someone reads can say something about them, so who borrowed what is seen only by the librarians (Administrators
   and up to two people chosen by an Administrator or the Senior Pastor) and the borrower; everyone else sees only
   "On loan" (database rules, tested). Other loans are not written in the audit log. Choosing a librarian is logged.

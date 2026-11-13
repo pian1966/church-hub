@@ -35,6 +35,7 @@ var Library = (function () {
     return out;
   }
   function isOut(loan) { return !!loan && !loan.back; }
+  function isPending(loan) { return isOut(loan) && loan.status === 'pending'; }
   /** Loans not yet returned, the ones due first at the top. */
   function onLoan(loans) { return (loans || []).filter(isOut).sort(function (a, b) { return String(a.due || '').localeCompare(String(b.due || '')) || String(a.title || '').localeCompare(String(b.title || '')); }); }
   function overdue(loan, today) { return isOut(loan) && !!loan.due && loan.due < today; }
@@ -236,6 +237,47 @@ var Library = (function () {
   /** The categories in use, by name. */
   function cats(books) { var c = {}; (books || []).forEach(function (b) { if (b.cat) c[b.cat] = 1; }); return Object.keys(c).sort(function (a, b) { return a.localeCompare(b); }); }
   function isLibrarian(settings, pid, admin) { return !!admin || (!!pid && ((settings || {}).librarianIds || []).indexOf(pid) >= 0); }
+  function normalizedTitle(value) {
+    var title = String(value || '').toLowerCase();
+    if (title.normalize) title = title.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+    title = title.replace(/[^a-z0-9]+/g, ' ').trim().replace(/^(the|a|an)\s+/, '');
+    return title.replace(/\s+/g, ' ');
+  }
+  function editDistance(a, b) {
+    var row = Array.from({ length: b.length + 1 }, function (_, i) { return i; });
+    for (var i = 1; i <= a.length; i++) {
+      var prev = row[0]; row[0] = i;
+      for (var j = 1; j <= b.length; j++) {
+        var old = row[j];
+        row[j] = Math.min(row[j] + 1, row[j - 1] + 1, prev + (a[i - 1] === b[j - 1] ? 0 : 1));
+        prev = old;
+      }
+    }
+    return row[b.length];
+  }
+  function near(a, b) {
+    if (!a || !b) return false;
+    var longest = Math.max(a.length, b.length), tolerance = Math.min(2, Math.max(1, Math.floor(longest * 0.12)));
+    return editDistance(a, b) <= tolerance;
+  }
+  /** Suggested duplicate pairs: normalized titles/authors allow punctuation, articles and small spelling differences. */
+  function duplicatePairs(books, ignored) {
+    ignored = ignored || [];
+    var pairs = [];
+    (books || []).filter(inLibrary).forEach(function (a, i, all) {
+      all.slice(i + 1).forEach(function (b) {
+        var isbnA = String(a.isbn || '').replace(/[^0-9x]/gi, '').toLowerCase();
+        var isbnB = String(b.isbn || '').replace(/[^0-9x]/gi, '').toLowerCase();
+        var sameIsbn = isbnA && isbnB && isbnA === isbnB;
+        var titleA = normalizedTitle(a.title), titleB = normalizedTitle(b.title);
+        var authorA = normalizedTitle(a.author), authorB = normalizedTitle(b.author);
+        var match = sameIsbn || (near(titleA, titleB) && authorA && authorB && near(authorA, authorB));
+        var ids = [String(a.id || ''), String(b.id || '')].sort(), key = ids.join('::');
+        if (match && ids[0] && ids[1] && ignored.indexOf(key) < 0) pairs.push({ key: key, first: a, second: b });
+      });
+    });
+    return pairs;
+  }
   /** Is it time for the Administrator to review the librarians? Missing or invalid dates are due. */
   function librarianReviewDue(reviewedAt, current) {
     var reviewed = Date.parse(reviewedAt || ''), now = current == null ? Date.now() : Date.parse(current);
@@ -250,6 +292,6 @@ var Library = (function () {
   }
 
   return { intl: intl, REMIND_DAYS: REMIND_DAYS, daysOut: daysOut, remindDue: remindDue, REASONS: REASONS, lose: lose, removeItem: removeItem, restore: restore, inLibrary: inLibrary, report: report, reportRows: reportRows, csv: csv,
-    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, LIBRARIAN_REVIEW_DAYS: LIBRARIAN_REVIEW_DAYS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, librarianReviewDue: librarianReviewDue, policy: policy, addDays: addDays, book: book, isOut: isOut, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, repair: repair, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian };
+    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, LIBRARIAN_REVIEW_DAYS: LIBRARIAN_REVIEW_DAYS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, librarianReviewDue: librarianReviewDue, policy: policy, addDays: addDays, book: book, isOut: isOut, isPending: isPending, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, repair: repair, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian, duplicatePairs: duplicatePairs, normalizedTitle: normalizedTitle };
 })();
 if (typeof module !== 'undefined') module.exports = Library;

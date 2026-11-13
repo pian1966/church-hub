@@ -330,7 +330,13 @@ var Hub = (function () {
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
   function listed() { return enabled().filter(function (m) { return !m.inGroups && !m.inLibrary; }); }
   /** The kinds of group this person may open (Groups → its tabs), in menu order. */
-  function groupMods() { return modules.filter(function (m) { return m.inGroups && opens(m); }); }
+  function groupMods() {
+    var priority = { care: 0, life: 1, staffgroup: 2, leaders: 3 };
+    return modules.map(function (m, i) { return { module: m, index: i }; })
+      .filter(function (x) { return x.module.inGroups && opens(x.module); })
+      .sort(function (a, b) { return (priority[a.module.id] === undefined ? 100 : priority[a.module.id]) - (priority[b.module.id] === undefined ? 100 : priority[b.module.id]) || a.index - b.index; })
+      .map(function (x) { return x.module; });
+  }
 
   /* ---------- routing ---------- */
   function parts() { return (location.hash.replace(/^#\/?/, '') || 'home').split('/').map(decodeURIComponent); }

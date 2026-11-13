@@ -93,7 +93,7 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
     "ex officio" as a third kind of member (beside co-opted); a group's Chair or Secretary manages its members
   - ⬜ Archive: let a group's Secretary file its own minutes; a retention review (how long
     each category is kept, with a reminder)
-  - ⬜ Library: ask to borrow or reserve a book in the app; send the three-week reminder by BulkSMS from Church Hub itself
+  - ⬜ Library: send the three-week reminder by BulkSMS from Church Hub itself
   - ⬜ Library (0.52 follow-ups): fluent speakers to check the new Library words in the 19 further languages (drafted by AI);
     a text message (BulkSMS) to a borrower whose item is overdue, using the loan's mobile number; read the ISBN with the camera.
   - ⬜ Library (0.53 follow-ups): fluent speakers to check the 0.53 Library words (import, reports, lost) in the 19 further

@@ -314,3 +314,10 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   group follows staff status, and Administrators can manage additional groups and visibility. Archive documents can be
   selected for the membership application without exposing Archive notes or access settings; supported Google documents
   open in an in-app preview. Firestore rules and tests protect published documents and current-version file parts.
+- ✅ 13 Nov 2026 (0.65.0): **Library requests and catalogue tools** – members request available items with a reserved copy
+  while a librarian verifies; the existing Home reminder and Library badge alert librarians. Librarians can approve or
+  reject requests, review likely duplicates, standardize catalogue details or dismiss false matches, and search for
+  borrowers. Members can open a Google Books preview and search links; librarians can drop a small cover image or select
+  missing covers for online lookup. The policy is now a compact header action. Me calls out borrowed items and displays a
+  Librarian chip; Groups tabs now put Staff Group before Leadership. Database rules, language keys, help, architecture and
+  privacy notes were updated.

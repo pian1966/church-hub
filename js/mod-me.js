@@ -52,7 +52,8 @@
     var u = me(), p = S.get('people', u.id) || u, child = p.familyRole === 'child';
     var none = function (unknown) { return '<span class="muted">' + (unknown ? T('Not known') : '—') + '</span>'; };
     // The same chips staff see on their profile: Church Partner, staff, their care group(s) – not where the record came from
-    var chips = (window.PeopleParts ? PeopleParts.catTags(p) : '') + (window.LibraryUI ? LibraryUI.chip() : '');
+    var chips = (window.PeopleParts ? PeopleParts.catTags(p) : '') +
+      (window.LibraryUI ? LibraryUI.chip() + LibraryUI.roleChip() : '');
     var html = '<div class="me-who">' + H.avatar(p, 56) + '<div><h1>' + esc(H.name(p)) + '</h1>' + (chips ? '<div class="row me-chips">' + chips + '</div>' : '') +
       '<p class="lead">' + T('Keep your details up to date, so the church can reach you.') + '</p></div></div>' + tabs('');
     html += '<div class="grid2">';

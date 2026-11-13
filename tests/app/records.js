@@ -48,9 +48,10 @@ module.exports = async function (ctx) {
     'a group can be for its members only; someone whose time has ended moves to “Served before”');
 
   console.log('Staff and custom groups (Administrator):');
-  await s.go('groups'); t = await s.text();
+  await s.go('staffgroup'); t = await s.text();
   check(t.includes('Staff') && t.includes('Group settings') && (await s.page.$$eval('.custom-group', cards => cards.length)) >= 1,
-    'the built-in Staff group is present for the Administrator and lists staff from People');
+    'the Staff Group tab lists staff from People for the Administrator');
+  await s.go('groups');
   await s.page.click('[data-act="customgroups:create"]'); await s.page.fill('#cg-name', 'Church Council helpers');
   await s.page.fill('.cg-q[data-for="cg-members"]', 'tim jac'); await s.page.waitForTimeout(400); await s.page.click('.cg-hits[data-for="cg-members"] .cg-pick[data-id="p14"]');
   await s.page.selectOption('#cg-visibility', 'members'); await s.page.click('[data-act="customgroups:save"]'); await s.settle();
@@ -305,6 +306,8 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
   check(!docs[dvd] && !docs['loans/purge-admin-linked-history'], 'purging a removed book also removes its linked returned loan');
   const live = JSON.parse(JSON.stringify(docs));
+  live['books/checkout-approve'] = { kind: 'Book', title: 'Checkout approval test', author: 'A Writer', copies: 1, out: 0 };
+  live['books/checkout-reject'] = { kind: 'Book', title: 'Checkout rejection test', author: 'A Writer', copies: 1, out: 0 };
   await finish(s);
 
   console.log('Library cover lookup (Administrator):');
@@ -313,8 +316,40 @@ module.exports = async function (ctx) {
   coverSeed['books/cv-b'] = { kind: 'Book', title: 'Beta Missing', author: 'B Writer', copies: 1, out: 0 };
   coverSeed['books/cv-c'] = { kind: 'Book', title: 'Gamma Limited', author: 'C Writer', isbn: '9780000000003', copies: 1, out: 0 };
   coverSeed['books/cv-d'] = { kind: 'Book', title: 'Delta Skipped', author: 'D Writer', copies: 1, out: 0 };
+  coverSeed['books/cv-e'] = { kind: 'Book', title: 'The Alpha-Cover!', author: 'A Writer', copies: 1, out: 0 };
+  coverSeed['books/cv-f'] = { kind: 'Book', title: 'Beta Missing', author: 'B Writer', copies: 1, out: 0 };
+  coverSeed['books/cv-covered'] = { kind: 'Book', title: 'Already covered', author: 'A Writer', copies: 1, out: 0, cover: 'v1' };
+  coverSeed['covers/cv-covered'] = { data: 'data:image/jpeg;base64,' + PNG.buffer.toString('base64') };
   const covers = await session('linda.pillay@example.com', coverSeed);
   await covers.go('library');
+  await covers.page.click('[data-act="library:add"]'); await covers.page.waitForSelector('#lib-cover-drop');
+  await covers.page.fill('#lib-title', 'Dropped cover test');
+  await covers.page.evaluate(base64 => {
+    const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+    const file = new File([bytes], 'cover.png', { type: 'image/png' });
+    const data = new DataTransfer(); data.items.add(file);
+    document.getElementById('lib-cover-drop').dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: data }));
+  }, PNG.buffer.toString('base64'));
+  await covers.page.waitForSelector('#lib-cover-now img');
+  await covers.page.click('#modal [data-act="library:save"]'); await covers.settle(); docs = await covers.docsNow();
+  const dropped = find(docs, 'books', d => d.title === 'Dropped cover test');
+  check(!!dropped && /^data:image\/jpeg;base64,/.test(docs['covers/' + dropped.split('/')[1]].data), 'a dropped PNG cover is resized and stored with the new catalogue item');
+  await covers.page.click('[data-act="library:duplicates"]'); await covers.page.waitForSelector('#modal .lib-duplicate-pair');
+  check((await covers.page.textContent('#modal')).includes('The Alpha-Cover!') && (await covers.page.textContent('#modal')).includes('Alpha Cover'),
+    'Suggested Duplicates groups titles that differ by an article, punctuation and whitespace');
+  const alphaPair = await covers.page.getAttribute('#modal [data-act="library:duplicateedit"]', 'data-key');
+  await covers.page.click('#modal [data-act="library:duplicateedit"]');
+  await covers.page.fill('#lib-dup-title', 'Alpha Cover'); await covers.page.fill('#lib-dup-author', 'A Writer');
+  await covers.page.click('#modal [data-act="library:duplicatesave"]'); await covers.settle(); docs = await covers.docsNow();
+  check(docs['books/cv-a'].title === 'Alpha Cover' && docs['books/cv-e'].title === 'Alpha Cover' && !!alphaPair,
+    'a librarian can standardize matched catalogue details without merging their copies');
+  await covers.page.click('[data-act="library:duplicates"]'); await covers.page.waitForSelector('#modal .lib-duplicate-pair');
+  await covers.page.click('#modal [data-act="library:duplicateignore"][data-key="cv-b::cv-f"]'); await covers.settle();
+  docs = await covers.docsNow();
+  check(!!docs['libraryDuplicateIgnores/cv-a::cv-e'] && !!docs['libraryDuplicateIgnores/cv-b::cv-f'] &&
+    (await covers.page.textContent('#modal')).includes('No possible duplicates were found.'),
+    'a librarian can dismiss a false-positive pair so it no longer returns');
+  await covers.page.click('#modal [data-act="hub:close"]');
   await covers.page.route('https://www.googleapis.com/books/v1/volumes**', route => {
     const q = new URL(route.request().url()).searchParams.get('q') || '';
     if (q.includes('9780000000003')) return route.fulfill({
@@ -333,6 +368,11 @@ module.exports = async function (ctx) {
   await covers.page.route('https://books.google.com/books/content**', route => route.fulfill({
     status: 200, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' }, body: PNG.buffer
   }));
+  await covers.page.click('[data-act="library:coversselectmissing"]');
+  check(await covers.page.isChecked('[data-lib-select="cv-a"]') && !(await covers.page.isChecked('[data-lib-select="cv-covered"]')),
+    'the missing-cover filter selects books without disturbing existing covers');
+  const selectedIds = await covers.page.$$eval('[data-lib-select]:checked', inputs => inputs.map(input => input.dataset.libSelect).filter(id => id !== 'cv-a'));
+  for (const id of selectedIds) await covers.page.uncheck('[data-lib-select="' + id + '"]');
   await covers.page.check('[data-lib-select="cv-a"]');
   await covers.page.click('[data-act="library:coversselected"]');
   await covers.page.waitForSelector('#modal [data-act="library:coversave"][data-id="cv-a"]');
@@ -378,16 +418,73 @@ module.exports = async function (ctx) {
   await s.go('leaders'); t = await s.text();
   check(t.includes('Church Council') && t.includes('Tim Jacobs') && !(await s.page.$('#lb-new')) && !(await s.page.$('[data-act="leaders:seat"]')), 'sees their own leadership group (though it is for members only), and can’t change it');
   await s.go('library'); t = await s.text();
-  check(/My books[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*Book\s*On loan/.test(t), 'the Library shows the book they have out and when it is due – not the librarian’s tools');
+  check(/Library Items I've Borrowed[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*Book\s*On loan/.test(t), 'the Library uses the renamed borrowed-items heading and shows the due date – not the librarian’s tools');
   check(!(await s.page.$('#lib-covers-selected')) && !(await s.page.$('[data-act="library:coversall"]')) && !(await s.page.$('[data-lib-select]')), 'regular members cannot run book cover searches or save covers');
   check(!(await s.page.$('[data-act="library:purge"]')), 'a regular member has no Purge controls');
-  check(!!(await s.page.$('#lib-filter-kind')) && !!(await s.page.$('#lib-filter-title')) && !!(await s.page.$('#lib-filter-author')) && !!(await s.page.$('#lib-filter-cat')) && (await s.page.$$('[data-act="library:sort"]')).length === 4, 'everyone can filter and sort the library by media type, title, author and subject');
+  check(!!(await s.page.$('#lib-filter-kind')) && !!(await s.page.$('#lib-filter-title')) && !!(await s.page.$('#lib-filter-author')) && !!(await s.page.$('#lib-filter-cat')) && !(await s.page.$('#lib-filter-borrower')) && (await s.page.$$('[data-act="library:sort"]')).length === 4, 'everyone can filter and sort the catalogue while the borrower filter stays hidden');
   await s.page.selectOption('#lib-filter-kind', 'Book'); await s.page.fill('#lib-filter-title', 'Knowing God'); await s.page.fill('#lib-filter-author', 'J. I. Packer'); await s.page.fill('#lib-filter-cat', 'Theology');
   check(await s.page.isVisible('.lib-book[data-title="Knowing God"]') && await s.page.$$eval('.lib-book:not([hidden])', rows => rows.length) === 1, 'the catalogue filters on all four fields together');
   await s.page.selectOption('#lib-filter-kind', ''); await s.page.fill('#lib-filter-title', ''); await s.page.fill('#lib-filter-author', ''); await s.page.fill('#lib-filter-cat', '');
   await s.page.click('[data-act="library:sort"][data-k="author"]');
-  check((await s.page.$$eval('#lib-books .lib-book', rows => rows[0].dataset.title)) === 'Mere Christianity', 'the public catalogue sorts by the selected field');
-  check(t.includes('Library policy') && t.includes('Items are lent for three weeks.') && !(await s.page.$('[data-act="library:policy"]')), 'everyone can read the library’s policy; only librarians change it');
+  check(await s.page.$$eval('#lib-books .lib-book', rows => {
+    const authors = rows.map(row => row.dataset.author || '');
+    return authors.every((author, i) => !i || authors[i - 1].localeCompare(author, undefined, { sensitivity: 'base' }) <= 0);
+  }), 'the public catalogue sorts by the selected field');
+  check(t.includes('Library policy') && !!(await s.page.$('[data-act="library:policyread"]')) && !(await s.page.$('[data-act="library:policy"]')), 'the policy is available from a compact link; editing stays librarian-only');
+  await s.page.route('https://www.googleapis.com/books/v1/volumes**', route => route.fulfill({
+    status: 200, contentType: 'application/json',
+    body: JSON.stringify({ items: [{ volumeInfo: { title: 'Knowing God', authors: ['J. I. Packer'], publisher: 'Test Publisher',
+      publishedDate: '1973', description: 'A book information preview.' } }] })
+  }));
+  await s.page.click('[data-act="library:bookinfo"][data-id="' + bk + '"]');
+  await s.page.waitForFunction(() => document.querySelector('#lib-info-results h3') && document.querySelector('#lib-info-results').textContent.includes('Test Publisher'));
+  check(!!(await s.page.$('#modal a[href*="books.google.com/books?q="]')) && !!(await s.page.$('#modal a[href*="google.com/search?q="]')), 'View / Info shows Google Books details with exact-title search fallbacks');
+  await s.page.click('#modal [data-act="hub:close"]');
+  await s.page.click('[data-act="library:policyread"]'); await s.page.waitForSelector('#modal article.lib-doc');
+  check((await s.page.textContent('#modal')).includes('Items are lent for three weeks.'), 'the compact policy action opens the complete policy');
+  await s.page.click('#modal [data-act="hub:close"]');
+  await s.page.click('[data-act="library:request"][data-id="checkout-approve"]');
+  await s.page.waitForSelector('#modal [data-act="library:requestsubmit"]');
+  await s.page.click('#modal [data-act="library:requestsubmit"]'); await s.settle();
+  docs = await s.docsNow();
+  const approvalPath = find(docs, 'loans', loan => loan.bookId === 'checkout-approve');
+  check(!!approvalPath && docs[approvalPath].status === 'pending' && docs[approvalPath].personId === 'p14' &&
+    docs['books/checkout-approve'].out === 1 && (await s.text()).includes('Pending Verification'),
+    'self-service checkout reserves the copy and appears as pending for the borrower');
+  const competing = await session('clare.jacobs@example.com', docs);
+  const competingResult = await competing.page.evaluate(async () => {
+    try {
+      await Store.requestLibraryLoan('checkout-approve', { bookId: 'checkout-approve', title: 'Checkout approval test', personId: 'p15',
+        name: 'Clare Jacobs', mobile: Store.get('people', 'p15').mobile, visitor: false, out: Hub.today(), due: '2026-12-01', back: '', note: '' });
+      return 'claimed';
+    } catch (e) { return 'unavailable'; }
+  });
+  docs = await competing.docsNow();
+  check(competingResult === 'unavailable' && docs['books/checkout-approve'].out === 1 &&
+    Object.keys(docs).filter(k => /^loans\//.test(k) && docs[k].bookId === 'checkout-approve').length === 1,
+    'a second member cannot claim the last copy while the first request awaits verification');
+  await competing.close();
+  const approveReview = await session('megan.smith@example.com', docs);
+  await approveReview.go('home');
+  await approveReview.page.waitForFunction(() => document.querySelector('#app').textContent.includes('checkout request needs verification'));
+  check((await approveReview.text()).includes('checkout request needs verification'), 'the existing Home reminder notifies librarians of pending requests');
+  await approveReview.go('library'); await approveReview.page.waitForSelector('#lib-pending [data-act="library:verify"]');
+  await approveReview.page.click('#lib-pending [data-act="library:verify"][data-id="' + approvalPath.split('/')[1] + '"]'); await approveReview.settle();
+  docs = await approveReview.docsNow();
+  check(docs[approvalPath].status === 'approved' && docs['books/checkout-approve'].out === 1, 'librarian approval converts the pending claim to an active loan');
+  await approveReview.close();
+  await s.page.click('[data-act="library:request"][data-id="checkout-reject"]');
+  await s.page.waitForSelector('#modal [data-act="library:requestsubmit"]');
+  await s.page.click('#modal [data-act="library:requestsubmit"]'); await s.settle(); docs = await s.docsNow();
+  const rejectionPath = find(docs, 'loans', loan => loan.bookId === 'checkout-reject');
+  const rejectReview = await session('megan.smith@example.com', docs);
+  await rejectReview.go('library'); await rejectReview.page.waitForSelector('#lib-pending [data-act="library:reject"]');
+  const rejectButton = '#lib-pending [data-act="library:reject"][data-id="' + rejectionPath.split('/')[1] + '"]';
+  await rejectReview.page.click(rejectButton); await rejectReview.page.click(rejectButton); await rejectReview.settle();
+  docs = await rejectReview.docsNow();
+  check(docs[rejectionPath].status === 'rejected' && docs['books/checkout-reject'].out === 0,
+    'librarian rejection cancels the request and releases the reserved copy');
+  await rejectReview.close();
   await finish(s);
   console.log('The staff member a contract is about:');
   s = await as('lerato.khumalo@example.com');
@@ -404,6 +501,10 @@ module.exports = async function (ctx) {
     'a librarian cannot query, preview, or download archive contents directly');
   await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();
   check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && !!(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('[data-act="library:libs"]')), 'as a librarian sees who has which book and can add books (but not name librarians)');
+  check(!!(await s.page.$('#lib-filter-borrower')), 'a librarian can search the current borrowers');
+  await s.go('me'); t = await s.page.textContent('.me-chips');
+  check(t.includes('Librarian'), 'a librarian has a Librarian chip on the Me page');
+  await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();
   check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on borrowed records');
   await s.page.click('[data-act="library:back"][data-id="' + activeLoan.split('/')[1] + '"]'); await s.page.fill('#lib-backnote', 'Cover slightly torn'); await s.page.click('[data-act="library:backsave"]'); await s.settle(); docs = await s.docsNow(); t = await s.text();
   check(docs[activeLoan].back !== '' && docs[activeLoan].returnNote === 'Cover slightly torn', 'the return date and condition note are saved');
@@ -546,11 +647,12 @@ module.exports = async function (ctx) {
   check(t.includes('Friendly reminder: you have had “Mere Christianity” from the church library for 23 days') && !t.includes('The term of'), 'a friendly reminder on their To do list (terms of office are for the Administrators and the Rector)');
   await s.go('library'); t = await s.text();
   check(/Mere Christianity[\s\S]*had for 23 days[\s\S]*Friendly reminder/.test(t), 'the Library shows how long they have had it');
-  check(await s.page.isVisible('#lib-policy [data-act="library:policyread"]'), 'everyone who opens the Library can read the policy');
-  await s.page.click('#lib-policy [data-act="library:policyread"]'); await s.page.waitForTimeout(200);
-  check(((await s.page.textContent('#modal')) || '').includes('Three weeks at a time'), '…it opens as a page');
+  check(await s.page.isVisible('[data-act="library:policyread"]') && !(await s.page.$('#lib-policy')), 'everyone can open the compact Library policy link without a prominent policy block');
+  await s.page.click('[data-act="library:policyread"]'); await s.page.waitForSelector('#modal article.lib-doc');
+  check(((await s.page.textContent('#modal')) || '').includes('Three weeks at a time'), '…it opens in a policy view');
+  check((await s.page.textContent('#modal article.lib-doc h3')) === 'Borrowing' && (await s.page.$$('#modal article.lib-doc li')).length === 2 &&
+    (await s.page.textContent('#modal article.lib-doc b')) === 'Return it clean', 'the policy is formatted: a heading, a list, bold');
   await s.page.click('#modal [data-act="hub:close"]');
-  check((await s.page.textContent('#lib-policy .lib-doc h3')) === 'Borrowing' && (await s.page.$$('#lib-policy .lib-doc li')).length === 2 && (await s.page.textContent('#lib-policy .lib-doc b')) === 'Return it clean', 'the library policy is shown formatted: a heading, a list, bold');
   await s.go('leaders'); await s.page.click('a[href="#/messages/send/leaders/lbT"]'); await s.page.waitForSelector('#ms-body');
   check((await s.page.inputValue('#ms-to')) === 'leaders/lbT', 'a Council member can message the whole Council');
   await s.page.fill('#ms-body', 'Council meets on Thursday.'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForTimeout(300);

@@ -9,7 +9,7 @@ module.exports = async function (ctx) {
   console.log('Life groups (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
   check(!(await inGroups(s, 'life')), 'Life groups are off until an Administrator switches them on');
-  await s.go('settings/apps'); await s.page.check('.st-mod[value="life"]'); await s.settle();
+  await s.go('settings/apps'); await s.page.check('.st-mod[value="life"]'); await s.page.check('.st-mod[value="leaders"]'); await s.settle();
   docs = await s.docsNow();
   check(docs['settings/church'].modules.life === true && !!(await inGroups(s, 'life')), 'switched on under Settings → Apps: the Life groups page appears');
   await s.go('settings/terminology'); t = await s.page.textContent('main');
@@ -57,7 +57,7 @@ module.exports = async function (ctx) {
   const sum = await s.page.textContent('.lg-panel[data-g="' + gid + '"] details.cg-fold > summary');
   check(/1 leader\s*·\s*Tim Jacobs/.test(sum) && (await s.page.$$('.lg-panel[data-g="' + gid + '"] details.cg-fold')).length === 2, 'the group folds like a care group: its leaders’ names show, the other members in a second fold');
   check(!(await s.page.$('aside a[href="#/life"]')) && !(await s.page.$('aside a[href="#/care"]')) && !!(await s.page.$('aside a[href="#/groups"]')), 'the menu has one Groups entry instead of one for each kind of group');
-  check(await s.page.$$eval('.groups-tabs a', a => a.map(x => x.getAttribute('href')).join()) === '#/groups,#/care,#/life' && !!(await s.page.$('aside a.on[href="#/groups"]')), 'Midweek Groups is a tab under Groups (with My groups and Care Groups), and Groups is lit in the menu');
+  check(await s.page.$$eval('.groups-tabs a', a => a.map(x => x.getAttribute('href')).join()) === '#/groups,#/care,#/life,#/staffgroup,#/leaders' && !!(await s.page.$('aside a.on[href="#/groups"]')), 'Groups tabs appear in order: My Groups, Care Groups, Midweek Groups, Staff Group, Leadership');
   await s.go('groups'); t = await s.text();
   check(!!(await s.page.$('.groups-tabs a.on[href="#/groups"]')) && t.includes('My groups'), 'Groups opens on My groups');
   await s.go('care'); t = await s.text();

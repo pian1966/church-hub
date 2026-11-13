@@ -2906,6 +2906,7 @@ I18n.add('tn', {
     "No checkouts are waiting for verification.": "No checkouts are waiting for verification.",
     "Select books missing covers": "Select books missing covers",
     "Borrower": "Borrower",
+    "All Borrowers": "Bakalimi botlhe",
     "ISBN / Code": "ISBN / Code",
     "Copies / Status": "Copies / Status",
     "Standardize matched items": "Standardize matched items",

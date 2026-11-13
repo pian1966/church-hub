@@ -13,6 +13,7 @@ I18n.rows([
     ["On loan", "Uitgeleen", "Ibolekiwe", "Ibolekiwe"],
     ["On Loan", "Uitgeleen", "Ibolekiwe", "Ibolekiwe"],
     ["All", "Alles", "Konke", "Konke"],
+    ["All Borrowers", "Alle leners", "Bonke ababolekayo", "Bonke ababoleki"],
     ["Being Repaired", "Word herstel", "Kuyalungiswa", "Iyalungiswa"],
     ["Permanently Removed", "Permanent verwyder", "Kususwe unomphela", "Kususwe ngokusisigxina"],
     ["Back from repair", "Terug van herstel", "Ibuya ekulungisweni", "Ibuya ekulungisweni"],

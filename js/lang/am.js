@@ -811,6 +811,8 @@ I18n.add('am', {
     "About {name}": "ስለ {name}",
     "Shown to {name}": "ለ{name} ይታያል",
     "Download": "አውርድ",
+    "Download file": "ፋይሉን አውርድ",
+    "Inline preview is not available for this file type": "ለዚህ የፋይል አይነት ቅድመ እይታ አይገኝም",
     "Open the link": "አገናኙን ክፈት",
     "Nothing filed yet for: {months}": "እስካሁን ምንም አልተቀመጠም ለ፦ {months}",
     "Archive": "መዝገብ ቤት",

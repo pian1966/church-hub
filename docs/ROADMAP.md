@@ -91,7 +91,7 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   Archive files inside the app. Follow-ups:
   - ⬜ Leadership (0.54 follow-ups): also send the term-of-office notice as an email to the Administrators and the Rector;
     "ex officio" as a third kind of member (beside co-opted); a group's Chair or Secretary manages its members
-  - ⬜ Archive: let a group's Secretary file its own minutes; open a PDF inside Church Hub; a retention review (how long
+  - ⬜ Archive: let a group's Secretary file its own minutes; a retention review (how long
     each category is kept, with a reminder); a "What Pastors can do" tick for managing the Archive
   - ⬜ Library: ask to borrow or reserve a book in the app; send the three-week reminder by BulkSMS from Church Hub itself
   - ⬜ Library (0.52 follow-ups): fluent speakers to check the new Library words in the 19 further languages (drafted by AI);

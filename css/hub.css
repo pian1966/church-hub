@@ -238,6 +238,22 @@ a.stat { color: var(--ink); text-decoration: none; } a.stat:hover { border-color
 .dlg-h h2 { margin: 0; font-size: 19px; } .dlg-h p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 .dlg-body { padding: 10px 20px; }
 .dlg-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding: 12px 20px 18px; border-top: 1px solid var(--line-2); margin-top: 6px; }
+.dialog.ar-preview-dialog { display: flex; flex-direction: column; width: min(1000px, 100%); height: min(850px, calc(100vh - 32px)); overflow: hidden; }
+.ar-preview-body { display: flex; flex: 1; flex-direction: column; min-height: 0; overflow: auto; }
+.ar-preview-meta { flex: none; margin: 0 0 10px; color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.ar-preview-frame { flex: 1; width: 100%; min-height: 360px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); }
+.ar-preview-image-wrap { display: grid; flex: 1; min-height: 0; place-items: center; overflow: auto; background: var(--surface-2); border: 1px solid var(--line); border-radius: 10px; }
+.ar-preview-image { display: block; max-width: 100%; max-height: 68vh; object-fit: contain; }
+.ar-preview-text { flex: 1; max-height: 68vh; overflow: auto; margin: 0; padding: 14px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2); color: var(--ink); white-space: pre-wrap; overflow-wrap: anywhere; font: 14px/1.55 ui-monospace, SFMono-Regular, Menlo, monospace; }
+.ar-preview-text.rich { font: inherit; }
+.ar-preview-unsupported { display: grid; justify-items: start; gap: 14px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+.ar-preview-unsupported p { margin: 0; }
+@media (max-width: 600px) {
+  .overlay:has(.ar-preview-dialog) { padding: 8px; }
+  .dialog.ar-preview-dialog { height: calc(100vh - 16px); max-height: calc(100vh - 16px); border-radius: 14px; }
+  .ar-preview-frame { min-height: 0; }
+  .ar-preview-image { max-height: 60vh; }
+}
 .cards.in-dialog { padding: 10px 20px 4px; }
 .toast { visibility: hidden; opacity: 0; position: fixed; left: 50%; bottom: 24px; transform: translate(-50%, 140%); background: #1D1B19; color: #fff; padding: 12px 18px; border-radius: 12px; font-weight: 600; font-size: 14px; z-index: 60; transition: transform .25s, opacity .25s; max-width: calc(100% - 32px); }
 .toast.show { visibility: visible; opacity: 1; transform: translate(-50%, 0); } .toast.bad { background: var(--bad); }

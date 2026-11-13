@@ -811,6 +811,8 @@ I18n.add('ts', {
     "About {name}": "Mayelana na {name}",
     "Shown to {name}": "Yi kombiwa {name}",
     "Download": "Dawuniloda",
+    "Download file": "Dawuniloda fayili",
+    "Inline preview is not available for this file type": "Xivono xa le mahlweni a xi kumeki hi muxaka lowu wa fayili",
     "Open the link": "Pfula linki",
     "Nothing filed yet for: {months}": "A ku si nghenisiwa nchumu wa: {months}",
     "Archive": "Vuhlayiselo bya tirhekhodo",

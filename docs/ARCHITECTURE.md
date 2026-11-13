@@ -601,12 +601,15 @@ plans, Staff contracts, Annual appraisals, Other), a date, and a file or a link.
   of my groups, and (Pastors) `access == office`. The same function gives a librarian who isn't an Administrator every loan.
 - **Files** are kept in Firestore, not Firebase Storage (nothing extra for a church to set up): the file as base64, cut
   into parts of 900 000 letters (`archive/{id}/parts/{n}`; a document holds 1 MB), at most 15 MB (`Archive.MAX`); bigger
-  files are linked. Parts are written before the record and fetched only on Download (`Store.saveFile` / `loadFile`), and
-  follow the record's read rule. The demo keeps files in memory only. Downloads use the browser, or
+  files are linked. Parts are written before the record and fetched on Download (`Store.saveFile` / `loadFile`), following
+  the record's read rule. A separate copy (`archivePreviews/{id}/parts/{n}`) is available only to Administrators and
+  Council members, and only for records they may already see; its rules protect direct requests. Existing files are
+  copied into this area the first time an authorized user previews them. Council membership is kept in step with
+  Leadership by `Store`. The demo keeps files in memory only. Downloads use the browser, or
   `ChurchHubApp.saveFileBase64(name, type, base64)` in the Android app (older apps: "please update").
-- Opening a record that isn't for everyone (download or link) is written in the audit log. Council minutes: the Archive
+- Opening a record that isn't for everyone (download, preview or link) is written in the audit log. Council minutes: the Archive
   lists this year's months with nothing filed, counted from the first minutes ever filed (`Archive.missingMonths`).
-Not built yet: letting a group's secretary file its own minutes; reading a file inside Church Hub; a retention review.
+Not built yet: letting a group's secretary file its own minutes; a retention review.
 
 ## Library (Library page; `js/library.js`, `js/mod-library.js`)
 **0.53:** items are never deleted except "added by mistake": taking one out sets `removed` (date), `why` (`Library.REASONS`:

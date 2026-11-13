@@ -811,6 +811,8 @@ I18n.add('sn', {
     "About {name}": "Nezva {name}",
     "Shown to {name}": "Zvinoratidzwa {name}",
     "Download": "Dhawunirodha",
+    "Download file": "Dhawunirodha faira",
+    "Inline preview is not available for this file type": "Ongororo yemukati haiwanikwi pamhando yefaira iyi",
     "Open the link": "Vhura chinongedzo",
     "Nothing filed yet for: {months}": "Hapana chati chaiswa che: {months}",
     "Archive": "Dura rezvinyorwa",

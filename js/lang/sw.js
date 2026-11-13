@@ -811,6 +811,8 @@ I18n.add('sw', {
     "About {name}": "Kuhusu {name}",
     "Shown to {name}": "Inaonyeshwa kwa {name}",
     "Download": "Pakua",
+    "Download file": "Pakua faili",
+    "Inline preview is not available for this file type": "Hakikisho la ndani halipatikani kwa aina hii ya faili",
     "Open the link": "Fungua kiungo",
     "Nothing filed yet for: {months}": "Bado hakuna kilichohifadhiwa kwa: {months}",
     "Archive": "Hifadhi ya kumbukumbu",

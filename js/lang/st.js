@@ -811,6 +811,8 @@ I18n.add('st', {
     "About {name}": "Mabapi le {name}",
     "Shown to {name}": "E bontshwa {name}",
     "Download": "Jarolla",
+    "Download file": "Jarolla faele",
+    "Inline preview is not available for this file type": "Ponahalo ea ka hare ha e fumanehe bakeng sa mofuta ona oa faele",
     "Open the link": "Bula sehokelo",
     "Nothing filed yet for: {months}": "Ha ho letho le kentsweng bakeng sa: {months}",
     "Archive": "Polokelo ya direkoto",

@@ -301,3 +301,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   handled without losing earlier matches. Administrators and the Senior Pastor can appoint any number of librarians, all
   with full library permissions. Administrators are reminded every 180 days to review the list and can confirm it or edit
   appointments. Added translations, Library help and privacy/architecture notes.
+- ✅ 13 Nov 2026 (0.62.0): **Archive previews** – Administrators can preview archive files, and Council members can preview
+  records they may already see. PDFs, images and text/Markdown/CSV display inline; other formats offer a clear download
+  option. A separate Firestore copy and role rules protect direct preview requests without changing normal downloads;
+  restricted previews are audit-logged.

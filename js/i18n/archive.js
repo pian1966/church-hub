@@ -13,6 +13,8 @@ I18n.rows([
     ["About {name}", "Oor {name}", "Mayelana no-{name}", "Malunga no-{name}"],
     ["Shown to {name}", "Gewys aan {name}", "Kuboniswa u-{name}", "Iboniswa u-{name}"],
     ["Download", "Laai af", "Landa", "Khuphela"],
+    ["Download file", "Laai lêer af", "Landa ifayela", "Khuphela ifayile"],
+    ["Inline preview is not available for this file type", "Voorskou binne die toepassing is nie vir hierdie lêertipe beskikbaar nie", "Ukuhlola ngaphakathi akutholakali kulolu hlobo lwefayela", "Ukujonga ngaphakathi akufumaneki kolu hlobo lwefayile"],
     ["Open the link", "Maak die skakel oop", "Vula isixhumanisi", "Vula ikhonkco"],
     ["Nothing filed yet for: {months}", "Nog niks geliasseer vir: {months}", "Akukafakwa lutho lwalezi zinyanga: {months}", "Akukafakwa nto yezi nyanga: {months}"],
     ["Archive", "Argief", "Ingobo yomlando", "Uvimba weerekhodi"],

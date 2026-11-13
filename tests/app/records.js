@@ -9,6 +9,19 @@ module.exports = async function (ctx) {
   const find = (d, coll, fn) => Object.keys(d).find(k => new RegExp('^' + coll + '/[^/]+$').test(k) && fn(d[k]));
   const b64 = PNG.buffer.toString('base64');
   const on = seed => { seed['settings/church'].modules = Object.assign({}, seed['settings/church'].modules, { leaders: true, archive: true, library: true }); return seed; };
+  const deniedPreview = async (x, id) => {
+    const before = (await x.denied()).length;
+    const code = await x.page.evaluate(async fileId => {
+      try { await Store.loadArchivePreview(fileId, 1); return ''; }
+      catch (e) { return e.code || ''; }
+    }, id);
+    const request = 'get archivePreviews/' + id + '/parts/0', denied = await x.denied();
+    const found = denied.indexOf(request, before);
+    if (found >= 0) await x.page.evaluate(path => {
+      const i = window.__fake.denied.indexOf(path); if (i >= 0) window.__fake.denied.splice(i, 1);
+    }, request);
+    return code === 'permission-denied' && found >= 0;
+  };
 
   console.log('Leadership (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('home');
@@ -62,6 +75,29 @@ module.exports = async function (ctx) {
   const [dl] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="archive:open"][data-id="' + ar + '"]')]);
   const got = ctx.fs.readFileSync(await dl.path()); await s.settle(); docs = await s.docsNow();
   check(dl.suggestedFilename() === 'face.png' && got.equals(PNG.buffer), 'the file downloads as it was added');
+  check(!!docs['archivePreviews/' + ar + '/parts/0'] && docs['archivePreviews/' + ar + '/parts/0'].data === b64, 'the restricted preview copy is saved separately from the normal download');
+  check(await s.page.isVisible('[data-act="archive:preview"][data-id="' + ar + '"]'), 'an Administrator can preview an archive file');
+  await s.page.click('[data-act="archive:preview"][data-id="' + ar + '"]'); await s.page.waitForSelector('#modal .ar-preview-image');
+  check(await s.page.isVisible('#modal .ar-preview-image') && (await s.page.getAttribute('#modal .ar-preview-image', 'alt')) === 'Council minutes – October', 'an image opens in the inline preview with the record title');
+  await s.page.click('#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay')); await s.settle();
+  docs = await s.docsNow();
+  check(Object.keys(docs).some(k => /^audit\//.test(k) && /Previewed the archive record “Council minutes – October”/.test(docs[k].action)), 'previewing a restricted archive record is written in the audit log');
+
+  const previewFile = async (title, file, selector, text) => {
+    await s.page.click('[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
+    await s.page.selectOption('#ar-cat', 'plans'); await s.page.fill('#ar-title', title); await s.page.setInputFiles('#ar-file', file);
+    await s.page.click('[data-act="archive:save"]'); await s.settle();
+    const stored = await s.docsNow(), k = find(stored, 'archive', d => d.title === title), id = k.split('/')[1];
+    await s.page.click('[data-act="archive:preview"][data-id="' + id + '"]'); await s.page.waitForSelector('#modal ' + selector);
+    const shown = await s.page.textContent('#modal');
+    check(shown.includes(text), title + ' uses its inline preview format');
+    await s.page.click('#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  };
+  await previewFile('Preview PDF', { name: 'plans.pdf', mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\n%%EOF') }, '.ar-preview-frame', 'Preview PDF');
+  await previewFile('Preview notes', { name: 'notes.md', mimeType: 'text/markdown', buffer: Buffer.from('# Readable notes\n\nA short paragraph.') }, '.ar-preview-text.rich', 'Readable notes');
+  await previewFile('Preview table', { name: 'table.csv', mimeType: 'text/csv', buffer: Buffer.from('Month,Meeting\nOctober,Council') }, 'pre.ar-preview-text', 'October,Council');
+  await previewFile('Preview spreadsheet', { name: 'table.xlsx', mimeType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', buffer: Buffer.from('not a real workbook') }, '.ar-preview-unsupported', 'Inline preview is not available for this file type');
+  docs = await s.docsNow();
   check(Object.keys(docs).some(k => /^audit\//.test(k) && /Opened the archive record “Council minutes – October”/.test(docs[k].action)), 'opening a record that isn’t for everyone is written in the audit log');
   await s.page.fill('#ar-q', 'hall'); await s.page.waitForTimeout(100);
   check(await s.page.isVisible('.ar-item:has-text("Hall extension plans")') && await s.page.isHidden('.ar-item:has-text("Contract of employment")'), 'searching the archive');
@@ -258,6 +294,10 @@ module.exports = async function (ctx) {
   console.log('A Council member (Basic access):');
   s = await as('tim.jacobs@example.com');
   check((await sees(s)) === 'yn' && !(await s.page.$('[data-act="archive:add"]')) && !(await s.page.$('[data-act="archive:edit"]')), 'sees the Council’s minutes, not the staff contract, and can’t add or change records');
+  check(await s.page.isVisible('[data-act="archive:preview"][data-id="' + ar + '"]'), 'a Council member can preview a record they are allowed to see');
+  await s.page.click('[data-act="archive:preview"][data-id="' + ar + '"]'); await s.page.waitForSelector('#modal .ar-preview-image');
+  await s.page.click('#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  check(await s.page.evaluate(async id => { try { await Store.loadArchivePreview(id, 1); return true; } catch (e) { return false; } }, ar), 'the Council member can request the restricted preview data directly');
   const [dl2] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="archive:open"][data-id="' + ar + '"]')]);
   check(ctx.fs.readFileSync(await dl2.path()).equals(PNG.buffer), 'and can download them');
   await s.go('leaders'); t = await s.text();
@@ -277,12 +317,16 @@ module.exports = async function (ctx) {
   console.log('The staff member a contract is about:');
   s = await as('lerato.khumalo@example.com');
   check((await sees(s)) === 'ny', 'sees their own contract, not the Council’s minutes');
+  check(!(await s.page.$('[data-act="archive:preview"]')) && await deniedPreview(s, ar),
+  'a standard member sees no Preview button and a direct preview request is denied');
   await s.go('leaders'); t = await s.text();
   check(!t.includes('Church Council') && t.includes('No leadership groups yet.'), 'a members-only leadership group is hidden from everyone else');
   await finish(s);
   console.log('Someone else (Basic access), who is a librarian:');
   s = await as('megan.smith@example.com');
   check((await sees(s)) === 'nn' && !(await s.page.$('nav a[href="#/archive"]')), 'sees no records – the Archive isn’t on their menu at all');
+  check(await deniedPreview(s, ar),
+    'a librarian is denied a direct request to the preview data');
   await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();
   check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && !!(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('[data-act="library:libs"]')), 'as a librarian sees who has which book and can add books (but not name librarians)');
   check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on borrowed records');

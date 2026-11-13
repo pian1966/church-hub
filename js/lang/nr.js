@@ -811,6 +811,8 @@ I18n.add('nr', {
     "About {name}": "Malungana no-{name}",
     "Shown to {name}": "Kutjengiswa u-{name}",
     "Download": "Landa",
+    "Download file": "Landa ifayili",
+    "Inline preview is not available for this file type": "Ukuqala ukubona ngaphakathi akutholakali kolu hlobo lwefayili",
     "Open the link": "Vula isixhumanisi",
     "Nothing filed yet for: {months}": "Akukafakwa litho lalezi nyanga: {months}",
     "Archive": "Ibulungelo lamarekhodi",

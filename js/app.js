@@ -26,7 +26,10 @@ var Hub = (function () {
   /** POPIA: children's medical notes are for Children's ministry only and pastoral notes for Pastors only –
    *  not even Administrators see them (the database rules enforce the same). */
   var RESTRICTED = ['medical', 'notes'];
-  function roleLabel(r) { return T((ROLES[r] || ROLES.member).label); }
+  function roleLabel(r) {
+    if (r === 'admin' && typeof Wording !== 'undefined') return Wording.words(Store.settings() || {}).admin[0];
+    return T((ROLES[r] || ROLES.member).label);
+  }
   /** The Senior Pastor (Rector), chosen by an Administrator in Settings → What Pastors can do: a Pastor with their own abilities. */
   function seniorId() { return (Store.settings() || {}).seniorPastorId || ''; }
   function isSenior(p) { return !!p && !!seniorId() && p.id === seniorId() && (p.appRole || 'member') === 'pastor' && p.active !== false; }

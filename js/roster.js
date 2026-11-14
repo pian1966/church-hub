@@ -14,7 +14,8 @@
  *   people:       [{ id, firstName, lastName, active }]
  *   positions:    [{ id, teamId, name, needed, times }]           needed = people per service; times = the services it runs at
  *                                                                  (e.g. ['08:00']; empty or missing = every service)
- *   skills:       [{ personId, positionId, frequency, times }]     frequency: 'weekly' | 'fortnightly' | 'monthly' | 'occasional';
+ *   skills:       [{ personId, positionId, frequency, times }]     new frequency: 'weekly' | 'monthly' | 'emergency';
+ *                                                                  legacy 'fortnightly' and 'occasional' remain readable;
  *                                                                  times = the services they serve at (empty or missing = any)
  *   services:     [{ id, date, time, name, slot }]                 slot = the regular service (time + venue); missing = time
  *   specialSlots: ['good-friday', …]                               slots that are special services: only positions naming them run there
@@ -25,7 +26,7 @@
 var RosterCore = (function () {
   'use strict';
 
-  var FREQ_DAYS = { weekly: 7, fortnightly: 14, monthly: 28, occasional: 56 };
+  var FREQ_DAYS = { weekly: 7, fortnightly: 14, monthly: 28, occasional: 56, emergency: 56 };
   /** Texts people see, in their language when the app has one (I18n); plain English in tests. */
   function T(s, v) {
     if (typeof I18n !== 'undefined' && I18n.t) return I18n.t(s, v);
@@ -96,6 +97,7 @@ var RosterCore = (function () {
       var p = people[personId];
       if (!p || p.active === false) return T('not active');
       if (!skillFor(personId, positionId)) return T('not on this team');
+      if (skillFor(personId, positionId).frequency === 'emergency' && !opts.emergency) return T('only available in emergencies');
       var kt = skillFor(personId, positionId).times;
       if (kt && kt.length && slotOf(svc) && kt.indexOf(slotOf(svc)) < 0) return T('serves at other services');
       var away = awayReason(data, personId, svc.date); if (away) return away;
@@ -145,7 +147,9 @@ var RosterCore = (function () {
     }
 
     function add(svc, personId, positionId, reason) {
-      var a = { id: 'auto-' + svc.id + '-' + (++seq), serviceId: svc.id, positionId: positionId, personId: personId, status: 'pending', source: 'auto', reason: reason };
+      var emergency = opts.emergency && skillFor(personId, positionId).frequency === 'emergency';
+      var a = { id: 'auto-' + svc.id + '-' + (++seq), serviceId: svc.id, positionId: positionId, personId: personId, status: 'pending',
+        source: emergency ? 'emergency' : 'auto', reason: emergency ? T('Emergency volunteer') : reason };
       all.push(a); added.push(a);
     }
 

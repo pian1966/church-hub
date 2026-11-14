@@ -106,7 +106,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `noCollect` | people **not allowed to collect** a child (e.g. a court order): { childId, personId \| name, note } – restricted, every view logged |
 | `consents` | per person and purpose: given/withdrawn, date, how, recorded by, guardian for children. Also what they'd **like to receive** (weekly notices by email, prayer needs and missionary updates by WhatsApp or email, "Who is Jesus" on WhatsApp) – a choice never ticked isn't recorded |
 | `notes` | pastoral notes (restricted) |
-| `teams`, `positions`, `skills` | departments, positions and who serves where, how often (`frequency`) and at which services (`times`, service ids such as ["08:00","10:00"] or "09:30@hilton-hall"; empty = every service). The regular services are `settings.serviceSlots` – { id, label, day, time, venue } – set in Settings → Services and venues (8am, 10am and 5pm until changed); a roster `service` carries its `slot` and `venue`. A position's `times` are the services it runs at (Creche Duty only at 08:00; Memorial Teas: `memorial`). Rosters → Teams adds the church's 8 departments and 26 positions in one click (`js/serving.js`); a person's **Volunteering** (People) writes their `skills`. Each slot may also carry `theme` (Serving.THEMES: colour and picture), `moods` (words) and `special: true` (special services: Memorial, Christmas, Maundy Thursday, Tenebrae, Good Friday, Easter Sunday, Ascension and the church's own, with `feast` = its name in Serving.specials for the next date; only positions that name it run there, also in RosterCore via `specialSlots`; `removed: true` hides one), chosen under **Rosters → Services**, which also switches positions on and off per service (`Serving.toggleTimes`; `['none']` = no service). Me → Serving shows the services first, then their departments and positions (`Serving.structure`) |
+| `teams`, `positions`, `skills` | departments, positions and who serves where, how often (`frequency`: `weekly`, `monthly` or emergency-only; older `fortnightly` and `occasional` records remain readable) and at which services (`times`, service ids such as ["08:00","10:00"] or "09:30@hilton-hall"; empty = every service). Away days are excluded from asks and rosters. The regular services are `settings.serviceSlots` – { id, label, day, time, venue } – set in Settings → Services and venues (8am, 10am and 5pm until changed); a roster `service` carries its `slot` and `venue`. A position's `times` are the services it runs at (Creche Duty only at 08:00; Memorial Teas: `memorial`). Rosters → Teams adds the church's 8 departments and 26 positions in one click (`js/serving.js`); a person's **Volunteering** (People) writes their `skills`. Each slot may also carry `theme` (Serving.THEMES: colour and picture), `moods` (words) and `special: true` (special services: Memorial, Christmas, Maundy Thursday, Tenebrae, Good Friday, Easter Sunday, Ascension and the church's own, with `feast` = its name in Serving.specials for the next date; only positions that name it run there, also in RosterCore via `specialSlots`; `removed: true` hides one), chosen under **Rosters → Services**, which also switches positions on and off per service (`Serving.toggleTimes`; `['none']` = no service). Me → Serving shows the services first, then their departments and positions (`Serving.structure`) |
 | `services` | dates and times of services/events needing a roster |
 | `assignments` | person × position × service, status pending/accepted/declined, why |
 | `groups` | serve **together** (must/prefer) or keep **apart** |
@@ -117,7 +117,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | `breaches` | security-compromise register (POPIA s22) |
 | `audit` | who viewed or changed sensitive information, and when |
 | `wordIdeas` | suggested better wording: { lang, en (the English text), text, note, personId, name, status waiting\|used\|declined, reply, reviewedBy, reviewedAt } |
-| `messages` | a message to a group or chosen people: { kind care\|group\|staff\|partners\|people, groupId, audience (its name, or the one chosen person's), some (only some of a group), title, body, fromId, fromName, to: [personIds worked out when sent], readBy: [personIds] } – see Messages below |
+| `messages` | a message to the Office, a group or chosen people: { kind office\|care\|group\|staff\|partners\|people, groupId, audience (its name, or the one chosen person's), some (only some of a group), title, body, fromId, fromName, to: [personIds worked out when sent; empty for Office], deliveredBy: [personIds], readBy: [personIds] } – see Messages below |
 | `msgGroups` | message groups (e.g. Worship team leaders): { name, memberIds, leaderIds, names } – Administrators and Pastors manage them |
 | `leaderBodies` | a leadership group (Council, elders…): { name, open, memberIds, names, seats: { personId: { role, title, portfolios, kind: elected\|coopted\|other, kindOther, from, to } }, past: [served before] } – see Leadership below |
 | `customGroups` | Administrator-managed groups: { name, description, memberIds, visibility: church\|members }; the built-in Staff group is derived from staff status, not stored here |
@@ -447,6 +447,8 @@ Later: direct import through the Elvanto API (server side, with the church's API
   Presbyterian/Reformed, Baptist, Pentecostal, Lutheran) and any word renamed (`settings.wording = { set, custom }`).
   `app.js` changes the words in what is shown (text nodes and titles/placeholders, after every render, in dialogs and
   messages) – in English only; stored values never change (`Church Partner` in the database shows as "Parishioner").
+  The Administrator title has ready choices (Administrator, Church Administrator, Operations Manager, Secretary) and
+  custom wording. Ministry-role suggestions are selected by church tradition and saved separately as `settings.ministerRoles`.
   Text inside `data-own-words` (people's notes, the wording panel itself) is left alone.
 - **Privacy law** (`js/privacy-law.js`): from the church's country – POPIA (ZA), GDPR (EU/EEA, with each country's
   authority; Germany notes church data protection law), UK GDPR (ICO), FADP (CH), PIPEDA (CA), Privacy Act (AU, NZ),
@@ -559,7 +561,9 @@ people marked as staff (including the older Staff category); it is not a second 
   they are in, with Carer / Group leader – the same as adding them from a group's page.
 
 ## Messages (Messages page; `js/messages.js`, `js/mod-messages.js`)
-- Audiences (`Msg.audiences`, tested): Administrators and Pastors – **Chosen people** (ticked one by one on a checklist of
+- Audiences (`Msg.audiences`, tested): anyone signed in may write to the **Office**; those messages have `kind: 'office'`
+  and an empty `to` list, so no staff or recipient list is disclosed. Administrators and Pastors receive them through their
+  existing full message query and can reply directly to the sender. They may also write to **Chosen people** (ticked one by one on a checklist of
   adults still in the church; "Send a message" on a person's page opens it with them ticked, `#/messages/send/people/<id>`), **Staff** (people with staff details), **Church Partners**
   (active adults), every care group and every message group; carers – their own care group; message-group leaders – their
   own group; anyone on a leadership group – that group (`kind: 'leaders'`, `groupId` = the `leaderBodies` id, `to` its
@@ -568,13 +572,16 @@ people marked as staff (including the older Staff category); it is not a second 
   group later doesn't see older messages, and the rules can check each reader.
 - Loading (`plan()` in `js/store.js`): Administrators and Pastors load all `messages` and `msgGroups`; everyone else the
   messages where `to` contains them, the ones they sent (`fromId`), and the message groups they are in.
-- Reading: opening the inbox (while the app is on screen) adds the person to `readBy` with `arrayUnion` (`Store.markRead`),
-  the only change the rules let a receiver make. Unread messages give a count on the Messages menu entry and phone tab
-  (a module's `badge()` in `js/app.js`) and a Home to-do. Not while an Administrator uses "View as".
-- Writing (Messages → Write, or `#/messages/send/<kind>/<groupId>` – carers get a button on their Me page): a confirmation
+- Reading: when a recipient's device receives a message, it adds them to `deliveredBy`; opening it (while the app is on
+  screen) adds them to `readBy` with `arrayUnion` (`Store.markDelivered`, `Store.markRead`). The rules allow only a recipient
+  to add their own status; Office staff can add theirs for Office messages. Unread messages give a count on the Messages
+  menu entry and phone tab (a module's `badge()` in `js/app.js`) and a Home to-do. Not while an Administrator uses "View as".
+- Writing (Messages → Write, or `#/messages/send/<kind>/<groupId>` – carers get a button on their Me page): the Office is
+  always offered, including to members; a confirmation
   with how many it goes to; Administrators and Pastors also see how many of them can't sign in yet. Rules: `firestore.rules`
   (messages, msgGroups) check the sender, that a carer or leader writes only to people in their group, and the sizes.
-- Sent → "Read by n of m" opens to the names of who has and hasn't opened it (`Msg.readers`).
+- Sent → "Read by n of m" opens to the names of who has and hasn't opened a group message (`Msg.readers`). The sender sees
+  grey sent, orange delivered and green read ticks as status changes.
 - Not yet: phone notifications when the app is closed, email/SMS fallback, replies (see ROADMAP Phase 5).
 
 ## Leadership (Leadership page; `js/leaders.js`, `js/mod-leaders.js`)
@@ -708,6 +715,10 @@ When an Administrator saves it, `Store.syncPastors()` copies the list onto every
 except `pastorCan`; with "access" they give and take away only Basic access, Roster coordinator and Children's ministry,
 never Administrator or Pastor, and never abilities. Medical notes stay with Children's ministry whatever is ticked.
 `plan()` in `js/store.js`, the POLICY in `tests/fake-firebase.js` and `tests/rules.test.mjs` follow the same ticks.
+
+`settings.ministerRoles` saves the suggested ministry titles for the selected tradition (for example Rector and Curate in
+Anglican churches, Parish Priest in Catholic churches, and Pastor or Elder in other traditions). These are role labels only;
+they do not grant app access or alter each person's permissions.
 
 **Senior Pastor (Rector) and Assistant Pastors.** An Administrator may choose one Pastor as Senior Pastor
 (`settings.seniorPastorId`), who then gets their own ticks (`settings.seniorCan`); `pastorCan` becomes the other Pastors'

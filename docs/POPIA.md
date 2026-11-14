@@ -212,14 +212,17 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
 - Purpose: keeping in touch with the people the church cares for (notices, care-group and team news). Basis: the church's
   legitimate interest – a message goes only to a group the person belongs to (their care group, a message group an
   Administrator or Pastor put them in, the staff, or the Church Partners), or to people an Administrator or Pastor chose one by
-  one (they already see everyone's contact details). No new personal information is collected:
-  a message holds the sender's name, the text, the people it went to (record numbers only) and who has opened it.
+  one (they already see everyone's contact details). Anyone signed in may also send to the Office; only Administrators and
+  Pastors read and reply to those messages. No new personal information is collected: a message holds the sender's name, the
+  text, the people it went to (record numbers only), and who received or opened it.
 - Who may read: the people it went to, its sender, Administrators and Pastors (database rules, tested). Members load only
   their own; the list of who opened it is shown only to the sender, Administrators and Pastors. People can't change a message
-  they received, only mark it as opened.
-- Who may send: Administrators and Pastors to any group or to people they tick; carers to their own care group; group leaders
+  they received, only mark it as delivered or opened. Office messages are shared with Administrators and Pastors, not with
+  other members.
+- Who may send: anyone signed in to the Office; Administrators and Pastors to any group or to people they tick; carers to their own care group; group leaders
   to their own group; anyone on a leadership group (e.g. the Council) to that group.
-- Who has read it: the sender (and Administrators and Pastors) see the names of who has opened a message and who hasn't
+- Status: the sender sees a grey tick when saved, orange when delivered to a recipient's inbox, and green when opened.
+  For ordinary group messages, the sender (and Administrators and Pastors) can also see who has opened it and who hasn't
   (Sent → Read by …). The names come from records the sender may already see, or the group's own list of names.
   Sending and deleting are in the audit log (to whom and how many – not what the message says). The Write page asks people
   not to put private or medical details in a message to a group.

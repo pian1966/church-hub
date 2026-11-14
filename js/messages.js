@@ -6,9 +6,10 @@
  *   staff    everyone on the staff (people with staff details)   – Administrators and Pastors only
  *   partners every Church Partner (adults)                       – Administrators and Pastors only
  *   people   people chosen one by one from a checklist           – Administrators and Pastors only
+ *   office   the church office channel                            – any signed-in person; Administrators and Pastors receive it
  * Anyone sending to a group may also tick only some of its people (some: true); carers and leaders still only reach
  * people in their own group.
- * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, title, body, fromId, fromName, to: [personIds], readBy: [personIds] }
+ * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, title, body, fromId, fromName, to: [personIds], deliveredBy: [personIds], readBy: [personIds] }
  * msgGroups/{id} = { name, memberIds, leaderIds, names: { personId: name } } – leaders are members too; names so leaders who
  *   aren't staff can tick people when writing.
  * The list of people (to) is worked out when the message is sent, so someone who joins a group later doesn't see older
@@ -18,7 +19,7 @@
  */
 var Msg = (function () {
   'use strict';
-  var KINDS = ['care', 'life', 'group', 'leaders', 'staff', 'partners', 'people'];
+  var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people'];
   var MAX_BODY = 4000, MAX_TITLE = 120;
 
   function alive(p) {
@@ -34,6 +35,7 @@ var Msg = (function () {
    *  who may be chosen (adults still in the church). */
   function recipients(kind, groupId, d) {
     d = d || {};
+    if (kind === 'office') return [];
     if (kind === 'staff') return (d.people || []).filter(function (p) { return alive(p) && !!p.staff; }).map(function (p) { return p.id; });
     if (kind === 'people') return (d.people || []).filter(alive).map(function (p) { return p.id; });
     if (kind === 'partners') return (d.people || []).filter(function (p) { return alive(p) && p.category === 'Church Partner'; }).map(function (p) { return p.id; });
@@ -47,7 +49,7 @@ var Msg = (function () {
    * who = { id, manager (Administrator or Pastor) }; names of care groups and message groups as stored.
    */
   function audiences(who, d) {
-    d = d || {}; var out = [], name = function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); };
+    d = d || {}; var out = [{ kind: 'office', groupId: '', name: 'Office' }], name = function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); };
     if (who.manager) { out.push({ kind: 'people', groupId: '', name: 'Chosen people' }); out.push({ kind: 'staff', groupId: '', name: 'Staff' }); out.push({ kind: 'partners', groupId: '', name: 'Church Partners' }); }
     (d.careGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'care', groupId: g.id, name: g.name }); });
     (d.lifeGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'life', groupId: g.id, name: g.name }); });
@@ -58,6 +60,7 @@ var Msg = (function () {
   /** May this person send to this audience? (The database rules check the same.) */
   function maySend(who, kind, groupId, d) {
     if (KINDS.indexOf(kind) < 0) return false;
+    if (kind === 'office') return true;
     if (who.manager) return true;
     if (kind === 'care') return leads(byId((d || {}).careGroups, groupId), who.id);
     if (kind === 'life') return leads(byId((d || {}).lifeGroups, groupId), who.id);
@@ -73,27 +76,34 @@ var Msg = (function () {
     if (!body) return { error: 'empty' };
     if (body.length > MAX_BODY) return { error: 'long' };
     var all = recipients(a.kind, a.groupId, d), to = all, some = false;
-    if (a.kind === 'people' || chosen) {
+    if (a.kind === 'office') to = [];
+    if (a.kind !== 'office' && (a.kind === 'people' || chosen)) {
       var want = {}; (chosen || []).forEach(function (id) { want[id] = 1; });
       to = all.filter(function (id) { return want[id]; });
       some = a.kind !== 'people' && to.length < all.length;
       if (!to.length) return { error: all.length ? 'none' : 'nobody' };
     }
-    if (!to.length) return { error: 'nobody' };
+    if (a.kind !== 'office' && !to.length) return { error: 'nobody' };
     var m = { kind: a.kind, groupId: a.groupId || '', audience: a.name || '', title: title.slice(0, MAX_TITLE), body: body,
-      fromId: from.id, fromName: nameOf(from), to: to, readBy: [from.id] };
+      fromId: from.id, fromName: nameOf(from), to: to, deliveredBy: [from.id], readBy: [from.id] };
     if (a.kind === 'people') m.audience = to.length === 1 ? nameOf(byId(d.people, to[0]) || {}) : '';
     if (some) m.some = true;
     return m;
   }
 
   function newestFirst(a, b) { return String(a.createdAt || '') < String(b.createdAt || '') ? 1 : String(a.createdAt || '') > String(b.createdAt || '') ? -1 : 0; }
-  /** Messages sent to this person, newest first. */
-  function inbox(messages, pid) { return (messages || []).filter(function (m) { return (m.to || []).indexOf(pid) >= 0; }).sort(newestFirst); }
+  /** Messages sent to this person, newest first; managers also receive the Office channel. */
+  function inbox(messages, pid, office) { return (messages || []).filter(function (m) { return (m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office' && m.fromId !== pid); }).sort(newestFirst); }
   /** Messages this person sent (or, for Administrators and Pastors, everyone's: all = true), newest first. */
   function sent(messages, pid, all) { return (messages || []).filter(function (m) { return all || m.fromId === pid; }).sort(newestFirst); }
-  function isUnread(m, pid) { return (m.to || []).indexOf(pid) >= 0 && m.fromId !== pid && (m.readBy || []).indexOf(pid) < 0; }
-  function unread(messages, pid) { return (messages || []).filter(function (m) { return isUnread(m, pid); }); }
+  function isUnread(m, pid, office) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office')) && m.fromId !== pid && (m.readBy || []).indexOf(pid) < 0; }
+  function unread(messages, pid, office) { return (messages || []).filter(function (m) { return isUnread(m, pid, office); }); }
+  /** Delivery state for a sent message, based on the first recipient who got or opened it. */
+  function status(m) {
+    var delivered = (m.deliveredBy || []).some(function (id) { return id !== m.fromId; });
+    var read = (m.readBy || []).some(function (id) { return id !== m.fromId; });
+    return read ? 'read' : delivered ? 'delivered' : 'sent';
+  }
   /** How many of the people it went to have opened it (the sender doesn't count). */
   function seen(m) {
     var to = (m.to || []).filter(function (x) { return x !== m.fromId; });
@@ -129,6 +139,6 @@ var Msg = (function () {
   }
 
   return { KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
-    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
+    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();
 if (typeof module !== 'undefined') module.exports = Msg;

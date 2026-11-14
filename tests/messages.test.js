@@ -29,18 +29,21 @@ ok(M.recipients('group', 'nope', d).length === 0 && M.recipients('odd', '', d).l
 
 console.log('Who may send to whom');
 const pastor = { id: 'a', manager: true }, carer = { id: 'c', manager: false }, leader = { id: 'b', manager: false }, member = { id: 'd', manager: false };
-ok(M.audiences(pastor, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'people:Chosen people,staff:Staff,partners:Church Partners,care:cg1,life:lg1,group:mg2,group:mg1', 'Administrators and Pastors: chosen people, staff, Church Partners, every care group, life group and message group (by name)');
-ok(M.audiences(carer, d).map(x => x.groupId).join() === 'cg1', 'a carer: only their own care group');
-ok(M.audiences(leader, d).map(x => x.groupId).join() === 'mg1', 'a group leader: only their own group');
-ok(M.audiences(member, d).map(x => x.kind + ':' + x.groupId).join() === 'life:lg1', 'a life group leader: only their own life group');
-ok(M.audiences({ id: 'h', manager: false }, d).length === 0, 'a member: nobody');
+ok(M.audiences(pastor, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'office:Office,people:Chosen people,staff:Staff,partners:Church Partners,care:cg1,life:lg1,group:mg2,group:mg1', 'Administrators and Pastors: Office, chosen people, staff, Church Partners, every care group, life group and message group (by name)');
+ok(M.audiences(carer, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'office:Office,care:cg1', 'a carer: Office and their own care group');
+ok(M.audiences(leader, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'office:Office,group:mg1', 'a group leader: Office and their own group');
+ok(M.audiences(member, d).map(x => x.kind + ':' + (x.groupId || x.name)).join() === 'office:Office,life:lg1', 'a life group leader: Office and their own life group');
+ok(M.audiences({ id: 'h', manager: false }, d).map(x => x.kind).join() === 'office', 'every signed-in member can message the Office');
 ok(M.maySend(member, 'life', 'lg1', d) && !M.maySend(carer, 'life', 'lg1', d), 'a life group\u2019s leader may send to it; others may not');
+ok(M.maySend(member, 'office', '', d), 'any signed-in member may send to the Office');
 ok(!M.maySend(carer, 'people', '', d) && M.maySend(pastor, 'people', '', d), 'only Administrators and Pastors choose people one by one');
 ok(M.maySend(carer, 'care', 'cg1', d) && !M.maySend(carer, 'staff', '', d) && !M.maySend(member, 'care', 'cg1', d) && !M.maySend(leader, 'group', 'mg2', d) && M.maySend(pastor, 'partners', '', d) && !M.maySend(pastor, 'everyone', '', d), 'maySend agrees');
 
 console.log('Writing a message');
 const m = M.make({ kind: 'care', groupId: 'cg1', name: 'Hilton' }, '  Tuesday  ', '  Bring a plate, please. ', people[2], d);
-ok(m.kind === 'care' && m.audience === 'Hilton' && m.title === 'Tuesday' && m.body === 'Bring a plate, please.' && m.fromId === 'c' && m.fromName === 'Cara Smit' && m.to.join() === 'c,d' && m.readBy.join() === 'c', 'a message: who to, from whom, already read by the sender');
+ok(m.kind === 'care' && m.audience === 'Hilton' && m.title === 'Tuesday' && m.body === 'Bring a plate, please.' && m.fromId === 'c' && m.fromName === 'Cara Smit' && m.to.join() === 'c,d' && m.deliveredBy.join() === 'c' && m.readBy.join() === 'c', 'a message: who to, from whom, already delivered to and read by the sender');
+const office = M.make({ kind: 'office', name: 'Office' }, '', 'Could someone call me?', people[3], d);
+ok(office.kind === 'office' && office.to.length === 0 && office.fromId === 'd' && office.deliveredBy.join() === 'd' && office.readBy.join() === 'd', 'an Office message is saved as a shared channel message, sent by the member');
 ok(M.make({ kind: 'care', groupId: 'cg1' }, 'x', '  ', people[2], d).error === 'empty', 'an empty message is refused');
 ok(M.make({ kind: 'care', groupId: 'cg1' }, '', 'x'.repeat(M.MAX_BODY + 1), people[2], d).error === 'long', 'a very long one is refused');
 ok(M.make({ kind: 'group', groupId: 'none' }, '', 'Hi', people[0], d).error === 'nobody', 'and one to nobody');
@@ -63,11 +66,16 @@ console.log('Reading');
 const msgs = [
   Object.assign({ id: 'm1', createdAt: '2026-11-01 08:00' }, m),
   { id: 'm2', createdAt: '2026-11-03 09:00', fromId: 'a', to: ['a', 'b', 'd'], readBy: ['a', 'b'] },
-  { id: 'm3', createdAt: '2026-11-02 09:00', fromId: 'a', to: ['b'], readBy: ['a'] }
+  { id: 'm3', createdAt: '2026-11-02 09:00', fromId: 'a', to: ['b'], readBy: ['a'] },
+  { id: 'office', createdAt: '2026-11-04 09:00', kind: 'office', fromId: 'd', to: [], deliveredBy: ['d'], readBy: ['d'] }
 ];
 ok(M.inbox(msgs, 'd').map(x => x.id).join() === 'm2,m1' && M.inbox(msgs, 'h').length === 0, 'the inbox: messages sent to me, newest first');
-ok(M.unread(msgs, 'd').map(x => x.id).join() === 'm1,m2' && M.unread(msgs, 'b').map(x => x.id).join() === 'm3' && M.unread(msgs, 'c').length === 0, 'unread: not opened yet, and never my own');
-ok(M.sent(msgs, 'a').map(x => x.id).join() === 'm2,m3' && M.sent(msgs, 'x', true).length === 3, 'sent: mine, or everyone’s for Administrators and Pastors');
+ok(M.inbox(msgs, 'a', true).some(x => x.id === 'office') && M.inbox(msgs, 'b', false).every(x => x.kind !== 'office'), 'only the Office staff inbox includes the shared Office channel');
+ok(M.unread(msgs, 'd').map(x => x.id).join() === 'm1,m2' && M.unread(msgs, 'b').map(x => x.id).join() === 'm3' && M.unread(msgs, 'c').length === 0 && M.unread(msgs, 'a', true).some(x => x.id === 'office'), 'unread: not opened yet, including Office messages for staff, and never my own');
+ok(M.sent(msgs, 'a').map(x => x.id).join() === 'm2,m3' && M.sent(msgs, 'x', true).length === 4, 'sent: mine, or everyone’s for Administrators and Pastors');
+ok(M.status({ fromId: 'a', deliveredBy: ['a'], readBy: ['a'] }) === 'sent'
+  && M.status({ fromId: 'a', deliveredBy: ['a', 'b'], readBy: ['a'] }) === 'delivered'
+  && M.status({ fromId: 'a', deliveredBy: ['a', 'b'], readBy: ['a', 'b'] }) === 'read', 'status progresses from sent to delivered to read');
 ok(JSON.stringify(M.seen(msgs[1])) === '{"of":2,"n":1}', 'seen by 1 of 2 (the sender doesn’t count)');
 ok(M.inApp(['a', 'b', 'c', 'd', 'x'], people).join() === 'a,b', 'who can open it in the app: signs in, with an email address');
 ok(M.mayDelete(msgs[0], carer) && !M.mayDelete(msgs[0], member) && M.mayDelete(msgs[1], pastor), 'the sender, Administrators and Pastors may delete a message');

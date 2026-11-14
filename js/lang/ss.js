@@ -889,6 +889,7 @@ I18n.add('ss', {
     "{n} book": "{n} incwadzi",
     "{n} books": "{n} tincwadzi",
     "Lent {date}": "Ibolekwe ngamhla ti-{date}",
+    "Borrowed on": "Ibolekwe ngamhla ti-",
     "Returned": "Ibuyisiwe",
     "Nothing on loan.": "Kute lokubolekiwe.",
     "Recently returned": "Letisandza kubuyiswa",

@@ -889,6 +889,7 @@ I18n.add('yo', {
     "{n} book": "Ìwé {n}",
     "{n} books": "Àwọn ìwé {n}",
     "Lent {date}": "A yá a jáde ní {date}",
+    "Borrowed on": "A yá a jáde ní",
     "Returned": "A ti dá a padà",
     "Nothing on loan.": "Kò sí ohun tí a yá jáde.",
     "Recently returned": "Àwọn tí a dá padà láìpẹ́",

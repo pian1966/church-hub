@@ -889,6 +889,7 @@ I18n.add('ts', {
     "{n} book": "Buku yi {n}",
     "{n} books": "Tibuku ta {n}",
     "Lent {date}": "Yi lombiwile hi {date}",
+    "Borrowed on": "Yi lombiwile hi",
     "Returned": "Yi vuyisiwile",
     "Nothing on loan.": "A ku na lexi lombiweke.",
     "Recently returned": "Leti ta ha ku vuyisiwaka",

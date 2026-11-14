@@ -518,6 +518,7 @@ I18n.add('en-US', {
     "{n} book": "{n} book",
     "{n} books": "{n} books",
     "Lent {date}": "Lent {date}",
+    "Borrowed on": "Borrowed on",
     "Returned": "Returned",
     "Nothing on loan.": "Nothing on loan.",
     "Recently returned": "Recently returned",

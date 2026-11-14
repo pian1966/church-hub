@@ -889,6 +889,7 @@ I18n.add('ve', {
     "{n} book": "Bugu i {n}",
     "{n} books": "Bugu dza {n}",
     "Lent {date}": "Yo hadzimwa nga {date}",
+    "Borrowed on": "Yo hadzimwa nga",
     "Returned": "Yo vhuiswa",
     "Nothing on loan.": "A hu na tsho hadzimwaho.",
     "Recently returned": "Dze dza kha ḓi tou bva u vhuiswa",

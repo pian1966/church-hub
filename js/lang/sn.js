@@ -889,6 +889,7 @@ I18n.add('sn', {
     "{n} book": "Bhuku {n}",
     "{n} books": "Mabhuku {n}",
     "Lent {date}": "Rakakweretwa musi wa {date}",
+    "Borrowed on": "Rakakweretwa musi wa",
     "Returned": "Radzoswa",
     "Nothing on loan.": "Hapana chakakweretwa.",
     "Recently returned": "Achangodzoswa",

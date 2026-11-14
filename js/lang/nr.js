@@ -889,6 +889,7 @@ I18n.add('nr', {
     "{n} book": "{n} incwadi",
     "{n} books": "{n} iincwadi",
     "Lent {date}": "Ibolekwe ngomhla ka-{date}",
+    "Borrowed on": "Ibolekwe ngomhla ka-",
     "Returned": "Ibuyisiwe",
     "Nothing on loan.": "Akukho okubolekiweko.",
     "Recently returned": "Ezisanda ukubuyiswa",

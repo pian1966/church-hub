@@ -100,6 +100,7 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
     languages (drafted by AI); importing from an Excel file directly (today: save it as CSV first).
   - ⬜ Library (0.61): fluent speakers to check the new cover-search, librarian-management and review-reminder wording in
     the 19 further languages (drafted by AI).
+  - ⬜ Library (0.67): fluent speakers to check the new borrower-date label in the 19 further languages.
   - ⬜ Library: the church's own loan period
   - ⬜ Church Words (Terminology) for "Council", "Leadership" and "Library", and demo data for the three pages
   - ⬜ Fluent speakers to check the new wording in every language (drafted by Claude), including the 0.54 words (terms of

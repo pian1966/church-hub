@@ -889,6 +889,7 @@ I18n.add('sw', {
     "{n} book": "Kitabu {n}",
     "{n} books": "Vitabu {n}",
     "Lent {date}": "Kiliazimwa {date}",
+    "Borrowed on": "Kiliazimwa",
     "Returned": "Kimerudishwa",
     "Nothing on loan.": "Hakuna kilichoazimwa.",
     "Recently returned": "Vilivyorudishwa karibuni",

@@ -189,14 +189,23 @@ module.exports = async function (ctx) {
   check(await s.page.$eval('#lib-filter-borrower', el => el.value) === 'All Borrowers' &&
     !!(await s.page.$('#lib-borrowers option[value="Tim Jacobs"]')), 'the borrower filter defaults to All Borrowers and suggests names with books checked out');
   await s.page.fill('#lib-filter-borrower', 'JAC');
-  check(await s.page.isVisible('.lib-out-loan') && await s.page.isVisible('[data-act="library:borrowerclear"]'),
+  check(await s.page.isVisible('.lib-out-loan') && await s.page.isVisible('[data-act="library:filtersclear"]'),
     'typing part of a surname, in any case, keeps that borrower’s checkout visible and offers a clear button');
   await s.page.fill('#lib-filter-borrower', 'TIM');
   check(await s.page.isVisible('.lib-out-loan'), 'a partial first-name search also finds the checked-out book');
   await s.page.fill('#lib-filter-borrower', 'not a borrower');
   check(await s.page.isHidden('.lib-out-loan') && (await s.page.textContent('#lib-out-count')).includes('0'),
     'a borrower search with no match hides checked-out books and updates the count');
-  await s.page.click('[data-act="library:borrowerclear"]');
+  check(!!(await s.page.$('#lib-filter-borrowed')) && (await s.page.$$('[data-act="library:sort"]')).length === 6,
+    'librarians can filter by date borrowed and sort by borrower or date borrowed as well as catalogue details');
+  await s.page.click('[data-act="library:filtersclear"]');
+  await s.page.fill('#lib-filter-borrowed', docs[loan].out);
+  check(await s.page.isVisible('.lib-out-loan'), 'the borrowed date filters the checkout');
+  check(await s.page.isVisible('.lib-book[data-title="Knowing God"]'), 'the borrowed date filters its catalogue item');
+  await s.page.fill('#lib-filter-borrowed', '2020-01-01');
+  check(await s.page.isHidden('.lib-out-loan') && await s.page.isHidden('.lib-book[data-title="Knowing God"]'),
+    'a borrowed date with no match hides those records');
+  await s.page.click('[data-act="library:filtersclear"]');
   check(await s.page.$eval('#lib-filter-borrower', el => el.value) === 'All Borrowers' &&
     await s.page.isVisible('.lib-out-loan'), 'clearing the borrower filter restores all checked-out books');
   check(await s.page.isDisabled('[data-act="library:repair"][data-id="' + bk + '"]'), 'a borrowed item cannot be marked for repair');
@@ -229,6 +238,24 @@ module.exports = async function (ctx) {
   await s.page.fill('#lib-vmob', '072 555 0101'); await s.page.click('[data-act="library:lendvisitor"]'); await s.settle();
   docs = await s.docsNow(); const vl = find(docs, 'loans', d => d.bookId === dv); t = await s.text();
   check(!!vl && docs[vl].personId === '' && docs[vl].visitor === true && docs[vl].name === 'Jane Visitor' && docs[vl].mobile === '072 555 0101' && /Jane Visitor\s*Visitor\s*·\s*072 555 0101/.test(t), 'someone not on the church’s list borrows it with their name and mobile number');
+  await s.page.evaluate(async ids => {
+    const dates = [Library.addDays(Hub.today(), -3), Library.addDays(Hub.today(), -1)];
+    for (let i = 0; i < ids.length; i++) {
+      const record = Store.get('loans', ids[i]); record.out = dates[i];
+      await Store.put('loans', record, 'Test library sorting');
+    }
+  }, [loan.split('/')[1], vl.split('/')[1]]);
+  await s.settle();
+  await s.page.click('[data-act="library:sort"][data-k="borrowed"]');
+  check(await s.page.$$eval('.lib-out-loan', rows => {
+    const dates = rows.map(row => row.dataset.borrowed);
+    return dates.length === 2 && dates[0] < dates[1];
+  }), 'the borrowed list sorts by date borrowed');
+  await s.page.click('[data-act="library:sort"][data-k="borrower"]');
+  check(await s.page.$$eval('.lib-out-loan', rows => {
+    const names = rows.map(row => row.dataset.borrower);
+    return names.length === 2 && names[0] < names[1];
+  }), 'the borrowed list sorts by borrower');
   check(!!loan && !!docs[loan].mobile && docs[loan].mobile === docs['people/p14'].mobile, 'a church member’s loan carries the mobile number on their record');
   await s.page.click('[data-act="library:back"][data-id="' + vl.split('/')[1] + '"]'); await s.page.fill('#lib-backnote', 'Case replaced'); await s.page.click('[data-act="library:backsave"]'); await s.settle(); docs = await s.docsNow();
   check(docs[vl].back !== '' && docs[vl].mobile === '' && docs[vl].returnNote === 'Case replaced', 'when it comes back, a condition note is kept and the mobile number is cleared');
@@ -242,6 +269,10 @@ module.exports = async function (ctx) {
   check(docs[loan].lost === true && !!docs[loan].back && !!docs[loan].mobile && docs[key].removed && docs[key].why === 'Lost' && !/Knowing God\s*(Available|On loan)/.test(await s.text()), 'the only copy marked lost: kept on the loan with the mobile number, and the item leaves the shelf');
   await s.page.click('[data-act="library:tab"][data-tab="lost"]');
   check(await s.page.isVisible('.lib-gone-item[data-removed="lost"]'), 'the Lost tab shows lost items');
+  await s.page.fill('#lib-filter-borrower', 'tim');
+  await s.page.fill('#lib-filter-borrowed', docs[loan].out);
+  check(await s.page.isVisible('.lib-gone-item[data-removed="lost"]'), 'the Lost tab filters by the borrower and original date borrowed');
+  await s.page.click('[data-act="library:filtersclear"]');
   await s.page.click('[data-act="library:putback"][data-id="' + bk + '"]'); await s.settle(); docs = await s.docsNow();
   await s.page.click('[data-act="library:tab"][data-tab="all"]');
   check(!docs[key].removed && /Knowing God\s*Book\s*Available/.test(await s.text()), 'it can be put back if it turns up');
@@ -505,8 +536,8 @@ module.exports = async function (ctx) {
   check(!(await s.page.$('[data-act="archive:preview"]')) && await deniedPreview(s, ar) && await deniedArchive(s, ar),
   'a standard member cannot preview, query, or download archive contents directly');
   await s.go('library');
-  check(!(await s.page.$('#lib-filter-borrower')) && !(await s.page.$('#lib-borrowers')),
-    'a regular member does not see the borrower filter or its borrower suggestions');
+  check(!(await s.page.$('#lib-filter-borrower')) && !(await s.page.$('#lib-filter-borrowed')) && !(await s.page.$('#lib-borrowers')),
+    'a regular member does not see borrower or borrowed-date filters or borrower suggestions');
   await s.go('leaders'); t = await s.text();
   check(!t.includes('Church Council') && t.includes('No leadership groups yet.'), 'a members-only leadership group is hidden from everyone else');
   await finish(s);
@@ -517,7 +548,8 @@ module.exports = async function (ctx) {
     'a librarian cannot query, preview, or download archive contents directly');
   await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();
   check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && !!(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('[data-act="library:libs"]')), 'as a librarian sees who has which book and can add books (but not name librarians)');
-  check(!!(await s.page.$('#lib-filter-borrower')), 'a librarian can search the current borrowers');
+  check(!!(await s.page.$('#lib-filter-borrower')) && !!(await s.page.$('#lib-filter-borrowed')),
+    'a librarian can search the current borrowers and filter by date borrowed');
   await s.go('me'); t = await s.page.textContent('.me-chips');
   check(t.includes('Librarian'), 'a librarian has a Librarian chip on the Me page');
   await s.go('library'); await s.page.waitForTimeout(400); t = await s.text();

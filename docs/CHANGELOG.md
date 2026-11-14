@@ -338,4 +338,9 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
     Church groups heading once; Staff Group page without a box in a box.
   - Settings: "Ministry roles the church uses" moved from What Pastors can do to Terminology (it is wording, not access).
   - The notebook sync workflow uses a fixed version of its tool.
+- ✅ 14 Nov 2026 (0.69.1): Library **View / Info** works again – Google Books is often "busy" (apps without their own key
+  share a small daily allowance), so book details and covers now come from **Open Library** (free, no key) when Google
+  can't help; the search no longer runs title and author together into one phrase, and a wrong author in the catalogue no
+  longer hides a book with the right title. Rows: "Added" before the date, no "Book" label on every book (only DVDs etc.),
+  and tick boxes only while choosing books for covers (More → Select books missing covers, with Cancel).
 

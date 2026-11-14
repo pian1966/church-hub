@@ -728,6 +728,6 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); const sentKey = find(docs, 'messages', d => d.body === 'Council meets on Thursday.');
   check(!!sentKey && docs[sentKey].kind === 'leaders' && docs[sentKey].to.join() === 'p14,p15', 'it goes to everyone on the Council');
   await s.go('messages/sent'); await click(s, 'details.msg-read > summary'); t = await s.text();
-  check(/Read by 0 of 1[\s\S]*Not read yet\s*Clare Jacobs/.test(t), 'the sender sees who has read it and who hasn’t');
+  check(/Read by 0 of 1[\s\S]*Not delivered yet\s*Clare Jacobs/.test(t), 'the sender sees who has read it and who hasn’t');
   await finish(s);
 };

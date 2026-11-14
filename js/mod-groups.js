@@ -34,7 +34,7 @@
   function render() {
     var html = (window.CareUI ? CareUI.mePanel() : '') + (window.LifeUI ? LifeUI.mePanel() : '') + (window.LeadersUI && LeadersUI.mePanel ? LeadersUI.mePanel() : '') +
       (window.CustomGroupsUI ? CustomGroupsUI.section() : '');
-    return tabs('groups') + '<div class="page-head"><div><h1>' + esc(label()) + '</h1><p class="lead">' + T('The groups you are in. The tabs above show every group you may see.') + '</p></div></div>' +
+    return tabs('groups') + '<div class="page-head"><div><h1>' + esc(label()) + '</h1><p class="lead">' + T('The groups you are in. The tabs show every group you may see.') + '</p></div></div>' +
       (html || '<p class="empty">' + T('You’re not in a group yet.') + '</p>');
   }
 

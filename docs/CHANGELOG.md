@@ -324,3 +324,18 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 13 Nov 2026 (0.66.0): Librarians and Administrators can filter checked-out items by borrower name.
 - ✅ 13 Nov 2026 (0.67.0): Librarians and Administrators can filter and sort books in each library status by title, author, subject, borrower and date borrowed. Borrower and loan-date filters stay hidden from other members.
 - ✅ 14 Nov 2026 (0.68.0): Settings now offers tradition-aware ministry-role suggestions and Administrator titles (Church Administrator, Operations Manager, Secretary, or custom wording). Serving choices are weekly, monthly or emergency-only, with away-day guidance and emergency-only volunteers excluded from regular fills. Every signed-in person can message the Office; Administrators and Pastors receive and can reply, and senders see sent, delivered and read ticks. The Firestore rules, translations, tests, brochure and privacy/architecture notes were updated.
+- ✅ 14 Nov 2026 (0.69.0): **review of the week's work** –
+  - Security (Archive): Council members can now only change, delete or attach files to records they may see, and can't
+    open up a private record (e.g. a staff contract) to themselves; a preview must be an exact copy of the record's file;
+    archive access is tied to real membership of the Council (a Pastor can't add themself to the hidden list); a Senior
+    Pastor on the Council sees private records, as documented. **Re-publish the rules.**
+  - Library: one main button and a **More** menu (import, reports, duplicates, covers, librarians, policy); Library /
+    Archives as the usual tabs; one toolbar for status, search and sorting (search folded away until used); empty sections
+    and empty status tabs hidden; a single "nothing yet" message; occasional row actions (repair, take out, lost, purge)
+    in a small ⋯ menu; sentence-case wording.
+  - Everywhere: no blue frame round the page after moving between screens; the initials picture stays round; "View as…"
+    moved into the side menu; the appearance choice no longer cut off; Groups tabs under the title like every page;
+    Church groups heading once; Staff Group page without a box in a box.
+  - Settings: "Ministry roles the church uses" moved from What Pastors can do to Terminology (it is wording, not access).
+  - The notebook sync workflow uses a fixed version of its tool.
+

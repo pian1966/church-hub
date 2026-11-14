@@ -4,7 +4,9 @@ Church Hub helps churches move from Elvanto, learning from tools such as Plannin
 It is built in phases; each phase is usable on its own. **Read this file first in every new working session.**
 
 ## Principles
-1. **Clean and self-explanatory.** Every screen says what it is for in one line; every action is a plain-English button. No jargon, no hidden menus.
+1. **Clean and self-explanatory.** Every screen says what it is for in one line; every action is a plain-English button. No jargon.
+   Each page has **one main button**; occasional tasks go in a single, clearly labelled **More ▾** menu (`Hub.menu`), and rare
+   row actions in a row's **⋯** menu – never deeper than that. See "Screen layout" in `CLAUDE.md`.
 2. **Apps as cards.** Each area (People, Rosters, Leave, Privacy…) is a *module* that registers itself and appears as a card on Home. Modules can be switched on or off in Settings. New features = new modules, without touching the others.
 3. **POPIA by design.** Privacy rules are part of the data model, not an add-on (see `POPIA.md`).
 4. **Explainable rostering.** No random rostering. Families and friends who want to serve together are kept together; people who must not serve at the same time are kept apart; every suggestion says why.
@@ -612,9 +614,11 @@ a link.
 - **Who may access it** is first limited to Administrators and Council members. Within that gate, each record's
   `access` choice, copied from its category when added, provides an additional limit: `all` all authorized readers ·
   `body` the members of one leadership group (`bodyId`) · `office` Administrators and Pastors · `private` the
-  Administrators and Senior Pastor. A record about a person (`aboutId`) may also be shown to them (`shownTo` = their
-  id), but this never bypasses the Administrator/Council gate. Administrators and Council members manage records and
-  files; only Administrators change the shared archive categories. `Archive.sees()` (screens, demo), `seesRecord()` in
+  Administrators and Senior Pastor (who also needs Council membership). A record about a person (`aboutId`) may also be shown to them (`shownTo` = their
+  id), but this never bypasses the Administrator/Council gate. Administrators manage every record; Council members manage
+  (change, delete, attach files to) only records they may see, and can't change a record into one they couldn't see.
+  Only Administrators change the shared archive categories. Council membership for the rules is `archivePreviewMembers/{person}`
+  = { personId, bodyId }, accepted only when that person really is in that leadership group and its name contains "council". `Archive.sees()` (screens, demo), `seesRecord()` in
   `firestore.rules` and the copy in `tests/fake-firebase.js` enforce these rules. `Archive.clean()` keeps `bodyId` only
   with `access: 'body'` and `shownTo` only equal to `aboutId` (the rules insist on both).
 - **Loading** can't be planned at sign-in, because it depends on settings (is Library on?) and Council membership.
@@ -626,7 +630,7 @@ a link.
   files are linked. Parts are written before the record and fetched on Download (`Store.saveFile` / `loadFile`), following
   the record's read rule. A separate copy (`archivePreviews/{id}/parts/{n}`) is available only to Administrators and
   Council members, and only for records they may already see; its rules protect direct requests. Existing files are
-  copied into this area the first time an authorized user previews them. Council membership is kept in step with
+  copied into this area the first time an authorized user previews them; the rules accept only an exact copy of the record's own file part (so a file is saved before its preview). Council membership is kept in step with
   Leadership by `Store`. The demo keeps files in memory only. Downloads use the browser, or
   `ChurchHubApp.saveFileBase64(name, type, base64)` in the Android app (older apps: "please update").
 - **Google Docs previews**: links to supported Google Docs, Sheets, Slides and Drive files open in an in-app preview

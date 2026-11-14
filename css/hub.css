@@ -896,3 +896,38 @@ a.tag.tag-link:hover, a.tag.tag-link:focus-visible { outline: 2px solid color-mi
 .lib-legend-t td.lib-doc > * { margin: 0; } .lib-legend-t td.lib-doc h3, .lib-legend-t td.lib-doc h4, .lib-legend-t td.lib-doc h5 { margin: 0; }
 .lib-legend-t code { font-size: 13px; white-space: nowrap; }
 #lib-pol-prev { margin-top: 8px; max-height: 40vh; overflow: auto; font-weight: 400; }
+
+/* ---------- Review 14 Nov 2026: consistency fixes ---------- */
+/* No blue frame round the whole page after moving to another screen (the page is focused for screen readers) */
+main:focus, main:focus-visible { outline: none; }
+/* The initials picture by the name in the side menu stays round */
+.who > .av { flex: 0 0 auto; }
+/* "View as…" sits in the side menu with the language and appearance, not floating over the page */
+.side-viewas { display: flex; align-items: center; gap: 8px; width: 100%; margin-top: 6px; padding: 6px 10px; min-height: 32px; border: 1px solid transparent; border-radius: 10px;
+  background: transparent; color: var(--side-muted); font: inherit; font-size: 12.5px; cursor: pointer; text-align: left; }
+.side-viewas:hover, .side-viewas:focus-visible { border-color: var(--side-2); color: var(--side-ink); }
+/* A "More ▾" menu: a button that opens a short list of less-used actions */
+details.menu { position: relative; display: inline-block; }
+details.menu > summary { list-style: none; cursor: pointer; }
+details.menu > summary::-webkit-details-marker { display: none; }
+details.menu[open] > summary { background: var(--surface-2); }
+.menu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 20; min-width: 230px; max-width: min(320px, 90vw); display: flex; flex-direction: column;
+  padding: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(29,27,25,.14); }
+.menu-list > button, .menu-list > a, .menu-list .btn { display: flex; align-items: center; gap: 8px; width: 100%; justify-content: flex-start; text-align: left; padding: 9px 12px;
+  min-height: 40px; border: 0; border-radius: 8px; background: transparent; color: var(--ink); font: inherit; font-size: 14px; font-weight: 500; text-decoration: none; cursor: pointer; box-shadow: none; }
+.menu-list > button:hover, .menu-list > a:hover, .menu-list .btn:hover { background: var(--surface-2); }
+@media (max-width: 700px) { .page-head .btns details.menu .menu-list { right: auto; left: 0; } }
+/* Library: tabs under the title, one toolbar for status, search and sorting, nothing shown that's empty */
+.lib-section { margin: 0 0 16px; }
+.lib-toolbar .lib-tabs { gap: 6px; }
+.lib-toolbar .pchip { border-style: solid; }
+.lib-n { font-weight: 500; opacity: .7; }
+details.lib-more { margin-top: 12px; }
+details.lib-more > summary { cursor: pointer; font-weight: 600; color: var(--accent-ink); font-size: 14px; }
+details.lib-more[open] > summary { margin-bottom: 12px; }
+.lib-books-head { align-items: center; }
+.lib-empty { padding: 32px 18px; }
+.lib-empty p { margin: 0 0 14px; }
+.row-menu > summary { font-size: 18px; line-height: 1; letter-spacing: 1px; }
+.menu-list .menu-danger, .menu-list > button.menu-danger { color: var(--bad); }
+.menu-list > button[disabled] { opacity: .5; cursor: default; }

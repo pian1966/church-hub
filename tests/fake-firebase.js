@@ -46,7 +46,7 @@
   /** The Archive's readers and record managers: Administrators and Council members. */
   function keeper(c) { return is(c, ['admin']) || (is(c, ['pastor']) && isMe(c, (docs['settings/church'] || {}).seniorPastorId || '')); }
   function seesRecord(c, d) {
-    return (is(c, ['admin']) || councilMember(c)) && (is(c, ['admin']) || (d.access === 'all' && is(c, ANY))
+    return (is(c, ['admin']) || councilMember(c)) && (is(c, ['admin']) || (d.access === 'private' && keeper(c)) || (d.access === 'all' && is(c, ANY))
       || (d.access === 'office' && is(c, ['admin', 'pastor']))
       || (!!(d.bodyId || '') && is(c, ANY) && meIn(c, docs['leaderBodies/' + d.bodyId].memberIds || [])) || mine(c, d.shownTo || ''));
   }
@@ -235,13 +235,18 @@
     archive: { read: function (c, id, d) { return !!d && seesRecord(c, d); },
       write: function (c, op, id, b, a) {
         if (!is(c, ['admin']) && !councilMember(c)) return false;
+        // Council members only manage records they may see, and can't turn one into something they couldn't see
+        if (!is(c, ['admin']) && ((b && !seesRecord(c, b)) || (op !== 'delete' && !seesRecord(c, a)))) return false;
         return op === 'delete' || (typeof a.title === 'string' && a.title.length > 0 && a.title.length <= 150 && ['all', 'body', 'office', 'private'].indexOf(a.access) >= 0
           && (a.access === 'body') === !!(a.bodyId || '') && (!(a.shownTo || '') || a.shownTo === (a.aboutId || ''))
           && typeof (a.displayOnApplication || false) === 'boolean'
           && (is(c, ['admin']) || (op === 'create' ? !a.displayOnApplication : !!a.displayOnApplication === !!(b.displayOnApplication || false))));
       } },
     'archive/parts': { read: function (c, n, d, id) { return seesRecord(c, docs['archive/' + id]); },   // a missing record fails
-      write: function (c, op, n, b, a) { return (is(c, ['admin']) || councilMember(c)) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
+      write: function (c, op, n, b, a, id) {
+        var rec = docs['archive/' + id], manages = is(c, ['admin']) || (councilMember(c) && (!rec || seesRecord(c, rec)));
+        return manages && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000));
+      } },
     applicationDocuments: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) {
         return is(c, ['admin']) && (op === 'delete' || (onlyKeys(a, ['title', 'date', 'link', 'fileName', 'fileType', 'parts', 'fileVersion'])
@@ -253,12 +258,18 @@
     'applicationDocuments/files/parts': { read: function (c, n, d, id, version) { return is(c, ANY) && !!docs['applicationDocuments/' + id] && docs['applicationDocuments/' + id].fileVersion === version; },
       write: function (c, op, n, b, a) { return is(c, ['admin']) && (op === 'delete' || (onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000)); } },
     archivePreviewMembers: { read: function (c, id) { return is(c, ['admin', 'pastor']) || isMe(c, id); },
-      write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || (onlyKeys(a, ['personId']) && a.personId === id)); } },
+      write: function (c, op, id, b, a) {
+        if (!is(c, ['admin', 'pastor'])) return false;
+        if (op === 'delete') return true;
+        var body = docs['leaderBodies/' + (a.bodyId || '')];
+        return onlyKeys(a, ['personId', 'bodyId']) && a.personId === id && !!body && /council/.test(String(body.name || '').toLowerCase()) && (body.memberIds || []).indexOf(id) >= 0;
+      } },
     'archivePreviews/parts': { read: function (c, n, d, id) { return is(c, ['admin']) || (councilMember(c) && seesRecord(c, docs['archive/' + id])); },
       write: function (c, op, n, b, a, id) {
-        if (op === 'delete') return is(c, ['admin']) || councilMember(c);
-        var valid = onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000;
-        return valid && (is(c, ['admin']) || councilMember(c));
+        var rec = docs['archive/' + id];
+        if (op === 'delete') return is(c, ['admin']) || (councilMember(c) && (!rec || seesRecord(c, rec)));
+        var valid = onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000, orig = docs['archive/' + id + '/parts/' + n];
+        return valid && (is(c, ['admin']) || (councilMember(c) && (!rec || seesRecord(c, rec)))) && !!orig && orig.data === a.data;
       } },
     // The Library: everyone reads the books; librarians write; a loan is read by the librarians and its borrower
     books: { read: function (c) { return is(c, ANY); },

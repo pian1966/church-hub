@@ -18,7 +18,8 @@
   function who() {
     var u = me(), admin = administrator(), bodies = u && window.LeadersUI ? LeadersUI.mine(u.id) : [];
     return { admin: admin, council: !S.preview() && !!u && bodies.some(function (id) { var b = S.get('leaderBodies', id); return b && /council/i.test(b.name || ''); }),
-      pastor: !admin && H.can('people.edit'), ids: u ? [u.id] : [], bodies: bodies };
+      pastor: !admin && H.can('people.edit'), senior: !admin && !!u && u.appRole === 'pastor' && (S.settings() || {}).seniorPastorId === u.id,
+      ids: u ? [u.id] : [], bodies: bodies };
   }
   function keeper() { return canAccess(); }
   function councilMember() {

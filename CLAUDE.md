@@ -64,6 +64,12 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
   that uses it (`common.js` if several parts use it). Every new line also goes in all 19 `js/lang/<code>.js` files: these are large,
   so don't read them – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js` fails if any language misses a line.
+- **Screen layout** (every page the same, so the app feels like one app): `page-head` (h1, one-line lead, then buttons on the
+  right) → tabs as `<nav class="seg">` *under* the title → the content. **One main button** (`btn primary`); other page actions in
+  one `Hub.menu(T('More'), [buttons])`; a row's rare or destructive actions (purge, take out…) in `Hub.menu('⋯', [...], 'row-menu', label)`,
+  never as big red buttons on every row. Don't show empty sections, empty filter tabs or two "nothing here" messages – show one
+  friendly empty state with the main button. Fold search/sort/filters in a `<details>` until used. Sentence case for labels
+  ("On loan", not "On Loan"). Required boxes get `class="field req"` (shading), not red asterisks. Check new screens at phone width (390px).
 - Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"`; never write "(optional)".
 - Changing who sees what means changing, together: `firestore.rules`, `plan()` in `js/store.js`, the POLICY copy in `tests/fake-firebase.js`,
   and `tests/rules.test.mjs` / `tests/app/*.js`. Once merged, `.github/workflows/publish-rules.yml` tests and publishes the rules (when the church has set up

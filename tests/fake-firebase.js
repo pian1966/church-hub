@@ -269,7 +269,7 @@
         var rec = docs['archive/' + id];
         if (op === 'delete') return is(c, ['admin']) || (councilMember(c) && (!rec || seesRecord(c, rec)));
         var valid = onlyKeys(a, ['data']) && typeof a.data === 'string' && a.data.length <= 950000, orig = docs['archive/' + id + '/parts/' + n];
-        return valid && (is(c, ['admin']) || (councilMember(c) && (!rec || seesRecord(c, rec)) && !!orig && orig.data === a.data));
+        return valid && (is(c, ['admin']) || (councilMember(c) && (!rec || seesRecord(c, rec)))) && !!orig && orig.data === a.data;
       } },
     // The Library: everyone reads the books; librarians write; a loan is read by the librarians and its borrower
     books: { read: function (c) { return is(c, ANY); },

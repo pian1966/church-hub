@@ -453,15 +453,16 @@ service cloud.firestore {
         || (also().size() > 1 && archivePreviewMember(also()[1]))
         || (also().size() > 2 && archivePreviewMember(also()[2])));
     }
-    function archiveReader() { return admin() || councilMember(); }
-    function seesRecord(d) {
-      return archiveReader() && (admin()
-        || (d.get('access', '') == 'private' && keeper())
+    // Past the Administrator/Council gate: does the record's own access let this person see it? (Kept apart from the gate,
+    // so a rule checks the costly Council membership only once - Firestore allows 1000 steps per request.)
+    function recordAllows(d) {
+      return (d.get('access', '') == 'private' && keeper())
         || (d.get('access', '') == 'all' && anyone())
         || (d.get('access', '') == 'office' && manager())
         || (d.get('bodyId', '') != '' && inBody(d.bodyId))
-        || mine(d.get('shownTo', '')));
+        || mine(d.get('shownTo', ''));
     }
+    function seesRecord(d) { return admin() || (councilMember() && recordAllows(d)); }
     function okRecord(d) {
       return d.title is string && d.title.size() > 0 && d.title.size() <= 150
         && d.access in ['all', 'body', 'office', 'private']
@@ -472,15 +473,15 @@ service cloud.firestore {
     // Council members manage only records they may see, and can't change one into something they couldn't see
     // (e.g. open up a private staff contract to themselves).
     function archiveRef(id) { return /databases/$(database)/documents/archive/$(id); }
-    function managesRecord(id) { return admin() || (archiveReader() && (!exists(archiveRef(id)) || seesRecord(get(archiveRef(id)).data))); }
+    function managesRecord(id) { return admin() || (councilMember() && (!exists(archiveRef(id)) || recordAllows(get(archiveRef(id)).data))); }
     match /archive/{id} {
       allow read: if seesRecord(resource.data);
-      allow create: if archiveReader() && okRecord(request.resource.data)
-        && (admin() || (!request.resource.data.get('displayOnApplication', false) && seesRecord(request.resource.data)));
-      allow update: if archiveReader() && okRecord(request.resource.data)
-        && (admin() || (seesRecord(resource.data) && seesRecord(request.resource.data)
+      allow create: if okRecord(request.resource.data)
+        && (admin() || (councilMember() && !request.resource.data.get('displayOnApplication', false) && recordAllows(request.resource.data)));
+      allow update: if okRecord(request.resource.data)
+        && (admin() || (councilMember() && recordAllows(resource.data) && recordAllows(request.resource.data)
           && request.resource.data.get('displayOnApplication', false) == resource.data.get('displayOnApplication', false)));
-      allow delete: if admin() || seesRecord(resource.data);
+      allow delete: if seesRecord(resource.data);
       // Parts are written before a new record, so a part of a record that doesn't exist yet may be written too.
       match /parts/{n} {
         allow read: if seesRecord(get(archiveRef(id)).data);
@@ -528,9 +529,9 @@ service cloud.firestore {
     }
     // A preview is an exact copy of a part of the record's own file, made by someone who may see that record.
     match /archivePreviews/{id}/parts/{n} {
-      allow read: if admin() || (councilMember() && seesRecord(get(archiveRef(id)).data));
+      allow read: if seesRecord(get(archiveRef(id)).data);
       allow create, update: if okArchivePreviewPart(request.resource.data)
-        && (admin() || (councilMember() && managesRecord(id)
+        && (managesRecord(id)
           && exists(/databases/$(database)/documents/archive/$(id)/parts/$(n))
           && request.resource.data.data == get(/databases/$(database)/documents/archive/$(id)/parts/$(n)).data.data));
       allow delete: if managesRecord(id);

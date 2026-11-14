@@ -516,8 +516,6 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
 .msg-read > summary { cursor: pointer; } .msg-read .tag { margin: 2px 2px 0 0; display: inline-block; }
-.msg-status { display: inline-block; margin-left: 6px; font-weight: 700; letter-spacing: -2px; }
-.msg-status.sent { color: #707070; } .msg-status.delivered { color: #b45309; } .msg-status.read { color: #16803c; }
 #ms-body { min-height: 140px; }
 /* Messages: ticking who gets a message */
 .ms-pick-box { padding: 12px 14px; margin: 0 0 14px; }
@@ -931,3 +929,25 @@ details.lib-more[open] > summary { margin-bottom: 12px; }
 .row-menu > summary { font-size: 18px; line-height: 1; letter-spacing: 1px; }
 .menu-list .menu-danger, .menu-list > button.menu-danger { color: var(--bad); }
 .menu-list > button[disabled] { opacity: .5; cursor: default; }
+
+/* ---------- Messages, as on WhatsApp: received on the left, sent on the right, time and ticks in the corner ---------- */
+.msg-chat { display: flex; flex-direction: column; gap: 8px; padding: 12px; border-radius: var(--radius); background: color-mix(in srgb, var(--accent) 5%, var(--bg)); }
+.msg-chat .msg { position: relative; max-width: min(88%, 640px); padding: 9px 12px 6px; border: 0; border-radius: 12px; background: var(--surface); box-shadow: 0 1px 1px rgba(29,27,25,.08); }
+.msg-chat .msg.in { align-self: flex-start; border-top-left-radius: 4px; }
+.msg-chat .msg.out { align-self: flex-end; border-top-right-radius: 4px; background: color-mix(in srgb, #25D366 14%, var(--surface)); }
+.msg-chat .msg.new { box-shadow: 0 1px 1px rgba(29,27,25,.08), inset 3px 0 0 #25D366; }
+.msg-chat .msg.new .msg-top b { font-weight: 800; }
+.msg-chat .msg.new .msg-top b::before { background: #25D366; }
+.msg-chat .msg:not(.new) .msg-top b { font-weight: 600; }
+.msg-top { align-items: center; }
+.msg-who { color: var(--muted); font-size: 12.5px; margin-top: 2px; }
+.msg-chat .msg-body { margin: 6px 0 2px; }
+.msg-chat .msg-foot { margin-top: 2px; justify-content: flex-end; }
+.msg-time { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.msg-status { display: inline-flex; align-items: center; line-height: 0; }
+.msg-status.sent, .msg-status.delivered { color: #8696A0; }
+.msg-status.read { color: #34B7F1; }
+.msg-unread-bar { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: .03em; box-shadow: 0 1px 1px rgba(29,27,25,.08); }
+.msg-chat .msg-read { font-size: 12.5px; }
+html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366 22%, var(--surface)); }

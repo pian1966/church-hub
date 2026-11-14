@@ -98,11 +98,28 @@ var Msg = (function () {
   function sent(messages, pid, all) { return (messages || []).filter(function (m) { return all || m.fromId === pid; }).sort(newestFirst); }
   function isUnread(m, pid, office) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office')) && m.fromId !== pid && (m.readBy || []).indexOf(pid) < 0; }
   function unread(messages, pid, office) { return (messages || []).filter(function (m) { return isUnread(m, pid, office); }); }
-  /** Delivery state for a sent message, based on the first recipient who got or opened it. */
-  function status(m) {
-    var delivered = (m.deliveredBy || []).some(function (id) { return id !== m.fromId; });
-    var read = (m.readBy || []).some(function (id) { return id !== m.fromId; });
-    return read ? 'read' : delivered ? 'delivered' : 'sent';
+  /** Ticks, as on WhatsApp: 'sent' (✓ grey) – 'delivered' (✓✓ grey) once it has reached EVERYONE it went to – 'read' (✓✓ blue)
+   *  once everyone has opened it. people (optional): only those who can sign in count, as the others can never open it.
+   *  A message to the Office (no list of people): delivered / read as soon as anyone in the office has it / opens it. */
+  function status(m, people) {
+    var to = uniq(m.to || []).filter(function (x) { return x !== m.fromId; });
+    if (people) to = inApp(to, people);
+    var has = function (list, x) { return (list || []).indexOf(x) >= 0; };
+    var got = function (x) { return has(m.deliveredBy, x) || has(m.readBy, x); };
+    if (!to.length) {
+      var others = function (list) { return (list || []).some(function (id) { return id !== m.fromId; }); };
+      return others(m.readBy) ? 'read' : others(m.deliveredBy) ? 'delivered' : 'sent';
+    }
+    if (to.every(function (x) { return has(m.readBy, x); })) return 'read';
+    return to.every(got) ? 'delivered' : 'sent';
+  }
+  /** For a sent message's details: how many it went to, have it on their device, and have read it (the sender doesn't count). */
+  function counts(m, people) {
+    var to = uniq(m.to || []).filter(function (x) { return x !== m.fromId; });
+    if (people) to = inApp(to, people);
+    var read = to.filter(function (x) { return (m.readBy || []).indexOf(x) >= 0; });
+    var got = to.filter(function (x) { return (m.deliveredBy || []).indexOf(x) >= 0 || read.indexOf(x) >= 0; });
+    return { of: to.length, delivered: got.length, read: read.length, waiting: to.filter(function (x) { return got.indexOf(x) < 0; }) };
   }
   /** How many of the people it went to have opened it (the sender doesn't count). */
   function seen(m) {
@@ -138,7 +155,7 @@ var Msg = (function () {
     return JSON.stringify(x) === JSON.stringify(g) ? null : x;
   }
 
-  return { KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
+  return { counts: counts, KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
     inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();
 if (typeof module !== 'undefined') module.exports = Msg;

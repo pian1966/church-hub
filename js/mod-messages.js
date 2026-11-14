@@ -53,13 +53,14 @@
     var u = me(), list = Msg.inbox(S.list('messages'), u.id, manager());
     var html = head(T('Messages from the church to you and the groups you are in.'), '');
     if (!list.length) return html + '<p class="empty">' + T('No messages yet. Messages from the church office, your Care Group and other groups you are in will appear here.') + '</p>';
-    return html + '<section class="panel" style="padding:0">' + list.map(function (m) {
+    // As on WhatsApp: messages that came in are bubbles on the left; new ones are bold with a dot, under an "unread" marker
+    var fresh = list.filter(function (m) { return Msg.isUnread(m, u.id, manager()) || justRead[m.id]; }).length;
+    return html + '<section class="msg-chat">' + (fresh ? '<div class="msg-unread-bar">' + esc(TN('{n} unread message', '{n} unread messages', fresh)) + '</div>' : '') + list.map(function (m) {
       var isNew = Msg.isUnread(m, u.id, manager()) || justRead[m.id];
-      var reply = manager() && m.kind === 'office' && m.fromId !== u.id
-        ? '<div class="msg-foot"><a class="btn small" href="#/messages/send/people/' + esc(m.fromId) + '">' + T('Reply') + '</a></div>' : '';
-      return '<article class="msg' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b><span class="muted small">' + esc(when(m.createdAt)) + '</span></div>' +
-        '<div class="muted small">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
-        '<p class="msg-body">' + bodyHtml(m.body) + '</p>' + reply + '</article>';
+      var reply = manager() && m.kind === 'office' && m.fromId !== u.id ? '<a class="btn small" href="#/messages/send/people/' + esc(m.fromId) + '">' + T('Reply') + '</a>' : '';
+      return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b></div>' +
+        '<div class="msg-who">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
+        '<p class="msg-body">' + bodyHtml(m.body) + '</p><div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
     }).join('') + '</section>';
   }
   /** Opening the inbox marks what is shown as read (on every device; the sender sees how many have read it). */
@@ -171,29 +172,34 @@
 
   /* ---------- Sent ---------- */
   /** "Read by 3 of 5", opening to who has read it and who hasn't yet. */
+  /** "Message info", as on WhatsApp: read by, delivered to, and not delivered yet (they haven't opened Church Hub since). */
   function readBy(m, s) {
     if (m.kind === 'office') return '';
-    var r = Msg.readers(m), a = { kind: m.kind, groupId: m.groupId }, names = function (ids) { return ids.map(function (id) { return personName(id, a); }).sort(function (x, y) { return x.localeCompare(y); }); };
+    var r = Msg.readers(m), c = Msg.counts(m), a = { kind: m.kind, groupId: m.groupId }, names = function (ids) { return ids.map(function (id) { return personName(id, a); }).sort(function (x, y) { return x.localeCompare(y); }); };
     if (!s.of) return T('Read by {n} of {total}', { n: s.n, total: s.of });
+    var got = r.unread.filter(function (id) { return c.waiting.indexOf(id) < 0; });
     var list = function (title, ids, cls) { return ids.length ? '<p class="small" style="margin:6px 0 0"><b>' + esc(title) + '</b> ' + names(ids).map(function (n) { return '<span class="tag ' + cls + '">' + esc(n) + '</span>'; }).join(' ') + '</p>' : ''; };
     return '<details class="msg-read"><summary>' + T('Read by {n} of {total}', { n: s.n, total: s.of }) + '</summary>' +
-      list(T('Read'), r.read, 'ok') + list(T('Not read yet'), r.unread, 'grey') + '</details>';
+      list(T('Read'), r.read, 'ok') + list(T('Delivered'), got, 'grey') + list(T('Not delivered yet'), c.waiting, 'grey') + '</details>';
   }
+  var TICK = 'M2.5 8.5l3.2 3.2L13 4.4', TICKS = 'M1 8.5l3.2 3.2L11.5 4.4M7.2 11.2l.5.5L15 4.4';
+  /** One grey tick: sent · two grey ticks: delivered to everyone · two blue ticks: read by everyone (as on WhatsApp). */
   function statusMark(m) {
-    var state = Msg.status(m), text = T(state === 'read' ? 'Read' : state === 'delivered' ? 'Delivered' : 'Sent');
-    return '<span class="msg-status ' + state + '" role="img" aria-label="' + esc(text) + '" title="' + esc(text) + '">' + (state === 'sent' ? '✓' : '✓✓') + '</span>';
+    var state = Msg.status(m, S.list('people')), text = T(state === 'read' ? 'Read' : state === 'delivered' ? 'Delivered' : 'Sent');
+    return '<span class="msg-status ' + state + '" role="img" aria-label="' + esc(text) + '" title="' + esc(text) + '"><svg width="17" height="13" viewBox="0 0 16 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + (state === 'sent' ? TICK : TICKS) + '"/></svg></span>';
   }
   function renderSent() {
     var u = me(), all = manager(), list = Msg.sent(S.list('messages'), u.id, all);
     var html = head(all ? T('Every message sent in Church Hub, newest first. You can delete any of them.') : T('Messages you have sent, newest first.'), 'sent');
     if (!list.length) return html + '<p class="empty">' + T('Nothing sent yet.') + '</p>';
-    return html + '<section class="panel" style="padding:0">' + list.map(function (m) {
+    return html + '<section class="msg-chat">' + list.map(function (m) {
       var s = Msg.seen(m), mine = m.fromId === u.id;
-      return '<article class="msg" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b><span class="muted small">' + esc(when(m.createdAt)) + (mine ? statusMark(m) : '') + '</span></div>' +
-        '<div class="muted small">' + (mine ? '' : T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ') + T('To {who}', { who: audLong(m) }) + '</div>' +
+      // Your own messages are bubbles on the right with ticks by the time; others' (Administrators and Pastors see all) on the left
+      return '<article class="msg ' + (mine ? 'out' : 'in') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b>' +
+        (Msg.mayDelete(m, who()) ? H.menu('⋯', ['<button class="menu-danger" data-act="messages:del" data-id="' + esc(m.id) + '">' + H.icon(H.ICON.trash, 16) + T('Delete the message') + '</button>'], 'row-menu', T('Delete the message')) : '') + '</div>' +
+        '<div class="msg-who">' + (mine ? '' : T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ') + T('To {who}', { who: audLong(m) }) + '</div>' +
         '<p class="msg-body">' + bodyHtml(m.body) + '</p>' +
-        '<div class="msg-foot"><span class="grow muted">' + (m.kind === 'office' ? '' : readBy(m, s)) + '</span>' +
-        (Msg.mayDelete(m, who()) ? '<button class="icon-btn ghost" data-act="messages:del" data-id="' + esc(m.id) + '" aria-label="' + esc(T('Delete the message')) + '" title="' + esc(T('Delete the message')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</div></article>';
+        '<div class="msg-foot"><span class="grow">' + (m.kind === 'office' ? '' : readBy(m, s)) + '</span><span class="msg-time">' + esc(when(m.createdAt)) + (mine ? statusMark(m) : '') + '</span></div></article>';
     }).join('') + '</section>';
   }
 

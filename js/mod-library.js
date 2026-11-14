@@ -15,7 +15,7 @@
   var PEN = 'M4 20h4L20 8l-4-4L4 16zM14 6l4 4';
   var POLICY_FILE_MAX = 600 * 1024;   // an attached policy file: at most 600 KB (it is kept in one database document)
   var filters = { kind: '', title: '', author: '', cat: '', borrower: '', borrowed: '' }, sortKey = 'title', sortDir = 1, catalogueTab = 'all', tidied = false;
-  var selectedBooks = {}, librarianReviewShown = false;
+  var selectedBooks = {}, selecting = false, librarianReviewShown = false;   // selecting: tick boxes shown, to choose books for covers
   var newCover;            // the cover chosen in the form: undefined = unchanged, '' = taken away, else a picture (data: address)
   var policy;              // the library's policy: undefined until fetched, then null (none) or { text, name, type, data }
   var policyAsked = false, coverCache = {}, coverAsked = {}, coverSeen = null;
@@ -75,9 +75,12 @@
   /** The formatting buttons' names (js/richtext.js). */
   function fmtWords() { return { bar: T('Formatting'), b: T('Bold'), i: T('Italic'), u: T('Underline'), h: T('Heading'), ul: T('Bulleted list'), ol: T('Numbered list') }; }
   function held(l) { var n = L.daysOut(l, H.today()); return TN('had for {n} day', 'had for {n} days', n); }
+  /** Permanently delete (inside a row's ⋯ menu: it's rare and can't be undone, so it isn't a big red button on every row). */
   function purgeButton(kind, id) {
-    return '<button class="btn small danger" data-act="library:purge" data-kind="' + kind + '" data-id="' + esc(id) + '">' + T('Purge') + '</button>';
+    return '<button class="menu-danger" data-act="library:purge" data-kind="' + kind + '" data-id="' + esc(id) + '">' + T('Purge') + '</button>';
   }
+  /** A row's own small "⋯" menu for its occasional actions. */
+  function rowMenu(name, items) { return items.length ? H.menu('⋯', items, 'row-menu', T('More') + ': ' + name) : ''; }
   function purgeDialog(kind, record) {
     var book = kind === 'book', warning = book ?
       T('Permanently delete this book and its loan records? This cannot be undone.') :
@@ -104,20 +107,20 @@
     var n = free(b), outCount = L.outCount(b, librarian() ? loans() : null), copies = Math.max(1, +b.copies || 1), bits = [b.author ? T('Author') + ': ' + b.author : '', b.cat ? T('Subject') + ': ' + b.cat : '', b.shelf ? T('Shelf {shelf}', { shelf: b.shelf }) : ''].filter(Boolean);
     var related = edit ? itemLoans(b, allLoans) : [], borrowerNamesForBook = related.map(function (l) { return String(l.name || '').toLowerCase(); }), borrowedDates = related.map(function (l) { return String(l.out || ''); });
     return '<div class="item rec-item lib-book" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(b.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(borrowerNamesForBook.join(' ')) + '" data-borrowed="' + esc(borrowedDates.join(' ')) + '" data-sort-borrower="' + esc(itemSortValue(b, allLoans, 'borrower')) + '" data-sort-borrowed="' + esc(itemSortValue(b, allLoans, 'borrowed')) + '" data-out="' + (!b.repairing && outCount > 0 && n === 0) + '" data-free="' + (n > 0) + '" data-repairing="' + !!b.repairing + '">' +
-      (edit && (b.kind || 'Book') === 'Book' ? '<label class="check lib-select"><input type="checkbox" data-lib-select="' + esc(b.id) + '"' + (selectedBooks[b.id] ? ' checked' : '') + ' aria-label="' + esc(T('Select {name}', { name: b.title })) + '"></label>' : '') + cover(b) +
-      '<span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag">' + esc(T(b.kind || 'Book')) + '</span> ' +
-      '<span class="tag ' + (b.repairing ? 'warn' : n ? 'ok' : 'grey') + '">' + (b.repairing ? T('Being Repaired') : n ? T('Available') : T('On loan')) + (copies > 1 && !b.repairing ? ' · ' + esc(T('{n} of {total}', { n: n, total: copies })) : '') + '</span>' +
+      (edit && selecting && (b.kind || 'Book') === 'Book' ? '<label class="check lib-select"><input type="checkbox" data-lib-select="' + esc(b.id) + '"' + (selectedBooks[b.id] ? ' checked' : '') + ' aria-label="' + esc(T('Select {name}', { name: b.title })) + '"></label>' : '') + cover(b) +
+      '<span class="grow"><b data-own-words>' + esc(b.title) + '</b> ' + ((b.kind || 'Book') !== 'Book' ? '<span class="tag">' + esc(T(b.kind)) + '</span> ' : '') +
+      '<span class="tag ' + (b.repairing ? 'warn' : n ? 'ok' : 'grey') + '">' + (b.repairing ? T('Being repaired') : n ? T('Available') : T('On loan')) + (copies > 1 && !b.repairing ? ' · ' + esc(T('{n} of {total}', { n: n, total: copies })) : '') + '</span>' +
       (bits.length ? '<small data-own-words>' + bits.map(esc).join(' · ') + '</small>' : '') +
-      (edit && (b.how || b.from || b.acquired) ? '<small class="muted">' + esc([b.how ? T(b.how) : '', b.from, b.acquired ? H.fmt(b.acquired, true) : ''].filter(Boolean).join(' · ')) + '</small>' : '') +
+      (edit && (b.how || b.from || b.acquired) ? '<small class="muted">' + esc([b.acquired ? T('Added {date}', { date: H.fmt(b.acquired, true) }) : '', b.how ? T(b.how) : '', b.from].filter(Boolean).join(' · ')) + '</small>' : '') +
       (b.note ? '<small data-own-words>' + esc(b.note) + '</small>' : '') + '</span><span class="rec-acts">' +
       '<button class="btn small" data-act="library:bookinfo" data-id="' + esc(b.id) + '">' + T('View / Info') + '</button>' +
       (!edit ? '<button class="btn small" data-act="library:request" data-id="' + esc(b.id) + '"' + (n || S.isLive() ? '' : ' disabled') + '>' + T('Request to borrow') + '</button>' : '') +
-      (edit ? (b.repairing ?
-        '<button class="btn small" data-act="library:repair" data-id="' + esc(b.id) + '">' + T('Back from repair') + '</button>' :
-        '<button class="btn small" data-act="library:repair" data-id="' + esc(b.id) + '"' + (L.outCount(b, loans()) ? ' disabled' : '') + '>' + T('Being Repaired') + '</button>') +
-        '<button class="btn small" data-act="library:lend" data-id="' + esc(b.id) + '"' + (n ? '' : ' disabled') + '>' + T('Lend') + '</button>' +
+      // Librarians: Lend (the everyday job) and Edit; repair and taking it out are in the row's ⋯ menu
+      (edit ? (b.repairing ? '<button class="btn small" data-act="library:repair" data-id="' + esc(b.id) + '">' + T('Back from repair') + '</button>' :
+        '<button class="btn small primary" data-act="library:lend" data-id="' + esc(b.id) + '"' + (n ? '' : ' disabled') + '>' + T('Lend') + '</button>') +
         '<button class="icon-btn ghost" data-act="library:edit" data-id="' + esc(b.id) + '" aria-label="' + esc(T('Edit {name}', { name: b.title })) + '" title="' + esc(T('Edit')) + '">' + H.icon(PEN, 16) + '</button>' +
-        '<button class="icon-btn ghost" data-act="library:remove" data-id="' + esc(b.id) + '" aria-label="' + esc(T('Take {name} out of the library', { name: b.title })) + '" title="' + esc(T('Take out of the library')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</span></div>';
+        rowMenu(b.title, [(b.repairing ? '' : '<button data-act="library:repair" data-id="' + esc(b.id) + '"' + (L.outCount(b, loans()) ? ' disabled' : '') + '>' + T('Being repaired') + '</button>'),
+          '<button data-act="library:remove" data-id="' + esc(b.id) + '">' + H.icon(H.ICON.trash, 16) + T('Take out of the library') + '</button>'].filter(Boolean)) : '') + '</span></div>';
   }
   function who(l) {   // the borrower, with the mobile number for the librarians to trace the item
     return esc(l.name) + (l.visitor ? ' <span class="tag grey">' + T('Visitor') + '</span>' : '') + (l.mobile ? ' · <a href="tel:' + esc(l.mobile.replace(/[^\d+]/g, '')) + '">' + esc(l.mobile) + '</a>' : '');
@@ -137,10 +140,11 @@
     var buttons = [];
     if (libraryOn()) buttons.push(['library', 'Library', '']);
     buttons.push(['archives', 'Archives', ArchiveUI.canAccess() ? '' : H.icon(H.ICON.lock, 14)]);
-    return '<section class="panel"><div class="lib-tabs" role="tablist" aria-label="' + esc(T('Library')) + '">' + buttons.map(function (b) {
-      return '<button type="button" class="btn small' + (active === b[0] ? ' primary' : '') + '" data-act="library:section" data-section="' + b[0] +
-        '" role="tab" aria-selected="' + (active === b[0]) + '">' + esc(T(b[1])) + (b[2] ? ' <span aria-hidden="true">' + b[2] + '</span>' : '') + '</button>';
-    }).join('') + '</div></section>';
+    // The app's usual tab bar (as on Messages, Rosters, Me…), under the page's title
+    return '<nav class="seg lib-section" aria-label="' + esc(T('Library')) + '">' + buttons.map(function (b) {
+      return '<button type="button" class="' + (active === b[0] ? 'on' : '') + '" data-act="library:section" data-section="' + b[0] +
+        '"' + (active === b[0] ? ' aria-current="page"' : '') + '>' + esc(T(b[1])) + (b[2] ? ' <span aria-hidden="true">' + b[2] + '</span>' : '') + '</button>';
+    }).join('') + '</nav>';
   }
   /** How to format the policy: what to type, and how it shows (drawn by the same code that shows the policy). */
   function legend() {
@@ -169,16 +173,23 @@
     gone.sort(function (a, b) { return compare(a, b, function (x) { return itemSortValue(x, allLoans, sortKey); }); });
     out.sort(function (a, b) { return compare(a, b, function (x) { return loanSortValue(x, sortKey, booksById); }); });
     var back = edit ? loans().filter(function (l) { return !!l.back; }).sort(function (a, b) { return String(b.back).localeCompare(String(a.back)); }).slice(0, 15) : [];
-    var policyActions = policyPanel();
+    // Header: one main button ("Add to the library"); the occasional tasks wait in a More menu, so the books come first
+    var policyActions = policyPanel(), more = (edit ? [
+      '<button data-act="library:import">' + T('Import a list') + '</button>', '<button data-act="library:report">' + T('Reports') + '</button>',
+      '<button data-act="library:duplicates">' + T('Find duplicates') + '</button>',
+      '<button data-act="library:coversmissing">' + T('Find missing covers') + '</button>', '<button data-act="library:coversall">' + T('Find covers for all books') + '</button>',
+      '<button data-act="library:coversselectmissing">' + T('Select books missing covers') + '</button>'] : [])
+      .concat(chooses() ? ['<button data-act="library:libs">' + T('Librarians') + '</button>'] : []).concat(policyActions ? [policyActions] : []);
     var html = '<div class="page-head"><div><h1>' + T('Library') + '</h1><p class="lead">' + (edit ? T('The church’s library: add books, DVDs and more, lend them and mark them as returned. Only librarians and the borrower see who has what.') : T('The church’s library. To borrow something, ask a librarian.')) + '</p></div>' +
-      (edit || chooses() || policyActions ? '<div class="btns">' + policyActions + (edit ? '<button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button>' +
-        '<button class="btn" data-act="library:duplicates">' + T('Suggested Duplicates') + '</button>' +
-        '<button class="btn" data-act="library:import">' + T('Import a list') + '</button><button class="btn" data-act="library:report">' + T('Reports') + '</button>' : '') +
-        (chooses() ? '<button class="btn" data-act="library:libs">' + T('Librarians') + '</button>' : '') + '</div>' : '') + '</div>';
+      (edit || more.length ? '<div class="btns">' + (edit ? '<button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button>' : '') +
+        // Members only have the policy: a plain button rather than a menu with one thing in it
+        (edit || chooses() ? (more.length ? H.menu(T('More'), more) : '') : policyActions) + '</div>' : '') + '</div>';
     html += sectionTabs('library');
-    if (mine.length) html += '<section class="panel" id="lib-mine"><h2>' + T("Library Items I've Borrowed") + '</h2><div class="list">' + mine.map(function (l) {
+    if (!all.length) return html + '<div class="empty lib-empty"><p>' + T('Nothing in the library yet.') + '</p>' +
+      (edit ? '<div class="btns" style="justify-content:center"><button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button><button class="btn" data-act="library:import">' + T('Import a list') + '</button></div>' : '') + '</div>';
+    if (mine.length) html += '<section class="panel" id="lib-mine"><h2>' + T('Items I have borrowed') + '</h2><div class="list">' + mine.map(function (l) {
       var n = L.daysOut(l, H.today());
-      return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (L.isPending(l) ? ' <span class="tag warn">' + T('Pending Verification') + '</span>' : '') + '<small>' + due(l) + ' · <span class="muted">' + esc(held(l)) + '</span></small>' +
+      return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (L.isPending(l) ? ' <span class="tag warn">' + T('Waiting for approval') + '</span>' : '') + '<small>' + due(l) + ' · <span class="muted">' + esc(held(l)) + '</span></small>' +
         (n >= L.REMIND_DAYS ? '<small class="note" style="margin-top:6px">' + esc(T('Friendly reminder: you have had this for {n} days. Please bring it back when you have finished with it.', { n: n })) + '</small>' : '') + '</span></div>'; }).join('') + '</div></section>';
     var tabCounts = {
       all: books.length + gone.length,
@@ -188,21 +199,24 @@
       repairing: books.filter(function (b) { return !!b.repairing; }).length,
       removed: gone.filter(function (b) { return b.why !== 'Lost'; }).length
     };
-    var tabs = [['all', 'All'], ['onLoan', 'On Loan'], ['available', 'Available'], ['lost', 'Lost'], ['repairing', 'Being Repaired'], ['removed', 'Permanently Removed']]
-      .filter(function (t) { return edit || (t[0] !== 'lost' && t[0] !== 'removed'); });
-    html += '<section class="panel" id="lib-status"><div class="lib-tabs" role="tablist" aria-label="' + esc(T('Library')) + '">' + tabs.map(function (t) {
-      var active = catalogueTab === t[0];
-      return '<button type="button" class="btn small' + (active ? ' primary' : '') + '" data-act="library:tab" data-tab="' + t[0] + '" role="tab" aria-selected="' + active + '">' +
-        esc(T(t[1])) + ' <span class="muted small">' + tabCounts[t[0]] + '</span></button>';
-    }).join('') + '</div></section>';
-    if (edit) html += '<section class="panel" id="lib-pending"><div class="row"><h2 class="grow" style="margin:0">' + T('Pending Verifications') + '</h2><span class="muted small">' + TN('{n} item', '{n} items', pending.length) + '</span></div>' +
-      (pending.length ? '<div class="list" style="margin-top:8px">' + pending.map(function (l) {
-        return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b> <span class="tag warn">' + T('Pending Verification') + '</span><small>' + who(l) + ' · ' + esc(T('Requested {date}', { date: H.fmt(l.out, true) })) + '</small></span>' +
+    // Requests to borrow, waiting for a librarian: first, and only when there are some
+    if (edit && pending.length) html += '<section class="panel" id="lib-pending"><div class="row"><h2 class="grow" style="margin:0">' + T('Waiting for approval') + '</h2><span class="muted small">' + TN('{n} item', '{n} items', pending.length) + '</span></div>' +
+      '<div class="list" style="margin-top:8px">' + pending.map(function (l) {
+        return '<div class="item rec-item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b><small>' + who(l) + ' · ' + esc(T('Requested {date}', { date: H.fmt(l.out, true) })) + '</small></span>' +
           '<span class="rec-acts"><button class="btn small save" data-act="library:verify" data-id="' + esc(l.id) + '">' + T('Approve') + '</button><button class="btn small" data-act="library:reject" data-id="' + esc(l.id) + '">' + T('Reject') + '</button></span></div>';
-      }).join('') + '</div>' : '<p class="muted small" style="margin:8px 0 0">' + T('No checkouts are waiting for verification.') + '</p>') + '</section>';
+      }).join('') + '</div></section>';
+    // The status tabs (those with nothing in them are left out, except the usual three), then search, sort and filters
+    var tabs = [['all', 'All'], ['available', 'Available'], ['onLoan', 'On loan'], ['repairing', 'Being repaired'], ['lost', 'Lost'], ['removed', 'Removed']]
+      .filter(function (t) { return (edit || (t[0] !== 'lost' && t[0] !== 'removed')) && (['all', 'available', 'onLoan'].indexOf(t[0]) >= 0 || tabCounts[t[0]] || catalogueTab === t[0]); });
     var sortFields = [['kind', 'Media type'], ['title', 'Title'], ['author', 'Author'], ['cat', 'Subject']];
     if (edit) sortFields.push(['borrower', 'Borrower'], ['borrowed', 'Borrowed on']);
-    html += '<section class="panel" id="lib-controls">' +
+    var filtering = Object.keys(filters).some(function (key) { return !!filters[key]; }) || sortKey !== 'title' || sortDir < 0;
+    html += '<section class="panel lib-toolbar" id="lib-controls"><div class="lib-tabs" role="tablist" aria-label="' + esc(T('Library')) + '">' + tabs.map(function (t) {
+      var active = catalogueTab === t[0];
+      return '<button type="button" class="pchip' + (active ? ' on' : '') + '" data-act="library:tab" data-tab="' + t[0] + '" role="tab" aria-selected="' + active + '">' +
+        esc(T(t[1])) + ' <span class="lib-n">' + tabCounts[t[0]] + '</span></button>';
+    }).join('') + '</div>' +
+      '<details class="lib-more"' + (filtering ? ' open' : '') + '><summary>' + T('Search') + ' · ' + T('Sort by') + '</summary>' +
       '<div class="lib-sort"><span class="muted small">' + T('Sort by') + '</span><div class="btns">' + sortFields.map(function (f) {
         var active = sortKey === f[0];
         return '<button class="btn small' + (active ? ' primary' : '') + '" data-act="library:sort" data-k="' + f[0] + '" aria-pressed="' + active + '" title="' + esc(T('Sort by') + ' ' + T(f[1])) + '">' + T(f[1]) + (active ? (sortDir > 0 ? ' ▲' : ' ▼') : '') + '</button>';
@@ -212,35 +226,32 @@
       '<label class="field">' + T('Title') + '<input id="lib-filter-title" type="search" value="' + esc(filters.title) + '" autocomplete="off"></label>' +
       '<label class="field">' + T('Author') + '<input id="lib-filter-author" type="search" value="' + esc(filters.author) + '" autocomplete="off"></label>' +
       '<label class="field">' + T('Subject') + '<input id="lib-filter-cat" type="search" value="' + esc(filters.cat) + '" autocomplete="off"></label>' +
-      (edit ? '<label class="field">' + T('Borrower') + '<input id="lib-filter-borrower" type="search" list="lib-borrowers" value="' + esc(filters.borrower || T('All Borrowers')) + '" placeholder="' + esc(T('All Borrowers')) + '" autocomplete="off"></label>' +
+      (edit ? '<label class="field">' + T('Borrower') + '<input id="lib-filter-borrower" type="search" list="lib-borrowers" value="' + esc(filters.borrower) + '" placeholder="' + esc(T('All Borrowers')) + '" autocomplete="off"></label>' +
         '<datalist id="lib-borrowers"><option value="' + esc(T('All Borrowers')) + '"></option>' + borrowers.map(function (name) { return '<option value="' + esc(name) + '"></option>'; }).join('') + '</datalist>' +
         '<label class="field">' + T('Borrowed on') + '<input id="lib-filter-borrowed" type="date" value="' + esc(filters.borrowed) + '"></label>' : '') +
-      '<button class="btn small" type="button" data-act="library:filtersclear"' + (Object.keys(filters).some(function (key) { return !!filters[key]; }) ? '' : ' hidden') + '>' + T('Clear') + '</button></div></section>';
-    if (edit) html += '<section class="panel" id="lib-out"><div class="row"><h2 class="grow" style="margin:0">' + T('On loan') + '</h2><span class="muted small" id="lib-out-count">' + TN('{n} item', '{n} items', out.length) + '</span></div>' +
+      '<button class="btn small" type="button" data-act="library:filtersclear"' + (Object.keys(filters).some(function (key) { return !!filters[key]; }) ? '' : ' hidden') + '>' + T('Clear') + '</button></div></details></section>';
+    if (edit && (out.length || back.length)) html += '<section class="panel" id="lib-out"><div class="row"><h2 class="grow" style="margin:0">' + T('On loan') + '</h2><span class="muted small" id="lib-out-count">' + TN('{n} item', '{n} items', out.length) + '</span></div>' +
       (out.length ? '<div class="list" style="margin-top:8px">' + out.map(function (l) {
         var b = booksById[l.bookId] || {};
         var remind = L.remindDue(l, H.today());
         return '<div class="item rec-item lib-out-loan" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(l.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(String(l.name || '').toLowerCase()) + '" data-borrowed="' + esc(l.out || '') + '"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (remind ? ' <span class="tag warn">' + T('Reminder due') + '</span>' : '') +
           '<small>' + who(l) + ' · ' + esc(T('Lent {date}', { date: H.fmt(l.out, true) })) + ' · ' + esc(held(l)) + ' · ' + due(l) + (l.reminded ? ' · ' + esc(T('Reminded {date}', { date: H.fmt(l.reminded, true) })) : '') + '</small></span>' +
           '<span class="rec-acts">' + (L.daysOut(l, H.today()) >= L.REMIND_DAYS ? '<button class="btn small" data-act="library:remind" data-id="' + esc(l.id) + '">' + T('Send a reminder') + '</button>' : '') +
-          '<button class="btn small" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button>' +
-          '<button class="btn small ghost" data-act="library:lost" data-id="' + esc(l.id) + '" title="' + esc(T('It won’t come back')) + '">' + T('Lost') + '</button>' + purgeButton('loan', l.id) + '</span></div>';
+          '<button class="btn small primary" data-act="library:back" data-id="' + esc(l.id) + '">' + H.icon(H.ICON.check, 16) + T('Returned') + '</button>' +
+          rowMenu(l.title, ['<button data-act="library:lost" data-id="' + esc(l.id) + '" title="' + esc(T('It won’t come back')) + '">' + T('Lost') + '</button>', purgeButton('loan', l.id)]) + '</span></div>';
       }).join('') + '</div><p class="empty" id="lib-out-none" hidden>' + T('Nothing matches.') + '</p>' : '<p class="muted small" style="margin:8px 0 0">' + T('Nothing on loan.') + '</p>') +
       (back.length ? '<details class="sub" style="margin-top:10px"><summary>' + T('Recently returned') + '</summary><div class="list">' + back.map(function (l) {
-        return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (l.lost ? ' <span class="tag bad">' + T('Lost') + '</span>' : '') + '<small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + (l.returnNote ? ' · ' + esc(l.returnNote) : '') + '</small></span>' + purgeButton('loan', l.id) + '</div>'; }).join('') +
+        return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (l.lost ? ' <span class="tag bad">' + T('Lost') + '</span>' : '') + '<small>' + who(l) + ' · ' + esc(H.fmt(l.out, true) + ' – ' + H.fmt(l.back, true)) + (l.returnNote ? ' · ' + esc(l.returnNote) : '') + '</small></span>' + rowMenu(l.title, [purgeButton('loan', l.id)]) + '</div>'; }).join('') +
         '</div><p class="hint">' + T('Returned loans are removed after a year.') + '</p></details>' : '') + '</section>';
-    if (gone.length) html += '<section class="panel" id="lib-gone"><h2 id="lib-gone-title">' + T('Removed from Library by Librarian') + ' <span class="muted small">' + TN('{n} item', '{n} items', gone.length) + '</span></h2><div class="list">' + gone.map(function (b) {
+    if (gone.length) html += '<section class="panel" id="lib-gone"><h2 id="lib-gone-title">' + T('Removed') + ' <span class="muted small">' + TN('{n} item', '{n} items', gone.length) + '</span></h2><div class="list">' + gone.map(function (b) {
       var related = itemLoans(b, allLoans), borrowersForItem = related.map(function (l) { return String(l.name || '').toLowerCase(); }), borrowedForItem = related.map(function (l) { return String(l.out || ''); });
       return '<div class="item rec-item lib-gone-item" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(b.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(borrowersForItem.join(' ')) + '" data-borrowed="' + esc(borrowedForItem.join(' ')) + '" data-sort-borrower="' + esc(itemSortValue(b, allLoans, 'borrower')) + '" data-sort-borrowed="' + esc(itemSortValue(b, allLoans, 'borrowed')) + '" data-removed="' + (b.why === 'Lost' ? 'lost' : 'removed') + '"><span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag grey">' + esc(T(b.why || 'Other')) + '</span><small>' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small></span>' +
-        '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button>' + purgeButton('book', b.id) + '</span></div>'; }).join('') + '</div><p class="muted small" id="lib-gone-none" hidden>' + T('None') + '</p></section>';
-    return html + '<section class="panel" id="lib-books">' +
-      (edit ? '<div class="btns lib-cover-actions"><button class="btn small" data-act="library:coversselected" id="lib-covers-selected">' + T('Find covers for selected') + ' (<span id="lib-selected-count">0</span>)</button>' +
-        '<button class="btn small" data-act="library:coversselectmissing">' + T('Select books missing covers') + '</button>' +
-        '<button class="btn small" data-act="library:coversall">' + T('Find covers for all books') + '</button>' +
-        '<button class="btn small" data-act="library:coversmissing">' + T('Find missing covers') + '</button></div>' : '') +
-      '<span class="muted small" id="lib-count">' + TN('{n} item', '{n} items', books.length) + '</span>' +
-      '<div class="list" style="margin-top:8px">' + books.map(function (b) { return bookRow(b, edit, allLoans); }).join('') + '</div><p class="empty" id="lib-none" hidden>' + T('Nothing matches.') + '</p>' +
-      (!all.length ? '<p class="empty">' + T('Nothing in the library yet.') + '</p>' : '') + '</section>';
+        '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button>' + rowMenu(b.title, [purgeButton('book', b.id)]) + '</span></div>'; }).join('') + '</div><p class="muted small" id="lib-gone-none" hidden>' + T('None') + '</p></section>';
+    return html + '<section class="panel" id="lib-books"><div class="row lib-books-head"><span class="muted small grow" id="lib-count">' + TN('{n} item', '{n} items', books.length) + '</span>' +
+      // Choosing books for covers (More → Select books missing covers): tick boxes on the rows, and these two buttons
+      (edit && selecting ? '<button class="btn small primary" data-act="library:coversselected" id="lib-covers-selected">' + T('Find covers for selected') + ' (<span id="lib-selected-count">0</span>)</button>' +
+        '<button class="btn small" data-act="library:selectdone">' + T('Cancel') + '</button>' : '') + '</div>' +
+      '<div class="list" style="margin-top:8px">' + books.map(function (b) { return bookRow(b, edit, allLoans); }).join('') + '</div><p class="empty" id="lib-none" hidden>' + T('Nothing matches.') + '</p></section>';
   }
   function applySearch() {
     var shown = 0, borrower = borrowerQuery(), borrowed = String(filters.borrowed || '');
@@ -341,7 +352,7 @@
     return new Promise(function (resolve, reject) {
       var url;
       try { url = new URL(src); } catch (e) { return reject(new Error('invalid image URL')); }
-      if (url.protocol !== 'https:' || !/^(books\.google\.com|books\.googleusercontent\.com)$/.test(url.hostname)) return reject(new Error('untrusted image URL'));
+      if (url.protocol !== 'https:' || !(GOOGLE.test(url.hostname) || OPENLIB.test(url.hostname))) return reject(new Error('untrusted image URL'));
       var img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = function () {
@@ -359,48 +370,80 @@
       img.src = url.href;
     });
   }
+  /* ---------- book details and covers: Google Books first, then Open Library (free, no key needed) ----------
+   * Google allows apps without their own key only a small shared daily quota, so it is often "busy"; Open Library then
+   * answers instead. Both are turned into the same shape: { title, subtitle, authors, publisher, published, description,
+   * image, link, isbns, source }. */
   function normalized(s) { return L.normalizedTitle(s).replace(/\s/g, ''); }
   function isbnDigits(s) { return String(s || '').replace(/[^0-9x]/gi, '').toLowerCase(); }
-  function bookMatch(book, item) {
-    var info = item.volumeInfo || {}, ids = info.industryIdentifiers || [], isbn = isbnDigits(book.isbn);
-    if (isbn && ids.some(function (x) { return isbnDigits(x.identifier) === isbn; })) return true;
-    var wanted = normalized(book.title), got = normalized(info.title);
-    if (!wanted || !got || !(wanted === got || got.indexOf(wanted) === 0 || wanted.indexOf(got) === 0)) return false;
-    var authors = (info.authors || []).map(normalized).filter(Boolean), author = normalized(book.author);
-    return !author || !authors.length || authors.some(function (x) { return x.indexOf(author) >= 0 || author.indexOf(x) >= 0; });
+  function safeUrl(u, hosts) { try { var x = new URL(String(u || '').replace(/^http:/, 'https:')); return x.protocol === 'https:' && hosts.test(x.hostname) ? x.href : ''; } catch (e) { return ''; } }
+  var GOOGLE = /^(books\.google\.com|books\.googleusercontent\.com|www\.google\.com|play\.google\.com)$/, OPENLIB = /^(openlibrary\.org|covers\.openlibrary\.org)$/;
+  function fromGoogle(item) {
+    var v = item.volumeInfo || {}, img = v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail);
+    return { title: v.title || '', subtitle: v.subtitle || '', authors: v.authors || [], publisher: v.publisher || '', published: v.publishedDate || '',
+      description: v.description || '', image: safeUrl(String(img || '').replace(/&amp;/g, '&'), GOOGLE), link: safeUrl(v.infoLink, GOOGLE),
+      isbns: (v.industryIdentifiers || []).map(function (x) { return isbnDigits(x.identifier); }), source: 'Google Books' };
   }
-  function coverQuery(query) {
-    return fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query) + '&maxResults=8&printType=books')
-      .then(function (response) {
-        function limitError() { var limit = new Error('rate limit'); limit.rateLimited = true; return limit; }
-        if (response.status === 429) throw limitError();
-        return response.json().then(function (data) {
-          var error = data.error || {}, reasons = (error.errors || []).map(function (item) { return item.reason || ''; }).join(' ');
-          if (/quota|rate.?limit|daily.?limit/i.test(error.message || '') || /quota|rate.?limit|daily.?limit/i.test(reasons)) throw limitError();
-          if (!response.ok || data.error) throw new Error('cover service unavailable');
-          return data;
-        });
+  function fromOpenLibrary(d) {
+    return { title: d.title || '', subtitle: d.subtitle || '', authors: d.author_name || [], publisher: (d.publisher || [])[0] || '',
+      published: d.first_publish_year ? String(d.first_publish_year) : '', description: '',
+      image: d.cover_i ? 'https://covers.openlibrary.org/b/id/' + encodeURIComponent(d.cover_i) + '-M.jpg' : '',
+      link: d.key ? safeUrl('https://openlibrary.org' + d.key, OPENLIB) : '', isbns: (d.isbn || []).map(isbnDigits), source: 'Open Library' };
+  }
+  function busy() { var e = new Error('busy'); e.rateLimited = true; return e; }
+  function googleSearch(query) {
+    return fetch('https://www.googleapis.com/books/v1/volumes?q=' + query + '&maxResults=8&printType=books').then(function (r) {
+      if (r.status === 429 || r.status === 403) throw busy();
+      return r.json().then(function (data) {
+        var e = data.error || {}, why = (e.errors || []).map(function (x) { return x.reason || ''; }).join(' ') + ' ' + (e.message || '');
+        if (/quota|rate.?limit|daily.?limit/i.test(why)) throw busy();
+        if (!r.ok || data.error) throw new Error('Google Books unavailable');
+        return (data.items || []).map(fromGoogle);
       });
+    });
+  }
+  function openLibrarySearch(book) {
+    var isbn = isbnDigits(book.isbn), q = isbn ? 'isbn=' + encodeURIComponent(isbn) : 'title=' + encodeURIComponent(book.title || '');
+    return fetch('https://openlibrary.org/search.json?' + q + '&limit=8&fields=key,title,subtitle,author_name,publisher,first_publish_year,cover_i,isbn')
+      .then(function (r) { if (!r.ok) throw new Error('Open Library unavailable'); return r.json(); })
+      .then(function (data) { return (data.docs || []).map(fromOpenLibrary); });
+  }
+  /** Is this result the book? The ISBN, or the title (a different author only puts it lower: catalogue authors are sometimes wrong). */
+  function bookMatch(book, x) {
+    var isbn = isbnDigits(book.isbn);
+    if (isbn && x.isbns.indexOf(isbn) >= 0) return 2;
+    var wanted = normalized(book.title), got = normalized(x.title);
+    if (!wanted || !got || !(wanted === got || got.indexOf(wanted) === 0 || wanted.indexOf(got) === 0)) return 0;
+    var author = normalized(book.author), authors = x.authors.map(normalized).filter(Boolean);
+    return !author || !authors.length || authors.some(function (a) { return a.indexOf(author) >= 0 || author.indexOf(a) >= 0 || a.indexOf(author.slice(0, 4)) >= 0; }) ? 2 : 1;
+  }
+  /** The best matches for a book, best first: Google Books, or Open Library when Google is busy or finds nothing. */
+  function findBook(book) {
+    var title = String(book.title || '').replace(/["\\]/g, ' ').trim(), author = String(book.author || '').replace(/["\\]/g, ' ').trim(), isbn = isbnDigits(book.isbn);
+    var queries = [];
+    if (isbn) queries.push(encodeURIComponent('isbn:' + isbn));
+    if (title && author) queries.push(encodeURIComponent('intitle:"' + title + '"') + '+' + encodeURIComponent('inauthor:"' + author + '"'));
+    if (title) queries.push(encodeURIComponent('intitle:"' + title + '"'));
+    var ranked = function (list) { return list.map(function (x) { return { x: x, m: bookMatch(book, x) }; }).filter(function (r) { return r.m; }).sort(function (a, b) { return b.m - a.m; }).map(function (r) { return r.x; }); };
+    function google(i) {
+      if (i >= queries.length) return Promise.resolve([]);
+      return googleSearch(queries[i]).then(function (list) { var hits = ranked(list); return hits.length ? hits : google(i + 1); });
+    }
+    var googleErr = null;
+    return google(0).catch(function (e) { googleErr = e; return []; }).then(function (hits) {
+      // Open Library unreachable too: report Google's own problem (e.g. "busy"), so the screen can say so
+      return hits.length ? hits : openLibrarySearch(book).then(ranked, function (e) { if (googleErr) throw googleErr; return []; });
+    });
   }
   function lookupCover(book) {
-    var queries = [];
-    if (book.isbn) queries.push('isbn:' + book.isbn.replace(/[^0-9x]/gi, ''));
-    var title = String(book.title || '').replace(/["\\]/g, ' ').trim(), author = String(book.author || '').replace(/["\\]/g, ' ').trim();
-    if (title) queries.push('intitle:"' + title + '"' + (author ? '+inauthor:"' + author + '"' : ''));
-    function search(index) {
-      if (index >= queries.length) return Promise.resolve(null);
-      return coverQuery(queries[index]).then(function (data) {
-        var candidates = (data.items || []).filter(function (item) { return bookMatch(book, item) && item.volumeInfo && item.volumeInfo.imageLinks; });
-        var links = candidates.map(function (item) { return item.volumeInfo.imageLinks.thumbnail || item.volumeInfo.imageLinks.smallThumbnail; }).filter(Boolean);
-        function tryImage(i) {
-          if (i >= links.length) return search(index + 1);
-          var imgUrl = links[i].replace(/^http:/, 'https:').replace(/&amp;/g, '&');
-          return coverImageData(imgUrl).then(function (image) { return { data: image }; }, function () { return tryImage(i + 1); });
-        }
-        return tryImage(0);
-      });
-    }
-    return search(0);
+    return findBook(book).then(function (hits) {
+      var links = hits.map(function (x) { return x.image; }).filter(Boolean);
+      function tryImage(i) {
+        if (i >= links.length) return null;
+        return coverImageData(links[i]).then(function (image) { return { data: image }; }, function () { return tryImage(i + 1); });
+      }
+      return tryImage(0);
+    });
   }
   var coverBatch = null, coverBatchRunning = false;
   function coverBatchDialog(open) {
@@ -511,41 +554,26 @@
   function bookInfoDialog(book) {
     var terms = [book.title, book.author].filter(Boolean).join(' '), encoded = encodeURIComponent(terms);
     var booksUrl = 'https://books.google.com/books?q=' + encoded, searchUrl = 'https://www.google.com/search?q=' + encoded;
-    var query = book.isbn ? 'isbn:' + book.isbn.replace(/[^0-9x]/gi, '') : 'intitle:' + book.title + (book.author ? '+inauthor:' + book.author : '');
     H.modal(H.dialogHead(T('Book / Media Information'), book.title) + '<div class="dlg-body"><div id="lib-info-results" class="lib-info-results"><p class="muted">' + T('Searching Google Books…') + '</p></div>' +
       '<p class="lib-info-links">' + T('Read more') + ': <a href="' + esc(booksUrl) + '" target="_blank" rel="noopener">' + T('Google Books') + '</a> · ' +
       '<a href="' + esc(searchUrl) + '" target="_blank" rel="noopener">' + T('Google Search') + '</a></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Book / Media Information'), true);
-    fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query) + '&maxResults=8&printType=books')
-      .then(function (response) {
-        if (!response.ok) throw new Error('Google Books returned ' + response.status);
-        return response.json();
-      }).then(function (data) {
-        var target = document.getElementById('lib-info-results'); if (!target) return;
-        var item = (data.items || []).filter(function (x) { return bookMatch(book, x); })[0];
-        if (!item) { target.innerHTML = '<p class="muted">' + T('No matching book information was found. Use the search links below.') + '</p>'; return; }
-        var v = item.volumeInfo || {}, image = v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail), imageUrl = '';
-        try {
-          var parsed = new URL(String(image || '').replace(/^http:/, 'https:'));
-          if (parsed.protocol === 'https:' && /^(books\.google\.com|books\.googleusercontent\.com)$/.test(parsed.hostname)) imageUrl = parsed.href;
-        } catch (e) { imageUrl = ''; }
-        var infoUrl = booksUrl;
-        try {
-          var parsedInfo = new URL(item.volumeInfo.infoLink || '');
-          if (parsedInfo.protocol === 'https:' && /(^|\.)google\.com$/.test(parsedInfo.hostname)) infoUrl = parsedInfo.href;
-        } catch (e) { infoUrl = booksUrl; }
-        target.innerHTML = (imageUrl ? '<img class="lib-info-cover" src="' + esc(imageUrl) + '" alt="' + esc(T('Cover of {name}', { name: v.title || book.title })) + '">' : '') +
-          '<div><h3>' + esc(v.title || book.title) + '</h3>' + (v.subtitle ? '<p>' + esc(v.subtitle) + '</p>' : '') +
-          (v.authors && v.authors.length ? '<p><b>' + T('Author') + ':</b> ' + esc(v.authors.join(', ')) + '</p>' : '') +
-          (v.publisher ? '<p><b>' + T('Publisher') + ':</b> ' + esc(v.publisher) + '</p>' : '') +
-          (v.publishedDate ? '<p><b>' + T('Published') + ':</b> ' + esc(v.publishedDate) + '</p>' : '') +
-          (v.description ? '<p class="lib-info-description">' + esc(String(v.description).slice(0, 1800)) + '</p>' : '') +
-          '<a href="' + esc(infoUrl) + '" target="_blank" rel="noopener">' + T('Open in Google Books') + '</a></div>';
-      }).catch(function (error) {
-        console.error('Could not load Google Books information', error);
-        var target = document.getElementById('lib-info-results');
-        if (target) target.innerHTML = '<p class="muted">' + T('Couldn’t load book information. Use the search links below.') + '</p>';
-      });
+    findBook(book).then(function (hits) {
+      var target = document.getElementById('lib-info-results'); if (!target) return;
+      var v = hits[0];
+      if (!v) { target.innerHTML = '<p class="muted">' + T('No matching book information was found. Use the search links below.') + '</p>'; return; }
+      target.innerHTML = (v.image ? '<img class="lib-info-cover" src="' + esc(v.image) + '" alt="' + esc(T('Cover of {name}', { name: v.title || book.title })) + '">' : '') +
+        '<div><h3>' + esc(v.title || book.title) + '</h3>' + (v.subtitle ? '<p>' + esc(v.subtitle) + '</p>' : '') +
+        (v.authors.length ? '<p><b>' + T('Author') + ':</b> ' + esc(v.authors.slice(0, 4).join(', ')) + '</p>' : '') +
+        (v.publisher ? '<p><b>' + T('Publisher') + ':</b> ' + esc(v.publisher) + '</p>' : '') +
+        (v.published ? '<p><b>' + T('Published') + ':</b> ' + esc(v.published) + '</p>' : '') +
+        (v.description ? '<p class="lib-info-description">' + esc(String(v.description).slice(0, 1800)) + '</p>' : '') +
+        (v.link ? '<a href="' + esc(v.link) + '" target="_blank" rel="noopener">' + esc(v.source) + ' ↗</a>' : '') + '</div>';
+    }, function (error) {
+      console.error('Could not load book information', error);
+      var target = document.getElementById('lib-info-results');
+      if (target) target.innerHTML = '<p class="muted">' + T('Couldn’t load book information. Use the search links below.') + '</p>';
+    });
   }
   function requestDialog(book) {
     if (!me() || librarian() || (!S.isLive() && free(book) < 1)) return;
@@ -757,7 +785,7 @@
     var items = selected[2].map(function (x) {
       var searchable = [x.title, x.author, x.name, x.mobile, x.from, x.how, x.why, x.whyNote, x.returnNote, x.out, x.back, x.acquired, x.removed].filter(Boolean).join(' ').toLowerCase();
       var type = selected[0] === 'removed' ? 'book' : selected[0] === 'acquired' ? '' : 'loan';
-      return '<div class="item lib-report-row" data-search="' + esc(searchable) + '"><span class="grow">' + selected[3](x) + '</span>' + (type ? purgeButton(type, x.id) : '') + '</div>';
+      return '<div class="item lib-report-row" data-search="' + esc(searchable) + '"><span class="grow">' + selected[3](x) + '</span>' + (type ? rowMenu(x.title || '', [purgeButton(type, x.id)]) : '') + '</div>';
     }).join('');
     H.modal(H.dialogHead(T('Reports'), T('Show library activity between two dates')) + '<div class="dlg-body">' +
       '<div class="two"><label class="field">' + T('From') + '<input type="date" id="lib-rfrom" value="' + esc(repFrom) + '"></label><label class="field">' + T('To') + '<input type="date" id="lib-rto" value="' + esc(repTo) + '"></label></div>' +
@@ -959,9 +987,9 @@
         if (!librarian()) return;
         selectedBooks = {};
         S.list('books').forEach(function (b) { if (L.inLibrary(b) && (b.kind || 'Book') === 'Book' && !b.cover) selectedBooks[b.id] = true; });
-        document.querySelectorAll('[data-lib-select]').forEach(function (input) { input.checked = !!selectedBooks[input.dataset.libSelect]; });
-        updateCoverControls();
+        selecting = true; H.render(); updateCoverControls();
       },
+      selectdone: function () { selecting = false; selectedBooks = {}; H.render(); },
       coversclose: function () { coverBatchRunning = false; coverBatch = null; H.closeModal(); },
       coversave: function (el) { saveBatchCover(el.dataset.id); },
       coverssaveall: function () {

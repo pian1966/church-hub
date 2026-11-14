@@ -453,14 +453,16 @@ service cloud.firestore {
         || (also().size() > 1 && archivePreviewMember(also()[1]))
         || (also().size() > 2 && archivePreviewMember(also()[2])));
     }
-    function archiveReader() { return admin() || councilMember(); }
-    function seesRecord(d) {
-      return archiveReader() && (admin()
+    // Past the Administrator/Council gate: does the record's own access let this person see it? (Kept apart from the gate,
+    // so a rule checks the costly Council membership only once - Firestore allows 1000 steps per request.)
+    function recordAllows(d) {
+      return (d.get('access', '') == 'private' && keeper())
         || (d.get('access', '') == 'all' && anyone())
         || (d.get('access', '') == 'office' && manager())
         || (d.get('bodyId', '') != '' && inBody(d.bodyId))
-        || mine(d.get('shownTo', '')));
+        || mine(d.get('shownTo', ''));
     }
+    function seesRecord(d) { return admin() || (councilMember() && recordAllows(d)); }
     function okRecord(d) {
       return d.title is string && d.title.size() > 0 && d.title.size() <= 150
         && d.access in ['all', 'body', 'office', 'private']
@@ -468,17 +470,24 @@ service cloud.firestore {
         && d.get('shownTo', '') is string && (d.get('shownTo', '') == '' || d.shownTo == d.get('aboutId', ''))
         && d.get('displayOnApplication', false) is bool;
     }
+    // Council members manage only records they may see, and can't change one into something they couldn't see
+    // (e.g. open up a private staff contract to themselves).
+    function archiveRef(id) { return /databases/$(database)/documents/archive/$(id); }
+    function managesRecord(id) { return admin() || (councilMember() && (!exists(archiveRef(id)) || recordAllows(get(archiveRef(id)).data))); }
     match /archive/{id} {
       allow read: if seesRecord(resource.data);
-      allow create: if archiveReader() && okRecord(request.resource.data) && (admin() || !request.resource.data.get('displayOnApplication', false));
-      allow update: if archiveReader() && okRecord(request.resource.data)
-        && (admin() || request.resource.data.get('displayOnApplication', false) == resource.data.get('displayOnApplication', false));
-      allow delete: if archiveReader();
+      allow create: if okRecord(request.resource.data)
+        && (admin() || (councilMember() && !request.resource.data.get('displayOnApplication', false) && recordAllows(request.resource.data)));
+      allow update: if okRecord(request.resource.data)
+        && (admin() || (councilMember() && recordAllows(resource.data) && recordAllows(request.resource.data)
+          && request.resource.data.get('displayOnApplication', false) == resource.data.get('displayOnApplication', false)));
+      allow delete: if seesRecord(resource.data);
+      // Parts are written before a new record, so a part of a record that doesn't exist yet may be written too.
       match /parts/{n} {
-        allow read: if seesRecord(get(/databases/$(database)/documents/archive/$(id)).data);
-        allow create, update: if archiveReader() && request.resource.data.keys().hasOnly(['data'])
+        allow read: if seesRecord(get(archiveRef(id)).data);
+        allow create, update: if managesRecord(id) && request.resource.data.keys().hasOnly(['data'])
           && request.resource.data.data is string && request.resource.data.data.size() <= 950000;
-        allow delete: if archiveReader();
+        allow delete: if managesRecord(id);
       }
     }
     // A deliberately limited public copy of documents an Administrator selected for the membership form.
@@ -504,20 +513,28 @@ service cloud.firestore {
         allow delete: if admin();
       }
     }
-    // Kept in step with Council membership in the Leadership page; only Administrators and Pastors maintain this list.
+    // Kept in step with Council membership in the Leadership page by Administrators and Pastors. Each entry names the
+    // Council (a leadership group with "council" in its name) and is only allowed if the person really is in it.
     match /archivePreviewMembers/{id} {
       allow read: if manager() || isMe(id);
-      allow create, update: if manager() && request.resource.data.keys().hasOnly(['personId']) && request.resource.data.personId == id;
+      allow create, update: if manager() && request.resource.data.keys().hasOnly(['personId', 'bodyId']) && request.resource.data.personId == id
+        && request.resource.data.bodyId is string && request.resource.data.bodyId.size() > 0
+        && exists(bodyRef(request.resource.data.bodyId))
+        && get(bodyRef(request.resource.data.bodyId)).data.name.lower().matches('.*council.*')
+        && id in get(bodyRef(request.resource.data.bodyId)).data.get('memberIds', []);
       allow delete: if manager();
     }
     function okArchivePreviewPart(d) {
       return d.keys().hasOnly(['data']) && d.data is string && d.data.size() <= 950000;
     }
+    // A preview is an exact copy of a part of the record's own file, made by someone who may see that record.
     match /archivePreviews/{id}/parts/{n} {
-      allow read: if admin() || (councilMember() && seesRecord(get(/databases/$(database)/documents/archive/$(id)).data));
+      allow read: if seesRecord(get(archiveRef(id)).data);
       allow create, update: if okArchivePreviewPart(request.resource.data)
-        && (admin() || councilMember());
-      allow delete: if admin() || councilMember();
+        && managesRecord(id)
+        && exists(/databases/$(database)/documents/archive/$(id)/parts/$(n))
+        && request.resource.data.data == get(/databases/$(database)/documents/archive/$(id)/parts/$(n)).data.data;
+      allow delete: if managesRecord(id);
     }
 
     // ---------- the Library (js/library.js) ----------

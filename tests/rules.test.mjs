@@ -84,7 +84,7 @@ await env.withSecurityRulesDisabled(async ctx => {
   // Leadership groups: the Council (members only; Tim is on it) and the Wardens (open; Clare)
   await set('leaderBodies/lb1', { name: 'Church Council', open: false, memberIds: ['p14'], names: { p14: 'Tim Jacobs' }, seats: { p14: { role: 'Chair' } } });
   await set('leaderBodies/lb2', { name: 'Wardens', open: true, memberIds: ['p15'], names: { p15: 'Clare Jacobs' }, seats: {} });
-  await set('archivePreviewMembers/p14', { personId: 'p14' });
+  await set('archivePreviewMembers/p14', { personId: 'p14', bodyId: 'lb1' });
   await set('customGroups/cg-private', { name: 'Worship team', description: '', memberIds: ['p14'], visibility: 'members' });
   await set('customGroups/cg-church', { name: 'Welcome team', description: '', memberIds: [], visibility: 'church' });
   // The Archive: the Council's minutes, Sipho's contract (shown to him), plans for the office, a notice for everyone,
@@ -639,14 +639,22 @@ await t('archive: inline preview content is only for Administrators and Council 
   await cannot(read(db.rosters, 'archivePreviews/ar2/parts/0'));          // even though Sipho may download his contract
   await cannot(read(standardMember, 'archivePreviews/ar4/parts/0'));
   await cannot(read(rector, 'archivePreviews/ar1/parts/0'));              // Senior Pastor is not an Administrator or Council member
-  await can(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'different' }));
-  await cannot(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'BBBB', extra: true }));
-  await can(db.member.doc('archivePreviews/council-new/parts/0').set({ data: 'QUJD' })); // Council can save a new file before its record
-  await can(db.member.doc('archivePreviews/council-new/parts/0').delete());
+  await can(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'AAAA' }));            // an exact copy of the record's own file
+  await cannot(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'different' }));   // … never anything else
+  await cannot(db.member.doc('archivePreviews/ar2/parts/0').set({ data: 'BBBB' }));        // nor for a record they may not see
+  await cannot(db.member.doc('archivePreviews/ar1/parts/0').set({ data: 'AAAA', extra: true }));
+  await can(db.member.doc('archive/council-new/parts/0').set({ data: 'QUJD' }));          // a new file is saved before its record …
+  await can(db.member.doc('archivePreviews/council-new/parts/0').set({ data: 'QUJD' }));  // … then its preview copy
+  await can(db.member.doc('archivePreviews/council-new/parts/0').delete()); await can(db.member.doc('archive/council-new/parts/0').delete());
+  await cannot(db.member.doc('archivePreviews/ar2/parts/0').delete());                     // not a preview of a record they may not see
   await cannot(db.rosters.doc('archivePreviews/ar2/parts/0').set({ data: 'BBBB' }));
   await cannot(standardMember.doc('archivePreviews/ar4/parts/0').set({ data: 'BBBB' }));
-  await can(db.admin.doc('archivePreviewMembers/p15').set({ personId: 'p15' }));
-  await cannot(db.member.doc('archivePreviewMembers/p15').set({ personId: 'p15' }));
+  await cannot(db.admin.doc('archivePreviewMembers/p15').set({ personId: 'p15', bodyId: 'lb1' }));   // Clare isn't on the Council
+  await cannot(db.admin.doc('archivePreviewMembers/p15').set({ personId: 'p15', bodyId: 'lb2' }));   // the Wardens aren't a Council
+  await cannot(db.admin.doc('archivePreviewMembers/p15').set({ personId: 'p15' }));
+  await cannot(db.pastor.doc('archivePreviewMembers/p02').set({ personId: 'p02', bodyId: 'lb1' }));  // a Pastor can't add themself …
+  await can(db.admin.doc('archivePreviewMembers/p14').set({ personId: 'p14', bodyId: 'lb1' }));      // … only real Council members are listed
+  await cannot(db.member.doc('archivePreviewMembers/p15').set({ personId: 'p15', bodyId: 'lb1' }));
 });
 await t('archive: only Administrators and Council members add, change and delete records', async () => {
   const r = o => Object.assign({ title: 'New', cat: 'other', date: '2026-11-10', note: '', access: 'office', bodyId: '', aboutId: '', aboutName: '', shownTo: '', link: 'https://example.org/x', by: 'x' }, o);
@@ -655,6 +663,11 @@ await t('archive: only Administrators and Council members add, change and delete
   await can(db.admin.doc('archive/n3').set(r({ access: 'private', aboutId: 'p05', shownTo: 'p05' })));
   await cannot(db.pastor.doc('archive/n4').set(r({}))); await cannot(db.rosters.doc('archive/n4').set(r({})));
   await can(db.member.doc('archive/ar1').update({ title: 'Updated by Council' })); await cannot(db.rosters.doc('archive/ar2').update({ access: 'all' }));
+  // A Council member can't change, delete or open up a record they may not see (e.g. a private staff contract)
+  await cannot(db.member.doc('archive/ar2').update({ access: 'all', shownTo: '', aboutId: '' })); await cannot(db.member.doc('archive/ar2').delete());
+  await cannot(db.member.doc('archive/ar2/parts/0').set({ data: 'XXXX' })); await cannot(db.member.doc('archive/ar2/parts/0').delete());
+  await cannot(db.member.doc('archive/ar4').update({ access: 'private' }));                 // … nor hide one from themself
+  await cannot(db.member.doc('archive/n6').set(r({ access: 'private' })));
   await cannot(db.admin.doc('archive/n4').set(r({ access: 'body' })));                       // a leadership group's record must name the group
   await cannot(db.admin.doc('archive/n4').set(r({ access: 'office', bodyId: 'lb1' })));      // … and no other record may
   await cannot(db.admin.doc('archive/n4').set(r({ access: 'anyone' }))); await cannot(db.admin.doc('archive/n4').set(r({ title: '' })));

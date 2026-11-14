@@ -52,6 +52,7 @@ var Archive = (function () {
     var r = rec || {}, w = who || {}, ids = w.ids || [];
     if (!w.admin && !w.council) return false;
     if (w.admin) return true;
+    if (r.access === 'private' && w.senior) return true;      // staff contracts and appraisals: the Senior Pastor too (on the Council)
     if (r.access === 'all') return true;
     if (r.access === 'office' && w.pastor) return true;
     if (r.bodyId && (w.bodies || []).indexOf(r.bodyId) >= 0) return true;

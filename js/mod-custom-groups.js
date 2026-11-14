@@ -13,18 +13,17 @@
   function staffSettings() {
     return Object.assign({ name: 'Staff Group', description: '' }, (S.settings() || {}).staffGroup || {});
   }
-  function staffCard() {
+  /** The Staff Group's own page: its name and note at the top (with Group settings), then who is in it. */
+  function staffPage() {
     var st = staffSettings(), members = G.staff(S.list('people'));
     var mine = members.some(function (p) { return p.id === personId(); });
-    if (!admin() && !mine) return '';
-    return '<section class="panel custom-group"><div class="row"><span class="grow"><h3>' + esc(st.name) + '</h3>' +
-      (st.description ? '<p class="hint">' + esc(st.description) + '</p>' : '') +
-      '<small class="muted">' + T(admin() ? 'This built-in group updates automatically from People staff details.' : 'This group follows the staff details on your profile.') +
-      (admin() ? ' · ' + TN('{n} person', '{n} people', members.length) : '') + '</small></span>' +
-      (admin() ? '<button class="btn small" data-act="customgroups:staffsettings">' + T('Group settings') + '</button>' : '') + '</div>' +
-      (admin() && members.length ? '<div class="list" style="margin-top:8px">' + members.map(function (p) {
-        return '<div class="item"><span class="grow">' + esc(H.name(p)) + '</span><small class="muted">' + esc((p.staff && p.staff.category) || T('Staff')) + '</small></div>';
-      }).join('') + '</div>' : admin() ? '<p class="empty">' + T('No staff have been marked in People yet.') + '</p>' : '') + '</section>';
+    if (!admin() && !mine) return '<p class="empty">' + T('This group follows the staff details on your profile.') + '</p>';
+    return '<div class="page-head"><div><h1>' + esc(st.name) + '</h1><p class="lead">' + (st.description ? esc(st.description) + ' ' : '') +
+      T(admin() ? 'This built-in group updates automatically from People staff details.' : 'This group follows the staff details on your profile.') + '</p></div>' +
+      (admin() ? '<div class="btns"><button class="btn" data-act="customgroups:staffsettings">' + T('Group settings') + '</button></div>' : '') + '</div>' +
+      (admin() ? (members.length ? '<section class="panel"><p class="muted small" style="margin:0 0 6px">' + TN('{n} person', '{n} people', members.length) + '</p><div class="list">' + members.map(function (p) {
+        return '<a class="item" href="#/people/p/' + esc(p.id) + '"><span class="grow">' + esc(H.name(p)) + '</span><small class="muted">' + esc((p.staff && p.staff.category) || T('Staff')) + '</small></a>';
+      }).join('') + '</div></section>' : '<p class="empty">' + T('No staff have been marked in People yet.') + '</p>') : '');
   }
   function card(group) {
     var mine = (group.memberIds || []).indexOf(personId()) >= 0;
@@ -41,10 +40,12 @@
   }
   function section() {
     var list = G.forPerson(S.list('customGroups'), personId(), admin()), html = list.map(card).join('');
-    if (admin()) html = '<section class="panel"><div class="row"><span class="grow"><h2>' + T('Church groups') + '</h2><p class="hint">' + T('Create groups for ministries, committees and other church teams.') + '</p></span>' +
-      '<button class="btn primary" data-act="customgroups:create">' + H.icon(H.ICON.plus, 16) + T('Create a group') + '</button></div></section>' + html;
-    if (!html) return '';
-    return '<h2 style="margin:22px 0 10px">' + T('Church groups') + '</h2><div class="grid2">' + html + '</div>';
+    if (!html && !admin()) return '';
+    // One heading, with its button beside it (not a second card repeating the title)
+    return '<div class="row" style="margin:22px 0 10px;align-items:flex-end;flex-wrap:wrap"><div class="grow"><h2 style="margin:0">' + T('Church groups') + '</h2>' +
+      (admin() ? '<p class="hint" style="margin:4px 0 0">' + T('Create groups for ministries, committees and other church teams.') + '</p>' : '') + '</div>' +
+      (admin() ? '<button class="btn primary" data-act="customgroups:create">' + H.icon(H.ICON.plus, 16) + T('Create a group') + '</button>' : '') + '</div>' +
+      (html ? '<div class="grid2">' + html + '</div>' : '');
   }
   function readDraft() {
     if (!draft) return;
@@ -120,11 +121,11 @@
     var p = S.get('people', personId());
     return admin() || S.list('customGroups').length > 0 || !!(p && G.staff([p]).length);
   }, staffVisible: function () { var p = S.get('people', personId()); return admin() || !!(p && G.staff([p]).length); },
-    staffPage: staffCard };
+    staffPage: staffPage };
   H.register({
     id: 'staffgroup', name: 'Staff Group', desc: 'This built-in group updates automatically from People staff details.', icon: 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16.5 11a2.6 2.6 0 1 0 0-5.2M2.5 19c.5-3 2.6-5 5.5-5s5 2 5.5 5M15.5 14.2c2.6.2 4.4 2 4.9 4.8',
     tint: '#3E6E8E', inGroups: true,
     show: function () { return CustomGroupsUI.staffVisible(); },
-    render: function () { return '<div class="page-head"><div><h1>' + T('Staff Group') + '</h1></div></div>' + CustomGroupsUI.staffPage(); }
+    render: function () { return CustomGroupsUI.staffPage(); }
   });
 })();

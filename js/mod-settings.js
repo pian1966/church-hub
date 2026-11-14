@@ -112,6 +112,15 @@
     });
   }
   /** Terminology (Church Words): a ready-made set for the kind of church, and any word renamed (js/wording.js). Full-width page. */
+  /** The ministry roles of the church's tradition (moved here from "What Pastors can do": they are words, not access). */
+  function rolesPanel(st) {
+    var roles = Wording.ministerRoles((st.wording || {}).set), on = Array.isArray(st.ministerRoles) ? st.ministerRoles : roles.map(function (r) { return r.id; });
+    return '<section class="panel" id="minister-roles"><h2>' + T('Ministry roles the church uses') + '</h2><p class="hint" style="margin-top:0">' +
+      T('These role names are suggested for the selected church tradition. They do not give app access; set access separately.') + '</p>' +
+      '<div class="pc-list">' + roles.map(function (r) {
+        return '<label class="check"><input type="checkbox" class="st-minister-role" value="' + esc(r.id) + '"' + (on.indexOf(r.id) >= 0 ? ' checked' : '') + '><span>' + esc(T(r.name)) + '</span></label>';
+      }).join('') + '</div><button class="btn small" data-autosave data-act="settings:ministerroles">' + T('Save') + '</button></section>';
+  }
   function renderTerminology(st) {
     var w = st.wording || {}, cur = Wording.SETS[w.set] ? w.set : 'general', words = Wording.words(st);
     return '<section class="panel" data-own-words><h2>' + T('Terminology (Church Words)') + '</h2><p class="hint" style="margin-top:0">' + T('The words your church uses for people and roles.') + ' ' +
@@ -132,7 +141,7 @@
         return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(T(t[2])) + '</span></td>' +
           '<td>' + adminChoice + '<input class="wd-1" data-k="' + t[0] + '" value="' + esc(words[t[0]][0]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][0] })) + '"></td>' +
           '<td><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][1] })) + '"></td></tr>';
-      }).join('') + '</tbody></table></div><button class="btn small" data-autosave data-act="settings:savewords">' + T('Save wording') + '</button></section>';
+      }).join('') + '</tbody></table></div><button class="btn small" data-autosave data-act="settings:savewords">' + T('Save wording') + '</button></section>' + rolesPanel(st);
   }
   /** Email templates for anniversaries, birthdays, death days of spouses, and welcome messages. */
   /** The choice of how to open emails: the email program (church address) or Gmail in the browser. */
@@ -404,17 +413,12 @@
       : '<div class="pc-list">' + H.PASTOR_CAN.map(function (a) {
         return '<label class="check"><input type="checkbox" class="st-pc" value="' + a[0] + '"' + (on.indexOf(a[0]) >= 0 ? ' checked' : '') + dis + '><span>' + esc(T(a[1])) + '</span></label>';
       }).join('') + '</div>';
-    var roles = Wording.ministerRoles((st.wording || {}).set), selectedRoles = Array.isArray(st.ministerRoles) ? st.ministerRoles : roles.map(function (r) { return r.id; });
     return '<section class="panel" id="pastor-can"><h2>' + T('What Pastors can do') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Pastors always see and edit everyone’s details, households, children and pastoral notes. Tick what else they may do – up to everything an Administrator does. Medical notes stay with Children’s ministry.') + '</p>' +
       '<label class="field" style="max-width:420px">' + T('Senior Pastor') + '<select id="st-senior"' + dis + '><option value="">' + T('Nobody – all Pastors the same') + '</option>' +
         pastors.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === senior ? ' selected' : '') + '>' + esc(H.name(p)) + '</option>'; }).join('') + '</select>' +
         '<small>' + T('The Pastor who leads the church can have more than the others. The other Pastors are then called Assistant Pastors.') + '</small></label>' +
       ticks +
-      '<h3>' + T('Ministry roles the church uses') + '</h3><p class="hint">' + T('These role names are suggested for the selected church tradition. They do not give app access; set access separately.') + '</p>' +
-      '<div class="pc-list">' + roles.map(function (r) {
-        return '<label class="check"><input type="checkbox" class="st-minister-role" value="' + esc(r.id) + '"' + (selectedRoles.indexOf(r.id) >= 0 ? ' checked' : '') + dis + '><span>' + esc(T(r.name)) + '</span></label>';
-      }).join('') + '</div>' +
       (admin ? '<div class="btns"><button class="btn small" data-autosave data-act="settings:pastorcan">' + T('Save') + '</button><button class="btn small ghost" data-act="settings:pastorall">' + T('Tick everything') + '</button></div>' +
         '<p class="hint">' + T('Pastors get the change the next time they open Church Hub.') + (Store.isLive() ? ' ' + T('If you have changed the database rules file, publish it again first (FIREBASE-SETUP step 7).') : '') + '</p>'
         : '<p class="hint">' + T('Only an Administrator can change this.') + '</p>') + '</section>';
@@ -619,8 +623,7 @@
           return H.PASTOR_CAN.filter(function (a) { return on.indexOf(a[0]) >= 0; }).map(function (a) { return a[0]; });
         };
         var st = S.settings() || {}, sel = document.getElementById('st-senior'), sid = sel ? sel.value : '', names = ticked('st-pc');
-        var ministerRoles = [].map.call(document.querySelectorAll('.st-minister-role:checked'), function (c) { return c.value; });
-        var upd = { pastorCan: names, seniorPastorId: sid, ministerRoles: ministerRoles }, say = (sid ? 'Assistant Pastors' : 'What Pastors can do') + ': ' + (names.join(', ') || 'nothing extra');
+        var upd = { pastorCan: names, seniorPastorId: sid }, say = (sid ? 'Assistant Pastors' : 'What Pastors can do') + ': ' + (names.join(', ') || 'nothing extra');
         if (sid) {
           // A Senior Pastor just chosen starts with what the Pastors could already do; after that, their own ticks
           upd.seniorCan = document.querySelector('.st-sc') ? ticked('st-sc') : (st.seniorCan && st.seniorPastorId ? st.seniorCan : names).slice();
@@ -629,6 +632,11 @@
         } else upd.seniorCan = [];
         S.setSettings(upd, say);
         S.syncPastors(); H.render(); H.toast(T('Saved'));
+      },
+      ministerroles: function () {
+        if (!H.can('*') && !H.can('settings.manage')) return;
+        var on = [].map.call(document.querySelectorAll('.st-minister-role:checked'), function (c) { return c.value; });
+        S.setSettings({ ministerRoles: on }, 'Ministry roles the church uses: ' + (on.join(', ') || 'none'));
       },
       pastorall: function () { document.querySelectorAll('.st-pc, .st-sc').forEach(function (c) { c.checked = true; }); var c = document.querySelector('.st-pc'); if (c) c.dispatchEvent(new Event('change', { bubbles: true })); },
       /** Who is in a care group but not in the church directory, by reason, with a link to each. */

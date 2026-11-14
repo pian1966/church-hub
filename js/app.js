@@ -411,7 +411,7 @@ var Hub = (function () {
     return '<label class="lang-pick mode-pick"><span class="sr">' + T('Appearance') + '</span>' +
       '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18z" fill="currentColor" stroke="none"/></svg>' +
       '<select class="mode-sel" aria-label="' + esc(T('Appearance')) + '">' + [['', TX('Automatic')], ['light', TX('Light')], ['dark', TX('Dark')]].map(function (x) {
-        return '<option value="' + x[0] + '"' + (m === x[0] ? ' selected' : '') + '>' + esc(T(x[1])) + (x[0] ? '' : ' (' + esc(T('Same as this device')) + ')') + '</option>';
+        return '<option value="' + x[0] + '"' + (m === x[0] ? ' selected' : '') + '>' + esc(T(x[1])) + '' + '</option>';
       }).join('') + '</select></label>';
   }
   if (typeof document !== 'undefined') document.addEventListener('change', function (ev) {
@@ -446,12 +446,15 @@ var Hub = (function () {
     if (p[0] === 'words') { if (!inWords && mod && mod.leaving) mod.leaving(I18n.seen()); inWords = true; I18n.page(null); }
     else { inWords = false; I18n.page(location.hash); }
     var body = mod ? mod.render(p.slice(1)) : renderHome();
-    if (mod && mod.inGroups) { var gm = moduleById('groups'); if (gm && gm.tabs) body = gm.tabs(mod.id) + body; }   // Groups: its tabs above each kind of group
+    if (mod && mod.inGroups) { var gm = moduleById('groups'); if (gm && gm.tabs) body = gm.tabs(mod.id) + body; }   // Groups: its tabs on each kind of group (moved under the title below)
     if (!mod || (mod.id === 'me' && !p[1])) body = prompts() + body;   // Home and My details
     var keyOf = function (d) { var sm = d.querySelector('summary'); return d.id || (sm ? sm.textContent.trim() : ''); };
     var wasOpen = [].map.call(root.querySelectorAll('details[open]'), keyOf).filter(Boolean), samePage = root.dataset.page === location.hash;
     root.innerHTML = shell(mod, body);
     root.dataset.page = location.hash; guardBack(); findables(root);
+    // Groups: its tabs go under the page's title, as on every other page (title, tabs, then the page)
+    var gt = root.querySelector('main .groups-tabs'), ph = root.querySelector('main .page-head');
+    if (gt && ph && (gt.compareDocumentPosition(ph) & 4)) ph.parentNode.insertBefore(gt, ph.nextSibling);
     if (samePage && wasOpen.length) root.querySelectorAll('details').forEach(function (d) { if (wasOpen.indexOf(keyOf(d)) >= 0) d.open = true; });   // a refresh keeps unfolded sections open
     ourWords(root);
     wirePrompts();
@@ -485,12 +488,12 @@ var Hub = (function () {
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
-      '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div class="side-mode">' + modePicker() + '</div></div>' +
+      '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div class="side-mode">' + modePicker() + '</div>' +
+      (canViewAs() && !Store.preview() ? '<button class="side-viewas" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button>' : '') + '</div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
       (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
-      (canViewAs() && !Store.preview() ? '<div class="corner"><button class="btn small" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button></div>' : '') +
       '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>' + 'Church Hub' + '</b></a>' +
       '<span class="top-r">' + (canViewAs() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
@@ -885,7 +888,15 @@ var Hub = (function () {
     return false;
   }
 
+  /** A "More ▾" button with a short list of less-used actions (each an HTML <button> or <a>). It closes when one is chosen,
+   *  or on a click anywhere else (onClick below), so pages can keep one main button and tuck the rest away. */
+  function menu(label, items, cls, aria) {
+    var dots = label === '⋯';
+    return '<details class="menu' + (cls ? ' ' + cls : '') + '"><summary class="' + (dots ? 'icon-btn ghost' : 'btn') + '"' + (aria ? ' aria-label="' + esc(aria) + '" title="' + esc(aria) + '"' : '') + '>' +
+      esc(label) + (dots ? '' : ' <span aria-hidden="true">▾</span>') + '</summary><div class="menu-list" role="menu">' + items.join('') + '</div></details>';
+  }
   function onClick(ev) {
+    document.querySelectorAll('details.menu[open]').forEach(function (d) { if (!d.contains(ev.target) || ev.target.closest('.menu-list')) d.removeAttribute('open'); });
     var el = ev.target.closest('[data-act]'); if (!el) return;
     var spec = el.dataset.act.split(':'), fn;
     if (spec[0] === 'hub') fn = hubActions[spec[1]];
@@ -1040,7 +1051,7 @@ var Hub = (function () {
   }
 
   return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
+    menu: menu, esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

@@ -458,6 +458,7 @@ I18n.rows([
     ["This group follows the staff details on your profile.", "Hierdie groep volg die personeelbesonderhede op jou profiel.", "Leli qembu lilandela imininingwane yomsebenzi esephrofayilini yakho.", "Eli qela lilandela iinkcukacha zomsebenzi kwiprofayile yakho."],
     ["My groups", "My groepe", "Amaqembu ami", "Amaqela am"],
     ["The groups you are in. The tabs above show every group you may see.", "Die groepe waarin jy is. Die oortjies hierbo wys elke groep wat jy mag sien.", "Amaqembu okuwo. Amathebhu angenhla akhombisa wonke amaqembu ongawabona.", "Amaqela okuwo. Iithebhu ezingentla zibonisa onke amaqela onokuwabona."],
+    ["The groups you are in. The tabs show every group you may see.", "Die groepe waarin jy is. Die oortjies wys elke groep wat jy mag sien.", "Amaqembu okuwo. Amathebhu akhombisa wonke amaqembu ongawabona.", "Amaqela okuwo. Iithebhu zibonisa onke amaqela onokuwabona."],
     ["You’re not in a group yet.", "Jy is nog nie in ’n groep nie.", "Awukabi seqenjini okwamanje.", "Akukabikho kwiqela."],
     ["My leadership groups", "My leierskapsgroepe", "Amaqembu ami obuholi", "Amaqela am obunkokeli"],
     ["Care Groups, Midweek Groups and Leadership in one place", "Sorggroepe, Middeweekse Groepe en Leierskap op een plek", "Amaqembu Okunakekelana, Amaqembu Aphakathi Nesonto noBuholi endaweni eyodwa", "Amaqela Okukhathalelana, Amaqela Aphakathi Kweveki noBunkokeli kwindawo enye"],

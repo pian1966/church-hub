@@ -81,7 +81,8 @@ var Store = (function () {
     if (LIVE && Live && Live.household) Live.household().forEach(function (h) { if (h.personId && ids.indexOf(h.personId) < 0) ids.push(h.personId); });
     var bodies = all('leaderBodies').filter(function (b) { return (b.memberIds || []).some(function (pid) { return ids.indexOf(pid) >= 0; }); });
     return { admin: isAdmin(), council: !previewRole && bodies.some(function (b) { return /council/i.test(b.name || ''); }),
-      pastor: !previewRole && !!user && user.appRole === 'pastor', ids: ids, bodies: bodies.map(function (b) { return b.id; }) };
+      pastor: !previewRole && !!user && user.appRole === 'pastor', senior: !previewRole && !!user && user.appRole === 'pastor' && !!db.settings && db.settings.seniorPastorId === user.id,
+      ids: ids, bodies: bodies.map(function (b) { return b.id; }) };
   }
   function archiveSees(record) {
     return !previewRole && !!record && typeof Archive !== 'undefined' && Archive.sees(record, archiveWho());
@@ -297,11 +298,12 @@ var Store = (function () {
       if (!session || previewRole || !is('admin', 'pastor')) return Promise.resolve();
       var councilIds = {};
       (db.leaderBodies || []).forEach(function (b) {
-        if (/council/i.test(b.name || '')) (b.memberIds || []).forEach(function (pid) { councilIds[pid] = true; });
+        if (/council/i.test(b.name || '')) (b.memberIds || []).forEach(function (pid) { councilIds[pid] = councilIds[pid] || b.id; });
       });
       function sync(pid) {
         if (!pid) return Promise.resolve();
-        return councilIds[pid] ? write('archivePreviewMembers/' + pid, { personId: pid }) :
+        // The rules check the person really is in that Council (bodyId)
+        return councilIds[pid] ? write('archivePreviewMembers/' + pid, { personId: pid, bodyId: councilIds[pid] }) :
           (local['archivePreviewMembers/' + pid] === null ? Promise.resolve() : del('archivePreviewMembers/' + pid));
       }
       if (ids) {
@@ -311,8 +313,9 @@ var Store = (function () {
       if (!is('admin')) return Promise.resolve();
       return fs.collection('archivePreviewMembers').get().then(function (snap) {
         var existing = {};
-        snap.docs.forEach(function (d) { existing[d.id] = true; });
-        var wanted = Object.keys(councilIds), jobs = wanted.filter(function (pid) { return !existing[pid]; }).map(sync);
+        snap.docs.forEach(function (d) { existing[d.id] = (d.data() || {}).bodyId || true; });
+        // Missing entries, and older ones without the Council's id, are (re)written
+        var wanted = Object.keys(councilIds), jobs = wanted.filter(function (pid) { return existing[pid] !== councilIds[pid]; }).map(sync);
         Object.keys(existing).forEach(function (pid) { if (!councilIds[pid]) jobs.push(del('archivePreviewMembers/' + pid)); });
         return Promise.all(jobs);
       }).catch(function (e) { err(e, 'update Council preview access'); });
@@ -744,17 +747,14 @@ var Store = (function () {
     }
     function stopExtras() { Object.keys(extraSubs).forEach(function (k) { try { extraSubs[k](); } catch (e) {} }); extraSubs = {}; }
     /** Archive source files remain available to each record's readers; preview copies have stricter read rules. */
+    // The file first, then its preview copy: the rules only accept a preview that is an exact copy of a saved part.
     function fileSave(id, parts, had) {
-      var jobs = [];
-      parts.forEach(function (data, i) {
-        jobs.push(doc('archive/' + id + '/parts/' + i).set({ data: data }));
-        jobs.push(doc('archivePreviews/' + id + '/parts/' + i).set({ data: data }));
-      });
-      for (var i = parts.length; i < (had || 0); i++) {
-        jobs.push(doc('archive/' + id + '/parts/' + i).delete());
-        jobs.push(doc('archivePreviews/' + id + '/parts/' + i).delete());
-      }
-      return Promise.all(jobs);
+      var extra = []; for (var i = parts.length; i < (had || 0); i++) extra.push(i);
+      return Promise.all(parts.map(function (data, i) { return doc('archive/' + id + '/parts/' + i).set({ data: data }); }))
+        .then(function () { return Promise.all(parts.map(function (data, i) { return doc('archivePreviews/' + id + '/parts/' + i).set({ data: data }); })); })
+        .then(function () {
+          return Promise.all(extra.map(function (i) { return doc('archivePreviews/' + id + '/parts/' + i).delete().then(function () { return doc('archive/' + id + '/parts/' + i).delete(); }); }));
+        });
     }
     function fileLoad(id, n) {
       var jobs = []; for (var i = 0; i < n; i++) jobs.push(doc('archive/' + id + '/parts/' + i).get());

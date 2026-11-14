@@ -76,6 +76,16 @@ ok(M.sent(msgs, 'a').map(x => x.id).join() === 'm2,m3' && M.sent(msgs, 'x', true
 ok(M.status({ fromId: 'a', deliveredBy: ['a'], readBy: ['a'] }) === 'sent'
   && M.status({ fromId: 'a', deliveredBy: ['a', 'b'], readBy: ['a'] }) === 'delivered'
   && M.status({ fromId: 'a', deliveredBy: ['a', 'b'], readBy: ['a', 'b'] }) === 'read', 'status progresses from sent to delivered to read');
+// As on WhatsApp, a message to several people: two ticks once it reached everyone, blue once everyone read it
+const grp = { fromId: 'a', to: ['a', 'b', 'c'], deliveredBy: ['a', 'b'], readBy: ['a', 'b'] };
+ok(M.status(grp) === 'sent', 'a group message read by one of two still shows one tick until it reaches everyone');
+ok(M.status(Object.assign({}, grp, { deliveredBy: ['a', 'b', 'c'] })) === 'delivered', '…two grey ticks once everyone has it');
+ok(M.status(Object.assign({}, grp, { deliveredBy: ['a', 'b', 'c'], readBy: ['a', 'b', 'c'] })) === 'read', '…blue ticks once everyone has read it');
+const ppl = [{ id: 'b', email: 'b@x.org', appRole: 'member' }, { id: 'c', email: '', appRole: 'none' }];
+ok(M.status(grp, ppl) === 'read', 'someone who can’t sign in (never able to open it) doesn’t hold the ticks back');
+const cnt = M.counts(Object.assign({}, grp, { to: ['a', 'b', 'c', 'd'], deliveredBy: ['a', 'b', 'c'] }));
+ok(cnt.of === 3 && cnt.delivered === 2 && cnt.read === 1 && cnt.waiting.join() === 'd', 'counts: went to, delivered, read, and who hasn’t got it yet');
+ok(M.status({ fromId: 'a', kind: 'office', to: [], deliveredBy: ['a', 'x'], readBy: ['a'] }) === 'delivered', 'to the Office: delivered as soon as someone in the office has it');
 ok(JSON.stringify(M.seen(msgs[1])) === '{"of":2,"n":1}', 'seen by 1 of 2 (the sender doesn’t count)');
 ok(M.inApp(['a', 'b', 'c', 'd', 'x'], people).join() === 'a,b', 'who can open it in the app: signs in, with an email address');
 ok(M.mayDelete(msgs[0], carer) && !M.mayDelete(msgs[0], member) && M.mayDelete(msgs[1], pastor), 'the sender, Administrators and Pastors may delete a message');

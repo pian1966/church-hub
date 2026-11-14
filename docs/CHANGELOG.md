@@ -344,3 +344,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   longer hides a book with the right title. Rows: "Added" before the date, no "Book" label on every book (only DVDs etc.),
   and tick boxes only while choosing books for covers (More → Select books missing covers, with Cancel).
 
+- ✅ Messages look like a chat app (0.70.0): messages as bubbles (yours on the right in green), one grey tick when sent, two grey ticks when it has reached everyone, two blue ticks when everyone has read it; new messages marked with a green bar and a "{n} unread messages" note; "Read by" lists Read, Delivered and Not delivered yet; Delete moved into the ⋯ menu.

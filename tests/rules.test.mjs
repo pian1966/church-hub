@@ -68,8 +68,9 @@ await env.withSecurityRulesDisabled(async ctx => {
   // Messages: a message group Tim leads, one Clare leads; a message to Tim and Clare, and one to Thandi only
   await set('msgGroups/mg1', { name: 'Welcome team', leaderIds: ['p14'], memberIds: ['p14', 'p15'] });
   await set('msgGroups/mg2', { name: 'Alpha team', leaderIds: ['p15'], memberIds: ['p15', 'p02'] });
-  await set('messages/ms1', { kind: 'group', groupId: 'mg1', audience: 'Welcome team', title: '', body: 'Hello', fromId: 'p01', fromName: 'Linda', to: ['p14', 'p15'], readBy: ['p01'] });
-  await set('messages/ms2', { kind: 'staff', groupId: '', audience: 'Staff', title: '', body: 'Staff only', fromId: 'p01', fromName: 'Linda', to: ['p01', 'p02'], readBy: ['p01'] });
+  await set('messages/ms1', { kind: 'group', groupId: 'mg1', audience: 'Welcome team', title: '', body: 'Hello', fromId: 'p01', fromName: 'Linda', to: ['p14', 'p15'], deliveredBy: ['p01'], readBy: ['p01'] });
+  await set('messages/ms2', { kind: 'staff', groupId: '', audience: 'Staff', title: '', body: 'Staff only', fromId: 'p01', fromName: 'Linda', to: ['p01', 'p02'], deliveredBy: ['p01'], readBy: ['p01'] });
+  await set('messages/ms3', { kind: 'office', groupId: '', audience: 'Office', title: '', body: 'Please call me', fromId: 'p14', fromName: 'Tim', to: [], deliveredBy: ['p14'], readBy: ['p14'] });
   // Translations: Nomvula (a member) checks isiZulu; a suggestion from Clare (p15) in isiZulu and one in Afrikaans
   await set('roles/nomvula@example.com', { role: 'member', personId: 'p20', langs: ['zu'] });
   await set('wordIdeas/w15', { lang: 'zu', en: 'Home', text: 'Ekhaya', personId: 'p15', name: 'Clare', status: 'waiting', createdAt: 'x' });
@@ -515,12 +516,16 @@ await t('messages: read by the people they went to, their sender, Administrators
   await can(list(db.member.collection('messages').where('fromId', '==', 'p14')));
   await cannot(list(db.member.collection('messages')));
   await can(read(db.pastor, 'messages/ms1')); await can(list(db.admin.collection('messages')));
+  await can(read(db.member, 'messages/ms3')); await can(read(db.admin, 'messages/ms3')); await can(read(db.pastor, 'messages/ms3'));
+  await cannot(read(db.kids, 'messages/ms3'));
   await cannot(read(db.rosters, 'messages/ms1')); await cannot(read(stranger, 'messages/ms1'));
 });
 await t('messages: who may send to whom', async () => {
-  const m = (o) => Object.assign({ groupId: '', audience: 'x', title: '', body: 'Hi', fromName: 'x', readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
+  const m = (o) => Object.assign({ groupId: '', audience: 'x', title: '', body: 'Hi', fromName: 'x', deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
   await can(db.admin.doc('messages/n1').set(m({ kind: 'staff', fromId: 'p01', to: ['p02', 'p05'], readBy: ['p01'] })));
   await can(db.pastor.doc('messages/n2').set(m({ kind: 'partners', fromId: 'p02', to: ['p14', 'p15'] })));
+  await can(db.member.doc('messages/nOffice').set(m({ kind: 'office', fromId: 'p14', audience: 'Office', to: [], deliveredBy: ['p14'], readBy: ['p14'] })));
+  await cannot(db.member.doc('messages/nOfficeBad').set(m({ kind: 'office', fromId: 'p14', to: ['p01'] })));
   await cannot(db.pastor.doc('messages/n3').set(m({ kind: 'partners', fromId: 'p01', to: ['p14'] })));          // not in someone else's name
   await cannot(db.rosters.doc('messages/n4').set(m({ kind: 'staff', fromId: 'p05', to: ['p01'] })));            // staff and Church Partners: Administrators and Pastors only
   await can(db.member.doc('messages/n5').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p14', 'p15'], readBy: ['p14'] })));   // Tim leads cg1
@@ -544,8 +549,13 @@ await t('messages: who may send to whom', async () => {
 });
 await t('messages: people mark what they opened as read, and change nothing else', async () => {
   await can(db.member.doc('messages/ms1').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p14') }));
+  await can(db.member.doc('messages/ms1').update({ deliveredBy: firebase.firestore.FieldValue.arrayUnion('p14') }));
+  await cannot(db.member.doc('messages/ms1').update({ deliveredBy: firebase.firestore.FieldValue.arrayUnion('p05') }));
   await cannot(db.member.doc('messages/ms1').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p15') }));
   await cannot(db.member.doc('messages/ms1').update({ readBy: ['p14'] }));   // taking the sender off
+  await can(db.admin.doc('messages/ms3').update({ deliveredBy: firebase.firestore.FieldValue.arrayUnion('p01') }));
+  await can(db.pastor.doc('messages/ms3').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p02') }));
+  await cannot(db.member.doc('messages/ms3').update({ deliveredBy: firebase.firestore.FieldValue.arrayUnion('p14') }));
   await cannot(db.member.doc('messages/ms1').update({ body: 'Changed' }));
   await cannot(db.member.doc('messages/ms1').delete());
   await can(db.member.doc('messages/n8').delete());   // their own

@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
-  var FREQ = ['weekly', 'fortnightly', 'monthly', 'occasional'];
+  var FREQ = ['weekly', 'monthly', 'emergency'];
   var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Care group', 'Photos'];
   var APK = 'https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk';   // built by .github/workflows/build-android.yml
 
@@ -18,7 +18,12 @@
   function pos(id) { return S.get('positions', id); }
   function team(id) { return S.get('teams', id); }
   function posName(id) { var p = pos(id); return p ? p.name + ' · ' + ((team(p.teamId) || {}).name || '') : T('A position that has been removed'); }
-  function freqText(f) { return f === 'weekly' ? T('Every week') : f === 'monthly' ? T('Once a month') : f === 'occasional' ? T('Now and then') : T('Every 2 weeks'); }
+  function freqText(f) {
+    if (f === 'weekly') return T('Whenever necessary (could be every week)');
+    if (f === 'monthly') return T('Once a month');
+    if (f === 'emergency') return T('Only now and then in emergencies');
+    return f === 'occasional' ? T('Now and then') : T('Every 2 weeks');
+  }
   function myOffers() { var u = me(); return u ? S.find('serveOffers', function (o) { return o.personId === u.id; }) : []; }
   function offerFor(positionId) { return myOffers().filter(function (o) { return o.positionId === positionId; })[0]; }
   function mySkills() { var u = me(); return S.find('skills', function (k) { return k.personId === u.id && pos(k.positionId); }); }
@@ -197,9 +202,12 @@
       (sl.length > 1 ? '<fieldset class="field" style="border:0;padding:0;margin:0 0 12px" id="mo-slots"><legend style="margin-bottom:6px">' + T('At which services?') + '</legend>' +
         sl.map(function (x) { return '<label class="check"><input type="checkbox" class="mo-t" value="' + esc(x.id) + '"' + (mine.indexOf(x.id) >= 0 ? ' checked' : '') + '><span>' + esc(Serving.slotLabel(x.id, S.settings())) + '</span></label>'; }).join('') + '</fieldset>' : '') +
       '<fieldset class="field" style="border:0;padding:0;margin:0 0 12px"><legend style="margin-bottom:6px">' + T('How often could you serve?') + '</legend>' +
+      (current && FREQ.indexOf(current.frequency) < 0 ? '<label class="check"><input type="radio" name="mo-f" value="' + esc(current.frequency) + '" checked><span>' + T('Keep your current preference: {how}', { how: freqText(current.frequency) }) + '</span></label>' : '') +
       FREQ.map(function (f) {
-        return '<label class="check"><input type="radio" name="mo-f" value="' + f + '"' + ((current ? current.frequency : 'fortnightly') === f ? ' checked' : '') + '><span>' + esc(freqText(f)) + (current && current.frequency === f ? ' <span class="muted small">' + T('(now)') + '</span>' : '') + '</span></label>';
+      return '<label class="check"><input type="radio" name="mo-f" value="' + f + '"' + ((current ? current.frequency : 'weekly') === f ? ' checked' : '') + '><span>' + esc(freqText(f)) + (current && current.frequency === f ? ' <span class="muted small">' + T('(now)') + '</span>' : '') + '</span></label>';
       }).join('') +
+      (current && FREQ.indexOf(current.frequency) < 0 ? '<p class="hint">' + T('Your current preference is {how}. Choose a new option only if you want to change it.', { how: freqText(current.frequency) }) + '</p>' : '') +
+      '<p class="hint">' + T('Add any days you’re unavailable under Days away. You won’t be asked or scheduled to serve then.') + '</p>' +
       (current ? '<label class="check"><input type="radio" name="mo-f" value="stop"><span><b>' + T('I’d like to stop serving here') + '</b></span></label>' : '') + '</fieldset>' +
       '<label class="field">' + T('Anything the roster coordinator should know?') + '<textarea id="mo-note" rows="2" maxlength="300" placeholder="' + (current ? T('e.g. busy with exams until June') : T('e.g. I’ve helped with this before')) + '"></textarea><small>' + T('Only the roster team sees it.') + '</small></label>' +
       '<p id="mo-err" class="note bad" hidden></p></div>' +

@@ -174,6 +174,11 @@ var Store = (function () {
     if (LIVE) return !!(Live.session() && Live.session().role === 'admin');
     return !!(user && user.appRole === 'admin');
   }
+  function isPastor() {
+    if (previewRole) return false;
+    if (LIVE) return !!(Live.session() && Live.session().role === 'pastor');
+    return !!(user && user.appRole === 'pastor');
+  }
   function brochures() { return isAdmin() ? db.brochures || {} : null; }
   function setBrochures(value, auditText) {
     if (blocked()) return false;
@@ -1119,6 +1124,11 @@ var Store = (function () {
       var path = 'messages/' + id; if (local[path]) local[path] = Object.assign({}, local[path], { readBy: (local[path].readBy || []).concat([session.personId]) });
       return doc(path).update({ readBy: fb.firestore.FieldValue.arrayUnion(session.personId) }).catch(function (e) { console.error('markRead', e); });
     }
+    /** A recipient's inbox received the message on this device. */
+    function markDelivered(id) {
+      var path = 'messages/' + id; if (local[path]) local[path] = Object.assign({}, local[path], { deliveredBy: (local[path].deliveredBy || []).concat([session.personId]) });
+      return doc(path).update({ deliveredBy: fb.firestore.FieldValue.arrayUnion(session.personId) }).catch(function (e) { console.error('markDelivered', e); });
+    }
     function unshare(gid, pid) { return del('careGroups/' + gid + '/share/' + pid); }
     function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
     /** ID numbers: Administrators (and the person themself) only, fetched one at a time when someone asks to see one. */
@@ -1234,7 +1244,7 @@ var Store = (function () {
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -1275,12 +1285,25 @@ var Store = (function () {
     /** The signed-in person opened these messages (ids): they count as read on every device, and the sender sees it.
      *  Not while viewing as someone else (an Administrator's looking doesn't count as the person reading). */
     markRead: function (ids, pid) {
-      if (previewRole || !pid) return;
+      if (previewRole || !pid || (LIVE && offline())) return;
       var any = false;
       (ids || []).forEach(function (id) {
-        var m = get('messages', id); if (!m || (m.readBy || []).indexOf(pid) >= 0 || (m.to || []).indexOf(pid) < 0) return;
+        var m = get('messages', id), office = m && m.kind === 'office' && m.fromId !== pid && (isAdmin() || isPastor());
+        if (!m || (m.readBy || []).indexOf(pid) >= 0 || ((m.to || []).indexOf(pid) < 0 && !office)) return;
         m.readBy = (m.readBy || []).concat([pid]); any = true;
         if (LIVE) Live.markRead(id);
+      });
+      if (any) { save(); changed(); }
+    },
+    /** The signed-in person's device received these messages; only recipients and Office managers may mark them delivered. */
+    markDelivered: function (ids, pid) {
+      if (previewRole || !pid || (LIVE && offline())) return;
+      var any = false;
+      (ids || []).forEach(function (id) {
+        var m = get('messages', id), office = m && m.kind === 'office' && m.fromId !== pid && (isAdmin() || isPastor());
+        if (!m || (m.deliveredBy || []).indexOf(pid) >= 0 || ((m.to || []).indexOf(pid) < 0 && !office)) return;
+        m.deliveredBy = (m.deliveredBy || []).concat([pid]); any = true;
+        if (LIVE) Live.markDelivered(id);
       });
       if (any) { save(); changed(); }
     },

@@ -31,6 +31,12 @@ const ownP = W.changer({ wording: { custom: { pastor: ['Elder', 'Elders'] } } })
 ok(ownP('Senior Pastor and Assistant Pastors') === 'Senior Elder and Assistant Elders', '…also when the church renamed Pastor itself');
 const ownS = W.changer({ wording: { set: 'methodist', custom: { senior: ['Superintendent', 'Superintendents'] } } });
 ok(ownS('Senior Pastor') === 'Superintendent' && ownS('Assistant Pastor') === 'Assistant Minister', 'the Senior Pastor can be renamed on its own');
+const adminWord = W.changer({ wording: { custom: { admin: ['Operations Manager', 'Operations Managers'] } } });
+ok(adminWord('Ask an Administrator; the Administrators can help') === 'Ask an Operations Manager; the Operations Managers can help', 'the Administrator terminology can be renamed in singular and plural');
+ok(W.ministerRoles('anglican').some(r => r.name === 'Rector') && W.ministerRoles('anglican').some(r => r.name === 'Curate') &&
+  W.ministerRoles('pentecostal').some(r => r.name === 'Elder') &&
+  ['Seniors Minister', 'Women’s Minister', 'Youth Minister', 'Children’s Minister', 'Apprentice', 'Music Director', 'Church Secretary', 'App Administrator'].every(n => W.ministerRoles('general').some(r => r.name === n)),
+  'ministry role choices include tradition-specific titles and all requested roles');
 
 const mus = W.changer({ wording: { custom: W.MUSIC.Music } });
 ok(mus('Worship team') === 'Music team' && mus('Worship Team') === 'Music Team' && mus('the worship leader') === 'the music leader' && mus('Worship') === 'Music', 'Worship → Music, Worship team → Music team, worship leader → music leader');

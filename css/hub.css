@@ -516,6 +516,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
 .msg-read > summary { cursor: pointer; } .msg-read .tag { margin: 2px 2px 0 0; display: inline-block; }
+.msg-status { display: inline-block; margin-left: 6px; font-weight: 700; letter-spacing: -2px; }
+.msg-status.sent { color: #707070; } .msg-status.delivered { color: #b45309; } .msg-status.read { color: #16803c; }
 #ms-body { min-height: 140px; }
 /* Messages: ticking who gets a message */
 .ms-pick-box { padding: 12px 14px; margin: 0 0 14px; }

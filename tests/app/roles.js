@@ -134,7 +134,14 @@ module.exports = async function (ctx) {
   check(Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14').length === 2, 'they can remove a day away');
   await s.go('me/serve'); t = await s.text();
   check(t.includes('Sound desk') && t.includes('Every 2 weeks') && t.includes('Where would you like to help?') && t.includes('Tea & coffee'), 'Serving shows where they serve and where they could help');
-  await s.page.click('[data-act="me:offer"][data-p="tea"]'); await s.page.check('input[name=mo-f][value=monthly]'); await s.page.fill('#mo-note', 'After the 9:30'); await s.page.click('[data-act="me:send"]'); await s.settle();
+  await s.page.click('[data-act="me:offer"][data-p="tea"]');
+  check(await s.page.$$eval('input[name="mo-f"]', xs => xs.map(x => x.value).join() === 'weekly,monthly,emergency') &&
+    (await s.page.locator('#modal').textContent()).includes('Whenever necessary (could be every week)') &&
+    (await s.page.locator('#modal').textContent()).includes('Only now and then in emergencies'),
+  'Serving offers show the three updated frequency choices');
+  check((await s.page.locator('#modal').textContent()).includes('You won’t be asked or scheduled to serve then.'),
+    'the frequency form explains that away days are not scheduled');
+  await s.page.check('input[name=mo-f][value=monthly]'); await s.page.fill('#mo-note', 'After the 9:30'); await s.page.click('[data-act="me:send"]'); await s.settle();
   docs = await s.docsNow(); let offs = Object.keys(docs).filter(k => k.startsWith('serveOffers/') && docs[k].personId === 'p14');
   check(offs.length === 1 && docs[offs[0]].kind === 'join' && docs[offs[0]].positionId === 'tea' && docs[offs[0]].frequency === 'monthly' && docs[offs[0]].note === 'After the 9:30' && docs[offs[0]].status === 'waiting', 'offering to help saves an offer for the roster coordinator');
   check((await s.text()).includes('Waiting for the roster coordinator'), 'the offer shows as waiting');
@@ -178,6 +185,10 @@ module.exports = async function (ctx) {
   await s.page.waitForTimeout(1200); await s.settle();
   for (let i = 0; i < 50 && !(((await s.docsNow())['settings/church'].wording || {}).custom || {}).worship; i++) await s.page.waitForTimeout(100);   // saved
   check(JSON.stringify(((await s.docsNow())['settings/church'].wording || {}).custom || {}).includes('Music team'), 'Save wording saves Music');
+  await s.page.selectOption('.wd-admin-preset', 'Operations Manager');
+  await s.page.waitForTimeout(1200); await s.settle();
+  for (let i = 0; i < 50 && !((((await s.docsNow())['settings/church'].wording || {}).custom || {}).admin || [])[0]; i++) await s.page.waitForTimeout(100);
+  check(await s.page.evaluate(() => Hub.roleLabel('admin')) === 'Operations Manager', 'the Administrator terminology choice is saved and used by app role labels');
   await s.go('rosters/teams'); await s.page.waitForFunction(() => !document.querySelector('main').textContent.includes('Worship'), null, { timeout: 5000 }).catch(() => {}); t = await s.text();
   check(t.includes('Music') && !t.includes('Worship'), 'the Worship team now shows as Music');
   await finish(s);

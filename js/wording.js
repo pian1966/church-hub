@@ -12,6 +12,7 @@ var Wording = (function () {
     ['pastor', ['Pastor', 'Pastors'], 'The role that keeps pastoral notes'],
     ['senior', ['Senior Pastor', 'Senior Pastors'], 'The Pastor who leads the church (chosen in Settings → What Pastors can do)'],
     ['assistant', ['Assistant Pastor', 'Assistant Pastors'], 'The other Pastors, who work with the Senior Pastor'],
+    ['admin', ['Administrator', 'Administrators'], 'The person who manages Church Hub access and settings'],
     ['partner', ['Church Partner', 'Church Partners'], 'A committed member of the church (a category)'],
     ['attender', ['Attender', 'Attenders'], 'Someone who comes regularly but isn’t a member (a category)'],
     ['visiting', ['Visiting Minister', 'Visiting Ministers'], 'A preacher or minister from elsewhere (a category)'],
@@ -46,6 +47,22 @@ var Wording = (function () {
     pentecostal: { name: 'Pentecostal / Charismatic', words: { assistant: ['Associate Pastor', 'Associate Pastors'], partner: ['Member', 'Members'], visiting: ['Guest Speaker', 'Guest Speakers'], care: ['Cell group', 'Cell groups'], carer: ['Cell leader', 'Cell leaders'] } },
     lutheran: { name: 'Lutheran', words: { assistant: ['Associate Pastor', 'Associate Pastors'], partner: ['Member', 'Members'], visiting: ['Visiting Pastor', 'Visiting Pastors'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Group leader', 'Group leaders'] } }
   };
+  var MINISTER_ROLES = {
+    general: ['Pastor', 'Senior Pastor', 'Assistant Minister', 'Seniors Minister', 'Women’s Minister', 'Youth Minister', 'Children’s Minister', 'Apprentice', 'Music Director', 'Worship Leader', 'Pastoral Care Worker', 'Church Secretary', 'App Administrator', 'Deacon', 'Elder'],
+    anglican: ['Rector', 'Assistant Minister', 'Curate', 'Deacon'],
+    catholic: ['Parish Priest', 'Assistant Priest', 'Priest', 'Deacon'],
+    methodist: ['Minister', 'Assistant Minister', 'Superintendent', 'Deacon', 'Elder'],
+    presbyterian: ['Minister', 'Assistant Minister', 'Elder', 'Deacon'],
+    baptist: ['Pastor', 'Assistant Pastor', 'Elder', 'Deacon'],
+    pentecostal: ['Pastor', 'Associate Pastor', 'Elder', 'Deacon'],
+    lutheran: ['Pastor', 'Associate Pastor', 'Deacon']
+  };
+  var MINISTER_EXTRAS = ['Seniors Minister', 'Women’s Minister', 'Youth Minister', 'Children’s Minister', 'Apprentice', 'Music Director', 'Worship Leader', 'Pastoral Care Worker', 'Church Secretary', 'App Administrator'];
+  /** Common ministry roles plus the roles usually found in the chosen church tradition. */
+  function ministerRoles(set) {
+    var labels = (MINISTER_ROLES[set] || MINISTER_ROLES.general).concat(MINISTER_EXTRAS);
+    return labels.filter(function (name, i) { return labels.indexOf(name) === i; }).map(function (name) { return { id: name, name: name }; });
+  }
 
   /** The words in use: { key: [singular, plural] } from the chosen set and any the Administrator renamed. */
   function words(settings) {
@@ -105,6 +122,6 @@ var Wording = (function () {
     });
   }
 
-  return { TERMS: TERMS, SETS: SETS, MUSIC: MUSIC, SERVICE: SERVICE, words: words, pairs: pairs, changer: changer, apply: apply };
+  return { TERMS: TERMS, SETS: SETS, MUSIC: MUSIC, SERVICE: SERVICE, MINISTER_ROLES: MINISTER_ROLES, ministerRoles: ministerRoles, words: words, pairs: pairs, changer: changer, apply: apply };
 })();
 if (typeof module !== 'undefined') module.exports = Wording;

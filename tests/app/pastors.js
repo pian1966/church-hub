@@ -11,10 +11,13 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings/pastors');
   check(await s.page.isVisible('#pastor-can'), 'Settings has “What Pastors can do”');
   for (const v of ['settings', 'leave']) await s.page.check('.st-pc[value="' + v + '"]');
+  await s.page.uncheck('.st-minister-role[value="Seniors Minister"]');
   await s.page.waitForTimeout(1200); await s.settle(); await s.page.waitForTimeout(300);
   docs = await s.docsNow();
   check(JSON.stringify(docs['settings/church'].pastorCan) === '["settings","leave"]' && JSON.stringify(docs['roles/thandi.mokoena@example.com'].can) === '["leave","settings"]',
     'ticking Settings and Leave saves them and copies them onto each Pastor’s access entry');
+  check(Array.isArray(docs['settings/church'].ministerRoles) && !docs['settings/church'].ministerRoles.includes('Seniors Minister'),
+    'the selected ministry role list is saved in church settings');
   await finish(s);
   s = await session('thandi.mokoena@example.com', docs); await s.go('settings/pastors');
   check(!!(await s.page.$('nav a[href="#/settings"]')) && await s.page.evaluate(() => Hub.can('leave.manage') && Hub.can('settings.manage') && !Hub.can('privacy.manage')), 'the Pastor now has Settings and Leave approvals – and nothing that wasn’t ticked');

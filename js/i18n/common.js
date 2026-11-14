@@ -218,6 +218,8 @@ I18n.rows([
     ['Every 2 weeks', 'Elke 2 weke', 'Njalo emasontweni ama-2', 'Qho emva kweeveki ezi-2'],
     ['Once a month', 'Een keer ’n maand', 'Kanye ngenyanga', 'Kanye ngenyanga'],
     ['Now and then', 'Af en toe', 'Ngezikhathi ezithile', 'Ngamaxesha athile'],
+    ['Whenever necessary (could be every week)', 'Wanneer nodig (kan elke week wees)', 'Uma kudingeka (kungaba njalo ngesonto)', 'Xa kufuneka (isenokuba qho ngeveki)'],
+    ['Only now and then in emergencies', 'Slegs nou en dan in noodgevalle', 'Ngezikhathi zezimo eziphuthumayo kuphela', 'Kuphela ngamaxesha kaxakeka'],
     ['Not now', 'Nie nou nie', 'Hhayi manje', 'Hayi ngoku'],
     ['State', 'Staat', 'Isifunda', 'Ilizwe'],
     ['County', 'Graafskap', 'Isifunda', 'Ingingqi'],

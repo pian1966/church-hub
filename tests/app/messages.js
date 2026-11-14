@@ -3,7 +3,7 @@
 'use strict';
 module.exports = async function (ctx) {
   const { check, finish, seedDocs, session } = ctx;
-  let docs, s, t;
+  let docs, s, t, officeMessage, officeDocs;
   console.log('Messages:');
 
   // An Administrator sets up a message group and writes to the staff
@@ -16,7 +16,7 @@ module.exports = async function (ctx) {
   check(docs['msgGroups/' + mg].memberIds.join() === 'p14,p15' && docs['msgGroups/' + mg].leaderIds.join() === 'p14', 'an Administrator sets up a message group with a leader and members');
   await s.go('messages/send');
   const opts = await s.page.$$eval('#ms-to option', o => o.map(x => x.value));
-  check(opts[0] === 'people' && opts.includes('staff') && opts.includes('partners') && opts.includes('group/' + mg), 'they can write to people they choose, the staff, the Church Partners and every group');
+  check(opts[0] === 'office' && opts.includes('people') && opts.includes('staff') && opts.includes('partners') && opts.includes('group/' + mg), 'they can write to the Office, people they choose, the staff, the Church Partners and every group');
   await s.page.selectOption('#ms-to', 'staff'); await s.page.waitForSelector('#ms-some');
   check((await s.page.textContent('#ms-reach')).includes('Goes to 8 people'), 'it says how many people a message goes to');
   await s.page.click('[data-act="messages:send"]');
@@ -65,11 +65,19 @@ module.exports = async function (ctx) {
   check(t.includes('Please be at the door by 9:15.') && t.includes('From Linda Pillay') && t.includes('To Welcome team') && !!(await s.page.$('.msg.new')), 'the inbox shows the message, who it is from and to, marked as new');
   check(docs['messages/m2'].readBy.join() === 'p01,p14' && !(await s.page.$('a[href="#/messages"] .badge')), 'opening the inbox marks it read (for the sender to see) and the count goes');
   await s.go('messages/send');
-  check(await s.page.$$eval('#ms-to option', o => o.map(x => x.value).join()) === 'group/mgW', 'a group leader can write only to their own group');
+  check(await s.page.$$eval('#ms-to option', o => o.map(x => x.value).join()) === 'office,group/mgW', 'a group leader can write to the Office and their own group');
+  await s.page.selectOption('#ms-to', 'office'); await s.page.fill('#ms-body', 'Could the office please call me?');
+  await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay'); await s.page.click('[data-act="messages:sendnow"]'); await s.settle();
+  docs = await s.docsNow(); officeMessage = Object.entries(docs).find(([k, d]) => /^messages\//.test(k) && d.kind === 'office');
+  check(officeMessage && officeMessage[1].to.length === 0 && officeMessage[1].fromId === 'p14', 'a member can send a message to the Office channel without choosing recipients');
+  await s.go('messages/sent');
+  check(await s.page.$('.msg-status.sent[aria-label="Sent"]'), 'sent messages show an accessible grey sent tick');
+  await s.go('messages/send'); await s.page.selectOption('#ms-to', 'group/mgW');
   await s.page.fill('#ms-body', 'Thanks, all!'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
-  const tm = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].fromId === 'p14').map(k => docs[k]);
+  const tm = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].fromId === 'p14' && docs[k].kind === 'group').map(k => docs[k]);
   check(tm.length === 1 && tm[0].to.join() === 'p14,p15,p17' && tm[0].kind === 'group', 'their message goes to the group');
+  officeDocs = docs;
   const tries = await s.page.evaluate(async () => {
     const fs = firebase.firestore(), base = { groupId: '', audience: 'Staff', title: '', body: 'x', fromId: 'p14', fromName: 'Tim Jacobs', readBy: ['p14'] };
     const r = p => p.then(() => 'saved', e => e.code);
@@ -84,7 +92,7 @@ module.exports = async function (ctx) {
   // A carer writes to their care group from the Me page
   s = await session('clare.jacobs@example.com', seed); await s.go('me');
   await s.page.click('#my-care a[href="#/messages/send/care/cgM"]'); await s.page.waitForSelector('#ms-to');
-  check(await s.page.$eval('#ms-to', e => e.value) === 'care/cgM' && (await s.page.$$eval('#ms-to option', o => o.length)) === 1, 'a carer: “Send the group a message” on the Me page opens a message to their care group (the only group they lead)');
+  check(await s.page.$eval('#ms-to', e => e.value) === 'care/cgM' && (await s.page.$$eval('#ms-to option', o => o.length)) === 2, 'a carer: “Send the group a message” on the Me page opens a message to their care group, with Office also available');
   await s.page.fill('#ms-body', 'Prayer meeting moved to Wednesday.'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.kind === 'care' && d.groupId === 'cgM' && d.fromId === 'p15' && d.to.join() === 'p15,p17'), 'their message goes to the care group');
@@ -97,5 +105,16 @@ module.exports = async function (ctx) {
   check(!(await s.page.$('#ms-to option[value="people"]')), 'a carer can’t choose people outside their group');
   await s.go('messages/sent');
   check(!(await s.text()).includes('Not for members') && (await s.text()).includes('Prayer meeting moved'), 'Sent shows only their own messages');
+  await finish(s);
+
+  // Office staff see Office messages, mark receipt and reading, and can reply directly to the sender
+  s = await session('linda.pillay@example.com', officeDocs); await s.go('messages'); await s.page.waitForTimeout(500); await s.settle(); docs = await s.docsNow();
+  check((await s.text()).includes('Could the office please call me?') && !!(await s.page.$('a[href="#/messages/send/people/p14"]')), 'Office staff see member messages and can reply directly');
+  check(docs[officeMessage[0]].deliveredBy.includes('p01') && docs[officeMessage[0]].readBy.includes('p01'), 'opening the Office inbox updates delivered and read status');
+  await s.page.click('a[href="#/messages/send/people/p14"]'); await s.page.waitForSelector('#ms-to');
+  check(await s.page.$eval('#ms-to', e => e.value) === 'people' && (await s.page.$$eval('.ms-pick:checked', c => c.map(x => x.value).join())) === 'p14', 'Reply opens a direct message to the member who contacted the Office');
+  await s.page.fill('#ms-body', 'We will call you shortly.'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
+  await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
+  check(Object.values(docs).some(d => d.kind === 'people' && d.to.join() === 'p14' && d.body === 'We will call you shortly.'), 'Office staff can reply to the sender');
   await finish(s);
 };

@@ -22,6 +22,15 @@ const skills = [
 const services = ['2026-11-01', '2026-11-08', '2026-11-15', '2026-11-22'].map((d, i) => ({ id: 's' + i, date: d, time: '09:30', name: 'Morning' }));
 const base = () => ({ people, positions, skills, services, assignments: [], groups: [], away: [] });
 
+console.log('Emergency-only volunteers');
+{
+  const d = { people: [people[0]], positions: [{ id: 'door', name: 'Door', needed: 1 }],
+    skills: [skill('p1', 'door', 'emergency')], services: [services[0]], assignments: [], groups: [], away: [] };
+  const regular = R.autoFill(d, ['s0']), emergency = R.autoFill(d, ['s0'], { emergency: true });
+  ok(regular.assignments.length === 0 && regular.gaps[0].why[0].includes('emergencies'), 'regular rosters skip emergency-only volunteers');
+  ok(emergency.assignments.length === 1 && emergency.assignments[0].source === 'emergency', 'emergency fill can include them and labels the suggestion');
+}
+
 console.log('Must-serve-together family');
 {
   const d = base();

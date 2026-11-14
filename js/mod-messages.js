@@ -1,5 +1,5 @@
 /* Church Hub – Messages: the church office, Pastors, carers and group leaders send messages to a care group, a message
- * group (e.g. Worship team leaders), the staff or every Church Partner; everyone reads theirs here, on a phone or a computer.
+ * group (e.g. Worship team leaders), the staff, every Church Partner or the Office; everyone reads theirs here, on a phone or a computer.
  * Rules (who goes in which audience, who may send, unread): js/messages.js. Data: messages, msgGroups (see that file). */
 (function () {
   'use strict';
@@ -8,14 +8,14 @@
   var STAR = 'M12 3.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.9l-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z';
 
   function me() { return H.user(); }
-  function manager() { return H.can('*') || H.can('people.edit'); }   // Administrators and Pastors
+  function manager() { var u = me(); return H.can('*') || H.can('people.edit') || !!(u && u.appRole === 'pastor'); }   // Administrators and Pastors
   function who() { var u = me(); return { id: u ? u.id : '', manager: manager() }; }
   /** Care groups and life groups only while switched on (Settings → Apps). */
   function data() { return { people: S.list('people'), careGroups: H.isOn('care') ? S.list('careGroups') : [], lifeGroups: H.isOn('life') ? S.list('lifeGroups') : [], msgGroups: S.list('msgGroups'), leaderBodies: H.isOn('leaders') ? S.list('leaderBodies') : [] }; }
   function audiences() { return Msg.audiences(who(), data()); }
   function key(a) { return a.kind + (a.groupId ? '/' + a.groupId : ''); }
   /** The audience's name as shown: Staff and Church Partners in the chosen language, groups as they are called. */
-  function audName(kind, name) { return kind === 'staff' ? T('Staff') : kind === 'partners' ? T('Church Partners') : kind === 'people' ? name || T('Chosen people') : name || ''; }
+  function audName(kind, name) { return kind === 'office' ? T('Office') : kind === 'staff' ? T('Staff') : kind === 'partners' ? T('Church Partners') : kind === 'people' ? name || T('Chosen people') : name || ''; }
   /** Who it went to, as shown: "Care group · Hilton", "Staff · 3 people" (only some of them), "Thandi Mokoena", "4 people". */
   function audLong(m) {
     var n = (m.to || []).length;
@@ -23,7 +23,7 @@
     var base = m.kind === 'care' ? T('Care Group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Midweek Group') + ' · ' + esc(m.audience) : m.kind === 'leaders' ? T('Leadership') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
     return base + (m.some ? ' · ' + esc(TN('{n} person', '{n} people', n)) : '');
   }
-  function unreadCount() { var u = me(); return u ? Msg.unread(S.list('messages'), u.id).length : 0; }
+  function unreadCount() { var u = me(); return u ? Msg.unread(S.list('messages'), u.id, manager()).length : 0; }
   /** "Today 08:15", "Yesterday 19:02" or "Tue 3 Nov 08:15" */
   function when(at) {
     if (!at) return '';
@@ -50,14 +50,16 @@
   var justRead = {};   // opened on this visit: still marked as new until the page is left, so people see what came in
   if (typeof window !== 'undefined') window.addEventListener('hashchange', function () { if (!/^#\/messages\/?$/.test(location.hash)) justRead = {}; });
   function renderInbox() {
-    var u = me(), list = Msg.inbox(S.list('messages'), u.id);
+    var u = me(), list = Msg.inbox(S.list('messages'), u.id, manager());
     var html = head(T('Messages from the church to you and the groups you are in.'), '');
     if (!list.length) return html + '<p class="empty">' + T('No messages yet. Messages from the church office, your Care Group and other groups you are in will appear here.') + '</p>';
     return html + '<section class="panel" style="padding:0">' + list.map(function (m) {
-      var isNew = Msg.isUnread(m, u.id) || justRead[m.id];
+      var isNew = Msg.isUnread(m, u.id, manager()) || justRead[m.id];
+      var reply = manager() && m.kind === 'office' && m.fromId !== u.id
+        ? '<div class="msg-foot"><a class="btn small" href="#/messages/send/people/' + esc(m.fromId) + '">' + T('Reply') + '</a></div>' : '';
       return '<article class="msg' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b><span class="muted small">' + esc(when(m.createdAt)) + '</span></div>' +
         '<div class="muted small">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
-        '<p class="msg-body">' + bodyHtml(m.body) + '</p></article>';
+        '<p class="msg-body">' + bodyHtml(m.body) + '</p>' + reply + '</article>';
     }).join('') + '</section>';
   }
   /** Opening the inbox marks what is shown as read (on every device; the sender sees how many have read it). */
@@ -65,7 +67,7 @@
     if (typeof document !== 'undefined' && document.hidden) return;   // the app is in the background: not seen yet (see below)
     if (!/^#\/messages\/?$/.test(location.hash)) return;
     var u = me(); if (!u) return;
-    var ids = Msg.unread(S.list('messages'), u.id).map(function (m) { return m.id; });
+    var ids = Msg.unread(S.list('messages'), u.id, manager()).map(function (m) { return m.id; });
     if (!ids.length) return;
     ids.forEach(function (id) { justRead[id] = 1; });
     S.markRead(ids, u.id);
@@ -73,6 +75,21 @@
   }
 
   if (typeof document !== 'undefined') document.addEventListener('visibilitychange', function () { if (!document.hidden) markShown(); });
+
+  var deliveryQueued = false;
+  function markDeliveredAvailable() {
+    var u = me(); if (!u) return;
+    var ids = S.list('messages').filter(function (m) {
+      var intended = (m.to || []).indexOf(u.id) >= 0 || (manager() && m.kind === 'office' && m.fromId !== u.id);
+      return intended && (m.deliveredBy || []).indexOf(u.id) < 0;
+    }).map(function (m) { return m.id; });
+    if (ids.length) S.markDelivered(ids, u.id);
+  }
+  S.onChange(function () {
+    if (deliveryQueued) return;
+    deliveryQueued = true;
+    setTimeout(function () { deliveryQueued = false; markDeliveredAvailable(); }, 0);
+  });
 
   /* ---------- Write a message ---------- */
   // What is being written (kept while the page is redrawn): who to, and – for "Chosen people" or "Only some of them" – who is
@@ -87,6 +104,7 @@
     return (g && g.names && g.names[id]) || T('Someone');
   }
   function reach(a) {
+    if (a.kind === 'office') return T('Sent to the Office; office staff can read it and reply.');
     var all = Msg.recipients(a.kind, a.groupId, data()), ids = picking(a) ? ticked().filter(function (id) { return all.indexOf(id) >= 0; }) : all, n = ids.length;
     var txt = TN('Goes to {n} person', 'Goes to {n} people', n);
     if (manager() && n) {
@@ -104,10 +122,10 @@
     var cur = as.filter(function (a) { return key(a) === draft.to; })[0] || as[0]; draft.to = key(cur);
     var opt = function (a) { return '<option value="' + esc(key(a)) + '"' + (key(a) === draft.to ? ' selected' : '') + '>' + esc(audName(a.kind, a.name)) + '</option>'; };
     var groupOf = function (k) { return as.filter(function (a) { return a.kind === k; }); };
-    var sel = [['', groupOf('people').concat(groupOf('staff'), groupOf('partners'))], [T('Care Groups'), groupOf('care')], [T('Midweek Groups'), groupOf('life')], [T('Leadership'), groupOf('leaders')], [T('Message groups'), groupOf('group')]].map(function (g) {
+    var sel = [['', groupOf('office').concat(groupOf('people'), groupOf('staff'), groupOf('partners'))], [T('Care Groups'), groupOf('care')], [T('Midweek Groups'), groupOf('life')], [T('Leadership'), groupOf('leaders')], [T('Message groups'), groupOf('group')]].map(function (g) {
       if (!g[1].length) return ''; return g[0] ? '<optgroup label="' + esc(g[0]) + '">' + g[1].map(opt).join('') + '</optgroup>' : g[1].map(opt).join('');
     }).join('');
-    return head(T('Send a message to a group. Everyone in it sees it here, in Church Hub.'), 'send') +
+    return head(T('Send a message to a group or the Office. Office staff can read messages to the Office and reply.'), 'send') +
       '<section class="panel">' + H.reqKey() + '<label class="field req">' + T('To') + '<select id="ms-to">' + sel + '</select></label><p class="hint" id="ms-reach" style="margin:-6px 0 16px">' + esc(reach(cur)) + '</p>' + checklist(cur) +
       '<label class="field">' + T('Subject') + '<input id="ms-title" maxlength="' + Msg.MAX_TITLE + '" value="' + esc(draft.title) + '" placeholder="' + esc(T('e.g. No meeting this Tuesday')) + '"></label>' +
       '<label class="field req">' + T('Message') + '<textarea id="ms-body" maxlength="' + Msg.MAX_BODY + '">' + esc(draft.body) + '</textarea></label>' +
@@ -154,11 +172,16 @@
   /* ---------- Sent ---------- */
   /** "Read by 3 of 5", opening to who has read it and who hasn't yet. */
   function readBy(m, s) {
+    if (m.kind === 'office') return '';
     var r = Msg.readers(m), a = { kind: m.kind, groupId: m.groupId }, names = function (ids) { return ids.map(function (id) { return personName(id, a); }).sort(function (x, y) { return x.localeCompare(y); }); };
     if (!s.of) return T('Read by {n} of {total}', { n: s.n, total: s.of });
     var list = function (title, ids, cls) { return ids.length ? '<p class="small" style="margin:6px 0 0"><b>' + esc(title) + '</b> ' + names(ids).map(function (n) { return '<span class="tag ' + cls + '">' + esc(n) + '</span>'; }).join(' ') + '</p>' : ''; };
     return '<details class="msg-read"><summary>' + T('Read by {n} of {total}', { n: s.n, total: s.of }) + '</summary>' +
       list(T('Read'), r.read, 'ok') + list(T('Not read yet'), r.unread, 'grey') + '</details>';
+  }
+  function statusMark(m) {
+    var state = Msg.status(m), text = T(state === 'read' ? 'Read' : state === 'delivered' ? 'Delivered' : 'Sent');
+    return '<span class="msg-status ' + state + '" role="img" aria-label="' + esc(text) + '" title="' + esc(text) + '">' + (state === 'sent' ? '✓' : '✓✓') + '</span>';
   }
   function renderSent() {
     var u = me(), all = manager(), list = Msg.sent(S.list('messages'), u.id, all);
@@ -166,10 +189,10 @@
     if (!list.length) return html + '<p class="empty">' + T('Nothing sent yet.') + '</p>';
     return html + '<section class="panel" style="padding:0">' + list.map(function (m) {
       var s = Msg.seen(m), mine = m.fromId === u.id;
-      return '<article class="msg" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b><span class="muted small">' + esc(when(m.createdAt)) + '</span></div>' +
+      return '<article class="msg" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b><span class="muted small">' + esc(when(m.createdAt)) + (mine ? statusMark(m) : '') + '</span></div>' +
         '<div class="muted small">' + (mine ? '' : T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ') + T('To {who}', { who: audLong(m) }) + '</div>' +
         '<p class="msg-body">' + bodyHtml(m.body) + '</p>' +
-        '<div class="msg-foot"><span class="grow muted">' + readBy(m, s) + '</span>' +
+        '<div class="msg-foot"><span class="grow muted">' + (m.kind === 'office' ? '' : readBy(m, s)) + '</span>' +
         (Msg.mayDelete(m, who()) ? '<button class="icon-btn ghost" data-act="messages:del" data-id="' + esc(m.id) + '" aria-label="' + esc(T('Delete the message')) + '" title="' + esc(T('Delete the message')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</div></article>';
     }).join('') + '</section>';
   }
@@ -228,14 +251,15 @@
           e.hidden = false; return;
         }
         var n = m.to.filter(function (x) { return x !== m.fromId; }).length;
-        H.modal(H.dialogHead(T('Send this message?'), m.kind === 'people' ? audLong(m) : audName(a.kind, a.name)) + '<div class="dlg-body"><p>' + esc(TN('It goes to {n} person.', 'It goes to {n} people.', n)) + '</p>' +
+        H.modal(H.dialogHead(T('Send this message?'), m.kind === 'people' ? audLong(m) : audName(a.kind, a.name)) + '<div class="dlg-body"><p>' + (m.kind === 'office' ? T('Sent to the Office; office staff can read it and reply.') : esc(TN('It goes to {n} person.', 'It goes to {n} people.', n))) + '</p>' +
           (m.title ? '<p><b>' + esc(m.title) + '</b></p>' : '') + '<p class="msg-body">' + bodyHtml(m.body) + '</p></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="messages:sendnow">' + T('Send') + '</button></div>', T('Send this message?'));
         pending = m;
       },
       sendnow: function () {
         var m = pending; if (!m) return; pending = null;
-        S.put('messages', m, 'Sent a message to ' + (m.kind === 'people' ? 'chosen people' : (m.some ? 'some of ' : '') + (m.kind === 'staff' ? 'the staff' : m.kind === 'partners' ? 'the Church Partners' : m.audience)) + ' (' + m.to.length + (m.to.length === 1 ? ' person)' : ' people)'));
+        var target = m.kind === 'office' ? 'the Office' : m.kind === 'people' ? 'chosen people' : (m.some ? 'some of ' : '') + (m.kind === 'staff' ? 'the staff' : m.kind === 'partners' ? 'the Church Partners' : m.audience);
+        S.put('messages', m, 'Sent a message to ' + target + (m.kind === 'office' ? '' : ' (' + m.to.length + (m.to.length === 1 ? ' person)' : ' people)')));
         draft = { to: draft.to, title: '', body: '', some: false, chosen: {} };
         H.closeModal(); H.toast(T('Message sent')); H.go('messages/sent');
       },

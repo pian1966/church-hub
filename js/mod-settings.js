@@ -125,8 +125,12 @@
         (Wording.SERVICE[words.service[0]] ? '' : '<option value="" selected>' + esc('Church ' + words.service[1]) + '</option>') + '</select><small>' + T('For example “Church Services” in Settings, and “a service” on the rosters.') + '</small></label></div>' +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
       Wording.TERMS.map(function (t) {
+        var adminChoice = t[0] === 'admin' ? '<select class="wd-admin-preset" aria-label="' + esc(T('Administrator title')) + '">' +
+          [['Administrator', 'Administrator'], ['Church Administrator', 'Church Administrator'], ['Operations Manager', 'Operations Manager'], ['Secretary', 'Secretary'], ['', 'Custom wording']].map(function (x) {
+            return '<option value="' + esc(x[0]) + '"' + ((x[0] === words.admin[0] || (!x[0] && words.admin[0] !== 'Administrator' && words.admin[0] !== 'Church Administrator' && words.admin[0] !== 'Operations Manager' && words.admin[0] !== 'Secretary')) ? ' selected' : '') + '>' + esc(T(x[1])) + '</option>';
+          }).join('') + '</select>' : '';
         return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(T(t[2])) + '</span></td>' +
-          '<td><input class="wd-1" data-k="' + t[0] + '" value="' + esc(words[t[0]][0]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][0] })) + '"></td>' +
+          '<td>' + adminChoice + '<input class="wd-1" data-k="' + t[0] + '" value="' + esc(words[t[0]][0]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][0] })) + '"></td>' +
           '<td><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][1] })) + '"></td></tr>';
       }).join('') + '</tbody></table></div><button class="btn small" data-autosave data-act="settings:savewords">' + T('Save wording') + '</button></section>';
   }
@@ -400,12 +404,17 @@
       : '<div class="pc-list">' + H.PASTOR_CAN.map(function (a) {
         return '<label class="check"><input type="checkbox" class="st-pc" value="' + a[0] + '"' + (on.indexOf(a[0]) >= 0 ? ' checked' : '') + dis + '><span>' + esc(T(a[1])) + '</span></label>';
       }).join('') + '</div>';
+    var roles = Wording.ministerRoles((st.wording || {}).set), selectedRoles = Array.isArray(st.ministerRoles) ? st.ministerRoles : roles.map(function (r) { return r.id; });
     return '<section class="panel" id="pastor-can"><h2>' + T('What Pastors can do') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Pastors always see and edit everyone’s details, households, children and pastoral notes. Tick what else they may do – up to everything an Administrator does. Medical notes stay with Children’s ministry.') + '</p>' +
       '<label class="field" style="max-width:420px">' + T('Senior Pastor') + '<select id="st-senior"' + dis + '><option value="">' + T('Nobody – all Pastors the same') + '</option>' +
         pastors.map(function (p) { return '<option value="' + esc(p.id) + '"' + (p.id === senior ? ' selected' : '') + '>' + esc(H.name(p)) + '</option>'; }).join('') + '</select>' +
         '<small>' + T('The Pastor who leads the church can have more than the others. The other Pastors are then called Assistant Pastors.') + '</small></label>' +
       ticks +
+      '<h3>' + T('Ministry roles the church uses') + '</h3><p class="hint">' + T('These role names are suggested for the selected church tradition. They do not give app access; set access separately.') + '</p>' +
+      '<div class="pc-list">' + roles.map(function (r) {
+        return '<label class="check"><input type="checkbox" class="st-minister-role" value="' + esc(r.id) + '"' + (selectedRoles.indexOf(r.id) >= 0 ? ' checked' : '') + dis + '><span>' + esc(T(r.name)) + '</span></label>';
+      }).join('') + '</div>' +
       (admin ? '<div class="btns"><button class="btn small" data-autosave data-act="settings:pastorcan">' + T('Save') + '</button><button class="btn small ghost" data-act="settings:pastorall">' + T('Tick everything') + '</button></div>' +
         '<p class="hint">' + T('Pastors get the change the next time they open Church Hub.') + (Store.isLive() ? ' ' + T('If you have changed the database rules file, publish it again first (FIREBASE-SETUP step 7).') : '') + '</p>'
         : '<p class="hint">' + T('Only an Administrator can change this.') + '</p>') + '</section>';
@@ -511,6 +520,14 @@
         var w = Wording.words({ wording: { set: ws.value } });
         document.querySelectorAll('.wd-1').forEach(function (i) { i.value = w[i.dataset.k][0]; });
         document.querySelectorAll('.wd-2').forEach(function (i) { i.value = w[i.dataset.k][1]; });
+        var ap = document.querySelector('.wd-admin-preset'); if (ap) ap.value = w.admin[0];
+      });
+      var adminPreset = document.querySelector('.wd-admin-preset');
+      if (adminPreset) adminPreset.addEventListener('change', function () {
+        if (!adminPreset.value) return;
+        var a = document.querySelector('.wd-1[data-k="admin"]'), b = document.querySelector('.wd-2[data-k="admin"]');
+        if (a) a.value = adminPreset.value;
+        if (b) b.value = adminPreset.value === 'Administrator' ? 'Administrators' : adminPreset.value + 's';
       });
       var wsv = document.getElementById('wd-service');
       if (wsv) wsv.addEventListener('change', function () {   // Service / Meeting / Gathering
@@ -602,7 +619,8 @@
           return H.PASTOR_CAN.filter(function (a) { return on.indexOf(a[0]) >= 0; }).map(function (a) { return a[0]; });
         };
         var st = S.settings() || {}, sel = document.getElementById('st-senior'), sid = sel ? sel.value : '', names = ticked('st-pc');
-        var upd = { pastorCan: names, seniorPastorId: sid }, say = (sid ? 'Assistant Pastors' : 'What Pastors can do') + ': ' + (names.join(', ') || 'nothing extra');
+        var ministerRoles = [].map.call(document.querySelectorAll('.st-minister-role:checked'), function (c) { return c.value; });
+        var upd = { pastorCan: names, seniorPastorId: sid, ministerRoles: ministerRoles }, say = (sid ? 'Assistant Pastors' : 'What Pastors can do') + ': ' + (names.join(', ') || 'nothing extra');
         if (sid) {
           // A Senior Pastor just chosen starts with what the Pastors could already do; after that, their own ticks
           upd.seniorCan = document.querySelector('.st-sc') ? ticked('st-sc') : (st.seniorCan && st.seniorPastorId ? st.seniorCan : names).slice();

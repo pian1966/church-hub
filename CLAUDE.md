@@ -83,5 +83,6 @@ A session should say which tier it is running at, and stop and ask if the task's
   The church can reword the brochures (About → Brochures → Edit): their edits are tied to the original wording, so a line you
   change stops carrying their edit of it (Church Hub lists it for them) – change wording only where the feature changed.
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.
+  GitHub Copilot reads `.github/copilot-instructions.md` (also pointing here, with the rules it has missed): keep it in step.
   Work on your own branch from the latest `main`; on a conflict in `js/version.js` / `index.html`, take the higher version.
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

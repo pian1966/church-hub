@@ -285,7 +285,7 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="library:filtersclear"]');
   await click(s, '[data-act="library:putback"][data-id="' + bk + '"]'); await s.settle(); docs = await s.docsNow();
   await click(s, '[data-act="library:tab"][data-tab="all"]');
-  check(!docs[key].removed && /Knowing God\s*Book\s*Available/.test(await s.text()), 'it can be put back if it turns up');
+  check(!docs[key].removed && /Knowing God\s*Available/.test(await s.text()), 'it can be put back if it turns up');
   await click(s, '[data-act="library:remove"][data-id="' + dv + '"]'); await select(s, '#lib-why', 'Damaged'); await fill(s, '#lib-whynote', 'Scratched'); await click(s, '[data-act="library:removesave"]'); await s.settle();
   docs = await s.docsNow();
   check(docs[dvd].removed && docs[dvd].why === 'Damaged' && docs[dvd].whyNote === 'Scratched', 'an item is taken out of the library with why (not deleted)');
@@ -472,7 +472,7 @@ module.exports = async function (ctx) {
   await s.go('leaders'); t = await s.text();
   check(t.includes('Church Council') && t.includes('Tim Jacobs') && !(await s.page.$('#lb-new')) && !(await s.page.$('[data-act="leaders:seat"]')), 'sees their own leadership group (though it is for members only), and can’t change it');
   await s.go('library'); t = await s.text();
-  check(/Items I have borrowed[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*Book\s*On loan/.test(t), 'the Library uses the renamed borrowed-items heading and shows the due date – not the librarian’s tools');
+  check(/Items I have borrowed[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*On loan/.test(t), 'the Library uses the renamed borrowed-items heading and shows the due date – not the librarian’s tools');
   check(!(await s.page.$('#lib-covers-selected')) && !(await s.page.$('[data-act="library:coversall"]')) && !(await s.page.$('[data-lib-select]')), 'regular members cannot run book cover searches or save covers');
   check(!(await s.page.$('[data-act="library:purge"]')), 'a regular member has no Purge controls');
   check(!!(await s.page.$('#lib-filter-kind')) && !!(await s.page.$('#lib-filter-title')) && !!(await s.page.$('#lib-filter-author')) && !!(await s.page.$('#lib-filter-cat')) && !(await s.page.$('#lib-filter-borrower')) && (await s.page.$$('[data-act="library:sort"]')).length === 4, 'everyone can filter and sort the catalogue while the borrower filter stays hidden');
@@ -493,6 +493,15 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="library:bookinfo"][data-id="' + bk + '"]');
   await s.page.waitForFunction(() => document.querySelector('#lib-info-results h3') && document.querySelector('#lib-info-results').textContent.includes('Test Publisher'));
   check(!!(await s.page.$('#modal a[href*="books.google.com/books?q="]')) && !!(await s.page.$('#modal a[href*="google.com/search?q="]')), 'View / Info shows Google Books details with exact-title search fallbacks');
+  await click(s, '#modal [data-act="hub:close"]');
+  // Google Books busy (its shared quota used up): the details come from Open Library instead
+  await s.page.unroute('https://www.googleapis.com/books/v1/volumes**');
+  await s.page.route('https://www.googleapis.com/books/v1/volumes**', route => route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ error: { message: 'Daily Limit Exceeded', errors: [{ reason: 'dailyLimitExceeded' }] } }) }));
+  await s.page.route('https://openlibrary.org/search.json**', route => route.fulfill({ status: 200, contentType: 'application/json', headers: { 'Access-Control-Allow-Origin': '*' },
+    body: JSON.stringify({ docs: [{ key: '/works/OL1W', title: 'Knowing God', author_name: ['J. I. Packer'], publisher: ['Open Publisher'], first_publish_year: 1973 }] }) }));
+  await click(s, '[data-act="library:bookinfo"][data-id="' + bk + '"]');
+  await s.page.waitForFunction(() => document.querySelector('#lib-info-results h3') && document.querySelector('#lib-info-results').textContent.includes('Open Publisher'));
+  check(!!(await s.page.$('#modal a[href="https://openlibrary.org/works/OL1W"]')), 'when Google Books is busy, View / Info shows the details from Open Library');
   await click(s, '#modal [data-act="hub:close"]');
   await click(s, '[data-act="library:policyread"]'); await s.page.waitForSelector('#modal article.lib-doc');
   check((await s.page.textContent('#modal')).includes('Items are lent for three weeks.'), 'the compact policy action opens the complete policy');
@@ -566,7 +575,7 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on borrowed records');
   await click(s, '[data-act="library:back"][data-id="' + activeLoan.split('/')[1] + '"]'); await fill(s, '#lib-backnote', 'Cover slightly torn'); await click(s, '[data-act="library:backsave"]'); await s.settle(); docs = await s.docsNow(); t = await s.text();
   check(docs[activeLoan].back !== '' && docs[activeLoan].returnNote === 'Cover slightly torn', 'the return date and condition note are saved');
-  check(docs['books/' + bk].out === 0 && /Knowing God\s*Book\s*Available/.test(t), 'the returned copy is back on the shelf');
+  check(docs['books/' + bk].out === 0 && /Knowing God\s*Available/.test(t), 'the returned copy is back on the shelf');
   check(t.includes('Nothing on loan.'), 'the librarian no longer sees the loan as outstanding');
   await click(s, '#lib-out summary');
   check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on a returned loan');
@@ -606,7 +615,7 @@ module.exports = async function (ctx) {
   kaviSeed['settings/church'].librarianIds = ['p17', 'p14', 'p15', 'p20'];
   kaviSeed['settings/church'].librarianReviewedAt = new Date().toISOString();
   s = await session('kavi.govender@example.com', kaviSeed); await s.go('library');
-  check(!!(await s.page.$('[data-act="library:add"]')) && !!(await s.page.$('[data-act="library:purge"]')) && !!(await s.page.$('#lib-covers-selected')), 'a fourth librarian gets the same manage, purge and cover lookup controls');
+  check(!!(await s.page.$('[data-act="library:add"]')) && !!(await s.page.$('[data-act="library:purge"]')) && !!(await s.page.$('[data-act="library:coversselectmissing"]')), 'a fourth librarian gets the same manage, purge and cover lookup controls');
   await s.page.route('https://www.googleapis.com/books/v1/volumes**', route => route.fulfill({
     status: 200, contentType: 'application/json', body: JSON.stringify({ items: [{
       volumeInfo: { title: 'Knowing God', authors: ['J. I. Packer'], industryIdentifiers: [{ type: 'ISBN_13', identifier: '9780000000004' }],
@@ -617,6 +626,7 @@ module.exports = async function (ctx) {
     status: 200, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' }, body: PNG.buffer
   }));
   const knowing = find(kaviSeed, 'books', b => b.title === 'Knowing God').split('/')[1];
+  await click(s, '[data-act="library:coversselectmissing"]');   // shows the tick boxes
   await s.page.check('[data-lib-select="' + knowing + '"]');
   await click(s, '[data-act="library:coversselected"]');
   await s.page.waitForSelector('#modal [data-act="library:coversave"][data-id="' + knowing + '"]');

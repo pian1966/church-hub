@@ -15,7 +15,7 @@
   var PEN = 'M4 20h4L20 8l-4-4L4 16zM14 6l4 4';
   var POLICY_FILE_MAX = 600 * 1024;   // an attached policy file: at most 600 KB (it is kept in one database document)
   var filters = { kind: '', title: '', author: '', cat: '', borrower: '', borrowed: '' }, sortKey = 'title', sortDir = 1, catalogueTab = 'all', tidied = false;
-  var selectedBooks = {}, librarianReviewShown = false;
+  var selectedBooks = {}, selecting = false, librarianReviewShown = false;   // selecting: tick boxes shown, to choose books for covers
   var newCover;            // the cover chosen in the form: undefined = unchanged, '' = taken away, else a picture (data: address)
   var policy;              // the library's policy: undefined until fetched, then null (none) or { text, name, type, data }
   var policyAsked = false, coverCache = {}, coverAsked = {}, coverSeen = null;
@@ -107,11 +107,11 @@
     var n = free(b), outCount = L.outCount(b, librarian() ? loans() : null), copies = Math.max(1, +b.copies || 1), bits = [b.author ? T('Author') + ': ' + b.author : '', b.cat ? T('Subject') + ': ' + b.cat : '', b.shelf ? T('Shelf {shelf}', { shelf: b.shelf }) : ''].filter(Boolean);
     var related = edit ? itemLoans(b, allLoans) : [], borrowerNamesForBook = related.map(function (l) { return String(l.name || '').toLowerCase(); }), borrowedDates = related.map(function (l) { return String(l.out || ''); });
     return '<div class="item rec-item lib-book" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(b.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(borrowerNamesForBook.join(' ')) + '" data-borrowed="' + esc(borrowedDates.join(' ')) + '" data-sort-borrower="' + esc(itemSortValue(b, allLoans, 'borrower')) + '" data-sort-borrowed="' + esc(itemSortValue(b, allLoans, 'borrowed')) + '" data-out="' + (!b.repairing && outCount > 0 && n === 0) + '" data-free="' + (n > 0) + '" data-repairing="' + !!b.repairing + '">' +
-      (edit && (b.kind || 'Book') === 'Book' ? '<label class="check lib-select"><input type="checkbox" data-lib-select="' + esc(b.id) + '"' + (selectedBooks[b.id] ? ' checked' : '') + ' aria-label="' + esc(T('Select {name}', { name: b.title })) + '"></label>' : '') + cover(b) +
-      '<span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag">' + esc(T(b.kind || 'Book')) + '</span> ' +
+      (edit && selecting && (b.kind || 'Book') === 'Book' ? '<label class="check lib-select"><input type="checkbox" data-lib-select="' + esc(b.id) + '"' + (selectedBooks[b.id] ? ' checked' : '') + ' aria-label="' + esc(T('Select {name}', { name: b.title })) + '"></label>' : '') + cover(b) +
+      '<span class="grow"><b data-own-words>' + esc(b.title) + '</b> ' + ((b.kind || 'Book') !== 'Book' ? '<span class="tag">' + esc(T(b.kind)) + '</span> ' : '') +
       '<span class="tag ' + (b.repairing ? 'warn' : n ? 'ok' : 'grey') + '">' + (b.repairing ? T('Being repaired') : n ? T('Available') : T('On loan')) + (copies > 1 && !b.repairing ? ' · ' + esc(T('{n} of {total}', { n: n, total: copies })) : '') + '</span>' +
       (bits.length ? '<small data-own-words>' + bits.map(esc).join(' · ') + '</small>' : '') +
-      (edit && (b.how || b.from || b.acquired) ? '<small class="muted">' + esc([b.how ? T(b.how) : '', b.from, b.acquired ? H.fmt(b.acquired, true) : ''].filter(Boolean).join(' · ')) + '</small>' : '') +
+      (edit && (b.how || b.from || b.acquired) ? '<small class="muted">' + esc([b.acquired ? T('Added {date}', { date: H.fmt(b.acquired, true) }) : '', b.how ? T(b.how) : '', b.from].filter(Boolean).join(' · ')) + '</small>' : '') +
       (b.note ? '<small data-own-words>' + esc(b.note) + '</small>' : '') + '</span><span class="rec-acts">' +
       '<button class="btn small" data-act="library:bookinfo" data-id="' + esc(b.id) + '">' + T('View / Info') + '</button>' +
       (!edit ? '<button class="btn small" data-act="library:request" data-id="' + esc(b.id) + '"' + (n || S.isLive() ? '' : ' disabled') + '>' + T('Request to borrow') + '</button>' : '') +
@@ -248,7 +248,9 @@
       return '<div class="item rec-item lib-gone-item" data-kind="' + esc(b.kind || 'Book') + '" data-title="' + esc(b.title) + '" data-author="' + esc(b.author) + '" data-subject="' + esc(b.cat) + '" data-borrower="' + esc(borrowersForItem.join(' ')) + '" data-borrowed="' + esc(borrowedForItem.join(' ')) + '" data-sort-borrower="' + esc(itemSortValue(b, allLoans, 'borrower')) + '" data-sort-borrowed="' + esc(itemSortValue(b, allLoans, 'borrowed')) + '" data-removed="' + (b.why === 'Lost' ? 'lost' : 'removed') + '"><span class="grow"><b data-own-words>' + esc(b.title) + '</b> <span class="tag grey">' + esc(T(b.why || 'Other')) + '</span><small>' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small></span>' +
         '<span class="rec-acts"><button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button>' + rowMenu(b.title, [purgeButton('book', b.id)]) + '</span></div>'; }).join('') + '</div><p class="muted small" id="lib-gone-none" hidden>' + T('None') + '</p></section>';
     return html + '<section class="panel" id="lib-books"><div class="row lib-books-head"><span class="muted small grow" id="lib-count">' + TN('{n} item', '{n} items', books.length) + '</span>' +
-      (edit ? '<button class="btn small" data-act="library:coversselected" id="lib-covers-selected" hidden>' + T('Find covers for selected') + ' (<span id="lib-selected-count">0</span>)</button>' : '') + '</div>' +
+      // Choosing books for covers (More → Select books missing covers): tick boxes on the rows, and these two buttons
+      (edit && selecting ? '<button class="btn small primary" data-act="library:coversselected" id="lib-covers-selected">' + T('Find covers for selected') + ' (<span id="lib-selected-count">0</span>)</button>' +
+        '<button class="btn small" data-act="library:selectdone">' + T('Cancel') + '</button>' : '') + '</div>' +
       '<div class="list" style="margin-top:8px">' + books.map(function (b) { return bookRow(b, edit, allLoans); }).join('') + '</div><p class="empty" id="lib-none" hidden>' + T('Nothing matches.') + '</p></section>';
   }
   function applySearch() {
@@ -298,7 +300,7 @@
     var count = Object.keys(selectedBooks).filter(function (id) { return selectedBooks[id]; }).length;
     var label = document.getElementById('lib-selected-count'), button = document.getElementById('lib-covers-selected');
     if (label) label.textContent = count;
-    if (button) { button.disabled = !count; button.hidden = !count; }
+    if (button) button.disabled = !count;
   }
 
   /* ---------- cover pictures: fetched only when they come into view, then kept for this visit ---------- */
@@ -350,7 +352,7 @@
     return new Promise(function (resolve, reject) {
       var url;
       try { url = new URL(src); } catch (e) { return reject(new Error('invalid image URL')); }
-      if (url.protocol !== 'https:' || !/^(books\.google\.com|books\.googleusercontent\.com)$/.test(url.hostname)) return reject(new Error('untrusted image URL'));
+      if (url.protocol !== 'https:' || !(GOOGLE.test(url.hostname) || OPENLIB.test(url.hostname))) return reject(new Error('untrusted image URL'));
       var img = new Image();
       img.crossOrigin = 'anonymous';
       img.onload = function () {
@@ -368,48 +370,80 @@
       img.src = url.href;
     });
   }
+  /* ---------- book details and covers: Google Books first, then Open Library (free, no key needed) ----------
+   * Google allows apps without their own key only a small shared daily quota, so it is often "busy"; Open Library then
+   * answers instead. Both are turned into the same shape: { title, subtitle, authors, publisher, published, description,
+   * image, link, isbns, source }. */
   function normalized(s) { return L.normalizedTitle(s).replace(/\s/g, ''); }
   function isbnDigits(s) { return String(s || '').replace(/[^0-9x]/gi, '').toLowerCase(); }
-  function bookMatch(book, item) {
-    var info = item.volumeInfo || {}, ids = info.industryIdentifiers || [], isbn = isbnDigits(book.isbn);
-    if (isbn && ids.some(function (x) { return isbnDigits(x.identifier) === isbn; })) return true;
-    var wanted = normalized(book.title), got = normalized(info.title);
-    if (!wanted || !got || !(wanted === got || got.indexOf(wanted) === 0 || wanted.indexOf(got) === 0)) return false;
-    var authors = (info.authors || []).map(normalized).filter(Boolean), author = normalized(book.author);
-    return !author || !authors.length || authors.some(function (x) { return x.indexOf(author) >= 0 || author.indexOf(x) >= 0; });
+  function safeUrl(u, hosts) { try { var x = new URL(String(u || '').replace(/^http:/, 'https:')); return x.protocol === 'https:' && hosts.test(x.hostname) ? x.href : ''; } catch (e) { return ''; } }
+  var GOOGLE = /^(books\.google\.com|books\.googleusercontent\.com|www\.google\.com|play\.google\.com)$/, OPENLIB = /^(openlibrary\.org|covers\.openlibrary\.org)$/;
+  function fromGoogle(item) {
+    var v = item.volumeInfo || {}, img = v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail);
+    return { title: v.title || '', subtitle: v.subtitle || '', authors: v.authors || [], publisher: v.publisher || '', published: v.publishedDate || '',
+      description: v.description || '', image: safeUrl(String(img || '').replace(/&amp;/g, '&'), GOOGLE), link: safeUrl(v.infoLink, GOOGLE),
+      isbns: (v.industryIdentifiers || []).map(function (x) { return isbnDigits(x.identifier); }), source: 'Google Books' };
   }
-  function coverQuery(query) {
-    return fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query) + '&maxResults=8&printType=books')
-      .then(function (response) {
-        function limitError() { var limit = new Error('rate limit'); limit.rateLimited = true; return limit; }
-        if (response.status === 429) throw limitError();
-        return response.json().then(function (data) {
-          var error = data.error || {}, reasons = (error.errors || []).map(function (item) { return item.reason || ''; }).join(' ');
-          if (/quota|rate.?limit|daily.?limit/i.test(error.message || '') || /quota|rate.?limit|daily.?limit/i.test(reasons)) throw limitError();
-          if (!response.ok || data.error) throw new Error('cover service unavailable');
-          return data;
-        });
+  function fromOpenLibrary(d) {
+    return { title: d.title || '', subtitle: d.subtitle || '', authors: d.author_name || [], publisher: (d.publisher || [])[0] || '',
+      published: d.first_publish_year ? String(d.first_publish_year) : '', description: '',
+      image: d.cover_i ? 'https://covers.openlibrary.org/b/id/' + encodeURIComponent(d.cover_i) + '-M.jpg' : '',
+      link: d.key ? safeUrl('https://openlibrary.org' + d.key, OPENLIB) : '', isbns: (d.isbn || []).map(isbnDigits), source: 'Open Library' };
+  }
+  function busy() { var e = new Error('busy'); e.rateLimited = true; return e; }
+  function googleSearch(query) {
+    return fetch('https://www.googleapis.com/books/v1/volumes?q=' + query + '&maxResults=8&printType=books').then(function (r) {
+      if (r.status === 429 || r.status === 403) throw busy();
+      return r.json().then(function (data) {
+        var e = data.error || {}, why = (e.errors || []).map(function (x) { return x.reason || ''; }).join(' ') + ' ' + (e.message || '');
+        if (/quota|rate.?limit|daily.?limit/i.test(why)) throw busy();
+        if (!r.ok || data.error) throw new Error('Google Books unavailable');
+        return (data.items || []).map(fromGoogle);
       });
+    });
+  }
+  function openLibrarySearch(book) {
+    var isbn = isbnDigits(book.isbn), q = isbn ? 'isbn=' + encodeURIComponent(isbn) : 'title=' + encodeURIComponent(book.title || '');
+    return fetch('https://openlibrary.org/search.json?' + q + '&limit=8&fields=key,title,subtitle,author_name,publisher,first_publish_year,cover_i,isbn')
+      .then(function (r) { if (!r.ok) throw new Error('Open Library unavailable'); return r.json(); })
+      .then(function (data) { return (data.docs || []).map(fromOpenLibrary); });
+  }
+  /** Is this result the book? The ISBN, or the title (a different author only puts it lower: catalogue authors are sometimes wrong). */
+  function bookMatch(book, x) {
+    var isbn = isbnDigits(book.isbn);
+    if (isbn && x.isbns.indexOf(isbn) >= 0) return 2;
+    var wanted = normalized(book.title), got = normalized(x.title);
+    if (!wanted || !got || !(wanted === got || got.indexOf(wanted) === 0 || wanted.indexOf(got) === 0)) return 0;
+    var author = normalized(book.author), authors = x.authors.map(normalized).filter(Boolean);
+    return !author || !authors.length || authors.some(function (a) { return a.indexOf(author) >= 0 || author.indexOf(a) >= 0 || a.indexOf(author.slice(0, 4)) >= 0; }) ? 2 : 1;
+  }
+  /** The best matches for a book, best first: Google Books, or Open Library when Google is busy or finds nothing. */
+  function findBook(book) {
+    var title = String(book.title || '').replace(/["\\]/g, ' ').trim(), author = String(book.author || '').replace(/["\\]/g, ' ').trim(), isbn = isbnDigits(book.isbn);
+    var queries = [];
+    if (isbn) queries.push(encodeURIComponent('isbn:' + isbn));
+    if (title && author) queries.push(encodeURIComponent('intitle:"' + title + '"') + '+' + encodeURIComponent('inauthor:"' + author + '"'));
+    if (title) queries.push(encodeURIComponent('intitle:"' + title + '"'));
+    var ranked = function (list) { return list.map(function (x) { return { x: x, m: bookMatch(book, x) }; }).filter(function (r) { return r.m; }).sort(function (a, b) { return b.m - a.m; }).map(function (r) { return r.x; }); };
+    function google(i) {
+      if (i >= queries.length) return Promise.resolve([]);
+      return googleSearch(queries[i]).then(function (list) { var hits = ranked(list); return hits.length ? hits : google(i + 1); });
+    }
+    var googleErr = null;
+    return google(0).catch(function (e) { googleErr = e; return []; }).then(function (hits) {
+      // Open Library unreachable too: report Google's own problem (e.g. "busy"), so the screen can say so
+      return hits.length ? hits : openLibrarySearch(book).then(ranked, function (e) { if (googleErr) throw googleErr; return []; });
+    });
   }
   function lookupCover(book) {
-    var queries = [];
-    if (book.isbn) queries.push('isbn:' + book.isbn.replace(/[^0-9x]/gi, ''));
-    var title = String(book.title || '').replace(/["\\]/g, ' ').trim(), author = String(book.author || '').replace(/["\\]/g, ' ').trim();
-    if (title) queries.push('intitle:"' + title + '"' + (author ? '+inauthor:"' + author + '"' : ''));
-    function search(index) {
-      if (index >= queries.length) return Promise.resolve(null);
-      return coverQuery(queries[index]).then(function (data) {
-        var candidates = (data.items || []).filter(function (item) { return bookMatch(book, item) && item.volumeInfo && item.volumeInfo.imageLinks; });
-        var links = candidates.map(function (item) { return item.volumeInfo.imageLinks.thumbnail || item.volumeInfo.imageLinks.smallThumbnail; }).filter(Boolean);
-        function tryImage(i) {
-          if (i >= links.length) return search(index + 1);
-          var imgUrl = links[i].replace(/^http:/, 'https:').replace(/&amp;/g, '&');
-          return coverImageData(imgUrl).then(function (image) { return { data: image }; }, function () { return tryImage(i + 1); });
-        }
-        return tryImage(0);
-      });
-    }
-    return search(0);
+    return findBook(book).then(function (hits) {
+      var links = hits.map(function (x) { return x.image; }).filter(Boolean);
+      function tryImage(i) {
+        if (i >= links.length) return null;
+        return coverImageData(links[i]).then(function (image) { return { data: image }; }, function () { return tryImage(i + 1); });
+      }
+      return tryImage(0);
+    });
   }
   var coverBatch = null, coverBatchRunning = false;
   function coverBatchDialog(open) {
@@ -520,41 +554,26 @@
   function bookInfoDialog(book) {
     var terms = [book.title, book.author].filter(Boolean).join(' '), encoded = encodeURIComponent(terms);
     var booksUrl = 'https://books.google.com/books?q=' + encoded, searchUrl = 'https://www.google.com/search?q=' + encoded;
-    var query = book.isbn ? 'isbn:' + book.isbn.replace(/[^0-9x]/gi, '') : 'intitle:' + book.title + (book.author ? '+inauthor:' + book.author : '');
     H.modal(H.dialogHead(T('Book / Media Information'), book.title) + '<div class="dlg-body"><div id="lib-info-results" class="lib-info-results"><p class="muted">' + T('Searching Google Books…') + '</p></div>' +
       '<p class="lib-info-links">' + T('Read more') + ': <a href="' + esc(booksUrl) + '" target="_blank" rel="noopener">' + T('Google Books') + '</a> · ' +
       '<a href="' + esc(searchUrl) + '" target="_blank" rel="noopener">' + T('Google Search') + '</a></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Book / Media Information'), true);
-    fetch('https://www.googleapis.com/books/v1/volumes?q=' + encodeURIComponent(query) + '&maxResults=8&printType=books')
-      .then(function (response) {
-        if (!response.ok) throw new Error('Google Books returned ' + response.status);
-        return response.json();
-      }).then(function (data) {
-        var target = document.getElementById('lib-info-results'); if (!target) return;
-        var item = (data.items || []).filter(function (x) { return bookMatch(book, x); })[0];
-        if (!item) { target.innerHTML = '<p class="muted">' + T('No matching book information was found. Use the search links below.') + '</p>'; return; }
-        var v = item.volumeInfo || {}, image = v.imageLinks && (v.imageLinks.thumbnail || v.imageLinks.smallThumbnail), imageUrl = '';
-        try {
-          var parsed = new URL(String(image || '').replace(/^http:/, 'https:'));
-          if (parsed.protocol === 'https:' && /^(books\.google\.com|books\.googleusercontent\.com)$/.test(parsed.hostname)) imageUrl = parsed.href;
-        } catch (e) { imageUrl = ''; }
-        var infoUrl = booksUrl;
-        try {
-          var parsedInfo = new URL(item.volumeInfo.infoLink || '');
-          if (parsedInfo.protocol === 'https:' && /(^|\.)google\.com$/.test(parsedInfo.hostname)) infoUrl = parsedInfo.href;
-        } catch (e) { infoUrl = booksUrl; }
-        target.innerHTML = (imageUrl ? '<img class="lib-info-cover" src="' + esc(imageUrl) + '" alt="' + esc(T('Cover of {name}', { name: v.title || book.title })) + '">' : '') +
-          '<div><h3>' + esc(v.title || book.title) + '</h3>' + (v.subtitle ? '<p>' + esc(v.subtitle) + '</p>' : '') +
-          (v.authors && v.authors.length ? '<p><b>' + T('Author') + ':</b> ' + esc(v.authors.join(', ')) + '</p>' : '') +
-          (v.publisher ? '<p><b>' + T('Publisher') + ':</b> ' + esc(v.publisher) + '</p>' : '') +
-          (v.publishedDate ? '<p><b>' + T('Published') + ':</b> ' + esc(v.publishedDate) + '</p>' : '') +
-          (v.description ? '<p class="lib-info-description">' + esc(String(v.description).slice(0, 1800)) + '</p>' : '') +
-          '<a href="' + esc(infoUrl) + '" target="_blank" rel="noopener">' + T('Open in Google Books') + '</a></div>';
-      }).catch(function (error) {
-        console.error('Could not load Google Books information', error);
-        var target = document.getElementById('lib-info-results');
-        if (target) target.innerHTML = '<p class="muted">' + T('Couldn’t load book information. Use the search links below.') + '</p>';
-      });
+    findBook(book).then(function (hits) {
+      var target = document.getElementById('lib-info-results'); if (!target) return;
+      var v = hits[0];
+      if (!v) { target.innerHTML = '<p class="muted">' + T('No matching book information was found. Use the search links below.') + '</p>'; return; }
+      target.innerHTML = (v.image ? '<img class="lib-info-cover" src="' + esc(v.image) + '" alt="' + esc(T('Cover of {name}', { name: v.title || book.title })) + '">' : '') +
+        '<div><h3>' + esc(v.title || book.title) + '</h3>' + (v.subtitle ? '<p>' + esc(v.subtitle) + '</p>' : '') +
+        (v.authors.length ? '<p><b>' + T('Author') + ':</b> ' + esc(v.authors.slice(0, 4).join(', ')) + '</p>' : '') +
+        (v.publisher ? '<p><b>' + T('Publisher') + ':</b> ' + esc(v.publisher) + '</p>' : '') +
+        (v.published ? '<p><b>' + T('Published') + ':</b> ' + esc(v.published) + '</p>' : '') +
+        (v.description ? '<p class="lib-info-description">' + esc(String(v.description).slice(0, 1800)) + '</p>' : '') +
+        (v.link ? '<a href="' + esc(v.link) + '" target="_blank" rel="noopener">' + esc(v.source) + ' ↗</a>' : '') + '</div>';
+    }, function (error) {
+      console.error('Could not load book information', error);
+      var target = document.getElementById('lib-info-results');
+      if (target) target.innerHTML = '<p class="muted">' + T('Couldn’t load book information. Use the search links below.') + '</p>';
+    });
   }
   function requestDialog(book) {
     if (!me() || librarian() || (!S.isLive() && free(book) < 1)) return;
@@ -968,9 +987,9 @@
         if (!librarian()) return;
         selectedBooks = {};
         S.list('books').forEach(function (b) { if (L.inLibrary(b) && (b.kind || 'Book') === 'Book' && !b.cover) selectedBooks[b.id] = true; });
-        document.querySelectorAll('[data-lib-select]').forEach(function (input) { input.checked = !!selectedBooks[input.dataset.libSelect]; });
-        updateCoverControls();
+        selecting = true; H.render(); updateCoverControls();
       },
+      selectdone: function () { selecting = false; selectedBooks = {}; H.render(); },
       coversclose: function () { coverBatchRunning = false; coverBatch = null; H.closeModal(); },
       coversave: function (el) { saveBatchCover(el.dataset.id); },
       coverssaveall: function () {

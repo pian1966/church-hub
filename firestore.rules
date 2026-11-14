@@ -531,9 +531,9 @@ service cloud.firestore {
     match /archivePreviews/{id}/parts/{n} {
       allow read: if seesRecord(get(archiveRef(id)).data);
       allow create, update: if okArchivePreviewPart(request.resource.data)
-        && (managesRecord(id)
-          && exists(/databases/$(database)/documents/archive/$(id)/parts/$(n))
-          && request.resource.data.data == get(/databases/$(database)/documents/archive/$(id)/parts/$(n)).data.data));
+        && managesRecord(id)
+        && exists(/databases/$(database)/documents/archive/$(id)/parts/$(n))
+        && request.resource.data.data == get(/databases/$(database)/documents/archive/$(id)/parts/$(n)).data.data;
       allow delete: if managesRecord(id);
     }
 

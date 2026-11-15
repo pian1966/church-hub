@@ -428,9 +428,22 @@ module.exports = async function (ctx) {
         imageLinks: { thumbnail: 'https://books.google.com/books/content?id=test-cover&printsec=frontcover' } }
     }] }) });
   });
-  await covers.page.route('https://books.google.com/books/content**', route => route.fulfill({
-    status: 200, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' }, body: PNG.buffer
-  }));
+  // Like the real Google Books, its pictures don't allow a web page to copy them (no Access-Control-Allow-Origin),
+  // so the covers have to come from Open Library: by ISBN, or from its own search
+  await covers.page.route('https://books.google.com/books/content**', route => route.fulfill({ status: 200, contentType: 'image/png', body: PNG.buffer }));
+  let olBeta = false;
+  await covers.page.route('https://openlibrary.org/search.json**', route => {
+    const u = new URL(route.request().url()), title = u.searchParams.get('title') || '';
+    if ((u.searchParams.get('isbn') || '') === '9780000000003') return route.abort();
+    const docs = title === 'Delta Skipped' ? [{ key: '/works/OL1W', title, author_name: ['D Writer'], cover_i: 77 }, { key: '/works/OL2W', title, author_name: ['D Writer'], cover_i: 78 }] :
+      title === 'Beta Missing' && olBeta ? [{ key: '/works/OL3W', title, author_name: ['B Writer'], cover_i: 88 }] : [];
+    return route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ docs }) });
+  });
+  await covers.page.route('https://covers.openlibrary.org/**', route => {
+    const u = route.request().url(), ok = /isbn\/9780000000001-|id\/(77|88)-/.test(u);
+    return ok ? route.fulfill({ status: 200, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' }, body: PNG.buffer }) : route.fulfill({ status: 200, contentType: 'image/png', headers: { 'Access-Control-Allow-Origin': '*' },   // Open Library's blank 1-pixel "no cover"
+      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==', 'base64') });
+  });
   await click(covers, '[data-act="library:coversselectmissing"]');
   check(await covers.page.isChecked('[data-lib-select="cv-a"]') && !(await covers.page.isChecked('[data-lib-select="cv-covered"]')),
     'the missing-cover filter selects books without disturbing existing covers');
@@ -450,6 +463,28 @@ module.exports = async function (ctx) {
   check(t.includes('No matching cover found') && t.includes('reached its limit') && t.includes('Alpha Cover'), 'bulk cover lookup reports missing matches and rate limits without losing earlier results');
   await click(covers, '#modal [data-act="library:coverssaveall"]'); await covers.settle(); docs = await covers.docsNow();
   check(!!docs['covers/cv-a'] && !docs['covers/cv-b'] && !docs['covers/cv-c'] && !docs['covers/cv-d'], 'Save all keeps the successful covers and skips missing or rate-limited books');
+  await covers.page.waitForFunction(() => !document.querySelector('#modal [data-act="library:coversave"]'));   // every found cover saved
+  await click(covers, '#modal [data-act="hub:close"]'); await covers.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  // One item at a time, from its ⋯ menu: Google knows the book, but its picture can't be copied, so Open Library's is offered
+  await covers.page.evaluate(() => document.querySelector('[data-act="library:coverfind"][data-id="cv-d"]').click());   // (inside the row's ⋯ menu)
+  await covers.page.waitForSelector('#modal [data-act="library:coversave"][data-id="cv-d"]');
+  check((await covers.page.$$('#modal .lib-cover-result')).length === 1, 'Find a cover online in an item’s menu looks up just that item, falling back to Open Library when Google’s picture can’t be used');
+  await click(covers, '#modal [data-act="library:coveranother"][data-id="cv-d"]');   // Open Library's second picture is missing
+  await covers.page.waitForFunction(() => (document.querySelector('#modal .lib-cover-result small') || {}).textContent === 'No other cover was found.', null, { timeout: 5000 });
+  check((await covers.page.textContent('#modal')).includes('No other cover was found.') && !!(await covers.page.$('#modal [data-act="library:coversave"][data-id="cv-d"]')),
+    'Show another cover offers the next picture, then says when there are no more and keeps the last one to save');
+  await click(covers, '#modal [data-act="library:coversave"][data-id="cv-d"]'); await covers.settle(); docs = await covers.docsNow();
+  check(!!docs['books/cv-d'].cover && /^data:image\/jpeg;base64,/.test(docs['covers/cv-d'].data), 'the single item’s cover is saved');
+  await click(covers, '#modal [data-act="hub:close"]'); await covers.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  // In the item's own form: search from what is typed, then tap a cover to use it
+  olBeta = true;
+  await click(covers, '[data-act="library:edit"][data-id="cv-b"]'); await covers.page.waitForSelector('#lib-cover-drop');
+  await click(covers, '#modal [data-act="library:coversearch"]');
+  await covers.page.waitForSelector('#lib-cover-choices .lib-cover-option');
+  await click(covers, '#lib-cover-choices [data-act="library:coverpick"]');
+  check(!!(await covers.page.$('#lib-cover-now img')), 'Find a cover online in the form shows covers to tap, and the tapped one becomes the item’s picture');
+  await click(covers, '#modal [data-act="library:save"]'); await covers.settle(); docs = await covers.docsNow();
+  check(!!docs['books/cv-b'].cover && /^data:image\/jpeg;base64,/.test(docs['covers/cv-b'].data), 'and is saved with the item');
   await finish(covers);
 
   // What each person sees of it all, carrying on from what the Administrator set up

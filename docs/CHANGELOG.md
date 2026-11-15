@@ -348,3 +348,9 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ Languages (0.71.0): Sesotho is now kept up to date with every change, like English, Afrikaans, isiZulu and isiXhosa (its missing texts translated). The other 18 languages are translated in one go before release (`docs/RELEASE.md`); the language test counts what is waiting instead of failing (`RELEASE=1` makes it strict), the English stand-ins copied into those files were taken out, and Home reminds Administrators every 3 days how many texts are waiting.
 - ✅ Sesotho spelling (0.72.0): choosing Sesotho asks which spelling: South Africa (dintlha) or Lesotho (lintlha); the Lesotho spelling is worked out from the South African file (`js/sesotho.js`), so it is always as complete.
 - ✅ Brochures for every nation (0.72.1): the cover for other churches now says "Every church, however small, deserves great church software." instead of "Made in South Africa"; new "Every nation, people and language" block (20+ languages, set up for each country and church tradition); privacy wording follows the church's own country's law (not only POPIA); librarian detail and long lists trimmed so the panels breathe.
+- ✅ 15 Nov 2026 (0.73.0): Library – **one list, nothing twice**: a lent item shows who has it, the dates and Returned on its
+  own row (the separate "On loan" list that repeated it is gone; "Recently returned" sits under the list). Librarians always
+  see every status tab: All, Available, On loan, Overdue, Damaged, Being repaired, Withdrawn, Lost, Removed. New: Mark as
+  damaged (off the shelf until sent for repair or put back; also "It came back damaged" when marking a return), Withdraw
+  from circulation (taken out, can be put back). "All" now means what is still in the library; items taken out are under
+  their own tabs. No change to the database rules (damaged items use the existing "being repaired" lock).

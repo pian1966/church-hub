@@ -924,6 +924,10 @@ details.lib-more { margin-top: 12px; }
 details.lib-more > summary { cursor: pointer; font-weight: 600; color: var(--accent-ink); font-size: 14px; }
 details.lib-more[open] > summary { margin-bottom: 12px; }
 .lib-books-head { align-items: center; }
+/* An item's loans, under it in the one list (librarians): who has it, and Returned */
+.lib-loans { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
+.lib-loan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line-2); }
+.lib-loan > .grow { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
 .lib-empty { padding: 32px 18px; }
 .lib-empty p { margin: 0 0 14px; }
 .row-menu > summary { font-size: 18px; line-height: 1; letter-spacing: 1px; }

@@ -38,8 +38,11 @@ function seedDocs(opts) {
     put('people/' + p.id, card); put('details/' + p.id, det);
     if (p.medical) put('medical/' + p.id, p.medical);
     if (p.familyRole !== 'child' && consentGiven(p.id, 'Church directory')) put('directory/' + p.id, { firstName: p.firstName, lastName: p.lastName, preferredName: p.preferredName });   // name only (Settings → What others can see)
+    if (p.familyRole !== 'child' && consentGiven(p.id, 'Church directory') && ['Church Partner', 'Staff'].indexOf(p.category) >= 0) put('names/' + p.id, { firstName: p.firstName, lastName: p.lastName, preferredName: p.preferredName });   // names only, for attendees
     if (p.email && p.familyRole !== 'child') put('roles/' + p.email.toLowerCase(), { role: p.appRole, personId: p.id });
   });
+  // the ministers everyone may write to (kept in Settings by Administrators)
+  out['settings/church'].ministers = d.people.filter(p => p.appRole === 'pastor' && p.active !== false).map(p => ({ id: p.id, name: ((p.preferredName || p.firstName) + ' ' + p.lastName).trim() })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
   const notes = {}; d.notes.forEach(n => { (notes[n.personId] = notes[n.personId] || []).push(strip(n)); });
   Object.keys(notes).forEach(pid => put('notes/' + pid, { entries: notes[pid].map(n => { delete n.personId; return n; }) }));
   ['families', 'consents', 'teams', 'positions', 'skills', 'services', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'guardians', 'noCollect', 'serveOffers'].forEach(c => d[c].forEach(x => put(c + '/' + x.id, strip(x))));

@@ -13,10 +13,10 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', viewSeed); await s.go('home');
   check(await s.page.isVisible('[data-act="hub:viewaspick"]'), 'an Administrator has a “View as” switch');
   await s.page.click('[data-act="hub:viewaspick"]');
-  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,pastor,rosters,kids,carer,member', 'they can view as a Pastor, Roster coordinator, Children’s ministry, a carer or a Member');
+  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,pastor,rosters,kids,carer,member,attendee', 'they can view as a Pastor, Roster coordinator, Children’s ministry, a carer, a Church Partner or an attendee');
   await s.page.click('[data-act="hub:viewas"][data-r="member"]'); await s.page.waitForSelector('.viewas'); await s.settle();
   t = await s.page.textContent('body');
-  check(t.includes('Viewing as') && (await s.page.textContent('.viewas')).includes('Basic access') && !(await s.page.$('nav a[href="#/settings"]')) && !(await s.page.$('nav a[href="#/import"]')), 'as a Church Partner: a banner says so, and Settings and Import are gone');
+  check(t.includes('Viewing as') && (await s.page.textContent('.viewas')).includes('Church Partner access') && !(await s.page.$('nav a[href="#/settings"]')) && !(await s.page.$('nav a[href="#/import"]')), 'as a Church Partner: a banner says so, and Settings and Import are gone');
   check(await s.page.evaluate(() => !Hub.can('*') && !Hub.can('people.basic') && !Store.list('consents').some(c => c.personId !== 'p01') && !Store.list('serveOffers').some(o => o.personId !== 'p01')), 'only what a Member may load is loaded (not other people’s consents or offers to serve)');
   await s.go('people'); check(!(await s.page.$('a[href="#/people/search"]')), 'no Advanced search as a Member');
   await s.page.evaluate(() => Store.setSettings({ churchName: 'Changed while viewing' }, 'x')); await s.settle();
@@ -46,7 +46,7 @@ module.exports = async function (ctx) {
   s = await session('thandi.mokoena@example.com', rSeed); await s.go('home');
   check(await s.page.isVisible('[data-act="hub:viewaspick"]'), 'the Senior Pastor has a “View as” switch');
   await s.page.click('[data-act="hub:viewaspick"]');
-  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,rosters,kids,carer,member', 'they can view as a Roster coordinator, Children’s ministry, a carer or a Member (not as an Administrator)');
+  check(await s.page.$$eval('[data-act="hub:viewas"]', b => b.map(x => x.dataset.r).join()) === 'admin,rosters,kids,carer,member,attendee', 'they can view as a Roster coordinator, Children’s ministry, a carer, a Church Partner or an attendee (not as an Administrator)');
   await s.page.click('[data-act="hub:viewas"][data-r="rosters"]'); await s.page.waitForSelector('.viewas'); await s.settle();
   t = await s.page.textContent('.viewas');
   check(t.includes('Roster coordinator') && t.includes('Back to Senior Pastor') && await s.page.evaluate(() => Hub.can('rosters.manage') && !Hub.can('notes') && !Store.list('notes').length), 'as a Roster coordinator: what they see, pastoral notes hidden, and “Back to Senior Pastor”');

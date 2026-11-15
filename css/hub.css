@@ -515,6 +515,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
+.msg-re { margin: 6px 0 0; padding-left: 8px; border-left: 3px solid var(--line); }
+.msg-quote { margin: 0 0 14px; padding: 8px 12px; border-left: 3px solid var(--a, #E8590C); background: var(--surface-2); border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 180px; overflow: auto; }
+.pp-name { min-height: 44px; }
+.me-req { margin: 8px 0 12px; }
 .msg-read > summary { cursor: pointer; } .msg-read .tag { margin: 2px 2px 0 0; display: inline-block; }
 #ms-body { min-height: 140px; }
 /* Messages: ticking who gets a message */

@@ -354,3 +354,11 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   damaged (off the shelf until sent for repair or put back; also "It came back damaged" when marking a return), Withdraw
   from circulation (taken out, can be put back). "All" now means what is still in the library; items taken out are under
   their own tabs. No change to the database rules (damaged items use the existing "being repaired" lock).
+- ✅ Replies and Church Partner access (0.74.0): **Reply** on any message sends a private reply to its sender (Office staff
+  reply to Office messages the same way). Basic access now comes in two kinds, automatically from the person's category:
+  **Church Partner access** (Church Partners and staff: the directory, replies – as before) and **attendees** (everyone
+  else), who by default see only Church Partners' names, and write only to the Office, the ministers and their Midweek
+  Group leaders (and reply to a minister). **Settings → Attendees** (Administrators and the Senior Pastor) changes what
+  attendees may do: names, the directory, writing, replying. Me invites people who aren't Church Partners yet to become
+  one, with **what it takes** – written, linked (Google Doc) or attached (Word/PDF) under Settings → Membership
+  application by Administrators and the Rector. "View as" → Attendee. New database rules: **re-publish the rules.**

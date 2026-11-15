@@ -53,6 +53,26 @@
   function councilMember(c) {
     return is(c, ANY) && c.ids.some(function (pid) { return !!docs['archivePreviewMembers/' + pid]; });
   }
+  /** Church Partner access or an attendee (firestore.rules partnerHere / attendee / attendeeMay). */
+  function partnerPerson(pid) { var p = docs['people/' + pid]; return !!p && ['Church Partner', 'Staff'].indexOf(p.category || '') >= 0; }
+  function attendee(c) { return is(c, ANY) && !is(c, STAFF) && !c.ids.some(partnerPerson); }
+  function attendeeMay(c, x) {
+    var on = (docs['settings/church'] || {}).attendeeCan; on = Array.isArray(on) ? on : ['names', 'write'];
+    return is(c, ANY) && (!attendee(c) || on.indexOf(x) >= 0);
+  }
+  function rector(c) { return is(c, ['pastor']) && isMe(c, (docs['settings/church'] || {}).seniorPastorId || ''); }
+  function minister(pid) { var p = docs['people/' + pid]; return !!p && p.appRole === 'pastor'; }
+  function mayDirect(c, a) {
+    if (a.kind !== 'direct' || a.to.length !== 1 || isMe(c, a.to[0])) return false;
+    if (a.replyTo) {
+      var o = docs['messages/' + a.replyTo];
+      return !!o && meIn(c, o.to || []) && o.fromId === a.to[0] && (attendeeMay(c, 'reply') || (attendeeMay(c, 'write') && minister(a.to[0])));
+    }
+    if (!attendeeMay(c, 'write')) return false;
+    if (!a.groupId) return minister(a.to[0]);
+    var g = docs['careGroups/' + a.groupId];
+    return !!g && g.type === 'life' && meIn(c, g.memberIds || []) && (g.leaderIds || []).indexOf(a.to[0]) >= 0;
+  }
   function librarian(c) { return is(c, ['admin']) || (is(c, ANY) && meIn(c, (docs['settings/church'] || {}).librarianIds || [])); }
   function pendingLibraryLoan(d, c) {
     return !!d && d.status === 'pending' && d.back === '' && d.visitor === false && typeof d.personId === 'string' && isMe(c, d.personId) &&
@@ -71,7 +91,9 @@
     settings: { read: function (c, id, d) { return (is(c, ['admin']) || ((is(c, ANY) || c.robot) && !(d && Object.prototype.hasOwnProperty.call(d, 'brochures')))); },
       write: function (c, op, id, b, a) { return is(c, ['admin']) ? op === 'delete' || !Object.prototype.hasOwnProperty.call(a || {}, 'brochures') : (op === 'update' && may(c, 'settings') && JSON.stringify(a.pastorCan || []) === JSON.stringify(b.pastorCan || []) && JSON.stringify(a.seniorCan || []) === JSON.stringify(b.seniorCan || []) && (a.seniorPastorId || '') === (b.seniorPastorId || '') && JSON.stringify(a.brochures) === JSON.stringify(b.brochures))
         // the Senior Pastor may choose the librarians and record the review date, and change nothing else here
-        || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['librarianIds', 'librarianReviewedAt']) && Array.isArray(a.librarianIds || []) && typeof a.librarianReviewedAt === 'string' && a.librarianReviewedAt.length >= 20 && a.librarianReviewedAt.length <= 40); } },
+        || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['librarianIds', 'librarianReviewedAt']) && Array.isArray(a.librarianIds || []) && typeof a.librarianReviewedAt === 'string' && a.librarianReviewedAt.length >= 20 && a.librarianReviewedAt.length <= 40)
+        // ... and what attendees may do (Settings -> Attendees)
+        || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['attendeeCan']) && Array.isArray(a.attendeeCan) && a.attendeeCan.every(function (x) { return ['names', 'directory', 'write', 'reply'].indexOf(x) >= 0; })); } },
     brochures: { read: function (c, id) { return is(c, ['admin']) && id === 'church'; }, write: function (c, op, id) { return is(c, ['admin']) && id === 'church'; } },
     elvantoSync: { read: function (c, id, d) { return may(c, 'import') || c.robot || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
@@ -95,11 +117,13 @@
       write: function (c) { return is(c, ['admin', 'pastor']); } },
     medical: { read: function (c) { return is(c, ['kids']); }, write: function (c, op) { return is(c, ['kids']) || (op === 'delete' && may(c, 'people')); } },
     notes: { read: function (c) { return is(c, ['pastor']); }, write: function (c, op) { return is(c, ['pastor']) || (op === 'delete' && may(c, 'people')); } },
-    directory: { read: function (c) { return is(c, ANY); },
+    directory: { read: function (c) { return is(c, STAFF) || attendeeMay(c, 'directory'); },
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care'])); } },
+    names: { read: function (c) { return is(c, STAFF) || attendeeMay(c, 'names') || attendeeMay(c, 'directory'); },
+      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName'])); } },
     contacts: { read: function (c) { return is(c, STAFF); },
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['shareAddress', 'shareSpouse'])); } },
-    photos: { read: function (c, id) { return child(id) ? is(c, ['admin', 'pastor', 'kids']) : is(c, STAFF) || mine(c, id) || (is(c, ANY) && docs['directory/' + id] !== undefined); },
+    photos: { read: function (c, id) { return child(id) ? is(c, ['admin', 'pastor', 'kids']) : is(c, STAFF) || mine(c, id) || (attendeeMay(c, 'directory') && docs['directory/' + id] !== undefined); },
       write: function (c, op, id, b, a) {
         var who = is(c, ['admin', 'pastor']) || (child(id) ? is(c, ['kids']) : mine(c, id));
         return who && (op === 'delete' || (onlyKeys(a, ['data', 'updatedAt']) && typeof a.data === 'string' && a.data.length < 200000));
@@ -202,15 +226,17 @@
           });
         }
         if (!is(c, ANY) || !isMe(c, a.fromId)) return false;
-        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
+        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'replyTo', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
         if (a.some !== undefined && typeof a.some !== 'boolean') return false;
-        if (['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
+        if (a.replyTo !== undefined && (typeof a.replyTo !== 'string' || a.replyTo.length > 100)) return false;
+        if (['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
         if (!Array.isArray(a.to) || (a.kind === 'office' ? a.to.length !== 0 : !a.to.length || a.to.length > 3000)
             || !Array.isArray(a.deliveredBy) || !a.deliveredBy.every(function (x) { return isMe(c, x); })
             || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
-        if (a.kind === 'office') return true;
+        if (a.kind === 'office') return attendeeMay(c, 'write');
         if (mgr) return true;
+        if (a.kind === 'direct') return mayDirect(c, a);
         if (a.kind === 'leaders') { var lb = docs['leaderBodies/' + a.groupId]; return !!lb && meIn(c, lb.memberIds || []) && a.to.every(function (x) { return (lb.memberIds || []).indexOf(x) >= 0; }); }
         var g = a.kind === 'care' || a.kind === 'life' ? docs['careGroups/' + a.groupId] : a.kind === 'group' ? docs['msgGroups/' + a.groupId] : null;
         if (!g || !meIn(c, (g.leaderIds || []))) return false;
@@ -301,6 +327,8 @@
       write: function (c, op, id, b, a) { return librarian(c) && (op === 'delete' || (onlyKeys(a, ['data', 'updatedAt']) && typeof a.data === 'string' && a.data.length < 200000)); } },
     libraryPolicy: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (librarian(c) || keeper(c)) && (op === 'delete' || (id === 'policy' && onlyKeys(a, ['text', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
+    partnerInfo: { read: function (c) { return is(c, ANY); },
+      write: function (c, op, id, b, a) { return (may(c, 'settings') || rector(c)) && (op === 'delete' || (id === 'requirements' && onlyKeys(a, ['text', 'link', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.link || '') === 'string' && (a.link || '').length <= 500 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
     dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
     audit: { read: function (c) { return may(c, 'privacy'); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }

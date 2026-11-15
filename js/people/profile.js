@@ -95,7 +95,7 @@
   /* ---------- profile ---------- */
   function renderPerson(id) {
     var p = S.get('people', id), me = isMe(p);
-    if (!p || (!canBasic() && !me && visiblePeople().indexOf(p) < 0)) return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a><p class="empty">' + T('This person isn’t available to you.') + '</p>';
+    if (!p || (!canBasic() && !me && (visiblePeople().indexOf(p) < 0 || P.namesOnly()))) return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a><p class="empty">' + T('This person isn’t available to you.') + '</p>';
     var full = canSeeAll() || me, fam = familyOf(p), child = p.familyRole === 'child';
     var seeMedical = child && H.can('medical');     // Children's ministry only (POPIA: special personal information)
     var seeNotes = H.can('notes');                   // Pastors only

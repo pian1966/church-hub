@@ -300,5 +300,18 @@ I18n.rows([
     ["{name} is now a Church Partner", "{name} is nou ’n Kerkvennoot", "U-{name} manje uyiLungu Lebandla", "U-{name} ngoku ulilungu leBandla"],
     ["Added to the name badges to print", "By die naamkaartjies gevoeg om te druk", "Kungezwe kumabheji egama azophrintwa", "Yongezwe kwiibheji zamagama eziza kuprintwa"],
     ["{n} badge marked as printed", "{n} kaartjie as gedruk gemerk", "Ibheji elingu-{n} limakwe njengeliphrintiwe", "Ibheji e-{n} iphawulwe njengeprintiweyo"],
-    ["{n} badges marked as printed", "{n} kaartjies as gedruk gemerk", "Amabheji angu-{n} amakwe njengaphrintiwe", "Iibheji ezi-{n} ziphawulwe njengeziprintiweyo"]
+    ["{n} badges marked as printed", "{n} kaartjies as gedruk gemerk", "Amabheji angu-{n} amakwe njengaphrintiwe", "Iibheji ezi-{n} ziphawulwe njengeziprintiweyo"],
+    ["Do you think of {church} as your home church? Then we’d love you to become a {partner}.", "Is {church} vir jou jou tuiskerk? Dan sal ons dit baie waardeer as jy ’n {partner} word.", "Ingabe u-{church} ulithatha njengebandla lakho lasekhaya? Singathanda kakhulu ukuthi ube yi-{partner}.", "Ngaba u-{church} uyithatha njengecawe yakho yasekhaya? Singathanda kakhulu ukuba ube yi-{partner}."],
+    ["What becoming a {partner} involves", "Wat dit beteken om ’n {partner} te word", "Okushiwo ukuba yi-{partner}", "Oko kuthethwa kukuba yi-{partner}"],
+    ["What it takes to become a {partner}", "Wat nodig is om ’n {partner} te word", "Okudingekayo ukuze ube yi-{partner}", "Oko kufunekayo ukuze ube yi-{partner}"],
+    ["Shown on the Me page of everyone who isn’t a Church Partner yet, with the button to apply. Write it here, link to a Google Doc, or attach a Word file or PDF.", "Gewys op die Ek-bladsy van almal wat nog nie Kerkvennote is nie, saam met die knoppie om aansoek te doen. Skryf dit hier, skakel na ’n Google Doc, of heg ’n Word-lêer of PDF aan.", "Kuboniswa ekhasini lami lalabo abangakabi amalungu ebandla, kanye nenkinobho yokufaka isicelo. Kubhale lapha, xhumanisa ne-Google Doc, noma unamathisele ifayela le-Word noma i-PDF.", "Kuboniswa kwiphepha lam labo bangekabi ngamalungu ecawe, kunye neqhosha lokufaka isicelo. Kubhale apha, qhagamshela kwi-Google Doc, okanye uncamathisele ifayile ye-Word okanye i-PDF."],
+    ["Last changed by {name}", "Laas verander deur {name}", "Kugcine ukushintshwa ngu-{name}", "Kugqibele ukutshintshwa ngu-{name}"],
+    ["Nothing written yet.", "Nog niks geskryf nie.", "Akukabhalwa lutho.", "Akukabhalwa nto."],
+    ["Write the requirements", "Skryf die vereistes", "Bhala izidingo", "Bhala iimfuno"],
+    ["Write or paste it here", "Skryf of plak dit hier", "Kubhale noma ukunamathisele lapha", "Kubhale okanye ukuncamathisele apha"],
+    ["e.g. Be 18 or older, worship here regularly, come to a membership class…", "bv. 18 of ouer wees, gereeld hier aanbid, ’n lidmaatskapklas bywoon…", "isb. Ube neminyaka engu-18 noma ngaphezulu, ukhonze lapha njalo, uze ekilasini lobulungu…", "umz. Ube neminyaka eli-18 nangaphezulu, unqule apha rhoqo, uze kwiklasi yobulungu…"],
+    ["Or a link to it (e.g. a Google Doc shared with everyone who has the link)", "Of ’n skakel daarna (bv. ’n Google Doc gedeel met almal wat die skakel het)", "Noma isixhumanisi sakho (isb. i-Google Doc eyabelwane nabo bonke abanesixhumanisi)", "Okanye ikhonkco lako (umz. i-Google Doc ekwabelwana ngayo nabo bonke abanekhonkco)"],
+    ["The link should start with https://", "Die skakel moet met https:// begin", "Isixhumanisi kufanele siqale ngo-https://", "Ikhonkco kufuneka liqale ngo-https://"],
+    ["Write something, add a link or choose a file.", "Skryf iets, voeg ’n skakel by of kies ’n lêer.", "Bhala okuthile, engeza isixhumanisi noma ukhethe ifayela.", "Bhala into, yongeza ikhonkco okanye ukhethe ifayile."],
+    ["The names of the church’s Church Partners.", "Die name van die kerk se Kerkvennote.", "Amagama amalungu ebandla.", "Amagama amalungu ecawe."]
 ]);

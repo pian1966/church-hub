@@ -955,3 +955,6 @@ html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366
 /* Choosing between a few options in a window (e.g. which Sesotho spelling) */
 .choices { display: grid; gap: 10px; }
 .btn.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 12px 14px; height: auto; white-space: normal; }
+/* Consent window: what withdrawing a consent means, shown under the unticked box */
+.cf-without { display: block; margin: 6px 0 0; padding: 8px 10px; font-size: 13px; }
+.cf-without[hidden] { display: none; }

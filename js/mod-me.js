@@ -42,7 +42,7 @@
   function dates(a) { return H.fmt(a.from, a.to === a.from) + (a.to !== a.from ? ' – ' + H.fmt(a.to, true) : ''); }
 
   function tabs(active) {
-    var t = [['', T('My details')], ['away', T('Days away')], ['serve', T('Serving')]];
+    var t = [['', T('My details')], ['consent', T('Consent')], ['away', T('Days away')], ['serve', T('Serving')]];
     return '<nav class="seg me-tabs" aria-label="' + T('Me') + '">' + t.map(function (x) {
       var on = x[0] === active;
       return '<a href="#/me' + (x[0] ? '/' + x[0] : '') + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + esc(x[1]) + '</a>';
@@ -87,19 +87,28 @@
     html += window.PeopleParts && PeopleParts.applyMePanel ? PeopleParts.applyMePanel() : '';   // apply to become a Church Partner
     html += window.CareUI ? CareUI.mePanel() : '';   // their care group, if they are in one
     html += window.LifeUI ? LifeUI.mePanel() : '';   // their life groups (Bible studies, midweek groups)
-    // Consent (POPIA): what they agreed to
-    var cf = window.PeopleHelpers ? PeopleHelpers.consentFor : function () { return null; };
-    html += '<section class="panel"><h2>' + T('Consent') + '</h2><p class="hint" style="margin:0 0 10px">' + T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) + '</p><div class="list">' +
-      PURPOSES.map(function (pur) {
-        var c = cf(p.id, pur);
-        return '<div class="item"><span class="grow"><b>' + esc(T(window.PeopleParts ? PeopleParts.purposeName(pur) : pur)) + '</b> ' + (window.PeopleParts ? PeopleParts.purposeTip(pur) : '') + '</span>' + (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
-      }).join('') + '</div><div class="btns" style="margin-top:12px"><button class="btn" data-act="people:consent" data-id="' + esc(p.id) + '">' + T('Change my choices') + '</button> <button class="btn" data-act="hub:notice">' + T('Privacy notice') + '</button></div></section>';
     // Signing out and the language are in the menu (left on a computer, ☰ on a phone); here only notes about this device
     var device = (I18n.isDraft() ? '<p class="hint">' + T('This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.') + '</p>' : '') +
       (window.ChurchHubApp ? '<p class="hint">' + T('Church Hub app, version {v}', { v: esc(appVersion()) }) + '</p>' :
         /Android/i.test(navigator.userAgent) ? '<p class="hint"><a href="' + APK + '" target="_blank" rel="noopener">' + T('Get the Church Hub app for Android') + '</a></p>' : '');
     if (device) html += '<section class="panel"><h2>' + T('This phone or computer') + '</h2>' + device + '</section>';
     return html + '</div>';
+  }
+  /* ---------- consent (its own tab, so it's easy to find) ---------- */
+  function renderConsent() {
+    var u = me(), p = S.get('people', u.id) || u, child = p.familyRole === 'child', PP = window.PeopleParts;
+    var cf = window.PeopleHelpers ? PeopleHelpers.consentFor : function () { return null; };
+    var html = head(T('Consent'), esc(T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short })),
+      '<button class="btn primary" data-act="people:consent" data-id="' + esc(p.id) + '">' + T('Change my choices') + '</button>' +
+      H.menu(T('More'), ['<button class="btn" data-act="hub:notice">' + T('Privacy notice') + '</button>']), 'consent');
+    var purposes = child ? ['Church records', 'Photos', 'Children’s medical notes'] : PURPOSES;
+    html += '<div class="list">' + purposes.map(function (pur) {
+      var c = cf(p.id, pur), no = c && !c.given;
+      return '<div class="item"><span class="grow"><b>' + esc(T(PP ? PP.purposeName(pur) : pur)) + '</b> ' + (PP ? PP.purposeTip(pur) : '') +
+        (no && PP ? '<small class="muted">' + esc(PP.purposeWithout(pur)) + '</small>' : '') + '</span>' +
+        (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
+    }).join('') + '</div><p class="hint" style="margin-top:12px">' + T('If you untick something, Church Hub tells you what it means before anything is saved.') + '</p>';
+    return html;
   }
   function appVersion() { try { return window.ChurchHubApp.version(); } catch (e) { return ''; } }
 
@@ -227,6 +236,7 @@
       return n ? [{ text: TN('The roster coordinator answered {n} of your serving offers', 'The roster coordinator answered {n} of your serving offers', n), href: '#/me/serve', tag: T('Me') }] : [];
     },
     render: function (p) {
+      if (p[0] === 'consent') return renderConsent();
       if (p[0] === 'away') return renderAway();
       if (p[0] === 'serve') return renderServe();
       return renderDetails();

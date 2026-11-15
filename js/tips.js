@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.78';
+  var NEWS_FOR = '0.79';
   var NEWS = [
+    { date: '2026-11-15', who: ['librarian'], app: 'library', text: TX("Librarians: covers found online now work for many more books, you can ask for another cover if the first is wrong, and each item’s ⋯ menu and Edit form have “Find a cover online”.") },
     { date: '2026-11-15', who: ['everyone'], text: TX('About now has a Close button at the top, so you can always get back – handy on the Android app.') },
     { date: '2026-11-15', who: ['everyone'], text: TX("Church Hub fits phones better: buttons no longer squeeze names and wording (Translations, Leave approvals, Serving together), Terminology and school terms fit the screen, and menus open within it.") },
     { date: '2026-11-15', who: ['admin', 'pastor'], app: 'care', text: TX("When you edit someone on a phone, each Care Group now has its own line, and the “leads it” tick appears only once that group is ticked.") },

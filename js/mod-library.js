@@ -17,6 +17,7 @@
   var filters = { kind: '', title: '', author: '', cat: '', borrower: '', borrowed: '' }, sortKey = 'title', sortDir = 1, catalogueTab = 'all', tidied = false;
   var selectedBooks = {}, selecting = false, librarianReviewShown = false;   // selecting: tick boxes shown, to choose books for covers
   var newCover;            // the cover chosen in the form: undefined = unchanged, '' = taken away, else a picture (data: address)
+  var formBook = null, formChoices = [], formSearch = 0;   // the item in the form, the covers found online for it, which search is current
   var policy;              // the library's policy: undefined until fetched, then null (none) or { text, name, type, data }
   var policyAsked = false, coverCache = {}, coverAsked = {}, coverSeen = null;
 
@@ -122,13 +123,14 @@
     else if (gone) acts = '<button class="btn small" data-act="library:putback" data-id="' + esc(b.id) + '">' + T('Put it back') + '</button>' + rowMenu(b.title, [purgeButton('book', b.id)]);
     else {
       var editBtn = '<button class="icon-btn ghost" data-act="library:edit" data-id="' + esc(b.id) + '" aria-label="' + esc(T('Edit {name}', { name: b.title })) + '" title="' + esc(T('Edit')) + '">' + H.icon(PEN, 16) + '</button>',
-        takeOut = '<button data-act="library:remove" data-id="' + esc(b.id) + '">' + H.icon(H.ICON.trash, 16) + T('Take out of the library') + '</button>', busy = outCount ? ' disabled' : '';
+        takeOut = '<button data-act="library:remove" data-id="' + esc(b.id) + '">' + H.icon(H.ICON.trash, 16) + T('Take out of the library') + '</button>', busy = outCount ? ' disabled' : '',
+        findCover = '<button data-act="library:coverfind" data-id="' + esc(b.id) + '">' + T('Find a cover online') + '</button>';
       // The everyday job first (Lend, or what a damaged or repaired item needs next); the rarer ones in the row's ⋯ menu
       if (status === 'damaged') acts = '<button class="btn small" data-act="library:repair" data-id="' + esc(b.id) + '">' + T('Send for repair') + '</button>' +
-        '<button class="btn small" data-act="library:damage" data-id="' + esc(b.id) + '">' + T('Back on the shelf') + '</button>' + editBtn + rowMenu(b.title, [takeOut]);
-      else if (status === 'repairing') acts = '<button class="btn small" data-act="library:repair" data-id="' + esc(b.id) + '">' + T('Back from repair') + '</button>' + editBtn + rowMenu(b.title, [takeOut]);
+        '<button class="btn small" data-act="library:damage" data-id="' + esc(b.id) + '">' + T('Back on the shelf') + '</button>' + editBtn + rowMenu(b.title, [findCover, takeOut]);
+      else if (status === 'repairing') acts = '<button class="btn small" data-act="library:repair" data-id="' + esc(b.id) + '">' + T('Back from repair') + '</button>' + editBtn + rowMenu(b.title, [findCover, takeOut]);
       else acts = '<button class="btn small primary" data-act="library:lend" data-id="' + esc(b.id) + '"' + (n ? '' : ' disabled') + '>' + T('Lend') + '</button>' + editBtn +
-        rowMenu(b.title, ['<button data-act="library:damage" data-id="' + esc(b.id) + '"' + busy + '>' + T('Mark as damaged') + '</button>',
+        rowMenu(b.title, [findCover, '<button data-act="library:damage" data-id="' + esc(b.id) + '"' + busy + '>' + T('Mark as damaged') + '</button>',
           '<button data-act="library:repair" data-id="' + esc(b.id) + '"' + busy + '>' + T('Being repaired') + '</button>',
           '<button data-act="library:withdraw" data-id="' + esc(b.id) + '"' + busy + '>' + T('Withdraw from circulation') + '</button>', takeOut]);
     }
@@ -341,6 +343,7 @@
       img.crossOrigin = 'anonymous';
       img.onload = function () {
         try {
+          if (img.naturalWidth < 3 || img.naturalHeight < 3) return reject(new Error('no cover'));   // Open Library's blank 1-pixel picture
           var k = Math.min(1, 360 / Math.max(img.naturalWidth, img.naturalHeight)), cv = document.createElement('canvas');
           cv.width = Math.max(1, Math.round(img.naturalWidth * k)); cv.height = Math.max(1, Math.round(img.naturalHeight * k));
           var c = cv.getContext('2d'); c.fillStyle = '#fff'; c.fillRect(0, 0, cv.width, cv.height); c.drawImage(img, 0, 0, cv.width, cv.height);
@@ -401,6 +404,7 @@
     var author = normalized(book.author), authors = x.authors.map(normalized).filter(Boolean);
     return !author || !authors.length || authors.some(function (a) { return a.indexOf(author) >= 0 || author.indexOf(a) >= 0 || a.indexOf(author.slice(0, 4)) >= 0; }) ? 2 : 1;
   }
+  function rankedHits(book, list) { return list.map(function (x) { return { x: x, m: bookMatch(book, x) }; }).filter(function (r) { return r.m; }).sort(function (a, b) { return b.m - a.m; }).map(function (r) { return r.x; }); }
   /** The best matches for a book, best first: Google Books, or Open Library when Google is busy or finds nothing. */
   function findBook(book) {
     var title = String(book.title || '').replace(/["\\]/g, ' ').trim(), author = String(book.author || '').replace(/["\\]/g, ' ').trim(), isbn = isbnDigits(book.isbn);
@@ -408,7 +412,7 @@
     if (isbn) queries.push(encodeURIComponent('isbn:' + isbn));
     if (title && author) queries.push(encodeURIComponent('intitle:"' + title + '"') + '+' + encodeURIComponent('inauthor:"' + author + '"'));
     if (title) queries.push(encodeURIComponent('intitle:"' + title + '"'));
-    var ranked = function (list) { return list.map(function (x) { return { x: x, m: bookMatch(book, x) }; }).filter(function (r) { return r.m; }).sort(function (a, b) { return b.m - a.m; }).map(function (r) { return r.x; }); };
+    var ranked = function (list) { return rankedHits(book, list); };
     function google(i) {
       if (i >= queries.length) return Promise.resolve([]);
       return googleSearch(queries[i]).then(function (list) { var hits = ranked(list); return hits.length ? hits : google(i + 1); });
@@ -419,16 +423,30 @@
       return hits.length ? hits : openLibrarySearch(book).then(ranked, function (e) { if (googleErr) throw googleErr; return []; });
     });
   }
-  function lookupCover(book) {
-    return findBook(book).then(function (hits) {
-      var links = hits.map(function (x) { return x.image; }).filter(Boolean);
-      function tryImage(i) {
-        if (i >= links.length) return null;
-        return coverImageData(links[i]).then(function (image) { return { data: image }; }, function () { return tryImage(i + 1); });
-      }
-      return tryImage(0);
-    });
+  /** Finds a book's cover pictures one at a time (next() → a small JPEG, or null when there are no more).
+   * Google Books' pictures can't be copied by a web page (Google doesn't allow it), so Open Library is always tried
+   * as well: first its cover for the ISBN, then Google's matches, then Open Library's own search. */
+  function coverFinder(book) {
+    var links = null, i = 0, openLibDone = false, seen = {}, isbn = isbnDigits(book.isbn), failed = null, found = 0;
+    function add(list) { list.forEach(function (u) { if (u && !seen[u]) { seen[u] = true; links.push(u); } }); }
+    function start() {
+      links = [];
+      if (isbn.length === 10 || isbn.length === 13) add(['https://covers.openlibrary.org/b/isbn/' + encodeURIComponent(isbn) + '-M.jpg']);
+      if (!book.title && !isbn) return Promise.resolve();
+      return findBook(book).then(function (hits) {
+        if (hits.some(function (x) { return x.source === 'Open Library'; })) openLibDone = true;
+        add(hits.map(function (x) { return x.image; }));
+      }, function (e) { openLibDone = true; failed = e; });   // both services unreachable: said at the end if nothing was found
+    }
+    function step() {
+      if (i < links.length) return coverImageData(links[i++]).then(function (d) { found++; return d; }, step);
+      if (openLibDone || !book.title) { if (failed && !found) throw failed; return null; }
+      openLibDone = true;
+      return openLibrarySearch(book).then(function (list) { add(rankedHits(book, list).map(function (x) { return x.image; })); return step(); }, function () { return null; });
+    }
+    return { next: function () { return (links ? Promise.resolve() : start()).then(step); } };
   }
+  function lookupCover(book) { return coverFinder(book).next().then(function (d) { return d ? { data: d } : null; }); }
   var coverBatch = null, coverBatchRunning = false;
   function coverBatchDialog(open) {
     if (!coverBatch) return;
@@ -437,25 +455,27 @@
     var rows = coverBatch.map(function (x) {
       var preview = x.data ? '<img class="lib-cover-preview" src="' + esc(x.data) + '" alt="' + esc(T('Cover of {name}', { name: x.book.title })) + '">' : '';
       var save = x.data && !x.saved ? '<button class="btn small save" data-act="library:coversave" data-id="' + esc(x.book.id) + '">' + T('Save this cover') + '</button>' : '';
-      return '<div class="item lib-cover-result">' + preview + '<span class="grow"><b data-own-words>' + esc(x.book.title) + '</b><small>' + esc(x.status) + '</small></span>' + save + '</div>';
+      var other = x.data && !x.saved && !x.last && !coverBatchRunning ? '<button class="btn small" data-act="library:coveranother" data-id="' + esc(x.book.id) + '">' + T('Show another cover') + '</button>' : '';
+      return '<div class="item lib-cover-result">' + preview + '<span class="grow"><b data-own-words>' + esc(x.book.title) + '</b><small>' + esc(x.status) + '</small></span><span class="rec-acts">' + other + save + '</span></div>';
     }).join('');
     H.modal('<div id="lib-cover-batch">' + H.dialogHead(T('Find book covers'), T('Preview each cover before saving it to the library.')) +
       '<div class="dlg-body"><p id="lib-cover-progress" class="hint">' + esc(coverBatch.progress || '') + '</p><div id="lib-cover-results" class="list">' + rows + '</div></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="' + (coverBatchRunning ? 'library:coversclose' : 'hub:close') + '">' + (coverBatchRunning ? T('Cancel search') : T('Close')) + '</button><button class="btn save" data-act="library:coverssaveall"' + (found.length && !coverBatchRunning ? '' : ' disabled') + '>' + T('Save all found covers') + ' (' + found.length + ')</button></div></div>', T('Find book covers'), true);
   }
-  function runCoverBatch(mode) {
+  /** Look covers up on the internet: mode 'one' (the item `id`), 'selected', 'missing' or 'all' (books only). */
+  function runCoverBatch(mode, id) {
     if (!librarian()) return;
-    var books = S.list('books').filter(function (b) { return L.inLibrary(b) && (b.kind || 'Book') === 'Book'; });
-    var targets = mode === 'selected' ? books.filter(function (b) { return selectedBooks[b.id]; }) :
+    var books = S.list('books').filter(function (b) { return L.inLibrary(b) && (mode === 'one' ? b.id === id : (b.kind || 'Book') === 'Book'); });
+    var targets = mode === 'one' ? books : mode === 'selected' ? books.filter(function (b) { return selectedBooks[b.id]; }) :
       mode === 'missing' ? books.filter(function (b) { return !b.cover; }) : books;
     if (!targets.length) { H.toast(T(mode === 'selected' ? 'Select at least one book.' : 'No books to look up.'), true); return; }
-    coverBatch = targets.map(function (book) { return { book: book, data: '', saved: false, status: T('Loading…') }; });
+    var batch = coverBatch = targets.map(function (book) { return { book: book, finder: coverFinder(book), data: '', saved: false, status: T('Loading…') }; });
     coverBatchRunning = true;
     coverBatch.progress = T('Searching for covers ({n} of {total})', { n: 0, total: targets.length });
     coverBatchDialog(true);
     var index = 0;
     function next() {
-      if (!librarian() || !coverBatch || !coverBatchRunning) return;
+      if (!librarian() || coverBatch !== batch || !coverBatchRunning) return;   // closed, or a newer search has started
       if (index >= coverBatch.length) {
         coverBatchRunning = false;
         coverBatch.progress = T('Search complete. Preview and choose which covers to save.');
@@ -464,14 +484,14 @@
       var entry = coverBatch[index], current = ++index, rateLimited = false;
       coverBatch.progress = T('Searching for covers ({n} of {total})', { n: current, total: targets.length });
       coverBatchDialog();
-      lookupCover(entry.book).then(function (result) {
-        if (result) { entry.data = result.data; entry.status = T('Cover found'); }
+      entry.finder.next().then(function (data) {
+        if (data) { entry.data = data; entry.status = T('Cover found'); }
         else entry.status = T('No matching cover found');
       }, function (error) {
         entry.status = error.rateLimited ? T('The cover service has reached its limit. Try the remaining books later.') : T('Couldn’t search for this cover. Check your connection and try again.');
         if (error.rateLimited) { rateLimited = true; coverBatch.slice(index).forEach(function (x) { x.status = T('The cover service has reached its limit. Try the remaining books later.'); }); }
       }).then(function () {
-        if (!coverBatch || !coverBatchRunning) return;
+        if (coverBatch !== batch || !coverBatchRunning) return;
         coverBatch.progress = T('Searching for covers ({n} of {total})', { n: current, total: targets.length });
         coverBatchDialog();
         if (rateLimited) {
@@ -485,21 +505,30 @@
     }
     next();
   }
+  /** The next picture for one book in the window (its first stays if there is no other). */
+  function anotherCover(id) {
+    var entry = coverBatch && coverBatch.filter(function (x) { return x.book.id === id && !x.saved; })[0];
+    if (!librarian() || !entry || entry.looking) return;
+    var batch = coverBatch;
+    entry.looking = true; entry.status = T('Loading…'); coverBatchDialog();
+    entry.finder.next().then(function (data) {
+      if (data) { entry.data = data; entry.status = T('Cover found'); } else { entry.last = true; entry.status = T('No other cover was found.'); }
+    }, function () { entry.status = T('Couldn’t search for this cover. Check your connection and try again.'); }).then(function () { entry.looking = false; if (coverBatch === batch) coverBatchDialog(); });
+  }
   function saveBatchCover(id) {
     if (!librarian() || !coverBatch) return;
     var entry = coverBatch.filter(function (x) { return x.book.id === id && x.data && !x.saved; })[0];
     if (!entry || !S.get('books', id)) return;
-    coverBatch.progress = T('Saving…');
-    coverBatchDialog();
+    var batch = coverBatch;
+    function show(progress) { if (coverBatch !== batch) return; batch.progress = progress; coverBatchDialog(); }   // only while its window is open
+    show(T('Saving…'));
     return S.setCover(id, entry.data, 'Saved a book cover for “' + entry.book.title + '”').then(function () {
       entry.saved = true; entry.status = T('Saved');
       coverCache[id + '|' + (S.get('books', id) || {}).cover] = entry.data;
-      coverBatch.progress = T('Saved');
-      coverBatchDialog();
+      show(T('Saved'));
     }, function (error) {
       console.error(error); entry.status = T('Couldn’t save it. Please try again.');
-      coverBatch.progress = T('Couldn’t save it. Please try again.');
-      coverBatchDialog();
+      show(T('Couldn’t save it. Please try again.'));
     });
   }
 
@@ -570,7 +599,7 @@
 
   function form(b) {
     var isNew = !b.id, cats = L.cats(S.list('books'));
-    newCover = undefined;
+    newCover = undefined; formBook = b; formChoices = []; formSearch++;
     H.modal(H.dialogHead(isNew ? T('Add to the library') : T('Edit {name}', { name: b.title })) + '<div class="dlg-body">' +
       '<div class="two"><label class="field req">' + T('What it is') + '<select id="lib-kind">' + L.KINDS.map(function (k) { return '<option value="' + esc(k) + '"' + ((b.kind || 'Book') === k ? ' selected' : '') + '>' + esc(T(k)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field req">' + T('Copies') + '<input id="lib-copies" type="number" min="1" max="99" value="' + esc(b.copies || 1) + '"></label></div>' +
@@ -579,7 +608,9 @@
       '<div class="field"><span>' + T('Cover') + '</span><div id="lib-cover-drop" class="lib-cover-drop"><div id="lib-cover-now" class="lib-cover-now"></div><div><p>' + T('Drop a cover image here, or choose a picture.') + '</p><div class="btns">' +
         '<label class="btn small">' + T('Choose a picture') + '<input id="lib-pic" type="file" accept="image/jpeg,image/png,image/webp" hidden></label>' +
         '<label class="btn small">' + T('Take a photo') + '<input id="lib-cam" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" hidden></label>' +
-        '<button type="button" class="btn small ghost" id="lib-cover-rm" data-act="library:coverrm" hidden>' + T('Remove the picture') + '</button></div><small class="muted">' + T('JPEG, PNG or WebP; pictures are resized before saving.') + '</small></div></div></div>' +
+        '<button type="button" class="btn small" data-act="library:coversearch">' + T('Find a cover online') + '</button>' +
+        '<button type="button" class="btn small ghost" id="lib-cover-rm" data-act="library:coverrm" hidden>' + T('Remove the picture') + '</button></div><small class="muted">' + T('JPEG, PNG or WebP; pictures are resized before saving.') + '</small></div></div>' +
+        '<div id="lib-cover-choices" class="lib-cover-choices" aria-live="polite" hidden></div></div>' +
       '<label class="field">' + T('Subject') + '<input id="lib-cat" maxlength="60" list="lib-cats" value="' + esc(b.cat || '') + '"><datalist id="lib-cats">' + cats.map(function (c) { return '<option value="' + esc(c) + '">'; }).join('') + '</datalist></label>' +
       '<div class="two"><label class="field">' + T('How it was acquired') + '<select id="lib-how"><option value="">' + T('Choose…') + '</option>' + L.HOW.map(function (h) { return '<option value="' + esc(h) + '"' + (b.how === h ? ' selected' : '') + '>' + esc(T(h)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field">' + T('Date acquired') + '<input id="lib-acq" type="date" value="' + esc(isNew ? H.today() : b.acquired || '') + '"></label></div>' +
@@ -606,6 +637,33 @@
       ['dragleave', 'drop'].forEach(function (type) { drop.addEventListener(type, function (ev) { ev.preventDefault(); drop.classList.remove('drag'); }); });
       drop.addEventListener('drop', function (ev) { chooseCover(ev.dataTransfer && ev.dataTransfer.files && ev.dataTransfer.files[0]); });
     }
+  }
+
+  /** Find a cover online from what is typed in the form; up to four to choose from (tap one to use it). */
+  function formCoverSearch() {
+    var box = document.getElementById('lib-cover-choices'); if (!box || !librarian()) return;
+    var book = { title: val('lib-title'), author: val('lib-author'), isbn: val('lib-isbn') };
+    if (!book.title && !isbnDigits(book.isbn)) { H.toast(T('Type the title or the ISBN first.'), true); return; }
+    var mine = ++formSearch, finder = coverFinder(book);
+    formChoices = []; box.hidden = false; box.innerHTML = '<p class="muted small">' + T('Searching for covers…') + '</p>';
+    function show(note) {
+      box.innerHTML = (formChoices.length ? '<p class="small">' + T('Tap a cover to use it.') + '</p><div class="lib-cover-pick">' + formChoices.map(function (d, i) {
+        return '<button type="button" class="lib-cover-option" data-act="library:coverpick" data-i="' + i + '" aria-label="' + esc(T('Use cover {n}', { n: i + 1 })) + '"><img src="' + esc(d) + '" alt=""></button>'; }).join('') + '</div>' : '') +
+        (note ? '<p class="muted small">' + esc(note) + '</p>' : '');
+    }
+    function more() {
+      if (mine !== formSearch) return;
+      if (formChoices.length >= 4) return show('');
+      return finder.next().then(function (d) {
+        if (mine !== formSearch) return;
+        if (!d) return show(formChoices.length ? '' : T('No matching cover found'));
+        formChoices.push(d); show(T('Searching for covers…')); return more();
+      }, function (e) {
+        if (mine !== formSearch) return;
+        show(e && e.rateLimited ? T('The cover service has reached its limit. Try the remaining books later.') : T('Couldn’t search for this cover. Check your connection and try again.'));
+      });
+    }
+    more();
   }
 
   /* ---------- lending: to someone on the church's list, or to a visitor – always with a mobile number ---------- */
@@ -988,11 +1046,15 @@
       selectdone: function () { selecting = false; selectedBooks = {}; H.render(); },
       coversclose: function () { coverBatchRunning = false; coverBatch = null; H.closeModal(); },
       coversave: function (el) { saveBatchCover(el.dataset.id); },
+      coveranother: function (el) { anotherCover(el.dataset.id); },
+      coverfind: function (el) { runCoverBatch('one', el.dataset.id); },
+      coversearch: function () { formCoverSearch(); },
+      coverpick: function (el) { var d = formChoices[+el.dataset.i]; if (librarian() && d) { newCover = d; coverPreview(formBook); } },
       coverssaveall: function () {
         if (!librarian() || !coverBatch) return;
-        var found = coverBatch.filter(function (x) { return x.data && !x.saved; }), index = 0;
+        var batch = coverBatch, found = batch.filter(function (x) { return x.data && !x.saved; }), index = 0;
         function next() {
-          if (index >= found.length) return;
+          if (index >= found.length || coverBatch !== batch) return;
           var entry = found[index++];
           return Promise.resolve(saveBatchCover(entry.book.id)).then(next);
         }

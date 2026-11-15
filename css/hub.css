@@ -866,6 +866,12 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .lib-cover-drop.drag { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .lib-cover-drop p { margin: 0 0 8px; }
 .lib-cover-drop small { display: block; margin-top: 6px; }
+.lib-cover-choices { margin-top: 8px; }
+.lib-cover-choices p { margin: 4px 0; }
+.lib-cover-pick { display: flex; flex-wrap: wrap; gap: 8px; }
+.lib-cover-option { padding: 0; border: 2px solid var(--line, #ccc); border-radius: 6px; background: var(--surface); cursor: pointer; line-height: 0; }
+.lib-cover-option:hover, .lib-cover-option:focus-visible { border-color: var(--accent); }
+.lib-cover-option img { width: 64px; height: 92px; object-fit: cover; border-radius: 4px; }
 .lib-duplicate-list { display: grid; gap: 12px; }
 .lib-duplicate-pair { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; padding: 12px; border: 1px solid var(--line, #ddd); border-radius: 8px; }
 .lib-duplicate-item { min-width: 0; }

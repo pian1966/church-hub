@@ -45,15 +45,19 @@ service cloud.firestore {
         || (also().size() > 1 && also()[1] in list) || (also().size() > 2 && also()[2] in list);
     }
     function mine(personId) { return anyone() && isMe(personId); }
-    // Church Partner access or an attendee (see the top of this file): one of the people on this sign-in is a Church
-    // Partner or on the staff (their category), or they have a larger role.
+    // Church Partner access or an attendee (see the top of this file): an attendee has only Basic access and none of the
+    // people on this sign-in is a Church Partner or on the staff (their category).
     function personRef(pid) { return /databases/$(database)/documents/people/$(pid); }
     function partnerPerson(pid) { return exists(personRef(pid)) && get(personRef(pid)).data.get('category', '') in ['Church Partner', 'Staff']; }
-    function partnerHere() {
-      return (me() != '' && partnerPerson(me())) || (also().size() > 0 && partnerPerson(also()[0]))
-        || (also().size() > 1 && partnerPerson(also()[1])) || (also().size() > 2 && partnerPerson(also()[2]));
+    // Only after anyone(). The access-list entry is read once (Firestore allows only so many steps per check).
+    function attendee() {
+      let d = access();
+      let pid = d.get('personId', '');
+      let a = d.get('also', []);
+      return !d.get('roles', [d.role]).hasAny(['admin', 'pastor', 'rosters', 'kids'])
+        && !(pid != '' && partnerPerson(pid))
+        && !(a.size() > 0 && partnerPerson(a[0])) && !(a.size() > 1 && partnerPerson(a[1])) && !(a.size() > 2 && partnerPerson(a[2]));
     }
-    function attendee() { return anyone() && !staff() && !partnerHere(); }
     function churchSettings() { return get(/databases/$(database)/documents/settings/church).data; }
     function attendeeCan(x) { return x in churchSettings().get('attendeeCan', ['names', 'write']); }
     function attendeeMay(x) { return anyone() && (!attendee() || attendeeCan(x)); }

@@ -140,15 +140,16 @@
     return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-care"' + (on ? ' checked' : '') + '><span><b>' + T('Care Group member') + '</b><br><span class="muted small">' + T('In one or more of the church’s Care Groups (tick which).') + '</span></span></label>' +
       '<div id="pf-care-f"' + (on ? '' : ' hidden') + ' style="margin-top:10px">' + (gs.length ? '<div class="field req" style="margin:0"><span>' + T('Which Care Groups') + '</span><div class="list" id="pf-care-gs">' + gs.map(function (x) {
         var has = Object.prototype.hasOwnProperty.call(inIt, x.id);
-        return '<div class="item" style="gap:12px;flex-wrap:wrap"><label class="check grow" style="margin:0"><input type="checkbox" class="pf-cg" value="' + esc(x.id) + '"' + (has ? ' checked' : '') + '><span>' + esc(x.name) + '</span></label>' +
-          '<label class="check" style="margin:0"><input type="checkbox" class="pf-cgl" data-g="' + esc(x.id) + '"' + (inIt[x.id] ? ' checked' : '') + (has ? '' : ' disabled') + '><span class="small">' + T('Carer (leads it)') + '</span></label></div>';
+        // The group on its own line; "leads it" under it, shown only once the group is ticked (no greyed-out boxes on a phone)
+        return '<div class="item pf-cg-item"><label class="check" style="margin:0"><input type="checkbox" class="pf-cg" value="' + esc(x.id) + '"' + (has ? ' checked' : '') + '><span>' + esc(x.name) + '</span></label>' +
+          '<label class="check pf-cgl-row"' + (has ? '' : ' hidden') + '><input type="checkbox" class="pf-cgl" data-g="' + esc(x.id) + '"' + (inIt[x.id] ? ' checked' : '') + '><span class="small">' + T('Carer (leads it)') + '</span></label></div>';
       }).join('') + '</div></div>' : '<p class="hint">' + T('There are no Care Groups yet – add them on the {link} page first.', { link: '<a href="#/care">' + T('Care Groups') + '</a>' }) + '</p>') + '</div></fieldset>';
   }
   function wireFields() {
     var b = document.getElementById('pf-care'), f = document.getElementById('pf-care-f');
     if (b && f) b.addEventListener('change', function () { f.hidden = !b.checked; });
     Array.prototype.forEach.call(document.querySelectorAll('.pf-cg'), function (c) {
-      c.addEventListener('change', function () { var l = document.querySelector('.pf-cgl[data-g="' + c.value + '"]'); if (l) { l.disabled = !c.checked; if (!c.checked) l.checked = false; } });
+      c.addEventListener('change', function () { var l = document.querySelector('.pf-cgl[data-g="' + c.value + '"]'); if (l) { l.closest('.pf-cgl-row').hidden = !c.checked; if (!c.checked) l.checked = false; } });
     });
   }
   /** What the form says: { on, want: { groupId: carer? } }, or { error } when no group is ticked. */

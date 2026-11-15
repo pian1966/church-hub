@@ -85,6 +85,9 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .field textarea { min-height: 84px; resize: vertical; }
 .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0 14px; }
 .check { display: flex; align-items: flex-start; gap: 10px; font-weight: 500; font-size: 14.5px; padding: 8px 0; }
+.item.pf-cg-item { display: block; padding: 6px 16px; min-height: 0; }
+.pf-cgl-row { margin: 0 0 0 30px; padding-top: 0; }
+.pf-cgl-row[hidden] { display: none; }
 .check input { width: 20px; height: 20px; margin-top: 1px; accent-color: var(--accent); flex: 0 0 auto; }
 .search { display: flex; align-items: center; gap: 8px; background: var(--surface); border: 1px solid var(--line-strong); border-radius: 12px; padding: 0 12px; min-height: 46px; flex: 1; min-width: 220px; }
 .search input { border: 0; padding: 0; min-height: 40px; outline: none; }

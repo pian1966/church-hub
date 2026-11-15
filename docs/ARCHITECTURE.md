@@ -777,3 +777,14 @@ The wedding anniversary sits right under marital status.
   line breaks and the church's name/address spans only). Colours come from one colour (`BrochureKit.colours`: ink dark enough
   for white writing; dark writing on a light cover). A panel that no longer fits its A4 third is marked and warned about.
 - The page isn't redrawn while open (`data-keep` stops remote-change redraws), so typing isn't lost.
+
+## Home: What's new and Did you know? (`js/tips.js`, `js/app.js` `tipsCard`)
+- `Tips.NEWS` (date, audience, text) and `Tips.TIPS` (id, audience, `not`, `app`, link, text). Texts are English marked `TX`, translated
+  where shown (`js/i18n/tips.js`, `js/lang/st.js`). News shows for `NEWS_DAYS` (14) days, newest first, at most two.
+- Audience tags (`homeTags()`): `everyone`, the role (`myRole()`, so "View as" shows that role's tips), `staffwork` (sees People),
+  `librarian` (`Library.isLibrarian`, not while viewing as someone else), `carer` (leads a Care Group, or "View as" a carer), `senior`.
+  A tip with `app` is only offered when that part is switched on and opens for the person (`opens()`).
+- One tip per sign-in (`runUpgrades` resets it): the next one not yet seen on this device (`Store.pref('tipsSeen')`), starting again after
+  the last. "Got it" hides the card until the next sign-in. No personal information; nothing is saved in the database.
+- Adding a feature: add a news line (its date and who it is for) and, where it helps, a tip – with all five languages.
+

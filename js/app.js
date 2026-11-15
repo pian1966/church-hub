@@ -344,7 +344,7 @@ var Hub = (function () {
   /** One-off data upgrades (module.upgrade), run when an Administrator signs in. */
   /** Modules may do something for everyone once they are signed in (e.g. keep their care group card up to date). */
   function signedInHooks() { var u = user; setTimeout(function () { if (!u || !user || user.id !== u.id) return; u = user; modules.forEach(function (m) { if (m.signedIn) { try { m.signedIn(u); } catch (e) { console.error('signedIn', m.id, e); } } }); }, 1500); }
-  function runUpgrades() { signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
+  function runUpgrades() { tipShown = null; tipClosed = false; signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
   /** Is this app switched on (Settings → Apps)? Most are on until switched off; a few (optIn, e.g. Life groups) are off until switched on. */
   function isOn(id) {
     var on = ((Store.settings() || {}).modules || {}), m = moduleById(id);
@@ -533,12 +533,38 @@ var Hub = (function () {
       '</div>';
   }
 
+  /* ---------- Home: What's new and Did you know? (js/tips.js), chosen for the person's access ---------- */
+  var tipShown = null, tipClosed = false;   // the tip on Home since signing in; "Got it" hides the card until the next sign-in
+  /** Who this person is, for the tips: everyone, their role, and librarian / carer / senior / staffwork. */
+  function homeTags() {
+    var tags = ['everyone', myRole()], me = Store.get('people', user.id) || user;
+    if (can('people.basic') || can('people.view') || can('*')) tags.push('staffwork');
+    if (typeof Library !== 'undefined' && Library.isLibrarian(Store.settings(), user.id, can('*')) && (can('*') || !Store.preview())) tags.push('librarian');
+    if (Store.previewCare() || (!Store.preview() && typeof Care !== 'undefined' && Store.list('careGroups').some(function (g) { return Care.isLeader(g, user.id); }))) tags.push('carer');
+    if (!Store.preview() && isSenior(me)) tags.push('senior');
+    return tags;
+  }
+  function tipCtx() { return { tags: homeTags(), on: function (id) { var m = moduleById(id); return !!m && opens(m); } }; }
+  function tipsCard() {
+    if (tipClosed || typeof Tips === 'undefined') return '';
+    var ctx = tipCtx(), tips = Tips.forPerson(ctx), news = Tips.news(ctx, today()), tip = tips.filter(function (t) { return t.id === tipShown; })[0];
+    if (!tip && tips.length) { var r = Tips.next(tips, Store.pref('tipsSeen').split(',').filter(Boolean)); tip = r.tip; tipShown = tip.id; Store.pref('tipsSeen', r.seen.join(',')); }
+    if (!tip && !news.length) return '';
+    return '<section class="panel tips-card" id="tips-card">' +
+      (news.length ? '<h2>' + T('What’s new') + '</h2><ul class="tips-news">' + news.map(function (n) { return '<li>' + esc(T(n.text)) + '</li>'; }).join('') + '</ul>' : '') +
+      (tip ? '<h2>' + T('Did you know?') + '</h2><p class="tip-text" data-tip="' + esc(tip.id) + '">' + esc(T(tip.text)) + '</p>' : '') +
+      '<div class="btns">' + (tip && tip.href ? '<a class="btn small" href="' + esc(tip.href) + '">' + T('Show me') + '</a>' : '') +
+      (tips.length > 1 ? '<button class="btn small" data-act="hub:tipnext">' + T('Another tip') + '</button>' : '') +
+      (tips.length > 1 ? '<button class="btn small" data-act="hub:tipsall">' + T('All tips') + '</button>' : '') +
+      '<button class="btn small" data-act="hub:tipclose">' + T('Got it') + '</button></div></section>';
+  }
+
   function renderHome() {
     var todos = [];
     enabled().forEach(function (m) { if (m.todos) (m.todos(user) || []).forEach(function (t) { t.mod = m; todos.push(t); }); });
     todos = todos.filter(function (t) { return t.priority; }).concat(todos.filter(function (t) { return !t.priority; }));
     var hour = new Date().getHours(), hello = T(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening');
-    return langsPrompt() + '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' +
+    return langsPrompt() + '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' + tipsCard() +
       '<section class="block"><h2>' + T('To do') + '</h2>' + (todos.length ? '<ul class="todo">' + todos.slice(0, 8).map(function (t) {
         return '<li><a href="' + esc(t.href) + '"><span class="dot" style="--c:' + t.mod.tint + '"></span><span class="grow">' + esc(t.text) + '</span><span class="tag" style="--c:' + t.mod.tint + '">' + esc(T(t.tag || t.mod.name)) + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="empty">' + T('Nothing needs you right now.') + '</p>') + '</section>' +
@@ -844,6 +870,14 @@ var Hub = (function () {
     restart: function () { live = { stage: 'signedOut' }; renderLive(); },
     selfie: function () { var f = document.getElementById('selfie-file'); if (f) f.click(); },
     sesotho: function (el) { useLang(el.dataset.l); },
+    tipnext: function () { var ctx = tipCtx(), tips = Tips.forPerson(ctx), r = Tips.next(tips, Store.pref('tipsSeen').split(',').filter(Boolean)); tipShown = r.tip ? r.tip.id : null; Store.pref('tipsSeen', r.seen.join(',')); render(); },
+    tipclose: function () { tipClosed = true; var c = document.getElementById('tips-card'); if (c) c.remove(); },
+    tipsall: function () {
+      var tips = Tips.forPerson(tipCtx());
+      modal(dialogHead(T('Did you know?'), T('Tips for getting the most out of Church Hub')) + '<div class="dlg-body"><ul class="tips-all">' + tips.map(function (t) {
+        return '<li><span class="grow">' + esc(T(t.text)) + '</span>' + (t.href ? ' <a class="btn small" href="' + esc(t.href) + '">' + T('Show me') + '</a>' : '') + '</li>';
+      }).join('') + '</ul></div>', T('Did you know?'));
+    },
     later: function (el) { Store.pref(el.dataset.k + 'Later', new Date().toISOString()); var b = el.closest('.prompt'); if (b) b.remove(); },
     havelink: function () { live = { stage: 'linkSent', email: Store.live.pendingEmail() }; renderLive(); },
     setup: function (el) {

@@ -959,3 +959,15 @@ html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366
 /* Choosing between a few options in a window (e.g. which Sesotho spelling) */
 .choices { display: grid; gap: 10px; }
 .btn.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 12px 14px; height: auto; white-space: normal; }
+
+/* Home: What's new and Did you know? (js/tips.js) */
+.panel.tips-card { margin: 0 0 18px; border-left: 4px solid var(--accent, #E8590C); }
+.tips-card h2 { font-size: 1rem; margin: 0 0 6px; }
+.tips-card h2 + .tips-news, .tips-card h2 + .tip-text { margin-top: 0; }
+.tips-card .tips-news { margin: 0 0 12px; padding-left: 1.2em; }
+.tips-card .tips-news li + li { margin-top: 4px; }
+.tips-card .tip-text { margin: 0; }
+.tips-card .btns { margin-top: 12px; flex-wrap: wrap; }
+.tips-all { list-style: none; margin: 0; padding: 0; }
+.tips-all li { display: flex; gap: 10px; align-items: center; padding: 10px 0; }
+.tips-all li + li { border-top: 1px solid var(--line-2); }

@@ -648,6 +648,25 @@ module.exports = async function (ctx) {
   await click(s, '#modal [data-act="library:coverssaveall"]'); await s.settle();
   await finish(s);
 
+  console.log('Home: What’s new and Did you know?, by access (Library switched on):');
+  s = await session('kavi.govender@example.com', kaviSeed); await s.go('home');
+  check(!!(await s.page.$('#tips-card .tip-text')), 'Home shows a “Did you know?” tip');
+  await click(s, '[data-act="hub:tipsall"]'); t = await s.page.textContent('#modal');
+  check(t.includes('Lend button') && t.includes('Mark as damaged') && !t.includes('The church has a library'), 'a librarian is told how to lend and repair, not the members’ library tip');
+  await s.page.click('#modal [data-act="hub:close"]');
+  const first = await s.page.getAttribute('#tips-card .tip-text', 'data-tip');
+  await click(s, '[data-act="hub:tipnext"]');
+  check((await s.page.getAttribute('#tips-card .tip-text', 'data-tip')) !== first, 'Another tip shows a different one');
+  await click(s, '[data-act="hub:tipclose"]');
+  check(!(await s.page.$('#tips-card')), 'Got it hides the card');
+  await s.go('rosters'); await s.go('home');
+  check(!(await s.page.$('#tips-card')), '… until the next sign-in');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', live); await s.go('home');
+  await click(s, '[data-act="hub:tipsall"]'); t = await s.page.textContent('#modal');
+  check(t.includes('The church has a library') && t.includes('Me page') && !t.includes('Lend button') && !t.includes('Mark as damaged') && !t.includes('Advanced search'), 'Basic access: told there is a library and that Me shows what they borrowed – nothing for librarians or staff');
+  await finish(s);
+
   console.log('Six-month librarian review prompt (Administrator):');
   const reviewSeed = on(seedDocs());
   reviewSeed['settings/church'].librarianIds = ['p17', 'p14', 'p15'];

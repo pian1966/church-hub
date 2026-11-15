@@ -113,6 +113,7 @@ module.exports = async function (ctx) {
   await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.selectOption('.adv-field[data-i="0"]', 'diedYear');
   await s.page.fill('input.adv-v[data-i="0"]', '2019'); await s.page.click('[data-act="people:advrun"]');
+  await s.page.waitForSelector('.adv-table tbody td a[href^="#/people/p/"]', { timeout: 5000 }).catch(() => {}); await s.settle();   // the results are drawn a moment later
   names = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.textContent));
   const p05 = await s.page.evaluate(() => Store.get('people', 'p05').lastName);
   check(names.length === 1 && names[0].includes(p05), 'Advanced search: Year of death finds who died that year: ' + names.join(' | '));

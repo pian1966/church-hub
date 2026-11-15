@@ -330,16 +330,6 @@ service cloud.firestore {
         : 'write' in on && (gid == '' ? minister(to0) : lifeLeader(gid, to0)));
     }
     function mayDirect(m) { return m.kind == 'direct' && m.to.size() == 1 && directOk(m, m.to[0]); }
-    // Roster messages are checked on their own (fewer steps: Firestore allows only so many per request)
-    function maySendTo(m) { return m.kind == 'roster' ? mayRosterNote(m) : mayWriteTo(m); }
-    function mayWriteTo(m) {
-      return !m.keys().hasAny(['roster', 'turns']) && ((m.kind == 'office' && m.to.size() == 0 && attendeeMay('write'))
-        || manager()
-        || mayDirect(m)
-        || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
-        || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))))
-        || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', []))));
-    }
     // Roster messages (kind roster): a roster coordinator or Administrator tells volunteers they are on the roster or
     // reminds them to reply (ask, remind); a volunteer who can't make it tells the roster team (declined) - the
     // Administrators, Roster coordinators and chosen people listed in settings.rosterTeam.
@@ -348,6 +338,16 @@ service cloud.firestore {
         && ((m.get('roster', '') in ['ask', 'remind'] && rosterer())
           || (m.get('roster', '') == 'declined' && m.to.hasOnly(churchSettings().get('rosterTeam', []))));
     }
+    function mayWriteTo(m) {
+      return !m.keys().hasAny(['roster', 'turns']) && ((m.kind == 'office' && m.to.size() == 0 && attendeeMay('write'))
+        || manager()
+        || mayDirect(m)
+        || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
+        || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))))
+        || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', []))));
+    }
+    // Roster messages are checked on their own (fewer steps: Firestore allows only so many per request)
+    function maySendTo(m) { return m.kind == 'roster' ? mayRosterNote(m) : mayWriteTo(m); }
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)

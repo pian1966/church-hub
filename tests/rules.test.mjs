@@ -25,7 +25,7 @@ const MED = 'Children’s medical notes';
 await env.withSecurityRulesDisabled(async ctx => {
   const db = ctx.firestore(), set = (p, d) => db.doc(p).set(d);
   for (const [role, [email, pid]] of Object.entries(USERS)) await set('roles/' + email, { role: role === 'attendee' ? 'member' : role, personId: pid });
-  await set('settings/church', { churchName: 'Test church', rosterTeam: ['p01', 'p05'] });
+  await set('settings/church', { churchName: 'Test church' });
   await set('leave/config', { types: [], autoApprove: ['UL'] });
   for (const pid of ['p01', 'p02', 'p04', 'p05', 'p14', 'p15']) await set('people/' + pid, { firstName: 'A', lastName: pid, familyRole: 'adult', email: pid + '@example.com', mobile: '082', familyId: 'f2' });
   // Tim and Clare are Church Partners (Church Partner access); Hope only comes to church (an attendee); Thandi is a Pastor
@@ -556,6 +556,7 @@ await t('messages: who may send to whom', async () => {
   await cannot(db.member.doc('messages/n17').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p15'], some: 'yes' })));
 });
 await t('messages: roster messages – asked to serve, reminders, and someone who can’t make it', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').set({ rosterTeam: ['p01', 'p05'] }, { merge: true }); });   // kept by Administrators
   const m = (o) => Object.assign({ kind: 'roster', groupId: '', audience: '', title: '', body: 'Reading, 6 Dec', fromName: 'x', deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
   await can(db.rosters.doc('messages/rost1').set(m({ roster: 'ask', turns: ['a1'], fromId: 'p05', to: ['p14'] })));          // the roster coordinator asks
   await can(db.rosters.doc('messages/rost2').set(m({ roster: 'remind', turns: ['a1', 'a2'], fromId: 'p05', to: ['p14'] })));

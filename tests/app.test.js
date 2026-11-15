@@ -43,6 +43,8 @@ function seedDocs(opts) {
   });
   // the ministers everyone may write to (kept in Settings by Administrators)
   out['settings/church'].ministers = d.people.filter(p => p.appRole === 'pastor' && p.active !== false).map(p => ({ id: p.id, name: ((p.preferredName || p.firstName) + ' ' + p.lastName).trim() })).sort((a, b) => a.name < b.name ? -1 : a.name > b.name ? 1 : 0);
+  // who hears about roster replies (kept in Settings by Administrators): Administrators and Roster coordinators
+  out['settings/church'].rosterTeam = d.people.filter(p => (p.appRole === 'admin' || p.appRole === 'rosters') && p.active !== false).map(p => p.id).sort();
   const notes = {}; d.notes.forEach(n => { (notes[n.personId] = notes[n.personId] || []).push(strip(n)); });
   Object.keys(notes).forEach(pid => put('notes/' + pid, { entries: notes[pid].map(n => { delete n.personId; return n; }) }));
   ['families', 'consents', 'teams', 'positions', 'skills', 'services', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'guardians', 'noCollect', 'serveOffers'].forEach(c => d[c].forEach(x => put(c + '/' + x.id, strip(x))));
@@ -97,7 +99,7 @@ function serve() {
 
 (async () => {
   const srv = await serve(), BASE = 'http://127.0.0.1:' + srv.address().port + '/index.html';
-  const browser = await chromium.launch(); let fails = 0;
+  const browser = await chromium.launch(process.env.CHROME ? { executablePath: process.env.CHROME } : {}); let fails = 0;
   const check = (ok, msg) => { if (!ok) { fails++; if (process.env.GITHUB_ACTIONS) console.log('::error title=App test::' + String(msg).replace(/[\r\n]+/g, ' ').slice(0, 300)); } console.log((ok ? '  ✓ ' : '  ✗ ') + msg); };
   const fake = fs.readFileSync(path.join(__dirname, 'fake-firebase.js'), 'utf8');
 

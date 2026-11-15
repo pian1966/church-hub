@@ -218,6 +218,27 @@ var Store = (function () {
       .map(function (p) { return { id: p.id, name: ((p.preferredName || p.firstName || '') + ' ' + (p.lastName || '')).trim() }; })
       .sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
   }
+  /** Who hears when someone can't make a roster turn (js/messages.js, kind 'roster'): Administrators, Roster coordinators and
+   *  the people chosen under Settings -> Church Services (settings.rosterExtra, e.g. the church secretary). Live, kept in
+   *  Settings by Administrators (settings.rosterTeam), as other people can't read who has which access; in the demo, from the people. */
+  function rosterTeamNow(st) {
+    var out = all('people').filter(function (p) { return (p.appRole === 'admin' || p.appRole === 'rosters') && p.active !== false && !p.binnedAt && !p.mergedInto; }).map(function (p) { return p.id; });
+    ((st || {}).rosterExtra || []).forEach(function (id) { var p = all('people').filter(function (x) { return x.id === id; })[0]; if (p && p.active !== false && !p.binnedAt && !p.mergedInto && out.indexOf(id) < 0) out.push(id); });
+    return out.sort();
+  }
+  function rosterTeam() {
+    if (LIVE) return ((db.settings || {}).rosterTeam || []).slice();
+    return rosterTeamNow(db.settings);
+  }
+  /** Settings -> Church Services: the extra people who hear about roster replies (Administrators and Pastors with "settings"). */
+  function setRosterExtra(ids, auditText) {
+    if (blocked()) return;
+    db.settings.rosterExtra = ids.slice();
+    db.settings.rosterTeam = rosterTeamNow(db.settings);
+    if (LIVE) Live.patch('settings/church', { rosterExtra: ids.slice(), rosterTeam: db.settings.rosterTeam.slice() });
+    if (auditText) audit(auditText, 'settings');
+    save(); changed();
+  }
   function localUpsert(collection, record) {
     var records = all(collection), index = records.findIndex(function (x) { return x.id === record.id; });
     if (index >= 0) records[index] = record; else records.push(record);
@@ -878,7 +899,7 @@ var Store = (function () {
       // that had a directory before (Administrators and Pastors)
       if (!previewRole && !offlineNow() && is('admin', 'pastor') && !careDir && Object.keys(raw.directory || {}).length && !Object.keys(raw.names || {}).length)
         setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
-      if (!previewRole && !offlineNow() && is('admin')) setTimeout(function () { if (ready && session && !previewRole && !offlineNow() && is('admin')) syncMinisters(); }, 2000);
+      if (!previewRole && !offlineNow() && is('admin')) setTimeout(function () { if (ready && session && !previewRole && !offlineNow() && is('admin')) { syncMinisters(); syncRosterTeam(); } }, 2000);
       onState({ stage: 'ready', person: meP, email: session.email, role: role() });
     }
     /** Administrators: the ministers' names in Settings (settings.ministers), so everyone may write to them. */
@@ -887,6 +908,14 @@ var Store = (function () {
       var now = pastorsNow(), was = (db.settings || {}).ministers || [];
       if (JSON.stringify(now) === JSON.stringify(was)) return;
       db.settings.ministers = now; patch('settings/church', { ministers: now });
+    }
+
+    /** Administrators: who hears about roster replies (settings.rosterTeam), so volunteers may tell them. */
+    function syncRosterTeam() {
+      if (!db.settings || ((raw.settings || {}).church || {}).brochures) return;
+      var now = rosterTeamNow(db.settings), was = (db.settings || {}).rosterTeam || [];
+      if (JSON.stringify(now) === JSON.stringify(was)) return;
+      db.settings.rosterTeam = now; patch('settings/church', { rosterTeam: now });
     }
 
     /* ---------- putting the pieces back together ---------- */
@@ -990,6 +1019,7 @@ var Store = (function () {
       syncDirectory(p.id);
       if (is('admin') || may('access')) syncRole(p, was.card);
       if (is('admin') && !previewRole && ((was.card || {}).appRole === 'pastor') !== (p.appRole === 'pastor' && p.active !== false)) syncMinisters();
+      if (is('admin') && !previewRole) syncRosterTeam();
     }
     /** Keep the members' directory in step with consent: name and phone only, adults who agreed. */
     /** Contact details (consent "Church directory", shown as Contact details): what other people may see of someone who agreed.
@@ -1332,7 +1362,7 @@ var Store = (function () {
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
   function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
-    settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
+    settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, rosterTeam: rosterTeam, setRosterExtra: setRosterExtra, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,

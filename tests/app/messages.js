@@ -190,4 +190,30 @@ module.exports = async function (ctx) {
   await s.go('me'); await s.page.waitForTimeout(400); t = await s.text();
   check(t.includes('What becoming a Church Partner involves') && !!(await s.page.$('#me-apply a[href="https://example.com/doc"]')), 'Me shows what it takes to become a Church Partner, with the link');
   await finish(s);
+
+  // Rosters → Messages: a reminder to someone who hasn't replied; they say they can't make it from the message; the roster team hears
+  console.log('Messages about the roster:');
+  const rs = seedDocs();
+  s = await session('linda.pillay@example.com', rs); await s.go('settings/services'); await s.page.waitForSelector('#st-rteam');
+  check((await s.page.textContent('#st-rteam')).includes('Sipho Dlamini'), 'Settings → Church Services lists who hears about roster replies (Roster coordinators always)');
+  await s.page.fill('.cg-q[data-for="st-rteam"]', 'clare'); await s.page.waitForTimeout(250);
+  await s.page.click('#st-rteam [data-act="settings:rtadd"][data-id="p15"]'); await s.settle(); docs = await s.docsNow();
+  check((docs['settings/church'].rosterExtra || []).join() === 'p15' && docs['settings/church'].rosterTeam.includes('p15') && docs['settings/church'].rosterTeam.includes('p05'), 'an Administrator adds someone else (e.g. the church secretary) to hear about roster replies');
+  Object.assign(rs['settings/church'], { rosterExtra: docs['settings/church'].rosterExtra, rosterTeam: docs['settings/church'].rosterTeam });
+  await finish(s);
+  s = await session('sipho.dlamini@example.com', rs); await s.go('rosters'); await s.page.waitForTimeout(300);
+  await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:remind"]'); await s.page.waitForSelector('[data-act="rosters:remindnow"]');
+  check((await s.page.textContent('#modal')).includes('Tim Jacobs'), 'they are asked to confirm, with the names of those to remind');
+  await s.page.click('[data-act="rosters:remindnow"]'); await s.settle(); docs = await s.docsNow();
+  const rem = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].kind === 'roster' && docs[k].roster === 'remind').map(k => Object.assign({ id: k.split('/')[1] }, docs[k]));
+  const timRem = rem.find(m => m.to.join() === 'p14');
+  check(rem.length > 0 && !!timRem && timRem.turns.includes('kTim') && timRem.fromId === 'p05', 'the roster coordinator reminds those who haven’t replied: one message each, about their turns');
+  rem.forEach(m => { rs['messages/' + m.id] = Object.assign({}, m); delete rs['messages/' + m.id].id; });
+  await finish(s);
+  s = await session('tim.jacobs@example.com', rs); await s.go('messages'); await s.page.waitForTimeout(400); t = await s.text();
+  check(t.includes('Reminder: please reply about serving') && !!(await s.page.$('.msg-turns [data-act="rosters:reply"][data-id="kTim"][data-s="declined"]')), 'the volunteer sees the reminder with their turn, and can answer it right there');
+  await s.page.click('.msg-turns [data-act="rosters:reply"][data-id="kTim"][data-s="declined"]'); await s.settle(); docs = await s.docsNow();
+  const dec = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].kind === 'roster' && docs[k].roster === 'declined').map(k => docs[k]);
+  check(docs['assignments/kTim'].status === 'declined' && dec.length === 1 && dec[0].to.join() === rs['settings/church'].rosterTeam.join() && dec[0].turns.join() === 'kTim', 'saying they can’t make it tells the roster team (Administrators, Roster coordinators and the chosen people)');
+  await finish(s);
 };

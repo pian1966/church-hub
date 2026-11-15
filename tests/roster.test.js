@@ -142,5 +142,24 @@ ok(R.runsAt({ times: [] }, { slot: '08:00' }, ['good-friday']) && !R.runsAt({ ti
   ok(r.assignments.map(x => x.positionId).join() === 'reader' && !r.gaps.length, 'filling a Good Friday roster asks only for its positions');
 }
 
+console.log('Telling people they are on the roster');
+{
+  const sv = [{ id: 's2', date: '2026-12-13', time: '10:00' }, { id: 's1', date: '2026-12-06', time: '08:00' }, { id: 'old', date: '2026-11-01', time: '10:00' }];
+  const as = [
+    { id: 'x1', serviceId: 's2', positionId: 'p', personId: 'a', status: 'pending' },
+    { id: 'x2', serviceId: 's1', positionId: 'p', personId: 'a', status: 'pending' },
+    { id: 'x3', serviceId: 's1', positionId: 'q', personId: 'b', status: 'accepted' },
+    { id: 'x4', serviceId: 'old', positionId: 'p', personId: 'c', status: 'pending' },
+    { id: 'x5', serviceId: 's2', positionId: 'q', personId: 'b', status: 'declined' },
+    { id: 'x6', serviceId: 'gone', positionId: 'q', personId: 'b', status: 'pending' }
+  ];
+  const all = R.byPerson(as, sv);
+  ok(all.length === 3 && all[0].personId === 'c' && all[1].personId === 'a' && all[1].ids.join() === 'x2,x1', 'one message per person, their turns in date order (a turn at a removed service is left out)');
+  const w = R.byPerson(as, sv, { waiting: true, today: '2026-11-15' });
+  ok(w.length === 1 && w[0].personId === 'a' && w[0].ids.join() === 'x2,x1', 'Remind them: only turns still waiting for a reply, from today on');
+  const only = R.byPerson(as, sv, { waiting: true, today: '2026-11-15', serviceIds: ['s1'] });
+  ok(only.length === 1 && only[0].ids.join() === 'x2', 'Remind them: only the services on screen');
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

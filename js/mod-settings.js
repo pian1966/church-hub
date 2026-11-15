@@ -33,6 +33,24 @@
       '<button class="btn small" data-act="settings:addslot">' + H.icon(H.ICON.plus, 16) + T('Add a service') + '</button></section>';
   }
 
+  /** Who hears when a volunteer can't make a turn (a message in Messages): Administrators and Roster coordinators always,
+   *  plus the people chosen here – e.g. the church secretary – without giving them the right to change the rosters. */
+  function renderRosterTeam(st) {
+    var always = S.find('people', function (p) { return (p.appRole === 'admin' || p.appRole === 'rosters') && p.active !== false && !p.binnedAt && !p.mergedInto; })
+      .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
+    var extra = (st.rosterExtra || []).slice(), finder = window.CareUI && CareUI.finder;
+    var row = function (p, id) {
+      var name = p ? H.name(p) : T('Someone');
+      return '<div class="item">' + (p ? H.avatar(p, 32) : '') + '<span class="grow"><b>' + esc(name) + '</b>' + (id ? '' : '<small>' + esc(H.roleLabel(p.appRole)) + '</small>') + '</span>' +
+        (id ? '<button class="icon-btn ghost" data-act="settings:rtout" data-id="' + esc(id) + '" aria-label="' + esc(T('Take {name} out', { name: name })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.x, 16) + '</button>' : '') + '</div>';
+    };
+    var pick = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.binnedAt && !p.mergedInto && p.appRole !== 'admin' && p.appRole !== 'rosters' && extra.indexOf(p.id) < 0; });
+    return '<section class="panel" id="st-rteam"><h2>' + T('Who hears about roster replies') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('When someone is put on the roster, they get a message in Messages. When they say they can’t make it, these people get a message. Administrators and Roster coordinators always do; add others, such as the church secretary.') + '</p>' +
+      '<div class="list">' + always.map(function (p) { return row(p, ''); }).join('') + extra.map(function (id) { return row(S.get('people', id), id); }).join('') + '</div>' +
+      (finder ? '<div style="margin-top:10px">' + finder('st-rteam', pick, 'settings:rtadd', {}, null, T('Add someone: type part of their name')) + '</div>' : '') + '</section>';
+  }
+
   var allSvcs = false;   // show every upcoming service, not just the next few
   /** Services that need a roster: the upcoming ones (remove any you won't hold), regular ones for some weeks, and special ones. */
   function renderServices(st, svcs) {
@@ -254,7 +272,7 @@
       body = renderAccess(st, byRole);
     } else if (a === 'services') {
       var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(function (x, y) { return x.date < y.date ? -1 : 1; });
-      body = renderSlots() + renderServices(st, svcs);
+      body = renderSlots() + renderServices(st, svcs) + renderRosterTeam(st);
     } else body = renderGeneral(st);
     return layout(a, body);
   }
@@ -779,6 +797,14 @@
         if (S.find('services', function (s) { return s.date === date && s.time === time && (s.venue || '') === venue; }).length) { H.toast(T('There is already a service then'), true); return; }
         S.put('services', { date: date, time: time, name: name, slot: like, venue: venue, special: true }, 'Added a special service: ' + name + ' on ' + date);
         H.render(); H.toast(T('{name} added – make its roster under Rosters', { name: name }));
+      },
+      rtadd: function (el) {
+        var p = S.get('people', el.dataset.id), ids = ((S.settings() || {}).rosterExtra || []).slice(); if (!p || ids.indexOf(p.id) >= 0) return;
+        ids.push(p.id); S.setRosterExtra(ids, H.name(p) + ' now hears about roster replies'); H.render(); H.toast(T('{name} added', { name: H.name(p) }));
+      },
+      rtout: function (el) {
+        var p = S.get('people', el.dataset.id), ids = ((S.settings() || {}).rosterExtra || []).filter(function (x) { return x !== el.dataset.id; });
+        S.setRosterExtra(ids, (p ? H.name(p) : 'Someone') + ' no longer hears about roster replies'); H.render();
       },
       delsvc: function (el) { if (!H.confirmBtn(el, '✕?')) return; S.find('assignments', function (x) { return x.serviceId === el.dataset.id; }).forEach(function (x) { S.remove('assignments', x.id); }); S.remove('services', el.dataset.id, 'Removed a service'); H.render(); }
     }

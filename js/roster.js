@@ -216,6 +216,28 @@ var RosterCore = (function () {
     return out;
   }
 
-  return { runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, FREQ_DAYS: FREQ_DAYS };
+  /**
+   * Turns grouped by person, for the messages that tell people they're on the roster (js/messages.js, kind 'roster'):
+   * [{ personId, ids: [assignment ids] }], people in the order they first appear, turns in date order.
+   * opts.waiting: only turns still waiting for a reply (pending) at services from opts.today on (for "Remind them");
+   * opts.serviceIds: only these services.
+   */
+  function byPerson(assignments, services, opts) {
+    opts = opts || {};
+    var svc = byId(services), out = [], at = {};
+    (assignments || []).filter(function (a) {
+      var s = svc[a.serviceId]; if (!s || !a.personId) return false;
+      if (opts.serviceIds && opts.serviceIds.indexOf(a.serviceId) < 0) return false;
+      if (opts.waiting && (a.status !== 'pending' || (opts.today && s.date < opts.today))) return false;
+      return true;
+    }).sort(function (a, b) { var x = svc[a.serviceId], y = svc[b.serviceId]; return (x.date + x.time) < (y.date + y.time) ? -1 : (x.date + x.time) > (y.date + y.time) ? 1 : 0; })
+      .forEach(function (a) {
+        if (!at[a.personId]) { at[a.personId] = { personId: a.personId, ids: [] }; out.push(at[a.personId]); }
+        at[a.personId].ids.push(a.id);
+      });
+    return out;
+  }
+
+  return { runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS };
 })();
 if (typeof module !== 'undefined') module.exports = RosterCore;

@@ -380,3 +380,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   language files' in `js/file-versions.js`), so a new version downloads only the files that changed instead of all of them
   (about 650 KB each release before). Find book covers: the window keeps its place while the search runs instead of jumping
   back to the top after every book.
+- ✅ 0.80.0 (15 Nov 2026): roster requests in Messages – people put on the roster get a message and accept or say they can't
+  make it from it; the roster team (Administrators, Roster coordinators and people chosen under Settings → Church Services,
+  such as the church secretary) gets a message when someone can't; Rosters → More → Remind those who haven't replied

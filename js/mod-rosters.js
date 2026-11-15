@@ -7,6 +7,49 @@
   var FREQ = [['weekly', TX('Whenever necessary (could be every week)')], ['monthly', TX('Once a month')], ['emergency', TX('Only now and then in emergencies')]];
 
   function manager() { return H.can('rosters.manage') || H.can('*'); }
+  var BELL = 'M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0';
+
+  /* ---------- telling people (Messages, js/messages.js kind 'roster') ---------- */
+  /** One turn, as it is written in a message: "Reading · Sun 6 Dec, 10:00 · Morning service". */
+  function turnText(a) {
+    var s = S.get('services', a.serviceId), po = pos(a.positionId);
+    return s && po ? po.name + ' · ' + H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name : '';
+  }
+  /** Who can open Church Hub to read it (the others are reached by email, WhatsApp or SMS as before). */
+  function signsIn(pid) { return Msg.inApp([pid], S.list('people')).length > 0; }
+  /** Send each person one message about their turns: note 'ask' (just put on the roster) or 'remind' (still waiting
+   *  for their reply). Returns { sent, missed } – missed: people who can't sign in to Church Hub yet. */
+  function tell(list, note) {
+    var me = H.user(), out = { sent: 0, missed: 0 };
+    if (!me || !H.isOn('messages')) return out;
+    R.byPerson(list, S.list('services')).forEach(function (x) {
+      if (x.personId === me.id) return;
+      if (!signsIn(x.personId)) { out.missed++; return; }
+      var lines = x.ids.map(function (id) { return turnText(S.get('assignments', id) || {}); }).filter(Boolean);
+      var title = note === 'remind' ? T('Reminder: please reply about serving') : T('You’re on the roster');
+      var body = (note === 'remind' ? T('You haven’t replied yet. Please accept or say you can’t make it:') : T('You’ve been asked to serve. Please accept or say you can’t make it:')) + '\n\n' + lines.join('\n');
+      var m = Msg.rosterNote(note, [x.personId], x.ids, me, title, body);
+      if (m.error) return;
+      S.put('messages', m, (note === 'remind' ? 'Reminded someone to reply about ' : 'Told someone about ') + x.ids.length + (x.ids.length === 1 ? ' serving turn' : ' serving turns'));
+      out.sent++;
+    });
+    return out;
+  }
+  /** "3 people told in Messages" (and how many can't sign in yet). */
+  function toldText(r) {
+    var t = r.sent ? TN('{n} person told in Messages', '{n} people told in Messages', r.sent) : '';
+    if (r.missed) t += (t ? ' · ' : '') + TN('{n} can’t sign in to Church Hub yet – reach them by email, WhatsApp or SMS', '{n} can’t sign in to Church Hub yet – reach them by email, WhatsApp or SMS', r.missed);
+    return t;
+  }
+  /** Someone can't make a turn: the roster team hears about it in Messages (Administrators, Roster coordinators and the
+   *  people chosen under Settings → Church Services). */
+  function tellDeclined(a) {
+    var me = H.user(); if (!me || !H.isOn('messages')) return;
+    var line = turnText(a); if (!line) return;
+    var nm = Msg.nameOf(person(a.personId) || me);
+    var m = Msg.rosterNote('declined', S.rosterTeam(), [a.id], me, T('{name} can’t make it', { name: nm }), T('{name} can’t serve:', { name: nm }) + '\n\n' + line);
+    if (!m.error) S.put('messages', m, 'Told the roster team someone can’t make a serving turn');
+  }
   function person(id) { return S.get('people', id); }
   function pos(id) { return S.get('positions', id); }
   function team(id) { return S.get('teams', id); }
@@ -62,7 +105,8 @@
     var problems = R.check(engineData(), ids);
     var html = head(T('Rosters'), T('Who is serving at each service. Families and friends who asked to serve together are kept together.'),
       '<button class="btn" data-act="rosters:move" data-d="-' + (narrow() ? 1 : 4) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + (narrow() ? 1 : 4) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
-      (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button><button class="btn" data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>')) + tabs('');
+      (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>' +
+        H.menu(T('More'), ['<button data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>', '<button data-act="rosters:remind">' + H.icon(BELL, 16) + T('Remind those who haven’t replied') + '</button>']))) + tabs('');
     if (state.preview) {
       var n = state.preview.assignments.length;
       html += '<div class="note info"><b>' + TN('{n} suggestion', '{n} suggestions', n) + '</b> ' + T('shown with a dashed border. Families and friends are kept together, people who are away are skipped, and turns are shared fairly.') +
@@ -432,9 +476,11 @@
         H.toast(state.preview.assignments.length ? TN('{n} suggestion ready – check and keep it', '{n} suggestions ready – check and keep them', state.preview.assignments.length) : T('Nothing more can be filled automatically'));
       },
       keep: function () {
-        state.preview.assignments.forEach(function (a) { S.put('assignments', { serviceId: a.serviceId, positionId: a.positionId, personId: a.personId, status: 'pending', source: a.source || 'auto', reason: a.reason }); });
+        var kept = [];
+        state.preview.assignments.forEach(function (a) { kept.push(S.put('assignments', { serviceId: a.serviceId, positionId: a.positionId, personId: a.personId, status: 'pending', source: a.source || 'auto', reason: a.reason })); });
         S.audit('Kept ' + state.preview.assignments.length + (state.preview.emergency ? ' emergency' : '') + ' roster suggestions', 'assignments');
-        var n = state.preview.assignments.length; state.preview = null; H.render(); H.toast(TN('{n} person asked to serve (they’ll get a message once email is connected)', '{n} people asked to serve (they’ll get a message once email is connected)', n));
+        var n = state.preview.assignments.length; state.preview = null; var told = toldText(tell(kept, 'ask')); H.render();
+        H.toast(TN('{n} person asked to serve', '{n} people asked to serve', n) + (told ? ' · ' + told : ''));
       },
       discard: function () { state.preview = null; H.render(); },
       slot: function (el) {
@@ -450,13 +496,34 @@
       pick: function (el) {
         var sid = el.dataset.s, pid = el.dataset.p, who = el.dataset.person, d = engineData();
         var emergency = el.dataset.emergency === '1';
-        S.put('assignments', { serviceId: sid, positionId: pid, personId: who, status: 'pending', source: emergency ? 'emergency' : 'manual',
+        var added = S.put('assignments', { serviceId: sid, positionId: pid, personId: who, status: 'pending', source: emergency ? 'emergency' : 'manual',
           reason: emergency ? T('Emergency volunteer') : '' }, emergency ? 'Added an emergency volunteer to roster' : 'Added to roster');
+        tell([added], 'ask');
         var tg = R.groupsOf(d, who, 'together').filter(function (g) { return g.strength === 'must'; })[0];
         H.closeModal(); H.render();
         H.toast(tg ? T('Added. {name} always serves with {names} – use “Fill the gaps” to place them too.', { name: H.name(person(who)), names: tg.memberIds.filter(function (m) { return m !== who; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Added – waiting for their reply'));
       },
-      reply: function (el) { var a = S.get('assignments', el.dataset.id); a.status = el.dataset.s; S.put('assignments', a, el.dataset.s === 'accepted' ? 'Accepted a serving turn' : 'Declined a serving turn'); H.render(); H.toast(T(el.dataset.s === 'accepted' ? 'Thank you!' : 'Thanks for letting us know')); },
+      reply: function (el) {
+        var a = S.get('assignments', el.dataset.id); if (!a || a.status === el.dataset.s) return;
+        a.status = el.dataset.s; S.put('assignments', a, el.dataset.s === 'accepted' ? 'Accepted a serving turn' : 'Declined a serving turn');
+        if (a.status === 'declined') tellDeclined(a);
+        H.render(); H.toast(T(el.dataset.s === 'accepted' ? 'Thank you!' : 'Thanks for letting us know'));
+      },
+      remind: function () {
+        var ids = inView().map(function (s) { return s.id; });
+        var people = R.byPerson(S.find('assignments', function (a) { return a.status === 'pending'; }), S.list('services'), { waiting: true, today: H.today(), serviceIds: ids });
+        if (!people.length) { H.toast(T('Everyone on these services has replied')); return; }
+        state.remind = people;
+        var names = people.map(function (x) { var p = person(x.personId); return p ? H.name(p) : T('Someone'); }).sort(function (a, b) { return a.localeCompare(b); });
+        H.modal(H.dialogHead(TN('Remind {n} person?', 'Remind {n} people?', people.length), T('They get a message in Messages about the turns they haven’t replied to yet.')) +
+          '<div class="dlg-body"><p>' + names.map(function (n) { return '<span class="tag grey">' + esc(n) + '</span>'; }).join(' ') + '</p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="rosters:remindnow">' + H.icon(BELL, 16) + T('Send reminders') + '</button></div>', T('Remind those who haven’t replied'));
+      },
+      remindnow: function () {
+        var people = state.remind || []; state.remind = null; H.closeModal();
+        var list = []; people.forEach(function (x) { x.ids.forEach(function (id) { var a = S.get('assignments', id); if (a && a.status === 'pending') list.push(a); }); });
+        var told = toldText(tell(list, 'remind')); H.render(); H.toast(told || T('Messages are switched off (Settings → Apps)'));
+      },
       group: function (el) { groupDialog(el.dataset.id ? S.get('groups', el.dataset.id) : null, el.dataset.kind); },
       savegroup: function () {
         var id = document.getElementById('gr-id').value, kind = document.getElementById('gr-kind').value;

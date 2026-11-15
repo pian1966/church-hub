@@ -555,6 +555,19 @@ await t('messages: who may send to whom', async () => {
   await can(db.member.doc('messages/n16').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p15'], some: true })));   // a carer: some of the group
   await cannot(db.member.doc('messages/n17').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p15'], some: 'yes' })));
 });
+await t('messages: roster messages – asked to serve, reminders, and someone who can’t make it', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').set({ rosterTeam: ['p01', 'p05'] }, { merge: true }); });   // kept by Administrators
+  const m = (o) => Object.assign({ kind: 'roster', groupId: '', audience: '', title: '', body: 'Reading, 6 Dec', fromName: 'x', deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.rosters.doc('messages/rost1').set(m({ roster: 'ask', turns: ['a1'], fromId: 'p05', to: ['p14'] })));          // the roster coordinator asks
+  await can(db.rosters.doc('messages/rost2').set(m({ roster: 'remind', turns: ['a1', 'a2'], fromId: 'p05', to: ['p14'] })));
+  await cannot(db.member.doc('messages/rost3').set(m({ roster: 'ask', turns: ['a1'], fromId: 'p14', to: ['p15'] })));        // a member can't ask people to serve
+  await can(db.member.doc('messages/rost4').set(m({ roster: 'declined', turns: ['a1'], fromId: 'p14', to: ['p01', 'p05'] })));   // can't make it: to the roster team
+  await cannot(db.member.doc('messages/rost5').set(m({ roster: 'declined', turns: ['a1'], fromId: 'p14', to: ['p15'] })));      // only to the roster team
+  await cannot(db.member.doc('messages/rost6').set(m({ roster: 'declined', turns: [], fromId: 'p14', to: ['p05'] })));          // about a turn
+  await cannot(db.rosters.doc('messages/rost7').set(m({ roster: 'ask', turns: 'a1', fromId: 'p05', to: ['p14'] })));
+  await cannot(db.rosters.doc('messages/rost8').set(m({ kind: 'staff', roster: 'ask', turns: ['a1'], fromId: 'p05', to: ['p01'] })));   // roster fields only on roster messages
+  await can(read(db.member, 'messages/rost1')); await cannot(read(db.attendee, 'messages/rost1'));
+});
 await t('messages: people mark what they opened as read, and change nothing else', async () => {
   await can(db.member.doc('messages/ms1').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p14') }));
   await can(db.member.doc('messages/ms1').update({ deliveredBy: firebase.firestore.FieldValue.arrayUnion('p14') }));

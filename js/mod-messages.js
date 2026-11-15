@@ -22,6 +22,11 @@
     var n = (m.to || []).length;
     if (m.kind === 'people') return m.audience ? esc(m.audience) : esc(TN('{n} person', '{n} people', n));
     if (m.kind === 'direct') { var u = me(); return u && (m.to || []).indexOf(u.id) >= 0 ? T('you') : esc(m.audience || T('Someone')); }
+    if (m.kind === 'roster') {
+      var v = me(); if (v && (m.to || []).indexOf(v.id) >= 0) return T('you');
+      if (m.roster === 'declined') return T('the roster team');
+      var p = S.get('people', (m.to || [])[0]); return p ? esc(H.name(p)) : esc(TN('{n} person', '{n} people', n));
+    }
     var base = m.kind === 'care' ? T('Care Group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Midweek Group') + ' · ' + esc(m.audience) : m.kind === 'leaders' ? T('Leadership') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
     return base + (m.some ? ' · ' + esc(TN('{n} person', '{n} people', n)) : '');
   }
@@ -78,11 +83,37 @@
     return html + '<section class="msg-chat">' + (fresh ? '<div class="msg-unread-bar">' + esc(TN('{n} unread message', '{n} unread messages', fresh)) + '</div>' : '') + list.map(function (m) {
       var isNew = Msg.isUnread(m, u.id, manager()) || justRead[m.id];
       var reply = Msg.mayReply(m, who(), data()) ? '<button class="btn small" data-act="messages:reply" data-id="' + esc(m.id) + '">' + T('Reply') + '</button>' : '';
-      return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b></div>' +
+      var roster = m.kind === 'roster' ? rosterPart(m) : '';
+      return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(roster ? rosterTitle(m) : m.title || audName(m.kind, m.audience)) + '</b></div>' +
         '<div class="msg-who">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
-        replyContext(m) + '<p class="msg-body">' + bodyHtml(m.body) + '</p><div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
+        replyContext(m) + (roster || '<p class="msg-body">' + bodyHtml(m.body) + '</p>') + '<div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
     }).join('') + '</section>';
   }
+  /* ---------- Roster messages (sent by Rosters: js/mod-rosters.js) ---------- */
+  /** The heading, in the reader's language. */
+  function rosterTitle(m) {
+    return m.roster === 'remind' ? T('Reminder: please reply about serving') : m.roster === 'declined' ? T('{name} can’t make it', { name: m.fromName || T('Someone') }) : T('You’re on the roster');
+  }
+  /** The turns it is about, in the reader's language: the volunteer accepts or says they can't make it right here; the
+   *  roster team opens the roster. '' when none of the turns can be shown any more (the message's own words are shown). */
+  function rosterPart(m) {
+    var u = me(), t = H.today(), team = m.roster === 'declined';
+    var rows = (m.turns || []).map(function (id) {
+      var a = S.get('assignments', id), sv = a && S.get('services', a.serviceId), po = a && S.get('positions', a.positionId);
+      if (!sv || !po) return '';
+      var line = '<span class="grow"><b>' + esc(po.name) + '</b><small>' + esc(H.fmt(sv.date, true) + ', ' + sv.time + ' · ' + sv.name) + '</small></span>';
+      if (team) return '<div class="item">' + line + '<span class="tag ' + (a.status === 'declined' ? 'grey' : 'ok') + '">' + esc(T(a.status === 'declined' ? 'Said no' : a.status === 'accepted' ? 'Accepted' : 'Waiting')) + '</span></div>';
+      if (!u || a.personId !== u.id) return '';
+      var act = a.status === 'pending' && sv.date >= t ? '<button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Accept') + '</button>'
+        : '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + esc(T(a.status === 'accepted' ? 'Accepted' : a.status === 'declined' ? 'Said no' : 'Waiting')) + '</span>';
+      return '<div class="item">' + line + act + '</div>';
+    }).filter(Boolean);
+    if (!rows.length) return '';
+    var lead = team ? T('{name} can’t serve:', { name: m.fromName || T('Someone') }) : m.roster === 'remind' ? T('You haven’t replied yet. Please accept or say you can’t make it:') : T('You’ve been asked to serve. Please accept or say you can’t make it:');
+    return '<p class="msg-body">' + esc(lead) + '</p><div class="list msg-turns">' + rows.join('') + '</div>' +
+      (team ? '<p style="margin:8px 0 0"><a class="btn small" href="#/rosters">' + T('Open the roster') + '</a></p>' : '');
+  }
+
   /** Opening the inbox marks what is shown as read (on every device; the sender sees how many have read it). */
   function markShown() {
     if (typeof document !== 'undefined' && document.hidden) return;   // the app is in the background: not seen yet (see below)

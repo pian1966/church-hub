@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.79';
+  var NEWS_FOR = '0.80';
   var NEWS = [
+    { date: '2026-11-15', who: ['everyone'], app: 'rosters', text: TX('When you’re put on a roster, a message now comes to your Messages inbox, and you can accept or say you can’t make it right there.') },
+    { date: '2026-11-15', who: ['rosters', 'admin'], app: 'rosters', text: TX('Roster coordinators: when someone says they can’t make it, you now get a message. Rosters → More → Remind those who haven’t replied sends everyone still to answer a reminder.') },
     { date: '2026-11-15', who: ['everyone'], text: TX('Updates are smaller now: a new version of Church Hub downloads only the parts that changed, so it uses much less data.') },
     { date: '2026-11-15', who: ['librarian'], app: 'library', text: TX('Librarians: the Find book covers window now keeps your place while it searches, instead of jumping back to the top after every book.') },
     { date: '2026-11-15', who: ['librarian'], app: 'library', text: TX("Librarians: covers found online now work for many more books, you can ask for another cover if the first is wrong, and each item’s ⋯ menu and Edit form have “Find a cover online”.") },
@@ -41,6 +43,7 @@
 
   var TIPS = [
     // Everyone
+    { id: 'roster-team', who: ['admin'], app: 'rosters', href: '#/settings/services', text: TX('Administrators and Roster coordinators hear when someone can’t make a roster turn. To include someone else, such as the church secretary, add them under Settings → Church Services.') },
     { id: 'me-details', who: ['everyone'], app: 'me', href: '#/me', text: TX('Your Me page has your own details, and you can update your contact details there yourself.') },
     { id: 'me-away', who: ['everyone'], app: 'me', href: '#/me', text: TX('Going away? Add your days away on your Me page, so nobody puts you on a roster while you’re gone.') },
     { id: 'me-serve', who: ['everyone'], app: 'me', href: '#/me', text: TX('When you’re put on a roster, you can accept or decline the turn under Me → Serving.') },

@@ -84,5 +84,7 @@ I18n.rows([    ['{n} new', '{n} nuut', '{n} ezintsha', '{n} ezintsha'],
     ["Delivered: it has reached everyone, but no one has read it yet.", "Afgelewer: dit het almal bereik, maar niemand het dit nog gelees nie.", "Ufikile: ufinyelele kubo bonke, kodwa akekho osewufundile.", "Ufikile: ufikelele kubo bonke, kodwa akukho mntu osele ewufundile."],
     ["Read by some: it has reached everyone, and some have read it.", "Deur sommige gelees: dit het almal bereik, en sommige het dit gelees.", "Ufundwe ngabanye: ufinyelele kubo bonke, futhi abanye sebewufundile.", "Ufundwe ngabanye: ufikelele kubo bonke, kwaye abanye sele bewufundile."],
     ["Read: everyone has read it.", "Gelees: almal het dit gelees.", "Ufundiwe: bonke sebewufundile.", "Ufundiwe: bonke sele bewufundile."],
-    ["A message to the Office counts as read as soon as someone in the office reads it.", "’n Boodskap aan die Kantoor tel as gelees sodra iemand in die kantoor dit lees.", "Umlayezo oya eHhovisi ubalwa njengofundiwe uma nje umuntu ehhovisi ewufunda.", "Umyalezo oya kwi-Ofisi ubalwa njengofundiweyo xa nje umntu e-ofisini ewufunda."]
+    ["A message to the Office counts as read as soon as someone in the office reads it.", "’n Boodskap aan die Kantoor tel as gelees sodra iemand in die kantoor dit lees.", "Umlayezo oya eHhovisi ubalwa njengofundiwe uma nje umuntu ehhovisi ewufunda.", "Umyalezo oya kwi-Ofisi ubalwa njengofundiweyo xa nje umntu e-ofisini ewufunda."],
+    ["the roster team", "die roosterspan", "ithimba lohlelo lokusebenza", "iqela loludwe lomsebenzi"],
+    ["Open the roster", "Maak die rooster oop", "Vula uhlelo lokusebenza", "Vula uludwe lomsebenzi"]
 ]);

@@ -52,7 +52,7 @@ Members see their own family (and give consent for their children), smart lists 
 - ⬜ Ask in your own words: more kinds of questions (leave, care and midweek groups, messages), and save an asked question as a smart list
 
 ## Phase 3 – Rostering and services (built; follow-ups below)
-Accept/decline by email and app, swap requests, reminders, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).
+Accept/decline by email, swap requests, automatic reminders before a turn, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).
 - ⬜ Church: Rosters → Services – check each service's look, mood and positions (Teens/Children/Creche are 8am only, as in Elvanto); rename "Operational" to Service Leading if it was added before 0.29.0 (teams can't be renamed yet)
 - ⬜ Decide: rename "Extra Slot" (e.g. Special Items, or Communion on its own and Features for Interview, Missions, Doctrine)
 - ⬜ Later: rename a team, and rename a special service
@@ -70,6 +70,8 @@ Groups and attendance, kids check-in on a tablet with medical alerts and leader 
 ## Phase 5 – Communication and calendar
 First step done (0.12.0): email prompts for birthdays, anniversaries and welcomes, opened in the church’s email program. Next: sending them automatically (formatted, with the church logo) through Afrihost or Gmail behind the scenes; then email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
 Messages inside the app done (0.21.0, Messages page). Next for messages:
+- ⬜ The number of unread messages on the Church Hub icon on the phone's home screen (comes with push notifications below:
+  Android shows it from waiting notifications; iPhone home-screen apps once notifications are allowed)
 - ⬜ Phone notifications ("push") when a message arrives, even with Church Hub closed: Firebase Cloud Messaging in the
   Android app and the home-screen app (iPhone: iOS 16.4 or later, added to the home screen), sent by a small server step
   (a Firebase Cloud Function on the Blaze plan, or the GitHub robot with a service-account secret). Ask permission

@@ -228,6 +228,13 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   nothing new beyond the text and which message it answers. Attendees (Basic access, not Church Partners) only as far as
   Settings → Attendees allows; by default they write to the Office, the ministers and their Midweek Group leaders, and
   reply only to a minister.
+- Roster messages (kind `roster`): a person put on the roster, or reminded to reply, gets a message about their own turns
+  (record numbers of the turns, plus the service, position and date in the text) from a Roster coordinator or Administrator,
+  who already see the roster. When they say they can't make it, a message goes to the roster team only
+  (`settings.rosterTeam`: Administrators, Roster coordinators and the people an Administrator chose under Settings -> Church
+  Services, such as the church secretary). Purpose: arranging who serves; basis: the church's legitimate interest (they
+  serve on that team). `settings.rosterTeam` holds record numbers only, so volunteers can send to it without learning who
+  has which access.
 - Ministers' names (`settings.ministers`) are readable by everyone signed in so they can be written to: the names of the
   church's Pastors, which the church makes public anyway.
 - Status: the sender sees a grey tick when saved, orange when delivered to a recipient's inbox, and green when opened.

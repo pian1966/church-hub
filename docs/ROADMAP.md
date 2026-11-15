@@ -13,7 +13,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - ⬜ Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
 - ⬜ Set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
 - ⬜ Re-publish the database rules (FIREBASE-SETUP step 7) after 0.69 – Archive security fixes (or let the "Publish database rules" workflow do it)
-- ⬜ About 130 texts added in Nov 2026 (Library, Archive, Leadership, serving, messages) are still in English in the 18 extra languages (js/lang/*.js) – translate them
+- ⬜ Before releasing to other churches: translate the 18 extra languages in one go (`docs/RELEASE.md`; Home counts what is waiting)
 - ⬜ Decide what "Ministry roles the church uses" (Settings → Terminology) should do – it is saved but nothing uses it yet
 - ⬜ tests/app/partners.js "no declaration of loyalty when left empty" fails now and then (timing) – make it wait for the save
 - ⬜ Fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate staff screens too
@@ -105,7 +105,6 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   - ⬜ Library (0.61): fluent speakers to check the new cover-search, librarian-management and review-reminder wording in
     the 19 further languages (drafted by AI).
   - ⬜ Library (0.67): fluent speakers to check the new borrower-date label in the 19 further languages.
-  - ⬜ Library (0.71): fluent speakers to check the new damaged / withdrawn wording in the 19 further languages (most are still in English).
   - ⬜ Library: the church's own loan period
   - ⬜ Church Words (Terminology) for "Council", "Leadership" and "Library", and demo data for the three pages
   - ⬜ Fluent speakers to check the new wording in every language (drafted by Claude), including the 0.54 words (terms of

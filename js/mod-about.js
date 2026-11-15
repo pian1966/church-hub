@@ -5,7 +5,12 @@
   var H = Hub, esc = H.esc, T = I18n.t, V = window.ChurchHubVersion || { version: '?', date: '', developer: '', repo: '' };
   var check = { state: '', web: '', app: '' };   // state: '' | checking | done | failed
   // Every time About is opened, check again (also when coming back to it)
-  window.addEventListener('hashchange', function () { if (/^#\/about/.test(location.hash) && check.state !== 'checking') check.state = ''; });
+  var back = false;   // was About opened from another page of Church Hub (so Close can go back to it)?
+  window.addEventListener('hashchange', function (e) {
+    if (/^#\/about/.test(location.hash)) { back = !/#\/about/.test(e.oldURL || '');   // after the brochures, Close goes Home
+      if (check.state !== 'checking') check.state = ''; }
+    else back = false;
+  });
 
   /** -1, 0 or 1: is version a older than, the same as, or newer than b? ("0.10.0" is newer than "0.9.3") */
   function cmp(a, b) {
@@ -61,7 +66,8 @@
       (st.churchName ? '<dt>' + T('Made for') + '</dt><dd>' + esc(st.churchName) + '</dd>' : '') +
       '<dt>' + T('Developed by') + '</dt><dd>' + esc(V.developer) + '<span class="kv-sub">' + T('With help from Claude, an AI made by Anthropic') + '</span></dd>' +
       '<dt>' + T('Language') + '</dt><dd>' + esc(I18n.name ? I18n.name(I18n.get()) : I18n.get()) + '</dd>';
-    return '<div class="page-head"><div><h1>' + T('About Church Hub') + '</h1><p class="lead">' + T('Church Hub keeps the church’s people, rosters, Care Groups and staff management in one place.') + '</p></div></div>' +
+    return '<div class="page-head"><div><h1>' + T('About Church Hub') + '</h1><p class="lead">' + T('Church Hub keeps the church’s people, rosters, Care Groups and staff management in one place.') + '</p></div>' +
+      '<div class="btns"><button class="btn" data-act="about:close" aria-label="' + esc(T('Close')) + '">' + H.icon(H.ICON.x, 18) + T('Close') + '</button></div></div>' +
       '<div class="grid2"><section class="panel"><h2>Church Hub</h2><dl class="kv">' + dl + '</dl></section>' + updatePanel() +
       '<section class="panel"><h2>' + T('More') + '</h2><div class="list">' +
         '<a class="item" href="#" data-act="hub:notice"><span class="grow"><b>' + T('Privacy notice') + '</b></span></a>' +
@@ -266,6 +272,8 @@
     },
     actions: {
       check: function () { runCheck(); },
+      // Back to where About was opened from (or Home), so About never leaves anyone stuck – on the Android app there is no browser Back button
+      close: function () { if (back) history.back(); else location.hash = '#/home'; },
       broedit: function () { if (!Store.isAdmin()) return; bro.edit = !bro.edit; if (!bro.edit) Store.audit('Changed the brochures (wording, colour or font)', 'brochures/church'); H.render(); },
       broprint: function () { var fr = document.getElementById('bro-frame'); if (fr && fr.contentWindow) { fr.contentWindow.focus(); fr.contentWindow.print(); } },
       brocolour: function (el) { broSetDesign({ accent: el.dataset.c }); },

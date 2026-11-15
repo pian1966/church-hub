@@ -97,9 +97,12 @@ ok(M.status({ fromId: 'a', deliveredBy: ['a'], readBy: ['a'] }) === 'sent'
 // As on WhatsApp, a message to several people: two ticks once it reached everyone, blue once everyone read it
 const grp = { fromId: 'a', to: ['a', 'b', 'c'], deliveredBy: ['a', 'b'], readBy: ['a', 'b'] };
 ok(M.status(grp) === 'sent', 'a group message read by one of two still shows one tick until it reaches everyone');
-ok(M.status(Object.assign({}, grp, { deliveredBy: ['a', 'b', 'c'] })) === 'delivered', '…two grey ticks once everyone has it');
+ok(M.status(Object.assign({}, grp, { deliveredBy: ['a', 'b', 'c'], readBy: ['a'] })) === 'delivered', '…two grey ticks once everyone has it');
 ok(M.status(Object.assign({}, grp, { deliveredBy: ['a', 'b', 'c'], readBy: ['a', 'b', 'c'] })) === 'read', '…blue ticks once everyone has read it');
 const ppl = [{ id: 'b', email: 'b@x.org', appRole: 'member' }, { id: 'c', email: '', appRole: 'none' }];
+ok(M.status(Object.assign({}, grp, { deliveredBy: ['a', 'b', 'c'], readBy: ['a', 'b'] })) === 'some', '…the first tick turns blue once it has reached everyone and some have read it');
+ok(M.markStyle('ZA') === 'ticks' && M.markStyle('') === 'ticks' && M.markStyle('cn') === 'circle' && M.markStyle('JP') === 'words', 'the signs follow what the church’s country is used to');
+ok(M.markStyle('ZA', 'post') === 'post' && M.markStyle('CN', 'ticks') === 'ticks' && M.markStyle('ZA', 'nonsense') === 'ticks', '…unless the person chose their own');
 ok(M.status(grp, ppl) === 'read', 'someone who can’t sign in (never able to open it) doesn’t hold the ticks back');
 const cnt = M.counts(Object.assign({}, grp, { to: ['a', 'b', 'c', 'd'], deliveredBy: ['a', 'b', 'c'] }));
 ok(cnt.of === 3 && cnt.delivered === 2 && cnt.read === 1 && cnt.waiting.join() === 'd', 'counts: went to, delivered, read, and who hasn’t got it yet');

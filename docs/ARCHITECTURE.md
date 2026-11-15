@@ -588,7 +588,11 @@ people marked as staff (including the older Staff category); it is not a second 
   with how many it goes to; Administrators and Pastors also see how many of them can't sign in yet. Rules: `firestore.rules`
   (messages, msgGroups) check the sender, that a carer or leader writes only to people in their group, and the sizes.
 - Sent → "Read by n of m" opens to the names of who has and hasn't opened a group message (`Msg.readers`). The sender sees
-  grey sent, orange delivered and green read ticks as status changes.
+  four states (`Msg.status`): sent (not yet on everyone's device), delivered (on everyone's), some (on everyone's and read by
+  some) and read (by everyone). "What the signs mean" (folded, on Sent) explains them and lets each person choose how they
+  are drawn – ticks (WhatsApp), envelopes (post), circles that fill up (DingTalk) or words (LINE, QQ) – kept on the device
+  (`Store.pref('msgMarks')`); until chosen, `Msg.markStyle` follows the church's country (China circles, Japan/Korea/Taiwan/
+  Thailand words, elsewhere ticks).
 - Replies (`Msg.mayReply`, `Msg.reply`, tested): **Reply** on a message in the inbox opens a small window; the reply is a
   `kind: 'direct'` message to the original's sender only (`to: [fromId]`, `replyTo: <message id>`, subject "Re: …"), and
   shows "Replying to: …" above it. The rules check that the original came to the replier and that `to` is its sender. Office

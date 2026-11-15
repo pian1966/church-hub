@@ -72,6 +72,12 @@ module.exports = async function (ctx) {
   check(officeMessage && officeMessage[1].to.length === 0 && officeMessage[1].fromId === 'p14', 'a member can send a message to the Office channel without choosing recipients');
   await s.go('messages/sent');
   check(await s.page.$('.msg-status.sent[aria-label="Sent"]'), 'sent messages show an accessible grey sent tick');
+  check(await s.page.$$eval('.msg-legend-list li', l => l.length) === 4 && (await s.page.textContent('.msg-legend')).includes('Read by some'), 'Sent explains what the signs mean, including “read by some”');
+  await s.page.click('.msg-legend > summary'); await s.page.selectOption('#ms-marks', 'post'); await s.settle();
+  check(await s.page.$eval('.msg-legend', d => d.open) && await s.page.$('.msg-chat .msg-status.sent svg rect'), 'choosing envelopes draws envelopes, and the explanation stays open');
+  await s.page.selectOption('#ms-marks', 'words'); await s.settle();
+  check((await s.page.textContent('.msg-chat .msg-status.sent')).trim() === 'Sent', 'choosing words writes the state in words');
+  await s.page.selectOption('#ms-marks', 'ticks'); await s.settle();
   await s.go('messages/send'); await s.page.selectOption('#ms-to', 'group/mgW');
   await s.page.fill('#ms-body', 'Thanks, all!'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();

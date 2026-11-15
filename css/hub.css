@@ -955,8 +955,19 @@ details.lib-more[open] > summary { margin-bottom: 12px; }
 .msg-chat .msg-foot { margin-top: 2px; justify-content: flex-end; }
 .msg-time { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
 .msg-status { display: inline-flex; align-items: center; line-height: 0; }
-.msg-status.sent, .msg-status.delivered { color: #8696A0; }
-.msg-status.read { color: #34B7F1; }
+:root { --tick-grey: #8696A0; --tick-blue: #34B7F1; }
+.msg-status.sent, .msg-status.delivered { color: var(--tick-grey); }
+.msg-status.read, .msg-status.some { color: var(--tick-blue); }
+.msg-word { font-size: 11px; font-weight: 600; line-height: 1; white-space: nowrap; }
+.msg-status.sent .msg-word, .msg-status.delivered .msg-word { color: var(--tick-grey); }
+.msg-legend { padding: 10px 14px; margin-bottom: 12px; }
+.msg-legend > summary { cursor: pointer; font-weight: 600; }
+.msg-legend-list { list-style: none; padding: 0; margin: 10px 0; display: grid; gap: 8px; }
+.msg-legend-list li { display: flex; gap: 10px; align-items: center; font-size: 14px; }
+.msg-legend-list .msg-status { flex: 0 0 72px; justify-content: center; }
+.msg-legend-list .msg-status svg { transform: scale(1.35); }
+.msg-legend-list .msg-word { white-space: normal; text-align: center; font-size: 12px; line-height: 1.2; }
+.msg-legend .hint { margin: 0 0 10px; }
 .msg-unread-bar { align-self: center; padding: 4px 12px; border-radius: 999px; background: var(--surface); color: var(--muted); font-size: 12px; font-weight: 600;
   text-transform: uppercase; letter-spacing: .03em; box-shadow: 0 1px 1px rgba(29,27,25,.08); }
 .msg-chat .msg-read { font-size: 12.5px; }

@@ -33,9 +33,13 @@ var I18n = (function () {
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
   var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'life', 'leaders', 'archive', 'library', 'messages', 'privacy', 'import', 'settings', 'tips'];
-  // Language files are fetched again with every new version of Church Hub (js/version.js), so phones don't keep old words
+  // A language file is fetched again only when its contents change: its fingerprint (js/file-versions.js, made by
+  // tools/stamp-files.js) is in its address. Without one (an old page), the version number, as before.
   var PACK_VERSION = 9, loading = {}, onLoad = [];
-  function packV() { return (typeof ChurchHubVersion !== 'undefined' && ChurchHubVersion.version) || PACK_VERSION; }
+  function packV(f) {
+    var codes = typeof ChurchHubFiles !== 'undefined' ? ChurchHubFiles : {};
+    return codes['js/lang/' + f + '.js'] || (typeof ChurchHubVersion !== 'undefined' && ChurchHubVersion.version) || PACK_VERSION;
+  }
   var DATES = {
     en: { mon: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], dow: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] },
     af: { mon: ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Des'], dow: ['So', 'Ma', 'Di', 'Wo', 'Do', 'Vr', 'Sa'] },
@@ -69,7 +73,7 @@ var I18n = (function () {
     if (f !== code && PACKS[f]) { derive(code); return; }
     if (loading[f] === 'asked' || loading[f] === 'wanted' || loading[f] === 'done') return;
     loading[f] = loading[f] || 'asked';
-    var sc = document.createElement('script'); sc.src = 'js/lang/' + f + '.js?v=' + packV(); sc.onerror = function () { delete loading[f]; delete loading[code]; }; document.head.appendChild(sc);
+    var sc = document.createElement('script'); sc.src = 'js/lang/' + f + '.js?v=' + packV(f); sc.onerror = function () { delete loading[f]; delete loading[code]; }; document.head.appendChild(sc);
   }
   function add(code, pack) {
     PACKS[code] = pack;

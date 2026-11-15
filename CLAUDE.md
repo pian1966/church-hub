@@ -85,8 +85,9 @@ A session should say which tier it is running at, and stop and ask if the task's
   and audit logging for sensitive views (read the matching section of `docs/POPIA.md`). Never commit real church data, names, keys
   or passwords – the repository is public.
 - Every change that reaches the website raises the version in `js/version.js` (and its date): the middle number for new
-  features, the last for fixes. Put the same number after every `?v=` in `index.html` (one find-and-replace), or browsers
-  and phones keep their old copies; `node tests/versions.test.js` checks it. Language files follow automatically.
+  features, the last for fixes. Then run `node tools/stamp-files.js`: it gives each file in `index.html` (and each language
+  file) a fingerprint of its contents after `?v=`, so phones download only the files that changed; `node tests/versions.test.js`
+  checks it. Don't type `?v=` numbers by hand. On a merge conflict in `index.html` or `js/file-versions.js`, take either side and run it again.
 - Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.

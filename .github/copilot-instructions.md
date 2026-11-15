@@ -36,7 +36,7 @@ neighbouring English line with grep and add yours next to it.
 
 ## 4. Every change
 - Work on your own branch from the latest `main`; finish with a pull request. Never push to `main`.
-- Raise the version in `js/version.js` and every `?v=` in `index.html`; update `docs/CHANGELOG.md` and `docs/ROADMAP.md`.
+- Raise the version in `js/version.js`, then run `node tools/stamp-files.js` (fingerprints after every `?v=` in `index.html`); update `docs/CHANGELOG.md` and `docs/ROADMAP.md`.
 - Run the tests (`AGENTS.md`, "Running the tests") and make sure GitHub's checks are green.
 - Keep code readable: short lines, one helper for one job (don't write the same logic twice), comments in plain English.
 - The repository is public: never add real church data, names, emails, keys or passwords.

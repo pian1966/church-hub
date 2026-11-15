@@ -213,7 +213,7 @@
     // Church office notes (Administrators and Pastors), e.g. the notes brought across from Elvanto
     if ((H.can('*') || H.can('people.edit')) && !me) {
       var onotes = S.find('officeNotes', function (n) { return n.personId === p.id; });
-      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Church office notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Administrators and Pastors') + '</span></div>' +
+      html += '<section class="panel"><div class="row" style="flex-wrap:wrap;row-gap:4px"><h2 class="grow" style="margin:0;min-width:200px">' + T('Church office notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Administrators and Pastors') + '</span></div>' +
         (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? T('From Elvanto') : n.by) + ', ' + H.fmt(n.at, true)) +
           ' · <button class="link" data-act="people:delonote" data-id="' + n.id + '">' + T('Delete') + '</button></p></div>'; }).join('') : '<p class="muted">' + T('No notes.') + '</p>') +
         '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="on-text" rows="2" placeholder="' + esc(T('Administrators and Pastors can see this. Pastoral matters go in pastoral notes.')) + '"></textarea></label><button class="btn small save" data-act="people:onote" data-id="' + p.id + '">' + T('Save note') + '</button></section>';

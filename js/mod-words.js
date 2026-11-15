@@ -56,7 +56,7 @@
     if (!list.length) return '<p class="muted">' + (st.page && !st.q ? T('No texts from that page – choose “All texts” to see everything.') : T('Nothing matches that.')) + '</p>';
     return '<div class="list">' + list.slice(0, st.limit).map(function (en) {
       var now = I18n.word(code, en);
-      return '<div class="item"><span class="grow"><b' + (now ? '' : ' class="muted"') + '>' + esc(now ? plain(now) : T('Not translated yet – shows in English')) + '</b>' +
+      return '<div class="item wrap-phone"><span class="grow"><b' + (now ? '' : ' class="muted"') + '>' + esc(now ? plain(now) : T('Not translated yet – shows in English')) + '</b>' +
         '<small class="muted">' + T('English') + ': ' + esc(plain(en)) + '</small>' + (mineWaiting[en] ? '<span class="tag">' + T('You suggested new wording') + '</span>' : '') + '</span>' +
         '<button class="btn small" data-act="words:suggest" data-i="' + all.indexOf(en) + '">' + H.icon(H.ICON.edit || 'M4 20h4L19 9l-4-4L4 16v4z', 16) + T('Suggest better wording') + '</button></div>';
     }).join('') + '</div>' +

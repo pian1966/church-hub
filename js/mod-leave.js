@@ -71,7 +71,7 @@
     var me = H.user().id, pend = d.requests.filter(function (r) { return r.status === 'Pending' && (isLeaveAdmin() || r.staffId !== me); }).sort(function (a, b) { return a.start < b.start ? -1 : 1; });
     return '<section class="block"><h2>' + T('Waiting for your decision') + '</h2>' + (pend.length ? '<div class="list">' + pend.map(function (r) {
       var st = C.staffById(d, r.staffId), t = typeOf(d, r.type), w = st ? C.requestWarnings(d, st, r, r.id, true) : [];
-      return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + (st ? '<a href="#/leave/staff/' + st.id + '">' + esc(st.name) + '</a>' : '?') + ' · ' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + amt(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small>' +
+      return '<div class="item wrap-phone" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + (st ? '<a href="#/leave/staff/' + st.id + '">' + esc(st.name) + '</a>' : '?') + ' · ' + esc(range(r)) + '</b><small>' + esc(t.name + ' · ' + amt(t, C.amount(r, t, C.ctx(d))) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small>' +
         (w.length ? '<span class="note warn" style="display:block;margin:8px 0 0;font-size:13px">⚠ ' + w.map(esc).join('<br>⚠ ') + '</span>' : '') + '</span>' +
         '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + r.id + '" data-d="Declined">' + T('Decline') + '</button><button class="btn small ok" data-act="leave:decide" data-id="' + r.id + '" data-d="Approved"' + (C.allowanceWarning(d, st, r, r.id, true) ? ' data-over="1"' : '') + '>' + T('Approve') + '</button></span></div>';
     }).join('') + '</div>' : '<p class="empty">' + T('Nothing is waiting for approval.') + '</p>') + '</section>' + (isLeaveAdmin() ? renderStandIn(d) : '');
@@ -204,7 +204,7 @@
     // Every request in the year
     h += '<section class="block"><h2>' + esc(T('Leave in {year}', { year: C.lyLabel(y, S) })) + '</h2>' + (list.length ? '<div class="list">' + list.map(function (r) {
       var t = typeOf(d, r.type), n = C.amount(r, t, ctx);
-      return '<div class="item" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + esc(range(r)) + '</b><small>' +
+      return '<div class="item wrap-phone" style="align-items:flex-start"><span class="dot" style="--c:' + esc(t.colour) + ';margin-top:6px"></span><span class="grow"><b>' + esc(range(r)) + '</b><small>' +
         esc(t.name + ' · ' + amt(t, n) + (r.reason ? ' · “' + r.reason + '”' : '')) + '</small><small>' +
         esc([r.submitted ? T('Asked {date}', { date: String(r.submitted).slice(0, 10) }) : '', r.decidedBy ? T(r.status === 'Declined' ? 'Declined by {name}' : 'Approved by {name}', { name: r.decidedBy }) + (r.decidedOn ? ' ' + T('on {date}', { date: String(r.decidedOn).slice(0, 10) }) : '') : '',
           r.cancelledBy ? T('Cancelled by {name}', { name: r.cancelledBy }) : '', r.source === 'Leave Manager' ? T('from Leave Manager') : ''].filter(Boolean).join(' · ')) + '</small></span>' + pill(r.status) +

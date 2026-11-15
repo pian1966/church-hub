@@ -49,7 +49,7 @@ var LeaveReports = (function () {
     // Waiting
     html += '<section class="block"><h2>' + esc(T('Waiting for approval')) + '</h2>' + (waiting.length ? '<div class="list">' + waiting.map(function (r) {
       var s = C.staffById(d, r.staffId), t = typeOf(d, r.type), w = s ? C.requestWarnings(d, s, r, r.id, true) : [];
-      return '<div class="item"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow"><b>' + esc(s ? s.name : '?') + ' · ' + esc(h.range(r)) + '</b><small>' + esc(t.name + (w.length ? ' · ⚠ ' + w.join(' ⚠ ') : '')) + '</small></span>' +
+      return '<div class="item wrap-phone"><span class="dot" style="--c:' + esc(t.colour) + '"></span><span class="grow"><b>' + esc(s ? s.name : '?') + ' · ' + esc(h.range(r)) + '</b><small>' + esc(t.name + (w.length ? ' · ⚠ ' + w.join(' ⚠ ') : '')) + '</small></span>' +
         '<span class="btns"><button class="btn small" data-act="leave:decide" data-id="' + esc(r.id) + '" data-d="Declined">' + esc(T('Decline')) + '</button><button class="btn small ok" data-act="leave:decide" data-id="' + esc(r.id) + '" data-d="Approved"' + (s && C.allowanceWarning(d, s, r, r.id, true) ? ' data-over="1"' : '') + '>' + esc(T('Approve')) + '</button></span></div>';
     }).join('') + '</div>' : '<p class="empty">' + esc(T('Nothing is waiting for approval.')) + '</p>') + '</section>';
     html += '<div class="grid2">';

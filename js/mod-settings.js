@@ -157,15 +157,15 @@
       '<div class="two"><label class="field">' + T('The church’s meetings are called') + '<select id="wd-service">' + Object.keys(Wording.SERVICE).map(function (k) {
         return '<option value="' + k + '"' + (Wording.SERVICE[k][0] === words.service[0] ? ' selected' : '') + '>' + esc('Church ' + Wording.SERVICE[k][1]) + '</option>'; }).join('') +
         (Wording.SERVICE[words.service[0]] ? '' : '<option value="" selected>' + esc('Church ' + words.service[1]) + '</option>') + '</select><small>' + T('For example “Church Services” in Settings, and “a service” on the rosters.') + '</small></label></div>' +
-      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="simple stack-phone"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
       Wording.TERMS.map(function (t) {
         var adminChoice = t[0] === 'admin' ? '<select class="wd-admin-preset" aria-label="' + esc(T('Administrator title')) + '">' +
           [['Administrator', 'Administrator'], ['Church Administrator', 'Church Administrator'], ['Operations Manager', 'Operations Manager'], ['Secretary', 'Secretary'], ['', 'Custom wording']].map(function (x) {
             return '<option value="' + esc(x[0]) + '"' + ((x[0] === words.admin[0] || (!x[0] && words.admin[0] !== 'Administrator' && words.admin[0] !== 'Church Administrator' && words.admin[0] !== 'Operations Manager' && words.admin[0] !== 'Secretary')) ? ' selected' : '') + '>' + esc(T(x[1])) + '</option>';
           }).join('') + '</select>' : '';
         return '<tr><td><b>' + esc(t[1][0]) + '</b><br><span class="muted small">' + esc(T(t[2])) + '</span></td>' +
-          '<td>' + adminChoice + '<input class="wd-1" data-k="' + t[0] + '" value="' + esc(words[t[0]][0]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][0] })) + '"></td>' +
-          '<td><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][1] })) + '"></td></tr>';
+          '<td data-label="' + esc(T('Your word')) + '">' + adminChoice + '<input class="wd-1" data-k="' + t[0] + '" value="' + esc(words[t[0]][0]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][0] })) + '"></td>' +
+          '<td data-label="' + esc(T('More than one')) + '"><input class="wd-2" data-k="' + t[0] + '" value="' + esc(words[t[0]][1]) + '" aria-label="' + esc(T('Your word for {word}', { word: t[1][1] })) + '"></td></tr>';
       }).join('') + '</tbody></table></div><button class="btn small" data-autosave data-act="settings:savewords">' + T('Save wording') + '</button></section>' + rolesPanel(st);
   }
   /** Email templates for anniversaries, birthdays, death days of spouses, and welcome messages. */
@@ -235,7 +235,7 @@
       '<div class="set-rows"><label class="set-row"><span class="set-l"><b>Use AI to understand questions</b><small>' +
         (!live ? 'Only when Church Hub is connected to the church’s Firebase project (not in the demo).' : ready ? 'Set up – switch on to use it.' : 'Not set up yet – follow the setup guide first (about 15 minutes).') +
       '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="st-ai"' + (ai.on ? ' checked' : '') + (live ? '' : ' disabled') + '></span></label>' +
-      '<label class="set-row"><span class="set-l"><b>Model</b><small>Change only if Google retires this one (the setup guide says how to check).</small></span><span class="set-c"><input id="st-ai-model" value="' + esc(ai.model || AskAI.MODEL) + '" style="max-width:220px"></span></label></div>' +
+      '<div class="set-row"><label class="set-l" for="st-ai-model"><b>Model</b><small>Change only if Google retires this one (the setup guide says how to check).</small></label><span class="set-c"><input id="st-ai-model" value="' + esc(ai.model || AskAI.MODEL) + '" style="max-width:220px"></span></div></div>' +
       '<p class="hint"><a href="' + guide + '" target="_blank" rel="noopener">Setup guide (docs/AI-SEARCH-SETUP.md)</a> · Before switching on, the Information Officer should agree and the privacy notice should say questions go to Google’s Gemini.</p></section>';
   }
 

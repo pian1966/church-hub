@@ -34,7 +34,9 @@ For: Administrators, Pastors, carers, group leaders
 Also asked: Send a notice to staff. Message all Church Partners. Message one person.
 
 1. Open **Messages → Write** (carers and leaders can also use **Send the group a message** on their Me page).
-2. Choose who it's for: **Chosen people** (tick them one by one), **Staff**, **Church Partners**, a care group, a midweek group
+2. Tap the **To** box: **Who is this for?** opens, with big cards for the **Office**, **Chosen people**, **Staff** and
+   **Church Partners**, and lists of groups below, each saying how many people it reaches (type in the search box to find one).
+   Choose who it's for: **Chosen people** (tick them one by one), **Staff**, **Church Partners**, a care group, a midweek group
    or a message group. To leave some people out, choose **Only some of them** and untick them.
 3. Write a **Subject** and the **Message**, then **Send**. Church Hub confirms how many people it goes to.
 
@@ -55,7 +57,7 @@ App access). Contact them another way meanwhile.
 ## How do I see or delete messages I've sent?
 For: Senders, Administrators
 
-**Messages → Sent** lists what you've sent. You can delete your own messages (**Delete the message**). Administrators and
+**Messages → Sent** lists what you've sent (for Administrators and Pastors this tab is called **All messages**). You can delete your own messages (**Delete the message**). Administrators and
 Pastors see every message sent in Church Hub and can delete any of them.
 
 ## How do I make a message group, like "Worship team leaders"?

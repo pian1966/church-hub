@@ -5,6 +5,9 @@ module.exports = async function (ctx) {
   const { check, finish, seedDocs, session } = ctx;
   let docs, s, t, officeMessage, officeDocs;
   console.log('Messages:');
+  // "Who is this for?": open it from the To box, read the choices, or pick one
+  const choices = async s => { await s.page.click('#ms-to-btn'); await s.page.waitForSelector('.ms-choose'); const k = await s.page.$$eval('.ms-choose .ms-aud', o => o.map(x => x.dataset.key)); await s.page.click('#modal [data-act="hub:close"]'); return k; };
+  const pick = async (s, k) => { await s.page.click('#ms-to-btn'); await s.page.waitForSelector('.ms-choose'); await s.page.click('.ms-aud[data-key="' + k + '"]'); await s.settle(); };
 
   // An Administrator sets up a message group and writes to the staff
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('messages/groups');
@@ -15,9 +18,15 @@ module.exports = async function (ctx) {
   await s.page.fill('.cg-q[data-for="m-' + mg + '"]', 'clare'); await s.page.press('.cg-q[data-for="m-' + mg + '"]', 'Enter'); await s.settle(); await s.page.waitForTimeout(200); docs = await s.docsNow();
   check(docs['msgGroups/' + mg].memberIds.join() === 'p14,p15' && docs['msgGroups/' + mg].leaderIds.join() === 'p14', 'an Administrator sets up a message group with a leader and members');
   await s.go('messages/send');
-  const opts = await s.page.$$eval('#ms-to option', o => o.map(x => x.value));
+  const opts = await choices(s);
   check(opts[0] === 'office' && opts.includes('people') && opts.includes('staff') && opts.includes('partners') && opts.includes('group/' + mg), 'they can write to the Office, people they choose, the staff, the Church Partners and every group');
-  await s.page.selectOption('#ms-to', 'staff'); await s.page.waitForSelector('#ms-some');
+  await s.page.click('#ms-to-btn'); await s.page.waitForSelector('.ms-choose');
+  check(await s.page.$$eval('.ms-card', c => c.length) === 4 && (await s.page.textContent('.ms-card[data-key="staff"]')).includes('8 people') && !!(await s.page.$('#ms-aud-find')), '“Who is this for?” shows big cards for the Office, chosen people, the staff and the Church Partners, with how many people, and a search');
+  await s.page.fill('#ms-aud-find', 'welc'); await s.page.waitForTimeout(300);
+  check(await s.page.$$eval('.ms-choose .ms-aud:not([hidden])', b => b.map(x => x.dataset.key).join()) === 'group/' + mg, 'typing part of a name narrows the choices');
+  await s.page.fill('#ms-aud-find', ''); await s.page.waitForTimeout(300);
+  await s.page.click('.ms-aud[data-key="staff"]'); await s.settle(); await s.page.waitForSelector('#ms-some');
+  check(await s.page.$eval('#ms-to', e => e.value) === 'staff' && (await s.page.textContent('#ms-to-btn')).includes('Staff'), 'choosing the staff closes the list and shows it in the To box');
   check((await s.page.textContent('#ms-reach')).includes('Goes to 8 people'), 'it says how many people a message goes to');
   await s.page.click('[data-act="messages:send"]');
   check(!(await s.page.isHidden('#ms-err')) && !(await s.page.$('#modal .overlay')), 'an empty message isn’t sent');
@@ -37,7 +46,7 @@ module.exports = async function (ctx) {
   check((await s.page.textContent('#modal')).includes('Tim Jacobs'), 'the confirmation names the person');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.kind === 'people' && d.to.join() === 'p14' && d.audience === 'Tim Jacobs'), 'it goes to that one person');
-  await s.go('messages/send'); await s.page.selectOption('#ms-to', 'people'); await s.page.waitForSelector('#ms-find');
+  await s.go('messages/send'); await pick(s, 'people'); await s.page.waitForSelector('#ms-find');
   await s.page.fill('#ms-body', 'Planning meeting?'); await s.page.click('[data-act="messages:send"]');
   check((await s.page.textContent('#ms-err')).includes('Tick who should get it'), 'nobody ticked: it asks who should get it');
   await s.page.fill('#ms-find', 'jacobs'); await s.page.waitForTimeout(400);
@@ -47,7 +56,7 @@ module.exports = async function (ctx) {
   check((await s.page.textContent('#ms-reach')).includes('Goes to 3 people'), '“Tick all” ticks the people shown; the count follows');
   await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay'); await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.kind === 'people' && d.to.slice().sort().join() === 'p14,p15,p17' && d.body === 'Planning meeting?'), 'the message goes to the three people ticked');
-  await s.go('messages/sent'); check((await s.text()).includes('To 3 people'), 'Sent says how many people it went to');
+  await s.go('messages/sent'); check((await s.text()).includes('To 3 people') && (await s.page.textContent('.me-tabs')).includes('All messages'), 'All messages (Sent, for Administrators) says how many people it went to');
   await finish(s);
 
   // A member: their message group's messages, unread until opened; the leader writes to their own group
@@ -65,8 +74,8 @@ module.exports = async function (ctx) {
   check(t.includes('Please be at the door by 9:15.') && t.includes('From Linda Pillay') && t.includes('To Welcome team') && !!(await s.page.$('.msg.new')), 'the inbox shows the message, who it is from and to, marked as new');
   check(docs['messages/m2'].readBy.join() === 'p01,p14' && !(await s.page.$('a[href="#/messages"] .badge')), 'opening the inbox marks it read (for the sender to see) and the count goes');
   await s.go('messages/send');
-  check(await s.page.$$eval('#ms-to option', o => o.map(x => x.value).join()) === 'office,direct/p03,direct/p02,group/mgW', 'a group leader (a Church Partner) can write to the Office, the ministers and their own group');
-  await s.page.selectOption('#ms-to', 'office'); await s.page.fill('#ms-body', 'Could the office please call me?');
+  check((await choices(s)).join() === 'office,direct/p03,direct/p02,group/mgW', 'a group leader (a Church Partner) can write to the Office, the ministers and their own group');
+  await pick(s, 'office'); await s.page.fill('#ms-body', 'Could the office please call me?');
   await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay'); await s.page.click('[data-act="messages:sendnow"]'); await s.settle();
   docs = await s.docsNow(); officeMessage = Object.entries(docs).find(([k, d]) => /^messages\//.test(k) && d.kind === 'office');
   check(officeMessage && officeMessage[1].to.length === 0 && officeMessage[1].fromId === 'p14', 'a member can send a message to the Office channel without choosing recipients');
@@ -85,7 +94,7 @@ module.exports = async function (ctx) {
   await s.page.click('.msg-style[data-style="words"]'); await s.settle();
   check((await s.page.textContent('.msg-chat .msg-status.sent')).trim() === 'Sent', 'choosing words writes the state in words');
   check(await s.page.$('.msg-style.on[data-style="words"]'), 'the chosen card is marked'); await s.page.click('.msg-style[data-style="ticks"]'); await s.settle();
-  await s.go('messages/send'); await s.page.selectOption('#ms-to', 'group/mgW');
+  await s.go('messages/send'); await pick(s, 'group/mgW');
   await s.page.fill('#ms-body', 'Thanks, all!'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   const tm = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].fromId === 'p14' && docs[k].kind === 'group').map(k => docs[k]);
@@ -104,8 +113,8 @@ module.exports = async function (ctx) {
 
   // A carer writes to their care group from the Me page
   s = await session('clare.jacobs@example.com', seed); await s.go('me');
-  await s.page.click('#my-care a[href="#/messages/send/care/cgM"]'); await s.page.waitForSelector('#ms-to');
-  check(await s.page.$eval('#ms-to', e => e.value) === 'care/cgM' && (await s.page.$$eval('#ms-to option', o => o.length)) === 4, 'a carer: “Send the group a message” on the Me page opens a message to their care group, with the Office and the ministers also available');
+  await s.page.click('#my-care a[href="#/messages/send/care/cgM"]'); await s.page.waitForSelector('#ms-to-btn');
+  check(await s.page.$eval('#ms-to', e => e.value) === 'care/cgM' && (await choices(s)).length === 4, 'a carer: “Send the group a message” on the Me page opens a message to their care group, with the Office and the ministers also available');
   await s.page.fill('#ms-body', 'Prayer meeting moved to Wednesday.'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.kind === 'care' && d.groupId === 'cgM' && d.fromId === 'p15' && d.to.join() === 'p15,p17'), 'their message goes to the care group');
@@ -115,7 +124,7 @@ module.exports = async function (ctx) {
   await s.page.fill('#ms-body', 'Just for you, Megan.'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.kind === 'care' && d.some === true && d.to.join() === 'p17' && d.body === 'Just for you, Megan.'), 'only the ticked people get it');
-  check(!(await s.page.$('#ms-to option[value="people"]')), 'a carer can’t choose people outside their group');
+  await s.go('messages/send'); check(!(await choices(s)).includes('people'), 'a carer can’t choose people outside their group');
   await s.go('messages/sent');
   check(!(await s.text()).includes('Not for members') && (await s.text()).includes('Prayer meeting moved'), 'Sent shows only their own messages');
   await finish(s);
@@ -153,8 +162,8 @@ module.exports = async function (ctx) {
   check(t.includes('Welcome to the church!') && t.includes('Thanks for helping.'), 'an attendee receives messages');
   check(!!(await s.page.$('[data-act="messages:reply"][data-id="mA"]')) && !(await s.page.$('[data-act="messages:reply"][data-id="mB"]')), 'they may reply to a minister, but not to other messages');
   await s.go('messages/send');
-  check(await s.page.$$eval('#ms-to option', o => o.map(x => x.value).join()) === 'office,direct/p03,direct/p02,direct/p15/lgA', 'they may write to the Office, the ministers and their Midweek Group leader');
-  await s.page.selectOption('#ms-to', 'direct/p15/lgA'); await s.page.waitForTimeout(200);
+  check((await choices(s)).join() === 'office,direct/p03,direct/p02,direct/p15/lgA', 'they may write to the Office, the ministers and their Midweek Group leader');
+  await pick(s, 'direct/p15/lgA'); await s.page.waitForTimeout(200);
   check((await s.page.textContent('#ms-reach')).includes('Only Clare Jacobs will see it.'), 'a message to one person says only they will see it');
   await s.page.fill('#ms-body', 'May I join?'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();

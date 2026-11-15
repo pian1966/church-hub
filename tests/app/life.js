@@ -85,7 +85,7 @@ module.exports = async function (ctx) {
   await s.go('groups'); t = await s.text();
   check(t.includes('Thursday Bible study') && t.includes('Hilton'), 'Groups → My groups: their Midweek Group and their Care Group together');
   await s.go('messages/send'); await s.page.waitForTimeout(200);
-  const to = await s.page.$$eval('#ms-to option', o => o.map(x => x.value));
+  await s.page.click('#ms-to-btn'); await s.page.waitForSelector('.ms-choose'); const to = await s.page.$$eval('.ms-choose .ms-aud', o => o.map(x => x.dataset.key));
   check(to.includes('life/lg1') && to.includes('care/cg1'), 'they can send a message to their life group (and their care group)');
   await finish(s);
 };

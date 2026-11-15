@@ -43,7 +43,7 @@
 
   function tabs(active) {
     var t = [['', T('Inbox')]];
-    if (audiences().length) t.push(['send', T('Write')], ['sent', T('Sent')]);
+    if (audiences().length) t.push(['send', T('Write')], ['sent', manager() ? T('All messages') : T('Sent')]);
     if (manager()) t.push(['groups', T('Groups')]);
     if (t.length < 2) return '';
     return '<nav class="seg me-tabs" aria-label="' + esc(T('Messages')) + '">' + t.map(function (x) {
@@ -173,19 +173,69 @@
     if (pp && as.some(function (a) { return a.kind === 'people'; })) { draft.to = 'people'; draft.chosen = {}; draft.chosen[pp[1]] = true; draft.some = false; }
     else if (pre && as.some(function (a) { return key(a) === pre; }) && pre !== draft.to) { draft.to = pre; draft.chosen = {}; draft.some = false; }
     var cur = as.filter(function (a) { return key(a) === draft.to; })[0] || as[0]; draft.to = key(cur);
-    var opt = function (a) { var n = audName(a.kind, a.kind === 'direct' ? a.name || personName(a.personId, a) : a.name) + (a.kind === 'direct' && a.group ? ' · ' + a.group : ''); return '<option value="' + esc(key(a)) + '"' + (key(a) === draft.to ? ' selected' : '') + '>' + esc(n) + '</option>'; };
-    var groupOf = function (k) { return as.filter(function (a) { return a.kind === k; }); };
-    var direct = groupOf('direct'), byGroup = function (g) { return direct.filter(function (a) { return !!a.groupId === g; }); };
-    var sel = [['', groupOf('office').concat(groupOf('people'), groupOf('staff'), groupOf('partners'))], [T('Ministers'), byGroup(false)], [T('Midweek Group leaders'), byGroup(true)], [T('Care Groups'), groupOf('care')], [T('Midweek Groups'), groupOf('life')], [T('Leadership'), groupOf('leaders')], [T('Message groups'), groupOf('group')]].map(function (g) {
-      if (!g[1].length) return ''; return g[0] ? '<optgroup label="' + esc(g[0]) + '">' + g[1].map(opt).join('') + '</optgroup>' : g[1].map(opt).join('');
-    }).join('');
     return head(T('Send a message to a group or the Office. Office staff can read messages to the Office and reply.'), 'send') +
-      '<section class="panel">' + H.reqKey() + '<label class="field req">' + T('To') + '<select id="ms-to">' + sel + '</select></label><p class="hint" id="ms-reach" style="margin:-6px 0 16px">' + esc(reach(cur)) + '</p>' + checklist(cur) +
+      '<section class="panel">' + H.reqKey() + '<div class="field req">' + T('To') + toButton(cur) + '<input type="hidden" id="ms-to" value="' + esc(key(cur)) + '"></div><p class="hint" id="ms-reach" style="margin:-6px 0 16px">' + esc(reach(cur)) + '</p>' + checklist(cur) +
       '<label class="field">' + T('Subject') + '<input id="ms-title" maxlength="' + Msg.MAX_TITLE + '" value="' + esc(draft.title) + '" placeholder="' + esc(T('e.g. No meeting this Tuesday')) + '"></label>' +
       '<label class="field req">' + T('Message') + '<textarea id="ms-body" maxlength="' + Msg.MAX_BODY + '">' + esc(draft.body) + '</textarea></label>' +
       '<p id="ms-err" class="note bad" hidden></p>' +
       '<div class="btns"><button class="btn primary" data-act="messages:send">' + H.icon(BUBBLE, 16) + T('Send') + '</button></div></section>' +
       '<p class="hint">' + T('Please don’t put private or medical details in a message to a group.') + '</p>';
+  }
+  /* "Who is this for?": the choices as big cards (the Office, chosen people, the staff, the Church Partners) and short
+   * lists with coloured initials (ministers, leaders, each kind of group), each saying how many people it reaches. */
+  var AUD_ICON = { office: 'M3 21h18M5 21V7l7-4 7 4v14M9 21v-6h6v6M9 10h.01M15 10h.01', people: 'M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21c.6-3.6 3.4-6 7-6s6.4 2.4 7 6M16 3.5a4 4 0 0 1 0 7.5M19 14c1.8.8 2.8 3 3 7',
+    staff: 'M3 7h18v13H3zM9 7V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2', partners: 'M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8L12 21l8.8-8.6a5.5 5.5 0 0 0 0-7.8z' };
+  var TINTS = [['#E3ECF7', '#2D5A8C'], ['#F6E3E0', '#9A3B2E'], ['#EDE6F5', '#5B3F86'], ['#E2F1EA', '#1F6B4A'], ['#F5ECD9', '#7A5300'], ['#E0EEF0', '#1F5F66'], ['#F7E4EE', '#8C2D5E']];
+  function tint(s) { var h = 0; String(s || '').split('').forEach(function (c) { h = (h * 31 + c.charCodeAt(0)) % 997; }); return TINTS[h % TINTS.length]; }
+  function initials(s) { var w = String(s || '?').replace(/[^\p{L}\p{N} ]/gu, ' ').trim().split(/\s+/); return ((w[0] || '?').charAt(0) + (w.length > 1 ? w[w.length - 1].charAt(0) : '')).toUpperCase(); }
+  function audLabel(a) { return audName(a.kind, a.kind === 'direct' ? a.name || personName(a.personId, a) : a.name); }
+  function audSub(a) {
+    if (a.kind === 'office') return T('Office staff read it and can reply');
+    if (a.kind === 'people') return T('You tick who gets it');
+    if (a.kind === 'direct') return a.group || '';
+    var n = Msg.recipients(a.kind, a.groupId, data()).length;   // the same count as "Goes to …" under the To box
+    return TN('{n} person', '{n} people', n);
+  }
+  function badge(a, size) {
+    if (AUD_ICON[a.kind]) return '<span class="ms-ico k-' + a.kind + '" style="width:' + size + 'px;height:' + size + 'px">' + H.icon(AUD_ICON[a.kind], Math.round(size * 0.55)) + '</span>';
+    var t = tint(audLabel(a));
+    return '<span class="ms-ini" style="width:' + size + 'px;height:' + size + 'px;background:' + t[0] + ';color:' + t[1] + '" aria-hidden="true">' + esc(initials(audLabel(a))) + '</span>';
+  }
+  function toButton(a) {
+    return '<button type="button" class="ms-to" id="ms-to-btn" data-act="messages:choose" aria-haspopup="dialog">' + badge(a, 36) +
+      '<span class="grow"><b>' + esc(audLabel(a)) + '</b><small>' + esc(audSub(a)) + '</small></span><span class="ms-to-change">' + T('Change') + '</span></button>';
+  }
+  /** The choices in order: big cards first, then the lists under their headings. */
+  function audSections() {
+    var as = audiences(), of = function (k) { return as.filter(function (a) { return a.kind === k; }); };
+    var direct = of('direct'), byGroup = function (g) { return direct.filter(function (a) { return !!a.groupId === g; }); };
+    return [['', of('office').concat(of('people'), of('staff'), of('partners'))], [T('Ministers'), byGroup(false)], [T('Midweek Group leaders'), byGroup(true)], [T('Care Groups'), of('care')],
+      [T('Midweek Groups'), of('life')], [T('Leadership'), of('leaders')], [T('Message groups'), of('group')]].filter(function (g) { return g[1].length; });
+  }
+  function chooser() {
+    var secs = audSections(), all = secs.reduce(function (n, g) { return n + g[1].length; }, 0);
+    var tick = '<span class="ms-tick" aria-hidden="true">' + H.icon(H.ICON.check, 14) + '</span>';
+    var html = H.dialogHead(T('Who is this for?')) + '<div class="dlg-body ms-choose">' +
+      (all > 4 ? '<label class="ms-find-to">' + H.icon(H.ICON.search, 18) + '<input id="ms-aud-find" type="search" autocomplete="off" placeholder="' + esc(T('Search a name or group')) + '" aria-label="' + esc(T('Search a name or group')) + '"></label>' : '') +
+      secs.map(function (g) {
+        var on = function (a) { return key(a) === draft.to; };
+        var attrs = function (a) { return ' data-act="messages:pickto" data-key="' + esc(key(a)) + '" data-name="' + esc((audLabel(a) + ' ' + (a.group || '')).toLowerCase()) + '" aria-pressed="' + on(a) + '"'; };
+        if (!g[0]) return '<div class="ms-cards">' + g[1].map(function (a) {
+          return '<button type="button" class="ms-aud ms-card' + (on(a) ? ' on' : '') + '"' + attrs(a) + '>' + badge(a, 38) + '<b>' + esc(audLabel(a)) + '</b><small>' + esc(audSub(a)) + '</small>' + tick + '</button>';
+        }).join('') + '</div>';
+        return '<section class="ms-sec"><h3>' + esc(g[0]) + ' <span>' + g[1].length + '</span></h3><div class="ms-rows">' + g[1].map(function (a) {
+          var sub = audSub(a);
+          return '<button type="button" class="ms-aud ms-rowbtn' + (on(a) ? ' on' : '') + '"' + attrs(a) + '>' + badge(a, 36) + '<span class="grow"><b>' + esc(audLabel(a)) + '</b>' + (sub ? '<small>' + esc(sub) + '</small>' : '') + '</span>' + tick + '</button>';
+        }).join('') + '</div></section>';
+      }).join('') + '<p class="empty" id="ms-aud-none" hidden>' + T('Nothing matches that.') + '</p></div>';
+    H.modal(html, T('Who is this for?'));
+    var find = document.getElementById('ms-aud-find');
+    if (find) find.addEventListener('input', H.pause(function () {
+      var any = false;
+      Array.prototype.forEach.call(document.querySelectorAll('.ms-choose .ms-aud'), function (b) { b.hidden = !H.matches(b.dataset.name, find.value); if (!b.hidden) any = true; });
+      Array.prototype.forEach.call(document.querySelectorAll('.ms-choose .ms-sec, .ms-choose .ms-cards'), function (s) { s.hidden = !s.querySelector('.ms-aud:not([hidden])'); });
+      document.getElementById('ms-aud-none').hidden = any;
+    }, 150));
   }
   /** Ticking who gets it: everyone who may be chosen ("Chosen people"), or a group's people after "Only some of them". */
   function checklist(a) {
@@ -206,7 +256,6 @@
   function wireSend() {
     var to = document.getElementById('ms-to'), title = document.getElementById('ms-title'), body = document.getElementById('ms-body');
     if (!to) return;
-    to.addEventListener('change', function () { draft.to = to.value; draft.some = false; draft.chosen = {}; H.render(); });
     var some = document.getElementById('ms-some');
     if (some) some.addEventListener('change', function () {   // start with everyone ticked, then untick who shouldn't get it
       var a = current(); draft.some = some.checked; draft.chosen = {};
@@ -409,6 +458,11 @@
         if (m.error) { e.textContent = m.error === 'empty' ? T('Write the message first.') : m.error === 'long' ? T('The message is too long – please shorten it.') : T('Couldn’t send the reply.'); e.hidden = false; return; }
         S.put('messages', m, 'Replied to a message (to one person)');
         H.closeModal(); H.toast(T('Reply sent')); H.render();
+      },
+      choose: function () { chooser(); },
+      pickto: function (el) {   // a choice in "Who is this for?": it becomes the To, and the page is drawn again
+        if (el.dataset.key !== draft.to) { draft.to = el.dataset.key; draft.some = false; draft.chosen = {}; }
+        H.closeModal(); H.render();
       },
       mark: function (el) { showMark(el); },   // tapping the ticks (or envelope, circle, words) by a message's time
       tick: function (el) {   // Tick all / Untick all – the people shown (after typing part of a name, only those)

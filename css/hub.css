@@ -403,6 +403,7 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .me-who { display: flex; align-items: center; gap: 14px; margin-bottom: 14px; }
 .me-who h1 { margin: 0; } .me-who .lead { margin: 4px 0 0; }
 .me-tabs { margin: 0 0 18px; }
+.me-tabs a, .me-tabs button { white-space: nowrap; }
 .me-cal { width: 44px; flex: 0 0 44px; border-radius: 10px; background: var(--accent-soft); color: var(--accent-ink); text-align: center; font-size: 11px; font-weight: 600; text-transform: uppercase; line-height: 1.1; padding: 5px 0; }
 .me-cal b { display: block; font-size: 18px; color: var(--ink); }
 .me-offer { display: block; margin-top: 4px; }
@@ -1048,3 +1049,36 @@ html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366
 .tips-all { list-style: none; margin: 0; padding: 0; }
 .tips-all li { display: flex; gap: 10px; align-items: center; padding: 10px 0; }
 .tips-all li + li { border-top: 1px solid var(--line-2); }
+
+/* ---------- Messages: "To" and "Who is this for?" (js/mod-messages.js toButton, chooser) ---------- */
+.ms-to { display: flex; align-items: center; gap: 12px; width: 100%; min-height: 56px; margin-top: 6px; padding: 10px 14px; border: 1px solid var(--req-line); border-radius: 14px; background: var(--req-bg); text-align: left; cursor: pointer; }
+.ms-to:hover { border-color: var(--line-strong); }
+.ms-to .grow, .ms-rowbtn .grow { display: flex; flex-direction: column; min-width: 0; }
+.ms-to b, .ms-rowbtn b { font-weight: 600; overflow-wrap: anywhere; }
+.ms-to small, .ms-aud small { color: var(--muted); font-size: 13px; font-weight: 400; }
+.ms-to-change { color: var(--accent-ink); font-weight: 600; font-size: 14px; flex: 0 0 auto; }
+.ms-ico, .ms-ini { flex: 0 0 auto; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 13px; font-weight: 700; letter-spacing: .02em; }
+.ms-ico { border-radius: 11px; }
+.ms-ico.k-office { background: #E3ECF7; color: #2D5A8C; } .ms-ico.k-people { background: #EDE6F5; color: #5B3F86; }
+.ms-ico.k-staff { background: var(--ok-soft); color: var(--ok); } .ms-ico.k-partners { background: #F5ECD9; color: #7A5300; }
+.ms-choose { display: flex; flex-direction: column; gap: 18px; }
+.ms-find-to { display: flex; align-items: center; gap: 10px; height: 48px; padding: 0 14px; border: 1px solid var(--line); border-radius: 14px; background: var(--surface-2); color: var(--muted); }
+.ms-find-to input { flex: 1; border: 0; outline: 0; background: transparent; font-size: 15px; color: var(--ink); min-width: 0; }
+.ms-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.ms-aud { position: relative; border: 1px solid var(--line); background: var(--surface); color: var(--ink); cursor: pointer; text-align: left; }
+.ms-aud:hover { border-color: var(--line-strong); }
+.ms-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 16px; min-height: 120px; }
+.ms-card b { font-size: 15px; font-weight: 600; }
+.ms-card small { margin-top: -4px; }
+.ms-sec h3 { margin: 0 0 8px; font-size: 12.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.ms-sec h3 span { font-weight: 500; }
+.ms-rows { display: flex; flex-direction: column; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.ms-rowbtn { display: flex; align-items: center; gap: 12px; min-height: 56px; padding: 10px 14px; border: 0; border-bottom: 1px solid var(--line-2); border-radius: 0; width: 100%; }
+.ms-rowbtn:last-child { border-bottom: 0; }
+.ms-tick { display: none; width: 22px; height: 22px; border-radius: 50%; background: var(--ok); color: #fff; align-items: center; justify-content: center; flex: 0 0 auto; }
+.ms-card .ms-tick { position: absolute; top: 12px; right: 12px; }
+.ms-aud.on { background: var(--ok-soft); }
+.ms-card.on { border: 2px solid var(--ok); padding: 13px; }
+.ms-aud.on .ms-tick { display: inline-flex; }
+.ms-aud[hidden], .ms-sec[hidden], .ms-cards[hidden] { display: none; }
+@media (max-width: 640px) { .ms-cards { grid-template-columns: 1fr 1fr; } }

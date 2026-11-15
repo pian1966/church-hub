@@ -345,3 +345,9 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   and tick boxes only while choosing books for covers (More → Select books missing covers, with Cancel).
 
 - ✅ Messages look like a chat app (0.70.0): messages as bubbles (yours on the right in green), one grey tick when sent, two grey ticks when it has reached everyone, two blue ticks when everyone has read it; new messages marked with a green bar and a "{n} unread messages" note; "Read by" lists Read, Delivered and Not delivered yet; Delete moved into the ⋯ menu.
+- ✅ 15 Nov 2026 (0.71.0): Library – **one list, nothing twice**: a lent item shows who has it, the dates and Returned on its
+  own row (the separate "On loan" list that repeated it is gone; "Recently returned" sits under the list). Librarians always
+  see every status tab: All, Available, On loan, Overdue, Damaged, Being repaired, Withdrawn, Lost, Removed. New: Mark as
+  damaged (off the shelf until sent for repair or put back; also "It came back damaged" when marking a return), Withdraw
+  from circulation (taken out, can be put back). "All" now means what is still in the library; items taken out are under
+  their own tabs. No change to the database rules (damaged items use the existing "being repaired" lock).

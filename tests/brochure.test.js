@@ -8,8 +8,8 @@ if (/Christ Church Howick/i.test(html)) {
   console.error('The printable brochure still contains local church branding.');
   process.exit(1);
 }
-if (!/data-fill="origin">Made in South Africa/.test(html)) {
-  console.error('The other-church brochure must use the generic South African attribution.');
+if (!/data-fill="origin">Every church, however small, deserves great church software\./.test(html)) {
+  console.error('The other-church brochure must end its cover with the slogan for every church.');
   process.exit(1);
 }
 console.log('Printable brochure branding is generic.');

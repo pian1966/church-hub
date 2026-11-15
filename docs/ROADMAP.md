@@ -13,7 +13,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - ⬜ Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
 - ⬜ Set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
 - ⬜ Re-publish the database rules (FIREBASE-SETUP step 7) after 0.69 – Archive security fixes (or let the "Publish database rules" workflow do it)
-- ⬜ About 130 texts added in Nov 2026 (Library, Archive, Leadership, serving, messages) are still in English in the 18 extra languages (js/lang/*.js) – translate them
+- ⬜ Before releasing to other churches: translate the 18 extra languages in one go (`docs/RELEASE.md`; Home counts what is waiting)
 - ⬜ Decide what "Ministry roles the church uses" (Settings → Terminology) should do – it is saved but nothing uses it yet
 - ⬜ tests/app/partners.js "no declaration of loyalty when left empty" fails now and then (timing) – make it wait for the save
 - ⬜ Fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate staff screens too

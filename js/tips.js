@@ -1,0 +1,95 @@
+/* Church Hub – "What's new" and "Did you know?" on Home: a sentence on the latest changes, and one tip about a part of
+ * Church Hub, chosen for the person who signed in. Each tip says who it is for (`who`: any of the tags below), who it is
+ * not for (`not`), and which part of Church Hub must be switched on and open to them (`app`), so nobody is told about
+ * something they can't use: a member hears that there is a library and that their Me page shows what they borrowed; a
+ * librarian hears how to lend, repair or take out an item.
+ * Tags (worked out in js/app.js, homeTags): everyone; the role (admin, pastor, rosters, kids, member); librarian; carer
+ * (leads a Care Group); senior (the Senior Pastor); staffwork (sees the People list: Administrators, Pastors, Roster
+ * coordinators, Children's ministry).
+ * Texts are English, marked with TX and translated where they are shown (js/i18n/tips.js, js/lang/st.js).
+ * To add news: put the newest line first in NEWS with the day it reached the website. Shown on Home for NEWS_DAYS days.
+ * Rules only, no screens: tested by tests/tips.test.js. */
+(function (global) {
+  'use strict';
+  var TX = function (x) { return x; };
+  var NEWS_DAYS = 14;
+
+  var NEWS = [
+    { date: '2026-11-15', who: ['everyone'], not: ['attendee'], app: 'messages', text: TX('You can now reply to a message: tap Reply and your answer goes privately to the person who sent it.') },
+    { date: '2026-11-15', who: ['librarian'], app: 'library', text: TX('The Library now shows each item once, with who has it on its own row, and has tabs for overdue, damaged and withdrawn items.') },
+    { date: '2026-11-15', who: ['admin', 'senior'], text: TX('Settings → Attendees decides what people who aren’t Church Partners yet may see and do in Church Hub.') },
+    { date: '2026-11-15', who: ['everyone'], text: TX('Home now shows what’s new in Church Hub, and a tip each time you sign in.') },
+    { date: '2026-11-14', who: ['everyone'], text: TX('Sesotho can now be chosen as written in South Africa or in Lesotho.') },
+    { date: '2026-11-14', who: ['everyone'], app: 'messages', text: TX('Messages now look like a chat: two blue ticks show that everyone has read yours.') },
+    { date: '2026-11-14', who: ['librarian'], app: 'library', text: TX('The Library is tidier: one Add button, everything else under More, and repairs in each item’s ⋯ menu.') },
+    { date: '2026-11-14', who: ['admin'], text: TX('Settings → Terminology now suggests ministry roles and titles for the church’s administrator.') }
+  ];
+
+  var TIPS = [
+    // Everyone
+    { id: 'me-details', who: ['everyone'], app: 'me', href: '#/me', text: TX('Your Me page has your own details, and you can update your contact details there yourself.') },
+    { id: 'me-away', who: ['everyone'], app: 'me', href: '#/me', text: TX('Going away? Add your days away on your Me page, so nobody puts you on a roster while you’re gone.') },
+    { id: 'me-serve', who: ['everyone'], app: 'me', href: '#/me', text: TX('When you’re put on a roster, you can accept or decline the turn under Me → Serving.') },
+    { id: 'me-offer', who: ['everyone'], app: 'me', href: '#/me', text: TX('Would you like to help? Under Me → Serving you can offer to serve in a team.') },
+    { id: 'me-lang', who: ['everyone'], app: 'me', href: '#/me', text: TX('Church Hub speaks your language. Choose English, Afrikaans, isiZulu, isiXhosa, Sesotho or another language on your Me page.') },
+    { id: 'lib-there', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library', text: TX('The church has a library. Open Library to see what is there – what you have borrowed shows on your Me page.') },
+    { id: 'lib-ask', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library', text: TX('Seen a book you’d like to read? Tap Request to borrow in the Library, and a librarian will get it ready for you.') },
+    { id: 'msg-office', who: ['everyone'], app: 'messages', href: '#/messages', text: TX('Messages from the church arrive under Messages. You can write to the church office there too.') },
+    { id: 'groups-mine', who: ['everyone'], app: 'groups', href: '#/groups', text: TX('Groups → My groups shows the groups you belong to.') },
+    { id: 'offline', who: ['everyone'], text: TX('No internet? Church Hub still shows what you last saw, view only, until you’re back online.') },
+    // Librarians
+    { id: 'lib-lend', who: ['librarian'], app: 'library', href: '#/library', text: TX('As a librarian, you lend an item with its Lend button, and tap Returned when it comes back.') },
+    { id: 'lib-repair', who: ['librarian'], app: 'library', href: '#/library', text: TX('Something damaged? In the item’s ⋯ menu, choose Mark as damaged – nobody can borrow it until it is repaired or put back.') },
+    { id: 'lib-out', who: ['librarian'], app: 'library', href: '#/library', text: TX('Lost, or no longer needed? In the item’s ⋯ menu choose Withdraw from circulation or Take out of the library – it can be put back later.') },
+    { id: 'lib-remind', who: ['librarian'], app: 'library', href: '#/library', text: TX('Three weeks after a loan Church Hub reminds the borrower. You can also send the reminder by WhatsApp or SMS.') },
+    { id: 'lib-requests', who: ['librarian'], app: 'library', href: '#/library', text: TX('Members can ask to borrow an item. Their requests wait at the top of the Library for you to say yes or no.') },
+    { id: 'lib-reports', who: ['librarian'], app: 'library', href: '#/library', text: TX('Library → More → Reports shows what was lent, returned, lost and added in any period.') },
+    // Care Group carers
+    { id: 'carer-msg', who: ['carer'], app: 'messages', href: '#/messages', text: TX('As a carer, you can send a message to everyone in your Care Group from Messages.') },
+    // Roster coordinators
+    { id: 'ros-fill', who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Fill the gaps for me (on Rosters) suggests fair turns, keeping everyone’s days away and leave in mind.') },
+    { id: 'ros-offers', who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Offers to serve from members wait for you at the top of Rosters → Teams.') },
+    // Children's ministry
+    { id: 'kids-medical', who: ['kids'], app: 'people', text: TX('Children’s medical notes are seen only by Children’s ministry – not even Administrators see them.') },
+    // Pastors
+    { id: 'pastor-notes', who: ['pastor'], app: 'people', text: TX('Pastoral notes on a person’s page are seen only by Pastors.') },
+    { id: 'senior-viewas', who: ['senior'], text: TX('As Senior Pastor you can use View as… to see Church Hub the way another role sees it.') },
+    // Staff who see the People list
+    { id: 'people-search', who: ['staffwork'], app: 'people', href: '#/people', text: TX('Advanced search on People finds people by almost anything – their age, a birthday coming up, the service they serve at.') },
+    // Administrators
+    { id: 'admin-viewas', who: ['admin'], text: TX('Use View as… in the menu to see exactly what a Pastor, a Roster coordinator or a member sees.') },
+    { id: 'admin-apps', who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Apps switches parts of Church Hub on and off, such as the Library or Midweek Groups.') },
+    { id: 'admin-change', who: ['admin'], app: 'people', href: '#/people', text: TX('In Advanced search you can tick people in the results and change one thing for all of them at once.') },
+    { id: 'admin-dupes', who: ['admin', 'pastor'], app: 'people', href: '#/people', text: TX('Find duplicates (on People) helps you join two records of the same person into one.') },
+    { id: 'admin-see', who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Who can see what decides which contact details each role may see.') }
+  ];
+
+  /** ctx: { tags: ['everyone', 'member', …], on: function (appId) → may this person open that part? } */
+  function fits(item, ctx) {
+    var tags = (ctx && ctx.tags) || [];
+    var has = function (t) { return tags.indexOf(t) >= 0; };
+    if (!(item.who || []).some(has)) return false;
+    if ((item.not || []).some(has)) return false;
+    return !item.app || !ctx.on || !!ctx.on(item.app);
+  }
+  /** The tips for this person, in the order above. */
+  function forPerson(ctx, list) { return (list || TIPS).filter(function (t) { return fits(t, ctx); }); }
+  /** The news for this person from the last NEWS_DAYS days (today: 'YYYY-MM-DD'), newest first, at most `max` (2). */
+  function news(ctx, today, max, list) {
+    var from = addDays(today, -NEWS_DAYS);
+    return (list || NEWS).filter(function (n) { return n.date <= today && n.date > from && fits(n, ctx); })
+      .sort(function (a, b) { return a.date < b.date ? 1 : a.date > b.date ? -1 : 0; }).slice(0, max || 2);
+  }
+  /** The next tip to show and the updated list of tips already seen (ids). After the last one it starts again. */
+  function next(tips, seen) {
+    seen = (seen || []).filter(function (id) { return tips.some(function (t) { return t.id === id; }); });
+    if (!tips.length) return { tip: null, seen: seen };
+    var fresh = tips.filter(function (t) { return seen.indexOf(t.id) < 0; });
+    if (!fresh.length) { seen = []; fresh = tips; }
+    return { tip: fresh[0], seen: seen.concat(fresh[0].id) };
+  }
+  function addDays(iso, n) { var d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
+
+  var Tips = { TIPS: TIPS, NEWS: NEWS, NEWS_DAYS: NEWS_DAYS, fits: fits, forPerson: forPerson, news: news, next: next };
+  if (typeof module !== 'undefined' && module.exports) module.exports = Tips; else global.Tips = Tips;
+})(typeof window !== 'undefined' ? window : this);

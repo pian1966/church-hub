@@ -4,7 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
-    "Made in South Africa": "E entsoe Afrika Borwa",
+    "Every church, however small, deserves great church software.": "Kereke e nngwe le e nngwe, leha e ka ba nyenyane hakae, e tshwanelwa ke software e ntle haholo ya kereke.",
     "Purge": "Hlakola ruri",
     "Purge library record": "Hlakola rekoto ya laeborari ruri",
     "Permanently delete this library record? This cannot be undone.": "Na o hlakole rekoto ye ya laeborari ruri? O ka se kgone go e busetsa morago.",
@@ -354,6 +354,9 @@ I18n.add('st', {
     "by {name}": "ke {name}",
     "Not asked yet": "Ha a so botswe",
     "Yes": "E",
+    "Which spelling would you like?": "O batla mopeleto ofe?",
+    "South Africa": "Afrika Borwa",
+    "Lesotho": "Lesotho",
     "Not every language is up to date": "Hase dipuo tsohle tse ntjhafaditsweng",
     "That is fine while Church Hub is used only by this church. Before other churches use it, ask Claude to translate them.": "Ho lokile ha Church Hub e sebediswa ke kereke ena feela. Pele dikereke tse ding di e sebedisa, kopa Claude ho di fetolela.",
     "Remind me in 3 days": "Nkgopotse ka mora matsatsi a 3",

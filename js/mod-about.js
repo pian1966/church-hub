@@ -189,7 +189,7 @@
     var st = Store.settings() || {}, link = (location.origin + location.pathname.replace(/index\.html$/, '')).replace(/^https?:\/\//, '').replace(/\/+$/, '');
     doc.querySelectorAll('[data-fill="church"]').forEach(function (e) { if (st.churchName) e.textContent = st.churchName; });
     doc.querySelectorAll('[data-fill="link"]').forEach(function (e) { e.textContent = link; });
-    doc.querySelectorAll('[data-fill="origin"]').forEach(function (e) { e.textContent = I18n.t('Made in South Africa'); });
+    doc.querySelectorAll('[data-fill="origin"]').forEach(function (e) { e.textContent = I18n.t('Every church, however small, deserves great church software.'); });
   }
   function broDesign(doc, d) {
     var c = BrochureKit.colours(d.accent), r = doc.documentElement.style;

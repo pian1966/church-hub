@@ -47,7 +47,7 @@ module.exports = async function (ctx) {
   check(await s.page.evaluate(() => window.__appGoogle === 'web-client.apps.googleusercontent.com' && window.__fake.credentials[0] === 'id-token-for-web-client.apps.googleusercontent.com'), 'Sign in with Google uses Android’s account picker and gives Firebase its ID token');
   check(!!(await s.page.$('.app')) && (await s.page.evaluate(() => location.hash)) === '#/me', 'members open on Me in the app');
   t = await s.text(); check(t.includes('Church Hub app, version 1.0.7'), 'Me shows the app version');
-  await s.page.click('[data-act="people:consent"]'); check(await s.page.evaluate(() => window.churchHubBack() === true && !document.querySelector('#modal .overlay')), 'the back button closes an open window first');
+  await s.page.click('[data-act="people:edit"]'); check(await s.page.evaluate(() => window.churchHubBack() === true && !document.querySelector('#modal .overlay')), 'the back button closes an open window first');
   check(await s.page.evaluate(() => window.churchHubBack() === false), '…then lets the app go back a page');
   await finish(s);
 

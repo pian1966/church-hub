@@ -247,6 +247,18 @@
       }).join('') + '</div></div></fieldset>';
   }
 
+  /** The orange "what this means" under a consent that was given: shown as soon as it is unticked (wired below), so people
+   * know before saving that, for example, without Email or SMS they might miss reminders of their roster duties. */
+  function withoutNote(p, pur) {
+    return hasConsent(p.id, pur) ? '<span class="note warn cf-without" data-for="' + esc(pur) + '" hidden>' + esc(P.purposeWithout(pur)) + '</span>' : '';
+  }
+  if (typeof document !== 'undefined') document.addEventListener('change', function (ev) {
+    var box = ev.target; if (!box.classList || !box.classList.contains('cf-p')) return;
+    var w = box.closest('label').querySelector('.cf-without'); if (w) w.hidden = box.checked;
+    var save = document.querySelector('[data-act="people:saveconsent"]'), c = document.getElementById('cf-confirm');
+    if (save && save.dataset.sure) { delete save.dataset.sure; save.textContent = T('Save'); if (c) c.hidden = true; }   // changed again: ask again
+  });
+
   function consentDialog(p) {
     var child = p.familyRole === 'child', me = isMe(p);
     var guardians = child ? HS.consentAdults(p.id, S.list('guardians')).map(function (l) { return S.get('people', l.adultId); }).filter(Boolean) : [];
@@ -259,13 +271,14 @@
       '<div class="dlg-body">' + purposes.map(function (pur, i) {
         return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(pur) + '"' + (hasConsent(p.id, pur) ? ' checked' : '') + '><span><b>' + esc(T(P.purposeName(pur))) + '</b> ' + P.purposeTip(pur) + '<br><span class="muted small">' + esc(T({
           'Church records': 'Keep their details on the church database.', 'Email': 'Church news and information by email.', 'SMS': 'Reminders and urgent news by SMS.',
-          'Church directory': 'My name, phone, email and home address may be seen by church staff and leaders, and by members as far as the church allows.', 'Care group': 'Photo, phone, email, address and birthday shared with my Care Group.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span></span></label>';
+          'Church directory': 'My name, phone, email and home address may be seen by church staff and leaders, and by members as far as the church allows.', 'Care group': 'Photo, phone, email, address and birthday shared with my Care Group.', 'Photos': 'Photos at church events may be shared.', 'Children’s medical notes': 'Allergies and medical notes kept for safety at children’s church.' }[pur])) + '</span>' + withoutNote(p, pur) + '</span></label>';
       }).join('') +
       (child ? '' : '<p class="field-l" style="margin:14px 0 4px">' + T('Would like to receive') + '</p>' + RECEIVE.map(function (r) {
-        return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(r[0]) + '"' + (hasConsent(p.id, r[0]) ? ' checked' : '') + '><span><b>' + esc(T(r[0])) + '</b><br><span class="muted small">' + esc(T(r[1])) + '</span></span></label>';
+        return '<label class="check"><input type="checkbox" class="cf-p" data-p="' + esc(r[0]) + '"' + (hasConsent(p.id, r[0]) ? ' checked' : '') + '><span><b>' + esc(T(r[0])) + '</b><br><span class="muted small">' + esc(T(r[1])) + '</span>' + withoutNote(p, r[0]) + '</span></label>';
       }).join('')) +
       (!me ? '<div class="two" style="margin-top:8px"><label class="field">' + T('How it was given') + '<select id="cf-method">' + ['Paper connect card', 'Online form', 'In person (verbal)', 'Email'].map(function (m) { return '<option value="' + m + '">' + esc(T(m)) + '</option>'; }).join('') + '</select></label>' +
         (child ? '<label class="field req">' + T('Given by (parent or guardian)') + '<select id="cf-guardian">' + guardians.map(function (g) { return '<option value="' + g.id + '">' + esc(H.name(g)) + '</option>'; }).join('') + '</select></label>' : '') + '</div>' : '') +
+      '<p class="note warn" id="cf-confirm" hidden></p>' +
       '<p class="hint">' + esc(Store.settings().privacyNotice) + '</p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:saveconsent" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Consent'));
   }
@@ -384,6 +397,15 @@
     saveconsent: function (el) {
         var p = S.get('people', el.dataset.id), me = isMe(p);
         var method = document.getElementById('cf-method'), guardian = document.getElementById('cf-guardian');
+        // Withdrawing a consent that was given: warn first, and save only when Save is pressed a second time
+        var gone = [].filter.call(document.querySelectorAll('.cf-p'), function (b) { return !b.checked && hasConsent(p.id, b.dataset.p); });
+        if (gone.length && !el.dataset.sure) {
+          var c = document.getElementById('cf-confirm');
+          el.dataset.sure = '1'; el.textContent = T('Withdraw and save');
+          c.innerHTML = '<b>' + esc(T(me ? 'You are withdrawing consent for: {list}' : 'They are withdrawing consent for: {list}', { list: gone.map(function (b) { return T(P.purposeName(b.dataset.p)); }).join(', ') })) + '</b><br>' +
+            esc(T('Read what this means in orange above. Press “{button}” to go ahead, or tick them again to keep them.', { button: T('Withdraw and save') }));
+          c.hidden = false; c.scrollIntoView({ block: 'nearest' }); return;
+        }
         document.querySelectorAll('.cf-p').forEach(function (box) {
           var pur = box.dataset.p, had = hasConsent(p.id, pur);
           if (box.checked === had && consentFor(p.id, pur)) return;

@@ -8,13 +8,18 @@
  * coordinators, Children's ministry).
  * Texts are English, marked with TX and translated where they are shown (js/i18n/tips.js, js/lang/st.js).
  * To add news: put the newest line first in NEWS with the day it reached the website. Shown on Home for NEWS_DAYS days.
+ * Every release with something people would notice adds a line (one sentence, for those it concerns), then sets NEWS_FOR.
  * Rules only, no screens: tested by tests/tips.test.js. */
 (function (global) {
   'use strict';
   var TX = function (x) { return x; };
   var NEWS_DAYS = 14;
 
+  // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
+  // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
+  var NEWS_FOR = '0.76';
   var NEWS = [
+    { date: '2026-11-15', who: ['everyone'], app: 'me', text: TX('Your Me page has a new Consent tab: it shows what you’ve agreed to, and what each “No” means for you.') },
     { date: '2026-11-15', who: ['everyone'], not: ['attendee'], app: 'messages', text: TX('You can now reply to a message: tap Reply and your answer goes privately to the person who sent it.') },
     { date: '2026-11-15', who: ['librarian'], app: 'library', text: TX('The Library now shows each item once, with who has it on its own row, and has tabs for overdue, damaged and withdrawn items.') },
     { date: '2026-11-15', who: ['admin', 'senior'], text: TX('Settings → Attendees decides what people who aren’t Church Partners yet may see and do in Church Hub.') },
@@ -90,6 +95,6 @@
   }
   function addDays(iso, n) { var d = new Date(iso + 'T12:00:00Z'); d.setUTCDate(d.getUTCDate() + n); return d.toISOString().slice(0, 10); }
 
-  var Tips = { TIPS: TIPS, NEWS: NEWS, NEWS_DAYS: NEWS_DAYS, fits: fits, forPerson: forPerson, news: news, next: next };
+  var Tips = { TIPS: TIPS, NEWS: NEWS, NEWS_FOR: NEWS_FOR, NEWS_DAYS: NEWS_DAYS, fits: fits, forPerson: forPerson, news: news, next: next };
   if (typeof module !== 'undefined' && module.exports) module.exports = Tips; else global.Tips = Tips;
 })(typeof window !== 'undefined' ? window : this);

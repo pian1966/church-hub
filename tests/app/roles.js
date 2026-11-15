@@ -113,7 +113,20 @@ module.exports = async function (ctx) {
   check(myAway.length === 3 && myAway.some(k => docs[k].from === '2027-07-01' && docs[k].to === '2027-07-14'), 'can add several away dates at once (2 service days + a holiday)');
   await s.go('rosters/mine'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.settle();
   docs = await s.docsNow(); check(docs['assignments/kTim'].status === 'accepted', 'can accept a serving turn');
+  // Me → Consent is its own tab; withdrawing a consent warns what it means, and needs Save pressed twice
+  await s.go('me/consent'); t = await s.text();
+  check(t.includes('Church directory') && !!(await s.page.$('.me-tabs a[href="#/me/consent"][aria-current]')), 'consent is its own tab on the Me page');
+  await s.go('me'); check(!(await s.text()).includes('Not asked yet') && !(await s.page.$('.panel [data-act="people:consent"]')), '…and no longer on My details');
+  await s.go('me/consent'); await s.page.click('[data-act="people:consent"]');
+  await s.page.check('.cf-p[data-p="Email"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
+  await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Email"]');
+  check(await s.page.isVisible('.cf-without[data-for="Email"]') && (await s.page.textContent('.cf-without[data-for="Email"]')).includes('roster'), 'unticking Email warns that roster reminders might be missed');
+  await s.page.check('.cf-p[data-p="Email"]'); check(!(await s.page.isVisible('.cf-without[data-for="Email"]')), '…ticking it again hides the warning');
+  await s.page.click('[data-act="hub:close"]');
   await s.go('people/p/p14'); await s.page.click('[data-act="people:consent"]'); await s.page.uncheck('.cf-p[data-p="Church directory"]'); await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
+  check(await s.page.isVisible('#cf-confirm') && (await s.page.textContent('[data-act="people:saveconsent"]')).includes('Withdraw'), 'Save first explains what withdrawing means');
+  docs = await s.docsNow(); check(!!docs['directory/p14'], '…and nothing is withdrawn yet');
+  await s.page.click('[data-act="people:saveconsent"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['directory/p14'], 'withdrawing directory consent removes them from the directory');
   const consentsBefore = Object.keys(docs).filter(k => k.startsWith('consents/')).length;
   await s.page.click('[data-act="people:consent"]'); await s.page.check('.cf-p[data-p="Missionary updates (via WhatsApp)"]'); await s.page.check('.cf-p[data-p="“Who is Jesus” (via WhatsApp)"]');

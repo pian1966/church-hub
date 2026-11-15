@@ -90,6 +90,11 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.
+- What's new on Home: every release that changes what people see or can do – features and noticeable fixes – adds one plain
+  sentence to the top of `NEWS` in `js/tips.js` (today's date; `who`/`not`/`app` so only the people it concerns see it), with its
+  words in `js/i18n/tips.js` and `js/lang/st.js`. Add a Did you know? tip too when there's a new thing worth discovering. When the
+  middle number goes up, set `NEWS_FOR` to it (`node tests/versions.test.js` checks it). When merging main into a branch, keep
+  both sides' news lines.
   The church can reword the brochures (About → Brochures → Edit): their edits are tied to the original wording, so a line you
   change stops carrying their edit of it (Church Hub lists it for them) – change wording only where the feature changed.
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.

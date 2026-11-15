@@ -9,7 +9,7 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   check(/Wedding anniversary\s*Not recorded/.test(await s.text()), 'a married person without a date shows “Wedding anniversary: Not recorded”');
   await s.page.click('button.link[data-focus="pf-wed"]');
-  check(await s.page.evaluate(() => document.activeElement && document.activeElement.id === 'pf-wed'), '“Add” opens Edit details at the anniversary box');
+  check(await s.page.evaluate(() => document.activeElement && document.activeElement.id === 'pf-wed-text'), '“Add” opens Edit details at the anniversary box, ready to type');
   await s.page.fill('#pf-wed', '2000-06-10'); await s.page.click('[data-act="people:save"]'); await s.settle();
   check(/Wedding anniversary\s*\S+ 10 Jun 2000\s*Married \d+ years/.test(await s.text()), 'then it shows the date and years married');
   // Boxes that don't apply are greyed out, with the reason; what was saved stays

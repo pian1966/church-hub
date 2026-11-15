@@ -237,14 +237,14 @@
             || !Array.isArray(a.deliveredBy) || !a.deliveredBy.every(function (x) { return isMe(c, x); })
             || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
         if (a.kind === 'office') return attendeeMay(c, 'write');
-        if (mgr) return true;
-        if (a.kind === 'direct') return mayDirect(c, a);
         if (a.kind === 'roster') {   // ask / remind: roster coordinators; declined: to the roster team only (settings.rosterTeam)
           if (!Array.isArray(a.turns) || !a.turns.length) return false;
           if (a.roster === 'ask' || a.roster === 'remind') return rosterer(c);
           var team = (docs['settings/church'] || {}).rosterTeam || [];
           return a.roster === 'declined' && a.to.every(function (x) { return team.indexOf(x) >= 0; });
         }
+        if (mgr) return true;
+        if (a.kind === 'direct') return mayDirect(c, a);
         if (a.kind === 'leaders') { var lb = docs['leaderBodies/' + a.groupId]; return !!lb && meIn(c, lb.memberIds || []) && a.to.every(function (x) { return (lb.memberIds || []).indexOf(x) >= 0; }); }
         var g = a.kind === 'care' || a.kind === 'life' ? docs['careGroups/' + a.groupId] : a.kind === 'group' ? docs['msgGroups/' + a.groupId] : null;
         if (!g || !meIn(c, (g.leaderIds || []))) return false;

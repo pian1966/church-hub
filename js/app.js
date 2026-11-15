@@ -860,6 +860,7 @@ var Hub = (function () {
     },
     restart: function () { live = { stage: 'signedOut' }; renderLive(); },
     selfie: function () { var f = document.getElementById('selfie-file'); if (f) f.click(); },
+    sesotho: function (el) { useLang(el.dataset.l); },
     later: function (el) { Store.pref(el.dataset.k + 'Later', new Date().toISOString()); var b = el.closest('.prompt'); if (b) b.remove(); },
     havelink: function () { live = { stage: 'linkSent', email: Store.live.pendingEmail() }; renderLive(); },
     setup: function (el) {
@@ -951,11 +952,21 @@ var Hub = (function () {
     document.querySelectorAll('.lang-sel').forEach(function (sel) {
       if (sel.dataset.wired) return; sel.dataset.wired = '1';
       sel.addEventListener('change', function () {
-        I18n.set(sel.value); Store.pref('lang', sel.value);   // a language from another file is redrawn when it arrives
-        if (document.querySelector('#modal .overlay')) closeModal();
-        render(); var again = document.querySelector('.lang-sel'); if (again) again.focus();
+        if (sel.value === 'st') { sesothoAsk(); return; }   // two spellings: ask which
+        useLang(sel.value);
       });
     });
+  }
+  function useLang(code) {
+    I18n.set(code); Store.pref('lang', code);   // a language from another file is redrawn when it arrives
+    if (document.querySelector('#modal .overlay')) closeModal();
+    render(); var again = document.querySelector('.lang-sel'); if (again) again.focus();
+  }
+  /** Sesotho is written a little differently in South Africa and in Lesotho (dintlha / lintlha): people choose. */
+  function sesothoAsk() {
+    var b = function (code, name, eg) { return '<button class="btn choice" data-act="hub:sesotho" data-l="' + code + '"><b>' + name + '</b><span class="small muted">' + eg + '</span></button>'; };
+    modal(dialogHead('Sesotho', T('Which spelling would you like?')) + '<div class="dlg-body"><div class="choices">' +
+      b('st', 'Sesotho sa Afrika Borwa', T('South Africa') + ' · dintlha, dihlopha') + b('st-LS', 'Sesotho sa Lesotho', T('Lesotho') + ' · lintlha, lihlopha') + '</div></div>', 'Sesotho');
   }
   function onKey(ev) { if (ev.key === 'Escape' && document.querySelector('#modal .overlay')) closeModal(); }
 

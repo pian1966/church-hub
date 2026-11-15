@@ -928,6 +928,10 @@ details.lib-more { margin-top: 12px; }
 details.lib-more > summary { cursor: pointer; font-weight: 600; color: var(--accent-ink); font-size: 14px; }
 details.lib-more[open] > summary { margin-bottom: 12px; }
 .lib-books-head { align-items: center; }
+/* An item's loans, under it in the one list (librarians): who has it, and Returned */
+.lib-loans { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
+.lib-loan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line-2); }
+.lib-loan > .grow { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
 .lib-empty { padding: 32px 18px; }
 .lib-empty p { margin: 0 0 14px; }
 .row-menu > summary { font-size: 18px; line-height: 1; letter-spacing: 1px; }
@@ -955,3 +959,7 @@ details.lib-more[open] > summary { margin-bottom: 12px; }
   text-transform: uppercase; letter-spacing: .03em; box-shadow: 0 1px 1px rgba(29,27,25,.08); }
 .msg-chat .msg-read { font-size: 12.5px; }
 html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366 22%, var(--surface)); }
+
+/* Choosing between a few options in a window (e.g. which Sesotho spelling) */
+.choices { display: grid; gap: 10px; }
+.btn.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 12px 14px; height: auto; white-space: normal; }

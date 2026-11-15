@@ -4,6 +4,10 @@
  *   how (Bought | Donated | Other), from (the donor or shop), shelf, isbn, note, out, cover } – out = how many copies are on
  *   loan, kept by the librarian so that everyone can see whether it is in, without seeing who has it; cover = the version
  *   of its cover picture, kept apart in covers/{id} and fetched only when shown.
+ *   Off the shelf (can't be lent): repairing = true, with damaged = true while it is damaged and waiting to be seen to
+ *   (both block lending in firestore.rules through `repairing`). Taken out of the library: removed (date) and why (REASONS:
+ *   Withdrawn = pulled out of circulation, Lost, Damaged = beyond repair, Given away, Other); it can be put back.
+ *   status() gives the one status a librarian sorts items by (STATUSES).
  * A loan: loans/{id} = { bookId, title, personId ('' for a visitor), name, mobile, visitor (true for someone not on the
  *   church's list), out (date lent), due, back (date returned, '' while out), returnNote, reminded (the last friendly reminder) }.
  * A friendly reminder is due REMIND_DAYS (3 weeks) after an item was borrowed, and again each REMIND_AGAIN days after that. Every loan needs a mobile number so a
@@ -18,7 +22,7 @@ var Library = (function () {
   var TX = function (x) { return x; };   // translated where it is shown
   var LOAN_DAYS = 21, REMIND_DAYS = 21, REMIND_AGAIN = 7, KEEP_DAYS = 365, LIBRARIAN_REVIEW_DAYS = 180, POLICY_MAX = 20000;
   var HOW = [TX('Bought'), TX('Donated'), TX('Other')];
-  var REASONS = [TX('Lost'), TX('Damaged'), TX('Given away'), TX('Other')];   // why an item left the library
+  var REASONS = [TX('Withdrawn'), TX('Lost'), TX('Damaged'), TX('Given away'), TX('Other')];   // why an item left the library (Withdrawn: out of circulation)
   var KINDS = [TX('Book'), TX('DVD'), TX('CD'), TX('Audiobook'), TX('Magazine'), TX('Game'), TX('Other')];
   function copy(o) { return JSON.parse(JSON.stringify(o)); }
   function addDays(iso, n) { var p = String(iso).split('-'), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2] + n)); return d.toISOString().slice(0, 10); }
@@ -30,7 +34,7 @@ var Library = (function () {
       how: HOW.indexOf(b.how) >= 0 ? b.how : '', from: text(b.from), shelf: text(b.shelf, 60), isbn: text(b.isbn, 20), note: text(b.note, 500), out: Math.max(0, Math.round(+b.out) || 0) };
     if (b.cover) out.cover = text(b.cover, 40);
     if (b.removed) { out.removed = text(b.removed, 10); out.why = REASONS.indexOf(b.why) >= 0 ? b.why : 'Other'; if (b.whyNote) out.whyNote = text(b.whyNote, 200); }
-    if (b.repairing === true) out.repairing = true;
+    if (b.repairing === true) { out.repairing = true; if (b.damaged === true) out.damaged = true; }
     ['id', 'createdAt', 'updatedAt'].forEach(function (k) { if (b[k]) out[k] = b[k]; });
     return out;
   }
@@ -44,7 +48,18 @@ var Library = (function () {
   /** How many copies are on the shelf. */
   function free(b, loans) { return b && b.repairing ? 0 : Math.max(0, (Math.max(1, +b.copies || 1)) - outCount(b, loans)); }
   /** Mark the whole catalogue item as being repaired, or return it to the shelf. */
-  function repair(b, repairing) { var x = copy(b); if (repairing) x.repairing = true; else delete x.repairing; return x; }
+  function repair(b, repairing) { var x = copy(b); delete x.damaged; if (repairing) x.repairing = true; else delete x.repairing; return x; }
+  /** Mark an item as damaged (off the shelf until it is sent for repair, put back or taken out), or clear it. */
+  function damage(b, damaged) { var x = copy(b); if (damaged) { x.repairing = true; x.damaged = true; } else { delete x.repairing; delete x.damaged; } return x; }
+  /** The status an item is filed under: available | onLoan | damaged | repairing (in the library), or withdrawn | lost |
+   *  damaged | removed (taken out). An item with some copies in and some out is available (and also has loans). */
+  var STATUSES = ['available', 'onLoan', 'damaged', 'repairing', 'withdrawn', 'lost', 'removed'];
+  function status(b, loans) {
+    if (!b) return '';
+    if (b.removed) return b.why === 'Withdrawn' ? 'withdrawn' : b.why === 'Lost' ? 'lost' : b.why === 'Damaged' ? 'damaged' : 'removed';
+    if (b.repairing) return b.damaged ? 'damaged' : 'repairing';
+    return free(b, loans) > 0 ? 'available' : 'onLoan';
+  }
   /** A mobile number tidied for saving: digits, spaces, a leading + and ( ) - kept; '' unless it has 7 to 15 digits. */
   function phone(s) {
     var t = String(s || '').replace(/[^\d+()\- ]/g, '').replace(/\s+/g, ' ').trim(), d = t.replace(/\D/g, '');
@@ -92,11 +107,11 @@ var Library = (function () {
   }
   /** Take an item out of the library (lost, damaged, given away…): kept, marked removed, for the reports. */
   function removeItem(b, why, note, today) {
-    var x = copy(b); delete x.repairing; x.removed = today; x.why = REASONS.indexOf(why) >= 0 ? why : 'Other'; if (note) x.whyNote = text(note, 200); else delete x.whyNote;
+    var x = copy(b); delete x.repairing; delete x.damaged; x.removed = today; x.why = REASONS.indexOf(why) >= 0 ? why : 'Other'; if (note) x.whyNote = text(note, 200); else delete x.whyNote;
     return x;
   }
   /** Put a removed item back on the shelf (found again, or removed by mistake). */
-  function restore(b) { var x = copy(b); delete x.removed; delete x.why; delete x.whyNote; delete x.repairing; return x; }
+  function restore(b) { var x = copy(b); delete x.removed; delete x.why; delete x.whyNote; delete x.repairing; delete x.damaged; return x; }
   function inLibrary(b) { return !!b && !b.removed; }
   /** What happened between two dates (yyyy-mm-dd, both included): lent, returned, lost, acquired and removed. */
   function report(books, loans, from, to) {
@@ -292,6 +307,6 @@ var Library = (function () {
   }
 
   return { intl: intl, REMIND_DAYS: REMIND_DAYS, daysOut: daysOut, remindDue: remindDue, REASONS: REASONS, lose: lose, removeItem: removeItem, restore: restore, inLibrary: inLibrary, report: report, reportRows: reportRows, csv: csv,
-    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, LIBRARIAN_REVIEW_DAYS: LIBRARIAN_REVIEW_DAYS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, librarianReviewDue: librarianReviewDue, policy: policy, addDays: addDays, book: book, isOut: isOut, isPending: isPending, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, repair: repair, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian, duplicatePairs: duplicatePairs, normalizedTitle: normalizedTitle };
+    parseCSV: parseCSV, columns: columns, isoDate: isoDate, kindOf: kindOf, importPlan: importPlan, sameItem: sameItem, policyHtml: policyHtml, LOAN_DAYS: LOAN_DAYS, KEEP_DAYS: KEEP_DAYS, LIBRARIAN_REVIEW_DAYS: LIBRARIAN_REVIEW_DAYS, POLICY_MAX: POLICY_MAX, HOW: HOW, KINDS: KINDS, phone: phone, borrower: borrower, librarianReviewDue: librarianReviewDue, policy: policy, addDays: addDays, book: book, isOut: isOut, isPending: isPending, onLoan: onLoan, overdue: overdue, outCount: outCount, free: free, repair: repair, damage: damage, status: status, STATUSES: STATUSES, lend: lend, giveBack: giveBack, stale: stale, mine: mine, find: find, cats: cats, isLibrarian: isLibrarian, duplicatePairs: duplicatePairs, normalizedTitle: normalizedTitle };
 })();
 if (typeof module !== 'undefined') module.exports = Library;

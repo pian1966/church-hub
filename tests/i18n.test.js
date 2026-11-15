@@ -65,7 +65,8 @@ console.log('More languages (js/lang/*.js, loaded when chosen; missing lines sho
 let waitingLines = 0;
 const EVERY_TIME = ['st'];
 const vm = require('vm'), langDir = path.join(__dirname, '..', 'js', 'lang');
-for (const [code, name] of I18n.MORE) {
+for (const [code, name, , , from] of I18n.MORE) {
+  if (from) continue;   // made from another language's file (Sesotho as written in Lesotho: tests/sesotho.test.js)
   const file = path.join(langDir, code + '.js');
   if (!fs.existsSync(file)) { check(false, name + ': js/lang/' + code + '.js exists'); continue; }
   let pack = null;

@@ -25,7 +25,10 @@ var I18n = (function () {
     ['fr', 'Français', 'French', ['Africa', 'Europe', 'Americas']], ['pt', 'Português', 'Portuguese', ['Africa', 'Europe', 'Americas']],
     ['es', 'Español', 'Spanish', ['Europe', 'Americas']], ['de', 'Deutsch', 'German', ['Europe']], ['nl', 'Nederlands', 'Dutch', ['Europe']],
     ['it', 'Italiano', 'Italian', ['Europe']], ['pl', 'Polski', 'Polish', ['Europe']],
-    ['en-US', 'US English', 'US English', ['Americas']]
+    ['en-US', 'US English', 'US English', ['Americas']],
+    // Made from another language's file, not a file of its own (5th item): Sesotho as written in Lesotho (js/sesotho.js).
+    // Not in the list itself: choosing Sesotho asks which spelling (js/app.js, langWire).
+    ['st-LS', 'Sesotho (Lesotho)', 'Sesotho (Lesotho)', ['Africa'], 'st']
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
   var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'life', 'leaders', 'archive', 'library', 'messages', 'privacy', 'import', 'settings'];
@@ -54,17 +57,32 @@ var I18n = (function () {
   var seen = {}, seenPage = '', watching = true;
 
   /** A language file (js/lang/<code>.js) adds itself: { mon, dow, words: { English: translation } }. */
+  var PACKS = {};
+  /** The file a language comes from: its own, or the one it is made from (st-LS from st). */
+  function fileOf(code) { var m = more(code); return (m && m[4]) || code; }
+  /** A language made from another one, worked out once that one has arrived. */
+  function derive(code) { var S = typeof Sesotho !== 'undefined' ? Sesotho : require('./sesotho.js'); add(code, S.pack(PACKS[fileOf(code)])); }
+  /** Ask for a language's file (once); one made from another language is worked out at once if that file is here. */
+  function fetch(code) {
+    var f = fileOf(code);
+    if (f !== code && PACKS[f]) { derive(code); return; }
+    if (loading[f] === 'asked' || loading[f] === 'wanted' || loading[f] === 'done') return;
+    loading[f] = loading[f] || 'asked';
+    var sc = document.createElement('script'); sc.src = 'js/lang/' + f + '.js?v=' + packV(); sc.onerror = function () { delete loading[f]; delete loading[code]; }; document.head.appendChild(sc);
+  }
   function add(code, pack) {
+    PACKS[code] = pack;
     D[code] = pack.words || {}; DATES[code] = { mon: pack.mon || DATES.en.mon, dow: pack.dow || DATES.en.dow };
     if (loading[code] === 'wanted') { lang = code; if (typeof document !== 'undefined') document.documentElement.lang = code; onLoad.forEach(function (fn) { try { fn(code); } catch (e) { console.error(e); } }); }
     loading[code] = 'done';
     (waiters[code] || []).splice(0).forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } });
+    MORE.forEach(function (m) { if (m[4] === code && loading[m[0]] && loading[m[0]] !== 'done') derive(m[0]); });
   }
   /** Fetch a language's file without switching to it (e.g. to suggest wording in it); cb when it is here. */
   function load(code, cb) {
     if (DATES[code] || !more(code) || typeof document === 'undefined') { if (cb) cb(); return; }
     (waiters[code] = waiters[code] || []).push(cb || function () {});
-    if (!loading[code]) { loading[code] = 'asked'; var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + packV(); sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
+    if (!loading[code]) { fetch(code); if (!loading[code]) loading[code] = 'asked'; }
   }
   /** What a suggestion must keep from the English: the same {parts} and the same <b>…</b> markup. '' = fine. */
   function check(en, text) {
@@ -89,9 +107,8 @@ var I18n = (function () {
   function set(code) {
     if (!DATES[code] && more(code) && typeof document !== 'undefined') {   // fetch it; the screen is redrawn when it arrives (onLoad)
       Object.keys(loading).forEach(function (k) { if (loading[k] === 'wanted') loading[k] = 'asked'; });
-      if (loading[code] !== 'asked') { var sc = document.createElement('script'); sc.src = 'js/lang/' + code + '.js?v=' + packV(); sc.onerror = function () { delete loading[code]; }; document.head.appendChild(sc); }
-      loading[code] = 'wanted';
-      return lang;
+      if (loading[code] !== 'asked') fetch(code);
+      if (!DATES[code]) { loading[code] = 'wanted'; return lang; }   // still on its way
     }
     Object.keys(loading).forEach(function (k) { if (loading[k] === 'wanted') loading[k] = 'asked'; });
     lang = DATES[code] ? code : 'en';
@@ -105,10 +122,11 @@ var I18n = (function () {
   /** English first, then the languages by continent (Africa starts with Afrikaans, isiZulu and isiXhosa). */
   function options() {
     var cur = loading && Object.keys(loading).filter(function (k) { return loading[k] === 'wanted'; })[0] || lang, done = false;
+    var m0 = more(cur); if (m0 && m0[4]) cur = m0[4];   // Sesotho (Lesotho) shows as Sesotho
     var opt = function (code, name, en) { var sel = code === cur && !done; if (sel) done = true; return '<option value="' + code + '"' + (sel ? ' selected' : '') + '>' + name + (en && en !== name ? ' (' + en + ')' : '') + '</option>'; };
     var ZA = LANGS.slice(1).map(function (l) { return [l[0], l[1], '', ['Africa']]; });   // Afrikaans, isiZulu, isiXhosa sit with Africa's languages
     return opt('en', 'UK English') + ['Africa', 'Europe', 'Americas'].map(function (c) {
-      return '<optgroup label="' + t(c) + '">' + (c === 'Africa' ? ZA : []).concat(MORE.filter(function (m) { return m[3].indexOf(c) >= 0; })).map(function (m) { return opt(m[0], m[1], m[2]); }).join('') + '</optgroup>';
+      return '<optgroup label="' + t(c) + '">' + (c === 'Africa' ? ZA : []).concat(MORE.filter(function (m) { return m[3].indexOf(c) >= 0 && !m[4]; })).map(function (m) { return opt(m[0], m[1], m[2]); }).join('') + '</optgroup>';
     }).join('');
   }
 

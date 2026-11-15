@@ -23,6 +23,16 @@ ok(L.onLoan(loans).map(l => l.id).join() === 'l2,l1' && L.overdue(loans[1], '202
 const repair = L.book({ id: 'repair', title: 'Repair item', repairing: true });
 ok(repair.repairing && L.free(repair) === 0 && L.lend(repair, tim, '2026-11-12', '', []) === null &&
   !L.repair(repair, false).repairing, 'an item being repaired cannot be lent until returned to the shelf');
+const hurt = L.damage(L.book({ id: 'hurt', title: 'Torn' }), true);
+ok(hurt.repairing && hurt.damaged && L.status(hurt) === 'damaged' && L.free(hurt) === 0 && L.lend(hurt, tim, '2026-11-12', '', []) === null &&
+  L.book(hurt).damaged && !L.book({ title: 'X', damaged: true }).damaged, 'a damaged item is off the shelf (it can’t be lent) and keeps its mark when saved');
+ok(L.status(L.repair(hurt, true)) === 'repairing' && !L.repair(hurt, true).damaged && L.status(L.damage(hurt, false)) === 'available' && !L.damage(hurt, false).repairing,
+  'a damaged item can be sent for repair, or put back on the shelf');
+ok(L.status(L.removeItem(hurt, 'Withdrawn', '', '2026-11-12')) === 'withdrawn' && !L.removeItem(hurt, 'Withdrawn', '', '2026-11-12').damaged &&
+  L.status(L.removeItem(hurt, 'Damaged', '', '2026-11-12')) === 'damaged' && L.status(L.removeItem(hurt, 'Given away', '', '2026-11-12')) === 'removed' &&
+  L.status(L.removeItem(hurt, 'Lost', '', '2026-11-12')) === 'lost' && !L.restore(L.removeItem(hurt, 'Withdrawn', '', '2026-11-12')).removed,
+  'items taken out are filed by why: withdrawn from circulation, damaged beyond repair, lost, or removed; and can be put back');
+ok(L.status(b, loans) === 'onLoan' && L.status(L.book({ id: 'z', title: 'Z' }), []) === 'available', 'an item with every copy out is on loan; one on the shelf is available');
 const back = L.giveBack(loans[1], b, '2026-11-22', loans);
 ok(back.loan.mobile === '' && back.loan.back === '2026-11-22' && back.book.out === 1 && loans[1].back === '' && L.giveBack(back.loan, back.book, '2026-11-23', [loans[0], back.loan]).book.out === 1, 'returning: the date is kept and a copy is back on the shelf (not twice)');
 const notedBack = L.giveBack(loans[1], b, '2026-11-22', loans, 'Cover slightly torn');

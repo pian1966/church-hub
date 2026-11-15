@@ -307,18 +307,25 @@ service cloud.firestore {
     // write only with Settings' "write" and reply only with "reply" (or to a minister, when they may write).
     function careOf(gid) { return get(careRef(gid)).data; }
     function minister(pid) { return exists(personRef(pid)) && get(personRef(pid)).data.get('appRole', '') == 'pastor'; }
-    function repliesTo(m) {
-      return exists(/databases/$(database)/documents/messages/$(m.replyTo))
-        && meIn(get(/databases/$(database)/documents/messages/$(m.replyTo)).data.get('to', []))
-        && get(/databases/$(database)/documents/messages/$(m.replyTo)).data.get('fromId', '') == m.to[0];
+    function msgRef(id) { return /databases/$(database)/documents/messages/$(id); }
+    // The message being answered came to this sign-in, from the person the reply goes to
+    function repliesTo(rt, to0) { return exists(msgRef(rt)) && get(msgRef(rt)).data.get('fromId', '') == to0 && meIn(get(msgRef(rt)).data.get('to', [])); }
+    // A leader of a Midweek Group (life group) this sign-in is in
+    function lifeLeader(gid, pid) {
+      let g = careOf(gid);
+      return g.get('type', '') == 'life' && pid in g.get('leaderIds', []) && meIn(g.get('memberIds', []));
     }
-    function mayDirect(m) {
-      return m.kind == 'direct' && m.to.size() == 1 && !isMe(m.to[0]) && (
-        (m.get('replyTo', '') != '' && repliesTo(m) && (attendeeMay('reply') || (attendeeMay('write') && minister(m.to[0]))))
-        || (m.get('replyTo', '') == '' && attendeeMay('write') && m.get('groupId', '') == '' && minister(m.to[0]))
-        || (m.get('replyTo', '') == '' && attendeeMay('write') && m.get('groupId', '') != '' && careOf(m.groupId).get('type', '') == 'life'
-          && meIn(careOf(m.groupId).get('memberIds', [])) && m.to[0] in careOf(m.groupId).get('leaderIds', [])));
+    // What attendees may do is read once per check (Firestore allows only so many steps)
+    function directOk(m, to0) {
+      let att = attendee();
+      let on = att ? churchSettings().get('attendeeCan', ['names', 'write']) : ['write', 'reply'];
+      let rt = m.get('replyTo', '');
+      let gid = m.get('groupId', '');
+      return !isMe(to0) && (rt != ''
+        ? repliesTo(rt, to0) && ('reply' in on || ('write' in on && minister(to0)))
+        : 'write' in on && (gid == '' ? minister(to0) : lifeLeader(gid, to0)));
     }
+    function mayDirect(m) { return m.kind == 'direct' && m.to.size() == 1 && directOk(m, m.to[0]); }
     function maySendTo(m) {
       return (m.kind == 'office' && m.to.size() == 0 && attendeeMay('write'))
         || manager()

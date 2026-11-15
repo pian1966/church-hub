@@ -34,7 +34,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
 | Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
 | Settings, countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
-| Language engine, 19 more languages | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
+| Language engine, 19 more languages (Sesotho kept up to date; the other 18 before a release) | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
 | Demo data | `js/sample.js` | – | |
 
@@ -62,8 +62,11 @@ A session should say which tier it is running at, and stop and ask if the task's
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
-  that uses it (`common.js` if several parts use it). Every new line also goes in all 19 `js/lang/<code>.js` files: these are large,
-  so don't read them – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js` fails if any language misses a line.
+  that uses it (`common.js` if several parts use it), **and** in `js/lang/st.js` (Sesotho, kept up to date like the other four):
+  it is large, so don't read it – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js`
+  fails if any of these five misses a line. **Don't** add new lines to the other 18 `js/lang/<code>.js` files: until Church Hub
+  is released to other churches they are translated in one go (`docs/RELEASE.md`); meanwhile they show English, the test
+  counts them, and Home reminds Administrators every 3 days. Never copy the English in as a "translation".
 - **Screen layout** (every page the same, so the app feels like one app): `page-head` (h1, one-line lead, then buttons on the
   right) → tabs as `<nav class="seg">` *under* the title → the content. **One main button** (`btn primary`); other page actions in
   one `Hub.menu(T('More'), [buttons])`; a row's rare or destructive actions (purge, take out…) in `Hub.menu('⋯', [...], 'row-menu', label)`,

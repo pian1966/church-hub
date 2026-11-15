@@ -12,7 +12,7 @@
  */
 var Hub = (function () {
   'use strict';
-  var modules = [], user = null, root = null, T = I18n.t;
+  var modules = [], user = null, root = null, T = I18n.t, TN = I18n.tn;
 
   /* ---------- roles and permissions (UI now; database security rules when on Firebase) ---------- */
   var ROLES = {
@@ -291,7 +291,7 @@ var Hub = (function () {
   function isIPhone() { var u = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1); }
 
   /* ---------- prompts on Home and Me: a photo of yourself (in the apps), and putting Church Hub on an iPhone's home screen ---------- */
-  var LATER_DAYS = { selfie: 30, iphone: 60 }, photoAdded = false;   // photoAdded: just added here (the database may not have answered yet)
+  var LATER_DAYS = { selfie: 30, iphone: 60, langs: 3 }, photoAdded = false;   // photoAdded: just added here (the database may not have answered yet)
   function later(k) { var d = Store.pref(k + 'Later'); return d && (Date.now() - Date.parse(d)) < LATER_DAYS[k] * 864e5; }
   function prompts() {
     var me = user && Store.get('people', user.id), out = '';
@@ -305,6 +305,30 @@ var Hub = (function () {
         '<p class="small" style="margin:0">' + T('Tap the Share button (the square with an arrow), then “Add to Home Screen”. Church Hub then opens like an app, full screen, with its own icon.') + '</p>' +
         '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="iphone">' + T('Not now') + '</button></div></section>';
     return out;
+  }
+  /* Administrators: the 18 extra languages are translated in one go before Church Hub is released (docs/RELEASE.md), so
+   * Home reminds them every few days how many texts are still in English there. German stands for all 18 (they are done
+   * together); the count is kept on this device for each version, so German's file is fetched once per version. */
+  var langGap = null;
+  function langsWaiting() {
+    if (langGap !== null) return langGap;
+    var v = (typeof ChurchHubVersion !== 'undefined' && ChurchHubVersion.version) || '', kept = Store.pref('langsGap').split('|');
+    if (kept.length === 2 && kept[0] === v) return (langGap = +kept[1] || 0);
+    langGap = 0;
+    I18n.load('de', function () {
+      langGap = I18n.english().filter(function (en) { return !I18n.word('de', en, true); }).length;
+      Store.pref('langsGap', v + '|' + langGap);
+      if (langGap && parts()[0] === 'home') render();
+    });
+    return 0;
+  }
+  function langsPrompt() {
+    if (!realAdmin() || later('langs')) return '';
+    var n = langsWaiting(); if (!n) return '';
+    return '<section class="panel prompt" id="langs-ask"><h2 style="margin:0 0 4px">' + T('Not every language is up to date') + '</h2>' +
+      '<p class="small" style="margin:0">' + TN('{n} text is still in English in the 18 extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', '{n} texts are still in English in the 18 extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', n) + '</p>' +
+      '<p class="small muted" style="margin:6px 0 0">' + T('That is fine while Church Hub is used only by this church. Before other churches use it, ask Claude to translate them.') + '</p>' +
+      '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="langs">' + T('Remind me in 3 days') + '</button></div></section>';
   }
   function wirePrompts() {
     var f = document.getElementById('selfie-file'); if (!f) return;
@@ -514,7 +538,7 @@ var Hub = (function () {
     enabled().forEach(function (m) { if (m.todos) (m.todos(user) || []).forEach(function (t) { t.mod = m; todos.push(t); }); });
     todos = todos.filter(function (t) { return t.priority; }).concat(todos.filter(function (t) { return !t.priority; }));
     var hour = new Date().getHours(), hello = T(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening');
-    return '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' +
+    return langsPrompt() + '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' +
       '<section class="block"><h2>' + T('To do') + '</h2>' + (todos.length ? '<ul class="todo">' + todos.slice(0, 8).map(function (t) {
         return '<li><a href="' + esc(t.href) + '"><span class="dot" style="--c:' + t.mod.tint + '"></span><span class="grow">' + esc(t.text) + '</span><span class="tag" style="--c:' + t.mod.tint + '">' + esc(T(t.tag || t.mod.name)) + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="empty">' + T('Nothing needs you right now.') + '</p>') + '</section>' +

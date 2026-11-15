@@ -28,6 +28,18 @@ module.exports = async function (ctx) {
   check((await s.text()).includes('Kontak en besonderhede') && (await s.text()).includes('Toestemming'), 'my details in Afrikaans');
   await s.page.selectOption('.side-lang .lang-sel', 'en'); await s.page.waitForTimeout(80);
   check((await s.page.textContent('.side nav')).includes('People'), 'back to English');
+  // Sesotho: South African or Lesotho spelling
+  await s.page.selectOption('.side-lang .lang-sel', 'st'); await s.page.waitForSelector('#modal [data-act="hub:sesotho"]');
+  check((await s.page.$$('#modal [data-act="hub:sesotho"]')).length === 2, 'choosing Sesotho asks which spelling (South Africa or Lesotho)');
+  await s.page.click('#modal [data-l="st-LS"]'); await s.page.waitForFunction(() => document.documentElement.lang === 'st-LS');
+  check(await s.page.evaluate(() => I18n.t('Groups') === 'Lihlopha' && I18n.t('People') === 'Batho'), 'Lesotho spelling: Lihlopha');
+  check((await s.page.inputValue('.side-lang .lang-sel')) === 'st', '…and the list shows Sesotho');
+  await s.page.reload(); await s.page.waitForSelector('.app'); await s.page.waitForFunction(() => document.documentElement.lang === 'st-LS');
+  check(await s.page.evaluate(() => I18n.t('Groups') === 'Lihlopha'), 'the Lesotho spelling is remembered on this device');
+  await s.page.selectOption('.side-lang .lang-sel', 'en'); await s.page.waitForTimeout(80);
+  await s.page.selectOption('.side-lang .lang-sel', 'st'); await s.page.click('#modal [data-l="st"]'); await s.page.waitForFunction(() => document.documentElement.lang === 'st');
+  check(await s.page.evaluate(() => I18n.t('Groups') === 'Dihlopha'), 'South African spelling: Dihlopha');
+  await s.page.selectOption('.side-lang .lang-sel', 'en'); await s.page.waitForTimeout(80);
   await finish(s);
 
   console.log('Translations (suggesting and checking better wording):');

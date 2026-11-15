@@ -34,7 +34,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
 | Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
 | Settings, countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
-| Language engine, 19 more languages (Sesotho kept up to date; the other 18 before a release) | `js/i18n.js`, `js/lang/<code>.js` | – | `tests/i18n.test.js` |
+| Language engine, 19 more languages (Sesotho kept up to date; the other 18 before a release); Sesotho as written in Lesotho, made from `st.js` | `js/i18n.js`, `js/lang/<code>.js`, `js/sesotho.js` | – | `tests/i18n.test.js`, `sesotho.test.js` |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
 | Demo data | `js/sample.js` | – | |
 
@@ -58,7 +58,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part

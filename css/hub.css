@@ -951,3 +951,7 @@ details.lib-more[open] > summary { margin-bottom: 12px; }
   text-transform: uppercase; letter-spacing: .03em; box-shadow: 0 1px 1px rgba(29,27,25,.08); }
 .msg-chat .msg-read { font-size: 12.5px; }
 html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366 22%, var(--surface)); }
+
+/* Choosing between a few options in a window (e.g. which Sesotho spelling) */
+.choices { display: grid; gap: 10px; }
+.btn.choice { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; padding: 12px 14px; height: auto; white-space: normal; }

@@ -7,6 +7,7 @@
  *   todos(user)    → [{ text, href, tag }]       stat(user)   → short text on the Home card (optional)
  *   actions        → { name: function (el, ev) } called for clicks on [data-act="id:name"]
  *   badge(user)    → a number shown on its menu entry and phone tab, e.g. unread messages (optional; 0 = none)
+ *   also()         → true for someone else who may open it besides roles/perm, e.g. the Rector (optional)
  *   inGroups       → true for the kinds of group (Care Groups, Midweek Groups, Leadership): not in the menu or on Home
  *                    themselves but under one "Groups" entry (js/mod-groups.js), as tabs at the top of their pages
  */
@@ -36,16 +37,32 @@ var Hub = (function () {
   /** Someone's app access as the church says it: once a Senior Pastor is chosen, the other Pastors are Assistant Pastors. */
   function personRole(p) {
     var r = (p && p.appRole) || 'member';
+    if (r === 'member' && Msg.partnerLevel(p)) return partnerAccess();   // Church Partners on Basic access: Church Partner access
     if (r !== 'pastor' || !seniorId()) return roleLabel(r);
     return T(isSenior(p) ? 'Senior Pastor' : 'Assistant Pastor');
   }
   /** The signed-in person's own label (or the role being viewed with "View as"). */
-  function myLabel() { return Store.preview() || !user ? roleLabel(myRole()) : personRole(Store.get('people', user.id) || user); }
-  /** The role the screens follow: normally the person's own; while an Administrator uses "View as", the role being viewed. */
-  function myRole() { return Store.preview() || (user && user.appRole) || 'member'; }
+  function myLabel() { return Store.preview() || !user ? viewLabel(Store.preview() || myRole()) : personRole(Store.get('people', user.id) || user); }
+  /** The role the screens follow: normally the person's own; while an Administrator uses "View as", the role being viewed
+   *  ("View as" an attendee: Basic access, not a Church Partner). */
+  function myRole() { var v = Store.preview(); return v === 'attendee' ? 'member' : v || (user && user.appRole) || 'member'; }
+  /** "Church Partner access" in the church's own words (e.g. "Parishioner access"). */
+  function partnerAccess() {
+    var w = typeof Wording !== 'undefined' ? (Wording.words(Store.settings() || {}).partner || [])[0] : '';
+    return T('{partner} access', { partner: w || T('Church Partner') });
+  }
+  /** An attendee: Basic access, but not a Church Partner or on the staff (by their category, so it follows automatically
+   *  when someone becomes a Church Partner). They see and do only what Settings → Attendees allows (attendeeCan). */
+  function attendee() {
+    if (!user || myRole() !== 'member') return false;
+    var v = Store.preview(); if (v) return v === 'attendee';
+    return !Msg.partnerLevel(Store.get('people', user.id) || user);
+  }
+  /** May an attendee do this ('names', 'directory', 'write', 'reply')? Everyone else: yes. */
+  function attendeeCan(x) { return !attendee() || Msg.attendeeCan(Store.settings()).indexOf(x) >= 0; }
   /** Really an Administrator (also while viewing as someone else), so "View as" is offered. */
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
-  var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
+  var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member', 'attendee'], switching = null;   // carer: a Member who leads a care group; attendee: Basic access, not a Church Partner
   /** Really the Senior Pastor (Rector), also while viewing as someone else: they may use "View as" for the roles below theirs. */
   function realRector() {
     if (!user) return false;
@@ -61,8 +78,8 @@ var Hub = (function () {
     if (viewHome() === 'admin') return T('Back to Administrator');
     return T('Back to {role}', { role: personRole(Object.assign({}, Store.get('people', user.id) || user, { appRole: 'pastor', active: true })) });
   }
-  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
-  function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
+  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : r === 'member' ? partnerAccess() : r === 'attendee' ? T('Attendee') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
+  function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(Store.preview() || myRole()); }
   /** What Pastors can do (Settings → What Pastors can do): each tick, the permissions it adds. The database rules check the same
    *  ticks (may('…') in firestore.rules), copied onto each Pastor's access-list entry. */
   var TX = function (x) { return x; };   // a text kept in a list, translated where it is shown (the language test checks it)
@@ -351,7 +368,7 @@ var Hub = (function () {
     if (id === 'library' || id === 'archive') return on.library === true || on.archive === true;
     return m && m.optIn ? on[id] === true : on[id] !== false;
   }
-  function opens(m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); }
+  function opens(m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm)) || (m.also && m.also())) && (!m.show || m.show()); }
   function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
@@ -1077,5 +1094,5 @@ var Hub = (function () {
   return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     menu: menu, esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
-    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
+    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

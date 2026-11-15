@@ -75,7 +75,8 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
   (a Firebase Cloud Function on the Blaze plan, or the GitHub robot with a service-account secret). Ask permission
   kindly after sign-in; a switch on Me to turn them off.
 - ⬜ Email (and later SMS) for people who can't sign in yet or haven't opened a message after a day – consent-aware
-- ⬜ Replies beyond the Office: members reply to ordinary messages, or a care group talks together (decide which first); Office staff can already reply directly to a member who writes to the Office
+- ⬜ A care group (or other group) talking together, as on WhatsApp – private replies to the sender are done (0.72.0)
+- ⬜ Let Administrators publish documents from the Archive to the membership application for the Rector too (they can already write, link or attach what it takes to become a Church Partner)
 - ⬜ Decide how long messages are kept (e.g. 2 years) and add them to Privacy → Retention
 
 ## Phase 6 – Member app and extras

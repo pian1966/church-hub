@@ -72,16 +72,41 @@
     ['services', TX('Church Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
     ['application', TX('Membership application'), TX('Declaration, documents to read, loyalty'), 'features', 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5', 'partner partnership membership member application form declaration constitution statement of faith denomination affiliation loyalty links documents'],
     ['access', TX('Who can see what'), TX('What each access level can see'), 'access', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'see contact details directory care groups consent roles access level basic church partner roster children'],
+    ['attendees', TX('Attendees'), TX('What people who aren’t Church Partners can do'), 'access', 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 8v6M16 11h6', 'attendee attendees attender visitor newcomer basic access church partner names directory reply write messages office'],
     ['pastors', TX('What Pastors can do'), TX('Extra abilities for Pastors'), 'access', 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', 'pastor senior rector assistant minister abilities permissions'],
     ['emails', TX('Email templates'), TX('Birthday, anniversary and welcome emails'), 'comms', 'M3 5h18v14H3zM3 6l9 7 9-7', 'email emails template birthday anniversary welcome newcomer gmail signed sign off']
   ];
-  function sectionOf(id) { return SECTIONS.filter(function (x) { return x[0] === id; })[0] || SECTIONS[0]; }
+  /** The Senior Pastor (Rector) without the "settings" tick: only what attendees may do and the membership application. */
+  var RECTOR_SECTIONS = ['attendees', 'application'];
+  function limited() { return !H.can('*') && !H.can('settings.manage'); }
+  function shown() { return limited() ? SECTIONS.filter(function (x) { return RECTOR_SECTIONS.indexOf(x[0]) >= 0; }) : SECTIONS; }
+  function sectionOf(id) { var all = shown(); return all.filter(function (x) { return x[0] === id; })[0] || all[0]; }
+  /** Settings → Attendees: what people on Basic access who aren't Church Partners (or staff) may see and do (settings.attendeeCan). */
+  var ATTENDEE_ROWS = [
+    ['names', TX('See the names of Church Partners'), TX('Names only, on the People page – no photos, phone numbers or addresses.')],
+    ['directory', TX('See the church directory'), TX('As Church Partners see it: photos and the contact details people agreed to share.')],
+    ['write', TX('Write to the Office, the ministers and their Midweek Group leaders'), TX('A message to one of them. They can also reply to a minister.')],
+    ['reply', TX('Reply to any message sent to them'), TX('Otherwise they only read the messages the church sends them.')]
+  ];
+  function renderAttendees(st) {
+    var on = Msg.attendeeCan(st), ppl = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (p.appRole || 'member') === 'member' && !!p.email; });
+    var att = ppl.filter(function (p) { return !Msg.partnerLevel(p); }).length, par = ppl.length - att;
+    return '<section class="panel" id="st-att" data-noauto><h2>' + T('Attendees') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + esc(T('People on Basic access who aren’t Church Partners or staff – usually people who come to church and have the app. Church Partners on Basic access get {access} automatically: they see the church directory and can reply to messages.', { access: H.partnerAccess() })) + '</p>' +
+      (S.find('people', function () { return true; }).some(function (p) { return p.appRole; }) ? '<p class="hint">' + esc(T('Now: {a} attendees and {p} Church Partners on Basic access who can sign in.', { a: att, p: par })) + '</p>' : '') +
+      '<div class="set-rows">' + ATTENDEE_ROWS.map(function (r) {
+        return '<label class="set-row"><span class="set-l"><b>' + esc(T(r[1])) + '</b><small>' + esc(T(r[2])) + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" class="st-att" value="' + r[0] + '"' + (on.indexOf(r[0]) >= 0 ? ' checked' : '') + ' aria-label="' + esc(T(r[1])) + '"></span></label>';
+      }).join('') + '</div>' +
+      '<p class="hint">' + T('Everyone always sees their own details, the rosters they are on and the messages sent to them.') + '</p>' +
+      '<button class="btn save" data-act="settings:attendees">' + T('Save') + '</button></section>';
+  }
   /** The list of topics: grouped, with a search box that narrows it as you type (Enter opens the first one). */
   function setNav(a) {
     return '<nav class="set-nav" aria-label="' + esc(T('Settings')) + '"><label class="set-q"><span class="sr">' + T('Search settings') + '</span>' + H.icon('M11 18a7 7 0 1 0 0-14 7 7 0 0 0 0 14zM20 20l-4-4', 16) +
       '<input id="set-q" type="search" autocomplete="off" placeholder="' + esc(T('Search settings')) + '"></label>' +
       GROUPS.map(function (g) {
-        return '<div class="set-grp"><p class="set-gl">' + esc(T(g[1])) + '</p>' + SECTIONS.filter(function (x) { return x[3] === g[0]; }).map(function (x) {
+        var mine = shown().filter(function (x) { return x[3] === g[0]; }); if (!mine.length) return '';
+        return '<div class="set-grp"><p class="set-gl">' + esc(T(g[1])) + '</p>' + mine.map(function (x) {
           var k = [x[1], x[2], T(x[1]), T(x[2]), x[5]].join(' ').toLowerCase();
           return '<a href="#/settings/' + x[0] + '" class="set-link' + (x[0] === a ? ' on' : '') + '"' + (x[0] === a ? ' aria-current="page"' : '') + ' data-k="' + esc(k) + '">' + H.icon(x[4], 18) + '<span>' + esc(T(x[1])) + '</span></a>';
         }).join('') + '</div>';
@@ -222,6 +247,7 @@
     else if (a === 'colours') body = renderTheme(st);
     else if (a === 'apps') body = renderApps(st);
     else if (a === 'pastors') body = renderPastorCan(st);
+    else if (a === 'attendees') body = renderAttendees(st);
     else if (a === 'application') body = window.PeopleParts && PeopleParts.formSettings ? PeopleParts.formSettings() : '';
     else if (a === 'access') {
       var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
@@ -344,7 +370,8 @@
     var html = '<section class="panel" id="access-kinds"><h2>' + T('What each kind of access can do') + '</h2>' +
       '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th><th>' + T('Can') + '</th><th class="c">' + T('People') + '</th></tr></thead><tbody>' +
       ACCESS.map(function (r) { return '<tr><td><b>' + esc(H.roleLabel(r[0])) + '</b></td><td>' + esc(T(r[1])) + '</td><td class="c">' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>'; }).join('') +
-      '</tbody></table></div><p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p></section>';
+      '</tbody></table></div><p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p>' +
+      '<p class="hint">' + esc(T('Church Partners on Basic access get {access} automatically. Others on Basic access are attendees:', { access: H.partnerAccess() })) + ' <a href="#/settings/attendees">' + T('what attendees can do') + '</a></p></section>';
     if (!P) return html;
     // 2. Contact details of people in the church directory
     html += '<div data-autoscope>' +   // both panels below save together, by themselves
@@ -501,6 +528,7 @@
 
   H.register({
     id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'], perm: 'settings.manage',
+    also: function () { return H.isRector(); },   // the Senior Pastor (Rector): Attendees and the membership application
     todos: function (u) {
       return dailyEmailTodos();
     },
@@ -509,7 +537,7 @@
         setTimeout(function () { showSendDialog(decodeURIComponent(parts[1])); }, 50);
         return render(['emails']);
       }
-      return H.can('settings.manage') ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>';
+      return H.can('settings.manage') || H.isRector() ? render(parts) : '<p class="empty">' + T('Only Administrators can change settings.') + '</p>';
     },
     after: function () {
       var on = document.querySelector('.set-link.on');   // phones: the topic strip shows the open topic
@@ -632,6 +660,12 @@
         } else upd.seniorCan = [];
         S.setSettings(upd, say);
         S.syncPastors(); H.render(); H.toast(T('Saved'));
+      },
+      attendees: function () {
+        if (limited() && !H.isRector()) return;
+        var on = [].map.call(document.querySelectorAll('.st-att:checked'), function (c) { return c.value; });
+        S.setAttendeeCan(on, 'What attendees may do: ' + (on.join(', ') || 'nothing beyond their own page and messages'));
+        H.render(); H.toast(T('Saved'));
       },
       ministerroles: function () {
         if (!H.can('*') && !H.can('settings.manage')) return;

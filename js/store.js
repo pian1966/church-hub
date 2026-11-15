@@ -199,6 +199,25 @@ var Store = (function () {
     if (auditText) audit(auditText, 'settings');
     save(); changed();
   }
+  /** Settings → Attendees: what people on Basic access who aren't Church Partners may do (Administrators and the Rector). */
+  function setAttendeeCan(list, auditText) {
+    if (blocked()) return;
+    db.settings.attendeeCan = list.slice();
+    if (LIVE) Live.patch('settings/church', { attendeeCan: list.slice() });
+    if (auditText) audit(auditText, 'settings');
+    save(); changed();
+  }
+  /** The ministers (Pastors) everyone may write to: [{ id, name }]. Live, kept in Settings by Administrators (settings.ministers),
+   *  as other people can't read who is a Pastor; in the demo, from the people. */
+  function ministers() {
+    if (LIVE) return ((db.settings || {}).ministers || []).slice();
+    return pastorsNow();
+  }
+  function pastorsNow() {
+    return all('people').filter(function (p) { return p.appRole === 'pastor' && p.active !== false && !p.binnedAt && !p.mergedInto; })
+      .map(function (p) { return { id: p.id, name: ((p.preferredName || p.firstName || '') + ' ' + (p.lastName || '')).trim() }; })
+      .sort(function (a, b) { return a.name < b.name ? -1 : a.name > b.name ? 1 : 0; });
+  }
   function localUpsert(collection, record) {
     var records = all(collection), index = records.findIndex(function (x) { return x.id === record.id; });
     if (index >= 0) records[index] = record; else records.push(record);
@@ -331,7 +350,7 @@ var Store = (function () {
     /** What the database holds for one document, as far as we know (our own unconfirmed writes count). */
     function known(path) {
       if (path in local) return local[path];
-      var s = path.split('/'), from = { people: ['people'], details: ['details', 'detailsMe'], medical: ['medical'], directory: ['directory'] }[s[0]] || [s[0]];
+      var s = path.split('/'), from = { people: ['people'], details: ['details', 'detailsMe'], medical: ['medical'], directory: ['directory'], names: ['names'] }[s[0]] || [s[0]];
       var m = merged.apply(null, from); return m[s[1]] === undefined ? null : m[s[1]];
     }
     function role() { return session ? previewRole || session.role : ''; }
@@ -563,7 +582,13 @@ var Store = (function () {
       add('settings', doc('settings/church'));
       if (is('admin') && !previewRole) add('brochure', doc('brochures/church'));
       add('leaveConfig', doc('leave/config'));
-      add('directory', coll('directory'));
+      // The church directory; attendees (Basic access, not Church Partners) only when Settings → Attendees lets them, and
+      // otherwise at most Church Partners' names (names). The rules decide for a real attendee (what they may not read
+      // stays empty); "View as" an attendee follows the settings already loaded.
+      // Basic access: asked for once their own record and the settings are known (Church Partner or attendee) – see extras()
+      var seenSt = lastSettings || {}, att = r === 'attendee', attCan = window.Msg ? Msg.attendeeCan(seenSt) : ['names'];
+      if (r !== 'member' && (!att || attCan.indexOf('directory') >= 0)) add('directory', coll('directory'));
+      if (r === 'admin' || r === 'pastor' || (att && (attCan.indexOf('names') >= 0 || attCan.indexOf('directory') >= 0))) add('names', coll('names'));
       if (is('admin')) add('customGroups', coll('customGroups'));
       else {
         add('customGroupsChurch', coll('customGroups').where('visibility', '==', 'church'));
@@ -638,7 +663,9 @@ var Store = (function () {
       return p;
     }
 
+    var lastSettings = null;   // the church's settings as last loaded (for "View as" an attendee)
     function subscribe() {
+      lastSettings = raw.settings && raw.settings.church ? copy(raw.settings.church) : lastSettings;
       db = blank(); raw = {}; ready = false; local = {};
       var sources = plan(); pending = sources.length;
       stats.start = Date.now(); stats.loaded = 0;
@@ -650,13 +677,14 @@ var Store = (function () {
           else if (snap.exists) m[snap.id] = snap.data();
           raw[s.key] = m; stats.snaps++; stats.sizes[s.key] = Object.keys(m).length;
           if (s.key === 'careGroups' && !is('admin', 'pastor')) shares(Object.keys(m));
-          if (s.key === 'settings' || s.key.indexOf('leaderBodies') === 0) extras();
+          if (s.key === 'settings' || s.key === 'people' || s.key.indexOf('leaderBodies') === 0) extras();
           if (s.key === 'settings') { careAll(m.church); if (!is('admin', 'pastor') && raw.careGroups) shares(Object.keys(raw.careGroups)); }
           if (!snap.metadata.hasPendingWrites) forget(s.coll);
           if (first) { first = false; if (--pending === 0) whenLoaded(); }
           else if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
         }, function (e) {
-          console.error('Could not load ' + s.key, e);
+          // An attendee isn't allowed the church directory (or names) unless Settings → Attendees says so: expected, not an error
+          if (s.key === 'directory' || s.key === 'names') console.warn('Not loaded (not allowed): ' + s.key); else console.error('Could not load ' + s.key, e);
           raw[s.key] = raw[s.key] || {};
           if (first) { first = false; if (--pending === 0) whenLoaded(); }
         }));
@@ -729,6 +757,13 @@ var Store = (function () {
           if (is('pastor')) want['archive:office'] = c('archive').where('access', '==', 'office');
           myBodies().forEach(function (g) { want['archive:g:' + g] = c('archive').where('bodyId', '==', g); });
         }
+      }
+      // Basic access: Church Partners (and staff) see the church directory; attendees what Settings → Attendees allows
+      var mine = (raw.people || {})[me];
+      if (role() === 'member' && me && mine && raw.settings) {
+        var partner = window.Msg ? Msg.partnerLevel(mine) : true, ac = window.Msg ? Msg.attendeeCan(st) : [];
+        if (partner || ac.indexOf('directory') >= 0) want.directory = c('directory');
+        if (partner || ac.indexOf('names') >= 0 || ac.indexOf('directory') >= 0) want.names = c('names');
       }
       if (!is('admin') && !previewRole && me && (st.librarianIds || []).indexOf(me) >= 0) {
         want['loans:all'] = c('loans');
@@ -839,7 +874,19 @@ var Store = (function () {
         if (is('admin', 'pastor')) setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
         else syncDirectory(session.personId);
       }
+      // Church Partners' names for attendees (names/…): written with each directory entry; filled in once for a church
+      // that had a directory before (Administrators and Pastors)
+      if (!previewRole && !offlineNow() && is('admin', 'pastor') && !careDir && Object.keys(raw.directory || {}).length && !Object.keys(raw.names || {}).length)
+        setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
+      if (!previewRole && !offlineNow() && is('admin')) setTimeout(function () { if (ready && session && !previewRole && !offlineNow() && is('admin')) syncMinisters(); }, 2000);
       onState({ stage: 'ready', person: meP, email: session.email, role: role() });
+    }
+    /** Administrators: the ministers' names in Settings (settings.ministers), so everyone may write to them. */
+    function syncMinisters() {
+      if (!db.settings || ((raw.settings || {}).church || {}).brochures) return;   // older brochure wording is moved first
+      var now = pastorsNow(), was = (db.settings || {}).ministers || [];
+      if (JSON.stringify(now) === JSON.stringify(was)) return;
+      db.settings.ministers = now; patch('settings/church', { ministers: now });
     }
 
     /* ---------- putting the pieces back together ---------- */
@@ -860,12 +907,18 @@ var Store = (function () {
         // What they agreed to share (Contact details), for roles that can't read their private details
         ['shareAddress', 'shareSpouse'].forEach(function (k) { var v = (shared[id] || {})[k] || (dir[id] || {})[k]; if (v) p[k] = v; });
         p.id = id;
-        if (id === session.personId) p.appRole = role();     // the access list is the source of truth (or the role being viewed as)
+        if (id === session.personId) p.appRole = role() === 'attendee' ? 'member' : role();     // the access list is the source of truth (or the role being viewed as)
         return p;
       });
       Object.keys(dir).forEach(function (id) {                     // members: other people come from the directory
         if (cards[id]) return;
         people.push(Object.assign({ id: id, familyId: '', familyRole: 'adult', category: '', email: '', active: true, inDirectory: true, appRole: 'member', keyDates: [] }, copy(dir[id])));
+      });
+      var names = raw.names || {};
+      Object.keys(names).forEach(function (id) {                   // attendees: only Church Partners' names
+        if (cards[id] || dir[id]) return;
+        var n = names[id] || {};
+        people.push({ id: id, firstName: n.firstName || '', lastName: n.lastName || '', preferredName: n.preferredName || '', familyId: '', familyRole: 'adult', category: 'Church Partner', email: '', active: true, nameOnly: true, appRole: 'member', keyDates: [] });
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
@@ -936,6 +989,7 @@ var Store = (function () {
       if (!same(a.med, was.med) && is('kids')) { if (a.med) write('medical/' + p.id, a.med); else del('medical/' + p.id); }
       syncDirectory(p.id);
       if (is('admin') || may('access')) syncRole(p, was.card);
+      if (is('admin') && !previewRole && ((was.card || {}).appRole === 'pastor') !== (p.appRole === 'pastor' && p.active !== false)) syncMinisters();
     }
     /** Keep the members' directory in step with consent: name and phone only, adults who agreed. */
     /** Contact details (consent "Church directory", shown as Contact details): what other people may see of someone who agreed.
@@ -961,6 +1015,9 @@ var Store = (function () {
         if (careForMembers(db.settings)) { var cg = careOf(pid); if (cg.length) want.care = cg; }
       }
       if (!same(want, known('directory/' + pid))) { if (want) write('directory/' + pid, want); else del('directory/' + pid); }
+      // Names only, for attendees: Church Partners (and staff) in the directory
+      var nm = ok && (p.category === 'Church Partner' || p.category === 'Staff') ? { firstName: p.firstName || '', lastName: p.lastName || '', preferredName: p.preferredName || '' } : null;
+      if (!same(nm, known('names/' + pid))) { if (nm) write('names/' + pid, nm); else del('names/' + pid); }
       var lead = {};
       if (ok && addr && (allows('rosters', 'address') || allows('kids', 'address'))) lead.shareAddress = addr;
       if (ok && spouse && (allows('rosters', 'spouse') || allows('kids', 'spouse'))) lead.shareSpouse = spouse;
@@ -1144,6 +1201,9 @@ var Store = (function () {
     function coverSet(id, data) { return data ? write('covers/' + id, { data: data, updatedAt: now() }) : del('covers/' + id); }
     function policyGet() { return doc('libraryPolicy/policy').get().then(function (s) { return s.exists ? s.data() : null; }); }
     function policySet(p) { return p ? write('libraryPolicy/policy', p) : del('libraryPolicy/policy'); }
+    /** What it takes to become a Church Partner (partnerInfo/requirements): fetched only when shown. */
+    function reqGet() { return doc('partnerInfo/requirements').get().then(function (s) { return s.exists ? s.data() : null; }); }
+    function reqSet(p) { return p ? write('partnerInfo/requirements', p) : del('partnerInfo/requirements'); }
     function auditEntry(entry) {
       var e = clean(entry); e.byEmail = session ? session.email : ''; e.ts = fb.firestore.FieldValue.serverTimestamp();
       fs.collection('audit').doc(entry.id).set(e).catch(function (x) { console.error('audit', x); });
@@ -1244,7 +1304,7 @@ var Store = (function () {
     return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -1272,7 +1332,7 @@ var Store = (function () {
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
   function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
-    settings: settings, setSettings: setSettings, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
+    settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,
@@ -1383,6 +1443,22 @@ var Store = (function () {
       })());
       put('books', b, auditText);
       return done;
+    },
+    /** What it takes to become a Church Partner, for everyone to read: { text, link, name, type, data } or null.
+     *  Written by Administrators, Pastors with the "settings" tick and the Senior Pastor (Rector). */
+    partnerRequirements: function () {
+      if (LIVE) return Live.reqGet().catch(function () { return null; });
+      var x = db && db.partnerReq ? copy(db.partnerReq) : null;
+      if (x && x.demoFile) { x.data = demoFiles.partnerReq || ''; delete x.demoFile; if (!x.data) { delete x.name; delete x.type; } }
+      return Promise.resolve(x);
+    },
+    setPartnerRequirements: function (p, auditText) {
+      if (blocked()) return Promise.reject(new Error('view only'));
+      if (p) { p = copy(p); p.updatedAt = now(); p.by = user ? ((user.preferredName || user.firstName) + ' ' + user.lastName) : ''; }
+      if (auditText) audit(auditText, 'partnerInfo/requirements');
+      if (LIVE) return Live.reqSet(p);
+      if (p && p.data && p.data.length > 400000) { demoFiles.partnerReq = p.data; p = copy(p); p.data = ''; p.demoFile = true; } else delete demoFiles.partnerReq;
+      db.partnerReq = p; save(); changed(); return Promise.resolve();
     },
     /** The library's policy for everyone to read: { text, name, type, data } (an attached file as base64), or null. */
     libraryPolicy: function () {

@@ -226,7 +226,7 @@ module.exports = async function (ctx) {
   check(checks === 1, 'opening About again checks for updates again, straight away');
   await s.page.unroute(newer);
   await s.go('me'); check((await s.text()).includes('22 Nov 2008'), 'Me shows their wedding anniversary');
-  check((await s.text()).includes('App access') && (await s.text()).includes('Basic access'), 'Me shows their access level (App access)');
+  check((await s.text()).includes('App access') && (await s.text()).includes('Church Partner access'), 'Me shows their access level (App access): a Church Partner on Basic access has Church Partner access');
   await s.page.click('[data-act="people:askchange"]'); await s.page.click('[data-act="people:sendchange"]');
   check(await s.page.isVisible('#dc-err'), 'sending with nothing changed asks them to fill something in');
   await s.page.fill('#dc-wed', '2008-11-29'); await s.page.fill('#dc-sp', 'Clare Jacobs'); await s.page.fill('#dc-ch', 'Sam Jacobs, 3 May 2015\nAmy Jacobs, 9 Jan 2018');

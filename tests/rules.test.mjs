@@ -18,16 +18,24 @@ const env = await initializeTestEnvironment({
 
 const USERS = {
   admin: ['linda@example.com', 'p01'], pastor: ['thandi@example.com', 'p02'], kids: ['grace@example.com', 'p04'],
-  rosters: ['sipho@example.com', 'p05'], member: ['tim@example.com', 'p14']
+  rosters: ['sipho@example.com', 'p05'], member: ['tim@example.com', 'p14'], attendee: ['hope@example.com', 'p16']
 };
 const MED = 'Children’s medical notes';
 
 await env.withSecurityRulesDisabled(async ctx => {
   const db = ctx.firestore(), set = (p, d) => db.doc(p).set(d);
-  for (const [role, [email, pid]] of Object.entries(USERS)) await set('roles/' + email, { role, personId: pid });
+  for (const [role, [email, pid]] of Object.entries(USERS)) await set('roles/' + email, { role: role === 'attendee' ? 'member' : role, personId: pid });
   await set('settings/church', { churchName: 'Test church' });
   await set('leave/config', { types: [], autoApprove: ['UL'] });
   for (const pid of ['p01', 'p02', 'p04', 'p05', 'p14', 'p15']) await set('people/' + pid, { firstName: 'A', lastName: pid, familyRole: 'adult', email: pid + '@example.com', mobile: '082', familyId: 'f2' });
+  // Tim and Clare are Church Partners (Church Partner access); Hope only comes to church (an attendee); Thandi is a Pastor
+  for (const pid of ['p14', 'p15']) await db.doc('people/' + pid).update({ category: 'Church Partner' });
+  await db.doc('people/p02').update({ appRole: 'pastor' });
+  await set('people/p16', { firstName: 'Hope', lastName: 'Visitor', familyRole: 'adult', category: 'Attender', email: 'hope@example.com', appRole: 'member' });
+  await set('names/p15', { firstName: 'Clare', lastName: 'Jacobs', preferredName: '' });
+  await set('careGroups/lg2', { type: 'life', name: 'Thursday study', leaderIds: ['p15'], memberIds: ['p15', 'p16'], names: { p15: 'Clare' } });
+  await set('messages/ms4', { kind: 'partners', groupId: '', audience: 'Church Partners', title: 'Sunday', body: 'Bring a friend', fromId: 'p15', fromName: 'Clare', to: ['p14', 'p16'], deliveredBy: ['p15'], readBy: ['p15'] });
+  await set('messages/ms5', { kind: 'people', groupId: '', audience: '', title: '', body: 'Welcome', fromId: 'p02', fromName: 'Thandi', to: ['p16'], deliveredBy: ['p02'], readBy: ['p02'] });
   await set('people/p12', { firstName: 'Child', lastName: 'One', familyRole: 'child', familyId: 'f1' });
   await set('details/p12', { birthDate: '2019-01-01', familyRole: 'child' });
   await set('details/p15', { birthDate: '1980-01-01', familyRole: 'adult' });
@@ -110,7 +118,7 @@ await env.withSecurityRulesDisabled(async ctx => {
 });
 
 const as = role => { const [email, pid] = USERS[role]; return env.authenticatedContext('uid-' + role, { email, email_verified: true }).firestore(); };
-const db = { admin: as('admin'), pastor: as('pastor'), kids: as('kids'), rosters: as('rosters'), member: as('member') };
+const db = { admin: as('admin'), pastor: as('pastor'), kids: as('kids'), rosters: as('rosters'), member: as('member'), attendee: as('attendee') };
 const standardMember = env.authenticatedContext('uid-nomvula', { email: 'nomvula@example.com', email_verified: true }).firestore();
 const settingsPastor = env.authenticatedContext('uid-settings-pastor', { email: 'andile@example.com', email_verified: true }).firestore();
 const stranger = env.authenticatedContext('uid-x', { email: 'stranger@example.com', email_verified: true }).firestore();
@@ -937,6 +945,64 @@ await t('shared sign-in: Pastors with “access” give and change it for the sm
   await cannot(andile.doc('roles/manse@example.com').delete());
   await cannot(andile.doc('roles/four@example.com').set({ role: 'member', personId: 'p38', name: 'F', roles: ['member'], also: ['a', 'b', 'c', 'd'] }));
   await can(db.admin.doc('roles/manse@example.com').update({ also: ['p33'], name: 'Gus' }));
+});
+
+console.log('Attendees (Basic access, not Church Partners) and replies');
+await t('attendees: Church Partners’ names but not the directory, unless Settings allows', async () => {
+  await cannot(read(db.attendee, 'directory/p15')); await cannot(list(db.attendee.collection('directory')));
+  await cannot(read(db.attendee, 'photos/p15'));
+  await can(read(db.attendee, 'names/p15')); await can(list(db.attendee.collection('names')));
+  await can(read(db.member, 'directory/p15')); await can(read(db.member, 'names/p15'));   // Church Partner access
+  await can(read(db.attendee, 'people/p16'));   // their own details
+  await cannot(db.attendee.doc('names/p15').set({ firstName: 'X', lastName: 'Y', preferredName: '' }));
+  await can(db.admin.doc('names/p14').set({ firstName: 'Tim', lastName: 'Jacobs', preferredName: '' }));
+  await cannot(db.admin.doc('names/p14').set({ firstName: 'Tim', lastName: 'Jacobs', mobile: '082' }));   // names only
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: ['directory'] }));
+  await can(read(db.attendee, 'directory/p15')); await can(read(db.attendee, 'names/p15'));
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: [] }));
+  await cannot(read(db.attendee, 'names/p15')); await cannot(read(db.attendee, 'directory/p15'));
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: firebase.firestore.FieldValue.delete() }));
+});
+await t('attendees: write to the Office, a minister and their Midweek Group leader; reply to a minister', async () => {
+  const m = x => Object.assign({ groupId: '', audience: '', title: '', body: 'Hello', deliveredBy: ['p16'], readBy: ['p16'], fromId: 'p16', fromName: 'Hope' }, x);
+  await can(db.attendee.doc('messages/a1').set(m({ kind: 'office', to: [] })));
+  await can(db.attendee.doc('messages/a2').set(m({ kind: 'direct', to: ['p02'] })));                 // Thandi is a Pastor
+  await cannot(db.attendee.doc('messages/a3').set(m({ kind: 'direct', to: ['p14'] })));              // not a minister
+  await can(db.attendee.doc('messages/a4').set(m({ kind: 'direct', groupId: 'lg2', to: ['p15'] })));   // Clare leads her Midweek Group
+  await cannot(db.attendee.doc('messages/a5').set(m({ kind: 'direct', groupId: 'lg1', to: ['p14'] })));  // a group she isn't in
+  await cannot(db.attendee.doc('messages/a6').set(m({ kind: 'direct', groupId: 'lg2', to: ['p16'] })));  // not to herself
+  await can(db.attendee.doc('messages/a7').set(m({ kind: 'direct', replyTo: 'ms5', to: ['p02'] })));     // a reply to a minister
+  await cannot(db.attendee.doc('messages/a8').set(m({ kind: 'direct', replyTo: 'ms4', to: ['p15'] })));  // a reply to anyone else: only with "reply"
+  await cannot(db.attendee.doc('messages/a9').set(m({ kind: 'care', groupId: 'cg1', to: ['p15'] })));
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: ['reply'] }));
+  await can(db.attendee.doc('messages/a10').set(m({ kind: 'direct', replyTo: 'ms4', to: ['p15'] })));
+  await cannot(db.attendee.doc('messages/a11').set(m({ kind: 'office', to: [] })));                  // without "write": only receive
+  await cannot(db.attendee.doc('messages/a12').set(m({ kind: 'direct', to: ['p02'] })));
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: firebase.firestore.FieldValue.delete() }));
+});
+await t('replies: privately to the sender of a message that came to you', async () => {
+  const m = x => Object.assign({ groupId: '', audience: 'Clare', title: 'Re: Sunday', body: 'Thanks', deliveredBy: ['p14'], readBy: ['p14'], fromId: 'p14', fromName: 'Tim' }, x);
+  await can(db.member.doc('messages/r1').set(m({ kind: 'direct', replyTo: 'ms4', to: ['p15'] })));     // a Church Partner replies
+  await cannot(db.member.doc('messages/r2').set(m({ kind: 'direct', replyTo: 'ms4', to: ['p01'] })));  // only to the sender
+  await cannot(db.member.doc('messages/r3').set(m({ kind: 'direct', replyTo: 'ms5', to: ['p02'] })));  // a message that didn't come to him
+  await cannot(db.member.doc('messages/r4').set(m({ kind: 'direct', replyTo: 'nothere', to: ['p15'] })));
+  await cannot(db.member.doc('messages/r5').set(m({ kind: 'direct', replyTo: 'ms4', to: ['p15', 'p16'] })));   // one person only
+  await can(read(db.member, 'messages/r1')); await cannot(read(db.attendee, 'messages/r1'));   // others in the group don't see it
+});
+await t('what attendees may do: Administrators and the Senior Pastor set it; requirements to become a Church Partner', async () => {
+  await can(db.admin.doc('settings/church').update({ attendeeCan: ['names'] }));
+  await cannot(db.pastor.doc('settings/church').update({ attendeeCan: ['names', 'write'] }));
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ seniorPastorId: 'p02' }));
+  await can(db.pastor.doc('settings/church').update({ attendeeCan: ['names', 'write'] }));
+  await cannot(db.pastor.doc('settings/church').update({ attendeeCan: ['everything'] }));
+  await cannot(db.pastor.doc('settings/church').update({ churchName: 'Mine' }));
+  await can(db.pastor.doc('partnerInfo/requirements').set({ text: 'Be 18 or older', link: '', updatedAt: 'x', by: 'Thandi' }));
+  await cannot(db.member.doc('partnerInfo/requirements').set({ text: 'x' }));
+  await cannot(db.pastor.doc('partnerInfo/other').set({ text: 'x' }));
+  await cannot(db.pastor.doc('partnerInfo/requirements').set({ text: 'x', extra: 1 }));
+  await can(read(db.attendee, 'partnerInfo/requirements')); await cannot(read(stranger, 'partnerInfo/requirements'));
+  await can(db.admin.doc('partnerInfo/requirements').delete());
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ seniorPastorId: firebase.firestore.FieldValue.delete(), attendeeCan: firebase.firestore.FieldValue.delete() }));
 });
 
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });

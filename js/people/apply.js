@@ -62,8 +62,91 @@
       '<button class="btn small" data-act="people:appwithdraw">' + T('Withdraw') + '</button>';
     else if (a && a.status === 'declined') body = '<p><span class="tag grey">' + T('Not accepted for now') + '</span>' + (a.reply ? ' ' + esc(T('The church office says: “{text}”', { text: a.reply })) : '') + '</p>' +
       '<button class="btn small" data-act="people:appwithdraw">' + T('OK') + '</button>';
-    else body = '<p class="hint" style="margin-top:0">' + T('You can vote at church meetings, and lead or teach in the church.') + '</p><a class="btn primary" href="#/people/apply">' + T('Apply to become a Church Partner') + '</a>';
+    else {
+      loadReq();
+      var church = (S.settings() || {}).churchName || T('this church');
+      body = '<p style="margin-top:0">' + esc(T('Do you think of {church} as your home church? Then we’d love you to become a {partner}.', { church: church, partner: partnerWord() })) + '</p>' +
+        '<p class="hint">' + T('You can vote at church meetings, and lead or teach in the church.') + '</p>' + reqView() +
+        '<a class="btn primary" href="#/people/apply">' + T('Apply to become a Church Partner') + '</a>';
+    }
     return '<section class="panel" id="me-apply"><h2>' + T('Become a Church Partner') + '</h2>' + body + '</section>';
+  }
+
+  /* ---------- what it takes to become a Church Partner (partnerInfo/requirements) ---------- */
+  // Written (with simple formatting, js/richtext.js), linked (e.g. a Google Doc) or attached (a Word file or PDF, at most
+  // 600 KB) by Administrators, Pastors with the "settings" tick and the Senior Pastor (Rector). Shown on Me to people who
+  // aren't Church Partners yet, above "Apply". Not personal information: the church's own words.
+  var REQ_FILE_MAX = 600 * 1024, REQ_MAX = 20000;
+  var req, reqAsked = false, reqDraft = null;   // req: undefined until fetched, then null or { text, link, name, type, data }
+  function writesReq() { return H.can('*') || H.can('settings.manage') || H.isRector(); }
+  function loadReq() {
+    if (reqAsked) return; reqAsked = true;
+    S.partnerRequirements().then(function (p) { req = p && (p.text || p.data || p.link) ? p : null; H.render(); }, function () { req = null; });
+  }
+  function okLink(u) { return /^https?:\/\/\S+$/i.test(String(u || '').trim()); }
+  function fileOpenable(type) { return /^(application\/pdf|image\/)/.test(type || ''); }
+  function reqButtons(p) {
+    return (p.link && okLink(p.link) ? '<a class="btn small" href="' + esc(p.link) + '" target="_blank" rel="noopener noreferrer">' + T('Open the link') + '</a>' : '') +
+      (p.name && p.data ? '<button class="btn small" data-act="people:reqfile">' + esc(T('Download {name}', { name: p.name })) + '</button>' : '');
+  }
+  /** On Me: what becoming a Church Partner involves, folded until opened. */
+  function reqView() {
+    var p = req; if (!p) return '';
+    var btns = reqButtons(p);
+    return '<details class="sub me-req"' + (p.text ? '' : ' open') + '><summary>' + esc(T('What becoming a {partner} involves', { partner: partnerWord() })) + '</summary>' +
+      (p.text && window.RichText ? '<article class="lib-doc" data-own-words>' + RichText.html(p.text) + '</article>' : '') +
+      (btns ? '<div class="btns">' + btns + '</div>' : '') + '</details>';
+  }
+  /** Settings → Membership application: the requirements, and Edit. */
+  function reqPanel() {
+    loadReq();
+    var p = req, has = !!p;
+    return '<section class="panel" id="ap-req" data-noauto><h2>' + esc(T('What it takes to become a {partner}', { partner: partnerWord() })) + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('Shown on the Me page of everyone who isn’t a Church Partner yet, with the button to apply. Write it here, link to a Google Doc, or attach a Word file or PDF.') + '</p>' +
+      (req === undefined ? '<p class="muted">' + T('Loading…') + '</p>' : has ? (p.text && window.RichText ? '<article class="lib-doc" data-own-words>' + RichText.html(p.text) + '</article>' : '') +
+        (reqButtons(p) ? '<div class="btns">' + reqButtons(p) + '</div>' : '') + (p.by ? '<p class="hint">' + esc(T('Last changed by {name}', { name: p.by })) + '</p>' : '') : '<p class="muted">' + T('Nothing written yet.') + '</p>') +
+      '<div class="btns" style="margin-top:10px"><button class="btn small primary" data-act="people:reqedit">' + (has ? T('Edit') : T('Write the requirements')) + '</button></div></section>';
+  }
+  function fmtWords() { return { bar: T('Formatting'), b: T('Bold'), i: T('Italic'), u: T('Underline'), h: T('Heading'), ul: T('Bulleted list'), ol: T('Numbered list') }; }
+  function reqDialog() {
+    var p = req || {}; reqDraft = p.name && p.data ? { name: p.name, type: p.type, data: p.data } : null;
+    var title = T('What it takes to become a {partner}', { partner: partnerWord() });
+    H.modal(H.dialogHead(title, T('Everyone who signs in can read it.')) + '<div class="dlg-body">' +
+      '<div class="field"><label for="ap-req-t">' + T('Write or paste it here') + '</label>' + (window.RichText ? RichText.tools('ap-req-t', fmtWords(), ['b', 'i', 'h', 'ul', 'ol']) : '') +
+        '<textarea id="ap-req-t" rows="10" maxlength="' + REQ_MAX + '" data-own-words placeholder="' + esc(T('e.g. Be 18 or older, worship here regularly, come to a membership class…')) + '">' + esc(p.text || '') + '</textarea>' +
+        '<details class="sub"><summary>' + T('Preview') + '</summary><div id="ap-req-prev" class="lib-doc" data-own-words>' + (window.RichText ? RichText.html(p.text || '') : '') + '</div></details></div>' +
+      '<label class="field">' + T('Or a link to it (e.g. a Google Doc shared with everyone who has the link)') + '<input id="ap-req-l" type="url" maxlength="500" value="' + esc(p.link || '') + '" placeholder="https://…"></label>' +
+      '<div class="field"><span>' + T('Or attach a file (PDF, Word or a picture)') + '</span><div class="btns"><label class="btn small">' + T('Choose a file') +
+        '<input id="ap-req-f" type="file" accept=".pdf,.doc,.docx,.odt,.txt,image/*" hidden></label><span id="ap-req-n" class="muted small"></span>' +
+        '<button type="button" class="btn small ghost" id="ap-req-rm" data-act="people:reqnofile" hidden>' + T('Remove the file') + '</button></div></div>' +
+      '<p id="ap-req-err" class="note bad" hidden></p></div>' +
+      '<div class="dlg-foot">' + (req ? '<button class="btn ghost" data-act="people:reqdel">' + T('Remove') + '</button>' : '') +
+      '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:reqsave">' + T('Save') + '</button></div>', title);
+    showReqFile();
+    var box = document.getElementById('ap-req-t'), prev = document.getElementById('ap-req-prev');
+    if (box && prev && window.RichText) box.addEventListener('input', H.pause(function () { prev.innerHTML = RichText.html(box.value); }, 200));
+    var inp = document.getElementById('ap-req-f');
+    inp.addEventListener('change', function () {
+      var f = inp.files && inp.files[0]; inp.value = ''; if (!f) return;
+      var err = document.getElementById('ap-req-err'); err.hidden = true;
+      if (/^text\/plain$/.test(f.type) || /\.txt$/i.test(f.name)) { f.text().then(function (t) { document.getElementById('ap-req-t').value = String(t).slice(0, REQ_MAX); }); return; }
+      if (f.size > REQ_FILE_MAX) { err.textContent = T('The file is too big (at most 600 KB). Paste the words instead, or make the file smaller.'); err.hidden = false; return; }
+      var fr = new FileReader();
+      fr.onload = function () { var d = String(fr.result || ''); reqDraft = { name: f.name.slice(0, 120), type: (f.type || 'application/octet-stream').slice(0, 100), data: d.slice(d.indexOf(',') + 1) }; showReqFile(); };
+      fr.readAsDataURL(f);
+    });
+  }
+  function showReqFile() {
+    var n = document.getElementById('ap-req-n'), rm = document.getElementById('ap-req-rm');
+    if (n) n.textContent = reqDraft ? reqDraft.name : ''; if (rm) rm.hidden = !reqDraft;
+  }
+  function saveB64(name, type, b64) {
+    if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFileBase64 === 'function') { window.ChurchHubApp.saveFileBase64(name, type || 'application/octet-stream', b64); return; }
+    if (window.ChurchHubApp) { H.toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+    var bin = atob(b64), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+    var url = URL.createObjectURL(new Blob([bytes], { type: type || 'application/octet-stream' }));
+    if (fileOpenable(type) && window.open(url, '_blank', 'noopener')) { setTimeout(function () { URL.revokeObjectURL(url); }, 60000); return; }
+    var a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000);
   }
 
   /* ---------- the form ---------- */
@@ -432,6 +515,22 @@
     },
     appwithdraw: function () { var a = mine(); if (a) S.remove('partnerApps', a.id, a.status === 'waiting' ? 'Withdrew their partnership application' : ''); H.render(); },
     appdoc: function (el) { readApplicationDocument(el.dataset.id); },
+    reqfile: function () { if (req && req.data) saveB64(req.name, req.type, req.data); },
+    reqedit: function () { if (writesReq()) reqDialog(); },
+    reqnofile: function () { reqDraft = null; showReqFile(); },
+    reqsave: function () {
+      if (!writesReq()) return;
+      var text = document.getElementById('ap-req-t').value.replace(/\r\n?/g, '\n').trim().slice(0, REQ_MAX), link = document.getElementById('ap-req-l').value.trim(), e = document.getElementById('ap-req-err');
+      if (link && !okLink(link)) { e.textContent = T('The link should start with https://'); e.hidden = false; return; }
+      if (!text && !link && !reqDraft) { e.textContent = T('Write something, add a link or choose a file.'); e.hidden = false; return; }
+      var p = { text: text, link: link.slice(0, 500) }; if (reqDraft) { p.name = reqDraft.name; p.type = reqDraft.type; p.data = reqDraft.data; }
+      H.busy(T('Saving…'), function () { return S.setPartnerRequirements(p, req ? 'Changed what it takes to become a Church Partner' : 'Wrote what it takes to become a Church Partner'); })
+        .then(function () { req = p; H.closeModal(); H.render(); H.toast(T('Saved')); }, function (er) { console.error(er); H.toast(T('Couldn’t save it. Please try again.'), true); });
+    },
+    reqdel: function (el) {
+      if (!writesReq() || !H.confirmBtn(el, T('Remove') + '?')) return;
+      S.setPartnerRequirements(null, 'Removed what it takes to become a Church Partner').then(function () { req = null; H.closeModal(); H.render(); H.toast(T('Deleted')); });
+    },
     appaccept: function (el) {
       var a = S.get('partnerApps', el.dataset.id); if (!a || !canReview()) return;
       H.modal(H.dialogHead(T('Accept'), T('They become a Church Partner from this date, and agree to be in the church directory.')) + '<div class="dlg-body">' +
@@ -510,5 +609,5 @@
     }
   });
 
-  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, appFormHook: formHook, formSettings: function () { return H.can('*') ? declPanel() : ''; }, addBadges: addBadges, layoutChanged: layoutChanged, printBadges: printBadges, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
+  Object.assign(P, { invite: invite, inviteLine: inviteLine, invitePanel: invitePanel, appFormHook: formHook, formSettings: function () { return (writesReq() ? reqPanel() : '') + (H.can('*') ? declPanel() : ''); }, addBadges: addBadges, layoutChanged: layoutChanged, printBadges: printBadges, printOnly: printOnly, mayApply: mayApply, appsWaiting: waiting, applyMePanel: mePanel, renderApplyForm: renderForm, renderApps: renderApps, renderBadges: renderBadges, badgesWaiting: badgesWaiting, badgeLine: badgeLine, setBadge: setBadge, badgeSheets: badgeSheets, DECL: DECL });
 })(PeopleParts);

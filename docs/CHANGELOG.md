@@ -346,3 +346,11 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 
 - ✅ Messages look like a chat app (0.70.0): messages as bubbles (yours on the right in green), one grey tick when sent, two grey ticks when it has reached everyone, two blue ticks when everyone has read it; new messages marked with a green bar and a "{n} unread messages" note; "Read by" lists Read, Delivered and Not delivered yet; Delete moved into the ⋯ menu.
 - ✅ Languages (0.71.0): Sesotho is now kept up to date with every change, like English, Afrikaans, isiZulu and isiXhosa (its missing texts translated). The other 18 languages are translated in one go before release (`docs/RELEASE.md`); the language test counts what is waiting instead of failing (`RELEASE=1` makes it strict), the English stand-ins copied into those files were taken out, and Home reminds Administrators every 3 days how many texts are waiting.
+- ✅ Replies and Church Partner access (0.72.0): **Reply** on any message sends a private reply to its sender (Office staff
+  reply to Office messages the same way). Basic access now comes in two kinds, automatically from the person's category:
+  **Church Partner access** (Church Partners and staff: the directory, replies – as before) and **attendees** (everyone
+  else), who by default see only Church Partners' names, and write only to the Office, the ministers and their Midweek
+  Group leaders (and reply to a minister). **Settings → Attendees** (Administrators and the Senior Pastor) changes what
+  attendees may do: names, the directory, writing, replying. Me invites people who aren't Church Partners yet to become
+  one, with **what it takes** – written, linked (Google Doc) or attached (Word/PDF) under Settings → Membership
+  application by Administrators and the Rector. "View as" → Attendee. New database rules: **re-publish the rules.**

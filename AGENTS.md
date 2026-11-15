@@ -5,7 +5,7 @@ written for Claude but meant for every agent working on Church Hub. When this fi
 
 The rules people most often miss:
 - Every new piece of screen text goes through `T('…')`, with a line in `js/i18n/<area>.js` (English, Afrikaans, isiZulu,
-  isiXhosa) **and** in `js/lang/st.js` (Sesotho). The other 18 `js/lang/<code>.js` files are translated in one go before a
+  isiXhosa) **and** in `js/lang/st.js` (Sesotho). The other 21 `js/lang/<code>.js` files are translated in one go before a
   release (`docs/RELEASE.md`) – don't add lines to them. `node tests/i18n.test.js` must pass.
 - Every change that reaches the website raises the version in `js/version.js` (and its date) and puts the same number
   after every `?v=` in `index.html`. `node tests/versions.test.js` must pass.

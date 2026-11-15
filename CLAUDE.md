@@ -34,7 +34,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
 | Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
 | Settings (incl. Attendees), countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
-| Language engine, 19 more languages (Sesotho kept up to date; the other 18 before a release); Sesotho as written in Lesotho, made from `st.js` | `js/i18n.js`, `js/lang/<code>.js`, `js/sesotho.js` | – | `tests/i18n.test.js`, `sesotho.test.js` |
+| Language engine, 22 more languages (Sesotho kept up to date; the other 21 before a release); Sesotho as written in Lesotho, made from `st.js` | `js/i18n.js`, `js/lang/<code>.js`, `js/sesotho.js` | – | `tests/i18n.test.js`, `sesotho.test.js` |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
 | Home: What’s new and Did you know? (tips by access level; add news to `NEWS` with its date) | `js/tips.js`, `js/app.js` (`tipsCard`, `homeTags`) | `js/i18n/tips.js` | `tests/tips.test.js`, `tests/app/records.js` |
 | Demo data | `js/sample.js` | – | |
@@ -65,7 +65,7 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
   that uses it (`common.js` if several parts use it), **and** in `js/lang/st.js` (Sesotho, kept up to date like the other four):
   it is large, so don't read it – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js`
-  fails if any of these five misses a line. **Don't** add new lines to the other 18 `js/lang/<code>.js` files: until Church Hub
+  fails if any of these five misses a line. **Don't** add new lines to the other 21 `js/lang/<code>.js` files: until Church Hub
   is released to other churches they are translated in one go (`docs/RELEASE.md`); meanwhile they show English, the test
   counts them, and Home reminds Administrators every 3 days. Never copy the English in as a "translation".
 - **Screen layout** (every page the same, so the app feels like one app): `page-head` (h1, one-line lead, then buttons on the

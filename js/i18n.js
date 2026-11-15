@@ -26,6 +26,7 @@ var I18n = (function () {
     ['es', 'Español', 'Spanish', ['Europe', 'Americas']], ['de', 'Deutsch', 'German', ['Europe']], ['nl', 'Nederlands', 'Dutch', ['Europe']],
     ['it', 'Italiano', 'Italian', ['Europe']], ['pl', 'Polski', 'Polish', ['Europe']],
     ['en-US', 'US English', 'US English', ['Americas']],
+    ['zh-Hans', '简体中文', 'Chinese (Simplified)', ['Asia']], ['zh-Hant', '繁體中文', 'Chinese (Traditional)', ['Asia']], ['ja', '日本語', 'Japanese', ['Asia']],
     // Made from another language's file, not a file of its own (5th item): Sesotho as written in Lesotho (js/sesotho.js).
     // Not in the list itself: choosing Sesotho asks which spelling (js/app.js, langWire).
     ['st-LS', 'Sesotho (Lesotho)', 'Sesotho (Lesotho)', ['Africa'], 'st']
@@ -125,7 +126,7 @@ var I18n = (function () {
     var m0 = more(cur); if (m0 && m0[4]) cur = m0[4];   // Sesotho (Lesotho) shows as Sesotho
     var opt = function (code, name, en) { var sel = code === cur && !done; if (sel) done = true; return '<option value="' + code + '"' + (sel ? ' selected' : '') + '>' + name + (en && en !== name ? ' (' + en + ')' : '') + '</option>'; };
     var ZA = LANGS.slice(1).map(function (l) { return [l[0], l[1], '', ['Africa']]; });   // Afrikaans, isiZulu, isiXhosa sit with Africa's languages
-    return opt('en', 'UK English') + ['Africa', 'Europe', 'Americas'].map(function (c) {
+    return opt('en', 'UK English') + ['Africa', 'Europe', 'Americas', 'Asia'].map(function (c) {
       return '<optgroup label="' + t(c) + '">' + (c === 'Africa' ? ZA : []).concat(MORE.filter(function (m) { return m[3].indexOf(c) >= 0 && !m[4]; })).map(function (m) { return opt(m[0], m[1], m[2]); }).join('') + '</optgroup>';
     }).join('');
   }

@@ -323,17 +323,17 @@ var Hub = (function () {
         '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="iphone">' + T('Not now') + '</button></div></section>';
     return out;
   }
-  /* Administrators: the 18 extra languages are translated in one go before Church Hub is released (docs/RELEASE.md), so
-   * Home reminds them every few days how many texts are still in English there. German stands for all 18 (they are done
-   * together); the count is kept on this device for each version, so German's file is fetched once per version. */
+  /* Administrators: the extra languages (all but Sesotho) are translated in one go before Church Hub is released (docs/RELEASE.md),
+   * so Home reminds them every few days how many texts are still in English there. Japanese stands for all of them (it was added
+   * last, so has the most waiting); the count is kept on this device for each version, so its file is fetched once per version. */
   var langGap = null;
   function langsWaiting() {
     if (langGap !== null) return langGap;
     var v = (typeof ChurchHubVersion !== 'undefined' && ChurchHubVersion.version) || '', kept = Store.pref('langsGap').split('|');
     if (kept.length === 2 && kept[0] === v) return (langGap = +kept[1] || 0);
     langGap = 0;
-    I18n.load('de', function () {
-      langGap = I18n.english().filter(function (en) { return !I18n.word('de', en, true); }).length;
+    I18n.load('ja', function () {
+      langGap = I18n.english().filter(function (en) { return !I18n.word('ja', en, true); }).length;
       Store.pref('langsGap', v + '|' + langGap);
       if (langGap && parts()[0] === 'home') render();
     });
@@ -343,7 +343,7 @@ var Hub = (function () {
     if (!realAdmin() || later('langs')) return '';
     var n = langsWaiting(); if (!n) return '';
     return '<section class="panel prompt" id="langs-ask"><h2 style="margin:0 0 4px">' + T('Not every language is up to date') + '</h2>' +
-      '<p class="small" style="margin:0">' + TN('{n} text is still in English in the 18 extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', '{n} texts are still in English in the 18 extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', n) + '</p>' +
+      '<p class="small" style="margin:0">' + TN('{n} text is still in English in the {count} extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', '{n} texts are still in English in the {count} extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', n, { count: I18n.MORE.filter(function (m) { return !m[4] && m[0] !== 'st'; }).length }) + '</p>' +
       '<p class="small muted" style="margin:6px 0 0">' + T('That is fine while Church Hub is used only by this church. Before other churches use it, ask Claude to translate them.') + '</p>' +
       '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="langs">' + T('Remind me in 3 days') + '</button></div></section>';
   }

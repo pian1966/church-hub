@@ -1,6 +1,6 @@
 /* Tests for js/i18n.js and its word files js/i18n/*.js (languages). Run: node tests/i18n.test.js
  * Every T('…') / TN('…', '…') text in the app must have Afrikaans, isiZulu and isiXhosa, with the same {parts}.
- * The 19 extra languages (js/lang/) may lag behind until a release: RELEASE=1 node tests/i18n.test.js requires them too. */
+ * The 22 extra languages (js/lang/) may lag behind until a release: RELEASE=1 node tests/i18n.test.js requires them too. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const I18n = require('../js/i18n.js');

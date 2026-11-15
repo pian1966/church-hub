@@ -13,7 +13,7 @@ module.exports = async function (ctx) {
   check(!(await s.page.$('.demo')), 'no demo banner when live');
   await tour(s, 'admin');
   await s.go('home'); await s.page.waitForSelector('#langs-ask', { timeout: 8000 }).catch(() => {});
-  check(/18 extra languages/.test((await s.page.textContent('#langs-ask').catch(() => '')) || ''), 'Home reminds an Administrator that the extra languages still need translating');
+  check(/21 extra languages/.test((await s.page.textContent('#langs-ask').catch(() => '')) || ''), 'Home reminds an Administrator that the extra languages still need translating');
   await s.page.click('#langs-ask [data-act="hub:later"]'); await s.go('people'); await s.go('home');
   check(!(await s.page.$('#langs-ask')), '…and “Remind me in 3 days” puts it away');
   await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-role', 'rosters'); await s.page.click('[data-act="people:save"]');

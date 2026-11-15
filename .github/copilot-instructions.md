@@ -30,7 +30,7 @@ Follow "Screen layout" in `CLAUDE.md`. In short:
 
 ## 3. Translations: translate, never copy the English
 Every new screen text goes through `T('…')`, with a line in `js/i18n/<area>.js` (English, Afrikaans, isiZulu, isiXhosa)
-**and** in `js/lang/st.js` (Sesotho). Leave the other 18 `js/lang/<code>.js` files alone: they are translated in one go
+**and** in `js/lang/st.js` (Sesotho). Leave the other 21 `js/lang/<code>.js` files alone: they are translated in one go
 before a release (`docs/RELEASE.md`). Write a real translation – never copy the English in. Don't read the big language files: find a
 neighbouring English line with grep and add yours next to it.
 

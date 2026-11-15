@@ -72,6 +72,10 @@ module.exports = async function (ctx) {
   check(officeMessage && officeMessage[1].to.length === 0 && officeMessage[1].fromId === 'p14', 'a member can send a message to the Office channel without choosing recipients');
   await s.go('messages/sent');
   check(await s.page.$('.msg-status.sent[aria-label="Sent"]'), 'sent messages show an accessible grey sent tick');
+  await s.page.click('.msg-chat .msg-status.sent');
+  check((await s.page.textContent('.msg-mark-tip')).includes('Sent: on its way'), 'tapping the ticks shows what they mean in a small note');
+  await s.page.waitForSelector('.msg-mark-tip', { state: 'detached', timeout: 6000 });
+  check(!(await s.page.$('.msg-mark-tip')), 'the note about the ticks goes away by itself');
   check(await s.page.$$eval('.msg-legend-list li', l => l.length) === 4 && (await s.page.textContent('.msg-legend')).includes('Read by some'), 'Sent explains what the signs mean, including “read by some”');
   await s.page.click('.msg-legend > summary');
   check(await s.page.$$eval('.msg-style', l => l.length) === 4 && await s.page.$('.msg-style.on[data-style="ticks"] input:checked') && (await s.page.textContent('.msg-style[data-style="words"]')).includes('iMessage'), 'the delivery signs are four picture cards, ticks chosen, each saying which apps use it');

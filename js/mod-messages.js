@@ -268,7 +268,20 @@
   /** One grey tick: sent · two grey ticks: delivered to everyone · first tick blue: read by some · two blue ticks: read by everyone. */
   function statusMark(m) {
     var state = Msg.status(m, S.list('people')), text = T(STATE_WORDS[state]), c = Msg.counts(m, S.list('people'));
-    return '<span class="msg-status ' + state + '" role="img" aria-label="' + esc(text) + '" title="' + esc(text) + '">' + drawing(state, markStyle(), c.of ? c.read / c.of : 0) + '</span>';
+    // A button: tapping it shows what the sign means for a few seconds (a phone has no hover for the title)
+    return '<button type="button" class="msg-status ' + state + '" data-act="messages:mark" data-state="' + state + '" aria-label="' + esc(text) + '" title="' + esc(text) + '">' + drawing(state, markStyle(), c.of ? c.read / c.of : 0) + '</button>';
+  }
+  /** Tapping a sign: a small bubble above it says what it means, then goes away by itself. */
+  var markTimer = null;
+  function showMark(el) {
+    var old = document.querySelector('.msg-mark-tip'); if (old) old.remove();
+    clearTimeout(markTimer);
+    if (old && old._for === el) return;   // tapping the same sign again just closes it
+    var mean = MEANINGS.filter(function (x) { return x[0] === el.dataset.state; })[0]; if (!mean) return;
+    var tip = document.createElement('span');
+    tip.className = 'msg-mark-tip'; tip.setAttribute('role', 'status'); tip.textContent = T(mean[1]); tip._for = el;
+    el.parentNode.appendChild(tip);
+    markTimer = setTimeout(function () { tip.remove(); }, 4000);
   }
   /** What the signs mean, folded under the tabs of Sent, with a choice of how they are drawn (kept on this device):
    *  four picture cards showing each style's steps, what it does, and which apps and countries use it. */
@@ -397,6 +410,7 @@
         S.put('messages', m, 'Replied to a message (to one person)');
         H.closeModal(); H.toast(T('Reply sent')); H.render();
       },
+      mark: function (el) { showMark(el); },   // tapping the ticks (or envelope, circle, words) by a message's time
       tick: function (el) {   // Tick all / Untick all – the people shown (after typing part of a name, only those)
         Array.prototype.forEach.call(document.querySelectorAll('.ms-row'), function (r) {
           if (r.hidden) return; var c = r.querySelector('.ms-pick'); c.checked = !!el.dataset.on; draft.chosen[c.value] = c.checked;

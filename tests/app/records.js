@@ -191,33 +191,32 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="library:save"]'); await s.settle();
   docs = await s.docsNow(); key = find(docs, 'books', d => d.title === 'Knowing God'); const bk = key ? key.split('/')[1] : '';
   check(!!key && docs[key].author === 'J. I. Packer' && docs[key].how === 'Donated' && docs[key].from === 'The Jacobs family' && docs[key].copies === 1 && docs[key].out === 0 && !!docs[key].acquired, 'a book is added, with how and when it was acquired');
-  check((await s.page.$$eval('#lib-controls [data-act="library:tab"]', bs => bs.map(b => b.dataset.tab).join(','))) === 'all,available,onLoan', 'the Library shows its status tabs, leaving out those with nothing in them');
+  check((await s.page.$$eval('#lib-controls [data-act="library:tab"]', bs => bs.map(b => b.dataset.tab).join(','))) === 'all,available,onLoan,overdue,damaged,repairing,withdrawn,lost,removed', 'librarians see every status tab: available, on loan, overdue, damaged, being repaired, withdrawn, lost and removed');
   await click(s, '[data-act="library:lend"][data-id="' + bk + '"]'); await fill(s, '.cg-q[data-for="lib-lend"]', 'tim jac'); await s.page.waitForTimeout(400); await click(s, '.cg-hits .cg-pick'); await s.settle();
   docs = await s.docsNow(); const loan = find(docs, 'loans', d => d.bookId === bk); t = await s.text();
   check(!!loan && docs[loan].personId === 'p14' && docs[loan].name === 'Tim Jacobs' && docs[loan].back === '' && docs[loan].due > docs[loan].out && docs[key].out === 1, 'it is lent to someone, due back in three weeks');
-  check(/On loan[\s\S]*Knowing God[\s\S]*Tim Jacobs/.test(t) && await s.page.isDisabled('[data-act="library:lend"][data-id="' + bk + '"]'), 'the librarian sees who has it; the only copy can’t be lent again');
+  check(await s.page.$$eval('.lib-book[data-title="Knowing God"]', rows => rows.length) === 1 && /Tim Jacobs/.test(await s.page.textContent('.lib-book[data-title="Knowing God"] .lib-loan')) && await s.page.isDisabled('[data-act="library:lend"][data-id="' + bk + '"]'), 'the librarian sees who has it on the item’s own row (listed once, not twice); the only copy can’t be lent again');
   check(await s.page.$eval('#lib-filter-borrower', el => el.value === '' && el.placeholder === 'All Borrowers') &&
     !!(await s.page.$('#lib-borrowers option[value="Tim Jacobs"]')), 'the borrower filter defaults to All Borrowers and suggests names with books checked out');
   await fill(s, '#lib-filter-borrower', 'JAC');
-  check(await s.page.isVisible('.lib-out-loan') && await s.page.isVisible('[data-act="library:filtersclear"]'),
+  check(await s.page.isVisible('.lib-book[data-title="Knowing God"] .lib-loan') && await s.page.isVisible('[data-act="library:filtersclear"]'),
     'typing part of a surname, in any case, keeps that borrower’s checkout visible and offers a clear button');
   await fill(s, '#lib-filter-borrower', 'TIM');
-  check(await s.page.isVisible('.lib-out-loan'), 'a partial first-name search also finds the checked-out book');
+  check(await s.page.isVisible('.lib-book[data-title="Knowing God"] .lib-loan'), 'a partial first-name search also finds the checked-out book');
   await fill(s, '#lib-filter-borrower', 'not a borrower');
-  check(await s.page.isHidden('.lib-out-loan') && (await s.page.textContent('#lib-out-count')).includes('0'),
+  check(await s.page.isHidden('.lib-book[data-title="Knowing God"]') && (await s.page.textContent('#lib-count')).includes('0'),
     'a borrower search with no match hides checked-out books and updates the count');
   check(!!(await s.page.$('#lib-filter-borrowed')) && (await s.page.$$('[data-act="library:sort"]')).length === 6,
     'librarians can filter by date borrowed and sort by borrower or date borrowed as well as catalogue details');
   await click(s, '[data-act="library:filtersclear"]');
   await fill(s, '#lib-filter-borrowed', docs[loan].out);
-  check(await s.page.isVisible('.lib-out-loan'), 'the borrowed date filters the checkout');
-  check(await s.page.isVisible('.lib-book[data-title="Knowing God"]'), 'the borrowed date filters its catalogue item');
+  check(await s.page.isVisible('.lib-book[data-title="Knowing God"] .lib-loan'), 'the borrowed date filters the checkout and its item');
   await fill(s, '#lib-filter-borrowed', '2020-01-01');
-  check(await s.page.isHidden('.lib-out-loan') && await s.page.isHidden('.lib-book[data-title="Knowing God"]'),
+  check(await s.page.isHidden('.lib-book[data-title="Knowing God"]'),
     'a borrowed date with no match hides those records');
   await click(s, '[data-act="library:filtersclear"]');
   check(await s.page.$eval('#lib-filter-borrower', el => el.value) === 'All Borrowers' &&
-    await s.page.isVisible('.lib-out-loan'), 'clearing the borrower filter restores all checked-out books');
+    await s.page.isVisible('.lib-book[data-title="Knowing God"] .lib-loan'), 'clearing the borrower filter restores all checked-out books');
   check(await s.page.isDisabled('[data-act="library:repair"][data-id="' + bk + '"]'), 'a borrowed item cannot be marked for repair');
   await click(s, '[data-act="library:libs"]'); await fill(s, '.cg-q[data-for="lib-libs"]', 'megan'); await s.page.waitForTimeout(400); await click(s, '.cg-hits .cg-pick'); await s.settle();
   docs = await s.docsNow();
@@ -241,6 +240,16 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="library:repair"][data-id="' + dv + '"]'); await s.settle(); docs = await s.docsNow();
   check(!docs[dvd].repairing && await s.page.isVisible('[data-act="library:tab"][data-tab="repairing"]'), 'a librarian can return a repaired item to the shelf');
   await click(s, '[data-act="library:tab"][data-tab="all"]');
+  await click(s, '[data-act="library:damage"][data-id="' + dv + '"]'); await s.settle(); docs = await s.docsNow();
+  await click(s, '[data-act="library:tab"][data-tab="damaged"]');
+  check(docs[dvd].damaged === true && docs[dvd].repairing === true && await s.page.isVisible('.lib-book[data-title="The Chosen"][data-status="damaged"]') &&
+    !(await s.page.$('[data-act="library:lend"][data-id="' + dv + '"]')), 'a librarian can mark an item as damaged: it shows under Damaged and can’t be lent');
+  await click(s, '[data-act="library:repair"][data-id="' + dv + '"]'); await s.settle(); docs = await s.docsNow();
+  await click(s, '[data-act="library:tab"][data-tab="repairing"]');
+  check(!docs[dvd].damaged && docs[dvd].repairing === true && await s.page.isVisible('.lib-book[data-title="The Chosen"]'), 'a damaged item is sent for repair');
+  await click(s, '[data-act="library:repair"][data-id="' + dv + '"]'); await s.settle(); docs = await s.docsNow();
+  check(!docs[dvd].repairing && !docs[dvd].damaged, '… and comes back from repair');
+  await click(s, '[data-act="library:tab"][data-tab="all"]');
   await click(s, '[data-act="library:lend"][data-id="' + dv + '"]'); await click(s, '#lib-vname >> xpath=ancestor::details/summary');
   await fill(s, '#lib-vname', 'Jane Visitor'); await click(s, '[data-act="library:lendvisitor"]'); await s.page.waitForTimeout(200);
   docs = await s.docsNow();
@@ -257,12 +266,12 @@ module.exports = async function (ctx) {
   }, [loan.split('/')[1], vl.split('/')[1]]);
   await s.settle();
   await click(s, '[data-act="library:sort"][data-k="borrowed"]');
-  check(await s.page.$$eval('.lib-out-loan', rows => {
+  check(await s.page.$$eval('.lib-book[data-lent="true"]', rows => {
     const dates = rows.map(row => row.dataset.borrowed);
     return dates.length === 2 && dates[0] < dates[1];
   }), 'the borrowed list sorts by date borrowed');
   await click(s, '[data-act="library:sort"][data-k="borrower"]');
-  check(await s.page.$$eval('.lib-out-loan', rows => {
+  check(await s.page.$$eval('.lib-book[data-lent="true"]', rows => {
     const names = rows.map(row => row.dataset.borrower);
     return names.length === 2 && names[0] < names[1];
   }), 'the borrowed list sorts by borrower');
@@ -278,10 +287,10 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(docs[loan].lost === true && !!docs[loan].back && !!docs[loan].mobile && docs[key].removed && docs[key].why === 'Lost' && !/Knowing God\s*(Available|On loan)/.test(await s.text()), 'the only copy marked lost: kept on the loan with the mobile number, and the item leaves the shelf');
   await click(s, '[data-act="library:tab"][data-tab="lost"]');
-  check(await s.page.isVisible('.lib-gone-item[data-removed="lost"]'), 'the Lost tab shows lost items');
+  check(await s.page.isVisible('.lib-book[data-status="lost"]'), 'the Lost tab shows lost items');
   await fill(s, '#lib-filter-borrower', 'tim');
   await fill(s, '#lib-filter-borrowed', docs[loan].out);
-  check(await s.page.isVisible('.lib-gone-item[data-removed="lost"]'), 'the Lost tab filters by the borrower and original date borrowed');
+  check(await s.page.isVisible('.lib-book[data-status="lost"]'), 'the Lost tab filters by the borrower and original date borrowed');
   await click(s, '[data-act="library:filtersclear"]');
   await click(s, '[data-act="library:putback"][data-id="' + bk + '"]'); await s.settle(); docs = await s.docsNow();
   await click(s, '[data-act="library:tab"][data-tab="all"]');
@@ -289,8 +298,8 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="library:remove"][data-id="' + dv + '"]'); await select(s, '#lib-why', 'Damaged'); await fill(s, '#lib-whynote', 'Scratched'); await click(s, '[data-act="library:removesave"]'); await s.settle();
   docs = await s.docsNow();
   check(docs[dvd].removed && docs[dvd].why === 'Damaged' && docs[dvd].whyNote === 'Scratched', 'an item is taken out of the library with why (not deleted)');
-  await click(s, '[data-act="library:tab"][data-tab="removed"]');
-  check(await s.page.isVisible('.lib-gone-item[data-removed="removed"]'), 'the Permanently Removed tab shows other removed items');
+  await click(s, '[data-act="library:tab"][data-tab="damaged"]');
+  check(await s.page.isVisible('.lib-book[data-status="damaged"][data-in="false"]') && await s.page.isHidden('.lib-book[data-title="Knowing God"]'), 'the Damaged tab shows an item taken out because it was damaged');
   await click(s, '[data-act="library:tab"][data-tab="all"]');
   await click(s, '[data-act="library:report"]'); await s.page.waitForSelector('#lib-rep'); t = await s.page.textContent('#lib-rep');
   check(/On Loan\s*2/.test(t) && /Returned\s*1/.test(t) && /Lost\s*1/.test(t) && /Acquired\s*2/.test(t) && /Removed from Library by Librarian\s*1/.test(t) && (await s.page.textContent('#modal')).includes('Show library activity between two dates'), 'reports are grouped under clickable activity chips for the date range');
@@ -343,7 +352,7 @@ module.exports = async function (ctx) {
   check(!find(docs, 'loans', d => d.id === 'purge-admin-out') && docs['books/purge-admin-book'].out === 0, 'purging an active loan updates the copy count immediately');
   await s.page.evaluate(() => { Store.remove('loans', 'purge-admin-returned'); Store.remove('books', 'purge-admin-book'); });
   await s.settle();
-  await click(s, '#lib-out summary');
+  await click(s, '#lib-recent summary');
   check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + vl.split('/')[1] + '"]')), 'an Administrator sees Purge on a returned loan');
   await click(s, '[data-act="library:purge"][data-kind="loan"][data-id="' + vl.split('/')[1] + '"]'); await click(s, '[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
   check(!docs[vl], 'an Administrator can confirm and purge a returned loan');
@@ -576,8 +585,8 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="library:back"][data-id="' + activeLoan.split('/')[1] + '"]'); await fill(s, '#lib-backnote', 'Cover slightly torn'); await click(s, '[data-act="library:backsave"]'); await s.settle(); docs = await s.docsNow(); t = await s.text();
   check(docs[activeLoan].back !== '' && docs[activeLoan].returnNote === 'Cover slightly torn', 'the return date and condition note are saved');
   check(docs['books/' + bk].out === 0 && /Knowing God\s*Available/.test(t), 'the returned copy is back on the shelf');
-  check(t.includes('Nothing on loan.'), 'the librarian no longer sees the loan as outstanding');
-  await click(s, '#lib-out summary');
+  check(!(await s.page.$('.lib-loan')), 'the librarian no longer sees the loan as outstanding');
+  await click(s, '#lib-recent summary');
   check(!!(await s.page.$('[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]')), 'a librarian sees Purge on a returned loan');
   await click(s, '[data-act="library:purge"][data-kind="loan"][data-id="' + activeLoan.split('/')[1] + '"]'); await click(s, '[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
   check(!docs[activeLoan], 'a librarian can confirm and purge a returned loan');
@@ -588,7 +597,7 @@ module.exports = async function (ctx) {
   });
   await s.settle(); await click(s, '[data-act="library:purge"][data-kind="loan"][data-id="purge-librarian-out"]'); await click(s, '[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
   check(!find(docs, 'loans', d => d.id === 'purge-librarian-out') && docs['books/purge-librarian-out-book'].out === 0, 'a librarian can confirm and purge an active loan');
-  await s.go('library');
+  await s.go('library'); await click(s, '[data-act="library:tab"][data-tab="damaged"]');
   await click(s, '[data-act="library:purge"][data-kind="book"][data-id="purge-librarian-removed"]'); await click(s, '[data-act="library:purgeconfirm"]'); await s.settle(); docs = await s.docsNow();
   check(!docs['books/purge-librarian-removed'] && !find(docs, 'loans', d => d.id === 'purge-librarian-history'), 'a librarian can purge a removed book and its linked history');
   await finish(s);
@@ -639,6 +648,25 @@ module.exports = async function (ctx) {
   await click(s, '#modal [data-act="library:coverssaveall"]'); await s.settle();
   await finish(s);
 
+  console.log('Home: What’s new and Did you know?, by access (Library switched on):');
+  s = await session('kavi.govender@example.com', kaviSeed); await s.go('home');
+  check(!!(await s.page.$('#tips-card .tip-text')), 'Home shows a “Did you know?” tip');
+  await click(s, '[data-act="hub:tipsall"]'); t = await s.page.textContent('#modal');
+  check(t.includes('Lend button') && t.includes('Mark as damaged') && !t.includes('The church has a library'), 'a librarian is told how to lend and repair, not the members’ library tip');
+  await s.page.click('#modal [data-act="hub:close"]');
+  const first = await s.page.getAttribute('#tips-card .tip-text', 'data-tip');
+  await click(s, '[data-act="hub:tipnext"]');
+  check((await s.page.getAttribute('#tips-card .tip-text', 'data-tip')) !== first, 'Another tip shows a different one');
+  await click(s, '[data-act="hub:tipclose"]');
+  check(!(await s.page.$('#tips-card')), 'Got it hides the card');
+  await s.go('rosters'); await s.go('home');
+  check(!(await s.page.$('#tips-card')), '… until the next sign-in');
+  await finish(s);
+  s = await session('tim.jacobs@example.com', live); await s.go('home');
+  await click(s, '[data-act="hub:tipsall"]'); t = await s.page.textContent('#modal');
+  check(t.includes('The church has a library') && t.includes('Me page') && !t.includes('Lend button') && !t.includes('Mark as damaged') && !t.includes('Advanced search'), 'Basic access: told there is a library and that Me shows what they borrowed – nothing for librarians or staff');
+  await finish(s);
+
   console.log('Six-month librarian review prompt (Administrator):');
   const reviewSeed = on(seedDocs());
   reviewSeed['settings/church'].librarianIds = ['p17', 'p14', 'p15'];
@@ -687,8 +715,8 @@ module.exports = async function (ctx) {
   check(docs['leaderBodies/lbT'].seats.p15.kind === 'other' && docs['leaderBodies/lbT'].seats.p15.kindOther === 'Community representative' && t.includes('Other: Community representative'), 'Other membership type and its description are saved and shown');
   await s.go('people/p/p14'); t = await s.text();
   check(t.includes('Chair, Treasurer, Elected Member · Church Council') && !!(await s.page.$('a.tag-link[href="#/leaders"]')), 'a person’s page shows their leadership role and membership type as a chip');
-  await s.go('library'); t = await s.text();
-  check(/Mere Christianity\s*Reminder due/.test(t) && t.includes('had for 23 days'), 'three weeks after it was borrowed, the librarian sees a reminder is due and how long they have had it');
+  await s.go('library'); t = await s.page.textContent('.lib-book[data-title="Mere Christianity"] .lib-loan');
+  check(/Reminder due/.test(t) && t.includes('had for 23 days'), 'three weeks after it was borrowed, the librarian sees a reminder is due and how long they have had it');
   await click(s, '[data-act="library:remind"][data-id="lnT"]'); await s.page.waitForSelector('#lib-rem');
   check((await s.page.inputValue('#lib-rem')).includes('“Mere Christianity” for 23 days') && !!(await s.page.$('[data-act="library:remindsend"][data-how="wa"]')), 'the reminder names the item and the days, ready to send by WhatsApp or SMS');
   await click(s, '[data-act="library:remindsend"][data-how="app"]'); await s.settle(); docs = await s.docsNow();

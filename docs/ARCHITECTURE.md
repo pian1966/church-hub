@@ -301,6 +301,11 @@ hidden where neither exists (e.g. Firefox). The words heard are only put in the 
   your own access are left out (Store writes the access list, as for one person).
 
 ## Partnership applications and name badges (`js/people/apply.js`; tests: `tests/app/partners.js`, `tests/rules.test.mjs`)
+- **What it takes to become a Church Partner** (`partnerInfo/requirements` = `{ text, link, name, type, data }`, fetched only
+  when shown, like the library policy): written with simple formatting (`js/richtext.js`), a link (e.g. a Google Doc) and/or
+  an attached file (at most 600 KB). Edited under Settings → Membership application by Administrators, Pastors with the
+  "settings" tick and the Senior Pastor (Rector); shown on Me to everyone who may apply, under "Do you think of … as your
+  home church?", above the Apply button.
 - **Apply** (Me → Become a Church Partner, `#/people/apply`): adults who aren't Church Partners (nor have died). The church's
   form: about you (details from their record; ID number → `idNumbers`, given once by themselves), spouse, anniversary, children,
   since when; faith (yes/no and how they came to faith); other church; membership class, Bible study, questions, serving; the
@@ -579,12 +584,32 @@ people marked as staff (including the older Staff category); it is not a second 
   to add their own status; Office staff can add theirs for Office messages. Unread messages give a count on the Messages
   menu entry and phone tab (a module's `badge()` in `js/app.js`) and a Home to-do. Not while an Administrator uses "View as".
 - Writing (Messages → Write, or `#/messages/send/<kind>/<groupId>` – carers get a button on their Me page): the Office is
-  always offered, including to members; a confirmation
+  offered to everyone except attendees the church lets only receive; a confirmation
   with how many it goes to; Administrators and Pastors also see how many of them can't sign in yet. Rules: `firestore.rules`
   (messages, msgGroups) check the sender, that a carer or leader writes only to people in their group, and the sizes.
 - Sent → "Read by n of m" opens to the names of who has and hasn't opened a group message (`Msg.readers`). The sender sees
   grey sent, orange delivered and green read ticks as status changes.
-- Not yet: phone notifications when the app is closed, email/SMS fallback, replies (see ROADMAP Phase 5).
+- Replies (`Msg.mayReply`, `Msg.reply`, tested): **Reply** on a message in the inbox opens a small window; the reply is a
+  `kind: 'direct'` message to the original's sender only (`to: [fromId]`, `replyTo: <message id>`, subject "Re: …"), and
+  shows "Replying to: …" above it. The rules check that the original came to the replier and that `to` is its sender. Office
+  staff reply to Office messages the same way (it replaced "Send a message" to the person).
+- Direct messages without `replyTo`: to a **minister** (a Pastor – `settings.ministers`, `[{ id, name }]`, kept by
+  Administrators' devices because others can't read who is a Pastor; the rules check `people/{id}.appRole`) or to a leader
+  of a **Midweek Group the writer is in** (`groupId` = that group). Offered under Write ("Ministers", "Midweek Group leaders")
+  to everyone except Administrators and Pastors, who choose people instead.
+- **Church Partner access and attendees** (`Hub.attendee()`, `Hub.attendeeCan(x)`, `Msg.partnerLevel`): Basic access is
+  split automatically by the person's category – Church Partners (and category Staff) get Church Partner access (as Basic
+  access was before: the directory, replies); everyone else on Basic access is an **attendee**. Attendees get only what
+  Settings → Attendees allows (`settings.attendeeCan`, default `['names', 'write']`): `names` – Church Partners' names on
+  People (`names/{id}`: first, last and known-as name of Church Partners and staff in the directory, written with each
+  directory entry by `syncDirectory`); `directory` – the church directory as Church Partners see it; `write` – the Office,
+  ministers and their Midweek Group leaders (and a reply to a minister); `reply` – reply to any message. Without `names` or
+  `directory` the People page is hidden (the application form still opens). Administrators and the Senior Pastor (Rector)
+  change it; the Rector opens Settings with only Attendees and Membership application. The rules (`attendee()`,
+  `attendeeMay(x)`) look at the category on `people/{id}` of the sign-in's people, so nothing needs syncing. Loading:
+  Basic access asks for `directory` / `names` only once its own record and the settings are known (`extras()` in
+  `js/store.js`), so an attendee never asks for what they may not read. "View as" → Attendee shows it.
+- Not yet: phone notifications when the app is closed, email/SMS fallback, a care group talking together (see ROADMAP Phase 5).
 
 ## Leadership (Leadership page; `js/leaders.js`, `js/mod-leaders.js`)
 Off until switched on (Settings → Apps; `optIn`). A leadership group is one `leaderBodies` document (like a care group):
@@ -777,3 +802,14 @@ The wedding anniversary sits right under marital status.
   line breaks and the church's name/address spans only). Colours come from one colour (`BrochureKit.colours`: ink dark enough
   for white writing; dark writing on a light cover). A panel that no longer fits its A4 third is marked and warned about.
 - The page isn't redrawn while open (`data-keep` stops remote-change redraws), so typing isn't lost.
+
+## Home: What's new and Did you know? (`js/tips.js`, `js/app.js` `tipsCard`)
+- `Tips.NEWS` (date, audience, text) and `Tips.TIPS` (id, audience, `not`, `app`, link, text). Texts are English marked `TX`, translated
+  where shown (`js/i18n/tips.js`, `js/lang/st.js`). News shows for `NEWS_DAYS` (14) days, newest first, at most two.
+- Audience tags (`homeTags()`): `everyone`, the role (`myRole()`, so "View as" shows that role's tips), `staffwork` (sees People),
+  `librarian` (`Library.isLibrarian`, not while viewing as someone else), `carer` (leads a Care Group, or "View as" a carer), `senior`.
+  A tip with `app` is only offered when that part is switched on and opens for the person (`opens()`).
+- One tip per sign-in (`runUpgrades` resets it): the next one not yet seen on this device (`Store.pref('tipsSeen')`), starting again after
+  the last. "Got it" hides the card until the next sign-in. No personal information; nothing is saved in the database.
+- Adding a feature: add a news line (its date and who it is for) and, where it helps, a tip – with all five languages.
+

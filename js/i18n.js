@@ -31,7 +31,7 @@ var I18n = (function () {
     ['st-LS', 'Sesotho (Lesotho)', 'Sesotho (Lesotho)', ['Africa'], 'st']
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
-  var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'life', 'leaders', 'archive', 'library', 'messages', 'privacy', 'import', 'settings'];
+  var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'life', 'leaders', 'archive', 'library', 'messages', 'privacy', 'import', 'settings', 'tips'];
   // Language files are fetched again with every new version of Church Hub (js/version.js), so phones don't keep old words
   var PACK_VERSION = 9, loading = {}, onLoad = [];
   function packV() { return (typeof ChurchHubVersion !== 'undefined' && ChurchHubVersion.version) || PACK_VERSION; }

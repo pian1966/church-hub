@@ -7,6 +7,7 @@
  *   todos(user)    → [{ text, href, tag }]       stat(user)   → short text on the Home card (optional)
  *   actions        → { name: function (el, ev) } called for clicks on [data-act="id:name"]
  *   badge(user)    → a number shown on its menu entry and phone tab, e.g. unread messages (optional; 0 = none)
+ *   also()         → true for someone else who may open it besides roles/perm, e.g. the Rector (optional)
  *   inGroups       → true for the kinds of group (Care Groups, Midweek Groups, Leadership): not in the menu or on Home
  *                    themselves but under one "Groups" entry (js/mod-groups.js), as tabs at the top of their pages
  */
@@ -36,16 +37,32 @@ var Hub = (function () {
   /** Someone's app access as the church says it: once a Senior Pastor is chosen, the other Pastors are Assistant Pastors. */
   function personRole(p) {
     var r = (p && p.appRole) || 'member';
+    if (r === 'member' && Msg.partnerLevel(p)) return partnerAccess();   // Church Partners on Basic access: Church Partner access
     if (r !== 'pastor' || !seniorId()) return roleLabel(r);
     return T(isSenior(p) ? 'Senior Pastor' : 'Assistant Pastor');
   }
   /** The signed-in person's own label (or the role being viewed with "View as"). */
-  function myLabel() { return Store.preview() || !user ? roleLabel(myRole()) : personRole(Store.get('people', user.id) || user); }
-  /** The role the screens follow: normally the person's own; while an Administrator uses "View as", the role being viewed. */
-  function myRole() { return Store.preview() || (user && user.appRole) || 'member'; }
+  function myLabel() { return Store.preview() || !user ? viewLabel(Store.preview() || myRole()) : personRole(Store.get('people', user.id) || user); }
+  /** The role the screens follow: normally the person's own; while an Administrator uses "View as", the role being viewed
+   *  ("View as" an attendee: Basic access, not a Church Partner). */
+  function myRole() { var v = Store.preview(); return v === 'attendee' ? 'member' : v || (user && user.appRole) || 'member'; }
+  /** "Church Partner access" in the church's own words (e.g. "Parishioner access"). */
+  function partnerAccess() {
+    var w = typeof Wording !== 'undefined' ? (Wording.words(Store.settings() || {}).partner || [])[0] : '';
+    return T('{partner} access', { partner: w || T('Church Partner') });
+  }
+  /** An attendee: Basic access, but not a Church Partner or on the staff (by their category, so it follows automatically
+   *  when someone becomes a Church Partner). They see and do only what Settings → Attendees allows (attendeeCan). */
+  function attendee() {
+    if (!user || myRole() !== 'member') return false;
+    var v = Store.preview(); if (v) return v === 'attendee';
+    return !Msg.partnerLevel(Store.get('people', user.id) || user);
+  }
+  /** May an attendee do this ('names', 'directory', 'write', 'reply')? Everyone else: yes. */
+  function attendeeCan(x) { return !attendee() || Msg.attendeeCan(Store.settings()).indexOf(x) >= 0; }
   /** Really an Administrator (also while viewing as someone else), so "View as" is offered. */
   function realAdmin() { return !!user && (Store.isLive() ? (Store.live.session() || {}).role === 'admin' : (Store.get('people', user.id) || user).appRole === 'admin'); }
-  var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member'], switching = null;   // carer: a Member who leads a care group
+  var VIEW_AS = ['pastor', 'rosters', 'kids', 'carer', 'member', 'attendee'], switching = null;   // carer: a Member who leads a care group; attendee: Basic access, not a Church Partner
   /** Really the Senior Pastor (Rector), also while viewing as someone else: they may use "View as" for the roles below theirs. */
   function realRector() {
     if (!user) return false;
@@ -61,8 +78,8 @@ var Hub = (function () {
     if (viewHome() === 'admin') return T('Back to Administrator');
     return T('Back to {role}', { role: personRole(Object.assign({}, Store.get('people', user.id) || user, { appRole: 'pastor', active: true })) });
   }
-  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
-  function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(myRole()); }
+  function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : r === 'member' ? partnerAccess() : r === 'attendee' ? T('Attendee') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
+  function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(Store.preview() || myRole()); }
   /** What Pastors can do (Settings → What Pastors can do): each tick, the permissions it adds. The database rules check the same
    *  ticks (may('…') in firestore.rules), copied onto each Pastor's access-list entry. */
   var TX = function (x) { return x; };   // a text kept in a list, translated where it is shown (the language test checks it)
@@ -344,14 +361,14 @@ var Hub = (function () {
   /** One-off data upgrades (module.upgrade), run when an Administrator signs in. */
   /** Modules may do something for everyone once they are signed in (e.g. keep their care group card up to date). */
   function signedInHooks() { var u = user; setTimeout(function () { if (!u || !user || user.id !== u.id) return; u = user; modules.forEach(function (m) { if (m.signedIn) { try { m.signedIn(u); } catch (e) { console.error('signedIn', m.id, e); } } }); }, 1500); }
-  function runUpgrades() { signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
+  function runUpgrades() { tipShown = null; tipClosed = false; signedInHooks(); if (!can('*')) return; modules.forEach(function (m) { if (m.upgrade) { try { m.upgrade(user); } catch (e) { console.error('upgrade', m.id, e); } } }); }
   /** Is this app switched on (Settings → Apps)? Most are on until switched off; a few (optIn, e.g. Life groups) are off until switched on. */
   function isOn(id) {
     var on = ((Store.settings() || {}).modules || {}), m = moduleById(id);
     if (id === 'library' || id === 'archive') return on.library === true || on.archive === true;
     return m && m.optIn ? on[id] === true : on[id] !== false;
   }
-  function opens(m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm))) && (!m.show || m.show()); }
+  function opens(m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm)) || (m.also && m.also())) && (!m.show || m.show()); }
   function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
@@ -533,12 +550,39 @@ var Hub = (function () {
       '</div>';
   }
 
+  /* ---------- Home: What's new and Did you know? (js/tips.js), chosen for the person's access ---------- */
+  var tipShown = null, tipClosed = false;   // the tip on Home since signing in; "Got it" hides the card until the next sign-in
+  /** Who this person is, for the tips: everyone, their role, and librarian / carer / senior / staffwork. */
+  function homeTags() {
+    var tags = ['everyone', myRole()], me = Store.get('people', user.id) || user;
+    if (can('people.basic') || can('people.view') || can('*')) tags.push('staffwork');
+    if (typeof Library !== 'undefined' && Library.isLibrarian(Store.settings(), user.id, can('*')) && (can('*') || !Store.preview())) tags.push('librarian');
+    if (Store.previewCare() || (!Store.preview() && typeof Care !== 'undefined' && Store.list('careGroups').some(function (g) { return Care.isLeader(g, user.id); }))) tags.push('carer');
+    if (!Store.preview() && isSenior(me)) tags.push('senior');
+    if (attendee()) tags.push('attendee');   // e.g. news about Reply, which attendees may not have
+    return tags;
+  }
+  function tipCtx() { return { tags: homeTags(), on: function (id) { var m = moduleById(id); return !!m && opens(m); } }; }
+  function tipsCard() {
+    if (tipClosed || typeof Tips === 'undefined') return '';
+    var ctx = tipCtx(), tips = Tips.forPerson(ctx), news = Tips.news(ctx, today()), tip = tips.filter(function (t) { return t.id === tipShown; })[0];
+    if (!tip && tips.length) { var r = Tips.next(tips, Store.pref('tipsSeen').split(',').filter(Boolean)); tip = r.tip; tipShown = tip.id; Store.pref('tipsSeen', r.seen.join(',')); }
+    if (!tip && !news.length) return '';
+    return '<section class="panel tips-card" id="tips-card">' +
+      (news.length ? '<h2>' + T('What’s new') + '</h2><ul class="tips-news">' + news.map(function (n) { return '<li>' + esc(T(n.text)) + '</li>'; }).join('') + '</ul>' : '') +
+      (tip ? '<h2>' + T('Did you know?') + '</h2><p class="tip-text" data-tip="' + esc(tip.id) + '">' + esc(T(tip.text)) + '</p>' : '') +
+      '<div class="btns">' + (tip && tip.href ? '<a class="btn small" href="' + esc(tip.href) + '">' + T('Show me') + '</a>' : '') +
+      (tips.length > 1 ? '<button class="btn small" data-act="hub:tipnext">' + T('Another tip') + '</button>' : '') +
+      (tips.length > 1 ? '<button class="btn small" data-act="hub:tipsall">' + T('All tips') + '</button>' : '') +
+      '<button class="btn small" data-act="hub:tipclose">' + T('Got it') + '</button></div></section>';
+  }
+
   function renderHome() {
     var todos = [];
     enabled().forEach(function (m) { if (m.todos) (m.todos(user) || []).forEach(function (t) { t.mod = m; todos.push(t); }); });
     todos = todos.filter(function (t) { return t.priority; }).concat(todos.filter(function (t) { return !t.priority; }));
     var hour = new Date().getHours(), hello = T(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening');
-    return langsPrompt() + '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' +
+    return langsPrompt() + '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' + tipsCard() +
       '<section class="block"><h2>' + T('To do') + '</h2>' + (todos.length ? '<ul class="todo">' + todos.slice(0, 8).map(function (t) {
         return '<li><a href="' + esc(t.href) + '"><span class="dot" style="--c:' + t.mod.tint + '"></span><span class="grow">' + esc(t.text) + '</span><span class="tag" style="--c:' + t.mod.tint + '">' + esc(T(t.tag || t.mod.name)) + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="empty">' + T('Nothing needs you right now.') + '</p>') + '</section>' +
@@ -844,6 +888,14 @@ var Hub = (function () {
     restart: function () { live = { stage: 'signedOut' }; renderLive(); },
     selfie: function () { var f = document.getElementById('selfie-file'); if (f) f.click(); },
     sesotho: function (el) { useLang(el.dataset.l); },
+    tipnext: function () { var ctx = tipCtx(), tips = Tips.forPerson(ctx), r = Tips.next(tips, Store.pref('tipsSeen').split(',').filter(Boolean)); tipShown = r.tip ? r.tip.id : null; Store.pref('tipsSeen', r.seen.join(',')); render(); },
+    tipclose: function () { tipClosed = true; var c = document.getElementById('tips-card'); if (c) c.remove(); },
+    tipsall: function () {
+      var tips = Tips.forPerson(tipCtx());
+      modal(dialogHead(T('Did you know?'), T('Tips for getting the most out of Church Hub')) + '<div class="dlg-body"><ul class="tips-all">' + tips.map(function (t) {
+        return '<li><span class="grow">' + esc(T(t.text)) + '</span>' + (t.href ? ' <a class="btn small" href="' + esc(t.href) + '">' + T('Show me') + '</a>' : '') + '</li>';
+      }).join('') + '</ul></div>', T('Did you know?'));
+    },
     later: function (el) { Store.pref(el.dataset.k + 'Later', new Date().toISOString()); var b = el.closest('.prompt'); if (b) b.remove(); },
     havelink: function () { live = { stage: 'linkSent', email: Store.live.pendingEmail() }; renderLive(); },
     setup: function (el) {
@@ -1088,5 +1140,5 @@ var Hub = (function () {
   return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     menu: menu, esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
-    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
+    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

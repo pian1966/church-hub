@@ -9,17 +9,19 @@
 
   function me() { return H.user(); }
   function manager() { var u = me(); return H.can('*') || H.can('people.edit') || !!(u && u.appRole === 'pastor'); }   // Administrators and Pastors
-  function who() { var u = me(); return { id: u ? u.id : '', manager: manager() }; }
+  /** Who is writing: Administrators and Pastors (manager), and attendees with what Settings → Attendees lets them do. */
+  function who() { var u = me(); return { id: u ? u.id : '', manager: manager(), attendee: H.attendee(), can: Msg.attendeeCan(S.settings()) }; }
   /** Care groups and life groups only while switched on (Settings → Apps). */
-  function data() { return { people: S.list('people'), careGroups: H.isOn('care') ? S.list('careGroups') : [], lifeGroups: H.isOn('life') ? S.list('lifeGroups') : [], msgGroups: S.list('msgGroups'), leaderBodies: H.isOn('leaders') ? S.list('leaderBodies') : [] }; }
+  function data() { return { ministers: S.ministers(), people: S.list('people'), careGroups: H.isOn('care') ? S.list('careGroups') : [], lifeGroups: H.isOn('life') ? S.list('lifeGroups') : [], msgGroups: S.list('msgGroups'), leaderBodies: H.isOn('leaders') ? S.list('leaderBodies') : [] }; }
   function audiences() { return Msg.audiences(who(), data()); }
-  function key(a) { return a.kind + (a.groupId ? '/' + a.groupId : ''); }
+  function key(a) { return a.kind === 'direct' ? 'direct/' + a.personId + (a.groupId ? '/' + a.groupId : '') : a.kind + (a.groupId ? '/' + a.groupId : ''); }
   /** The audience's name as shown: Staff and Church Partners in the chosen language, groups as they are called. */
-  function audName(kind, name) { return kind === 'office' ? T('Office') : kind === 'staff' ? T('Staff') : kind === 'partners' ? T('Church Partners') : kind === 'people' ? name || T('Chosen people') : name || ''; }
+  function audName(kind, name) { return kind === 'direct' ? name || T('Someone') : kind === 'office' ? T('Office') : kind === 'staff' ? T('Staff') : kind === 'partners' ? T('Church Partners') : kind === 'people' ? name || T('Chosen people') : name || ''; }
   /** Who it went to, as shown: "Care group · Hilton", "Staff · 3 people" (only some of them), "Thandi Mokoena", "4 people". */
   function audLong(m) {
     var n = (m.to || []).length;
     if (m.kind === 'people') return m.audience ? esc(m.audience) : esc(TN('{n} person', '{n} people', n));
+    if (m.kind === 'direct') { var u = me(); return u && (m.to || []).indexOf(u.id) >= 0 ? T('you') : esc(m.audience || T('Someone')); }
     var base = m.kind === 'care' ? T('Care Group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Midweek Group') + ' · ' + esc(m.audience) : m.kind === 'leaders' ? T('Leadership') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
     return base + (m.some ? ' · ' + esc(TN('{n} person', '{n} people', n)) : '');
   }
@@ -46,6 +48,24 @@
   }
   function head(lead, active) { return '<div class="page-head"><div><h1>' + T('Messages') + '</h1><p class="lead">' + lead + '</p></div></div>' + tabs(active); }
 
+  /** A reply shows a line of what it answers ("Replying to: Sunday – Please bring…"), when that message is still here. */
+  function replyContext(m) {
+    if (!m.replyTo) return '';
+    var o = S.get('messages', m.replyTo); if (!o) return '<p class="msg-re muted small">' + T('A reply') + '</p>';
+    var bit = String(o.body || '').replace(/\s+/g, ' ').slice(0, 80) + (String(o.body || '').length > 80 ? '…' : '');
+    return '<p class="msg-re muted small">' + T('Replying to: {text}', { text: esc((o.title ? o.title + ' – ' : '') + bit) }) + '</p>';
+  }
+  /** Reply privately to a message's sender: a small window with the message and a box to write in. */
+  function replyDialog(m) {
+    H.modal(H.dialogHead(T('Reply to {name}', { name: esc(m.fromName || T('Someone')) }), T('Only {name} will see your reply.', { name: esc(m.fromName || T('Someone')) })) +
+      '<div class="dlg-body"><blockquote class="msg-quote">' + (m.title ? '<b>' + esc(m.title) + '</b><br>' : '') + bodyHtml(String(m.body || '').slice(0, 400)) + (String(m.body || '').length > 400 ? '…' : '') + '</blockquote>' +
+      '<label class="field req">' + T('Your reply') + '<textarea id="ms-reply" rows="5" maxlength="' + Msg.MAX_BODY + '"></textarea></label>' +
+      '<p id="ms-rerr" class="note bad" hidden></p>' +
+      '<p class="hint">' + T('Please don’t put private or medical details in a message to a group.') + '</p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="messages:replysend" data-id="' + esc(m.id) + '">' + H.icon(BUBBLE, 16) + T('Send') + '</button></div>', T('Reply'));
+    var box = document.getElementById('ms-reply'); if (box) box.focus();
+  }
+
   /* ---------- Inbox: messages sent to me ---------- */
   var justRead = {};   // opened on this visit: still marked as new until the page is left, so people see what came in
   if (typeof window !== 'undefined') window.addEventListener('hashchange', function () { if (!/^#\/messages\/?$/.test(location.hash)) justRead = {}; });
@@ -57,10 +77,10 @@
     var fresh = list.filter(function (m) { return Msg.isUnread(m, u.id, manager()) || justRead[m.id]; }).length;
     return html + '<section class="msg-chat">' + (fresh ? '<div class="msg-unread-bar">' + esc(TN('{n} unread message', '{n} unread messages', fresh)) + '</div>' : '') + list.map(function (m) {
       var isNew = Msg.isUnread(m, u.id, manager()) || justRead[m.id];
-      var reply = manager() && m.kind === 'office' && m.fromId !== u.id ? '<a class="btn small" href="#/messages/send/people/' + esc(m.fromId) + '">' + T('Reply') + '</a>' : '';
+      var reply = Msg.mayReply(m, who(), data()) ? '<button class="btn small" data-act="messages:reply" data-id="' + esc(m.id) + '">' + T('Reply') + '</button>' : '';
       return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.title || audName(m.kind, m.audience)) + '</b></div>' +
         '<div class="msg-who">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
-        '<p class="msg-body">' + bodyHtml(m.body) + '</p><div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
+        replyContext(m) + '<p class="msg-body">' + bodyHtml(m.body) + '</p><div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
     }).join('') + '</section>';
   }
   /** Opening the inbox marks what is shown as read (on every device; the sender sees how many have read it). */
@@ -101,11 +121,12 @@
   /** A person's name for the checklist: from their record, or the name the group keeps (carers and leaders who aren't staff). */
   function personName(id, a) {
     var p = S.get('people', id); if (p) return H.name(p);
-    var g = a.kind === 'care' ? S.get('careGroups', a.groupId) : a.kind === 'life' ? S.get('lifeGroups', a.groupId) : a.kind === 'group' ? S.get('msgGroups', a.groupId) : a.kind === 'leaders' ? S.get('leaderBodies', a.groupId) : null;
+    var g = a.kind === 'care' ? S.get('careGroups', a.groupId) : a.kind === 'life' || (a.kind === 'direct' && a.groupId) ? S.get('lifeGroups', a.groupId) : a.kind === 'group' ? S.get('msgGroups', a.groupId) : a.kind === 'leaders' ? S.get('leaderBodies', a.groupId) : null;
     return (g && g.names && g.names[id]) || T('Someone');
   }
   function reach(a) {
     if (a.kind === 'office') return T('Sent to the Office; office staff can read it and reply.');
+    if (a.kind === 'direct') return T('Only {name} will see it.', { name: a.name || personName(a.personId, a) });
     var all = Msg.recipients(a.kind, a.groupId, data()), ids = picking(a) ? ticked().filter(function (id) { return all.indexOf(id) >= 0; }) : all, n = ids.length;
     var txt = TN('Goes to {n} person', 'Goes to {n} people', n);
     if (manager() && n) {
@@ -116,14 +137,15 @@
   }
   function renderSend(pre) {
     var as = audiences();
-    if (!as.length) return head(T('Messages from the church to you and the groups you are in.'), 'send') + '<p class="empty">' + T('Only Administrators, Pastors, carers and group leaders can send messages.') + '</p>';
+    if (!as.length) return head(T('Messages from the church to you and the groups you are in.'), 'send') + '<p class="empty">' + T('You can read the messages the church sends you here.') + '</p>';
     var pp = /^people\/(.+)$/.exec(pre || '');   // #/messages/send/people/<personId>: a message to that one person
     if (pp && as.some(function (a) { return a.kind === 'people'; })) { draft.to = 'people'; draft.chosen = {}; draft.chosen[pp[1]] = true; draft.some = false; }
     else if (pre && as.some(function (a) { return key(a) === pre; }) && pre !== draft.to) { draft.to = pre; draft.chosen = {}; draft.some = false; }
     var cur = as.filter(function (a) { return key(a) === draft.to; })[0] || as[0]; draft.to = key(cur);
-    var opt = function (a) { return '<option value="' + esc(key(a)) + '"' + (key(a) === draft.to ? ' selected' : '') + '>' + esc(audName(a.kind, a.name)) + '</option>'; };
+    var opt = function (a) { var n = audName(a.kind, a.kind === 'direct' ? a.name || personName(a.personId, a) : a.name) + (a.kind === 'direct' && a.group ? ' · ' + a.group : ''); return '<option value="' + esc(key(a)) + '"' + (key(a) === draft.to ? ' selected' : '') + '>' + esc(n) + '</option>'; };
     var groupOf = function (k) { return as.filter(function (a) { return a.kind === k; }); };
-    var sel = [['', groupOf('office').concat(groupOf('people'), groupOf('staff'), groupOf('partners'))], [T('Care Groups'), groupOf('care')], [T('Midweek Groups'), groupOf('life')], [T('Leadership'), groupOf('leaders')], [T('Message groups'), groupOf('group')]].map(function (g) {
+    var direct = groupOf('direct'), byGroup = function (g) { return direct.filter(function (a) { return !!a.groupId === g; }); };
+    var sel = [['', groupOf('office').concat(groupOf('people'), groupOf('staff'), groupOf('partners'))], [T('Ministers'), byGroup(false)], [T('Midweek Group leaders'), byGroup(true)], [T('Care Groups'), groupOf('care')], [T('Midweek Groups'), groupOf('life')], [T('Leadership'), groupOf('leaders')], [T('Message groups'), groupOf('group')]].map(function (g) {
       if (!g[1].length) return ''; return g[0] ? '<optgroup label="' + esc(g[0]) + '">' + g[1].map(opt).join('') + '</optgroup>' : g[1].map(opt).join('');
     }).join('');
     return head(T('Send a message to a group or the Office. Office staff can read messages to the Office and reply.'), 'send') +
@@ -136,6 +158,7 @@
   }
   /** Ticking who gets it: everyone who may be chosen ("Chosen people"), or a group's people after "Only some of them". */
   function checklist(a) {
+    if (a.kind === 'direct') return '';
     var box = a.kind === 'people' ? '' : '<label class="check" style="margin:-6px 0 12px"><input type="checkbox" id="ms-some"' + (draft.some ? ' checked' : '') + '><span>' + T('Only some of them') + '</span></label>';
     if (!picking(a)) return box;
     var ids = Msg.recipients(a.kind, a.groupId, data()).map(function (id) { return { id: id, name: personName(id, a) }; })
@@ -235,7 +258,7 @@
   H.register({
     id: 'messages', name: 'Messages', desc: 'Messages from the church to you and your groups', icon: BUBBLE, tint: '#2F6FB0',
     render: function (p) {
-      if (p[0] === 'send') return renderSend(p[1] ? p[1] + (p[2] ? '/' + p[2] : '') : '');
+      if (p[0] === 'send') return renderSend(p.slice(1).join('/'));
       if (p[0] === 'sent') return renderSent();
       if (p[0] === 'groups') return renderGroups();
       return renderInbox();
@@ -257,17 +280,27 @@
           e.hidden = false; return;
         }
         var n = m.to.filter(function (x) { return x !== m.fromId; }).length;
-        H.modal(H.dialogHead(T('Send this message?'), m.kind === 'people' ? audLong(m) : audName(a.kind, a.name)) + '<div class="dlg-body"><p>' + (m.kind === 'office' ? T('Sent to the Office; office staff can read it and reply.') : esc(TN('It goes to {n} person.', 'It goes to {n} people.', n))) + '</p>' +
+        if (m.kind === 'direct' && !m.audience) m.audience = personName(a.personId, a);
+        H.modal(H.dialogHead(T('Send this message?'), m.kind === 'people' || m.kind === 'direct' ? audLong(m) : audName(a.kind, a.name)) + '<div class="dlg-body"><p>' + (m.kind === 'office' ? T('Sent to the Office; office staff can read it and reply.') : m.kind === 'direct' ? esc(T('Only {name} will see it.', { name: m.audience })) : esc(TN('It goes to {n} person.', 'It goes to {n} people.', n))) + '</p>' +
           (m.title ? '<p><b>' + esc(m.title) + '</b></p>' : '') + '<p class="msg-body">' + bodyHtml(m.body) + '</p></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="messages:sendnow">' + T('Send') + '</button></div>', T('Send this message?'));
         pending = m;
       },
       sendnow: function () {
         var m = pending; if (!m) return; pending = null;
-        var target = m.kind === 'office' ? 'the Office' : m.kind === 'people' ? 'chosen people' : (m.some ? 'some of ' : '') + (m.kind === 'staff' ? 'the staff' : m.kind === 'partners' ? 'the Church Partners' : m.audience);
+        var target = m.kind === 'office' ? 'the Office' : m.kind === 'people' ? 'chosen people' : m.kind === 'direct' ? 'one person' : (m.some ? 'some of ' : '') + (m.kind === 'staff' ? 'the staff' : m.kind === 'partners' ? 'the Church Partners' : m.audience);
         S.put('messages', m, 'Sent a message to ' + target + (m.kind === 'office' ? '' : ' (' + m.to.length + (m.to.length === 1 ? ' person)' : ' people)')));
         draft = { to: draft.to, title: '', body: '', some: false, chosen: {} };
         H.closeModal(); H.toast(T('Message sent')); H.go('messages/sent');
+      },
+      reply: function (el) { var m = S.get('messages', el.dataset.id); if (m && Msg.mayReply(m, who(), data())) replyDialog(m); },
+      replysend: function (el) {
+        var o = S.get('messages', el.dataset.id), box = document.getElementById('ms-reply'), e = document.getElementById('ms-rerr');
+        if (!o || !box || !Msg.mayReply(o, who(), data())) { H.closeModal(); return; }
+        var m = Msg.reply(o, box.value, me());
+        if (m.error) { e.textContent = m.error === 'empty' ? T('Write the message first.') : m.error === 'long' ? T('The message is too long – please shorten it.') : T('Couldn’t send the reply.'); e.hidden = false; return; }
+        S.put('messages', m, 'Replied to a message (to one person)');
+        H.closeModal(); H.toast(T('Reply sent')); H.render();
       },
       tick: function (el) {   // Tick all / Untick all – the people shown (after typing part of a name, only those)
         Array.prototype.forEach.call(document.querySelectorAll('.ms-row'), function (r) {

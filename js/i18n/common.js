@@ -470,5 +470,8 @@ I18n.rows([
     ["You’re not in a group yet.", "Jy is nog nie in ’n groep nie.", "Awukabi seqenjini okwamanje.", "Akukabikho kwiqela."],
     ["My leadership groups", "My leierskapsgroepe", "Amaqembu ami obuholi", "Amaqela am obunkokeli"],
     ["Care Groups, Midweek Groups and Leadership in one place", "Sorggroepe, Middeweekse Groepe en Leierskap op een plek", "Amaqembu Okunakekelana, Amaqembu Aphakathi Nesonto noBuholi endaweni eyodwa", "Amaqela Okukhathalelana, Amaqela Aphakathi Kweveki noBunkokeli kwindawo enye"],
-    ["The menu entry that holds Care Groups, Midweek Groups and Leadership", "Die kieslysinskrywing wat Sorggroepe, Middeweekse Groepe en Leierskap bevat", "Okufakwe kumenyu okuqukethe Amaqembu Okunakekelana, Amaqembu Aphakathi Nesonto noBuholi", "Into esemenyu equlethe Amaqela Okukhathalelana, Amaqela Aphakathi Kweveki noBunkokeli"]
+    ["The menu entry that holds Care Groups, Midweek Groups and Leadership", "Die kieslysinskrywing wat Sorggroepe, Middeweekse Groepe en Leierskap bevat", "Okufakwe kumenyu okuqukethe Amaqembu Okunakekelana, Amaqembu Aphakathi Nesonto noBuholi", "Into esemenyu equlethe Amaqela Okukhathalelana, Amaqela Aphakathi Kweveki noBunkokeli"],
+    ["{partner} access", "{partner}-toegang", "Ukufinyelela kwe-{partner}", "Ufikelelo lwe-{partner}"],
+    ["Attendee", "Bywoner", "Ohambela isonto", "Ohamba icawe"],
+    ["this church", "hierdie kerk", "leli bandla", "le cawe"]
 ]);

@@ -28,14 +28,15 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Leadership (the Council, elders, leaders: roles, titles, portfolios; `leaderBodies`) | `js/mod-leaders.js`, `js/leaders.js` | `js/i18n/leaders.js` | `tests/leaders.test.js`, `tests/app/records.js` |
 | Archives (inside Library; minutes, plans, contracts, appraisals; role access; files in parts) | `js/mod-archive.js`, `js/mod-library.js`, `js/archive.js`, `js/store.js` (`extras`, `saveFile`) | `js/i18n/archive.js` | `tests/archive.test.js`, `tests/app/records.js` |
 | Library (books, loans, librarians) | `js/mod-library.js`, `js/library.js` | `js/i18n/library.js` | `tests/library.test.js`, `tests/app/records.js` |
-| Messages (inside the app; message groups) | `js/mod-messages.js`, `js/messages.js` | `js/i18n/messages.js` | `tests/messages.test.js`, `tests/app/messages.js` |
+| Messages (inside the app; message groups; replies; what attendees may do – `Msg.attendeeCan`, `Hub.attendee()`) | `js/mod-messages.js`, `js/messages.js` | `js/i18n/messages.js` | `tests/messages.test.js`, `tests/app/messages.js` |
 | Privacy pages, law by country | `js/mod-privacy.js`, `js/privacy-law.js` | `js/i18n/privacy.js` | `tests/privacy-law.test.js` |
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
 | Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
-| Settings, countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
+| Settings (incl. Attendees), countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
 | Language engine, 19 more languages (Sesotho kept up to date; the other 18 before a release); Sesotho as written in Lesotho, made from `st.js` | `js/i18n.js`, `js/lang/<code>.js`, `js/sesotho.js` | – | `tests/i18n.test.js`, `sesotho.test.js` |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
+| Home: What’s new and Did you know? (tips by access level; add news to `NEWS` with its date) | `js/tips.js`, `js/app.js` (`tipsCard`, `homeTags`) | `js/i18n/tips.js` | `tests/tips.test.js`, `tests/app/records.js` |
 | Demo data | `js/sample.js` | – | |
 
 The browser test is `node tests/app.test.js` (needs Playwright); it starts the browser and runs each part in `tests/app/` in turn.
@@ -58,7 +59,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`, `tips`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
@@ -89,6 +90,11 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.
+- What's new on Home: every release that changes what people see or can do – features and noticeable fixes – adds one plain
+  sentence to the top of `NEWS` in `js/tips.js` (today's date; `who`/`not`/`app` so only the people it concerns see it), with its
+  words in `js/i18n/tips.js` and `js/lang/st.js`. Add a Did you know? tip too when there's a new thing worth discovering. When the
+  middle number goes up, set `NEWS_FOR` to it (`node tests/versions.test.js` checks it). When merging main into a branch, keep
+  both sides' news lines.
   The church can reword the brochures (About → Brochures → Edit): their edits are tied to the original wording, so a line you
   change stops carrying their edit of it (Church Hub lists it for them) – change wording only where the feature changed.
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.

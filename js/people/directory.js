@@ -174,6 +174,7 @@
     var filters = [['all', 'Everyone'], ['Church Partner', 'Church Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
     if (canSeeAll()) filters.push(['deceased', 'Deceased']);   // people who have died are kept for the records, out of the other lists
     if (!canBasic()) filters = [['all', T('Directory')]];
+    var bare = P.namesOnly();   // an attendee: Church Partners' names only (Settings → Attendees)
     if (!filters.some(function (f) { return f[0] === state.f; })) state.f = 'all';
     if (!canPick()) state.pick = null; else if (!state.pick) state.pick = {};   // Administrators and the Senior Pastor: tick boxes on the list
     var dead = state.f === 'deceased', q = state.q.trim().toLowerCase(), pick = dead ? null : state.pick;
@@ -182,16 +183,17 @@
       if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
       return matchesPerson(p, q);
     }).sort(SORTS[sortKey()].cmp);
-    return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : T('People who agreed to be in the church directory.')) + '</p></div>' +
+    return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : bare ? T('The names of the church’s Church Partners.') : T('People who agreed to be in the church directory.')) + '</p></div>' +
       '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + P.binLink() + (H.can('*') || H.can('people.edit') ? '<a class="btn" href="#/people/badges">' + T('Name badges') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.badgesWaiting().length) + '</a><a class="btn" href="#/people/applications">' + T('Partnership applications') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appsWaiting().length) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
-      '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + T('Search by name, household, email or phone') + '" value="' + esc(state.q) + '"></label>' +
+      '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + (bare ? T('Type part of their name') : T('Search by name, household, email or phone')) + '" value="' + esc(state.q) + '"></label>' +
         (canBasic() ? '<a class="adv-link" href="#/people/search">' + T('Advanced search') + '</a>' : '') + '</div>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="' + T('Show') + '">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + T(f[1]) + '</button>'; }).join('') + '</div>' : '') + '</div>' +
       '<div class="row pp-sortrow"><p class="muted small" id="pp-count">' + (pick && shown.length ? '<label class="pp-tick pp-tickall"><input type="checkbox" id="pp-selall" aria-label="' + esc(T('Tick everyone shown')) + '"' + (shown.every(function (p) { return pick[p.id]; }) ? ' checked' : '') + '></label>' : '') + TN('{n} person', '{n} people', shown.length) + '</p>' +
         sortSwitch() + '</div>' +
       (pick ? (P.bulkUndoNote ? P.bulkUndoNote() : '') + pickBar() : '') +
       (shown.length ? '<div class="list" id="pp-list">' + shown.map(function (p) {
+        if (bare && !isMe(p)) return '<div class="item pp-row pp-name"><span class="grow"><b>' + listName(p) + '</b></span></div>';   // a name, nothing more
         var fam = familyOf(p), tags = '';
         if (p.familyRole === 'child') tags += '<span class="tag" style="--c:#0E7490">' + T('Child') + (age(p) !== '' ? ', ' + age(p) : '') + '</span>';
         else if (dead) tags += '<span class="tag grey">' + esc(p.deceasedAt ? T('Died {date}', { date: H.fmt(p.deceasedAt, true) }) : T('Deceased')) + '</span>';

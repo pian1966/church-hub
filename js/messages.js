@@ -7,9 +7,14 @@
  *   partners every Church Partner (adults)                       – Administrators and Pastors only
  *   people   people chosen one by one from a checklist           – Administrators and Pastors only
  *   office   the church office channel                            – any signed-in person; Administrators and Pastors receive it
+ *   direct   one person: a reply to a message (replyTo: its id) goes back to its sender only; or a new message to a
+ *            minister (a Pastor) or to a leader of one of your own Midweek Groups (groupId: that group)
+ * Attendees (Basic access, not Church Partners or staff – Hub.attendee()) only do what Settings → Attendees allows
+ * (settings.attendeeCan, default ATTENDEE_CAN): 'write' – the Office, the ministers and their Midweek Group leaders;
+ * 'reply' – reply to any message sent to them. Without 'reply' they may still reply to a minister when they may write.
  * Anyone sending to a group may also tick only some of its people (some: true); carers and leaders still only reach
  * people in their own group.
- * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, title, body, fromId, fromName, to: [personIds], deliveredBy: [personIds], readBy: [personIds] }
+ * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, replyTo, title, body, fromId, fromName, to: [personIds], deliveredBy: [personIds], readBy: [personIds] }
  * msgGroups/{id} = { name, memberIds, leaderIds, names: { personId: name } } – leaders are members too; names so leaders who
  *   aren't staff can tick people when writing.
  * The list of people (to) is worked out when the message is sent, so someone who joins a group later doesn't see older
@@ -19,8 +24,19 @@
  */
 var Msg = (function () {
   'use strict';
-  var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people'];
+  var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct'];
   var MAX_BODY = 4000, MAX_TITLE = 120;
+  /** What attendees may do when the church hasn't chosen (Settings → Attendees): see Church Partners' names, and write to
+   *  the Office, the ministers and their Midweek Group leaders. Also offered: 'directory' (the church directory, as Church
+   *  Partners see it) and 'reply' (reply to any message). */
+  var ATTENDEE_CAN = ['names', 'write'], ATTENDEE_OPTIONS = ['names', 'directory', 'write', 'reply'];
+  function attendeeCan(settings) { var c = (settings || {}).attendeeCan; return Array.isArray(c) ? c.filter(function (x) { return ATTENDEE_OPTIONS.indexOf(x) >= 0; }) : ATTENDEE_CAN.slice(); }
+  /** Church Partner access: Basic access plus being a Church Partner (or on the staff) – given by the category, automatically. */
+  function partnerLevel(p) { return !!p && (p.category === 'Church Partner' || p.category === 'Staff'); }
+  /** May this person write new messages / reply? who = { manager, attendee, can: [what attendees may do] } */
+  function mayWrite(who) { return !who.attendee || (who.can || []).indexOf('write') >= 0; }
+  function mayReplyAll(who) { return !who.attendee || (who.can || []).indexOf('reply') >= 0; }
+  function isMinister(pid, d) { return ((d || {}).ministers || []).some(function (x) { return x.id === pid; }); }
 
   function alive(p) {
     return !!p && p.active !== false && p.familyRole !== 'child' && p.category !== 'Deceased' && !p.binnedAt && !p.mergedInto && !p.deletedAt && p.firstName !== 'Deleted';
@@ -35,7 +51,7 @@ var Msg = (function () {
    *  who may be chosen (adults still in the church). */
   function recipients(kind, groupId, d) {
     d = d || {};
-    if (kind === 'office') return [];
+    if (kind === 'office' || kind === 'direct') return [];
     if (kind === 'staff') return (d.people || []).filter(function (p) { return alive(p) && !!p.staff; }).map(function (p) { return p.id; });
     if (kind === 'people') return (d.people || []).filter(alive).map(function (p) { return p.id; });
     if (kind === 'partners') return (d.people || []).filter(function (p) { return alive(p) && p.category === 'Church Partner'; }).map(function (p) { return p.id; });
@@ -45,28 +61,56 @@ var Msg = (function () {
   }
 
   /**
-   * The audiences someone may send to, in the order they are offered: [{ kind, groupId, name }].
-   * who = { id, manager (Administrator or Pastor) }; names of care groups and message groups as stored.
+   * The audiences someone may send to, in the order they are offered: [{ kind, groupId, name, personId }].
+   * who = { id, manager (Administrator or Pastor), attendee, can }; names of care groups and message groups as stored.
+   * d.ministers = [{ id, name }] (Settings keeps the Pastors' names for everyone: settings.ministers).
    */
   function audiences(who, d) {
-    d = d || {}; var out = [{ kind: 'office', groupId: '', name: 'Office' }], name = function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); };
+    d = d || {}; var out = [], name = function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); };
+    if (who.manager || mayWrite(who)) out.push({ kind: 'office', groupId: '', name: 'Office' });
     if (who.manager) { out.push({ kind: 'people', groupId: '', name: 'Chosen people' }); out.push({ kind: 'staff', groupId: '', name: 'Staff' }); out.push({ kind: 'partners', groupId: '', name: 'Church Partners' }); }
+    else if (mayWrite(who)) {
+      (d.ministers || []).slice().sort(name).forEach(function (x) { if (x.id && x.id !== who.id) out.push({ kind: 'direct', groupId: '', personId: x.id, name: x.name || '' }); });
+      // the leaders of their own Midweek Groups (those they don't lead themselves)
+      (d.lifeGroups || []).slice().sort(name).forEach(function (g) {
+        if ((g.memberIds || []).indexOf(who.id) < 0 || leads(g, who.id)) return;
+        (g.leaderIds || []).forEach(function (l) { if (l !== who.id && !isMinister(l, d)) out.push({ kind: 'direct', groupId: g.id, personId: l, name: (g.names || {})[l] || '', group: g.name || '' }); });
+      });
+    }
     (d.careGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'care', groupId: g.id, name: g.name }); });
     (d.lifeGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'life', groupId: g.id, name: g.name }); });
     (d.msgGroups || []).slice().sort(name).forEach(function (g) { if (who.manager || leads(g, who.id)) out.push({ kind: 'group', groupId: g.id, name: g.name }); });
     (d.leaderBodies || []).slice().sort(name).forEach(function (b) { if (who.manager || onBody(b, who.id)) out.push({ kind: 'leaders', groupId: b.id, name: b.name }); });
     return out;
   }
-  /** May this person send to this audience? (The database rules check the same.) */
-  function maySend(who, kind, groupId, d) {
+  /** May this person send to this audience? (The database rules check the same.) personId: for a direct message. */
+  function maySend(who, kind, groupId, d, personId) {
     if (KINDS.indexOf(kind) < 0) return false;
-    if (kind === 'office') return true;
+    if (kind === 'office') return !!who.manager || mayWrite(who);
     if (who.manager) return true;
+    if (kind === 'direct') return audiences(who, d).some(function (a) { return a.kind === 'direct' && a.personId === personId && (a.groupId || '') === (groupId || ''); });
     if (kind === 'care') return leads(byId((d || {}).careGroups, groupId), who.id);
     if (kind === 'life') return leads(byId((d || {}).lifeGroups, groupId), who.id);
     if (kind === 'group') return leads(byId((d || {}).msgGroups, groupId), who.id);
     if (kind === 'leaders') return onBody(byId((d || {}).leaderBodies, groupId), who.id);
     return false;
+  }
+  /** May this person reply to this message (privately, to its sender)? Not to their own, not to one that has no sender;
+   *  it must have come to them (or, for Administrators and Pastors, to the Office). Attendees: only with Settings' 'reply',
+   *  or to a minister when they may write. */
+  function mayReply(m, who, d) {
+    if (!m || !m.fromId || m.fromId === who.id) return false;
+    var got = (m.to || []).indexOf(who.id) >= 0 || (!!who.manager && m.kind === 'office');
+    if (!got) return false;
+    if (who.manager || mayReplyAll(who)) return true;
+    return mayWrite(who) && isMinister(m.fromId, d);
+  }
+  /** A reply, ready to save (or { error }): privately to the original's sender, "Re: …" as its subject. */
+  function reply(orig, body, from) {
+    var t = String(orig.title || '').trim(), title = !t ? '' : /^re:/i.test(t) ? t : 'Re: ' + t;
+    var m = make({ kind: 'direct', groupId: '', personId: orig.fromId, name: orig.fromName || '' }, title, body, from, {});
+    if (!m.error) m.replyTo = orig.id || '';
+    return m;
   }
 
   /** A new message, ready to save; or { error } saying what is missing. a = { kind, groupId, name }, from = person.
@@ -77,7 +121,8 @@ var Msg = (function () {
     if (body.length > MAX_BODY) return { error: 'long' };
     var all = recipients(a.kind, a.groupId, d), to = all, some = false;
     if (a.kind === 'office') to = [];
-    if (a.kind !== 'office' && (a.kind === 'people' || chosen)) {
+    if (a.kind === 'direct') { if (!a.personId || a.personId === from.id) return { error: 'nobody' }; to = [a.personId]; }
+    else if (a.kind !== 'office' && (a.kind === 'people' || chosen)) {
       var want = {}; (chosen || []).forEach(function (id) { want[id] = 1; });
       to = all.filter(function (id) { return want[id]; });
       some = a.kind !== 'people' && to.length < all.length;
@@ -88,6 +133,7 @@ var Msg = (function () {
       fromId: from.id, fromName: nameOf(from), to: to, deliveredBy: [from.id], readBy: [from.id] };
     if (a.kind === 'people') m.audience = to.length === 1 ? nameOf(byId(d.people, to[0]) || {}) : '';
     if (some) m.some = true;
+    if (a.kind === 'direct') { m.audience = a.name || ''; if (a.replyTo) m.replyTo = a.replyTo; }
     return m;
   }
 
@@ -155,7 +201,8 @@ var Msg = (function () {
     return JSON.stringify(x) === JSON.stringify(g) ? null : x;
   }
 
-  return { counts: counts, KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
+  return { ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
+    counts: counts, KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
     inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();
 if (typeof module !== 'undefined') module.exports = Msg;

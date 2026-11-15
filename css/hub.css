@@ -515,6 +515,10 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
+.msg-re { margin: 6px 0 0; padding-left: 8px; border-left: 3px solid var(--line); }
+.msg-quote { margin: 0 0 14px; padding: 8px 12px; border-left: 3px solid var(--a, #E8590C); background: var(--surface-2); border-radius: 6px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 180px; overflow: auto; }
+.pp-name { min-height: 44px; }
+.me-req { margin: 8px 0 12px; }
 .msg-read > summary { cursor: pointer; } .msg-read .tag { margin: 2px 2px 0 0; display: inline-block; }
 #ms-body { min-height: 140px; }
 /* Messages: ticking who gets a message */
@@ -924,6 +928,10 @@ details.lib-more { margin-top: 12px; }
 details.lib-more > summary { cursor: pointer; font-weight: 600; color: var(--accent-ink); font-size: 14px; }
 details.lib-more[open] > summary { margin-bottom: 12px; }
 .lib-books-head { align-items: center; }
+/* An item's loans, under it in the one list (librarians): who has it, and Returned */
+.lib-loans { flex: 1 1 100%; display: flex; flex-direction: column; gap: 6px; }
+.lib-loan { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 10px; border-radius: 10px; background: var(--bg); border: 1px solid var(--line-2); }
+.lib-loan > .grow { flex: 1 1 220px; min-width: 0; overflow-wrap: anywhere; }
 .lib-empty { padding: 32px 18px; }
 .lib-empty p { margin: 0 0 14px; }
 .row-menu > summary { font-size: 18px; line-height: 1; letter-spacing: 1px; }
@@ -958,3 +966,15 @@ html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366
 /* Consent window: what withdrawing a consent means, shown under the unticked box */
 .cf-without { display: block; margin: 6px 0 0; padding: 8px 10px; font-size: 13px; }
 .cf-without[hidden] { display: none; }
+
+/* Home: What's new and Did you know? (js/tips.js) */
+.panel.tips-card { margin: 0 0 18px; border-left: 4px solid var(--accent, #E8590C); }
+.tips-card h2 { font-size: 1rem; margin: 0 0 6px; }
+.tips-card h2 + .tips-news, .tips-card h2 + .tip-text { margin-top: 0; }
+.tips-card .tips-news { margin: 0 0 12px; padding-left: 1.2em; }
+.tips-card .tips-news li + li { margin-top: 4px; }
+.tips-card .tip-text { margin: 0; }
+.tips-card .btns { margin-top: 12px; flex-wrap: wrap; }
+.tips-all { list-style: none; margin: 0; padding: 0; }
+.tips-all li { display: flex; gap: 10px; align-items: center; padding: 10px 0; }
+.tips-all li + li { border-top: 1px solid var(--line-2); }

@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.80';
   var NEWS = [
+    { date: '2026-11-15', who: ['everyone'], app: 'messages', text: TX('In Messages → Sent, you now choose how the delivery signs look from four picture cards, each showing its steps and which apps and countries use that style.') },
     { date: '2026-11-15', who: ['everyone'], app: 'rosters', text: TX('When you’re put on a roster, a message now comes to your Messages inbox, and you can accept or say you can’t make it right there.') },
     { date: '2026-11-15', who: ['rosters', 'admin'], app: 'rosters', text: TX('Roster coordinators: when someone says they can’t make it, you now get a message. Rosters → More → Remind those who haven’t replied sends everyone still to answer a reminder.') },
     { date: '2026-11-15', who: ['everyone'], text: TX('Updates are smaller now: a new version of Church Hub downloads only the parts that changed, so it uses much less data.') },

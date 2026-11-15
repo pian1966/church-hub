@@ -283,25 +283,39 @@
     el.parentNode.appendChild(tip);
     markTimer = setTimeout(function () { tip.remove(); }, 4000);
   }
-  /** What the signs mean, folded under the tabs of Sent, with a choice of how they are drawn (kept on this device). */
-  var STYLE_NAMES = [['ticks', 'Ticks (as on WhatsApp)'], ['post', 'Envelopes (as in the post)'], ['circle', 'Circles (as on DingTalk, China)'], ['words', 'Words (as on LINE and QQ)']];
+  /** What the signs mean, folded under the tabs of Sent, with a choice of how they are drawn (kept on this device):
+   *  four picture cards showing each style's steps, what it does, and which apps and countries use it. */
+  var STYLES = [
+    ['ticks', 'Ticks', 'Grey ticks turn blue as people read it', 'Like WhatsApp · used worldwide'],
+    ['post', 'Envelopes', 'The envelope opens when it’s read', 'Like the post'],
+    ['circle', 'Circles', 'The circle fills up as people read it', 'Like DingTalk · China'],
+    ['words', 'Words', 'Says it in words: Sent, Delivered, Read', 'Like iMessage on iPhone, LINE (Japan, Thailand, Taiwan) and QQ (China)']];
   var MEANINGS = [['sent', 'Sent: on its way. Not everyone has opened Church Hub since.'], ['delivered', 'Delivered: it has reached everyone, but no one has read it yet.'],
     ['some', 'Read by some: it has reached everyone, and some have read it.'], ['read', 'Read: everyone has read it.']];
+  function styleCard(x, chosen) {
+    var steps = x[0] === 'words' ? ['sent', 'read'] : ['sent', 'delivered', 'some', 'read'];
+    return '<label class="msg-style' + (chosen ? ' on' : '') + '" data-style="' + x[0] + '"><input type="radio" class="sr-only" name="ms-marks" value="' + x[0] + '"' + (chosen ? ' checked' : '') + '>' +
+      (chosen ? '<span class="msg-style-tick" aria-hidden="true">' + svg(12, 12, '0 0 16 13', '<path d="' + TICK + '" stroke="#fff" stroke-width="2.4"/>') + '</span>' : '') +
+      '<b>' + esc(T(x[1])) + '</b><span class="msg-style-steps" aria-hidden="true">' + steps.map(function (st) {
+        return '<span class="msg-status ' + st + '">' + drawing(st, x[0], 0.5) + '</span>';
+      }).join('<span class="msg-style-arrow">›</span>') + '</span><span class="msg-style-what">' + esc(T(x[2])) + '</span><span class="msg-style-like">' + esc(T(x[3])) + '</span></label>';
+  }
   function legend() {
     var style = markStyle();
     return '<details class="panel msg-legend"><summary>' + T('What the signs mean') + '</summary><ul class="msg-legend-list">' + MEANINGS.map(function (x) {
       return '<li><span class="msg-status ' + x[0] + '">' + drawing(x[0], style, 0.5) + '</span><span>' + esc(T(x[1])) + '</span></li>';
     }).join('') + '</ul><p class="hint">' + T('A message to the Office counts as read as soon as someone in the office reads it.') + '</p>' +
-      '<label class="field" style="margin:0">' + T('Show them as') + '<select id="ms-marks">' + STYLE_NAMES.map(function (x) {
-        return '<option value="' + x[0] + '"' + (x[0] === style ? ' selected' : '') + '>' + esc(T(x[1])) + '</option>';
-      }).join('') + '</select></label></details>';
+      '<fieldset class="msg-styles"><legend>' + T('How should the delivery signs look?') + '</legend><div class="msg-style-grid">' +
+      STYLES.map(function (x) { return styleCard(x, x[0] === style); }).join('') + '</div></fieldset></details>';
   }
   var legendOpen = false;
   function wireSent() {
-    var d = document.querySelector('.msg-legend'), sel = document.getElementById('ms-marks'); if (!d || !sel) return;
+    var d = document.querySelector('.msg-legend'); if (!d) return;
     if (legendOpen) d.open = true;
     d.addEventListener('toggle', function () { legendOpen = d.open; });
-    sel.addEventListener('change', function () { S.pref('msgMarks', sel.value); legendOpen = true; H.render(); });
+    Array.prototype.forEach.call(d.querySelectorAll('input[name="ms-marks"]'), function (r) {
+      r.addEventListener('change', function () { if (r.checked) { S.pref('msgMarks', r.value); legendOpen = true; H.render(); } });
+    });
   }
   function renderSent() {
     var u = me(), all = manager(), list = Msg.sent(S.list('messages'), u.id, all);

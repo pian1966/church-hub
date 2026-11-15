@@ -385,3 +385,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   such as the church secretary) gets a message when someone can't; Rosters → More → Remind those who haven't replied
 - ✅ 0.80.1 (15 Nov 2026): Messages – tapping the ticks (or envelope, circle or words) by your message's time shows a short
   note saying what they mean; it goes away by itself after 4 seconds
+- ✅ 0.80.2 (15 Nov 2026): Messages → Sent: the delivery signs are chosen from four picture cards (ticks, envelopes, circles, words), each showing its
+  steps and which apps and countries use it

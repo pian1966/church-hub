@@ -77,11 +77,14 @@ module.exports = async function (ctx) {
   await s.page.waitForSelector('.msg-mark-tip', { state: 'detached', timeout: 6000 });
   check(!(await s.page.$('.msg-mark-tip')), 'the note about the ticks goes away by itself');
   check(await s.page.$$eval('.msg-legend-list li', l => l.length) === 4 && (await s.page.textContent('.msg-legend')).includes('Read by some'), 'Sent explains what the signs mean, including “read by some”');
-  await s.page.click('.msg-legend > summary'); await s.page.selectOption('#ms-marks', 'post'); await s.settle();
+  await s.page.click('.msg-legend > summary');
+  check(await s.page.$$eval('.msg-style', l => l.length) === 4 && await s.page.$('.msg-style.on[data-style="ticks"] input:checked') && (await s.page.textContent('.msg-style[data-style="words"]')).includes('iMessage'), 'the delivery signs are four picture cards, ticks chosen, each saying which apps use it');
+  check(await s.page.$$eval('.msg-style', l => l.every(c => c.getBoundingClientRect().right <= document.documentElement.clientWidth)), 'the picture cards fit the screen');
+  await s.page.click('.msg-style[data-style="post"]'); await s.settle();
   check(await s.page.$eval('.msg-legend', d => d.open) && await s.page.$('.msg-chat .msg-status.sent svg rect'), 'choosing envelopes draws envelopes, and the explanation stays open');
-  await s.page.selectOption('#ms-marks', 'words'); await s.settle();
+  await s.page.click('.msg-style[data-style="words"]'); await s.settle();
   check((await s.page.textContent('.msg-chat .msg-status.sent')).trim() === 'Sent', 'choosing words writes the state in words');
-  await s.page.selectOption('#ms-marks', 'ticks'); await s.settle();
+  check(await s.page.$('.msg-style.on[data-style="words"]'), 'the chosen card is marked'); await s.page.click('.msg-style[data-style="ticks"]'); await s.settle();
   await s.go('messages/send'); await s.page.selectOption('#ms-to', 'group/mgW');
   await s.page.fill('#ms-body', 'Thanks, all!'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();

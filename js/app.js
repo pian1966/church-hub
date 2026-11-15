@@ -972,6 +972,15 @@ var Hub = (function () {
     return '<details class="menu' + (cls ? ' ' + cls : '') + '"><summary class="' + (dots ? 'icon-btn ghost' : 'btn') + '"' + (aria ? ' aria-label="' + esc(aria) + '" title="' + esc(aria) + '"' : '') + '>' +
       esc(label) + (dots ? '' : ' <span aria-hidden="true">▾</span>') + '</summary><div class="menu-list" role="menu">' + items.join('') + '</div></details>';
   }
+  /** A menu that would open past the edge of the screen (a "More" button near the middle of a phone) is moved back in. */
+  if (typeof document !== 'undefined') document.addEventListener('toggle', function (ev) {
+    var d = ev.target; if (!d.matches || !d.matches('details.menu') || !d.open) return;
+    var l = d.querySelector('.menu-list'); if (!l) return;
+    l.style.left = ''; l.style.right = '';
+    var r = l.getBoundingClientRect(), vw = document.documentElement.clientWidth, pad = 8;
+    if (r.right > vw - pad) { l.style.right = 'auto'; l.style.left = Math.round(l.offsetLeft - (r.right - (vw - pad))) + 'px'; }
+    else if (r.left < pad) { l.style.right = 'auto'; l.style.left = Math.round(l.offsetLeft + (pad - r.left)) + 'px'; }
+  }, true);
   function onClick(ev) {
     document.querySelectorAll('details.menu[open]').forEach(function (d) { if (!d.contains(ev.target) || ev.target.closest('.menu-list')) d.removeAttribute('open'); });
     var el = ev.target.closest('[data-act]'); if (!el) return;

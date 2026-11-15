@@ -205,16 +205,65 @@
     return '<details class="msg-read"><summary>' + T('Read by {n} of {total}', { n: s.n, total: s.of }) + '</summary>' +
       list(T('Read'), r.read, 'ok') + list(T('Delivered'), got, 'grey') + list(T('Not delivered yet'), c.waiting, 'grey') + '</details>';
   }
-  var TICK = 'M2.5 8.5l3.2 3.2L13 4.4', TICKS = 'M1 8.5l3.2 3.2L11.5 4.4M7.2 11.2l.5.5L15 4.4';
-  /** One grey tick: sent · two grey ticks: delivered to everyone · two blue ticks: read by everyone (as on WhatsApp). */
+  var TICK = 'M2.5 8.5l3.2 3.2L13 4.4', TICK1 = 'M1 8.5l3.2 3.2L11.5 4.4', TICK2 = 'M7.2 11.2l.5.5L15 4.4';
+  var STATE_WORDS = { sent: 'Sent', delivered: 'Delivered', some: 'Read by some', read: 'Read' };
+  /** The style chosen on this device (Sent → What the signs mean), otherwise what the church's country is used to. */
+  function markStyle() { return Msg.markStyle((S.settings() || {}).country, S.pref('msgMarks')); }
+  function svg(w, h, vb, inner, extra) { return '<svg width="' + w + '" height="' + h + '" viewBox="' + vb + '" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + inner + '</svg>'; }
+  /** The drawing for a state in a style. frac: the share of people who have read it (the circle fills up with it). */
+  function drawing(state, style, frac) {
+    var GREY = 'var(--tick-grey)', BLUE = 'var(--tick-blue)';
+    if (style === 'words') return '<span class="msg-word">' + esc(T(STATE_WORDS[state])) + '</span>';
+    if (style === 'post') {   // on its way (speed lines) · arrived (closed envelope) · opened by some (grey, blue dot) · opened by everyone (blue)
+      var shut = '<rect x="4.5" y="2.5" width="12.5" height="9.5" rx="1.2"/><path d="M4.8 3.2l6 4.6 6-4.6"/>';
+      var open = '<path d="M4.5 6.2v6.3h12.5V6.2"/><path d="M4.5 6.2l6.25 4.5 6.25-4.5"/>';
+      var flap = '<path d="M4.5 6.2l6.25-4.6 6.25 4.6"/>';
+      if (state === 'sent') return svg(19, 14, '0 0 18 14', '<g stroke="' + GREY + '">' + shut + '<path d="M.8 5h2M.8 8.5h2"/></g>');
+      if (state === 'delivered') return svg(19, 14, '0 0 18 14', '<g stroke="' + GREY + '">' + shut + '</g>');
+      return svg(19, 14, '0 0 18 14', '<g stroke="' + (state === 'read' ? BLUE : GREY) + '">' + open + flap + '</g>' + (state === 'some' ? '<circle cx="15.8" cy="2.6" r="2.2" fill="' + BLUE + '" stroke="none"/>' : ''));
+    }
+    if (style === 'circle') {   // a dotted ring · a ring · a ring filling up as people read · a full circle with a tick
+      if (state === 'sent') return svg(14, 14, '0 0 14 14', '<circle cx="7" cy="7" r="5.5" stroke="' + GREY + '" stroke-dasharray="2 2.3"/>');
+      if (state === 'read') return svg(14, 14, '0 0 14 14', '<circle cx="7" cy="7" r="6.2" fill="' + BLUE + '" stroke="none"/><path d="M4.2 7.2l1.9 1.9 3.7-3.9" stroke="#fff"/>');
+      var ring = '<circle cx="7" cy="7" r="5.5" stroke="' + GREY + '"/>';
+      if (state === 'delivered') return svg(14, 14, '0 0 14 14', ring);
+      var f = Math.min(Math.max(frac || 0.5, 0.08), 0.92), a = f * 2 * Math.PI, x = (7 + 5.5 * Math.sin(a)).toFixed(2), y = (7 - 5.5 * Math.cos(a)).toFixed(2);
+      return svg(14, 14, '0 0 14 14', ring + '<path d="M7 7V1.5A5.5 5.5 0 0 1 ' + (f > 0.5 ? '7 12.5A5.5 5.5 0 0 1 ' : '') + x + ' ' + y + 'Z" fill="' + BLUE + '" stroke="none"/>');
+    }
+    // Ticks, as on WhatsApp – with the first tick blue once some (not yet everyone) have read it
+    if (state === 'sent') return svg(17, 13, '0 0 16 13', '<path d="' + TICK + '" stroke="' + GREY + '"/>');
+    return svg(17, 13, '0 0 16 13', '<path d="' + TICK1 + '" stroke="' + (state === 'delivered' ? GREY : BLUE) + '"/><path d="' + TICK2 + '" stroke="' + (state === 'read' ? BLUE : GREY) + '"/>');
+  }
+  /** One grey tick: sent · two grey ticks: delivered to everyone · first tick blue: read by some · two blue ticks: read by everyone. */
   function statusMark(m) {
-    var state = Msg.status(m, S.list('people')), text = T(state === 'read' ? 'Read' : state === 'delivered' ? 'Delivered' : 'Sent');
-    return '<span class="msg-status ' + state + '" role="img" aria-label="' + esc(text) + '" title="' + esc(text) + '"><svg width="17" height="13" viewBox="0 0 16 13" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + (state === 'sent' ? TICK : TICKS) + '"/></svg></span>';
+    var state = Msg.status(m, S.list('people')), text = T(STATE_WORDS[state]), c = Msg.counts(m, S.list('people'));
+    return '<span class="msg-status ' + state + '" role="img" aria-label="' + esc(text) + '" title="' + esc(text) + '">' + drawing(state, markStyle(), c.of ? c.read / c.of : 0) + '</span>';
+  }
+  /** What the signs mean, folded under the tabs of Sent, with a choice of how they are drawn (kept on this device). */
+  var STYLE_NAMES = [['ticks', 'Ticks (as on WhatsApp)'], ['post', 'Envelopes (as in the post)'], ['circle', 'Circles (as on DingTalk, China)'], ['words', 'Words (as on LINE and QQ)']];
+  var MEANINGS = [['sent', 'Sent: on its way. Not everyone has opened Church Hub since.'], ['delivered', 'Delivered: it has reached everyone, but no one has read it yet.'],
+    ['some', 'Read by some: it has reached everyone, and some have read it.'], ['read', 'Read: everyone has read it.']];
+  function legend() {
+    var style = markStyle();
+    return '<details class="panel msg-legend"><summary>' + T('What the signs mean') + '</summary><ul class="msg-legend-list">' + MEANINGS.map(function (x) {
+      return '<li><span class="msg-status ' + x[0] + '">' + drawing(x[0], style, 0.5) + '</span><span>' + esc(T(x[1])) + '</span></li>';
+    }).join('') + '</ul><p class="hint">' + T('A message to the Office counts as read as soon as someone in the office reads it.') + '</p>' +
+      '<label class="field" style="margin:0">' + T('Show them as') + '<select id="ms-marks">' + STYLE_NAMES.map(function (x) {
+        return '<option value="' + x[0] + '"' + (x[0] === style ? ' selected' : '') + '>' + esc(T(x[1])) + '</option>';
+      }).join('') + '</select></label></details>';
+  }
+  var legendOpen = false;
+  function wireSent() {
+    var d = document.querySelector('.msg-legend'), sel = document.getElementById('ms-marks'); if (!d || !sel) return;
+    if (legendOpen) d.open = true;
+    d.addEventListener('toggle', function () { legendOpen = d.open; });
+    sel.addEventListener('change', function () { S.pref('msgMarks', sel.value); legendOpen = true; H.render(); });
   }
   function renderSent() {
     var u = me(), all = manager(), list = Msg.sent(S.list('messages'), u.id, all);
     var html = head(all ? T('Every message sent in Church Hub, newest first. You can delete any of them.') : T('Messages you have sent, newest first.'), 'sent');
     if (!list.length) return html + '<p class="empty">' + T('Nothing sent yet.') + '</p>';
+    if (list.some(function (m) { return m.fromId === u.id; })) html += legend();   // the signs are only on your own messages
     return html + '<section class="msg-chat">' + list.map(function (m) {
       var s = Msg.seen(m), mine = m.fromId === u.id;
       // Your own messages are bubbles on the right with ticks by the time; others' (Administrators and Pastors see all) on the left
@@ -265,6 +314,7 @@
     },
     after: function (p) {
       if (p[0] === 'send') wireSend();
+      else if (p[0] === 'sent') wireSent();
       else if (!p[0]) setTimeout(markShown, 300);
     },
     badge: function () { return unreadCount(); },

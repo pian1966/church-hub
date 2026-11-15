@@ -72,5 +72,17 @@ I18n.rows([    ['{n} new', '{n} nuut', '{n} ezintsha', '{n} ezintsha'],
     ["You can read the messages the church sends you here.", "Jy kan die boodskappe wat die kerk vir jou stuur, hier lees.", "Ungafunda lapha imilayezo ibandla elikuthumelela yona.", "Ungafunda apha imiyalezo ocawe ikuthumelela yona."],
     ["Ministers", "Leraars", "Abefundisi", "Abefundisi"],
     ["Midweek Group leaders", "Lewensgroepleiers", "Abaholi bamaqembu empilo", "Iinkokeli zamaqela obomi"],
-    ["Couldn’t send the reply.", "Kon nie die antwoord stuur nie.", "Akukwazekanga ukuthumela impendulo.", "Ayikwazanga ukuthumela impendulo."]
+    ["Couldn’t send the reply.", "Kon nie die antwoord stuur nie.", "Akukwazekanga ukuthumela impendulo.", "Ayikwazanga ukuthumela impendulo."],
+    ["Read by some", "Deur sommige gelees", "Ufundwe ngabanye", "Ufundwe ngabanye"],
+    ["What the signs mean", "Wat die tekens beteken", "Okushiwo yizimpawu", "Oko kuthethwa ziimpawu"],
+    ["Show them as", "Wys hulle as", "Zibonise njenge", "Zibonise njenge"],
+    ["Ticks (as on WhatsApp)", "Regmerkies (soos op WhatsApp)", "Amathikhi (njengaku-WhatsApp)", "Amathikhi (njengakwi-WhatsApp)"],
+    ["Envelopes (as in the post)", "Koeverte (soos by die pos)", "Izimvilophu (njengeposi)", "Iimvulophu (njengeposi)"],
+    ["Circles (as on DingTalk, China)", "Sirkels (soos op DingTalk, China)", "Izindilinga (njengaku-DingTalk, eShayina)", "Izangqa (njengakwi-DingTalk, eTshayina)"],
+    ["Words (as on LINE and QQ)", "Woorde (soos op LINE en QQ)", "Amagama (njengaku-LINE naku-QQ)", "Amagama (njengakwi-LINE nakwi-QQ)"],
+    ["Sent: on its way. Not everyone has opened Church Hub since.", "Gestuur: op pad. Nie almal het Church Hub sedertdien oopgemaak nie.", "Uthunyelwe: usendleleni. Akubona bonke abavule iChurch Hub kusukela lapho.", "Uthunyelwe: usendleleni. Asingabo bonke abavule iChurch Hub ukususela ngoko."],
+    ["Delivered: it has reached everyone, but no one has read it yet.", "Afgelewer: dit het almal bereik, maar niemand het dit nog gelees nie.", "Ufikile: ufinyelele kubo bonke, kodwa akekho osewufundile.", "Ufikile: ufikelele kubo bonke, kodwa akukho mntu osele ewufundile."],
+    ["Read by some: it has reached everyone, and some have read it.", "Deur sommige gelees: dit het almal bereik, en sommige het dit gelees.", "Ufundwe ngabanye: ufinyelele kubo bonke, futhi abanye sebewufundile.", "Ufundwe ngabanye: ufikelele kubo bonke, kwaye abanye sele bewufundile."],
+    ["Read: everyone has read it.", "Gelees: almal het dit gelees.", "Ufundiwe: bonke sebewufundile.", "Ufundiwe: bonke sele bewufundile."],
+    ["A message to the Office counts as read as soon as someone in the office reads it.", "’n Boodskap aan die Kantoor tel as gelees sodra iemand in die kantoor dit lees.", "Umlayezo oya eHhovisi ubalwa njengofundiwe uma nje umuntu ehhovisi ewufunda.", "Umyalezo oya kwi-Ofisi ubalwa njengofundiweyo xa nje umntu e-ofisini ewufunda."]
 ]);

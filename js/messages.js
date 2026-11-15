@@ -144,8 +144,8 @@ var Msg = (function () {
   function sent(messages, pid, all) { return (messages || []).filter(function (m) { return all || m.fromId === pid; }).sort(newestFirst); }
   function isUnread(m, pid, office) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office')) && m.fromId !== pid && (m.readBy || []).indexOf(pid) < 0; }
   function unread(messages, pid, office) { return (messages || []).filter(function (m) { return isUnread(m, pid, office); }); }
-  /** Ticks, as on WhatsApp: 'sent' (✓ grey) – 'delivered' (✓✓ grey) once it has reached EVERYONE it went to – 'read' (✓✓ blue)
-   *  once everyone has opened it. people (optional): only those who can sign in count, as the others can never open it.
+  /** Ticks, as on WhatsApp: 'sent' (✓ grey) – 'delivered' (✓✓ grey) once it has reached EVERYONE it went to – 'some'
+   *  (✓✓, the first blue) once it has reached everyone and some have read it – 'read' (✓✓ blue) once everyone has opened it. people (optional): only those who can sign in count, as the others can never open it.
    *  A message to the Office (no list of people): delivered / read as soon as anyone in the office has it / opens it. */
   function status(m, people) {
     var to = uniq(m.to || []).filter(function (x) { return x !== m.fromId; });
@@ -156,8 +156,19 @@ var Msg = (function () {
       var others = function (list) { return (list || []).some(function (id) { return id !== m.fromId; }); };
       return others(m.readBy) ? 'read' : others(m.deliveredBy) ? 'delivered' : 'sent';
     }
-    if (to.every(function (x) { return has(m.readBy, x); })) return 'read';
-    return to.every(got) ? 'delivered' : 'sent';
+    var read = function (x) { return has(m.readBy, x); };
+    if (to.every(read)) return 'read';
+    if (!to.every(got)) return 'sent';
+    return to.some(read) ? 'some' : 'delivered';
+  }
+  /** How the ticks are drawn: 'ticks' (as on WhatsApp), 'post' (envelopes), 'circle' (fills up as people read, as on
+   *  DingTalk in China) or 'words' (as on LINE in Japan and QQ in China). Each person may choose (chosen); otherwise what
+   *  people in the church's country are used to. */
+  var MARK_STYLES = ['ticks', 'post', 'circle', 'words'];
+  var MARKS_BY_COUNTRY = { CN: 'circle', HK: 'circle', MO: 'circle', TW: 'words', JP: 'words', KR: 'words', TH: 'words' };
+  function markStyle(country, chosen) {
+    if (MARK_STYLES.indexOf(chosen) >= 0) return chosen;
+    return MARKS_BY_COUNTRY[String(country || '').toUpperCase()] || 'ticks';
   }
   /** For a sent message's details: how many it went to, have it on their device, and have read it (the sender doesn't count). */
   function counts(m, people) {
@@ -203,6 +214,6 @@ var Msg = (function () {
 
   return { ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
     counts: counts, KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
-    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
+    inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, MARK_STYLES: MARK_STYLES, markStyle: markStyle, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();
 if (typeof module !== 'undefined') module.exports = Msg;

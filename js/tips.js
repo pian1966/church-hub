@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.77';
+  var NEWS_FOR = '0.78';
   var NEWS = [
+    { date: '2026-11-15', who: ['everyone'], app: 'messages', text: TX("Messages can now show what the ticks mean, and you can choose ticks, envelopes, a filling circle or words; the first tick turns blue once some have read a group message.") },
     { date: '2026-11-15', who: ['everyone'], app: 'me', text: TX('Chinese and Japanese can now be chosen as languages; for now only the main screens are translated.') },
     { date: '2026-11-15', who: ['everyone'], app: 'me', text: TX('Your Me page has a new Consent tab: it shows what you’ve agreed to, and what each “No” means for you.') },
     { date: '2026-11-15', who: ['everyone'], not: ['attendee'], app: 'messages', text: TX('You can now reply to a message: tap Reply and your answer goes privately to the person who sent it.') },

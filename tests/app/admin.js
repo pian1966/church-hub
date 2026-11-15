@@ -85,7 +85,7 @@ module.exports = async function (ctx) {
   check(docs['details/p24'].lateSpouseId === 'p23' && !(await s.text()).includes('Probably married'), '“Yes, they were married” records it and the suggestion goes');
   await s.go('people/p/p23');
   await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-email', ''); await s.page.fill('#pf-mobile', '');
-  const reqs = await s.page.$$eval('#pf .field.req input, #pf .field.req select', els => els.map(e => e.id));
+  const reqs = await s.page.$$eval('#pf .field.req input:not(.date-text), #pf .field.req select', els => els.map(e => e.id));
   await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
   check(reqs.join() === 'pf-first,pf-last,pf-died' && !(await s.page.$('#pf')) && !docs['people/p23'].email, 'for someone who has died only first and last name (and the date they died) must be filled in: ' + reqs.join());
   await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-died', '2026-01-15'); await s.page.fill('#pf-funeral', '2026-01-22'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();

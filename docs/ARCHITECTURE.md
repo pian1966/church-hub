@@ -378,7 +378,7 @@ matches names with `ElvantoImport.matchFound` (tested: known-as names, "Surname,
 
 ## Offline (view only)
 - **Files** (`sw.js`): every file Church Hub uses (its own, the Firebase library, the font) is fetched fresh when online and a
-  copy kept; offline – or after 7 seconds on a weak signal – the copy is used. One copy per file (without `?v=`). `keepFiles()`
+  copy kept; offline – or after 7 seconds on a weak signal – the copy is used. One copy per file (without `?v=`). Each file's `?v=` is a fingerprint of its contents (`tools/stamp-files.js`; language files' in `js/file-versions.js`), so a release downloads only the files that changed. `keepFiles()`
   in `js/app.js` tells it what the page loaded, so the first visit is already kept. Not intercepted: the database, sign-in, and
   anything fetched with `cache: 'no-store'` (About → Check for updates).
 - **Data** (live mode, `js/store.js`): Firestore's offline copy (`enablePersistence`, shared between tabs). Offline, the

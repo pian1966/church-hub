@@ -376,3 +376,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   Add / Edit form (searches from what is typed; up to four covers to tap), and **Show another cover** in the
   Find book covers window when the first one is wrong. Batches (missing, selected, all) work as before.
 - ✅ Dates can be typed (0.78.4): every date box has a box to type in ("12 Aug 1990", "12/08/1990", "1990-08-12"; day first; English, Afrikaans and the language in use) next to a small calendar button, so a birthday in 1990 no longer means tapping back month by month (`js/datebox.js`, `tests/datebox.test.js`).
+- ✅ Smaller updates (0.79.1): each file's `?v=` in `index.html` is now a fingerprint of its contents (`node tools/stamp-files.js`;
+  language files' in `js/file-versions.js`), so a new version downloads only the files that changed instead of all of them
+  (about 650 KB each release before). Find book covers: the window keeps its place while the search runs instead of jumping
+  back to the top after every book.

@@ -3,9 +3,9 @@
 One file = one pull request. Read `../DECISION.md` and `../TARGET.md` first, then the task, then `CLAUDE.md`.
 Each task names the cheapest kind of AI that should do it – see `../MODELS.md`. Before starting, check the session's
 model against the task's **Model** line; if the session is lighter than the task needs, stop and say so.
-Every task: own branch from the latest `main`; raise the version (`js/version.js` + `?v=` in `index.html`) if the
+Every task: own branch from the latest `main`; raise the version (`js/version.js`, then `node tools/stamp-files.js`) if the
 website changes; member-facing words through `T('…')` in every language file; run the checks `CLAUDE.md` asks for.
-On a conflict in `js/version.js` / `index.html`, take the higher version.
+On a conflict in `js/version.js`, take the higher version; in `index.html` / `js/file-versions.js`, take either and run `node tools/stamp-files.js`.
 
 | Task | What | Needs first | Touches (shared files in bold) | Can run beside |
 | --- | --- | --- | --- | --- |
@@ -17,6 +17,7 @@ On a conflict in `js/version.js` / `index.html`, take the higher version.
 | 012 | Rules versions | 013 | **`firestore.rules`**, **`js/store.js`**, `js/app.js`, `js/version.js`, tests | not 011, 031 |
 | 011 | The public card | 012 | **`firestore.rules`**, **`js/store.js`**, tests | not 031 |
 | 031 | Plain-English quota messages | 011 | **`js/store.js`**, i18n | 014 |
+| 032 | Download only what changed (design by Architect first) | 030 | **`js/store.js`**, **`firestore.rules`**, tests | after 031 |
 | 015 | Sign-in codes: rules and data layer | 031, 012 | **`firestore.rules`**, **`js/store.js`**, `js/app.js`, i18n, tests | 014, 020 |
 | 016 | Sign-in codes: giving them out | 015 | `js/people/*.js`, `js/codes.js` (new), `js/store.js` (`syncRole`), i18n | 020–023 |
 | 017 | One phone, several people (later; escalate first) | 016 | rules, `js/store.js` | – |
@@ -39,5 +40,5 @@ On a conflict in `js/version.js` / `index.html`, take the higher version.
 | 041 | Android app for any church | 010, 040 | `android/` | 050 |
 | 050 | Guides, brochure, terms, roadmap | 021 | docs, `brochure.html` | 041 |
 
-The tasks that change `js/store.js` (013 → 012 → 011 → 031 → 015 → 016 → 061) go **one after another**, each from the merged
+The tasks that change `js/store.js` (013 → 012 → 011 → 031 → 015 → 016 → 061 → 032) go **one after another**, each from the merged
 result of the one before. Give them to one agent, or wait for each merge.

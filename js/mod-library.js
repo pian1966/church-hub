@@ -458,9 +458,19 @@
       var other = x.data && !x.saved && !x.last && !coverBatchRunning ? '<button class="btn small" data-act="library:coveranother" data-id="' + esc(x.book.id) + '">' + T('Show another cover') + '</button>' : '';
       return '<div class="item lib-cover-result">' + preview + '<span class="grow"><b data-own-words>' + esc(x.book.title) + '</b><small>' + esc(x.status) + '</small></span><span class="rec-acts">' + other + save + '</span></div>';
     }).join('');
+    // The window is redrawn after every book, so keep the reader's place: where they had scrolled to and which button had focus
+    // (redrawing focuses the first button, which would jump back to the top).
+    var oldBox = !open && document.querySelector('#modal .dialog'), scrolled = oldBox ? oldBox.scrollTop : 0;
+    var had = !open && document.activeElement && document.activeElement.closest && document.activeElement.closest('#lib-cover-batch') ? document.activeElement : null;
+    var hadAct = had && had.getAttribute('data-act'), hadId = had && had.getAttribute('data-id');
     H.modal('<div id="lib-cover-batch">' + H.dialogHead(T('Find book covers'), T('Preview each cover before saving it to the library.')) +
       '<div class="dlg-body"><p id="lib-cover-progress" class="hint">' + esc(coverBatch.progress || '') + '</p><div id="lib-cover-results" class="list">' + rows + '</div></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="' + (coverBatchRunning ? 'library:coversclose' : 'hub:close') + '">' + (coverBatchRunning ? T('Cancel search') : T('Close')) + '</button><button class="btn save" data-act="library:coverssaveall"' + (found.length && !coverBatchRunning ? '' : ' disabled') + '>' + T('Save all found covers') + ' (' + found.length + ')</button></div></div>', T('Find book covers'), true);
+    if (open) return;
+    var box = document.querySelector('#modal .dialog'); if (!box) return;
+    var again = hadAct ? box.querySelector('[data-act="' + hadAct + '"]' + (hadId ? '[data-id="' + CSS.escape(hadId) + '"]' : '')) : null;
+    if (again) again.focus({ preventScroll: true }); else if (document.activeElement && box.contains(document.activeElement)) document.activeElement.blur();
+    box.scrollTop = scrolled;
   }
   /** Look covers up on the internet: mode 'one' (the item `id`), 'selected', 'missing' or 'all' (books only). */
   function runCoverBatch(mode, id) {

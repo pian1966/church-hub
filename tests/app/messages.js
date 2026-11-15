@@ -65,7 +65,7 @@ module.exports = async function (ctx) {
   check(t.includes('Please be at the door by 9:15.') && t.includes('From Linda Pillay') && t.includes('To Welcome team') && !!(await s.page.$('.msg.new')), 'the inbox shows the message, who it is from and to, marked as new');
   check(docs['messages/m2'].readBy.join() === 'p01,p14' && !(await s.page.$('a[href="#/messages"] .badge')), 'opening the inbox marks it read (for the sender to see) and the count goes');
   await s.go('messages/send');
-  check(await s.page.$$eval('#ms-to option', o => o.map(x => x.value).join()) === 'office,group/mgW', 'a group leader can write to the Office and their own group');
+  check(await s.page.$$eval('#ms-to option', o => o.map(x => x.value).join()) === 'office,direct/p03,direct/p02,group/mgW', 'a group leader (a Church Partner) can write to the Office, the ministers and their own group');
   await s.page.selectOption('#ms-to', 'office'); await s.page.fill('#ms-body', 'Could the office please call me?');
   await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay'); await s.page.click('[data-act="messages:sendnow"]'); await s.settle();
   docs = await s.docsNow(); officeMessage = Object.entries(docs).find(([k, d]) => /^messages\//.test(k) && d.kind === 'office');
@@ -92,7 +92,7 @@ module.exports = async function (ctx) {
   // A carer writes to their care group from the Me page
   s = await session('clare.jacobs@example.com', seed); await s.go('me');
   await s.page.click('#my-care a[href="#/messages/send/care/cgM"]'); await s.page.waitForSelector('#ms-to');
-  check(await s.page.$eval('#ms-to', e => e.value) === 'care/cgM' && (await s.page.$$eval('#ms-to option', o => o.length)) === 2, 'a carer: “Send the group a message” on the Me page opens a message to their care group, with Office also available');
+  check(await s.page.$eval('#ms-to', e => e.value) === 'care/cgM' && (await s.page.$$eval('#ms-to option', o => o.length)) === 4, 'a carer: “Send the group a message” on the Me page opens a message to their care group, with the Office and the ministers also available');
   await s.page.fill('#ms-body', 'Prayer meeting moved to Wednesday.'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.kind === 'care' && d.groupId === 'cgM' && d.fromId === 'p15' && d.to.join() === 'p15,p17'), 'their message goes to the care group');
@@ -109,12 +109,79 @@ module.exports = async function (ctx) {
 
   // Office staff see Office messages, mark receipt and reading, and can reply directly to the sender
   s = await session('linda.pillay@example.com', officeDocs); await s.go('messages'); await s.page.waitForTimeout(500); await s.settle(); docs = await s.docsNow();
-  check((await s.text()).includes('Could the office please call me?') && !!(await s.page.$('a[href="#/messages/send/people/p14"]')), 'Office staff see member messages and can reply directly');
+  const replyBtn = '[data-act="messages:reply"][data-id="' + officeMessage[0].split('/')[1] + '"]';
+  check((await s.text()).includes('Could the office please call me?') && !!(await s.page.$(replyBtn)), 'Office staff see member messages and can reply directly');
   check(docs[officeMessage[0]].deliveredBy.includes('p01') && docs[officeMessage[0]].readBy.includes('p01'), 'opening the Office inbox updates delivered and read status');
-  await s.page.click('a[href="#/messages/send/people/p14"]'); await s.page.waitForSelector('#ms-to');
-  check(await s.page.$eval('#ms-to', e => e.value) === 'people' && (await s.page.$$eval('.ms-pick:checked', c => c.map(x => x.value).join())) === 'p14', 'Reply opens a direct message to the member who contacted the Office');
-  await s.page.fill('#ms-body', 'We will call you shortly.'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
+  await s.page.click(replyBtn); await s.page.waitForSelector('#ms-reply');
+  check((await s.page.textContent('#modal')).includes('Only Tim Jacobs will see your reply.') && (await s.page.textContent('#modal .msg-quote')).includes('Could the office please call me?'), 'Reply opens a private reply to the member who contacted the Office, showing their message');
+  await s.page.click('[data-act="messages:replysend"]');
+  check(!(await s.page.isHidden('#ms-rerr')), 'an empty reply isn’t sent');
+  await s.page.fill('#ms-reply', 'We will call you shortly.'); await s.page.click('[data-act="messages:replysend"]'); await s.settle(); docs = await s.docsNow();
+  check(Object.values(docs).some(d => d.kind === 'direct' && d.to.join() === 'p14' && d.replyTo === officeMessage[0].split('/')[1] && d.body === 'We will call you shortly.'), 'Office staff can reply to the sender');
+  officeDocs = docs;
+  await finish(s);
+
+  // A Church Partner replies privately to a message from their group; the reply shows what it answers
+  s = await session('tim.jacobs@example.com', officeDocs); await s.go('messages'); await s.page.waitForTimeout(400); await s.settle();
+  check((await s.text()).includes('We will call you shortly.') && (await s.text()).includes('Replying to:'), 'the reply reaches them, saying what it answers');
+  await s.page.click('[data-act="messages:reply"][data-id="m2"]'); await s.page.waitForSelector('#ms-reply');
+  await s.page.fill('#ms-reply', 'I will be there.'); await s.page.click('[data-act="messages:replysend"]'); await s.settle(); docs = await s.docsNow();
+  const tr = Object.values(docs).find(d => d.kind === 'direct' && d.fromId === 'p14' && d.replyTo === 'm2');
+  check(tr && tr.to.join() === 'p01' && tr.title === 'Re: Sunday' && tr.audience === 'Linda Pillay', 'a Church Partner’s reply goes only to the sender, as “Re: …”');
+  await finish(s);
+
+  // An attendee (Basic access, not a Church Partner): reads messages; writes only to the Office, the ministers and their Midweek Group leader
+  const aSeed = seedDocs(); aSeed['settings/church'].modules = Object.assign({}, aSeed['settings/church'].modules, { life: true });
+  aSeed['careGroups/lgA'] = { type: 'life', name: 'Tuesday study', leaderIds: ['p15'], memberIds: ['p15', 'p10'], names: { p15: 'Clare Jacobs' } };
+  aSeed['messages/mA'] = { kind: 'people', groupId: '', audience: '', title: 'Welcome', body: 'Welcome to the church!', fromId: 'p02', fromName: 'Thandi Mokoena', to: ['p10', 'p14'], readBy: ['p02'], createdAt: '2026-11-03 08:00', updatedAt: '2026-11-03 08:00' };
+  aSeed['messages/mB'] = { kind: 'people', groupId: '', audience: '', title: 'Rota', body: 'Thanks for helping.', fromId: 'p01', fromName: 'Linda Pillay', to: ['p10'], readBy: ['p01'], createdAt: '2026-11-04 08:00', updatedAt: '2026-11-04 08:00' };
+  s = await session('jason.naidoo@example.com', aSeed); await s.go('messages'); await s.page.waitForTimeout(400); await s.settle();
+  t = await s.text();
+  check(t.includes('Welcome to the church!') && t.includes('Thanks for helping.'), 'an attendee receives messages');
+  check(!!(await s.page.$('[data-act="messages:reply"][data-id="mA"]')) && !(await s.page.$('[data-act="messages:reply"][data-id="mB"]')), 'they may reply to a minister, but not to other messages');
+  await s.go('messages/send');
+  check(await s.page.$$eval('#ms-to option', o => o.map(x => x.value).join()) === 'office,direct/p03,direct/p02,direct/p15/lgA', 'they may write to the Office, the ministers and their Midweek Group leader');
+  await s.page.selectOption('#ms-to', 'direct/p15/lgA'); await s.page.waitForTimeout(200);
+  check((await s.page.textContent('#ms-reach')).includes('Only Clare Jacobs will see it.'), 'a message to one person says only they will see it');
+  await s.page.fill('#ms-body', 'May I join?'); await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay');
   await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
-  check(Object.values(docs).some(d => d.kind === 'people' && d.to.join() === 'p14' && d.body === 'We will call you shortly.'), 'Office staff can reply to the sender');
+  check(Object.values(docs).some(d => d.kind === 'direct' && d.groupId === 'lgA' && d.to.join() === 'p15' && d.fromId === 'p10'), 'the message goes to the leader only');
+  const aTries = await s.page.evaluate(async () => {
+    const fs = firebase.firestore(), base = { groupId: '', audience: '', title: '', body: 'x', fromId: 'p10', fromName: 'Jason Naidoo', readBy: ['p10'], deliveredBy: ['p10'] };
+    const r = p => p.then(() => 'saved', e => e.code);
+    const out = [await r(fs.doc('messages/y1').set(Object.assign({}, base, { kind: 'direct', replyTo: 'mB', to: ['p01'] }))),
+      await r(fs.doc('messages/y2').set(Object.assign({}, base, { kind: 'direct', to: ['p14'] }))),
+      await r(fs.doc('directory/p14').get())];
+    window.__fake.denied.length = 0; return out.join();
+  });
+  check(aTries === 'permission-denied,permission-denied,permission-denied', 'the database refuses an attendee replying where Settings doesn’t allow, writing to anyone else, or reading the directory');
+  await s.go('people'); t = await s.text();
+  check(t.includes('The names of the church’s Church Partners.') && t.includes('Jacobs, Tim') && !(await s.page.$('#main a.pp-row[href="#/people/p/p14"]')) && !t.includes('Naidoo, Priya'), 'People shows Church Partners’ names only (no links, no attenders)');
+  await s.go('me'); t = await s.text();
+  check(t.includes('as your home church') && t.includes('Apply to become a Church Partner') && t.includes('Basic access'), 'Me invites them to become a Church Partner');
+  await finish(s);
+
+  // Settings → Attendees: the Senior Pastor lets attendees only receive, and writes what it takes to become a Church Partner
+  const rSeed = seedDocs(); rSeed['settings/church'].seniorPastorId = 'p02';
+  s = await session('thandi.mokoena@example.com', rSeed); await s.go('settings');
+  const links = await s.page.$$eval('.set-link', a => a.map(x => x.getAttribute('href')).join());
+  check(links === '#/settings/application,#/settings/attendees', 'the Senior Pastor opens Settings for the membership application and attendees only' + (links ? '' : ': ' + (await s.text()).slice(0, 200)));
+  await s.go('settings/attendees');
+  check(await s.page.$$eval('.st-att', c => c.map(x => x.value + ':' + x.checked).join()) === 'names:true,directory:false,write:true,reply:false', 'by default attendees see names and may write');
+  await s.page.uncheck('.st-att[value="names"]'); await s.page.uncheck('.st-att[value="write"]'); await s.page.click('[data-act="settings:attendees"]'); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['settings/church'].attendeeCan) === '[]', 'they can change it (saved for the database rules too)');
+  await s.go('settings/application'); await s.page.waitForSelector('[data-act="people:reqedit"]');
+  await s.page.click('[data-act="people:reqedit"]'); await s.page.waitForSelector('#ap-req-t');
+  await s.page.fill('#ap-req-t', '# Becoming a Church Partner\n- Be 18 or older\n- Come to a membership class'); await s.page.fill('#ap-req-l', 'https://example.com/doc');
+  await s.page.click('[data-act="people:reqsave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['partnerInfo/requirements'] && docs['partnerInfo/requirements'].text.includes('membership class') && docs['partnerInfo/requirements'].link === 'https://example.com/doc', 'the requirements are saved');
+  rSeed['settings/church'].attendeeCan = []; rSeed['partnerInfo/requirements'] = docs['partnerInfo/requirements'];
+  rSeed['messages/mA'] = aSeed['messages/mA'];
+  await finish(s);
+  s = await session('jason.naidoo@example.com', rSeed); await s.go('messages'); await s.page.waitForTimeout(400);
+  check(!(await s.page.$('a[href="#/messages/send"]')) && !(await s.page.$('[data-act="messages:reply"]')), 'an attendee the church lets only receive: no Write, no Reply');
+  check(!(await s.page.$('nav a[href="#/people"]')), 'and no People page when they may not see names');
+  await s.go('me'); await s.page.waitForTimeout(400); t = await s.text();
+  check(t.includes('What becoming a Church Partner involves') && !!(await s.page.$('#me-apply a[href="https://example.com/doc"]')), 'Me shows what it takes to become a Church Partner, with the link');
   await finish(s);
 };

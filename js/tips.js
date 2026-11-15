@@ -15,6 +15,9 @@
   var NEWS_DAYS = 14;
 
   var NEWS = [
+    { date: '2026-11-15', who: ['everyone'], not: ['attendee'], app: 'messages', text: TX('You can now reply to a message: tap Reply and your answer goes privately to the person who sent it.') },
+    { date: '2026-11-15', who: ['librarian'], app: 'library', text: TX('The Library now shows each item once, with who has it on its own row, and has tabs for overdue, damaged and withdrawn items.') },
+    { date: '2026-11-15', who: ['admin', 'senior'], text: TX('Settings → Attendees decides what people who aren’t Church Partners yet may see and do in Church Hub.') },
     { date: '2026-11-15', who: ['everyone'], text: TX('Home now shows what’s new in Church Hub, and a tip each time you sign in.') },
     { date: '2026-11-14', who: ['everyone'], text: TX('Sesotho can now be chosen as written in South Africa or in Lesotho.') },
     { date: '2026-11-14', who: ['everyone'], app: 'messages', text: TX('Messages now look like a chat: two blue ticks show that everyone has read yours.') },

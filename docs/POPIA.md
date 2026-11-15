@@ -133,7 +133,10 @@ someone is deleted or dies.
 ## Contact details: what others can see
 The consent "Church directory" is shown as **Contact details**: name, phone, email and home address may be seen by church
 staff and leaders, and by members as far as the church allows. Settings → What others can see decides, per role (Church
-Partners, Roster coordinators, Children's ministry), what besides the name is shown – name only by default. Administrators
+Partners, Roster coordinators, Children's ministry), what besides the name is shown – name only by default. Attendees (Basic
+access, not Church Partners) don't see the directory unless Settings → Attendees allows it; by default they see only the
+names of Church Partners (`names/{id}`, name only – no photo or contact details), as Church Partners agreed to be in the
+directory that everyone who signs in can see; the church can switch even that off. Administrators
 and Pastors see everything; people who didn't agree show nothing beyond what a role already had. The database holds only
 what each role may see: `directory/{id}` (everyone) carries only what Church Partners may see; `contacts/{id}` (staff and
 leaders only) carries address and spouse. Church Partners see shared details as pictures, so they can't tap or copy them
@@ -220,7 +223,13 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
   they received, only mark it as delivered or opened. Office messages are shared with Administrators and Pastors, not with
   other members.
 - Who may send: anyone signed in to the Office; Administrators and Pastors to any group or to people they tick; carers to their own care group; group leaders
-  to their own group; anyone on a leadership group (e.g. the Council) to that group.
+  to their own group; anyone on a leadership group (e.g. the Council) to that group. Anyone may reply privately to the
+  sender of a message they received, or write to a minister or the leader of a Midweek Group they are in – a reply holds
+  nothing new beyond the text and which message it answers. Attendees (Basic access, not Church Partners) only as far as
+  Settings → Attendees allows; by default they write to the Office, the ministers and their Midweek Group leaders, and
+  reply only to a minister.
+- Ministers' names (`settings.ministers`) are readable by everyone signed in so they can be written to: the names of the
+  church's Pastors, which the church makes public anyway.
 - Status: the sender sees a grey tick when saved, orange when delivered to a recipient's inbox, and green when opened.
   For ordinary group messages, the sender (and Administrators and Pastors) can also see who has opened it and who hasn't
   (Sent → Read by …). The names come from records the sender may already see, or the group's own list of names.

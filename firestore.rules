@@ -15,6 +15,9 @@ rules_version = '2';
 //   Administrators cannot read either; they can only delete them when someone asks to be deleted (POPIA s24).
 // - Members see their own details, their own serving and leave, and the church directory
 //   (only people who agreed to be in it).
+// - Basic access comes in two kinds, decided by the person's category (automatically): Church Partners (and staff) get
+//   Church Partner access; everyone else on Basic access is an attendee, who sees and does only what Settings > Attendees
+//   allows (settings attendeeCan: names, directory, write, reply; ['names', 'write'] if the church hasn't chosen).
 
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -42,6 +45,24 @@ service cloud.firestore {
         || (also().size() > 1 && also()[1] in list) || (also().size() > 2 && also()[2] in list);
     }
     function mine(personId) { return anyone() && isMe(personId); }
+    // Church Partner access or an attendee (see the top of this file): an attendee has only Basic access and none of the
+    // people on this sign-in is a Church Partner or on the staff (their category).
+    function personRef(pid) { return /databases/$(database)/documents/people/$(pid); }
+    function partnerPerson(pid) { return exists(personRef(pid)) && get(personRef(pid)).data.get('category', '') in ['Church Partner', 'Staff']; }
+    // Only after anyone(). The access-list entry is read once (Firestore allows only so many steps per check).
+    function attendee() {
+      let d = access();
+      let pid = d.get('personId', '');
+      let a = d.get('also', []);
+      return !d.get('roles', [d.role]).hasAny(['admin', 'pastor', 'rosters', 'kids'])
+        && !(pid != '' && partnerPerson(pid))
+        && !(a.size() > 0 && partnerPerson(a[0])) && !(a.size() > 1 && partnerPerson(a[1])) && !(a.size() > 2 && partnerPerson(a[2]));
+    }
+    function churchSettings() { return get(/databases/$(database)/documents/settings/church).data; }
+    function attendeeCan(x) { return x in churchSettings().get('attendeeCan', ['names', 'write']); }
+    function attendeeMay(x) { return anyone() && (!attendee() || attendeeCan(x)); }
+    // The Senior Pastor (Rector), chosen in Settings > What Pastors can do
+    function rector() { return isRole(['pastor']) && isMe(churchSettings().get('seniorPastorId', '')); }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
     // What Pastors can do (Settings): an Administrator ticks abilities, which Church Hub copies onto each Pastor's
     // access-list entry as "can". The Senior Pastor (Rector), if one is chosen, gets their own ticks (seniorCan). may('leave') is true for Administrators, and for Pastors with that tick.
@@ -86,7 +107,7 @@ service cloud.firestore {
       allow delete: if admin();
       // A Pastor with "settings" may change everything except what Pastors can do, what the Senior Pastor can do,
       // and who the Senior Pastor is (only an Administrator sets those)
-      // The Senior Pastor may choose the librarians and record the review date, and change nothing else here
+      // The Senior Pastor may choose the librarians and record the review date, and what attendees may do, and change nothing else here
       allow update: if (admin() && !request.resource.data.keys().hasAny(['brochures'])) || (may('settings')
         && request.resource.data.get('pastorCan', []) == resource.data.get('pastorCan', [])
         && request.resource.data.get('seniorCan', []) == resource.data.get('seniorCan', [])
@@ -97,7 +118,10 @@ service cloud.firestore {
           && request.resource.data.get('librarianIds', []) is list
           && request.resource.data.get('librarianReviewedAt', '') is string
           && request.resource.data.get('librarianReviewedAt', '').size() >= 20
-          && request.resource.data.get('librarianReviewedAt', '').size() <= 40);
+          && request.resource.data.get('librarianReviewedAt', '').size() <= 40)
+        || (isRole(['pastor']) && isMe(resource.data.get('seniorPastorId', ''))
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeeCan'])
+          && request.resource.data.attendeeCan is list && request.resource.data.attendeeCan.hasOnly(['names', 'directory', 'write', 'reply']));
     }
     // Brochure wording is visible and editable only by Administrators.
     match /brochures/{id} {
@@ -143,10 +167,18 @@ service cloud.firestore {
     // Contact details, for adults who agreed to share them. directory: everyone signed in can read it - their name and photo,
     // plus only what Settings lets Church Partners see (mobile, email, address, spouse). contacts: staff and leaders only -
     // home address and spouse, when Settings lets Roster coordinators or Children's ministry see them.
+    // Attendees see it only when Settings > Attendees lets them (directory); otherwise at most names (below).
     match /directory/{id} {
-      allow read: if anyone();
+      allow read: if staff() || attendeeMay('directory');
       allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
         && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care']);
+      allow delete: if isRole(['admin', 'pastor']) || mine(id);
+    }
+    // names: the names of Church Partners in the directory - all an attendee sees of other people (when Settings allows).
+    match /names/{id} {
+      allow read: if staff() || attendeeMay('names') || attendeeMay('directory');
+      allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName']);
       allow delete: if isRole(['admin', 'pastor']) || mine(id);
     }
     match /contacts/{id} {
@@ -161,7 +193,7 @@ service cloud.firestore {
     function isChild(id) { return get(/databases/$(database)/documents/people/$(id)).data.get('familyRole', '') == 'child'; }
     match /photos/{id} {
       allow read: if isChild(id) ? isRole(['admin', 'pastor', 'kids'])
-        : (staff() || mine(id) || (anyone() && exists(/databases/$(database)/documents/directory/$(id))));
+        : (staff() || mine(id) || (attendeeMay('directory') && exists(/databases/$(database)/documents/directory/$(id))));
       allow create, update: if request.resource.data.keys().hasOnly(['data', 'updatedAt'])
         && request.resource.data.data is string && request.resource.data.data.size() < 200000
         && (isRole(['admin', 'pastor']) || (isChild(id) ? isRole(['kids']) : mine(id)));
@@ -274,9 +306,34 @@ service cloud.firestore {
     function msgGroupRef(gid) { return /databases/$(database)/documents/msgGroups/$(gid); }
     function manager() { return isRole(['admin', 'pastor']); }
     function mayTrackMessage(m) { return meIn(m.get('to', [])) || (m.kind == 'office' && manager() && !isMe(m.fromId)); }
+    // A direct message (kind direct) goes to one person: a reply goes back to the sender of a message that came to you
+    // (replyTo); a new one to a minister (a Pastor) or to a leader of a Midweek Group you are in (groupId). Attendees
+    // write only with Settings' "write" and reply only with "reply" (or to a minister, when they may write).
+    function careOf(gid) { return get(careRef(gid)).data; }
+    function minister(pid) { return exists(personRef(pid)) && get(personRef(pid)).data.get('appRole', '') == 'pastor'; }
+    function msgRef(id) { return /databases/$(database)/documents/messages/$(id); }
+    // The message being answered came to this sign-in, from the person the reply goes to
+    function repliesTo(rt, to0) { return exists(msgRef(rt)) && get(msgRef(rt)).data.get('fromId', '') == to0 && meIn(get(msgRef(rt)).data.get('to', [])); }
+    // A leader of a Midweek Group (life group) this sign-in is in
+    function lifeLeader(gid, pid) {
+      let g = careOf(gid);
+      return g.get('type', '') == 'life' && pid in g.get('leaderIds', []) && meIn(g.get('memberIds', []));
+    }
+    // What attendees may do is read once per check (Firestore allows only so many steps)
+    function directOk(m, to0) {
+      let att = attendee();
+      let on = att ? churchSettings().get('attendeeCan', ['names', 'write']) : ['write', 'reply'];
+      let rt = m.get('replyTo', '');
+      let gid = m.get('groupId', '');
+      return !isMe(to0) && (rt != ''
+        ? repliesTo(rt, to0) && ('reply' in on || ('write' in on && minister(to0)))
+        : 'write' in on && (gid == '' ? minister(to0) : lifeLeader(gid, to0)));
+    }
+    function mayDirect(m) { return m.kind == 'direct' && m.to.size() == 1 && directOk(m, m.to[0]); }
     function maySendTo(m) {
-      return (m.kind == 'office' && m.to.size() == 0)
+      return (m.kind == 'office' && m.to.size() == 0 && attendeeMay('write'))
         || manager()
+        || mayDirect(m)
         || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
         || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))))
         || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])));
@@ -284,8 +341,9 @@ service cloud.firestore {
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)
-        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
-        && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people']
+        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
+        && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct']
+        && request.resource.data.get('replyTo', '') is string && request.resource.data.get('replyTo', '').size() <= 100
         && request.resource.data.get('some', false) is bool
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 4000
         && request.resource.data.get('title', '') is string && request.resource.data.get('title', '').size() <= 120
@@ -607,6 +665,18 @@ service cloud.firestore {
         && request.resource.data.get('text', '') is string && request.resource.data.get('text', '').size() <= 20000
         && request.resource.data.get('data', '') is string && request.resource.data.get('data', '').size() <= 900000;
       allow delete: if librarian() || keeper();
+    }
+
+    // What it takes to become a Church Partner (Me > Become a Church Partner): written, linked or attached by
+    // Administrators, Pastors with the "settings" tick and the Senior Pastor (Rector); everyone signed in reads it.
+    match /partnerInfo/{doc} {
+      allow read: if anyone();
+      allow create, update: if doc == 'requirements' && (may('settings') || rector())
+        && request.resource.data.keys().hasOnly(['text', 'link', 'name', 'type', 'data', 'updatedAt', 'by'])
+        && request.resource.data.get('text', '') is string && request.resource.data.get('text', '').size() <= 20000
+        && request.resource.data.get('link', '') is string && request.resource.data.get('link', '').size() <= 500
+        && request.resource.data.get('data', '') is string && request.resource.data.get('data', '').size() <= 900000;
+      allow delete: if may('settings') || rector();
     }
 
     // ---------- POPIA registers (Administrators, and Pastors with "privacy") ----------

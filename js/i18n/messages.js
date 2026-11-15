@@ -62,5 +62,15 @@ I18n.rows([    ['{n} new', '{n} nuut', '{n} ezintsha', '{n} ezintsha'],
     ['Tick all', 'Merk almal', 'Khetha bonke', 'Phawula bonke'],
     ['Untick all', 'Ontmerk almal', 'Susa konke ukukhetha', 'Susa zonke iimpawu'],
     ["Read", "Gelees", "Kufundiwe", "Kufundiwe"],
-    ["Not read yet", "Nog nie gelees nie", "Akukafundwa", "Akukafundwa"]
+    ["Not read yet", "Nog nie gelees nie", "Akukafundwa", "Akukafundwa"],
+    ["A reply", "’n Antwoord", "Impendulo", "Impendulo"],
+    ["Replying to: {text}", "Antwoord op: {text}", "Iphendula: {text}", "Iphendula: {text}"],
+    ["Reply to {name}", "Antwoord {name}", "Phendula u-{name}", "Phendula u-{name}"],
+    ["Only {name} will see your reply.", "Net {name} sal jou antwoord sien.", "Ngu-{name} kuphela ozobona impendulo yakho.", "Ngu-{name} kuphela oza kubona impendulo yakho."],
+    ["Your reply", "Jou antwoord", "Impendulo yakho", "Impendulo yakho"],
+    ["Only {name} will see it.", "Net {name} sal dit sien.", "Ngu-{name} kuphela ozowubona.", "Ngu-{name} kuphela oza kuwubona."],
+    ["You can read the messages the church sends you here.", "Jy kan die boodskappe wat die kerk vir jou stuur, hier lees.", "Ungafunda lapha imilayezo ibandla elikuthumelela yona.", "Ungafunda apha imiyalezo ocawe ikuthumelela yona."],
+    ["Ministers", "Leraars", "Abefundisi", "Abefundisi"],
+    ["Midweek Group leaders", "Lewensgroepleiers", "Abaholi bamaqembu empilo", "Iinkokeli zamaqela obomi"],
+    ["Couldn’t send the reply.", "Kon nie die antwoord stuur nie.", "Akukwazekanga ukuthumela impendulo.", "Ayikwazanga ukuthumela impendulo."]
 ]);

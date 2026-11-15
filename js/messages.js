@@ -7,6 +7,11 @@
  *   partners every Church Partner (adults)                       – Administrators and Pastors only
  *   people   people chosen one by one from a checklist           – Administrators and Pastors only
  *   office   the church office channel                            – any signed-in person; Administrators and Pastors receive it
+ *   roster   about serving turns (js/mod-rosters.js; never chosen on the Write page): roster: 'ask' (you're on the roster) or
+ *            'remind' (please reply), from a roster coordinator or Administrator to one volunteer; 'declined' (someone can't
+ *            make it), from the volunteer to the roster team (settings.rosterTeam: Administrators, Roster coordinators and
+ *            the people chosen under Settings -> Church Services). turns: the assignment ids it is about, so the inbox shows
+ *            them in the reader's language with Accept / Can't make it.
  *   direct   one person: a reply to a message (replyTo: its id) goes back to its sender only; or a new message to a
  *            minister (a Pastor) or to a leader of one of your own Midweek Groups (groupId: that group)
  * Attendees (Basic access, not Church Partners or staff – Hub.attendee()) only do what Settings → Attendees allows
@@ -14,7 +19,7 @@
  * 'reply' – reply to any message sent to them. Without 'reply' they may still reply to a minister when they may write.
  * Anyone sending to a group may also tick only some of its people (some: true); carers and leaders still only reach
  * people in their own group.
- * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, replyTo, title, body, fromId, fromName, to: [personIds], deliveredBy: [personIds], readBy: [personIds] }
+ * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, replyTo, roster, turns, title, body, fromId, fromName, to: [personIds], deliveredBy: [personIds], readBy: [personIds] }
  * msgGroups/{id} = { name, memberIds, leaderIds, names: { personId: name } } – leaders are members too; names so leaders who
  *   aren't staff can tick people when writing.
  * The list of people (to) is worked out when the message is sent, so someone who joins a group later doesn't see older
@@ -24,7 +29,8 @@
  */
 var Msg = (function () {
   'use strict';
-  var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct'];
+  var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster'];
+  var ROSTER_NOTES = ['ask', 'remind', 'declined'], MAX_TURNS = 100;
   var MAX_BODY = 4000, MAX_TITLE = 120;
   /** What attendees may do when the church hasn't chosen (Settings → Attendees): see Church Partners' names, and write to
    *  the Office, the ministers and their Midweek Group leaders. Also offered: 'directory' (the church directory, as Church
@@ -85,7 +91,7 @@ var Msg = (function () {
   }
   /** May this person send to this audience? (The database rules check the same.) personId: for a direct message. */
   function maySend(who, kind, groupId, d, personId) {
-    if (KINDS.indexOf(kind) < 0) return false;
+    if (KINDS.indexOf(kind) < 0 || kind === 'roster') return false;   // roster messages are sent by Rosters, not written
     if (kind === 'office') return !!who.manager || mayWrite(who);
     if (who.manager) return true;
     if (kind === 'direct') return audiences(who, d).some(function (a) { return a.kind === 'direct' && a.personId === personId && (a.groupId || '') === (groupId || ''); });
@@ -135,6 +141,21 @@ var Msg = (function () {
     if (some) m.some = true;
     if (a.kind === 'direct') { m.audience = a.name || ''; if (a.replyTo) m.replyTo = a.replyTo; }
     return m;
+  }
+
+  /**
+   * A message about serving turns (kind 'roster'), ready to save; or { error }. note: 'ask' | 'remind' | 'declined';
+   * to: who gets it (the sender is left out); turns: assignment ids; title and body in the sender's language (the inbox
+   * shows the turns in the reader's own).
+   */
+  function rosterNote(note, to, turns, from, title, body) {
+    if (ROSTER_NOTES.indexOf(note) < 0) return { error: 'kind' };
+    to = uniq(to).filter(function (x) { return x !== from.id; }); turns = uniq(turns).slice(0, MAX_TURNS);
+    if (!to.length) return { error: 'nobody' };
+    if (!turns.length) return { error: 'empty' };
+    body = String(body || '').trim().slice(0, MAX_BODY); if (!body) return { error: 'empty' };
+    return { kind: 'roster', groupId: '', audience: '', roster: note, turns: turns, title: String(title || '').trim().slice(0, MAX_TITLE), body: body,
+      fromId: from.id, fromName: nameOf(from), to: to, deliveredBy: [from.id], readBy: [from.id] };
   }
 
   function newestFirst(a, b) { return String(a.createdAt || '') < String(b.createdAt || '') ? 1 : String(a.createdAt || '') > String(b.createdAt || '') ? -1 : 0; }
@@ -213,7 +234,7 @@ var Msg = (function () {
   }
 
   return { ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
-    counts: counts, KINDS: KINDS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
+    counts: counts, KINDS: KINDS, rosterNote: rosterNote, MAX_TURNS: MAX_TURNS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
     inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, MARK_STYLES: MARK_STYLES, markStyle: markStyle, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();
 if (typeof module !== 'undefined') module.exports = Msg;

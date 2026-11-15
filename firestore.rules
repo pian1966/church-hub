@@ -336,13 +336,24 @@ service cloud.firestore {
         || mayDirect(m)
         || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
         || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))))
-        || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])));
+        || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])))
+        || mayRosterNote(m);
+    }
+    // Roster messages (kind roster): a roster coordinator or Administrator tells volunteers they are on the roster or
+    // reminds them to reply (ask, remind); a volunteer who can't make it tells the roster team (declined) - the
+    // Administrators, Roster coordinators and chosen people listed in settings.rosterTeam.
+    function mayRosterNote(m) {
+      return m.kind == 'roster' && m.get('turns', []).size() > 0
+        && ((m.get('roster', '') in ['ask', 'remind'] && rosterer())
+          || (m.get('roster', '') == 'declined' && m.to.hasOnly(churchSettings().get('rosterTeam', []))));
     }
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)
-        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
-        && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct']
+        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
+        && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster']
+        && (request.resource.data.kind == 'roster' || !request.resource.data.keys().hasAny(['roster', 'turns']))
+        && request.resource.data.get('turns', []) is list && request.resource.data.get('turns', []).size() <= 100
         && request.resource.data.get('replyTo', '') is string && request.resource.data.get('replyTo', '').size() <= 100
         && request.resource.data.get('some', false) is bool
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 4000

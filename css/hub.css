@@ -539,6 +539,8 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg.new { box-shadow: inset 3px 0 0 var(--accent); }
 .msg.new .msg-top b::before { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); margin-right: 8px; vertical-align: middle; }
 .msg-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
+.msg-turns { margin-top: 8px; }
+.msg-turns .item { flex-wrap: wrap; gap: 6px; }
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
 .msg-re { margin: 6px 0 0; padding-left: 8px; border-left: 3px solid var(--line); }

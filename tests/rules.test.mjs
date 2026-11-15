@@ -25,7 +25,7 @@ const MED = 'Children’s medical notes';
 await env.withSecurityRulesDisabled(async ctx => {
   const db = ctx.firestore(), set = (p, d) => db.doc(p).set(d);
   for (const [role, [email, pid]] of Object.entries(USERS)) await set('roles/' + email, { role: role === 'attendee' ? 'member' : role, personId: pid });
-  await set('settings/church', { churchName: 'Test church' });
+  await set('settings/church', { churchName: 'Test church', rosterTeam: ['p01', 'p05'] });
   await set('leave/config', { types: [], autoApprove: ['UL'] });
   for (const pid of ['p01', 'p02', 'p04', 'p05', 'p14', 'p15']) await set('people/' + pid, { firstName: 'A', lastName: pid, familyRole: 'adult', email: pid + '@example.com', mobile: '082', familyId: 'f2' });
   // Tim and Clare are Church Partners (Church Partner access); Hope only comes to church (an attendee); Thandi is a Pastor
@@ -554,6 +554,18 @@ await t('messages: who may send to whom', async () => {
   await cannot(db.member.doc('messages/n15').set(m({ kind: 'people', fromId: 'p14', to: ['p15'] })));                         // members can't choose people
   await can(db.member.doc('messages/n16').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p15'], some: true })));   // a carer: some of the group
   await cannot(db.member.doc('messages/n17').set(m({ kind: 'care', groupId: 'cg1', fromId: 'p14', to: ['p15'], some: 'yes' })));
+});
+await t('messages: roster messages – asked to serve, reminders, and someone who can’t make it', async () => {
+  const m = (o) => Object.assign({ kind: 'roster', groupId: '', audience: '', title: '', body: 'Reading, 6 Dec', fromName: 'x', deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.rosters.doc('messages/r1').set(m({ roster: 'ask', turns: ['a1'], fromId: 'p05', to: ['p14'] })));          // the roster coordinator asks
+  await can(db.rosters.doc('messages/r2').set(m({ roster: 'remind', turns: ['a1', 'a2'], fromId: 'p05', to: ['p14'] })));
+  await cannot(db.member.doc('messages/r3').set(m({ roster: 'ask', turns: ['a1'], fromId: 'p14', to: ['p15'] })));        // a member can't ask people to serve
+  await can(db.member.doc('messages/r4').set(m({ roster: 'declined', turns: ['a1'], fromId: 'p14', to: ['p01', 'p05'] })));   // can't make it: to the roster team
+  await cannot(db.member.doc('messages/r5').set(m({ roster: 'declined', turns: ['a1'], fromId: 'p14', to: ['p15'] })));      // only to the roster team
+  await cannot(db.member.doc('messages/r6').set(m({ roster: 'declined', turns: [], fromId: 'p14', to: ['p05'] })));          // about a turn
+  await cannot(db.rosters.doc('messages/r7').set(m({ roster: 'ask', turns: 'a1', fromId: 'p05', to: ['p14'] })));
+  await cannot(db.rosters.doc('messages/r8').set(m({ kind: 'staff', roster: 'ask', turns: ['a1'], fromId: 'p05', to: ['p01'] })));   // roster fields only on roster messages
+  await can(read(db.member, 'messages/r1')); await cannot(read(db.attendee, 'messages/r1'));
 });
 await t('messages: people mark what they opened as read, and change nothing else', async () => {
   await can(db.member.doc('messages/ms1').update({ readBy: firebase.firestore.FieldValue.arrayUnion('p14') }));

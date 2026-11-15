@@ -125,5 +125,15 @@ ok(!M.maySend({ id: 'h', manager: false }, 'leaders', 'lb1', dl) && M.maySend({ 
 const rm = { fromId: 'c', to: ['c', 'd', 'e', 'f'], readBy: ['c', 'e'] };
 ok(M.readers(rm).read.join() === 'e' && M.readers(rm).unread.join() === 'd,f', 'the sender sees who has read it and who hasn’t');
 
+// roster messages (js/mod-rosters.js): you're on the roster, please reply, someone can't make it
+{
+  const ask = M.rosterNote('ask', ['d', 'd', 'a'], ['x1', 'x2', 'x1'], people[0], 'You are on the roster', 'Reading, 6 Dec');
+  ok(ask.kind === 'roster' && ask.roster === 'ask' && ask.to.join() === 'd' && ask.turns.join() === 'x1,x2' && ask.readBy.join() === 'a', 'asking someone to serve: one message to them about their turns (not to the sender)');
+  ok(M.rosterNote('declined', ['a'], ['x1'], people[0], '', 'No').error === 'nobody' && M.rosterNote('remind', ['d'], [], people[0], '', 'x').error === 'empty' && M.rosterNote('other', ['d'], ['x1'], people[0], '', 'x').error === 'kind', 'nothing is sent without someone to send to, a turn, or a known kind');
+  ok(!M.maySend({ id: 'a', manager: true }, 'roster', '', d) && !M.audiences({ id: 'a', manager: true }, d).some(x => x.kind === 'roster'), 'roster messages are never written by hand on the Write page');
+  const r = M.rosterNote('declined', ['a', 'b'], ['x1'], people[3], 'Can’t make it', 'Reading');
+  ok(M.mayReply(Object.assign({ id: 'm1' }, r), { id: 'a', manager: true }, d), 'the roster coordinator can reply privately to someone who can’t make it');
+}
+
 if (fails) { console.log('\n' + fails + ' test(s) FAILED'); process.exit(1); }
 console.log('\nAll message tests passed');

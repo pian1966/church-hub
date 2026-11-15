@@ -135,8 +135,6 @@ I18n.rows([
     ['{n} suggestion ready – check and keep it', '{n} voorstel gereed – kyk en hou dit', 'Isiphakamiso esingu-{n} silungile – sihlole bese usigcina', 'Isindululo esi-{n} silungile – sijonge uze usigcine'],
     ['{n} suggestions ready – check and keep them', '{n} voorstelle gereed – kyk en hou hulle', 'Iziphakamiso ezingu-{n} zilungile – zihlole bese uzigcina', 'Izindululo ezi-{n} zilungile – zijonge uze uzigcine'],
     ['Nothing more can be filled automatically', 'Niks meer kan outomaties gevul word nie', 'Akukho okunye okungagcwaliswa ngokuzenzakalela', 'Akukho nto yongezelelweyo inokuzaliswa ngokuzenzekelayo'],
-    ['{n} person asked to serve (they’ll get a message once email is connected)', '{n} persoon gevra om te dien (hulle kry ’n boodskap sodra e-pos gekoppel is)', 'Umuntu ongu-{n} ucelwe ukukhonza (uzothola umlayezo uma i-imeyili isixhunyiwe)', 'Umntu o-{n} ucelwe ukukhonza (uya kufumana umyalezo xa i-imeyile iqhagamshelwe)'],
-    ['{n} people asked to serve (they’ll get a message once email is connected)', '{n} mense gevra om te dien (hulle kry ’n boodskap sodra e-pos gekoppel is)', 'Abantu abangu-{n} bacelwe ukukhonza (bazothola umlayezo uma i-imeyili isixhunyiwe)', 'Abantu abali-{n} bacelwe ukukhonza (baya kufumana umyalezo xa i-imeyile iqhagamshelwe)'],
     ['Added. {name} always serves with {names} – use “Fill the gaps” to place them too.', 'Bygevoeg. {name} dien altyd saam met {names} – gebruik “Vul die gapings” om hulle ook in te deel.', 'Wengeziwe. U-{name} uhlala ekhonza no-{names} – sebenzisa “Gcwalisa izikhala” ukuze nabo ubabeke.', 'Wongeziwe. U-{name} uhlala ekhonza no-{names} – sebenzisa “Zalisa izithuba” ukuze nabo ubabeke.'],
     ['Added – waiting for their reply', 'Bygevoeg – wag vir hul antwoord', 'Wengeziwe – kulindwe impendulo yakhe', 'Wongeziwe – kulindelwe impendulo yakhe'],
     ['Name of the new team (e.g. Prayer)', 'Naam van die nuwe span (bv. Gebed)', 'Igama lethimba elisha (isb. Umkhuleko)', 'Igama leqela elitsha (umz. Umthandazo)'],
@@ -230,5 +228,17 @@ I18n.rows([
     ['Bread and wine', 'Brood en wyn', 'Isinkwa newayini', 'Isonka newayini'],
     ['The cross', 'Die kruis', 'Isiphambano', 'Umnqamlezo'],
     ['Easter morning', 'Paasoggend', 'Ukusa kwePhasika', 'Intsasa yePasika'],
-    ['Sky', 'Lug', 'Isibhakabhaka', 'Isibhakabhaka']
+    ['Sky', 'Lug', 'Isibhakabhaka', 'Isibhakabhaka'],
+    ["{n} person asked to serve", "{n} persoon gevra om te dien", "Umuntu ongu-{n} ucelwe ukukhonza", "Umntu o-{n} ucelwe ukukhonza"],
+    ["{n} people asked to serve", "{n} mense gevra om te dien", "Abantu abangu-{n} bacelwe ukukhonza", "Abantu abali-{n} bacelwe ukukhonza"],
+    ["{n} person told in Messages", "{n} persoon in Boodskappe laat weet", "Umuntu ongu-{n} wazisiwe ku-Imilayezo", "Umntu o-{n} waziswe kwi-Imiyalezo"],
+    ["{n} people told in Messages", "{n} mense in Boodskappe laat weet", "Abantu abangu-{n} bazisiwe ku-Imilayezo", "Abantu abali-{n} baziswe kwi-Imiyalezo"],
+    ["{n} can’t sign in to Church Hub yet – reach them by email, WhatsApp or SMS", "{n} kan nog nie by Church Hub aanmeld nie – bereik hulle per e-pos, WhatsApp of SMS", "Abangu-{n} abakakwazi ukungena ku-Church Hub – bathinte nge-imeyili, i-WhatsApp noma i-SMS", "Aba-{n} abakakwazi ukungena kwi-Church Hub – baqhagamshele nge-imeyile, i-WhatsApp okanye i-SMS"],
+    ["Remind those who haven’t replied", "Herinner dié wat nog nie geantwoord het nie", "Khumbuza labo abangakaphenduli", "Khumbuza abo bangekaphenduli"],
+    ["Everyone on these services has replied", "Almal by hierdie dienste het geantwoord", "Wonke umuntu kulezi zinkonzo uphendulile", "Wonke umntu kwezi nkonzo uphendulile"],
+    ["Remind {n} person?", "Herinner {n} persoon?", "Khumbuza umuntu ongu-{n}?", "Khumbuza umntu o-{n}?"],
+    ["Remind {n} people?", "Herinner {n} mense?", "Khumbuza abantu abangu-{n}?", "Khumbuza abantu abali-{n}?"],
+    ["Messages are switched off (Settings → Apps)", "Boodskappe is afgeskakel (Instellings → Toepassings)", "Imilayezo icishiwe (Izilungiselelo → Izingxenye)", "Imiyalezo icinyiwe (Iisetingi → Amacandelo)"],
+    ["They get a message in Messages about the turns they haven’t replied to yet.", "Hulle kry ’n boodskap in Boodskappe oor die beurte waarop hulle nog nie geantwoord het nie.", "Bathola umlayezo ku-Imilayezo mayelana namathuba abangakawaphenduli.", "Bafumana umyalezo kwi-Imiyalezo malunga namathuba abangekawaphenduli."],
+    ["Send reminders", "Stuur herinnerings", "Thumela izikhumbuzo", "Thumela izikhumbuzo"]
 ]);

@@ -476,5 +476,11 @@ I18n.rows([
     ["The menu entry that holds Care Groups, Midweek Groups and Leadership", "Die kieslysinskrywing wat Sorggroepe, Middeweekse Groepe en Leierskap bevat", "Okufakwe kumenyu okuqukethe Amaqembu Okunakekelana, Amaqembu Aphakathi Nesonto noBuholi", "Into esemenyu equlethe Amaqela Okukhathalelana, Amaqela Aphakathi Kweveki noBunkokeli"],
     ["{partner} access", "{partner}-toegang", "Ukufinyelela kwe-{partner}", "Ufikelelo lwe-{partner}"],
     ["Attendee", "Bywoner", "Ohambela isonto", "Ohamba icawe"],
-    ["this church", "hierdie kerk", "leli bandla", "le cawe"]
+    ["this church", "hierdie kerk", "leli bandla", "le cawe"],
+    ["You’re on the roster", "Jy is op die rooster", "Usohlelweni lokusebenza", "Ukuludwe lomsebenzi"],
+    ["Reminder: please reply about serving", "Herinnering: antwoord asseblief oor jou diens", "Isikhumbuzo: sicela uphendule mayelana nokukhonza", "Isikhumbuzo: nceda uphendule malunga nokukhonza"],
+    ["{name} can’t make it", "{name} kan nie kom nie", "U-{name} ngeke akwazi ukuza", "U-{name} akanakukwazi ukuza"],
+    ["{name} can’t serve:", "{name} kan nie dien nie:", "U-{name} ngeke akwazi ukukhonza:", "U-{name} akanakukwazi ukukhonza:"],
+    ["You haven’t replied yet. Please accept or say you can’t make it:", "Jy het nog nie geantwoord nie. Aanvaar asseblief, of sê as jy nie kan kom nie:", "Awukaphenduli. Sicela wamukele noma usho ukuthi ngeke ukwazi ukuza:", "Awukaphenduli. Nceda wamkele okanye uthi akunakukwazi ukuza:"],
+    ["You’ve been asked to serve. Please accept or say you can’t make it:", "Jy is gevra om te dien. Aanvaar asseblief, of sê as jy nie kan kom nie:", "Ucelwe ukukhonza. Sicela wamukele noma usho ukuthi ngeke ukwazi ukuza:", "Ucelwe ukukhonza. Nceda wamkele okanye uthi akunakukwazi ukuza:"]
 ]);

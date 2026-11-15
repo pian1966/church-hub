@@ -577,6 +577,14 @@ people marked as staff (including the older Staff category); it is not a second 
   `memberIds`). Members only read. Writing to a group, "Only some of them" shows its people ticked; unticking narrows `to`
   (`some: true`) – the rules already only let carers and leaders reach people in their own group. The people a message goes to (`to`) are worked out when it is sent, so someone added to a
   group later doesn't see older messages, and the rules can check each reader.
+- Roster messages (`kind: 'roster'`, `Msg.rosterNote`, sent by `js/mod-rosters.js`, never on the Write page): `roster: 'ask'`
+  when someone is put on the roster (Fill the gaps → Keep, or added by hand), `'remind'` from Rosters → More → Remind those who
+  haven't replied (the services on screen; `RosterCore.byPerson` groups the turns, one message per person), and `'declined'`
+  when a volunteer says they can't make it – to `settings.rosterTeam` (`Store.rosterTeam()`: Administrators, Roster
+  coordinators and `settings.rosterExtra`, chosen under Settings → Church Services; kept by Administrators like
+  `settings.ministers`, `Store.setRosterExtra`). `turns` holds the assignment ids: the inbox shows them in the reader's
+  language with Accept / Can't make it (the volunteer) or their status and Open the roster (the team). Rules: ask/remind by
+  `rosterer()`, declined only to the people in `rosterTeam`. People who can't sign in are counted, not messaged.
 - Loading (`plan()` in `js/store.js`): Administrators and Pastors load all `messages` and `msgGroups`; everyone else the
   messages where `to` contains them, the ones they sent (`fromId`), and the message groups they are in.
 - Reading: when a recipient's device receives a message, it adds them to `deliveredBy`; opening it (while the app is on

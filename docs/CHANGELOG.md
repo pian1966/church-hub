@@ -404,3 +404,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   currency; India and Cambodia added), three kinds of cup with an honest-amount nudge, "Who are you paying for?",
   "Churches to pray for" and "Prayer card for your church", "Take a photo" for the prayer card; the public website's
   price section does the same, and shows a second phone: a Western parish's Sunday roster
+- ✅ Website (16 Nov 2026): a desktop computer showing Church Hub's Home with its side menu, to show it runs in any browser, not only on a phone

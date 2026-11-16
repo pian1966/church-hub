@@ -192,3 +192,14 @@ function makeSampleData() {
       fromId: 'p03', fromName: 'Pieter van Wyk', to: ['p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08'], readBy: ['p03', 'p05'], createdAt: off(-1) + ' 08:30', updatedAt: off(-1) + ' 08:30' }]
   };
 }
+
+/* Made-up churches for the demo's prayer circle and "pay for another church" (js/mod-support.js). No real churches.
+ * Once Church Hub opens to other churches, the real list comes from Church Hub's office (TARGET.md section 10). */
+var SampleChurches = [
+  { id: 'demo-ch-1', name: 'Hope Chapel', town: 'Mangochi', country: 'MW', countryName: 'Malawi', continent: 'Africa', card: { place: 'Mangochi', points: ['Clean water for the village borehole, which broke in October', 'Our three new Sunday-school teachers'], needsHelp: true } },
+  { id: 'demo-ch-2', name: 'St Andrew’s', town: 'Ballarat', country: 'AU', countryName: 'Australia', continent: 'Oceania', card: { points: ['Young families moving into the new estate near the church', 'Wisdom as we look for a youth worker'] } },
+  { id: 'demo-ch-3', name: 'Grace Fellowship', town: 'Kano', country: 'NG', countryName: 'Nigeria', continent: 'Africa', card: { points: ['Safety as we gather on Sundays', 'Courage and joy for believers who are new to the faith'], needsHelp: true } },
+  { id: 'demo-ch-4', name: 'Riverside Community Church', town: 'Dayton', country: 'US', countryName: 'United States', continent: 'Americas', card: { points: ['Our food pantry, which now serves 200 families a week'] } },
+  { id: 'demo-ch-5', name: 'Bethel Church', town: 'Mafeteng', country: 'LS', countryName: 'Lesotho', continent: 'Africa', card: { points: ['Rain for the farmers in our district', 'Our pastor, who walks to three villages each month'], needsHelp: true } },
+  { id: 'demo-ch-6', name: 'House church', town: '', country: 'CN', countryName: 'China', continent: 'Asia', card: { discreet: true, points: ['Wisdom for the leaders', 'That we would keep meeting and keep growing'] } }
+];

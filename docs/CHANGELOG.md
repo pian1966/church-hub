@@ -394,3 +394,9 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.81.0 (16 Nov 2026): Holy Communion – each service's communion Sundays (Rosters → Services: every week, 1st–5th, last
   or never; Howick: 10am 1st Sunday, 8am and 5pm 2nd), communion positions only rostered when there is communion, and a
   one-off change for any date from the chip under it in the roster
+- ✅ 0.82.0 (16 Nov 2026): Subscription – "buy us a coffee": one coffee a month or ten a year (five coffees to choose
+  from, priced in rand, US or Australian dollars), gift coffees in one tap, paying for another church, bank transfer to
+  Church Hub's Capitec account with each church's own reference, reminders on the Administrator's Home when payment is
+  due, payment holidays (three a year monthly, one a year yearly), and praying instead: the prayer circle, a church's
+  prayer card (photo, two prayer points, "keep us hidden" for countries where Christians face danger) and the church to
+  pray for each month on everyone's Home page

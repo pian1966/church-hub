@@ -581,12 +581,17 @@ var Hub = (function () {
       '<button class="btn small" data-act="hub:tipclose">' + T('Got it') + '</button></div></section>';
   }
 
+  /** Cards a module puts on everyone's Home (module.homeCard), e.g. the church we pray for this month – shown when the
+   * module is switched on, even to people who can't open the module itself. */
+  function homeCards() {
+    return modules.filter(function (m) { return m.homeCard && isOn(m.id); }).map(function (m) { try { return m.homeCard(user) || ''; } catch (e) { console.error('homeCard', m.id, e); return ''; } }).join('');
+  }
   function renderHome() {
     var todos = [];
     enabled().forEach(function (m) { if (m.todos) (m.todos(user) || []).forEach(function (t) { t.mod = m; todos.push(t); }); });
     todos = todos.filter(function (t) { return t.priority; }).concat(todos.filter(function (t) { return !t.priority; }));
     var hour = new Date().getHours(), hello = T(hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening');
-    return langsPrompt() + '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' + tipsCard() +
+    return langsPrompt() + '<div class="page-head"><div><h1>' + hello + ', ' + esc(user.preferredName || user.firstName) + '</h1><p class="lead">' + esc(fmt(today(), true)) + ' · ' + esc(myLabel()) + '</p></div></div>' + tipsCard() + homeCards() +
       '<section class="block"><h2>' + T('To do') + '</h2>' + (todos.length ? '<ul class="todo">' + todos.slice(0, 8).map(function (t) {
         return '<li><a href="' + esc(t.href) + '"><span class="dot" style="--c:' + t.mod.tint + '"></span><span class="grow">' + esc(t.text) + '</span><span class="tag" style="--c:' + t.mod.tint + '">' + esc(T(t.tag || t.mod.name)) + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="empty">' + T('Nothing needs you right now.') + '</p>') + '</section>' +

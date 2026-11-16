@@ -280,15 +280,24 @@ becomes view-only. The office being unreachable never makes anything worse: the 
 lock on the official website, not on the data. A technical person could run their own copy without it. That is
 accepted; it keeps honest churches honest and costs nothing to run.
 
-### 10.5 The price
-- **One Big Mac a year at the church's own country's price**, from The Economist's Big Mac index
-  (`js/bigmac.js`: country → local price and currency, with the index date; updated when the index is, twice a year).
-  Countries not in the index: the nearest listed neighbour named in the table, otherwise the US price.
-- **Plus an optional extra gift** – any amount, with a sentence inviting the church to think what Church Hub is
-  worth to it and what it can afford.
-- The robot, not the website, decides whether enough was paid: amount ≥ the minimum for the registered country on
-  the day of payment (10% tolerance for exchange rates).
-- A church in hardship asks the owner; the owner records a `grant` and the robot issues a licence.
+### 10.5 The price (changed 16 Nov 2026: a coffee, not a Big Mac)
+Decided by the owner on 16 Nov 2026, replacing "one Big Mac a year". Built: `js/coffee.js` (rules, tested), `js/mod-support.js`
+(Subscription page), `docs/PRICES.md` (where the prices come from).
+- **One café coffee a month, or ten a year** (two months free), priced as a Starbucks "Tall" in South Africa, the United
+  States or Australia – the church picks the coffee (cappuccino, flat white, latte, Americano, caramel macchiato) and the
+  currency. About R50 a month or R500 a year.
+- **Plus an optional gift** – gift coffees in one tap, or any amount, inviting the church to think what Church Hub is worth to it.
+- **Pay for another church**: a church that has asked for help, or "where it's needed most".
+- **Payment holidays**: a free month, no questions asked – up to three a year on the monthly plan, one a year (the year's
+  payment a month later) on the yearly plan. Nothing is ever locked for being late.
+- **Praying instead**: a church that cannot afford a coffee uses Church Hub free by promising to pray, once a month, for
+  another church Church Hub shows it (the prayer circle). Its prayer card – a photo and two prayer points, never anything
+  about its people – is what other churches pray over. Churches in the Open Doors top 50 countries start "hidden" (no name,
+  town, country or photo; only a wide region).
+- Payment is by bank transfer (EFT) into Church Hub's account, with the church's own reference (`Coffee.reference`); the
+  church taps "We've paid", which records it in its settings. Card payments (`Coffee.PAY_URL`) wait for task 059. Until the
+  office (10.1) exists, payments are not checked against the bank and nothing is enforced.
+- Still the office robot's job later: match bank payments to references, issue licences, share prayer cards between churches.
 
 ### 10.6 The office robot (`.github/workflows/office-robot.yml`, `robot/office.js`)
 GitHub Actions on a timer (every 15 minutes, like the Elvanto robot; free). Secrets: the office service-account

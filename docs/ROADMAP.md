@@ -157,22 +157,15 @@ each church gives what it chooses once a year, with a small minimum. Today each 
 - ⬜ 7.9 Move Christ Church Howick across (export from its own project, import into the shared one), then retire the single-church setup guide.
 - ⬜ 7.10 A simple public website: what Church Hub does, the demo, languages, privacy and safety, how the gift works, sign up.
 
-**The yearly gift**
-- Minimum: the price of **one Big Mac in the church's country**, from The Economist's Big Mac index (published twice a year,
-  free data). Countries not in the index use the nearest neighbour or the US price converted. A Big Mac (R54.90 in South Africa,
-  US$6.12 in the USA, January 2026) is chosen over a McDonald's coffee because card fees take a much smaller share of it, and
-  the index gives an official, regularly updated list instead of one we keep by hand.
-- Suggested amount shown beside the minimum, by size (for example one Big Mac per 10 adults on the church's list); the church
-  can type any amount at or above the minimum.
-- Paid once a year in the church's own currency. Payment provider to decide: Paystack (South Africa: 2.9% + R1 + VAT per card
-  payment) or Stripe/Paddle for other countries; never store card details ourselves.
-- The reminder, a year after each gift: what Church Hub did for them that year (people, rosters, leave days handled), the
-  scriptures ("The worker deserves his wages" – Luke 10:7, 1 Timothy 5:18; "Do not muzzle the ox while it is treading out the
-  grain" – Deuteronomy 25:4, 1 Corinthians 9:9), last year's gift, and a button to give again or change the amount.
-- If a church doesn't give: reminders for 60 days, then read-only (they can still see and download everything), never deleted
-  without warning. A church in hardship can ask for the minimum to be waived.
-- Tax: gifts for using software are income to whoever runs Church Hub, not a tax-deductible donation, unless it is run by a
-  registered NPO/PBO. Decide the structure (and ask an accountant) before the first payment.
+**The subscription** – changed 16 Nov 2026 to a coffee a month (or ten a year), with gifts, paying for another church,
+payment holidays and praying instead; built as the Subscription page (`docs/architecture/TARGET.md` 10.5, `docs/PRICES.md`).
+Still to do:
+- ⬜ Account holder's full name (as on the owner's ID) in `Coffee.BANK.holder`, so churches outside South Africa can pay (Capitec needs it).
+- ⬜ Match bank payments to churches' references (the office robot, task 063/067) – today "We've paid" is taken on trust.
+- ⬜ Share prayer cards between churches through the office, so the prayer circle works outside the demo.
+- ⬜ Refresh coffee prices twice a year, and the "start hidden" countries each January (`docs/PRICES.md`).
+- ⬜ Card payments, once a payment company is chosen (task 059).
+- ⬜ Ask an accountant: is subscription money taxable income for the owner (it is, unless a registered NPO/PBO receives it)?
 
 **Decisions waiting**
 - ⬜ Who runs it: personally, a company, or an NPO/PBO.

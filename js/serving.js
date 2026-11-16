@@ -12,6 +12,10 @@
  * Administrator chooses each one's departments and positions. `feast` is its name in specials() (for the next date).
  * Each slot can also carry `theme` (THEMES: its colour and picture) and `moods` (words describing it), chosen under
  * Rosters → Services, where the departments and positions for each service are switched on and off too.
+ * Holy Communion: a regular slot's `communion` says which weeks of the month it is celebrated there – 'every' (or missing,
+ * apart from the church's usual three in DEFAULT_COMMUNION) = every week, [] = never, or e.g. [1] (the 1st Sunday), [2, 4], ['last']. A dated service can set `communion: true/false`
+ * for a one-off change (Christmas, a fifth Sunday, a visiting bishop). Positions for communion (`communion: true`, or a name
+ * with "communion" in it, such as Servers (Collection & Communion)) are only rostered at services that have communion.
  */
 var Serving = (function () {
   'use strict';
@@ -135,14 +139,61 @@ var Serving = (function () {
   }
   /** The slot a dated service belongs to. */
   function slotOf(service) { return service ? service.slot || service.time || '' : ''; }
+  /* ---------- Holy Communion ---------- */
+  var COMMUNION_NAME = /communion|eucharist|lord.?s supper|holy table|chalice/i;
+  /** Is this position only needed when there is communion? Its own tick, or (until it is ticked or unticked) its name. */
+  function isCommunion(pos) { return !!pos && (typeof pos.communion === 'boolean' ? pos.communion : COMMUNION_NAME.test(pos.name || '')); }
+  /** Which weeks of the month a regular service has communion: 'every', or a list of 1–5 and 'last' ([] = never). */
+  // Christ Church Howick: communion on the 1st Sunday at 10am, the 2nd Sunday at 8am and 5pm (like DEFAULT_MOODS, until changed)
+  var DEFAULT_COMMUNION = { '10:00': [1], '08:00': [2], '17:00': [2] };
+  function communionWeeks(slot) {
+    var c = slot && (slot.communion != null ? slot.communion : DEFAULT_COMMUNION[slot.id]);
+    return c == null || c === 'every' ? 'every' : (Array.isArray(c) ? c.slice() : 'every');
+  }
+  /** The weeks after tapping one choice ('every', 'never', 1–5 or 'last') → what to save as the slot's `communion`. */
+  function toggleCommunionWeek(slot, w) {
+    if (w === 'every') return 'every';
+    if (w === 'never') return [];
+    var now = communionWeeks(slot), list = now === 'every' ? [] : now, k = w === 'last' ? 'last' : +w;
+    list = list.indexOf(k) >= 0 ? list.filter(function (x) { return x !== k; }) : list.concat([k]);
+    var order = [1, 2, 3, 4, 5, 'last'];
+    list.sort(function (a, b) { return order.indexOf(a) - order.indexOf(b); });
+    return [1, 2, 3, 4, 5].every(function (x) { return list.indexOf(x) >= 0; }) ? 'every' : list;
+  }
+  /** Does the usual pattern give communion on this date? (1st Sunday = days 1–7, … ; last = the last one in the month) */
+  function communionOnDate(weeks, date) {
+    if (weeks === 'every') return true;
+    var p = String(date).split('-'), d = +p[2], len = new Date(+p[0], +p[1], 0).getDate();
+    return weeks.indexOf(Math.ceil(d / 7)) >= 0 || (weeks.indexOf('last') >= 0 && d + 7 > len);
+  }
+  /** Is there communion at this dated service? Its own one-off choice first; then its regular service's pattern. Special
+   *  services (Good Friday…) have it when their communion positions are switched on, so the pattern doesn't apply to them. */
+  function hasCommunion(service, settings) {
+    if (!service) return true;
+    if (typeof service.communion === 'boolean') return service.communion;
+    var id = slotOf(service), x = savedSlots(settings).filter(function (y) { return y.id === id; })[0];
+    if (service.special || !x || x.special) return true;
+    return communionOnDate(communionWeeks(x), service.date);
+  }
+  /** What the usual pattern would give, ignoring a one-off change (to show "As usual: …"). */
+  function usualCommunion(service, settings) { return hasCommunion(Object.assign({}, service, { communion: null }), settings); }
+  /** The next dates (from `from`, yyyy-mm-dd) a regular service has communion, as yyyy-mm-dd (n of them, within a year). */
+  function nextCommunions(slot, from, n) {
+    var weeks = communionWeeks(slot), out = [], p = String(from).split('-'), d = new Date(+p[0], +p[1] - 1, +p[2]);
+    if (weeks !== 'every' && !weeks.length) return out;
+    while (d.getDay() !== (slot.day || 0)) d = plus(d, 1);
+    for (var i = 0; i < 54 && out.length < (n || 3); i++, d = plus(d, 7)) if (communionOnDate(weeks, ymd(d))) out.push(ymd(d));
+    return out;
+  }
+
   var ALL = ['08:00', '10:00', '17:00'], EIGHT = ['08:00'], TEN = ['10:00'], MEMORIAL = ['memorial'];   // memorial and funeral teas: not a Sunday service
-  // [department id, department, [position id, position, people needed, services (all when left out)]]
+  // [department id, department, [position id, position, people needed, services (all when left out), only when there is communion]]
   var DEPARTMENTS = [
     ['dept-operational', 'Service Leading', [['pos-host', 'Host', 1], ['pos-preaching', 'Preaching', 1], ['pos-reading', 'Reading', 1], ['pos-prayer', 'Prayer', 1]]],
-    ['dept-extra', 'Extra Slot', [['pos-comm-lead', 'Communion – Leading', 1], ['pos-comm-provide', 'Communion – Providing', 2], ['pos-interview', 'Interview', 1],
+    ['dept-extra', 'Extra Slot', [['pos-comm-lead', 'Communion – Leading', 1, null, true], ['pos-comm-provide', 'Communion – Providing', 2, null, true], ['pos-interview', 'Interview', 1],
       ['pos-missions', 'Missions', 1], ['pos-doctrine', 'Doctrine Slot', 1]]],
     ['dept-hospitality', 'Hospitality', [['pos-welcoming', 'Welcoming & Service Assistant', 2], ['pos-tea', 'Tea Duty', 2], ['pos-eats', 'Providing Eats', 1, EIGHT],
-      ['pos-servers', 'Servers (Collection & Communion)', 5, TEN]]],
+      ['pos-servers', 'Servers (Collection & Communion)', 5, TEN, true]]],
     ['dept-music', 'Music', [['pos-singers', 'Singers', 2], ['pos-guitar', 'Guitar', 1], ['pos-bass', 'Bass', 1], ['pos-drums', 'Drums', 1], ['pos-piano', 'Piano', 1],
       ['pos-sound', 'Sound Desk', 1], ['pos-streaming', 'Online Streaming', 1, TEN]]],
     ['dept-teens', 'Teens', [['pos-teens-teacher', 'Teens’ Church Teacher', 1, EIGHT], ['pos-teens-assistant', 'Teens’ Church Assistant', 1, EIGHT]]],
@@ -167,7 +218,7 @@ var Serving = (function () {
       if (!t) { t = { id: d[0], name: d[1] }; out.teams.push(t); }
       d[2].forEach(function (p) {
         var have = (positions || []).some(function (x) { return x.teamId === t.id && norm(x.name) === norm(p[1]); });
-        if (!have) out.positions.push({ id: p[0], teamId: t.id, name: p[1], needed: p[2], times: (p[3] || []).slice() });   // [] = every service
+        if (!have) out.positions.push(Object.assign({ id: p[0], teamId: t.id, name: p[1], needed: p[2], times: (p[3] || []).slice() }, p[4] ? { communion: true } : {}));   // [] = every service
       });
     });
     return out;
@@ -228,6 +279,8 @@ var Serving = (function () {
   return { TIMES: TIMES, DEFAULT_SLOTS: DEFAULT_SLOTS, DEFAULT_SPECIALS: DEFAULT_SPECIALS, THEMES: THEMES, MOODS: MOODS, savedSlots: savedSlots, allSlots: allSlots,
     specialSlots: specialSlots, addSpecialSlot: addSpecialSlot, removeSlot: removeSlot, findSpecial: findSpecial, themeOf: themeOf, moodsOf: moodsOf,
     runsAtSlot: runsAtSlot, toggleTimes: toggleTimes, structure: structure, updateSlot: updateSlot, DEPARTMENTS: DEPARTMENTS, missing: missing, timeLabel: timeLabel, findPosition: findPosition,
+    isCommunion: isCommunion, communionWeeks: communionWeeks, toggleCommunionWeek: toggleCommunionWeek, communionOnDate: communionOnDate, hasCommunion: hasCommunion,
+    usualCommunion: usualCommunion, nextCommunions: nextCommunions,
     slots: slots, slotLabel: slotLabel, newSlotId: newSlotId, slotOf: slotOf, easter: function (y) { return ymd(easter(y)); }, specials: specials, specialDate: specialDate };
 })();
 if (typeof module !== 'undefined') module.exports = Serving;

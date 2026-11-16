@@ -70,8 +70,10 @@
     return out;
   }
   function engineData(extra) {
-    return { people: S.list('people'), positions: orderedPositions(), skills: S.list('skills'), services: S.list('services'),
-      assignments: S.list('assignments').concat(extra || []), groups: S.list('groups'), away: awayList(), specialSlots: specialIds() };
+    var st = S.settings(), svcs = S.list('services');
+    return { people: S.list('people'), positions: orderedPositions().map(function (p) { return Object.assign({}, p, { communion: Serving.isCommunion(p) }); }), skills: S.list('skills'), services: svcs,
+      assignments: S.list('assignments').concat(extra || []), groups: S.list('groups'), away: awayList(), specialSlots: specialIds(),
+      noCommunion: svcs.filter(function (s) { return !Serving.hasCommunion(s, st); }).map(function (s) { return s.id; }) };
   }
   function orderedPositions() {
     var t = S.list('teams').map(function (x) { return x.id; });
@@ -80,7 +82,9 @@
   /** A position only runs at some services (e.g. Creche Duty at 8:00): elsewhere its cell is shown as not needed. */
   /** A special service (Good Friday…) only has the positions chosen for it; a Sunday one every position unless narrowed down. */
   function specialIds() { return Serving.specialSlots(S.settings()).map(function (x) { return x.id; }); }
-  function runsAt(p, s) { return R.runsAt(p, s, specialIds()); }
+  function runsAt(p, s) { return R.runsAt(p, s, specialIds()) && !noCommunionFor(p, s); }
+  /** A communion role (Communion – Providing, Servers…) at a service without Holy Communion: nobody is asked. */
+  function noCommunionFor(p, s) { return Serving.isCommunion(p) && !Serving.hasCommunion(s, S.settings()); }
   function slotName(id) { return Serving.slotLabel(id, S.settings()); }
   function narrow() { return window.innerWidth < 700; }
   function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; }); }
@@ -97,12 +101,42 @@
   }
   function head(title, lead, btns) { return '<div class="page-head"><div><h1>' + esc(title) + '</h1><p class="lead">' + lead + '</p></div>' + (btns ? '<div class="btns">' + btns + '</div>' : '') + '</div>'; }
 
+  /* ---------- Holy Communion on a date (the chip under each service in the roster) ---------- */
+  var CHALICE = 'M7 3h10l-1 7a4 4 0 0 1-8 0zM12 14v7M8 21h8';
+  /** Communion at this service? Shown under its date; Roster coordinators tap it to change it for that day only. */
+  function communionChip(s, st) {
+    var on = Serving.hasCommunion(s, st), oneOff = typeof s.communion === 'boolean';
+    var label = T(on ? 'Communion' : 'No communion') + (oneOff ? ' *' : '');
+    var attrs = manager() ? ' data-act="rosters:communion" data-s="' + esc(s.id) + '" aria-label="' + esc(T('Holy Communion at this service: change it for this day')) + '"' : ' disabled';
+    return '<button class="comm-chip' + (on ? ' on' : '') + '"' + attrs + (oneOff ? ' title="' + esc(T('Changed for this day only')) + '"' : '') + '>' + (on ? H.icon(CHALICE, 14) : '') + esc(label) + '</button>';
+  }
+  function communionDialog(id) {
+    var s = S.get('services', id); if (!s) return;
+    var st = S.settings(), usual = Serving.usualCommunion(s, st), cur = typeof s.communion === 'boolean' ? (s.communion ? 'yes' : 'no') : 'usual';
+    var asked = S.find('assignments', function (a) { var p = pos(a.positionId); return a.serviceId === s.id && a.status !== 'declined' && Serving.isCommunion(p); }).length;
+    var b = function (v, title, sub) {
+      return '<button class="btn choice' + (cur === v ? ' on' : '') + '" aria-pressed="' + (cur === v) + '" data-act="rosters:communionset" data-s="' + esc(s.id) + '" data-v="' + v + '"><b>' + (v === 'yes' ? H.icon(CHALICE, 16) : '') + esc(title) + '</b><span class="small muted">' + esc(sub) + '</span></button>';
+    };
+    H.modal(H.dialogHead(T('Holy Communion'), H.fmt(s.date, true) + ' · ' + s.time + ' · ' + s.name) + '<div class="dlg-body"><div class="choices">' +
+      b('usual', T('As usual'), T(usual ? 'Communion, as usual for this service' : 'No communion, as usual for this service')) +
+      b('yes', T('Communion this time'), T('Ask for communion servers and providers for this day')) +
+      b('no', T('No communion this time'), T('Nobody is asked for communion on this day')) + '</div>' +
+      (asked ? '<p class="hint">' + esc(TN('{n} person is already on the roster for communion that day. They stay on it unless you take them off.', '{n} people are already on the roster for communion that day. They stay on it unless you take them off.', asked)) + '</p>' : '') +
+      '<p class="hint">' + T('The usual pattern for each service is under Rosters → Services.') + '</p></div>', T('Holy Communion'));
+  }
+  function setCommunion(id, v) {
+    var s = S.get('services', id); if (!s) return;
+    s = Object.assign({}, s); if (v === 'usual') delete s.communion; else s.communion = v === 'yes';
+    S.put('services', s, 'Holy Communion on ' + s.date + ' (' + s.time + '): ' + (v === 'usual' ? 'as usual' : v === 'yes' ? 'yes, this time' : 'no, this time'));
+    H.closeModal(); H.render(); H.toast(T('Saved'));
+  }
+
   /* ---------- matrix ---------- */
   function renderMatrix() {
     var svcs = inView(), ids = svcs.map(function (s) { return s.id; });
     var extra = state.preview ? state.preview.assignments : [];
     var all = S.list('assignments').concat(extra), away = awayList();
-    var problems = R.check(engineData(), ids);
+    var ed = engineData(), problems = R.check(ed, ids), st = S.settings();
     var html = head(T('Rosters'), T('Who is serving at each service. Families and friends who asked to serve together are kept together.'),
       '<button class="btn" data-act="rosters:move" data-d="-' + (narrow() ? 1 : 4) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + (narrow() ? 1 : 4) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
       (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>' +
@@ -116,7 +150,7 @@
     }
     if (problems.length) html += '<div class="note warn"><b>' + T('Please check') + '</b><ul>' + problems.map(function (p) { return '<li>' + esc(p.text) + '</li>'; }).join('') + '</ul></div>';
     html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
-    html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span></th>'; }).join('') + '</tr></thead><tbody>';
+    html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
     orderedPositions().forEach(function (p) {
       if (p.teamId !== lastTeam) { lastTeam = p.teamId; html += '<tr class="team-row"><th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th></tr>'; }
@@ -126,10 +160,10 @@
         var cells = here.map(function (a) {
           var who = person(a.personId), isAway = R.awayReason({ away: away }, a.personId, s.date);
           var cls = (a.source === 'auto' || a.source === 'emergency') && extra.indexOf(a) >= 0 ? 'auto' : isAway && a.status !== 'declined' ? 'away' : a.status;
-          var tg = R.groupsOf(engineData(), a.personId, 'together').length ? H.icon(H.ICON.link, 14) : '';
+          var tg = R.groupsOf(ed, a.personId, 'together').length ? H.icon(H.ICON.link, 14) : '';
           return '<button class="chip ' + cls + '" data-act="rosters:slot" data-id="' + esc(a.id) + '" title="' + esc(a.reason || (isAway ? isAway : T({ accepted: 'Accepted', pending: 'Waiting for a reply', declined: 'Said no' }[a.status] || a.status))) + '">' + esc(H.name(who)) + '<span class="tg">' + tg + '</span></button>';
         }).join('');
-        if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">' + esc(T('Not at {time}', { time: slotName(Serving.slotOf(s)) })) + '</span></td>';
+        if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">' + esc(noCommunionFor(p, s) && R.runsAt(p, s, ed.specialSlots) ? T('No communion') : T('Not at {time}', { time: slotName(Serving.slotOf(s)) })) + '</span></td>';
         for (var i = live; i < p.needed && runsAt(p, s); i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ ' + T('Add someone') + '</button>';
         return '<td><div class="slot">' + cells + '</div></td>';
       }).join('') + '</tr>';
@@ -248,6 +282,8 @@
       }).join('') + '</div>' +
       (look ? '<div class="row" style="margin-top:12px;gap:8px;align-items:flex-end"><label class="field grow" style="margin:0"><span class="sr">' + T('Add your own') + '</span><input id="sv-mood" maxlength="30" placeholder="' + esc(T('e.g. Bilingual')) + '"></label><button class="btn" data-act="rosters:svcmoodadd" data-s="' + esc(x.id) + '">' + H.icon(H.ICON.plus, 16) + T('Add your own') + '</button></div>'
         : '<p class="hint">' + T('Only Administrators can change the look and mood.') + '</p>') + '</section>';
+    // Holy Communion: which weeks of the month (regular services; a special service has it when its communion positions are on)
+    if (!x.special) html += communionPanel(x, look);
     // Departments and positions
     var teams = S.list('teams');
     html += '<section class="panel"><h2>' + T('Departments and positions') + '</h2><p class="hint" style="margin-top:0">' + T('Tap a position to switch it on or off at this service. Its volunteers stay on the team.') + '</p>' +
@@ -258,11 +294,33 @@
           '<button class="link small" data-act="rosters:svcdept" data-s="' + esc(x.id) + '" data-t="' + esc(t.id) + '" data-on="' + (onN < ps.length ? 1 : 0) + '">' + (onN < ps.length ? T('Switch all on') : T('Switch all off')) + '</button></div><div class="pchips">' +
           ps.map(function (p) {
             var on = Serving.runsAtSlot(p, x);
-            return '<button class="pchip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="rosters:svcpos" data-s="' + esc(x.id) + '" data-p="' + esc(p.id) + '">' + (on ? H.icon(H.ICON.check, 15) : '') + esc(p.name) + '</button>';
+            return '<button class="pchip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="rosters:svcpos" data-s="' + esc(x.id) + '" data-p="' + esc(p.id) + '">' + (on ? H.icon(H.ICON.check, 15) : '') + esc(p.name) +
+              (Serving.isCommunion(p) ? '<span class="comm-mark" title="' + esc(T('Only when there is communion')) + '">' + H.icon(CHALICE, 13) + '</span>' : '') + '</button>';
           }).join('') + '</div></div>';
       }).join('') + '</div>' : '<p class="empty">' + T('No departments yet. Add them under Teams.') + ' <a href="#/rosters/teams">' + T('Teams') + '</a></p>') + '</section>';
     if (x.special && look) html += '<p style="margin-top:16px"><button class="btn" data-act="rosters:svcremove" data-s="' + esc(x.id) + '">' + H.icon(H.ICON.trash, 16) + T('Remove this service') + '</button></p>';
     return html + '</div>';
+  }
+  var commOpen = false;   // keep "Communion positions" open while tapping them
+  var WEEKS = [['every', TX('Every week')], [1, TX('1st')], [2, TX('2nd')], [3, TX('3rd')], [4, TX('4th')], [5, TX('5th')], ['last', TX('Last')], ['never', TX('Never')]];
+  function communionPanel(x, look) {
+    var w = Serving.communionWeeks(x), next = Serving.nextCommunions(x, H.today(), 4);
+    var on = function (k) { return k === 'every' ? w === 'every' : k === 'never' ? w !== 'every' && !w.length : w !== 'every' && w.indexOf(k) >= 0; };
+    var roles = S.list('positions').filter(Serving.isCommunion);
+    return '<section class="panel comm-panel"><h2>' + H.icon(CHALICE, 20) + T('Holy Communion') + '</h2><p class="hint" style="margin-top:0">' +
+      T('Which weeks of the month is communion celebrated at this service? Communion servers and providers are only asked for then.') + '</p><div class="pchips">' +
+      WEEKS.map(function (k) {
+        var o = on(k[0]);
+        return '<button class="pchip' + (o ? ' on' : '') + '" aria-pressed="' + o + '"' + (look ? ' data-act="rosters:svccomm" data-s="' + esc(x.id) + '" data-w="' + k[0] + '"' : ' disabled') + '>' + (o ? H.icon(H.ICON.check, 15) : '') + esc(T(k[1])) + '</button>';
+      }).join('') + '</div>' +
+      '<p class="comm-next">' + (next.length ? T('Next: {dates}', { dates: next.map(function (d) { return H.fmt(d, true); }).join(' · ') }) : T('No communion at this service')) + '</p>' +
+      '<p class="hint">' + T('For a one-off change, such as Christmas or a fifth Sunday, tap “Communion” under that date in the roster.') + '</p>' +
+      '<details class="comm-roles"' + (commOpen ? ' open' : '') + '><summary>' + T('Communion positions') + ': ' + esc(roles.length ? roles.map(function (p) { return p.name; }).join(', ') : T('none yet')) + '</summary>' +
+      '<p class="hint">' + T('Tap the positions that are only needed when there is communion.') + '</p><div class="pchips">' +
+      S.list('positions').map(function (p) {
+        var c = Serving.isCommunion(p);
+        return '<button class="pchip' + (c ? ' on' : '') + '" aria-pressed="' + c + '"' + (manager() ? ' data-act="rosters:poscomm" data-p="' + esc(p.id) + '" data-s="' + esc(x.id) + '"' : ' disabled') + '>' + (c ? H.icon(CHALICE, 14) : '') + esc(p.name) + '</button>';
+      }).join('') + '</div></details></section>';
   }
   function saveSlot(id, patch, what) { S.setSettings({ serviceSlots: Serving.updateSlot(S.settings(), id, patch) }, what); H.render(); }
   function setTimes(p, times, x) { p = JSON.parse(JSON.stringify(p)); p.times = times; S.put('positions', p, 'Positions at the ' + x.label + ' service: ' + p.name + (Serving.runsAtSlot(p, x) ? ' on' : ' off')); }
@@ -277,6 +335,14 @@
       if (!w) { H.toast(T('Type a word first'), true); return; }
       if (m.some(function (y) { return y.toLowerCase() === w.toLowerCase(); })) { H.toast(T('That one is already there'), true); return; }
       saveSlot(x.id, { moods: m.concat([w]) }, 'Mood of the ' + x.label + ' service');
+    },
+    svccomm: function (el) {
+      var x = slotById(el.dataset.s), w = el.dataset.w, c = Serving.toggleCommunionWeek(x, /^\d$/.test(w) ? +w : w);
+      saveSlot(x.id, { communion: c }, 'Holy Communion at the ' + x.label + ' service: ' + (c === 'every' ? 'every week' : c.length ? 'weeks ' + c.join(', ') : 'never'));
+    },
+    poscomm: function (el) {
+      var p = JSON.parse(JSON.stringify(pos(el.dataset.p))); p.communion = !Serving.isCommunion(p); commOpen = true;
+      S.put('positions', p, (p.communion ? 'Only rostered when there is communion: ' : 'Rostered whether or not there is communion: ') + p.name); H.render();
     },
     svcpos: function (el) { var x = slotById(el.dataset.s), p = pos(el.dataset.p); setTimes(p, Serving.toggleTimes(p, x.id, S.settings()), x); H.render(); },
     svcdept: function (el) {
@@ -491,6 +557,8 @@
       status: function (el) { var a = S.get('assignments', el.dataset.id); a.status = el.dataset.s; S.put('assignments', a, 'Roster status changed'); H.closeModal(); H.render(); },
       remove: function (el) { if (!H.confirmBtn(el, T('Click again to remove'))) return; S.remove('assignments', el.dataset.id, 'Removed from roster'); H.closeModal(); H.render(); },
       assign: function (el) { assignDialog(el.dataset.s, el.dataset.p, false); },
+      communion: function (el) { communionDialog(el.dataset.s); },
+      communionset: function (el) { setCommunion(el.dataset.s, el.dataset.v); },
       emergencyassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, true); },
       regularassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, false); },
       pick: function (el) {

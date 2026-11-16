@@ -391,3 +391,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.80.4 (16 Nov 2026): Messages → Write: the To dropdown is replaced by “Who is this for?” – big cards for the Office, chosen
   people, the staff and the Church Partners, coloured lists of groups, each with how many people it reaches, and a search;
   for Administrators and Pastors the Sent tab is now called All messages
+- ✅ 0.81.0 (16 Nov 2026): Holy Communion – each service's communion Sundays (Rosters → Services: every week, 1st–5th, last
+  or never; Howick: 10am 1st Sunday, 8am and 5pm 2nd), communion positions only rostered when there is communion, and a
+  one-off change for any date from the chip under it in the roster

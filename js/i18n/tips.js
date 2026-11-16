@@ -1,6 +1,7 @@
 /* Church Hub – words for Home's "What's new" and "Did you know?" card (js/tips.js, js/app.js tipsCard).
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part as it is. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Writing a message is easier: tap the box at the top to choose who it’s for from clear cards and lists, each showing how many people it reaches.", "Om ’n boodskap te skryf is makliker: tik op die blokkie bo-aan om te kies vir wie dit is, uit duidelike kaarte en lyste wat elk wys hoeveel mense dit bereik.", "Ukubhala umlayezo sekulula: thinta ibhokisi ephezulu ukhethe ukuthi ngowabani, emakhadini nasezinhlwini ezicacile ezikhombisa ukuthi ngamunye ufinyelela abantu abangaki.", "Ukubhala umyalezo kulula ngoku: cofa ibhokisi ephezulu ukhethe ukuba ngowabani, kumakhadi nakwizintlu ezicacileyo ezibonisa ukuba nganye ifikelela kubantu abangaphi."],
     ["Did you know?", "Het jy geweet?", "Ubuwazi?", "Ubusazi?"],
     ["Show me", "Wys my", "Ngikhombise", "Ndibonise"],
     ["Another tip", "Nog ’n wenk", "Elinye icebiso", "Elinye icebiso"],

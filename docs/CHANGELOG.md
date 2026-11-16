@@ -388,3 +388,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.80.2 (15 Nov 2026): Messages → Sent: the delivery signs are chosen from four picture cards (ticks, envelopes, circles, words), each showing its
   steps and which apps and countries use it
 - ✅ Gentle movement (0.80.3): pages fade in, pop-up windows rise in and fade away, folded sections slide open, new messages glide into the conversation, and a green tick draws itself when something is saved; none of it for people whose phone asks for less motion (`css/hub.css` "Gentle movement", `js/app.js`)
+- ✅ 0.80.4 (16 Nov 2026): Messages → Write: the To dropdown is replaced by “Who is this for?” – big cards for the Office, chosen
+  people, the staff and the Church Partners, coloured lists of groups, each with how many people it reaches, and a search;
+  for Administrators and Pastors the Sent tab is now called All messages

@@ -109,14 +109,15 @@ module.exports = async function (ctx) {
   await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('audit/') && /Downloaded an advanced search/.test(docs[k].text || docs[k].what || JSON.stringify(docs[k]))), 'downloading search results is in the audit log');
   check(await s.page.$$eval('.adv-field[data-i="0"] option', o => ['marital', 'consents', 'access', 'status'].every(k => o.some(x => x.value === k))), 'Administrators can search marital status, consent, app access and status');
-  await s.page.evaluate(() => { const p = Store.get('people', 'p05'); p.deceasedAt = '2019-03-04'; p.active = false; p.category = 'Deceased'; });
+  await s.page.evaluate(() => { const p = Store.get('people', 'p05'); p.deceasedAt = '2019-03-04'; p.active = false; p.category = 'Deceased'; Store.put('people', p); }); await s.settle();   // saved, so a fresh copy of the data can't undo it
   await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.selectOption('.adv-field[data-i="0"]', 'diedYear');
   await s.page.fill('input.adv-v[data-i="0"]', '2019'); await s.page.click('[data-act="people:advrun"]');
+  await s.page.waitForSelector('.adv-table tbody td a[href^="#/people/p/"]', { timeout: 5000 }).catch(() => {}); await s.settle();   // the results are drawn a moment later
   names = await s.page.$$eval('.adv-table tbody td a[href^="#/people/p/"]', as => as.map(a => a.textContent));
   const p05 = await s.page.evaluate(() => Store.get('people', 'p05').lastName);
   check(names.length === 1 && names[0].includes(p05), 'Advanced search: Year of death finds who died that year: ' + names.join(' | '));
-  await s.page.evaluate(() => { const p = Store.get('people', 'p05'); delete p.deceasedAt; p.active = true; p.category = 'Staff'; });
+  await s.page.evaluate(() => { const p = Store.get('people', 'p05'); delete p.deceasedAt; p.active = true; p.category = 'Staff'; Store.put('people', p); }); await s.settle();
   // Finding a field by typing part of its name; searching church office notes
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   const shownFields = () => s.page.$$eval('.adv-fpick[data-i="0"] .adv-fo', o => o.filter(x => x.offsetParent).map(x => x.textContent));

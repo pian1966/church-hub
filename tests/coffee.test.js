@@ -1,0 +1,94 @@
+/* Tests for js/coffee.js (the subscription: a coffee a month, ten a year, a gift, praying instead). Run: node tests/coffee.test.js */
+'use strict';
+const C = require('../js/coffee.js');
+const Countries = require('../js/countries.js');
+let fails = 0;
+function check(ok, what) { if (!ok) { fails++; console.log('  ✗ ' + what); } else console.log('  ✓ ' + what); }
+
+console.log('Prices');
+check(C.DRINKS.length >= 4, 'several coffees to choose from');
+check(C.DRINKS.every(d => C.CURRENCY_ORDER.every(c => d.prices[c] > 0)), 'every coffee has a price in rand, US dollars and Australian dollars');
+check(C.cup('cappuccino', 'ZAR') >= 40 && C.cup('cappuccino', 'ZAR') <= 60, 'a cappuccino in South Africa is about R50');
+check(C.drink('nonsense').id === C.DEFAULT_DRINK, 'an unknown coffee falls back to the cappuccino');
+check(C.money(50, 'ZAR') === 'R50' && C.money(500, 'ZAR') === 'R500' && C.money(1250, 'ZAR') === 'R1 250', 'rand are whole, with a space for thousands');
+check(C.money(4.95, 'USD') === 'US$4.95' && C.money(60, 'AUD') === 'A$60.00' && C.money(120, 'AUD') === 'A$120', 'dollars show cents (round hundreds without)');
+check(C.currencyFor('ZA') === 'ZAR' && C.currencyFor('LS') === 'ZAR' && C.currencyFor('AU') === 'AUD' && C.currencyFor('NZ') === 'AUD' && C.currencyFor('GB') === 'USD' && C.currencyFor('') === 'USD', 'each country starts with the nearest currency');
+check(Countries.all().every(c => !!C.currency(C.currencyFor(c.code)).sym), 'every country Church Hub knows gets a currency');
+
+console.log('Plans');
+let q = C.quote({ drink: 'cappuccino', currency: 'ZAR', plan: 'month' });
+check(q.coffees === 1 && q.total === 50 && q.per === 'month', 'a month is one coffee');
+q = C.quote({ drink: 'cappuccino', currency: 'ZAR', plan: 'year' });
+check(q.coffees === 10 && q.total === 500 && q.saved === 100, 'a year is ten coffees – two months free');
+q = C.quote({ drink: 'flatwhite', currency: 'USD', plan: 'year', gift: '20' });
+check(q.base === 50.5 && q.gift === 20 && q.total === 70.5, 'a gift is added to the total');
+q = C.quote({ drink: 'latte', currency: 'AUD', plan: 'month', gift: 'abc' });
+check(q.gift === 0 && q.total === 6, 'a gift that isn’t a number counts as nothing');
+check(C.quote({ plan: 'year', currency: 'ZAR', gift: -50 }).gift === 0, 'a gift can’t be negative');
+check(C.quote({ plan: 'pray', currency: 'ZAR' }).total === 0, 'praying instead costs nothing');
+check(C.giftOf(3, 'cappuccino', 'ZAR') === 150 && C.giftOf(99, 'cappuccino', 'ZAR') === 600 && C.giftOf(-1, 'cappuccino', 'ZAR') === 0, 'a gift of coffees: 0 to 12');
+check(C.payLink({ ref: 'ch-x', total: 500, currency: 'ZAR' }) === '', 'no payment address until the owner chooses a payment company');
+check(/^CH-[0-9A-Z]{6}$/.test(C.reference('church-hub-7ec02')) && C.reference('a') === C.reference('a') && C.reference('a') !== C.reference('b'), 'each church has its own short payment reference');
+check(C.BANK.branch === '470010' && /^\d{10}$/.test(C.BANK.account) && C.BANK.swift === 'CABLZAJJ', 'bank transfer details are complete');
+
+console.log('What is due, and payment holidays');
+check(C.addMonths('2026-01-31', 1) === '2026-02-28' && C.addMonths('2026-12-15', 1) === '2027-01-15' && C.addMonths('2026-03-10', -12) === '2025-03-10', 'adding months keeps to real dates');
+check(C.status({}, '2026-11-16').state === 'none' && C.status({ plan: 'pray' }, '2026-11-16').state === 'pray', 'not paying yet / praying instead');
+let sub = C.recordPayment({ drink: 'cappuccino', currency: 'ZAR' }, '2026-11-16', { kind: 'month', amount: 50, currency: 'ZAR' });
+check(sub.plan === 'month' && sub.paidUntil === '2026-12-16' && sub.startedAt === '2026-11-16', 'the first monthly payment starts the plan, paid for a month');
+check(C.status(sub, '2026-11-20').state === 'ok' && C.status(sub, '2026-12-10').state === 'soon' && C.status(sub, '2026-12-16').state === 'due' && C.status(sub, '2027-01-20').state === 'late', 'monthly: fine, then due soon (7 days), due, late');
+let early = C.recordPayment(sub, '2026-12-10', { kind: 'month', amount: 50 });
+check(early.paidUntil === '2027-01-16', 'paying early adds a month to the due date, not to today');
+let lapsed = C.recordPayment(sub, '2027-03-01', { kind: 'month', amount: 50 });
+check(lapsed.paidUntil === '2027-04-01', 'after a long gap, a month from today');
+check(C.recordPayment(sub, '2026-11-20', { kind: 'gift', amount: 100 }).paidUntil === sub.paidUntil, 'a gift doesn’t move the due date');
+check(C.recordPayment(sub, '2026-11-20', { kind: 'month', amount: 50, forOther: 'demo-ch-1' }).paidUntil === sub.paidUntil, 'paying for another church doesn’t either');
+check(C.nextAmount(sub).total === 50, 'the next payment is one coffee');
+let h = C.takeHoliday(sub, '2026-12-12', 'Our roof blew off');
+check(h.paidUntil === '2027-01-16' && h.holidays.length === 1 && h.holidays[0].reason === 'Our roof blew off', 'a payment holiday moves the due date a month later, free');
+check(C.status(h, '2026-12-20').state === 'holiday', '…and shows as a holiday until then');
+h = C.takeHoliday(C.takeHoliday(h, '2027-01-10'), '2027-02-10');
+check(h && C.holidayAllowed(h, '2027-03-01').ok === false && C.takeHoliday(h, '2027-03-01') === null, 'monthly: up to three holidays in a year');
+check(C.holidayAllowed(h, '2028-03-01').ok, '…and they come back after twelve months');
+let y = C.recordPayment({}, '2026-11-16', { kind: 'year', amount: 500 });
+check(y.paidUntil === '2027-11-16' && C.status(y, '2027-10-20').state === 'soon' && C.status(y, '2027-09-01').state === 'ok', 'yearly: paid for a year, reminded 30 days before');
+let yh = C.takeHoliday(y, '2027-11-01');
+check(yh.paidUntil === '2027-12-16' && C.holidayAllowed(yh, '2027-12-20').ok === false, 'yearly: one holiday a year, moving the payment a month');
+check(C.takeHoliday({ plan: 'pray' }, '2026-11-16') === null && C.takeHoliday({}, '2026-11-16') === null, 'no holiday from nothing');
+let late = C.takeHoliday(sub, '2027-03-01');
+check(late.paidUntil === '2027-04-01', 'a holiday taken long after the due date counts from today');
+
+console.log('Prayer cards');
+check(C.takeCare('KP') && C.takeCare('ng') && !C.takeCare('ZA') && !C.takeCare(''), 'the Open Doors top 50 countries are marked “take care”');
+check(C.TAKE_CARE.length === 50 && new Set(C.TAKE_CARE).size === 50, 'fifty countries, none twice');
+check(C.isDiscreet({}, 'NG') && !C.isDiscreet({}, 'ZA'), 'a church in a dangerous country starts discreet; others don’t');
+check(!C.isDiscreet({ discreet: false }, 'NG') && C.isDiscreet({ discreet: true }, 'ZA'), 'the church’s own choice wins');
+const howick = { id: 'ch-a', name: 'St Mark’s', town: 'Howick', country: 'ZA', countryName: 'South Africa', continent: 'Africa' };
+let pc = C.publicCard({ photo: 'data:x', photoOk: true, points: [' Rain  for farmers ', 'Our youth camp', 'a third'] }, howick);
+check(pc.title === 'St Mark’s' && pc.place === 'Howick, South Africa' && pc.photo === 'data:x', 'an open card shows the church’s name, town and photo');
+check(pc.points.length === 2 && pc.points[0] === 'Rain for farmers', 'at most two prayer points, tidied');
+check(C.publicCard({ photo: 'data:x' }, howick).photo === '', 'no photo unless the church confirmed everyone in it agreed');
+const hidden = { id: 'ch-b', name: 'Grace Fellowship', town: 'Kano', country: 'NG', countryName: 'Nigeria', continent: 'Africa' };
+pc = C.publicCard({ photo: 'data:x', photoOk: true, place: 'Kano', points: ['Safety'] }, hidden);
+check(pc.discreet && !pc.title && !pc.place && !pc.photo && pc.region === 'West Africa', 'a discreet card has no name, town, country or photo – only a wide region');
+check(JSON.stringify(pc).indexOf('Nigeria') < 0 && JSON.stringify(pc).indexOf('Grace') < 0 && JSON.stringify(pc).indexOf('Kano') < 0, '…and nothing on it names the church or the country');
+check(C.region('XX', 'Americas') === 'the Americas' && C.region('', '') === 'the world', 'unknown countries are shown by continent');
+check(C.screen('Email me at a@b.org or call +27 82 000 1234 www.x.org @pastor').join() === 'email,phone,link,handle', 'warns about emails, phone numbers, links and @handles');
+check(C.screen('Pray for the youth in Kano', ['Kano']).join() === 'name' && C.screen('Pray for rain', ['Kano']).length === 0, 'warns when a discreet card names its town or church');
+check(C.points(['x'.repeat(500)])[0].length === C.POINT_MAX, 'a prayer point is kept short');
+
+console.log('The church to pray for each month');
+const list = ['a', 'b', 'c', 'd'].map(id => ({ id: 'ch-' + id, points: ['p'] }));
+const p1 = C.partnerFor('ch-a', '2026-11', list), p2 = C.partnerFor('ch-a', '2026-12', list);
+check(p1 && p1.id !== 'ch-a', 'never prays for itself');
+check(C.partnerFor('ch-a', '2026-11', list.slice().reverse()).id === p1.id, 'the same church all month, whatever order the list comes in');
+check(p1.id !== p2.id, 'a different church the next month');
+const seen = new Set(); for (let m = 1; m <= 3; m++) seen.add(C.partnerFor('ch-a', '2027-0' + m, list).id);
+check(seen.size === 3, 'over the months, every other church in turn');
+check(C.partnerFor('ch-a', '2026-11', [{ id: 'ch-a', points: ['p'] }]) === null && C.partnerFor('ch-a', 'bad', list) === null, 'nobody to pray for: none');
+check(C.partnerFor('ch-a', '2026-11', [{ id: 'ch-z', points: [] }]) === null, 'a church with no prayer points isn’t chosen');
+check(C.monthKey('2026-11-16') === '2026-11', 'the month of a date');
+check(C.needing([{ id: 'x', needsHelp: true }, { id: 'y' }, { id: 'me', needsHelp: true }], 'me').map(c => c.id).join() === 'x', 'churches asking for help (not ourselves)');
+
+console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nAll checks passed');
+process.exit(fails ? 1 : 0);

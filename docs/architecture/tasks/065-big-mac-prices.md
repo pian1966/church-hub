@@ -1,5 +1,8 @@
 # 065 – The price table
 
+> **Replaced (16 Nov 2026):** the price is now a coffee a month, not a Big Mac a year – built in `js/coffee.js`,
+> `docs/PRICES.md` (TARGET.md 10.5). Don't build `js/bigmac.js`.
+
 **Model:** Light.
 
 **Goal:** the minimum price for every country Church Hub knows, from The Economist's Big Mac index.

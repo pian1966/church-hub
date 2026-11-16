@@ -1,5 +1,9 @@
 # 066 – The Subscription screen and reminders
 
+> **Mostly built (16 Nov 2026)** as its own page, Subscription (`js/mod-support.js`): coffee prices, monthly/yearly,
+> gifts, paying for another church, payment holidays, reminders on Home, bank transfer. Still to do here: the licence
+> banners (task 061) and card payments once task 059 chooses a company.
+
 **Model:** Middle; translations light.
 
 **Goal:** an Administrator sees what is owed, adds a gift if they wish, and pays.

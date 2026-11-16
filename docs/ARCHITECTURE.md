@@ -54,7 +54,7 @@ tests/*.test.js           one per pure rules file above (roster, leave-import, e
                           (robot.test.js); made-up data in tests/fixtures
 tests/rules.test.mjs      security rules (Firestore emulator)
 tests/app.test.js         the app in a browser as every role, demo and live (live uses tests/fake-firebase.js); its parts are in tests/app/*.js
-.github/workflows/tests.yml  runs all of these on GitHub after every push
+.github/workflows/tests.yml  runs all of these on GitHub after every push (skipped when only site/, docs/ or *.md change)
 ```
 
 ### Data layer contract

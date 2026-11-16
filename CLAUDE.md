@@ -42,7 +42,8 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Public website for other churches (features, languages, the coffee price and prayer circle – prices copied from `js/coffee.js`; one file, English, not part of the app or its version) | `site/index.html` | – | |
 
 The browser test is `node tests/app.test.js` (needs Playwright); it starts the browser and runs each part in `tests/app/` in turn.
-GitHub runs every test, including the rules against the Firestore emulator, on every push (`.github/workflows/tests.yml`).
+GitHub runs every test, including the rules against the Firestore emulator, on every push (`.github/workflows/tests.yml`) –
+except when a change only touches the public website (`site/`) or the documentation (`docs/`, `*.md`): then the check skips the tests and turns green at once.
 
 **Small changes – quick checks only.** For wording, translations, labels, help pages and docs, colours or spacing in
 `css/hub.css`, and version numbers – no change to how anything works – don't run the browser test yourself: run the quick

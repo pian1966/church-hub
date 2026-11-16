@@ -4,6 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
+    "About now has a link to Church Hub’s website, which shows what Church Hub offers to every church – handy to share with friends at other churches.": "Ka jwale e na le sehokelo sa websaete ya Church Hub, e bontshang seo Church Hub e se fanang bakeng sa kereke e nngwe le e nngwe – ho bonolo ho e arolelana le metswalle dikerekeng tse ding.",
     "Messages: Sent now shows only the messages you sent. Administrators and Pastors find everyone’s messages under All messages, and set up groups under Message groups.": "Melaetsa: Tse rometsweng jwale di bontsha feela melaetsa eo o e rometseng. Batsamaisi le Baruti ba fumana melaetsa ya bohle tlasa Melaetsa yohle, mme ba theha dihlopha tlasa Dihlopha tsa melaetsa.",
     "Every church, however small, deserves great church software.": "Kereke e nngwe le e nngwe, leha e ka ba nyenyane hakae, e tshwanelwa ke software e ntle haholo ya kereke.",
     "Subscription: each church now gives the price of one cup where it lives, in its own money – chai from a stall, a café coffee or a coffee-chain latte, whichever is honest for the church – and the prayer card can use a photo taken there and then.": "Peeletso: jwale kereke e nngwe le e nngwe e fana ka theko ya kopi e le nngwe moo e leng teng, ka tjhelete ya yona – tee ya setaleng, kofi ya khefing kapa latte ya lebenkele le leholo la kofi, eng kapa eng e leng ya botshepehi ho kereke – mme karete ya thapelo e ka sebedisa setshwantsho se nkuwang hona moo.",
@@ -1085,6 +1086,8 @@ I18n.add('st', {
     "About Church Hub": "Ka Church Hub",
     "Church Hub keeps the church’s people, rosters, Care Groups and staff management in one place.": "Church Hub e boloka batho ba kereke, mananeo a tshebeletso, dihlopha tsa tlhokomelo le taolo ya basebetsi sebakeng se le seng.",
     "What’s new": "Tse ntjha",
+    "Church Hub website": "Websaete ya Church Hub",
+    "What Church Hub offers, for every church": "Seo Church Hub e se fanang, bakeng sa kereke e nngwe le e nngwe",
     "Opens on GitHub": "E bula ho GitHub",
     "Open in Google Maps": "Bula ho Google Maps",
     "Source code": "Khoutu ya mohlodi",

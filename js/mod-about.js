@@ -22,6 +22,9 @@
   function cleanSearch() { return location.search.replace(/([?&])u=\d+(&|$)/, function (m, a, b) { return b ? a : ''; }).replace(/^&/, '?'); }
   if (/[?&]u=\d+/.test(location.search)) { try { history.replaceState(history.state, '', location.pathname + cleanSearch() + location.hash); } catch (e) {} }
   function appVersion() { try { return window.ChurchHubApp && window.ChurchHubApp.version ? String(window.ChurchHubApp.version()) : ''; } catch (e) { return ''; } }
+  /** Church Hub's public website (site/index.html on GitHub Pages: "pian1966/church-hub" → https://pian1966.github.io/church-hub/site/).
+   *  Built from the repository, so it is the same address in the browser and in the Android app. */
+  function siteUrl() { var r = String(V.repo || '').split('/'); return 'https://' + r[0] + '.github.io/' + (r[1] || '') + '/site/'; }
   function isoDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? H.fmt(d, true) : ''; }
 
   /** The website's version now (the file is fetched again, bypassing the browser's copy). */
@@ -71,6 +74,7 @@
       '<button class="float-close" data-act="about:close" aria-label="' + esc(T('Close')) + '" title="' + esc(T('Close')) + '">' + H.icon(H.ICON.x, 20) + '</button>' +
       '<div class="grid2"><section class="panel"><h2>Church Hub</h2><dl class="kv">' + dl + '</dl></section>' + updatePanel() +
       '<section class="panel"><h2>' + T('More') + '</h2><div class="list">' +
+        '<a class="item" href="' + esc(siteUrl()) + '" target="_blank" rel="noopener"><span class="grow"><b>' + T('Church Hub website') + '</b><small>' + T('What Church Hub offers, for every church') + '</small></span></a>' +
         '<a class="item" href="#" data-act="hub:notice"><span class="grow"><b>' + T('Privacy notice') + '</b></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '/blob/main/docs/CHANGELOG.md" target="_blank" rel="noopener"><span class="grow"><b>' + T('What’s new') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '" target="_blank" rel="noopener"><span class="grow"><b>' + T('Source code') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +

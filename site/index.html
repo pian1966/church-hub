@@ -188,6 +188,7 @@ section { padding: 96px 0; }
 .way p { color: var(--night-muted); margin-top: 6px; }
 .circle { margin-top: 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: center; }
 .circle-text p { color: var(--night-muted); margin-top: 14px; max-width: 56ch; }
+.circle-text .verse { color: #fff; font: 600 1.2rem var(--display); }
 .cards { position: relative; height: 430px; }
 .pcard { position: absolute; width: 270px; background: var(--paper); color: var(--ink); border-radius: 22px; overflow: hidden; box-shadow: 0 24px 50px -20px rgba(0,0,0,.6); }
 .pcard:first-child { left: 0; top: 0; rotate: -4deg; z-index: 1; }
@@ -397,8 +398,8 @@ footer a { color: var(--ink-2); }
 
 <section class="price" id="pricing" aria-labelledby="price-title">
   <div class="wrap">
-    <h2 id="price-title">Buy us a coffee.</h2>
-    <p class="lead">Church Hub costs one café coffee a month, or ten a year if you pay yearly, so two months are free. If it means more to your church than that, you can add a gift. If your church can't afford even one coffee, you can still use it for free by praying instead.</p>
+    <h2 id="price-title">Church Hub for the price of a coffee.</h2>
+    <p class="lead">Buy us one coffee a month, and Church Hub keeps going, for you and for churches that can't. Church Hub is for every church, in every nation and language. No church is ever turned away for being poor: a church that can't afford a coffee pays in prayer instead.</p>
 
     <div class="deal">
       <div class="ticket">
@@ -410,24 +411,24 @@ footer a { color: var(--ink-2); }
             <button type="button" role="radio" data-v="AUD">A$</button>
           </div>
         </div>
-        <span class="pick-label" id="cup-label">Choose your coffee</span>
+        <span class="pick-label" id="cup-label">Choose your coffee: the one you'd order</span>
         <div class="cups" role="radiogroup" aria-labelledby="cup-label" id="cups"></div>
         <div class="seg plan" role="radiogroup" aria-label="How often you pay" id="plan">
           <button type="button" role="radio" data-v="month">Monthly</button>
-          <button type="button" role="radio" data-v="year">Yearly · 2 months free</button>
+          <button type="button" role="radio" data-v="year">Yearly · two coffees free</button>
         </div>
         <div class="amount" id="amount" aria-live="polite">R50</div>
         <div class="per" id="per">a month, for your whole church</div>
         <div class="usd" id="save"></div>
-        <p class="fine">Prices are a Starbucks Tall in each country (November 2026, from menu price guides, because Starbucks doesn't publish them). Pay by bank transfer to Church Hub's account in South Africa, with your church's own reference.</p>
+        <p class="fine">A Tall at Starbucks, November 2026, rounded. Wherever you are, choose the price closest to what a good coffee costs where you live. Stop or change whenever you like. You pay by bank transfer from your own banking app, so Church Hub never sees your card or your bank details.</p>
       </div>
       <div class="incl">
         <h3>Every church is welcome</h3>
         <ul>
           <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Every feature, for everyone.</b> <span>No paid tiers, and no extra charge per member, group or language.</span></div></li>
-          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Add a gift in one tap.</b> <span>One, two or five more coffees, or any amount: whatever you think Church Hub is worth to your church.</span></div></li>
-          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>A hard month? Take a payment holiday.</b> <span>A free month, no questions asked: up to three a year on the monthly plan, or one that moves your yearly payment a month later.</span></div></li>
-          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Nothing is ever locked for paying late.</b> <span>Your Administrators get a friendly reminder before a payment is due, and that's all.</span></div></li>
+          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Add a gift in one tap.</b> <span>What is Church Hub worth to your church? Think of the time it saves and what you can afford. Every extra coffee helps a church that can't pay.</span></div></li>
+          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>A hard month? Take a payment holiday.</b> <span>Skip a month free, no questions asked: up to three a year on the monthly plan, or one that moves your yearly payment a month later. Tell us why if you'd like, so we can pray for you.</span></div></li>
+          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Nothing is ever locked for paying late.</b> <span>Nor deleted. Your Administrators get a friendly reminder before a coffee is due, and Church Hub keeps working: pay when you can.</span></div></li>
         </ul>
       </div>
     </div>
@@ -438,17 +439,17 @@ footer a { color: var(--ink-2); }
         <div class="way">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#E8590C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h26v12a10 10 0 0 1-10 10h-6A10 10 0 0 1 9 30z"/><path d="M35 21h3a5 5 0 0 1 0 10h-3"/><path d="M17 6c-2 3 2 5 0 8M25 6c-2 3 2 5 0 8"/></svg>
           <b>Buy us a coffee</b>
-          <p>A coffee a month, or ten a year. Add a gift whenever you like.</p>
+          <p>One coffee a month, or ten a year with two coffees free. Add a gift whenever you like.</p>
         </div>
         <div class="way">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#E8590C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 42S7 32 7 19a9 9 0 0 1 17-4 9 9 0 0 1 17 4c0 13-17 23-17 23z"/><path d="M18 22h12M24 16v14"/></svg>
           <b>Pay for another church</b>
-          <p>Cover the coffee for a church that has asked for help, or let it go where it's needed most.</p>
+          <p>Bless a church that can't afford it. Choose one that has asked for help, or let Church Hub give it to the church that has waited longest.</p>
         </div>
         <div class="way">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#E8590C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 6c-3 6-9 9-9 18v16h18V24c0-9-6-12-9-18z"/><path d="M15 40h18"/><path d="M24 24v8"/></svg>
           <b>Pray instead, for free</b>
-          <p>Can't afford a coffee? Promise to pray once a month for another church, and use Church Hub at no cost.</p>
+          <p>Can't afford a coffee? Promise to pray for another church each month. For your church, that promise is its subscription, for as long as you need.</p>
         </div>
       </div>
     </div>
@@ -456,8 +457,10 @@ footer a { color: var(--ink-2); }
     <div class="circle" id="prayer">
       <div class="circle-text">
         <h3>The prayer circle</h3>
-        <p>Every church in the circle makes a prayer card: a photo, its town and two things to pray for. Each month Church Hub puts another church's card on your Home page, so churches around the world pray for one another.</p>
+        <p>Churches around the world praying for each other. Once a month Church Hub shows your church another church, with a photo and one or two things to pray for, and another church prays for you. Pray for them in a Sunday service, a prayer meeting or a Care Group. Any church may join.</p>
+        <p>Your prayer card is the only thing about your church that is shared, never anything about your people. A church that would be grateful for help paying can say so on its card.</p>
         <p>Churches where following Jesus is dangerous are kept safe. In the 50 countries on the Open Doors World Watch List, a church starts hidden: others see only a wide region, never its name, town, country or photo. Phone numbers, email addresses and links are flagged before a card is saved, and a photo with people in it shows only once everyone in it has agreed.</p>
+        <p class="verse">“Pray for each other.” James 5:16</p>
       </div>
       <div class="cards" aria-hidden="true">
         <div class="pcard">
@@ -481,7 +484,7 @@ footer a { color: var(--ink-2); }
 
     <div class="why">
       <p><b>Why a coffee?</b>It's a small, familiar thank-you anywhere in the world, the price of one cup at your local café, so a church in Durban, Denver or Darwin each pays what a coffee costs where they are.</p>
-      <p><b>The worker deserves his wages.</b>Your coffee pays for looking after Church Hub, so it keeps improving, and your gifts help keep it free for churches that can't pay.</p>
+      <p><b>The worker deserves his wages.</b>Your coffee pays for looking after Church Hub, so it keeps improving, and your gifts pay for churches that can't. Thank you for your generosity.</p>
     </div>
   </div>
 </section>
@@ -494,10 +497,10 @@ footer a { color: var(--ink-2); }
       <details><summary>Who can see our members' details?</summary><p>Only the people whose role at church needs them. Members choose what others may see, and appear in the directory only if they agree. Sensitive details, like pastoral notes and children's medical notes, are kept to the people who care for them, with a record of who has looked.</p></details>
       <details><summary>Many of our couples share one email address. Is that a problem?</summary><p>No. Up to four people can share one email address, and each still gets their own page, rosters and messages.</p></details>
       <details><summary>Is the price per church or per person?</summary><p>Per church. However many people, groups or services you have, it's one coffee a month, or ten a year.</p></details>
-      <details><summary>How do we pay?</summary><p>By bank transfer (EFT) to Church Hub's bank account in South Africa. Church Hub shows you the account details and your church's own short reference, so we can tell who paid. Card payments are planned.</p></details>
-      <details><summary>What if we can't pay one month?</summary><p>Take a payment holiday: a free month, no questions asked. Monthly churches can take three a year, and yearly churches one. If money is tight for longer, join the prayer circle and use Church Hub for free. Nothing is ever locked because a payment is late.</p></details>
-      <details><summary>Is our prayer card safe to share?</summary><p>A prayer card only holds what your church chooses: a photo, your town and two prayer points. Churches in countries where Christians face danger start hidden, shown only by a wide region. Don't put names, phone numbers or addresses in prayer points; Church Hub flags them if you do.</p></details>
-      <details><summary>When can our church sign up?</summary><p>Church Hub is in daily use at a parish church in South Africa and is getting ready for other churches. Try the demo now and see if it's right for you.</p></details>
+      <details><summary>How do we pay?</summary><p>By bank transfer (EFT) from your own banking app. Church Hub shows you its bank details and your church's own short reference, so we know the payment is from you. From outside South Africa, your bank changes your money into rand. Card payments are planned.</p></details>
+      <details><summary>What if we can't pay one month?</summary><p>Take a payment holiday: a free month, no questions asked. Monthly churches can take three a year, and yearly churches one. If paying is hard for longer, pray instead: Church Hub stays free for as long as you need. Nothing is ever locked or deleted for being late.</p></details>
+      <details><summary>Is our prayer card safe to share?</summary><p>A prayer card only holds what your church chooses: a photo, your town and two prayer points. Churches in countries where Christians face danger start hidden, shown only as “a church in” a wide region. Pray for things, not people by name: Church Hub flags phone numbers, email addresses and links before a card is saved.</p></details>
+      <details><summary>When can our church sign up?</summary><p>Church Hub is in daily use at a parish church in South Africa and is getting ready for other churches. The prayer circle starts when it opens to them, and any promise you make before then is kept. Try the demo now and see if it's right for you.</p></details>
     </div>
   </div>
 </section>
@@ -571,7 +574,7 @@ footer a { color: var(--ink-2); }
     var yearly = state.plan === 'year';
     amount.textContent = money(yearly ? c * 10 : c, state.cur);
     per.textContent = yearly ? 'a year, for your whole church' : 'a month, for your whole church';
-    save.textContent = yearly ? 'Ten coffees instead of twelve: you save ' + money(c * 2, state.cur) + '.' : 'Or ' + money(c * 10, state.cur) + ' a year, with two months free.';
+    save.textContent = yearly ? 'Two coffees free: you save ' + money(c * 2, state.cur) + '.' : 'Or ' + money(c * 10, state.cur) + ' a year, with two coffees free.';
     if (animate) { amount.classList.remove('flip'); void amount.offsetWidth; amount.classList.add('flip'); }
   }
   function wire(group, key) {

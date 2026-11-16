@@ -4,6 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
+    "Subscription: the page now makes clear that the price is per church, not per person, and that a low price doesn’t mean Church Hub does less.": "Ngodiso: leqephe jwale le hlakisa hore theko ke ya kereke, eseng ya motho ka mong, le hore theko e tlase ha e bolele hore Church Hub e etsa ho honyenyane.",
     "About now has a link to Church Hub’s website, which shows what Church Hub offers to every church – handy to share with friends at other churches.": "Ka jwale e na le sehokelo sa websaete ya Church Hub, e bontshang seo Church Hub e se fanang bakeng sa kereke e nngwe le e nngwe – ho bonolo ho e arolelana le metswalle dikerekeng tse ding.",
     "Messages: Sent now shows only the messages you sent. Administrators and Pastors find everyone’s messages under All messages, and set up groups under Message groups.": "Melaetsa: Tse rometsweng jwale di bontsha feela melaetsa eo o e rometseng. Batsamaisi le Baruti ba fumana melaetsa ya bohle tlasa Melaetsa yohle, mme ba theha dihlopha tlasa Dihlopha tsa melaetsa.",
     "Every church, however small, deserves great church software.": "Kereke e nngwe le e nngwe, leha e ka ba nyenyane hakae, e tshwanelwa ke software e ntle haholo ya kereke.",
@@ -100,6 +101,8 @@ I18n.add('st', {
     "Coffee": "Kofi",
     "A “Tall” at Starbucks, as of {date}, rounded. Wherever you are, choose the price closest to what a good coffee costs where you live.": "“Tall” ho Starbucks, ho tloha ka {date}, e potolohisitswe. Hohle moo o leng teng, kgetha theko e haufi le seo kofi e ntle e se jang moo o dulang teng.",
     "How would you like to give?": "O ka rata ho fana jwang?",
+    "The price is per church, not per person: one cup a month covers your whole church, however many people, groups and services you have.": "Theko ke ya kereke, eseng ya motho ka mong: kopi e le nngwe ka kgwedi e lekana kereke ya hao kaofela, ho sa tsotellehe hore le na le batho, dihlopha le ditshebeletso tse kae.",
+    "Don’t mistake a low price for a lesser product. Church Hub competes with the best church management systems in the world. We keep the price low so that every church can have it, not because it does less.": "O se ke wa nahana hore theko e tlase e bolela sehlahiswa se fokolang. Church Hub e qothisana le ditsamaiso tse molemohadi tsa tsamaiso ya dikereke lefatsheng. Re boloka theko e le tlase hore kereke e nngwe le e nngwe e be le yona, eseng hobane e etsa ho honyenyane.",
     "Every way gives your church all of Church Hub.": "Tsela e nngwe le e nngwe e fa kereke ya hao Church Hub kaofela.",
     "a month": "ka kgwedi",
     "One coffee a month": "Kofi e le nngwe ka kgwedi",

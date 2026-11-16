@@ -8,6 +8,7 @@ module.exports = async function (ctx) {
   let s = await session('linda.pillay@example.com', seedDocs());
   await s.go('support'); let t = await s.text();
   check(/What does one cup cost where you live/.test(t) && /About R50/.test(t) && /Every church, however small/.test(t), 'an Administrator sees “one cup where you live”, in rand, starting at R50');
+  check(/per church, not per person/.test(t) && /competes with the best church management systems/.test(t), 'the Subscription page says the price is per church, and that a low price is not a lesser product');
   check(await s.page.inputValue('#sp-cup') === '50' && /Who are you paying for/.test(t), 'the price box holds R50, and step 4 asks who you are paying for');
   await s.page.click('[data-act="support:kind"][data-k="street"]'); await s.page.fill('#sp-cup', '20'); await s.page.waitForTimeout(700);
   check(/R200/.test(await s.page.textContent('.sp-plans')), 'a church can choose a street-stall cup and type its own price (R20 → R200 a year)');

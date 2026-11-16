@@ -1120,3 +1120,17 @@ details.unfold > :not(summary) { animation: unfold .26s var(--ease-out) both; }
   .toast-tick path { animation: none; stroke-dashoffset: 0; }
   .toast.show { transition: opacity .2s; }
 }
+
+/* Holy Communion: the chip under each date in the roster, the panel under Rosters → Services */
+.comm-chip { display: inline-flex; align-items: center; gap: 4px; margin-top: 6px; padding: 2px 9px; border-radius: 999px; border: 1px dashed var(--line); background: transparent; color: var(--muted); font: inherit; font-size: 11.5px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+.comm-chip.on { border: 1px solid #C2414F; background: #FBE6E8; color: #8A1D2C; }
+.comm-chip[disabled] { cursor: default; }
+.comm-chip:not([disabled]):hover { border-color: #C2414F; }
+.comm-panel h2 { display: flex; align-items: center; gap: 8px; }
+.comm-next { margin: 12px 0 0; font-weight: 600; color: var(--svc-ink, var(--ink)); }
+.comm-roles { margin-top: 10px; }
+.comm-roles summary { cursor: pointer; color: var(--muted); font-size: 13.5px; }
+.comm-mark { display: inline-flex; color: #C2414F; margin-left: 2px; }
+.btn.choice.on { border-color: var(--accent); background: var(--accent-soft); }
+.btn.choice b { display: inline-flex; align-items: center; gap: 6px; }
+html[data-mode=dark] .comm-chip.on { background: #4A1F26; color: #F4B9C0; border-color: #C2414F; }

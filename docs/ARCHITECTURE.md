@@ -745,6 +745,13 @@ borrowed" on the Me page; `LibraryUI.roleChip()` shows Librarian there when the 
   Watchnight, Covenant service, Epiphany, Remembrance Sunday, Reformation Sunday, All Saints', Christ the King, and occasions
   (baptisms, confirmations, weddings, funerals…). A special service is a `services` record with `special: true`; "Teams
   like" picks which regular service's positions it uses (its `slot`).
+- **Holy Communion** (`Serving.hasCommunion`): a regular slot's `communion` is the weeks of the month it has communion –
+  `'every'`, `[]` (never), or a list of 1–5 and `'last'` (Christ Church Howick's defaults, `DEFAULT_COMMUNION`: 10am on the
+  1st Sunday, 8am and 5pm on the 2nd; a new service: every week), chosen under Rosters → Services. A dated `services` record
+  may carry `communion: true/false` for one day (the chip under its date in the roster). Positions with `communion: true`
+  (or, until ticked either way, a name containing communion, eucharist, chalice…; `Serving.isCommunion`) are not rostered at a
+  service without communion: RosterCore gets `noCommunion` (service ids) and resolved `communion` flags from `engineData()`.
+  Special services (Good Friday…) are left to the positions switched on for them.
 
 
 ## What Pastors can do (Settings)

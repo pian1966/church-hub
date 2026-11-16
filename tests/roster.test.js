@@ -161,5 +161,15 @@ console.log('Telling people they are on the roster');
   ok(only.length === 1 && only[0].ids.join() === 'x2', 'Remind them: only the services on screen');
 }
 
+console.log('Holy Communion: communion positions only where there is communion');
+{
+  const pos = [{ id: 'tea', teamId: 'h', name: 'Tea', needed: 1 }, { id: 'comm', teamId: 'x', name: 'Communion – Providing', needed: 1, communion: true }];
+  const d = { people, positions: pos, skills: [skill('p1', 'tea', 'weekly'), skill('p2', 'comm', 'weekly')], services: services.slice(0, 2), assignments: [], groups: [], away: [], noCommunion: ['s1'] };
+  const r = R.autoFill(d, ['s0', 's1']);
+  ok(r.assignments.some(a => a.serviceId === 's0' && a.positionId === 'comm') && !r.assignments.some(a => a.serviceId === 's1' && a.positionId === 'comm'), 'no one is asked for communion at a service without it');
+  ok(r.assignments.filter(a => a.positionId === 'tea').length === 2 && !r.gaps.some(g => g.serviceId === 's1' && g.positionId === 'comm'), 'other positions are filled as usual, and no gap is reported');
+  ok(!R.runsAt(pos[1], services[1], [], ['s1']) && R.runsAt(pos[1], services[0], [], ['s1']) && R.runsAt(pos[0], services[1], [], ['s1']), 'runsAt knows about communion');
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

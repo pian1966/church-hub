@@ -43,5 +43,25 @@ ok(S.structure(mem, [{ id: 't' }, { id: 'u' }], [host, creche, teas]).map(x => x
 const m = S.missing([{ id: 'old', name: 'Operational' }], []);
 ok(!m.teams.some(t => t.name === 'Service Leading') && m.positions.filter(p => p.teamId === 'old').length === 4, 'the department once called Operational (Elvanto: Service) is now Service Leading – not added twice');
 
+console.log('Holy Communion: which Sundays, one-off changes, and which positions');
+const cs = {};   // the usual services: 10am on the 1st Sunday, 8am and 5pm on the 2nd
+const svc = (date, slot, more) => Object.assign({ id: date + slot, date, time: slot, slot }, more || {});
+ok(S.hasCommunion(svc('2026-12-06', '10:00'), cs) && !S.hasCommunion(svc('2026-12-06', '08:00'), cs) && !S.hasCommunion(svc('2026-12-06', '17:00'), cs), '1st Sunday (6 Dec 2026): communion at 10am only');
+ok(!S.hasCommunion(svc('2026-12-13', '10:00'), cs) && S.hasCommunion(svc('2026-12-13', '08:00'), cs) && S.hasCommunion(svc('2026-12-13', '17:00'), cs), '2nd Sunday (13 Dec): communion at 8am and 5pm');
+ok(!S.hasCommunion(svc('2026-11-29', '10:00'), cs) && !S.hasCommunion(svc('2026-11-29', '08:00'), cs), 'a 5th Sunday: no communion as usual');
+ok(S.hasCommunion(svc('2026-11-29', '10:00', { communion: true }), cs) && !S.hasCommunion(svc('2026-12-06', '10:00', { communion: false }), cs), 'a one-off change for a day wins over the pattern');
+ok(S.usualCommunion(svc('2026-12-06', '10:00', { communion: false }), cs) === true, 'what the pattern would have given is still known');
+ok(S.hasCommunion(svc('2026-12-25', 'christmas', { special: true }), cs), 'special services: their communion positions decide');
+const every = { serviceSlots: [{ id: '09:00', label: '9am', day: 0, time: '09:00', communion: 'every' }, { id: '18:00', label: '6pm', day: 0, time: '18:00', communion: [] }, { id: '07:00', label: '7am', day: 0, time: '07:00', communion: ['last', 3] }] };
+ok(S.hasCommunion(svc('2026-12-13', '09:00'), every) && !S.hasCommunion(svc('2026-12-06', '18:00'), every), 'every week, or never');
+ok(S.hasCommunion(svc('2026-12-27', '07:00'), every) && S.hasCommunion(svc('2026-12-20', '07:00'), every) && !S.hasCommunion(svc('2026-12-13', '07:00'), every), 'the last Sunday and the 3rd');
+ok(S.hasCommunion(svc('2026-12-13', '11:00'), { serviceSlots: [{ id: '11:00', label: '11am', day: 0, time: '11:00' }] }), 'a church’s own new service has communion every week until chosen');
+const tenAm = S.slots(cs)[1];
+ok(JSON.stringify(S.toggleCommunionWeek(tenAm, 3)) === '[1,3]' && JSON.stringify(S.toggleCommunionWeek(tenAm, 1)) === '[]' && S.toggleCommunionWeek(tenAm, 'every') === 'every' && JSON.stringify(S.toggleCommunionWeek(tenAm, 'never')) === '[]', 'tapping weeks on and off');
+ok(S.toggleCommunionWeek({ communion: [1, 2, 3, 4] }, 5) === 'every' && JSON.stringify(S.toggleCommunionWeek({ communion: 'every' }, 2)) === '[2]', 'all five weeks is every week; from every week, one tap picks that week');
+ok(S.nextCommunions(tenAm, '2026-11-16', 3).join() === '2026-12-06,2027-01-03,2027-02-07' && S.nextCommunions({ day: 0, communion: [] }, '2026-11-16').length === 0, 'the next communion Sundays');
+ok(S.isCommunion({ name: 'Communion – Providing' }) && S.isCommunion({ name: 'Servers (Collection & Communion)' }) && !S.isCommunion({ name: 'Tea Duty' }) && !S.isCommunion({ name: 'Servers (Collection & Communion)', communion: false }) && S.isCommunion({ name: 'Chalice bearers' }) && S.isCommunion({ name: 'Ushers', communion: true }), 'communion positions: by name until ticked or unticked');
+ok(S.missing([], []).positions.filter(p => p.communion).map(p => p.id).join() === 'pos-comm-lead,pos-comm-provide,pos-servers', 'the usual communion positions are marked');
+
 if (fails) { console.log('\n' + fails + ' serving test(s) FAILED'); process.exit(1); }
 console.log('\nAll serving tests passed');

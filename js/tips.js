@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.80';
+  var NEWS_FOR = '0.81';
   var NEWS = [
+    { date: '2026-11-16', who: ['rosters', 'admin'], app: 'rosters', text: TX("Holy Communion: under Rosters → Services, choose which Sundays of the month each service has communion, and communion servers and providers are only asked for then. For a one-off change, tap “Communion” under that date in the roster.") },
     { date: '2026-11-16', who: ['everyone'], app: 'messages', text: TX('Writing a message is easier: tap the box at the top to choose who it’s for from clear cards and lists, each showing how many people it reaches.') },
     { date: '2026-11-15', who: ['everyone'], text: TX('Church Hub now moves more gently: pages and windows ease in, new messages glide into the conversation, and a small green tick shows when something is saved.') },
     { date: '2026-11-15', who: ['everyone'], app: 'messages', text: TX('In Messages → Sent, you now choose how the delivery signs look from four picture cards, each showing its steps and which apps and countries use that style.') },

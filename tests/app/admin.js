@@ -169,6 +169,29 @@ module.exports = async function (ctx) {
   check(JSON.stringify(docs['positions/pos-creche'].times) === '["08:00","10:00"]' && JSON.stringify(docs['positions/pos-host'].times) === '["08:00","17:00"]', 'tapping a position switches it on or off at that service');
   await s.page.click('[data-act="rosters:svcpos"][data-p="pos-host"]'); await s.settle(); docs = await s.docsNow();
   check(docs['positions/pos-host'].times.length === 0, 'and back on: every service again');
+  // Holy Communion: which Sundays each service has it, which positions are for it, and a one-off change on a date
+  tt = await s.text();
+  check(tt.includes('Holy Communion') && !!(await s.page.$('[data-act="rosters:svccomm"][data-w="1"][aria-pressed="true"]')) && !(await s.page.$('[data-act="rosters:svccomm"][data-w="2"][aria-pressed="true"]')) && !!(await s.page.$('.pchip .comm-mark')),
+    '10am: Holy Communion on the 1st Sunday to start with, and communion positions are marked');
+  await s.page.click('[data-act="rosters:svccomm"][data-w="3"]'); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['settings/church'].serviceSlots.find(x => x.id === '10:00').communion) === '[1,3]', 'tapping the 3rd Sunday adds it');
+  await s.page.click('[data-act="rosters:svccomm"][data-w="never"]'); await s.settle(); docs = await s.docsNow();
+  check(JSON.stringify(docs['settings/church'].serviceSlots.find(x => x.id === '10:00').communion) === '[]' && (await s.text()).includes('No communion at this service'), 'Never: no communion at that service');
+  await s.page.click('[data-act="rosters:svccomm"][data-w="1"]'); await s.settle();
+  await s.page.click('details.comm-roles summary'); await s.page.click('[data-act="rosters:poscomm"][data-p="pos-tea"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['positions/pos-tea'].communion === true, 'a position can be marked as only needed for communion');
+  await s.page.click('[data-act="rosters:poscomm"][data-p="pos-tea"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['positions/pos-tea'].communion === false, '… and unmarked');
+  const csv = await s.page.evaluate(() => { const u = Store.list('services').filter(x => x.date >= Hub.today()).sort((a, b) => a.date < b.date ? -1 : 1)[0]; const was = JSON.stringify(u); Store.put('services', Object.assign({}, u, { slot: '10:00', time: '10:00', communion: false })); return { id: u.id, was }; });
+  await s.settle(); await s.go('rosters');
+  const cell = () => s.page.$('[data-act="rosters:assign"][data-s="' + csv.id + '"][data-p="pos-comm-provide"]');
+  check(!(await cell()) && (await s.page.$eval('[data-act="rosters:communion"][data-s="' + csv.id + '"]', b => b.textContent)).includes('No communion'), 'the roster: no communion that day, so nobody is asked to provide it');
+  await s.page.click('[data-act="rosters:communion"][data-s="' + csv.id + '"]'); await s.page.click('[data-act="rosters:communionset"][data-v="yes"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['services/' + csv.id].communion === true && !!(await cell()), 'a one-off change: communion that day, and its positions are asked for');
+  await s.page.click('[data-act="rosters:communion"][data-s="' + csv.id + '"]'); await s.page.click('[data-act="rosters:communionset"][data-v="usual"]'); await s.settle(); docs = await s.docsNow();
+  check(!('communion' in docs['services/' + csv.id]), 'As usual takes the one-off change away');
+  await s.page.evaluate(w => Store.put('services', JSON.parse(w)), csv.was); await s.settle();
+  await s.go('rosters/services/10%3A00');
   await s.go('rosters/services/memorial'); tt = await s.text();
   check(tt.includes('Held now and then') && (await s.page.$('[data-act="rosters:svcpos"][data-p="pos-memorial-teas"][aria-pressed="true"]')) && (await s.page.$('[data-act="rosters:svcpos"][data-p="pos-host"][aria-pressed="false"]')), 'Memorial has only memorial teas');
   await s.go('rosters/services/good-friday'); tt = await s.text();

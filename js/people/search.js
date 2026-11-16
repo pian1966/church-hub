@@ -261,7 +261,7 @@
   function servicesResult(q) {
     var st = S.settings(), special = Serving.specialSlots(st).map(function (x) { return x.id; });
     var rows = Ask.services({ services: S.list('services'), assignments: S.list('assignments'), positions: S.list('positions'), timeOf: timeOf,
-      runsAt: function (p, s) { return RosterCore.runsAt(p, s, special); } }, q);
+      runsAt: function (p, s) { return RosterCore.runsAt(p, s, special) && !(Serving.isCommunion(p) && !Serving.hasCommunion(s, st)); } }, q);
     return '<div id="ask-result"><h3 style="margin:16px 0 8px">' + TN('{n} service found', '{n} services found', rows.length) + '</h3>' + (rows.length ? '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Date') + '</th><th>' + T('Service') + '</th>' +
       (q.personId ? '<th>' + T('Serving') + '</th>' : '') + '<th>' + T('Still needed') + '</th></tr></thead><tbody>' + rows.map(function (x) {
         var s = x.service;

@@ -19,6 +19,7 @@
  *                                                                  times = the services they serve at (empty or missing = any)
  *   services:     [{ id, date, time, name, slot }]                 slot = the regular service (time + venue); missing = time
  *   specialSlots: ['good-friday', …]                               slots that are special services: only positions naming them run there
+ *   noCommunion:  [serviceId, …]                                    services without Holy Communion: positions with communion: true don't run
  *   assignments:  [{ id, serviceId, positionId, personId, status, source }]  status: pending | accepted | declined
  *   groups:       [{ id, name, kind: 'together'|'apart', strength: 'must'|'prefer', memberIds: [] }]
  *   away:         [{ personId, from, to, reason }]                 blockouts + approved leave
@@ -40,8 +41,9 @@ var RosterCore = (function () {
 
   /** Does this position run at this service? Positions without times run at every service. */
   function slotOf(svc) { return svc.slot || svc.time; }   // which regular service (time and venue) this is
-  function runsAt(pos, svc, special) {
+  function runsAt(pos, svc, special, noCommunion) {
     var k = slotOf(svc), t = pos.times || [];
+    if (pos.communion === true && noCommunion && noCommunion.indexOf(svc.id) >= 0) return false;   // a communion role, no communion that day
     if (k && special && special.indexOf(k) >= 0) return t.indexOf(k) >= 0;   // a special service: only positions chosen for it
     return !(t.length && k && t.indexOf(k) < 0);
   }
@@ -133,7 +135,7 @@ var RosterCore = (function () {
         var m = others[i], best = null;
         if (servingAt(svc.id, m)) continue;                 // already there: counts as together
         positions.forEach(function (pos) {
-          if (!runsAt(pos, svc, data.specialSlots)) return;
+          if (!runsAt(pos, svc, data.specialSlots, data.noCommunion)) return;
           var open = (pos.needed || 1) - filled(svc.id, pos.id) - (taken[pos.id] || 0);
           if (open <= 0 || blocker(svc, m, pos.id)) return;
           var sc = score(svc, m, pos.id);
@@ -155,7 +157,7 @@ var RosterCore = (function () {
 
     services.forEach(function (svc) {
       positions.forEach(function (pos) {
-        if (!runsAt(pos, svc, data.specialSlots)) return;   // e.g. Creche Duty only at the 8:00 service
+        if (!runsAt(pos, svc, data.specialSlots, data.noCommunion)) return;   // e.g. Creche Duty only at the 8:00 service
         var guard = 0;
         while (filled(svc.id, pos.id) < (pos.needed || 1) && guard++ < 50) {
           var cands = (data.skills || []).filter(function (k) { return k.positionId === pos.id; })

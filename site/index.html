@@ -275,7 +275,22 @@ section { padding: 96px 0; }
 .pk { font-size: .82rem; color: var(--ink-2); }
 .pbody b { display: block; font: 600 1.15rem var(--display); margin-top: 2px; }
 .pbody ul { margin: 10px 0 0; padding-left: 18px; color: var(--ink-2); font-size: .92rem; }
+/* Give without signing up */
+.give { margin-top: 80px; display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: start; }
+.give h3 { color: #fff; font-size: 1.6rem; }
+.give-text p { color: var(--night-muted); margin-top: 14px; max-width: 56ch; }
+.give-text ul { list-style: none; padding: 0; margin: 18px 0 0; display: grid; gap: 14px; }
+.give-text li { background: var(--night-2); border-radius: 18px; padding: 16px 20px; color: var(--night-muted); }
+.give-text li b { display: block; color: #fff; font: 600 1.1rem var(--display); }
+.give-text li code { color: #FFB27A; font: 700 .95rem ui-monospace, SFMono-Regular, Menlo, monospace; letter-spacing: .04em; }
+.bank { background: var(--paper); color: var(--ink); border-radius: 28px; padding: 32px 36px; }
+.bank h4 { font: 600 1.2rem var(--display); margin: 0 0 14px; }
+.bank dl { display: grid; grid-template-columns: auto 1fr; gap: 10px 20px; margin: 0; }
+.bank dt { color: var(--ink-2); }
+.bank dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+.bank .fine { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--line); color: var(--ink-2); font-size: .92rem; }
 @media (max-width: 900px) {
+  .give { grid-template-columns: 1fr; gap: 28px; } .bank { padding: 28px 24px; }
   .ways-grid { grid-template-columns: 1fr; gap: 28px; }
   .circle { grid-template-columns: 1fr; }
   .cards { height: 400px; max-width: 360px; margin: 0 auto; width: 100%; }
@@ -587,6 +602,30 @@ footer a { color: var(--ink-2); }
       </div>
     </div>
 
+    <div class="give" id="give">
+      <div class="give-text">
+        <h3>Happy with what you use? You can still give.</h3>
+        <p>You don't need to use Church Hub to help it. Any church, or anyone at all, can give towards it. Every gift helps keep Church Hub going, and pays for churches that can't afford even a coffee.</p>
+        <p>Choose where your gift goes by the reference you use:</p>
+        <ul>
+          <li><b>Where it's needed most</b>Reference <code>HELP</code> and your church's name (or yours). Pays for churches that can't afford it.</li>
+          <li><b>Keeping Church Hub going</b>Reference <code>HUB</code> and your church's name (or yours). Pays for looking after Church Hub and making it better.</li>
+        </ul>
+      </div>
+      <div class="bank">
+        <h4>Give by bank transfer</h4>
+        <dl>
+          <dt>Bank</dt><dd>Capitec Bank</dd>
+          <dt>Account name</dt><dd>Church Hub</dd>
+          <dt>Account number</dt><dd>2625071881</dd>
+          <dt>Branch code</dt><dd>470010</dd>
+          <dt>Account type</dt><dd>Savings</dd>
+          <dt>Reference</dt><dd>HELP or HUB, and your name</dd>
+        </dl>
+        <p class="fine">Any amount, once or every month, from your own banking app. Gifts to Church Hub are not tax-deductible, so we can't give tax receipts. Giving from a bank outside South Africa will be possible soon.</p>
+      </div>
+    </div>
+
     <div class="circle" id="prayer">
       <div class="circle-text">
         <h3>The prayer circle</h3>
@@ -635,6 +674,7 @@ footer a { color: var(--ink-2); }
       <details><summary>Why does Church Hub make the price so low?</summary><p>Because we’ve been there! Church Hub was born in a small, modestly resourced church that battled to pay its bills and grew tired of paying for church software in the currencies of the world’s richest countries. We didn’t see why churches in poorer countries should pay more than they can afford, or make do with less. Every church gets all of Church Hub, at the price of a cup of coffee – where it is, not in Paris or Sydney! We trust that well-resourced, generous churches will enjoy Church Hub and want to see it made available to everyone, by giving what they think it’s worth, or a portion of what they’re paying now for the same thing.</p></details>
       <details><summary>Does such a low price mean fewer features?</summary><p>No. Every church gets all of Church Hub, which stands alongside the best church management systems in the world. The price is low so that no church is left out, not because anything is missing.</p></details>
       <details><summary>We're in India (or Malawi, or Cambodia). Do we pay Starbucks prices?</summary><p>No. You pay what one cup costs where you live, in your own money, and you choose the cup: chai from a stall, a café coffee or a coffee-chain latte. A church with plenty can choose more, wherever it is. A church that can't afford even that prays instead, for free.</p></details>
+      <details><summary>Can we give if we don't use Church Hub?</summary><p>Yes, gladly. Any church or person can give, once or every month, by bank transfer: see <a href="#give">Happy with what you use? You can still give</a>. Use the reference HELP to pay for churches that can't afford it, or HUB to help keep Church Hub going.</p></details>
       <details><summary>How do we pay?</summary><p>By bank transfer (EFT) from your own banking app. Church Hub shows you its bank details and your church's own short reference, so we know the payment is from you. From outside South Africa, your bank changes your money into rand. Card payments are planned.</p></details>
       <details><summary>What if we can't pay one month?</summary><p>Take a payment holiday: a free month, no questions asked. Monthly churches can take three a year, and yearly churches one. If paying is hard for longer, pray instead: Church Hub stays free for as long as you need. Nothing is ever locked or deleted for being late.</p></details>
       <details><summary>Is our prayer card safe to share?</summary><p>A prayer card only holds what your church chooses: a photo, your town and two prayer points. Churches in countries where Christians face danger start hidden, shown only as “a church in” a wide region. Pray for things, not people by name: Church Hub flags phone numbers, email addresses and links before a card is saved.</p></details>

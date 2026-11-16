@@ -1082,3 +1082,41 @@ html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366
 .ms-aud.on .ms-tick { display: inline-flex; }
 .ms-aud[hidden], .ms-sec[hidden], .ms-cards[hidden] { display: none; }
 @media (max-width: 640px) { .ms-cards { grid-template-columns: 1fr 1fr; } }
+
+/* ---------- Gentle movement (js/app.js): short, soft and quiet, so Church Hub feels alive without getting in the way ---------- */
+:root { --ease-out: cubic-bezier(.22, 1, .36, 1); --ease-spring: cubic-bezier(.2, 1.3, .4, 1); }
+/* A new page eases in */
+.page-body.page-in { animation: page-in .24s ease-out both; }   /* fading only: nothing moves under a finger about to tap */
+@keyframes page-in { from { opacity: 0; } to { opacity: 1; } }
+/* Pop-up windows: the shade fades in, the window rises and settles; closing fades it away */
+.overlay { animation: shade-in .2s ease-out both; }
+.overlay .dialog { animation: dialog-in .28s var(--ease-out) both; }
+.overlay.again, .overlay.again .dialog { animation: none; }
+.overlay.leaving { animation: shade-out .2s ease-in both; pointer-events: none; z-index: 49; }
+.overlay.leaving .dialog { animation: dialog-out .2s ease-in both; }
+@keyframes shade-in { from { background: rgba(29, 27, 25, 0); } }
+@keyframes shade-out { to { background: rgba(29, 27, 25, 0); } }
+@keyframes dialog-in { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+@keyframes dialog-out { to { opacity: 0; transform: translateY(8px) scale(.98); } }
+@media (max-width: 860px) { @keyframes dialog-in { from { opacity: 0; transform: translateY(32px); } to { opacity: 1; transform: none; } } }
+/* A section that folds open slides its contents in */
+details.unfold > :not(summary) { animation: unfold .26s var(--ease-out) both; }
+@keyframes unfold { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+/* A message that has just arrived glides into the conversation */
+.msg.arrive { animation: msg-arrive .42s var(--ease-spring) both; transform-origin: left bottom; }
+.msg.out.arrive { transform-origin: right bottom; }
+@keyframes msg-arrive { from { opacity: 0; transform: translateY(14px) scale(.96); } to { opacity: 1; transform: none; } }
+/* "Saved": a small green tick draws itself in the message at the bottom */
+.toast { display: flex; align-items: center; gap: 10px; }
+.toast.show { transition: transform .32s var(--ease-spring), opacity .2s; }
+.toast-tick { width: 22px; height: 22px; flex: none; fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.toast-tick circle { fill: #1F8A4C; stroke: none; transform-origin: center; animation: tick-ring .3s var(--ease-spring) both; }
+.toast-tick path { stroke: #fff; stroke-width: 2.6; stroke-dasharray: 16; stroke-dashoffset: 16; animation: tick-draw .3s .15s ease-out forwards; }
+@keyframes tick-ring { from { transform: scale(.3); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes tick-draw { to { stroke-dashoffset: 0; } }
+/* People who have asked their phone for less motion get none of this */
+@media (prefers-reduced-motion: reduce) {
+  .page-body.page-in, .overlay, .overlay .dialog, details.unfold > :not(summary), .msg.arrive, .toast-tick circle { animation: none; }
+  .toast-tick path { animation: none; stroke-dashoffset: 0; }
+  .toast.show { transition: opacity .2s; }
+}

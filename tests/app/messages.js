@@ -6,8 +6,8 @@ module.exports = async function (ctx) {
   let docs, s, t, officeMessage, officeDocs;
   console.log('Messages:');
   // "Who is this for?": open it from the To box, read the choices, or pick one
-  const choices = async s => { await s.page.click('#ms-to-btn'); await s.page.waitForSelector('.ms-choose'); const k = await s.page.$$eval('.ms-choose .ms-aud', o => o.map(x => x.dataset.key)); await s.page.click('#modal [data-act="hub:close"]'); return k; };
-  const pick = async (s, k) => { await s.page.click('#ms-to-btn'); await s.page.waitForSelector('.ms-choose'); await s.page.click('.ms-aud[data-key="' + k + '"]'); await s.settle(); };
+  const choices = async s => { await s.page.click('#ms-to-btn'); await s.page.waitForSelector('#modal .ms-choose'); const k = await s.page.$$eval('#modal .ms-choose .ms-aud', o => o.map(x => x.dataset.key)); await s.page.click('#modal [data-act="hub:close"]'); return k; };
+  const pick = async (s, k) => { await s.page.click('#ms-to-btn'); await s.page.waitForSelector('#modal .ms-choose'); await s.page.click('#modal .ms-aud[data-key="' + k + '"]'); await s.settle(); };
 
   // An Administrator sets up a message group and writes to the staff
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('messages/groups');
@@ -20,12 +20,12 @@ module.exports = async function (ctx) {
   await s.go('messages/send');
   const opts = await choices(s);
   check(opts[0] === 'office' && opts.includes('people') && opts.includes('staff') && opts.includes('partners') && opts.includes('group/' + mg), 'they can write to the Office, people they choose, the staff, the Church Partners and every group');
-  await s.page.click('#ms-to-btn'); await s.page.waitForSelector('.ms-choose');
-  check(await s.page.$$eval('.ms-card', c => c.length) === 4 && (await s.page.textContent('.ms-card[data-key="staff"]')).includes('8 people') && !!(await s.page.$('#ms-aud-find')), '“Who is this for?” shows big cards for the Office, chosen people, the staff and the Church Partners, with how many people, and a search');
+  await s.page.click('#ms-to-btn'); await s.page.waitForSelector('#modal .ms-choose');
+  check(await s.page.$$eval('#modal .ms-card', c => c.length) === 4 && (await s.page.textContent('#modal .ms-card[data-key="staff"]')).includes('8 people') && !!(await s.page.$('#ms-aud-find')), '“Who is this for?” shows big cards for the Office, chosen people, the staff and the Church Partners, with how many people, and a search');
   await s.page.fill('#ms-aud-find', 'welc'); await s.page.waitForTimeout(300);
-  check(await s.page.$$eval('.ms-choose .ms-aud:not([hidden])', b => b.map(x => x.dataset.key).join()) === 'group/' + mg, 'typing part of a name narrows the choices');
+  check(await s.page.$$eval('#modal .ms-choose .ms-aud:not([hidden])', b => b.map(x => x.dataset.key).join()) === 'group/' + mg, 'typing part of a name narrows the choices');
   await s.page.fill('#ms-aud-find', ''); await s.page.waitForTimeout(300);
-  await s.page.click('.ms-aud[data-key="staff"]'); await s.settle(); await s.page.waitForSelector('#ms-some');
+  await s.page.click('#modal .ms-aud[data-key="staff"]'); await s.settle(); await s.page.waitForSelector('#ms-some');
   check(await s.page.$eval('#ms-to', e => e.value) === 'staff' && (await s.page.textContent('#ms-to-btn')).includes('Staff'), 'choosing the staff closes the list and shows it in the To box');
   check((await s.page.textContent('#ms-reach')).includes('Goes to 8 people'), 'it says how many people a message goes to');
   await s.page.click('[data-act="messages:send"]');

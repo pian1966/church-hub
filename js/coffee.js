@@ -9,8 +9,9 @@
  *   - a church that cannot afford even one coffee a month uses Church Hub for free by promising to pray, once a month,
  *     for another church that Church Hub shows it. Every church is welcome; nobody is turned away for being poor.
  *
- * Prices: a Starbucks "Tall" in South Africa, the United States and Australia, as of AS_OF – Starbucks does not publish
- * prices, so these are typical menu prices from price guides (docs/PRICES.md says where from and how to refresh them).
+ * Prices: one cup of what the church would buy where it lives, in its own country's money – a street-stall cup, a café
+ * coffee or a coffee-chain latte, as is honest for that church. EXAMPLES has the prices we've looked up (docs/PRICES.md);
+ * everywhere else the church types its own.
  * Church Hub never takes card details: the Pay button opens the payment company's own page (PAY_URL, empty until the
  * owner chooses one – docs/architecture/tasks/059-billing-decisions.md).
  */
@@ -24,23 +25,36 @@ var Coffee = (function () {
   var BANK = { bank: 'Capitec Bank', account: '2625071881', branch: '470010', swift: 'CABLZAJJ', type: 'Savings', beneficiary: 'Church Hub', holder: '' };
   var YEAR_COFFEES = 10, MONTH_COFFEES = 1;
 
+  // Each country's own money (ISO 4217), as people write it. whole: no cents shown. Countries not here: US dollars.
   var CURRENCIES = {
-    ZAR: { code: 'ZAR', sym: 'R', country: 'ZA', name: 'South Africa', whole: true },
-    USD: { code: 'USD', sym: 'US$', country: 'US', name: 'United States', whole: false },
-    AUD: { code: 'AUD', sym: 'A$', country: 'AU', name: 'Australia', whole: false }
+    ZAR: ['R', 1], NAD: ['N$', 1], BWP: ['P', 0], ZWG: ['ZiG', 0], ZMW: ['K', 0], MZN: ['MT', 1], LSL: ['M', 1], SZL: ['E', 1],
+    MWK: ['MK', 1], AOA: ['Kz', 1], KES: ['KSh', 1], UGX: ['USh', 1], TZS: ['TSh', 1], RWF: ['FRw', 1], ETB: ['Br', 1], NGN: ['₦', 1],
+    GHS: ['GH₵', 0], XAF: ['FCFA ', 1], CDF: ['FC', 1], GBP: ['£', 0], EUR: ['€', 0], CHF: ['CHF ', 0], PLN: ['zł ', 0],
+    DKK: ['kr ', 0], NOK: ['kr ', 0], SEK: ['kr ', 0], USD: ['US$', 0], CAD: ['CA$', 0], MXN: ['MX$', 1], JMD: ['J$', 1],
+    BRL: ['R$', 0], ARS: ['AR$', 1], CLP: ['CLP$', 1], COP: ['COL$', 1], PEN: ['S/ ', 0], AUD: ['A$', 0], NZD: ['NZ$', 0],
+    INR: ['₹', 1], KHR: ['៛', 1]
   };
-  var CURRENCY_ORDER = ['ZAR', 'USD', 'AUD'];
+  var COUNTRY_CURRENCY = {
+    ZA: 'ZAR', NA: 'NAD', BW: 'BWP', ZW: 'ZWG', ZM: 'ZMW', MZ: 'MZN', LS: 'LSL', SZ: 'SZL', MW: 'MWK', AO: 'AOA', KE: 'KES', UG: 'UGX',
+    TZ: 'TZS', RW: 'RWF', ET: 'ETB', NG: 'NGN', GH: 'GHS', CM: 'XAF', CD: 'CDF', GB: 'GBP', IE: 'EUR', DE: 'EUR', AT: 'EUR', CH: 'CHF',
+    NL: 'EUR', BE: 'EUR', FR: 'EUR', ES: 'EUR', PT: 'EUR', IT: 'EUR', PL: 'PLN', DK: 'DKK', NO: 'NOK', SE: 'SEK', FI: 'EUR', US: 'USD',
+    CA: 'CAD', MX: 'MXN', JM: 'JMD', BR: 'BRL', AR: 'ARS', CL: 'CLP', CO: 'COP', PE: 'PEN', AU: 'AUD', NZ: 'NZD', IN: 'INR', KH: 'KHR'
+  };
 
-  // Starbucks Tall, approximate menu prices, Nov 2026 (docs/PRICES.md). `art` is how the cup is drawn (js/mod-support.js).
-  var DRINKS = [
-    { id: 'cappuccino', name: 'Cappuccino', note: 'Espresso under a deep cap of foam', art: 'cappuccino', prices: { ZAR: 50, USD: 4.95, AUD: 6.00 } },
-    { id: 'flatwhite', name: 'Flat white', note: 'A stronger, velvety coffee with fine milk', art: 'flatwhite', prices: { ZAR: 50, USD: 5.05, AUD: 6.00 } },
-    { id: 'latte', name: 'Latte', note: 'Espresso with lots of steamed milk', art: 'latte', prices: { ZAR: 50, USD: 4.95, AUD: 6.00 } },
-    { id: 'americano', name: 'Americano (long black)', note: 'Espresso and hot water, no milk', art: 'americano', prices: { ZAR: 42, USD: 3.75, AUD: 5.50 } },
-    { id: 'macchiato', name: 'Caramel macchiato', note: 'A sweet treat with caramel on top', art: 'macchiato', prices: { ZAR: 56, USD: 5.25, AUD: 7.30 } }
+  // One cup, three ways. The church chooses the one that is honest for it – a church with plenty can choose the coffee
+  // chain wherever it is; a church with little, the street stall – and types what it costs where it lives.
+  var KINDS = [
+    { id: 'street', name: 'A cup from a street stall', note: 'Tea or coffee from a stall, market or kiosk', art: 'glass' },
+    { id: 'cafe', name: 'A coffee at a local café', note: 'An ordinary café near you', art: 'cappuccino' },
+    { id: 'chain', name: 'A latte at a coffee chain', note: 'Like a Starbucks Tall latte', art: 'latte' }
   ];
-  var DEFAULT_DRINK = 'cappuccino';
-
+  // What one cup costs, where we have looked it up (docs/PRICES.md). Everywhere else the church types its own price.
+  var EXAMPLES = {
+    ZA: { chain: 50 }, US: { chain: 4.95 }, AU: { chain: 6.00 },   // a Starbucks Tall latte, November 2026
+    IN: { street: 15 },   // chai at a Delhi roadside stall, March 2026
+    KH: { street: 4000 }  // iced coffee from a Phnom Penh stall, about US$1, 2026
+  };
+  var DEFAULT_KIND = 'cafe';
   // Countries where following Jesus is most dangerous: Open Doors World Watch List 2026, top 50 (January 2026).
   // A church here starts "discreet" (no photo, no church name, no town – only a wide region), and is warned before
   // turning that off. Refresh each January with the new list (docs/PRICES.md, "Countries that start discreet").
@@ -66,17 +80,11 @@ var Coffee = (function () {
   };
   var POINT_MAX = 160, POINTS = 2;
 
-  function drink(id) { return DRINKS.filter(function (d) { return d.id === id; })[0] || drink(DEFAULT_DRINK); }
-  function currency(code) { return CURRENCIES[code] || CURRENCIES.USD; }
-  /** The currency a church in this country sees first: South Africa and its neighbours rand, Australia and New Zealand
-   * Australian dollars, everyone else US dollars. They can switch. */
-  function currencyFor(countryCode) {
-    var c = String(countryCode || '').toUpperCase();
-    if (REGION['Southern Africa'].indexOf(c) >= 0) return 'ZAR';
-    if (c === 'AU' || c === 'NZ') return 'AUD';
-    return 'USD';
-  }
-  /** Money as people write it: R50, R500, US$4.95, A$60.00. */
+  function kind(id) { return KINDS.filter(function (k) { return k.id === id; })[0] || kind(DEFAULT_KIND); }
+  /** The money of a country ("ZA" → "ZAR"); US dollars for a country not in the list. */
+  function currencyFor(countryCode) { return COUNTRY_CURRENCY[String(countryCode || '').toUpperCase()] || 'USD'; }
+  function currency(code) { var c = CURRENCIES[code] ? code : 'USD'; return { code: c, sym: CURRENCIES[c][0], whole: !!CURRENCIES[c][1] }; }
+  /** Money as people write it: R50, R1 250, ₹15, US$4.95, €3.50, ៛4 000. */
   function money(amount, code) {
     var c = currency(code), n = Math.round((+amount || 0) * 100) / 100;
     var whole = c.whole || n % 1 === 0 && n >= 100;
@@ -85,24 +93,34 @@ var Coffee = (function () {
     return c.sym + s;
   }
   function coffees(plan) { return plan === 'year' ? YEAR_COFFEES : plan === 'month' ? MONTH_COFFEES : 0; }
-  /** One coffee, in this currency. */
-  function cup(drinkId, code) { var p = drink(drinkId).prices[currency(code).code]; return +p || 0; }
+  function round(x, code) { return currency(code).whole ? Math.round(x) : Math.round(x * 100) / 100; }
+  /** What one cup of this kind costs in this country, where we have looked it up; 0 when we haven't. */
+  function example(countryCode, kindId) { var e = EXAMPLES[String(countryCode || '').toUpperCase()]; return e && +e[kindId] || 0; }
   /**
-   * What a choice costs: { coffees, base, gift, total, per, saved } – all in the chosen currency.
-   * plan: 'month' | 'year' | 'pray'. gift: an amount the church adds (any number ≥ 0; bad input counts as 0).
-   * saved: what paying yearly saves compared with twelve months.
+   * The church's cup: { kind, price, currency }. Its own choice while it is in its country's money; otherwise (a new
+   * church, or the church changed its country) the first example we have for the country, or a café cup with no price yet.
+   */
+  function cupOf(sub, countryCode) {
+    var code = currencyFor(countryCode), c = sub && sub.cup;
+    if (c && c.currency === code && +c.price > 0) return { kind: kind(c.kind).id, price: +c.price, currency: code };
+    var e = EXAMPLES[String(countryCode || '').toUpperCase()] || {}, k = ['chain', 'cafe', 'street'].filter(function (x) { return e[x]; })[0];
+    return { kind: k || DEFAULT_KIND, price: k ? e[k] : 0, currency: code };
+  }
+  /** A price as typed ("15", "4,95", "R 50") → a number ≥ 0. */
+  function parse(v) { var n = parseFloat(String(v == null ? '' : v).replace(/\s/g, '').replace(',', '.').replace(/[^\d.]/g, '')); return n > 0 ? Math.round(n * 100) / 100 : 0; }
+  /**
+   * What a choice costs: { coffees, cup, base, gift, total, currency, per, saved } – in the church's own money.
+   * o: { price (one cup), currency, plan: 'month'|'year'|'pray', gift }. saved: what paying yearly saves over twelve months.
    */
   function quote(o) {
     o = o || {};
-    var code = currency(o.currency).code, c = cup(o.drink, code), n = coffees(o.plan);
-    var gift = Math.max(0, Math.round((parseFloat(o.gift) || 0) * 100) / 100);
+    var code = currency(o.currency).code, c = parse(o.price), n = coffees(o.plan), gift = parse(o.gift);
     var base = round(c * n, code), total = round(base + gift, code);
     return { coffees: n, cup: c, base: base, gift: gift, total: total, currency: code, per: o.plan === 'year' ? 'year' : o.plan === 'month' ? 'month' : '',
       saved: o.plan === 'year' ? round(c * (12 - YEAR_COFFEES), code) : 0 };
   }
-  function round(x, code) { return currency(code).whole ? Math.round(x) : Math.round(x * 100) / 100; }
-  /** A gift as a number of coffees (the little cups on the page): 0–12. */
-  function giftOf(n, drinkId, code) { n = Math.max(0, Math.min(12, Math.floor(+n || 0))); return round(cup(drinkId, code) * n, code); }
+  /** A gift of n cups (the little cups on the page): 0–20. */
+  function giftOf(n, price, code) { n = Math.max(0, Math.min(20, Math.floor(+n || 0))); return round(parse(price) * n, code); }
 
   /** The address the Pay button opens, or '' while payments aren't open. Only the church's id, the amount and currency go. */
   function payLink(o) {
@@ -187,7 +205,7 @@ var Coffee = (function () {
     return sub;
   }
   /** What the next payment is: the plan's coffees, in the church's coffee and currency. */
-  function nextAmount(sub) { sub = sub || {}; return quote({ drink: sub.drink, currency: sub.currency, plan: sub.plan }); }
+  function nextAmount(sub, countryCode) { var c = cupOf(sub, countryCode); return quote({ price: c.price, currency: c.currency, plan: (sub || {}).plan }); }
 
   /* ---------- prayer ---------- */
   function takeCare(countryCode) { return TAKE_CARE.indexOf(String(countryCode || '').toUpperCase()) >= 0; }
@@ -258,9 +276,9 @@ var Coffee = (function () {
   /** Churches that have asked for help, for "pay for another church". */
   function needing(churches, selfId) { return (churches || []).filter(function (c) { return c && c.needsHelp && c.id !== selfId; }); }
 
-  return { AS_OF: AS_OF, PAY_URL: PAY_URL, YEAR_COFFEES: YEAR_COFFEES, DRINKS: DRINKS, DEFAULT_DRINK: DEFAULT_DRINK, CURRENCIES: CURRENCIES, CURRENCY_ORDER: CURRENCY_ORDER,
+  return { AS_OF: AS_OF, PAY_URL: PAY_URL, YEAR_COFFEES: YEAR_COFFEES, KINDS: KINDS, EXAMPLES: EXAMPLES, COUNTRY_CURRENCY: COUNTRY_CURRENCY,
     TAKE_CARE: TAKE_CARE, POINT_MAX: POINT_MAX, POINTS: POINTS,
-    BANK: BANK, reference: reference, HOLIDAYS: HOLIDAYS, addMonths: addMonths, status: status, holidayAllowed: holidayAllowed, takeHoliday: takeHoliday, recordPayment: recordPayment, nextAmount: nextAmount, drink: drink, currency: currency, currencyFor: currencyFor, money: money, cup: cup, quote: quote, giftOf: giftOf, payLink: payLink,
+    BANK: BANK, reference: reference, HOLIDAYS: HOLIDAYS, addMonths: addMonths, status: status, holidayAllowed: holidayAllowed, takeHoliday: takeHoliday, recordPayment: recordPayment, nextAmount: nextAmount, kind: kind, example: example, cupOf: cupOf, parse: parse, currency: currency, currencyFor: currencyFor, money: money, quote: quote, giftOf: giftOf, payLink: payLink,
     takeCare: takeCare, region: region, isDiscreet: isDiscreet, screen: screen, points: points, publicCard: publicCard, monthKey: monthKey, partnerFor: partnerFor, needing: needing };
 })();
 if (typeof module !== 'undefined') module.exports = Coffee;

@@ -283,9 +283,9 @@ accepted; it keeps honest churches honest and costs nothing to run.
 ### 10.5 The price (changed 16 Nov 2026: a coffee, not a Big Mac)
 Decided by the owner on 16 Nov 2026, replacing "one Big Mac a year". Built: `js/coffee.js` (rules, tested), `js/mod-support.js`
 (Subscription page), `docs/PRICES.md` (where the prices come from).
-- **One café coffee a month, or ten a year** (two months free), priced as a Starbucks "Tall" in South Africa, the United
-  States or Australia – the church picks the coffee (cappuccino, flat white, latte, Americano, caramel macchiato) and the
-  currency. About R50 a month or R500 a year.
+- **One cup a month, or ten a year** (two months free), at what one cup costs where the church lives, in its own
+  country's money: a street-stall cup, a café coffee or a coffee-chain latte, whichever is honest for that church (changed
+  16 Nov 2026 from Starbucks prices in three currencies). About R50 a month or R500 a year in South Africa.
 - **Plus an optional gift** – gift coffees in one tap, or any amount, inviting the church to think what Church Hub is worth to it.
 - **Pay for another church**: a church that has asked for help, or "where it's needed most".
 - **Payment holidays**: a free month, no questions asked – up to three a year on the monthly plan, one a year (the year's

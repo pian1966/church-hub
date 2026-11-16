@@ -400,3 +400,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   due, payment holidays (three a year monthly, one a year yearly), and praying instead: the prayer circle, a church's
   prayer card (photo, two prayer points, "keep us hidden" for countries where Christians face danger) and the church to
   pray for each month on everyone's Home page
+- ✅ 0.83.0 (16 Nov 2026): Subscription – one cup where you live, in the church's own money (every country has its
+  currency; India and Cambodia added), three kinds of cup with an honest-amount nudge, "Who are you paying for?",
+  "Churches to pray for" and "Prayer card for your church", "Take a photo" for the prayer card; the public website's
+  price section does the same, and shows a second phone: a Western parish's Sunday roster

@@ -95,6 +95,28 @@ p { margin: 0; }
 .screen .tabs { display: flex; justify-content: space-around; background: #fff; border-top: 1px solid #E7E1DA; padding: 9px 0 14px; color: #8A8079; font-size: 10px; font-weight: 600; }
 .screen .tabs span.on { color: #B8430A; }
 
+/* A second phone: a church in another culture, another part of the app (the Sunday roster), in the blue colours */
+.showcase { display: grid; grid-template-columns: .9fr 1.1fr; gap: 64px; align-items: center; margin-top: 72px; }
+.showcase h3 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); letter-spacing: -0.02em; }
+.showcase p { color: var(--ink-2); margin-top: 14px; max-width: 54ch; }
+.showcase .phone { rotate: -3deg; }
+.screen.blue .head svg path { stroke: #1D5FB8; }
+.screen.blue .tabs span.on { color: #164A8F; }
+.screen .svc { background: #1D5FB8; color: #fff; margin: 0 12px 10px; border-radius: 14px; padding: 12px; }
+.screen .svc .k { color: #D5E3F6; }
+.screen .svc .t { font-size: 15px; }
+.screen .slot { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-top: 1px solid #F0EBE5; }
+.screen .slot:first-of-type { border-top: 0; }
+.screen .slot .who { flex: 1; min-width: 0; }
+.screen .slot .who small { display: block; color: #645B53; font-size: 10.5px; }
+.screen .st { font-size: 10px; font-weight: 700; border-radius: 999px; padding: 3px 8px; white-space: nowrap; }
+.screen .st.ok { background: #DFF3E6; color: #1F6B3A; }
+.screen .st.wait { background: #FFF1CC; color: #7A5300; }
+.screen .st.gap { background: #FDE2E2; color: #9B1C1C; }
+.screen .fill { margin-top: 8px; text-align: center; border-radius: 10px; padding: 7px 0; font-weight: 700; font-size: 12px; background: #1D5FB8; color: #fff; }
+.screen .away { color: #645B53; font-size: 11px; }
+@media (max-width: 900px) { .showcase { grid-template-columns: 1fr; gap: 40px; } .showcase .phone { rotate: 0deg; } }
+
 /* Sections */
 section { padding: 96px 0; }
 .stone { background: var(--stone); }
@@ -179,6 +201,15 @@ section { padding: 96px 0; }
 .cup[aria-checked="true"] svg { transform: translateY(-3px) rotate(-6deg); }
 .cup em { font-style: normal; font-weight: 400; color: var(--ink-2); font-size: .8rem; }
 @media (max-width: 520px) { .cups { grid-template-columns: repeat(3, 1fr); } .seg button { padding: 8px 12px; font-size: .88rem; } }
+
+/* Where is your church? Three kinds of cup, and the price in its own money */
+.country { width: 100%; max-width: 360px; font: 600 1rem var(--body); padding: 12px 14px; border-radius: 14px; border: 2px solid var(--line); background: var(--paper); color: var(--ink); }
+.cups.three { grid-template-columns: repeat(3, 1fr); }
+.honest { margin-top: 14px; color: var(--ink-2); font-size: .95rem; font-style: italic; }
+.money { display: inline-flex; align-items: center; border: 2px solid var(--line); border-radius: 14px; background: var(--paper); overflow: hidden; margin-bottom: 4px; }
+.money span { padding: 0 12px; font-weight: 800; color: var(--ink-2); }
+.money input { border: 0; outline: none; font: 800 1.3rem var(--display); width: 130px; padding: 10px 10px 10px 0; background: transparent; color: var(--ink); }
+.money:focus-within { border-color: var(--orange); }
 
 /* Three ways and the prayer circle */
 .ways { margin-top: 72px; }
@@ -337,6 +368,36 @@ footer a { color: var(--ink-2); }
         </ul>
       </div>
     </div>
+
+    <div class="showcase">
+      <div aria-hidden="true">
+        <div class="phone">
+          <div class="screen blue">
+            <div class="bar"><span>8:15</span><span>●●● ▮</span></div>
+            <div class="head">
+              <svg width="22" height="22" viewBox="0 0 48 48"><path d="M24 8v32M13 19h22" fill="none" stroke="#1D5FB8" stroke-width="6" stroke-linecap="round"/></svg>
+              <b>Rosters</b>
+            </div>
+            <div class="svc"><div class="k">St Luke's · Sunday 23 November</div><div class="t">10:30 Family Service</div><div class="k" style="margin-top:2px">Communion · Worship band</div></div>
+            <div class="card">
+              <div class="slot"><span class="av" style="background:#C2410C">HW</span><div class="who"><b>Hannah Wright</b><small>Worship leader</small></div><span class="st ok">Accepted</span></div>
+              <div class="slot"><span class="av" style="background:#0F7C80">JB</span><div class="who"><b>Josh Bennett</b><small>Sound desk</small></div><span class="st ok">Accepted</span></div>
+              <div class="slot"><span class="av" style="background:#6D3FC0">TM</span><div class="who"><b>The Millers</b><small>Welcome team, serving together</small></div><span class="st ok">Accepted</span></div>
+              <div class="slot"><span class="av" style="background:#A3283B">EC</span><div class="who"><b>Emily Carter</b><small>Bible reading</small></div><span class="st wait">Asked</span></div>
+              <div class="slot"><span class="av" style="background:#8A8079">?</span><div class="who"><b>Kids' Church</b><small>Mark is away: half-term</small></div><span class="st gap">Gap</span></div>
+              <div class="fill">Fill the gap</div>
+            </div>
+            <div class="card"><div class="k">Coffee rota after the service</div><div class="t">Sarah and Tom Hughes</div></div>
+            <div class="tabs"><span>Home</span><span>Me</span><span>Messages</span><span class="on">Rosters</span><span>More</span></div>
+          </div>
+        </div>
+      </div>
+      <div>
+        <h3>At home in a township hall or a suburban parish.</h3>
+        <p>The same Church Hub runs a congregation of forty in a rural village and a busy town church with a worship band, three services and a coffee rota. Rosters keep families serving together, skip the weeks people are away, and show at a glance who has said yes.</p>
+        <p>Each church chooses its own colours, its own words and its own ministries, so Church Hub feels like your church, wherever and however you worship.</p>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -399,20 +460,19 @@ footer a { color: var(--ink-2); }
 <section class="price" id="pricing" aria-labelledby="price-title">
   <div class="wrap">
     <h2 id="price-title">Church Hub for the price of a coffee.</h2>
-    <p class="lead">Buy us one coffee a month, and Church Hub keeps going, for you and for churches that can't. Church Hub is for every church, in every nation and language. No church is ever turned away for being poor: a church that can't afford a coffee pays in prayer instead.</p>
+    <p class="lead">Give us the price of one cup of coffee a month, whatever a cup costs where you live, and Church Hub keeps going, for you and for churches that can't. Church Hub is for every church, in every nation and language. No church is ever turned away for being poor: a church that can't afford a coffee pays in prayer instead.</p>
 
     <div class="deal">
       <div class="ticket">
         <div class="pick-row">
-          <span class="pick-label" id="cur-label">Show prices in</span>
-          <div class="seg" role="radiogroup" aria-labelledby="cur-label" id="cur">
-            <button type="button" role="radio" data-v="ZAR">Rand</button>
-            <button type="button" role="radio" data-v="USD">US$</button>
-            <button type="button" role="radio" data-v="AUD">A$</button>
-          </div>
+          <label class="pick-label" for="country">Where is your church?</label>
+          <select id="country" class="country"></select>
         </div>
-        <span class="pick-label" id="cup-label">Choose your coffee: the one you'd order</span>
-        <div class="cups" role="radiogroup" aria-labelledby="cup-label" id="cups"></div>
+        <span class="pick-label" id="cup-label">What does one cup cost where you live?</span>
+        <div class="cups three" role="radiogroup" aria-labelledby="cup-label" id="cups"></div>
+        <p class="honest">Choose the cup that is honest for your church. A church with plenty, wherever it is in the world, might choose the coffee-chain price; a church with little, the street stall.</p>
+        <label class="pick-label" for="cupprice">One cup costs</label>
+        <div class="money"><span id="sym">R</span><input id="cupprice" inputmode="decimal" autocomplete="off" value="50"></div>
         <div class="seg plan" role="radiogroup" aria-label="How often you pay" id="plan">
           <button type="button" role="radio" data-v="month">Monthly</button>
           <button type="button" role="radio" data-v="year">Yearly · two coffees free</button>
@@ -420,7 +480,7 @@ footer a { color: var(--ink-2); }
         <div class="amount" id="amount" aria-live="polite">R50</div>
         <div class="per" id="per">a month, for your whole church</div>
         <div class="usd" id="save"></div>
-        <p class="fine">A Tall at Starbucks, November 2026, rounded. Wherever you are, choose the price closest to what a good coffee costs where you live. Stop or change whenever you like. You pay by bank transfer from your own banking app, so Church Hub never sees your card or your bank details.</p>
+        <p class="fine">Prices are in your own country's money. The examples we show (a Tall latte at Starbucks in South Africa, the USA and Australia; chai from a stall in India; iced coffee from a stall in Cambodia) are from November 2026, rounded. Stop or change whenever you like. You pay by bank transfer from your own banking app, so Church Hub never sees your card or your bank details.</p>
       </div>
       <div class="incl">
         <h3>Every church is welcome</h3>
@@ -439,7 +499,7 @@ footer a { color: var(--ink-2); }
         <div class="way">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#E8590C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18h26v12a10 10 0 0 1-10 10h-6A10 10 0 0 1 9 30z"/><path d="M35 21h3a5 5 0 0 1 0 10h-3"/><path d="M17 6c-2 3 2 5 0 8M25 6c-2 3 2 5 0 8"/></svg>
           <b>Buy us a coffee</b>
-          <p>One coffee a month, or ten a year with two coffees free. Add a gift whenever you like.</p>
+          <p>One cup a month, at what a cup costs where you live, or ten a year with two free. Add a gift whenever you like.</p>
         </div>
         <div class="way">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#E8590C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 42S7 32 7 19a9 9 0 0 1 17-4 9 9 0 0 1 17 4c0 13-17 23-17 23z"/><path d="M18 22h12M24 16v14"/></svg>
@@ -449,7 +509,7 @@ footer a { color: var(--ink-2); }
         <div class="way">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#E8590C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 6c-3 6-9 9-9 18v16h18V24c0-9-6-12-9-18z"/><path d="M15 40h18"/><path d="M24 24v8"/></svg>
           <b>Pray instead, for free</b>
-          <p>Can't afford a coffee? Promise to pray for another church each month. For your church, that promise is its subscription, for as long as you need.</p>
+          <p>Can't afford a coffee? Promise to pray, each month, for another church that uses Church Hub. For your church, that promise is its subscription, for as long as you need.</p>
         </div>
       </div>
     </div>
@@ -483,7 +543,7 @@ footer a { color: var(--ink-2); }
     </div>
 
     <div class="why">
-      <p><b>Why a coffee?</b>It's a small, familiar thank-you anywhere in the world, the price of one cup at your local café, so a church in Durban, Denver or Darwin each pays what a coffee costs where they are.</p>
+      <p><b>Why a coffee?</b>It's a small, familiar thank-you anywhere in the world, the price of one cup at your local café, so a church in Durban, Denver, Delhi or Darwin each pays what a cup costs where they are, and what is honest for them. A cup of chai from a stall, a café coffee or a coffee-chain latte: each church chooses.</p>
       <p><b>The worker deserves his wages.</b>Your coffee pays for looking after Church Hub, so it keeps improving, and your gifts pay for churches that can't. Thank you for your generosity.</p>
     </div>
   </div>
@@ -496,7 +556,8 @@ footer a { color: var(--ink-2); }
       <details><summary>Do we need someone technical to set it up?</summary><p>No. Church Hub is designed to be set up and run by a church office volunteer. Each church's records live in its own Google account, so you need a Google account for the church.</p></details>
       <details><summary>Who can see our members' details?</summary><p>Only the people whose role at church needs them. Members choose what others may see, and appear in the directory only if they agree. Sensitive details, like pastoral notes and children's medical notes, are kept to the people who care for them, with a record of who has looked.</p></details>
       <details><summary>Many of our couples share one email address. Is that a problem?</summary><p>No. Up to four people can share one email address, and each still gets their own page, rosters and messages.</p></details>
-      <details><summary>Is the price per church or per person?</summary><p>Per church. However many people, groups or services you have, it's one coffee a month, or ten a year.</p></details>
+      <details><summary>Is the price per church or per person?</summary><p>Per church. However many people, groups or services you have, it's one cup of coffee a month, or ten a year.</p></details>
+      <details><summary>We're in India (or Malawi, or Cambodia). Do we pay Starbucks prices?</summary><p>No. You pay what one cup costs where you live, in your own money, and you choose the cup: chai from a stall, a café coffee or a coffee-chain latte. A church with plenty can choose more, wherever it is. A church that can't afford even that prays instead, for free.</p></details>
       <details><summary>How do we pay?</summary><p>By bank transfer (EFT) from your own banking app. Church Hub shows you its bank details and your church's own short reference, so we know the payment is from you. From outside South Africa, your bank changes your money into rand. Card payments are planned.</p></details>
       <details><summary>What if we can't pay one month?</summary><p>Take a payment holiday: a free month, no questions asked. Monthly churches can take three a year, and yearly churches one. If paying is hard for longer, pray instead: Church Hub stays free for as long as you need. Nothing is ever locked or deleted for being late.</p></details>
       <details><summary>Is our prayer card safe to share?</summary><p>A prayer card only holds what your church chooses: a photo, your town and two prayer points. Churches in countries where Christians face danger start hidden, shown only as “a church in” a wide region. Pray for things, not people by name: Church Hub flags phone numbers, email addresses and links before a card is saved.</p></details>
@@ -517,50 +578,53 @@ footer a { color: var(--ink-2); }
 <footer>
   <div class="wrap">
     <span>Church Hub · Every church, however small, deserves great church software.</span>
-    <span>Coffee prices: a Starbucks Tall, November 2026, from menu price guides.</span>
+    <span>Cup prices: examples from November 2026; each church gives what is honest where it lives.</span>
   </div>
 </footer>
 
 <script>
 (function () {
-  // The coffee a church chooses, priced as a Starbucks Tall (November 2026) – the same figures as the app (js/coffee.js).
-  var DRINKS = [
-    { id: 'cappuccino', name: 'Cappuccino', prices: { ZAR: 50, USD: 4.95, AUD: 6.00 } },
-    { id: 'flatwhite', name: 'Flat white', prices: { ZAR: 50, USD: 5.05, AUD: 6.00 } },
-    { id: 'latte', name: 'Latte', prices: { ZAR: 50, USD: 4.95, AUD: 6.00 } },
-    { id: 'americano', name: 'Americano', prices: { ZAR: 42, USD: 3.75, AUD: 5.50 } },
-    { id: 'macchiato', name: 'Caramel macchiato', prices: { ZAR: 56, USD: 5.25, AUD: 7.30 } }
+  // One cup where you live, in each country's own money – the same lists as the app (made from js/countries.js and
+  // js/coffee.js). Each country: [code, name, currency, symbol, whole numbers?, street-stall, café, coffee-chain price or 0].
+  var COUNTRIES = [{"c":"Africa","l":[["AO","Angola","AOA","Kz",1,0,0,0],["BW","Botswana","BWP","P",0,0,0,0],["CM","Cameroon","XAF","FCFA ",1,0,0,0],["CD","DR Congo","CDF","FC",1,0,0,0],["SZ","Eswatini","SZL","E",1,0,0,0],["ET","Ethiopia","ETB","Br",1,0,0,0],["GH","Ghana","GHS","GH₵",0,0,0,0],["KE","Kenya","KES","KSh",1,0,0,0],["LS","Lesotho","LSL","M",1,0,0,0],["MW","Malawi","MWK","MK",1,0,0,0],["MZ","Mozambique","MZN","MT",1,0,0,0],["NA","Namibia","NAD","N$",1,0,0,0],["NG","Nigeria","NGN","₦",1,0,0,0],["RW","Rwanda","RWF","FRw",1,0,0,0],["ZA","South Africa","ZAR","R",1,0,0,50],["TZ","Tanzania","TZS","TSh",1,0,0,0],["UG","Uganda","UGX","USh",1,0,0,0],["ZM","Zambia","ZMW","K",0,0,0,0],["ZW","Zimbabwe","ZWG","ZiG",0,0,0,0]]},{"c":"Asia","l":[["KH","Cambodia","KHR","៛",1,4000,0,0],["IN","India","INR","₹",1,15,0,0]]},{"c":"Europe","l":[["AT","Austria","EUR","€",0,0,0,0],["BE","Belgium","EUR","€",0,0,0,0],["DK","Denmark","DKK","kr ",0,0,0,0],["FI","Finland","EUR","€",0,0,0,0],["FR","France","EUR","€",0,0,0,0],["DE","Germany","EUR","€",0,0,0,0],["IE","Ireland","EUR","€",0,0,0,0],["IT","Italy","EUR","€",0,0,0,0],["NL","Netherlands","EUR","€",0,0,0,0],["NO","Norway","NOK","kr ",0,0,0,0],["PL","Poland","PLN","zł ",0,0,0,0],["PT","Portugal","EUR","€",0,0,0,0],["ES","Spain","EUR","€",0,0,0,0],["SE","Sweden","SEK","kr ",0,0,0,0],["CH","Switzerland","CHF","CHF ",0,0,0,0],["GB","United Kingdom","GBP","£",0,0,0,0]]},{"c":"Americas","l":[["AR","Argentina","ARS","AR$",1,0,0,0],["BR","Brazil","BRL","R$",0,0,0,0],["CA","Canada","CAD","CA$",0,0,0,0],["CL","Chile","CLP","CLP$",1,0,0,0],["CO","Colombia","COP","COL$",1,0,0,0],["JM","Jamaica","JMD","J$",1,0,0,0],["MX","Mexico","MXN","MX$",1,0,0,0],["PE","Peru","PEN","S/ ",0,0,0,0],["US","United States","USD","US$",0,0,0,4.95]]},{"c":"Oceania","l":[["AU","Australia","AUD","A$",0,0,0,6],["NZ","New Zealand","NZD","NZ$",0,0,0,0]]}];
+  var KINDS = [
+    { id: 'street', name: 'A cup from a street stall', i: 5 },
+    { id: 'cafe', name: 'A coffee at a local café', i: 6 },
+    { id: 'chain', name: 'A latte at a coffee chain', i: 7 }
   ];
-  var SYM = { ZAR: 'R', USD: 'US$', AUD: 'A$' };
-  // Each cup drawn in a few lines: the body, then what sits on top.
-  var TOP = {
-    cappuccino: '<path d="M11 20c0-6 6-9 13-9s13 3 13 9z" fill="#FFF8EE" stroke="currentColor" stroke-width="2"/>',
-    flatwhite: '<ellipse cx="24" cy="20" rx="13" ry="3.4" fill="#C8955F"/><path d="M24 22.2c-3-1.6-4-3-2.6-3.8 1-.5 2 .2 2.6 1 .6-.8 1.6-1.5 2.6-1 1.4.8.4 2.2-2.6 3.8z" fill="#FFF8EE"/>',
-    latte: '<ellipse cx="24" cy="20" rx="13" ry="3.4" fill="#E9CFAE"/>',
-    americano: '<ellipse cx="24" cy="20" rx="13" ry="3.4" fill="#3B2416"/>',
-    macchiato: '<ellipse cx="24" cy="20" rx="13" ry="3.4" fill="#F3E3CC"/><path d="M15 19.5l18 1M17 21.5l14-2.5M20 18l9 4" stroke="#C26A1A" stroke-width="1.4" stroke-linecap="round"/>'
+  var ART = {
+    street: '<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M14 14h20l-2.5 26a2 2 0 0 1-2 1.8H18.5a2 2 0 0 1-2-1.8z" fill="#F4FAFB" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M15.3 22h17.4l-1.9 18H17.2z" fill="#C8833F"/><path d="M15.3 22h17.4l-.3 3H15.6z" fill="#F1D9B8"/></svg>',
+    cafe: '<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M11 20h26l-2.4 17.5A4 4 0 0 1 30.6 41H17.4a4 4 0 0 1-4-3.5z" fill="#fff" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M36.5 24h2a4 4 0 0 1 0 8h-3.2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M11 20c0-6 6-9 13-9s13 3 13 9z" fill="#FFF8EE" stroke="currentColor" stroke-width="2"/></svg>',
+    chain: '<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M13 12h22l-2.6 28a2 2 0 0 1-2 1.8H17.6a2 2 0 0 1-2-1.8z" fill="#fff" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M12 9h24v4H12z" fill="#fff" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="M14.6 22h18.8l-.9 9H15.5z" fill="#2F6B4F"/><circle cx="24" cy="26.5" r="3" fill="#fff"/></svg>'
   };
-  function art(id) {
-    return '<svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M11 20h26l-2.4 17.5A4 4 0 0 1 30.6 41H17.4a4 4 0 0 1-4-3.5z" fill="#fff" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>' +
-      '<path d="M36.5 24h2a4 4 0 0 1 0 8h-3.2" fill="none" stroke="currentColor" stroke-width="2"/>' + TOP[id] + '</svg>';
-  }
-  var state = { cur: 'ZAR', drink: 'cappuccino', plan: 'month' };
+  var byCode = {};
+  COUNTRIES.forEach(function (g) { g.l.forEach(function (c) { byCode[c[0]] = c; }); });
   var lang = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toUpperCase();
-  var region = lang.split('-').pop();
-  if (region === 'AU' || region === 'NZ') state.cur = 'AUD';
-  else if (/^(ZA|NA|BW|ZW|ZM|MZ|LS|SZ|MW)$/.test(region)) state.cur = 'ZAR';
-  else if (lang.indexOf('-') > 0) state.cur = 'USD';
+  var region = lang.indexOf('-') > 0 ? lang.split('-').pop() : '';
+  var state = { country: byCode[region] ? region : 'ZA', kind: 'chain', price: '', plan: 'month' };
 
-  function money(n, cur) {
-    n = Math.round(n * 100) / 100;
-    var s = cur === 'ZAR' || (n % 1 === 0 && n >= 100) ? String(Math.round(n)) : n.toFixed(2);
-    return SYM[cur] + s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
-  }
-  var cups = document.getElementById('cups');
-  cups.innerHTML = DRINKS.map(function (d) {
-    return '<button type="button" role="radio" class="cup" data-v="' + d.id + '">' + art(d.id) + '<span>' + d.name + '</span><em data-price="' + d.id + '"></em></button>';
+  var sel = document.getElementById('country');
+  sel.innerHTML = COUNTRIES.map(function (g) {
+    return '<optgroup label="' + g.c + '">' + g.l.map(function (c) { return '<option value="' + c[0] + '">' + c[1] + '</option>'; }).join('') + '</optgroup>';
   }).join('');
+  var cups = document.getElementById('cups');
+  cups.innerHTML = KINDS.map(function (k) {
+    return '<button type="button" role="radio" class="cup" data-v="' + k.id + '">' + ART[k.id] + '<span>' + k.name + '</span><em data-price="' + k.id + '"></em></button>';
+  }).join('');
+  var input = document.getElementById('cupprice'), sym = document.getElementById('sym');
 
+  function c() { return byCode[state.country]; }
+  function money(n) {
+    var x = c(); n = Math.round(n * 100) / 100;
+    var s = x[4] || (n % 1 === 0 && n >= 100) ? String(Math.round(n)) : n.toFixed(2);
+    return x[3] + s.replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
+  }
+  function parse(v) { var n = parseFloat(String(v || '').replace(/\s/g, '').replace(',', '.').replace(/[^\d.]/g, '')); return n > 0 ? n : 0; }
+  /** A new country: the first cup we have a price for there (or a café cup and an empty box to fill in). */
+  function startCountry() {
+    var x = c(), k = ['chain', 'cafe', 'street'].filter(function (id) { return x[KINDS.filter(function (kk) { return kk.id === id; })[0].i]; })[0];
+    state.kind = k || 'cafe'; state.price = k ? String(x[KINDS.filter(function (kk) { return kk.id === k; })[0].i]) : '';
+  }
   function mark(group, v) {
     [].forEach.call(document.querySelectorAll('#' + group + ' [data-v]'), function (b) {
       var on = b.getAttribute('data-v') === v; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1;
@@ -568,27 +632,32 @@ footer a { color: var(--ink-2); }
   }
   var amount = document.getElementById('amount'), per = document.getElementById('per'), save = document.getElementById('save');
   function show(animate) {
-    var d = DRINKS.filter(function (x) { return x.id === state.drink; })[0], c = d.prices[state.cur];
-    mark('cur', state.cur); mark('cups', state.drink); mark('plan', state.plan);
-    DRINKS.forEach(function (x) { document.querySelector('[data-price="' + x.id + '"]').textContent = money(x.prices[state.cur], state.cur); });
-    var yearly = state.plan === 'year';
-    amount.textContent = money(yearly ? c * 10 : c, state.cur);
+    var x = c(), p = parse(state.price), yearly = state.plan === 'year';
+    sel.value = state.country; sym.textContent = x[3].trim(); if (document.activeElement !== input) input.value = state.price;
+    mark('cups', state.kind); mark('plan', state.plan);
+    KINDS.forEach(function (k) { document.querySelector('[data-price="' + k.id + '"]').textContent = x[k.i] ? 'About ' + money(x[k.i]) : 'You say how much'; });
+    amount.textContent = p ? money(yearly ? p * 10 : p) : x[3].trim() + ' ?';
     per.textContent = yearly ? 'a year, for your whole church' : 'a month, for your whole church';
-    save.textContent = yearly ? 'Two coffees free: you save ' + money(c * 2, state.cur) + '.' : 'Or ' + money(c * 10, state.cur) + ' a year, with two coffees free.';
+    save.textContent = !p ? 'Type what one cup costs where you live.' : yearly ? 'Two cups free: you save ' + money(p * 2) + '.' : 'Or ' + money(p * 10) + ' a year, with two cups free.';
     if (animate) { amount.classList.remove('flip'); void amount.offsetWidth; amount.classList.add('flip'); }
   }
-  function wire(group, key) {
+  function wire(group, key, after) {
     var el = document.getElementById(group);
-    el.addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (b) { state[key] = b.getAttribute('data-v'); show(true); } });
+    var pick = function (v) { state[key] = v; if (after) after(v); show(true); };
+    el.addEventListener('click', function (e) { var b = e.target.closest('[data-v]'); if (b) pick(b.getAttribute('data-v')); });
     el.addEventListener('keydown', function (e) {   // arrow keys move between the choices, as in any radio group
       var k = e.key, all = [].slice.call(el.querySelectorAll('[data-v]')), i = all.indexOf(document.activeElement);
       if (i < 0 || !/Arrow(Left|Right|Up|Down)/.test(k)) return;
       e.preventDefault(); var n = all[(i + (/Right|Down/.test(k) ? 1 : all.length - 1)) % all.length];
-      state[key] = n.getAttribute('data-v'); show(true); n.focus();
+      pick(n.getAttribute('data-v')); n.focus();
     });
   }
-  wire('cur', 'cur'); wire('cups', 'drink'); wire('plan', 'plan');
-  show(false);
+  // A cup we know the price of fills the box; otherwise the church types its own
+  wire('cups', 'kind', function (k) { var v = c()[KINDS.filter(function (kk) { return kk.id === k; })[0].i]; if (v) state.price = String(v); else { state.price = ''; setTimeout(function () { input.focus(); }, 0); } });
+  wire('plan', 'plan');
+  sel.addEventListener('change', function () { state.country = sel.value; startCountry(); show(true); });
+  input.addEventListener('input', function () { state.price = input.value; show(false); });
+  startCountry(); show(false);
 
   // A thin line under the top bar once the page has scrolled.
   var top = document.getElementById('top');

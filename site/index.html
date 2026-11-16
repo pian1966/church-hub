@@ -206,7 +206,9 @@ section { padding: 96px 0; }
 .price .lead { color: var(--night-muted); }
 .deal { display: grid; grid-template-columns: 1.05fr .95fr; gap: 28px; margin-top: 52px; align-items: stretch; }
 .ticket { background: var(--paper); color: var(--ink); border-radius: 28px; padding: 36px; position: relative; }
-.amount { margin-top: 30px; font-family: var(--display); font-weight: 800; font-size: clamp(3.2rem, 8vw, 5.6rem); line-height: .95; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
+.suggest { margin-top: 30px; font-weight: 700; font-size: .85rem; letter-spacing: .08em; text-transform: uppercase; color: var(--orange); }
+.hint { margin-top: 6px; color: var(--ink-2); font-size: .9rem; }
+.amount { margin-top: 6px; font-family: var(--display); font-weight: 800; font-size: clamp(3.2rem, 8vw, 5.6rem); line-height: .95; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; }
 .amount.flip { animation: flip .35s ease; }
 @keyframes flip { from { opacity: .2; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .per { font: 600 1.35rem var(--display); margin-top: 8px; letter-spacing: -0.01em; }
@@ -540,16 +542,18 @@ footer a { color: var(--ink-2); }
         <span class="pick-label" id="cup-label">What does one cup cost where you live?</span>
         <div class="cups three" role="radiogroup" aria-labelledby="cup-label" id="cups"></div>
         <p class="honest">Choose the cup that is honest for your church. A church with plenty, wherever it is in the world, might choose the coffee-chain price; a church with little, the street stall.</p>
-        <label class="pick-label" for="cupprice">One cup costs</label>
+        <label class="pick-label" for="cupprice">Your price for one cup</label>
         <div class="money"><span id="sym">R</span><input id="cupprice" inputmode="decimal" autocomplete="off" value="50"></div>
+        <p class="hint">We fill in a suggested price. Change it to whatever is honest for your church.</p>
         <div class="seg plan" role="radiogroup" aria-label="How often you pay" id="plan">
           <button type="button" role="radio" data-v="month">Monthly</button>
           <button type="button" role="radio" data-v="year">Yearly · two coffees free</button>
         </div>
+        <div class="suggest" id="suggest">Suggested price</div>
         <div class="amount" id="amount" aria-live="polite">R50</div>
         <div class="per" id="per">a month, for your whole church</div>
         <div class="usd" id="save"></div>
-        <p class="fine">Prices are in your own country's money. The examples we show (a Tall latte at Starbucks in South Africa, the USA and Australia; chai from a stall in India; iced coffee from a stall in Cambodia) are from November 2026, rounded. Stop or change whenever you like. You pay by bank transfer from your own banking app, so Church Hub never sees your card or your bank details.</p>
+        <p class="fine">These are suggested prices, not fixed charges, in your own country's money. The examples we suggest (a Tall latte at Starbucks in South Africa, the USA and Australia; chai from a stall in India; iced coffee from a stall in Cambodia) are from November 2026, rounded. Stop or change whenever you like. You pay by bank transfer from your own banking app, so Church Hub never sees your card or your bank details.</p>
       </div>
       <div class="incl">
         <h3>Every church is welcome</h3>
@@ -647,7 +651,7 @@ footer a { color: var(--ink-2); }
 <footer>
   <div class="wrap">
     <span>Church Hub · Every church, however small, deserves great church software.</span>
-    <span>Cup prices: examples from November 2026; each church gives what is honest where it lives.</span>
+    <span>Suggested cup prices: examples from November 2026; each church gives what is honest where it lives.</span>
   </div>
 </footer>
 
@@ -699,12 +703,13 @@ footer a { color: var(--ink-2); }
       var on = b.getAttribute('data-v') === v; b.setAttribute('aria-checked', on); b.tabIndex = on ? 0 : -1;
     });
   }
-  var amount = document.getElementById('amount'), per = document.getElementById('per'), save = document.getElementById('save');
+  var suggest = document.getElementById('suggest'), amount = document.getElementById('amount'), per = document.getElementById('per'), save = document.getElementById('save');
   function show(animate) {
     var x = c(), p = parse(state.price), yearly = state.plan === 'year';
     sel.value = state.country; sym.textContent = x[3].trim(); if (document.activeElement !== input) input.value = state.price;
     mark('cups', state.kind); mark('plan', state.plan);
-    KINDS.forEach(function (k) { document.querySelector('[data-price="' + k.id + '"]').textContent = x[k.i] ? 'About ' + money(x[k.i]) : 'You say how much'; });
+    KINDS.forEach(function (k) { document.querySelector('[data-price="' + k.id + '"]').textContent = x[k.i] ? 'Suggested price: ' + money(x[k.i]) : 'You say how much'; });
+    suggest.textContent = p && p === Number(c()[KINDS.filter(function (kk) { return kk.id === state.kind; })[0].i]) ? 'Suggested price' : 'Your price';
     amount.textContent = p ? money(yearly ? p * 10 : p) : x[3].trim() + ' ?';
     per.textContent = yearly ? 'a year, for your whole church' : 'a month, for your whole church';
     save.textContent = !p ? 'Type what one cup costs where you live.' : yearly ? 'Two cups free: you save ' + money(p * 2) + '.' : 'Or ' + money(p * 10) + ' a year, with two cups free.';

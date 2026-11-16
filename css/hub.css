@@ -1289,3 +1289,8 @@ html[data-mode=dark] .sp-st-holiday { background: linear-gradient(135deg, var(--
 .sp-more > summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 12px 16px; border-radius: 14px; background: var(--surface); border: 1px solid var(--line); margin-bottom: 18px; list-style-position: inside; }
 .sp-more[open] > summary { margin-bottom: 22px; }
 @media (min-width: 861px) { .sp-total { margin-right: 52px; } }
+/* Subscription: one cup where you live – three kinds of cup, then the price in the church's own money */
+.sp-cups.sp-kinds { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sp-cupprice { margin: 16px 0 4px; max-width: 260px; } .sp-cupprice .sp-money input { width: 100%; font-size: 18px; }
+.sp-photo-btns { margin: 0; gap: 8px; } .sp-photo-btns .btn { gap: 6px; }
+@media (max-width: 860px) { .sp-cups.sp-kinds { grid-auto-columns: 62%; } }

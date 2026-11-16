@@ -19,7 +19,7 @@ ok(C.ofAddress({ country: 'Kenya' }, {}).code === 'KE' && C.ofAddress({ street: 
 ok(C.find('US').postcodeLabel === 'ZIP code' && C.find('IE').postcodeLabel === 'Eircode' && C.find('ZA').regionLabel === 'Province' && C.find('US').regionLabel === 'State' && C.find('GB').regionLabel === 'County' && C.find('GB').regions === null, 'the wording follows the country (ZIP code, Eircode, State, County)');
 ok(C.region('kzn', 'ZA') === 'KwaZulu-Natal' && C.region('Kwazulu Natal', 'ZA') === 'KwaZulu-Natal' && C.region('NSW', 'AU') === 'New South Wales' && C.region('tx', 'US') === 'Texas' && C.region('quebec', 'CA') === 'Quebec' && C.region('Somewhere', 'ZA') === 'Somewhere', 'regions tidied as typed (KZN, NSW, TX); anything else kept');
 ok(C.find('ZA').law === 'popia' && C.find('DE').law === 'gdpr' && C.find('GB').law === 'ukgdpr' && C.find('NA').law === 'general', 'each country names its privacy law');
-ok(C.grouped().map(g => g.continent).join() === 'Africa,Europe,Americas,Oceania' && C.grouped().reduce((n, g) => n + g.countries.length, 0) === all.length, 'grouped by continent');
+ok(C.grouped().map(g => g.continent).join() === 'Africa,Asia,Europe,Americas,Oceania' && C.grouped().reduce((n, g) => n + g.countries.length, 0) === all.length, 'grouped by continent');
 ok(C.phoneKey('+27 82 000 1234') === C.phoneKey('082 000 1234') && C.phoneKey('+44 7700 900123') === C.phoneKey('07700 900123') && C.phoneKey('123') === '', 'phone numbers compare across ways of writing them');
 
 ok(C.birthFromId('8001015009087', 'ZA', '2026-11-10') === '1980-01-01' && C.birthFromId('800101 5009 087', 'ZA', '2026-11-10') === '1980-01-01', 'a South African ID number gives the date of birth (spaces are fine)');

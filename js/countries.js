@@ -11,7 +11,7 @@
 var Countries = (function () {
   'use strict';
   // code: [name, continent, regionLabel, regions or null, postcodeLabel, dialling code, law, other names people type]
-  var A = 'Africa', E = 'Europe', M = 'Americas', O = 'Oceania';
+  var A = 'Africa', S = 'Asia', E = 'Europe', M = 'Americas', O = 'Oceania';
   var DATA = {
     ZA: ['South Africa', A, 'Province', ['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape'], 'Postcode', '27', 'popia', ['RSA', 'SA', 'Suid-Afrika', 'Republic of South Africa']],
     NA: ['Namibia', A, 'Region', ['Erongo', 'Hardap', 'Karas', 'Kavango East', 'Kavango West', 'Khomas', 'Kunene', 'Ohangwena', 'Omaheke', 'Omusati', 'Oshana', 'Oshikoto', 'Otjozondjupa', 'Zambezi'], 'Postcode', '264', '', []],
@@ -60,10 +60,13 @@ var Countries = (function () {
     CO: ['Colombia', M, 'Department', ['Amazonas', 'Antioquia', 'Arauca', 'Atlántico', 'Bogotá D.C.', 'Bolívar', 'Boyacá', 'Caldas', 'Caquetá', 'Casanare', 'Cauca', 'Cesar', 'Chocó', 'Córdoba', 'Cundinamarca', 'Guainía', 'Guaviare', 'Huila', 'La Guajira', 'Magdalena', 'Meta', 'Nariño', 'Norte de Santander', 'Putumayo', 'Quindío', 'Risaralda', 'San Andrés y Providencia', 'Santander', 'Sucre', 'Tolima', 'Valle del Cauca', 'Vaupés', 'Vichada'], 'Postal code', '57', '', []],
     PE: ['Peru', M, 'Region', null, 'Postal code', '51', '', ['Perú']],
 
+    IN: ['India', S, 'State', null, 'PIN code', '91', '', ['Bharat']],
+    KH: ['Cambodia', S, 'Province', null, 'Postal code', '855', '', ['Kampuchea']],
+
     AU: ['Australia', O, 'State or territory', ['Australian Capital Territory', 'New South Wales', 'Northern Territory', 'Queensland', 'South Australia', 'Tasmania', 'Victoria', 'Western Australia'], 'Postcode', '61', 'au', []],
     NZ: ['New Zealand', O, 'Region', ['Auckland', 'Bay of Plenty', 'Canterbury', 'Gisborne', 'Hawke’s Bay', 'Manawatū-Whanganui', 'Marlborough', 'Nelson', 'Northland', 'Otago', 'Southland', 'Taranaki', 'Tasman', 'Waikato', 'Wellington', 'West Coast'], 'Postcode', '64', 'nz', ['Aotearoa']]
   };
-  var CONTINENTS = [A, E, M, O];
+  var CONTINENTS = [A, S, E, M, O];
   var DEFAULT = 'ZA';
 
   function norm(s) { return String(s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z]/g, ''); }

@@ -1,16 +1,17 @@
 # Prices and lists the Subscription uses (`js/coffee.js`)
 
-## Coffee prices (refresh twice a year)
-A Starbucks "Tall" in South Africa (rand), the United States and Australia, as of `AS_OF` in `js/coffee.js` (Nov 2026).
-Starbucks doesn't publish prices, so these are typical menu prices from price guides on the day, rounded:
-- **South Africa:** 2024 menu prices (cappuccino and latte R45, Americano R38, caramel macchiato R51) raised about 5% a year;
-  the owner's own reference point was "about R50 for a cappuccino or flat white".
-- **United States:** national-average menu guides, May 2026 (flat white $5.05, Americano $3.75, caramel macchiato $5.25;
-  cappuccino and latte about $4.95 in most guides).
-- **Australia:** menu guides 2025 (latte, cappuccino and flat white A$6.00, long black A$5.50, caramel macchiato A$7.30).
+## One cup where you live (`EXAMPLES` and `COUNTRY_CURRENCY` in `js/coffee.js`)
+Changed 16 Nov 2026: each church pays the price of **one cup of what it would buy where it lives, in its own country's
+money** – a cup from a street stall, a coffee at a local café, or a latte at a coffee chain – choosing the one that is honest
+for it (a church with plenty can choose the coffee-chain price wherever it is). The church types the price; we only show
+examples where we have looked them up:
+- South Africa R50, United States US$4.95, Australia A$6.00: a Starbucks Tall latte, menu price guides, November 2026.
+- India ₹15: chai at a Delhi roadside stall (Business Today, March 2026: up from ₹10 when gas prices rose).
+- Cambodia ៛4 000: iced coffee from a Phnom Penh stall, about US$1 (2026 menu prices).
 
-To refresh: search each country's current Starbucks menu prices, change only the numbers and `AS_OF`, run
-`node tests/coffee.test.js`. Never invent a price; if a figure can't be found, keep the old one and say so here.
+To add or refresh an example: look it up on the day, change only the number, run `node tests/coffee.test.js`. Never invent
+a price. Every country Church Hub knows must have a currency in `COUNTRY_CURRENCY` (the test checks); the public website
+(`site/index.html`) carries a copy of the countries, currencies and examples – regenerate it when these change.
 
 ## Countries that start "hidden" (refresh each January)
 `TAKE_CARE` in `js/coffee.js`: the top 50 of Open Doors' World Watch List (2026 list, published January 2026). A church in

@@ -7,10 +7,12 @@ module.exports = async function (ctx) {
   console.log('Subscription:');
   let s = await session('linda.pillay@example.com', seedDocs());
   await s.go('support'); let t = await s.text();
-  check(/one coffee a month/i.test(t) && /R50/.test(t) && /Every church, however small/.test(t), 'an Administrator sees the coffee subscription, priced in rand');
-  await s.page.click('[data-act="support:cur"][data-c="USD"]'); t = await s.text();
-  check(/US\$/.test(t), 'prices can be shown in US dollars');
-  await s.page.click('[data-act="support:cur"][data-c="ZAR"]');
+  check(/What does one cup cost where you live/.test(t) && /About R50/.test(t) && /Every church, however small/.test(t), 'an Administrator sees “one cup where you live”, in rand, starting at R50');
+  check(await s.page.inputValue('#sp-cup') === '50' && /Who are you paying for/.test(t), 'the price box holds R50, and step 4 asks who you are paying for');
+  await s.page.click('[data-act="support:kind"][data-k="street"]'); await s.page.fill('#sp-cup', '20'); await s.page.waitForTimeout(700);
+  check(/R200/.test(await s.page.textContent('.sp-plans')), 'a church can choose a street-stall cup and type its own price (R20 → R200 a year)');
+  await s.page.click('[data-act="support:kind"][data-k="chain"]'); await s.page.waitForTimeout(100);
+  check(await s.page.inputValue('#sp-cup') === '50', 'choosing the coffee-chain cup puts back the price we know (R50)');
   await s.page.click('[data-act="support:plan"][data-p="month"]'); await s.page.click('[data-act="support:cups"][data-n="2"]');
   check(/R150/.test(await s.page.textContent('.sp-total')), 'two gift coffees are added to the month’s coffee (R150)');
   await s.page.click('.sp-total [data-act="support:pay"]'); await s.page.waitForSelector('.sp-bank');
@@ -32,6 +34,7 @@ module.exports = async function (ctx) {
   await s.go('home'); check(!(await s.page.$('.sp-status')), '…and the reminder goes away');
   // The prayer card: hidden when asked, warnings for phone numbers
   await s.go('support/card');
+  check(/Take a photo/.test(await s.text()) && await s.page.getAttribute('.sp-photo-in[capture]', 'capture') === 'environment', 'the prayer card offers “Take a photo” (the phone’s camera) as well as “Choose a photo”');
   await s.page.fill('#sp-pt0', 'Rain for our farmers'); await s.page.fill('#sp-pt1', 'Call 082 123 4567');
   check(/phone number/.test(await s.page.textContent('#sp-w1')), 'a phone number in a prayer point is flagged');
   await s.page.click('[data-act="support:savecard"]'); await s.settle();
@@ -44,7 +47,7 @@ module.exports = async function (ctx) {
   await s.page.check('#sp-vow-ok'); await s.page.click('[data-act="support:vow"]'); await s.settle();
   docs = await s.docsNow(); sup = docs['settings/church'].support;
   check(sup.pledge && sup.pledge.at && sup.plan === 'month', 'joining the prayer circle records the promise and keeps the church paying');
-  check(/Our promise/.test(await s.text()), 'the Pray page shows the promise straight away');
+  check(/Your church’s promise/.test(await s.text()), 'the Pray page shows the promise straight away');
   await finish(s);
 
   // A member: no Subscription page

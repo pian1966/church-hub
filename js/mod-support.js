@@ -3,7 +3,7 @@
  *   #/support        choose a coffee, how often, a gift, and who it's for (our church or another church)
  *   #/support/pray   the prayer circle: the church we pray for this month, and our promise
  *   #/support/card   our church's prayer card: photo, two prayer points, "keep us hidden"
- * Kept in Settings: settings.support = { drink, currency, choice, pledge: { at, by } | null, prayOn }
+ * Kept in Settings: settings.support = { cup: { kind, price, currency }, plan, paidUntil, payments, holidays, choice, pledge, prayOn }
  *                   settings.prayerCard = { photo, photoOk, place, points: [2], discreet, needsHelp, updated }
  * Nothing about the church's people is on the prayer card. Until Church Hub's office exists (TARGET.md section 10) the
  * card stays in the church's own settings; the demo shows made-up churches (js/sample.js SampleChurches). */
@@ -11,7 +11,7 @@
   'use strict';
   var H = Hub, S = Store, esc = H.esc, T = I18n.t;
   var C = Coffee;
-  var sel = null;   // this visit's choice: { drink, currency, plan, cups, other, forWho, otherId }
+  var sel = null;   // this visit's choice: { kind, price, currency, plan, cups, other, forWho, otherId }
 
   function st() { return S.settings() || {}; }
   function sup() { return st().support || {}; }
@@ -22,10 +22,13 @@
   function pledged() { return !!(sup().pledge && sup().pledge.at); }
   function inCircle() { return pledged() || sup().prayOn === true; }
   function month() { return C.monthKey(H.today()); }
+  function cur() { return C.currencyFor(country().code); }
+  function myCup() { return C.cupOf(sup(), country().code); }
   function choice() {
-    if (sel) return sel;
-    var s = sup(), ch = s.choice || {};
-    sel = { drink: s.drink || C.DEFAULT_DRINK, currency: s.currency || C.currencyFor(country().code), plan: ch.plan || 'year', cups: +ch.cups || 0, other: ch.other || '', forWho: 'us', otherId: '' };
+    var code = cur();
+    if (sel && sel.currency === code) return sel;
+    var s = sup(), ch = s.choice || {}, c = myCup();
+    sel = { kind: c.kind, price: c.price ? String(c.price) : '', currency: code, plan: ch.plan || 'year', cups: +ch.cups || 0, other: ch.other || '', forWho: 'us', otherId: '' };
     return sel;
   }
   /** Other churches in the prayer circle, as each wants to be seen. The demo: made-up churches. Live: none yet (the office). */
@@ -38,7 +41,7 @@
     return C.publicCard(card(), { id: selfId(), name: st().churchName, town: '', country: c.code, countryName: c.name, continent: c.continent });
   }
   function partner() { return C.partnerFor(selfId(), month(), circle()); }
-  function quote() { var s = choice(); return C.quote({ drink: s.drink, currency: s.currency, plan: s.plan, gift: s.other !== '' ? s.other : C.giftOf(s.cups, s.drink, s.currency) }); }
+  function quote() { var s = choice(); return C.quote({ price: s.price, currency: s.currency, plan: s.plan, gift: s.other !== '' ? s.other : C.giftOf(s.cups, s.price, s.currency) }); }
 
   /* ---------- pictures ---------- */
   var uid = 0;
@@ -49,6 +52,11 @@
       cappuccino: ['#F1E4D0', '#D9BE98'], flatwhite: ['#B87A45', '#8A5428'], latte: ['#CF9F6E', '#A9713F'],
       americano: ['#4A2C1A', '#24140B'], macchiato: ['#EFDDBF', '#D4B48A']
     }[kind] || ['#CF9F6E', '#A9713F'];
+    if (kind === 'glass') {   // a glass of tea or coffee from a stall, seen from above: no saucer
+      return '<svg class="cup-art" viewBox="0 0 100 100" width="' + s + '" height="' + s + '" aria-hidden="true"><defs><radialGradient id="' + id + 'g" cx="45%" cy="40%" r="65%"><stop offset="0" stop-color="#E9B97A"/><stop offset="1" stop-color="#B9733A"/></radialGradient></defs>' +
+        '<circle cx="50" cy="53" r="36" fill="rgba(0,0,0,.08)"/><circle cx="50" cy="50" r="36" fill="#F4FAFB" stroke="#CFDDE2" stroke-width="2"/><circle cx="50" cy="50" r="30" fill="url(#' + id + 'g)"/>' +
+        '<path d="M33 40a20 20 0 0 1 14-12" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" opacity=".55"/><circle cx="58" cy="56" r="7" fill="#F6E3C6" opacity=".55"/></svg>';
+    }
     if (kind === 'cappuccino') top = '<g fill="#7A4A26" opacity=".55"><circle cx="46" cy="44" r="1.6"/><circle cx="53" cy="41" r="1.2"/><circle cx="50" cy="50" r="2"/><circle cx="57" cy="52" r="1.3"/><circle cx="43" cy="55" r="1.1"/><circle cx="52" cy="58" r="1.5"/><circle cx="60" cy="45" r="1"/></g>';
     else if (kind === 'flatwhite') top = '<path d="M50 61c-9-6-14-10-14-16a7 7 0 0 1 14-2 7 7 0 0 1 14 2c0 6-5 10-14 16z" fill="#FBF3E8"/>';
     else if (kind === 'latte') top = '<g fill="none" stroke="#FBF3E8" stroke-width="2.6" stroke-linecap="round"><path d="M50 66V36"/><path d="M42 41q8 4 16 0M40 47q10 5 20 0M39 53q11 5 22 0M41 59q9 4 18 0"/></g><circle cx="50" cy="34" r="3.4" fill="#FBF3E8"/>';
@@ -84,7 +92,7 @@
       : '<svg viewBox="0 0 64 64" width="56" height="56" aria-hidden="true" fill="#FFFFFF"><path d="M30 6h4v6h5v4h-5v6l14 10v24H16V32l14-10v-6h-5v-4h5z" opacity=".95"/><path d="M28 56V44a4 4 0 0 1 8 0v12z" fill="rgba(0,0,0,.25)"/><circle cx="32" cy="34" r="3.5" fill="rgba(0,0,0,.2)"/></svg>';
     return '<div class="pc-pic pc-ph" style="background:' + bg + '">' + pic + '</div>';
   }
-  function pcTitle(c) { return c.discreet ? T('A church in {region}', { region: T(c.region) }) : (c.title || T('Our church')); }
+  function pcTitle(c) { return c.discreet ? T('A church in {region}', { region: T(c.region) }) : (c.title || T('Your church')); }
   /** A prayer card as other churches see it. */
   function prayerCard(c, opts) {
     opts = opts || {};
@@ -99,7 +107,7 @@
 
   /* ---------- the page ---------- */
   function tabs(on) {
-    return '<nav class="seg sp-tabs">' + [['', 'Choose a plan'], ['pray', 'Pray for a church'], ['card', 'Our prayer card']].map(function (t) {
+    return '<nav class="seg sp-tabs">' + [['', 'Choose a plan'], ['pray', 'Churches to pray for'], ['card', 'Prayer card for your church']].map(function (t) {
       return '<a href="#/support' + (t[0] ? '/' + t[0] : '') + '" class="' + (on === t[0] ? 'on' : '') + '"' + (on === t[0] ? ' aria-current="page"' : '') + '>' + T(t[1]) + '</a>';
     }).join('') + '</nav>';
   }
@@ -107,34 +115,34 @@
     return '<div class="page-head"><div><h1>' + T('Subscription') + '</h1><p class="lead">' + T('Church Hub for the price of a coffee.') + '</p></div></div>' + tabs(tab);
   }
   function hero() {
-    var c = country(), q = C.quote({ drink: choice().drink, currency: choice().currency, plan: 'month' });
     return '<section class="sp-hero"><div class="sp-hero-art">' + heroArt() + '</div><div class="sp-hero-text">' +
       '<p class="sp-kicker">' + T('Every church, however small, deserves great church software.') + '</p>' +
-      '<h2>' + esc(T('Buy us one coffee a month – about {price} – and Church Hub keeps going, for you and for churches that can’t.', { price: C.money(q.cup, q.currency) })) + '</h2>' +
+      '<h2>' + T('Give us the price of one cup of coffee a month – whatever a cup costs where you live – and Church Hub keeps going, for you and for churches that can’t.') + '</h2>' +
       '<p>' + T('Church Hub is for every church, in every nation and language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.') + '</p>' +
       (pledged() ? '<p class="sp-chip">' + H.icon(PRAY, 16) + T('Your church has promised to pray for another church each month') + '</p>' : '') +
       '</div></section>';
   }
   var PRAY = 'M12 2c2.5 3 4 5.2 4 7.5a4 4 0 0 1-8 0C8 7.2 9.5 5 12 2zM9.5 15h5v7h-5z';   // a candle: prayer
   function drinks() {
-    var s = choice();
-    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">1</span><div><h2>' + T('Choose your coffee') + '</h2><p>' + T('Pick the one you’d order. Its price sets your subscription.') + '</p></div>' +
-      '<div class="sp-cur" role="radiogroup" aria-label="' + esc(T('Prices in')) + '"><span>' + T('Prices in') + '</span><span class="seg small">' + C.CURRENCY_ORDER.map(function (code) {
-        var cur = C.CURRENCIES[code];
-        return '<button type="button" role="radio" aria-checked="' + (s.currency === code) + '" class="' + (s.currency === code ? 'on' : '') + '" data-act="support:cur" data-c="' + code + '" title="' + esc(T(cur.name)) + '">' + esc(cur.sym) + '</button>';
-      }).join('') + '</span></div></div>' +
-      '<div class="sp-cups" role="radiogroup" aria-label="' + esc(T('Choose your coffee')) + '">' + C.DRINKS.map(function (d) {
-        var on = d.id === s.drink;
-        return '<button type="button" class="sp-cup' + (on ? ' on' : '') + '" role="radio" aria-checked="' + on + '" data-act="support:drink" data-d="' + d.id + '">' + cupArt(d.art) +
-          '<b>' + esc(T(d.name)) + '</b><small>' + esc(T(d.note)) + '</small><span class="sp-price">' + esc(C.money(C.cup(d.id, s.currency), s.currency)) + '</span></button>';
+    var s = choice(), cc = country().code, sym = C.currency(s.currency).sym.trim();
+    var known = [];
+    Object.keys(C.EXAMPLES).forEach(function (k) { var co = Countries.find(k); C.KINDS.forEach(function (kd) { var p = C.example(k, kd.id); if (p && co) known.push({ co: co, kind: kd, p: p, code: C.currencyFor(k) }); }); });
+    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">1</span><div><h2>' + T('What does one cup cost where you live?') + '</h2>' +
+      '<p>' + T('Choose the cup that is honest for your church. A church with plenty, wherever it is in the world, might choose the coffee-chain price; a church with little, the street stall.') + '</p></div></div>' +
+      '<div class="sp-cups sp-kinds" role="radiogroup" aria-label="' + esc(T('What does one cup cost where you live?')) + '">' + C.KINDS.map(function (k) {
+        var on = k.id === s.kind, ex = C.example(cc, k.id);
+        return '<button type="button" class="sp-cup' + (on ? ' on' : '') + '" role="radio" aria-checked="' + on + '" data-act="support:kind" data-k="' + k.id + '">' + cupArt(k.art) +
+          '<b>' + esc(T(k.name)) + '</b><small>' + esc(T(k.note)) + '</small><span class="sp-price">' + (ex ? esc(T('About {price}', { price: C.money(ex, s.currency) })) : esc(T('You say how much'))) + '</span></button>';
       }).join('') + '</div>' +
-      '<details class="sp-world"><summary>' + T('What a coffee costs in South Africa, the United States and Australia') + '</summary><div class="sp-table-wrap"><table class="sp-table"><thead><tr><th>' + T('Coffee') + '</th>' +
-        C.CURRENCY_ORDER.map(function (code) { return '<th>' + esc(T(C.CURRENCIES[code].name)) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-        C.DRINKS.map(function (d) { return '<tr' + (d.id === s.drink ? ' class="on"' : '') + '><td>' + esc(T(d.name)) + '</td>' + C.CURRENCY_ORDER.map(function (code) { return '<td>' + esc(C.money(d.prices[code], code)) + '</td>'; }).join('') + '</tr>'; }).join('') +
-      '</tbody></table></div><p class="hint">' + esc(T('A “Tall” at Starbucks, as of {date}, rounded. Wherever you are, choose the price closest to what a good coffee costs where you live.', { date: H.fmt(C.AS_OF + '-01', true).replace(/^\d+\s/, '') })) + '</p></details></section>';
+      '<label class="field sp-other sp-cupprice' + (C.parse(s.price) ? '' : ' req') + '"><span>' + esc(T('One cup costs ({currency})', { currency: s.currency })) + '</span><span class="sp-money"><span>' + esc(sym) + '</span><input id="sp-cup" inputmode="decimal" value="' + esc(s.price) + '" autocomplete="off" aria-describedby="sp-cup-h"></span></label>' +
+      '<p class="hint" id="sp-cup-h">' + esc(T('In {currency}, the money of {country}. You can change your country in Settings.', { currency: s.currency, country: T(country().name) })) + '</p>' +
+      '<details class="sp-world"><summary>' + T('What a cup costs in some countries') + '</summary><div class="sp-table-wrap"><table class="sp-table"><thead><tr><th>' + T('Country') + '</th><th>' + T('Cup') + '</th><th>' + T('Price') + '</th></tr></thead><tbody>' +
+        known.map(function (x) { return '<tr' + (x.co.code === cc ? ' class="on"' : '') + '><td>' + esc(T(x.co.name)) + '</td><td>' + esc(T(x.kind.name)) + '</td><td>' + esc(C.money(x.p, x.code)) + '</td></tr>'; }).join('') +
+      '</tbody></table></div><p class="hint">' + T('November 2026, rounded. These are only examples: whatever the cup, give what is honest for your church.') + '</p></details></section>';
   }
   function plans() {
-    var s = choice(), m = C.quote({ drink: s.drink, currency: s.currency, plan: 'month' }), y = C.quote({ drink: s.drink, currency: s.currency, plan: 'year' });
+    var s = choice(), m = C.quote({ price: s.price, currency: s.currency, plan: 'month' }), y = C.quote({ price: s.price, currency: s.currency, plan: 'year' });
+    var none = !m.cup, dash = '–';
     var plan = function (id, ribbon, big, per, line, sub) {
       var on = s.plan === id;
       return '<button type="button" class="sp-plan sp-plan-' + id + (on ? ' on' : '') + '" role="radio" aria-checked="' + on + '" data-act="support:plan" data-p="' + id + '">' +
@@ -144,13 +152,13 @@
     };
     return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">2</span><div><h2>' + T('How would you like to give?') + '</h2><p>' + T('Every way gives your church all of Church Hub.') + '</p></div></div>' +
       '<div class="sp-plans" role="radiogroup" aria-label="' + esc(T('How would you like to give?')) + '">' +
-        plan('month', '', C.money(m.total, m.currency), T('a month'), T('One coffee a month'), T('Stop or change whenever you like.')) +
-        plan('year', T('Two coffees free'), C.money(y.total, y.currency), T('a year'), T('Ten coffees a year'), T('You save {amount} by paying for the year.', { amount: C.money(y.saved, y.currency) })) +
-        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray for another church each month.')) +
+        plan('month', '', none ? dash : C.money(m.total, m.currency), T('a month'), T('One coffee a month'), T('Stop or change whenever you like.')) +
+        plan('year', T('Two coffees free'), none ? dash : C.money(y.total, y.currency), T('a year'), T('Ten coffees a year'), none ? T('Two months free when you pay for the year.') : T('You save {amount} by paying for the year.', { amount: C.money(y.saved, y.currency) })) +
+        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray, each month, for another church that uses Church Hub.')) +
       '</div></section>';
   }
   function gift() {
-    var s = choice(), cupPrice = C.cup(s.drink, s.currency);
+    var s = choice(), cupPrice = C.parse(s.price);
     return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">3</span><div><h2>' + T('Add a gift, if you’d like') + '</h2><p>' + T('What is Church Hub worth to your church? Think of the time it saves and what you can afford – every extra coffee helps a church that can’t pay.') + '</p></div></div>' +
       '<div class="sp-gift"><div class="sp-gift-cups" role="radiogroup" aria-label="' + esc(T('Extra coffees')) + '">' +
         [0, 1, 2, 3, 4, 5, 6].map(function (n) {
@@ -158,14 +166,14 @@
           return '<button type="button" role="radio" aria-checked="' + on + '" class="sp-gc' + (on ? ' on' : '') + (s.other === '' && n && n <= s.cups ? ' full' : '') + '" data-act="support:cups" data-n="' + n + '" aria-label="' + esc(n ? T('{n} extra coffees', { n: n }) : T('No gift')) + '">' +
             (n ? '<span class="sp-gc-cup" aria-hidden="true"></span><small>+' + n + '</small>' : '<small>' + T('None') + '</small>') + '</button>';
         }).join('') + '</div>' +
-        '<label class="field sp-other"><span>' + T('Or any amount') + '</span><span class="sp-money"><span>' + esc(C.currency(s.currency).sym) + '</span><input id="sp-other" inputmode="decimal" value="' + esc(s.other) + '" placeholder="' + esc(String(cupPrice * 2)) + '" autocomplete="off"></span></label></div></section>';
+        '<label class="field sp-other"><span>' + T('Or any amount') + '</span><span class="sp-money"><span>' + esc(C.currency(s.currency).sym.trim()) + '</span><input id="sp-other" inputmode="decimal" value="' + esc(s.other) + '" placeholder="' + esc(cupPrice ? String(cupPrice * 2) : '') + '" autocomplete="off"></span></label></div></section>';
   }
   function forWho() {
     var s = choice(), need = C.needing(circle(), selfId());
-    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">4</span><div><h2>' + T('Who is it for?') + '</h2><p>' + T('Pay for your own church, or bless another church that can’t afford it.') + '</p></div></div>' +
-      '<div class="sp-who" role="radiogroup" aria-label="' + esc(T('Who is it for?')) + '">' +
-        '<button type="button" role="radio" aria-checked="' + (s.forWho === 'us') + '" class="sp-whob' + (s.forWho === 'us' ? ' on' : '') + '" data-act="support:who" data-w="us">' + H.icon(H.ICON.home, 22) + '<b>' + T('Our church') + '</b><small>' + esc(st().churchName || '') + '</small></button>' +
-        '<button type="button" role="radio" aria-checked="' + (s.forWho === 'other') + '" class="sp-whob' + (s.forWho === 'other' ? ' on' : '') + '" data-act="support:who" data-w="other">' + H.icon('M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z', 22) + '<b>' + T('Pay for another church') + '</b><small>' + T('An under-resourced church') + '</small></button>' +
+    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">4</span><div><h2>' + T('Who are you paying for?') + '</h2><p>' + T('Your own church, or another church that can’t afford it.') + '</p></div></div>' +
+      '<div class="sp-who" role="radiogroup" aria-label="' + esc(T('Who are you paying for?')) + '">' +
+        '<button type="button" role="radio" aria-checked="' + (s.forWho === 'us') + '" class="sp-whob' + (s.forWho === 'us' ? ' on' : '') + '" data-act="support:who" data-w="us">' + H.icon(H.ICON.home, 22) + '<b>' + T('Your church') + '</b><small>' + esc(st().churchName || '') + '</small></button>' +
+        '<button type="button" role="radio" aria-checked="' + (s.forWho === 'other') + '" class="sp-whob' + (s.forWho === 'other' ? ' on' : '') + '" data-act="support:who" data-w="other">' + H.icon('M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z', 22) + '<b>' + T('Another church') + '</b><small>' + T('An under-resourced church') + '</small></button>' +
       '</div>' +
       (s.forWho === 'other' ? '<div class="sp-others"><p class="hint">' + T('Choose a church that has asked for help, or let Church Hub give it where it’s needed most.') + '</p><div class="pcards" role="radiogroup">' +
         '<article class="pcard pick any' + (!s.otherId ? ' on' : '') + '" role="radio" tabindex="0" aria-checked="' + !s.otherId + '" data-act="support:other" data-id=""><div class="pc-pic pc-ph pc-any">' + H.icon('M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z', 40) + '</div><div class="pc-body"><h3>' + T('Where it’s needed most') + '</h3><p>' + T('Church Hub gives it to the church that has waited longest for help.') + '</p></div></article>' +
@@ -173,14 +181,16 @@
   }
   function summary() {
     var s = choice(), q = quote(), pray = s.plan === 'pray';
-    var who = s.forWho === 'other' ? (s.otherId ? pcTitle(circle().filter(function (c) { return c.id === s.otherId; })[0] || {}) : T('Where it’s needed most')) : (st().churchName || T('Our church'));
+    var who = s.forWho === 'other' ? (s.otherId ? pcTitle(circle().filter(function (c) { return c.id === s.otherId; })[0] || {}) : T('Where it’s needed most')) : (st().churchName || T('Your church'));
     return '<section class="sp-total' + (pray ? ' pray' : '') + '"><div>' + (pray
       ? '<b>' + T('Free, with a promise to pray') + '</b><small>' + T('Once a month Church Hub shows your church another church to pray for.') + '</small>'
+      : !q.cup ? '<b>' + T('Type what one cup costs where you live.') + '</b><small>' + T('Then choose how often, and Pay.') + '</small>'
       : '<span class="sp-total-n">' + esc(C.money(q.total, q.currency)) + '<small>' + esc(q.per === 'year' ? T('a year') : T('a month')) + '</small></span>' +
         '<small>' + esc(TN1(q.coffees)) + (q.gift ? ' + ' + esc(T('a gift of {amount}', { amount: C.money(q.gift, q.currency) })) : '') + ' · ' + esc(T('for {who}', { who: who })) + '</small>') + '</div>' +
       (admin() ? (pray
         ? (pledged() ? '<a class="btn primary" href="#/support/pray">' + T('See who we pray for') + '</a>' : '<button class="btn primary" data-act="support:promise">' + T('Make our promise') + '</button>')
-        : '<button class="btn primary" data-act="support:pay">' + esc(T('Pay {amount}', { amount: C.money(q.total, q.currency) })) + '</button>') : '') + '</section>';
+        : q.total > 0 ? '<button class="btn primary" data-act="support:pay">' + esc(T('Pay {amount}', { amount: C.money(q.total, q.currency) })) + '</button>'
+        : '<button class="btn primary" data-act="support:needprice">' + T('Pay') + '</button>') : '') + '</section>';
   }
   function renderChoose() {
     var s = choice();
@@ -196,16 +206,16 @@
     if (!inCircle()) top = '<section class="sp-circle-intro"><div class="sp-circle-art" aria-hidden="true">' + circleArt() + '</div><div><h2>' + T('The prayer circle') + '</h2>' +
       '<p>' + T('Churches around the world praying for each other. Once a month Church Hub shows your church another church, with a photo and one or two things to pray for – and another church prays for you.') + '</p>' +
       '<p>' + T('For a church that can’t afford a coffee, this promise is its subscription. Any church may join.') + '</p>' +
-      (admin() ? '<div class="btns"><button class="btn primary" data-act="support:promise">' + T('Join the prayer circle') + '</button><a class="btn" href="#/support/card">' + T('Make our prayer card') + '</a></div>' : '') + '</div></section>';
+      (admin() ? '<div class="btns"><button class="btn primary" data-act="support:promise">' + T('Join the prayer circle') + '</button><a class="btn" href="#/support/card">' + T('Make your prayer card') + '</a></div>' : '') + '</div></section>';
     var body = '';
     if (inCircle() && p) body = '<section class="sp-month"><p class="sp-kicker">' + esc(T('This month, {church} prays for', { church: st().churchName || T('our church') })) + '</p>' + prayerCard(p, { big: true }) +
       '<div class="sp-month-foot"><p>' + T('Pray for them in a Sunday service, a prayer meeting or a Care Group – or simply on your own this week.') + '</p>' + prayedBtn() + '</div></section>';
     else if (inCircle()) body = '<p class="note info">' + T('The prayer circle starts when Church Hub opens to other churches. Your promise is kept, and the first church to pray for will appear here – and on everyone’s Home page.') + '</p>';
-    var promise = pledged() ? '<section class="panel sp-promise"><h2>' + T('Our promise') + '</h2><p>' + esc(T('Made on {date} by {name}.', { date: H.fmt(sup().pledge.at, true), name: sup().pledge.by || '' })) + '</p>' +
+    var promise = pledged() ? '<section class="panel sp-promise"><h2>' + T('Your church’s promise') + '</h2><p>' + esc(T('Made on {date} by {name}.', { date: H.fmt(sup().pledge.at, true), name: sup().pledge.by || '' })) + '</p>' +
       (admin() ? H.menu(T('More'), ['<button data-act="support:leave">' + T('Leave the prayer circle') + '</button>']) : '') + '</section>' : '';
     var others = circle().filter(function (c) { return !p || c.id !== p.id; });
     var rest = inCircle() && others.length ? '<details class="sp-all"><summary>' + esc(T('All the churches in the circle ({n})', { n: others.length })) + '</summary><div class="pcards">' + others.map(function (c) { return prayerCard(c); }).join('') + '</div></details>' : '';
-    return head('pray') + top + body + (inCircle() ? '<div class="grid2 sp-pray-grid">' + promise + '<section class="panel"><h2>' + T('Who prays for you') + '</h2><p>' + T('Other churches see your prayer card.') + '</p>' + prayerCard(mine) + '<div class="btns"><a class="btn" href="#/support/card">' + T('Change our prayer card') + '</a></div></section></div>' : '') + rest;
+    return head('pray') + top + body + (inCircle() ? '<div class="grid2 sp-pray-grid">' + promise + '<section class="panel"><h2>' + T('Prayer card for your church') + '</h2><p>' + T('This is what other churches in the circle see when they pray for you.') + '</p>' + prayerCard(mine) + '<div class="btns"><a class="btn" href="#/support/card">' + T('Change your prayer card') + '</a></div></section></div>' : '') + rest;
   }
   function circleArt() {
     var dots = ''; for (var i = 0; i < 8; i++) { var a = i / 8 * Math.PI * 2; dots += '<circle cx="' + (60 + Math.cos(a) * 42).toFixed(1) + '" cy="' + (60 + Math.sin(a) * 42).toFixed(1) + '" r="9" />'; }
@@ -221,14 +231,16 @@
   function renderCard() {
     var c = card(), co = country(), discreet = C.isDiscreet(c, co.code), pts = (c.points || []).concat(['', '']).slice(0, 2), danger = C.takeCare(co.code);
     var names = [st().churchName, c.place].filter(Boolean);
-    var form = '<section class="panel sp-cardform"><h2>' + T('Our prayer card') + '</h2>' +
-      '<p class="hint">' + T('Churches in the prayer circle see this card and pray for you. It is the only thing about your church that is shared – never anything about your people.') + '</p>' +
+    var form = '<section class="panel sp-cardform"><h2>' + T('Prayer card for your church') + '</h2>' +
+      '<p class="hint">' + T('Other churches pray for you using this card: a photo and one or two things to pray for. It is the only thing about your church that is shared – never anything about your people.') + '</p>' +
       (danger ? '<p class="note warn">' + esc(T('Christians in {country} can face danger for their faith, so your card starts hidden: other churches see only “a church in {region}”.', { country: T(co.name), region: T(C.region(co.code, co.continent)) })) + '</p>' : '') +
       '<label class="set-row sp-hide"><span class="set-l"><b>' + T('Keep us hidden') + '</b><small>' + T('For churches where following Jesus is dangerous. No name, town, country or photo – only a wide region.') + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="sp-discreet"' + (discreet ? ' checked' : '') + ' aria-label="' + esc(T('Keep us hidden')) + '"></span></label>' +
       (discreet ? '' :
-        '<div class="sp-photo">' + (c.photo ? '<img src="' + esc(c.photo) + '" alt="' + esc(T('Our church')) + '">' : placeholder({ id: selfId() })) +
+        '<div class="sp-photo">' + (c.photo ? '<img src="' + esc(c.photo) + '" alt="' + esc(T('Your church')) + '">' : placeholder({ id: selfId() })) +
           '<div><b>' + T('A photo of your church or congregation') + '</b><p class="hint">' + T('Your building, your area, or your people – faces only if everyone in it agrees.') + '</p>' +
-          '<label class="btn small"><input type="file" id="sp-photo" accept="image/*" hidden>' + T(c.photo ? 'Change photo' : 'Choose a photo') + '</label>' + (c.photo ? ' <button class="btn small" data-act="support:nophoto">' + T('Remove') + '</button>' : '') + '</div></div>' +
+          '<div class="btns sp-photo-btns"><label class="btn small">' + H.icon('M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 16) + '<input type="file" class="sp-photo-in" accept="image/*" capture="environment" hidden>' + T('Take a photo') + '</label>' +
+          '<label class="btn small">' + H.icon('M4 5h16v14H4zM4 15l5-5 4 4 3-3 4 4', 16) + '<input type="file" class="sp-photo-in" accept="image/*" hidden>' + T(c.photo ? 'Change photo' : 'Choose a photo') + '</label>' +
+          (c.photo ? '<button class="btn small" data-act="support:nophoto">' + T('Remove') + '</button>' : '') + '</div></div></div>' +
           (c.photo ? '<label class="check"><input type="checkbox" id="sp-photook"' + (c.photoOk ? ' checked' : '') + '><span>' + T('Everyone who can be recognised in this photo has agreed to it being shown to other churches.') + '</span></label>' : '') +
         '<label class="field"><span>' + T('Your town or area') + '</span><input id="sp-place" value="' + esc(c.place || '') + '" maxlength="60" placeholder="' + esc(T('For example: Howick, KwaZulu-Natal')) + '"></label>') +
       pts.map(function (p, i) {
@@ -237,7 +249,7 @@
       }).join('') +
       '<p class="hint">' + T('Pray for things, not people by name. Don’t include phone numbers, email addresses or anything that could put someone at risk.') + '</p>' +
       '<label class="set-row"><span class="set-l"><b>' + T('We’d be grateful for help paying') + '</b><small>' + T('Churches that pay for another church will see your card.') + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="sp-help"' + (c.needsHelp ? ' checked' : '') + ' aria-label="' + esc(T('We’d be grateful for help paying')) + '"></span></label>' +
-      (admin() ? '<div class="btns"><button class="btn primary" data-act="support:savecard">' + T('Save our prayer card') + '</button></div>' : '') + '</section>';
+      (admin() ? '<div class="btns"><button class="btn primary" data-act="support:savecard">' + T('Save the prayer card') + '</button></div>' : '') + '</section>';
     var preview = '<section class="sp-preview"><p class="sp-kicker">' + T('How other churches see it') + '</p><div id="sp-prev">' + prayerCard(ourCard(), { big: true }) + '</div>' +
       (S.isLive() && !st().demo ? '<p class="hint">' + T('Kept in your own church’s settings until Church Hub opens to other churches.') + '</p>' : '') + '</section>';
     return head('card') + '<div class="sp-card-grid">' + form + preview + '</div>';
@@ -269,21 +281,21 @@
 
   /* ---------- dialogs ---------- */
   function promiseDialog() {
-    H.modal(H.dialogHead(T('Our church’s promise'), T('The prayer circle')) + '<div class="dlg-body sp-promise-dlg">' + '<div class="sp-promise-art" aria-hidden="true">' + circleArt() + '</div>' +
+    H.modal(H.dialogHead(T('Your church’s promise'), T('The prayer circle')) + '<div class="dlg-body sp-promise-dlg">' + '<div class="sp-promise-art" aria-hidden="true">' + circleArt() + '</div>' +
       '<p class="sp-vow">' + T('Each month, we will pray for the church Church Hub shows us – in a service, a prayer meeting or a Care Group – as part of the worldwide family of God.') + '</p>' +
       '<p class="hint">' + T('“Pray for each other.” – James 5:16') + '</p>' +
       '<label class="check"><input type="checkbox" id="sp-vow-ok"><span>' + T('We promise, on behalf of our church.') + '</span></label>' +
-      '<div class="btns"><button class="btn primary" data-act="support:vow">' + T('Make our promise') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div></div>', T('Our church’s promise'));
+      '<div class="btns"><button class="btn primary" data-act="support:vow">' + T('Make our promise') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div></div>', T('Your church’s promise'));
   }
   /** The Pay button on the plan builder: what was chosen on the page. */
   function payChosen() {
     var s = choice(), q = quote();
-    S.setSettings({ support: Object.assign({}, sup(), { drink: s.drink, currency: s.currency, choice: { plan: s.plan, cups: s.cups, other: s.other, forWho: s.forWho, otherId: s.otherId, at: H.today() } }) });
+    S.setSettings({ support: Object.assign({}, sup(), { cup: { kind: s.kind, price: C.parse(s.price), currency: s.currency }, choice: { plan: s.plan, cups: s.cups, other: s.other, forWho: s.forWho, otherId: s.otherId, at: H.today() } }) });
     payDialog({ kind: s.plan, total: q.total, currency: q.currency, gift: q.gift, forOther: s.forWho === 'other' ? (s.otherId || 'any') : '' });
   }
   /** The next payment, from the "Your subscription" card or Home: the plan's coffees plus any gift coffees tapped. */
   function payNext() {
-    var sub = sup(), n = C.nextAmount(sub), g = C.giftOf(extra, sub.drink, sub.currency);
+    var sub = sup(), c = myCup(), n = C.nextAmount(sub, country().code), g = C.giftOf(extra, c.price, c.currency);
     payDialog({ kind: sub.plan, total: n.total + g, currency: n.currency, gift: g });
   }
   var prayInstead = false;   // the promise about to be made replaces paying
@@ -302,7 +314,7 @@
     };
     var abroad = o.currency !== 'ZAR', tag = o.forOther ? (o.forOther === 'any' ? ' GIFT-ANY' : ' GIFT') : o.kind === 'gift' ? ' GIFT' : '';
     var total = C.money(o.total, o.currency) + (o.kind === 'year' ? ' ' + T('a year') : o.kind === 'month' ? ' ' + T('a month') : '');
-    H.modal(H.dialogHead(T('Thank you!'), T('Pay by bank transfer')) + '<div class="dlg-body sp-thanks">' + '<div class="sp-thanks-art">' + cupArt(C.drink(sup().drink || choice().drink).art, 84) + '</div>' +
+    H.modal(H.dialogHead(T('Thank you!'), T('Pay by bank transfer')) + '<div class="dlg-body sp-thanks">' + '<div class="sp-thanks-art">' + cupArt(C.kind(myCup().kind).art, 84) + '</div>' +
       '<p class="sp-pay-amt">' + esc(T('Please pay {total} into Church Hub’s account:', { total: total })) + '</p>' +
       '<dl class="sp-bank">' + row(T('Bank'), B.bank) + row(T('Account number'), B.account, true) + row(T('Branch code'), B.branch, true) +
         row(T('Account type'), T(B.type)) + row(T('Beneficiary'), B.beneficiary) + row(T('Reference'), ref + tag, true) + '</dl>' +
@@ -315,10 +327,10 @@
   }
   /** One-tap gift coffees: [+1] [+2] [+5] … on the subscription card and Home. */
   function giftChips() {
-    var sub = sup();
+    var c = myCup();
     return '<div class="sp-quick" role="group" aria-label="' + esc(T('Add a gift')) + '"><span>' + T('Add a gift:') + '</span>' + [1, 2, 5].map(function (n) {
       var on = extra === n;
-      return '<button type="button" class="sp-qg' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="support:extra" data-n="' + n + '">' + '<span class="sp-gc-cup" aria-hidden="true"></span>+' + n + ' <small>' + esc(C.money(C.giftOf(n, sub.drink, sub.currency), sub.currency)) + '</small></button>';
+      return '<button type="button" class="sp-qg' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="support:extra" data-n="' + n + '">' + '<span class="sp-gc-cup" aria-hidden="true"></span>+' + n + ' <small>' + esc(C.money(C.giftOf(n, c.price, c.currency), c.currency)) + '</small></button>';
     }).join('') + '</div>';
   }
   /** "Your subscription": the next payment, gift coffees, Pay, and a payment holiday. Shown once the church pays. */
@@ -332,9 +344,9 @@
   }
   function statusPanel(compact) {
     var sub = sup(), stt = C.status(sub, H.today()); if (stt.state === 'none' || stt.state === 'pray') return '';
-    var n = C.nextAmount(sub), g = C.giftOf(extra, sub.drink, sub.currency), hol = C.holidayAllowed(sub, H.today());
+    var c = myCup(), n = C.nextAmount(sub, country().code), g = C.giftOf(extra, c.price, c.currency), hol = C.holidayAllowed(sub, H.today());
     var urgent = stt.state === 'soon' || stt.state === 'due' || stt.state === 'late';
-    return '<section class="sp-status sp-st-' + stt.state + (compact ? ' compact' : '') + '"><div class="sp-status-top">' + cupArt(C.drink(sub.drink).art, compact ? 52 : 64) +
+    return '<section class="sp-status sp-st-' + stt.state + (compact ? ' compact' : '') + '"><div class="sp-status-top">' + cupArt(C.kind(c.kind).art, compact ? 52 : 64) +
       '<div class="grow"><p class="sp-kicker">' + esc(sub.plan === 'year' ? T('Ten coffees a year') : T('One coffee a month')) + '</p><h2>' + esc(statusLine(stt, sub)) + '</h2>' +
       '<p class="sp-status-amt">' + esc(T('Next payment: {amount}', { amount: C.money(n.total, n.currency) })) + (g ? ' + ' + esc(T('a gift of {amount}', { amount: C.money(g, n.currency) })) : '') + '</p></div></div>' +
       (admin() ? giftChips() + '<div class="btns">' + '<button class="btn primary" data-act="support:paynext">' + esc(T('Pay {amount}', { amount: C.money(n.total + g, n.currency) })) + '</button>' +
@@ -347,7 +359,7 @@
     var sub = sup(), today = H.today(), ok = C.holidayAllowed(sub, today), stt = C.status(sub, today), yearly = sub.plan === 'year';
     var trial = C.takeHoliday(sub, today, ''), next = trial ? H.fmt(trial.paidUntil, true) : '';
     H.modal(H.dialogHead(T('A payment holiday'), yearly ? T('Ten coffees a year') : T('One coffee a month')) + '<div class="dlg-body sp-hol">' +
-      '<div class="sp-hol-art" aria-hidden="true">' + cupArt(C.drink(sub.drink).art, 72) + '<span class="sp-zz">z<span>z</span><span>z</span></span></div>' +
+      '<div class="sp-hol-art" aria-hidden="true">' + cupArt(C.kind(myCup().kind).art, 72) + '<span class="sp-zz">z<span>z</span><span>z</span></span></div>' +
       (ok.ok ? '<p class="sp-vow">' + esc(yearly ? T('Pay your year a month later, free – no questions asked.') : T('Skip this month’s coffee, free – no questions asked.')) + '</p>' +
         '<p>' + esc(T('Your next payment moves to {date}. Church Hub keeps working exactly as before.', { date: next })) + '</p>' +
         '<p class="hint">' + esc(yearly ? T('A yearly plan may take one payment holiday a year.') : T('A monthly plan may take up to three payment holidays a year. You have {n} left.', { n: ok.left })) + '</p>' +
@@ -359,13 +371,13 @@
       (stt.state === 'late' ? '<p class="hint">' + T('Nothing is ever locked or deleted for being late.') + '</p>' : '') + '</div>', T('A payment holiday'));
   }
   function giftDialog() {
-    var sub = sup(), d = sub.drink || choice().drink, cur = sub.currency || choice().currency;
+    var c = myCup().price ? myCup() : { price: C.parse(choice().price), currency: cur() }, cu = c.currency;
     H.modal(H.dialogHead(T('Give a one-off gift'), T('Thank you for your generosity')) + '<div class="dlg-body sp-thanks">' +
       '<p>' + T('Every gift helps Church Hub grow and pays for churches that can’t. How many coffees would you like to give?') + '</p>' +
       '<div class="sp-giftgrid">' + [1, 2, 5, 10, 20].map(function (n) {
-        return '<button class="sp-gg" data-act="support:giftn" data-n="' + n + '">' + '<span class="sp-gc-cup" aria-hidden="true"></span><b>' + esc(TN1(n)) + '</b><small>' + esc(C.money(C.cup(d, cur) * n, cur)) + '</small></button>';
+        return '<button class="sp-gg" data-act="support:giftn" data-n="' + n + '">' + '<span class="sp-gc-cup" aria-hidden="true"></span><b>' + esc(TN1(n)) + '</b><small>' + esc(C.money(C.giftOf(n, c.price, cu), cu)) + '</small></button>';
       }).join('') + '</div>' +
-      '<label class="field sp-other"><span>' + T('Or any amount') + '</span><span class="sp-money"><span>' + esc(C.currency(cur).sym) + '</span><input id="sp-giftamt" inputmode="decimal" autocomplete="off"></span></label>' +
+      '<label class="field sp-other"><span>' + T('Or any amount') + '</span><span class="sp-money"><span>' + esc(C.currency(cu).sym.trim()) + '</span><input id="sp-giftamt" inputmode="decimal" autocomplete="off"></span></label>' +
       '<div class="btns"><button class="btn primary" data-act="support:giftamt">' + T('Give this amount') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div></div>', T('Give a one-off gift'));
   }
   function TN1(n) { return n === 1 ? T('1 coffee') : T('{n} coffees', { n: n }); }
@@ -379,6 +391,11 @@
       return p === 'pray' ? renderPray() : p === 'card' ? renderCard() : renderChoose();
     },
     after: function (parts) {
+      var cp = document.getElementById('sp-cup');
+      if (cp) cp.addEventListener('input', H.pause(function () {
+        var v = String(cp.value || '').replace(/[^\d.,]/g, ''); choice().price = v;
+        var pos = cp.selectionStart; H.render(); var n = document.getElementById('sp-cup'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
+      }, 450));
       var o = document.getElementById('sp-other');
       if (o) o.addEventListener('input', H.pause(function () {
         var v = String(o.value || '').replace(',', '.').replace(/[^\d.]/g, ''); choice().other = v; if (v !== '') choice().cups = 0;
@@ -394,14 +411,13 @@
           if (!d.checked && C.takeCare(co.code) && !window.confirm(T('Christians in your country can face danger. Show your church’s name, town and photo to other churches anyway?'))) { d.checked = true; return; }
           var c = readForm(); S.setSettings({ prayerCard: Object.assign(c, { points: C.points(c.points), updated: H.today() }) }, d.checked ? 'Prayer card: kept hidden' : 'Prayer card: shown with the church’s name'); H.render();
         });
-        var f = document.getElementById('sp-photo');
-        if (f) f.addEventListener('change', function () {
+        document.querySelectorAll('.sp-photo-in').forEach(function (f) { f.addEventListener('change', function () {
           var file = f.files && f.files[0]; if (!file) return; f.value = '';
           H.cropPhoto(file).then(function (data) {
             if (!data) return;
             var c = readForm(); S.setSettings({ prayerCard: Object.assign(c, { photo: data, photoOk: false, points: C.points(c.points), updated: H.today() }) }, 'Prayer card: photo added'); H.render(); H.toast(T('Photo saved'));
           }).catch(function () { H.toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.')); });
-        });
+        }); });
         liveCheck();
       }
     },
@@ -414,8 +430,12 @@
       return due + '<section class="panel sp-home"><div class="sp-home-h">' + H.icon(PRAY, 18) + '<h2>' + T('This month we pray for') + '</h2></div>' + prayerCard(p) + '<div class="btns">' + prayedBtn() + '</div></section>';
     },
     actions: {
-      drink: function (el) { choice().drink = el.dataset.d; H.render(); },
-      cur: function (el) { choice().currency = el.dataset.c; H.render(); },
+      kind: function (el) {
+        var s = choice(), ex = C.example(country().code, el.dataset.k); s.kind = el.dataset.k;
+        if (ex) s.price = String(ex);   // a price we know for this cup here; otherwise they keep (or type) their own
+        H.render(); if (!ex) { var i = document.getElementById('sp-cup'); if (i) i.focus(); }
+      },
+      needprice: function () { var i = document.getElementById('sp-cup'); if (i) { i.focus(); i.scrollIntoView({ block: 'center' }); } H.toast(T('Type what one cup costs where you live.'), true); },
       plan: function (el) { choice().plan = el.dataset.p; H.render(); },
       cups: function (el) { choice().cups = +el.dataset.n; choice().other = ''; H.render(); },
       who: function (el) { choice().forWho = el.dataset.w; H.render(); },
@@ -433,16 +453,16 @@
       },
       prayinstead: function () { prayInstead = true; H.closeModal(); promiseDialog(); },
       gift: function () { if (admin()) giftDialog(); },
-      giftn: function (el) { var sub = sup(), d = sub.drink || choice().drink, cur = sub.currency || choice().currency, a = C.giftOf(Math.min(12, +el.dataset.n), d, cur) || C.cup(d, cur) * (+el.dataset.n);
-        if (+el.dataset.n > 12) a = Math.round(C.cup(d, cur) * (+el.dataset.n) * 100) / 100;
-        H.closeModal(); payDialog({ kind: 'gift', total: a, currency: cur, gift: a }); },
-      giftamt: function () { var i = document.getElementById('sp-giftamt'), cur = sup().currency || choice().currency, a = Math.round((parseFloat(String(i && i.value || '').replace(',', '.')) || 0) * 100) / 100;
+      giftn: function (el) { var c = myCup().price ? myCup() : { price: C.parse(choice().price), currency: cur() }, a = C.giftOf(+el.dataset.n, c.price, c.currency);
+        if (!(a > 0)) { H.toast(T('Type what one cup costs where you live.'), true); return; }
+        H.closeModal(); payDialog({ kind: 'gift', total: a, currency: c.currency, gift: a }); },
+      giftamt: function () { var i = document.getElementById('sp-giftamt'), cu = cur(), a = C.parse(i && i.value);
         if (!(a > 0)) { H.toast(T('Type an amount first.'), true); return; }
-        H.closeModal(); payDialog({ kind: 'gift', total: a, currency: cur, gift: a }); },
+        H.closeModal(); payDialog({ kind: 'gift', total: a, currency: cu, gift: a }); },
       paid: function () {
         if (!admin() || !paying) return;
         var o = paying, cur = sup(), before = cur.paidUntil;
-        var base = Object.assign({}, cur, o.kind === 'month' || o.kind === 'year' ? { drink: cur.drink || choice().drink, currency: o.currency } : {});
+        var base = Object.assign({}, cur, o.kind === 'month' || o.kind === 'year' ? { cup: cur.cup && cur.cup.currency === o.currency ? cur.cup : { kind: choice().kind, price: C.parse(choice().price), currency: o.currency } } : {});
         var next = C.recordPayment(base, H.today(), { kind: o.kind === 'pray' ? 'gift' : o.kind, amount: o.total, currency: o.currency, gift: o.gift, forOther: o.forOther });
         if (next.plan === 'month' || next.plan === 'year') next.pledge = next.pledge || null;
         S.setSettings({ support: next }, 'Recorded a payment to Church Hub (' + C.money(o.total, o.currency) + ', ' + (o.forOther ? 'for another church' : o.kind) + ')');

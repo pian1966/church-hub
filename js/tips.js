@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.82';
+  var NEWS_FOR = '0.83';
   var NEWS = [
+    { date: '2026-11-16', who: ['admin'], app: 'support', text: TX('Subscription: each church now gives the price of one cup where it lives, in its own money – chai from a stall, a café coffee or a coffee-chain latte, whichever is honest for the church – and the prayer card can use a photo taken there and then.') },
     { date: '2026-11-16', who: ['admin'], app: 'support', text: TX('Administrators: the new Subscription page (one coffee a month, or ten a year) shows when your next payment is due, lets you add a gift in one tap, and offers a free payment holiday when money is tight.') },
     { date: '2026-11-16', who: ['everyone'], text: TX('Church Hub is for every church: a church that can’t afford it can pray for another church each month instead, and that church appears on everyone’s Home page.') },
     { date: '2026-11-16', who: ['rosters', 'admin'], app: 'rosters', text: TX("Holy Communion: under Rosters → Services, choose which Sundays of the month each service has communion, and communion servers and providers are only asked for then. For a one-off change, tap “Communion” under that date in the roster.") },

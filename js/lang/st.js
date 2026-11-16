@@ -4,6 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
+    "Messages: Sent now shows only the messages you sent. Administrators and Pastors find everyone’s messages under All messages, and set up groups under Message groups.": "Melaetsa: Tse rometsweng jwale di bontsha feela melaetsa eo o e rometseng. Batsamaisi le Baruti ba fumana melaetsa ya bohle tlasa Melaetsa yohle, mme ba theha dihlopha tlasa Dihlopha tsa melaetsa.",
     "Every church, however small, deserves great church software.": "Kereke e nngwe le e nngwe, leha e ka ba nyenyane hakae, e tshwanelwa ke software e ntle haholo ya kereke.",
     "Subscription: each church now gives the price of one cup where it lives, in its own money – chai from a stall, a café coffee or a coffee-chain latte, whichever is honest for the church – and the prayer card can use a photo taken there and then.": "Peeletso: jwale kereke e nngwe le e nngwe e fana ka theko ya kopi e le nngwe moo e leng teng, ka tjhelete ya yona – tee ya setaleng, kofi ya khefing kapa latte ya lebenkele le leholo la kofi, eng kapa eng e leng ya botshepehi ho kereke – mme karete ya thapelo e ka sebedisa setshwantsho se nkuwang hona moo.",
     "Your church": "Kereke ya lona",

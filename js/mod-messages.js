@@ -43,8 +43,9 @@
 
   function tabs(active) {
     var t = [['', T('Inbox')]];
-    if (audiences().length) t.push(['send', T('Write')], ['sent', manager() ? T('All messages') : T('Sent')]);
-    if (manager()) t.push(['groups', T('Groups')]);
+    // Like email: Inbox, Write, Sent first; what only Administrators and Pastors have comes last
+    if (audiences().length) t.push(['send', T('Write')], ['sent', T('Sent')]);
+    if (manager()) t.push(['all', T('All messages')], ['groups', T('Message groups')]);
     if (t.length < 2) return '';
     return '<nav class="seg me-tabs" aria-label="' + esc(T('Messages')) + '">' + t.map(function (x) {
       var on = x[0] === active, n = x[0] === '' ? unreadCount() : 0;
@@ -366,9 +367,10 @@
       r.addEventListener('change', function () { if (r.checked) { S.pref('msgMarks', r.value); legendOpen = true; H.render(); } });
     });
   }
-  function renderSent() {
-    var u = me(), all = manager(), list = Msg.sent(S.list('messages'), u.id, all);
-    var html = head(all ? T('Every message sent in Church Hub, newest first. You can delete any of them.') : T('Messages you have sent, newest first.'), 'sent');
+  /** Sent: your own messages. All messages (Administrators and Pastors): everyone's. */
+  function renderSent(everyone) {
+    var u = me(), all = !!everyone && manager(), list = Msg.sent(S.list('messages'), u.id, all);
+    var html = head(all ? T('Every message sent in Church Hub, newest first. You can delete any of them.') : T('Messages you have sent, newest first.'), all ? 'all' : 'sent');
     if (!list.length) return html + '<p class="empty">' + T('Nothing sent yet.') + '</p>';
     if (list.some(function (m) { return m.fromId === u.id; })) html += legend();   // the signs are only on your own messages
     return html + '<section class="msg-chat">' + list.map(function (m) {
@@ -415,13 +417,14 @@
     id: 'messages', name: 'Messages', desc: 'Messages from the church to you and your groups', icon: BUBBLE, tint: '#2F6FB0',
     render: function (p) {
       if (p[0] === 'send') return renderSend(p.slice(1).join('/'));
-      if (p[0] === 'sent') return renderSent();
+      if (p[0] === 'sent') return renderSent(false);
+      if (p[0] === 'all') return renderSent(true);
       if (p[0] === 'groups') return renderGroups();
       return renderInbox();
     },
     after: function (p) {
       if (p[0] === 'send') wireSend();
-      else if (p[0] === 'sent') wireSent();
+      else if (p[0] === 'sent' || p[0] === 'all') wireSent();
       else if (!p[0]) setTimeout(markShown, 300);
     },
     badge: function () { return unreadCount(); },

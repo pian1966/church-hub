@@ -531,7 +531,7 @@ footer a { color: var(--ink-2); }
 <section class="price" id="pricing" aria-labelledby="price-title">
   <div class="wrap">
     <h2 id="price-title">Church Hub for the price of a coffee.</h2>
-    <p class="lead">Give us the price of one cup of coffee a month (whatever a cup costs where you live) so that we can make sure that Church Hub keeps going - not only for you, but also for churches that can't pay anything. Church Hub is for every church, everywhere. No church is ever excluded because of financial hardship. If a church cannot afford even a cup of coffee, they can contribute through pledging to pray for another Church Hub church instead. Every church belongs, regardless of its means.</p>
+    <p class="lead">Give us the price of one cup of coffee a month (whatever a cup costs where you live) for your whole church, not for each person in it, so that we can make sure that Church Hub keeps going - not only for you, but also for churches that can't pay anything. Church Hub is for every church, everywhere. No church is ever excluded because of financial hardship. If a church cannot afford even a cup of coffee, they can contribute through pledging to pray for another Church Hub church instead. Every church belongs, regardless of its means.</p>
 
     <div class="deal">
       <div class="ticket">
@@ -551,7 +551,7 @@ footer a { color: var(--ink-2); }
         </div>
         <div class="suggest" id="suggest">Suggested price</div>
         <div class="amount" id="amount" aria-live="polite">R50</div>
-        <div class="per" id="per">a month, for your whole church</div>
+        <div class="per" id="per">a month, for your whole church (not per person)</div>
         <div class="usd" id="save"></div>
         <p class="fine">These are suggested prices, not fixed charges, in your own country's money. The examples we suggest (a Tall latte at Starbucks in South Africa, the USA and Australia; chai from a stall in India; iced coffee from a stall in Cambodia) are from November 2026, rounded. Stop or change whenever you like. You pay by bank transfer from your own banking app, so Church Hub never sees your card or your bank details.</p>
       </div>
@@ -617,6 +617,8 @@ footer a { color: var(--ink-2); }
 
     <div class="why">
       <p><b>Why a coffee?</b>It's a small, familiar thank-you anywhere in the world, the price of one cup at your local café, so a church in Durban, Denver, Delhi or Darwin each pays what a cup costs where they are, and what is honest for them. A cup of chai from a stall, a café coffee or a coffee-chain latte: each church chooses.</p>
+      <p><b>Per church, not per person.</b>One cup a month covers your whole church: every member, group, service and language. Forty people or four thousand, the price is the same.</p>
+      <p><b>A small price, not a small product.</b>Don't mistake a low price for an inferior product or missing features. Church Hub competes with the best church management systems in the world: people, rosters, groups, messages, staff leave, archives and a library, in more than 20 languages. We keep the price low so that every church can have it, not because it does less.</p>
       <p><b>The worker deserves his wages.</b>Your coffee pays for looking after Church Hub, so it keeps improving, and your gifts pay for churches that can't. Thank you for your generosity.</p>
     </div>
   </div>
@@ -629,7 +631,8 @@ footer a { color: var(--ink-2); }
       <details><summary>Do we need someone technical to set it up?</summary><p>No. Church Hub is designed to be set up and run by a church office volunteer. Each church's records live in its own Google account, so you need a Google account for the church.</p></details>
       <details><summary>Who can see our members' details?</summary><p>Only the people whose role at church needs them. Members choose what others may see, and appear in the directory only if they agree. Sensitive details, like pastoral notes and children's medical notes, are kept to the people who care for them, with a record of who has looked.</p></details>
       <details><summary>Many of our couples share one email address. Is that a problem?</summary><p>No. Up to four people can share one email address, and each still gets their own page, rosters and messages.</p></details>
-      <details><summary>Is the price per church or per person?</summary><p>Per church. However many people, groups or services you have, it's one cup of coffee a month, or ten a year.</p></details>
+      <details><summary>Is the price per church or per person?</summary><p>Per church, not per person. However many people, groups or services you have, it's one cup of coffee a month for your whole church, or ten a year.</p></details>
+      <details><summary>Does such a low price mean fewer features?</summary><p>No. Every church gets all of Church Hub, which stands alongside the best church management systems in the world. The price is low so that no church is left out, not because anything is missing.</p></details>
       <details><summary>We're in India (or Malawi, or Cambodia). Do we pay Starbucks prices?</summary><p>No. You pay what one cup costs where you live, in your own money, and you choose the cup: chai from a stall, a café coffee or a coffee-chain latte. A church with plenty can choose more, wherever it is. A church that can't afford even that prays instead, for free.</p></details>
       <details><summary>How do we pay?</summary><p>By bank transfer (EFT) from your own banking app. Church Hub shows you its bank details and your church's own short reference, so we know the payment is from you. From outside South Africa, your bank changes your money into rand. Card payments are planned.</p></details>
       <details><summary>What if we can't pay one month?</summary><p>Take a payment holiday: a free month, no questions asked. Monthly churches can take three a year, and yearly churches one. If paying is hard for longer, pray instead: Church Hub stays free for as long as you need. Nothing is ever locked or deleted for being late.</p></details>
@@ -711,7 +714,7 @@ footer a { color: var(--ink-2); }
     KINDS.forEach(function (k) { document.querySelector('[data-price="' + k.id + '"]').textContent = x[k.i] ? 'Suggested price: ' + money(x[k.i]) : 'You say how much'; });
     suggest.textContent = p && p === Number(c()[KINDS.filter(function (kk) { return kk.id === state.kind; })[0].i]) ? 'Suggested price' : 'Your price';
     amount.textContent = p ? money(yearly ? p * 10 : p) : x[3].trim() + ' ?';
-    per.textContent = yearly ? 'a year, for your whole church' : 'a month, for your whole church';
+    per.textContent = yearly ? 'a year, for your whole church (not per person)' : 'a month, for your whole church (not per person)';
     save.textContent = !p ? 'Type what one cup costs where you live.' : yearly ? 'Two cups free: you save ' + money(p * 2) + '.' : 'Or ' + money(p * 10) + ' a year, with two cups free.';
     if (animate) { amount.classList.remove('flip'); void amount.offsetWidth; amount.classList.add('flip'); }
   }

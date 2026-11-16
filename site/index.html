@@ -117,6 +117,47 @@ p { margin: 0; }
 .screen .away { color: #645B53; font-size: 11px; }
 @media (max-width: 900px) { .showcase { grid-template-columns: 1fr; gap: 40px; } .showcase .phone { rotate: 0deg; } }
 
+/* A desktop computer: the whole app with its side menu, drawn at 960 × 560 and scaled to fit (a few lines of script below) */
+.desktop { margin-top: 88px; text-align: center; }
+.desktop h3 { font-size: clamp(1.7rem, 3.4vw, 2.4rem); letter-spacing: -0.02em; }
+.desktop > p { color: var(--ink-2); margin: 14px auto 0; max-width: 60ch; }
+.monitor { max-width: 980px; margin: 40px auto 0; }
+.bezel { background: #16212E; border-radius: 22px; padding: 14px 14px 18px; box-shadow: 0 40px 70px -30px rgba(22,33,46,.55), 0 12px 24px -12px rgba(22,33,46,.35); }
+.fitbox { position: relative; width: 100%; aspect-ratio: 960 / 590; overflow: hidden; border-radius: 10px; background: #F6F4F1; }
+.dsk { position: absolute; left: 0; top: 0; width: 960px; height: 590px; transform-origin: 0 0; transform: scale(var(--fit, 1)); text-align: left;
+  font-family: Inter, var(--body); font-size: 12.5px; line-height: 1.4; color: #1D1B19; display: grid; grid-template-rows: 30px 1fr; }
+.neck { width: 120px; height: 46px; margin: 0 auto; background: linear-gradient(#C9C2BA, #B3AAA1); clip-path: polygon(18% 0, 82% 0, 100% 100%, 0 100%); }
+.foot { width: 260px; height: 12px; margin: 0 auto; border-radius: 10px 10px 4px 4px; background: #B3AAA1; }
+.dsk h4, .dsk h5, .dsk p, .dsk ul { margin: 0; padding: 0; } .dsk ul { list-style: disc; }
+.dsk .chrome { display: flex; align-items: center; gap: 8px; padding: 0 12px; background: #E9E4DE; border-bottom: 1px solid #D6CDC4; }
+.dsk .chrome i { width: 10px; height: 10px; border-radius: 50%; background: #E0B4A8; } .dsk .chrome i + i { background: #E8D29A; } .dsk .chrome i + i + i { background: #A9CFA0; }
+.dsk .url { margin-left: 14px; flex: 1; max-width: 420px; background: #fff; border-radius: 7px; padding: 3px 10px; color: #645B53; font-size: 11px; }
+.dsk .app { display: grid; grid-template-columns: 196px 1fr; min-height: 0; }
+.dsk .side { background: #231E1A; color: #E9E2DB; padding: 14px 10px; display: flex; flex-direction: column; gap: 2px; }
+.dsk .brand2 { display: flex; align-items: center; gap: 8px; padding: 0 6px 12px; } .dsk .brand2 .m { width: 28px; height: 28px; border-radius: 8px; background: #E8590C; display: grid; place-items: center; }
+.dsk .brand2 b { display: block; color: #fff; font-size: 12.5px; } .dsk .brand2 small { color: #B7ADA4; font-size: 10px; }
+.dsk .nv { display: flex; align-items: center; gap: 9px; padding: 6px 8px; border-radius: 8px; font-weight: 600; font-size: 12px; }
+.dsk .nv.on { background: #3A322C; color: #fff; box-shadow: inset 3px 0 0 #E8590C; }
+.dsk .nv .dot { width: 12px; height: 12px; border-radius: 4px; background: #5A4F47; } .dsk .nv.on .dot { background: #E8590C; }
+.dsk .nv .n { margin-left: auto; background: #E8590C; color: #fff; border-radius: 999px; font-size: 9.5px; padding: 0 6px; }
+.dsk .me { margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 10px 6px 0; border-top: 1px solid #3A322C; }
+.dsk .me .av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font-weight: 700; font-size: 10px; flex: none; } .dsk .me small { display: block; color: #B7ADA4; font-size: 10px; }
+.dsk main.m2 { padding: 20px 26px; overflow: hidden; }
+.dsk h4 { font-size: 21px; letter-spacing: -0.01em; } .dsk .lead2 { color: #645B53; margin-top: 2px; }
+.dsk .cols { display: grid; grid-template-columns: 1.15fr 1fr; gap: 16px; margin-top: 16px; }
+.dsk .news { padding-left: 16px; } .dsk .news li { margin: 0 0 6px; }
+.dsk .pane { background: #fff; border: 1px solid #E7E1DA; border-radius: 12px; padding: 12px 14px; }
+.dsk .pane h5 { font-size: 12.5px; margin-bottom: 6px; }
+.dsk .todo { display: flex; align-items: center; gap: 9px; padding: 7px 0; border-top: 1px solid #F0EBE5; } .dsk .todo:first-of-type { border-top: 0; }
+.dsk .todo span:nth-child(2) { flex: 1; }
+.dsk .dotc { width: 8px; height: 8px; border-radius: 50%; }
+.dsk .tg { font-size: 9.5px; font-weight: 700; border-radius: 6px; padding: 2px 7px; }
+.dsk .news li { color: #3B342E; }
+.dsk .apps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-top: 14px; }
+.dsk .ac { background: #fff; border: 1px solid #E7E1DA; border-radius: 12px; padding: 10px 12px; }
+.dsk .ac .ic { width: 26px; height: 26px; border-radius: 8px; margin-bottom: 6px; }
+.dsk .ac b { display: block; font-size: 12.5px; } .dsk .ac small { color: #645B53; font-size: 10.5px; }
+
 /* Sections */
 section { padding: 96px 0; }
 .stone { background: var(--stone); }
@@ -398,6 +439,34 @@ footer a { color: var(--ink-2); }
         <p>Each church chooses its own colours, its own words and its own ministries, so Church Hub feels like your church, wherever and however you worship.</p>
       </div>
     </div>
+
+    <div class="desktop">
+      <h3>On the office computer, too.</h3>
+      <p>Church Hub runs in any web browser: on the office computer, a laptop at home, a tablet or a phone, with nothing to install. The same church, the same people, the same rosters, wherever you sign in.</p>
+      <div class="monitor" aria-hidden="true">
+        <div class="bezel"><div class="fitbox"><div class="dsk">
+          <div class="chrome"><i></i><i></i><i></i><span class="url">pian1966.github.io/church-hub</span></div>
+          <div class="app">
+            <div class="side">
+              <div class="brand2"><span class="m"><svg width="16" height="16" viewBox="0 0 48 48"><path d="M24 8v32M13 19h22" fill="none" stroke="#fff" stroke-width="6" stroke-linecap="round"/></svg></span><span><b>Church Hub</b><small>Grace Community Church</small></span></div>
+              <div class="nv on"><span class="dot"></span>Home</div><div class="nv"><span class="dot"></span>Me</div><div class="nv"><span class="dot"></span>People</div><div class="nv"><span class="dot"></span>Rosters</div><div class="nv"><span class="dot"></span>Leave</div><div class="nv"><span class="dot"></span>Groups</div><div class="nv"><span class="dot"></span>Messages<span class="n">2</span></div><div class="nv"><span class="dot"></span>Library</div><div class="nv"><span class="dot"></span>Privacy</div><div class="nv"><span class="dot"></span>Subscription</div><div class="nv"><span class="dot"></span>Settings</div>
+              <div class="me"><span class="av" style="background:#0F7C80">PA</span><span><b>Pastor Ana Silva</b><small>Administrator</small></span></div>
+            </div>
+            <main class="m2">
+              <h4>Good afternoon, Ana</h4>
+              <p class="lead2">Tuesday 18 November · Administrator</p>
+              <div class="cols">
+                <div class="pane"><h5>To do</h5><div class="todo"><span class="dotc" style="background:#2F6B4F"></span><span>Welcome 3 newcomers from Sunday</span><span class="tg" style="background:#E0F2E7;color:#23613D">People</span></div><div class="todo"><span class="dotc" style="background:#1D5FB8"></span><span>Fill 2 gaps on the roster for Sun 23 Nov</span><span class="tg" style="background:#E1ECFA;color:#164A8F">Rosters</span></div><div class="todo"><span class="dotc" style="background:#B8430A"></span><span>Approve or decline 2 leave requests</span><span class="tg" style="background:#FFE8D9;color:#B8430A">Leave</span></div><div class="todo"><span class="dotc" style="background:#6D3FC0"></span><span>Remind the Youth Care Group leader</span><span class="tg" style="background:#EEE6FB;color:#55309A">Groups</span></div><div class="todo"><span class="dotc" style="background:#A3283B"></span><span>3 library books are overdue</span><span class="tg" style="background:#FBE3E7;color:#7F1F2E">Library</span></div></div>
+                <div class="pane"><h5>What's new</h5><ul class="news"><li>Rosters ask volunteers in Messages, and they reply right there.</li><li>Take a photo for your church's prayer card.</li></ul>
+                  <h5 style="margin-top:10px">This month we pray for</h5><b>Hope Chapel, Mangochi, Malawi</b><p style="color:#645B53;margin-top:2px">Clean water for the village borehole · Three new Sunday-school teachers</p></div>
+              </div>
+              <div class="apps"><div class="ac"><div class="ic" style="background:#E0F2E7"></div><b>People</b><small>212 people · 86 households</small></div><div class="ac"><div class="ic" style="background:#E1ECFA"></div><b>Rosters</b><small>2 gaps on Sun 23 Nov</small></div><div class="ac"><div class="ic" style="background:#EEE6FB"></div><b>Groups</b><small>14 Care Groups · 6 Midweek</small></div><div class="ac"><div class="ic" style="background:#FFE8D9"></div><b>Messages</b><small>2 new messages</small></div><div class="ac"><div class="ic" style="background:#FBE3E7"></div><b>Library</b><small>41 books on loan</small></div><div class="ac"><div class="ic" style="background:#E5F1FB"></div><b>Leave</b><small>2 waiting for approval</small></div><div class="ac"><div class="ic" style="background:#F0EBE5"></div><b>Privacy</b><small>All consents up to date</small></div><div class="ac"><div class="ic" style="background:#FFF1CC"></div><b>Subscription</b><small>In the prayer circle</small></div></div>
+            </main>
+          </div>
+        </div></div></div>
+        <div class="neck"></div><div class="foot"></div>
+      </div>
+    </div>
   </div>
 </section>
 
@@ -658,6 +727,11 @@ footer a { color: var(--ink-2); }
   sel.addEventListener('change', function () { state.country = sel.value; startCountry(); show(true); });
   input.addEventListener('input', function () { state.price = input.value; show(false); });
   startCountry(); show(false);
+
+  // The desktop picture is drawn at 960 pixels wide; scale it to whatever room the page has.
+  var fits = document.querySelectorAll('.fitbox');
+  function fit() { [].forEach.call(fits, function (b) { b.style.setProperty('--fit', b.clientWidth / 960); }); }
+  fit(); addEventListener('resize', fit, { passive: true });
 
   // A thin line under the top bar once the page has scrolled.
   var top = document.getElementById('top');

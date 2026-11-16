@@ -86,6 +86,10 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 - ⬜ A care group (or other group) talking together, as on WhatsApp – private replies to the sender are done (0.72.0)
 - ⬜ Let Administrators publish documents from the Archive to the membership application for the Rector too (they can already write, link or attach what it takes to become a Church Partner)
 - ⬜ Decide how long messages are kept (e.g. 2 years) and add them to Privacy → Retention
+- ⬜ Weekly notices: the Office writes the week's notices once, and they go out each week only to people who have chosen to
+  receive them (a switch on Me, like an opt-in, and changeable at any time) – in the app's Messages, and later by email for
+  those who prefer it (consent-aware, with an easy opt-out, never to people who have died or left). Attendees as well as Church
+  Partners can sign up; a past-notices list so anyone can read last week's again
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.

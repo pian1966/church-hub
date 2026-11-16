@@ -366,3 +366,11 @@ This document describes POPIA; churches elsewhere should check the same points a
   can act as any of them, so the rules allow what any of them may do – no more than they could do before by signing in with
   the shared address. Church Hub says so on Edit details; staff roles (Administrator, Pastor) on a shared address are best
   avoided, and only an Administrator can set them up. Switching is written in the history log.
+
+## Prayer cards (Subscription → Our prayer card)
+Purpose: other churches pray for this church. It is about the church, never its people: a photo, a town and two prayer
+points. A photo with recognisable people is only shown once an Administrator ticks that everyone in it agreed (`photoOk`).
+Prayer points are checked as they're typed for phone numbers, email addresses, links and @names, with a reminder to pray
+for things rather than people by name. Churches in countries where Christians face danger start hidden (no name, town,
+country or photo). Kept in `settings.prayerCard` (readable by everyone signed in to the church, as all settings are);
+changes are written to the audit log. Shared with other churches only once Church Hub's office exists.

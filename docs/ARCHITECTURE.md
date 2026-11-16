@@ -832,3 +832,15 @@ The wedding anniversary sits right under marital status.
   the last. "Got it" hides the card until the next sign-in. No personal information; nothing is saved in the database.
 - Adding a feature: add a news line (its date and who it is for) and, where it helps, a tip – with all five languages.
 
+
+## Subscription and the prayer circle (`js/coffee.js`, `js/mod-support.js`)
+Administrators (and Pastors with "settings") open **Subscription**: choose a coffee and currency, monthly (one coffee) or
+yearly (ten), a gift, and who it's for (our church or another church); Pay shows Church Hub's bank details and the church's
+reference (`Coffee.reference`), and "We've paid" records it. Kept in `settings.support` = `{ drink, currency, plan, startedAt,
+paidUntil, payments[], holidays[], pledge, prayOn }` (the newest 24 payments and holidays) and `settings.prayerCard` =
+`{ photo, photoOk, place, points[2], discreet, needsHelp }` – both in the church's own settings, so the Firestore rules
+didn't change. `Coffee.status()` decides the reminder (7 days before for monthly, 30 for yearly; due; late after 30 days);
+modules can put a card on everyone's Home with `homeCard` (`js/app.js` `homeCards`): the due reminder (Administrators) and
+"This month we pray for" (everyone, once the church is in the prayer circle). The church to pray for comes from
+`Coffee.partnerFor` (a different church each month, the same on every phone). Until the office exists the circle is the
+demo's made-up churches (`SampleChurches` in `js/sample.js`); live churches see their promise kept and an explanation.

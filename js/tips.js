@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.81';
+  var NEWS_FOR = '0.82';
   var NEWS = [
+    { date: '2026-11-16', who: ['admin'], app: 'support', text: TX('Administrators: the new Subscription page (one coffee a month, or ten a year) shows when your next payment is due, lets you add a gift in one tap, and offers a free payment holiday when money is tight.') },
+    { date: '2026-11-16', who: ['everyone'], text: TX('Church Hub is for every church: a church that can’t afford it can pray for another church each month instead, and that church appears on everyone’s Home page.') },
     { date: '2026-11-16', who: ['rosters', 'admin'], app: 'rosters', text: TX("Holy Communion: under Rosters → Services, choose which Sundays of the month each service has communion, and communion servers and providers are only asked for then. For a one-off change, tap “Communion” under that date in the roster.") },
     { date: '2026-11-16', who: ['everyone'], app: 'messages', text: TX('Writing a message is easier: tap the box at the top to choose who it’s for from clear cards and lists, each showing how many people it reaches.') },
     { date: '2026-11-15', who: ['everyone'], text: TX('Church Hub now moves more gently: pages and windows ease in, new messages glide into the conversation, and a small green tick shows when something is saved.') },
@@ -48,6 +50,7 @@
 
   var TIPS = [
     // Everyone
+    { id: 'prayer-card', who: ['admin'], app: 'support', href: '#/support/card', text: TX('Give your church a prayer card under Subscription → Our prayer card: a photo and two things to pray for, so churches in the prayer circle can pray for you.') },
     { id: 'roster-team', who: ['admin'], app: 'rosters', href: '#/settings/services', text: TX('Administrators and Roster coordinators hear when someone can’t make a roster turn. To include someone else, such as the church secretary, add them under Settings → Church Services.') },
     { id: 'me-details', who: ['everyone'], app: 'me', href: '#/me', text: TX('Your Me page has your own details, and you can update your contact details there yourself.') },
     { id: 'me-away', who: ['everyone'], app: 'me', href: '#/me', text: TX('Going away? Add your days away on your Me page, so nobody puts you on a roster while you’re gone.') },

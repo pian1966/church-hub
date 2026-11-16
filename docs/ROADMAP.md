@@ -156,6 +156,8 @@ each church gives what it chooses once a year, with a small minimum. Today each 
   Administrator's Home), a church's gift history under Settings, and a page for us listing churches and gifts.
 - ⬜ 7.9 Move Christ Church Howick across (export from its own project, import into the shared one), then retire the single-church setup guide.
 - ⬜ 7.10 A simple public website: what Church Hub does, the demo, languages, privacy and safety, how the gift works, sign up.
+  First version built (16 Nov 2026): `site/index.html`, at `/church-hub/site/`. Still to add: sign-up and a contact address
+  once Church Hub has its own web address. Its coffee prices copy `js/coffee.js` (16 Nov 2026): refresh both together (`docs/PRICES.md`).
 
 **The subscription** – changed 16 Nov 2026 to a coffee a month (or ten a year), with gifts, paying for another church,
 payment holidays and praying instead; built as the Subscription page (`docs/architecture/TARGET.md` 10.5, `docs/PRICES.md`).

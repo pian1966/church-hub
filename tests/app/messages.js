@@ -56,7 +56,9 @@ module.exports = async function (ctx) {
   check((await s.page.textContent('#ms-reach')).includes('Goes to 3 people'), '“Tick all” ticks the people shown; the count follows');
   await s.page.click('[data-act="messages:send"]'); await s.page.waitForSelector('#modal .overlay'); await s.page.click('[data-act="messages:sendnow"]'); await s.settle(); docs = await s.docsNow();
   check(Object.values(docs).some(d => d.kind === 'people' && d.to.slice().sort().join() === 'p14,p15,p17' && d.body === 'Planning meeting?'), 'the message goes to the three people ticked');
-  await s.go('messages/sent'); check((await s.text()).includes('To 3 people') && (await s.page.textContent('.me-tabs')).includes('All messages'), 'All messages (Sent, for Administrators) says how many people it went to');
+  await s.go('messages/sent'); check((await s.text()).includes('To 3 people'), 'Sent says how many people it went to');
+  check((await s.page.$$eval('.me-tabs a', a => a.map(x => x.textContent.replace(/ \(\d+\)$/, '')).join())) === 'Inbox,Write,Sent,All messages,Message groups', 'Administrators: the tabs are Inbox, Write, Sent, All messages, Message groups');
+  await s.go('messages/all'); check((await s.text()).includes('Every message sent in Church Hub') && !!(await s.page.$('.me-tabs a.on[href="#/messages/all"]')), 'All messages has its own tab');
   await finish(s);
 
   // A member: their message group's messages, unread until opened; the leader writes to their own group

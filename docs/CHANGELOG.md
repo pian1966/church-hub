@@ -405,3 +405,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   "Churches to pray for" and "Prayer card for your church", "Take a photo" for the prayer card; the public website's
   price section does the same, and shows a second phone: a Western parish's Sunday roster
 - ✅ Website (16 Nov 2026): a desktop computer showing Church Hub's Home with its side menu, to show it runs in any browser, not only on a phone
+- ✅ 0.83.1 (16 Nov 2026): Messages tabs in a logical order – Inbox, Write, Sent, then (Administrators and Pastors) All messages
+  and Message groups; Sent is back for everyone and shows only your own messages; "Groups" renamed Message groups

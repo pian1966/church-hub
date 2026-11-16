@@ -407,3 +407,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ Website (16 Nov 2026): a desktop computer showing Church Hub's Home with its side menu, to show it runs in any browser, not only on a phone
 - ✅ 0.83.1 (16 Nov 2026): Messages tabs in a logical order – Inbox, Write, Sent, then (Administrators and Pastors) All messages
   and Message groups; Sent is back for everyone and shows only your own messages; "Groups" renamed Message groups
+- ✅ 0.83.2 (16 Nov 2026): About → More has a link to Church Hub’s public website (site/, on GitHub Pages) for everyone

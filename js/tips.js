@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.83';
   var NEWS = [
+    { date: '2026-11-16', who: ['everyone'], text: TX('About now has a link to Church Hub’s website, which shows what Church Hub offers to every church – handy to share with friends at other churches.') },
     { date: '2026-11-16', who: ['admin', 'pastor'], app: 'messages', text: TX('Messages: Sent now shows only the messages you sent. Administrators and Pastors find everyone’s messages under All messages, and set up groups under Message groups.') },
     { date: '2026-11-16', who: ['admin'], app: 'support', text: TX('Subscription: each church now gives the price of one cup where it lives, in its own money – chai from a stall, a café coffee or a coffee-chain latte, whichever is honest for the church – and the prayer card can use a photo taken there and then.') },
     { date: '2026-11-16', who: ['admin'], app: 'support', text: TX('Administrators: the new Subscription page (one coffee a month, or ten a year) shows when your next payment is due, lets you add a gift in one tap, and offers a free payment holiday when money is tight.') },

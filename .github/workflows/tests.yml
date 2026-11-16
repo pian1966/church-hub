@@ -16,10 +16,13 @@ jobs:
           files=''
           if [ '${{ github.event_name }}' = pull_request ]; then
             files=$(gh api --paginate 'repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files' --jq '.[].filename') || files=''
-          elif [ -n '${{ github.event.before }}' ] && [ '${{ github.event.before }}' != 0000000000000000000000000000000000000000 ]; then
-            files=$(gh api 'repos/${{ github.repository }}/compare/${{ github.event.before }}...${{ github.sha }}' --jq '.files[].filename') || files=''
+          else
+            # A brand-new branch (e.g. a file edited on github.com) has no "before": compare it with main instead.
+            base='${{ github.event.before }}'
+            case "$base" in ''|0000000000000000000000000000000000000000) base='${{ github.event.repository.default_branch }}';; esac
+            files=$(gh api "repos/${{ github.repository }}/compare/$base...${{ github.sha }}" --jq 'if (.files|length) >= 300 then empty else .files[].filename end') || files=''
           fi
-          # Unknown (new branch, error) or anything outside site/, docs/ and *.md -> run every test.
+          # Unknown (error, or more than 300 files) or anything outside site/, docs/ and *.md -> run every test.
           if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -vE '^(site/|docs/)|\.md$' > /dev/null; then
             echo 'skip=true' >> "$GITHUB_OUTPUT"
             echo 'Only the website or the documentation changed - the tests are skipped.'

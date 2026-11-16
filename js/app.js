@@ -491,7 +491,11 @@ var Hub = (function () {
     if (!mod || (mod.id === 'me' && !p[1])) body = prompts() + body;   // Home and My details
     var keyOf = function (d) { var sm = d.querySelector('summary'); return d.id || (sm ? sm.textContent.trim() : ''); };
     var wasOpen = [].map.call(root.querySelectorAll('details[open]'), keyOf).filter(Boolean), samePage = root.dataset.page === location.hash;
+    var hadMsgs = samePage ? [].map.call(root.querySelectorAll('.msg-chat [data-id]'), function (x) { return x.dataset.id; }) : null;
     root.innerHTML = shell(mod, body);
+    // Gentle movement: a new page eases in; a message that has just arrived on the page you're on glides into the list
+    var pb = root.querySelector('.page-body'); if (pb && !samePage) pb.classList.add('page-in');
+    if (hadMsgs) root.querySelectorAll('.msg-chat [data-id]').forEach(function (x) { if (hadMsgs.indexOf(x.dataset.id) < 0) x.classList.add('arrive'); });
     root.dataset.page = location.hash; guardBack(); findables(root);
     // Groups: its tabs go under the page's title, as on every other page (title, tabs, then the page)
     var gt = root.querySelector('main .groups-tabs'), ph = root.querySelector('main .page-head');
@@ -773,8 +777,8 @@ var Hub = (function () {
 
   function modal(html, label, wide) {
     lastFocus = document.activeElement;
-    var m = document.getElementById('modal');
-    m.innerHTML = '<div class="overlay" data-act="hub:overlay"><div class="dialog' + (wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' + html + '</div></div>';
+    var m = document.getElementById('modal'), again = !!m.firstChild;   // one window replacing another: no second entrance
+    m.innerHTML = '<div class="overlay' + (again ? ' again' : '') + '" data-act="hub:overlay"><div class="dialog' + (wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' + html + '</div></div>';
     ourWords(m); findables(m);
     var body = m.querySelector('.dlg-body');
     if (body && body.querySelector('.field.req')) body.insertAdjacentHTML('afterbegin', reqKey());
@@ -788,7 +792,23 @@ var Hub = (function () {
       if (x.closest('.field.req')) x.setAttribute('aria-required', 'true'); else x.removeAttribute('aria-required');
     });
   }
-  function closeModal() { document.getElementById('modal').innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus(); }
+  function closeModal() {
+    var m = document.getElementById('modal'), ov = m.firstChild;
+    // A copy of the window fades away by itself (the real one is gone at once, so a new window can open straight away)
+    if (ov && ov.classList && ov.classList.contains('overlay') && !reduceMotion()) {
+      var ghost = ov.cloneNode(true); ghost.classList.add('leaving'); ghost.setAttribute('aria-hidden', 'true');
+      [ghost].concat([].slice.call(ghost.querySelectorAll('[data-act], [id], [name], [role]'))).forEach(function (x) { ['data-act', 'id', 'name', 'role'].forEach(function (a) { x.removeAttribute(a); }); });   // only a picture: nothing in it can be found or tapped
+      document.body.appendChild(ghost); setTimeout(function () { ghost.remove(); }, 220);
+    }
+    m.innerHTML = ''; if (lastFocus && lastFocus.focus) lastFocus.focus();
+  }
+  function reduceMotion() { return !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); }
+  // A section that folds open (<details>) slides its contents in – only when someone opens it, not when the page is redrawn
+  document.addEventListener('toggle', function (ev) {
+    var d = ev.target; if (!d || d.tagName !== 'DETAILS' || !d.open) return;
+    d.classList.remove('unfold'); void d.offsetWidth; d.classList.add('unfold');
+    setTimeout(function () { d.classList.remove('unfold'); }, 400);
+  }, true);
   function dialogHead(title, sub) { return '<header class="dlg-h"><div><h2>' + esc(title) + '</h2>' + (sub ? '<p>' + esc(sub) + '</p>' : '') + '</div><button class="icon-btn ghost x" data-act="hub:close" aria-label="' + T('Close') + '">' + icon(ICON.x) + '</button></header>'; }
   var toastTimer = null;
   /**
@@ -810,10 +830,16 @@ var Hub = (function () {
       }, 30); });
     });
   }
+  /** Messages that say something was saved or done: the toast gets a small tick that draws itself. */
+  var SAVED_WORDS = ['Saved', 'Photo saved', 'Note saved', 'Wording saved', 'Terms saved', 'Added', 'Reply sent', 'Recorded.', 'Service added', 'Stand-in set'];
+  function savedMsg(msg) { return SAVED_WORDS.some(function (w) { var x = T(w); return msg === x || msg.indexOf(T('Saved') + ' ') === 0; }); }
   function toast(msg, bad) {
     if (autoQuiet) { autoNote(msg, bad); return; }   // saving as you go: a small note instead of a toast
     var t = document.getElementById('toast');
-    var wf = words(); t.textContent = wf ? wf(String(msg)) : msg; t.className = 'toast show' + (bad ? ' bad' : '');
+    var wf = words(), text = wf ? wf(String(msg)) : String(msg), ok = !bad && savedMsg(String(msg));
+    t.innerHTML = (ok ? '<svg class="toast-tick" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.2 3.2L17 9"/></svg>' : '') + '<span>' + esc(text) + '</span>';
+    t.className = 'toast'; void t.offsetWidth;   // play the tick again when saving twice in a row
+    t.className = 'toast show' + (bad ? ' bad' : '') + (ok ? ' ok' : '');
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { t.className = 'toast'; }, 3200);
   }
   function download(filename, text, type) {

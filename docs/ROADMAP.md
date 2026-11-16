@@ -50,6 +50,12 @@ Members see their own family (and give consent for their children), smart lists 
 - ⬜ Save searches as smart lists; use them for emails and SMS
 - ⬜ Partnership applications: an email to Administrators and Pastors when one arrives (needs a Firebase function); apply without an account yet (email link first); print badges from the Android app
 - ⬜ Ask in your own words: more kinds of questions (leave, care and midweek groups, messages), and save an asked question as a smart list
+- ⬜ Care board – like the whiteboard in Myra's office: a board of people who need care (ill, in hospital, bereaved, newcomers,
+  struggling…). Adding someone sends a message through to the Care Group leader(s) of that person's Care Group (and the
+  Midweek Group leaders if relevant) so they can be visited and cared for. Each name shows who is caring, when they were last
+  visited and a status (needs a visit → visited → follow up → resolved), with gentle reminders when no one has picked someone
+  up, and people not in any Care Group flagged for the Office/ministers – so no one falls through the cracks. Only pastoral
+  staff and the relevant leaders see the board; keep details minimal and POPIA-safe (read `docs/POPIA.md`)
 
 ## Phase 3 – Rostering and services (built; follow-ups below)
 Accept/decline by email, swap requests, automatic reminders before a turn, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).

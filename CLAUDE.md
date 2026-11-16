@@ -38,7 +38,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
 | Home: What’s new and Did you know? (tips by access level; add news to `NEWS` with its date) | `js/tips.js`, `js/app.js` (`tipsCard`, `homeTags`) | `js/i18n/tips.js` | `tests/tips.test.js`, `tests/app/records.js` |
 | Demo data | `js/sample.js` | – | |
-| Public website for other churches (features, languages, the Big Mac price; one file, English, not part of the app or its version) | `site/index.html` | – | |
+| Public website for other churches (features, languages, the coffee price and prayer circle – prices copied from `js/coffee.js`; one file, English, not part of the app or its version) | `site/index.html` | – | |
 
 The browser test is `node tests/app.test.js` (needs Playwright); it starts the browser and runs each part in `tests/app/` in turn.
 GitHub runs every test, including the rules against the Firestore emulator, on every push (`.github/workflows/tests.yml`).

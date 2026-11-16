@@ -157,7 +157,7 @@ each church gives what it chooses once a year, with a small minimum. Today each 
 - ⬜ 7.9 Move Christ Church Howick across (export from its own project, import into the shared one), then retire the single-church setup guide.
 - ⬜ 7.10 A simple public website: what Church Hub does, the demo, languages, privacy and safety, how the gift works, sign up.
   First version built (16 Nov 2026): `site/index.html`, at `/church-hub/site/`. Still to add: sign-up and a contact address
-  once Church Hub has its own web address; refresh the Big Mac prices in it when the index is updated (January and July).
+  once Church Hub has its own web address. Its coffee prices copy `js/coffee.js` (16 Nov 2026): refresh both together (`docs/PRICES.md`).
 
 **The yearly gift**
 - Minimum: the price of **one Big Mac in the church's country**, from The Economist's Big Mac index (published twice a year,

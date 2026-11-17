@@ -581,10 +581,10 @@ var Store = (function () {
       });
     }
 
-    /* ---------- members with no email: a sign-in code once, then their number and a PIN (firestore.rules: invites, devices,
+    /* ---------- members with no email: a sign-in code once, then their number and a PIN (firestore.rules: invites, roles,
      * pinLogins). The phone signs in anonymously to read the code, then the person chooses a PIN: the anonymous account gets
      * a made-up address (<number>-<v>@pin.church-hub.invalid) with the PIN as its password, and in one write records
-     * devices/{id} (Member access for the person on the code), pinLogins/{number} and the spent code. From then on they sign
+     * roles/{that address} (Member access for the person on the code), pinLogins/{number} and the spent code. From then on they sign
      * in on any phone with their number and PIN. docs/ARCHITECTURE.md "Sign-in codes and PINs". */
     var PIN_DOMAIN = '@pin.church-hub.invalid', PIN_RE = /^c?[0-9]+-[0-9]+@pin\.church-hub\.invalid$/;
     var claim = null;   // the code being used: { code, invite } while the person says who they are and chooses a PIN
@@ -630,7 +630,7 @@ var Store = (function () {
       return doc('pinLogins/' + login).get().then(function (s) { return s.exists && (tries || 0) < 8 ? newChurchNumber((tries || 0) + 1) : login; });
     }
     /** "Yes, that's me", then their number (raw; '' = give them a church number) and a PIN: the account gets its sign-in
-     *  address and, in one write, the devices document, pinLogins/{number} and the spent code. Resolves { login } – the session
+     *  address and, in one write, its access entry (roles/{address}), pinLogins/{number} and the spent code. Resolves { login } – the session
      *  starts with begin(). Rejects 'pin/number' | 'pin/taken' | 'pin/off' | 'codes/used' | 'codes/error'. */
     function confirmCode(rawNumber, pin) {
       if (!claim || !auth.currentUser) return Promise.reject(fail('codes/error'));
@@ -652,7 +652,7 @@ var Store = (function () {
         return link();
       }).then(function () { return user.getIdToken(true); }).then(function () {
         var b = fs.batch();
-        b.set(doc('devices/' + uid), { role: 'member', roles: ['member'], personId: inv.personId, also: [], people: {}, invite: claim.code, name: inv.name || '', linkedAt: now(), login: login, pinV: v });
+        b.set(doc('roles/' + pinAddress(login, v)), { role: 'member', roles: ['member'], personId: inv.personId, also: [], people: {}, invite: claim.code, name: inv.name || '', linkedAt: now(), login: login, pinV: v, uid: uid });
         b.set(doc('pinLogins/' + login), { v: v, uid: uid });
         b.set(doc('invites/' + claim.code), Object.assign({}, inv, { usedBy: uid, usedAt: now() }));
         return b.commit().catch(function (e) { throw fail(e && e.code === 'permission-denied' ? (had ? 'pin/taken' : 'codes/used') : (e && e.code) || 'codes/error'); });
@@ -694,21 +694,20 @@ var Store = (function () {
     function startCodeSession(u) {
       if (claiming) return;
       if (u.isAnonymous) { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut' }); }); }   // a code left half-used
-      var key = 'code:' + u.uid, had = false;
-      try { had = localStorage.getItem(OWNER_KEY) === key; } catch (x) {}
+      var email = String(u.email).toLowerCase();
       onState({ stage: 'loading', email: '' });
-      var get = function () { return offlineNow() ? doc('devices/' + u.uid).get({ source: 'cache' }).catch(function () { return doc('devices/' + u.uid).get(); }) : doc('devices/' + u.uid).get(); };
-      ownCopy(key).then(get).then(function (snap) {
+      var get = function () { return offlineNow() ? doc('roles/' + email).get({ source: 'cache' }).catch(function () { return doc('roles/' + email).get(); }) : doc('roles/' + email).get(); };
+      ownCopy(email).then(get).then(function (snap) {
         if (!snap.exists) {   // switched off by the church (or never finished): they need a new code
           if (!(snap.metadata && snap.metadata.fromCache)) wipe();
           codeQuiet = true;
           return auth.signOut().then(function () { onState({ stage: 'signedOut', message: 'unlinked' }); });
         }
         var r = snap.data();
-        session = { email: key, code: true, login: r.login || '', role: 'member', personId: r.personId || '', langs: [], can: [], standInFrom: 0, standInTo: 0, household: [] };
+        session = { email: email, code: true, login: r.login || '', role: 'member', personId: r.personId || '', langs: [], can: [], standInFrom: 0, standInTo: 0, household: [] };
         subscribe();
       }).catch(function (e) {
-        if (e && e.code === 'permission-denied') { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut', message: had ? 'unlinked' : '' }); }); }
+        if (e && e.code === 'permission-denied') { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut', message: 'unlinked' }); }); }
         onState({ stage: 'error', message: offlineNow() ? 'You’re offline, and this device has no copy of Church Hub yet. Connect to the internet once, then it will open offline too.' :
           'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
       });
@@ -730,7 +729,7 @@ var Store = (function () {
       return Promise.all([codesUnused(pid), devicesOf(pid)]).then(function (r) {
         var b = fs.batch();
         r[0].forEach(function (c) { b.delete(doc('invites/' + c)); });
-        r[1].forEach(function (d) { b.delete(doc('devices/' + d.id)); });
+        r[1].forEach(function (d) { b.delete(doc('roles/' + d.id)); });
         var inv = { personId: pid, name: name, role: 'member', expires: expires, by: session.personId || '', createdAt: now() };
         if (mobile) inv.mobile = String(mobile);
         if (dial) { inv.dial = String(dial); b.set(doc('pinLogins/dial'), { dial: String(dial) }); }
@@ -741,17 +740,19 @@ var Store = (function () {
     function codesUnused(pid) {
       return fs.collection('invites').where('personId', '==', pid).get().then(function (s) { return s.docs.filter(function (d) { return !(d.data() || {}).usedBy; }).map(function (d) { return d.id; }); });
     }
-    /** A person's PIN sign-ins: [{ id, login, linkedAt }] (Administrators). */
+    /** A person's PIN sign-ins: their access entries with a number ([{ id: the address, login, linkedAt }], Administrators). */
     function devicesOf(pid) {
-      return fs.collection('devices').where('personId', '==', pid).get().then(function (s) { return s.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, login: x.login || '', linkedAt: x.linkedAt || null }; }); });
+      return fs.collection('roles').where('personId', '==', pid).get().then(function (s) {
+        return s.docs.filter(function (d) { return PIN_RE.test(d.id); }).map(function (d) { var x = d.data() || {}; return { id: d.id, login: x.login || '', linkedAt: x.linkedAt || null }; });
+      });
     }
-    function deviceRemove(uid) { return doc('devices/' + uid).delete(); }
+    function deviceRemove(id) { if (!PIN_RE.test(id)) return Promise.reject(new Error('not a PIN sign-in')); local['roles/' + id] = null; return doc('roles/' + id).delete(); }
     /** No access, left, or died: every PIN sign-in and unused code of this person goes (Administrators). */
     function codesDrop(pid) {
       return Promise.all([devicesOf(pid), codesUnused(pid)]).then(function (r) {
         if (!r[0].length && !r[1].length) return;
         var b = fs.batch();
-        r[0].forEach(function (d) { b.delete(doc('devices/' + d.id)); });
+        r[0].forEach(function (d) { b.delete(doc('roles/' + d.id)); });
         r[1].forEach(function (c) { b.delete(doc('invites/' + c)); });
         return b.commit();
       }).catch(function (e) { console.error('sign-in codes', e && e.code); });

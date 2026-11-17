@@ -41,11 +41,11 @@ This is a design checklist, not legal advice – the church's Information Office
 
 ## Sign-in codes and PINs (members with no email)
 - **What is kept:** `invites/{code}` (the person it is for, their first name and initial, their cellphone number to fill in,
-  the church's calling code, expiry, who made it, and – once used – the account id), `devices/{id}` (Member access for that
+  the church's calling code, expiry, who made it, and – once used – the account id), `roles/{<number>-<v>@pin.church-hub.invalid}` (Member access for that
   person, the number they sign in with, set-up date) and `pinLogins/{number}` (which account that number signs in with now:
   a version and the account id, no name). The PIN is kept only by Firebase Authentication as a password (never by Church Hub,
   never in the audit log). Codes are never written to the audit log, exports or searches; the audit log records "Gave a
-  sign-in code to …", "Switched off the PIN sign-in of …", and the member's own actions under `code:` and the account id.
+  sign-in code to …", "Switched off the PIN sign-in of …", and the member's own actions under that made-up address.
 - **Who:** only Administrators make codes, list them and see or switch off PIN sign-ins (`firestore.rules`). A code gives only
   **Member** access for one adult with Member access, works once, for 14 days; a new code, No access, Mark as left and a
   death switch off that person's PIN sign-in and remove unused codes. Signing out leaves the PIN sign-in working.

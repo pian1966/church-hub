@@ -149,9 +149,9 @@ module.exports = async function (ctx) {
   await s.page.fill('#si-pin', '480215'); await s.page.fill('#si-pin2', '480215'); await s.page.click('[data-act="hub:pinset"]');
   await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {}); await s.settle();
   docs = await s.docsNow();
-  let dev = Object.keys(docs).filter(k => k.startsWith('devices/'))[0];
-  const uid1 = dev && dev.split('/')[1];
-  check(!!(await s.page.$('.app')) && dev && docs[dev].personId === 'p17' && docs[dev].role === 'member' && docs[dev].login === '27825550101' && docs['invites/' + plain].usedBy === uid1
+  const PIN_DOC = /^roles\/c?\d+-\d+@pin\.church-hub\.invalid$/;
+  const dev = 'roles/27825550101-1@pin.church-hub.invalid', uid1 = (docs[dev] || {}).uid;
+  check(!!(await s.page.$('.app')) && uid1 && docs[dev].personId === 'p17' && docs[dev].role === 'member' && docs[dev].login === '27825550101' && docs['invites/' + plain].usedBy === uid1
     && JSON.stringify(docs['pinLogins/27825550101']) === JSON.stringify({ v: 1, uid: uid1 }), 'the PIN is set: Member access for that person, their number recorded, the code spent');
   const accounts = await s.page.evaluate(() => window.__fake.accounts);
   check(accounts['27825550101-1@pin.church-hub.invalid'] && accounts['27825550101-1@pin.church-hub.invalid'].uid === uid1, 'their sign-in is the same account, now with the number and PIN');
@@ -207,8 +207,8 @@ module.exports = async function (ctx) {
   check(/^[1-9]\d\d \d{3}$/.test(shown), 'their church number is shown to write down (' + shown + ')');
   await s.page.click('[data-act="hub:pinbegin"]'); await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {}); await s.settle();
   docs = await s.docsNow();
-  const church = 'c' + shown.replace(' ', ''), dev2 = Object.keys(docs).filter(k => k.startsWith('devices/'))[0];
-  check(!!(await s.page.$('.app')) && dev2 && docs[dev2].login === church && docs['pinLogins/' + church] && docs['pinLogins/' + church].uid === dev2.split('/')[1], 'they’re in, signing in from now on with the church number and PIN');
+  const church = 'c' + shown.replace(' ', ''), dev2 = Object.keys(docs).filter(k => PIN_DOC.test(k) && docs[k].login === church)[0];
+  check(!!(await s.page.$('.app')) && dev2 && docs[dev2].personId === 'p17' && docs['pinLogins/' + church] && docs['pinLogins/' + church].uid === docs[dev2].uid, 'they’re in, signing in from now on with the church number and PIN');
   await s.page.click('.side [data-act="hub:signout"]');
   check((await s.page.textContent('#modal')).includes(shown), 'signing out reminds them of their church number');
   await s.page.click('[data-act="hub:signoutyes"]'); await s.settle();

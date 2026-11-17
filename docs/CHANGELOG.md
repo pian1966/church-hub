@@ -439,7 +439,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   member taps the link or **I have a sign-in code** → "Is this you?" → **Choose your PIN** with their cellphone number, or a
   church number if they have no number of their own → from then on **Sign in with my number** (number and PIN) on any phone.
   A new code switches off an old PIN (a forgotten PIN or a new number); **Cellphone sign-in** on the person's page with
-  Switch off; No access, left or a death switch it off. Rules (`invites`, `devices`, `pinLogins`, `pinUser()`), the fake,
+  Switch off; No access, left or a death switch it off. Rules (`invites`, `pinLogins`, `pinUser()`, `pinClaim()` in `roles`), the fake,
   rules tests and browser tests; POPIA, ARCHITECTURE, FIREBASE-SETUP steps 3–4, the setup tool, the website and the brochures.
 - ✅ Every dropdown is searchable (0.85.1, 17 Nov 2026): `findables()` in `js/app.js` turns each `<select>` into one box – tap
   it and the whole list opens; type and it narrows as you type (part of a name, short names too); arrow keys and Enter, or a

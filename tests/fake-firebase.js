@@ -15,15 +15,23 @@
   var ANY = ['admin', 'pastor', 'rosters', 'kids', 'member'], STAFF = ['admin', 'pastor', 'rosters', 'kids'];
   var PIN_RE = /^c?[0-9]+-[0-9]+@pin\.church-hub\.invalid$/;
   function ctx() {
-    // A number-and-PIN sign-in (its made-up address): its devices document instead of an email's roles document
+    // A number-and-PIN sign-in: its made-up address (not verified) has its own roles document like any email
     var code = !!(currentUser && PIN_RE.test(String(currentUser.email || '')));
-    var email = !currentUser ? '' : code ? 'code:' + currentUser.uid : String(currentUser.email).toLowerCase();
-    var r = !currentUser ? null : code ? docs['devices/' + currentUser.uid] : email ? docs['roles/' + email] : null;
+    var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
     // A sign-in shared by several people (one email address): every role they have, and every one of them
     var ids = (r && r.personId ? [r.personId] : []).concat((r && r.also) || []);
     return { signedIn: !!(currentUser && (code || currentUser.emailVerified)), code: code, uid: currentUser ? currentUser.uid : '', email: email, role: r ? r.role : '', roles: r ? r.roles || [r.role] : [], me: r && r.personId ? r.personId : '', ids: ids,
       robot: !!(currentUser && !code && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [],
       standIn: !!(r && (r.standInFrom || 0) <= Date.now() && Date.now() <= (r.standInTo || 0)) };
+  }
+  var PIN = '@pin.church-hub.invalid';
+  /** A PIN account's own access entry, made with a code (firestore.rules pinClaim). */
+  function pinClaim(c, id, a, after) {
+    var inv = docs['invites/' + a.invite], invAfter = after['invites/' + a.invite], pl = after['pinLogins/' + a.login] || {};
+    return c.code && id === c.email && onlyKeys(a, ['role', 'roles', 'personId', 'also', 'people', 'invite', 'name', 'linkedAt', 'login', 'pinV', 'uid'])
+      && a.role === 'member' && JSON.stringify(a.roles) === '["member"]' && JSON.stringify(a.also) === '[]' && JSON.stringify(a.people) === '{}' && a.uid === c.uid
+      && id === a.login + '-' + a.pinV + PIN && !!inv && inv.personId === a.personId && !inv.usedBy && Date.now() < inv.expires
+      && !!invAfter && invAfter.usedBy === c.uid && pl.v === a.pinV;
   }
   function is(c, list) { return c.signedIn && !!c.role && c.roles.some(function (x) { return list.indexOf(x) >= 0; }); }
   /** What Pastors can do: Administrators always; Pastors with the tick on their access-list entry. */
@@ -84,8 +92,9 @@
       Object.keys(d).every(function (k) { return ['bookId', 'title', 'personId', 'name', 'mobile', 'visitor', 'out', 'due', 'back', 'note', 'status', 'requestedAt', 'createdAt', 'updatedAt'].indexOf(k) >= 0; });
   }
   var POLICY = {
-    roles: { read: function (c, id) { return c.signedIn && ((!c.code && id === c.email) || may(c, 'access')); },
-      write: function (c, op, id, b, a) {
+    roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
+      write: function (c, op, id, b, a, after) {
+        if (op === 'create' && pinClaim(c, id, a, after)) return true;
         if (is(c, ['admin'])) return op === 'delete' || (ANY.concat(['robot']).indexOf(a.role) >= 0 && okRoles(a));
         if (op === 'update' && may(c, 'leave') && onlyChanges(b, a, ['standInFrom', 'standInTo'])) return true;   // the stand-in approver's dates
         if (!may(c, 'access')) return false;
@@ -341,31 +350,21 @@
       write: function (c, op, id, b, a) { return (librarian(c) || keeper(c)) && (op === 'delete' || (id === 'policy' && onlyKeys(a, ['text', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
     partnerInfo: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (may(c, 'settings') || rector(c)) && (op === 'delete' || (id === 'requirements' && onlyKeys(a, ['text', 'link', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.link || '') === 'string' && (a.link || '').length <= 500 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
-    // Sign-in codes and PINs (firestore.rules: invites, devices, pinLogins). Reading an invite needs only a sign-in (by its code;
+    // Sign-in codes and PINs (firestore.rules: invites, roles, pinLogins). Reading an invite needs only a sign-in (by its code;
     // the app never lists them); a pinLogins document anyone may fetch by its number.
     invites: { read: function (c) { return !!currentUser; },
       write: function (c, op, id, b, a, after) {
         if (is(c, ['admin'])) return op === 'delete' || (op === 'create' && a.role === 'member' && !a.usedBy && typeof a.expires === 'number' && !!a.personId);
         return op === 'update' && c.code && !b.usedBy && Date.now() < b.expires && onlyChanges(b, a, ['usedBy', 'usedAt']) && a.usedBy === c.uid
-          && (after['devices/' + c.uid] || {}).invite === id;
-      } },
-    devices: { read: function (c, id) { return (!!currentUser && currentUser.uid === id) || is(c, ['admin']); },
-      write: function (c, op, id, b, a, after) {
-        if (op === 'delete') return is(c, ['admin']);
-        if (op !== 'create' || !c.code || c.uid !== id) return false;
-        var inv = docs['invites/' + a.invite], invAfter = after['invites/' + a.invite], pl = after['pinLogins/' + a.login] || {};
-        return onlyKeys(a, ['role', 'roles', 'personId', 'also', 'people', 'invite', 'name', 'linkedAt', 'login', 'pinV']) && a.role === 'member' && JSON.stringify(a.roles) === '["member"]'
-          && JSON.stringify(a.also) === '[]' && JSON.stringify(a.people) === '{}' && !!inv && inv.personId === a.personId && !inv.usedBy && Date.now() < inv.expires
-          && !!invAfter && invAfter.usedBy === id && typeof a.login === 'string' && typeof a.pinV === 'number' && pl.v === a.pinV && pl.uid === id;
+          && (after['roles/' + c.email] || {}).invite === id;
       } },
     pinLogins: { read: function () { return true; },
       write: function (c, op, id, b, a, after) {
         if (op === 'delete') return is(c, ['admin']);
         if (id === 'dial') return is(c, ['admin']) && onlyKeys(a, ['dial']) && typeof a.dial === 'string';
-        var dev = after['devices/' + c.uid] || {};
-        return c.code && onlyKeys(a, ['v', 'uid']) && a.uid === c.uid && typeof a.v === 'number' && String(currentUser.email) === id + '-' + a.v + '@pin.church-hub.invalid'
-          && !docs['devices/' + c.uid] && dev.login === id
-          && (!b || (a.v > b.v && (!docs['devices/' + b.uid] || docs['devices/' + b.uid].personId === dev.personId)));
+        var mine = after['roles/' + c.email] || {}, old = b ? docs['roles/' + id + '-' + b.v + PIN] : null;
+        return c.code && onlyKeys(a, ['v', 'uid']) && a.uid === c.uid && typeof a.v === 'number' && c.email === id + '-' + a.v + PIN
+          && !docs['roles/' + c.email] && mine.login === id && (!b || (a.v > b.v && (!old || old.personId === mine.personId)));
       } },
     dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
     audit: { read: function (c) { return may(c, 'privacy'); },

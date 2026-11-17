@@ -23,7 +23,7 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [messages.md](messages.md) | Reading and sending messages inside Church Hub |
 | [people.md](people.md) | For staff: adding and editing people, households, children, duplicates, searching, a death |
 | [privacy.md](privacy.md) | Consent, what others can see, and the Privacy pages for Administrators |
-| [settings.md](settings.md) | For Administrators: settings, apps, services, wording, roles, View as, imports |
+| [settings.md](settings.md) | For Administrators: settings, apps, services, wording, roles, View as, imports, setting up Church Hub at another church |
 | [translations.md](translations.md) | Languages and suggesting better wording |
 
 ## How each answer is written

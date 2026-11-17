@@ -63,7 +63,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 
 **Demo mode** (no Firebase settings, or `?demo` in the address): made-up people from `sample.js`, saved in this browser.
 
-**Live mode**: Firebase Authentication (Google or email link) and Firestore in Johannesburg. Setup: `docs/FIREBASE-SETUP.md`.
+**Live mode**: Firebase Authentication (Google or email link) and Firestore in Johannesburg. Setup: the setup tool (`site/setup.html`, section "Setup tool") or `docs/FIREBASE-SETUP.md`.
 - *Access list* `roles/{email}` = `{ role, personId }`. Only Administrators write it, from People → Edit details → App access
   (`No access` deletes it). The first Administrator is added by hand in the console, then Church Hub asks them to set up the church.
 - *A shared sign-in*: people who share one email address (often a couple, up to 4) share `roles/{email}`. It keeps the first
@@ -844,3 +844,22 @@ modules can put a card on everyone's Home with `homeCard` (`js/app.js` `homeCard
 "This month we pray for" (everyone, once the church is in the prayer circle). The church to pray for comes from
 `Coffee.partnerFor` (a different church each month, the same on every phone). Until the office exists the circle is the
 demo's made-up churches (`SampleChurches` in `js/sample.js`); live churches see their promise kept and an explanation.
+
+## Setup tool (`site/setup.html`, `site/setup-kit.js`; tested by `tests/setup-kit.test.js`)
+- One page outside the app (English, like the brochures and the website), at `/church-hub/site/setup.html`. It sets up Church Hub
+  at a new church as it works today: one church, one Firebase project, and – until one address serves every church
+  (`docs/architecture/`, tasks 010 and 020–021) – the church's own copy (fork) of this repository on GitHub Pages.
+- `setup-kit.js` is pure and holds the content: `CHAPTERS` and `STEPS` (each `{ id, chapter, title, mins, why, body(c), fields?, ready? }`,
+  bodies built from `Kit.ctx(church)` so every instruction shows that church's names, addresses and project id), `GROW` (everything
+  a church can switch on afterwards, grouped, each with `mods` = the `Hub.register` ids it covers and `since` = the version it
+  arrived in; `every` makes a repeating job such as "Get the latest Church Hub"), `NOT_SETUP` (parts with nothing to set up) and
+  `COMING`. It also reads Firebase's pasted settings (`parseConfig`), writes the church's `js/firebase-config.js` (`configFile`,
+  same keys as the repository's file) and picks the Firestore location from the country (`place`, TARGET.md section 5).
+- `setup.html` draws it: welcome, a church's overview (progress ring, Next up, chapters, the Grow list with Still to do / Done /
+  Not for us, Coming), and one step at a time with the steps beside it. It fetches `../firestore.rules` (no-store) for **Copy the
+  rules**, and loads `../js/version.js`, `../js/countries.js` and `../js/qr.js`.
+- Progress stays in the browser's localStorage (`church_hub_setup`; this page is not the app, so `Store` doesn't apply), for any
+  number of churches; **More → Save progress to a file** / **Open a progress file** move it. Nothing is sent anywhere; it never
+  asks for passwords. A church's `seen` (major.minor) decides which Grow items are marked **New**.
+- Kept up to date by: `tests/setup-kit.test.js` (every `Hub.register` id covered; the settings file matches `js/firebase-config.js`),
+  `tests/versions.test.js` (`reviewed-for` in `setup.html` follows the middle version number) and the rule in `CLAUDE.md`.

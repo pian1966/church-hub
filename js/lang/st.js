@@ -4,6 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
+    "Library: if you have borrowed something, the Library now opens on Items I have borrowed; tap Library for the whole catalogue.": "Laeborari: haeba o adimile ho hong, Laeborari jwale e bula ho Dintho tseo ke di adimileng; tobetsa Laeborari ho bona lethathamo lohle.",
     "People: each field on a person’s page and in Edit details now has a small icon, so you can see at a glance what it asks.": "Batho: lebala ka leng leqepheng la motho le ho Fetola dintlha jwale le na le letshwao le lenyane, hore o bone kapele hore le botsa eng.",
     "Library: the items you have borrowed now have a tab of their own, before Library and Archives.": "Laeborari: dintho tseo o di adimileng jwale di na le thebe ya tsona, pele ho Laeborari le Polokelo ya ditokomane.",
     "Sign in with a code": "Kena ka khoutu",

@@ -209,7 +209,9 @@
   function page(parts) {
     var archiveOn = H.isOn('archive'), archivePage = archiveOn && ((parts || [])[0] === 'archives' || !libraryOn());
     if (archivePage) return sectionTabs('archives') + ArchiveUI.page();
-    if ((parts || [])[0] === 'borrowed' && myLoans().length) return borrowedPage();
+    // Someone who has borrowed something lands on Items I have borrowed; the catalogue is the Library tab (library/all)
+    var first = (parts || [])[0] || '';
+    if ((first === 'borrowed' || !first) && myLoans().length) return borrowedPage();
     var u = me(), edit = librarian(), all = L.find(S.list('books'), ''), allLoans = edit ? loans() : [], books = all.filter(L.inLibrary), gone = edit ? all.filter(function (b) { return !L.inLibrary(b); }) : [], mine = u ? L.mine(loans(), u.id) : [], pending = edit ? allLoans.filter(L.isPending) : mine.filter(L.isPending), out = edit ? L.onLoan(allLoans).filter(function (l) { return !L.isPending(l); }) : [], items = books.concat(gone);
     var borrowers = edit ? borrowerNames(out) : [];
     if (!edit) {
@@ -945,11 +947,11 @@
       var late = librarian() ? activeLoans.filter(function (l) { return L.overdue(l, H.today()); }).length : 0, mine = u ? L.mine(loans(), u.id).filter(function (l) { return !L.isPending(l) && L.overdue(l, H.today()); }) : [];
       var out = [], pending = librarian() ? loans().filter(L.isPending).length : 0, dueNow = librarian() ? activeLoans.filter(function (l) { return L.remindDue(l, H.today()); }).length : 0;
       var long = u ? L.mine(loans(), u.id).filter(function (l) { return !L.isPending(l) && L.daysOut(l, H.today()) >= L.REMIND_DAYS && !L.overdue(l, H.today()); }) : [];
-      if (administrator() && needsLibrarianReview()) out.push({ text: T('Please review who is still a librarian'), href: '#/library', tag: T('Librarians'), priority: true });
-      if (pending) out.push({ text: TN('{n} checkout request needs verification', '{n} checkout requests need verification', pending), href: '#/library', tag: T('Pending Verifications'), priority: true });
-      if (late) out.push({ text: TN('{n} library item is overdue', '{n} library items are overdue', late), href: '#/library', tag: T('Library') });
+      if (administrator() && needsLibrarianReview()) out.push({ text: T('Please review who is still a librarian'), href: '#/library/all', tag: T('Librarians'), priority: true });
+      if (pending) out.push({ text: TN('{n} checkout request needs verification', '{n} checkout requests need verification', pending), href: '#/library/all', tag: T('Pending Verifications'), priority: true });
+      if (late) out.push({ text: TN('{n} library item is overdue', '{n} library items are overdue', late), href: '#/library/all', tag: T('Library') });
       else if (mine.length) out.push({ text: T('Please return “{title}” to the church library', { title: mine[0].title }), href: '#/library/borrowed', tag: T('Library') });
-      if (dueNow) out.push({ text: TN('{n} borrower is due a friendly reminder', '{n} borrowers are due a friendly reminder', dueNow), href: '#/library', tag: T('Library') });
+      if (dueNow) out.push({ text: TN('{n} borrower is due a friendly reminder', '{n} borrowers are due a friendly reminder', dueNow), href: '#/library/all', tag: T('Library') });
       long.slice(0, 2).forEach(function (l) { out.push({ text: T('Friendly reminder: you have had “{title}” from the church library for {n} days', { title: l.title, n: L.daysOut(l, H.today()) }), href: '#/library/borrowed', tag: T('Library') }); });
       return out;
     },
@@ -958,7 +960,7 @@
         var section = el.dataset.section;
         if (section === 'archives' && H.isOn('archive')) H.go('library/archives');
         else if (section === 'borrowed') H.go('library/borrowed');
-        else if (section === 'library' && libraryOn()) H.go('library');
+        else if (section === 'library' && libraryOn()) H.go('library/all');
       },
       add: function () { if (librarian()) form({}); },
       edit: function (el) { var b = S.get('books', el.dataset.id); if (b && librarian()) form(b); },

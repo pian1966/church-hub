@@ -1018,73 +1018,96 @@ await t('what attendees may do: Administrators and the Senior Pastor set it; req
   await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ seniorPastorId: firebase.firestore.FieldValue.delete(), attendeeCan: firebase.firestore.FieldValue.delete() }));
 });
 
-console.log('Sign-in codes (members with no email)');
+console.log('Sign-in codes and PINs (members with no email)');
 {
-  const phone = uid => env.authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } }).firestore();
+  // A phone using a code (anonymous), and an account with a number-and-PIN address (<login>-<v>@pin.church-hub.invalid)
+  const anon = uid => env.authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } }).firestore();
+  const PIN = '@pin.church-hub.invalid';
+  const pin = (uid, login, v) => env.authenticatedContext(uid, { email: login + '-' + (v || 1) + PIN, firebase: { sign_in_provider: 'password' } }).firestore();
   const DAY = 864e5, inv = (pid, extra) => Object.assign({ personId: pid, name: 'Tim J.', role: 'member', expires: Date.now() + 14 * DAY, by: 'p01', createdAt: 'x' }, extra || {});
-  const link = (d, uid, code, pid, extra) => {
+  const devDoc = (pid, code, login, v, extra) => Object.assign({ role: 'member', roles: ['member'], personId: pid, also: [], people: {}, invite: code, name: 'Tim J.', linkedAt: 'x', login, pinV: v }, extra || {});
+  // The claim: the devices document, pinLogins/{login} and the spent code, in one write
+  const link = (d, uid, code, pid, login, v, extra, plExtra) => {
     const b = d.batch();
-    b.set(d.doc('devices/' + uid), Object.assign({ role: 'member', roles: ['member'], personId: pid, also: [], people: {}, invite: code, name: 'Tim J.', linkedAt: 'x' }, extra || {}));
+    b.set(d.doc('devices/' + uid), devDoc(pid, code, login, v, extra));
+    b.set(d.doc('pinLogins/' + login), Object.assign({ v, uid }, plExtra || {}));
     b.update(d.doc('invites/' + code), { usedBy: uid, usedAt: 'x' });
     return b.commit();
   };
+  const seedInvites = codes => env.withSecurityRulesDisabled(async c => { for (const [code, data] of Object.entries(codes)) await c.firestore().doc('invites/' + code).set(data); });
   await t('only an Administrator makes or lists codes, and only for Member access', async () => {
-    await can(db.admin.doc('invites/AAAA2222').set(inv('p14')));
+    await can(db.admin.doc('invites/AAAA2222').set(inv('p14', { mobile: '082 555 0101', dial: '27' })));
     await cannot(db.admin.doc('invites/AAAA3333').set(inv('p14', { role: 'admin' })));
     await cannot(db.admin.doc('invites/AAAA3334').set(inv('p14', { usedBy: 'x' })));
     for (const r of ['pastor', 'kids', 'rosters', 'member']) await cannot(db[r].doc('invites/AAAA4444').set(inv('p14')));
     await can(list(db.admin.collection('invites').where('personId', '==', 'p14')));
-    await cannot(list(db.pastor.collection('invites'))); await cannot(list(phone('anon-0').collection('invites')));
+    await cannot(list(db.pastor.collection('invites'))); await cannot(list(anon('anon-0').collection('invites')));
   });
-  await t('a new phone with no link sees nothing but a code fetched by its exact id', async () => {
-    const d = phone('anon-1');
-    await can(read(d, 'invites/AAAA2222'));
+  await t('the church’s calling code: anyone may read it, only an Administrator writes it', async () => {
+    await can(db.admin.doc('pinLogins/dial').set({ dial: '27' }));
+    await cannot(db.admin.doc('pinLogins/dial').set({ dial: '27', v: 1 }));
+    await cannot(db.pastor.doc('pinLogins/dial').set({ dial: '1' })); await cannot(anon('anon-0').doc('pinLogins/dial').set({ dial: '1' }));
+    await can(read(nobody, 'pinLogins/dial'));
+  });
+  await t('a phone using a code sees nothing but that code (fetched by its exact id) and pinLogins by number', async () => {
+    const d = anon('anon-1');
+    await can(read(d, 'invites/AAAA2222')); await can(read(d, 'pinLogins/27825550101'));
     for (const path of ['settings/church', 'people/p14', 'directory/p15', 'roles/tim@example.com', 'devices/anon-2']) await cannot(read(d, path));
-    await cannot(read(nobody, 'invites/AAAA2222'));
+    await cannot(read(nobody, 'invites/AAAA2222')); await cannot(list(nobody.collection('pinLogins')));
+    await cannot(link(d, 'anon-1', 'AAAA2222', 'p14', '27825550101', 1));   // a code alone (no PIN) links nothing
   });
-  await t('a phone links itself and marks the code used, in one write – then reads what a Member reads', async () => {
-    const d = phone('anon-1');
-    await cannot(d.doc('devices/anon-1').set({ role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'AAAA2222', name: 'x', linkedAt: 'x' }));   // without spending the code
-    await cannot(d.doc('invites/AAAA2222').update({ usedBy: 'anon-1', usedAt: 'x' }));   // spending it without the link
-    await can(link(d, 'anon-1', 'AAAA2222', 'p14'));
-    await can(read(d, 'devices/anon-1')); await can(read(d, 'settings/church')); await can(read(d, 'people/p14'));
+  await t('with a PIN the account links itself, records its number and spends the code, in one write – then reads what a Member reads', async () => {
+    const d = pin('pin-1', '27825550101');
+    await cannot(d.doc('devices/pin-1').set(devDoc('p14', 'AAAA2222', '27825550101', 1)));   // without spending the code or the number
+    await cannot(d.doc('invites/AAAA2222').update({ usedBy: 'pin-1', usedAt: 'x' }));        // spending it without the link
+    await cannot(d.doc('pinLogins/27825550101').set({ v: 1, uid: 'pin-1' }));                // the number without the link
+    await cannot(link(d, 'pin-1', 'AAAA2222', 'p14', '27825550101', 2));                      // a version its address doesn't have
+    await cannot(link(d, 'pin-1', 'AAAA2222', 'p14', '27825559999', 1));                      // another number
+    await can(link(d, 'pin-1', 'AAAA2222', 'p14', '27825550101', 1));
+    await can(read(d, 'devices/pin-1')); await can(read(d, 'settings/church')); await can(read(d, 'people/p14'));
     await cannot(read(d, 'details/p15')); await cannot(read(d, 'roles/tim@example.com'));
-    await cannot(d.doc('devices/anon-1').update({ role: 'admin' }));
+    await cannot(d.doc('devices/pin-1').update({ role: 'admin' })); await cannot(d.doc('devices/pin-1').delete());
+    await cannot(d.doc('pinLogins/27825550101').set({ v: 5, uid: 'pin-1' }));                // only in the write that links
   });
   await t('a code works once, before it expires, for its own person, and gives only Member access', async () => {
-    await cannot(link(phone('anon-3'), 'anon-3', 'AAAA2222', 'p14'));   // used already
-    await env.withSecurityRulesDisabled(async c => {
-      const x = c.firestore();
-      await x.doc('invites/BBBB2222').set(inv('p14', { expires: Date.now() - DAY }));
-      for (const code of ['CCCC2222', 'DDDD2222', 'EEEE2222', 'FFFF2222', 'GGGG2222']) await x.doc('invites/' + code).set(inv('p14'));
-    });
-    await cannot(link(phone('anon-4'), 'anon-4', 'BBBB2222', 'p14'));                          // expired
-    await cannot(link(phone('anon-5'), 'anon-5', 'CCCC2222', 'p15'));                          // another person
-    await cannot(link(phone('anon-6'), 'anon-6', 'DDDD2222', 'p14', { role: 'admin' }));       // more than Member
-    await cannot(link(phone('anon-7'), 'anon-7', 'EEEE2222', 'p14', { roles: ['member', 'pastor'] }));
-    await cannot(link(phone('anon-8'), 'anon-8', 'FFFF2222', 'p14', { also: ['p15'] }));      // sharing with someone else
-    const p9 = phone('anon-9'), b = p9.batch();   // a link for another phone's id
-    b.set(p9.doc('devices/anon-10'), { role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'GGGG2222', name: 'x', linkedAt: 'x' });
-    b.update(p9.doc('invites/GGGG2222'), { usedBy: 'anon-9', usedAt: 'x' });
+    await cannot(link(pin('pin-3', '27820000003'), 'pin-3', 'AAAA2222', 'p14', '27820000003', 1));   // used already
+    await seedInvites({ BBBB2222: inv('p14', { expires: Date.now() - DAY }), CCCC2222: inv('p14'), DDDD2222: inv('p14'), EEEE2222: inv('p14'), FFFF2222: inv('p14'), GGGG2222: inv('p14') });
+    await cannot(link(pin('pin-4', '27820000004'), 'pin-4', 'BBBB2222', 'p14', '27820000004', 1));                        // expired
+    await cannot(link(pin('pin-5', '27820000005'), 'pin-5', 'CCCC2222', 'p15', '27820000005', 1));                        // another person
+    await cannot(link(pin('pin-6', '27820000006'), 'pin-6', 'DDDD2222', 'p14', '27820000006', 1, { role: 'admin' }));     // more than Member
+    await cannot(link(pin('pin-7', '27820000007'), 'pin-7', 'EEEE2222', 'p14', '27820000007', 1, { roles: ['member', 'pastor'] }));
+    await cannot(link(pin('pin-8', '27820000008'), 'pin-8', 'FFFF2222', 'p14', '27820000008', 1, { also: ['p15'] }));    // sharing with someone else
+    await cannot(link(pin('pin-9', '27820000009'), 'pin-9', 'GGGG2222', 'p14', '27820000009', 1, {}, { uid: 'pin-10' })); // the number for another account
+    const p9 = pin('pin-9', '27820000009'), b = p9.batch();   // a link for another account's id
+    b.set(p9.doc('devices/pin-10'), devDoc('p14', 'GGGG2222', '27820000009', 1)); b.set(p9.doc('pinLogins/27820000009'), { v: 1, uid: 'pin-10' });
+    b.update(p9.doc('invites/GGGG2222'), { usedBy: 'pin-9', usedAt: 'x' });
     await cannot(b.commit());
-    await cannot(link(as('member'), 'uid-member', 'GGGG2222', 'p14'));                           // an email sign-in isn't a code phone
+    await cannot(link(as('member'), 'uid-member', 'GGGG2222', 'p14', '27820000011', 1));   // an email sign-in isn't a PIN account
   });
-  await t('the audit log takes a code phone’s entries under its own id', async () => {
-    const d = phone('anon-1');
-    await can(d.doc('audit/code-1').set({ action: 'Signed in', byEmail: 'code:anon-1', ts: ts() }));
-    await cannot(d.doc('audit/code-2').set({ action: 'Signed in', byEmail: 'tim@example.com', ts: ts() }));
-    await cannot(d.doc('audit/code-3').set({ action: 'Signed in', byEmail: 'code:anon-2', ts: ts() }));
+  await t('a number in use moves to a new PIN only for the same person, or once the old one is switched off', async () => {
+    await seedInvites({ HHHH2222: inv('p15'), JJJJ2222: inv('p14'), KKKK2222: inv('p14') });
+    await cannot(link(pin('pin-12', '27825550101', 2), 'pin-12', 'HHHH2222', 'p15', '27825550101', 2));   // Tim's number, for Clare
+    await cannot(link(pin('pin-13', '27825550101', 1), 'pin-13', 'JJJJ2222', 'p14', '27825550101', 1));   // the version must go up
+    await can(link(pin('pin-13', '27825550101', 2), 'pin-13', 'JJJJ2222', 'p14', '27825550101', 2));      // Tim again (a forgotten PIN)
+    await can(db.admin.doc('devices/pin-13').delete());                                                      // switched off by the office
+    await can(link(pin('pin-14', '27825550101', 3), 'pin-14', 'HHHH2222', 'p15', '27825550101', 3));      // now free for someone else
+    await can(link(pin('pin-15', 'c482913'), 'pin-15', 'KKKK2222', 'p14', 'c482913', 1));                   // a church number
+    await can(read(pin('pin-15', 'c482913'), 'settings/church'));
   });
-  await t('an Administrator sees and removes linked phones; the phone can unlink itself; then it sees nothing', async () => {
+  await t('the audit log takes a PIN account’s entries under its own id', async () => {
+    const d = pin('pin-1', '27825550101');
+    await can(d.doc('audit/code-1').set({ action: 'Signed in', byEmail: 'code:pin-1', ts: ts() }));
+    await cannot(d.doc('audit/code-2').set({ action: 'Signed in', byEmail: '27825550101-1' + PIN, ts: ts() }));
+    await cannot(d.doc('audit/code-3').set({ action: 'Signed in', byEmail: 'code:pin-2', ts: ts() }));
+  });
+  await t('an Administrator sees and switches off PIN sign-ins; then that account sees nothing', async () => {
     await can(list(db.admin.collection('devices').where('personId', '==', 'p14')));
-    await cannot(list(db.pastor.collection('devices'))); await cannot(read(db.member, 'devices/anon-1'));
-    await can(db.admin.doc('devices/anon-1').delete());
-    await cannot(read(phone('anon-1'), 'settings/church'));
-    await env.withSecurityRulesDisabled(c => c.firestore().doc('devices/anon-11').set({ role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'x', name: 'x', linkedAt: 'x' }));
-    await cannot(phone('anon-12').doc('devices/anon-11').delete());
-    await can(phone('anon-11').doc('devices/anon-11').delete());
+    await cannot(list(db.pastor.collection('devices'))); await cannot(read(db.member, 'devices/pin-1'));
+    await can(db.admin.doc('devices/pin-1').delete());
+    await cannot(read(pin('pin-1', '27825550101'), 'settings/church'));
+    await cannot(read(pin('pin-99', '27820000099'), 'settings/church'));   // an address of the right shape with no devices document
   });
-  await t('people who sign in with email are unchanged by codes', async () => {
+  await t('people who sign in with email are unchanged by PINs', async () => {
     await can(read(db.member, 'roles/tim@example.com')); await cannot(read(db.member, 'roles/linda@example.com'));
     await cannot(read(impostor, 'settings/church'));
   });

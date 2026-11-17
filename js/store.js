@@ -538,14 +538,12 @@ var Store = (function () {
       var flushed = fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, 3000); })]) : Promise.resolve();
       // A shared sign-in: the next person signing in on this device chooses again
       try { if (session && session.household.length) localStorage.removeItem(WHO_KEY + session.email); } catch (x) {}
-      // A phone signed in with a code unlinks itself (it would need a new code anyway: the anonymous account is gone)
-      var unlink = session && session.code && auth && auth.currentUser ? function () { return doc('devices/' + auth.currentUser.uid).delete().catch(function () {}); } : function () {};
-      return flushed.then(unlink).then(function () { session = null; db = blank(); return auth ? auth.signOut() : null; }).then(wipe);
+      return flushed.then(function () { session = null; db = blank(); return auth ? auth.signOut() : null; }).then(wipe);
     }
 
     /* ---------- session: who is this, and what may they see ---------- */
     function startSession(u) {
-      if (u.isAnonymous) return startCodeSession(u);
+      if (u.isAnonymous || isPin(u)) return startCodeSession(u);   // a number-and-PIN sign-in (or a code being used)
       var email = (u.email || '').toLowerCase();
       onState({ stage: 'loading', email: email });
       if (!u.emailVerified) return onState({ stage: 'noAccess', email: email, reason: 'unverified' });
@@ -583,19 +581,33 @@ var Store = (function () {
       });
     }
 
-    /* ---------- sign-in codes: a member's phone with no email (firestore.rules: invites, devices) ----------
-     * The phone signs in anonymously (a secret account id), then in one write records devices/{id} – Member access for the
-     * person on the code – and marks the code used. From then on this phone is that member. docs/ARCHITECTURE.md "Sign-in codes". */
-    var claim = null;   // the code being used: { code, invite } while the person is asked "is that you?"
-    function codeKey(code) { return 'code:' + code; }
+    /* ---------- members with no email: a sign-in code once, then their number and a PIN (firestore.rules: invites, devices,
+     * pinLogins). The phone signs in anonymously to read the code, then the person chooses a PIN: the anonymous account gets
+     * a made-up address (<number>-<v>@pin.church-hub.invalid) with the PIN as its password, and in one write records
+     * devices/{id} (Member access for the person on the code), pinLogins/{number} and the spent code. From then on they sign
+     * in on any phone with their number and PIN. docs/ARCHITECTURE.md "Sign-in codes and PINs". */
+    var PIN_DOMAIN = '@pin.church-hub.invalid', PIN_RE = /^c?[0-9]+-[0-9]+@pin\.church-hub\.invalid$/;
+    var claim = null;   // the code being used: { code, invite } while the person says who they are and chooses a PIN
+    function fail(c) { var e = new Error(c); e.code = c; return e; }
     function cleanCode(s) { return String(s || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
-    /** Type or open a code: sign in anonymously, fetch the invite → resolves { name } to ask "is that you?", or rejects
+    function pinAddress(login, v) { return login + '-' + v + PIN_DOMAIN; }
+    /** Is this account a number-and-PIN sign-in? */
+    function isPin(u) { return !!(u && u.email && PIN_RE.test(String(u.email).toLowerCase())); }
+    /** The number someone signs in with: a cellphone number in international form (digits only), or "c" and a 6-digit
+     *  church number. dial = the church's country calling code, for numbers typed the local way (082…). '' = not a number. */
+    function pinLogin(raw, dial) {
+      var t = String(raw || '').trim(), d = t.replace(/\D/g, ''), code = String(dial || '').replace(/\D/g, '');
+      if (/^c/i.test(t) || (/^[1-9][0-9]{5}$/.test(d) && !/^\+/.test(t))) return /^[1-9][0-9]{5}$/.test(d) ? 'c' + d : '';
+      if (!/^\+/.test(t)) { if (/^00/.test(d)) d = d.slice(2); else if (/^0/.test(d)) { if (!code) return ''; d = code + d.slice(1); } }
+      return d.length >= 8 && d.length <= 15 ? d : '';
+    }
+    /** Type or open a code: sign in anonymously, fetch the invite → resolves { name, mobile } to ask "is that you?", or rejects
      *  { code: 'codes/unknown' | 'codes/used' | 'codes/expired' | 'codes/off' | 'codes/busy' | … }. */
     function claimCode(raw) {
-      var code = cleanCode(raw), fail = function (c) { var e = new Error(c); e.code = c; return e; };
+      var code = cleanCode(raw);
       if (code.length !== 8) return Promise.reject(fail('codes/unknown'));
       claiming = true;
-      var signed = auth.currentUser && auth.currentUser.isAnonymous ? Promise.resolve() : auth.signInAnonymously();
+      var signed = auth.currentUser && auth.currentUser.isAnonymous ? Promise.resolve() : (auth.currentUser ? auth.signOut() : Promise.resolve()).then(function () { return auth.signInAnonymously(); });
       return signed.then(function () { return doc('invites/' + code).get(); }, function (e) {
         claiming = false;
         throw fail(e && (e.code === 'auth/admin-restricted-operation' || e.code === 'auth/operation-not-allowed') ? 'codes/off' : e && e.code === 'auth/too-many-requests' ? 'codes/busy' : (e && e.code) || 'codes/error');
@@ -605,44 +617,95 @@ var Store = (function () {
         if (inv.usedBy) throw fail('codes/used');
         if (!(inv.expires > Date.now())) throw fail('codes/expired');
         claim = { code: code, invite: inv };
-        return { name: inv.name || '' };
+        return { name: inv.name || '', mobile: inv.mobile || '' };
       }).catch(function (e) {
         var c = e && e.code && /^codes\//.test(e.code) ? e.code : e && e.code === 'permission-denied' ? 'codes/off' : 'codes/error';
         return cancelCode().then(function () { throw fail(c); });
       });
     }
-    /** "Yes, that's me": link this phone to the person (one write: the devices document and the spent code). */
-    function confirmCode() {
-      if (!claim || !auth.currentUser) return Promise.reject(new Error('no code'));
-      var uid = auth.currentUser.uid, inv = claim.invite, b = fs.batch();
-      b.set(doc('devices/' + uid), { role: 'member', roles: ['member'], personId: inv.personId, also: [], people: {}, invite: claim.code, name: inv.name || '', linkedAt: now() });
-      b.set(doc('invites/' + claim.code), Object.assign({}, inv, { usedBy: uid, usedAt: now() }));
-      return b.commit().then(function () { claim = null; claiming = false; startSession(auth.currentUser); }, function (e) {
-        var x = new Error('codes/used'); x.code = e && e.code === 'permission-denied' ? 'codes/used' : (e && e.code) || 'codes/error'; throw x;
+    /** A church number for someone with no number of their own: 6 digits, not used by anyone yet. */
+    function newChurchNumber(tries) {
+      var a = new Uint32Array(1); (window.crypto || window.msCrypto).getRandomValues(a);
+      var login = 'c' + (100000 + a[0] % 900000);
+      return doc('pinLogins/' + login).get().then(function (s) { return s.exists && (tries || 0) < 8 ? newChurchNumber((tries || 0) + 1) : login; });
+    }
+    /** "Yes, that's me", then their number (raw; '' = give them a church number) and a PIN: the account gets its sign-in
+     *  address and, in one write, the devices document, pinLogins/{number} and the spent code. Resolves { login } – the session
+     *  starts with begin(). Rejects 'pin/number' | 'pin/taken' | 'pin/off' | 'codes/used' | 'codes/error'. */
+    function confirmCode(rawNumber, pin) {
+      if (!claim || !auth.currentUser) return Promise.reject(fail('codes/error'));
+      var inv = claim.invite, user = auth.currentUser, uid = user.uid, login, v = 1, had = null;
+      var pick = rawNumber ? Promise.resolve(pinLogin(rawNumber, inv.dial)) : newChurchNumber();
+      return pick.then(function (l) {
+        login = l; if (!login) throw fail('pin/number');
+        return doc('pinLogins/' + login).get();
+      }).then(function (s) {
+        had = s.exists ? s.data() : null; if (had) v = (+had.v || 0) + 1;
+        var tries = 0;
+        // Link the PIN to this account (the same account id). If someone took that address first, the next version is used.
+        var link = function () {
+          return user.linkWithCredential(fb.auth.EmailAuthProvider.credential(pinAddress(login, v), pin)).catch(function (e) {
+            if (e && e.code === 'auth/email-already-in-use' && ++tries < 5) { v++; return link(); }
+            throw fail(e && (e.code === 'auth/operation-not-allowed' || e.code === 'auth/admin-restricted-operation') ? 'pin/off' : e && e.code === 'auth/email-already-in-use' ? 'pin/taken' : (e && e.code) || 'codes/error');
+          });
+        };
+        return link();
+      }).then(function () { return user.getIdToken(true); }).then(function () {
+        var b = fs.batch();
+        b.set(doc('devices/' + uid), { role: 'member', roles: ['member'], personId: inv.personId, also: [], people: {}, invite: claim.code, name: inv.name || '', linkedAt: now(), login: login, pinV: v });
+        b.set(doc('pinLogins/' + login), { v: v, uid: uid });
+        b.set(doc('invites/' + claim.code), Object.assign({}, inv, { usedBy: uid, usedAt: now() }));
+        return b.commit().catch(function (e) { throw fail(e && e.code === 'permission-denied' ? (had ? 'pin/taken' : 'codes/used') : (e && e.code) || 'codes/error'); });
+      }).then(function () {
+        claim = null;
+        return { login: login };
+      }, function (e) {
+        // Nothing was linked: an account that got the address but not the rest is removed (the address is free again), and
+        // the phone signs in anonymously again so the person can try once more with the same code
+        var u = auth.currentUser, drop = Promise.resolve();
+        if (isPin(u)) { codeQuiet = true; drop = u.delete().then(function () { return auth.signInAnonymously(); }).catch(function () {}); }
+        return drop.then(function () { throw e && /^(pin|codes)\//.test(e.code || '') ? e : fail('codes/error'); });
       });
     }
+    /** After the PIN is chosen (and a church number shown): open Church Hub as that member. */
+    function begin() { claiming = false; if (auth.currentUser) startSession(auth.currentUser); }
     /** "No, that isn't me" (or the code didn't work): nothing is linked, and the anonymous sign-in is dropped. */
     function cancelCode() {
       claim = null; claiming = false;
-      if (!(auth && auth.currentUser && auth.currentUser.isAnonymous)) return Promise.resolve();
+      if (!(auth && auth.currentUser && (auth.currentUser.isAnonymous || isPin(auth.currentUser)))) return Promise.resolve();
       codeQuiet = true;
       return auth.signOut().catch(function () {});
     }
-    var claiming = false, codeQuiet = false;   // while a code is being checked, the anonymous sign-in doesn't open a session yet
+    /** Sign in with a number (or church number) and PIN. Rejects 'pin/number' | 'pin/unknown' | 'pin/wrong' | 'pin/busy' | 'pin/off' | … */
+    function signInPin(rawNumber, pin) {
+      return doc('pinLogins/dial').get().then(function (s) { return s.exists ? s.data().dial : ''; }, function () { return ''; }).then(function (dial) {
+        var login = pinLogin(rawNumber, dial); if (!login) throw fail('pin/number');
+        return doc('pinLogins/' + login).get().then(function (s) {
+          if (!s.exists) throw fail('pin/unknown');
+          return auth.signInWithEmailAndPassword(pinAddress(login, s.data().v), String(pin || '')).catch(function (e) {
+            var c = e && e.code;
+            throw fail(c === 'auth/too-many-requests' ? 'pin/busy' : c === 'auth/operation-not-allowed' ? 'pin/off' :
+              /wrong-password|invalid-credential|invalid-login-credentials|user-not-found|invalid-password/.test(c || '') ? 'pin/wrong' : c || 'pin/error');
+          });
+        });
+      }).catch(function (e) { throw e && /^pin\//.test(e.code || '') ? e : fail(e && e.code === 'unavailable' ? 'pin/offline' : 'pin/error'); });
+    }
+    var claiming = false, codeQuiet = false;   // while a code is being used, its sign-in doesn't open a session yet
     function startCodeSession(u) {
       if (claiming) return;
+      if (u.isAnonymous) { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut' }); }); }   // a code left half-used
       var key = 'code:' + u.uid, had = false;
       try { had = localStorage.getItem(OWNER_KEY) === key; } catch (x) {}
       onState({ stage: 'loading', email: '' });
       var get = function () { return offlineNow() ? doc('devices/' + u.uid).get({ source: 'cache' }).catch(function () { return doc('devices/' + u.uid).get(); }) : doc('devices/' + u.uid).get(); };
       ownCopy(key).then(get).then(function (snap) {
-        if (!snap.exists) {   // unlinked by the church (or never linked): this phone needs a new code
+        if (!snap.exists) {   // switched off by the church (or never finished): they need a new code
           if (!(snap.metadata && snap.metadata.fromCache)) wipe();
           codeQuiet = true;
-          return auth.signOut().then(function () { onState(had ? { stage: 'signedOut', message: 'unlinked' } : { stage: 'signedOut' }); });
+          return auth.signOut().then(function () { onState({ stage: 'signedOut', message: 'unlinked' }); });
         }
         var r = snap.data();
-        session = { email: key, code: true, role: 'member', personId: r.personId || '', langs: [], can: [], standInFrom: 0, standInTo: 0, household: [] };
+        session = { email: key, code: true, login: r.login || '', role: 'member', personId: r.personId || '', langs: [], can: [], standInFrom: 0, standInTo: 0, household: [] };
         subscribe();
       }).catch(function (e) {
         if (e && e.code === 'permission-denied') { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut', message: had ? 'unlinked' : '' }); }); }
@@ -650,35 +713,40 @@ var Store = (function () {
           'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
       });
     }
-    /** Is this a phone signed in with a sign-in code? (Signing out then needs a new code.) */
-    function isCodeSession() { return !!(session && session.code); }
+    /** Signed in with a number and PIN? Resolves to that number ('c…' for a church number), or '' for an email sign-in. */
+    function isCodeSession() { return session && session.code ? session.login || 'pin' : ''; }
 
-    /* Administrators: give codes, see and remove linked phones */
+    /* Administrators: give codes, see and switch off PIN sign-ins */
     var CODE_CHARS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', CODE_DAYS = 14;
     function newCode() {
       var out = '', a = new Uint32Array(8); (window.crypto || window.msCrypto).getRandomValues(a);
       for (var i = 0; i < 8; i++) out += CODE_CHARS[a[i] % CODE_CHARS.length];
       return out;
     }
-    /** A new code for a person (their unused older codes are removed): resolves { code, expires }. */
-    function codeGive(pid, name) {
+    /** A new code for a person: resolves { code, expires }. Their unused older codes go, and so does a PIN sign-in they
+     *  already have (a new code is for a forgotten PIN or a new number). mobile = their cellphone number, to fill in. */
+    function codeGive(pid, name, mobile, dial) {
       var code = newCode(), expires = Date.now() + CODE_DAYS * 864e5;
-      return codesUnused(pid).then(function (old) {
+      return Promise.all([codesUnused(pid), devicesOf(pid)]).then(function (r) {
         var b = fs.batch();
-        old.forEach(function (c) { b.delete(doc('invites/' + c)); });
-        b.set(doc('invites/' + code), { personId: pid, name: name, role: 'member', expires: expires, by: session.personId || '', createdAt: now() });
+        r[0].forEach(function (c) { b.delete(doc('invites/' + c)); });
+        r[1].forEach(function (d) { b.delete(doc('devices/' + d.id)); });
+        var inv = { personId: pid, name: name, role: 'member', expires: expires, by: session.personId || '', createdAt: now() };
+        if (mobile) inv.mobile = String(mobile);
+        if (dial) { inv.dial = String(dial); b.set(doc('pinLogins/dial'), { dial: String(dial) }); }
+        b.set(doc('invites/' + code), inv);
         return b.commit();
       }).then(function () { return { code: code, expires: expires }; });
     }
     function codesUnused(pid) {
       return fs.collection('invites').where('personId', '==', pid).get().then(function (s) { return s.docs.filter(function (d) { return !(d.data() || {}).usedBy; }).map(function (d) { return d.id; }); });
     }
-    /** The phones linked to a person: [{ id, linkedAt }] (Administrators). */
+    /** A person's PIN sign-ins: [{ id, login, linkedAt }] (Administrators). */
     function devicesOf(pid) {
-      return fs.collection('devices').where('personId', '==', pid).get().then(function (s) { return s.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, linkedAt: x.linkedAt || null }; }); });
+      return fs.collection('devices').where('personId', '==', pid).get().then(function (s) { return s.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, login: x.login || '', linkedAt: x.linkedAt || null }; }); });
     }
     function deviceRemove(uid) { return doc('devices/' + uid).delete(); }
-    /** No access, left, or died: every linked phone and unused code of this person goes (Administrators). */
+    /** No access, left, or died: every PIN sign-in and unused code of this person goes (Administrators). */
     function codesDrop(pid) {
       return Promise.all([devicesOf(pid), codesUnused(pid)]).then(function (r) {
         if (!r[0].length && !r[1].length) return;
@@ -1443,7 +1511,7 @@ var Store = (function () {
         });
       }).catch(function (e) { err(e, 'verify this checkout'); throw e; });
     }
-    return { claimCode: claimCode, confirmCode: confirmCode, cancelCode: cancelCode, isCodeSession: isCodeSession, codeGive: codeGive, devicesOf: devicesOf, deviceRemove: deviceRemove, codesDrop: codesDrop,
+    return { claimCode: claimCode, confirmCode: confirmCode, begin: begin, signInPin: signInPin, cancelCode: cancelCode, isCodeSession: isCodeSession, codeGive: codeGive, devicesOf: devicesOf, deviceRemove: deviceRemove, codesDrop: codesDrop,
       choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
@@ -1545,12 +1613,12 @@ var Store = (function () {
       var x = ((db && db.photos) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.data : '');
     },
     /** A person's ID number (Administrators only; the person may see their own). Kept apart, never loaded with the rest. */
-    /** Sign-in codes (Administrators): a new code for a person → { code, expires }; their linked phones; unlink one.
+    /** Sign-in codes (Administrators): a new code for a person → { code, expires }; their PIN sign-ins; switch one off.
      *  The demo makes a code that can't be used (there is no sign-in in the demo). */
-    codeGive: function (pid, name) {
+    codeGive: function (pid, name, mobile, dial) {
       if (blocked()) return Promise.reject(new Error('view only'));
       if (!isAdmin()) return Promise.reject(new Error('Only an Administrator can give sign-in codes.'));
-      if (LIVE) return Live.codeGive(pid, name);
+      if (LIVE) return Live.codeGive(pid, name, mobile, dial);
       var A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', c = ''; for (var i = 0; i < 8; i++) c += A[Math.floor(Math.random() * A.length)];
       return Promise.resolve({ code: c, expires: Date.now() + 14 * 864e5 });
     },
@@ -1687,7 +1755,7 @@ var Store = (function () {
     onRemoteChange: function (fn) { remoteListeners.push(fn); }, onError: function (fn) { errorListeners.push(fn); },
     onLeaveChange: function (fn) { leaveHooks.push(fn); },
     setRobot: function (email, uid, oldEmail) { if (blocked()) return Promise.resolve(); return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
-    live: { claimCode: Live.claimCode, confirmCode: Live.confirmCode, cancelCode: Live.cancelCode, isCodeSession: Live.isCodeSession,
+    live: { claimCode: Live.claimCode, confirmCode: Live.confirmCode, begin: Live.begin, signInPin: Live.signInPin, cancelCode: Live.cancelCode, isCodeSession: Live.isCodeSession,
       choose: Live.choose, household: Live.household, boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
       setup: Live.setup, session: Live.session } };
 })();

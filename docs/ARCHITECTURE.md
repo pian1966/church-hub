@@ -865,21 +865,34 @@ demo's made-up churches (`SampleChurches` in `js/sample.js`); live churches see 
 - Kept up to date by: `tests/setup-kit.test.js` (every `Hub.register` id covered; the settings file matches `js/firebase-config.js`),
   `tests/versions.test.js` (`reviewed-for` in `setup.html` follows the middle version number) and the rule in `CLAUDE.md`.
 
-## Sign-in codes (members with no email; `js/store.js` Live: `claimCode`, `confirmCode`, `codeGive`; `firestore.rules` invites, devices)
+## Sign-in codes and PINs (members with no email; `js/store.js` Live: `claimCode`, `confirmCode`, `signInPin`, `codeGive`; `firestore.rules` invites, devices, pinLogins)
 - Built from `docs/architecture/TARGET.md` section 9 for the one-church setup (tasks 015–016, without the rules-version gate
-  of task 012, which isn't built yet). Needs **Anonymous** switched on in Firebase (FIREBASE-SETUP.md step 3); until then the
-  code box says codes aren't switched on.
+  of task 012, which isn't built yet), then changed so the code is a one-time invitation and the member signs in with a number
+  and PIN from then on (not tied to one phone). Needs **Anonymous** and **Email/Password** switched on in Firebase
+  (FIREBASE-SETUP.md steps 3–4); until then the screens say codes or PINs aren't switched on.
 - Administrator: a person's page → App access → **Give a sign-in code** (adults with Member access only) → `invites/{8 characters
-  from 23456789ABCDEFGHJKMNPQRSTUVWXYZ}` = `{ personId, name, role: 'member', expires: ms, by, createdAt }`; the person's unused
-  older codes are deleted. The window shows the QR (`js/qr.js`) of `…/?j=CODE`, the code as ABCD-EFGH, Send by WhatsApp and
-  Print (one slip); it can't be shown again once closed. **Linked phones** lists `devices` for the person; Remove deletes one.
-  `syncRole`: losing access (No access, left, died) deletes the person's devices and unused invites (`codesDrop`).
-- Member: **I have a sign-in code** (or the `?j=` link, taken out of the address at once) → `auth.signInAnonymously()` →
-  get `invites/{code}` → "Is this you?" → one batch: `devices/{uid}` (`role/roles: member`, `personId`, `also: []`,
-  `people: {}`, `invite`, `name`, `linkedAt`) + the invite's `usedBy/usedAt`. **No** signs the anonymous user out.
-- Session: an anonymous user reads `devices/{uid}` instead of `roles/{email}` (`startCodeSession`); `session.email` is
-  `'code:' + uid` (the audit log's `byEmail`, the offline-copy owner). No devices document → signed out ("isn't linked any
-  more" if this phone was linked before). Signing out deletes `devices/{uid}` first, after a warning.
-- Rules: `codeUser()` (sign_in_provider anonymous); `roleRef()` → `devices/{uid}` for code users, so every other rule works
-  unchanged; the robot and `roles` read rules never reach `token.email` for a code user; audit `byEmail == byWho()`.
+  from 23456789ABCDEFGHJKMNPQRSTUVWXYZ}` = `{ personId, name, role: 'member', expires: ms, by, createdAt, mobile?, dial? }`; the
+  person's unused older codes **and their PIN sign-in** (`devices`) are deleted (a new code is for a forgotten PIN or a new
+  number); `pinLogins/dial = { dial }` (the church's calling code, for numbers typed as 082…). The window shows the QR
+  (`js/qr.js`) of `…/?j=CODE`, the code as ABCD-EFGH, Send by WhatsApp and Print (one slip); it can't be shown again once
+  closed. **Cellphone sign-in** lists the person's `devices` (the number partly hidden, or the church number); **Switch off**
+  deletes one. `syncRole`: losing access (No access, left, died) deletes the person's devices and unused invites (`codesDrop`).
+- Member, once: **I have a sign-in code** (or the `?j=` link, taken out of the address at once) → `auth.signInAnonymously()` →
+  get `invites/{code}` → "Is this you?" → **Choose your PIN**: their cellphone number (filled in from `mobile`) or **I don't
+  have my own number** (a church number: "c" + 6 random digits, not starting with 0, not in `pinLogins` yet) and a 6-digit PIN
+  twice (111111, 123456 and the like refused) → `user.linkWithCredential(EmailAuthProvider.credential(<login>-<v>@pin.church-hub.invalid, PIN))`
+  (the same uid; `v` = `pinLogins/{login}.v` + 1, or the next one if that address is taken) → token refreshed → one batch:
+  `devices/{uid}` (`role/roles: member`, `personId`, `also: []`, `people: {}`, `invite`, `name`, `linkedAt`, `login`, `pinV`)
+  + `pinLogins/{login} = { v, uid }` + the invite's `usedBy/usedAt`. A church number is then shown to write down. If the
+  write fails, the account with the address is deleted and the phone signs in anonymously again, so the code can be retried.
+- Member, from then on: **Sign in with my number** → number (`pinLogin()`: +27…, 0027…, 082… with `pinLogins/dial`, or a
+  6-digit church number) and PIN → get `pinLogins/{login}` (readable signed out) → `signInWithEmailAndPassword`.
+- Session: an account whose email matches the PIN pattern reads `devices/{uid}` instead of `roles/{email}` (`startCodeSession`);
+  `session.email` is `'code:' + uid` (the audit log's `byEmail`, the offline-copy owner), `session.login` the number (for the
+  sign-out wording). No devices document → signed out ("This sign-in has been switched off"). Signing out changes nothing.
+- Rules: `pinUser()` (the token's email matches `^c?[0-9]+-[0-9]+@pin[.]church-hub[.]invalid$`); `roleRef()` → `devices/{uid}`
+  for PIN users, so every other rule works unchanged; the robot and `roles` read rules never treat a PIN address as an email;
+  audit `byEmail == byWho()`. `pinLogins/{login}` may be written only by the account whose address is `<login>-<v>@…`, in the
+  write that creates its devices document; a number already in use moves on only for the same person or once the old
+  devices document is gone. A bare anonymous account can read an invite by its code and `pinLogins`, nothing else.
 - Not built yet (task 016): printing slips for many people at once from People → Change selected…; a Settings switch.

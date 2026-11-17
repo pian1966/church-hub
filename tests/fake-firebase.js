@@ -13,9 +13,10 @@
 
   /* ---------- the rules, in JavaScript ---------- */
   var ANY = ['admin', 'pastor', 'rosters', 'kids', 'member'], STAFF = ['admin', 'pastor', 'rosters', 'kids'];
+  var PIN_RE = /^c?[0-9]+-[0-9]+@pin\.church-hub\.invalid$/;
   function ctx() {
-    // A phone signed in with a sign-in code (anonymous): its devices document instead of an email's roles document
-    var code = !!(currentUser && currentUser.isAnonymous);
+    // A number-and-PIN sign-in (its made-up address): its devices document instead of an email's roles document
+    var code = !!(currentUser && PIN_RE.test(String(currentUser.email || '')));
     var email = !currentUser ? '' : code ? 'code:' + currentUser.uid : String(currentUser.email).toLowerCase();
     var r = !currentUser ? null : code ? docs['devices/' + currentUser.uid] : email ? docs['roles/' + email] : null;
     // A sign-in shared by several people (one email address): every role they have, and every one of them
@@ -340,7 +341,8 @@
       write: function (c, op, id, b, a) { return (librarian(c) || keeper(c)) && (op === 'delete' || (id === 'policy' && onlyKeys(a, ['text', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
     partnerInfo: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (may(c, 'settings') || rector(c)) && (op === 'delete' || (id === 'requirements' && onlyKeys(a, ['text', 'link', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.link || '') === 'string' && (a.link || '').length <= 500 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
-    // Sign-in codes (firestore.rules: invites, devices). Reading an invite needs only a sign-in (by its code; the app never lists them).
+    // Sign-in codes and PINs (firestore.rules: invites, devices, pinLogins). Reading an invite needs only a sign-in (by its code;
+    // the app never lists them); a pinLogins document anyone may fetch by its number.
     invites: { read: function (c) { return !!currentUser; },
       write: function (c, op, id, b, a, after) {
         if (is(c, ['admin'])) return op === 'delete' || (op === 'create' && a.role === 'member' && !a.usedBy && typeof a.expires === 'number' && !!a.personId);
@@ -349,12 +351,21 @@
       } },
     devices: { read: function (c, id) { return (!!currentUser && currentUser.uid === id) || is(c, ['admin']); },
       write: function (c, op, id, b, a, after) {
-        if (op === 'delete') return is(c, ['admin']) || (!!currentUser && currentUser.uid === id);
+        if (op === 'delete') return is(c, ['admin']);
         if (op !== 'create' || !c.code || c.uid !== id) return false;
-        var inv = docs['invites/' + a.invite], invAfter = after['invites/' + a.invite];
-        return onlyKeys(a, ['role', 'roles', 'personId', 'also', 'people', 'invite', 'name', 'linkedAt']) && a.role === 'member' && JSON.stringify(a.roles) === '["member"]'
+        var inv = docs['invites/' + a.invite], invAfter = after['invites/' + a.invite], pl = after['pinLogins/' + a.login] || {};
+        return onlyKeys(a, ['role', 'roles', 'personId', 'also', 'people', 'invite', 'name', 'linkedAt', 'login', 'pinV']) && a.role === 'member' && JSON.stringify(a.roles) === '["member"]'
           && JSON.stringify(a.also) === '[]' && JSON.stringify(a.people) === '{}' && !!inv && inv.personId === a.personId && !inv.usedBy && Date.now() < inv.expires
-          && !!invAfter && invAfter.usedBy === id;
+          && !!invAfter && invAfter.usedBy === id && typeof a.login === 'string' && typeof a.pinV === 'number' && pl.v === a.pinV && pl.uid === id;
+      } },
+    pinLogins: { read: function () { return true; },
+      write: function (c, op, id, b, a, after) {
+        if (op === 'delete') return is(c, ['admin']);
+        if (id === 'dial') return is(c, ['admin']) && onlyKeys(a, ['dial']) && typeof a.dial === 'string';
+        var dev = after['devices/' + c.uid] || {};
+        return c.code && onlyKeys(a, ['v', 'uid']) && a.uid === c.uid && typeof a.v === 'number' && String(currentUser.email) === id + '-' + a.v + '@pin.church-hub.invalid'
+          && !docs['devices/' + c.uid] && dev.login === id
+          && (!b || (a.v > b.v && (!docs['devices/' + b.uid] || docs['devices/' + b.uid].personId === dev.personId)));
       } },
     dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
     audit: { read: function (c) { return may(c, 'privacy'); },
@@ -479,7 +490,7 @@
     enablePersistence: function () { F.kept++; return Promise.resolve(); },
     terminate: function () { return Promise.resolve(); },
     clearPersistence: function () { F.wiped++; return Promise.resolve(); },
-    batch: function () { var ops = []; return { set: function (ref, data) { ops.push({ path: ref.path, data: data }); }, commit: function () { return apply(ops); } }; } };
+    batch: function () { var ops = []; return { set: function (ref, data) { ops.push({ path: ref.path, data: data }); }, delete: function (ref) { ops.push({ path: ref.path, data: null }); }, commit: function () { return apply(ops); } }; } };
   function notifyAuth() { authCbs.forEach(function (cb) { setTimeout(function () { cb(currentUser); }, 0); }); }
   var auth = {
     get currentUser() { if (currentUser && !currentUser.getIdToken) currentUser.getIdToken = function () { return Promise.resolve(''); }; return currentUser; },
@@ -494,14 +505,38 @@
     // A sign-in code: a new anonymous account (F.anonFail makes it fail, e.g. 'auth/admin-restricted-operation')
     signInAnonymously: function () {
       if (F.anonFail) { var e = new Error(F.anonFail); e.code = F.anonFail; return Promise.reject(e); }
-      currentUser = { uid: 'anon-' + (++F.anonCount), isAnonymous: true, email: null, emailVerified: false }; notifyAuth();
+      currentUser = account('anon-' + (++F.anonCount), null); notifyAuth();
+      return Promise.resolve({ user: currentUser });
+    },
+    // A number and PIN: the made-up address and the PIN (F.accounts: address → { uid, password })
+    signInWithEmailAndPassword: function (email, password) {
+      var a = F.accounts[email];
+      if (!a || a.password !== password) { var e = new Error('wrong'); e.code = 'auth/invalid-credential'; return Promise.reject(e); }
+      currentUser = account(a.uid, email); notifyAuth();
       return Promise.resolve({ user: currentUser });
     }
   };
-  F.anonCount = 0;
+  /** An account: anonymous (no email) until a PIN is linked to it (same uid); it can be deleted. */
+  function account(uid, email) {
+    var u = { uid: uid, isAnonymous: !email, email: email, emailVerified: false };
+    u.getIdToken = function () { return Promise.resolve(''); };
+    u.linkWithCredential = function (cred) {
+      if (F.accounts[cred.email]) { var e = new Error('in use'); e.code = 'auth/email-already-in-use'; return Promise.reject(e); }
+      F.accounts[cred.email] = { uid: u.uid, password: cred.password }; u.email = cred.email; u.isAnonymous = false;
+      return Promise.resolve({ user: u });
+    };
+    u.delete = function () {
+      Object.keys(F.accounts).forEach(function (k) { if (F.accounts[k].uid === u.uid) delete F.accounts[k]; });
+      if (currentUser === u) { currentUser = null; notifyAuth(); }
+      return Promise.resolve();
+    };
+    return u;
+  }
+  F.anonCount = 0; F.accounts = {};
   function GoogleAuthProvider() {} GoogleAuthProvider.prototype.setCustomParameters = function () {};
   GoogleAuthProvider.credential = function (idToken) { return { providerId: 'google.com', idToken: idToken }; };
   var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; }, arrayUnion: function () { return { __union: Array.prototype.slice.call(arguments) }; }, delete: function () { return { __delete: true }; } };
   var authFn = function () { return auth; }; authFn.GoogleAuthProvider = GoogleAuthProvider;
+  authFn.EmailAuthProvider = { credential: function (email, password) { return { providerId: 'password', email: email, password: password }; } };
   window.firebase = { apps: [], initializeApp: function (c) { this.apps.push(c); return {}; }, auth: authFn, firestore: firestoreFn };
 })();

@@ -57,7 +57,7 @@
       (mine || !c.confirmed ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
   }
 
-  /* ---------- sign-in codes (Administrators): for members, often with no email, to link their phone ---------- */
+  /* ---------- sign-in codes (Administrators): for members with no email – with the code they choose a PIN ---------- */
   /** May this person be given a sign-in code? An adult, still at church, with Member access (codes never give more). */
   function codeable(p) {
     return H.can('*') && !S.preview() && p && p.familyRole !== 'child' && p.active !== false && !deceased(p) && p.category !== 'Deceased' && (p.appRole || 'member') === 'member';
@@ -177,7 +177,7 @@
       (p.staff && full ? '<dt>' + T('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
       (H.can('access.manage') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.personRole(p)) + (codeable(p) && !me ?
         '<span class="kv-sub"><button class="link" data-act="people:givecode" data-id="' + p.id + '">' + T('Give a sign-in code') + '</button> · ' +
-        '<button class="link" data-act="people:phones" data-id="' + p.id + '">' + T('Linked phones') + '</button></span>' : '') + '</dd>' : '') +
+        '<button class="link" data-act="people:phones" data-id="' + p.id + '">' + T('Cellphone sign-in') + '</button></span>' : '') + '</dd>' : '') +
       '</dl></section>';
     if (/<dt>/.test(contact)) html += contact;
     // Households (where they live) – a child can live in more than one
@@ -523,15 +523,16 @@
       },
     givecode: function (el) {
         var p = S.get('people', el.dataset.id); if (!codeable(p)) return;
-        H.modal(H.dialogHead(T('Give a sign-in code'), H.name(p)) + '<div class="dlg-body"><p style="margin-top:0">' + esc(T('For {name} to sign in on their phone without an email address. The code works once, for 14 days.', { name: P.known(p) })) + '</p>' +
-          '<p class="note warn">' + esc(T('Give it only to {name}: whoever has the code can sign in as them.', { name: P.known(p) })) + '</p></div>' +
+        H.modal(H.dialogHead(T('Give a sign-in code'), H.name(p)) + '<div class="dlg-body"><p style="margin-top:0">' + esc(T('For {name} to sign in without an email address. With the code they choose a 6-digit PIN, then sign in on any phone with their cellphone number and PIN. The code works once, for 14 days.', { name: P.known(p) })) + '</p>' +
+          '<p class="note warn">' + esc(T('Give it only to {name}: whoever has the code can sign in as them.', { name: P.known(p) })) + '</p>' +
+          '<p class="muted">' + esc(T('If they already sign in with a PIN, it stops working now, and they choose a new one with this code.')) + '</p></div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:makecode" data-id="' + p.id + '">' + T('Make the code') + '</button></div>', T('Give a sign-in code'));
       },
     makecode: function (el) {
         var p = S.get('people', el.dataset.id); if (!codeable(p)) return;
         el.disabled = true;
         var name = (P.known(p) + ' ' + (p.lastName || '').slice(0, 1) + '.').trim();
-        Store.codeGive(p.id, name).then(function (r) {
+        Store.codeGive(p.id, name, p.mobile || '', (Countries.church(S.settings()) || {}).dial || '').then(function (r) {
           S.audit('Gave a sign-in code to ' + H.name(p), 'people/' + p.id);   // never the code itself
           var link = codeLink(r.code), until = H.fmt(new Date(r.expires).toISOString().slice(0, 10), true);
           slip = '<div class="code-slip print"><p><b>' + esc((S.settings() || {}).churchName || 'Church Hub') + '</b> · Church Hub</p><h1>' + esc(H.name(p)) + '</h1>' +
@@ -556,24 +557,27 @@
         window.addEventListener('afterprint', done, { once: true });
         try { window.print(); } catch (e) { done(); H.toast(T('Printing works best from a computer.'), true); }
       },
+    /** How someone signs in with a number and PIN (Administrators): the number, when it was set up, and Switch off. */
     phones: function (el) {
         var p = S.get('people', el.dataset.id); if (!p) return;
-        H.modal(H.dialogHead(T('Linked phones'), H.name(p)) + '<div class="dlg-body" id="ph-list"><p class="muted">' + T('Loading…') + '</p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Linked phones'));
+        H.modal(H.dialogHead(T('Cellphone sign-in'), H.name(p)) + '<div class="dlg-body" id="ph-list"><p class="muted">' + T('Loading…') + '</p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Cellphone sign-in'));
         Store.devicesOf(p.id).then(function (ds) {
           var box = document.getElementById('ph-list'); if (!box) return;
-          box.innerHTML = ds.length ? '<p class="muted" style="margin-top:0">' + esc(T('Phones signed in as {name} with a sign-in code. Remove one that is lost or no longer theirs.', { name: P.known(p) })) + '</p><div class="list">' + ds.map(function (d) {
-            return '<div class="item"><span class="grow"><b>' + T('Phone') + '</b><small>' + esc(T('Linked {date}', { date: d.linkedAt ? H.fmt(String(d.linkedAt).slice(0, 10), true) : '?' })) + '</small></span>' +
-              '<button class="btn small" data-act="people:unphone" data-id="' + esc(d.id) + '" data-p="' + p.id + '">' + T('Remove') + '</button></div>';
-          }).join('') + '</div>' : '<p class="muted" style="margin-top:0">' + esc(T('No phones are linked to {name} with a sign-in code.', { name: P.known(p) })) + '</p>';
-        }, function () { var box = document.getElementById('ph-list'); if (box) box.innerHTML = '<p class="note bad">' + T('Couldn’t load the linked phones.') + '</p>'; });
+          box.innerHTML = ds.length ? '<p class="muted" style="margin-top:0">' + esc(T('How {name} signs in with a number and PIN. Switch it off if their phone is lost or the number is no longer theirs.', { name: P.known(p) })) + '</p><div class="list">' + ds.map(function (d) {
+            var church = /^c\d/.test(d.login), digits = String(d.login || '').replace(/\D/g, '');
+            var what = church ? T('Church number {number}', { number: digits.slice(0, 3) + ' ' + digits.slice(3) }) : digits ? T('Cellphone number ending {last}', { last: digits.slice(-4) }) : T('Phone');
+            return '<div class="item"><span class="grow"><b>' + esc(what) + '</b><small>' + esc(T('Set up {date}', { date: d.linkedAt ? H.fmt(String(d.linkedAt).slice(0, 10), true) : '?' })) + '</small></span>' +
+              '<button class="btn small" data-act="people:unphone" data-id="' + esc(d.id) + '" data-p="' + p.id + '">' + T('Switch off') + '</button></div>';
+          }).join('') + '</div>' : '<p class="muted" style="margin-top:0">' + esc(T('{name} doesn’t sign in with a number and PIN yet. Give a sign-in code to set it up.', { name: P.known(p) })) + '</p>';
+        }, function () { var box = document.getElementById('ph-list'); if (box) box.innerHTML = '<p class="note bad">' + T('Couldn’t load the cellphone sign-in.') + '</p>'; });
       },
     unphone: function (el) {
-        if (!H.confirmBtn(el, T('Click again to remove'))) return;
+        if (!H.confirmBtn(el, T('Click again to switch off'))) return;
         var p = S.get('people', el.dataset.p);
         Store.deviceRemove(el.dataset.id).then(function () {
-          S.audit('Unlinked a phone from ' + H.name(p), 'people/' + p.id);
-          var row = el.closest('.item'); if (row) row.remove(); H.toast(T('Phone removed – it is signed out'));
-        }, function () { H.toast(T('Couldn’t remove the phone.'), true); });
+          S.audit('Switched off the PIN sign-in of ' + H.name(p), 'people/' + p.id);
+          var row = el.closest('.item'); if (row) row.remove(); H.toast(T('PIN sign-in switched off'));
+        }, function () { H.toast(T('Couldn’t switch it off.'), true); });
       },
     showid: function (el) {
         var p = S.get('people', el.dataset.id), box = document.getElementById('pp-idn');

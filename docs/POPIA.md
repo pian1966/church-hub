@@ -39,17 +39,24 @@ This is a design checklist, not legal advice – the church's Information Office
 - **Home address** (street, line 2, town, postcode, province, country), **middle name** and **maiden name** (a woman's surname before she married; the box appears for women who are or were married): private details – Administrators and Pastors, and the person themself (Children's ministry for children). Purpose: pastoral visits and keeping records correct. Brought across from Elvanto's Home Address columns (provinces tidied, e.g. KZN → KwaZulu-Natal); a province or country on its own isn't kept as an address. Elvanto's mailing address isn't used.
 - From Elvanto the import also takes **Date Added** (when someone was first added – it replaces the import day), **Anniversary**, **Membership Date** and **Membership last renewed on** (the Church Partner dates; a renewal year on its own is kept as the year), **Checklist of what to receive** (into the consent register, "Carried over from Elvanto") and **Department Positions** (volunteering). Groups, giving, security codes and Elvanto's email/SMS preferences are not read: Elvanto ticks those preferences by default, so they aren't consent.
 
-## Sign-in codes (members with no email)
-- **What is kept:** `invites/{code}` (the person it is for, their first name and initial, expiry, who made it, and – once used –
-  the phone's account id) and `devices/{id}` (Member access for that person, linked date). Codes are never written to the
-  audit log, exports or searches; the audit log records "Gave a sign-in code to …", "Unlinked a phone from …", and a code
-  phone's own actions under `code:` and its account id.
-- **Who:** only Administrators make codes, list them and see or remove linked phones (`firestore.rules`). A code gives only
-  **Member** access for one adult with Member access, works once, for 14 days; No access, Mark as left and a death remove
-  that person's phones and unused codes. Signing out unlinks the phone.
+## Sign-in codes and PINs (members with no email)
+- **What is kept:** `invites/{code}` (the person it is for, their first name and initial, their cellphone number to fill in,
+  the church's calling code, expiry, who made it, and – once used – the account id), `devices/{id}` (Member access for that
+  person, the number they sign in with, set-up date) and `pinLogins/{number}` (which account that number signs in with now:
+  a version and the account id, no name). The PIN is kept only by Firebase Authentication as a password (never by Church Hub,
+  never in the audit log). Codes are never written to the audit log, exports or searches; the audit log records "Gave a
+  sign-in code to …", "Switched off the PIN sign-in of …", and the member's own actions under `code:` and the account id.
+- **Who:** only Administrators make codes, list them and see or switch off PIN sign-ins (`firestore.rules`). A code gives only
+  **Member** access for one adult with Member access, works once, for 14 days; a new code, No access, Mark as left and a
+  death switch off that person's PIN sign-in and remove unused codes. Signing out leaves the PIN sign-in working.
+- **Number lookup:** anyone may ask whether a number has a Church Hub sign-in at this church (`pinLogins/{number}`, needed
+  before signing in); it shows no name. A church in an area hostile to the gospel can give church numbers instead of using
+  cellphone numbers.
 - **What it does not protect against:** whoever holds an unused code becomes that member – as whoever reads an inbox is that
   email's owner. They see only what a Member sees (their own details, the directory as allowed, their rosters, groups and
-  messages), never staff-only information. Cures: single use, 14 days, "Is this you?", the linked-phones list and the audit
+  messages), never staff-only information. A 6-digit PIN can be guessed by someone who knows the number and keeps trying;
+  Firebase slows repeated wrong tries. Cures: single use, 14 days, "Is this you?", easy PINs refused, Cellphone sign-in
+  (Switch off) on the person's page and the audit
   log. Anyone can create an anonymous Firebase account in the church's project; without a spent code it can read nothing.
 
 ## ID numbers

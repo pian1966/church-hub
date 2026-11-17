@@ -261,7 +261,7 @@ var SetupKit = (function () {
           'In the left menu open ' + ui('Security') + ' → ' + ui('Authentication') + ' (older: ' + ui('Build') + ' → ' + ui('Authentication') + '). Click ' + ui('Get started') + '.',
           ui('Sign-in method') + ' → ' + ui('Google') + ' → switch ' + ui('Enable') + ' on → choose the church’s email as support email → ' + ui('Save') + '.',
           ui('Add new provider') + ' → ' + ui('Email/Password') + ' → switch on <b>both</b> ' + ui('Email/Password') + ' and ' + ui('Email link (passwordless sign-in)') + ' → ' + ui('Save') + '.',
-          ui('Add new provider') + ' → ' + ui('Anonymous') + ' → switch it on → ' + ui('Save') + '. This lets members with no email sign in with a code from the office; on its own it lets nobody see anything.',
+          ui('Add new provider') + ' → ' + ui('Anonymous') + ' → switch it on → ' + ui('Save') + '. This lets members with no email use a code from the office to choose a PIN; on its own it lets nobody see anything.',
           ui('Settings') + ' tab → ' + ui('Authorized domains') + ' → ' + ui('Add domain') + ' → ' + (c.domain ? copy(c.domain) : '<i>your GitHub username</i>.github.io') + ' → ' + ui('Add') + '.'
         ]);
       } },
@@ -447,9 +447,9 @@ var SetupKit = (function () {
     { id: 'ai', group: 'extras', title: 'Ask in your own words, with AI', mods: [], since: '0.43',
       what: 'Find people by asking a question – “Who has a birthday this month in a care group?”.',
       how: function () { return ol([open(DOCS + 'AI-SEARCH-SETUP.md', 'Follow the AI setup guide') + ' (about 15 minutes), then switch it on in Settings → Apps.']); } },
-    { id: 'codes', group: 'people', title: 'Sign-in codes for members with no email', mods: [], since: '0.87',
-      what: 'Give a member a code on a slip or by WhatsApp: they scan it once and their phone stays signed in. Free; Member access only.',
-      how: function (c) { return ol(['Check ' + ui('Anonymous') + ' sign-in is switched on in ' + (c.projectId ? open(c.fb('authentication/providers'), 'Firebase → Sign-in method') : 'Firebase → Authentication → Sign-in method') + '.', open(c.app('people'), 'Open People') + ', open the person → ' + ui('Give a sign-in code') + '.']); } },
+    { id: 'codes', group: 'people', title: 'Sign-in codes and PINs for members with no email', mods: [], since: '0.87',
+      what: 'Give a member a code on a slip or by WhatsApp: with it they choose a PIN, then sign in on any phone with their cellphone number (or a church number) and PIN. Free; Member access only.',
+      how: function (c) { return ol(['Check ' + ui('Anonymous') + ' and ' + ui('Email/Password') + ' sign-in are switched on in ' + (c.projectId ? open(c.fb('authentication/providers'), 'Firebase → Sign-in method') : 'Firebase → Authentication → Sign-in method') + '.', open(c.app('people'), 'Open People') + ', open the person → ' + ui('Give a sign-in code') + '.']); } },
     { id: 'share', group: 'extras', title: 'Tell the church', mods: [], since: '0.1',
       what: 'Share the church’s address; people can add it to their phone’s home screen like an app.',
       how: function (c) { return (c.site ? '<p>' + copy(c.site) + '</p>' : '') + '<div class="qr" data-qr="' + esc(c.site || '') + '"></div>'; } },

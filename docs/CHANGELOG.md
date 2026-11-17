@@ -434,6 +434,8 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   box: choose the other person, even in another household, and both records are linked (`spouseId` in `details/`); the couple
   is certain wherever they live and comes before the household's guesses (`Households.couples`, `explicit`), Not a couple
   unlinks them, and the late-spouse suggestions use it. Greyed out for Single, Engaged, Divorced and Widowed. Help, What's new.
+- ✅ 0.87.3 (17 Nov 2026): **Field icons** – a small, quiet icon in front of each field's label on a person's page and in Edit
+  details (`F()` in `js/people/core.js`, `.f-lab`/`.f-ico` in `css/hub.css`; key dates get a calendar; hidden when printing).
 - ✅ 0.87.2 (17 Nov 2026): **Library**: Items I have borrowed is a tab of its own (`#/library/borrowed`), first, before Library and
   Archives (only when the person has borrowed something); Home's reminders and the Me page chip open it. The help pages
   (getting started, People), the brochure and the planning notes describe signing in with a number and PIN.

@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.87';
   var NEWS = [
+    { date: '2026-11-17', who: ['everyone'], app: 'people', text: TX("People: each field on a person’s page and in Edit details now has a small icon, so you can see at a glance what it asks.") },
     { date: '2026-11-17', who: ['everyone'], app: 'library', text: TX('Library: the items you have borrowed now have a tab of their own, before Library and Archives.') },
     { date: '2026-11-17', who: ['everyone'], text: TX('Members with no email address can now sign in with their cellphone number and a PIN: the church office gives them a sign-in code once, and with it they choose their PIN.') },
     { date: '2026-11-17', who: ['admin'], text: TX('Administrators: give a member with no email a sign-in code from their page (App access → Give a sign-in code) – by WhatsApp, on a printed slip or on screen. With it they choose a PIN. Switch on Anonymous and Email/Password sign-in in Firebase first.') },

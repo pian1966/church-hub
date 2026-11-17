@@ -3,7 +3,7 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
-  var HS = P.HS, PURPOSES = P.PURPOSES, RECEIVE_P = P.RECEIVE_P, WEDDING = P.WEDDING, state = P.state;
+  var F = P.F, HS = P.HS, PURPOSES = P.PURPOSES, RECEIVE_P = P.RECEIVE_P, WEDDING = P.WEDDING, state = P.state;
   // From the other People files (each looked up when called)
   function addressLines() { return P.addressLines.apply(this, arguments); }
   function age() { return P.age.apply(this, arguments); }
@@ -52,7 +52,7 @@
     var c = coupleOf(p.id); if (!c) return '';
     var o = S.get('people', c.a === p.id ? c.b : c.a), t = coupleTodo(c), mine = (c.copy && c.copy.to === p.id) || (c.mark && c.mark.id === p.id) || c.differ;
     if (!mine) t.lines = [];
-    return '<dt>' + T(c.kind === 'spouse' ? 'Spouse' : 'Partner') + '</dt><dd><a href="#/people/p/' + o.id + '">' + esc(H.name(o)) + '</a>' +
+    return '<dt>' + F(c.kind === 'spouse' ? 'Spouse' : 'Partner') + '</dt><dd><a href="#/people/p/' + o.id + '">' + esc(H.name(o)) + '</a>' +
       (c.confirmed ? '' : '<span class="kv-sub">' + T(c.sure ? 'Going by their household – not confirmed yet' : 'Probably – going by their household') + '</span>') +
       (mine || !c.confirmed ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
   }
@@ -142,40 +142,40 @@
     var head = html, col = { a: '', b: '', c: '' }; html = '';
     // Contact (left out when there's nothing this person may see, e.g. a young child for Children's ministry)
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
-      (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
-      (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
-      (full && p.maidenName ? '<dt>' + T('Maiden name') + '</dt><dd>' + esc(p.maidenName) + '</dd>' : '') +
-      (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + ' ' + H.mapLink(addressLines(p).join(', ')) + '</dd>' :
-        !full && P.contactHtml(p, 'address') ? '<dt>' + T('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
-      (!child && (canSeeAll() || me) ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
-        '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
+      (p.preferredName ? '<dt>' + F('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
+      (full && p.middleName ? '<dt>' + F('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
+      (full && p.maidenName ? '<dt>' + F('Maiden name') + '</dt><dd>' + esc(p.maidenName) + '</dd>' : '') +
+      (full && addressLines(p).length ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + ' ' + H.mapLink(addressLines(p).join(', ')) + '</dd>' :
+        !full && P.contactHtml(p, 'address') ? '<dt>' + F('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
+      (!child && (canSeeAll() || me) ? '<dt>' + F('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
+        '<dt>' + F('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
       // Everyone else: only what Settings shares with their role, of people who agreed (Contact details)
       (!child && !canSeeAll() && !me ? ['email', 'mobile', 'spouse'].map(function (f) { var v = P.contactHtml(p, f); return v ? '<dt>' + T(f === 'email' ? 'Email' : f === 'mobile' ? 'Mobile' : 'Spouse or partner') + '</dt><dd>' + v + '</dd>' : ''; }).join('') : '') +
-      ((full || (child && canChildren())) && p.birthDate ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
-      (full && !p.birthDate && p.birthDay ? '<dt>' + T('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
-      ((full || (child && canChildren())) ? '<dt>' + T('Gender') + '</dt><dd>' + (p.gender ? esc(T(p.gender)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
-      (full && (p.category === 'Church Partner' || p.partnerSince || p.partnerUpdated) ? '<dt>' + T('Church Partner') + '</dt><dd>' +
+      ((full || (child && canChildren())) && p.birthDate ? '<dt>' + F('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +
+      (full && !p.birthDate && p.birthDay ? '<dt>' + F('Birthday') + '</dt><dd>' + esc(+p.birthDay.slice(3) + ' ' + H.mon()[+p.birthDay.slice(0, 2) - 1]) + ' <span class="muted small">' + T('(year not known)') + '</span></dd>' : '') +
+      ((full || (child && canChildren())) ? '<dt>' + F('Gender') + '</dt><dd>' + (p.gender ? esc(T(p.gender)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
+      (full && (p.category === 'Church Partner' || p.partnerSince || p.partnerUpdated) ? '<dt>' + F('Church Partner') + '</dt><dd>' +
         (p.partnerSince ? esc(T('Accepted {date}', { date: H.fmt(p.partnerSince, true) })) : '<span class="muted">' + T('Date accepted not recorded') + '</span>') +
         (p.partnerUpdated ? '<span class="kv-sub">' + esc(T('Partnership last updated {date}', { date: /^\d{4}$/.test(p.partnerUpdated) ? p.partnerUpdated : H.fmt(p.partnerUpdated, true) })) + '</span>' : '') + '</dd>' : '') +
-      (full && p.attendingSince ? '<dt>' + T('Coming to the church since') + '</dt><dd>' + esc(P.monthYear(p.attendingSince)) + '</dd>' : '') +
-      (full && !child ? '<dt>' + T('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
+      (full && p.attendingSince ? '<dt>' + F('Coming to the church since') + '</dt><dd>' + esc(P.monthYear(p.attendingSince)) + '</dd>' : '') +
+      (full && !child ? '<dt>' + F('Marital status') + '</dt><dd>' + (p.maritalStatus ? esc(T(p.maritalStatus)) : '<span class="muted">' + T('Not recorded') + '</span>') + '</dd>' : '') +
       (!child ? coupleLine(p) : '') +
-      (!child && lateSpouse(p) ? '<dt>' + T('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +
+      (!child && lateSpouse(p) ? '<dt>' + F('Late spouse') + '</dt><dd>' + T('Was married to {name}', { name: '<a href="#/people/p/' + lateSpouse(p).id + '">' + esc(H.name(lateSpouse(p))) + '</a>' }) +
         (lateSpouse(p).deceasedAt ? '<span class="kv-sub">' + esc(T('Died {date}', { date: H.fmt(lateSpouse(p).deceasedAt, true) })) + '</span>' : '') + '</dd>' :
-        !child && p.lateSpouseName ? '<dt>' + T('Late spouse') + '</dt><dd>' + esc(T('Was married to {name}', { name: p.lateSpouseName })) + '</dd>' : '') +
-      (H.can('idnumbers') || me ? '<dt>' + T('ID number') + '</dt><dd id="pp-idn"><button class="link" data-act="people:showid" data-id="' + p.id + '">' + T('Show') + '</button>' +
+        !child && p.lateSpouseName ? '<dt>' + F('Late spouse') + '</dt><dd>' + esc(T('Was married to {name}', { name: p.lateSpouseName })) + '</dd>' : '') +
+      (H.can('idnumbers') || me ? '<dt>' + F('ID number') + '</dt><dd id="pp-idn"><button class="link" data-act="people:showid" data-id="' + p.id + '">' + T('Show') + '</button>' +
         (H.can('idnumbers') ? ' · <button class="link" data-act="people:editid" data-id="' + p.id + '">' + T('Change') + '</button>' : '') + '<span class="kv-sub">' + (me && !H.can('*') ? T('Only you and the church Administrators can see it.') : T('Administrators only · views are logged')) + '</span></dd>' : '') +
-      (!child && survivingSpouses(p).length ? '<dt>' + T('Spouse') + '</dt><dd>' + survivingSpouses(p).map(function (s) { return T('Was married to {name}', { name: '<a href="#/people/p/' + s.id + '">' + esc(H.name(s)) + '</a>' }); }).join('<br>') + '</dd>' : '') +
+      (!child && survivingSpouses(p).length ? '<dt>' + F('Spouse') + '</dt><dd>' + survivingSpouses(p).map(function (s) { return T('Was married to {name}', { name: '<a href="#/people/p/' + s.id + '">' + esc(H.name(s)) + '</a>' }); }).join('<br>') + '</dd>' : '') +
       // Wedding anniversary straight after marital status: the date, or "Not recorded" with an Add link, for anyone ever married
-      (full && !child && !keyDate(p, WEDDING) && /^(Married|Separated|Divorced|Widowed)$/.test(p.maritalStatus || '') ? '<dt>' + T('Wedding anniversary') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' +
+      (full && !child && !keyDate(p, WEDDING) && /^(Married|Separated|Divorced|Widowed)$/.test(p.maritalStatus || '') ? '<dt>' + F('Wedding anniversary') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' +
         ((!me || H.can('*')) && (full || H.can('people.edit')) ? ' · <button class="link" data-act="people:edit" data-id="' + p.id + '" data-focus="pf-wed">' + T('Add') + '</button>' : '') + '</dd>' : '') +
       (full ? (p.keyDates || []).slice().sort(function (a, b) { return WEDDING.test(b.label || '') - WEDDING.test(a.label || ''); }).map(function (k) {
-        if (!WEDDING.test(k.label || '')) return '<dt>' + esc(T(k.label)) + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>';
+        if (!WEDDING.test(k.label || '')) return '<dt>' + F(k.label, 'calendar') + '</dt><dd>' + esc(H.fmt(k.date, true)) + '</dd>';
         var n = yearsSince(k.date);     // years married: only while still married (not after a death or divorce)
-        return '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('Married {n} year', 'Married {n} years', n)) + '</span>' : '') + '</dd>';
+        return '<dt>' + F('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('Married {n} year', 'Married {n} years', n)) + '</span>' : '') + '</dd>';
       }).join('') : '') +
-      (p.staff && full ? '<dt>' + T('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
-      (H.can('access.manage') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.personRole(p)) + (codeable(p) && !me ?
+      (p.staff && full ? '<dt>' + F('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
+      (H.can('access.manage') ? '<dt>' + F('App access') + '</dt><dd>' + esc(H.personRole(p)) + (codeable(p) && !me ?
         '<span class="kv-sub"><button class="link" data-act="people:givecode" data-id="' + p.id + '">' + T('Give a sign-in code') + '</button> · ' +
         '<button class="link" data-act="people:phones" data-id="' + p.id + '">' + T('Cellphone sign-in') + '</button></span>' : '') + '</dd>' : '') +
       '</dl></section>';
@@ -220,7 +220,7 @@
     // Medical (children)
     if (seeMedical) {
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Medical and allergies') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Children’s ministry only') + '</span></div>' +
-        (p.medical && (p.medical.allergies || p.medical.notes) ? '<dl class="kv" style="margin-top:12px">' + (p.medical.allergies ? '<dt>' + T('Allergies') + '</dt><dd><span class="tag bad">' + esc(p.medical.allergies) + '</span></dd>' : '') + (p.medical.notes ? '<dt>' + T('Notes') + '</dt><dd>' + esc(p.medical.notes) + '</dd>' : '') + '</dl>' : '<p class="muted">' + T('None recorded.') + '</p>') +
+        (p.medical && (p.medical.allergies || p.medical.notes) ? '<dl class="kv" style="margin-top:12px">' + (p.medical.allergies ? '<dt>' + F('Allergies') + '</dt><dd><span class="tag bad">' + esc(p.medical.allergies) + '</span></dd>' : '') + (p.medical.notes ? '<dt>' + F('Notes') + '</dt><dd>' + esc(p.medical.notes) + '</dd>' : '') + '</dl>' : '<p class="muted">' + T('None recorded.') + '</p>') +
         (hasConsent(p.id, 'Children’s medical notes') ? '' : '<p class="note warn" style="margin-top:10px">' + T('No guardian consent for medical notes yet.') + '</p>') +
         '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:medical" data-id="' + p.id + '">' + T('Edit medical notes') + '</button></div></section>';
     }
@@ -262,8 +262,8 @@
     var teams = S.list('teams').filter(function (t) { return byTeam[t.id]; });
     if (!sk.length && !canVolunteer() && !me) return '';
     return '<section class="panel"><h2>' + T('Volunteering') + '</h2><dl class="kv">' +
-      '<dt>' + T('Volunteer') + '</dt><dd>' + (sk.length ? T('Yes') : T('No')) + '</dd>' +
-      (sk.length ? '<dt>' + T('Services') + '</dt><dd>' + esc(serveTimes(sk).map(slotName).join(', ')) + '</dd>' +
+      '<dt>' + F('Volunteer') + '</dt><dd>' + (sk.length ? T('Yes') : T('No')) + '</dd>' +
+      (sk.length ? '<dt>' + F('Services') + '</dt><dd>' + esc(serveTimes(sk).map(slotName).join(', ')) + '</dd>' +
         teams.map(function (t) { return '<dt>' + esc(t.name) + '</dt><dd>' + esc(byTeam[t.id].join(', ')) + '</dd>'; }).join('') : '') + '</dl>' +
       gr.map(function (g) { var names = esc(g.memberIds.filter(function (m) { return m !== p.id; }).map(function (m) { return H.name(S.get('people', m)); }).join(', ')); return '<p class="hint">' + H.icon(g.kind === 'together' ? H.ICON.link : H.ICON.split, 14) + ' ' + T(g.kind === 'together' ? 'Serves together with {names}' : 'Kept apart from {names}', { names: names }) + ' (' + esc(T(g.strength === 'must' ? 'always' : 'when possible')) + ')</p>'; }).join('') +
       '<div class="btns" style="margin-top:10px">' + (canVolunteer() ? '<button class="btn small" data-act="people:volunteer" data-id="' + p.id + '">' + T('Edit volunteering') + '</button>' : '') +
@@ -414,7 +414,7 @@
     if (!(H.can('*') || H.can('people.edit')) || !window.Households) return '';
     var sug = Households.addressSuggestions(p, S.list('people'), P.allCouples(), S.list('guardians'));
     if (!sug.length) return '';
-    return '<dt>' + T('Home address') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' + sug.map(function (x) {
+    return '<dt>' + F('Home address') + '</dt><dd><span class="muted">' + T('Not recorded') + '</span>' + sug.map(function (x) {
       var o = S.get('people', x.from), lines = addressLines({ address: x.address });
       return '<div class="note info" style="margin:6px 0 0;padding:8px 10px">' + esc(T('Probably the same as {name}:', { name: H.name(o) })) + '<br><b>' + lines.map(esc).join(', ') + '</b><br>' +
         '<button class="btn small" style="margin-top:6px" data-act="people:copyaddress" data-id="' + esc(p.id) + '" data-from="' + esc(x.from) + '">' + T('Use this address') + '</button></div>';

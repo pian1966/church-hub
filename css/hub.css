@@ -84,6 +84,11 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .icon-btn.ghost { background: transparent; border-color: transparent; color: inherit; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-weight: 600; font-size: 14px; }
 .field small { font-weight: 400; color: var(--muted); }
+/* A small, quiet icon in front of a field's label (People: a person's page and Edit details), so people see what it asks */
+.f-lab { display: inline-flex; align-items: center; gap: 6px; }
+.f-ico { flex: none; color: var(--muted); opacity: .7; }
+.kv dt .f-ico { opacity: .8; }
+@media print { .f-ico { display: none; } }
 .field input, .field select, .field textarea, .search input, select.inline { border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); padding: 10px 12px; min-height: 44px; font-weight: 400; font-size: 15px; width: 100%; }
 /* Dates that can be typed (js/datebox.js): a box to type in, and the phone's calendar behind a small button */
 .date-typed { display: flex; gap: 6px; align-items: stretch; }

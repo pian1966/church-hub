@@ -1063,9 +1063,9 @@ console.log('Sign-in codes (members with no email)');
     await cannot(link(phone('anon-6'), 'anon-6', 'DDDD2222', 'p14', { role: 'admin' }));       // more than Member
     await cannot(link(phone('anon-7'), 'anon-7', 'EEEE2222', 'p14', { roles: ['member', 'pastor'] }));
     await cannot(link(phone('anon-8'), 'anon-8', 'FFFF2222', 'p14', { also: ['p15'] }));      // sharing with someone else
-    const b = phone('anon-9').batch();   // a link for another phone's id
-    b.set(phone('anon-9').doc('devices/anon-10'), { role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'GGGG2222', name: 'x', linkedAt: 'x' });
-    b.update(phone('anon-9').doc('invites/GGGG2222'), { usedBy: 'anon-9', usedAt: 'x' });
+    const p9 = phone('anon-9'), b = p9.batch();   // a link for another phone's id
+    b.set(p9.doc('devices/anon-10'), { role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'GGGG2222', name: 'x', linkedAt: 'x' });
+    b.update(p9.doc('invites/GGGG2222'), { usedBy: 'anon-9', usedAt: 'x' });
     await cannot(b.commit());
     await cannot(link(as('member'), 'uid-member', 'GGGG2222', 'p14'));                           // an email sign-in isn't a code phone
   });

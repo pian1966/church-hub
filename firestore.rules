@@ -29,16 +29,18 @@ service cloud.firestore {
     // ---------- who is asking ----------
     // A phone signed in with a sign-in code (Firebase anonymous sign-in: no email address)
     function codeUser() { return request.auth != null && request.auth.token.firebase.sign_in_provider == 'anonymous'; }
-    function signedIn() { return request.auth != null && (codeUser() || request.auth.token.email_verified == true); }
+    // Firestore allows only 1000 steps per check, and roleRef() runs many times in one check: people with an email are
+    // looked at first and in as few steps as possible, so the sign-in-code test costs them almost nothing.
+    function signedIn() { return request.auth != null && (request.auth.token.get('email_verified', false) == true || codeUser()); }
     function roleRef() {
-      return codeUser() ? /databases/$(database)/documents/devices/$(request.auth.uid)
-        : /databases/$(database)/documents/roles/$(request.auth.token.email.lower());
+      return 'email' in request.auth.token ? /databases/$(database)/documents/roles/$(request.auth.token.email.lower())
+        : /databases/$(database)/documents/devices/$(request.auth.uid);
     }
     // Who wrote an audit entry: the email address, or "code:" and the phone's account id for a sign-in code
     function byWho() { return codeUser() ? 'code:' + request.auth.uid : request.auth.token.email.lower(); }
     function hasRole() { return signedIn() && exists(roleRef()); }
     function access() { return get(roleRef()).data; }
-    function myRoles() { return access().get('roles', [access().role]); }
+    function myRoles() { let d = access(); return d.get('roles', [d.role]); }   // the entry read once
     function isRole(list) { return hasRole() && myRoles().hasAny(list); }
     function admin() { return isRole(['admin']); }
     function staff() { return isRole(['admin', 'pastor', 'rosters', 'kids']); }

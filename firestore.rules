@@ -18,12 +18,21 @@ rules_version = '2';
 // - Basic access comes in two kinds, decided by the person's category (automatically): Church Partners (and staff) get
 //   Church Partner access; everyone else on Basic access is an attendee, who sees and does only what Settings > Attendees
 //   allows (settings attendeeCan: names, directory, write, reply; ['names', 'write'] if the church hasn't chosen).
+// - Members with no email: an Administrator gives a person a single-use sign-in code (invites/{code}, 14 days). The member's
+//   phone signs in "anonymously" to read it, then chooses a 6-digit PIN: the account gets a made-up address that only Church Hub
+//   uses (<number>-<v>@pin.church-hub.invalid, number = their cellphone number, or "c" and a 6-digit church number) with the PIN
+//   as its password. In one write it records roles/{that address} (only ever Member access, for that person),
+//   pinLogins/{number} (which address that number uses now) and marks the code used. From then on they sign in on any phone
+//   with their number and PIN. With no roles document such an account can see nothing.
 
 service cloud.firestore {
   match /databases/{database}/documents {
 
     // ---------- who is asking ----------
-    function signedIn() { return request.auth != null && request.auth.token.email_verified == true; }
+    // A member signed in with their number and PIN (no email address of their own): see the top of this file. Their access
+    // entry is roles/{that made-up address}, so everyone is looked up the same way, in as few steps as possible.
+    function pinUser() { return request.auth != null && request.auth.token.get('email', '').matches('^c?[0-9]+-[0-9]+@pin[.]church-hub[.]invalid$'); }
+    function signedIn() { return request.auth != null && (request.auth.token.email_verified == true || pinUser()); }
     function roleRef() { return /databases/$(database)/documents/roles/$(request.auth.token.email.lower()); }
     function hasRole() { return signedIn() && exists(roleRef()); }
     function access() { return get(roleRef()).data; }
@@ -90,11 +99,64 @@ service cloud.firestore {
     match /roles/{email} {
       allow read: if signedIn() && (email == request.auth.token.email.lower() || may('access'));
       allow create: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'] && okRoles(request.resource.data))
-        || (may('access') && smallRoles(request.resource.data) && okRoles(request.resource.data) && request.resource.data.keys().hasOnly(['role', 'personId', 'name', 'roles', 'also', 'people']));
+        || (may('access') && smallRoles(request.resource.data) && okRoles(request.resource.data) && request.resource.data.keys().hasOnly(['role', 'personId', 'name', 'roles', 'also', 'people']))
+        || pinClaim(email);
       allow update: if (admin() && request.resource.data.role in ['admin', 'pastor', 'rosters', 'kids', 'member', 'robot'] && okRoles(request.resource.data))
         || (may('access') && smallRoles(resource.data) && smallRoles(request.resource.data) && okRoles(request.resource.data) && request.resource.data.keys().hasOnly(['role', 'personId', 'name', 'roles', 'also', 'people']))
         || (may('leave') && onlyChanges(['standInFrom', 'standInTo']) && request.resource.data.standInFrom is int && request.resource.data.standInTo is int);
       allow delete: if admin() || (may('access') && smallRoles(resource.data));
+    }
+
+    // ---------- sign-in codes and PINs (members with no email address) ----------
+    // A PIN account's own access entry, roles/{its address}, made with a code: only ever Member access for the person on the
+    // code, in the same write that spends the code and records pinLogins/{its number}. login = that number, pinV = the
+    // version in its address, uid = its account id.
+    function pinClaim(email) {
+      let d = request.resource.data;
+      let inv = get(/databases/$(database)/documents/invites/$(d.invite)).data;
+      return pinUser() && email == request.auth.token.email
+        && d.keys().hasOnly(['role', 'roles', 'personId', 'also', 'people', 'invite', 'name', 'linkedAt', 'login', 'pinV', 'uid'])
+        && d.role == 'member' && d.roles == ['member'] && d.also == [] && d.people == {} && d.uid == request.auth.uid
+        && d.invite is string && d.login is string && d.pinV is int
+        && email == d.login + '-' + string(d.pinV) + '@pin.church-hub.invalid'
+        && inv.personId == d.personId && inv.get('usedBy', '') == '' && request.time.toMillis() < inv.expires
+        && getAfter(/databases/$(database)/documents/invites/$(d.invite)).data.usedBy == request.auth.uid
+        && getAfter(/databases/$(database)/documents/pinLogins/$(d.login)).data.v == d.pinV;
+    }
+    // invites/{code}: { personId, name, role: 'member', expires: <ms>, by, createdAt, mobile?, dial?, usedBy?, usedAt? }. Knowing the
+    // code is the key: anyone signed in (the phone signs in anonymously first) may fetch one by its code, never list them.
+    // Only Administrators make or remove them.
+    match /invites/{code} {
+      allow get: if request.auth != null;
+      allow list: if admin();
+      allow create: if admin() && request.resource.data.role == 'member' && request.resource.data.get('usedBy', '') == ''
+        && request.resource.data.expires is int && request.resource.data.personId is string && request.resource.data.personId != '';
+      allow delete: if admin();
+      // Marked used in the same write as the PIN account's access entry (so a code works once, before it expires)
+      allow update: if pinUser()
+        && resource.data.get('usedBy', '') == '' && request.time.toMillis() < resource.data.expires
+        && onlyChanges(['usedBy', 'usedAt']) && request.resource.data.usedBy == request.auth.uid
+        && getAfter(/databases/$(database)/documents/roles/$(request.auth.token.email)).data.invite == code;
+    }
+    // pinLogins/{login}: which version of the address a number (or "c" and a church number) signs in with now: { v, uid }.
+    // The sign-in screen fetches it by the number typed, before anyone is signed in; nobody may list them.
+    // pinLogins/dial = { dial }: the church's country calling code, for numbers typed as 082... (written by Administrators).
+    match /pinLogins/{login} {
+      allow get: if true;
+      allow list: if false;
+      allow delete: if admin();
+      allow create, update: if (admin() && login == 'dial' && request.resource.data.keys().hasOnly(['dial']) && request.resource.data.dial is string)
+        || (pinUser() && login != 'dial'
+          && request.resource.data.keys().hasOnly(['v', 'uid']) && request.resource.data.uid == request.auth.uid && request.resource.data.v is int
+          // only for this account's own address, in the write that makes its access entry
+          && request.auth.token.email == login + '-' + string(request.resource.data.v) + '@pin.church-hub.invalid'
+          && !exists(/databases/$(database)/documents/roles/$(request.auth.token.email))
+          && getAfter(/databases/$(database)/documents/roles/$(request.auth.token.email)).data.login == login
+          // a number already in use moves on only for the same person, or once that sign-in was switched off
+          && (resource == null || (request.resource.data.v > resource.data.v
+            && (!exists(/databases/$(database)/documents/roles/$(login + '-' + string(resource.data.v) + '@pin.church-hub.invalid'))
+              || get(/databases/$(database)/documents/roles/$(login + '-' + string(resource.data.v) + '@pin.church-hub.invalid')).data.personId
+                == getAfter(/databases/$(database)/documents/roles/$(request.auth.token.email)).data.personId))));
     }
 
     // ---------- church settings ----------

@@ -630,6 +630,30 @@ var Hub = (function () {
       '<form id="si-form" novalidate><label class="field">' + T('Email') + '<input id="si-email" type="email" autocomplete="email" required></label><p id="si-err" class="note bad" hidden></p><button class="btn primary" data-act="hub:finishlink">' + T('Sign in') + '</button></form>';
     else if (st.stage === 'choosePerson') html = '<h1>' + T('Who is using Church Hub?') + '</h1><p class="lead">' + T('{email} is shared by more than one person. Choose who you are – you can switch at any time.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       whoButtons(st.people, '') + '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button>';
+    else if (st.stage === 'code') html = '<h1>' + T('Sign in with a code') + '</h1><p class="lead">' + T('Type the code the church office gave you. It has 8 letters and numbers.') + '</p>' +
+      '<form id="si-form" novalidate><label class="field">' + T('Sign-in code') + '<input id="si-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="ABCD-EFGH" value="' + esc(st.code || '') + '" style="font-size:1.4rem;letter-spacing:.12em;text-transform:uppercase"></label>' +
+      '<p id="si-err" class="note bad"' + (st.message ? '' : ' hidden') + '>' + esc(st.message || '') + '</p>' +
+      '<button class="btn primary" data-act="hub:claimcode">' + T('Continue') + '</button> <button class="btn" type="button" data-act="hub:restart">' + T('Use a different way') + '</button></form>';
+    else if (st.stage === 'codeYou') html = '<h1>' + T('Is this you?') + '</h1><p class="lead">' + T('You’re signing in as {name}', { name: '<b>' + esc(st.name) + '</b>' }) + '</p>' +
+      '<p class="muted">' + T('Only say yes if this is your name. Next you’ll choose a PIN to sign in with.') + '</p>' +
+      '<div class="btns"><button class="btn primary big-btn" data-act="hub:codeyes">' + T('Yes, that’s me') + '</button> <button class="btn" data-act="hub:codeno">' + T('No, that isn’t me') + '</button></div>';
+    else if (st.stage === 'choosePin') html = '<h1>' + T('Choose your PIN') + '</h1><p class="lead">' + T('From now on you’ll sign in with your number and a 6-digit PIN, on any phone.') + '</p>' +
+      '<form id="si-form" novalidate>' + (st.noNumber ?
+        '<p class="note">' + T('Church Hub will give you a church number to sign in with.') + ' <button class="link" type="button" data-act="hub:pinnumber">' + T('I do have a number') + '</button></p>' :
+        '<label class="field req">' + T('Your cellphone number') + '<input id="si-num" type="tel" inputmode="tel" autocomplete="tel" value="' + esc(st.number || '') + '"></label>' +
+        '<p style="margin:-4px 0 12px"><button class="link" type="button" data-act="hub:pinnonumber">' + T('I don’t have my own number') + '</button></p>') +
+      pinBox('si-pin', T('PIN (6 numbers)'), 'new-password') + pinBox('si-pin2', T('Type the PIN again'), 'new-password') +
+      '<p id="si-err" class="note bad"' + (st.message ? '' : ' hidden') + '>' + esc(st.message || '') + '</p>' +
+      '<button class="btn primary" data-act="hub:pinset">' + T('Done') + '</button> <button class="btn" type="button" data-act="hub:restart">' + T('Cancel') + '</button></form>';
+    else if (st.stage === 'churchNumber') html = '<h1>' + T('Your church number') + '</h1><p class="code-big" style="text-align:center">' + esc(churchNumber(st.login)) + '</p>' +
+      '<p class="lead">' + T('Write it down. You’ll sign in with this number and your PIN. The church office can also look it up for you.') + '</p>' +
+      '<button class="btn primary big-btn" data-act="hub:pinbegin">' + T('Continue') + '</button>';
+    else if (st.stage === 'pin') html = '<h1>' + T('Sign in with your number') + '</h1><p class="lead">' + T('Use your cellphone number (or church number) and your 6-digit PIN.') + '</p>' +
+      '<form id="si-form" novalidate><label class="field">' + T('Cellphone or church number') + '<input id="si-num" type="tel" inputmode="tel" autocomplete="username" value="' + esc(st.number || '') + '"></label>' +
+      pinBox('si-pin', T('PIN'), 'current-password') +
+      '<p id="si-err" class="note bad"' + (st.message ? '' : ' hidden') + '>' + esc(st.message || '') + '</p>' +
+      '<button class="btn primary" data-act="hub:pinsignin">' + T('Sign in') + '</button> <button class="btn" type="button" data-act="hub:restart">' + T('Use a different way') + '</button></form>' +
+      '<p class="fine">' + T('Forgot your PIN? Ask the church office for a new sign-in code.') + '</p>';
     else if (st.stage === 'noAccess') html = '<h1>' + T('No access yet') + '</h1><p class="lead">' + ({
       unverified: T('Your email address ({email}) hasn’t been verified. Sign in with Google or an email link instead.', { email: esc(st.email) }),
       notReady: T('Church Hub hasn’t been set up yet. Please try again later.'),
@@ -640,17 +664,65 @@ var Hub = (function () {
       '<form id="su-form" novalidate>' + reqKey() + (st.needChurch ? '<label class="field req">' + T('Church name') + '<input id="su-church" value="Christ Church Howick"></label>' : '') +
       '<div class="two"><label class="field req">' + T('Your first name') + '<input id="su-first" autocomplete="given-name"></label><label class="field req">' + T('Last name') + '<input id="su-last" autocomplete="family-name"></label></div>' +
       '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + T(st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">' + T('Sign out') + '</button>';
-    else html = '<h1>' + T('Sign in') + '</h1><p class="lead">' + T('For church staff, leaders and members who have been given access.') + '</p>' + (st.message ? '<p class="note bad">' + esc(st.message) + '</p>' : '') +
+    else html = '<h1>' + T('Sign in') + '</h1><p class="lead">' + T('For church staff, leaders and members who have been given access.') + '</p>' +
+      (st.message ? '<p class="note bad">' + esc(st.message === 'unlinked' ? T('This sign-in has been switched off. Ask the church office for a new sign-in code.') : st.message) + '</p>' : '') +
       (inApp() && !(window.CHURCH_HUB_FIREBASE || {}).googleWebClientId ? '' : '<button class="btn primary big-btn" data-act="hub:google">' + icon('M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5c-.2 1.2-.9 2.2-1.9 2.8v2.4h3.1c1.8-1.7 2.8-4.1 2.8-6.9zM12 21c2.6 0 4.7-.9 6.3-2.3l-3.1-2.4c-.9.6-2 .9-3.2.9-2.5 0-4.6-1.7-5.3-3.9H3.5v2.4C5.1 18.9 8.3 21 12 21zM6.7 13.3a5.4 5.4 0 0 1 0-3.4V7.5H3.5a9 9 0 0 0 0 8.2zM12 6.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9 9 0 0 0 3.5 7.5l3.2 2.4C7.4 8.2 9.5 6.6 12 6.6z', 18) + T('Sign in with Google') + '</button>' +
       '<p class="muted" style="text-align:center;margin:14px 0 6px">' + T('or get a sign-in link by email') + '</p>') +
       '<form id="si-form" novalidate><label class="field"><span class="sr">' + T('Email') + '</span><input id="si-email" type="email" placeholder="' + 'you@example.com' + '" autocomplete="email"></label><p id="si-err" class="note bad" hidden></p>' +
       '<button class="btn" data-act="hub:sendlink">' + T('Email me a link') + '</button></form>' +
       (phoneApp() && Store.live.pendingEmail() ? '<p style="margin:10px 0 0"><button class="link" data-act="hub:havelink">' + T('I already have a sign-in link') + '</button></p>' : '') +
+      '<p class="muted" style="text-align:center;margin:18px 0 6px">' + T('No email? Sign in with your cellphone number and PIN.') + '</p>' +
+      '<button class="btn" style="width:100%" data-act="hub:pinstart">' + T('Sign in with my number') + '</button>' +
+      '<p style="margin:10px 0 0;text-align:center"><button class="link" data-act="hub:havecode">' + T('I have a sign-in code') + '</button></p>' +
       '<p class="fine">' + esc(((Store.settings() || {}).privacyNotice || T('The church keeps your information secure and stores it in South Africa')).split('.')[0]) + '. ' + T('Want to look around first?') + ' <a href="?demo">' + T('Try the demo with made-up people') + '</a>.</p>';
     root.innerHTML = liveCard(html);
     var f = root.querySelector('input'); if (f) f.focus();
     langWire();
   }
+  /** A sign-in code, typed or from its link (?j=…): check it, then ask "is this you?" */
+  function useCode(code, btn) {
+    if (btn) btn.disabled = true;
+    live = { stage: 'loading', email: '' }; renderLive();
+    Store.live.claimCode(code).then(function (r) { live = { stage: 'codeYou', name: r.name || '?', mobile: r.mobile || '', code: code }; renderLive(); },
+      function (e) { live = { stage: 'code', code: code, message: codeMessage(e && e.code) }; renderLive(); });
+  }
+  function codeMessage(c) {
+    return ({
+      'codes/unknown': T('That code wasn’t found. Check each letter and number, or ask the church office.'),
+      'codes/used': T('That code has already been used. Ask the church office for a new one.'),
+      'codes/expired': T('That code has expired (codes last 14 days). Ask the church office for a new one.'),
+      'codes/off': T('Sign-in codes aren’t switched on for this church yet. Please ask the church office.'),
+      'codes/busy': T('Lots of people are joining right now – please try again in a little while.')
+    })[c] || T('That didn’t work. Check your internet connection and try again.');
+  }
+  /** A PIN box: numbers only, shown as dots, big enough to read. */
+  function pinBox(id, label, ac) {
+    return '<label class="field">' + label + '<input id="' + id + '" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="6" autocomplete="' + ac + '" style="font-size:1.4rem;letter-spacing:.3em"></label>';
+  }
+  /** A church number (stored as c482913) as people read it: 482 913. */
+  function churchNumber(login) { var d = String(login || '').replace(/\D/g, ''); return d.slice(0, 3) + ' ' + d.slice(3); }
+  /** Is this PIN too easy to guess? (111111, 123456, 654321, 121212 …) */
+  function weakPin(pin) {
+    if (/^(\d)\1+$/.test(pin) || /^(\d\d)\1+$/.test(pin) || /^(\d\d\d)\1$/.test(pin)) return true;
+    return '0123456789'.indexOf(pin) >= 0 || '9876543210'.indexOf(pin) >= 0;
+  }
+  function pinMessage(c) {
+    return ({
+      'pin/number': T('Check the number: type your cellphone number, or your 6-digit church number.'),
+      'pin/unknown': T('There’s no Church Hub sign-in for that number. Check it, or ask the church office for a sign-in code.'),
+      'pin/wrong': T('That PIN isn’t right. Try again, or ask the church office for a new sign-in code.'),
+      'pin/busy': T('Too many tries. Please wait a few minutes and try again.'),
+      'pin/off': T('Signing in with a PIN isn’t switched on for this church yet. Please ask the church office.'),
+      'pin/taken': T('That number is already used to sign in by someone else. Use another number, or ask the church office.')
+    })[c] || codeMessage(c);
+  }
+  /** Opened from a code's link (…/?j=ABCD-EFGH): take the code out of the address and use it. */
+  function codeFromLink() {
+    var m = /[?&]j=([^&#]+)/.exec(location.search); if (!m) return '';
+    history.replaceState(null, '', location.pathname + location.search.replace(/([?&])j=[^&#]*(&|$)/, function (x, a, b) { return b ? a : ''; }).replace(/[?&]$/, '') + location.hash);
+    return decodeURIComponent(m[1]);
+  }
+  var linkCode = '';
   function onLiveState(st) {
     live = st;
     if (switching && st.stage === 'ready') { var d = switching; switching = null; user = st.person; Store.setUser(user); d(); return; }   // "View as" finished loading
@@ -664,7 +736,11 @@ var Hub = (function () {
       if ((!location.hash || location.hash === '#' || location.hash === '#/home') && after[0] && Date.now() - (+after[1] || 0) < 864e5) location.hash = after[0];   // within a day
       if (!location.hash || location.hash === '#') location.hash = phoneApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
       render();
-    } else { user = null; Store.setUser(null); renderLive(); }
+    } else {
+      user = null; Store.setUser(null);
+      if (st.stage === 'signedOut' && linkCode) { var c = linkCode; linkCode = ''; return useCode(c); }   // opened from a code's link
+      renderLive();
+    }
   }
 
   function renderSignIn() {
@@ -961,7 +1037,9 @@ var Hub = (function () {
     /** Signing out asks first (not in the demo, where it means "switch person"). */
     signout: function () {
       if (!Store.isLive()) return hubActions.signoutyes();
-      modal(dialogHead(T('Sign out of Church Hub?')) + '<div class="dlg-body"><p style="margin:0">' + T('You will need to sign in again next time.') + '</p></div>' +
+      var pinNo = Store.live.isCodeSession();
+      modal(dialogHead(T('Sign out of Church Hub?')) + '<div class="dlg-body"><p style="margin:0">' + (/^c\d/.test(pinNo) ? T('You’ll sign in again with your church number ({number}) and PIN.', { number: churchNumber(pinNo) }) :
+        pinNo ? T('You’ll sign in again with your cellphone number and PIN.') : T('You will need to sign in again next time.')) + '</p></div>' +
         '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="hub:signoutyes">' + T('Sign out') + '</button></div>', T('Sign out'));
     },
     /** Someone sharing the sign-in: choose who is using Church Hub now. */
@@ -1014,7 +1092,50 @@ var Hub = (function () {
       var email = document.getElementById('si-email').value.trim(); if (!email) return;
       live = { stage: 'loading', email: email }; renderLive(); Store.live.finishEmailLink(email);
     },
-    restart: function () { live = { stage: 'signedOut' }; renderLive(); },
+    restart: function () { Store.live.cancelCode(); live = { stage: 'signedOut' }; renderLive(); },
+    havecode: function () { live = { stage: 'code' }; renderLive(); },
+    claimcode: function (el, ev) {
+      if (ev) ev.preventDefault();
+      var code = (document.getElementById('si-code') || {}).value || '';
+      useCode(code, el);
+    },
+    codeyes: function () { live = { stage: 'choosePin', number: live.mobile || '', code: live.code || '' }; renderLive(); },
+    pinnonumber: function () { live.noNumber = true; live.message = ''; renderLive(); },
+    pinnumber: function () { live.noNumber = false; live.message = ''; renderLive(); },
+    /** Their number (or a church number) and a PIN: link the sign-in, then open Church Hub (a church number is shown first). */
+    pinset: function (el, ev) {
+      if (ev) ev.preventDefault();
+      var v = function (id) { var x = document.getElementById(id); return x ? x.value.trim() : ''; };
+      var num = live.noNumber ? '' : v('si-num'), pin = v('si-pin'), pin2 = v('si-pin2'), errEl = document.getElementById('si-err');
+      var say = function (m) { errEl.textContent = m; errEl.hidden = false; };
+      if (!live.noNumber && !num) return say(T('Type your cellphone number.'));
+      if (!/^\d{6}$/.test(pin)) return say(T('Your PIN must be 6 numbers.'));
+      if (weakPin(pin)) return say(T('Choose a PIN that isn’t easy to guess (not 123456 or 111111).'));
+      if (pin !== pin2) return say(T('The two PINs aren’t the same.'));
+      var back = { stage: 'choosePin', number: num, noNumber: !!live.noNumber, code: live.code };
+      el.disabled = true; live = { stage: 'loading', email: '' }; renderLive();
+      Store.live.confirmCode(num, pin).then(function (r) {
+        if (/^c\d/.test(r.login)) { live = { stage: 'churchNumber', login: r.login }; renderLive(); } else Store.live.begin();
+      }, function (e) {
+        var c = e && e.code;
+        if (c === 'codes/used' || c === 'codes/expired') { Store.live.cancelCode(); live = { stage: 'code', code: back.code, message: codeMessage(c) }; }
+        else live = Object.assign(back, { message: pinMessage(c) });
+        renderLive();
+      });
+    },
+    pinbegin: function () { live = { stage: 'loading', email: '' }; renderLive(); Store.live.begin(); },
+    pinstart: function () { live = { stage: 'pin' }; renderLive(); },
+    pinsignin: function (el, ev) {
+      if (ev) ev.preventDefault();
+      var num = (document.getElementById('si-num') || {}).value || '', pin = (document.getElementById('si-pin') || {}).value || '', errEl = document.getElementById('si-err');
+      if (!num.trim() || !pin.trim()) { errEl.textContent = T('Type your number and your PIN.'); errEl.hidden = false; return; }
+      el.disabled = true; live = { stage: 'loading', email: '' }; renderLive();
+      Store.live.signInPin(num, pin.trim()).catch(function (e) { live = { stage: 'pin', number: num, message: pinMessage(e && e.code) }; renderLive(); });
+    },
+    codeno: function () {
+      Store.live.cancelCode();
+      live = { stage: 'signedOut', message: T('Nothing was changed. Please ask the church office for your own sign-in code.') }; renderLive();
+    },
     selfie: function () { var f = document.getElementById('selfie-file'); if (f) f.click(); },
     sesotho: function (el) { useLang(el.dataset.l); },
     tipnext: function () { var ctx = tipCtx(), tips = Tips.forPerson(ctx), r = Tips.next(tips, Store.pref('tipsSeen').split(',').filter(Boolean)); tipShown = r.tip ? r.tip.id : null; Store.pref('tipsSeen', r.seen.join(',')); render(); },
@@ -1266,6 +1387,7 @@ var Hub = (function () {
         if (document.querySelector('#modal .overlay') || document.querySelector('[data-sure]') || document.querySelector('[data-keep]') || (a && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return;
         render();
       });
+      linkCode = codeFromLink();
       Store.live.boot(onLiveState);
       return;
     }

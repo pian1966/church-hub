@@ -434,6 +434,13 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   box: choose the other person, even in another household, and both records are linked (`spouseId` in `details/`); the couple
   is certain wherever they live and comes before the household's guesses (`Households.couples`, `explicit`), Not a couple
   unlinks them, and the late-spouse suggestions use it. Greyed out for Single, Engaged, Divorced and Widowed. Help, What's new.
+- ✅ 0.87.0 (17 Nov 2026): **Sign-in codes and PINs** for members with no email (tasks 015–016 for the one-church setup): an
+  Administrator gives a code from the person's page (QR, ABCD-EFGH, WhatsApp, Print; once, 14 days, Member access only); the
+  member taps the link or **I have a sign-in code** → "Is this you?" → **Choose your PIN** with their cellphone number, or a
+  church number if they have no number of their own → from then on **Sign in with my number** (number and PIN) on any phone.
+  A new code switches off an old PIN (a forgotten PIN or a new number); **Cellphone sign-in** on the person's page with
+  Switch off; No access, left or a death switch it off. Rules (`invites`, `pinLogins`, `pinUser()`, `pinClaim()` in `roles`), the fake,
+  rules tests and browser tests; POPIA, ARCHITECTURE, FIREBASE-SETUP steps 3–4, the setup tool, the website and the brochures.
 - ✅ Every dropdown is searchable (0.85.1, 17 Nov 2026): `findables()` in `js/app.js` turns each `<select>` into one box – tap
   it and the whole list opens; type and it narrows as you type (part of a name, short names too); arrow keys and Enter, or a
   tap, choose. Replaces the separate "type to narrow" box above long lists. The select stays underneath and keeps the value;

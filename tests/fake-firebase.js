@@ -13,13 +13,25 @@
 
   /* ---------- the rules, in JavaScript ---------- */
   var ANY = ['admin', 'pastor', 'rosters', 'kids', 'member'], STAFF = ['admin', 'pastor', 'rosters', 'kids'];
+  var PIN_RE = /^c?[0-9]+-[0-9]+@pin\.church-hub\.invalid$/;
   function ctx() {
+    // A number-and-PIN sign-in: its made-up address (not verified) has its own roles document like any email
+    var code = !!(currentUser && PIN_RE.test(String(currentUser.email || '')));
     var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
     // A sign-in shared by several people (one email address): every role they have, and every one of them
     var ids = (r && r.personId ? [r.personId] : []).concat((r && r.also) || []);
-    return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', roles: r ? r.roles || [r.role] : [], me: r && r.personId ? r.personId : '', ids: ids,
-      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [],
+    return { signedIn: !!(currentUser && (code || currentUser.emailVerified)), code: code, uid: currentUser ? currentUser.uid : '', email: email, role: r ? r.role : '', roles: r ? r.roles || [r.role] : [], me: r && r.personId ? r.personId : '', ids: ids,
+      robot: !!(currentUser && !code && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [],
       standIn: !!(r && (r.standInFrom || 0) <= Date.now() && Date.now() <= (r.standInTo || 0)) };
+  }
+  var PIN = '@pin.church-hub.invalid';
+  /** A PIN account's own access entry, made with a code (firestore.rules pinClaim). */
+  function pinClaim(c, id, a, after) {
+    var inv = docs['invites/' + a.invite], invAfter = after['invites/' + a.invite], pl = after['pinLogins/' + a.login] || {};
+    return c.code && id === c.email && onlyKeys(a, ['role', 'roles', 'personId', 'also', 'people', 'invite', 'name', 'linkedAt', 'login', 'pinV', 'uid'])
+      && a.role === 'member' && JSON.stringify(a.roles) === '["member"]' && JSON.stringify(a.also) === '[]' && JSON.stringify(a.people) === '{}' && a.uid === c.uid
+      && id === a.login + '-' + a.pinV + PIN && !!inv && inv.personId === a.personId && !inv.usedBy && Date.now() < inv.expires
+      && !!invAfter && invAfter.usedBy === c.uid && pl.v === a.pinV;
   }
   function is(c, list) { return c.signedIn && !!c.role && c.roles.some(function (x) { return list.indexOf(x) >= 0; }); }
   /** What Pastors can do: Administrators always; Pastors with the tick on their access-list entry. */
@@ -81,7 +93,8 @@
   }
   var POLICY = {
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
-      write: function (c, op, id, b, a) {
+      write: function (c, op, id, b, a, after) {
+        if (op === 'create' && pinClaim(c, id, a, after)) return true;
         if (is(c, ['admin'])) return op === 'delete' || (ANY.concat(['robot']).indexOf(a.role) >= 0 && okRoles(a));
         if (op === 'update' && may(c, 'leave') && onlyChanges(b, a, ['standInFrom', 'standInTo'])) return true;   // the stand-in approver's dates
         if (!may(c, 'access')) return false;
@@ -337,6 +350,22 @@
       write: function (c, op, id, b, a) { return (librarian(c) || keeper(c)) && (op === 'delete' || (id === 'policy' && onlyKeys(a, ['text', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
     partnerInfo: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (may(c, 'settings') || rector(c)) && (op === 'delete' || (id === 'requirements' && onlyKeys(a, ['text', 'link', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.link || '') === 'string' && (a.link || '').length <= 500 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
+    // Sign-in codes and PINs (firestore.rules: invites, roles, pinLogins). Reading an invite needs only a sign-in (by its code;
+    // the app never lists them); a pinLogins document anyone may fetch by its number.
+    invites: { read: function (c) { return !!currentUser; },
+      write: function (c, op, id, b, a, after) {
+        if (is(c, ['admin'])) return op === 'delete' || (op === 'create' && a.role === 'member' && !a.usedBy && typeof a.expires === 'number' && !!a.personId);
+        return op === 'update' && c.code && !b.usedBy && Date.now() < b.expires && onlyChanges(b, a, ['usedBy', 'usedAt']) && a.usedBy === c.uid
+          && (after['roles/' + c.email] || {}).invite === id;
+      } },
+    pinLogins: { read: function () { return true; },
+      write: function (c, op, id, b, a, after) {
+        if (op === 'delete') return is(c, ['admin']);
+        if (id === 'dial') return is(c, ['admin']) && onlyKeys(a, ['dial']) && typeof a.dial === 'string';
+        var mine = after['roles/' + c.email] || {}, old = b ? docs['roles/' + id + '-' + b.v + PIN] : null;
+        return c.code && onlyKeys(a, ['v', 'uid']) && a.uid === c.uid && typeof a.v === 'number' && c.email === id + '-' + a.v + PIN
+          && !docs['roles/' + c.email] && mine.login === id && (!b || (a.v > b.v && (!old || old.personId === mine.personId)));
+      } },
     dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
     audit: { read: function (c) { return may(c, 'privacy'); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }
@@ -460,9 +489,10 @@
     enablePersistence: function () { F.kept++; return Promise.resolve(); },
     terminate: function () { return Promise.resolve(); },
     clearPersistence: function () { F.wiped++; return Promise.resolve(); },
-    batch: function () { var ops = []; return { set: function (ref, data) { ops.push({ path: ref.path, data: data }); }, commit: function () { return apply(ops); } }; } };
+    batch: function () { var ops = []; return { set: function (ref, data) { ops.push({ path: ref.path, data: data }); }, delete: function (ref) { ops.push({ path: ref.path, data: null }); }, commit: function () { return apply(ops); } }; } };
   function notifyAuth() { authCbs.forEach(function (cb) { setTimeout(function () { cb(currentUser); }, 0); }); }
   var auth = {
+    get currentUser() { if (currentUser && !currentUser.getIdToken) currentUser.getIdToken = function () { return Promise.resolve(''); }; return currentUser; },
     isSignInWithEmailLink: function (link) { return /[?&]mode=signIn(&|$)/.test(link || '') && /[?&]oobCode=/.test(link || ''); },
     signInWithCredential: function (cred) { F.credentials.push(cred && cred.idToken); currentUser = F.nextUser; notifyAuth(); return Promise.resolve({ user: currentUser }); },
     onAuthStateChanged: function (cb) { authCbs.push(cb); setTimeout(function () { cb(currentUser); }, 0); return function () {}; },
@@ -470,11 +500,42 @@
     signInWithRedirect: function () { return auth.signInWithPopup(); },
     sendSignInLinkToEmail: function (email) { F.sentLinks.push(email); return Promise.resolve(); },
     signInWithEmailLink: function (email, link) { F.linkSignIns.push([email, link]); if (F.nextUser) { currentUser = F.nextUser; notifyAuth(); } return Promise.resolve(); },
-    signOut: function () { currentUser = null; notifyAuth(); return Promise.resolve(); }
+    signOut: function () { currentUser = null; notifyAuth(); return Promise.resolve(); },
+    // A sign-in code: a new anonymous account (F.anonFail makes it fail, e.g. 'auth/admin-restricted-operation')
+    signInAnonymously: function () {
+      if (F.anonFail) { var e = new Error(F.anonFail); e.code = F.anonFail; return Promise.reject(e); }
+      currentUser = account('anon-' + (++F.anonCount), null); notifyAuth();
+      return Promise.resolve({ user: currentUser });
+    },
+    // A number and PIN: the made-up address and the PIN (F.accounts: address → { uid, password })
+    signInWithEmailAndPassword: function (email, password) {
+      var a = F.accounts[email];
+      if (!a || a.password !== password) { var e = new Error('wrong'); e.code = 'auth/invalid-credential'; return Promise.reject(e); }
+      currentUser = account(a.uid, email); notifyAuth();
+      return Promise.resolve({ user: currentUser });
+    }
   };
+  /** An account: anonymous (no email) until a PIN is linked to it (same uid); it can be deleted. */
+  function account(uid, email) {
+    var u = { uid: uid, isAnonymous: !email, email: email, emailVerified: false };
+    u.getIdToken = function () { return Promise.resolve(''); };
+    u.linkWithCredential = function (cred) {
+      if (F.accounts[cred.email]) { var e = new Error('in use'); e.code = 'auth/email-already-in-use'; return Promise.reject(e); }
+      F.accounts[cred.email] = { uid: u.uid, password: cred.password }; u.email = cred.email; u.isAnonymous = false;
+      return Promise.resolve({ user: u });
+    };
+    u.delete = function () {
+      Object.keys(F.accounts).forEach(function (k) { if (F.accounts[k].uid === u.uid) delete F.accounts[k]; });
+      if (currentUser === u) { currentUser = null; notifyAuth(); }
+      return Promise.resolve();
+    };
+    return u;
+  }
+  F.anonCount = 0; F.accounts = {};
   function GoogleAuthProvider() {} GoogleAuthProvider.prototype.setCustomParameters = function () {};
   GoogleAuthProvider.credential = function (idToken) { return { providerId: 'google.com', idToken: idToken }; };
   var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; }, arrayUnion: function () { return { __union: Array.prototype.slice.call(arguments) }; }, delete: function () { return { __delete: true }; } };
   var authFn = function () { return auth; }; authFn.GoogleAuthProvider = GoogleAuthProvider;
+  authFn.EmailAuthProvider = { credential: function (email, password) { return { providerId: 'password', email: email, password: password }; } };
   window.firebase = { apps: [], initializeApp: function (c) { this.apps.push(c); return {}; }, auth: authFn, firestore: firestoreFn };
 })();

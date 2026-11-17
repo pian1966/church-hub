@@ -39,8 +39,10 @@ The project stays on the free **Spark** plan. Don't add a credit card; a church 
 2. On the **Sign-in method** tab, click **Google** → switch **Enable** on → choose the church's email as the
    **Project support email** → **Save**.
 3. Click **Add new provider** → **Email/Password** → switch on **Email/Password** *and* **Email link (passwordless sign-in)** → **Save**.
-   (Church Hub never uses passwords; the first switch just has to be on for email links to work.)
-4. Click the **Settings** tab → **Authorized domains** → **Add domain** → type `pian1966.github.io` → **Add**.
+   (The first switch is also what lets members with no email sign in with their cellphone number and a PIN.)
+4. Click **Add new provider** → **Anonymous** → switch it on → **Save**. (This lets members with no email use a sign-in
+   code from the church to choose their PIN. On its own it lets nobody see anything.)
+5. Click the **Settings** tab → **Authorized domains** → **Add domain** → type `pian1966.github.io` → **Add**.
 
 ## Step 4 – Register the website and get its settings
 1. Click the **gear icon** next to **Project Overview** (top left) → **Project settings**.
@@ -116,6 +118,7 @@ People added without access stay on the church records but can't sign in.
 | Google sign-in window closes straight away | Check step 3 (Google enabled, `pian1966.github.io` authorised) and step 8 (both website lines). |
 | The email link doesn't arrive | Check the spam folder; check step 3 point 3. |
 | "We couldn't send the link" with `(auth/operation-not-allowed)` | Email links aren't switched on: Authentication → Sign-in method → Email/Password → switch on **both** Email/Password and Email link (passwordless sign-in) → Save. |
+| "Signing in with a PIN isn't switched on for this church yet" | Authentication → Sign-in method → Email/Password → switch on **Email/Password** (the first switch) → Save. For "Sign-in codes aren't switched on", switch on **Anonymous** too. |
 | "...isn't allowed from this web address" (`auth/unauthorized-continue-uri` or `unauthorized-domain`) | Authentication → Settings → Authorised domains → add `pian1966.github.io`. |
 | "We couldn't send the link" with another code | Check step 8: if the key is limited to certain APIs, **Identity Toolkit API** must be on its list. Tell Claude the code in brackets. |
 | Still the demo, not "Sign in" | Step 6 isn't saved yet, or the browser kept the old page: wait two minutes and refresh. |

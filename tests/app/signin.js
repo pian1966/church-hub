@@ -115,4 +115,105 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('.app')) && docs['settings/church'].churchName === 'Christ Church Howick' && Object.keys(docs).some(k => k.startsWith('people/') && docs[k].firstName === 'Second'), 'church settings kept; their own record created');
   await finish(s);
 
+
+  /* ---------- Members with no email: a sign-in code once, then their number and a PIN ---------- */
+  console.log('Sign-in codes and PINs:');
+  s = await session('linda.pillay@example.com', seedDocs());
+  await s.go('people/p/p17'); await s.page.click('[data-act="people:givecode"]'); await s.page.click('[data-act="people:makecode"]');
+  await s.page.waitForSelector('.code-big', { timeout: 5000 });
+  const code = (await s.page.textContent('.code-big')).trim(), plain = code.replace('-', '');
+  docs = await s.docsNow();
+  const audits = JSON.stringify(Object.keys(docs).filter(k => k.startsWith('audit/')).map(k => docs[k]));
+  check(/^[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/.test(code) && (docs['invites/' + plain] || {}).personId === 'p17' && docs['invites/' + plain].role === 'member' && audits.includes('Gave a sign-in code') && !audits.includes(plain),
+    'an Administrator gives a code: a Member invite for that person, audit-logged without the code');
+  check((docs['pinLogins/dial'] || {}).dial === '27' && docs['invites/' + plain].dial === '27', 'the church’s calling code is kept for numbers typed the local way (082…)');
+  await s.page.click('#modal [data-act="hub:close"]');
+  const withCode = await s.docsNow(); await finish(s);
+  s = await session('', withCode);
+  let card2 = await s.page.textContent('.signin-card');
+  check(card2.includes('I have a sign-in code') && card2.includes('Sign in with my number'), 'the sign-in screen offers “Sign in with my number” and “I have a sign-in code”');
+  await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', 'ZZZZ-ZZZZ'); await s.page.click('[data-act="hub:claimcode"]');
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('wasn’t found'), 'a wrong code is turned away kindly');
+  await s.page.goto(BASE + '?j=' + code); await s.page.waitForSelector('[data-act="hub:codeyes"]', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('Megan S.') && !(await s.page.url()).includes('j='), 'the code’s link asks “Is this you?” with their name (and the code leaves the address)');
+  await s.page.click('[data-act="hub:codeyes"]'); await s.page.waitForSelector('#si-pin2', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('Choose your PIN'), '“Yes, that’s me”: they choose a PIN');
+  const pinErr = async (num, a, b) => {
+    if (num !== null) await s.page.fill('#si-num', num);
+    await s.page.fill('#si-pin', a); await s.page.fill('#si-pin2', b); await s.page.click('[data-act="hub:pinset"]');
+    return (await s.page.textContent('#si-err')) || '';
+  };
+  check((await pinErr('082 555 0101', '123456', '123456')).includes('easy to guess') && (await pinErr(null, '111111', '111111')).includes('easy to guess'), 'an easy PIN (123456, 111111) is refused');
+  check((await pinErr(null, '480215', '480216')).includes('aren’t the same') && (await pinErr(null, '48021', '48021')).includes('6 numbers'), 'the two PINs must match and have 6 numbers');
+  await s.page.fill('#si-pin', '480215'); await s.page.fill('#si-pin2', '480215'); await s.page.click('[data-act="hub:pinset"]');
+  await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {}); await s.settle();
+  docs = await s.docsNow();
+  const PIN_DOC = /^roles\/c?\d+-\d+@pin\.church-hub\.invalid$/;
+  const dev = 'roles/27825550101-1@pin.church-hub.invalid', uid1 = (docs[dev] || {}).uid;
+  check(!!(await s.page.$('.app')) && uid1 && docs[dev].personId === 'p17' && docs[dev].role === 'member' && docs[dev].login === '27825550101' && docs['invites/' + plain].usedBy === uid1
+    && JSON.stringify(docs['pinLogins/27825550101']) === JSON.stringify({ v: 1, uid: uid1 }), 'the PIN is set: Member access for that person, their number recorded, the code spent');
+  const accounts = await s.page.evaluate(() => window.__fake.accounts);
+  check(accounts['27825550101-1@pin.church-hub.invalid'] && accounts['27825550101-1@pin.church-hub.invalid'].uid === uid1, 'their sign-in is the same account, now with the number and PIN');
+  await s.page.click('.side [data-act="hub:signout"]');
+  check((await s.page.textContent('#modal')).includes('cellphone number and PIN'), 'signing out says they’ll sign in again with their number and PIN');
+  await s.page.click('[data-act="hub:signoutyes"]'); await s.settle();
+  docs = await s.docsNow();
+  check(!!docs[dev], 'signing out leaves the PIN sign-in working');
+  await s.page.click('[data-act="hub:pinstart"]'); await s.page.fill('#si-num', '082 555 0101'); await s.page.fill('#si-pin', '999999'); await s.page.click('[data-act="hub:pinsignin"]');
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('isn’t right'), 'a wrong PIN is turned away');
+  await s.page.fill('#si-num', '084 000 0000'); await s.page.fill('#si-pin', '480215'); await s.page.click('[data-act="hub:pinsignin"]');
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('no Church Hub sign-in for that number'), 'a number with no PIN is told so');
+  await s.page.fill('#si-num', '+27 82 555 0101'); await s.page.fill('#si-pin', '480215'); await s.page.click('[data-act="hub:pinsignin"]');
+  await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {}); await s.settle();
+  check(!!(await s.page.$('.app')) && (await s.page.textContent('.side')).includes('Megan'), 'their number (in either form) and PIN sign them in again – as on a new phone');
+  await s.page.click('.side [data-act="hub:signout"]'); await s.page.click('[data-act="hub:signoutyes"]'); await s.settle();
+  await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', code.toLowerCase()); await s.page.click('[data-act="hub:claimcode"]');   // (reloading would start the test data afresh)
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('already been used'), 'a code works only once');
+  await s.page.evaluate(() => { window.__fake.anonFail = 'auth/admin-restricted-operation'; });
+  await s.page.click('[data-act="hub:restart"]'); await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', code); await s.page.click('[data-act="hub:claimcode"]');
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('aren’t switched on'), 'when the church hasn’t switched codes on, it says so');
+  const afterPin = await s.docsNow(); await finish(s);
+
+  // Forgot the PIN: the office gives a new code, which switches the old PIN off; this time they take a church number
+  s = await session('linda.pillay@example.com', afterPin);
+  await s.go('people/p/p17'); await s.page.click('[data-act="people:phones"]'); await s.page.waitForSelector('#ph-list .item', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('#ph-list')).includes('ending 0101'), 'Cellphone sign-in shows the Administrator how they sign in (the number partly hidden)');
+  await s.page.click('#modal [data-act="hub:close"]');
+  await s.page.click('[data-act="people:givecode"]');
+  check((await s.page.textContent('#modal')).includes('stops working now'), 'a new code warns that an existing PIN stops working');
+  await s.page.click('[data-act="people:makecode"]'); await s.page.waitForSelector('.code-big', { timeout: 5000 });
+  const code2 = (await s.page.textContent('.code-big')).trim();
+  await s.page.click('#modal [data-act="hub:close"]'); await s.settle();
+  docs = await s.docsNow();
+  check(!docs[dev], 'the new code switches off the old PIN sign-in');
+  const withCode2 = docs; await finish(s);
+  s = await session('', withCode2);
+  await s.page.evaluate(a => { window.__fake.accounts = a; }, accounts);
+  await s.page.click('[data-act="hub:pinstart"]'); await s.page.fill('#si-num', '0825550101'); await s.page.fill('#si-pin', '480215'); await s.page.click('[data-act="hub:pinsignin"]');
+  await s.page.waitForSelector('.signin-card .note.bad', { timeout: 5000 }).catch(() => {}); await s.page.waitForTimeout(200);
+  check((await s.page.textContent('.signin-card')).includes('switched off') && !(await s.page.$('.app')), 'the old PIN no longer opens Church Hub');
+  await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', code2); await s.page.click('[data-act="hub:claimcode"]');
+  await s.page.waitForSelector('[data-act="hub:codeyes"]', { timeout: 5000 }); await s.page.click('[data-act="hub:codeyes"]');
+  await s.page.click('[data-act="hub:pinnonumber"]');
+  check((await s.page.textContent('.signin-card')).includes('church number'), '“I don’t have my own number”: Church Hub will give them a church number');
+  await s.page.fill('#si-pin', '730518'); await s.page.fill('#si-pin2', '730518'); await s.page.click('[data-act="hub:pinset"]');
+  await s.page.waitForSelector('[data-act="hub:pinbegin"]', { timeout: 8000 }).catch(() => {});
+  const shown = ((await s.page.textContent('.signin-card .code-big').catch(() => '')) || '').trim();
+  check(/^[1-9]\d\d \d{3}$/.test(shown), 'their church number is shown to write down (' + shown + ')');
+  await s.page.click('[data-act="hub:pinbegin"]'); await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {}); await s.settle();
+  docs = await s.docsNow();
+  const church = 'c' + shown.replace(' ', ''), dev2 = Object.keys(docs).filter(k => PIN_DOC.test(k) && docs[k].login === church)[0];
+  check(!!(await s.page.$('.app')) && dev2 && docs[dev2].personId === 'p17' && docs['pinLogins/' + church] && docs['pinLogins/' + church].uid === docs[dev2].uid, 'they’re in, signing in from now on with the church number and PIN');
+  await s.page.click('.side [data-act="hub:signout"]');
+  check((await s.page.textContent('#modal')).includes(shown), 'signing out reminds them of their church number');
+  await s.page.click('[data-act="hub:signoutyes"]'); await s.settle();
+  await s.page.click('[data-act="hub:pinstart"]'); await s.page.fill('#si-num', shown); await s.page.fill('#si-pin', '730518'); await s.page.click('[data-act="hub:pinsignin"]');
+  await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {});
+  check(!!(await s.page.$('.app')), 'the church number and PIN sign them in');
+  await finish(s);
 };

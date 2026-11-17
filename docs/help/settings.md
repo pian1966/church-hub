@@ -116,6 +116,24 @@ changes for the language you selected; **Back to Church Hub's colour and font** 
 a brochure's wording, any change you made to that line is listed so you can redo it. Only Administrators can open or change
 the editor; its saved wording is kept separately from general church settings.
 
+## How do I set up Church Hub at another church?
+For: Administrators
+Also asked: Install Church Hub for a new church. Start using Church Hub. A friend's church wants it. Setup guide.
+
+Open the setup tool: **https://pian1966.github.io/church-hub/site/setup.html** (also linked from the website as **Set up Church
+Hub for your church**). Use a computer. It goes one step at a time – the church's own Google account, its copy of the website,
+its database, the first sign-in, then privacy, wording, services and staff – filling in each instruction with that church's
+own names, with copy buttons and links to the right pages. It remembers where you stopped. Never type passwords into it.
+
+## What else can our church switch on?
+For: Administrators
+Also asked: What haven't we set up yet? What's new for Administrators? Setup checklist.
+
+The setup tool keeps a list for each church it set up: **Everything else Church Hub can do** – Care Groups, Midweek Groups,
+rosters, message groups, leave, the library, AI search and more – with **How**, **Done** and **Not for us**, and **New** beside
+anything added since you last looked. It also reminds you about once a month to bring the latest Church Hub into your
+church's copy. The list is kept on the computer you used; **More → Save progress to a file** carries it to another.
+
 ## How do I check which version we're on?
 For: Everyone
 

@@ -357,9 +357,18 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .adv-two > * { flex: 1 1 0; }
 .adv-two > span.muted { flex: 0 0 auto; }
 .adv-none { padding: 0 4px; }
-.adv-btns { display: flex; gap: 6px; }
-.icon-btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
-.icon-btn.bad { background: var(--bad); border-color: var(--bad); color: #fff; }
+.adv-row { border-radius: 12px; transition: opacity .18s ease, transform .18s ease; }
+/* Remove: a quiet ×, coloured only when you reach for it. Add: one soft dashed invitation under the last filter. */
+.adv-x { width: 36px; height: 36px; border-radius: 999px; border: 0; background: transparent; color: var(--muted); display: grid; place-items: center; cursor: pointer; transition: background .15s, color .15s, transform .15s; }
+.adv-x:hover, .adv-x:focus-visible { background: var(--bad-soft); color: var(--bad); }
+.adv-x:active { transform: scale(.88); }
+.adv-add { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; min-height: 48px; margin-top: 12px; border: 1.5px dashed var(--line-strong); border-radius: var(--radius); background: transparent; color: var(--accent-ink); font: inherit; font-weight: 600; cursor: pointer; transition: background .15s, border-color .15s, color .15s; }
+.adv-add:hover, .adv-add:focus-visible { border-style: solid; border-color: var(--accent); background: var(--accent-soft); }
+.adv-add:active { transform: scale(.99); }
+.adv-new { animation: adv-in .28s ease both; }
+.adv-gone { opacity: 0; transform: translateX(16px) scale(.98); }
+@keyframes adv-in { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .adv-new { animation: none; } .adv-row, .adv-add, .adv-x { transition: none; } }
 .adv-join { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 12.5px; font-weight: 700; letter-spacing: .04em; }
 .adv-join::before, .adv-join::after { content: ''; flex: 1; border-top: 1px solid var(--line-2); }
 .adv-cols { display: flex; flex-wrap: wrap; gap: 8px; }
@@ -371,10 +380,13 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .th-sort:hover { color: var(--ink); text-decoration: underline; }
 .adv-table td { white-space: nowrap; }
 @media (max-width: 760px) {
-  .adv-row, .adv-row:has(.adv-n) { grid-template-columns: 1fr 1fr; padding: 10px 0; border-bottom: 1px solid var(--line-2); }
-  .adv-row .adv-n { grid-column: 1 / -1; }
-  .adv-row > :nth-last-child(2) { grid-column: 1 / -1; }
-  .adv-btns { grid-column: 1 / -1; justify-content: flex-end; }
+  /* Each filter becomes a soft card: the field with its × beside it, then how to compare, then the value. */
+  .adv-row, .adv-row:has(.adv-n) { grid-template-columns: minmax(0, 1fr) 32px; gap: 8px; padding: 12px; background: var(--surface-2); border: 1px solid var(--line-2); }
+  .adv-row > :not(.adv-x):not(.adv-fpick) { grid-column: 1 / -1; }
+  .adv-row .adv-fpick { grid-column: 1; width: 100%; }
+  .adv-row .adv-x { grid-column: 2; grid-row: 1; width: 32px; height: 32px; }
+  .adv-row:has(.adv-n) .adv-x { grid-row: 2; }
+  .adv-join { margin: 6px 0; }
 }
 .pp-searchrow { align-items: flex-start; }
 .pp-searchcol { flex: 1; min-width: 220px; display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
@@ -728,7 +740,7 @@ html[data-mode=dark] .svc-top b, html[data-mode=dark] .svc-ico, html[data-mode=d
 /* Dark: plain boxes that have no style of their own (e.g. Terminology's words) */
 html[data-mode=dark] input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), html[data-mode=dark] select, html[data-mode=dark] textarea { background-color: var(--surface); color: var(--ink); border-color: var(--line-strong); }
 /* Dark: small round add / remove buttons (Advanced search filters) */
-html[data-mode=dark] .icon-btn.ok { background: #237A4B; color: #fff; } html[data-mode=dark] .icon-btn.bad { background: #A83A34; color: #fff; }
+
 
 /* Back to the top / to the bottom (js/app.js jumpButtons): bottom right of a long page, up above down; above the phone's tab bar */
 #jump { position: fixed; right: 18px; bottom: 22px; z-index: 55; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }

@@ -108,8 +108,11 @@
     var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: '', familyId: '', familyRole: '', appRole: Store.defaultRole() };
     var admin = H.can('*'), me = isMe(p);
     var fams = S.list('families');
-    var html = H.dialogHead(isNew ? T('Add a person') : T('Edit {name}', { name: H.name(p) }), isNew ? T('Only add what the church needs. Ask for consent when you add someone.') : '') +
-      '<form id="pf" class="dlg-body" novalidate><input type="hidden" id="pf-id" value="' + esc(p.id || '') + '">' +
+    editSession = { id: p.id || '', audited: false };
+    var html = H.dialogHead(isNew ? T('Add a person') : T('Edit {name}', { name: H.name(p) }), isNew ? T('Only add what the church needs. Ask for consent when you add someone.') : T('Changes are saved as you go.')) +
+      // Someone already on the records: saved as you go (data-autoscope + the hidden data-autosave button). A new person waits for "Add person".
+      '<form id="pf" class="dlg-body" novalidate' + (isNew ? '' : ' data-autoscope') + '><input type="hidden" id="pf-id" value="' + esc(p.id || '') + '">' +
+      (isNew ? '' : '<button type="button" data-autosave data-act="people:autosave" tabindex="-1">' + T('Save') + '</button>') +
       // Leaving or removing someone: at the top, apart from the details
       (!isNew && (admin || H.can('people.delete')) ? '<div class="pf-top"><button type="button" class="btn small" data-act="people:archive" data-id="' + p.id + '" title="' + esc(T('They’ve left the church: hidden from lists, history kept')) + '">' + H.icon(LEFT, 16) + T('Mark as left') + '</button>' +
         '<button type="button" class="btn small" data-act="people:bin" data-id="' + p.id + '" title="' + esc(T('For a test person or someone added by mistake. They can be restored for 30 days.')) + '">' + H.icon(H.ICON.trash, 16) + T('Move to Bin') + '</button></div>' : '') +
@@ -157,7 +160,8 @@
       (isNew && (admin || H.can('people.edit')) ? '<label class="check"><input type="checkbox" id="pf-badge"><span>' + T('Make a name badge') + '</span></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
       '<div class="dlg-foot">' +
-      '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:save">' + T(isNew ? 'Add person' : 'Save') + '</button></div>';
+      (isNew ? '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="people:save">' + T('Add person') + '</button>'
+        : '<button class="btn primary save" data-act="people:save">' + T('Done') + '</button>') + '</div>';
     H.modal(html, T(isNew ? 'Add a person' : 'Edit details'));
     if (!isNew && (deceased(p) || p.category === 'Deceased')) {   // someone who has died: only first and last name must be filled in
       document.querySelectorAll('#pf .field.req').forEach(function (f) { if (!f.querySelector('#pf-first, #pf-last, #pf-died')) f.classList.remove('req'); });
@@ -327,9 +331,19 @@
     add: function () { editDialog(null); },
     edit: function (el) { editDialog(S.get('people', el.dataset.id)); var f = el.dataset.focus && document.getElementById(el.dataset.focus); if (f) { f.focus(); f.scrollIntoView({ block: 'center' }); } },
     consent: function (el) { consentDialog(S.get('people', el.dataset.id)); },
-    save: function () {
+    save: function () { H.autoForget(); savePerson(false); },   // Add person, or Done: everything checked, then the window closes
+    autosave: function () { savePerson(true); }
+  });
+  var editSession = { id: '', audited: false };   // one "Updated details" line in the audit log per time the window is open
+  /** Edit details / Add a person. quiet = saving as you go: the window stays open, problems show in a small note. */
+  function savePerson(quiet) {
         var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : null; };
         var err = document.getElementById('pf-err'), id = g('pf-id');
+        if (!err) return;
+        if (quiet) {   // every "can't save" below shows in the small red note too
+          var box = err;
+          err = { set textContent(v) { box.textContent = v; H.toast(v, true); }, get textContent() { return box.textContent; }, set hidden(v) { box.hidden = v; } };
+        }
         var p = id ? JSON.parse(JSON.stringify(S.get('people', id))) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'manual' };
         if (!g('pf-first') || !g('pf-last')) { err.textContent = T('Please enter a first and last name.'); err.hidden = false; return; }
         var dead = !!id && (deceased(p) || p.category === 'Deceased');   // someone who has died: only their name is needed
@@ -419,7 +433,11 @@
           err.textContent = T('{names} also signs in with this email address. Only an Administrator can give access on an email address shared with a Pastor or Administrator.', { names: sharers.map(H.name).join(', ') }); err.hidden = false; return;
         }
         var fam = g('pf-fam');
-        if (fam === '__new') { var f = S.put('families', { name: p.lastName + ' family', custom: false }, 'Created a household for ' + p.firstName + ' ' + p.lastName); fam = f.id; }
+        if (fam === '__new') {
+          var f = S.put('families', { name: p.lastName + ' family', custom: false }, 'Created a household for ' + p.firstName + ' ' + p.lastName); fam = f.id;
+          var fs = document.getElementById('pf-fam');   // saving as you go: the list now shows the new household, so it isn't made twice
+          if (fs) { var o = document.createElement('option'); o.value = f.id; o.textContent = H.familyName(f); fs.appendChild(o); fs.value = f.id; }
+        }
         if (fam !== null) p.familyId = fam;
         if (p.familyRole === 'child' && !p.familyId && !dead) { err.textContent = T('Children must be in a household, so the church knows who they live with.'); err.hidden = false; return; }
         var care = window.CareUI ? CareUI.read() : null;
@@ -429,16 +447,25 @@
         if (spNew !== null) { if (spNew) p.spouseId = spNew; else delete p.spouseId; }
         var wantBadge = document.getElementById('pf-badge');
         if (!id && wantBadge && wantBadge.checked) p.badgeWanted = H.today();
-        S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName + (p.badgeWanted && !id ? ' (name badge to print)' : ''));
+        err.hidden = true;
+        var before = id ? S.get('people', id) : null, same = function (a, b) { a = Object.assign({}, a); b = Object.assign({}, b); delete a.updatedAt; delete b.updatedAt; return JSON.stringify(a) === JSON.stringify(b); };
+        var changed = !before || !same(before, p);
+        if (changed) {
+          var say = !id || editSession.id !== id || !editSession.audited;   // saving as you go: one line in the audit log, not one per pause
+          S.put('people', p, say ? (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName + (p.badgeWanted && !id ? ' (name badge to print)' : '') : null);
+          if (id) editSession = { id: id, audited: true };
+        }
         if (spNew !== null && spNew !== spOld) linkSpouse(p, spOld, spNew);
         P.partnerAgrees(p, wasCat);   // becoming a Church Partner: Contact details agreed
         if (window.CareUI) { if (!(care && CareUI.setFrom(p, care))) CareUI.sync(p.id); }
         if (window.LifeUI) LifeUI.sync(p.id);   // their life group cards show their details
         dups.forEach(function (m) { markNotSame(p.id, m.id); });
+        if (quiet) { H.render(); H.toast(T('Saved')); return; }   // the page behind shows the change; the window stays open
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();
         H.toast(T(id ? 'Saved' : 'Added – now record their consent'));
-      },
+  }
+  Object.assign(P.actions, {
     saveconsent: function (el) {
         var p = S.get('people', el.dataset.id), me = isMe(p);
         var method = document.getElementById('cf-method'), guardian = document.getElementById('cf-guardian');

@@ -447,7 +447,7 @@ var SetupKit = (function () {
     { id: 'ai', group: 'extras', title: 'Ask in your own words, with AI', mods: [], since: '0.43',
       what: 'Find people by asking a question – “Who has a birthday this month in a care group?”.',
       how: function () { return ol([open(DOCS + 'AI-SEARCH-SETUP.md', 'Follow the AI setup guide') + ' (about 15 minutes), then switch it on in Settings → Apps.']); } },
-    { id: 'codes', group: 'people', title: 'Sign-in codes for members with no email', mods: [], since: '0.86',
+    { id: 'codes', group: 'people', title: 'Sign-in codes for members with no email', mods: [], since: '0.87',
       what: 'Give a member a code on a slip or by WhatsApp: they scan it once and their phone stays signed in. Free; Member access only.',
       how: function (c) { return ol(['Check ' + ui('Anonymous') + ' sign-in is switched on in ' + (c.projectId ? open(c.fb('authentication/providers'), 'Firebase → Sign-in method') : 'Firebase → Authentication → Sign-in method') + '.', open(c.app('people'), 'Open People') + ', open the person → ' + ui('Give a sign-in code') + '.']); } },
     { id: 'share', group: 'extras', title: 'Tell the church', mods: [], since: '0.1',

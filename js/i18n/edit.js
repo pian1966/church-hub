@@ -19,6 +19,7 @@ I18n.rows([
     ['Another country…', '’n Ander land…', 'Elinye izwe…', 'Elinye ilizwe…'],
     ['Type the country', 'Tik die land', 'Bhala izwe', 'Bhala ilizwe'],
     ['Add a person', 'Voeg ’n persoon by', 'Engeza umuntu', 'Yongeza umntu'],
+    ['Changes are saved as you go.', 'Veranderinge word gestoor terwyl jy werk.', 'Izinguquko zigcinwa ngesikhathi usebenza.', 'Utshintsho lugcinwa ngexesha usebenza.'],
     ['Only add what the church needs. Ask for consent when you add someone.', 'Voeg net by wat die kerk nodig het. Vra toestemming wanneer jy iemand byvoeg.', 'Engeza kuphela lokho ibandla elikudingayo. Cela imvume uma wengeza umuntu.', 'Yongeza kuphela oko icawe ikufunayo. Cela imvume xa usongeza umntu.'],
     ['Elvanto only says {year}. Leave empty to keep that, or choose the date.', 'Elvanto sê net {year}. Laat leeg om dit te hou, of kies die datum.', 'I-Elvanto ithi {year} kuphela. Shiya kungenalutho ukuze kugcinwe lokho, noma ukhethe usuku.', 'I-Elvanto ithi {year} kuphela. Shiya kungenanto ukuze kugcinwe oko, okanye ukhethe umhla.'],
     ['+ New household…', '+ Nuwe huishouding…', '+ Ikhaya elisha…', '+ Ikhaya elitsha…'],

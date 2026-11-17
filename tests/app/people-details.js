@@ -196,4 +196,28 @@ await s.page.waitForFunction(() => {
   check(!(await s.page.$('[data-act="people:copyaddress"]')), 'Children’s ministry (who can’t change addresses) isn’t offered it');
   await finish(s);
 
+
+  console.log('Edit details saves as you go:');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p15');
+  await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.waitForTimeout(100);
+  check(!(await s.page.$('.dlg-foot [data-act="hub:close"]')) && (await s.page.textContent('.dlg-foot [data-act="people:save"]')).trim() === 'Done', 'no Save or Cancel: one “Done” button');
+  const updLines = d => Object.keys(d).filter(k => k.startsWith('audit/') && /Updated details of/.test(d[k].action || '')).length;
+  const auditsBefore = updLines(await s.docsNow());
+  await s.page.fill('#pf-pref', 'Clarabel'); await s.page.waitForTimeout(1300); await s.settle(); docs = await s.docsNow();
+  check(docs['people/p15'].preferredName === 'Clarabel' && !!(await s.page.$('#modal .dialog')), 'a pause in typing saves the change, and the window stays open');
+  check(/Saved/.test(await s.page.textContent('#autosaved')), '… with a small “Saved” note');
+  await s.page.fill('#pf-pref', 'Clara-Belle'); await s.page.waitForTimeout(1300); await s.settle(); docs = await s.docsNow();
+  check(docs['people/p15'].preferredName === 'Clara-Belle' && updLines(docs) - auditsBefore === 1, 'saving again doesn’t add another line to the history log each time');
+  const goodEmail = docs['people/p15'].email;
+  await s.page.fill('#pf-email', 'not-an-email'); await s.page.waitForTimeout(1300); docs = await s.docsNow();
+  check(docs['people/p15'].email === goodEmail && /doesn’t look right/.test(await s.page.textContent('#autosaved')), 'something that can’t be saved isn’t, and the note says why');
+  await s.page.keyboard.press('Escape'); await s.page.waitForTimeout(100);
+  check(!!(await s.page.$('#modal .dialog')), 'closing then keeps the window open once, so the change isn’t lost by accident');
+  await s.page.keyboard.press('Escape'); await s.page.waitForTimeout(300); docs = await s.docsNow();
+  check(!(await s.page.$('#modal .dialog')) && docs['people/p15'].email === goodEmail, '… closing again lets it go');
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-pref', 'Clara'); await s.page.keyboard.press('Escape'); await s.page.waitForTimeout(300); docs = await s.docsNow();
+  check(docs['people/p15'].preferredName === 'Clara' && !(await s.page.$('#modal .dialog')), 'closing straight after typing still saves what was typed');
+  await s.go('people'); await s.page.click('[data-act="people:add"]');
+  check(!(await s.page.$('#pf[data-autoscope]')) && (await s.page.textContent('.dlg-foot [data-act="people:save"]')).trim() === 'Add person', 'adding someone new still waits for “Add person”');
+  await finish(s);
 };

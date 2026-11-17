@@ -842,10 +842,12 @@ var Hub = (function () {
   function ourWords(el) { var f = words(); if (f && el) Wording.apply(el, f); }
   /* ---------- saving as you go (like Google Docs) ----------
    * A panel whose save button has data-autosave saves by itself: straight after a tick or a choice, and once typing pauses.
-   * The button stays hidden; a small "Saved" note shows it worked (or what is still missing). Pop-up windows keep their buttons. */
-  var autoT = null, autoQuiet = false, autoNoteT = null, autoSaid = '';
+   * The button stays hidden; a small "Saved" note shows it worked (or what is still missing). Pop-up windows keep their buttons,
+   * unless the form in them has data-autoscope (Edit details): closing such a window first saves what is still waiting, and if
+   * that can't be saved the window stays open once, showing why (closing it again lets the change go). */
+  var autoT = null, autoQuiet = false, autoNoteT = null, autoSaid = '', autoPending = null, autoBad = null, autoAnyway = null;
   function autoBtn(el) {
-    if (!el || !el.closest || el.closest('.dialog') || el.type === 'search' || el.closest('[data-noauto]')) return null;
+    if (!el || !el.closest || (el.closest('.dialog') && !el.closest('[data-autoscope]')) || el.type === 'search' || el.closest('[data-noauto]')) return null;
     var sec = el.closest('[data-autoscope]') || el.closest('section, .panel');   // a scope: several panels saved by one button
     return sec ? sec.querySelector('[data-autosave]') : null;
   }
@@ -879,16 +881,30 @@ var Hub = (function () {
     row.classList.remove('just-saved'); void row.offsetWidth; row.classList.add('just-saved');
     setTimeout(function () { row.classList.remove('just-saved'); }, 1600);
   }
+  function autoFire(btn) {
+    clearTimeout(autoT); autoPending = null;
+    if (!document.body.contains(btn)) return;
+    var k = focusKey(document.activeElement);
+    autoQuiet = true; autoSaid = '';
+    try { btn.click(); } finally { autoQuiet = false; }
+    autoBad = autoSaid === 'bad' ? btn : autoBad === btn ? null : autoBad;
+    refocus(k);
+    if (autoSaid === 'ok' && k) flashSaved(document.querySelectorAll(k.sel)[k.n]);
+  }
   function autoRun(btn, wait) {
-    clearTimeout(autoT);
-    autoT = setTimeout(function () {
-      if (!document.body.contains(btn)) return;
-      var k = focusKey(document.activeElement);
-      autoQuiet = true; autoSaid = '';
-      try { btn.click(); } finally { autoQuiet = false; }
-      refocus(k);
-      if (autoSaid === 'ok' && k) flashSaved(document.querySelectorAll(k.sel)[k.n]);
-    }, wait);
+    clearTimeout(autoT); autoPending = btn;
+    autoT = setTimeout(function () { autoFire(btn); }, wait);
+  }
+  /** A window saved by its own button (Done): nothing left waiting to save as you go. */
+  function autoForget() { clearTimeout(autoT); autoPending = autoBad = autoAnyway = null; }
+  /** Closing a window that saves as you go: save what is still waiting. false = it couldn't be saved, so keep the window open (once). */
+  function autoFlush(m) {
+    var pend = [autoPending, autoBad].filter(function (b) { return b && m.contains(b); })[0];
+    if (!pend) return true;
+    if (autoAnyway === pend) { autoForget(); return true; }
+    autoFire(pend);
+    if (autoSaid === 'bad') { autoAnyway = pend; return false; }
+    autoForget(); return true;
   }
   document.addEventListener('change', function (ev) { var b = autoBtn(ev.target); if (b) autoRun(b, 0); });
   document.addEventListener('input', function (ev) {
@@ -897,8 +913,10 @@ var Hub = (function () {
   });
 
   function modal(html, label, wide) {
+    var m = document.getElementById('modal');
+    if (m.firstChild) autoFlush(m), autoForget();   // one window replacing another (Mark as left…): save what was waiting first
     lastFocus = document.activeElement;
-    var m = document.getElementById('modal'), again = !!m.firstChild;   // one window replacing another: no second entrance
+    var again = !!m.firstChild;   // one window replacing another: no second entrance
     m.innerHTML = '<div class="overlay' + (again ? ' again' : '') + '" data-act="hub:overlay"><div class="dialog' + (wide ? ' wide' : '') + '" role="dialog" aria-modal="true" aria-label="' + esc(label) + '">' + html + '</div></div>';
     ourWords(m); findables(m);
     var body = m.querySelector('.dlg-body');
@@ -915,6 +933,7 @@ var Hub = (function () {
   }
   function closeModal() {
     var m = document.getElementById('modal'), ov = m.firstChild;
+    if (ov && !autoFlush(m)) return;   // saving as you go: the last change couldn't be saved – the note says why
     // A copy of the window fades away by itself (the real one is gone at once, so a new window can open straight away)
     if (ov && ov.classList && ov.classList.contains('overlay') && !reduceMotion()) {
       var ghost = ov.cloneNode(true); ghost.classList.add('leaving'); ghost.setAttribute('aria-hidden', 'true');
@@ -1309,7 +1328,7 @@ var Hub = (function () {
   }
 
   return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    menu: menu, esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal,
+    menu: menu, esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal, autoForget: autoForget,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

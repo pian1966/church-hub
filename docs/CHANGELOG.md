@@ -434,7 +434,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   box: choose the other person, even in another household, and both records are linked (`spouseId` in `details/`); the couple
   is certain wherever they live and comes before the household's guesses (`Households.couples`, `explicit`), Not a couple
   unlinks them, and the late-spouse suggestions use it. Greyed out for Single, Engaged, Divorced and Widowed. Help, What's new.
-- ✅ 0.86.0 (17 Nov 2026): **Sign-in codes** for members with no email (tasks 015–016 for the one-church setup): an Administrator
+- ✅ 0.87.0 (17 Nov 2026): **Sign-in codes** for members with no email (tasks 015–016 for the one-church setup): an Administrator
   gives a code from the person's page (QR, ABCD-EFGH, WhatsApp, Print; once, 14 days, Member access only); the member taps
   the link or **I have a sign-in code** → "Is this you?" → that phone stays signed in (anonymous sign-in + `devices/{uid}`);
   Linked phones with Remove; No access, left or a death unlink them; signing out unlinks the phone. Rules (`invites`,
@@ -444,3 +444,10 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   it and the whole list opens; type and it narrows as you type (part of a name, short names too); arrow keys and Enter, or a
   tap, choose. Replaces the separate "type to narrow" box above long lists. The select stays underneath and keeps the value;
   values set by the page, changed options, disabled and hidden follow. `data-plain` opts out. What's new.
+- ✅ 0.86.0 (17 Nov 2026): **Edit details saves as you go** – like the panels elsewhere in Church Hub: a choice or tick saves at
+  once, typing saves when it pauses, with the small "Saved" note (or a red note saying what still needs fixing). The window has
+  one "Done" button (it checks everything and closes); Save and Cancel are gone. Closing the window saves anything still
+  waiting; if that can't be saved, it stays open once to show why, and closing again lets the change go. One "Updated details"
+  line in the audit log per time the window is opened, and nothing is written when nothing changed. Adding a new person still
+  waits for "Add person", so half-typed newcomers aren't created. The engine in `js/app.js` now works in a pop-up whose form has
+  `data-autoscope`. What's new.

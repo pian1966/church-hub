@@ -40,7 +40,9 @@ The project stays on the free **Spark** plan. Don't add a credit card; a church 
    **Project support email** → **Save**.
 3. Click **Add new provider** → **Email/Password** → switch on **Email/Password** *and* **Email link (passwordless sign-in)** → **Save**.
    (Church Hub never uses passwords; the first switch just has to be on for email links to work.)
-4. Click the **Settings** tab → **Authorized domains** → **Add domain** → type `pian1966.github.io` → **Add**.
+4. Click **Add new provider** → **Anonymous** → switch it on → **Save**. (This lets members with no email sign in with a
+   sign-in code from the church. On its own it lets nobody see anything.)
+5. Click the **Settings** tab → **Authorized domains** → **Add domain** → type `pian1966.github.io` → **Add**.
 
 ## Step 4 – Register the website and get its settings
 1. Click the **gear icon** next to **Project Overview** (top left) → **Project settings**.

@@ -1,5 +1,8 @@
 # 015 – Sign-in codes: rules and data layer
 
+**Status (17 Nov 2026):** built for the one-church setup in 0.86.0 (see `docs/ARCHITECTURE.md`, "Sign-in codes"), without the
+rules-version gate (012) and the `?c=` church (010).
+
 **Model:** Senior. The rules diff is read by the architect before merging.
 
 **Goal:** a phone with no email can be linked to one Member by a single-use code. No screens for giving codes yet

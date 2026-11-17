@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.85';
+  var NEWS_FOR = '0.86';
   var NEWS = [
+    { date: '2026-11-17', who: ['everyone'], text: TX('Members with no email address can now sign in with a code from the church office: tap I have a sign-in code, or scan the QR code on the slip.') },
+    { date: '2026-11-17', who: ['admin'], text: TX('Administrators: give a member with no email a sign-in code from their page (App access → Give a sign-in code) – by WhatsApp, on a printed slip or on screen. Switch on Anonymous sign-in in Firebase first.') },
     { date: '2026-11-17', who: ['admin', 'pastor'], app: 'people', text: TX('People: in Edit details, choose someone’s Spouse or partner by hand – even when they live apart – and Church Hub links them on both records.') },
     { date: '2026-11-17', who: ['admin', 'pastor'], app: 'people', text: TX('People: Edit details now has a Maiden name box for women who are or were married, and People’s search finds them by it. Church office notes now sit near the top of a person’s page, so adding one is easy to find.') },
     { date: '2026-11-16', who: ['admin'], app: 'support', text: TX('Subscription: the page now makes clear that the price is per church, not per person, and that a low price doesn’t mean Church Hub does less.') },

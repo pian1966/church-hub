@@ -864,3 +864,22 @@ demo's made-up churches (`SampleChurches` in `js/sample.js`); live churches see 
   asks for passwords. A church's `seen` (major.minor) decides which Grow items are marked **New**.
 - Kept up to date by: `tests/setup-kit.test.js` (every `Hub.register` id covered; the settings file matches `js/firebase-config.js`),
   `tests/versions.test.js` (`reviewed-for` in `setup.html` follows the middle version number) and the rule in `CLAUDE.md`.
+
+## Sign-in codes (members with no email; `js/store.js` Live: `claimCode`, `confirmCode`, `codeGive`; `firestore.rules` invites, devices)
+- Built from `docs/architecture/TARGET.md` section 9 for the one-church setup (tasks 015–016, without the rules-version gate
+  of task 012, which isn't built yet). Needs **Anonymous** switched on in Firebase (FIREBASE-SETUP.md step 3); until then the
+  code box says codes aren't switched on.
+- Administrator: a person's page → App access → **Give a sign-in code** (adults with Member access only) → `invites/{8 characters
+  from 23456789ABCDEFGHJKMNPQRSTUVWXYZ}` = `{ personId, name, role: 'member', expires: ms, by, createdAt }`; the person's unused
+  older codes are deleted. The window shows the QR (`js/qr.js`) of `…/?j=CODE`, the code as ABCD-EFGH, Send by WhatsApp and
+  Print (one slip); it can't be shown again once closed. **Linked phones** lists `devices` for the person; Remove deletes one.
+  `syncRole`: losing access (No access, left, died) deletes the person's devices and unused invites (`codesDrop`).
+- Member: **I have a sign-in code** (or the `?j=` link, taken out of the address at once) → `auth.signInAnonymously()` →
+  get `invites/{code}` → "Is this you?" → one batch: `devices/{uid}` (`role/roles: member`, `personId`, `also: []`,
+  `people: {}`, `invite`, `name`, `linkedAt`) + the invite's `usedBy/usedAt`. **No** signs the anonymous user out.
+- Session: an anonymous user reads `devices/{uid}` instead of `roles/{email}` (`startCodeSession`); `session.email` is
+  `'code:' + uid` (the audit log's `byEmail`, the offline-copy owner). No devices document → signed out ("isn't linked any
+  more" if this phone was linked before). Signing out deletes `devices/{uid}` first, after a warning.
+- Rules: `codeUser()` (sign_in_provider anonymous); `roleRef()` → `devices/{uid}` for code users, so every other rule works
+  unchanged; the robot and `roles` read rules never reach `token.email` for a code user; audit `byEmail == byWho()`.
+- Not built yet (task 016): printing slips for many people at once from People → Change selected…; a Settings switch.

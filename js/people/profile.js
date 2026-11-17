@@ -57,6 +57,15 @@
       (mine || !c.confirmed ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
   }
 
+  /* ---------- sign-in codes (Administrators): for members, often with no email, to link their phone ---------- */
+  /** May this person be given a sign-in code? An adult, still at church, with Member access (codes never give more). */
+  function codeable(p) {
+    return H.can('*') && !S.preview() && p && p.familyRole !== 'child' && p.active !== false && !deceased(p) && p.category !== 'Deceased' && (p.appRole || 'member') === 'member';
+  }
+  var slip = '';   // the code just made, for Print (kept only until the next one)
+  function codeLink(code) { return location.origin + location.pathname + '?j=' + code; }
+  function showCode(code) { return code.slice(0, 4) + '-' + code.slice(4); }
+
   /* ---------- photos: Administrators and Pastors for anyone, Children's ministry for children, adults their own ---------- */
   /** The kinds of group someone can be put in from their page (Administrators and Pastors): Care Groups (adults), Midweek Groups. */
   function groupKinds(p) {
@@ -166,7 +175,9 @@
         return '<dt>' + T('Wedding anniversary') + '</dt><dd>' + esc(H.fmt(k.date, true)) + (n !== '' && n > 0 && p.maritalStatus === 'Married' && !deceased(p) ? '<span class="kv-sub">' + esc(TN('Married {n} year', 'Married {n} years', n)) + '</span>' : '') + '</dd>';
       }).join('') : '') +
       (p.staff && full ? '<dt>' + T('Staff') + '</dt><dd>' + esc(p.staff.category) + (p.staff.start ? ', ' + esc(T('since {date}', { date: H.fmt(p.staff.start, true) })) : '') + ' · <a href="#/leave' + (H.can('*') ? '/staff/' + p.id : '') + '">' + T('Leave') + '</a></dd>' : '') +
-      (H.can('access.manage') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.personRole(p)) + '</dd>' : '') +
+      (H.can('access.manage') ? '<dt>' + T('App access') + '</dt><dd>' + esc(H.personRole(p)) + (codeable(p) && !me ?
+        '<span class="kv-sub"><button class="link" data-act="people:givecode" data-id="' + p.id + '">' + T('Give a sign-in code') + '</button> · ' +
+        '<button class="link" data-act="people:phones" data-id="' + p.id + '">' + T('Linked phones') + '</button></span>' : '') + '</dd>' : '') +
       '</dl></section>';
     if (/<dt>/.test(contact)) html += contact;
     // Households (where they live) – a child can live in more than one
@@ -509,6 +520,60 @@
         var n = S.get('officeNotes', el.dataset.id); if (!n) return;
         S.remove('officeNotes', n.id, 'Deleted a church office note for ' + H.name(S.get('people', n.personId)));
         H.render(); H.toast(T('Note deleted'));
+      },
+    givecode: function (el) {
+        var p = S.get('people', el.dataset.id); if (!codeable(p)) return;
+        H.modal(H.dialogHead(T('Give a sign-in code'), H.name(p)) + '<div class="dlg-body"><p style="margin-top:0">' + esc(T('For {name} to sign in on their phone without an email address. The code works once, for 14 days.', { name: P.known(p) })) + '</p>' +
+          '<p class="note warn">' + esc(T('Give it only to {name}: whoever has the code can sign in as them.', { name: P.known(p) })) + '</p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:makecode" data-id="' + p.id + '">' + T('Make the code') + '</button></div>', T('Give a sign-in code'));
+      },
+    makecode: function (el) {
+        var p = S.get('people', el.dataset.id); if (!codeable(p)) return;
+        el.disabled = true;
+        var name = (P.known(p) + ' ' + (p.lastName || '').slice(0, 1) + '.').trim();
+        Store.codeGive(p.id, name).then(function (r) {
+          S.audit('Gave a sign-in code to ' + H.name(p), 'people/' + p.id);   // never the code itself
+          var link = codeLink(r.code), until = H.fmt(new Date(r.expires).toISOString().slice(0, 10), true);
+          slip = '<div class="code-slip print"><p><b>' + esc((S.settings() || {}).churchName || 'Church Hub') + '</b> · Church Hub</p><h1>' + esc(H.name(p)) + '</h1>' +
+            '<div class="code-qr">' + QR.svg(link, { px: 220 }) + '</div><p class="code-big">' + esc(showCode(r.code)) + '</p><p>' +
+            esc(T('Scan it with the phone’s camera, or open Church Hub → I have a sign-in code. Works once, until {date}.', { date: until })) + '</p></div>';
+          var num = p.mobile ? Library.intl(p.mobile, (Countries.church(S.settings()) || {}).dial) : '';
+          var text = T('Hello {name}, here is your sign-in for Church Hub. Tap the link on your phone (it works once, until {date}): {link}', { name: P.known(p), date: until, link: link });
+          H.modal(H.dialogHead(T('Sign-in code for {name}', { name: H.name(p) })) + '<div class="dlg-body code-slip">' +
+            '<div class="code-qr">' + QR.svg(link, { px: 180 }) + '</div><p class="code-big">' + esc(showCode(r.code)) + '</p>' +
+            '<p class="muted" style="text-align:center">' + esc(T('Scan it with the phone’s camera, or open Church Hub → I have a sign-in code. Works once, until {date}.', { date: until })) + '</p>' +
+            '<p class="hint" style="text-align:center">' + T('Once you close this, the code can’t be shown again – give a new one if it’s lost.') + '</p></div>' +
+            '<div class="dlg-foot"><a class="btn" href="https://wa.me/' + esc(num) + '?text=' + encodeURIComponent(text) + '" target="_blank" rel="noopener">' + T('Send by WhatsApp') + '</a>' +
+            '<button class="btn" data-act="people:printcode">' + T('Print') + '</button><button class="btn primary" data-act="hub:close">' + T('Done') + '</button></div>', T('Sign-in code'));
+        }, function (e) { el.disabled = false; H.toast(T('Couldn’t make the code ({code}).', { code: (e && e.code) || 'error' }), true); });
+      },
+    printcode: function () {
+        if (!slip) return;
+        var box = document.getElementById('print-only') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'print-only' }));
+        box.className = 'app'; box.innerHTML = slip;
+        document.documentElement.classList.add('printing');
+        var done = function () { document.documentElement.classList.remove('printing'); box.innerHTML = ''; };
+        window.addEventListener('afterprint', done, { once: true });
+        try { window.print(); } catch (e) { done(); H.toast(T('Printing works best from a computer.'), true); }
+      },
+    phones: function (el) {
+        var p = S.get('people', el.dataset.id); if (!p) return;
+        H.modal(H.dialogHead(T('Linked phones'), H.name(p)) + '<div class="dlg-body" id="ph-list"><p class="muted">' + T('Loading…') + '</p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Linked phones'));
+        Store.devicesOf(p.id).then(function (ds) {
+          var box = document.getElementById('ph-list'); if (!box) return;
+          box.innerHTML = ds.length ? '<p class="muted" style="margin-top:0">' + esc(T('Phones signed in as {name} with a sign-in code. Remove one that is lost or no longer theirs.', { name: P.known(p) })) + '</p><div class="list">' + ds.map(function (d) {
+            return '<div class="item"><span class="grow"><b>' + T('Phone') + '</b><small>' + esc(T('Linked {date}', { date: d.linkedAt ? H.fmt(String(d.linkedAt).slice(0, 10), true) : '?' })) + '</small></span>' +
+              '<button class="btn small" data-act="people:unphone" data-id="' + esc(d.id) + '" data-p="' + p.id + '">' + T('Remove') + '</button></div>';
+          }).join('') + '</div>' : '<p class="muted" style="margin-top:0">' + esc(T('No phones are linked to {name} with a sign-in code.', { name: P.known(p) })) + '</p>';
+        }, function () { var box = document.getElementById('ph-list'); if (box) box.innerHTML = '<p class="note bad">' + T('Couldn’t load the linked phones.') + '</p>'; });
+      },
+    unphone: function (el) {
+        if (!H.confirmBtn(el, T('Click again to remove'))) return;
+        var p = S.get('people', el.dataset.p);
+        Store.deviceRemove(el.dataset.id).then(function () {
+          S.audit('Unlinked a phone from ' + H.name(p), 'people/' + p.id);
+          var row = el.closest('.item'); if (row) row.remove(); H.toast(T('Phone removed – it is signed out'));
+        }, function () { H.toast(T('Couldn’t remove the phone.'), true); });
       },
     showid: function (el) {
         var p = S.get('people', el.dataset.id), box = document.getElementById('pp-idn');

@@ -876,6 +876,12 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .rec-acts { display: flex; align-items: center; gap: 4px; margin-left: auto; }
 @media print { .pick-bar { display: none; } }
 
+/* Sign-in codes (js/people/profile.js): the code, its QR and the printed slip */
+.code-qr svg { display: block; margin: 4px auto 8px; border-radius: 10px; }
+.code-big { text-align: center; font: 700 2rem/1.2 ui-monospace, 'SF Mono', Menlo, Consolas, monospace; letter-spacing: .14em; margin: 4px 0 8px; }
+.code-slip.print { text-align: center; padding: 12mm 8mm; border: 1.5pt dashed #999; border-radius: 6mm; max-width: 120mm; margin: 0 auto; }
+.code-slip.print h1 { font-size: 20pt; margin: 4pt 0 8pt; }
+
 /* Library: cover pictures (js/mod-library.js) and the policy */
 .lib-sort { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
 .lib-filters { margin-bottom: 12px; }

@@ -483,6 +483,7 @@ var Store = (function () {
           stop();
           if (u) startSession(u);
           else if (linkStage === 'needEmail') onState({ stage: 'needEmail' });
+          else if (codeQuiet) codeQuiet = false;   // a sign-in code that didn't go ahead: its message stays on the screen
           else if (!linkStage) onState({ stage: 'signedOut' });
         });
       });
@@ -537,11 +538,14 @@ var Store = (function () {
       var flushed = fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, 3000); })]) : Promise.resolve();
       // A shared sign-in: the next person signing in on this device chooses again
       try { if (session && session.household.length) localStorage.removeItem(WHO_KEY + session.email); } catch (x) {}
-      return flushed.then(function () { session = null; db = blank(); return auth ? auth.signOut() : null; }).then(wipe);
+      // A phone signed in with a code unlinks itself (it would need a new code anyway: the anonymous account is gone)
+      var unlink = session && session.code && auth && auth.currentUser ? function () { return doc('devices/' + auth.currentUser.uid).delete().catch(function () {}); } : function () {};
+      return flushed.then(unlink).then(function () { session = null; db = blank(); return auth ? auth.signOut() : null; }).then(wipe);
     }
 
     /* ---------- session: who is this, and what may they see ---------- */
     function startSession(u) {
+      if (u.isAnonymous) return startCodeSession(u);
       var email = (u.email || '').toLowerCase();
       onState({ stage: 'loading', email: email });
       if (!u.emailVerified) return onState({ stage: 'noAccess', email: email, reason: 'unverified' });
@@ -577,6 +581,112 @@ var Store = (function () {
           'You’re offline, and this device has no copy of Church Hub yet. Connect to the internet once, then it will open offline too.' :
           'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
       });
+    }
+
+    /* ---------- sign-in codes: a member's phone with no email (firestore.rules: invites, devices) ----------
+     * The phone signs in anonymously (a secret account id), then in one write records devices/{id} – Member access for the
+     * person on the code – and marks the code used. From then on this phone is that member. docs/ARCHITECTURE.md "Sign-in codes". */
+    var claim = null;   // the code being used: { code, invite } while the person is asked "is that you?"
+    function codeKey(code) { return 'code:' + code; }
+    function cleanCode(s) { return String(s || '').toUpperCase().replace(/[^0-9A-Z]/g, ''); }
+    /** Type or open a code: sign in anonymously, fetch the invite → resolves { name } to ask "is that you?", or rejects
+     *  { code: 'codes/unknown' | 'codes/used' | 'codes/expired' | 'codes/off' | 'codes/busy' | … }. */
+    function claimCode(raw) {
+      var code = cleanCode(raw), fail = function (c) { var e = new Error(c); e.code = c; return e; };
+      if (code.length !== 8) return Promise.reject(fail('codes/unknown'));
+      claiming = true;
+      var signed = auth.currentUser && auth.currentUser.isAnonymous ? Promise.resolve() : auth.signInAnonymously();
+      return signed.then(function () { return doc('invites/' + code).get(); }, function (e) {
+        claiming = false;
+        throw fail(e && (e.code === 'auth/admin-restricted-operation' || e.code === 'auth/operation-not-allowed') ? 'codes/off' : e && e.code === 'auth/too-many-requests' ? 'codes/busy' : (e && e.code) || 'codes/error');
+      }).then(function (snap) {
+        if (!snap.exists) throw fail('codes/unknown');
+        var inv = snap.data();
+        if (inv.usedBy) throw fail('codes/used');
+        if (!(inv.expires > Date.now())) throw fail('codes/expired');
+        claim = { code: code, invite: inv };
+        return { name: inv.name || '' };
+      }).catch(function (e) {
+        var c = e && e.code && /^codes\//.test(e.code) ? e.code : e && e.code === 'permission-denied' ? 'codes/off' : 'codes/error';
+        return cancelCode().then(function () { throw fail(c); });
+      });
+    }
+    /** "Yes, that's me": link this phone to the person (one write: the devices document and the spent code). */
+    function confirmCode() {
+      if (!claim || !auth.currentUser) return Promise.reject(new Error('no code'));
+      var uid = auth.currentUser.uid, inv = claim.invite, b = fs.batch();
+      b.set(doc('devices/' + uid), { role: 'member', roles: ['member'], personId: inv.personId, also: [], people: {}, invite: claim.code, name: inv.name || '', linkedAt: now() });
+      b.set(doc('invites/' + claim.code), Object.assign({}, inv, { usedBy: uid, usedAt: now() }));
+      return b.commit().then(function () { claim = null; claiming = false; startSession(auth.currentUser); }, function (e) {
+        var x = new Error('codes/used'); x.code = e && e.code === 'permission-denied' ? 'codes/used' : (e && e.code) || 'codes/error'; throw x;
+      });
+    }
+    /** "No, that isn't me" (or the code didn't work): nothing is linked, and the anonymous sign-in is dropped. */
+    function cancelCode() {
+      claim = null; claiming = false;
+      if (!(auth && auth.currentUser && auth.currentUser.isAnonymous)) return Promise.resolve();
+      codeQuiet = true;
+      return auth.signOut().catch(function () {});
+    }
+    var claiming = false, codeQuiet = false;   // while a code is being checked, the anonymous sign-in doesn't open a session yet
+    function startCodeSession(u) {
+      if (claiming) return;
+      var key = 'code:' + u.uid, had = false;
+      try { had = localStorage.getItem(OWNER_KEY) === key; } catch (x) {}
+      onState({ stage: 'loading', email: '' });
+      var get = function () { return offlineNow() ? doc('devices/' + u.uid).get({ source: 'cache' }).catch(function () { return doc('devices/' + u.uid).get(); }) : doc('devices/' + u.uid).get(); };
+      ownCopy(key).then(get).then(function (snap) {
+        if (!snap.exists) {   // unlinked by the church (or never linked): this phone needs a new code
+          if (!(snap.metadata && snap.metadata.fromCache)) wipe();
+          codeQuiet = true;
+          return auth.signOut().then(function () { onState(had ? { stage: 'signedOut', message: 'unlinked' } : { stage: 'signedOut' }); });
+        }
+        var r = snap.data();
+        session = { email: key, code: true, role: 'member', personId: r.personId || '', langs: [], can: [], standInFrom: 0, standInTo: 0, household: [] };
+        subscribe();
+      }).catch(function (e) {
+        if (e && e.code === 'permission-denied') { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut', message: had ? 'unlinked' : '' }); }); }
+        onState({ stage: 'error', message: offlineNow() ? 'You’re offline, and this device has no copy of Church Hub yet. Connect to the internet once, then it will open offline too.' :
+          'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
+      });
+    }
+    /** Is this a phone signed in with a sign-in code? (Signing out then needs a new code.) */
+    function isCodeSession() { return !!(session && session.code); }
+
+    /* Administrators: give codes, see and remove linked phones */
+    var CODE_CHARS = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', CODE_DAYS = 14;
+    function newCode() {
+      var out = '', a = new Uint32Array(8); (window.crypto || window.msCrypto).getRandomValues(a);
+      for (var i = 0; i < 8; i++) out += CODE_CHARS[a[i] % CODE_CHARS.length];
+      return out;
+    }
+    /** A new code for a person (their unused older codes are removed): resolves { code, expires }. */
+    function codeGive(pid, name) {
+      var code = newCode(), expires = Date.now() + CODE_DAYS * 864e5;
+      return codesUnused(pid).then(function (old) {
+        var b = fs.batch();
+        old.forEach(function (c) { b.delete(doc('invites/' + c)); });
+        b.set(doc('invites/' + code), { personId: pid, name: name, role: 'member', expires: expires, by: session.personId || '', createdAt: now() });
+        return b.commit();
+      }).then(function () { return { code: code, expires: expires }; });
+    }
+    function codesUnused(pid) {
+      return fs.collection('invites').where('personId', '==', pid).get().then(function (s) { return s.docs.filter(function (d) { return !(d.data() || {}).usedBy; }).map(function (d) { return d.id; }); });
+    }
+    /** The phones linked to a person: [{ id, linkedAt }] (Administrators). */
+    function devicesOf(pid) {
+      return fs.collection('devices').where('personId', '==', pid).get().then(function (s) { return s.docs.map(function (d) { var x = d.data() || {}; return { id: d.id, linkedAt: x.linkedAt || null }; }); });
+    }
+    function deviceRemove(uid) { return doc('devices/' + uid).delete(); }
+    /** No access, left, or died: every linked phone and unused code of this person goes (Administrators). */
+    function codesDrop(pid) {
+      return Promise.all([devicesOf(pid), codesUnused(pid)]).then(function (r) {
+        if (!r[0].length && !r[1].length) return;
+        var b = fs.batch();
+        r[0].forEach(function (d) { b.delete(doc('devices/' + d.id)); });
+        r[1].forEach(function (c) { b.delete(doc('invites/' + c)); });
+        return b.commit();
+      }).catch(function (e) { console.error('sign-in codes', e && e.code); });
     }
 
     /** Someone sharing the sign-in chose who they are (or switched): load Church Hub as that person. */
@@ -1086,6 +1196,8 @@ var Store = (function () {
     }
     /** Administrators give sign-in access from the person's record: roles/{email} = { role, personId }. */
     function syncRole(p, prev) {
+      // No access, left the church or died: the phones linked by sign-in codes go too (Administrators)
+      if (is('admin') && prev && roleOf(prev) && !roleOf(p)) codesDrop(p.id);
       var SMALL = ['rosters', 'kids', 'member'], small = function (x) { return !x || SMALL.indexOf(x) >= 0; };
       if (!is('admin') && (!small(p.appRole === 'none' ? '' : p.appRole) || !small(prev && prev.appRole === 'none' ? '' : prev && prev.appRole))) return;   // a Pastor with "access": the smaller roles only
       var email = mailOf(p), was = prev ? mailOf(prev) : '';
@@ -1331,7 +1443,8 @@ var Store = (function () {
         });
       }).catch(function (e) { err(e, 'verify this checkout'); throw e; });
     }
-    return { choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
+    return { claimCode: claimCode, confirmCode: confirmCode, cancelCode: cancelCode, isCodeSession: isCodeSession, codeGive: codeGive, devicesOf: devicesOf, deviceRemove: deviceRemove, codesDrop: codesDrop,
+      choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
       put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
@@ -1432,6 +1545,17 @@ var Store = (function () {
       var x = ((db && db.photos) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.data : '');
     },
     /** A person's ID number (Administrators only; the person may see their own). Kept apart, never loaded with the rest. */
+    /** Sign-in codes (Administrators): a new code for a person → { code, expires }; their linked phones; unlink one.
+     *  The demo makes a code that can't be used (there is no sign-in in the demo). */
+    codeGive: function (pid, name) {
+      if (blocked()) return Promise.reject(new Error('view only'));
+      if (!isAdmin()) return Promise.reject(new Error('Only an Administrator can give sign-in codes.'));
+      if (LIVE) return Live.codeGive(pid, name);
+      var A = '23456789ABCDEFGHJKMNPQRSTUVWXYZ', c = ''; for (var i = 0; i < 8; i++) c += A[Math.floor(Math.random() * A.length)];
+      return Promise.resolve({ code: c, expires: Date.now() + 14 * 864e5 });
+    },
+    devicesOf: function (pid) { return LIVE && isAdmin() ? Live.devicesOf(pid) : Promise.resolve([]); },
+    deviceRemove: function (uid) { if (blocked()) return Promise.reject(new Error('view only')); return LIVE ? Live.deviceRemove(uid) : Promise.resolve(); },
     idNumber: function (pid) {
       if (LIVE) return Live.idGet(pid);
       var x = ((db && db.idNumbers) || []).filter(function (o) { return o.id === pid; })[0]; return Promise.resolve(x ? x.value : '');
@@ -1563,6 +1687,7 @@ var Store = (function () {
     onRemoteChange: function (fn) { remoteListeners.push(fn); }, onError: function (fn) { errorListeners.push(fn); },
     onLeaveChange: function (fn) { leaveHooks.push(fn); },
     setRobot: function (email, uid, oldEmail) { if (blocked()) return Promise.resolve(); return LIVE ? Live.setRobot(email, uid, oldEmail) : Promise.resolve(); },
-    live: { choose: Live.choose, household: Live.household, boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
+    live: { claimCode: Live.claimCode, confirmCode: Live.confirmCode, cancelCode: Live.cancelCode, isCodeSession: Live.isCodeSession,
+      choose: Live.choose, household: Live.household, boot: Live.boot, google: Live.google, emailLink: Live.emailLink, finishEmailLink: Live.finishEmailLink, isEmailLink: Live.isEmailLink, pendingEmail: Live.pendingEmail, signOut: Live.signOut,
       setup: Live.setup, session: Live.session } };
 })();

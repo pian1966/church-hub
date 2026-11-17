@@ -1018,6 +1018,78 @@ await t('what attendees may do: Administrators and the Senior Pastor set it; req
   await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ seniorPastorId: firebase.firestore.FieldValue.delete(), attendeeCan: firebase.firestore.FieldValue.delete() }));
 });
 
+console.log('Sign-in codes (members with no email)');
+{
+  const phone = uid => env.authenticatedContext(uid, { firebase: { sign_in_provider: 'anonymous' } }).firestore();
+  const DAY = 864e5, inv = (pid, extra) => Object.assign({ personId: pid, name: 'Tim J.', role: 'member', expires: Date.now() + 14 * DAY, by: 'p01', createdAt: 'x' }, extra || {});
+  const link = (d, uid, code, pid, extra) => {
+    const b = d.batch();
+    b.set(d.doc('devices/' + uid), Object.assign({ role: 'member', roles: ['member'], personId: pid, also: [], people: {}, invite: code, name: 'Tim J.', linkedAt: 'x' }, extra || {}));
+    b.update(d.doc('invites/' + code), { usedBy: uid, usedAt: 'x' });
+    return b.commit();
+  };
+  await t('only an Administrator makes or lists codes, and only for Member access', async () => {
+    await can(db.admin.doc('invites/AAAA2222').set(inv('p14')));
+    await cannot(db.admin.doc('invites/AAAA3333').set(inv('p14', { role: 'admin' })));
+    await cannot(db.admin.doc('invites/AAAA3334').set(inv('p14', { usedBy: 'x' })));
+    for (const r of ['pastor', 'kids', 'rosters', 'member']) await cannot(db[r].doc('invites/AAAA4444').set(inv('p14')));
+    await can(list(db.admin.collection('invites').where('personId', '==', 'p14')));
+    await cannot(list(db.pastor.collection('invites'))); await cannot(list(phone('anon-0').collection('invites')));
+  });
+  await t('a new phone with no link sees nothing but a code fetched by its exact id', async () => {
+    const d = phone('anon-1');
+    await can(read(d, 'invites/AAAA2222'));
+    for (const path of ['settings/church', 'people/p14', 'directory/p15', 'roles/tim@example.com', 'devices/anon-2']) await cannot(read(d, path));
+    await cannot(read(nobody, 'invites/AAAA2222'));
+  });
+  await t('a phone links itself and marks the code used, in one write – then reads what a Member reads', async () => {
+    const d = phone('anon-1');
+    await cannot(d.doc('devices/anon-1').set({ role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'AAAA2222', name: 'x', linkedAt: 'x' }));   // without spending the code
+    await cannot(d.doc('invites/AAAA2222').update({ usedBy: 'anon-1', usedAt: 'x' }));   // spending it without the link
+    await can(link(d, 'anon-1', 'AAAA2222', 'p14'));
+    await can(read(d, 'devices/anon-1')); await can(read(d, 'settings/church')); await can(read(d, 'people/p14'));
+    await cannot(read(d, 'details/p15')); await cannot(read(d, 'roles/tim@example.com'));
+    await cannot(d.doc('devices/anon-1').update({ role: 'admin' }));
+  });
+  await t('a code works once, before it expires, for its own person, and gives only Member access', async () => {
+    await cannot(link(phone('anon-3'), 'anon-3', 'AAAA2222', 'p14'));   // used already
+    await env.withSecurityRulesDisabled(async c => {
+      const x = c.firestore();
+      await x.doc('invites/BBBB2222').set(inv('p14', { expires: Date.now() - DAY }));
+      for (const code of ['CCCC2222', 'DDDD2222', 'EEEE2222', 'FFFF2222', 'GGGG2222']) await x.doc('invites/' + code).set(inv('p14'));
+    });
+    await cannot(link(phone('anon-4'), 'anon-4', 'BBBB2222', 'p14'));                          // expired
+    await cannot(link(phone('anon-5'), 'anon-5', 'CCCC2222', 'p15'));                          // another person
+    await cannot(link(phone('anon-6'), 'anon-6', 'DDDD2222', 'p14', { role: 'admin' }));       // more than Member
+    await cannot(link(phone('anon-7'), 'anon-7', 'EEEE2222', 'p14', { roles: ['member', 'pastor'] }));
+    await cannot(link(phone('anon-8'), 'anon-8', 'FFFF2222', 'p14', { also: ['p15'] }));      // sharing with someone else
+    const b = phone('anon-9').batch();   // a link for another phone's id
+    b.set(phone('anon-9').doc('devices/anon-10'), { role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'GGGG2222', name: 'x', linkedAt: 'x' });
+    b.update(phone('anon-9').doc('invites/GGGG2222'), { usedBy: 'anon-9', usedAt: 'x' });
+    await cannot(b.commit());
+    await cannot(link(as('member'), 'uid-member', 'GGGG2222', 'p14'));                           // an email sign-in isn't a code phone
+  });
+  await t('the audit log takes a code phone’s entries under its own id', async () => {
+    const d = phone('anon-1');
+    await can(d.doc('audit/code-1').set({ action: 'Signed in', byEmail: 'code:anon-1', ts: ts() }));
+    await cannot(d.doc('audit/code-2').set({ action: 'Signed in', byEmail: 'tim@example.com', ts: ts() }));
+    await cannot(d.doc('audit/code-3').set({ action: 'Signed in', byEmail: 'code:anon-2', ts: ts() }));
+  });
+  await t('an Administrator sees and removes linked phones; the phone can unlink itself; then it sees nothing', async () => {
+    await can(list(db.admin.collection('devices').where('personId', '==', 'p14')));
+    await cannot(list(db.pastor.collection('devices'))); await cannot(read(db.member, 'devices/anon-1'));
+    await can(db.admin.doc('devices/anon-1').delete());
+    await cannot(read(phone('anon-1'), 'settings/church'));
+    await env.withSecurityRulesDisabled(c => c.firestore().doc('devices/anon-11').set({ role: 'member', roles: ['member'], personId: 'p14', also: [], people: {}, invite: 'x', name: 'x', linkedAt: 'x' }));
+    await cannot(phone('anon-12').doc('devices/anon-11').delete());
+    await can(phone('anon-11').doc('devices/anon-11').delete());
+  });
+  await t('people who sign in with email are unchanged by codes', async () => {
+    await can(read(db.member, 'roles/tim@example.com')); await cannot(read(db.member, 'roles/linda@example.com'));
+    await cannot(read(impostor, 'settings/church'));
+  });
+}
+
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });
 
 await env.cleanup();

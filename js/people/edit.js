@@ -411,7 +411,8 @@
             if (p.category === 'Staff') p.category = 'Church Partner';
           }
         }
-        if (Store.isLive() && p.appRole && p.appRole !== 'none' && !p.email) { err.textContent = T('To give someone access to Church Hub, add their email address – that’s how they sign in.'); err.hidden = false; return; }
+        if (Store.isLive() && p.appRole && p.appRole !== 'none' && p.appRole !== 'member' && !p.email) {   // members with no email sign in with a code
+           err.textContent = T('To give someone access to Church Hub, add their email address – that’s how they sign in.'); err.hidden = false; return; }
         var sharers = p.appRole && p.appRole !== 'none' && p.active !== false ? signsInWith(p) : [];
         if (Store.isLive() && sharers.length >= 4) { err.textContent = T('At most 4 people can share one email address to sign in. Give this person an email address of their own.'); err.hidden = false; return; }
         if (Store.isLive() && !(H.can('*')) && sharers.some(function (o) { return o.appRole === 'admin' || o.appRole === 'pastor'; })) {

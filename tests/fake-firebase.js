@@ -14,11 +14,14 @@
   /* ---------- the rules, in JavaScript ---------- */
   var ANY = ['admin', 'pastor', 'rosters', 'kids', 'member'], STAFF = ['admin', 'pastor', 'rosters', 'kids'];
   function ctx() {
-    var email = currentUser ? String(currentUser.email).toLowerCase() : '', r = email ? docs['roles/' + email] : null;
+    // A phone signed in with a sign-in code (anonymous): its devices document instead of an email's roles document
+    var code = !!(currentUser && currentUser.isAnonymous);
+    var email = !currentUser ? '' : code ? 'code:' + currentUser.uid : String(currentUser.email).toLowerCase();
+    var r = !currentUser ? null : code ? docs['devices/' + currentUser.uid] : email ? docs['roles/' + email] : null;
     // A sign-in shared by several people (one email address): every role they have, and every one of them
     var ids = (r && r.personId ? [r.personId] : []).concat((r && r.also) || []);
-    return { signedIn: !!(currentUser && currentUser.emailVerified), email: email, role: r ? r.role : '', roles: r ? r.roles || [r.role] : [], me: r && r.personId ? r.personId : '', ids: ids,
-      robot: !!(currentUser && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [],
+    return { signedIn: !!(currentUser && (code || currentUser.emailVerified)), code: code, uid: currentUser ? currentUser.uid : '', email: email, role: r ? r.role : '', roles: r ? r.roles || [r.role] : [], me: r && r.personId ? r.personId : '', ids: ids,
+      robot: !!(currentUser && !code && r && r.role === 'robot' && r.uid && r.uid === currentUser.uid), langs: (r && r.langs) || [], can: (r && r.can) || [],
       standIn: !!(r && (r.standInFrom || 0) <= Date.now() && Date.now() <= (r.standInTo || 0)) };
   }
   function is(c, list) { return c.signedIn && !!c.role && c.roles.some(function (x) { return list.indexOf(x) >= 0; }); }
@@ -80,7 +83,7 @@
       Object.keys(d).every(function (k) { return ['bookId', 'title', 'personId', 'name', 'mobile', 'visitor', 'out', 'due', 'back', 'note', 'status', 'requestedAt', 'createdAt', 'updatedAt'].indexOf(k) >= 0; });
   }
   var POLICY = {
-    roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
+    roles: { read: function (c, id) { return c.signedIn && ((!c.code && id === c.email) || may(c, 'access')); },
       write: function (c, op, id, b, a) {
         if (is(c, ['admin'])) return op === 'delete' || (ANY.concat(['robot']).indexOf(a.role) >= 0 && okRoles(a));
         if (op === 'update' && may(c, 'leave') && onlyChanges(b, a, ['standInFrom', 'standInTo'])) return true;   // the stand-in approver's dates
@@ -337,6 +340,22 @@
       write: function (c, op, id, b, a) { return (librarian(c) || keeper(c)) && (op === 'delete' || (id === 'policy' && onlyKeys(a, ['text', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
     partnerInfo: { read: function (c) { return is(c, ANY); },
       write: function (c, op, id, b, a) { return (may(c, 'settings') || rector(c)) && (op === 'delete' || (id === 'requirements' && onlyKeys(a, ['text', 'link', 'name', 'type', 'data', 'updatedAt', 'by']) && typeof (a.text || '') === 'string' && (a.text || '').length <= 20000 && typeof (a.link || '') === 'string' && (a.link || '').length <= 500 && typeof (a.data || '') === 'string' && (a.data || '').length <= 900000)); } },
+    // Sign-in codes (firestore.rules: invites, devices). Reading an invite needs only a sign-in (by its code; the app never lists them).
+    invites: { read: function (c) { return !!currentUser; },
+      write: function (c, op, id, b, a, after) {
+        if (is(c, ['admin'])) return op === 'delete' || (op === 'create' && a.role === 'member' && !a.usedBy && typeof a.expires === 'number' && !!a.personId);
+        return op === 'update' && c.code && !b.usedBy && Date.now() < b.expires && onlyChanges(b, a, ['usedBy', 'usedAt']) && a.usedBy === c.uid
+          && (after['devices/' + c.uid] || {}).invite === id;
+      } },
+    devices: { read: function (c, id) { return (!!currentUser && currentUser.uid === id) || is(c, ['admin']); },
+      write: function (c, op, id, b, a, after) {
+        if (op === 'delete') return is(c, ['admin']) || (!!currentUser && currentUser.uid === id);
+        if (op !== 'create' || !c.code || c.uid !== id) return false;
+        var inv = docs['invites/' + a.invite], invAfter = after['invites/' + a.invite];
+        return onlyKeys(a, ['role', 'roles', 'personId', 'also', 'people', 'invite', 'name', 'linkedAt']) && a.role === 'member' && JSON.stringify(a.roles) === '["member"]'
+          && JSON.stringify(a.also) === '[]' && JSON.stringify(a.people) === '{}' && !!inv && inv.personId === a.personId && !inv.usedBy && Date.now() < inv.expires
+          && !!invAfter && invAfter.usedBy === id;
+      } },
     dsr: 'privacy', breaches: 'privacy', emailPrompts: 'settings',
     audit: { read: function (c) { return may(c, 'privacy'); },
       write: function (c, op, id, b, a) { return op === 'create' && is(c, ANY) && a.byEmail === c.email && a.ts && a.ts.__serverTs === true; } }
@@ -463,6 +482,7 @@
     batch: function () { var ops = []; return { set: function (ref, data) { ops.push({ path: ref.path, data: data }); }, commit: function () { return apply(ops); } }; } };
   function notifyAuth() { authCbs.forEach(function (cb) { setTimeout(function () { cb(currentUser); }, 0); }); }
   var auth = {
+    get currentUser() { if (currentUser && !currentUser.getIdToken) currentUser.getIdToken = function () { return Promise.resolve(''); }; return currentUser; },
     isSignInWithEmailLink: function (link) { return /[?&]mode=signIn(&|$)/.test(link || '') && /[?&]oobCode=/.test(link || ''); },
     signInWithCredential: function (cred) { F.credentials.push(cred && cred.idToken); currentUser = F.nextUser; notifyAuth(); return Promise.resolve({ user: currentUser }); },
     onAuthStateChanged: function (cb) { authCbs.push(cb); setTimeout(function () { cb(currentUser); }, 0); return function () {}; },
@@ -470,8 +490,15 @@
     signInWithRedirect: function () { return auth.signInWithPopup(); },
     sendSignInLinkToEmail: function (email) { F.sentLinks.push(email); return Promise.resolve(); },
     signInWithEmailLink: function (email, link) { F.linkSignIns.push([email, link]); if (F.nextUser) { currentUser = F.nextUser; notifyAuth(); } return Promise.resolve(); },
-    signOut: function () { currentUser = null; notifyAuth(); return Promise.resolve(); }
+    signOut: function () { currentUser = null; notifyAuth(); return Promise.resolve(); },
+    // A sign-in code: a new anonymous account (F.anonFail makes it fail, e.g. 'auth/admin-restricted-operation')
+    signInAnonymously: function () {
+      if (F.anonFail) { var e = new Error(F.anonFail); e.code = F.anonFail; return Promise.reject(e); }
+      currentUser = { uid: 'anon-' + (++F.anonCount), isAnonymous: true, email: null, emailVerified: false }; notifyAuth();
+      return Promise.resolve({ user: currentUser });
+    }
   };
+  F.anonCount = 0;
   function GoogleAuthProvider() {} GoogleAuthProvider.prototype.setCustomParameters = function () {};
   GoogleAuthProvider.credential = function (idToken) { return { providerId: 'google.com', idToken: idToken }; };
   var firestoreFn = function () { return fs; }; firestoreFn.FieldValue = { serverTimestamp: function () { return { __serverTs: true }; }, arrayUnion: function () { return { __union: Array.prototype.slice.call(arguments) }; }, delete: function () { return { __delete: true }; } };

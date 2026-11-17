@@ -115,4 +115,42 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('.app')) && docs['settings/church'].churchName === 'Christ Church Howick' && Object.keys(docs).some(k => k.startsWith('people/') && docs[k].firstName === 'Second'), 'church settings kept; their own record created');
   await finish(s);
 
+
+  /* ---------- Sign-in codes: a member's phone with no email ---------- */
+  console.log('Sign-in codes:');
+  s = await session('linda.pillay@example.com', seedDocs());
+  await s.go('people/p/p17'); await s.page.click('[data-act="people:givecode"]'); await s.page.click('[data-act="people:makecode"]');
+  await s.page.waitForSelector('.code-big', { timeout: 5000 });
+  const code = (await s.page.textContent('.code-big')).trim(), plain = code.replace('-', '');
+  docs = await s.docsNow();
+  const audits = JSON.stringify(Object.keys(docs).filter(k => k.startsWith('audit/')).map(k => docs[k]));
+  check(/^[2-9A-HJKMNP-Z]{4}-[2-9A-HJKMNP-Z]{4}$/.test(code) && (docs['invites/' + plain] || {}).personId === 'p17' && docs['invites/' + plain].role === 'member' && audits.includes('Gave a sign-in code') && !audits.includes(plain),
+    'an Administrator gives a code: a Member invite for that person, audit-logged without the code');
+  await s.page.click('#modal [data-act="hub:close"]');
+  const withCode = await s.docsNow(); await finish(s);
+  s = await session('', withCode);
+  check((await s.page.textContent('.signin-card')).includes('I have a sign-in code'), 'the sign-in screen offers “I have a sign-in code”');
+  await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', 'ZZZZ-ZZZZ'); await s.page.click('[data-act="hub:claimcode"]');
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('wasn’t found'), 'a wrong code is turned away kindly');
+  await s.page.goto(BASE + '?j=' + code); await s.page.waitForSelector('[data-act="hub:codeyes"]', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('Megan S.') && !(await s.page.url()).includes('j='), 'the code’s link asks “Is this you?” with their name (and the code leaves the address)');
+  await s.page.click('[data-act="hub:codeyes"]'); await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {}); await s.settle();
+  docs = await s.docsNow();
+  const dev = Object.keys(docs).filter(k => k.startsWith('devices/'))[0];
+  check(!!(await s.page.$('.app')) && dev && docs[dev].personId === 'p17' && docs[dev].role === 'member' && docs['invites/' + plain].usedBy === dev.split('/')[1],
+    '“Yes, that’s me”: the phone is linked as that member, and the code is spent');
+  await s.page.click('.side [data-act="hub:signout"]');
+  check((await s.page.textContent('#modal')).includes('new sign-in code'), 'signing out warns that a new code will be needed');
+  await s.page.click('[data-act="hub:signoutyes"]'); await s.settle();
+  docs = await s.docsNow();
+  check(!docs[dev], 'signing out unlinks the phone');
+  await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', code.toLowerCase()); await s.page.click('[data-act="hub:claimcode"]');   // (reloading would start the test data afresh)
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('already been used'), 'a code works only once');
+  await s.page.evaluate(() => { window.__fake.anonFail = 'auth/admin-restricted-operation'; });
+  await s.page.click('[data-act="hub:restart"]'); await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', code); await s.page.click('[data-act="hub:claimcode"]');
+  await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
+  check((await s.page.textContent('.signin-card')).includes('aren’t switched on'), 'when the church hasn’t switched codes on, it says so');
+  await finish(s);
 };

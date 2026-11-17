@@ -55,6 +55,18 @@ person → **Edit details** → **Spouse or partner**, choose the other person a
 pages show each other as Spouse (or Partner). Choose **Going by their household** to undo it. The box is greyed out when the
 marital status is Single, Engaged, Divorced or Widowed (for someone who has died, use **Late spouse**).
 
+## Someone has no email address. How can they sign in?
+For: Administrators
+Also asked: Sign-in code. Member without email. Link a phone. Lost phone. Print a sign-in slip.
+
+Open the person → under **App access**, tap **Give a sign-in code** → **Make the code**. Church Hub shows a QR code and an
+8-character code: **Send by WhatsApp** (to their mobile), **Print** a slip, or show them the screen. It works once, for 14 days;
+once you close the window it can't be shown again – give a new one if it's lost (the old one stops working). Codes only
+ever give **Member** access, and only to an adult whose App access is Member. **Linked phones** lists the phones signed in
+with a code; **Remove** signs a lost phone out. **No access**, **Mark as left** or recording a death removes them all.
+Give the code only to that person: whoever has it can sign in as them. The church must first switch codes on in Firebase
+(FIREBASE-SETUP.md step 3, **Anonymous**).
+
 ## How do I give someone access to Church Hub?
 For: Administrators (Pastors if allowed)
 Also asked: Let someone sign in. Make someone a roster coordinator. Change someone's role.

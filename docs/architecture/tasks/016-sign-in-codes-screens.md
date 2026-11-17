@@ -1,5 +1,8 @@
 # 016 – Sign-in codes: giving them out
 
+**Status (17 Nov 2026):** built for the one-church setup in 0.86.0 (see `docs/ARCHITECTURE.md`, "Sign-in codes"), without the
+rules-version gate (012) and the `?c=` church (010). Still to do here: slips for many people, the Settings switch.
+
 **Model:** Middle for screens and `js/codes.js`; the `syncRole` change in `js/store.js` is handed up to the senior; translations light.
 
 **Goal:** an Administrator can give one person a code, print slips for many, and see and remove linked phones.

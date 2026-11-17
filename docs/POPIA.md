@@ -39,6 +39,19 @@ This is a design checklist, not legal advice – the church's Information Office
 - **Home address** (street, line 2, town, postcode, province, country), **middle name** and **maiden name** (a woman's surname before she married; the box appears for women who are or were married): private details – Administrators and Pastors, and the person themself (Children's ministry for children). Purpose: pastoral visits and keeping records correct. Brought across from Elvanto's Home Address columns (provinces tidied, e.g. KZN → KwaZulu-Natal); a province or country on its own isn't kept as an address. Elvanto's mailing address isn't used.
 - From Elvanto the import also takes **Date Added** (when someone was first added – it replaces the import day), **Anniversary**, **Membership Date** and **Membership last renewed on** (the Church Partner dates; a renewal year on its own is kept as the year), **Checklist of what to receive** (into the consent register, "Carried over from Elvanto") and **Department Positions** (volunteering). Groups, giving, security codes and Elvanto's email/SMS preferences are not read: Elvanto ticks those preferences by default, so they aren't consent.
 
+## Sign-in codes (members with no email)
+- **What is kept:** `invites/{code}` (the person it is for, their first name and initial, expiry, who made it, and – once used –
+  the phone's account id) and `devices/{id}` (Member access for that person, linked date). Codes are never written to the
+  audit log, exports or searches; the audit log records "Gave a sign-in code to …", "Unlinked a phone from …", and a code
+  phone's own actions under `code:` and its account id.
+- **Who:** only Administrators make codes, list them and see or remove linked phones (`firestore.rules`). A code gives only
+  **Member** access for one adult with Member access, works once, for 14 days; No access, Mark as left and a death remove
+  that person's phones and unused codes. Signing out unlinks the phone.
+- **What it does not protect against:** whoever holds an unused code becomes that member – as whoever reads an inbox is that
+  email's owner. They see only what a Member sees (their own details, the directory as allowed, their rosters, groups and
+  messages), never staff-only information. Cures: single use, 14 days, "Is this you?", the linked-phones list and the audit
+  log. Anyone can create an anonymous Firebase account in the church's project; without a spent code it can read nothing.
+
 ## ID numbers
 - **Purpose (as the church gave it):** telling apart people with the same name; they were also collected during covid. POPIA s10 (minimality) and s14 (keep no longer than needed): the covid reason has ended, so the church should decide whether it still needs ID numbers at all – a date of birth usually tells people apart. Delete them if not.
 - **Where:** `idNumbers/{person}`, apart from everything else; never loaded with the person, only when an Administrator taps **Show**, or presses Search in an advanced search with an *ID number* filter (all are fetched for that search, kept only in memory and never shown, put in a column or downloaded; at least 4 digits must be typed). Every view, search (with who was found) and change is in the audit log.

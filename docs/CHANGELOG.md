@@ -434,3 +434,9 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   box: choose the other person, even in another household, and both records are linked (`spouseId` in `details/`); the couple
   is certain wherever they live and comes before the household's guesses (`Households.couples`, `explicit`), Not a couple
   unlinks them, and the late-spouse suggestions use it. Greyed out for Single, Engaged, Divorced and Widowed. Help, What's new.
+- ✅ 0.86.0 (17 Nov 2026): **Sign-in codes** for members with no email (tasks 015–016 for the one-church setup): an Administrator
+  gives a code from the person's page (QR, ABCD-EFGH, WhatsApp, Print; once, 14 days, Member access only); the member taps
+  the link or **I have a sign-in code** → "Is this you?" → that phone stays signed in (anonymous sign-in + `devices/{uid}`);
+  Linked phones with Remove; No access, left or a death unlink them; signing out unlinks the phone. Rules (`invites`,
+  `devices`, `codeUser()`), the fake, rules tests and browser tests; help, POPIA, ARCHITECTURE, FIREBASE-SETUP step 3
+  (Anonymous), the setup tool, the website and the brochures.

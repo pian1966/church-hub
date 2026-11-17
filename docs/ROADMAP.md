@@ -165,6 +165,10 @@ each church gives what it chooses once a year, with a small minimum. Today each 
 - ⬜ 7.8 Gifts and reminders (see "The yearly gift" below): pay page, receipts, the yearly reminder (email + a note on the
   Administrator's Home), a church's gift history under Settings, and a page for us listing churches and gifts.
 - ⬜ 7.9 Move Christ Church Howick across (export from its own project, import into the shared one), then retire the single-church setup guide.
+- ⬜ Church: switch on **Anonymous** sign-in in Firebase (Authentication → Sign-in method → Add new provider → Anonymous) so
+  sign-in codes work, and re-publish the database rules (or let the workflow do it) after 0.86 – sign-in codes
+- ⬜ Sign-in codes, still to do (task 016): print slips for many people at once (People → Change selected…), a Settings switch;
+  have the Architect (Fable) read the rules diff of 0.86 (MODELS.md asks for this for sign-in rules)
 - ⬜ Setup tool follow-ups (`site/setup.html`, built 17 Nov 2026): when tasks 010/020/021 (one address, automatic setup) are
   built, replace the tool's "The church's website" chapter and the GitHub steps with the church's own link and the automatic
   setup (the Coming item "Set up in about a minute" moves to the list); refuse the countries in 7.7 with the kind explanation;

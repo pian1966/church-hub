@@ -408,3 +408,12 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.83.1 (16 Nov 2026): Messages tabs in a logical order – Inbox, Write, Sent, then (Administrators and Pastors) All messages
   and Message groups; Sent is back for everyone and shows only your own messages; "Groups" renamed Message groups
 - ✅ 0.83.2 (16 Nov 2026): About → More has a link to Church Hub’s public website (site/, on GitHub Pages) for everyone
+- ✅ 17 Nov 2026: **Setup tool** (`site/setup.html`, `site/setup-kit.js`) – sets up Church Hub at a new church one friendly step at a
+  time: the church's own Google account (and keeping it safe), its own copy of the website on GitHub, its Firebase database in
+  the place nearest its country, the first Administrator, the security rules (copied with one click), connecting the two (the
+  settings file made for them), the first sign-in, then privacy, wording, services, access, staff and a second owner. Every
+  instruction is filled in with the church's own names and addresses, with copy buttons and links to the exact pages. It
+  remembers where you were (several churches, a progress file to carry on elsewhere), and afterwards keeps a list of
+  everything else the church can switch on (with "New" for features added since they last looked, and monthly reminders to
+  get the latest Church Hub), plus what is coming. `tests/setup-kit.test.js` fails if a part of the app is missing from it;
+  `tests/versions.test.js` asks for it to be re-read with each feature release. Linked from the public website and FIREBASE-SETUP.md.

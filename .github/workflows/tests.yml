@@ -1,6 +1,6 @@
 # Runs Church Hub's tests on GitHub after every push: rostering rules, the database security rules
 # (against Google's Firestore emulator) and the app in a browser as every role. Made-up people only.
-# When a change only touches the public website (site/) or the documentation (docs/, *.md), the tests are
+# When a change only touches the public website (site/index.html) or the documentation (docs/, *.md), the tests are
 # skipped: the check still runs and turns green in seconds, so "Protect main" lets the pull request merge.
 name: Tests
 on: [push, pull_request]
@@ -22,8 +22,8 @@ jobs:
             case "$base" in ''|0000000000000000000000000000000000000000) base='${{ github.event.repository.default_branch }}';; esac
             files=$(gh api "repos/${{ github.repository }}/compare/$base...${{ github.sha }}" --jq 'if (.files|length) >= 300 then empty else .files[].filename end') || files=''
           fi
-          # Unknown (error, or more than 300 files) or anything outside site/, docs/ and *.md -> run every test.
-          if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -vE '^(site/|docs/)|\.md$' > /dev/null; then
+          # Unknown (error, or more than 300 files) or anything outside site/index.html, docs/ and *.md -> run every test.
+          if [ -n "$files" ] && ! printf '%s\n' "$files" | grep -vE '^(site/index\.html|docs/)|\.md$' > /dev/null; then
             echo 'skip=true' >> "$GITHUB_OUTPUT"
             echo 'Only the website or the documentation changed - the tests are skipped.'
           fi
@@ -71,6 +71,9 @@ jobs:
       - if: steps.changes.outputs.skip != 'true'
         name: Countries (addresses, regions)
         run: node tests/countries.test.js
+      - if: steps.changes.outputs.skip != 'true'
+        name: Setup tool (covers every part of the app)
+        run: node tests/setup-kit.test.js
       - if: steps.changes.outputs.skip != 'true'
         name: Church wording
         run: node tests/wording.test.js

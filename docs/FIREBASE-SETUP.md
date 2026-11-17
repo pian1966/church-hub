@@ -1,5 +1,7 @@
 # Connecting Church Hub to Firebase – step by step
 
+**Easier: the setup tool** at https://pian1966.github.io/church-hub/site/setup.html walks through all of this one step at a time (and the church's Google account and its own copy of the website before it), remembers where you were, and afterwards keeps a list of everything else the church can switch on. This page is the same steps written out in full.
+
 This connects Church Hub to the church's own database, stored in Johannesburg. It takes about 30 minutes.
 You don't need to be technical: follow each step and click exactly what it says.
 Google sometimes moves buttons around; if something isn't where this guide says, look for the same words nearby.

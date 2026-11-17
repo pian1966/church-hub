@@ -33,8 +33,9 @@ service cloud.firestore {
     function pinUser() { return request.auth != null && request.auth.token.get('email', '').matches('^c?[0-9]+-[0-9]+@pin[.]church-hub[.]invalid$'); }
     // Firestore allows only 1000 steps per check, and roleRef() runs many times in one check: keep these short.
     function signedIn() { return request.auth != null && (request.auth.token.get('email_verified', false) == true || pinUser()); }
+    // People with a verified email are looked at first, in as few steps as possible (the PIN test costs them nothing).
     function roleRef() {
-      return pinUser() ? /databases/$(database)/documents/devices/$(request.auth.uid)
+      return request.auth.token.email_verified != true && pinUser() ? /databases/$(database)/documents/devices/$(request.auth.uid)
         : /databases/$(database)/documents/roles/$(request.auth.token.email.lower());
     }
     // Who wrote an audit entry: the email address, or "code:" and the account id for a number-and-PIN sign-in

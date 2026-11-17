@@ -1,5 +1,9 @@
 # 017 – One phone, several people (later)
 
+> **Note (0.87):** sign-in codes were built with PINs: access entries are `roles/{PIN address}`, not `devices/{uid}`, and
+> a phone isn't linked (signing out changes nothing). Read `docs/ARCHITECTURE.md` "Sign-in codes and PINs" before starting.
+> One phone, several people now works without this task: each person signs out and in with their own number and PIN.
+
 **Model:** Architect first, then senior.
 
 **Goal:** a household with one phone can link up to four people to it and choose who is using Church Hub – the

@@ -420,3 +420,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.83.4 (17 Nov 2026): the setup tool in the documentation – README, ARCHITECTURE ("Setup tool"), help (Settings: setting up
   another church; what else a church can switch on), the website's "Do we need someone technical?", the brochure for other
   churches, the release checklist, and planned tasks 021 and 050
+- ✅ 0.83.5 (17 Nov 2026): a person who has died has grey information blocks on their page (light and dark), so it is clear at a glance

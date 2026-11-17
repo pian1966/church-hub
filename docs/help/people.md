@@ -100,7 +100,7 @@ Church Partner dates, or filling gaps). **Undo** puts everyone back.
 For: Administrators, Pastors
 
 Open the person → **Record a death**: the date, the funeral or memorial (if known), an optional pastoral note, and whether
-to change their spouse to Widowed. They stay on the records as *Deceased* and leave the directory. Then **Finish: take off
+to change their spouse to Widowed. They stay on the records as *Deceased* and leave the directory; the blocks of information on their page turn grey. Then **Finish: take off
 rosters, teams, leave and sign-in** (Administrators; it's on the To do list). Pastors get "Care for the family of …" on
 their to-do list for 8 weeks. Made a mistake? **Recorded by mistake?** undoes it.
 

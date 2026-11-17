@@ -17,8 +17,11 @@ jobs:
           if [ '${{ github.event_name }}' = pull_request ]; then
             files=$(gh api --paginate 'repos/${{ github.repository }}/pulls/${{ github.event.pull_request.number }}/files' --jq '.[].filename') || files=''
           else
-            # A brand-new branch (e.g. a file edited on github.com) has no "before": compare it with main instead.
+            # On a branch, compare it with main: only the branch's own changes count. Otherwise bringing main into the branch
+            # ("Update branch") would count everything main gained since, and run every test for a website-only change.
+            # On main itself (or a brand-new branch with no "before"), compare with what was there before the push.
             base='${{ github.event.before }}'
+            if [ '${{ github.ref_name }}' != '${{ github.event.repository.default_branch }}' ]; then base='${{ github.event.repository.default_branch }}'; fi
             case "$base" in ''|0000000000000000000000000000000000000000) base='${{ github.event.repository.default_branch }}';; esac
             files=$(gh api "repos/${{ github.repository }}/compare/$base...${{ github.sha }}" --jq 'if (.files|length) >= 300 then empty else .files[].filename end') || files=''
           fi

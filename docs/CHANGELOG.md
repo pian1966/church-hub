@@ -441,6 +441,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   A new code switches off an old PIN (a forgotten PIN or a new number); **Cellphone sign-in** on the person's page with
   Switch off; No access, left or a death switch it off. Rules (`invites`, `pinLogins`, `pinUser()`, `pinClaim()` in `roles`), the fake,
   rules tests and browser tests; POPIA, ARCHITECTURE, FIREBASE-SETUP steps 3–4, the setup tool, the website and the brochures.
+- ✅ 0.87.1 (17 Nov 2026): About → Released shows the release time in South African time with "SAST" for everyone, wherever they are; `node tools/stamp-files.js` now writes the release date and time into `js/version.js` itself (the time had been typed by hand and was wrong)
 - ✅ Every dropdown is searchable (0.85.1, 17 Nov 2026): `findables()` in `js/app.js` turns each `<select>` into one box – tap
   it and the whole list opens; type and it narrows as you type (part of a name, short names too); arrow keys and Enter, or a
   tap, choose. Replaces the separate "type to narrow" box above long lists. The select stays underneath and keeps the value;

@@ -91,7 +91,7 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Privacy (POPIA): every new piece of personal information needs a purpose, a consent or lawful basis, an access rule by role,
   and audit logging for sensitive views (read the matching section of `docs/POPIA.md`). Never commit real church data, names, keys
   or passwords – the repository is public.
-- Every change that reaches the website raises the version in `js/version.js` (and its date and time – South African time, `HH:MM`): the middle number for new
+- Every change that reaches the website raises the version in `js/version.js` (`node tools/stamp-files.js` then writes its date and time – South African time – itself; don't type them): the middle number for new
   features, the last for fixes. Then run `node tools/stamp-files.js`: it gives each file in `index.html` (and each language
   file) a fingerprint of its contents after `?v=`, so phones download only the files that changed; `node tests/versions.test.js`
   checks it. Don't type `?v=` numbers by hand. On a merge conflict in `index.html` or `js/file-versions.js`, take either side and run it again.

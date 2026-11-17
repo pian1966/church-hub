@@ -26,14 +26,12 @@
    *  Built from the repository, so it is the same address in the browser and in the Android app. */
   function siteUrl() { var r = String(V.repo || '').split('/'); return 'https://' + r[0] + '.github.io/' + (r[1] || '') + '/site/'; }
   function isoDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? H.fmt(d, true) : ''; }
-  /** When this version was released: the day, date and time (js/version.js gives South African time, UTC+2), shown in this
-   *  person's own time zone – e.g. "Tue 17 Nov 2026, 08:45". Just the day and date for a version without a time. */
+  /** When this version was released: the day, date and time in South African time (SAST, UTC+2), the same for everyone
+   *  wherever they are – e.g. "Tue 17 Nov 2026, 14:56 SAST". Just the day and date for a version without a time. */
   function released() {
     if (!isoDate(V.date)) return '';
     if (!/^\d{2}:\d{2}$/.test(V.time || '')) return isoDate(V.date);
-    var t = new Date(V.date + 'T' + V.time + ':00+02:00'); if (isNaN(t)) return isoDate(V.date);
-    var two = function (n) { return (n < 10 ? '0' : '') + n; };
-    return H.fmt(LeaveCore.iso(t), true) + ', ' + two(t.getHours()) + ':' + two(t.getMinutes());
+    return isoDate(V.date) + ', ' + V.time + ' SAST';
   }
 
   /** The website's version now (the file is fetched again, bypassing the browser's copy). */

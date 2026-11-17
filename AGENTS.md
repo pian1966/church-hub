@@ -7,7 +7,7 @@ The rules people most often miss:
 - Every new piece of screen text goes through `T('…')`, with a line in `js/i18n/<area>.js` (English, Afrikaans, isiZulu,
   isiXhosa) **and** in `js/lang/st.js` (Sesotho). The other 21 `js/lang/<code>.js` files are translated in one go before a
   release (`docs/RELEASE.md`) – don't add lines to them. `node tests/i18n.test.js` must pass.
-- Every change that reaches the website raises the version in `js/version.js` (and its date and time – South African time, `HH:MM`), then runs
+- Every change that reaches the website raises the version in `js/version.js` (`node tools/stamp-files.js` then writes its date and time – South African time – itself; don't type them), then runs
   `node tools/stamp-files.js` (each file's `?v=` in `index.html` becomes a fingerprint of its contents, so phones download only
   what changed). `node tests/versions.test.js` must pass.
 - Changing who may see what means changing `firestore.rules`, `plan()` in `js/store.js`, `tests/fake-firebase.js` and

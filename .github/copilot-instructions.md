@@ -36,7 +36,7 @@ neighbouring English line with grep and add yours next to it.
 
 ## 4. Every change
 - Work on your own branch from the latest `main`; finish with a pull request. Never push to `main`.
-- Raise the version in `js/version.js`, then run `node tools/stamp-files.js` (fingerprints after every `?v=` in `index.html`); update `docs/CHANGELOG.md` and `docs/ROADMAP.md`.
+- Raise the version in `js/version.js` (with its date and time, South African time), then run `node tools/stamp-files.js` (fingerprints after every `?v=` in `index.html`); update `docs/CHANGELOG.md` and `docs/ROADMAP.md`.
 - A new part of the app, or a feature an Administrator sets up, gets an item in the setup tool (`site/setup-kit.js`; `CLAUDE.md`, "Setup tool").
 - Run the tests (`AGENTS.md`, "Running the tests") and make sure GitHub's checks are green.
 - Keep code readable: short lines, one helper for one job (don't write the same logic twice), comments in plain English.

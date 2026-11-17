@@ -2,10 +2,12 @@
  * then run node tools/stamp-files.js: it puts each file's fingerprint after its ?v= in index.html, so browsers and phones fetch
  * only the files that changed (tests/versions.test.js checks it).
  * About → Check for updates reads this file again from the website and compares, so keep the same layout:
- * version: three numbers (major.minor.patch), date: YYYY-MM-DD. */
+ * version: three numbers (major.minor.patch), date: YYYY-MM-DD, time: HH:MM in South African time (UTC+2) – About shows the date
+ * and time in each person's own time zone. */
 var ChurchHubVersion = {
-  version: '0.84.0',
+  version: '0.84.1',
   date: '2026-11-17',
+  time: '08:34',
   developer: 'pian1966',
   repo: 'pian1966/church-hub'
 };

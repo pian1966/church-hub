@@ -428,3 +428,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   their own blocks – details and household; Church office notes, volunteering and the other notes; then Consent – so short
   blocks no longer leave gaps beside the long Consent block, and the office notes (and adding one) are near the top. Two
   columns on smaller screens (Consent across the bottom), one on a phone. Help, POPIA and What's new updated.
+- ✅ 0.84.1 (17 Nov 2026): About → Released shows the time as well as the day and date (`time` in `js/version.js`, South African
+  time, shown in each person's own time zone); `tests/versions.test.js` checks every release has one

@@ -440,3 +440,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   Linked phones with Remove; No access, left or a death unlink them; signing out unlinks the phone. Rules (`invites`,
   `devices`, `codeUser()`), the fake, rules tests and browser tests; help, POPIA, ARCHITECTURE, FIREBASE-SETUP step 3
   (Anonymous), the setup tool, the website and the brochures.
+- ✅ Every dropdown is searchable (0.85.1, 17 Nov 2026): `findables()` in `js/app.js` turns each `<select>` into one box – tap
+  it and the whole list opens; type and it narrows as you type (part of a name, short names too); arrow keys and Enter, or a
+  tap, choose. Replaces the separate "type to narrow" box above long lists. The select stays underneath and keeps the value;
+  values set by the page, changed options, disabled and hidden follow. `data-plain` opts out. What's new.

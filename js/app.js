@@ -736,30 +736,109 @@ var Hub = (function () {
     if (k !== wordKey) { wordKey = k; wordFn = I18n.get() === 'en' && st && st.wording ? Wording.changer(st) : null; }
     return wordFn;
   }
-  /** Long lists of people or households (select.findable, 10 or more): a box above the list narrows it as you type
-   *  part of a name ("dar ben"). The list keeps its own value, so saving works as before. */
+  /** Every dropdown (a <select>) becomes one box: tap it and the whole list opens; type and the list narrows as you type
+   *  (part of a name – "dar ben" – or any word in the list). Arrow keys and Enter, or a tap, choose. The real <select> stays
+   *  underneath (invisible) and keeps the value, so saving – and anything listening for a change – works as before; a value
+   *  set on the select itself (by the page, or a test) shows in the box too. Left alone: lists marked data-plain, lists that
+   *  choose several (multiple, size) and hidden helper lists (sr-only, aria-hidden) that already have a picker of their own. */
+  var findN = 0, SKIP = '[multiple],[size],.sr-only,[aria-hidden="true"],[data-plain]';
+  var selValue = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  var selIndex = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'selectedIndex');
   function findables(el) {
     if (!el || !el.querySelectorAll) return;
-    el.querySelectorAll('select.findable').forEach(function (sel) {
-      if (sel.dataset.fw || sel.options.length < 10) return;
+    el.querySelectorAll('select').forEach(function (sel) {
+      if (sel.dataset.fw || sel.matches(SKIP) || !sel.parentNode) return;
       sel.dataset.fw = '1';
-      var all = [].map.call(sel.options, function (o) { return { v: o.value, t: o.text, keep: !o.value || /^__/.test(o.value) }; });
-      var inp = document.createElement('input');
-      inp.type = 'search'; inp.className = 'find-in'; inp.autocomplete = 'off';
-      inp.placeholder = T('Type part of a name to narrow the list'); inp.setAttribute('aria-label', inp.placeholder);
-      sel.parentNode.insertBefore(inp, sel);
-      inp.addEventListener('keydown', function (ev) { if (ev.key === 'Enter') ev.preventDefault(); });
-      inp.addEventListener('input', pause(function () {
-        if (!document.body.contains(sel)) return;   // the window was closed meanwhile
-        var q = inp.value.trim(), cur = sel.value;
-        var shown = all.filter(function (o) { return o.keep || !q || matches(o.t, q); });
-        sel.innerHTML = shown.map(function (o) { return '<option value="' + esc(o.v) + '">' + esc(o.t) + '</option>'; }).join('');
-        var hit = q ? shown.filter(function (o) { return !o.keep; })[0] : null;
-        sel.value = hit ? hit.v : shown.some(function (o) { return o.v === cur; }) ? cur : (shown[0] || {}).v || '';
-        sel.dispatchEvent(new Event('change', { bubbles: true }));
-      }, 200));
+      var all = [], names = sel.classList.contains('findable');
+      var lid = 'find-l' + (++findN);
+      var block = !!sel.closest('.field, .adv-row, .set-c, td, .side-lang, .side-mode, .two');
+      var box = document.createElement('div'); box.className = 'find-box' + (block ? '' : ' find-inline'); box.setAttribute('data-noauto', '');
+      if (sel.getAttribute('style')) box.setAttribute('style', sel.getAttribute('style'));
+      box.innerHTML = '<input type="text" class="find-in" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="' + lid + '">' +
+        '<span class="find-arrow" aria-hidden="true"></span><ul class="find-list" id="' + lid + '" role="listbox" hidden></ul>';
+      sel.parentNode.insertBefore(box, sel);
+      sel.classList.add('find-sel'); sel.tabIndex = -1;
+      var inp = box.querySelector('input'), list = box.querySelector('ul'), shown = [], at = -1, typed = false;
+      var lab = sel.getAttribute('aria-label') || (sel.id && document.querySelector('label[for="' + CSS.escape(sel.id) + '"]') || {}).textContent ||
+        (function () { var l = sel.closest('label'), t = l && l.firstChild; return t && t.nodeType === 3 ? t.textContent : ''; })();
+      if (lab && lab.trim()) inp.setAttribute('aria-label', lab.trim());
+      function read() {
+        all = [].map.call(sel.options, function (o) { return { v: o.value, t: o.text, keep: !o.value || /^__/.test(o.value), off: o.disabled }; });
+        var short = all.length < 8;   // a short list: tapping shows it all; no keyboard pops up on a phone (typing still works)
+        if (short) inp.setAttribute('inputmode', 'none'); else inp.removeAttribute('inputmode');
+        if (!block) inp.size = Math.min(24, Math.max(6, all.reduce(function (m, o) { return Math.max(m, o.t.length); }, 0) + 1));
+      }
+      function cur() { var i = selIndex.get.call(sel); return i >= 0 ? all[i] : null; }
+      function showChosen() {   // the box shows what is chosen; an empty choice ("Choose…") shows as the grey hint
+        var c = cur(); inp.value = c && c.v ? c.t : '';
+        inp.placeholder = c && !c.v ? c.t : names ? T('Type part of a name to narrow the list') : T('Type to narrow the list');
+        inp.disabled = sel.disabled; box.hidden = sel.hidden; box.style.display = sel.style.display === 'none' ? 'none' : '';
+        box.classList.toggle('is-req', sel.required);
+      }
+      function mark(i, scroll) {
+        at = i;
+        [].forEach.call(list.children, function (li, n) { var on = n === i; li.classList.toggle('on', on); if (li.dataset.i) li.setAttribute('aria-selected', on ? 'true' : 'false'); });
+        var li = list.children[i];
+        if (li && li.id) { inp.setAttribute('aria-activedescendant', li.id); if (scroll) li.scrollIntoView({ block: 'nearest' }); } else inp.removeAttribute('aria-activedescendant');
+      }
+      function fill() {
+        var q = typed ? inp.value.trim() : '', c = cur();
+        shown = all.filter(function (o) { return o.keep || !q || matches(o.t, q); });
+        var real = shown.filter(function (o) { return !o.keep; }).length;
+        list.innerHTML = shown.map(function (o, i) {
+          return '<li role="option" id="' + lid + '-' + i + '" data-i="' + i + '" class="' + (o.keep ? 'keep' : '') + (o === c ? ' chosen' : '') + (o.off ? ' off' : '') + '"' + (o.off ? ' aria-disabled="true"' : '') + '>' + esc(o.t) + '</li>';
+        }).join('') + (q && !real ? '<li class="none" aria-disabled="true">' + esc(names ? T('Nobody matches that – try fewer letters') : T('Nothing matches that – try fewer letters')) + '</li>' : '');
+        var first = -1;
+        shown.some(function (o, i) { if (q ? !o.keep && !o.off : o === c) { first = i; return true; } return false; });
+        mark(first, true);
+      }
+      function open() {
+        if (inp.disabled || !list.hidden) return;
+        typed = false; list.hidden = false; box.classList.add('open'); inp.setAttribute('aria-expanded', 'true'); fill();
+      }
+      function close() { list.hidden = true; box.classList.remove('open'); inp.setAttribute('aria-expanded', 'false'); inp.removeAttribute('aria-activedescendant'); typed = false; showChosen(); }
+      function pick(i) {
+        var o = shown[i]; if (!o || o.off) return;
+        var n = all.indexOf(o), changed = selIndex.get.call(sel) !== n; selIndex.set.call(sel, n); close();
+        if (changed) { sel.dispatchEvent(new Event('input', { bubbles: true })); sel.dispatchEvent(new Event('change', { bubbles: true })); }
+      }
+      // A value set on the select by the page shows in the box straight away.
+      Object.defineProperty(sel, 'value', { configurable: true, get: function () { return selValue.get.call(this); }, set: function (v) { selValue.set.call(this, v); showChosen(); } });
+      Object.defineProperty(sel, 'selectedIndex', { configurable: true, get: function () { return selIndex.get.call(this); }, set: function (v) { selIndex.set.call(this, v); showChosen(); } });
+      inp.addEventListener('focus', function () { try { inp.select(); } catch (e) { /* fine */ } });
+      inp.addEventListener('click', open);
+      box.querySelector('.find-arrow').addEventListener('mousedown', function (ev) { ev.preventDefault(); if (list.hidden) { inp.focus(); open(); } else close(); });
+      inp.addEventListener('input', function () { if (list.hidden) open(); typed = true; fill(); });
+      ['input', 'change', 'keyup'].forEach(function (t) { box.addEventListener(t, function (ev) { if (ev.target === inp) ev.stopPropagation(); }); });   // the page only hears the select
+      inp.addEventListener('keydown', function (ev) {
+        var k = ev.key, n = shown.length;
+        if (k === 'ArrowDown' || k === 'ArrowUp') {
+          ev.preventDefault(); if (list.hidden) { open(); return; }
+          if (n) mark(k === 'ArrowDown' ? (at < n - 1 ? at + 1 : 0) : (at > 0 ? at - 1 : n - 1), true);
+        } else if (k === 'Enter') { ev.preventDefault(); ev.stopPropagation(); if (!list.hidden && at >= 0) pick(at); else open(); }
+        else if (k === 'Escape') { if (!list.hidden) { ev.preventDefault(); ev.stopPropagation(); close(); } }
+        else if (k === 'Tab') { if (!list.hidden) { if (typed && at >= 0) pick(at); else close(); } }
+      });
+      inp.addEventListener('blur', function () { if (list.hidden) return; if (typed && inp.value.trim() && at >= 0) pick(at); else close(); });
+      list.addEventListener('mousedown', function (ev) { ev.preventDefault(); });   // keep the cursor in the box
+      list.addEventListener('mousemove', function (ev) { var li = ev.target.closest('li[data-i]'); if (li && +li.dataset.i !== at) mark(+li.dataset.i); });
+      list.addEventListener('click', function (ev) {
+        ev.preventDefault(); ev.stopPropagation();   // inside a <label>: don't let it open the list again
+        var li = ev.target.closest('li[data-i]'); if (li) pick(+li.dataset.i);
+      });
+      sel.addEventListener('change', function () { if (list.hidden) showChosen(); });   // chosen another way (or by a test)
+      sel.addEventListener('focus', function () { inp.focus(); });   // the page (or a label) sends the cursor to the list
+      new MutationObserver(function (ms) {
+        if (ms.some(function (m) { return m.type === 'childList' || m.target !== sel; })) { read(); if (!list.hidden) fill(); }
+        showChosen();
+      }).observe(sel, { attributes: true, attributeFilter: ['disabled', 'hidden', 'style', 'required'], childList: true, subtree: true, characterData: true });
+      read(); showChosen();
     });
   }
+  // Dropdowns drawn later, anywhere (the side bar, a list redrawn in place), get the same box.
+  var findT = null;
+  new MutationObserver(function () { if (!findT) findT = requestAnimationFrame(function () { findT = null; findables(document.body); }); })
+    .observe(document.documentElement, { childList: true, subtree: true });
   function ourWords(el) { var f = words(); if (f && el) Wording.apply(el, f); }
   /* ---------- saving as you go (like Google Docs) ----------
    * A panel whose save button has data-autosave saves by itself: straight after a tick or a choice, and once typing pauses.

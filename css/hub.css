@@ -512,7 +512,39 @@ details.cg-fold[open] > summary { white-space: normal; }
 .cg-hits { margin-top: 6px; }
 .cg-hits .cg-pick { width: 100%; text-align: left; background: var(--surface); border: 1px solid var(--line-2); border-radius: 10px; cursor: pointer; font: inherit; color: var(--ink); margin-top: 4px; }
 .cg-hits .cg-pick:hover, .cg-hits .cg-pick:focus-visible { border-color: var(--accent); }
-.find-in { display: block; width: 100%; min-height: 36px; padding: 6px 10px; margin: 4px 0 6px; border: 1px solid var(--line); border-radius: 10px; background: var(--surface-2, #FBFAF8); color: var(--ink); font: inherit; font-size: 14px; }
+/* Every dropdown: one box – tap for the whole list, type to narrow it (findables() in app.js) */
+.find-box { position: relative; }
+.find-box.find-inline { display: inline-block; vertical-align: middle; max-width: 100%; }
+.find-box.find-inline .find-list { min-width: 220px; right: auto; }
+.find-box .find-in { display: block; width: 100%; min-height: 44px; padding: 10px 38px 10px 12px; border: 1px solid var(--line-strong); border-radius: 10px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 400; font-size: 15px; margin: 0; text-overflow: ellipsis; cursor: pointer; }
+.find-box .find-in:focus { cursor: text; outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.find-box .find-in:disabled { opacity: .55; cursor: default; }
+.find-arrow { position: absolute; right: 6px; top: 50%; width: 28px; height: 28px; margin-top: -14px; cursor: pointer; }
+.find-arrow::after { content: ''; position: absolute; left: 10px; top: 9px; width: 7px; height: 7px; border: solid var(--muted); border-width: 0 2px 2px 0; transform: rotate(45deg); transition: transform .18s ease, top .18s ease; }
+.find-box.open .find-arrow::after { transform: rotate(-135deg); top: 12px; }
+.find-in:disabled + .find-arrow { pointer-events: none; opacity: .4; }
+.find-list { position: absolute; z-index: 40; left: 0; right: 0; top: calc(100% + 4px); max-height: min(300px, 50vh); overflow-y: auto; margin: 0; padding: 4px; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,.16); animation: find-pop .14s ease-out; }
+@keyframes find-pop { from { opacity: 0; transform: translateY(-4px); } }
+.find-list li { padding: 9px 10px; font-size: 15px; border-radius: 8px; cursor: pointer; font-weight: 400; overflow-wrap: anywhere; }
+.find-list li.keep { color: var(--muted); }
+.find-list li.chosen { font-weight: 600; }
+.find-list li.chosen::after { content: ' ✓'; color: var(--accent); }
+.find-list li.on { background: var(--accent-soft); }
+.find-list li.off { opacity: .45; cursor: default; }
+.find-list li.none { cursor: default; color: var(--muted); font-style: italic; }
+.find-sel { position: absolute !important; left: 0; bottom: 0; width: 1px !important; height: 1px !important; min-height: 0 !important; padding: 0 !important; border: 0 !important; opacity: 0; pointer-events: none; }
+label.field:has(.find-sel), :has(> .find-sel) { position: relative; }
+.field.req .find-box .find-in, .find-box.is-req .find-in { background-color: var(--req-bg); border-color: var(--req-line); }
+.field.is-off .find-box .find-in { cursor: not-allowed; }
+.lang-pick .find-box .find-in, .mode-pick .find-box .find-in { min-height: 36px; padding: 6px 30px 6px 32px; font-size: 13.5px; border-color: var(--line); }
+.lang-pick svg { z-index: 1; }
+.lang-pick .find-list, .mode-pick .find-list { right: 0; left: auto; }
+.side-lang .find-box, .side-mode .find-box { display: block; }
+.side-lang .find-box .find-in, .side-mode .find-box .find-in { min-height: 36px; padding: 6px 30px 6px 32px; font-size: 13.5px; background: transparent; color: var(--side-ink); border-color: #3A322C; }
+.side-mode .find-box .find-in { min-height: 32px; font-size: 12.5px; color: var(--side-muted); border-color: transparent; }
+.side-lang .find-arrow::after, .side-mode .find-arrow::after { border-color: var(--side-muted); }
+.side-lang .find-list, .side-mode .find-list { top: auto; bottom: calc(100% + 4px); left: 0; right: 0; color: var(--ink); }
 
 /* Care groups: the name may wrap; Rename, Duplicate and Delete sit close together */
 .cg-head { align-items: flex-start; gap: 8px; }

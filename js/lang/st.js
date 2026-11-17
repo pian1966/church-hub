@@ -4,6 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
+    "Library: the items you have borrowed now have a tab of their own, before Library and Archives.": "Laeborari: dintho tseo o di adimileng jwale di na le thebe ya tsona, pele ho Laeborari le Polokelo ya ditokomane.",
     "Sign in with a code": "Kena ka khoutu",
     "Type the code the church office gave you. It has 8 letters and numbers.": "Ngola khoutu eo ofisi ya kereke e o fileng yona. E na le ditlhaku le dinomoro tse 8.",
     "Sign-in code": "Khoutu ya ho kena",

@@ -254,5 +254,51 @@ var PeopleParts = { actions: {} };
   function keyDate(p, re) { var k = (p.keyDates || []).filter(function (x) { return re.test(x.label || ''); })[0]; return k ? k.date : ''; }
   function uniq(a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }).sort(function (x, y) { return String(x).localeCompare(String(y)); }); }
 
-  Object.assign(P, { namesOnly: namesOnly, monthYear: monthYear, purposeTip: purposeTip, purposeWithout: purposeWithout, memo: memo, memoLater: memoLater, partnerAgrees: partnerAgrees, partnersUnrecorded: partnersUnrecorded, PARTNER_AGREED: PARTNER_AGREED, purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
+  /* ---------- field icons: a small, quiet picture beside each label, so people see at a glance what it asks ---------- */
+  var ICO = {
+    person: 'M20 21a8 8 0 0 0-16 0M12 13a5 5 0 1 0 0-10 5 5 0 0 0 0 10z',
+    phone: 'M7 2h10a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM11 18h2',
+    mail: 'M3 5h18v14H3zM3 6l9 7 9-7',
+    pin: 'M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z',
+    globe: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18',
+    cake: 'M4 21h16M5 21v-8h14v8M12 13V9M12 6.5c.8 0 1.5-.7 1.5-1.5 0-1-1.5-2.5-1.5-2.5S10.5 4 10.5 5c0 .8.7 1.5 1.5 1.5zM5 16.5c2.3 1 4.7-1 7 0s4.7 1 7 0',
+    heart: 'M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z',
+    gender: 'M12 14a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM12 14v7M9 18h6',
+    card: 'M3 5h18v14H3zM7 10h4M7 14h6M15 9h3v4h-3z',
+    alert: 'M12 3 2 20h20zM12 9v5M12 17h.01',
+    note: 'M5 3h10l4 4v14H5zM14 3v5h5M8 12h8M8 16h6',
+    calendar: 'M8 3v4M16 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+    tag: 'M3 12V3h9l9 9-9 9zM7.5 7.5h.01',
+    work: 'M3 7h18v13H3zM8 7V4h8v3M3 12h18',
+    star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',
+    key: 'M5 11h14v10H5zM8 11V8a4 4 0 0 1 8 0v3',
+    home: 'M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',
+    chat: 'M4 4h16v12H8l-4 4z',
+    shield: 'M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6zM9 12l2 2 4-4',
+    cross: 'M12 3v18M7 8h10'
+  };
+  // Which picture goes with which label (the English label, as passed to T)
+  var FIELD_ICO = {
+    'First name': 'person', 'Last name': 'person', 'Middle name': 'person', 'Maiden name': 'person', 'Known as': 'person', 'Their name': 'person',
+    'Mobile': 'phone', 'Email': 'mail',
+    'Home address': 'pin', 'Street address': 'pin', 'Address line 2': 'pin', 'Town or city': 'pin', 'Country': 'globe',
+    'Birthday': 'cake', 'Gender': 'gender', 'ID number': 'card', 'Allergies': 'alert', 'Medical notes': 'alert',
+    'Marital status': 'heart', 'Wedding anniversary': 'heart', 'Spouse': 'heart', 'Partner': 'heart', 'Spouse or partner': 'heart', 'Late spouse': 'heart',
+    'Notes': 'note', 'Pastoral note': 'note',
+    'Coming to the church since': 'calendar', 'Started at the church': 'calendar', 'Date accepted as Church Partner': 'calendar',
+    'Partnership last updated': 'calendar', 'Date of death': 'calendar',
+    'Church Partner': 'tag', 'Category': 'tag', 'Staff': 'work', 'Staff category': 'work', 'Volunteer': 'star', 'Services': 'star',
+    'App access': 'key', 'Household': 'home', 'In the household as': 'home', 'Would like to receive': 'chat',
+    'Given by (parent or guardian)': 'shield', 'How it was given': 'shield', 'Funeral or memorial': 'cross'
+  };
+  /** A field's label with its small icon in front (the label alone when it has none; `other` = the icon for any other label,
+   *  e.g. 'calendar' for a key date such as Baptised). */
+  function F(label, other) {
+    var k = FIELD_ICO[label] || (/anniversary/i.test(label || '') ? 'heart' : /birthday/i.test(label || '') ? 'cake' : other || '');
+    var text = esc(T(label));
+    if (!k) return text;
+    return '<span class="f-lab"><svg class="f-ico" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="' + ICO[k] + '"></path></svg>' + text + '</span>';
+  }
+
+  Object.assign(P, { F: F, namesOnly: namesOnly, monthYear: monthYear, purposeTip: purposeTip, purposeWithout: purposeWithout, memo: memo, memoLater: memoLater, partnerAgrees: partnerAgrees, partnersUnrecorded: partnersUnrecorded, PARTNER_AGREED: PARTNER_AGREED, purposeName: purposeName, SHARE: SHARE, TIERS: TIERS, contactHtml: contactHtml, mayShare: mayShare, seeTier: seeTier, sharedValue: sharedValue, tierSees: tierSees, CARE_WEEKS: CARE_WEEKS, CATS: CATS, DUP: DUP, GENDERS: GENDERS, HS: HS, MARITAL: MARITAL, PS: PS, PURPOSES: PURPOSES, RECEIVE: RECEIVE, RECEIVE_P: RECEIVE_P, SORTS: SORTS, WEDDING: WEDDING, addressLines: addressLines, age: age, allCouples: allCouples, canBasic: canBasic, canChildren: canChildren, canCouples: canCouples, canDup: canDup, canRecordDeath: canRecordDeath, canSeeAll: canSeeAll, canVolunteer: canVolunteer, catTags: catTags, cmp: cmp, consentFor: consentFor, coupleOf: coupleOf, couplesToCheck: couplesToCheck, deceased: deceased, dupPeople: dupPeople, dupSens: dupSens, familyOf: familyOf, first: first, hasAccess: hasAccess, hasConsent: hasConsent, householdNames: householdNames, isDead: isDead, isMe: isMe, keyDate: keyDate, known: known, lateSpouse: lateSpouse, linkName: linkName, links: links, members: members, notDup: notDup, serveTimes: serveTimes, slotIds: slotIds, slotName: slotName, state: state, survivingSpouses: survivingSpouses, uniq: uniq, visiblePeople: visiblePeople, yearsSince: yearsSince });
 })(PeopleParts);

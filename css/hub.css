@@ -59,6 +59,9 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .block > h2, .panel > h2 { font-size: 16px; margin: 0 0 10px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
 .panel + .panel { margin-top: 16px; }
+/* A person who has died (js/people/profile.js): their information blocks are grey. Setting --surface on the block greys
+   everything inside that uses it too (lists, boxes), without touching the rest of the page. */
+.deceased .panel { --surface: #ECEAE6; --surface-2: #E4E1DC; --line-2: #DAD5CF; background: var(--surface); border-color: #DAD5CF; box-shadow: none; }
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .grow { flex: 1; min-width: 0; }
@@ -639,6 +642,7 @@ html[data-mode=dark] { color-scheme: dark;
   --ok: #6FCF97; --ok-soft: #1B3326; --warn: #E8BE66; --warn-soft: #362C16; --bad: #F2908A; --bad-soft: #3B1E1E; --away: #2C2723;
   --req-bg: #2E2419; --req-line: #6B4A2C;
   --shadow: 0 1px 2px rgba(0,0,0,.4), 0 4px 16px rgba(0,0,0,.35); }
+html[data-mode=dark] .deceased .panel { --surface: #2A2724; --surface-2: #26231F; --line-2: #3A3530; border-color: #3A3530; }
 html[data-mode=dark] .demo { background: #2E2617; border-bottom-color: #5A4A26; color: var(--ink); }
 html[data-mode=dark] .viewas { background: #33290F; color: #F3DC9B; border-bottom-color: #5E4C1C; }
 html[data-mode=dark] .offline-bar { background: #1B2636; color: #BCD0EC; border-bottom-color: #2F4260; }

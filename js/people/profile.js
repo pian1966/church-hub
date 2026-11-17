@@ -228,7 +228,8 @@
     // Volunteering: services, departments and positions (Rosters teams and positions); roster coordinators and Administrators change it
     html += volunteerPanel(p, me);
     html += '</div>';
-    return html;
+    // Someone who has died: their information blocks turn grey (css/hub.css, .deceased), so it's clear at a glance
+    return deceased(p) ? '<div class="deceased">' + html + '</div>' : html;
   }
 
   function volunteerPanel(p, me) {

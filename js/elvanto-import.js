@@ -32,6 +32,7 @@ var ElvantoImport = (function () {
     ['gender', TX('Gender'), ['Gender'], /^(gender|sex)$/i],
     ['dateAdded', TX('Date added to Elvanto'), ['Date Added'], /^date\s*added$/i],
     ['middleName', TX('Middle name'), ['Middle Name'], /^middle\s*name$/i],
+    ['maidenName', TX('Maiden name'), ['Maiden Name'], /^maiden\s*name$/i],
     ['anniversary', TX('Wedding anniversary'), ['Anniversary'], /^(wedding\s*)?anniversary$/i],
     ['partnerSince', TX('Date accepted as Church Partner'), ['Membership Date'], /^member(ship)?\s*date$/i],
     ['partnerUpdated', TX('Partnership last updated'), ['Membership last renewed on:'], /^member(ship)?\s*(last\s*)?renewed/i],
@@ -302,6 +303,7 @@ var ElvantoImport = (function () {
     if (o.child) delete p.maritalStatus; else if (o.marital) p.maritalStatus = o.marital;
     if (o.gender) p.gender = o.gender;
     if (o.middleName) p.middleName = o.middleName;
+    if (o.maidenName) p.maidenName = o.maidenName;
     if (o.dateAdded && (!p.createdAt || o.dateAdded < p.createdAt)) p.createdAt = o.dateAdded;   // when they were first added (in Elvanto)
     if (o.anniversary && !o.child) { p.keyDates = (p.keyDates || []).filter(function (k) { return !/wedding|anniversary/i.test(k.label || ''); }).concat([{ label: 'Wedding anniversary', date: o.anniversary }]); }
     if (o.partnerSince) p.partnerSince = o.partnerSince;

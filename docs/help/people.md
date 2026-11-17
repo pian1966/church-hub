@@ -27,6 +27,23 @@ Open the person and tap **Edit details**. Save when you're done. Boxes that don'
 for example **Wedding anniversary** when the marital status is Single, Engaged, Partner or Divorced. Whatever was saved in a
 greyed-out box is kept.
 
+## Where do I record a married woman's maiden name?
+For: Administrators, Pastors
+Also asked: Née. Surname before marriage. Previous surname. Find someone by her old surname.
+
+**Edit details** → **Maiden name**. The box appears once Gender is Female (or not recorded) and Marital status is Married,
+Separated, Divorced or Widowed. It shows on her page under **Contact and details**, People's search box finds her by it, and
+Advanced search has it under Personal. Brought across from Elvanto's **Maiden Name** column too. Like the middle name, only
+Administrators, Pastors and she herself see it.
+
+## How do I add a note about someone for the church office?
+For: Administrators, Pastors
+Also asked: Admin note. Office note. Note on a person's record.
+
+On the person's page, **Church office notes** is near the top, beside their details: type in **Add a note** and tap
+**Save note**. Each note shows who wrote it and when, and can be deleted. Administrators and Pastors see these notes (notes
+brought across from Elvanto land here too); pastoral matters go in **Pastoral notes**, which only Pastors see.
+
 ## How do I give someone access to Church Hub?
 For: Administrators (Pastors if allowed)
 Also asked: Let someone sign in. Make someone a roster coordinator. Change someone's role.

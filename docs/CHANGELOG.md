@@ -421,3 +421,10 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   another church; what else a church can switch on), the website's "Do we need someone technical?", the brochure for other
   churches, the release checklist, and planned tasks 021 and 050
 - ✅ 0.83.5 (17 Nov 2026): a person who has died has grey information blocks on their page (light and dark), so it is clear at a glance
+- ✅ 0.84.0 (17 Nov 2026): **Maiden name** – Edit details has a Maiden name box for women who are or were married (it appears
+  when Gender is Female or not recorded and Marital status is Married, Separated, Divorced or Widowed); shown under Contact
+  and details, found by People's search box and Advanced search, brought across from Elvanto's Maiden Name column; kept in
+  `details/` like the middle name (no rules change). **A person's page uses the space better**: its blocks sit in up to three columns that each stack
+  their own blocks – details and household; Church office notes, volunteering and the other notes; then Consent – so short
+  blocks no longer leave gaps beside the long Consent block, and the office notes (and adding one) are near the top. Two
+  columns on smaller screens (Consent across the bottom), one on a phone. Help, POPIA and What's new updated.

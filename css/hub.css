@@ -332,6 +332,13 @@ table.simple th { font-size: 12.5px; color: var(--muted); font-weight: 600; }
 .simple td.lt { text-align: center; }
 .simple thead th { vertical-align: bottom; }
 .grid2 > .panel + .panel { margin-top: 0; }   /* the grid gap spaces them */
+/* A person's page (js/people/profile.js): up to three columns, each stacking its own blocks, so short blocks sit under each
+   other instead of leaving gaps beside a long one. Two columns on smaller screens (the third, Consent, across the bottom). */
+.person-cols { display: grid; gap: 16px; align-items: start; grid-template-columns: minmax(0, 1fr); }
+.pcol { min-width: 0; }
+.pcol > * + * { margin-top: 16px; }
+@media (min-width: 640px) { .person-cols.cols-2, .person-cols.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .person-cols.cols-3 > .pcol.c { grid-column: 1 / -1; } }
+@media (min-width: 1250px) { .person-cols.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); } .person-cols.cols-3 > .pcol.c { grid-column: auto; } }
 [hidden] { display: none !important; }   /* "hidden" always wins over a layout class (.two, .row…) */
 
 /* Advanced search (People) */

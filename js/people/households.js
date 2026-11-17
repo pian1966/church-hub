@@ -109,7 +109,7 @@
   /* Fixing a duplicate: keep one record, fill its gaps from the other, move what points at the other, retire the other. */
   var FIELD_NAMES = { email: TX('Email'), mobile: TX('Mobile'), birthDate: TX('Birthday'), maritalStatus: TX('Marital status'), preferredName: TX('Known as'),
     firstName: TX('First name'), lastName: TX('Last name'), elvantoId: TX('Elvanto link'), staff: TX('Staff details'), familyId: TX('Household'), keyDates: TX('Key dates'),
-    familyRole: TX('Adult or child'), directory: TX('Directory'), emailUnknown: TX('Email not known'), mobileUnknown: TX('Mobile not known') };
+    familyRole: TX('Adult or child'), middleName: TX('Middle name'), maidenName: TX('Maiden name'), directory: TX('Directory'), emailUnknown: TX('Email not known'), mobileUnknown: TX('Mobile not known') };
   function fieldName(k) { return FIELD_NAMES[k] ? T(FIELD_NAMES[k]) : k; }
   function refsOf(id) {
     var by = function (c) { return S.find(c, function (x) { return x.personId === id; }); }, lv = S.leave();

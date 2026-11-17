@@ -68,6 +68,7 @@
     add(birth, TX('Personal'), 'age', TX('Age'), 'number', function (p) { return age(p); });
     add(all, TX('Personal'), 'gender', TX('Gender'), 'choice', function (p) { return p.gender || ''; }, GENDERS);
     add(all, TX('Personal'), 'middleName', TX('Middle name'), 'text', function (p) { return p.middleName || ''; });
+    add(all, TX('Personal'), 'maidenName', TX('Maiden name'), 'text', function (p) { return p.maidenName || ''; });
     add(all, TX('Name and contact'), 'town', TX('Town or city'), 'text', function (p) { return (p.address || {}).city || ''; });
     add(all, TX('Name and contact'), 'address', TX('Home address'), 'text', function (p) { return addressLines(p).join(', '); });
     add(all, TX('Church'), 'partnerSince', TX('Date accepted as Church Partner'), 'date', function (p) { return p.partnerSince || ''; });

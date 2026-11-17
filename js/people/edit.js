@@ -133,6 +133,9 @@
         // Next to marital status: the wedding anniversary and late spouse, greyed out when they don't apply (offBox)
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Wedding anniversary') + '<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' +
         (admin ? lateSpouseField(p) : '') +
+        // Maiden name: for women who are or were married (shown when it applies, or when one is already recorded)
+        (!me || admin ? '<div class="two" id="pf-maiden-f"' + (maidenApplies(p.familyRole, p.gender, p.maritalStatus) || p.maidenName ? '' : ' hidden') + '><label class="field">' + T('Maiden name') +
+          '<input id="pf-maiden" value="' + esc(p.maidenName || '') + '" autocomplete="off"><small>' + T('Her surname before she married.') + '</small></label></div>' : '') +
         (!isNew && canRecordDeath() && (deceased(p) || p.category === 'Deceased') ? '<div class="two"><label class="field req">' + T('Date of death') + '<input type="date" id="pf-died" max="' + H.today() + '" value="' + esc(p.deceasedAt || '') + '"></label>' +
           '<label class="field">' + T('Funeral or memorial') + '<input type="date" id="pf-funeral" value="' + esc(keyDate(p, /^funeral$/i)) + '"></label></div>' : '') +
         '<fieldset class="panel" style="padding:10px 12px;margin:6px 0 14px"><legend class="field-l" style="padding:0 4px">' + T('Home address') + '</legend>' +
@@ -197,13 +200,19 @@
       if (wi && wi.disabled) { var wn = document.getElementById('pf-wed-n'); if (wn) wn.textContent = ''; } else live();
       offBox('pf-late', !child && NO_LATE.indexOf(m) >= 0, m);
       if (mi && ltf && m === 'Widowed') ltf.hidden = false;
+      var mf2 = document.getElementById('pf-maiden-f'), gi = document.getElementById('pf-gender'), mv = document.getElementById('pf-maiden');
+      if (mf2) mf2.hidden = !maidenApplies(child ? 'child' : 'adult', gi ? gi.value : '', m) && !(mv && mv.value);
     };
     if (mi) mi.addEventListener('change', fit);
     if (fr) fr.addEventListener('change', fit);
+    var gsel = document.getElementById('pf-gender'); if (gsel) gsel.addEventListener('change', fit);
     fit();
   }
 
   var NO_WEDDING = ['Single', 'Engaged', 'Partner', 'Divorced'], NO_LATE = ['Single', 'Engaged'];
+  /** A maiden name applies to an adult woman (or gender not recorded) who is or was married. */
+  var EVER_MARRIED = ['Married', 'Separated', 'Divorced', 'Widowed'];
+  function maidenApplies(role, gender, marital) { return role !== 'child' && gender !== 'Male' && EVER_MARRIED.indexOf(marital) >= 0; }
   /** Grey a box out (and say why) when it doesn't apply to this person, or bring it back. */
   function offBox(id, off, status) {
     var el = document.getElementById(id), lab = el && el.closest('.field'); if (!lab) return;
@@ -331,6 +340,7 @@
         }
         if (g('pf-gender') !== null) { if (g('pf-gender')) p.gender = g('pf-gender'); else delete p.gender; }
         if (g('pf-middle') !== null) { if (g('pf-middle')) p.middleName = g('pf-middle'); else delete p.middleName; }
+        if (g('pf-maiden') !== null) { if (g('pf-maiden')) p.maidenName = g('pf-maiden'); else delete p.maidenName; }
         if (g('pf-street') !== null) {
           var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') === '__other' ? g('pf-country-o') : g('pf-country') };
           if (ad.street || ad.street2 || ad.city || ad.postcode) p.address = ad; else delete p.address;

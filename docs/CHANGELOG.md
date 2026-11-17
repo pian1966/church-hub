@@ -434,3 +434,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   box: choose the other person, even in another household, and both records are linked (`spouseId` in `details/`); the couple
   is certain wherever they live and comes before the household's guesses (`Households.couples`, `explicit`), Not a couple
   unlinks them, and the late-spouse suggestions use it. Greyed out for Single, Engaged, Divorced and Widowed. Help, What's new.
+- ✅ Every dropdown is searchable (0.85.1, 17 Nov 2026): `findables()` in `js/app.js` turns each `<select>` into one box – tap
+  it and the whole list opens; type and it narrows as you type (part of a name, short names too); arrow keys and Enter, or a
+  tap, choose. Replaces the separate "type to narrow" box above long lists. The select stays underneath and keeps the value;
+  values set by the page, changed options, disabled and hidden follow. `data-plain` opts out. What's new.

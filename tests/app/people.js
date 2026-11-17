@@ -13,8 +13,12 @@ module.exports = async function (ctx) {
   await s.settle(); docs = await s.docsNow();
   check(Object.keys(docs).some(k => k.startsWith('audit/') && docs[k].action === 'Viewed collection restrictions for Ravi Naidoo'), 'viewing a collection restriction is logged');
   await s.go('people/p/p16'); await s.page.click('[data-act="people:link"][data-child="p16"]');
-  await s.page.fill('#modal .find-in', 'elsa van'); await s.page.waitForTimeout(400);
-  check(await s.page.$$eval('#gl-who option', o => o.filter(x => x.value && !x.value.startsWith('__')).map(x => x.value).join()) === 'p24' && await s.page.inputValue('#gl-who') === 'p24', 'long lists of people narrow as you type part of a name (and pick the match)');
+  await s.page.click('#modal .find-in');
+  check(await s.page.$$eval('#modal .find-list li[data-i]', l => l.length) === await s.page.$$eval('#gl-who option', o => o.length), 'a long list of people shows everyone as soon as it is opened');
+  await s.page.fill('#modal .find-in', 'elsa van'); await s.page.waitForTimeout(100);
+  check(await s.page.$$eval('#modal .find-list li[data-i]:not(.keep)', l => l.map(x => x.textContent).join('|')) === await s.page.$eval('#gl-who option[value="p24"]', o => o.textContent), 'long lists of people narrow as you type part of a name');
+  await s.page.keyboard.press('Enter');
+  check(await s.page.inputValue('#gl-who') === 'p24' && await s.page.$eval('#modal .find-list', l => l.hidden), 'Enter chooses the match and closes the list');
   await s.page.selectOption('#gl-who', 'p24'); await s.page.selectOption('#gl-rel', 'Step-parent');
   check(!(await s.page.isChecked('#gl-consent')) && await s.page.isChecked('#gl-collect'), 'a step-parent can collect but can’t give consent by default');
   await s.page.click('[data-act="people:linksave"]'); await s.settle();

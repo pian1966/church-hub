@@ -438,3 +438,10 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   it and the whole list opens; type and it narrows as you type (part of a name, short names too); arrow keys and Enter, or a
   tap, choose. Replaces the separate "type to narrow" box above long lists. The select stays underneath and keeps the value;
   values set by the page, changed options, disabled and hidden follow. `data-plain` opts out. What's new.
+- ✅ 0.86.0 (17 Nov 2026): **Edit details saves as you go** – like the panels elsewhere in Church Hub: a choice or tick saves at
+  once, typing saves when it pauses, with the small "Saved" note (or a red note saying what still needs fixing). The window has
+  one "Done" button (it checks everything and closes); Save and Cancel are gone. Closing the window saves anything still
+  waiting; if that can't be saved, it stays open once to show why, and closing again lets the change go. One "Updated details"
+  line in the audit log per time the window is opened, and nothing is written when nothing changed. Adding a new person still
+  waits for "Add person", so half-typed newcomers aren't created. The engine in `js/app.js` now works in a pop-up whose form has
+  `data-autoscope`. What's new.

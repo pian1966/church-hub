@@ -1897,6 +1897,8 @@ I18n.add('st', {
     "Undo": "Kgutlisa",
     "What to change": "Se lokelang ho fetolwa",
     "Add a person": "Eketsa motho",
+    "Edit details now saves as you go, like the rest of Church Hub – no Save button, just tap Done when you’re finished.": "Fetola dintlha jwale e boloka ha o ntse o sebetsa, jwalo ka Church Hub kaofela – ha ho konopo ya Boloka, tobetsa feela Ho entswe ha o qetile.",
+    "Changes are saved as you go.": "Diphetoho di bolokwa ha o ntse o sebetsa.",
     "Only add what the church needs. Ask for consent when you add someone.": "Eketsa feela seo kereke e se hlokang. Kopa tumello ha o eketsa motho.",
     "Category": "Sehlopha",
     "Date accepted as Church Partner": "Letsatsi leo a amohetsweng jwalo ka Molekane wa Kereke",

@@ -338,12 +338,12 @@
         var def = byKey[f.field];
         var ops = def ? PS.opsFor(def.type) : [];
         return (i && A.match !== 'logic' ? '<div class="adv-join"><span>' + word + '</span></div>' : '') +
-          '<div class="adv-row">' + (A.match === 'logic' ? '<span class="adv-n">' + (i + 1) + '.</span>' : '') + fieldSelect(f, i) +
+          '<div class="adv-row' + (i === A.fresh ? ' adv-new' : '') + '">' + (A.match === 'logic' ? '<span class="adv-n">' + (i + 1) + '.</span>' : '') + fieldSelect(f, i) +
           '<select class="adv-op" data-i="' + i + '" aria-label="' + esc(T('Filter {n}: how to compare', { n: i + 1 })) + '"' + (def ? '' : ' disabled') + '>' + ops.map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === f.op ? ' selected' : '') + '>' + esc(T(o[1])) + '</option>'; }).join('') + '</select>' +
           (def ? valueBox(f, def, i) : '<span></span>') +
-          '<span class="adv-btns"><button class="icon-btn ok" data-act="people:advadd" data-i="' + i + '" aria-label="' + esc(T('Add a filter after filter {n}', { n: i + 1 })) + '" title="' + esc(T('Add a filter')) + '">' + H.icon(H.ICON.plus, 18) + '</button>' +
-          '<button class="icon-btn bad" data-act="people:advdel" data-i="' + i + '" aria-label="' + esc(T('Remove filter {n}', { n: i + 1 })) + '" title="' + esc(T('Remove this filter')) + '"><span aria-hidden="true" style="font-size:20px;line-height:1">−</span></button></span></div>';
-      }).join('') + '</div>' : '<p class="muted">' + T('No filters: Search finds everyone.') + ' <button class="btn small" data-act="people:advadd" data-i="-1">' + H.icon(H.ICON.plus, 16) + T('Add a filter') + '</button></p>') +
+          '<button type="button" class="adv-x" data-act="people:advdel" data-i="' + i + '" aria-label="' + esc(T('Remove filter {n}', { n: i + 1 })) + '" title="' + esc(T('Remove this filter')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
+      }).join('') + '</div>' +
+        '<button type="button" class="adv-add" data-act="people:advadd" data-i="' + (A.filters.length - 1) + '">' + H.icon(H.ICON.plus, 18) + '<span>' + T('Add a filter') + '</span></button>' : '<p class="muted">' + T('No filters: Search finds everyone.') + ' <button class="btn small" data-act="people:advadd" data-i="-1">' + H.icon(H.ICON.plus, 16) + T('Add a filter') + '</button></p>') +
       '</section>' +
       '<section class="panel"><h2>' + T('Columns to show') + '</h2><p class="hint" style="margin-top:0">' + T('Name always comes first. Use the arrows to change the order.') + '</p><div class="adv-cols">' +
       '<span class="adv-col fixed">' + T('Name') + '</span>' + A.cols.map(function (k, i) {
@@ -550,8 +550,13 @@
 
 
   Object.assign(P.actions, {
-    advadd: function (el) { var i = +el.dataset.i, prev = state.adv.filters[i]; state.adv.filters.splice(i + 1, 0, { field: prev ? prev.field : 'name', op: prev ? prev.op : 'has', value: '', value2: '', unit: 'days' }); H.render(); var s2 = document.querySelectorAll('.adv-fbtn')[i + 1]; if (s2) s2.focus(); },
-    advdel: function (el) { state.adv.filters.splice(+el.dataset.i, 1); H.render(); },
+    advadd: function (el) { var i = +el.dataset.i, prev = state.adv.filters[i]; state.adv.filters.splice(i + 1, 0, { field: prev ? prev.field : 'name', op: prev ? prev.op : 'has', value: '', value2: '', unit: 'days' }); state.adv.fresh = i + 1; H.render(); delete state.adv.fresh; var s2 = document.querySelectorAll('.adv-fbtn')[i + 1]; if (s2) s2.focus(); },
+    advdel: function (el) {
+      // The row folds away gently first (at once if the phone asks for less movement), then the list is drawn again.
+      var row = el.closest('.adv-row'), go = function () { state.adv.filters.splice(+el.dataset.i, 1); H.render(); };
+      if (!row || !window.matchMedia || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return go();
+      row.classList.add('adv-gone'); setTimeout(go, 180);
+    },
     advcol: function (el) {
         var c = state.adv.cols, i = c.indexOf(el.dataset.k), m = +el.dataset.m;
         if (i < 0) return;

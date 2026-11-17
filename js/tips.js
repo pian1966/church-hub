@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.87';
   var NEWS = [
+    { date: '2026-11-17', who: ['staffwork'], app: 'people', text: TX('Advanced search looks calmer: each filter has a small × to remove it, and one Add a filter button sits underneath.') },
     { date: '2026-11-17', who: ['everyone'], app: 'library', text: TX("Library: if you have borrowed something, the Library now opens on Items I have borrowed; tap Library for the whole catalogue.") },
     { date: '2026-11-17', who: ['everyone'], app: 'people', text: TX("People: each field on a person’s page and in Edit details now has a small icon, so you can see at a glance what it asks.") },
     { date: '2026-11-17', who: ['everyone'], app: 'library', text: TX('Library: the items you have borrowed now have a tab of their own, before Library and Archives.') },

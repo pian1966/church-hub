@@ -8,7 +8,9 @@ const vs = fs.readFileSync(path.join(root, 'js/version.js'), 'utf8'), html = fs.
 const v = (/version:\s*'(\d+\.\d+\.\d+)'/.exec(vs) || [])[1], d = (/date:\s*'(\d{4}-\d\d-\d\d)'/.exec(vs) || [])[1];
 let fails = 0;
 function ok(c, what) { if (!c) { fails++; console.log('  ✗ ' + what); } else console.log('  ✓ ' + what); }
-ok(!!v && !!d, 'js/version.js has a version (' + v + ') and a date (' + d + ')');
+const tm = (/time:\s*'(\d\d:\d\d)'/.exec(vs) || [])[1];
+ok(!!v && !!d && !!tm && +tm.slice(0, 2) < 24 && +tm.slice(3) < 60, 'js/version.js has a version (' + v + '), a date (' + d + ') and a time (' + tm + ', South African time)' +
+  (tm ? '' : ' – add time: \'HH:MM\' under the date: when this version is released'));
 const stamp = require('../tools/stamp-files.js'), RUN = ' – run: node tools/stamp-files.js';
 const tags = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))(\?v=([^"]*))?"/g)].filter(m => !/^https?:/.test(m[1]));
 const wrong = tags.filter(m => m[3] !== stamp.code(m[1])).map(m => m[1]);

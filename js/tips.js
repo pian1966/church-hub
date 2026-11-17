@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.87';
   var NEWS = [
+    { date: '2026-11-17', who: ['everyone'], app: 'library', text: TX("Library: if you have borrowed something, the Library now opens on Items I have borrowed; tap Library for the whole catalogue.") },
     { date: '2026-11-17', who: ['everyone'], app: 'people', text: TX("People: each field on a person’s page and in Edit details now has a small icon, so you can see at a glance what it asks.") },
     { date: '2026-11-17', who: ['everyone'], app: 'library', text: TX('Library: the items you have borrowed now have a tab of their own, before Library and Archives.') },
     { date: '2026-11-17', who: ['everyone'], text: TX('Members with no email address can now sign in with their cellphone number and a PIN: the church office gives them a sign-in code once, and with it they choose their PIN.') },
@@ -69,18 +70,18 @@
     { id: 'me-serve', who: ['everyone'], app: 'me', href: '#/me', text: TX('When you’re put on a roster, you can accept or decline the turn under Me → Serving.') },
     { id: 'me-offer', who: ['everyone'], app: 'me', href: '#/me', text: TX('Would you like to help? Under Me → Serving you can offer to serve in a team.') },
     { id: 'me-lang', who: ['everyone'], app: 'me', href: '#/me', text: TX('Church Hub speaks your language. Choose English, Afrikaans, isiZulu, isiXhosa, Sesotho or another language on your Me page.') },
-    { id: 'lib-there', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library', text: TX('The church has a library. Open Library to see what is there – what you have borrowed shows on your Me page.') },
-    { id: 'lib-ask', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library', text: TX('Seen a book you’d like to read? Tap Request to borrow in the Library, and a librarian will get it ready for you.') },
+    { id: 'lib-there', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library/all', text: TX('The church has a library. Open Library to see what is there – what you have borrowed shows on your Me page.') },
+    { id: 'lib-ask', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library/all', text: TX('Seen a book you’d like to read? Tap Request to borrow in the Library, and a librarian will get it ready for you.') },
     { id: 'msg-office', who: ['everyone'], app: 'messages', href: '#/messages', text: TX('Messages from the church arrive under Messages. You can write to the church office there too.') },
     { id: 'groups-mine', who: ['everyone'], app: 'groups', href: '#/groups', text: TX('Groups → My groups shows the groups you belong to.') },
     { id: 'offline', who: ['everyone'], text: TX('No internet? Church Hub still shows what you last saw, view only, until you’re back online.') },
     // Librarians
-    { id: 'lib-lend', who: ['librarian'], app: 'library', href: '#/library', text: TX('As a librarian, you lend an item with its Lend button, and tap Returned when it comes back.') },
-    { id: 'lib-repair', who: ['librarian'], app: 'library', href: '#/library', text: TX('Something damaged? In the item’s ⋯ menu, choose Mark as damaged – nobody can borrow it until it is repaired or put back.') },
-    { id: 'lib-out', who: ['librarian'], app: 'library', href: '#/library', text: TX('Lost, or no longer needed? In the item’s ⋯ menu choose Withdraw from circulation or Take out of the library – it can be put back later.') },
-    { id: 'lib-remind', who: ['librarian'], app: 'library', href: '#/library', text: TX('Three weeks after a loan Church Hub reminds the borrower. You can also send the reminder by WhatsApp or SMS.') },
-    { id: 'lib-requests', who: ['librarian'], app: 'library', href: '#/library', text: TX('Members can ask to borrow an item. Their requests wait at the top of the Library for you to say yes or no.') },
-    { id: 'lib-reports', who: ['librarian'], app: 'library', href: '#/library', text: TX('Library → More → Reports shows what was lent, returned, lost and added in any period.') },
+    { id: 'lib-lend', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('As a librarian, you lend an item with its Lend button, and tap Returned when it comes back.') },
+    { id: 'lib-repair', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Something damaged? In the item’s ⋯ menu, choose Mark as damaged – nobody can borrow it until it is repaired or put back.') },
+    { id: 'lib-out', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Lost, or no longer needed? In the item’s ⋯ menu choose Withdraw from circulation or Take out of the library – it can be put back later.') },
+    { id: 'lib-remind', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Three weeks after a loan Church Hub reminds the borrower. You can also send the reminder by WhatsApp or SMS.') },
+    { id: 'lib-requests', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Members can ask to borrow an item. Their requests wait at the top of the Library for you to say yes or no.') },
+    { id: 'lib-reports', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Library → More → Reports shows what was lent, returned, lost and added in any period.') },
     // Care Group carers
     { id: 'carer-msg', who: ['carer'], app: 'messages', href: '#/messages', text: TX('As a carer, you can send a message to everyone in your Care Group from Messages.') },
     // Roster coordinators

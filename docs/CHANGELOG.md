@@ -430,3 +430,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   columns on smaller screens (Consent across the bottom), one on a phone. Help, POPIA and What's new updated.
 - ✅ 0.84.1 (17 Nov 2026): About → Released shows the time as well as the day and date (`time` in `js/version.js`, South African
   time, shown in each person's own time zone); `tests/versions.test.js` checks every release has one
+- ✅ 0.85.0 (17 Nov 2026): **Spouse or partner, chosen by hand** – Edit details (Administrators and Pastors) has a Spouse or partner
+  box: choose the other person, even in another household, and both records are linked (`spouseId` in `details/`); the couple
+  is certain wherever they live and comes before the household's guesses (`Households.couples`, `explicit`), Not a couple
+  unlinks them, and the late-spouse suggestions use it. Greyed out for Single, Engaged, Divorced and Widowed. Help, What's new.

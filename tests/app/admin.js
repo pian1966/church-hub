@@ -82,6 +82,15 @@ module.exports = async function (ctx) {
   await s.page.selectOption('#pf-gender', 'Female'); await s.page.fill('#pf-maiden', 'Botha'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); tt = await s.text();
   check(manHidden && docs['details/p24'].maidenName === 'Botha' && !docs['people/p24'].maidenName && tt.includes('Maiden name') && tt.includes('Botha'), '… but not for a man; it is saved with the private details and shown on her page');
+  // Spouse or partner chosen by hand: Sam and Ruth don't share a household
+  await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-marital', 'Married');
+  await s.page.selectOption('#pf-spouse', 'p27'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  docs = await s.docsNow(); tt = await s.text();
+  check(docs['details/p19'].spouseId === 'p27' && docs['details/p27'].spouseId === 'p19' && tt.includes('Spouse') && tt.includes('Ruth Daniels') && !tt.includes('not confirmed yet'),
+    'a spouse can be chosen by hand, even in another household: linked on both, and shown as certain');
+  await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-spouse', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
+  docs = await s.docsNow(); check(!docs['details/p19'].spouseId && !docs['details/p27'].spouseId, '… and unlinked again on both');
+  await s.go('people/p/p24');   // back to Elsa for the late spouse checks below
   // Late spouse suggestions: clear Elsa's, and Church Hub should suggest Johan again (same household and surname)
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   await s.page.evaluate(() => { const e = Store.get('people', 'p24'); delete e.lateSpouseSet; });

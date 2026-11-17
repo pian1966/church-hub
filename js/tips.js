@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.84';
+  var NEWS_FOR = '0.85';
   var NEWS = [
+    { date: '2026-11-17', who: ['admin', 'pastor'], app: 'people', text: TX('People: in Edit details, choose someone’s Spouse or partner by hand – even when they live apart – and Church Hub links them on both records.') },
     { date: '2026-11-17', who: ['admin', 'pastor'], app: 'people', text: TX('People: Edit details now has a Maiden name box for women who are or were married, and People’s search finds them by it. Church office notes now sit near the top of a person’s page, so adding one is easy to find.') },
     { date: '2026-11-16', who: ['admin'], app: 'support', text: TX('Subscription: the page now makes clear that the price is per church, not per person, and that a low price doesn’t mean Church Hub does less.') },
     { date: '2026-11-16', who: ['everyone'], text: TX('About now has a link to Church Hub’s website, which shows what Church Hub offers to every church – handy to share with friends at other churches.') },

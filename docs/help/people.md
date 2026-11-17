@@ -44,6 +44,17 @@ On the person's page, **Church office notes** is near the top, beside their deta
 **Save note**. Each note shows who wrote it and when, and can be deleted. Administrators and Pastors see these notes (notes
 brought across from Elvanto land here too); pastoral matters go in **Pastoral notes**, which only Pastors see.
 
+## How do I link a spouse or partner?
+For: Administrators, Pastors
+Also asked: Add a husband or wife. Couple who live apart. Wrong person shown as spouse. Find someone's partner.
+
+Usually there's nothing to do: Church Hub works couples out from each household (two adults, both **Married** or both
+**Partner**) and asks you to confirm them (**Yes, married to each other** on their page, or **Households → Couples to
+confirm**). To choose by hand – a couple who live apart, or when the household leaves Church Hub guessing – open either
+person → **Edit details** → **Spouse or partner**, choose the other person and **Save**: both records are linked, and their
+pages show each other as Spouse (or Partner). Choose **Going by their household** to undo it. The box is greyed out when the
+marital status is Single, Engaged, Divorced or Widowed (for someone who has died, use **Late spouse**).
+
 ## How do I give someone access to Church Hub?
 For: Administrators (Pastors if allowed)
 Also asked: Let someone sign in. Make someone a roster coordinator. Change someone's role.

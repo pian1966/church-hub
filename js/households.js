@@ -78,6 +78,8 @@ var Households = (function () {
    *    more than 25 years apart in age -4 (a parent and a married son or daughter). Best pairs first, each person once.
    *  - A pair the church said is "not a couple" (families.notCouples: ["id1|id2"]) is never suggested again;
    *    a pair a person confirmed (families.couples: ["id1|id2"]) is shown as certain.
+   *  - First of all, couples chosen by hand (spouseId on a person, Edit details → Spouse or partner) – wherever each lives:
+   *    certain, "partner" when either is recorded as Partner (and neither as Married), otherwise "spouse"; explicit: true.
    * Returns [{ familyId, a, b, kind: 'spouse'|'partner', sure, confirmed, copy: { from, to, date } | null, differ, mark: { id, status } | null }]:
    *   sure - the only two adults in the household who could be a couple;
    *   copy - spouses only: one has a wedding anniversary and the other doesn't (partners have no anniversary);
@@ -85,6 +87,21 @@ var Households = (function () {
    */
   function couples(people, families) {
     var out = [], seen = {}, KIND = { Married: 'spouse', Partner: 'partner' };
+    var living = function (p) { return p && p.familyRole !== 'child' && p.active !== false && !p.deceasedAt; };
+    var byId = {}; (people || []).forEach(function (p) { byId[p.id] = p; });
+    (people || []).forEach(function (a) {
+      var b = a.spouseId && byId[a.spouseId];
+      if (!living(a) || !living(b) || a.id === b.id || seen[a.id] || seen[b.id]) return;
+      seen[a.id] = seen[b.id] = 1;
+      var sa = a.maritalStatus || '', sb = b.maritalStatus || '';
+      var status = (sa === 'Partner' || sb === 'Partner') && sa !== 'Married' && sb !== 'Married' ? 'Partner' : 'Married', spouse = status === 'Married';
+      var wa = spouse ? weddingOf(a) : '', wb = spouse ? weddingOf(b) : '';
+      var other = sa !== status ? a : sb !== status ? b : null;
+      var shared = householdsOf(a).filter(function (h) { return inHousehold(b, h); })[0];
+      out.push({ familyId: shared || a.familyId || b.familyId || '', a: a.id, b: b.id, kind: KIND[status], confirmed: true, sure: true, explicit: true,
+        copy: wa && !wb ? { from: a.id, to: b.id, date: wa } : wb && !wa ? { from: b.id, to: a.id, date: wb } : null,
+        differ: !!(wa && wb && wa !== wb), mark: other ? { id: other.id, status: status } : null });
+    });
     (families || []).forEach(function (f) {
       var no = {}, yes = {}; (f.notCouples || []).forEach(function (k) { no[k] = 1; }); (f.couples || []).forEach(function (k) { yes[k] = 1; });
       var adults = (people || []).filter(function (p) {
@@ -156,6 +173,7 @@ var Households = (function () {
         if (a.id === b.id || (a.notLateSpouse || []).indexOf(b.id) >= 0 || (b.notLateSpouse || []).indexOf(a.id) >= 0) return;
         if (dead(a) && a.maritalStatus === 'Widowed' && b.maritalStatus === 'Widowed') return;   // both widowed: each lost someone else
         var score = 0, why = [];
+        if (a.spouseId === b.id || b.spouseId === a.id) { score += 60; why.push(TX('chosen as their spouse or partner')); }
         if (householdsOf(a).some(function (h) { return inHousehold(b, h); })) { score += 40; why.push(TX('same household')); }
         var wa = weddingOf(a), wb = weddingOf(b);
         if (wa && wa === wb) { score += 40; why.push(TX('same wedding date')); }

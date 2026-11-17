@@ -80,6 +80,23 @@ console.log('Couples and wedding anniversaries');
   const c3 = HS.couples(P, F3), sd = c3.find(c => [c.a, c.b].sort().join() === 'dil,son');
   ok(sd.confirmed && sd.sure && !HS.couplesToCheck(P, F3).some(c => c.a === 'son' || c.b === 'son'), 'a confirmed couple is certain and drops off the list');
   ok(HS.couplesToCheck(P, F3).some(c => [c.a, c.b].sort().join() === 'gma,gpa'), '…unless there’s still something to fix (Granny’s anniversary)');
+  // Chosen by hand (Edit details → Spouse or partner): wherever each lives, ahead of the household's guesses
+  const away = [
+    { id: 'ann', firstName: 'Ann', lastName: 'Ndlovu', familyRole: 'adult', familyId: 'hx', maritalStatus: 'Married', spouseId: 'ben', keyDates: [{ label: 'Wedding anniversary', date: '1999-01-02' }] },
+    { id: 'ben', firstName: 'Ben', lastName: 'Ndlovu', familyRole: 'adult', familyId: 'hy', spouseId: 'ann' },
+    { id: 'cat', firstName: 'Cat', lastName: 'Ndlovu', familyRole: 'adult', familyId: 'hy', maritalStatus: 'Married' },
+    { id: 'dee', firstName: 'Dee', lastName: 'Moyo', familyRole: 'adult', familyId: 'hz', maritalStatus: 'Partner', spouseId: 'eve' },
+    { id: 'eve', firstName: 'Eve', lastName: 'Khumalo', familyRole: 'adult', familyId: 'hz', maritalStatus: 'Partner', spouseId: 'dee' },
+    { id: 'fay', firstName: 'Fay', lastName: 'Dube', familyRole: 'adult', familyId: 'hq', maritalStatus: 'Married', spouseId: 'gus' },
+    { id: 'gus', firstName: 'Gus', lastName: 'Dube', familyRole: 'adult', familyId: 'hq', maritalStatus: 'Married', spouseId: 'fay', deceasedAt: '2025-01-01' }
+  ], AF = ['hx', 'hy', 'hz', 'hq'].map(id => ({ id }));
+  const ca = HS.couples(away, AF), ab = ca.find(c => [c.a, c.b].sort().join() === 'ann,ben');
+  ok(ab && ab.explicit && ab.confirmed && ab.kind === 'spouse' && ab.mark.id === 'ben' && ab.copy.to === 'ben', 'a couple chosen by hand who live apart: certain, with Ben’s marital status and anniversary to fill in');
+  ok(!ca.some(c => c.a === 'cat' || c.b === 'cat'), '…and Ben isn’t also paired with Cat, who lives with him');
+  ok(ca.some(c => [c.a, c.b].sort().join() === 'dee,eve' && c.kind === 'partner' && c.explicit), 'partners chosen by hand stay partners');
+  ok(!ca.some(c => c.a === 'fay' || c.b === 'fay'), 'not when one of them has died');
+  ok(HS.lateSpouseSuggestions(away.map(p => p.id === 'fay' ? Object.assign({}, p, { maritalStatus: 'Widowed' }) : p), p => !!p.deceasedAt).some(x => x.a === 'fay' && x.b === 'gus'),
+    'the late spouse suggestion uses the spouse chosen by hand');
 }
 
 console.log('Late spouses: who a widow or widower was probably married to');

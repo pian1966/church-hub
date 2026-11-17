@@ -240,8 +240,8 @@
     couplefix: function (el) {
         var key = HS.pairKey(el.dataset.a, el.dataset.b), c = HS.couples(S.list('people'), S.list('families')).filter(function (x) { return HS.pairKey(x.a, x.b) === key; })[0];
         if (!c || !canCouples()) return;
-        var f = JSON.parse(JSON.stringify(S.get('families', c.familyId)));
-        if ((f.couples || []).indexOf(key) < 0) { f.couples = (f.couples || []).concat([key]); S.put('families', f, 'Confirmed ' + (c.kind === 'spouse' ? 'spouses' : 'partners') + ': ' + H.name(S.get('people', c.a)) + ' and ' + H.name(S.get('people', c.b))); }
+        var f = !c.explicit && S.get('families', c.familyId) ? JSON.parse(JSON.stringify(S.get('families', c.familyId))) : null;   // chosen by hand: already certain
+        if (f && (f.couples || []).indexOf(key) < 0) { f.couples = (f.couples || []).concat([key]); S.put('families', f, 'Confirmed ' + (c.kind === 'spouse' ? 'spouses' : 'partners') + ': ' + H.name(S.get('people', c.a)) + ' and ' + H.name(S.get('people', c.b))); }
         var ids = []; if (c.copy) ids.push(c.copy.to); if (c.mark && ids.indexOf(c.mark.id) < 0) ids.push(c.mark.id);
         ids.forEach(function (id) {
           var q = JSON.parse(JSON.stringify(S.get('people', id))), what = [];
@@ -255,7 +255,13 @@
         H.render(); H.toast(T(c.kind === 'spouse' ? 'Confirmed as married' : 'Confirmed as partners'));
       },
     notcouple: function (el) {
-        var f = S.get('families', el.dataset.f); if (!f || !canCouples()) return;
+        if (!canCouples()) return;
+        // A couple chosen by hand (Edit details → Spouse or partner): undo the choice on both people
+        var a0 = S.get('people', el.dataset.a), b0 = S.get('people', el.dataset.b);
+        if (a0 && b0 && (a0.spouseId === b0.id || b0.spouseId === a0.id)) {
+          [a0, b0].forEach(function (q) { if (q.spouseId) { q = JSON.parse(JSON.stringify(q)); delete q.spouseId; S.put('people', q, 'Not a couple: unlinked ' + H.name(q)); } });
+        }
+        var f = S.get('families', el.dataset.f); if (!f) { H.render(); H.toast(T('Won’t be suggested again')); return; }
         f = JSON.parse(JSON.stringify(f)); f.notCouples = (f.notCouples || []).concat([HS.pairKey(el.dataset.a, el.dataset.b)]);
         S.put('families', f, 'Not a couple: ' + H.name(S.get('people', el.dataset.a)) + ' and ' + H.name(S.get('people', el.dataset.b)));
         H.render(); H.toast(T('Won’t be suggested again'));

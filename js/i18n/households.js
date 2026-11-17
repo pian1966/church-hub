@@ -87,6 +87,7 @@ I18n.rows([
     ['Same birthday', 'Dieselfde verjaarsdag', 'Usuku lokuzalwa olufanayo', 'Usuku lokuzalwa olufanayo'],
     ['Different surname – perhaps a maiden or married name', 'Ander van – dalk ’n nooiens- of getroude van', 'Isibongo esihlukile – mhlawumbe esasebuntombini noma esomshado', 'Ifani eyahlukileyo – mhlawumbi eyobuntombi okanye yomtshato'],
     ['same household', 'dieselfde huishouding', 'ikhaya elifanayo', 'ikhaya elifanayo'],
+    ['chosen as their spouse or partner', 'as hul eggenoot of lewensmaat gekies', 'ukhethwe njengoshade naye noma umlingani', 'ukhethwe njengeqabane lomtshato okanye iqabane'],
     ['same wedding date', 'dieselfde troudatum', 'usuku lomshado olufanayo', 'umhla womtshato ofanayo'],
     ['same email', 'dieselfde e-pos', 'i-imeyili efanayo', 'i-imeyile efanayo'],
     ['same phone number', 'dieselfde telefoonnommer', 'inombolo yocingo efanayo', 'inombolo yefowuni efanayo'],

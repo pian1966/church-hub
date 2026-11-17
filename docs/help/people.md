@@ -57,15 +57,18 @@ marital status is Single, Engaged, Divorced or Widowed (for someone who has died
 
 ## Someone has no email address. How can they sign in?
 For: Administrators
-Also asked: Sign-in code. Member without email. Link a phone. Lost phone. Print a sign-in slip.
+Also asked: Sign-in code. Member without email. PIN. Forgot PIN. Church number. Lost phone. Print a sign-in slip.
 
 Open the person → under **App access**, tap **Give a sign-in code** → **Make the code**. Church Hub shows a QR code and an
 8-character code: **Send by WhatsApp** (to their mobile), **Print** a slip, or show them the screen. It works once, for 14 days;
-once you close the window it can't be shown again – give a new one if it's lost (the old one stops working). Codes only
-ever give **Member** access, and only to an adult whose App access is Member. **Linked phones** lists the phones signed in
-with a code; **Remove** signs a lost phone out. **No access**, **Mark as left** or recording a death removes them all.
-Give the code only to that person: whoever has it can sign in as them. The church must first switch codes on in Firebase
-(FIREBASE-SETUP.md step 3, **Anonymous**).
+once you close the window it can't be shown again – give a new one if it's lost (the old one stops working). With the code
+the person chooses a 6-digit PIN, then signs in on any phone with their cellphone number (or a church number, if they have
+no number of their own) and PIN. You don't need to keep a record of numbers or PINs: nobody can see a PIN, and the church
+number is under **Cellphone sign-in**. A **forgotten PIN** or a **new number**: give a new code – it switches off the old PIN.
+Codes only ever give **Member** access, and only to an adult whose App access is Member. **Cellphone sign-in** shows how they
+sign in; **Switch off** stops it (a lost phone). **No access**, **Mark as left** or recording a death switch it off too.
+Give the code only to that person: whoever has it can sign in as them. The church must first switch on **Anonymous** and
+**Email/Password** sign-in in Firebase (FIREBASE-SETUP.md steps 3–4).
 
 ## How do I give someone access to Church Hub?
 For: Administrators (Pastors if allowed)

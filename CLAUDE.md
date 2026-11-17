@@ -78,6 +78,9 @@ A session should say which tier it is running at, and stop and ask if the task's
   never as big red buttons on every row. Don't show empty sections, empty filter tabs or two "nothing here" messages – show one
   friendly empty state with the main button. Fold search/sort/filters in a `<details>` until used. Sentence case for labels
   ("On loan", not "On Loan"). Required boxes get `class="field req"` (shading), not red asterisks. Check new screens at phone width (390px).
+- Dropdowns: write a plain `<select>`; `findables()` in `js/app.js` turns every one into a box that opens the whole list and
+  narrows it as you type (the select stays underneath and keeps the value, so `.value`, `change` and Playwright's `selectOption` work).
+  `class="findable"` marks a list of names (its hint says so); `data-plain` leaves a select as it is. In tests, click `.find-in` to use the box.
 - Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"`; never write "(optional)".
 - Changing who sees what means changing, together: `firestore.rules`, `plan()` in `js/store.js`, the POLICY copy in `tests/fake-firebase.js`,
   and `tests/rules.test.mjs` / `tests/app/*.js`. Once merged, `.github/workflows/publish-rules.yml` tests and publishes the rules (when the church has set up

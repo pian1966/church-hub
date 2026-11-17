@@ -417,3 +417,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   everything else the church can switch on (with "New" for features added since they last looked, and monthly reminders to
   get the latest Church Hub), plus what is coming. `tests/setup-kit.test.js` fails if a part of the app is missing from it;
   `tests/versions.test.js` asks for it to be re-read with each feature release. Linked from the public website and FIREBASE-SETUP.md.
+- ✅ 0.83.4 (17 Nov 2026): the setup tool in the documentation – README, ARCHITECTURE ("Setup tool"), help (Settings: setting up
+  another church; what else a church can switch on), the website's "Do we need someone technical?", the brochure for other
+  churches, the release checklist, and planned tasks 021 and 050

@@ -20,3 +20,6 @@ To do it, ask Claude (or another AI) in one session:
 ## 2. Check the brochures and help pages
 
 About → Brochures: check that every claim still matches what the app does.
+
+The setup tool (`site/setup.html`): set up a practice church end to end with a throw-away Google account, and fix any step
+where Google, Firebase or GitHub have moved a button or renamed a page.

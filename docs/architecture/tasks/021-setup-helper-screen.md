@@ -6,6 +6,10 @@
 
 **Needs:** 020, 014, 011.
 
+**Already there:** the guided setup tool `site/setup.html` / `site/setup-kit.js` (17 Nov 2026) walks a church through today's
+manual setup. When this task lands, change its chapters "The church's website" and "Connect and open" to the new helper (or
+point the tool at it), move the `COMING` item "Set up in about a minute" into its steps, and keep its Grow list.
+
 **Files:** `js/mod-newchurch.js` (new; reached from the landing screen, not a Home card), `js/store.js` (`google()`
 only), `js/app.js` (route), `js/i18n/newchurch.js` (new) + all `js/lang/*.js`, `tests/app/newchurch.js` (new),
 `docs/help/` (one page).

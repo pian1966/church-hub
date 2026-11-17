@@ -4,6 +4,8 @@
 
 **Goal:** the written material matches how it now works.
 
+**Also:** the setup tool (`site/setup-kit.js`): its steps, its Grow list and its Coming list must match how setup now works.
+
 **Files:** `docs/ROADMAP.md` (rewrite Phase 7 from `DECISION.md`; keep "The yearly gift" and "Decisions waiting",
 remove "Who runs it" as an operator question and re-ask it only for receiving gifts), `docs/CHANGELOG.md`,
 `docs/FIREBASE-SETUP.md` (title it "Setting up by hand – only if the helper can't"), `docs/ARCHITECTURE.md`

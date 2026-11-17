@@ -12,6 +12,8 @@ The rules people most often miss:
   what changed). `node tests/versions.test.js` must pass.
 - Changing who may see what means changing `firestore.rules`, `plan()` in `js/store.js`, `tests/fake-firebase.js` and
   the tests together – GitHub then publishes the rules after the merge (docs/RULES-AUTOPUBLISH.md, once set up; otherwise tell the church to re-publish them).
+- Keep the setup tool (`site/setup-kit.js`) in step: a new part of the app or a feature an Administrator sets up gets an item
+  there (`CLAUDE.md`, "Setup tool"); `node tests/setup-kit.test.js` must pass.
 - The repository is public: never add real church data, names, emails, keys or passwords.
 - The church is not technical: explain changes in plain English, without code words.
 

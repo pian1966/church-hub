@@ -39,11 +39,12 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Subscription: a coffee a month, payment holidays, gifts, paying for another church; the prayer circle and prayer cards (`homeCard` on Home) | `js/mod-support.js`, `js/coffee.js` | `js/i18n/support.js` | `tests/coffee.test.js`, `tests/app/support.js` |
 | Home: What’s new and Did you know? (tips by access level; add news to `NEWS` with its date) | `js/tips.js`, `js/app.js` (`tipsCard`, `homeTags`) | `js/i18n/tips.js` | `tests/tips.test.js`, `tests/app/records.js` |
 | Demo data | `js/sample.js` | – | |
+| Setup tool: sets up Church Hub at a new church from nothing (Google account, the church's copy on GitHub, Firebase, first sign-in, the settings before anyone joins) and keeps a come-back-later list of everything else a church can switch on, plus what's coming. English, one page outside the app | `site/setup.html` (the screens), `site/setup-kit.js` (the steps, the list, the rules) | – (English) | `tests/setup-kit.test.js`, `tests/versions.test.js` |
 | Public website for other churches (features, languages, the coffee price and prayer circle – prices copied from `js/coffee.js`; one file, English, not part of the app or its version) | `site/index.html` | – | |
 
 The browser test is `node tests/app.test.js` (needs Playwright); it starts the browser and runs each part in `tests/app/` in turn.
 GitHub runs every test, including the rules against the Firestore emulator, on every push (`.github/workflows/tests.yml`) –
-except when a change only touches the public website (`site/`) or the documentation (`docs/`, `*.md`): then the check skips the tests and turns green at once.
+except when a change only touches the public website (`site/index.html`) or the documentation (`docs/`, `*.md`): then the check skips the tests and turns green at once.
 
 **Small changes – quick checks only.** For wording, translations, labels, help pages and docs, colours or spacing in
 `css/hub.css`, and version numbers – no change to how anything works – don't run the browser test yourself: run the quick
@@ -62,7 +63,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`, `tips`, `coffee`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`, `tips`, `coffee`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
@@ -94,6 +95,13 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.
+- **Setup tool** (`site/setup.html`, `site/setup-kit.js`): keep it in step with the app, in the same pull request.
+  A new part of the app (a new `Hub.register` id) needs a `GROW` item (or a `STEPS` entry) with it in `mods`, or a `NOT_SETUP` line
+  saying why – `node tests/setup-kit.test.js` fails until it has one. A feature an Administrator would switch on, fill in or set up
+  gets a `GROW` item with `since` = its version (returning Administrators see it marked "New"); something on `COMING` that is now
+  built moves to `GROW`; a change to `docs/FIREBASE-SETUP.md` (or to the shape of `js/firebase-config.js`) changes the matching
+  step (or `configFile()`). When the middle number goes up, read `site/setup-kit.js` and set `reviewed-for` in `site/setup.html`
+  (`node tests/versions.test.js` checks it). Plain, warm English for people who are not technical; never ask for passwords.
 - What's new on Home: every release that changes what people see or can do – features and noticeable fixes – adds one plain
   sentence to the top of `NEWS` in `js/tips.js` (today's date; `who`/`not`/`app` so only the people it concerns see it), with its
   words in `js/i18n/tips.js` and `js/lang/st.js`. Add a Did you know? tip too when there's a new thing worth discovering. When the

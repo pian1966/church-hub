@@ -165,6 +165,11 @@ each church gives what it chooses once a year, with a small minimum. Today each 
 - ⬜ 7.8 Gifts and reminders (see "The yearly gift" below): pay page, receipts, the yearly reminder (email + a note on the
   Administrator's Home), a church's gift history under Settings, and a page for us listing churches and gifts.
 - ⬜ 7.9 Move Christ Church Howick across (export from its own project, import into the shared one), then retire the single-church setup guide.
+- ⬜ Setup tool follow-ups (`site/setup.html`, built 17 Nov 2026): when tasks 010/020/021 (one address, automatic setup) are
+  built, replace the tool's "The church's website" chapter and the GitHub steps with the church's own link and the automatic
+  setup (the Coming item "Set up in about a minute" moves to the list); refuse the countries in 7.7 with the kind explanation;
+  try it end to end once with a throw-away Google account and fix any wording Google has moved. Idea: a "Finish setting up"
+  card on Administrators' Home inside the app that sees for itself what is done (care groups made, services added…).
 - ⬜ 7.10 A simple public website: what Church Hub does, the demo, languages, privacy and safety, how the gift works, sign up.
   First version built (16 Nov 2026): `site/index.html`, at `/church-hub/site/`. Still to add: sign-up and a contact address
   once Church Hub has its own web address. Its coffee prices copy `js/coffee.js` (16 Nov 2026): refresh both together (`docs/PRICES.md`).

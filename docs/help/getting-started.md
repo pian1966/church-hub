@@ -8,21 +8,24 @@ Church Hub has no password. Use the email address the church office has for you:
 - **Sign in with Google** – if your email is a Gmail or Google address, tap it and choose your account.
 - **Email me a link** – type your email address and tap **Email me a link**. Open the email and tap the link, and you're signed in.
 
-- **I have a sign-in code** – no email? The church office can give you a code (on a slip of paper or by WhatsApp). Tap the
-  link or scan the QR code, or tap **I have a sign-in code** and type it. Church Hub asks "Is this you?" – tap **Yes, that's
-  me**. That phone then stays signed in as you.
+- **Sign in with my number** – no email? Sign in with your cellphone number (or church number) and your 6-digit PIN. The
+  first time, you need a **sign-in code** from the church office: tap **I have a sign-in code** and choose your PIN.
 
 You can only sign in if the church office has given you access. If you see **No access yet**, ask the church office.
 
 ## I don't have an email address. How do I sign in?
 For: Everyone
-Also asked: Sign-in code. No email. Code from the office. The code doesn't work.
+Also asked: Sign-in code. No email. Code from the office. The code doesn't work. PIN. Forgot my PIN. Church number. New phone.
 
-Ask the church office for a **sign-in code**. Scan its QR code with your phone's camera (or tap the link they sent by
-WhatsApp), or open Church Hub, tap **I have a sign-in code** and type the 8 letters and numbers. Check the name is yours and
-tap **Yes, that's me**. A code works **once** and for **14 days**. Add Church Hub to your home screen so the phone stays
-signed in: if the browser's data is cleared, or you sign out, or you get a new phone, ask for a new code. "Already been
-used" or "expired"? Ask the office for a new one.
+**The first time:** ask the church office for a **sign-in code**. Scan its QR code with your phone's camera (or tap the link
+they sent by WhatsApp), or open Church Hub, tap **I have a sign-in code** and type the 8 letters and numbers. Check the name
+is yours and tap **Yes, that's me**. Then check your cellphone number and choose a **6-digit PIN** (not an easy one like
+123456), typed twice. No number of your own? Tap **I don't have my own number**: Church Hub gives you a **church number** –
+write it down. A code works **once** and for **14 days**; "Already been used" or "expired"? Ask the office for a new one.
+
+**After that:** tap **Sign in with my number** and type your cellphone number (or church number) and your PIN – on any phone,
+also a new one. Signing out doesn't change anything. **Forgot your PIN** or **changed your number**? Ask the office for a new
+sign-in code and choose a new PIN; the old one stops working.
 
 ## I asked for a sign-in link but nothing came. What now?
 For: Everyone

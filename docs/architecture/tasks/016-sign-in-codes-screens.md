@@ -1,5 +1,8 @@
 # 016 – Sign-in codes: giving them out
 
+> **Note (0.87):** sign-in codes were built with PINs: access entries are `roles/{PIN address}`, not `devices/{uid}`, and
+> a phone isn't linked (signing out changes nothing). Read `docs/ARCHITECTURE.md` "Sign-in codes and PINs" before starting.
+
 **Status (17 Nov 2026):** built for the one-church setup in 0.86.0 (see `docs/ARCHITECTURE.md`, "Sign-in codes"), without the
 rules-version gate (012) and the `?c=` church (010). Still to do here: slips for many people, the Settings switch.
 

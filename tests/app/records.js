@@ -515,8 +515,10 @@ module.exports = async function (ctx) {
   check(!!councilFile && !!docs['archive/' + councilFileId + '/parts/0'] && !!docs['archivePreviews/' + councilFileId + '/parts/0'], 'a Council member can add a record and its file and preview copy');
   await s.go('leaders'); t = await s.text();
   check(t.includes('Church Council') && t.includes('Tim Jacobs') && !(await s.page.$('#lb-new')) && !(await s.page.$('[data-act="leaders:seat"]')), 'sees their own leadership group (though it is for members only), and can’t change it');
+  await s.go('library/borrowed'); t = await s.text();
+  check(/Items I have borrowed \(1\)[\s\S]*Library[\s\S]*Knowing God[\s\S]*Due/.test(t) && !!(await s.page.$('.lib-section [data-section="borrowed"].on')), '“Items I have borrowed” is a tab of its own, first, with the due date');
   await s.go('library'); t = await s.text();
-  check(/Items I have borrowed[\s\S]*Knowing God[\s\S]*Due/.test(t) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*On loan/.test(t), 'the Library uses the renamed borrowed-items heading and shows the due date – not the librarian’s tools');
+  check(!(await s.page.$('#lib-mine')) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*On loan/.test(t), 'the Library tab shows the catalogue – not the borrowed items or the librarian’s tools');
   check(!(await s.page.$('#lib-covers-selected')) && !(await s.page.$('[data-act="library:coversall"]')) && !(await s.page.$('[data-lib-select]')), 'regular members cannot run book cover searches or save covers');
   check(!(await s.page.$('[data-act="library:purge"]')), 'a regular member has no Purge controls');
   check(!!(await s.page.$('#lib-filter-kind')) && !!(await s.page.$('#lib-filter-title')) && !!(await s.page.$('#lib-filter-author')) && !!(await s.page.$('#lib-filter-cat')) && !(await s.page.$('#lib-filter-borrower')) && (await s.page.$$('[data-act="library:sort"]')).length === 4, 'everyone can filter and sort the catalogue while the borrower filter stays hidden');
@@ -555,9 +557,11 @@ module.exports = async function (ctx) {
   await click(s, '#modal [data-act="library:requestsubmit"]'); await s.settle();
   docs = await s.docsNow();
   const approvalPath = find(docs, 'loans', loan => loan.bookId === 'checkout-approve');
+  await s.go('library/borrowed');
   check(!!approvalPath && docs[approvalPath].status === 'pending' && docs[approvalPath].personId === 'p14' &&
     docs['books/checkout-approve'].out === 1 && (await s.text()).includes('Waiting for approval'),
     'self-service checkout reserves the copy and appears as pending for the borrower');
+  await s.go('library');
   const competing = await session('clare.jacobs@example.com', docs);
   const competingResult = await competing.page.evaluate(async () => {
     try {
@@ -773,10 +777,10 @@ module.exports = async function (ctx) {
 
   console.log('A Council member (Basic access):');
   s = await session('tim.jacobs@example.com', live2); await s.go('me'); await s.page.waitForTimeout(300); t = await s.page.textContent('.me-chips');
-  check(t.includes('Chair, Treasurer, Elected Member · Church Council') && t.includes('1 library item borrowed') && !!(await s.page.$('.me-chips a[href="#/library"]')) && !!(await s.page.$('.me-chips a[href="#/leaders"]')), 'the Me page shows their leadership role and membership type and their borrowed books as chips that open those pages');
+  check(t.includes('Chair, Treasurer, Elected Member · Church Council') && t.includes('1 library item borrowed') && !!(await s.page.$('.me-chips a[href="#/library/borrowed"]')) && !!(await s.page.$('.me-chips a[href="#/leaders"]')), 'the Me page shows their leadership role and membership type and their borrowed books as chips that open those pages');
   await s.go('home'); t = await s.text();
   check(t.includes('Friendly reminder: you have had “Mere Christianity” from the church library for 23 days') && !t.includes('The term of'), 'a friendly reminder on their To do list (terms of office are for the Administrators and the Rector)');
-  await s.go('library'); t = await s.text();
+  await s.go('library/borrowed'); t = await s.text();
   check(/Mere Christianity[\s\S]*had for 23 days[\s\S]*Friendly reminder/.test(t), 'the Library shows how long they have had it');
   check(await s.page.isVisible('[data-act="library:policyread"]') && !(await s.page.$('#lib-policy')), 'everyone can open the compact Library policy link without a prominent policy block');
   await click(s, '[data-act="library:policyread"]'); await s.page.waitForSelector('#modal article.lib-doc');

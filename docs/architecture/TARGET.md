@@ -135,6 +135,11 @@ Archive files in Firestore, the demo, the Elvanto robot (Howick only; it keeps r
 
 ## 9. Signing in without an email address ("sign-in codes")
 
+> **Built differently (0.87, 17 Nov 2026):** the code is a one-time invitation. With it the member chooses a 6-digit PIN
+> and signs in from then on with their cellphone number (or a church number) and PIN, on any phone; their access entry is
+> `roles/{<number>-<v>@pin.church-hub.invalid}` rather than `devices/{uid}`. What is built is described in
+> `docs/ARCHITECTURE.md` "Sign-in codes and PINs"; the design below is kept as the history of the decision.
+
 For members who have a phone but no email they use. Free, no daily limit, works in every church **beside**
 Google sign-in and the email link – it replaces neither. Administrators, Pastors and other staff roles keep
 using Google or the email link; a code can only ever make someone a **Member**.

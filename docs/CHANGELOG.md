@@ -434,6 +434,9 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   box: choose the other person, even in another household, and both records are linked (`spouseId` in `details/`); the couple
   is certain wherever they live and comes before the household's guesses (`Households.couples`, `explicit`), Not a couple
   unlinks them, and the late-spouse suggestions use it. Greyed out for Single, Engaged, Divorced and Widowed. Help, What's new.
+- ✅ 0.87.2 (17 Nov 2026): **Library**: Items I have borrowed is a tab of its own (`#/library/borrowed`), first, before Library and
+  Archives (only when the person has borrowed something); Home's reminders and the Me page chip open it. The help pages
+  (getting started, People), the brochure and the planning notes describe signing in with a number and PIN.
 - ✅ 0.87.0 (17 Nov 2026): **Sign-in codes and PINs** for members with no email (tasks 015–016 for the one-church setup): an
   Administrator gives a code from the person's page (QR, ABCD-EFGH, WhatsApp, Print; once, 14 days, Member access only); the
   member taps the link or **I have a sign-in code** → "Is this you?" → **Choose your PIN** with their cellphone number, or a

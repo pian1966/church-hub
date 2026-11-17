@@ -158,15 +158,19 @@
       (edit ? '<button class="btn small" data-act="library:policy">' + H.icon(PEN, 16) + T('Edit') + '</button>' : '');
   }
   function libraryOn() { return H.isOn('library'); }
+  /** What this person has borrowed (waiting for approval too). */
+  function myLoans() { var u = me(); return u && libraryOn() ? L.mine(loans(), u.id) : []; }
+  /** The tabs under the title: Items I have borrowed (when they have some), Library, Archives (when switched on). */
   function sectionTabs(active) {
-    if (!H.isOn('archive')) return '';
-    var buttons = [];
+    var buttons = [], n = myLoans().length;
+    if (n) buttons.push(['borrowed', 'Items I have borrowed', '', n]);
     if (libraryOn()) buttons.push(['library', 'Library', '']);
-    buttons.push(['archives', 'Archives', ArchiveUI.canAccess() ? '' : H.icon(H.ICON.lock, 14)]);
+    if (H.isOn('archive')) buttons.push(['archives', 'Archives', ArchiveUI.canAccess() ? '' : H.icon(H.ICON.lock, 14)]);
+    if (buttons.length < 2) return '';
     // The app's usual tab bar (as on Messages, Rosters, Me…), under the page's title
     return '<nav class="seg lib-section" aria-label="' + esc(T('Library')) + '">' + buttons.map(function (b) {
       return '<button type="button" class="' + (active === b[0] ? 'on' : '') + '" data-act="library:section" data-section="' + b[0] +
-        '"' + (active === b[0] ? ' aria-current="page"' : '') + '>' + esc(T(b[1])) + (b[2] ? ' <span aria-hidden="true">' + b[2] + '</span>' : '') + '</button>';
+        '"' + (active === b[0] ? ' aria-current="page"' : '') + '>' + esc(T(b[1])) + (b[3] ? ' (' + b[3] + ')' : '') + (b[2] ? ' <span aria-hidden="true">' + b[2] + '</span>' : '') + '</button>';
     }).join('') + '</nav>';
   }
   /** How to format the policy: what to type, and how it shows (drawn by the same code that shows the policy). */
@@ -178,9 +182,34 @@
       rows.map(function (r) { return '<tr><td><code>' + esc(r[0]).replace(/\n/g, '<br>') + '</code></td><td class="lib-doc">' + L.policyHtml(r[1] || r[0]) + '</td></tr>'; }).join('') +
       '</tbody></table></details>';
   }
+  /** The page's title and buttons, the same on every tab. */
+  function pageHead() {
+    var edit = librarian();
+    // Header: one main button ("Add to the library"); the occasional tasks wait in a More menu, so the books come first
+    var policyActions = policyPanel(), more = (edit ? [
+      '<button data-act="library:import">' + T('Import a list') + '</button>', '<button data-act="library:report">' + T('Reports') + '</button>',
+      '<button data-act="library:duplicates">' + T('Find duplicates') + '</button>',
+      '<button data-act="library:coversmissing">' + T('Find missing covers') + '</button>', '<button data-act="library:coversall">' + T('Find covers for all books') + '</button>',
+      '<button data-act="library:coversselectmissing">' + T('Select books missing covers') + '</button>'] : [])
+      .concat(chooses() ? ['<button data-act="library:libs">' + T('Librarians') + '</button>'] : []).concat(policyActions ? [policyActions] : []);
+    return '<div class="page-head"><div><h1>' + T('Library') + '</h1><p class="lead">' + (edit ? T('The church’s library: add books, DVDs and more, lend them and mark them as returned. Only librarians and the borrower see who has what.') : T('The church’s library. To borrow something, ask a librarian.')) + '</p></div>' +
+      (edit || more.length ? '<div class="btns">' + (edit ? '<button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button>' : '') +
+        // Members only have the policy: a plain button rather than a menu with one thing in it
+        (edit || chooses() ? (more.length ? H.menu(T('More'), more) : '') : policyActions) + '</div>' : '') + '</div>';
+  }
+  /** Items I have borrowed: a tab of its own, before Library and Archives. */
+  function borrowedPage() {
+    var mine = myLoans();
+    return pageHead() +
+      sectionTabs('borrowed') + '<section class="panel" id="lib-mine"><div class="list">' + mine.map(function (l) {
+      var n = L.daysOut(l, H.today());
+      return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (L.isPending(l) ? ' <span class="tag warn">' + T('Waiting for approval') + '</span>' : '') + '<small>' + due(l) + ' · <span class="muted">' + esc(held(l)) + '</span></small>' +
+        (n >= L.REMIND_DAYS ? '<small class="note" style="margin-top:6px">' + esc(T('Friendly reminder: you have had this for {n} days. Please bring it back when you have finished with it.', { n: n })) + '</small>' : '') + '</span></div>'; }).join('') + '</div></section>';
+  }
   function page(parts) {
     var archiveOn = H.isOn('archive'), archivePage = archiveOn && ((parts || [])[0] === 'archives' || !libraryOn());
     if (archivePage) return sectionTabs('archives') + ArchiveUI.page();
+    if ((parts || [])[0] === 'borrowed' && myLoans().length) return borrowedPage();
     var u = me(), edit = librarian(), all = L.find(S.list('books'), ''), allLoans = edit ? loans() : [], books = all.filter(L.inLibrary), gone = edit ? all.filter(function (b) { return !L.inLibrary(b); }) : [], mine = u ? L.mine(loans(), u.id) : [], pending = edit ? allLoans.filter(L.isPending) : mine.filter(L.isPending), out = edit ? L.onLoan(allLoans).filter(function (l) { return !L.isPending(l); }) : [], items = books.concat(gone);
     var borrowers = edit ? borrowerNames(out) : [];
     if (!edit) {
@@ -192,24 +221,10 @@
     }
     items.sort(function (a, b) { return compare(a, b, function (x) { return itemSortValue(x, allLoans, sortKey); }); });
     var back = edit ? loans().filter(function (l) { return !!l.back; }).sort(function (a, b) { return String(b.back).localeCompare(String(a.back)); }).slice(0, 15) : [];
-    // Header: one main button ("Add to the library"); the occasional tasks wait in a More menu, so the books come first
-    var policyActions = policyPanel(), more = (edit ? [
-      '<button data-act="library:import">' + T('Import a list') + '</button>', '<button data-act="library:report">' + T('Reports') + '</button>',
-      '<button data-act="library:duplicates">' + T('Find duplicates') + '</button>',
-      '<button data-act="library:coversmissing">' + T('Find missing covers') + '</button>', '<button data-act="library:coversall">' + T('Find covers for all books') + '</button>',
-      '<button data-act="library:coversselectmissing">' + T('Select books missing covers') + '</button>'] : [])
-      .concat(chooses() ? ['<button data-act="library:libs">' + T('Librarians') + '</button>'] : []).concat(policyActions ? [policyActions] : []);
-    var html = '<div class="page-head"><div><h1>' + T('Library') + '</h1><p class="lead">' + (edit ? T('The church’s library: add books, DVDs and more, lend them and mark them as returned. Only librarians and the borrower see who has what.') : T('The church’s library. To borrow something, ask a librarian.')) + '</p></div>' +
-      (edit || more.length ? '<div class="btns">' + (edit ? '<button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button>' : '') +
-        // Members only have the policy: a plain button rather than a menu with one thing in it
-        (edit || chooses() ? (more.length ? H.menu(T('More'), more) : '') : policyActions) + '</div>' : '') + '</div>';
+    var html = pageHead();
     html += sectionTabs('library');
     if (!all.length) return html + '<div class="empty lib-empty"><p>' + T('Nothing in the library yet.') + '</p>' +
       (edit ? '<div class="btns" style="justify-content:center"><button class="btn primary" data-act="library:add">' + H.icon(H.ICON.plus, 16) + T('Add to the library') + '</button><button class="btn" data-act="library:import">' + T('Import a list') + '</button></div>' : '') + '</div>';
-    if (mine.length) html += '<section class="panel" id="lib-mine"><h2>' + T('Items I have borrowed') + '</h2><div class="list">' + mine.map(function (l) {
-      var n = L.daysOut(l, H.today());
-      return '<div class="item"><span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (L.isPending(l) ? ' <span class="tag warn">' + T('Waiting for approval') + '</span>' : '') + '<small>' + due(l) + ' · <span class="muted">' + esc(held(l)) + '</span></small>' +
-        (n >= L.REMIND_DAYS ? '<small class="note" style="margin-top:6px">' + esc(T('Friendly reminder: you have had this for {n} days. Please bring it back when you have finished with it.', { n: n })) + '</small>' : '') + '</span></div>'; }).join('') + '</div></section>';
     // How many items in each status. "All" is everything still in the library; items taken out are under their own tabs.
     var tabCounts = { all: books.length, onLoan: 0, overdue: 0, available: 0, damaged: 0, repairing: 0, withdrawn: 0, lost: 0, removed: 0 };
     items.forEach(function (b) {
@@ -933,15 +948,16 @@
       if (administrator() && needsLibrarianReview()) out.push({ text: T('Please review who is still a librarian'), href: '#/library', tag: T('Librarians'), priority: true });
       if (pending) out.push({ text: TN('{n} checkout request needs verification', '{n} checkout requests need verification', pending), href: '#/library', tag: T('Pending Verifications'), priority: true });
       if (late) out.push({ text: TN('{n} library item is overdue', '{n} library items are overdue', late), href: '#/library', tag: T('Library') });
-      else if (mine.length) out.push({ text: T('Please return “{title}” to the church library', { title: mine[0].title }), href: '#/library', tag: T('Library') });
+      else if (mine.length) out.push({ text: T('Please return “{title}” to the church library', { title: mine[0].title }), href: '#/library/borrowed', tag: T('Library') });
       if (dueNow) out.push({ text: TN('{n} borrower is due a friendly reminder', '{n} borrowers are due a friendly reminder', dueNow), href: '#/library', tag: T('Library') });
-      long.slice(0, 2).forEach(function (l) { out.push({ text: T('Friendly reminder: you have had “{title}” from the church library for {n} days', { title: l.title, n: L.daysOut(l, H.today()) }), href: '#/library', tag: T('Library') }); });
+      long.slice(0, 2).forEach(function (l) { out.push({ text: T('Friendly reminder: you have had “{title}” from the church library for {n} days', { title: l.title, n: L.daysOut(l, H.today()) }), href: '#/library/borrowed', tag: T('Library') }); });
       return out;
     },
     actions: {
       section: function (el) {
         var section = el.dataset.section;
         if (section === 'archives' && H.isOn('archive')) H.go('library/archives');
+        else if (section === 'borrowed') H.go('library/borrowed');
         else if (section === 'library' && libraryOn()) H.go('library');
       },
       add: function () { if (librarian()) form({}); },
@@ -1254,7 +1270,7 @@
     chip: function () {
       var u = me(); if (!u || !H.isOn('library')) return '';
       var n = L.mine(loans(), u.id).filter(function (l) { return !L.isPending(l); }).length; if (!n) return '';
-      return ' <a class="tag tag-link" style="--c:#2F7A78" href="#/library">' + esc(TN('{n} library item borrowed', '{n} library items borrowed', n)) + '</a>';
+      return ' <a class="tag tag-link" style="--c:#2F7A78" href="#/library/borrowed">' + esc(TN('{n} library item borrowed', '{n} library items borrowed', n)) + '</a>';
     },
     roleChip: function () {
       var u = me();

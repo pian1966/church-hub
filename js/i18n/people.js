@@ -96,6 +96,8 @@ I18n.rows([
     ['Show', 'Wys', 'Bonisa', 'Bonisa'],
     ['Sort by', 'Sorteer volgens', 'Hlela ngo', 'Lungelelanisa nge'],
     ['Late spouse', 'Oorlede eggenoot', 'Owashada naye ongasekho', 'Iqabane elingasekhoyo'],
+    ['Going by their household', 'Volgens hul huishouding', 'Ngokwekhaya labo', 'Ngokwekhaya labo'],
+    ['Choose them if they live apart, or to be sure. Otherwise Church Hub works it out from the household.', 'Kies hulle as hulle apart woon, of om seker te maak. Andersins werk Church Hub dit uit volgens die huishouding.', 'Bakhethe uma behlala ngokwehlukana, noma ukuze uqiniseke. Uma kungenjalo i-Church Hub iyakuthola ngokwekhaya.', 'Bakhethe ukuba bahlala ngokwahlukeneyo, okanye ukuze uqiniseke. Ukuba akunjalo i-Church Hub iyakufumanisa ngokwekhaya.'],
     ['No one matches. Try another name, or clear the search.', 'Niemand pas nie. Probeer ’n ander naam, of maak die soektog skoon.', 'Akekho ofanayo. Zama elinye igama, noma usule ukusesha.', 'Akukho mntu uhambelanayo. Zama elinye igama, okanye ucime ukhangelo.'],
     ['Adult', 'Volwassene', 'Umuntu omdala', 'Umntu omdala'],
     ['Edit details', 'Wysig besonderhede', 'Hlela imininingwane', 'Hlela iinkcukacha'],

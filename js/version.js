@@ -5,9 +5,9 @@
  * version: three numbers (major.minor.patch), date: YYYY-MM-DD, time: HH:MM in South African time (UTC+2) – About shows the date
  * and time in each person's own time zone. */
 var ChurchHubVersion = {
-  version: '0.84.1',
+  version: '0.85.0',
   date: '2026-11-17',
-  time: '08:34',
+  time: '09:04',
   developer: 'pian1966',
   repo: 'pian1966/church-hub'
 };

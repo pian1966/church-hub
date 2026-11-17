@@ -133,6 +133,7 @@
         // Next to marital status: the wedding anniversary and late spouse, greyed out when they don't apply (offBox)
         '<label class="field" id="pf-wed-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '>' + T('Wedding anniversary') + '<input id="pf-wed" type="date" max="' + H.today() + '" value="' + esc(keyDate(p, WEDDING)) + '"><small id="pf-wed-n" class="live-n" aria-live="polite"></small></label>' +
         (admin ? lateSpouseField(p) : '') +
+        (canSeeAll() && (admin || H.can('people.edit')) ? spouseField(p) : '') +
         // Maiden name: for women who are or were married (shown when it applies, or when one is already recorded)
         (!me || admin ? '<div class="two" id="pf-maiden-f"' + (maidenApplies(p.familyRole, p.gender, p.maritalStatus) || p.maidenName ? '' : ' hidden') + '><label class="field">' + T('Maiden name') +
           '<input id="pf-maiden" value="' + esc(p.maidenName || '') + '" autocomplete="off"><small>' + T('Her surname before she married.') + '</small></label></div>' : '') +
@@ -199,6 +200,8 @@
       offBox('pf-wed', !child && NO_WEDDING.indexOf(m) >= 0, m);
       if (wi && wi.disabled) { var wn = document.getElementById('pf-wed-n'); if (wn) wn.textContent = ''; } else live();
       offBox('pf-late', !child && NO_LATE.indexOf(m) >= 0, m);
+      var sf = document.getElementById('pf-spouse-f'); if (sf) sf.hidden = child;
+      offBox('pf-spouse', !child && NO_SPOUSE.indexOf(m) >= 0, m);
       if (mi && ltf && m === 'Widowed') ltf.hidden = false;
       var mf2 = document.getElementById('pf-maiden-f'), gi = document.getElementById('pf-gender'), mv = document.getElementById('pf-maiden');
       if (mf2) mf2.hidden = !maidenApplies(child ? 'child' : 'adult', gi ? gi.value : '', m) && !(mv && mv.value);
@@ -209,7 +212,7 @@
     fit();
   }
 
-  var NO_WEDDING = ['Single', 'Engaged', 'Partner', 'Divorced'], NO_LATE = ['Single', 'Engaged'];
+  var NO_WEDDING = ['Single', 'Engaged', 'Partner', 'Divorced'], NO_LATE = ['Single', 'Engaged'], NO_SPOUSE = ['Single', 'Engaged', 'Divorced', 'Widowed'];
   /** A maiden name applies to an adult woman (or gender not recorded) who is or was married. */
   var EVER_MARRIED = ['Married', 'Separated', 'Divorced', 'Widowed'];
   function maidenApplies(role, gender, marital) { return role !== 'child' && gender !== 'Male' && EVER_MARRIED.indexOf(marital) >= 0; }
@@ -220,6 +223,33 @@
     var why = lab.querySelector('.off-why');
     if (off && !why) { why = document.createElement('small'); why.className = 'off-why'; lab.appendChild(why); }
     if (why) { why.hidden = !off; why.textContent = off ? T('Not needed – marital status is {status}.', { status: T(status) }) : ''; }
+  }
+  /** Keep both sides of a hand-chosen couple in step: the one they were linked to lets go, the new one links back (and lets go
+   *  of anyone they were linked to before). */
+  function linkSpouse(p, oldId, newId) {
+    var unlink = function (id, from) {
+      var q = id && S.get('people', id); if (!q || q.spouseId !== from) return;
+      q = JSON.parse(JSON.stringify(q)); delete q.spouseId; S.put('people', q, 'Spouse or partner: unlinked ' + H.name(q) + ' from ' + H.name(S.get('people', from)));
+    };
+    if (oldId && oldId !== newId) unlink(oldId, p.id);
+    if (!newId) return;
+    var r = S.get('people', newId); if (!r || r.spouseId === p.id) return;
+    if (r.spouseId) unlink(r.spouseId, r.id);
+    r = JSON.parse(JSON.stringify(r)); r.spouseId = p.id;
+    S.put('people', r, 'Spouse or partner: linked ' + H.name(r) + ' and ' + H.name(p));
+  }
+  /** Spouse or partner, chosen by hand (Administrators and Pastors): for a couple who live apart, or to settle it when the
+   *  household leaves Church Hub guessing. Saved as spouseId on both people (details/, like the rest of the couple's details);
+   *  "Going by their household" leaves it to Church Hub (Households.couples). */
+  function spouseField(p) {
+    var cur = p.spouseId ? S.get('people', p.spouseId) : null;
+    var adults = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && x.active !== false && !x.mergedInto && !x.binnedAt && !deceased(x) && x.category !== 'Deceased'; })
+      .sort(function (a, b) { return ((a.lastName || '') + (a.firstName || '')).localeCompare((b.lastName || '') + (b.firstName || '')); });
+    if (cur && adults.indexOf(cur) < 0) adults.unshift(cur);
+    return '<div class="two" id="pf-spouse-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '><label class="field">' + T('Spouse or partner') + '<select class="findable" id="pf-spouse" data-was="' + esc(p.spouseId || '') + '">' +
+      '<option value="">' + T('Going by their household') + '</option>' +
+      adults.map(function (x) { return '<option value="' + x.id + '"' + (cur && cur.id === x.id ? ' selected' : '') + '>' + esc((x.lastName || '') + ', ' + (x.preferredName || x.firstName || '')) + '</option>'; }).join('') +
+      '</select><small>' + T('Choose them if they live apart, or to be sure. Otherwise Church Hub works it out from the household.') + '</small></label></div>';
   }
   /** Administrators: who a widow or widower was married to – someone in Church Hub who has died, or a name. */
   function lateSpouseField(p) {
@@ -393,9 +423,13 @@
         if (p.familyRole === 'child' && !p.familyId && !dead) { err.textContent = T('Children must be in a household, so the church knows who they live with.'); err.hidden = false; return; }
         var care = window.CareUI ? CareUI.read() : null;
         if (care && care.error && !dead) { err.textContent = care.error; err.hidden = false; return; }
+        // Spouse or partner chosen by hand (left as it was when the box is greyed out or not shown)
+        var spEl = document.getElementById('pf-spouse'), spNew = spEl && !spEl.disabled && !isChild ? spEl.value : null, spOld = p.spouseId || '';
+        if (spNew !== null) { if (spNew) p.spouseId = spNew; else delete p.spouseId; }
         var wantBadge = document.getElementById('pf-badge');
         if (!id && wantBadge && wantBadge.checked) p.badgeWanted = H.today();
         S.put('people', p, (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName + (p.badgeWanted && !id ? ' (name badge to print)' : ''));
+        if (spNew !== null && spNew !== spOld) linkSpouse(p, spOld, spNew);
         P.partnerAgrees(p, wasCat);   // becoming a Church Partner: Contact details agreed
         if (window.CareUI) { if (!(care && CareUI.setFrom(p, care))) CareUI.sync(p.id); }
         if (window.LifeUI) LifeUI.sync(p.id);   // their life group cards show their details

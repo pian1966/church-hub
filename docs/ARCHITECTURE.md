@@ -79,7 +79,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
   | Document | Holds | Read by |
   | --- | --- | --- |
   | `people/{id}` | name, household, category, email, mobile, active, app role (display copy), `photo` (version of their photo, if any), date added | Admin, Pastor, Roster coordinator, Children's ministry; the person |
-  | `details/{id}` | everything else about the person: birthday, gender, middle name, maiden name, home address, marital status, late spouse, key dates (wedding, died, funeral), staff details, Church Partner dates, date of death, "unknown" email/mobile, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
+  | `details/{id}` | everything else about the person: birthday, gender, middle name, maiden name, spouse or partner chosen by hand (`spouseId`, both people), home address, marital status, late spouse, key dates (wedding, died, funeral), staff details, Church Partner dates, date of death, "unknown" email/mobile, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
   | `medical/{id}` | children's allergies and medical notes | **Children's ministry only** |
   | `notes/{personId}` | pastoral notes (`entries` list) | **Pastors only** |
   | `officeNotes/{personId}` | church office notes (`entries` list; Elvanto's Notes come here) | Admin, Pastor |
@@ -233,7 +233,8 @@ church's own words (categories, teams, services, kinds of leave, privacy notice)
 The isiZulu and isiXhosa were drafted by AI and need checking by fluent speakers.
 
 ## Couples (spouses and partners)
-Who is married to whom isn't typed in: `Households.couples()` (`js/households.js`, tested) works it out from each household's
+Who is married to whom is usually not typed in (Administrators and Pastors can choose it by hand – Edit details → Spouse or
+partner, `spouseId` on both people, taken first and certain wherever each lives): `Households.couples()` (`js/households.js`, tested) works it out from each household's
 living adults – a shared marital status (Married = spouses, Partner = partners; one may still be unrecorded), the same anniversary,
 surname, and age (a big age gap means parent and grown-up child). Households → "Couples to confirm" (Administrators and Pastors,
 as marital status is private) confirms a couple with one tap, which also records a missing marital status and copies a spouse's

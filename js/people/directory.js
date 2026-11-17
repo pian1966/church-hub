@@ -138,6 +138,7 @@
     var em = (open || P.tierSees('email')) && P.mayShare(p, 'email') ? (p.email || '') : '';
     var addr = (open || P.tierSees('address')) && P.mayShare(p, 'address') ? (p.shareAddress || (addressLines(p) || []).join(' ')) : '';
     if (em) parts.push(em);
+    if (open && p.maidenName) parts.push(p.maidenName);   // found by the surname she had before she married
     if (mob) {
       parts.push(mob);
       var digits = mob.replace(/\D/g, '');

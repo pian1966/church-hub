@@ -79,7 +79,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
   | Document | Holds | Read by |
   | --- | --- | --- |
   | `people/{id}` | name, household, category, email, mobile, active, app role (display copy), `photo` (version of their photo, if any), date added | Admin, Pastor, Roster coordinator, Children's ministry; the person |
-  | `details/{id}` | everything else about the person: birthday, gender, middle name, home address, marital status, late spouse, key dates (wedding, died, funeral), staff details, Church Partner dates, date of death, "unknown" email/mobile, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
+  | `details/{id}` | everything else about the person: birthday, gender, middle name, maiden name, home address, marital status, late spouse, key dates (wedding, died, funeral), staff details, Church Partner dates, date of death, "unknown" email/mobile, Elvanto ID (+ copy of family role) | Admin, Pastor; Children's ministry for children; the person |
   | `medical/{id}` | children's allergies and medical notes | **Children's ministry only** |
   | `notes/{personId}` | pastoral notes (`entries` list) | **Pastors only** |
   | `officeNotes/{personId}` | church office notes (`entries` list; Elvanto's Notes come here) | Admin, Pastor |
@@ -102,7 +102,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 | Collection | Holds |
 | --- | --- |
 | `settings` | church name, modules on/off, Information Officer, retention period, privacy notice |
-| `people` | name (and middle name), contact, household(s), category (Church Partner, Attender, Visiting Minister, Staff, Former member, Deceased), gender, home address, marital status (adults), late spouse, Church Partner dates, staff details (leave category, start date, working days – staff keep their category, so a Church Partner can be staff), key dates, date of death, child medical notes (special personal information), Elvanto ID; the photo, ID number and office notes are kept apart (see above) |
+| `people` | name (and middle name, and maiden name for women who are or were married), contact, household(s), category (Church Partner, Attender, Visiting Minister, Staff, Former member, Deceased), gender, home address, marital status (adults), late spouse, Church Partner dates, staff details (leave category, start date, working days – staff keep their category, so a Church Partner can be staff), key dates, date of death, child medical notes (special personal information), Elvanto ID; the photo, ID number and office notes are kept apart (see above) |
 | `families` | households: `name` + `custom`. Shown via `Hub.familyName()`: named after its active adults ("Tim & Clare Jacobs", "Thandi Mokoena & Sipho Dlamini") unless `custom` is true; no "head of household". A person's main household is `familyId`; extra households (children of separated parents) are `householdIds` |
 | `guardians` | the adults responsible for a child, independent of households: { childId, adultId \| name + phone, relationship, canConsent, primary, mayCollect, confirmed } (`js/households.js`) |
 | `noCollect` | people **not allowed to collect** a child (e.g. a court order): { childId, personId \| name, note } – restricted, every view logged |
@@ -424,7 +424,7 @@ doubling – run it once to trial and again at switch-over. The preview shows ea
 ## Elvanto import
 Phase 1: Elvanto's People export (CSV) → column mapping → category mapping → preview → import people and families.
 - Only these columns are read: Member ID (Elvanto's person reference – include it), Date Added (becomes `createdAt`), names
-  and Middle Name, Email Address, Cellphone/Landline, Date of Birth (also "MM-DD" without a year), Gender, Family Relationship,
+  and Middle Name, Maiden Name, Email Address, Cellphone/Landline, Date of Birth (also "MM-DD" without a year), Gender, Family Relationship,
   Primary & Spouse Full Names (family key when there is no Family ID), Marital Status, Anniversary, People Category,
   Membership Date and Membership last renewed on (Church Partner dates; a year on its own is kept), Archived, Deceased, Date
   Deceased, Photo (downloaded from Elvanto's own https address and made small, for people without a photo), ID Number

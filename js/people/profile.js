@@ -127,11 +127,15 @@
         ' <button class="link" data-act="people:undodeath" data-id="' + p.id + '">' + T('Recorded by mistake?') + '</button></div>';
     }
 
-    html += '<div class="grid2">';
+    // The blocks go in three columns (css/hub.css, .person-cols), each stacking its own blocks, so short blocks sit under
+    // each other instead of leaving gaps beside a long one: (a) details and household, (b) notes and volunteering,
+    // (c) the long Consent block. Two columns on a smaller screen (Consent across the bottom), one on a phone.
+    var head = html, col = { a: '', b: '', c: '' }; html = '';
     // Contact (left out when there's nothing this person may see, e.g. a young child for Children's ministry)
     var contact = '<section class="panel"><h2>' + T('Contact and details') + '</h2><dl class="kv">' +
       (p.preferredName ? '<dt>' + T('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + T('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
+      (full && p.maidenName ? '<dt>' + T('Maiden name') + '</dt><dd>' + esc(p.maidenName) + '</dd>' : '') +
       (full && addressLines(p).length ? '<dt>' + T('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + ' ' + H.mapLink(addressLines(p).join(', ')) + '</dd>' :
         !full && P.contactHtml(p, 'address') ? '<dt>' + T('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
       (!child && (canSeeAll() || me) ? '<dt>' + T('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
@@ -179,6 +183,19 @@
         (canEditHomes && hs.length ? '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:addhome" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Also lives in another household') + '</button></div>' : '') +
         (H.can('rosters.manage') || H.can('*') ? '<p class="hint">' + T('Want them to serve together?') + ' <a href="#/rosters/together">' + T('Set up a serving group') + '</a>.</p>' : '') + '</section>';
     }
+    col.a += html; html = '';
+    // Church office notes (Administrators and Pastors), e.g. the notes brought across from Elvanto. Near the top, so an
+    // Administrator finds them (and adding one) straight after the person's details and household.
+    if ((H.can('*') || H.can('people.edit')) && !me) {
+      var onotes = S.find('officeNotes', function (n) { return n.personId === p.id; });
+      html += '<section class="panel"><div class="row" style="flex-wrap:wrap;row-gap:4px"><h2 class="grow" style="margin:0;min-width:200px">' + T('Church office notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Administrators and Pastors') + '</span></div>' +
+        (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? T('From Elvanto') : n.by) + ', ' + H.fmt(n.at, true)) +
+          ' · <button class="link" data-act="people:delonote" data-id="' + n.id + '">' + T('Delete') + '</button></p></div>'; }).join('') : '<p class="muted">' + T('No notes.') + '</p>') +
+        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="on-text" rows="2" placeholder="' + esc(T('Administrators and Pastors can see this. Pastoral matters go in pastoral notes.')) + '"></textarea></label><button class="btn small save" data-act="people:onote" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
+    }
+    // Volunteering: services, departments and positions (Rosters teams and positions); roster coordinators and Administrators change it
+    html += volunteerPanel(p, me);
+    col.b += html; html = '';
     // Adults responsible for a child, and who may not collect them (Administrators, Pastors, Children's ministry)
     if (child && canChildren()) html += guardiansPanel(p);
     if (!child && canChildren()) {
@@ -188,6 +205,22 @@
         return '<a class="item" href="#/people/p/' + c.id + '">' + H.avatar(c, 32) + '<span class="grow"><b>' + esc(H.name(c)) + '</b><small>' + esc(T(l.relationship) + (l.canConsent ? ' · ' + T('can give consent') : '') + (l.mayCollect ? ' · ' + T('may collect') : '')) + '</small></span></a>';
       }).join('') + '</div></section>';
     }
+    col.a += html; html = '';
+    // Medical (children)
+    if (seeMedical) {
+      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Medical and allergies') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Children’s ministry only') + '</span></div>' +
+        (p.medical && (p.medical.allergies || p.medical.notes) ? '<dl class="kv" style="margin-top:12px">' + (p.medical.allergies ? '<dt>' + T('Allergies') + '</dt><dd><span class="tag bad">' + esc(p.medical.allergies) + '</span></dd>' : '') + (p.medical.notes ? '<dt>' + T('Notes') + '</dt><dd>' + esc(p.medical.notes) + '</dd>' : '') + '</dl>' : '<p class="muted">' + T('None recorded.') + '</p>') +
+        (hasConsent(p.id, 'Children’s medical notes') ? '' : '<p class="note warn" style="margin-top:10px">' + T('No guardian consent for medical notes yet.') + '</p>') +
+        '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:medical" data-id="' + p.id + '">' + T('Edit medical notes') + '</button></div></section>';
+    }
+    // Pastoral notes
+    if (seeNotes && !me) {
+      var notes = S.find('notes', function (n) { return n.personId === p.id; });
+      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Pastoral notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Pastors only · views are logged') + '</span></div>' +
+        (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">' + T('No notes.') + '</p>') +
+        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="pn-text" rows="2" placeholder="' + esc(T('Only pastors can see this')) + '"></textarea></label><button class="btn small save" data-act="people:note" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
+    }
+    col.b += html; html = '';
     // Consent (POPIA)
     if (full) {
       html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Consent') + '</h2>' + H.icon(H.ICON.privacy, 18) + '</div><p class="hint" style="margin:4px 0 10px">' + (me ? T('What you have agreed to, as {law} requires.', { law: PrivacyLaw.forChurch(S.settings()).short }) : esc(T('What {name} has agreed to, as {law} requires.', { name: p.firstName, law: PrivacyLaw.forChurch(S.settings()).short }))) + (child ? ' ' + T('A parent or guardian gives consent for children.') : '') + '</p>' +
@@ -203,31 +236,9 @@
         }).join('') + '</div>') +
         '<div class="btns" style="margin-top:12px"><button class="btn small" data-act="people:consent" data-id="' + p.id + '">' + T(me ? 'Change my choices' : 'Record consent') + '</button></div></section>';
     }
-    // Medical (children)
-    if (seeMedical) {
-      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Medical and allergies') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Children’s ministry only') + '</span></div>' +
-        (p.medical && (p.medical.allergies || p.medical.notes) ? '<dl class="kv" style="margin-top:12px">' + (p.medical.allergies ? '<dt>' + T('Allergies') + '</dt><dd><span class="tag bad">' + esc(p.medical.allergies) + '</span></dd>' : '') + (p.medical.notes ? '<dt>' + T('Notes') + '</dt><dd>' + esc(p.medical.notes) + '</dd>' : '') + '</dl>' : '<p class="muted">' + T('None recorded.') + '</p>') +
-        (hasConsent(p.id, 'Children’s medical notes') ? '' : '<p class="note warn" style="margin-top:10px">' + T('No guardian consent for medical notes yet.') + '</p>') +
-        '<div class="btns" style="margin-top:10px"><button class="btn small" data-act="people:medical" data-id="' + p.id + '">' + T('Edit medical notes') + '</button></div></section>';
-    }
-    // Church office notes (Administrators and Pastors), e.g. the notes brought across from Elvanto
-    if ((H.can('*') || H.can('people.edit')) && !me) {
-      var onotes = S.find('officeNotes', function (n) { return n.personId === p.id; });
-      html += '<section class="panel"><div class="row" style="flex-wrap:wrap;row-gap:4px"><h2 class="grow" style="margin:0;min-width:200px">' + T('Church office notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Administrators and Pastors') + '</span></div>' +
-        (onotes.length ? onotes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0;white-space:pre-line" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc((n.by === 'Elvanto' ? T('From Elvanto') : n.by) + ', ' + H.fmt(n.at, true)) +
-          ' · <button class="link" data-act="people:delonote" data-id="' + n.id + '">' + T('Delete') + '</button></p></div>'; }).join('') : '<p class="muted">' + T('No notes.') + '</p>') +
-        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="on-text" rows="2" placeholder="' + esc(T('Administrators and Pastors can see this. Pastoral matters go in pastoral notes.')) + '"></textarea></label><button class="btn small save" data-act="people:onote" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
-    }
-    // Pastoral notes
-    if (seeNotes && !me) {
-      var notes = S.find('notes', function (n) { return n.personId === p.id; });
-      html += '<section class="panel"><div class="row"><h2 class="grow" style="margin:0">' + T('Pastoral notes') + '</h2><span class="locked">' + H.icon(H.ICON.lock, 14) + T('Pastors only · views are logged') + '</span></div>' +
-        (notes.length ? notes.map(function (n) { return '<div style="margin-top:12px"><p style="margin:0" data-own-words>' + esc(n.text) + '</p><p class="hint">' + esc(n.by + ', ' + H.fmt(n.at, true)) + '</p></div>'; }).join('') : '<p class="muted">' + T('No notes.') + '</p>') +
-        '<label class="field" style="margin-top:12px">' + T('Add a note') + '<textarea id="pn-text" rows="2" placeholder="' + esc(T('Only pastors can see this')) + '"></textarea></label><button class="btn small save" data-act="people:note" data-id="' + p.id + '">' + T('Save note') + '</button></section>';
-    }
-    // Volunteering: services, departments and positions (Rosters teams and positions); roster coordinators and Administrators change it
-    html += volunteerPanel(p, me);
-    html += '</div>';
+    col.c += html;
+    var cols = ['a', 'b', 'c'].filter(function (k) { return col[k]; });
+    html = head + '<div class="person-cols cols-' + cols.length + '">' + cols.map(function (k) { return '<div class="pcol ' + k + '">' + col[k] + '</div>'; }).join('') + '</div>';
     // Someone who has died: their information blocks turn grey (css/hub.css, .deceased), so it's clear at a glance
     return deceased(p) ? '<div class="deceased">' + html + '</div>' : html;
   }

@@ -4,6 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
+    "People: Edit details now has a Maiden name box for women who are or were married, and People’s search finds them by it. Church office notes now sit near the top of a person’s page, so adding one is easy to find.": "Batho: Ho fetola dintlha jwale ho na le lebokose la Fane ya pele ho nyalwa bakeng sa basadi ba nyetsweng kapa ba kileng ba nyalwa, mme patlo ya Batho e ba fumana ka yona. Dintlha tsa ofisi ya kereke jwale di hodimo leqepheng la motho, hore ho be bonolo ho kenya e nngwe.",
     "Subscription: the page now makes clear that the price is per church, not per person, and that a low price doesn’t mean Church Hub does less.": "Ngodiso: leqephe jwale le hlakisa hore theko ke ya kereke, eseng ya motho ka mong, le hore theko e tlase ha e bolele hore Church Hub e etsa ho honyenyane.",
     "About now has a link to Church Hub’s website, which shows what Church Hub offers to every church – handy to share with friends at other churches.": "Ka jwale e na le sehokelo sa websaete ya Church Hub, e bontshang seo Church Hub e se fanang bakeng sa kereke e nngwe le e nngwe – ho bonolo ho e arolelana le metswalle dikerekeng tse ding.",
     "Messages: Sent now shows only the messages you sent. Administrators and Pastors find everyone’s messages under All messages, and set up groups under Message groups.": "Melaetsa: Tse rometsweng jwale di bontsha feela melaetsa eo o e rometseng. Batsamaisi le Baruti ba fumana melaetsa ya bohle tlasa Melaetsa yohle, mme ba theha dihlopha tlasa Dihlopha tsa melaetsa.",
@@ -796,6 +797,8 @@ I18n.add('st', {
     "Please keep this page open.": "Ka kopo siya leqephe lena le butswe.",
     "Something went wrong. Please try again.": "Ho na le se sa tsamaeng hantle. Ka kopo leka hape.",
     "Middle name": "Lebitso la bobedi",
+    "Maiden name": "Fane ya pele ho nyalwa",
+    "Her surname before she married.": "Fane ya hae pele a nyalwa.",
     "Home address": "Aterese ya lapeng",
     "Street address": "Aterese ya seterata",
     "Address line 2": "Mola wa bobedi wa aterese",

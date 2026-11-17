@@ -75,6 +75,13 @@ module.exports = async function (ctx) {
   check(tt.includes('Was married to Johan van der Merwe') && docs['details/p24'].lateSpouseId === 'p23' && !docs['details/p24'].lateSpouseName, '… or choose someone in Church Hub who has died');
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   tt = await s.text(); check(!tt.includes('Late spouse'), '… or nobody');
+  // Maiden name: the box appears for a woman who is or was married (Elsa is now Widowed), not for a man
+  await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-gender', 'Female');
+  check(await s.page.isVisible('#pf-maiden'), 'Edit details offers a Maiden name for a widow');
+  await s.page.selectOption('#pf-gender', 'Male'); const manHidden = !(await s.page.isVisible('#pf-maiden'));
+  await s.page.selectOption('#pf-gender', 'Female'); await s.page.fill('#pf-maiden', 'Botha'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  docs = await s.docsNow(); tt = await s.text();
+  check(manHidden && docs['details/p24'].maidenName === 'Botha' && !docs['people/p24'].maidenName && tt.includes('Maiden name') && tt.includes('Botha'), '… but not for a man; it is saved with the private details and shown on her page');
   // Late spouse suggestions: clear Elsa's, and Church Hub should suggest Johan again (same household and surname)
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   await s.page.evaluate(() => { const e = Store.get('people', 'p24'); delete e.lateSpouseSet; });

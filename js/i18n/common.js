@@ -163,6 +163,8 @@ I18n.rows([
     ['Please keep this page open.', 'Hou asseblief hierdie bladsy oop.', 'Sicela ugcine leli khasi livuliwe.', 'Nceda ugcine eli phepha livulekile.'],
     ['Something went wrong. Please try again.', 'Iets het skeefgeloop. Probeer asseblief weer.', 'Kukhona okungahambanga kahle. Sicela uzame futhi.', 'Kukho into engahambanga kakuhle. Nceda uzame kwakhona.'],
     ['Middle name', 'Middelnaam', 'Igama eliphakathi', 'Igama eliphakathi'],
+    ['Maiden name', 'Nooiensvan', 'Isibongo sobuntombi', 'Ifani yobuntombi'],
+    ['Her surname before she married.', 'Haar van voordat sy getroud is.', 'Isibongo sakhe ngaphambi kokuba ashade.', 'Ifani yakhe phambi kokuba atshate.'],
     ['Home address', 'Huisadres', 'Ikheli lasekhaya', 'Idilesi yasekhaya'],
     ['Town or city', 'Dorp of stad', 'Idolobha', 'Idolophu'],
     ['Postcode', 'Poskode', 'Ikhodi yeposi', 'Ikhowudi yeposi'],

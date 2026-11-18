@@ -65,6 +65,10 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 16px; align-items: start; }
 .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .grow { flex: 1; min-width: 0; }
+/* Rosters → Teams: a position's name with how many and which services underneath, its Add button beside them */
+.pos-head { flex-wrap: nowrap; align-items: flex-start; }
+.pos-head .grow { display: flex; flex-direction: column; gap: 2px; overflow-wrap: anywhere; }
+.pos-head .btn { flex: 0 0 auto; }
 .muted { color: var(--muted); } .small { font-size: 13px; }
 .empty { color: var(--muted); background: var(--surface-2); border: 1px dashed var(--line); border-radius: 12px; padding: 18px; text-align: center; margin: 0; }
 .hint { font-size: 13px; color: var(--muted); margin: 6px 0 0; }

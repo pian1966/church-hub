@@ -37,7 +37,7 @@ js/wording.js             Wording: the church's own words (sets by denomination 
 js/care.js                Care: care groups – who is in which group, carers, and the card the group sees (tested)
 js/messages.js            Msg: messages inside the app – who each audience is, who may send to whom, unread (tested)
 js/leaders.js             Leaders: leadership groups (Council, elders, leaders) – roles, titles, portfolios, served before (tested)
-js/archive.js             Archive: church records – categories, who sees a record, files cut into parts (tested)
+js/archive.js             Archive: church records – folders (Year → Month by date), checking a date, who sees a record, files cut into parts (tested)
 js/library.js             Library: the church's books – copies in and out, lending, returning, overdue (tested)
 js/sample.js              made-up church for demo mode and tests
 robot/robot.js            the Elvanto robot (GitHub Actions, every 15 min): does the waiting Elvanto updates (docs/ELVANTO-ROBOT.md)
@@ -647,8 +647,19 @@ The Archive reads `memberIds` to decide who sees a group's records, so a group w
 ## Archive (Library → Archives; `js/archive.js`, `js/mod-archive.js`, `js/mod-library.js`)
 Off until Library is switched on. Archives is a tab inside Library, with a lock indicator and a restricted notice for
 people who are not Administrators or Council members. A record has a category (`settings.archiveCats`, or
-`Archive.CATS`: Council minutes, Architectural plans, Staff contracts, Annual appraisals, Other), a date, and a file or
+`Archive.CATS`: Council meetings, Architectural plans, Staff contracts, Annual appraisals, Other), a date, and a file or
 a link.
+- **Folders** (0.92): each category is a folder; `parent` puts one inside another ('' = the top; `Archive.cats()` moves a
+  folder whose parent is missing or would make a loop to the top). A folder with `byDate` (the starting Council meetings
+  has it) shows Year → Month folders built from each record's `date` – they are not stored, so nobody makes them and they
+  can't be renamed; move a record by changing its date or folder. A record's `cat` is the folder it is in, at any depth.
+  Administrators make, change and delete (empty) folders on the page (More → New folder / Change this folder); a folder's
+  "who can see it" is the starting choice for new records only. No change to the rules: folders live in settings.
+- **Before saving** the record dialog shows what Church Hub is about to do (where it will be filed, who can see it, the
+  file) and `Archive.checkDate()` asks about a date that looks wrong: in the future, before 1800, not the month or year
+  the title or file name speaks of (`Archive.named()`, month names in English, Afrikaans, isiZulu, isiXhosa, Sesotho), not
+  the date the month's other documents share, or a title already in that month. The summary can be switched off on a
+  device (`Store.pref('archiveAsk')`, More → Show a summary before saving); the date questions always show.
 - **Who may access it** is first limited to Administrators and Council members. Within that gate, each record's
   `access` choice, copied from its category when added, provides an additional limit: `all` all authorized readers ·
   `body` the members of one leadership group (`bodyId`) · `office` Administrators and Pastors · `private` the

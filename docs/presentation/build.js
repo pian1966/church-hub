@@ -222,7 +222,7 @@ async function icon(Comp, color, px = 256) {
       [Lu.LuMessageCircle, 'Messages', 'Chat-style news and replies, with read ticks'],
       [Lu.LuUsersRound, 'Groups', 'Care Groups, Midweek Groups and leadership'],
       [Lu.LuPlane, 'Staff leave', 'Allowances, approvals, public holidays'],
-      [Lu.LuLibrary, 'Library & Archives', 'Loans and reminders; protected church records'],
+      [Lu.LuLibrary, 'Library & Archives', 'Loans; church records filed by year and month'],
       [Lu.LuSmartphone, 'Me', 'Members update their own details and days away'],
       [Lu.LuShieldCheck, 'Privacy', 'Access by role, consent, privacy law tools']
     ];
@@ -234,7 +234,7 @@ async function icon(Comp, color, px = 256) {
       T(s, mods[i][2], { x: x + 0.3, y: y + 1.6, w: w - 0.5, h: 0.7, fontSize: 14, color: HEX.muted });
     }
   }
-  s.addNotes('These are the essential parts. People with households and consent. Rosters. Messages inside the app. Groups. Staff leave. A library and protected archives for minutes and contracts. Me – where members look after their own details. And privacy, built into everything.');
+  s.addNotes('These are the essential parts. People with households and consent. Rosters. Messages inside the app. Groups. Staff leave. A library, and protected archives for minutes and contracts – meeting papers file themselves into the right year and month, and Church Hub asks before saving anything under a date that looks wrong. Me – where members look after their own details. And privacy, built into everything.');
 
   // ========== 9. People ==========
   s = content('What it does', 'Know and care for your people', true);

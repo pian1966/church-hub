@@ -1389,3 +1389,20 @@ html[data-mode=dark] .sp-st-holiday { background: linear-gradient(135deg, var(--
 .ro-date .date-typed { width: 100%; }
 .ro-date .date-typed { gap: 6px; }
 .ro-date .date-text { min-height: 44px; width: 100%; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; font-size: 14.5px; }
+/* Archives: folders, Year → Month, and the summary before saving */
+.ar-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 14px; color: var(--muted); }
+.ar-crumbs button { background: none; border: 0; padding: 4px 2px; font: inherit; font-weight: 600; color: var(--accent, var(--ink)); cursor: pointer; border-radius: 6px; }
+.ar-crumbs button:hover { text-decoration: underline; } .ar-crumbs button[aria-current] { color: var(--ink); cursor: default; text-decoration: none; }
+.ar-tiles { margin-bottom: 14px; }
+button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; align-items: flex-start; }
+.ar-folder .tag { margin-top: auto; display: inline-flex; align-items: center; gap: 4px; }
+.ar-docs { margin-top: 4px; }
+.ar-where { margin: -4px 0 12px; min-height: 1em; }
+.ar-check-h { font-size: 16px; margin: 4px 0 10px; }
+.ar-plan { margin: 0 0 14px; padding-left: 20px; display: grid; gap: 6px; }
+.ar-warn { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 10px; } .ar-warn > span { flex: 1 1 240px; }
+.ar-noask { margin-top: 6px; border-top: 1px solid var(--line); padding-top: 12px; }
+.btn.ar-del { color: var(--bad); }
+.ar-folder .ar-sub { color: var(--muted); font-size: 13px; }
+.ar-folder .tag { max-width: 100%; white-space: normal; text-align: left; line-height: 1.3; }
+.ar-folder .ic { transition: transform .2s var(--ease-spring, ease); } .ar-folder:hover .ic { transform: scale(1.06) rotate(-3deg); }

@@ -26,6 +26,18 @@ special account for this – choose one of these:
   **https://accounts.google.com/signup** (a new Gmail address), then share the presentation with it as an Editor – or
   move the presentation into it – before you start.
 
+  **Choosing a name for a new account.** Try these on the sign-up page and take the first that is free (Google says if
+  a name is taken):
+  - `churchhub.app@gmail.com` – matches the web address Church Hub may use
+  - `churchhub.office@gmail.com`, `churchhub.team@gmail.com` or `hello.churchhub@gmail.com`
+  - if those are taken: `churchhubsoftware@gmail.com`, `getchurchhub@gmail.com` or `churchhub.za@gmail.com`
+
+  Avoid a person's or a church's name, so the account can be handed on one day, and words like "robot" or "slides" –
+  the account will probably hold more than the presentation (the website, subscriptions). Gmail ignores dots, so
+  `church.hub` and `churchhub` are the same address. Set the account's name to **Church Hub**, so emails show as from
+  Church Hub. Once Church Hub has its own web address, a matching email (such as `hello@churchhub.app`) can be added in
+  front of this account.
+
 Don't use a church's own Google account (the one a church makes when it sets up Church Hub): that account belongs to the
 church, while the presentation belongs to Church Hub. If you start with one account and change your mind later, just
 repeat these steps with the other one.

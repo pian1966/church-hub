@@ -151,6 +151,17 @@ module.exports = async function (ctx) {
   await s.page.keyboard.press('Enter'); await s.settle();
   check((await s.page.$$eval('.adv-col', c => c.map(x => x.textContent))).some(x => /Marital status/.test(x)) && !(await s.page.$('.adv-fpick[data-i="col"] .adv-fo[data-key="marital"]')),
     '…Enter adds it as a column (and it leaves the list of columns to add)');
+  // Columns: drag one to a new place (finger or mouse), or move it with the arrow keys
+  const colOrder = () => s.page.$$eval('.adv-col[data-k]', c => c.map(x => x.dataset.k));
+  const before = await colOrder(), last = before[before.length - 1], firstCol = before[0];
+  await s.page.locator('.adv-cols').scrollIntoViewIfNeeded();
+  const from = await s.page.locator('.adv-col[data-k="' + last + '"]').boundingBox(), to = await s.page.locator('.adv-col[data-k="' + firstCol + '"]').boundingBox();
+  await s.page.mouse.move(from.x + 15, from.y + from.height / 2); await s.page.mouse.down();
+  await s.page.mouse.move(from.x + 40, from.y + from.height / 2, { steps: 3 }); await s.page.mouse.move(to.x + 5, to.y + to.height / 2, { steps: 10 }); await s.page.mouse.up(); await s.settle();
+  let after = await colOrder();
+  check(after[0] === last && after.length === before.length && !(await s.page.$('.adv-hole')), 'Columns: dragging the last column onto the first puts it first');
+  await s.page.focus('.adv-col[data-k="' + last + '"]'); await s.page.keyboard.press('ArrowRight'); await s.settle(); after = await colOrder();
+  check(after[1] === last && await s.page.evaluate(k => document.activeElement.dataset.k === k, last), '…and the arrow keys move a column, keeping it in focus');
   // Quotes: an exact phrase
   await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p16'))); p.address = { street: '4 Amber Glen', city: 'Howick' }; Store.put('people', p);
     const q = JSON.parse(JSON.stringify(Store.get('people', 'p17'))); q.address = { street: '9 Glen Rd', street2: 'Amber Valley', city: 'Howick' }; Store.put('people', q); }); await s.settle();

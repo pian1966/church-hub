@@ -2,6 +2,7 @@
 (function (P) {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
+  var GRIP = '<svg width="10" height="16" viewBox="0 0 10 16" fill="currentColor"><circle cx="2.5" cy="3" r="1.5"/><circle cx="7.5" cy="3" r="1.5"/><circle cx="2.5" cy="8" r="1.5"/><circle cx="7.5" cy="8" r="1.5"/><circle cx="2.5" cy="13" r="1.5"/><circle cx="7.5" cy="13" r="1.5"/></svg>';
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var CATS = P.CATS, GENDERS = P.GENDERS, HS = P.HS, MARITAL = P.MARITAL, PS = P.PS, PURPOSES = P.PURPOSES, RECEIVE_P = P.RECEIVE_P, SORTS = P.SORTS, state = P.state;
   // From the other People files (each looked up when called)
@@ -345,11 +346,11 @@
       }).join('') + '</div>' +
         '<button type="button" class="adv-add" data-act="people:advadd" data-i="' + (A.filters.length - 1) + '">' + H.icon(H.ICON.plus, 18) + '<span>' + T('Add a filter') + '</span></button>' : '<p class="muted">' + T('No filters: Search finds everyone.') + ' <button class="btn small" data-act="people:advadd" data-i="-1">' + H.icon(H.ICON.plus, 16) + T('Add a filter') + '</button></p>') +
       '</section>' +
-      '<section class="panel"><h2>' + T('Columns to show') + '</h2><p class="hint" style="margin-top:0">' + T('Name always comes first. Use the arrows to change the order.') + '</p><div class="adv-cols">' +
+      '<section class="panel"><h2>' + T('Columns to show') + '</h2><p class="hint" style="margin-top:0">' + T('Name always comes first. Drag a column to change the order.') + '</p><div class="adv-cols">' +
       '<span class="adv-col fixed">' + T('Name') + '</span>' + A.cols.map(function (k, i) {
-        return '<span class="adv-col">' + esc(byKey[k].label) +
-          '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="-1"' + (i ? '' : ' disabled') + ' aria-label="' + esc(T('Move {column} left', { column: byKey[k].label })) + '">‹</button>' +
-          '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="1"' + (i < A.cols.length - 1 ? '' : ' disabled') + ' aria-label="' + esc(T('Move {column} right', { column: byKey[k].label })) + '">›</button>' +
+        // Drag a column to move it (finger or mouse); with the keyboard, the arrow keys move it (colDrag below)
+        return '<span class="adv-col" data-k="' + k + '" tabindex="0" aria-label="' + esc(T('{column}: drag, or use the arrow keys, to move it', { column: byKey[k].label })) + '">' +
+          '<span class="adv-grip" aria-hidden="true">' + GRIP + '</span>' + esc(byKey[k].label) +
           '<button class="icon-btn ghost" data-act="people:advcol" data-k="' + k + '" data-m="0" aria-label="' + esc(T('Remove column {column}', { column: byKey[k].label })) + '">' + H.icon(H.ICON.x, 14) + '</button></span>';
       }).join('') + '</div>' +
       '<div class="field adv-addcol-w" style="max-width:320px;margin-top:12px"><span>' + T('Add a column') + '</span>' +
@@ -660,6 +661,56 @@
         });
       }
   });
+
+  /* ---------- Columns to show: drag a column to a new place ---------- */
+  /** Pick a column up (finger or mouse), move it, let go: the others make room as it passes. The arrow keys do the same
+   *  for the keyboard. Name stays first. Set up once; it works on whatever the page has drawn. */
+  (function colDrag() {
+    if (typeof document === 'undefined') return;
+    var d = null;
+    function order(box) { return [].map.call(box.querySelectorAll('.adv-col[data-k]'), function (c) { return c.dataset.k; }); }
+    function save(cols, focusKey) {
+      state.adv.cols = cols; H.render();
+      if (focusKey) { var c = document.querySelector('.adv-col[data-k="' + focusKey + '"]'); if (c) c.focus(); }
+    }
+    document.addEventListener('pointerdown', function (e) {
+      var chip = e.target.closest && e.target.closest('.adv-col[data-k]');
+      if (!chip || e.target.closest('button') || e.button > 0) return;
+      d = { chip: chip, box: chip.parentNode, x: e.clientX, y: e.clientY, id: e.pointerId, on: false };
+    });
+    document.addEventListener('pointermove', function (e) {
+      if (!d || e.pointerId !== d.id) return;
+      var dx = e.clientX - d.x, dy = e.clientY - d.y;
+      if (!d.on) {
+        if (Math.abs(dx) + Math.abs(dy) < 6) return;
+        var r = d.chip.getBoundingClientRect();
+        d.on = true; d.hole = document.createElement('span'); d.hole.className = 'adv-col adv-hole'; d.hole.style.width = r.width + 'px'; d.hole.style.height = r.height + 'px';
+        d.box.insertBefore(d.hole, d.chip);
+        d.chip.classList.add('adv-lift'); d.chip.style.left = r.left + 'px'; d.chip.style.top = r.top + 'px'; d.chip.style.width = r.width + 'px';
+      }
+      e.preventDefault();
+      d.chip.style.transform = 'translate(' + dx + 'px,' + dy + 'px) rotate(-1.5deg)';
+      var under = document.elementFromPoint(e.clientX, e.clientY), t = under && under.closest('.adv-col[data-k]');
+      if (!t || t === d.chip || t.parentNode !== d.box) return;
+      var tr = t.getBoundingClientRect(), after = e.clientX > tr.left + tr.width / 2;
+      d.box.insertBefore(d.hole, after ? t.nextSibling : t);
+    }, { passive: false });
+    function drop(e) {
+      if (!d || (e && e.pointerId !== d.id)) return;
+      var x = d; d = null; if (!x.on) return;
+      x.box.insertBefore(x.chip, x.hole); x.hole.remove();
+      x.chip.classList.remove('adv-lift'); x.chip.removeAttribute('style');
+      save(order(x.box));
+    }
+    document.addEventListener('pointerup', drop); document.addEventListener('pointercancel', drop);
+    document.addEventListener('keydown', function (e) {
+      var chip = e.target.closest && e.target.closest('.adv-col[data-k]');
+      if (!chip || e.target !== chip || (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight')) return;
+      var cols = order(chip.parentNode), i = cols.indexOf(chip.dataset.k), j = i + (e.key === 'ArrowLeft' ? -1 : 1);
+      if (j < 0 || j >= cols.length) return;
+      e.preventDefault(); cols.splice(j, 0, cols.splice(i, 1)[0]); save(cols, chip.dataset.k);
+    });
+  })();
 
   Object.assign(P, { advCsv: advCsv, advRun: advRun, advShow: advShow, advSync: advSync, awaySoon: awaySoon, bulkDialog: bulkDialog, bulkFields: bulkFields, bulkUndoNote: bulkUndoNote, canBulk: canBulk, emptyAdv: emptyAdv, fieldActive: fieldActive, fieldClose: fieldClose, fieldFilter: fieldFilter, fieldOpen: fieldOpen, fieldPick: fieldPick, renderSearch: renderSearch, searchFields: searchFields, serveInfoTimes: serveInfoTimes, servingInfo: servingInfo, valueBox: valueBox });
 })(PeopleParts);

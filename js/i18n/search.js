@@ -48,6 +48,8 @@ I18n.rows([
     ['Remove this filter', 'Verwyder hierdie filter', 'Susa lesi sihlungi', 'Susa esi sihluzi'],
     ['No filters: Search finds everyone.', 'Geen filters nie: Soek vind almal.', 'Azikho izihlungi: Sesha kuthola wonke umuntu.', 'Akukho zihluzi: Khangela kufumana wonke umntu.'],
     ['Columns to show', 'Kolomme om te wys', 'Amakholomu azoboniswa', 'Iikholamu eziza kuboniswa'],
+    ["Name always comes first. Drag a column to change the order.", "Naam kom altyd eerste. Sleep ’n kolom om die volgorde te verander.", "Igama lihlala liza kuqala. Hudula ikholamu ukuze ushintshe ukulandelana.", "Igama lihlala lizé kuqala. Rhuqa ikholam ukuze utshintshe ulandelelwano."],
+    ["{column}: drag, or use the arrow keys, to move it", "{column}: sleep dit, of gebruik die pyltjiesleutels, om dit te skuif", "{column}: yihudule, noma usebenzise izinkinobho zemicibisholo, ukuyihambisa", "{column}: yirhuqe, okanye usebenzise amaqhosha eentolo, ukuyishukumisa"],
     ['Name always comes first. Use the arrows to change the order.', 'Naam kom altyd eerste. Gebruik die pyltjies om die volgorde te verander.', 'Igama lihlala liza kuqala. Sebenzisa imicibisholo ukushintsha ukulandelana.', 'Igama lihlala lizé kuqala. Sebenzisa iintolo ukutshintsha ulandelelwano.'],
     ['Add a column', 'Voeg ’n kolom by', 'Engeza ikholomu', 'Yongeza ikholamu'],
     ['Search', 'Soek', 'Sesha', 'Khangela'],

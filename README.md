@@ -15,6 +15,6 @@ and records – set up with the setup tool below.
 - **Android app:** [docs/ANDROID.md](docs/ANDROID.md) – members' own details, days away and serving on their phone · download: https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk
 - **Leave → Elvanto:** [docs/ELVANTO-ROBOT.md](docs/ELVANTO-ROBOT.md) – approved leave as Elvanto unavailability (robot)
 - **Help for the church:** [docs/help/](docs/help/README.md) – questions and answers in plain English
-- **Tests:** `node tests/<name>.test.js` for each rules file in `tests/` (rosters, imports, households, groups, messages, the setup tool, languages and more) · `node tests/app.test.js` (the whole app in a browser, Playwright) · `tests/rules.test.mjs` (security rules, Firestore emulator). All run on GitHub after every push.
+- **Tests:** `node tests/<name>.test.js` for each rules file in `tests/` (rosters, imports, households, groups, messages, the setup tool, languages and more) · `node tests/app.test.js` (the whole app in a browser, Playwright) · `tests/rules.test.mjs` (security rules, Firestore emulator). All run on GitHub for every pull request, and on main after each merge.
 
 No real church data belongs in this repository – it is public.

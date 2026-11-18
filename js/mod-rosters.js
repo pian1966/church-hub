@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, R = RosterCore, T = I18n.t, TN = I18n.tn;
-  var state = { start: 0, preview: null, gapsOpen: false, hidden: [] };   // hidden: services (8am, 5pm…) hidden from the roster for now, with the eye
+  var state = { start: 0, preview: null, gapsOpen: false, hidden: [], cols: 6 };   // hidden: services (8am, 5pm…) hidden from the roster for now, with the eye; cols: how many side by side
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var FREQ = [['weekly', TX('Whenever necessary (could be every week)')], ['monthly', TX('Once a month')], ['emergency', TX('Only now and then in emergencies')]];
 
@@ -107,7 +107,7 @@
   /** The departments in the church's order (Teams → ↑ ↓). */
   function teams() { return Serving.orderTeams(S.list('teams')); }
   /** How many services the roster shows side by side (one on a phone). */
-  function cols() { return narrow() ? 1 : 6;
+  function cols() { return narrow() ? 1 : state.cols;
   }
   /** A position only runs at some services (e.g. Creche Duty at 8:00): elsewhere its cell is shown as not needed. */
   /** A special service (Good Friday…) only has the positions chosen for it; a Sunday one every position unless narrowed down. */
@@ -147,6 +147,12 @@
       var w = e.target, r = document.getElementById('ro-slide'), room = w.scrollWidth - w.clientWidth;
       if (r && document.activeElement !== r) r.value = room > 0 ? Math.round(w.scrollLeft / room * 100) : 0;
     }, true);
+    window.addEventListener('resize', fitSlider);
+  }
+  /** The slider only shows when there is more roster than fits on the screen. */
+  function fitSlider() {
+    var w = document.getElementById('ro-wrap'), r = document.querySelector('.ro-slide');
+    if (w && r) r.hidden = w.scrollWidth - w.clientWidth < 4;
   }
 
   function tabs(active) {
@@ -209,8 +215,10 @@
     }).join('') + (state.hidden.length > 1 ? '<button type="button" class="btn small ghost" data-act="rosters:showslot" data-v="">' + T('Show all') + '</button>' : '') + '</div>';
     if (!svcs.length && state.hidden.length) return html + '<p class="empty">' + T('Every service is hidden. Tap one above to show it again.') + '</p>';
     html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
-    if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label>';
-    html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    if (!narrow()) html += '<div class="ro-view"><div class="ro-cols" role="group" aria-label="' + esc(T('Services side by side')) + '"><span class="muted small">' + T('Side by side:') + '</span>' +
+      [2, 3, 4, 5, 6, 7, 8].map(function (n) { return '<button type="button" class="' + (state.cols === n ? 'on' : '') + '" aria-pressed="' + (state.cols === n) + '" data-act="rosters:cols" data-n="' + n + '" title="' + esc(TN('Show {n} service at a time', 'Show {n} services at a time', n)) + '">' + n + '</button>'; }).join('') + '</div>';
+    if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label></div>';
+    html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"' + (narrow() ? '' : ' style="min-width:' + (180 + 180 * svcs.length) + 'px"') + '><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
     // A department or position that isn't at any of these services (e.g. Creche at 8:00, communion roles without communion)
     // is left out, so the roster shows only what is needed. Someone already rostered there keeps the row.
@@ -233,6 +241,7 @@
       }).join('') + '</tr>';
     });
     html += '</tbody></table></div>';
+    setTimeout(fitSlider, 0);
     if (state.preview && state.preview.gaps.length) {
       html += '<section class="panel" style="margin-top:16px"><h2>' + T('Why some slots are still empty') + '</h2>' + state.preview.gaps.map(function (g) {
         var s = S.get('services', g.serviceId);
@@ -618,6 +627,7 @@
         });
       },
       move: function (el) { state.start += +el.dataset.d; state.preview = null; H.render(); },
+      cols: function (el) { state.cols = +el.dataset.n; state.preview = null; H.render(); },
       hideslot: function (el) { if (state.hidden.indexOf(el.dataset.v) < 0) state.hidden.push(el.dataset.v); H.render(); },
       showslot: function (el) { var v = el.dataset.v; state.hidden = v ? state.hidden.filter(function (x) { return x !== v; }) : []; H.render(); },
       teammove: function (el) {

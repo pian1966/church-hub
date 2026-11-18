@@ -962,6 +962,7 @@ var Store = (function () {
           want['archive:all'] = c('archive').where('access', '==', 'all');
           want['archive:me'] = c('archive').where('shownTo', '==', me);
           if (is('pastor')) want['archive:office'] = c('archive').where('access', '==', 'office');
+          if (is('pastor') && st.seniorPastorId === me) want['archive:private'] = c('archive').where('access', '==', 'private');   // staff contracts and appraisals
           myBodies().forEach(function (g) { want['archive:g:' + g] = c('archive').where('bodyId', '==', g); });
         }
       }
@@ -1149,6 +1150,14 @@ var Store = (function () {
       [['leaderBodies', /^leaderBodies/], ['archive', /^archive:/], ['loans', /^loans/]].forEach(function (x) {   // each asked for in parts (plan(), extras())
         var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
         db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
+      });
+      // An Archive record saved on this device shows straight away, even before (or without) a list that brings it back
+      // from the database – e.g. a document only the Senior Pastor may see. A record deleted here stays gone.
+      Object.keys(local).forEach(function (k) {
+        var bits = k.split('/'); if (bits.length !== 2 || bits[0] !== 'archive') return;
+        var there = db.archive.some(function (r) { return r.id === bits[1]; });
+        if (local[k] === null) { if (there) db.archive = db.archive.filter(function (r) { return r.id !== bits[1]; }); }
+        else if (local[k] && !there) { var o = copy(local[k]); o.id = bits[1]; db.archive.push(o); }
       });
       var cgs = merged('careGroupsAll', 'careGroups');   // my own groups, and every group when Settings allows (careAll)
       db.careGroups = Object.keys(cgs).map(function (id) { var o = copy(cgs[id]); o.id = id; return o; });

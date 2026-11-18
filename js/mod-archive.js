@@ -408,6 +408,7 @@
         var u = me(), rec = A.clean({ id: old ? old.id : S.uid('ar'), createdAt: old && old.createdAt, title: val('ar-title'), cat: val('ar-cat'), date: val('ar-date'), note: val('ar-note'), access: access, bodyId: val('ar-body'),
             aboutId: about ? about.id : '', aboutName: about ? H.name(about) : '', shownTo: !!about && document.getElementById('ar-shown').checked, link: A.link(typed),
             displayOnApplication: administrator() ? !!document.getElementById('ar-app-doc').checked : !!(old && old.displayOnApplication), file: old && old.file, by: old ? old.by : (u ? H.name(u) : '') });
+        if (!administrator() && !A.sees(rec, who())) return bad(T('You wouldn’t be able to see this record yourself. Under “Who can see it”, choose a group you belong to.'));
         if (old && old.displayOnApplication && !administrator() &&
           (rec.title !== old.title || rec.date !== old.date || rec.link !== old.link || !!file)) {
           return bad(T('Only an Administrator can change a document displayed on the membership form.'));

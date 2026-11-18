@@ -32,4 +32,4 @@ Plain HTML/CSS/JavaScript, no build step; Node 22.
 - The browser test: `npm i --no-save playwright@1 && npx playwright install chromium`, then `node tests/app.test.js`.
 - The security rules test needs the Firestore emulator (Java): `npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13`,
   then `npx firebase emulators:exec --only firestore --project demo-church-hub "node tests/rules.test.mjs"`.
-GitHub runs all of them on every push; a pull request should be green before it is merged.
+GitHub runs all of them once a pull request is open (and on main after each merge), not on a branch push alone: open the pull request to have your branch tested. It must be green before it is merged.

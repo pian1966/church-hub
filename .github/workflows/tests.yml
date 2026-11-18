@@ -1,9 +1,14 @@
-# Runs Church Hub's tests on GitHub after every push: rostering rules, the database security rules
+# Runs Church Hub's tests on GitHub for every pull request, and on main after each merge: rostering rules, the database security rules
 # (against Google's Firestore emulator) and the app in a browser as every role. Made-up people only.
 # When a change only touches the public website (site/index.html) or the documentation (docs/, *.md), the tests are
 # skipped: the check still runs and turns green in seconds, so "Protect main" lets the pull request merge.
+# A branch is tested once its pull request is open (not on every push as well, which ran the same tests twice at once);
+# main is tested again after each merge, in case two pull requests that passed on their own don't work together.
+# The test browser and the database emulator are kept between runs (cached), so they aren't downloaded every time.
 name: Tests
-on: [push, pull_request]
+on:
+  push: { branches: [main] }
+  pull_request:
 permissions: { contents: read, pull-requests: read }
 jobs:
   test:
@@ -101,6 +106,14 @@ jobs:
       - if: steps.changes.outputs.skip != 'true'
         name: Subscription (coffee prices, payment holidays, the prayer circle)
         run: node tests/coffee.test.js
+      - if: steps.changes.outputs.skip != 'true'
+        name: Keep the test browser and the database emulator between runs
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            ~/.cache/firebase/emulators
+          key: test-tools-playwright-1.64-firebase-15
       - if: steps.changes.outputs.skip != 'true'
         name: Install test tools
         run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13 playwright@1.64

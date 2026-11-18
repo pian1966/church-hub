@@ -1726,6 +1726,8 @@ I18n.add('st', {
     "When someone applies to become a Church Partner, Administrators and Pastors now also get a message in Messages.": "Ha motho a etsa kopo ya ho ba Molekane wa Kereke, Batsamaisi le Baruti jwale ba fumana le molaetsa ho Melaetsa.",
     "Services are now shown in time order (8am, 10am, 5pm) and in their own colours on the roster, My serving and Settings.": "Ditshebeletso jwale di bontshwa ka tatellano ya nako (8 hoseng, 10 hoseng, 5 mantsiboya) le ka mebala ya tsona lenaneng, ho Tshebeletso ya ka le ho Disetting.",
     "Rosters → Teams: use − and + to choose how many people a position needs at each service, for example 2 on the sound desk.": "Lenane → Dihlopha: sebedisa − le + ho kgetha hore boemo bo hloka batho ba bakae tshebeletsong ka nngwe, mohlala 2 deskeng ya modumo.",
+    "Go to a date": "Eya letsatsing",
+    "Rosters: choose a date beside Earlier and Later to jump straight to the services that need filling then.": "Lenane: kgetha letsatsi pela Pejana le Hamorao ho ya hang ditshebeletsong tse hlokang ho tlatswa ka nako eo.",
     "Take off the roster": "Tlosa lenaneng",
     "Mark “can’t make it”": "Tshwaya “a ke ke a kgona”",
     "Mark accepted": "Tshwaya e amohetswe",

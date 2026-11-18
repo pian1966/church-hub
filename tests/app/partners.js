@@ -66,7 +66,8 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:appdocssave"]');
   check(/must start with https/.test(await s.page.textContent('#ap-docerr')), 'Documents to read: a link must be a web address');
   await s.page.fill('.ap-du[data-i="1"]', 'https://example.org/faith'); await s.page.fill('#ap-loytext', '');
-  await s.page.click('[data-act="people:appdocssave"]'); await s.settle(); docs = await s.docsNow();
+  await s.page.click('[data-act="people:appdocssave"]'); await s.settle();
+  for (let i = 0; i < 20; i++) { docs = await s.docsNow(); const x = docs['settings/church'].partnerApp || {}; if ((x.links || []).length === 2 && x.loyalty === '') break; await s.page.waitForTimeout(150); }   // wait for the save (it failed now and then)
   const pa = docs['settings/church'].partnerApp;
   check(pa.links.length === 2 && pa.links[1].label === 'Statement of faith' && pa.loyalty === '', 'saved: the constitution and the statement of faith; no declaration of loyalty when left empty');
   await s.go('settings/application');

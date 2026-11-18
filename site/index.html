@@ -167,6 +167,11 @@ section { padding: 96px 0; }
 
 /* Features: a list grouped by what a church does, not a grid of identical cards */
 .features { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 64px; }
+.modules { margin-top: 48px; padding: 28px 32px; border-radius: 20px; background: #fff; border: 1px solid #E7E1DA; display: grid; grid-template-columns: 1.1fr 1fr; gap: 28px; align-items: center; }
+.modules h3 { margin: 0 0 8px; font-size: 1.4rem; } .modules p { margin: 0; color: var(--ink-2); }
+.modules .chips { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.modules .chips li { padding: 7px 14px; border-radius: 999px; background: #FFF1E6; color: #B8430A; font-weight: 600; font-size: .95rem; }
+@media (max-width: 760px) { .modules { grid-template-columns: 1fr; padding: 22px; } }
 .group { padding: 30px 0; border-top: 2px solid var(--ink); }
 .group h3 { font-size: 1.5rem; display: flex; align-items: center; gap: 12px; }
 .group h3 svg { flex: none; }
@@ -397,6 +402,7 @@ footer a { color: var(--ink-2); }
         <h3><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#E8590C" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.6-3.6 3.2-5.5 6.5-5.5s5.9 1.9 6.5 5.5"/><path d="M16 4.6a3.5 3.5 0 0 1 0 6.8M18.5 14.8c1.7.8 2.7 2.5 3 5.2"/></svg>People and care</h3>
         <ul>
           <li><strong>A directory that makes sense.</strong> Households kept together, consent recorded for each person, name badges printed on your own labels.</li>
+          <li><strong>Membership applications</strong> filled in on a phone, with the pastors told in Messages and one tap to accept.</li>
           <li><strong>Find anyone in everyday words,</strong> typed or spoken, with optional AI search. Duplicates are spotted as you type.</li>
           <li><strong>Pastoral notes stay with the pastors,</strong> and children's medical notes with the children's ministry.</li>
         </ul>
@@ -407,6 +413,7 @@ footer a { color: var(--ink-2); }
           <li><strong>Rosters that keep families together</strong> and skip the Sundays people are away.</li>
           <li><strong>Communion roles only on communion Sundays,</strong> set for each service.</li>
           <li><strong>Requests arrive in Messages</strong> to accept or decline, and coordinators can send a gentle reminder.</li>
+          <li><strong>Put down the wrong name?</strong> Change it in one tap, and the first person is told.</li>
         </ul>
       </div>
       <div class="group">
@@ -425,6 +432,16 @@ footer a { color: var(--ink-2); }
           <li><strong>A church library</strong> with loans, returns and reminders.</li>
         </ul>
       </div>
+    </div>
+
+    <div class="modules">
+      <div>
+        <h3>Use only what you need.</h3>
+        <p>Church Hub is built in parts. Start with People and Rosters, then switch on Groups, Messages, Leave, the Library or Archives when your church is ready – each one a single switch in Settings. What you don't use stays out of the way, so a small church sees a small, simple app.</p>
+      </div>
+      <ul class="chips" aria-label="The parts of Church Hub">
+        <li>People</li><li>Rosters</li><li>Groups</li><li>Messages</li><li>Staff leave</li><li>Library</li><li>Archives</li><li>Leadership</li><li>Privacy</li><li>Ask in your own words</li>
+      </ul>
     </div>
 
     <div class="showcase">

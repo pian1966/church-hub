@@ -15,7 +15,6 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - ⬜ Re-publish the database rules (FIREBASE-SETUP step 7) after 0.69 – Archive security fixes (or let the "Publish database rules" workflow do it)
 - ⬜ Before releasing to other churches: translate the 21 extra languages in one go (`docs/RELEASE.md`; Home counts what is waiting)
 - ⬜ Decide what "Ministry roles the church uses" (Settings → Terminology) should do – it is saved but nothing uses it yet
-- ⬜ tests/app/partners.js "no declaration of loyalty when left empty" fails now and then (timing) – make it wait for the save
 - ⬜ Fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate staff screens too
 
 **Church to do – people and Leave**
@@ -48,7 +47,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 ## Phase 2 – People and pastoral care
 Members see their own family (and give consent for their children), smart lists (leave out people who have died), follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
 - ⬜ Save searches as smart lists; use them for emails and SMS
-- ⬜ Partnership applications: an email to Administrators and Pastors when one arrives (needs a Firebase function); apply without an account yet (email link first); print badges from the Android app
+- ⬜ Partnership applications: an email to Administrators and Pastors when one arrives, as well as the message in Messages (needs a Firebase function); apply without an account yet (email link first); print badges from the Android app
 - ⬜ Ask in your own words: more kinds of questions (leave, care and midweek groups, messages), and save an asked question as a smart list
 - ⬜ Care board – like the whiteboard in Myra's office: a board of people who need care (ill, in hospital, bereaved, newcomers,
   struggling…). Adding someone sends a message through to the Care Group leader(s) of that person's Care Group (and the

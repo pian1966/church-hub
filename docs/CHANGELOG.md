@@ -461,3 +461,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   waits for "Add person", so half-typed newcomers aren't created. The engine in `js/app.js` now works in a pop-up whose form has
   `data-autoscope`. What's new.
 - ✅ 17 Nov 2026 (0.87.5): Advanced search filters redesigned – the green + and red − on every row (too much like Elvanto) replaced by a quiet × that turns soft red only when touched, and one dashed "Add a filter" button under the last filter; on phones each filter is a soft card (field and × on top, then how to compare, then the value); new filters slide in, removed ones fold away (none of that when the phone asks for less movement)
+- ✅ 18 Nov 2026 (0.87.6): the app icon (phone home screen, computer desktop, browser tab, Android app) now has the same thin, round-ended cross as the mark inside the app, in the same proportions

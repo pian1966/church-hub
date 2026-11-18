@@ -4,6 +4,7 @@ I18n.add('st', {
   mon: ["Phe", "Kol", "Ube", "Mme", "Mot", "Jan", "Upu", "Phat", "Lwe", "Dip", "Ngw", "Tsh"],
   dow: ["Son", "Mma", "Bed", "Rar", "Ne", "Hla", "Moq"],
   words: {
+    "The Church Hub icon on your phone or computer now has the same thin cross as inside the app.": "Letshwao la Church Hub mohaleng kapa khomputareng ya hao jwale le na le sefapano se sesesane se tshwanang le se ka hara app.",
     "Advanced search looks calmer: each filter has a small × to remove it, and one Add a filter button sits underneath.": "Patlo e tswetseng pele e shebahala e kgutsitse: sefilthara ka seng se na le × e nyane ho se tlosa, mme konopo e le nngwe ya Eketsa filthara e ka tlase.",
     "Library: if you have borrowed something, the Library now opens on Items I have borrowed; tap Library for the whole catalogue.": "Laeborari: haeba o adimile ho hong, Laeborari jwale e bula ho Dintho tseo ke di adimileng; tobetsa Laeborari ho bona lethathamo lohle.",
     "People: each field on a person’s page and in Edit details now has a small icon, so you can see at a glance what it asks.": "Batho: lebala ka leng leqepheng la motho le ho Fetola dintlha jwale le na le letshwao le lenyane, hore o bone kapele hore le botsa eng.",

@@ -607,7 +607,7 @@ console.log('Leadership groups, the Archive and the Library');
 // For these: Andile (a Pastor, p03) is the Senior Pastor, and Sipho (Roster coordinator, p05) is a librarian
 await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').set({ seniorPastorId: 'p03', librarianIds: ['p05'] }, { merge: true }); });
 const rector = env.authenticatedContext('uid-rector', { email: 'andile@example.com', email_verified: true }).firestore();
-await t('brochures: the Rector (Senior Pastor) may read the church's brochure wording to print it, but not change it; other Pastors may not', async () => {
+await t('brochures: the Rector (Senior Pastor) may read the church’s brochure wording to print it, but not change it; other Pastors may not', async () => {
   await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('brochures/church').set({ design: {}, members: {} }); });
   await can(read(rector, 'brochures/church')); await cannot(read(db.pastor, 'brochures/church'));
   await cannot(rector.doc('brochures/church').set({ design: { accent: '#000000' } })); await cannot(rector.doc('brochures/other').get());

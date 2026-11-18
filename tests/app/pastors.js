@@ -53,6 +53,12 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); await finish(s);
   s = await session('thandi.mokoena@example.com', docs); await s.go('home');
   check(await s.page.evaluate(() => Hub.can('privacy.manage') && Hub.can('access.manage') && Hub.can('settings.manage')), 'the Senior Pastor has her own abilities');
+  await s.go('about');
+  check(!!(await s.page.$('#about-brochures')), 'the Rector sees the brochures under About');
+  await s.go('about/brochure/churches'); await s.page.waitForSelector('#bro-frame');
+  check(!!(await s.page.$('[data-act="about:broprint"]')) && !(await s.page.$('[data-act="about:broedit"]')) && !(await s.page.$('#bro-colour')),
+    '…and can open and print them, but not change their wording, colour or font');
+  check(await s.page.evaluate(() => Store.isRector() && Store.brochures() !== null && Store.setBrochures({ members: { texts: {} } }) === false), 'the Rector reads the brochure wording but can’t save it');
   await s.page.evaluate(() => Store.setSettings({ seniorPastorId: 'p03' }, 'x')); await s.settle(); await s.page.waitForTimeout(300);
   await s.page.evaluate(() => Store.setSettings({ seniorCan: ['settings'] }, 'x')); await s.settle(); await s.page.waitForTimeout(300);
   docs = await s.docsNow();
@@ -60,6 +66,8 @@ module.exports = async function (ctx) {
   check((await s.denied()).length === 2, 'those two refused changes are the only things refused'); await s.close();
   s = await session('pieter.vanwyk@example.com', docs); await s.go('home');
   check(await s.page.evaluate(() => Hub.can('leave.manage') && !Hub.can('settings.manage') && !Hub.can('privacy.manage')), 'an Assistant Pastor has only the Assistant Pastors’ ticks');
+  await s.go('about');
+  check(!(await s.page.$('#about-brochures')) && await s.page.evaluate(() => !Store.isRector() && Store.brochures() === null), 'an Assistant Pastor doesn’t see the brochures');
   await finish(s);
   s = await session('linda.pillay@example.com', docs); await s.go('settings/pastors');
   await s.page.selectOption('#st-senior', ''); await s.page.waitForTimeout(800); await s.settle(); await s.page.waitForTimeout(300);

@@ -819,8 +819,10 @@ The wedding anniversary sits right under marital status.
   a language picker, colour (Church Hub orange, the church's colour from Settings → Colours, or any colour) and font (a short
   list of Google Fonts).
 - The church's changes are stored separately in `brochures/church`, not in the settings document. `Store.plan()` loads it only
-  for an Administrator, `Store.isAdmin()` excludes "View as", and `Store.setBrochures()` checks the role before saving. Firestore
-  rules allow only Administrators to read or write this document. Older `settings/church.brochures` data is moved to the private
+  for an Administrator, `Store.isAdmin()` excludes "View as", and `Store.setBrochures()` checks the role before saving. The Rector
+  (Senior Pastor, `Store.isRector()`, not "View as") may read it too – asked for in `extras()` once the settings say who the Senior
+  Pastor is – so About shows them the brochures to open and print, without Edit, colour or font. Firestore rules allow
+  Administrators to read and write this document, and the Rector (`rector()`) to read it. Older `settings/church.brochures` data is moved to the private
   document by an Administrator's first load; while it remains there, non-Administrators (including the robot) cannot read settings.
 - `BrochureKit.tidy` keeps `design { accent, font }` and, per brochure,
   `texts { key: { o: Church Hub's original text, h: their wording } }` and `hidden { key: original text }`. Keys are places

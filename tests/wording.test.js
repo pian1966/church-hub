@@ -46,5 +46,8 @@ ok(W.changer({})('Worship team') === 'Worship team', 'as Church Hub comes: Worsh
 const fel = { wording: { custom: { groups: ['Fellowship', 'Fellowships'] } } };
 ok(W.words(fel).groups.join() === 'Fellowship,Fellowships' && W.changer(fel)('Message groups · Groups · Care Groups') === 'Message groups · Groups · Care Groups', 'the church’s word for the Groups menu is used by the menu only, not changed in other texts');
 
+const vg = W.changer({ wording: { custom: { verger: ['Sexton', 'Sextons'] } } });
+ok(vg('Verger · 2 Vergers needed') === 'Sexton · 2 Sextons needed' && W.changer({ wording: { set: 'catholic' } })('Verger') === 'Sacristan' && W.changer({})('Verger') === 'Verger', 'Verger: the church can call it something else (Catholic: Sacristan)');
+
 if (fails) { console.log('\n' + fails + ' wording test(s) FAILED'); process.exit(1); }
 console.log('\nAll wording tests passed');

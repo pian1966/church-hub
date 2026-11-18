@@ -15,7 +15,7 @@
  * Holy Communion: a regular slot's `communion` says which weeks of the month it is celebrated there – 'every' (or missing,
  * apart from the church's usual three in DEFAULT_COMMUNION) = every week, [] = never, or e.g. [1] (the 1st Sunday), [2, 4], ['last']. A dated service can set `communion: true/false`
  * for a one-off change (Christmas, a fifth Sunday, a visiting bishop). Positions for communion (`communion: true`, or a name
- * with "communion" in it, such as Servers (Collection & Communion)) are only rostered at services that have communion.
+ * with "communion" in it, such as Communion Servers) are only rostered at services that have communion.
  */
 var Serving = (function () {
   'use strict';
@@ -189,12 +189,12 @@ var Serving = (function () {
   var ALL = ['08:00', '10:00', '17:00'], EIGHT = ['08:00'], TEN = ['10:00'], MEMORIAL = ['memorial'];   // memorial and funeral teas: not a Sunday service
   // [department id, department, [position id, position, people needed, services (all when left out), only when there is communion]]
   var DEPARTMENTS = [
-    ['dept-operational', 'Service Leading', [['pos-host', 'Host', 1], ['pos-preaching', 'Preaching', 1], ['pos-reading', 'Reading', 1], ['pos-prayer', 'Prayer', 1]]],
+    ['dept-operational', 'Service Leading', [['pos-host', 'Host', 1], ['pos-verger', 'Verger', 1], ['pos-preaching', 'Preaching', 1], ['pos-reading', 'Reading', 1], ['pos-prayer', 'Prayer', 1]]],
     ['dept-extra', 'Extra Slot', [['pos-comm-lead', 'Communion – Leading', 1, null, true], ['pos-comm-provide', 'Communion – Providing', 2, null, true], ['pos-interview', 'Interview', 1],
       ['pos-missions', 'Missions', 1], ['pos-doctrine', 'Doctrine Slot', 1]]],
-    ['dept-hospitality', 'Hospitality', [['pos-welcoming', 'Welcoming & Service Assistant', 2], ['pos-tea', 'Tea Duty', 2], ['pos-eats', 'Providing Eats', 1, EIGHT],
-      ['pos-servers', 'Servers (Collection & Communion)', 5, TEN, true]]],
-    ['dept-music', 'Music', [['pos-singers', 'Singers', 2], ['pos-guitar', 'Guitar', 1], ['pos-bass', 'Bass', 1], ['pos-drums', 'Drums', 1], ['pos-piano', 'Piano', 1],
+    ['dept-hospitality', 'Hospitality', [['pos-welcoming', 'Welcoming & Service Assistant', 2], ['pos-ushers', 'Ushers', 2], ['pos-tea', 'Tea Duty', 2], ['pos-eats', 'Providing Eats', 1, EIGHT],
+      ['pos-collection', 'Collection Servers', 2, TEN], ['pos-servers', 'Communion Servers', 3, TEN, true]]],
+    ['dept-music', 'Music', [['pos-singers', 'Singers', 2], ['pos-guitar', 'Guitar', 1], ['pos-bass', 'Bass', 1], ['pos-drums', 'Drums', 1], ['pos-piano', 'Piano', 1], ['pos-recorded', 'Recorded Music', 1],
       ['pos-sound', 'Sound Desk', 1], ['pos-streaming', 'Online Streaming', 1, TEN]]],
     ['dept-teens', 'Teens', [['pos-teens-teacher', 'Teens’ Church Teacher', 1, EIGHT], ['pos-teens-assistant', 'Teens’ Church Assistant', 1, EIGHT]]],
     ['dept-children', 'Children', [['pos-children-teacher', 'Children’s Church Teacher', 1, EIGHT], ['pos-children-assistant', 'Children’s Church Assistant', 1, EIGHT]]],
@@ -204,20 +204,25 @@ var Serving = (function () {
   // Elvanto's names that differ from Church Hub's
   // Departments with another name earlier (Church Hub) or in Elvanto: their positions go in the same team
   var DEPT_ALIASES = { operational: 'service leading', service: 'service leading' };
-  var ALIASES = { guitarists: 'guitar', vocal: 'singers', vocals: 'singers', welcoming: 'welcoming & service assistant', servers: 'servers (collection & communion)', 'memorial duties': 'memorial teas' };
+  var ALIASES = { guitarists: 'guitar', vocal: 'singers', vocals: 'singers', welcoming: 'welcoming & service assistant', servers: 'communion servers', 'servers (collection & communion)': 'communion servers', 'memorial duties': 'memorial teas' };
   function norm(s) { return String(s || '').trim().toLowerCase().replace(/[’']/g, '').replace(/[–-]/g, ' ').replace(/\s+/g, ' '); }
+  // Positions that became something else: the old one is renamed, keeping its people and turns (and what is new is added)
+  var RENAMED = { 'servers (collection & communion)': 'Communion Servers' };
   /**
    * What to add so the church's departments and positions are all there: teams and positions missing by name are added;
-   * a team that already has the department's name is used for it (nothing existing is changed or removed).
-   * → { teams: [new teams], positions: [new positions] }
+   * a team that already has the department's name is used for it. Nothing is removed; a position in RENAMED is renamed.
+   * → { teams: [new teams], positions: [new positions], renames: [{ id, from, to }] }
    */
   function missing(teams, positions) {
-    var out = { teams: [], positions: [] };
+    var out = { teams: [], positions: [], renames: [] };
     DEPARTMENTS.forEach(function (d) {
       var t = (teams || []).filter(function (x) { var n = norm(x.name); return (DEPT_ALIASES[n] || n) === norm(d[1]); })[0];
       if (!t) { t = { id: d[0], name: d[1] }; out.teams.push(t); }
       d[2].forEach(function (p) {
-        var have = (positions || []).some(function (x) { return x.teamId === t.id && norm(x.name) === norm(p[1]); });
+        var mine = (positions || []).filter(function (x) { return x.teamId === t.id; });
+        var have = mine.some(function (x) { return norm(x.name) === norm(p[1]); });
+        var old = !have && mine.filter(function (x) { return norm(RENAMED[norm(x.name)] || '') === norm(p[1]); })[0];
+        if (old) { out.renames.push({ id: old.id, from: old.name, to: p[1] }); return; }
         if (!have) out.positions.push(Object.assign({ id: p[0], teamId: t.id, name: p[1], needed: p[2], times: (p[3] || []).slice() }, p[4] ? { communion: true } : {}));   // [] = every service
       });
     });
@@ -226,8 +231,8 @@ var Serving = (function () {
   function timeLabel(t, settings) { return slotLabel(t, settings); }
   /** A position by name as Elvanto writes it ("Guitarists", "Communion - Leading") among Church Hub's positions. */
   function findPosition(name, positions) {
-    var n = norm(name); n = norm(ALIASES[n] || n);
-    return (positions || []).filter(function (x) { return norm(x.name) === n; })[0] || null;
+    var n = norm(name), a = norm(ALIASES[n] || n);
+    return (positions || []).filter(function (x) { return norm(x.name) === a; })[0] || (positions || []).filter(function (x) { return norm(x.name) === n; })[0] || null;
   }
 
   /* ---------- special services (Settings → Services that need a roster → Add a special service) ---------- */

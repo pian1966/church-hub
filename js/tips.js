@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.88';
+  var NEWS_FOR = '0.89';
   var NEWS = [
+    { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters → Teams now offers a Verger, Ushers and Recorded Music, and Collection Servers and Communion Servers as two separate positions – tap Add them.') },
     { date: '2026-11-18', who: ['staffwork'], app: 'people', text: TX('You can now drag the columns in Advanced search to put them in the order you want.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: tap a name and choose Change person to swap it in one go – the first person is told, and a message they haven’t opened is taken back.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters now show only the departments and positions needed at the services you’re looking at.') },

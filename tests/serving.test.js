@@ -41,7 +41,7 @@ const st = S.structure(ten, [{ id: 't', name: 'A' }, { id: 'u', name: 'B' }], [h
 ok(st.length === 1 && st[0].positions.map(p => p.id).join() === 'h', 'what a volunteer sees at 10am: only departments with positions there');
 ok(S.structure(mem, [{ id: 't' }, { id: 'u' }], [host, creche, teas]).map(x => x.team.id).join() === 'u', 'and at a memorial only memorial teas');
 const m = S.missing([{ id: 'old', name: 'Operational' }], []);
-ok(!m.teams.some(t => t.name === 'Service Leading') && m.positions.filter(p => p.teamId === 'old').length === 4, 'the department once called Operational (Elvanto: Service) is now Service Leading – not added twice');
+ok(!m.teams.some(t => t.name === 'Service Leading') && m.positions.filter(p => p.teamId === 'old').length === 5, 'the department once called Operational (Elvanto: Service) is now Service Leading – not added twice');
 
 console.log('Holy Communion: which Sundays, one-off changes, and which positions');
 const cs = {};   // the usual services: 10am on the 1st Sunday, 8am and 5pm on the 2nd
@@ -60,7 +60,13 @@ const tenAm = S.slots(cs)[1];
 ok(JSON.stringify(S.toggleCommunionWeek(tenAm, 3)) === '[1,3]' && JSON.stringify(S.toggleCommunionWeek(tenAm, 1)) === '[]' && S.toggleCommunionWeek(tenAm, 'every') === 'every' && JSON.stringify(S.toggleCommunionWeek(tenAm, 'never')) === '[]', 'tapping weeks on and off');
 ok(S.toggleCommunionWeek({ communion: [1, 2, 3, 4] }, 5) === 'every' && JSON.stringify(S.toggleCommunionWeek({ communion: 'every' }, 2)) === '[2]', 'all five weeks is every week; from every week, one tap picks that week');
 ok(S.nextCommunions(tenAm, '2026-11-16', 3).join() === '2026-12-06,2027-01-03,2027-02-07' && S.nextCommunions({ day: 0, communion: [] }, '2026-11-16').length === 0, 'the next communion Sundays');
-ok(S.isCommunion({ name: 'Communion – Providing' }) && S.isCommunion({ name: 'Servers (Collection & Communion)' }) && !S.isCommunion({ name: 'Tea Duty' }) && !S.isCommunion({ name: 'Servers (Collection & Communion)', communion: false }) && S.isCommunion({ name: 'Chalice bearers' }) && S.isCommunion({ name: 'Ushers', communion: true }), 'communion positions: by name until ticked or unticked');
+ok(S.isCommunion({ name: 'Communion – Providing' }) && S.isCommunion({ name: 'Communion Servers' }) && !S.isCommunion({ name: 'Collection Servers' }) && !S.isCommunion({ name: 'Tea Duty' }) && !S.isCommunion({ name: 'Servers (Collection & Communion)', communion: false }) && S.isCommunion({ name: 'Chalice bearers' }) && S.isCommunion({ name: 'Ushers', communion: true }), 'communion positions: by name until ticked or unticked');
+const hosp = S.missing([{ id: 'h', name: 'Hospitality' }, { id: 'm', name: 'Music' }], [{ id: 'old-srv', teamId: 'h', name: 'Servers (Collection & Communion)', communion: true }]);
+ok(hosp.renames.length === 1 && hosp.renames[0].id === 'old-srv' && hosp.renames[0].to === 'Communion Servers' && !hosp.positions.some(p => p.name === 'Communion Servers')
+  && ['Collection Servers', 'Ushers', 'Recorded Music'].every(n => hosp.positions.some(p => p.name === n)), 'the old Servers (Collection & Communion) becomes Communion Servers (people kept); Collection Servers, Ushers and Recorded Music are added');
+ok(!hosp.positions.find(p => p.name === 'Collection Servers').communion, 'collection servers are needed with or without communion');
+ok(S.missing([{ id: 'h', name: 'Hospitality' }], [{ id: 'x', teamId: 'h', name: 'Communion Servers' }, { id: 'y', teamId: 'h', name: 'Servers (Collection & Communion)' }]).renames.length === 0, 'nothing renamed when Communion Servers is already there');
+ok(S.findPosition('Servers (Collection & Communion)', [{ id: 'a', name: 'Communion Servers' }]).id === 'a' && S.findPosition('Servers (Collection & Communion)', [{ id: 'b', name: 'Servers (Collection & Communion)' }]).id === 'b', 'Elvanto’s combined servers: Communion Servers, or the old position if not renamed yet');
 ok(S.missing([], []).positions.filter(p => p.communion).map(p => p.id).join() === 'pos-comm-lead,pos-comm-provide,pos-servers', 'the usual communion positions are marked');
 
 if (fails) { console.log('\n' + fails + ' serving test(s) FAILED'); process.exit(1); }

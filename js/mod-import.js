@@ -302,6 +302,7 @@
           var addD = Serving.missing(S.list('teams'), S.list('positions'));
           if (addD.positions.length) {
             addD.teams.forEach(function (t) { S.put('teams', t); }); addD.positions.forEach(function (x) { S.put('positions', x); });
+            addD.renames.forEach(function (r) { var q = S.get('positions', r.id); if (q) S.put('positions', Object.assign(JSON.parse(JSON.stringify(q)), { name: r.to })); });
             S.audit('Set up the church’s departments for the Elvanto import: ' + addD.teams.length + ' departments and ' + addD.positions.length + ' positions added', 'teams');
           }
         }

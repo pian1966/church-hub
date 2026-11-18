@@ -94,7 +94,7 @@ async function icon(Comp, color, px = 256) {
   mark(s, 0.8, 1.1, 0.95);
   s.addText('Church Hub', { placeholder: 'title' });
   s.addText('Every church, however small, deserves great church software.', { placeholder: 'body' });
-  T(s, 'Made at Christ Church Howick, South Africa – for every nation, people and language', { x: 0.8, y: 5.9, w: 7, h: 0.5, fontSize: 14, color: HEX.nightMuted });
+  T(s, 'Made for every church, in every nation, in (nearly) every language', { x: 0.8, y: 5.9, w: 7, h: 0.5, fontSize: 14, color: HEX.nightMuted });
   phone(s, 'm-home.jpg', 9.35, 0.75, 6.0, 'Church Hub Home on a phone');
   s.addNotes('Welcome. Church Hub is church management software built by a church, for every church – however small, wherever it is, whatever it can afford. In the next few minutes: what a church management system is, why your church needs one, why we built our own, and what it can do for you.');
 

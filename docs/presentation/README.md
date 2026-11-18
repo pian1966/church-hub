@@ -23,6 +23,13 @@ price and how to move across. Speaker notes are on every slide.
 Design: Church Hub's own colours (orange `E8590C`, dark `231E1A`) and font (Inter, which Google Slides has too). Animation is
 kept to the three clips, on the screens that matter most; there are no slide transitions or build animations.
 
+## Keeping it up to date
+The `.pptx` here is the master copy. It is rebuilt in the same pull request as any change that alters what the slides say,
+and at least whenever the middle version number goes up; the last slide says which version it describes
+("Slides for Church Hub 0.92.0 · 18 Nov 2026"), so any copy can be checked against **About** in the app. After each merge,
+GitHub puts the new slides into the Google Slides copy by itself (`docs/SLIDES-AUTOPUBLISH.md`) – don't edit that copy by
+hand, it is replaced; make your own copy (File → Make a copy) to tweak for a particular talk.
+
 ## Making it again after Church Hub changes
 ```bash
 python3 -m http.server 8765               # in the repository folder (another terminal)

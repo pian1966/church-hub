@@ -1,6 +1,7 @@
 // Church Hub – conference presentation. Builds church-hub-presentation.pptx (16:9) from the screenshots and clips in img/.
 // Run: node build.js   (needs pptxgenjs, react-icons, react, react-dom, sharp). See README.md; img/ comes from capture.py.
 const path = require('path');
+const fs = require('fs');
 const pptxgen = require('pptxgenjs');
 const React = require('react');
 const ReactDOMServer = require('react-dom/server');
@@ -363,6 +364,11 @@ async function icon(Comp, color, px = 256) {
       T(s, qr[i][1], { x: x + 0.15, y: 3.8, w: 2.0, h: 0.4, fontSize: 16, bold: true, align: 'center' });
       T(s, qr[i][2], { x: x + 0.1, y: 4.25, w: 2.1, h: 0.8, fontSize: 11, color: HEX.muted, align: 'center' });
     }
+  }
+  {   // which version of Church Hub these slides describe, so a copy can be checked against About in the app
+    const v = (fs.readFileSync(path.join(__dirname, '../../js/version.js'), 'utf8').match(/version:\s*'([\d.]+)'/) || [])[1] || '';
+    const when = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Johannesburg' });
+    T(s, 'Slides for Church Hub ' + v + ' · ' + when, { x: 8.0, y: 6.85, w: 4.9, h: 0.35, fontSize: 10, color: HEX.nightInk, align: 'right' });
   }
   s.addNotes('Thank you. Scan the code to try the demo now – a whole church of made-up people, nothing to install. The website has the price, the setup guide and the answers to the questions churches ask. Every church, however small, deserves great church software.');
 

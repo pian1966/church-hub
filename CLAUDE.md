@@ -40,7 +40,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Home: What’s new and Did you know? (tips by access level; add news to `NEWS` with its date) | `js/tips.js`, `js/app.js` (`tipsCard`, `homeTags`) | `js/i18n/tips.js` | `tests/tips.test.js`, `tests/app/records.js` |
 | Demo data | `js/sample.js` | – | |
 | Setup tool: sets up Church Hub at a new church from nothing (Google account, the church's copy on GitHub, Firebase, first sign-in, the settings before anyone joins) and keeps a come-back-later list of everything else a church can switch on, plus what's coming. English, one page outside the app | `site/setup.html` (the screens), `site/setup-kit.js` (the steps, the list, the rules) | – (English) | `tests/setup-kit.test.js`, `tests/versions.test.js` |
-| Conference presentation (17 slides, speaker notes, three GIF clips; Google Slides via Drive upload) – remake after big changes | `docs/presentation/build.js`, `docs/presentation/capture.py` | – (English) | |
+| Conference presentation (17 slides, speaker notes, three GIF clips; the last slide names the version it describes). The .pptx is the master copy; GitHub puts each new one into the Google Slides copy (`docs/SLIDES-AUTOPUBLISH.md`) | `docs/presentation/build.js`, `docs/presentation/capture.py`, `tools/publish-slides.mjs` | – (English) | |
 | Public website for other churches (features, languages, the coffee price and prayer circle – prices copied from `js/coffee.js`; one file, English, not part of the app or its version) | `site/index.html` | – | |
 
 The browser test is `node tests/app.test.js` (needs Playwright); it starts the browser and runs each part in `tests/app/` in turn.
@@ -99,6 +99,10 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.
+- Presentation: keep it up to date. When a change alters anything the slides or their speaker notes say (or adds a feature
+  worth showing), change `docs/presentation/build.js` and rebuild the .pptx in the same pull request (README there; new
+  screenshots with `capture.py` when screens changed); when the middle number goes up, rebuild it anyway so its last slide
+  names the new version. Never edit the Google Slides copy: it is replaced from the .pptx after each merge.
 - **Setup tool** (`site/setup.html`, `site/setup-kit.js`): keep it in step with the app, in the same pull request.
   A new part of the app (a new `Hub.register` id) needs a `GROW` item (or a `STEPS` entry) with it in `mods`, or a `NOT_SETUP` line
   saying why – `node tests/setup-kit.test.js` fails until it has one. A feature an Administrator would switch on, fill in or set up

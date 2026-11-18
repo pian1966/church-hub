@@ -135,5 +135,7 @@ ok(M.readers(rm).read.join() === 'e' && M.readers(rm).unread.join() === 'd,f', '
   ok(M.mayReply(Object.assign({ id: 'm1' }, r), { id: 'a', manager: true }, d), 'the roster coordinator can reply privately to someone who can’t make it');
 }
 
+const on = M.officeNotice('partnerApp', { id: 'p16', firstName: 'Hope', lastName: 'Ndlovu' }, 'Partnership application', 'Hope Ndlovu has applied to become a Church Partner.');
+ok(on.kind === 'office' && on.about === 'partnerApp' && on.to.length === 0 && on.fromId === 'p16' && on.readBy.join() === 'p16' && M.officeNotice('other', { id: 'x' }, 't', 'b').error, 'a partnership application tells the office (Administrators and Pastors)');
 if (fails) { console.log('\n' + fails + ' test(s) FAILED'); process.exit(1); }
 console.log('\nAll message tests passed');

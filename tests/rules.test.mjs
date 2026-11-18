@@ -993,6 +993,9 @@ await t('attendees: write to the Office, a minister and their Midweek Group lead
   await can(db.attendee.doc('messages/a10').set(m({ kind: 'direct', replyTo: 'ms4', to: ['p15'] })));
   await cannot(db.attendee.doc('messages/a11').set(m({ kind: 'office', to: [] })));                  // without "write": only receive
   await cannot(db.attendee.doc('messages/a12').set(m({ kind: 'direct', to: ['p02'] })));
+  await can(db.attendee.doc('messages/a13').set(m({ kind: 'office', to: [], about: 'partnerApp' })));   // applying to be a Church Partner: the office is told
+  await cannot(db.attendee.doc('messages/a14').set(m({ kind: 'direct', to: ['p02'], about: 'partnerApp' })));   // only to the office
+  await cannot(db.attendee.doc('messages/a15').set(m({ kind: 'office', to: [], about: 'other' })));
   await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: firebase.firestore.FieldValue.delete() }));
 });
 await t('replies: privately to the sender of a message that came to you', async () => {

@@ -166,6 +166,10 @@ module.exports = async function (ctx) {
   const posDocs = Object.keys(docs).filter(k => k.startsWith('positions/pos-'));
   check(docs['teams/dept-operational'] && docs['teams/dept-music'] && docs['teams/dept-creche'] && posDocs.length === 30 && docs['positions/pos-verger'] && docs['positions/pos-collection'] && docs['positions/pos-ushers'] && docs['positions/pos-recorded'] && docs['teams/dept-memorial'] && JSON.stringify(docs['positions/pos-creche'].times) === '["08:00"]' && docs['positions/pos-host'].times.length === 0,
     'Rosters → Teams adds the church’s 8 departments and 30 positions, with Verger, Ushers, Collection Servers and Recorded Music (Creche Duty only at 8:00): ' + posDocs.length);
+  await s.page.click('[data-act="rosters:needed"][data-p="pos-sound"][data-d="1"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['positions/pos-sound'].needed === 2 && /2 per service/.test(await s.text()), 'Teams: + makes it 2 on the Sound Desk');
+  await s.page.click('[data-act="rosters:needed"][data-p="pos-sound"][data-d="-1"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['positions/pos-sound'].needed === 1 && await s.page.isDisabled('[data-act="rosters:needed"][data-p="pos-sound"][data-d="-1"]'), '… − takes it back to 1, and no fewer');
   check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
   check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && (await s.text()).includes('8am only'), 'once added, the offer goes, and 8am-only positions say so');
   check(docs['teams/dept-operational'].name === 'Service Leading', 'the department for preaching, hosting, reading and prayer is called Service Leading');

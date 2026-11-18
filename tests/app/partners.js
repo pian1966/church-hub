@@ -31,6 +31,8 @@ module.exports = async function (ctx) {
   check(!!app && app.personId === 'p10' && app.status === 'waiting' && app.faith === 'yes' && app.since === '2025-11' && app.birthDate === '1990-01-01' && /Example Fellowship/.test(app.loyalty) && app.directory === true && /Christ/.test(app.declaration) && !('idNumber' in app),
     'sent: the answers are saved as waiting (without the ID number)');
   check(docs['idNumbers/p10'] && docs['idNumbers/p10'].value === '9001015009086', '… the ID number is kept apart, where only Administrators can read it');
+  const told = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].about === 'partnerApp').map(k => docs[k]);
+  check(told.length === 1 && told[0].kind === 'office' && told[0].fromId === 'p10' && !/Christian home/.test(told[0].body), '… and the Office (Administrators and Pastors) gets a message – without the answers themselves');
   check(/waiting for a Pastor/.test(await s.page.textContent('#me-apply')), 'their page now says it is waiting for a Pastor');
   check((await s.denied()).length === 0, 'nothing refused by the security rules');
   await s.close();
@@ -39,6 +41,8 @@ module.exports = async function (ctx) {
   // A Pastor sees it (to-do and list); a Roster coordinator doesn't
   s = await session('pieter.vanwyk@example.com', JSON.parse(JSON.stringify(after))); await s.go('home');
   check(/1 partnership application to review/.test(await s.text()), 'Pastors: “1 partnership application to review” on Home');
+  await s.go('messages'); await s.page.waitForTimeout(300); t = await s.text();
+  check(/Partnership application/.test(t) && /Jason Naidoo has applied to become a Church Partner/.test(t) && await s.page.isVisible('.msg a[href="#/people/applications"]'), 'and in Messages: who applied, with a button to the applications');
   await s.go('people/applications/' + appId); t = await s.text();
   check(/Grew up in a Christian home/.test(t) && /Welcome team/.test(t) && await s.page.isVisible('[data-act="people:appaccept"]'), 'a Pastor reads the whole application and can accept it');
   await s.close();

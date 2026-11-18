@@ -158,6 +158,17 @@ var Msg = (function () {
       fromId: from.id, fromName: nameOf(from), to: to, deliveredBy: [from.id], readBy: [from.id] };
   }
 
+  /**
+   * A note to the church office (Administrators and Pastors) that Church Hub sends for someone, e.g. about: 'partnerApp' –
+   * they applied to become a Church Partner. Sent even by attendees who may not write to the Office themselves.
+   */
+  function officeNotice(about, from, title, body) {
+    if (NOTICES.indexOf(about) < 0 || !from || !from.id) return { error: 'kind' };
+    return { kind: 'office', groupId: '', audience: '', about: about, title: String(title || '').slice(0, MAX_TITLE), body: String(body || '').trim().slice(0, MAX_BODY),
+      fromId: from.id, fromName: nameOf(from), to: [], deliveredBy: [from.id], readBy: [from.id] };
+  }
+  var NOTICES = ['partnerApp'];
+
   function newestFirst(a, b) { return String(a.createdAt || '') < String(b.createdAt || '') ? 1 : String(a.createdAt || '') > String(b.createdAt || '') ? -1 : 0; }
   /** Messages sent to this person, newest first; managers also receive the Office channel. */
   function inbox(messages, pid, office) { return (messages || []).filter(function (m) { return (m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office' && m.fromId !== pid); }).sort(newestFirst); }
@@ -233,7 +244,7 @@ var Msg = (function () {
     return JSON.stringify(x) === JSON.stringify(g) ? null : x;
   }
 
-  return { ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
+  return { officeNotice: officeNotice, ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
     counts: counts, KINDS: KINDS, rosterNote: rosterNote, MAX_TURNS: MAX_TURNS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
     inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, MARK_STYLES: MARK_STYLES, markStyle: markStyle, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();

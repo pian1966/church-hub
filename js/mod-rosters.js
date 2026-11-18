@@ -112,9 +112,9 @@
   function noCommunionFor(p, s) { return Serving.isCommunion(p) && !Serving.hasCommunion(s, S.settings()); }
   function slotName(id) { return Serving.slotLabel(id, S.settings()); }
   function narrow() { return window.innerWidth < 700; }
-  function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(function (a, b) { return a.date < b.date ? -1 : 1; }); }
+  function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(Serving.byWhen); }
   function inView() {
-    var all = S.list('services').slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    var all = S.list('services').slice().sort(Serving.byWhen);
     var first = all.findIndex(function (s) { return s.date >= H.today(); }); if (first < 0) first = Math.max(0, all.length - 4);
     var i = Math.max(0, Math.min(all.length - 1, first + state.start)), n = narrow() ? 1 : 4;
     return all.slice(i, i + n);
@@ -175,7 +175,7 @@
     }
     if (problems.length) html += '<div class="note warn"><b>' + T('Please check') + '</b><ul>' + problems.map(function (p) { return '<li>' + esc(p.text) + '</li>'; }).join('') + '</ul></div>';
     html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
-    html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
     // A department or position that isn't at any of these services (e.g. Creche at 8:00, communion roles without communion)
     // is left out, so the roster shows only what is needed. Someone already rostered there keeps the row.
@@ -255,6 +255,8 @@
   function slotById(id) { return Serving.savedSlots(S.settings()).filter(function (x) { return x.id === id; })[0]; }
   /** The colours of a service's theme, for style="…" on a card or page. */
   function themeStyle(th) { return '--svc-ink:' + th.ink + ';--svc-line:' + th.line + ';--svc-soft:' + th.soft; }
+  /** The colours of the service a date belongs to (8am sunrise, 10am morning…), for its column, card or row. */
+  function svcStyle(s) { return themeStyle(Serving.themeOfService(s, S.settings())); }
   function slotWhen(x) {
     if (!x.special) return x.time + (x.venue ? ' · ' + x.venue : '');
     if (x.id === 'memorial') return T('Held now and then (memorials and funerals)');
@@ -396,7 +398,7 @@
     },
     svcback: function (el) { var x = slotById(el.dataset.s); saveSlot(x.id, { removed: false }, 'Brought back the ' + x.label + ' service'); H.toast(T('Saved')); }
   };
-  window.RosterServices = { serviceCard: serviceCard, themeStyle: themeStyle };
+  window.RosterServices = { serviceCard: serviceCard, themeStyle: themeStyle, svcStyle: svcStyle };
 
   /* ---------- teams ---------- */
   function renderTeams() {
@@ -414,7 +416,7 @@
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
       return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; });
-        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b><span class="muted small">' + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
+        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b><span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
             return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc(freqText(k.frequency)) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
@@ -511,12 +513,12 @@
   function renderMine() {
     var me = H.user(), t = H.today();
     var mine = S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === me.id && s && s.date >= t; })
-      .sort(function (a, b) { return S.get('services', a.serviceId).date < S.get('services', b.serviceId).date ? -1 : 1; });
+      .sort(function (a, b) { return Serving.byWhen(S.get('services', a.serviceId), S.get('services', b.serviceId)); });
     var sk = S.find('skills', function (k) { return k.personId === me.id; });
     var html = head(T('My serving'), T('Your upcoming turns. Please reply so the roster can be planned.'), '') + tabs('mine');
     html += mine.length ? '<div class="list">' + mine.map(function (a) {
       var s = S.get('services', a.serviceId), po = pos(a.positionId);
-      return '<div class="item"><span class="grow"><b>' + esc(po.name + ' · ' + (team(po.teamId) || {}).name) + '</b><small>' + esc(H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name) + '</small></span>' +
+      return '<div class="item svc-tint" style="' + svcStyle(s) + '"><span class="grow"><b>' + esc(po.name + ' · ' + (team(po.teamId) || {}).name) + '</b><small>' + esc(H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name) + '</small></span>' +
         (a.status === 'pending' ? '<button class="btn small" data-act="rosters:reply" data-id="' + a.id + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + a.id + '" data-s="accepted">' + T('Accept') + '</button>' :
           '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + T(a.status === 'accepted' ? 'Accepted' : 'Said no') + '</span>') + '</div>';
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on the roster in the coming weeks.') + '</p>';
@@ -694,6 +696,13 @@
       },
       delaway: function (el) { S.remove('blockouts', el.dataset.id, 'Removed away dates'); H.render(); },
       newteam: function () { var n = prompt(T('Name of the new team (e.g. Prayer)')); if (n && n.trim()) { S.put('teams', { name: n.trim() }, 'Created team ' + n.trim()); H.render(); } },
+      /** How many people a position needs at each service (e.g. 2 on the sound desk): − and + on Teams. */
+      needed: function (el) {
+        var p = pos(el.dataset.p); if (!p || !manager()) return;
+        var n = Math.max(1, Math.min(20, (p.needed || 1) + (+el.dataset.d))); if (n === p.needed) return;
+        p = JSON.parse(JSON.stringify(p)); p.needed = n; S.put('positions', p, p.name + ': ' + n + ' needed per service'); H.render();
+        var b = document.querySelector('[data-act="rosters:needed"][data-p="' + p.id + '"][data-d="' + el.dataset.d + '"]'); if (b && !b.disabled) b.focus();
+      },
       newpos: function (el) { var n = prompt(T('Name of the position (e.g. Camera)')); if (!n || !n.trim()) return; var k = parseInt(prompt(T('How many people are needed per service?'), '1'), 10) || 1; S.put('positions', { teamId: el.dataset.t, name: n.trim(), needed: k }, 'Added position ' + n.trim()); H.render(); },
       addmember: function (el) {
         var po = pos(el.dataset.p), have = S.find('skills', function (k) { return k.positionId === po.id; }).map(function (k) { return k.personId; });

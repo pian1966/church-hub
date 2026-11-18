@@ -510,6 +510,11 @@
       if (loyalty()) a.loyalty = loyalty();
       S.idNumber(p.id).then(function (have) { return have ? null : S.setIdNumber(p.id, id, 'Gave their ID number when applying to become a Church Partner'); }).catch(function () { /* the church office can add it */ }).then(function () {
         S.put('partnerApps', a, 'Applied to become a Church Partner');
+        // The Administrators and Pastors hear about it in Messages (the Office), as well as the to-do on Home
+        if (window.Msg && H.isOn('messages')) {
+          var note = Msg.officeNotice('partnerApp', p, T('Partnership application'), T('{name} has applied to become a Church Partner.', { name: Msg.nameOf(p) }));
+          if (!note.error) S.put('messages', note, 'Told the church office about a partnership application');
+        }
         H.go('me'); H.toast(T('Sent – a Pastor will be in touch'));
       });
     },

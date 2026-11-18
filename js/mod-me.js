@@ -31,7 +31,7 @@
   function upcomingTurns() {
     var u = me(), t = H.today();
     return S.find('assignments', function (a) { var s = service(a.serviceId); return a.personId === u.id && s && s.date >= t; })
-      .sort(function (a, b) { return service(a.serviceId).date < service(b.serviceId).date ? -1 : 1; });
+      .sort(function (a, b) { return Serving.byWhen(service(a.serviceId), service(b.serviceId)); });
   }
   function myAway() {
     var u = me(), t = H.today(), all = window.RosterHelpers ? RosterHelpers.awayList() : [];
@@ -142,7 +142,7 @@
     // Coming up
     html += '<section class="block"><h2>' + T('Coming up') + '</h2>' + (turns.length ? '<div class="list">' + turns.map(function (a) {
       var s = service(a.serviceId);
-      return '<div class="item"><span class="grow"><b>' + esc(posName(a.positionId)) + '</b><small>' + esc(H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name) + '</small></span>' +
+      return '<div class="item svc-tint" style="' + (window.RosterServices ? RosterServices.svcStyle(s) : '') + '"><span class="grow"><b>' + esc(posName(a.positionId)) + '</b><small>' + esc(H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name) + '</small></span>' +
         (a.status === 'pending' ? '<span class="btns"><button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Accept') + '</button></span>' :
           '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + (a.status === 'accepted' ? T('Accepted') : T('Said no')) + '</span>') + '</div>';
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on the roster in the coming weeks.') + '</p>') + '</section>';

@@ -93,6 +93,8 @@ I18n.rows([
     ["Changed to {name} – waiting for their reply", "Verander na {name} – wag vir hul antwoord", "Kushintshelwe ku-{name} – kulindwe impendulo yakhe", "Kutshintshelwe ku-{name} – kulindelwe impendulo yakhe"],
     ["{old} becomes {new}; its people and turns stay.", "{old} word {new}; sy mense en beurte bly.", "U-{old} uba ngu-{new}; abantu bakhe nezikhathi zabo kuyahlala.", "U-{old} uba ngu-{new}; abantu bayo namaxesha abo ayahlala."],
     ["Nothing is removed.", "Niks word verwyder nie.", "Akukho okususwayo.", "Akukho nto isuswayo."],
+    ["One fewer for {position}", "Een minder vir {position}", "Oyedwa ngaphansi ku-{position}", "Omnye ngaphantsi ku-{position}"],
+    ["One more for {position}", "Een meer vir {position}", "Oyedwa ngaphezulu ku-{position}", "Omnye ngaphezulu ku-{position}"],
     ['Take off the roster', 'Haal van die rooster af', 'Susa ohlelweni', 'Susa kuludwe'],
     ['Mark “can’t make it”', 'Merk “kan nie kom nie”', 'Phawula ukuthi “angeke akwazi”', 'Phawula ukuthi “akanakukwazi”'],
     ['Mark accepted', 'Merk aanvaar', 'Phawula ukuthi kwamukelwe', 'Phawula ukuthi kwamkelwe'],

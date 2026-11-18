@@ -1,0 +1,39 @@
+# Puts the conference presentation into its Google Slides copy, so the shared Google Slides link always shows the latest
+# slides. Runs when a new church-hub-presentation.pptx reaches main (a pull request is merged), and on demand
+# (Actions → Publish the slides → Run workflow). The .pptx in the repository stays the master copy.
+#
+# Repository secrets (Settings → Secrets and variables → Actions) – see docs/SLIDES-AUTOPUBLISH.md:
+#   SLIDES_ROBOT_KEY – the key of a Google Cloud service account that the Slides file is shared with (and nothing else)
+#   SLIDES_FILE_ID   – the Google Slides file's id (kept secret so the link isn't public in this public repository)
+# Without them nothing is published and the log says so. The key is never printed.
+name: Publish the slides
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/presentation/church-hub-presentation.pptx'
+      - 'tools/publish-slides.mjs'
+      - '.github/workflows/publish-slides.yml'
+  workflow_dispatch:
+
+concurrency:
+  group: publish-slides
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - name: Put the slides into Google Slides
+        env:
+          SLIDES_ROBOT_KEY: ${{ secrets.SLIDES_ROBOT_KEY }}
+          SLIDES_FILE_ID: ${{ secrets.SLIDES_FILE_ID }}
+        run: node tools/publish-slides.mjs

@@ -1,6 +1,7 @@
 // Church Hub – conference presentation. Builds church-hub-presentation.pptx (16:9) from the screenshots and clips in img/.
 // Run: node build.js   (needs pptxgenjs, react-icons, react, react-dom, sharp). See README.md; img/ comes from capture.py.
 const path = require('path');
+const fs = require('fs');
 const pptxgen = require('pptxgenjs');
 const React = require('react');
 const ReactDOMServer = require('react-dom/server');
@@ -105,7 +106,7 @@ async function icon(Comp, color, px = 256) {
     { text: 'Who belongs to the church, and how to reach them', options: { bullet: true, breakLine: true } },
     { text: 'Who serves where, and when', options: { bullet: true, breakLine: true } },
     { text: 'Groups, care and communication', options: { bullet: true, breakLine: true } },
-    { text: 'Records the church must keep – safely, by law', options: { bullet: true } }
+    { text: 'Essential Church Records: Securely Stored and Legally Compliant', options: { bullet: true } }
   ], { x: 0.6, y: 3.35, w: 5.2, h: 2.4, fontSize: 16, color: HEX.muted, paraSpaceAfter: 10 });
   // hub diagram: the church in the middle, the work around it
   {
@@ -169,7 +170,7 @@ async function icon(Comp, color, px = 256) {
   // ========== 5. Who it's for ==========
   s = content('Our story', 'Who it’s for: every church', true);
   {
-    const stats = [['Any size', 'From forty people in a village hall to a town church with three services and a band'], ['20+', 'languages – and each person chooses their own'], ['Offline', 'still opens with no signal, and updates use very little data']];
+    const stats = [['Any size', 'From forty people in a village hall to suburban and city churches with multiple services and teams of volunteers'], ['20+', 'languages – and each person chooses their own'], ['Offline', 'still opens with no signal, and updates use very little data']];
     for (let i = 0; i < 3; i++) {
       const x = 0.6 + i * 4.1;
       s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y: 1.6, w: 3.85, h: 3.0, rectRadius: 0.16, fill: { color: HEX.white }, line: { color: HEX.line, width: 0.75 } });
@@ -181,18 +182,20 @@ async function icon(Comp, color, px = 256) {
       { text: 'Church Hub speaks your tradition: Rector or Senior Pastor, Parishioner or Member, Home group or Cell group – and you can rename any word.' }
     ], { x: 0.6, y: 5.0, w: 12.1, h: 1.4, fontSize: 17, color: HEX.ink, paraSpaceAfter: 6 });
   }
-  s.addNotes('Who is it for? Every church. The same Church Hub runs a congregation of forty in a rural village and a busy town church. More than twenty languages, and each person picks their own. It works with a weak signal, and it uses very little data. And it speaks your tradition’s words.');
+  s.addNotes('Who is it for? Every church. The same Church Hub runs a congregation of forty in a rural village and suburban and city churches with several services and teams of volunteers. More than twenty languages, and each person picks their own. It works with a weak signal, and it uses very little data. And it speaks your tradition’s words.');
 
   // ========== 6. Everything in one place ==========
   pres.addSection({ title: 'What it does' });
   s = content('What it does', 'Everything your church runs on, in one place');
   shot(s, 'd-home.jpg', 4.55, 1.5, 8.15, 8.15 * 900 / 1440, 'Home for an Administrator');
-  T(s, 'Home shows each person what needs them today.', { x: 0.6, y: 1.55, w: 3.6, h: 1.3, fontSize: 22, bold: true });
+  s.addImage({ data: await icon(Lu.LuHouse, HEX.orange), x: 0.6, y: 1.62, w: 0.36, h: 0.36 });
+  T(s, 'Home', { x: 1.08, y: 1.55, w: 3.1, h: 0.5, fontSize: 24, bold: true, valign: 'middle' });
   T(s, [
+    { text: 'Shows each person what needs them today', options: { bullet: true, breakLine: true } },
     { text: 'A to-do list for each role', options: { bullet: true, breakLine: true } },
     { text: 'What’s new, and tips for the parts they can use', options: { bullet: true, breakLine: true } },
     { text: 'On any computer, tablet or phone – nothing to install', options: { bullet: true } }
-  ], { x: 0.6, y: 3.0, w: 3.6, h: 2.6, fontSize: 16, color: HEX.muted, paraSpaceAfter: 10 });
+  ], { x: 0.6, y: 2.3, w: 3.6, h: 3.4, fontSize: 18, color: HEX.muted, paraSpaceAfter: 12 });
   s.addNotes('This is Home for an Administrator. Everyone sees what needs them today: the office sees consent to record and leave to approve, a roster coordinator sees gaps on Sunday, a member sees their serving requests. It runs in any web browser, and there is an Android app.');
 
   // ========== 7. Built in parts ==========
@@ -330,10 +333,10 @@ async function icon(Comp, color, px = 256) {
   T(s, 'A low price doesn’t mean less: every church gets all of Church Hub.', { x: 0.8, y: 5.6, w: 7.2, h: 0.8, fontSize: 16, italic: true, color: HEX.orange });
   s.addNotes('And the price: one cup of coffee a month, for your whole church – not per person – at whatever a cup costs where you live. It is a suggested price; choose what is honest for your church. Every church gets every feature. A hard month? Take a payment holiday. A church that can’t pay at all can pledge to pray for another church instead. No church is turned away.');
 
-  // ========== 16. Moving from Elvanto ==========
+  // ========== 16. Moving from another system ==========
   s = content('Trust', 'Moving from another system?', true);
   {
-    const steps = [['1', 'Import your people', 'Import members, households and staff leave – from Elvanto and Leave Manager today.'], ['2', 'Run both for a while', 'Keep Church Hub up to date with Elvanto’s changes while everyone settles in.'], ['3', 'Switch over', 'When you’re ready, everyone signs in – the office keeps a list of what’s left to set up.']];
+    const steps = [['1', 'Import your people', 'Bring your members, households and staff leave across from your current church management system.'], ['2', 'Run both for a while', 'Keep your current system going while everyone settles in.'], ['3', 'Switch over', 'When you’re ready, everyone signs in – the office keeps a list of what’s left to set up.']];
     for (let i = 0; i < 3; i++) {
       const x = 0.6 + i * 4.1;
       s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y: 1.7, w: 3.85, h: 3.8, rectRadius: 0.16, fill: { color: HEX.white }, line: { color: HEX.line, width: 0.75 } });
@@ -345,7 +348,7 @@ async function icon(Comp, color, px = 256) {
     }
     T(s, 'A step-by-step setup guide takes a church from nothing to its first sign-in – about an hour, no technical knowledge needed.', { x: 0.6, y: 5.85, w: 12.1, h: 0.8, fontSize: 16, color: HEX.ink });
   }
-  s.addNotes('Moving from Elvanto? Import your people, households and staff leave, run both systems side by side while everyone settles in, then switch over. The setup guide takes a church office volunteer from nothing to the first sign-in in about an hour.');
+  s.addNotes('Moving from another church management system? Import your people, households and staff leave, run both systems side by side while everyone settles in, then switch over. The setup guide takes a church office volunteer from nothing to the first sign-in in about an hour.');
 
   // ========== 17. Try it ==========
   pres.addSection({ title: 'Close' });
@@ -363,6 +366,11 @@ async function icon(Comp, color, px = 256) {
       T(s, qr[i][1], { x: x + 0.15, y: 3.8, w: 2.0, h: 0.4, fontSize: 16, bold: true, align: 'center' });
       T(s, qr[i][2], { x: x + 0.1, y: 4.25, w: 2.1, h: 0.8, fontSize: 11, color: HEX.muted, align: 'center' });
     }
+  }
+  {   // which version of Church Hub these slides describe, so a copy can be checked against About in the app
+    const v = (fs.readFileSync(path.join(__dirname, '../../js/version.js'), 'utf8').match(/version:\s*'([\d.]+)'/) || [])[1] || '';
+    const when = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Johannesburg' });
+    T(s, 'Slides for Church Hub ' + v + ' · ' + when, { x: 8.0, y: 6.85, w: 4.9, h: 0.35, fontSize: 10, color: HEX.nightInk, align: 'right' });
   }
   s.addNotes('Thank you. Scan the code to try the demo now – a whole church of made-up people, nothing to install. The website has the price, the setup guide and the answers to the questions churches ask. Every church, however small, deserves great church software.');
 

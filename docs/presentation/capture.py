@@ -101,7 +101,7 @@ with sync_playwright() as p:
     # ---- clip: Ask in your own words ----
     def ask(pg):
         go(pg, 'people/search', 1500); pg.click('#ask-q'); pg.wait_for_timeout(400)
-        pg.keyboard.type('Church Partners who serve on the welcome team', delay=45); pg.wait_for_timeout(400)
+        pg.keyboard.type('Church Partners who serve on the welcome team', delay=45); pg.wait_for_timeout(1800)   # the whole sentence stays on screen
         pg.keyboard.press('Enter'); pg.wait_for_timeout(1200)
         pg.evaluate("() => { const t = document.querySelector('.adv-table'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); }"); pg.wait_for_timeout(2800)
     gif(record(b, 'ask', ask), 'ask', 3.6, 1100)

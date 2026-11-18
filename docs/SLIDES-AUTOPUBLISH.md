@@ -17,13 +17,21 @@ use **File → Make a copy** in Google Slides and change the copy.
 Allow about 15 minutes.
 
 ## Which Google account?
-The robot lives inside a Google Cloud project, which belongs to an ordinary Google account. Use **Church Hub's own Google
-account** – the one for Church Hub itself (its website, its subscriptions) – not a church's account: each church's account
-belongs to that church, and the presentation belongs to Church Hub. Until Church Hub's own account exists, use the account
-that owns the Google Slides file; the robot can be moved later by repeating these steps.
+The robot lives inside a Google Cloud project, and every project belongs to an ordinary Google account. You don't need a
+special account for this – choose one of these:
+
+- **The Google account that owns the presentation** (the one you're signed in with when you open it in Google Slides).
+  This is the simplest: nothing new to create.
+- **A new Google account just for Church Hub**, if you'd rather keep it apart from your own. Create one free at
+  **https://accounts.google.com/signup** (a new Gmail address), then share the presentation with it as an Editor – or
+  move the presentation into it – before you start.
+
+Don't use a church's own Google account (the one a church makes when it sets up Church Hub): that account belongs to the
+church, while the presentation belongs to Church Hub. If you start with one account and change your mind later, just
+repeat these steps with the other one.
 
 ## Step 1 – A Google Cloud project with Google Drive switched on
-1. Open **https://console.cloud.google.com/projectcreate**, signed in with that account. Accept the terms if asked.
+1. Open **https://console.cloud.google.com/projectcreate**, signed in with the account you chose above. Accept the terms if asked.
 2. Project name: `Church Hub slides`. Click **Create** and wait a few seconds.
 3. Open **https://console.cloud.google.com/apis/library/drive.googleapis.com** – check the project at the top says
    **Church Hub slides** – and click **Enable**.

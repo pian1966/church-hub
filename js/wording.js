@@ -27,7 +27,8 @@ var Wording = (function () {
     ['service', ['Service', 'Services'], 'A Sunday service or other regular time the church meets (Settings → Church Services)'],
     ['worship', ['Worship', 'Worship'], 'Music in services (also teams and positions named after it)'],
     ['worshipTeam', ['Worship team', 'Worship teams'], 'The team that leads music in services'],
-    ['worshipLeader', ['Worship leader', 'Worship leaders'], 'Who leads the music in a service']
+    ['worshipLeader', ['Worship leader', 'Worship leaders'], 'Who leads the music in a service'],
+    ['verger', ['Verger', 'Vergers'], 'Who gets the church ready and helps the service run (a position under Service Leading)']
   ];
   /** Quick choices for what the music in services is called (Settings → Terminology (Church Words)). */
   var MUSIC = {
@@ -40,7 +41,7 @@ var Wording = (function () {
   var SETS = {
     general: { name: 'General (as Church Hub comes)', words: {} },
     anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], senior: ['Rector', 'Rectors'], assistant: ['Assistant Minister', 'Assistant Ministers'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Home group leader', 'Home group leaders'] } },
-    catholic: { name: 'Catholic', words: { pastor: ['Priest', 'Priests'], senior: ['Parish Priest', 'Parish Priests'], assistant: ['Assistant Priest', 'Assistant Priests'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Priest', 'Visiting Priests'], kids: ['Children’s catechesis', 'Children’s catechesis'], office: ['Parish office', 'Parish offices'], care: ['Small Christian Community', 'Small Christian Communities'], carer: ['Leader', 'Leaders'] } },
+    catholic: { name: 'Catholic', words: { pastor: ['Priest', 'Priests'], senior: ['Parish Priest', 'Parish Priests'], assistant: ['Assistant Priest', 'Assistant Priests'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Priest', 'Visiting Priests'], kids: ['Children’s catechesis', 'Children’s catechesis'], verger: ['Sacristan', 'Sacristans'], office: ['Parish office', 'Parish offices'], care: ['Small Christian Community', 'Small Christian Communities'], carer: ['Leader', 'Leaders'] } },
     methodist: { name: 'Methodist', words: { pastor: ['Minister', 'Ministers'], partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Class', 'Classes'], carer: ['Class leader', 'Class leaders'] } },
     presbyterian: { name: 'Presbyterian / Reformed', words: { pastor: ['Minister', 'Ministers'], assistant: ['Associate Minister', 'Associate Ministers'], partner: ['Communicant Member', 'Communicant Members'], attender: ['Adherent', 'Adherents'], care: ['Elder’s district', 'Elders’ districts'], carer: ['Elder', 'Elders'] } },
     baptist: { name: 'Baptist', words: { assistant: ['Associate Pastor', 'Associate Pastors'], partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Small group', 'Small groups'], carer: ['Group leader', 'Group leaders'] } },

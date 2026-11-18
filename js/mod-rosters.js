@@ -403,15 +403,18 @@
     var html = head(T('Teams'), T('Who can serve in each position, and how often they’d like to.'), '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + T('New team') + '</button>') + tabs('teams');
     html += renderOffers();
     var add = window.Serving ? Serving.missing(S.list('teams'), S.list('positions')) : { teams: [], positions: [] };
-    if (add.positions.length && (H.can('*') || H.can('rosters.manage'))) html += '<div class="note info" style="margin-bottom:16px"><b>' + T('Set up the church’s departments.') + '</b> ' +
-      (add.teams.length ? T('Adds {d} and {p} as in Elvanto (Service Leading, Extra Slot, Hospitality, Music, Teens, Children, Creche, Memorial Service), each marked with the services it runs at.', { d: TN('{n} department', '{n} departments', add.teams.length), p: TN('{n} position', '{n} positions', add.positions.length) })
-        : T('Adds {p} as in Elvanto, each marked with the services it runs at.', { p: TN('{n} position', '{n} positions', add.positions.length) })) + ' ' + T('Nothing here is changed or removed.') + ' ' +
+    var ren = add.renames || [];
+    if ((add.positions.length || ren.length) && (H.can('*') || H.can('rosters.manage'))) html += '<div class="note info" style="margin-bottom:16px"><b>' + T('Set up the church’s departments.') + '</b> ' +
+      (add.teams.length ? T('Adds {d} and {p} as in Elvanto (Service Leading, Extra Slot, Hospitality, Music, Teens, Children, Creche, Memorial Service), each marked with the services it runs at.', { d: TN('{n} department', '{n} departments', add.teams.length), p: TN('{n} position', '{n} positions', add.positions.length) }) + ' '
+        : add.positions.length ? T('Adds {p} as in Elvanto, each marked with the services it runs at.', { p: TN('{n} position', '{n} positions', add.positions.length) }) + ' ' : '') +
+      ren.map(function (r) { return T('{old} becomes {new}; its people and turns stay.', { old: esc(r.from), new: esc(r.to) }) + ' '; }).join('') +
+      (ren.length ? T('Nothing is removed.') : T('Nothing here is changed or removed.')) + ' ' +
       '<button class="btn small primary" data-act="rosters:setupdepts">' + T('Add them') + '</button></div>';
     html += '<div class="grid2">' + S.list('teams').map(function (t) {
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
       return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; });
-        return '<div style="margin:12px 0"><div class="row"><b class="grow">' + esc(p.name) + '</b><span class="muted small">' + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
+        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b><span class="muted small">' + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
             return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc(freqText(k.frequency)) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
@@ -557,7 +560,8 @@
         H.busy(T('Adding the departments…'), function () {
         add.teams.forEach(function (t) { S.put('teams', t); });
         add.positions.forEach(function (p) { S.put('positions', p); });
-        S.audit('Set up the church’s departments: ' + add.teams.length + ' departments and ' + add.positions.length + ' positions added', 'teams');
+        (add.renames || []).forEach(function (r) { var p = S.get('positions', r.id); if (p) S.put('positions', Object.assign(JSON.parse(JSON.stringify(p)), { name: r.to }), 'Renamed the position ' + r.from + ' to ' + r.to); });
+        S.audit('Set up the church’s departments: ' + add.teams.length + ' departments and ' + add.positions.length + ' positions added' + ((add.renames || []).length ? ', ' + add.renames.length + ' renamed' : ''), 'teams');
         H.render(); H.toast(T('Departments and positions added'));
         });
       },

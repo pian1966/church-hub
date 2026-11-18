@@ -1341,9 +1341,14 @@ var Hub = (function () {
       if (on === shown[b.id]) return; shown[b.id] = on;
       if (on) { label(); b.hidden = false; requestAnimationFrame(function () { b.classList.add('show'); }); } else { b.classList.remove('show'); setTimeout(function () { if (!shown[b.id]) b.hidden = true; }, 200); }
     };
+    // On phones the arrows would sit on top of buttons near the bottom right (an Add button, a ✕), so there they show only
+    // while you scroll and fade away a moment after you stop – scroll a little to bring them back.
+    var idle = null, phone = function () { return !!(window.matchMedia && window.matchMedia('(max-width: 860px)').matches); };
     var check = function () {
       var y = window.scrollY, h = document.documentElement.scrollHeight, left = h - (y + window.innerHeight);
       show(up, y > 600); show(down, left > 600);
+      clearTimeout(idle);
+      if (phone()) idle = setTimeout(function () { if (box.contains(document.activeElement)) return; show(up, false); show(down, false); }, 2000);
     };
     window.addEventListener('scroll', check, { passive: true });
     window.addEventListener('resize', check, { passive: true });

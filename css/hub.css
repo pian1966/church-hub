@@ -240,6 +240,21 @@ button.item { width: 100%; border: 0; background: transparent; text-align: left;
 .matrix thead th { position: sticky; top: 0; background: var(--surface); text-align: left; font-size: 13px; padding: 12px 8px; z-index: 1; }
 .matrix tbody th { text-align: left; font-weight: 600; padding: 10px 14px; position: sticky; left: 0; background: var(--surface); min-width: 150px; z-index: 1; }
 .matrix tbody th small { display: block; font-weight: 400; color: var(--muted); font-size: 12.5px; }
+/* Six services side by side: the roster slides sideways, with a slider above it and a clear scroll bar below */
+.matrix-wrap { scrollbar-width: auto; scrollbar-color: var(--accent) var(--surface-2); }
+.matrix-wrap::-webkit-scrollbar { height: 14px; }
+.matrix-wrap::-webkit-scrollbar-track { background: var(--surface-2); border-radius: 0 0 var(--radius) var(--radius); }
+.matrix-wrap::-webkit-scrollbar-thumb { background: var(--accent); border-radius: 8px; border: 3px solid var(--surface-2); }
+@media (min-width: 700px) { .matrix { min-width: 1240px; } .matrix thead th.svc-col, .matrix td { min-width: 180px; } }
+.ro-slide { display: block; margin: 0 0 10px; }
+.svc-eye { float: right; margin: -6px -4px 0 4px; opacity: .55; }
+.svc-eye:hover, .svc-eye:focus-visible { opacity: 1; }
+.ro-hidden { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 0 0 12px; }
+.ro-hidden .btn { gap: 6px; }
+.ro-slide input { width: 100%; accent-color: var(--accent); cursor: ew-resize; height: 22px; }
+.team-h { display: flex; align-items: center; gap: 4px; }
+.team-tools { display: inline-flex; align-items: center; gap: 2px; font-size: 16px; }
+.team-tools .icon-btn[disabled] { opacity: .3; cursor: default; }
 .matrix .team-row th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 8px 14px; }
 .slot { display: flex; flex-direction: column; gap: 4px; }
 .chip { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; border-radius: 10px; padding: 7px 9px; border: 1px solid transparent; font-size: 13.5px; font-weight: 600; cursor: pointer; min-height: 38px; background: var(--ok-soft); color: #173F27; }

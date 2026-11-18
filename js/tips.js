@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.93';
+  var NEWS_FOR = '0.94';
   var NEWS = [
+    { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: six services side by side with a slider to move across, an eye to hide a service for now, and departments can be put in order or joined together (Teams → ↑ ↓ and ⋯).') },
     { date: '2026-11-18', who: ['archivist'], app: 'library', text: TX('Archives: a document you add now shows in its folder straight away, and the Senior Pastor sees staff contracts and appraisals again.') },
     { date: '2026-11-18', who: ['senior'], app: 'about', text: TX('The Senior Pastor can now open the brochures under About, and print them or save them as a PDF.') },
     { date: '2026-11-18', who: ['archivist'], app: 'library', text: TX('Archives now has folders: Council meetings sort themselves into years and months by date, and Church Hub shows where a document will go – and asks if its date looks wrong – before saving.') },

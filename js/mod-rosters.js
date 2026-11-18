@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, R = RosterCore, T = I18n.t, TN = I18n.tn;
-  var state = { start: 0, preview: null, gapsOpen: false };
+  var state = { start: 0, preview: null, gapsOpen: false, hidden: [] };   // hidden: services (8am, 5pm…) hidden from the roster for now, with the eye
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var FREQ = [['weekly', TX('Whenever necessary (could be every week)')], ['monthly', TX('Once a month')], ['emergency', TX('Only now and then in emergencies')]];
 
@@ -101,8 +101,13 @@
       noCommunion: svcs.filter(function (s) { return !Serving.hasCommunion(s, st); }).map(function (s) { return s.id; }) };
   }
   function orderedPositions() {
-    var t = S.list('teams').map(function (x) { return x.id; });
-    return S.list('positions').slice().sort(function (a, b) { return t.indexOf(a.teamId) - t.indexOf(b.teamId); });
+    var t = teams().map(function (x) { return x.id; }), all = S.list('positions');
+    return all.slice().sort(function (a, b) { return t.indexOf(a.teamId) - t.indexOf(b.teamId) || all.indexOf(a) - all.indexOf(b); });
+  }
+  /** The departments in the church's order (Teams → ↑ ↓). */
+  function teams() { return Serving.orderTeams(S.list('teams')); }
+  /** How many services the roster shows side by side (one on a phone). */
+  function cols() { return narrow() ? 1 : 6;
   }
   /** A position only runs at some services (e.g. Creche Duty at 8:00): elsewhere its cell is shown as not needed. */
   /** A special service (Good Friday…) only has the positions chosen for it; a Sunday one every position unless narrowed down. */
@@ -110,13 +115,16 @@
   function runsAt(p, s) { return R.runsAt(p, s, specialIds()) && !noCommunionFor(p, s); }
   /** A communion role (Communion – Providing, Servers…) at a service without Holy Communion: nobody is asked. */
   function noCommunionFor(p, s) { return Serving.isCommunion(p) && !Serving.hasCommunion(s, S.settings()); }
+  var EYE_OFF = 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 4l16 16';   // the eye, crossed out
+  /** A hidden service's name as the roster shows it ("5pm service"). */
+  function hiddenName(v) { var s = S.find('services', function (x) { return Serving.slotOf(x) === v; })[0]; return s ? s.name : slotName(v); }
   function slotName(id) { return Serving.slotLabel(id, S.settings()); }
   function narrow() { return window.innerWidth < 700; }
   function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(Serving.byWhen); }
   function inView() {
-    var all = S.list('services').slice().sort(Serving.byWhen);
+    var all = S.list('services').slice().sort(Serving.byWhen).filter(function (s) { return state.hidden.indexOf(Serving.slotOf(s)) < 0; });
     var first = all.findIndex(function (s) { return s.date >= H.today(); }); if (first < 0) first = Math.max(0, all.length - 4);
-    var n = narrow() ? 1 : 4, i = Math.max(0, Math.min(Math.max(0, all.length - n), first + state.start));
+    var n = cols(), i = Math.max(0, Math.min(Math.max(0, all.length - n), first + state.start));
     state.start = i - first;   // at the end of the list: the last few services, not one column on its own
     return all.slice(i, i + n);
   }
@@ -128,6 +136,18 @@
     state.start = i - first; state.preview = null; H.render();
   }
   if (typeof document !== 'undefined') document.addEventListener('change', function (e) { if (e.target && e.target.id === 'ro-date' && e.target.value) goTo(e.target.value); });
+  // The slider above the roster and the roster's own scroll bar move together.
+  if (typeof document !== 'undefined') {
+    document.addEventListener('input', function (e) {
+      if (!e.target || e.target.id !== 'ro-slide') return;
+      var w = document.getElementById('ro-wrap'); if (w) w.scrollLeft = (w.scrollWidth - w.clientWidth) * e.target.value / 100;
+    });
+    document.addEventListener('scroll', function (e) {
+      if (!e.target || e.target.id !== 'ro-wrap') return;
+      var w = e.target, r = document.getElementById('ro-slide'), room = w.scrollWidth - w.clientWidth;
+      if (r && document.activeElement !== r) r.value = room > 0 ? Math.round(w.scrollLeft / room * 100) : 0;
+    }, true);
+  }
 
   function tabs(active) {
     var t = manager() ? [['', T('Roster')], ['teams', T('Teams')], ['services', T('Services')], ['together', T('Serving together')], ['away', T('Away dates')], ['mine', T('My serving')]] : [['mine', T('My serving')], ['together', T('Serving together')], ['away', T('Away dates')]];
@@ -172,7 +192,7 @@
     var all = S.list('assignments').concat(extra), away = awayList();
     var ed = engineData(), problems = R.check(ed, ids), st = S.settings();
     var html = head(T('Rosters'), T('Who is serving at each service. Families and friends who asked to serve together are kept together.'),
-      '<button class="btn" data-act="rosters:move" data-d="-' + (narrow() ? 1 : 4) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + (narrow() ? 1 : 4) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
+      '<button class="btn" data-act="rosters:move" data-d="-' + cols() + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + cols() + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
       '<label class="ro-date" title="' + esc(T('Go to a date')) + '"><input type="date" id="ro-date" value="' + esc(svcs.length ? svcs[0].date : H.today()) + '" aria-label="' + esc(T('Go to a date')) + '"></label>' +
       (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>' +
         H.menu(T('More'), ['<button data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>', '<button data-act="rosters:remind">' + H.icon(BELL, 16) + T('Remind those who haven’t replied') + '</button>']))) + tabs('');
@@ -184,8 +204,13 @@
         '<div class="btns" style="margin-top:10px"><button class="btn primary small" data-act="rosters:keep">' + T('Keep these and ask people') + '</button><button class="btn small" data-act="rosters:discard">' + T('Discard') + '</button></div></div>';
     }
     if (problems.length) html += '<div class="note warn"><b>' + T('Please check') + '</b><ul>' + problems.map(function (p) { return '<li>' + esc(p.text) + '</li>'; }).join('') + '</ul></div>';
+    if (state.hidden.length) html += '<div class="ro-hidden"><span class="muted small">' + T('Hidden for now:') + '</span>' + state.hidden.map(function (v) {
+      return '<button type="button" class="btn small" data-act="rosters:showslot" data-v="' + esc(v) + '" title="' + esc(T('Show the {service} again', { service: hiddenName(v) })) + '">' + H.icon(EYE_OFF, 16) + esc(hiddenName(v)) + '</button>';
+    }).join('') + (state.hidden.length > 1 ? '<button type="button" class="btn small ghost" data-act="rosters:showslot" data-v="">' + T('Show all') + '</button>' : '') + '</div>';
+    if (!svcs.length && state.hidden.length) return html + '<p class="empty">' + T('Every service is hidden. Tap one above to show it again.') + '</p>';
     html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
-    html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label>';
+    html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
     // A department or position that isn't at any of these services (e.g. Creche at 8:00, communion roles without communion)
     // is left out, so the roster shows only what is needed. Someone already rostered there keeps the row.
@@ -330,9 +355,9 @@
     // Holy Communion: which weeks of the month (regular services; a special service has it when its communion positions are on)
     if (!x.special) html += communionPanel(x, look);
     // Departments and positions
-    var teams = S.list('teams');
+    var tl = teams();
     html += '<section class="panel"><h2>' + T('Departments and positions') + '</h2><p class="hint" style="margin-top:0">' + T('Tap a position to switch it on or off at this service. Its volunteers stay on the team.') + '</p>' +
-      (teams.length ? '<div class="dept-grid">' + teams.map(function (t) {
+      (tl.length ? '<div class="dept-grid">' + tl.map(function (t) {
         var ps = S.find('positions', function (p) { return p.teamId === t.id; }); if (!ps.length) return '';
         var onN = ps.filter(function (p) { return Serving.runsAtSlot(p, x); }).length;
         return '<div class="dept' + (onN ? '' : ' off') + '"><div class="row"><b class="grow">' + esc(t.name) + '</b>' +
@@ -411,6 +436,16 @@
   window.RosterServices = { serviceCard: serviceCard, themeStyle: themeStyle, svcStyle: svcStyle };
 
   /* ---------- teams ---------- */
+  /** Join a team to another (e.g. a second Music department): its positions, people and turns move across. */
+  function mergeDialog(t) {
+    if (!t) return;
+    var others = teams().filter(function (x) { return x.id !== t.id; });
+    var same = others.filter(function (x) { return x.name.trim().toLowerCase() === t.name.trim().toLowerCase(); })[0];
+    H.modal(H.dialogHead(T('Join with another team'), t.name) + '<div class="dlg-body">' +
+      '<label class="field"><span>' + esc(T('Join {team} to', { team: t.name })) + '</span><select id="tm-to" data-plain>' + others.map(function (x) { return '<option value="' + esc(x.id) + '"' + (same && same.id === x.id ? ' selected' : '') + '>' + esc(x.name) + '</option>'; }).join('') + '</select></label>' +
+      '<p class="hint">' + esc(T('Its positions, the people on them and their turns on the roster move across. A position with the same name is joined to the one already there, so nobody is listed twice. Then {team} is removed.', { team: t.name })) + '</p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="rosters:teammergego" data-id="' + esc(t.id) + '">' + T('Join them') + '</button></div>', T('Join with another team'));
+  }
   function renderTeams() {
     var html = head(T('Teams'), T('Who can serve in each position, and how often they’d like to.'), '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + T('New team') + '</button>') + tabs('teams');
     html += renderOffers();
@@ -422,9 +457,14 @@
       ren.map(function (r) { return T('{old} becomes {new}; its people and turns stay.', { old: esc(r.from), new: esc(r.to) }) + ' '; }).join('') +
       (ren.length ? T('Nothing is removed.') : T('Nothing here is changed or removed.')) + ' ' +
       '<button class="btn small primary" data-act="rosters:setupdepts">' + T('Add them') + '</button></div>';
-    html += '<div class="grid2">' + S.list('teams').map(function (t) {
+    var tl = teams();
+    html += '<div class="grid2">' + tl.map(function (t, ti) {
       var ps = S.find('positions', function (p) { return p.teamId === t.id; });
-      return '<section class="panel"><h2>' + esc(t.name) + '</h2>' + ps.map(function (p) {
+      var tools = manager() ? '<span class="team-tools"><button type="button" class="icon-btn ghost" data-act="rosters:teammove" data-id="' + esc(t.id) + '" data-d="-1"' + (ti ? '' : ' disabled') + ' aria-label="' + esc(T('Move {team} up', { team: t.name })) + '" title="' + esc(T('Move up')) + '">↑</button>' +
+        '<button type="button" class="icon-btn ghost" data-act="rosters:teammove" data-id="' + esc(t.id) + '" data-d="1"' + (ti < tl.length - 1 ? '' : ' disabled') + ' aria-label="' + esc(T('Move {team} down', { team: t.name })) + '" title="' + esc(T('Move down')) + '">↓</button>' +
+        H.menu('⋯', [tl.length > 1 ? '<button data-act="rosters:teammerge" data-id="' + esc(t.id) + '">' + T('Join with another team…') + '</button>' : '',
+          ps.length ? '' : '<button class="menu-danger" data-act="rosters:teamdel" data-id="' + esc(t.id) + '">' + T('Delete team') + '</button>'], 'row-menu', T('More for {team}', { team: t.name })) + '</span>' : '';
+      return '<section class="panel"><h2 class="team-h"><span class="grow">' + esc(t.name) + '</span>' + tools + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; });
         return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b><span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
@@ -578,6 +618,33 @@
         });
       },
       move: function (el) { state.start += +el.dataset.d; state.preview = null; H.render(); },
+      hideslot: function (el) { if (state.hidden.indexOf(el.dataset.v) < 0) state.hidden.push(el.dataset.v); H.render(); },
+      showslot: function (el) { var v = el.dataset.v; state.hidden = v ? state.hidden.filter(function (x) { return x !== v; }) : []; H.render(); },
+      teammove: function (el) {
+        var ch = Serving.moveTeam(S.list('teams'), el.dataset.id, +el.dataset.d), t = team(el.dataset.id);
+        ch.forEach(function (c) { var x = team(c.id); if (x && x.order !== c.order) S.put('teams', Object.assign({}, x, { order: c.order })); });
+        if (ch.length) S.audit('Moved the department ' + (t || {}).name + (+el.dataset.d < 0 ? ' up' : ' down'), 'teams');
+        H.render();
+      },
+      teammerge: function (el) { mergeDialog(team(el.dataset.id)); },
+      teammergego: function (el) {
+        var from = team(el.dataset.id), to = team(document.getElementById('tm-to').value); if (!from || !to || from.id === to.id) return;
+        var m = Serving.mergeTeam(from.id, to.id, S.list('positions'), S.list('skills'), S.list('assignments'));
+        H.busy(T('Joining the teams…'), function () {
+          m.positions.forEach(function (p) { S.put('positions', p); });
+          m.skills.forEach(function (k) { S.put('skills', k); });
+          m.assignments.forEach(function (a) { S.put('assignments', a); });
+          m.removeSkills.forEach(function (id) { S.remove('skills', id); });
+          m.removePositions.forEach(function (id) { S.remove('positions', id); });
+          S.remove('teams', from.id, 'Joined the department ' + from.name + ' to ' + to.name);
+          H.closeModal(); H.render(); H.toast(T('{from} is now part of {to}', { from: from.name, to: to.name }));
+        });
+      },
+      teamdel: function (el) {
+        var t = team(el.dataset.id); if (!t || S.find('positions', function (p) { return p.teamId === t.id; }).length) return;
+        if (!H.confirmBtn(el, T('Click again to delete'))) return;
+        S.remove('teams', t.id, 'Deleted the department ' + t.name); H.render();
+      },
       autofill: function () {
         var ids = inView().filter(function (s) { return s.date >= H.today(); }).map(function (s) { return s.id; });
         state.preview = R.autoFill(engineData(), ids); state.preview.emergency = false;

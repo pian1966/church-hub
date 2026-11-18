@@ -173,6 +173,16 @@ module.exports = async function (ctx) {
   check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
   check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && (await s.text()).includes('8am only'), 'once added, the offer goes, and 8am-only positions say so');
   check(docs['teams/dept-operational'].name === 'Service Leading', 'the department for preaching, hosting, reading and prayer is called Service Leading');
+  // The order of departments, and joining a second music department to the first
+  let order = await s.page.$$eval('.team-h .grow', e => e.map(x => x.textContent));
+  check(order.indexOf('Welcome') === 0 && order.indexOf('Hospitality') < order.indexOf('Music') && order.indexOf('Creche') < order.indexOf('Children') && order.indexOf('Teens') < order.indexOf('Technical'), 'departments follow a service: Welcome, Service Leading, Extra Slot, Hospitality, Music, Creche, Children, Teens, Technical – ' + order.join(', '));
+  await s.page.click('[data-act="rosters:teammove"][data-id="tech"][data-d="-1"]'); await s.settle(); docs = await s.docsNow();
+  order = await s.page.$$eval('.team-h .grow', e => e.map(x => x.textContent));
+  check(order.indexOf('Technical') < order.indexOf('Teens') && typeof docs['teams/tech'].order === 'number', '↑ moves Technical above Teens, and the order is saved');
+  const worshipPos = Object.keys(docs).filter(k => k.startsWith('positions/') && docs[k].teamId === 'worship');
+  await s.page.click('section.panel:has([data-act="rosters:teammerge"][data-id="worship"]) .row-menu summary'); await s.page.click('[data-act="rosters:teammerge"][data-id="worship"]');
+  await s.page.selectOption('#tm-to', 'dept-music'); await s.page.click('[data-act="rosters:teammergego"]'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
+  check(worshipPos.length && !docs['teams/worship'] && !Object.keys(docs).some(k => k.startsWith('positions/') && docs[k].teamId === 'worship'), 'Join with another team: Worship’s positions move into Music and Worship goes');
   // Rosters → Services: each service's look, mood, departments and positions
   await s.go('rosters/services'); tt = await s.text();
   check((await s.page.$$('.svc-card')).length === 10 && tt.includes('Sunday services') && tt.includes('Special services') && tt.includes('Good Friday') && tt.includes('Tenebrae') && tt.includes('Memorial') && tt.includes('Sunday school') && tt.includes('Seniors') && tt.includes('Young adults'), 'Rosters → Services: Sunday services (8am, 10am, 5pm) and special services (Memorial, Christmas, Maundy Thursday, Tenebrae, Good Friday, Easter Sunday, Ascension), each with its mood');

@@ -422,7 +422,7 @@ var SetupKit = (function () {
       how: function (c) { return ol([open(c.app('groups'), 'Open Groups') + ' and add a group.']); } },
     { id: 'teams', group: 'serving', title: 'Serving teams and positions', mods: ['rosters'], since: '0.1',
       what: 'Departments and positions – one click sets up a starter set you can change.',
-      how: function (c) { return ol([open(c.app('rosters/teams'), 'Open Rosters → Teams') + ' and choose the starter teams, or add your own.']); } },
+      how: function (c) { return ol([open(c.app('rosters/teams'), 'Open Rosters → Teams') + ' and choose the starter teams, or add your own.', 'Put the departments in the order of your service with the ↑ ↓ arrows beside each name (the roster follows that order).']); } },
     { id: 'rosters', group: 'serving', title: 'Make the first roster', mods: ['rosters'], since: '0.1',
       what: 'Church Hub fills the roster fairly, keeps families together and asks volunteers in Messages.',
       how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.']); } },

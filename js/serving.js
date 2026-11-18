@@ -288,7 +288,50 @@ var Serving = (function () {
     return a.date >= today ? a.date : f(y + 1).date;
   }
 
-  return { TIMES: TIMES, DEFAULT_SLOTS: DEFAULT_SLOTS, DEFAULT_SPECIALS: DEFAULT_SPECIALS, THEMES: THEMES, MOODS: MOODS, savedSlots: savedSlots, allSlots: allSlots,
+  /* ---------- the order of departments (Rosters → Teams → ↑ ↓) ---------- */
+  // Until a church puts its own in order, departments follow the usual running order of a service; others come after them.
+  var TEAM_ORDER = ['welcome', 'service leading', 'extra slot', 'hospitality', 'music', 'worship', 'creche', 'children', 'teens', 'technical', 'tech', 'memorial service'];
+  function teamRank(t) {
+    if (t && typeof t.order === 'number') return t.order;
+    var n = norm(t && t.name); n = DEPT_ALIASES[n] || n;
+    var i = TEAM_ORDER.indexOf(n);
+    return 1000 + (i < 0 ? TEAM_ORDER.length : i);
+  }
+  /** The teams in the church's order (stable: teams that tie keep the order they were made in). */
+  function orderTeams(teams) {
+    return (teams || []).map(function (t, i) { return [t, i]; })
+      .sort(function (a, b) { return teamRank(a[0]) - teamRank(b[0]) || a[1] - b[1]; }).map(function (x) { return x[0]; });
+  }
+  /** Move a team one place up (-1) or down (+1) → every team with its new order number, [{ id, order }]. */
+  function moveTeam(teams, id, d) {
+    var list = orderTeams(teams), i = list.findIndex(function (t) { return t.id === id; }), j = i + d;
+    if (i < 0 || j < 0 || j >= list.length) return [];
+    var x = list[i]; list[i] = list[j]; list[j] = x;
+    return list.map(function (t, k) { return { id: t.id, order: k }; });
+  }
+  /**
+   * Fold one team into another (a second Music department into the first): its positions move across, and one with the same
+   * name as a position already there is joined to it – its people and their turns on the roster go with them, nobody twice.
+   * → { positions: [positions to save], removePositions: [ids], skills: [skills to save], removeSkills: [ids], assignments: [to save] }
+   */
+  function mergeTeam(from, to, positions, skills, assignments) {
+    var out = { positions: [], removePositions: [], skills: [], removeSkills: [], assignments: [] };
+    var theirs = (positions || []).filter(function (p) { return p.teamId === to; });
+    (positions || []).filter(function (p) { return p.teamId === from; }).forEach(function (p) {
+      var same = theirs.filter(function (q) { return norm(q.name) === norm(p.name); })[0];
+      if (!same) { out.positions.push(Object.assign({}, p, { teamId: to })); return; }
+      out.removePositions.push(p.id);
+      if ((p.needed || 0) > (same.needed || 0)) out.positions.push(Object.assign({}, same, { needed: p.needed }));
+      (skills || []).filter(function (k) { return k.positionId === p.id; }).forEach(function (k) {
+        var has = (skills || []).some(function (x) { return x.positionId === same.id && x.personId === k.personId; });
+        if (has) out.removeSkills.push(k.id); else out.skills.push(Object.assign({}, k, { positionId: same.id }));
+      });
+      (assignments || []).filter(function (a) { return a.positionId === p.id; }).forEach(function (a) { out.assignments.push(Object.assign({}, a, { positionId: same.id })); });
+    });
+    return out;
+  }
+
+  return { orderTeams: orderTeams, moveTeam: moveTeam, mergeTeam: mergeTeam, TIMES: TIMES, DEFAULT_SLOTS: DEFAULT_SLOTS, DEFAULT_SPECIALS: DEFAULT_SPECIALS, THEMES: THEMES, MOODS: MOODS, savedSlots: savedSlots, allSlots: allSlots,
     specialSlots: specialSlots, addSpecialSlot: addSpecialSlot, removeSlot: removeSlot, findSpecial: findSpecial, themeOf: themeOf, moodsOf: moodsOf,
     runsAtSlot: runsAtSlot, toggleTimes: toggleTimes, structure: structure, updateSlot: updateSlot, DEPARTMENTS: DEPARTMENTS, missing: missing, timeLabel: timeLabel, findPosition: findPosition,
     isCommunion: isCommunion, communionWeeks: communionWeeks, toggleCommunionWeek: toggleCommunionWeek, communionOnDate: communionOnDate, hasCommunion: hasCommunion,

@@ -69,5 +69,17 @@ ok(S.missing([{ id: 'h', name: 'Hospitality' }], [{ id: 'x', teamId: 'h', name: 
 ok(S.findPosition('Servers (Collection & Communion)', [{ id: 'a', name: 'Communion Servers' }]).id === 'a' && S.findPosition('Servers (Collection & Communion)', [{ id: 'b', name: 'Servers (Collection & Communion)' }]).id === 'b', 'Elvanto’s combined servers: Communion Servers, or the old position if not renamed yet');
 ok(S.missing([], []).positions.filter(p => p.communion).map(p => p.id).join() === 'pos-comm-lead,pos-comm-provide,pos-servers', 'the usual communion positions are marked');
 
+console.log('The order of departments, and folding one into another');
+const TM = ['Technical', 'Teens', 'Music', 'Creche', 'Hospitality', 'Children', 'Extra Slot', 'Operational', 'Welcome', 'Prayer', 'Memorial Service'].map((n, i) => ({ id: 't' + i, name: n }));
+ok(S.orderTeams(TM).map(t => t.name).join() === 'Welcome,Operational,Extra Slot,Hospitality,Music,Creche,Children,Teens,Technical,Memorial Service,Prayer', 'the usual order: welcome, operational, extra slot, hospitality, music, creche, children, teens, technical (then the rest)');
+const mv = S.moveTeam(TM, 't0', -1), byId = Object.fromEntries(mv.map(x => [x.id, x.order]));
+const moved = S.orderTeams(TM.map(t => Object.assign({}, t, { order: byId[t.id] })));
+ok(moved.map(t => t.name).slice(7, 9).join() === 'Technical,Teens' && S.moveTeam(TM, 't8', -1).length === 0, 'a team moves up one place (and the first can’t go higher)');
+const MP = [{ id: 'a', teamId: 'm1', name: 'Singers', needed: 2 }, { id: 'b', teamId: 'm2', name: 'singers', needed: 3 }, { id: 'c', teamId: 'm2', name: 'Keyboard', needed: 1 }];
+const MK = [{ id: 'k1', positionId: 'a', personId: 'p1' }, { id: 'k2', positionId: 'b', personId: 'p1' }, { id: 'k3', positionId: 'b', personId: 'p2' }];
+const mg = S.mergeTeam('m2', 'm1', MP, MK, [{ id: 'x', positionId: 'b', personId: 'p2' }]);
+ok(mg.removePositions.join() === 'b' && mg.positions.map(p => p.id + p.teamId + p.needed).join() === 'am13,cm11', 'merging: the same position joins the one already there (keeping the larger number needed), a new one moves across');
+ok(mg.removeSkills.join() === 'k2' && mg.skills.map(k => k.id + k.positionId).join() === 'k3a' && mg.assignments.map(a => a.positionId).join() === 'a', 'its people and their turns go with it, nobody twice');
+
 if (fails) { console.log('\n' + fails + ' serving test(s) FAILED'); process.exit(1); }
 console.log('\nAll serving tests passed');

@@ -234,4 +234,31 @@ module.exports = async function (ctx) {
   const dec = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].kind === 'roster' && docs[k].roster === 'declined').map(k => docs[k]);
   check(docs['assignments/kTim'].status === 'declined' && dec.length === 1 && dec[0].to.join() === rs['settings/church'].rosterTeam.join() && dec[0].turns.join() === 'kTim', 'saying they can’t make it tells the roster team (Administrators, Roster coordinators and the chosen people)');
   await finish(s);
+
+  // Rosters → Change person: a turn given to the wrong person is changed in one go; the first person's message is taken
+  // back if they haven't opened it, or they are told they're no longer needed if they have
+  console.log('Changing who serves on the roster:');
+  const cs = seedDocs(), askTim = (read) => ({ kind: 'roster', groupId: '', audience: '', roster: 'ask', turns: ['kTim'], title: 'You’re on the roster', body: 'Door', fromId: 'p05', fromName: 'Sipho Dlamini',
+    to: ['p14'], deliveredBy: ['p05'], readBy: read ? ['p05', 'p14'] : ['p05'], createdAt: '2026-11-01T08:00:00.000Z', updatedAt: '2026-11-01T08:00:00.000Z' });
+  cs['messages/askTim'] = askTim(false);
+  s = await session('sipho.dlamini@example.com', cs); await s.go('rosters'); await s.page.waitForTimeout(300);
+  await s.page.click('[data-act="rosters:slot"][data-id="kTim"]'); await s.page.click('[data-act="rosters:change"][data-id="kTim"]'); await s.page.waitForTimeout(200);
+  check((await s.page.textContent('#modal')).includes('Instead of Tim') && !(await s.page.$('#modal [data-act="rosters:pick"][data-person="p14"]')), 'Change person offers the rest of the team, not the person being changed');
+  const newId = await s.page.evaluate(() => [...document.querySelectorAll('#modal [data-act="rosters:pick"][data-r="kTim"]:not([disabled])')].map(b => b.dataset.person).find(id => (Store.get('people', id) || {}).email));
+  await s.page.click('#modal [data-act="rosters:pick"][data-r="kTim"][data-person="' + newId + '"]'); await s.settle(); docs = await s.docsNow();
+  const swapped = Object.keys(docs).filter(k => k.startsWith('assignments/') && docs[k].positionId === 'door' && docs[k].serviceId === cs['assignments/kTim'].serviceId && docs[k].personId === newId);
+  const askedNew = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].roster === 'ask' && docs[k].to.join() === newId);
+  check(!!newId && !docs['assignments/kTim'] && swapped.length === 1 && askedNew.length === 1, 'the turn changes hands in one go, and the new person is asked');
+  check(!docs['messages/askTim'] && !Object.keys(docs).some(k => /^messages\//.test(k) && docs[k].roster === 'off'), 'Tim hadn’t opened his message yet: it is taken back quietly');
+  await finish(s);
+  cs['messages/askTim'] = askTim(true);
+  s = await session('sipho.dlamini@example.com', cs); await s.go('rosters'); await s.page.waitForTimeout(300);
+  await s.page.click('[data-act="rosters:slot"][data-id="kTim"]'); await s.page.click('[data-act="rosters:remove"][data-id="kTim"]'); await s.page.click('[data-act="rosters:remove"][data-id="kTim"]'); await s.settle(); docs = await s.docsNow();
+  const off = Object.keys(docs).filter(k => /^messages\//.test(k) && docs[k].roster === 'off').map(k => docs[k]);
+  check(!docs['assignments/kTim'] && !!docs['messages/askTim'] && off.length === 1 && off[0].to.join() === 'p14' && off[0].body.includes('no longer needed'), 'Tim had read it: taken off the roster, he is told he’s no longer needed');
+  await finish(s);
+  delete cs['assignments/kTim']; cs['messages/offTim'] = Object.assign({}, off[0]);
+  s = await session('tim.jacobs@example.com', cs); await s.go('messages'); await s.page.waitForTimeout(400); t = await s.text();
+  check(t.includes('No longer needed') && t.includes('no longer needed for this') && !(await s.page.$('[data-act="rosters:reply"][data-id="kTim"]')), 'Tim sees “No longer needed”, with nothing to answer');
+  await finish(s);
 };

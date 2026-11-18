@@ -30,7 +30,7 @@
 var Msg = (function () {
   'use strict';
   var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster'];
-  var ROSTER_NOTES = ['ask', 'remind', 'declined'], MAX_TURNS = 100;
+  var ROSTER_NOTES = ['ask', 'remind', 'declined', 'off'], MAX_TURNS = 100;
   var MAX_BODY = 4000, MAX_TITLE = 120;
   /** What attendees may do when the church hasn't chosen (Settings → Attendees): see Church Partners' names, and write to
    *  the Office, the ministers and their Midweek Group leaders. Also offered: 'directory' (the church directory, as Church
@@ -144,7 +144,7 @@ var Msg = (function () {
   }
 
   /**
-   * A message about serving turns (kind 'roster'), ready to save; or { error }. note: 'ask' | 'remind' | 'declined';
+   * A message about serving turns (kind 'roster'), ready to save; or { error }. note: 'ask' | 'remind' | 'declined' | 'off' (taken off a turn);
    * to: who gets it (the sender is left out); turns: assignment ids; title and body in the sender's language (the inbox
    * shows the turns in the reader's own).
    */

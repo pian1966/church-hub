@@ -250,9 +250,9 @@
             || !Array.isArray(a.deliveredBy) || !a.deliveredBy.every(function (x) { return isMe(c, x); })
             || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
         if (a.kind === 'office') return attendeeMay(c, 'write');
-        if (a.kind === 'roster') {   // ask / remind: roster coordinators; declined: to the roster team only (settings.rosterTeam)
+        if (a.kind === 'roster') {   // ask / remind / off: roster coordinators; declined: to the roster team only (settings.rosterTeam)
           if (!Array.isArray(a.turns) || !a.turns.length) return false;
-          if (a.roster === 'ask' || a.roster === 'remind') return rosterer(c);
+          if (a.roster === 'ask' || a.roster === 'remind' || a.roster === 'off') return rosterer(c);
           var team = (docs['settings/church'] || {}).rosterTeam || [];
           return a.roster === 'declined' && a.to.every(function (x) { return team.indexOf(x) >= 0; });
         }

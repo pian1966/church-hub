@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.87';
+  var NEWS_FOR = '0.88';
   var NEWS = [
+    { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: tap a name and choose Change person to swap it in one go – the first person is told, and a message they haven’t opened is taken back.') },
+    { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters now show only the departments and positions needed at the services you’re looking at.') },
     { date: '2026-11-18', who: ['everyone'], text: TX('The Church Hub icon on your phone or computer now has the same thin cross as inside the app.') },
     { date: '2026-11-17', who: ['staffwork'], app: 'people', text: TX('Advanced search looks calmer: each filter has a small × to remove it, and one Add a filter button sits underneath.') },
     { date: '2026-11-17', who: ['everyone'], app: 'library', text: TX("Library: if you have borrowed something, the Library now opens on Items I have borrowed; tap Library for the whole catalogue.") },

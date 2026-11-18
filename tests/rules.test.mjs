@@ -560,6 +560,8 @@ await t('messages: roster messages – asked to serve, reminders, and someone wh
   const m = (o) => Object.assign({ kind: 'roster', groupId: '', audience: '', title: '', body: 'Reading, 6 Dec', fromName: 'x', deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
   await can(db.rosters.doc('messages/rost1').set(m({ roster: 'ask', turns: ['a1'], fromId: 'p05', to: ['p14'] })));          // the roster coordinator asks
   await can(db.rosters.doc('messages/rost2').set(m({ roster: 'remind', turns: ['a1', 'a2'], fromId: 'p05', to: ['p14'] })));
+  await can(db.rosters.doc('messages/rost9').set(m({ roster: 'off', turns: ['a1'], fromId: 'p05', to: ['p14'] })));          // no longer needed
+  await cannot(db.member.doc('messages/rost10').set(m({ roster: 'off', turns: ['a1'], fromId: 'p14', to: ['p15'] })));
   await cannot(db.member.doc('messages/rost3').set(m({ roster: 'ask', turns: ['a1'], fromId: 'p14', to: ['p15'] })));        // a member can't ask people to serve
   await can(db.member.doc('messages/rost4').set(m({ roster: 'declined', turns: ['a1'], fromId: 'p14', to: ['p01', 'p05'] })));   // can't make it: to the roster team
   await cannot(db.member.doc('messages/rost5').set(m({ roster: 'declined', turns: ['a1'], fromId: 'p14', to: ['p15'] })));      // only to the roster team

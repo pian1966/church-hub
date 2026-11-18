@@ -35,6 +35,31 @@
     });
     return out;
   }
+  /** Someone is taken off a turn (a mistake, or changed for someone else). A "You're on the roster" message they haven't
+   *  opened yet is taken back quietly (if it is about other turns too, this one just drops out of it); if they have read it,
+   *  or it can't be taken back, they get a short note that they're no longer needed. Nothing is sent if they had said no.
+   *  Call before the turn is removed. Returns 'back', 'told' or ''. */
+  function untell(a) {
+    var me = H.user(); if (!me || !H.isOn('messages') || !a || a.status === 'declined' || a.personId === me.id) return '';
+    var asks = S.find('messages', function (m) { return m.kind === 'roster' && (m.roster === 'ask' || m.roster === 'remind') && (m.turns || []).indexOf(a.id) >= 0 && (m.to || []).indexOf(a.personId) >= 0; });
+    if (!asks.length) return '';   // never told (they can't sign in to Church Hub, or the message was already deleted)
+    var mgr = H.can('*') || H.can('people.edit') || me.appRole === 'pastor', seen = false;
+    asks.forEach(function (m) {
+      if ((m.readBy || []).indexOf(a.personId) >= 0) { seen = true; return; }
+      if ((m.turns || []).some(function (id) { return id !== a.id && S.get('assignments', id); })) return;   // still about other turns
+      if ((m.fromId === me.id || mgr) && (m.to || []).length === 1) S.remove('messages', m.id, 'Took back a roster message (taken off the roster)');
+      else seen = true;
+    });
+    if (!seen) return 'back';
+    var m = Msg.rosterNote('off', [a.personId], [a.id], me, T('No longer needed'), T('Sorry – you’re no longer needed for this:') + '\n\n' + turnText(a));
+    if (m.error) return '';
+    S.put('messages', m, 'Told someone they are no longer needed for a serving turn');
+    return 'told';
+  }
+  /** The end of a toast after someone was taken off: what happened to the message they had been sent. */
+  function untoldText(r, p) {
+    return r === 'told' ? ' · ' + T('{name} has been told they’re no longer needed', { name: H.name(p) }) : r === 'back' ? ' · ' + T('the message to {name} was taken back', { name: H.name(p) }) : '';
+  }
   /** "3 people told in Messages" (and how many can't sign in yet). */
   function toldText(r) {
     var t = r.sent ? TN('{n} person told in Messages', '{n} people told in Messages', r.sent) : '';
@@ -152,7 +177,11 @@
     html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
     html += '<div class="matrix-wrap"><table class="matrix"><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col">' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
-    orderedPositions().forEach(function (p) {
+    // A department or position that isn't at any of these services (e.g. Creche at 8:00, communion roles without communion)
+    // is left out, so the roster shows only what is needed. Someone already rostered there keeps the row.
+    orderedPositions().filter(function (p) {
+      return svcs.some(function (s) { return runsAt(p, s); }) || all.some(function (a) { return a.positionId === p.id && ids.indexOf(a.serviceId) >= 0; });
+    }).forEach(function (p) {
       if (p.teamId !== lastTeam) { lastTeam = p.teamId; html += '<tr class="team-row"><th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th></tr>'; }
       html += '<tr><th scope="row">' + esc(p.name) + '<small>' + T('{n} needed', { n: p.needed }) + '</small></th>' + svcs.map(function (s) {
         var here = all.filter(function (a) { return a.serviceId === s.id && a.positionId === p.id; });
@@ -188,12 +217,15 @@
       (isPreview ? '<p class="muted">' + T('This is a suggestion. Keep the suggestions to ask them.') + '</p>' : '<p>' + T('Status') + ': <b>' + esc(T({ accepted: 'Accepted', pending: 'Waiting for a reply', declined: 'Said no' }[a.status] || '')) + '</b></p>') + '</div>' +
       '<div class="dlg-foot">' + (isPreview ? '<button class="btn" data-act="rosters:dropsug" data-id="' + esc(a.id) + '">' + T('Remove suggestion') + '</button>' :
         '<button class="btn" style="margin-right:auto" data-act="rosters:remove" data-id="' + a.id + '">' + T('Take off the roster') + '</button>' +
+        '<button class="btn" data-act="rosters:change" data-id="' + a.id + '">' + T('Change person') + '</button>' +
         (a.status !== 'declined' ? '<button class="btn" data-act="rosters:status" data-id="' + a.id + '" data-s="declined">' + T('Mark “can’t make it”') + '</button>' : '') +
         (a.status !== 'accepted' ? '<button class="btn ok" data-act="rosters:status" data-id="' + a.id + '" data-s="accepted">' + T('Mark accepted') + '</button>' : '')) + '</div>', T('Roster slot'));
   }
 
-  function assignDialog(serviceId, positionId, emergency) {
-    var s = S.get('services', serviceId), po = pos(positionId), d = engineData();
+  /** Choose who serves. replacing: the turn being changed to someone else ("Change person"); its person isn't offered. */
+  function assignDialog(serviceId, positionId, emergency, replacing) {
+    var s = S.get('services', serviceId), po = pos(positionId), d = engineData(), old = replacing && S.get('assignments', replacing);
+    var rAttr = old ? ' data-r="' + esc(old.id) + '"' : '';
     var cands = S.find('skills', function (k) { return k.positionId === positionId; }).map(function (k) {
       var p = person(k.personId), why = R.awayReason(d, k.personId, s.date);
       if (!why && k.frequency === 'emergency' && !emergency) why = T('Only available in emergencies');
@@ -203,18 +235,19 @@
       if (!why && apart) why = T('Kept apart from someone already serving');
       var tg = R.groupsOf(d, k.personId, 'together')[0];
       return { p: p, why: why, tg: tg, emergency: k.frequency === 'emergency' };
-    }).filter(function (c) { return c.p && c.p.active !== false; }).sort(function (a, b) { return (!!a.why - !!b.why) || H.name(a.p).localeCompare(H.name(b.p)); });
-    H.modal(H.dialogHead(T('Add someone'), po.name + ' · ' + H.fmt(s.date, true)) + '<div class="dlg-body">' +
+    }).filter(function (c) { return c.p && c.p.active !== false && !(old && c.p.id === old.personId); }).sort(function (a, b) { return (!!a.why - !!b.why) || H.name(a.p).localeCompare(H.name(b.p)); });
+    H.modal(H.dialogHead(old ? T('Change person') : T('Add someone'), po.name + ' · ' + H.fmt(s.date, true)) + '<div class="dlg-body">' +
+      (old ? '<p class="hint">' + T('Instead of {name}. They’ll be told, and the new person is asked.', { name: esc(H.name(person(old.personId))) }) + '</p>' : '') +
       (emergency ? '<p class="hint">' + T('Emergency-only volunteers are included. Use this only to cover an emergency.') + '</p>' : '') +
       (cands.length ? '<div class="list">' + cands.map(function (c) {
-        return '<button class="item" data-act="rosters:pick" data-s="' + serviceId + '" data-p="' + positionId + '" data-person="' + c.p.id + '"' + (emergency && c.emergency ? ' data-emergency="1"' : '') + (c.why ? ' disabled style="opacity:.55;cursor:not-allowed"' : '') + '>' + H.avatar(c.p, 32) +
+        return '<button class="item" data-act="rosters:pick" data-s="' + serviceId + '" data-p="' + positionId + '" data-person="' + c.p.id + '"' + rAttr + (emergency && c.emergency ? ' data-emergency="1"' : '') + (c.why ? ' disabled style="opacity:.55;cursor:not-allowed"' : '') + '>' + H.avatar(c.p, 32) +
           '<span class="grow"><b>' + esc(H.name(c.p)) + '</b><small>' + esc(c.why || (c.emergency ? T('Emergency-only volunteer') : c.tg ? T(c.tg.strength === 'must' ? 'Serves together with {names} (always) – they’ll be asked too' : 'Serves together with {names} (when possible)', { names: c.tg.memberIds.filter(function (m) { return m !== c.p.id; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Available'))) + '</small></span>' +
           (c.why ? '<span class="tag grey">' + T('Not available') + '</span>' : '<span class="tag ok">' + T('Available') + '</span>') + '</button>';
       }).join('') + '</div>' : '<p class="empty">' + T('No one is on this team yet. Add people under Teams.') + '</p>') + '</div>' +
       '<div class="dlg-foot"><a class="btn" href="#/rosters/teams" data-act="hub:close">' + T('Manage teams') + '</a>' +
-      (emergency ? '<button class="btn" data-act="rosters:regularassign" data-s="' + serviceId + '" data-p="' + positionId + '">' + T('Show regular volunteers') + '</button>' :
-        '<button class="btn" data-act="rosters:emergencyassign" data-s="' + serviceId + '" data-p="' + positionId + '">' + T('Show emergency helpers') + '</button>') +
-      '<button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Add someone'));
+      (emergency ? '<button class="btn" data-act="rosters:regularassign" data-s="' + serviceId + '" data-p="' + positionId + '"' + rAttr + '>' + T('Show regular volunteers') + '</button>' :
+        '<button class="btn" data-act="rosters:emergencyassign" data-s="' + serviceId + '" data-p="' + positionId + '"' + rAttr + '>' + T('Show emergency helpers') + '</button>') +
+      '<button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', old ? T('Change person') : T('Add someone'));
   }
 
   /* ---------- services: look, mood, departments and positions (Rosters → Services) ---------- */
@@ -555,21 +588,29 @@
       },
       dropsug: function (el) { state.preview.assignments = state.preview.assignments.filter(function (x) { return x.id !== el.dataset.id; }); H.closeModal(); H.render(); },
       status: function (el) { var a = S.get('assignments', el.dataset.id); a.status = el.dataset.s; S.put('assignments', a, 'Roster status changed'); H.closeModal(); H.render(); },
-      remove: function (el) { if (!H.confirmBtn(el, T('Click again to remove'))) return; S.remove('assignments', el.dataset.id, 'Removed from roster'); H.closeModal(); H.render(); },
+      remove: function (el) {
+        if (!H.confirmBtn(el, T('Click again to remove'))) return;
+        var a = S.get('assignments', el.dataset.id), r = untell(a);
+        S.remove('assignments', el.dataset.id, 'Removed from roster'); H.closeModal(); H.render();
+        if (a) H.toast(T('Taken off the roster') + untoldText(r, person(a.personId)));
+      },
+      change: function (el) { var a = S.get('assignments', el.dataset.id); if (a) assignDialog(a.serviceId, a.positionId, false, a.id); },
       assign: function (el) { assignDialog(el.dataset.s, el.dataset.p, false); },
       communion: function (el) { communionDialog(el.dataset.s); },
       communionset: function (el) { setCommunion(el.dataset.s, el.dataset.v); },
-      emergencyassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, true); },
-      regularassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, false); },
+      emergencyassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, true, el.dataset.r); },
+      regularassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, false, el.dataset.r); },
       pick: function (el) {
         var sid = el.dataset.s, pid = el.dataset.p, who = el.dataset.person, d = engineData();
-        var emergency = el.dataset.emergency === '1';
+        var emergency = el.dataset.emergency === '1', old = el.dataset.r && S.get('assignments', el.dataset.r), untold = '';
         var added = S.put('assignments', { serviceId: sid, positionId: pid, personId: who, status: 'pending', source: emergency ? 'emergency' : 'manual',
           reason: emergency ? T('Emergency volunteer') : '' }, emergency ? 'Added an emergency volunteer to roster' : 'Added to roster');
         tell([added], 'ask');
+        if (old) { untold = untell(old); S.remove('assignments', old.id, 'Changed who serves on the roster'); }
         var tg = R.groupsOf(d, who, 'together').filter(function (g) { return g.strength === 'must'; })[0];
         H.closeModal(); H.render();
-        H.toast(tg ? T('Added. {name} always serves with {names} – use “Fill the gaps” to place them too.', { name: H.name(person(who)), names: tg.memberIds.filter(function (m) { return m !== who; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Added – waiting for their reply'));
+        if (old) H.toast(T('Changed to {name} – waiting for their reply', { name: H.name(person(who)) }) + untoldText(untold, person(old.personId)));
+        else H.toast(tg ? T('Added. {name} always serves with {names} – use “Fill the gaps” to place them too.', { name: H.name(person(who)), names: tg.memberIds.filter(function (m) { return m !== who; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Added – waiting for their reply'));
       },
       reply: function (el) {
         var a = S.get('assignments', el.dataset.id); if (!a || a.status === el.dataset.s) return;

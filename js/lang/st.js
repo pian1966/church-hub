@@ -173,7 +173,7 @@ I18n.add('st', {
     "Subscription": "Peeletso",
     "Church Hub for the price of a coffee.": "Church Hub ka theko ya kofi.",
     "Buy us one coffee a month – about {price} – and Church Hub keeps going, for you and for churches that can’t.": "Re rekele kofi e le nngwe ka kgwedi – hoo e ka bang {price} – mme Church Hub e tswela pele, bakeng sa lona le bakeng sa dikereke tse sa kgoneng.",
-    "Church Hub is for every church, in every nation and language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.": "Church Hub ke ya kereke e nngwe le e nngwe, setjhabeng se seng le se seng le puong e nngwe le e nngwe. Ha ho kereke e kileng ya kgutlisetswa morao hobane e futsanehile: kereke e sa kgoneng ho reka kofi e lefa ka thapelo.",
+    "Church Hub is for every church, in every nation, in (nearly) every language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.": "Church Hub ke ya kereke e nngwe le e nngwe, setjhabeng se seng le se seng, (hoo e ka bang) puong e nngwe le e nngwe. Ha ho kereke e kileng ya kgutlisetswa morao hobane e futsanehile: kereke e sa kgoneng ho reka kofi e lefa ka thapelo.",
     "Your church has promised to pray for another church each month": "Kereke ya hao e tshepisitse ho rapella kereke e nngwe kgwedi le kgwedi",
     "Choose your coffee": "Kgetha kofi ya hao",
     "Pick the one you’d order. Its price sets your subscription.": "Kgetha eo o ka e odarang. Theko ya yona e beha peeletso ya hao.",

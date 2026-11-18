@@ -118,7 +118,7 @@
     return '<section class="sp-hero"><div class="sp-hero-art">' + heroArt() + '</div><div class="sp-hero-text">' +
       '<p class="sp-kicker">' + T('Every church, however small, deserves great church software.') + '</p>' +
       '<h2>' + T('Give us the price of one cup of coffee a month – whatever a cup costs where you live – and Church Hub keeps going, for you and for churches that can’t.') + '</h2>' +
-      '<p>' + T('Church Hub is for every church, in every nation and language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.') + '</p>' +
+      '<p>' + T('Church Hub is for every church, in every nation, in (nearly) every language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.') + '</p>' +
       '<p class="sp-hero-more">' + T('The price is per church, not per person: one cup a month covers your whole church, however many people, groups and services you have.') + '</p>' +
       '<p class="sp-hero-more">' + T('Don’t mistake a low price for a lesser product. Church Hub competes with the best church management systems in the world. We keep the price low so that every church can have it, not because it does less.') + '</p>' +
       (pledged() ? '<p class="sp-chip">' + H.icon(PRAY, 16) + T('Your church has promised to pray for another church each month') + '</p>' : '') +

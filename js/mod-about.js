@@ -107,9 +107,11 @@
       (pages ? '<h3 style="margin:14px 0 6px">Last pages drawn</h3><table class="table small"><tbody>' + pages + '</tbody></table>' : '') + '</section>';
   }
 
-  /** Admins: the two printable brochures (brochure.html), filled in with the church's name and this Church Hub's address. */
+  /** Administrators and the Rector: the two printable brochures (brochure.html), filled in with the church's name and this
+   *  Church Hub's address. Administrators can also change their wording, colour and font; the Rector opens and prints them. */
+  function mayOpenBrochures() { return Store.isAdmin() || Store.isRector(); }
   function brochures() {
-    if (!Store.isAdmin()) return '';
+    if (!mayOpenBrochures()) return '';
     var st = Store.settings() || {}, link = location.origin + location.pathname.replace(/index\.html$/, '');
     function a(who, title, sub) {
       return '<a class="item" href="#/about/brochure/' + who + '"><span class="grow"><b>' + title + '</b><small>' + sub + '</small></span></a>';
@@ -117,7 +119,7 @@
     return '<section class="panel" id="about-brochures"><h2>' + T('Brochures') + '</h2><p class="hint">' + T('Fold-out A4 brochures about Church Hub to print or save as PDF. They are kept up to date as new features are added.') + '</p><div class="list">' +
       a('members', T('For our members'), T('How to start, and what members can do')) +
       a('churches', T('For other churches'), T('What Church Hub offers, and the demo')) +
-      '</div><p class="hint" style="margin-bottom:0">Open one to print it, or to change its wording, colour and font (Edit).' +
+      '</div><p class="hint" style="margin-bottom:0">' + (Store.isAdmin() ? 'Open one to print it, or to change its wording, colour and font (Edit).' : 'Open one to print it or save it as a PDF. Administrators can change its wording, colour and font.') +
       (window.BrochureKit && BrochureKit.changed(Store.brochures()) ? ' <b>Your church has changed them.</b>' : '') + '</p></section>';
   }
 
@@ -147,8 +149,13 @@
   }
   function renderBrochure(who) {
     who = who === 'churches' ? 'churches' : 'members';
-    var b = broSaved(), d = b.design, st = Store.settings() || {}, lang = I18n.get(), own = st.theme && st.theme.id === 'custom' && st.theme.color ? String(st.theme.color).toUpperCase() : '';
+    var admin = Store.isAdmin(), b = broSaved(), d = b.design, st = Store.settings() || {}, lang = I18n.get(), own = st.theme && st.theme.id === 'custom' && st.theme.color ? String(st.theme.color).toUpperCase() : '';
     var sw = function (c, label) { return '<button type="button" class="bro-sw' + (d.accent === c ? ' on' : '') + '" data-act="about:brocolour" data-c="' + c + '" style="--c:' + c + '" title="' + esc(label) + '" aria-label="' + esc(label) + '"></button>'; };
+    if (!admin) bro.edit = false;
+    var nav = '<nav class="seg" style="margin-bottom:14px"><a href="#/about/brochure/members" class="' + (who === 'members' ? 'on' : '') + '">' + T('For our members') + '</a><a href="#/about/brochure/churches" class="' + (who === 'churches' ? 'on' : '') + '">' + T('For other churches') + '</a></nav>';
+    var frame = '<div class="bro-wrap" data-keep><iframe id="bro-frame" title="' + esc(who === 'members' ? T('For our members') : T('For other churches')) + '" src="' + esc(broSrc(who)) + '"></iframe></div>';
+    if (!admin) return '<div class="page-head"><div><h1>' + T('Brochures') + '</h1><p class="lead">Fold-out A4 brochures to print or save as PDF.</p></div>' +   // the Rector: open and print
+      '<div class="btns"><a class="btn" href="#/about">' + H.icon(H.ICON.back, 18) + T('About') + '</a><button class="btn primary" data-act="about:broprint">Print or save as PDF</button></div></div>' + nav + frame;
     return '<div class="page-head"><div><h1>' + T('Brochures') + '</h1><p class="lead">Fold-out A4 brochures to print or save as PDF. Change the wording, colour and font to suit your church.</p></div>' +
       '<div class="btns"><a class="btn" href="#/about">' + H.icon(H.ICON.back, 18) + T('About') + '</a></div></div>' +
       '<nav class="seg" style="margin-bottom:14px"><a href="#/about/brochure/members" class="' + (who === 'members' ? 'on' : '') + '">' + T('For our members') + '</a><a href="#/about/brochure/churches" class="' + (who === 'churches' ? 'on' : '') + '">' + T('For other churches') + '</a></nav>' +
@@ -272,7 +279,7 @@
     id: 'about', name: 'About', desc: 'Version, updates and who made Church Hub', tint: '#475569',
     icon: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-5M12 8h.01',
     stat: function () { return T('Version {v}', { v: V.version }); },
-    render: function (parts) { return parts && parts[0] === 'brochure' && Store.isAdmin() && window.BrochureKit ? renderBrochure(parts[1]) : render(); },
+    render: function (parts) { return parts && parts[0] === 'brochure' && mayOpenBrochures() && window.BrochureKit ? renderBrochure(parts[1]) : render(); },
     after: function (parts) {
       if (parts && parts[0] === 'brochure') {
         var fr = document.getElementById('bro-frame'), who = parts[1] === 'churches' ? 'churches' : 'members';

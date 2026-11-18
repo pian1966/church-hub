@@ -107,7 +107,7 @@
         || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['librarianIds', 'librarianReviewedAt']) && Array.isArray(a.librarianIds || []) && typeof a.librarianReviewedAt === 'string' && a.librarianReviewedAt.length >= 20 && a.librarianReviewedAt.length <= 40)
         // ... and what attendees may do (Settings -> Attendees)
         || (op === 'update' && is(c, ['pastor']) && isMe(c, (b || {}).seniorPastorId || '') && onlyChanges(b, a, ['attendeeCan']) && Array.isArray(a.attendeeCan) && a.attendeeCan.every(function (x) { return ['names', 'directory', 'write', 'reply'].indexOf(x) >= 0; })); } },
-    brochures: { read: function (c, id) { return is(c, ['admin']) && id === 'church'; }, write: function (c, op, id) { return is(c, ['admin']) && id === 'church'; } },
+    brochures: { read: function (c, id) { return (is(c, ['admin']) || rector(c)) && id === 'church'; }, write: function (c, op, id) { return is(c, ['admin']) && id === 'church'; } },
     elvantoSync: { read: function (c, id, d) { return may(c, 'import') || c.robot || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
         if (may(c, 'import')) return true;

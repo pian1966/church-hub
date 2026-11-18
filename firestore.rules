@@ -185,9 +185,10 @@ service cloud.firestore {
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['attendeeCan'])
           && request.resource.data.attendeeCan is list && request.resource.data.attendeeCan.hasOnly(['names', 'directory', 'write', 'reply']));
     }
-    // Brochure wording is visible and editable only by Administrators.
+    // Brochure wording is editable only by Administrators; the Rector may also read it, to print the brochures.
     match /brochures/{id} {
-      allow read, write: if admin() && id == 'church';
+      allow read: if (admin() || rector()) && id == 'church';
+      allow write: if admin() && id == 'church';
     }
 
     // ---------- people ----------

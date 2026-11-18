@@ -116,9 +116,18 @@
   function inView() {
     var all = S.list('services').slice().sort(Serving.byWhen);
     var first = all.findIndex(function (s) { return s.date >= H.today(); }); if (first < 0) first = Math.max(0, all.length - 4);
-    var i = Math.max(0, Math.min(all.length - 1, first + state.start)), n = narrow() ? 1 : 4;
+    var n = narrow() ? 1 : 4, i = Math.max(0, Math.min(Math.max(0, all.length - n), first + state.start));
+    state.start = i - first;   // at the end of the list: the last few services, not one column on its own
     return all.slice(i, i + n);
   }
+  /** "Go to a date": the roster from the first service on or after that day (to fill in a Sunday further ahead). */
+  function goTo(d) {
+    var all = S.list('services').slice().sort(Serving.byWhen), t = H.today();
+    var first = all.findIndex(function (s) { return s.date >= t; }); if (first < 0) first = Math.max(0, all.length - 4);
+    var i = all.findIndex(function (s) { return s.date >= d; }); if (i < 0) i = all.length - 1;
+    state.start = i - first; state.preview = null; H.render();
+  }
+  if (typeof document !== 'undefined') document.addEventListener('change', function (e) { if (e.target && e.target.id === 'ro-date' && e.target.value) goTo(e.target.value); });
 
   function tabs(active) {
     var t = manager() ? [['', T('Roster')], ['teams', T('Teams')], ['services', T('Services')], ['together', T('Serving together')], ['away', T('Away dates')], ['mine', T('My serving')]] : [['mine', T('My serving')], ['together', T('Serving together')], ['away', T('Away dates')]];
@@ -164,6 +173,7 @@
     var ed = engineData(), problems = R.check(ed, ids), st = S.settings();
     var html = head(T('Rosters'), T('Who is serving at each service. Families and friends who asked to serve together are kept together.'),
       '<button class="btn" data-act="rosters:move" data-d="-' + (narrow() ? 1 : 4) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + (narrow() ? 1 : 4) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
+      '<label class="ro-date" title="' + esc(T('Go to a date')) + '"><input type="date" id="ro-date" value="' + esc(svcs.length ? svcs[0].date : H.today()) + '" aria-label="' + esc(T('Go to a date')) + '"></label>' +
       (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>' +
         H.menu(T('More'), ['<button data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>', '<button data-act="rosters:remind">' + H.icon(BELL, 16) + T('Remind those who haven’t replied') + '</button>']))) + tabs('');
     if (state.preview) {

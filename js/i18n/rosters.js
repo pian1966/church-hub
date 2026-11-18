@@ -95,6 +95,7 @@ I18n.rows([
     ["Nothing is removed.", "Niks word verwyder nie.", "Akukho okususwayo.", "Akukho nto isuswayo."],
     ["One fewer for {position}", "Een minder vir {position}", "Oyedwa ngaphansi ku-{position}", "Omnye ngaphantsi ku-{position}"],
     ["One more for {position}", "Een meer vir {position}", "Oyedwa ngaphezulu ku-{position}", "Omnye ngaphezulu ku-{position}"],
+    ["Go to a date", "Gaan na ’n datum", "Iya osukwini", "Yiya kumhla"],
     ['Take off the roster', 'Haal van die rooster af', 'Susa ohlelweni', 'Susa kuludwe'],
     ['Mark “can’t make it”', 'Merk “kan nie kom nie”', 'Phawula ukuthi “angeke akwazi”', 'Phawula ukuthi “akanakukwazi”'],
     ['Mark accepted', 'Merk aanvaar', 'Phawula ukuthi kwamukelwe', 'Phawula ukuthi kwamkelwe'],

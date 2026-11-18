@@ -210,6 +210,9 @@ module.exports = async function (ctx) {
   check(docs['services/' + csv.id].communion === true && !!(await cell()), 'a one-off change: communion that day, and its positions are asked for');
   await s.page.click('[data-act="rosters:communion"][data-s="' + csv.id + '"]'); await s.page.click('[data-act="rosters:communionset"][data-v="usual"]'); await s.settle(); docs = await s.docsNow();
   check(!('communion' in docs['services/' + csv.id]), 'As usual takes the one-off change away');
+  const later = await s.page.evaluate(() => Store.list('services').map(x => x.date).sort().filter(d => d > Hub.today())[5]);
+  await s.page.fill('#ro-date', later); await s.page.dispatchEvent('#ro-date', 'change'); await s.settle();
+  check(await s.page.evaluate(d => { return [...document.querySelectorAll('.matrix thead th')].slice(1).some(th => th.textContent.includes(Hub.fmt(d))); }, later), 'Go to a date: the roster jumps to the services from that day');
   await s.page.evaluate(w => Store.put('services', JSON.parse(w)), csv.was); await s.settle();
   await s.go('rosters/services/10%3A00');
   await s.go('rosters/services/memorial'); tt = await s.text();

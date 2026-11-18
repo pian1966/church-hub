@@ -612,6 +612,7 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .msg-body { margin: 6px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.5; }
 .msg-turns { margin-top: 8px; }
 .msg-turns .item { flex-wrap: wrap; gap: 6px; }
+.msg-turns .item .grow { flex: 1 1 180px; }   /* on a phone the date gets a full line; the buttons go underneath, not beside a narrow column */
 .msg-foot { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-top: 8px; }
 .msg-foot .grow { font-size: 13px; }
 .msg-re { margin: 6px 0 0; padding-left: 8px; border-left: 3px solid var(--line); }
@@ -1382,3 +1383,9 @@ html[data-mode=dark] .sp-st-holiday { background: linear-gradient(135deg, var(--
 .sp-cupprice { margin: 16px 0 4px; max-width: 260px; } .sp-cupprice .sp-money input { width: 100%; font-size: 18px; }
 .sp-photo-btns { margin: 0; gap: 8px; } .sp-photo-btns .btn { gap: 6px; }
 @media (max-width: 860px) { .sp-cups.sp-kinds { grid-auto-columns: 62%; } }
+
+/* Rosters: "Go to a date" beside Earlier / Later (the date box from js/datebox.js: type a date or tap its calendar) */
+.ro-date { display: inline-flex; width: 190px; }
+.ro-date .date-typed { width: 100%; }
+.ro-date .date-typed { gap: 6px; }
+.ro-date .date-text { min-height: 44px; width: 100%; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; font-size: 14.5px; }

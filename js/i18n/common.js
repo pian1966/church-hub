@@ -484,6 +484,7 @@ I18n.rows([
     ["{partner} access", "{partner}-toegang", "Ukufinyelela kwe-{partner}", "Ufikelelo lwe-{partner}"],
     ["Attendee", "Bywoner", "Ohambela isonto", "Ohamba icawe"],
     ["this church", "hierdie kerk", "leli bandla", "le cawe"],
+    ["No longer needed", "Nie meer nodig nie", "Akusadingeki", "Akusafuneki"],
     ["You’re on the roster", "Jy is op die rooster", "Usohlelweni lokusebenza", "Ukuludwe lomsebenzi"],
     ["Reminder: please reply about serving", "Herinnering: antwoord asseblief oor jou diens", "Isikhumbuzo: sicela uphendule mayelana nokukhonza", "Isikhumbuzo: nceda uphendule malunga nokukhonza"],
     ["{name} can’t make it", "{name} kan nie kom nie", "U-{name} ngeke akwazi ukuza", "U-{name} akanakukwazi ukuza"],

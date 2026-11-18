@@ -93,11 +93,12 @@
   /* ---------- Roster messages (sent by Rosters: js/mod-rosters.js) ---------- */
   /** The heading, in the reader's language. */
   function rosterTitle(m) {
-    return m.roster === 'remind' ? T('Reminder: please reply about serving') : m.roster === 'declined' ? T('{name} can’t make it', { name: m.fromName || T('Someone') }) : T('You’re on the roster');
+    return m.roster === 'off' ? T('No longer needed') : m.roster === 'remind' ? T('Reminder: please reply about serving') : m.roster === 'declined' ? T('{name} can’t make it', { name: m.fromName || T('Someone') }) : T('You’re on the roster');
   }
   /** The turns it is about, in the reader's language: the volunteer accepts or says they can't make it right here; the
    *  roster team opens the roster. '' when none of the turns can be shown any more (the message's own words are shown). */
   function rosterPart(m) {
+    if (m.roster === 'off') return '';   // no longer needed: the message's own words say for what
     var u = me(), t = H.today(), team = m.roster === 'declined';
     var rows = (m.turns || []).map(function (id) {
       var a = S.get('assignments', id), sv = a && S.get('services', a.serviceId), po = a && S.get('positions', a.positionId);

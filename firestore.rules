@@ -397,7 +397,7 @@ service cloud.firestore {
     // Administrators, Roster coordinators and chosen people listed in settings.rosterTeam.
     function mayRosterNote(m) {
       return m.get('turns', []) is list && m.get('turns', []).size() > 0 && m.get('turns', []).size() <= 100
-        && ((m.get('roster', '') in ['ask', 'remind'] && rosterer())
+        && ((m.get('roster', '') in ['ask', 'remind', 'off'] && rosterer())
           || (m.get('roster', '') == 'declined' && m.to.hasOnly(churchSettings().get('rosterTeam', []))));
     }
     function mayWriteTo(m) {

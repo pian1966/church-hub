@@ -329,7 +329,7 @@
     };
     var word = A.match === 'any' ? 'OR' : 'AND', logicNote = '';
     if (A.match === 'logic' && A.logic.trim()) { var pl = PS.parseLogic(A.logic, A.filters.length); if (!pl.error && pl.unused.length) logicNote = '<p class="hint">' + T('Not used in your logic: filter {list}.', { list: pl.unused.join(', ') }) + '</p>'; }
-    var html = crumb + '<div class="page-head"><div><h1>' + T('Advanced search') + '</h1><p class="lead">' + T('Find people by any mix of details, as in Elvanto. You can only search on what your role may see.') + '</p></div></div>' +
+    var html = crumb + '<div class="page-head"><div><h1>' + T('Advanced search') + '</h1><p class="lead">' + T('Find people by any mix of details. You can only search on what your role may see.') + '</p></div></div>' +
       askPanel(F, byKey) +
       '<div id="adv"><section class="panel"><h2>' + T('Filters') + '</h2>' +
       '<label class="field" style="max-width:420px">' + T('Match') + '<select id="adv-match">' + [['all', TX('All of the following filters')], ['any', TX('Any of the following filters')], ['logic', TX('Advanced: your own logic')]].map(function (m) {

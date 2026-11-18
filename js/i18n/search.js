@@ -38,7 +38,7 @@ I18n.rows([
     ['Type at least 4 digits of the ID number.', 'Tik ten minste 4 syfers van die ID-nommer.', 'Thayipha okungenani izinombolo ezi-4 zenombolo kamazisi.', 'Chwetheza ubuncinane amanani ama-4 enombolo yesazisi.'],
     ['Press Search to look up ID numbers.', 'Druk Soek om ID-nommers na te gaan.', 'Cindezela u-Sesha ukuze ubheke izinombolo zomazisi.', 'Cofa u-Khangela ukuze ujonge iinombolo zesazisi.'],
     ['Couldn’t load the ID numbers', 'Kon nie die ID-nommers laai nie', 'Ayikwazanga ukulayisha izinombolo zomazisi', 'Ayikwazanga ukulayisha iinombolo zesazisi'],
-    ['Find people by any mix of details, as in Elvanto. You can only search on what your role may see.', 'Vind mense volgens enige mengsel van besonderhede, soos in Elvanto. Jy kan net soek op wat jou rol mag sien.', 'Thola abantu nganoma iyiphi inhlanganisela yemininingwane, njengaku-Elvanto. Ungasesha kuphela kulokho indima yakho evunyelwe ukukubona.', 'Fumana abantu ngayo nayiphi na indibaniselwano yeenkcukacha, njengakwi-Elvanto. Unokukhangela kuphela kwinto indima yakho evunyelwe ukuyibona.'],
+    ['Find people by any mix of details. You can only search on what your role may see.', 'Vind mense volgens enige mengsel van besonderhede. Jy kan net soek op wat jou rol mag sien.', 'Thola abantu nganoma iyiphi inhlanganisela yemininingwane. Ungasesha kuphela kulokho indima yakho evunyelwe ukukubona.', 'Fumana abantu ngayo nayiphi na indibaniselwano yeenkcukacha. Unokukhangela kuphela kwinto indima yakho evunyelwe ukuyibona.'],
     ['Filters', 'Filters', 'Izihlungi', 'Izihluzi'],
     ['Match', 'Pas', 'Fanisa', 'Dibanisa'],
     ['Your own logic', 'Jou eie logika', 'Umqondo wakho', 'Ingqiqo yakho'],

@@ -1390,6 +1390,7 @@ I18n.add('st', {
     "Keep {file} ({size}) in Church Hub.": "Boloka {file} ({size}) ho Church Hub.",
     "Keep a link to where it is kept.": "Boloka sehokelo sa moo e bolokilweng teng.",
     "Show it on the Membership Application Form, where everyone who signs in can read it.": "E bontshe Foromong ya Kopo ya Botho, moo bohle ba kenang ba ka e balang.",
+    "You wouldn’t be able to see this record yourself. Under “Who can see it”, choose a group you belong to.": "O ne o ke ke wa bona rekoto ena ka bowena. Tlasa “Ke mang ya ka e bonang”, kgetha sehlopha seo o leng ho sona.",
     "Please check the date": "Ka kopo hlahloba letsatsi",
     "Here’s what Church Hub is about to do": "Sena ke seo Church Hub e tlang ho se etsa",
     "Don’t show this summary again": "O se ke wa bontsha kakaretso ena hape",

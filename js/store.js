@@ -180,7 +180,14 @@ var Store = (function () {
     if (LIVE) return !!(Live.session() && Live.session().role === 'pastor');
     return !!(user && user.appRole === 'pastor');
   }
-  function brochures() { return isAdmin() ? db.brochures || {} : null; }
+  /** The Senior Pastor (Rector), signed in as themselves (not "View as"). */
+  function isRector() {
+    if (previewRole || !isPastor()) return false;
+    var id = LIVE ? (Live.session() || {}).personId : (user && user.id), st = db.settings || {};
+    return !!id && !!st.seniorPastorId && st.seniorPastorId === id;
+  }
+  /** The church's brochure wording: Administrators change it; the Rector may read it (to print the brochures). */
+  function brochures() { return isAdmin() || isRector() ? db.brochures || {} : null; }
   function setBrochures(value, auditText) {
     if (blocked()) return false;
     if (!isAdmin()) { tell('Only Administrators can change brochure content.'); return false; }
@@ -965,6 +972,7 @@ var Store = (function () {
         if (partner || ac.indexOf('directory') >= 0) want.directory = c('directory');
         if (partner || ac.indexOf('names') >= 0 || ac.indexOf('directory') >= 0) want.names = c('names');
       }
+      if (is('pastor') && !previewRole && me && st.seniorPastorId === me) want['brochure:rector'] = fs.doc('brochures/church');   // the Rector reads the brochure wording
       if (!is('admin') && !previewRole && me && (st.librarianIds || []).indexOf(me) >= 0) {
         want['loans:all'] = c('loans');
         want['libraryDuplicateIgnores:all'] = c('libraryDuplicateIgnores');
@@ -975,7 +983,7 @@ var Store = (function () {
       Object.keys(want).forEach(function (k) {
         if (extraSubs[k]) return;
         extraSubs[k] = want[k].onSnapshot(function (snap) {
-          var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw[k] = m;
+          var m = {}; if (snap.docs) snap.docs.forEach(function (d) { m[d.id] = d.data(); }); else if (snap.exists) m[snap.id] = snap.data(); raw[k] = m;   // a collection, or one document
           if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
         }, function (e) { console.warn('Could not load ' + k + ' (re-publish the database rules?)', e && e.code); delete extraSubs[k]; });
       });
@@ -1130,7 +1138,8 @@ var Store = (function () {
       });
       db.people = people;
       db.settings = raw.settings && raw.settings.church ? copy(raw.settings.church) : null;
-      db.brochures = role() === 'admin' && raw.brochure && raw.brochure.church ? copy(raw.brochure.church) : {};
+      var bro = role() === 'admin' ? raw.brochure : raw['brochure:rector'];   // the Rector's copy is asked for in extras()
+      db.brochures = bro && bro.church ? copy(bro.church) : {};
       if (db.settings) delete db.settings.brochures;
       ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books', 'applicationDocuments'].forEach(function (c) { db[c] = arr(c); });
       var ignoredDuplicates = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('libraryDuplicateIgnores') === 0; }));
@@ -1544,7 +1553,7 @@ var Store = (function () {
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
   function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
-    settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, rosterTeam: rosterTeam, setRosterExtra: setRosterExtra, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
+    settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, rosterTeam: rosterTeam, setRosterExtra: setRosterExtra, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, isRector: isRector, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,

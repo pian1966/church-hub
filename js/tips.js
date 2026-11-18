@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.91';
+  var NEWS_FOR = '0.92';
   var NEWS = [
+    { date: '2026-11-18', who: ['archivist'], app: 'library', text: TX('Archives now has folders: Council meetings sort themselves into years and months by date, and Church Hub shows where a document will go – and asks if its date looks wrong – before saving.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: choose a date beside Earlier and Later to jump straight to the services that need filling then.') },
     { date: '2026-11-18', who: ['admin', 'pastor'], app: 'people', text: TX('When someone applies to become a Church Partner, Administrators and Pastors now also get a message in Messages.') },
     { date: '2026-11-18', who: ['everyone'], app: 'rosters', text: TX('Services are now shown in time order (8am, 10am, 5pm) and in their own colours on the roster, My serving and Settings.') },
@@ -104,6 +105,8 @@
     { id: 'senior-viewas', who: ['senior'], text: TX('As Senior Pastor you can use View as… to see Church Hub the way another role sees it.') },
     // Staff who see the People list
     { id: 'people-search', who: ['staffwork'], app: 'people', href: '#/people', text: TX('Advanced search on People finds people by almost anything – their age, a birthday coming up, the service they serve at.') },
+    // Administrators and Council members (who open the Archives)
+    { id: 'archive-search', who: ['archivist'], app: 'library', href: '#/library/archives', text: TX('Searching the Archives looks through every folder at once, and shows where each document is filed.') },
     // Administrators
     { id: 'admin-viewas', who: ['admin'], text: TX('Use View as… in the menu to see exactly what a Pastor, a Roster coordinator or a member sees.') },
     { id: 'admin-apps', who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Apps switches parts of Church Hub on and off, such as the Library or Midweek Groups.') },

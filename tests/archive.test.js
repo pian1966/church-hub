@@ -4,7 +4,7 @@ const A = require('../js/archive.js');
 let fails = 0;
 function ok(c, what) { if (!c) { fails++; console.log('  ✗ ' + what); } else console.log('  ✓ ' + what); }
 
-ok(A.cats(null).map(c => c.id).join() === 'minutes,plans,contracts,appraisals,other' && A.cat(null, 'contracts').access === 'private' && A.cat(null, 'contracts').person && A.cat(null, 'minutes').access === 'body', 'the starting categories: minutes for a leadership group, contracts and appraisals private');
+ok(A.cats(null).map(c => c.id).join() === 'minutes,plans,contracts,appraisals,other' && A.cat(null, 'contracts').access === 'private' && A.cat(null, 'contracts').person && A.cat(null, 'minutes').access === 'body' && A.cat(null, 'minutes').byDate && !A.cat(null, 'plans').byDate, 'the starting categories: minutes for a leadership group, contracts and appraisals private');
 ok(A.cats({ archiveCats: [{ id: 'x1', name: 'Title deeds', access: 'nonsense' }] })[0].access === 'office' && A.cat({ archiveCats: [{ id: 'x1', name: 'Title deeds' }] }, 'minutes') === null, 'the church’s own categories replace them (an unknown “who can see” becomes Administrators and Pastors)');
 
 let r = A.clean({ title: '  October minutes ', cat: 'minutes', date: '2026-10-14T00:00', access: 'body', bodyId: 'g1', aboutId: '', aboutName: 'Nobody', shownTo: true, junk: 1, link: ' https://example.org/a ' });
@@ -34,6 +34,29 @@ const recs = [{ cat: 'minutes', date: '2026-01-20', title: 'Jan' }, { cat: 'minu
 ok(A.years(recs).join() === '2026,2025' && A.list(recs, 'minutes', '2026').map(x => x.title).join() === 'Mar,Jan' && A.list(recs, '', '').length === 4, 'records by category and year, newest first');
 ok(A.missingMonths(recs, 'minutes', '2026', '2026-04').join() === '2,4' && A.missingMonths(recs, 'minutes', '2026').length === 10, 'months with no minutes yet');
 ok(A.missingMonths(recs, 'minutes', '2025').join() === '12' && A.missingMonths(recs, 'plans', '2025').length === 0 && A.missingMonths([], 'minutes', '2026').length === 0, '… counted only after the first minutes ever filed');
+
+// Folders
+const fs = { archiveCats: [{ id: 'minutes', name: 'Council meetings', access: 'body' }, { id: 'plans', name: 'Plans', access: 'office' }, { id: 'hall', name: 'Hall extension', access: 'office', parent: 'plans' },
+  { id: 'roof', name: 'Roof', parent: 'hall', byDate: true }, { id: 'loop1', name: 'Loop', parent: 'loop2' }, { id: 'loop2', name: 'Loop 2', parent: 'loop1' }, { id: 'lost', name: 'Lost', parent: 'gone' }] };
+ok(A.cat(fs, 'minutes').byDate && A.cat(fs, 'roof').byDate && !A.cat(fs, 'hall').byDate, 'the Council folder sorts by year and month unless the church says otherwise; any folder can');
+ok(A.kids(fs, '').map(c => c.id).join() === 'minutes,plans,loop1,lost' && A.kids(fs, 'loop1').map(c => c.id).join() === 'loop2' && A.kids(fs, 'plans').map(c => c.id).join() === 'hall', 'folders inside folders; a folder in a loop or inside a missing folder goes to the top');
+ok(A.path(fs, 'roof').map(c => c.name).join(' › ') === 'Plans › Hall extension › Roof' && A.path(fs, 'nope').length === 0, 'the path from the top down to a folder');
+const frecs = [{ cat: 'plans', date: '2020-01-01' }, { cat: 'hall', date: '2021-01-01' }, { cat: 'roof', date: '2022-05-05' }, { cat: 'minutes', date: '2026-11-12' }];
+ok(A.under(fs, 'plans').join() === 'plans,hall,roof' && A.count(fs, frecs, 'plans') === 3 && A.count(fs, frecs, 'hall') === 2, 'a folder counts the documents in the folders inside it');
+const mrecs = [{ cat: 'minutes', date: '2026-11-12', title: 'Agenda' }, { cat: 'minutes', date: '2026-11-12', title: 'Minutes' }, { cat: 'minutes', date: '2026-10-08', title: 'Minutes' }, { cat: 'minutes', date: '2025-12-01', title: 'Minutes' }];
+ok(JSON.stringify(A.months(mrecs, '2026')) === '[{"m":11,"n":2},{"m":10,"n":1}]' && A.inMonth(mrecs, 'minutes', '2026', 11).length === 2 && A.inMonth(mrecs, 'minutes', '2026', 0).length === 3, 'Year → Month folders come from the dates, newest first');
+
+// What a title or file name says about the date
+const N = t => { const x = A.named(t); return x ? [x.y, x.m, x.d].join('-') : ''; };
+ok(N('Council minutes – October') === '0-10-0' && N('minutes_2026_11_12.pdf') === '2026-11-12' && N('12 November 2026 agenda') === '2026-11-12' && N('Nov 2026 minutes') === '2026-11-0' && N('12-11-2026') === '2026-11-12', 'months and dates in titles and file names');
+ok(N('Kerkraadsnotules Maart') === '0-3-0' && N('Imizuzu kaNovemba') === '' && N('Imizuzu Novemba') === '0-11-0' && N('Metsotso Pudungwana') === '0-11-0', '… in Afrikaans, isiZulu and Sesotho too');
+ok(N('Who may sign') === '' && N('Jan’s contract') === '' && N('Budget 2026') === '2026-0-0' && N('Hall plans') === '', 'not every word is a month: “may”, a name like Jan; a year on its own');
+const C = (o) => A.checkDate(Object.assign({ today: '2026-12-03', byDate: true, recs: [] }, o)).map(w => w.code + (w.date ? ':' + w.date : '')).join();
+ok(C({ date: '2026-12-03', title: 'November minutes' }) === 'named:2026-11-03', 'November minutes filed on 3 December: asks, and offers November');
+ok(C({ date: '2027-01-05', today: '2027-01-05', title: 'December minutes' }) === 'named:2026-12-05', 'a later month with no year means last year');
+ok(C({ date: '2026-12-25', title: 'Christmas' }) === 'future' && C({ date: '1026-11-12', title: 'Minutes' }) === 'old' && C({ date: '2026-11-30', title: 'Minutes 31 November 2026' }) === 'named:2026-11-30', 'a date not yet come, a slip of the year, and no 31 November');
+ok(C({ date: '2026-11-14', title: 'Treasurer’s report', recs: mrecs }) === 'meeting:2026-11-12' && C({ date: '2026-11-12', title: 'Treasurer’s report', recs: mrecs }) === '' && C({ date: '2026-11-14', title: 'Report', byDate: false, recs: mrecs }) === '', 'other documents of that month share another date: is it the same meeting? (only in a date-sorted folder)');
+ok(C({ date: '2026-11-12', title: 'minutes ', recs: mrecs }) === 'same' && C({ date: '2026-11-12', title: 'Minutes', recs: mrecs, id: 'x' }) === 'same' && C({ date: '2026-09-01', title: 'Minutes', recs: mrecs }) === '' && C({ date: '2026-11-12', title: 'Minutes', recs: [Object.assign({ id: 'x' }, mrecs[1])], id: 'x' }) === '', 'the same title already in that month (not counting the record itself)');
 
 if (fails) { console.log('\n' + fails + ' archive test(s) FAILED'); process.exit(1); }
 console.log('\nAll archive tests passed');

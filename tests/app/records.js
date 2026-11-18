@@ -18,6 +18,9 @@ module.exports = async function (ctx) {
   let docs, s, t, key;
   const find = (d, coll, fn) => Object.keys(d).find(k => new RegExp('^' + coll + '/[^/]+$').test(k) && fn(d[k]));
   const b64 = PNG.buffer.toString('base64');
+  // The Archive shows a summary before saving (and asks about a date that looks wrong): carry on past it, as a person would
+  const save = async (s) => { await click(s, '[data-act="archive:save"]'); if (await s.page.$('#ar-check:not([hidden])')) await click(s, '#ar-foot [data-act="archive:save"][data-sure]'); };
+  const goTo = (s, id) => s.page.evaluate(id => ArchiveUI.show(id), id);
   const on = seed => { seed['settings/church'].modules = Object.assign({}, seed['settings/church'].modules, { leaders: true, archive: true, library: true }); return seed; };
   const deniedPreview = async (x, id) => {
     const code = await x.page.evaluate(async fileId => {
@@ -92,34 +95,67 @@ module.exports = async function (ctx) {
   await s.go('archive'); t = await s.text();
   check(t.includes('No records yet.'), 'the Archive starts empty');
   await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
-  check((await s.page.inputValue('#ar-cat')) === 'minutes' && (await s.page.inputValue('#ar-access')) === 'body' && (await s.page.inputValue('#ar-body')) === lb && await s.page.isHidden('#ar-about-wrap'), 'a new record starts as Council minutes, for the Council to see');
+  check((await s.page.inputValue('#ar-cat')) === 'minutes' && (await s.page.inputValue('#ar-access')) === 'body' && (await s.page.inputValue('#ar-body')) === lb && await s.page.isHidden('#ar-about-wrap'), 'a new record starts in Council meetings, for the Council to see');
   await click(s, '[data-act="archive:save"]');
   check(!(await s.page.isHidden('#ar-err')) && !!(await s.page.$('#ar-title')), 'a record needs a title');
   await fill(s, '#ar-title', 'Council minutes – October'); await fill(s, '#ar-date', '2026-10-13'); await click(s, '[data-act="archive:save"]');
   check(!(await s.page.isHidden('#ar-err')) && !!(await s.page.$('#ar-title')), '… and a file or a link');
-  await s.page.setInputFiles('#ar-file', PNG); await click(s, '[data-act="archive:save"]'); await s.settle();
+  check((await s.page.textContent('#ar-where')).includes('Council meetings › 2026 › October'), 'while typing, the form says which folder the date files it in');
+  await s.page.setInputFiles('#ar-file', PNG); await click(s, '[data-act="archive:save"]');
+  t = await s.page.textContent('#ar-check');
+  check(await s.page.isVisible('#ar-check') && await s.page.isHidden('#ar-form') && t.includes('Here’s what Church Hub is about to do') && t.includes('File “Council minutes – October” in Council meetings › 2026 › October.') &&
+    t.includes('It is the first document for October 2026') && t.includes('Who can see it: Church Council.') && t.includes('face.png') && !t.includes('Please check the date') && !(await s.docsNow())[find(await s.docsNow(), 'archive', d => d.cat === 'minutes') || 'x'],
+    'before saving, Church Hub says what it is about to do, and nothing is saved yet');
+  await click(s, '[data-act="archive:back"]');
+  check(await s.page.isVisible('#ar-form') && (await s.page.inputValue('#ar-title')) === 'Council minutes – October', 'Go back keeps what was typed');
+  await save(s); await s.settle();
   docs = await s.docsNow(); key = find(docs, 'archive', d => d.cat === 'minutes'); const ar = key ? key.split('/')[1] : '';
   check(!!key && docs[key].access === 'body' && docs[key].bodyId === lb && docs[key].shownTo === '' && docs[key].file.name === 'face.png' && docs[key].file.parts === 1 && docs[key].date === '2026-10-13', 'the minutes are saved for the Council');
   check(!!docs['archive/' + ar + '/parts/0'] && docs['archive/' + ar + '/parts/0'].data === b64, 'the file is kept apart from the record, in parts');
   await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
+  await fill(s, '#ar-title', 'Council agenda – September'); await fill(s, '#ar-date', '2026-10-13'); await fill(s, '#ar-link', 'https://example.org/agenda'); await click(s, '[data-act="archive:save"]');
+  t = await s.page.textContent('#ar-check');
+  check(t.includes('Please check the date') && t.includes('speaks of September') && !!(await s.page.$('[data-act="archive:usedate"][data-date="2026-09-13"]')), 'a title that speaks of another month: Church Hub asks, and offers that month');
+  await click(s, '[data-act="archive:usedate"]'); t = await s.page.textContent('#ar-check');
+  check((await s.page.inputValue('#ar-date')) === '2026-09-13' && !t.includes('Please check the date') && t.includes('Council meetings › 2026 › September'), '… one tap puts the date right and shows the summary again');
+  await s.page.check('#ar-noask'); await click(s, '#ar-foot [data-act="archive:save"][data-sure]'); await s.settle();
+  docs = await s.docsNow(); const agenda = find(docs, 'archive', d => d.title === 'Council agenda – September');
+  check(!!agenda && docs[agenda].date === '2026-09-13' && await s.page.evaluate(() => Store.pref('archiveAsk')) === 'off', 'saved in September; the summary can be switched off on this device');
+  await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
+  await fill(s, '#ar-title', 'Council minutes – October'); await fill(s, '#ar-date', '2026-10-13'); await fill(s, '#ar-link', 'https://example.org/again'); await click(s, '[data-act="archive:save"]');
+  check(await s.page.isVisible('#ar-check') && (await s.page.textContent('#ar-check')).includes('There is already a document called “Council minutes – October”'), 'with the summary off, Church Hub still asks about a likely mistake (the same title again)');
+  await click(s, '[data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  await click(s, '[data-act="archive:go"][data-folder="minutes"]'); await click(s, '[data-act="archive:go"][data-yr="2026"]');
+  t = await s.text();
+  check(t.includes('October') && t.includes('September') && !!(await s.page.$('.ar-crumbs')) && (await s.page.textContent('.ar-crumbs')).includes('Council meetings'), 'Council meetings opens into 2026, then its months – made from the dates');
+  await click(s, '[data-act="archive:go"][data-mo="10"]');
+  t = await s.page.textContent('#ar-browse');
+  check(t.includes('Council minutes – October') && !t.includes('Council agenda – September'), 'a month shows its documents');
+  await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
+  check((await s.page.inputValue('#ar-cat')) === 'minutes' && (await s.page.inputValue('#ar-date')) === '2026-10-13', 'adding from inside a month starts with that folder and the date of its meeting');
+  await click(s, '[data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  await click(s, '[data-act="archive:asks"]');
+  check(await s.page.evaluate(() => Store.pref('archiveAsk')) === 'on', 'the summary can be switched back on under More');
+  await click(s, '.ar-crumbs [data-folder=""]');
+  await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
   await select(s, '#ar-cat', 'contracts');
   check((await s.page.inputValue('#ar-access')) === 'private' && await s.page.isHidden('#ar-body-wrap') && !(await s.page.isHidden('#ar-about-wrap')), 'a staff contract starts private, and asks which staff member it is about');
-  await fill(s, '#ar-title', 'Contract of employment'); await select(s, '#ar-about', 'p06'); await s.page.setInputFiles('#ar-file', PNG); await click(s, '[data-act="archive:save"]'); await s.settle();
+  await fill(s, '#ar-title', 'Contract of employment'); await select(s, '#ar-about', 'p06'); await s.page.setInputFiles('#ar-file', PNG); await save(s); await s.settle();
   await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
-  await select(s, '#ar-cat', 'plans'); await fill(s, '#ar-title', 'Hall extension plans'); await fill(s, '#ar-link', 'drive.google.com/hall-plans'); await click(s, '[data-act="archive:save"]'); await s.settle();
+  await select(s, '#ar-cat', 'plans'); await fill(s, '#ar-title', 'Hall extension plans'); await fill(s, '#ar-link', 'drive.google.com/hall-plans'); await save(s); await s.settle();
   docs = await s.docsNow(); const con = find(docs, 'archive', d => d.cat === 'contracts'), plan = find(docs, 'archive', d => d.cat === 'plans');
   check(!!con && docs[con].access === 'private' && docs[con].aboutId === 'p06' && docs[con].aboutName === 'Lerato Khumalo' && docs[con].shownTo === 'p06' && docs[con].bodyId === '', 'the contract is private, and shown to the staff member it is about');
   check(!!plan && docs[plan].access === 'office' && docs[plan].link === 'https://drive.google.com/hall-plans' && !docs[plan].file, 'a record can be a link to where the file is kept');
   await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
   await select(s, '#ar-cat', 'plans'); await fill(s, '#ar-title', 'Statement of Faith'); await fill(s, '#ar-date', '2026-10-14');
   await fill(s, '#ar-link', 'https://docs.google.com/document/d/AbC123/edit?usp=sharing');
-  await s.page.setInputFiles('#ar-file', PNG); await s.page.check('#ar-app-doc'); await click(s, '[data-act="archive:save"]'); await s.settle();
+  await s.page.setInputFiles('#ar-file', PNG); await s.page.check('#ar-app-doc'); await save(s); await s.settle();
   docs = await s.docsNow(); const statement = find(docs, 'archive', d => d.title === 'Statement of Faith'), statementId = statement ? statement.split('/')[1] : '';
   const pub = docs['applicationDocuments/' + statementId];
   check(!!statement && docs[statement].displayOnApplication === true && !!pub && pub.title === 'Statement of Faith' && pub.parts === 1 &&
     !!pub.fileVersion && docs['applicationDocuments/' + statementId + '/files/' + pub.fileVersion + '/parts/0'].data === b64,
     'an Administrator can publish a limited title, link and separately versioned file copy to the membership form');
-  await click(s, '[data-act="archive:linkpreview"][data-id="' + statementId + '"]'); await s.page.waitForSelector('#modal #ar-doc-preview');
+  await goTo(s, statementId); await click(s, '[data-act="archive:linkpreview"][data-id="' + statementId + '"]'); await s.page.waitForSelector('#modal #ar-doc-preview');
   check(await s.page.getAttribute('#ar-doc-preview', 'src') === 'https://docs.google.com/document/d/AbC123/preview?embedded=true' &&
     await s.page.$eval('#ar-doc-loading', e => e.getAttribute('role') === 'status' && e.getAttribute('aria-live') === 'polite') &&
     await s.page.isVisible('#modal .ar-preview-body .hint') && await s.page.getAttribute('#modal .dlg-foot a', 'href') === 'https://docs.google.com/document/d/AbC123/edit?usp=sharing',
@@ -135,15 +171,16 @@ module.exports = async function (ctx) {
     'an applicant can read the deliberately published uploaded document');
   await s.close();
   s = await session('linda.pillay@example.com', docs); await s.go('archive');
-  await click(s, '[data-act="archive:edit"][data-id="' + statementId + '"]'); await s.page.uncheck('#ar-app-doc'); await click(s, '[data-act="archive:save"]'); await s.settle();
+  await goTo(s, statementId); await click(s, '[data-act="archive:edit"][data-id="' + statementId + '"]'); await s.page.uncheck('#ar-app-doc'); await save(s); await s.settle();
   docs = await s.docsNow();
   check(!docs['applicationDocuments/' + statementId] && docs['archive/' + statementId].displayOnApplication === false,
     'unpublishing removes the public copy while keeping the Archive record private');
-  t = await s.text();
+  t = await s.page.textContent('#ar-results');
   check(t.includes('Council minutes – October') && t.includes('Church Council') && t.includes('Shown to Lerato Khumalo') && t.includes('Administrators and the Senior Pastor only'), 'each record says who can see it');
   await click(s, '[data-act="archive:storageinfo"]'); await s.page.waitForSelector('#modal .overlay');
   check((await s.page.textContent('#modal')).includes('Uploaded files are stored in the church’s Firestore database in South Africa.') && (await s.page.textContent('#modal')).includes('Linked files stay in their cloud folder:'), 'an Administrator can open the storage information note');
   await click(s, '#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  await goTo(s, ar);
   const [dl] = await Promise.all([s.page.waitForEvent('download'), s.page.click('[data-act="archive:open"][data-id="' + ar + '"]')]);
   const got = ctx.fs.readFileSync(await dl.path()); await s.settle(); docs = await s.docsNow();
   check(dl.suggestedFilename() === 'face.png' && got.equals(PNG.buffer), 'the file downloads as it was added');
@@ -158,9 +195,9 @@ module.exports = async function (ctx) {
   const previewFile = async (title, file, selector, text) => {
     await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
     await select(s, '#ar-cat', 'plans'); await fill(s, '#ar-title', title); await s.page.setInputFiles('#ar-file', file);
-    await click(s, '[data-act="archive:save"]'); await s.settle();
+    await save(s); await s.settle();
     const stored = await s.docsNow(), k = find(stored, 'archive', d => d.title === title), id = k.split('/')[1];
-    await click(s, '[data-act="archive:preview"][data-id="' + id + '"]'); await s.page.waitForSelector('#modal ' + selector);
+    await goTo(s, id); await click(s, '[data-act="archive:preview"][data-id="' + id + '"]'); await s.page.waitForSelector('#modal ' + selector);
     const shown = await s.page.textContent('#modal');
     check(shown.includes(text), title + ' uses its inline preview format');
     await click(s, '#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
@@ -172,12 +209,19 @@ module.exports = async function (ctx) {
   docs = await s.docsNow();
   check(Object.keys(docs).some(k => /^audit\//.test(k) && /Opened the archive record “Council minutes – October”/.test(docs[k].action)), 'opening a record that isn’t for everyone is written in the audit log');
   await fill(s, '#ar-q', 'hall'); await s.page.waitForTimeout(100);
-  check(await s.page.isVisible('.ar-item:has-text("Hall extension plans")') && await s.page.isHidden('.ar-item:has-text("Contract of employment")'), 'searching the archive');
+  check(await s.page.isVisible('#ar-results .ar-item:has-text("Hall extension plans")') && await s.page.isHidden('#ar-results .ar-item:has-text("Contract of employment")') && await s.page.isHidden('#ar-browse'), 'searching the archive');
   await fill(s, '#ar-q', '');
-  await click(s, '[data-act="archive:cats"]'); await click(s, '[data-act="archive:catadd"]');
-  await fill(s, '.ar-cat:last-child .ar-cn', 'Title deeds'); await select(s, '.ar-cat:last-child .ar-ca', 'private'); await click(s, '[data-act="archive:catsave"]'); await s.settle();
+  await click(s, '.ar-crumbs [data-folder=""]').catch(() => {}); await goTo(s, plan.split('/')[1]);
+  await click(s, '[data-act="archive:newfolder"]'); await s.page.waitForSelector('#af-name');
+  check((await s.page.inputValue('#af-parent')) === 'plans' && (await s.page.inputValue('#af-access')) === 'office', 'a new folder made inside Architectural plans starts inside it, with its “who can see it”');
+  await fill(s, '#af-name', 'Title deeds'); await select(s, '#af-access', 'private'); await s.page.check('#af-bydate'); await click(s, '[data-act="archive:foldersave"]'); await s.settle();
   docs = await s.docsNow(); const acs = docs['settings/church'].archiveCats || [];
-  check(acs.length === 6 && acs[5].name === 'Title deeds' && acs[5].access === 'private' && acs[0].name === 'Council minutes', 'the church adds its own categories');
+  check(acs.length === 6 && acs[5].name === 'Title deeds' && acs[5].access === 'private' && acs[5].parent === 'plans' && acs[5].byDate === true && acs[0].name === 'Council meetings' && (await s.text()).includes('Nothing in this folder yet.'),
+    'an Administrator makes a folder inside a folder, sorted by year and month, and it opens empty');
+  await click(s, '[data-act="archive:folder"]'); await click(s, '[data-act="archive:folderdel"]'); await click(s, '[data-act="archive:folderdel"]'); await s.settle();
+  docs = await s.docsNow();
+  check((docs['settings/church'].archiveCats || []).length === 5, 'an empty folder can be deleted');
+  await goTo(s, plan.split('/')[1]);
   await click(s, '[data-act="archive:del"][data-id="' + plan.split('/')[1] + '"]'); await click(s, '[data-act="archive:del"][data-id="' + plan.split('/')[1] + '"]'); await s.settle();
   docs = await s.docsNow();
   check(!docs[plan], 'a record can be deleted');
@@ -489,7 +533,7 @@ module.exports = async function (ctx) {
 
   // What each person sees of it all, carrying on from what the Administrator set up
   const as = async (email, senior) => { const seed = JSON.parse(JSON.stringify(live)); if (senior) seed['settings/church'].seniorPastorId = senior; const x = await session(email, seed); await x.go('library/archives'); await x.page.waitForTimeout(400); return x; };
-  const sees = async x => { const tx = await x.text(); return ['Council minutes – October', 'Contract of employment'].map(n => tx.includes(n) ? 'y' : 'n').join(''); };
+  const sees = async x => { const tx = await x.page.evaluate(() => document.body.textContent); return ['Council minutes – October', 'Contract of employment'].map(n => tx.includes(n) ? 'y' : 'n').join(''); };
   const deniedArchive = async (x, id) => x.page.evaluate(async fileId => {
     let fileDenied = false;
     try { await Store.loadFile(fileId, 0); } catch (e) { fileDenied = e.code === 'permission-denied'; }
@@ -502,6 +546,7 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="archive:storageinfo"]'); await s.page.waitForSelector('#modal .overlay');
   check((await s.page.textContent('#modal')).includes('Uploaded files are stored in the church’s Firestore database in South Africa.') && (await s.page.textContent('#modal')).includes('Linked files stay in their cloud folder:'), 'a Council member can open the storage information note');
   await click(s, '#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
+  await goTo(s, ar);
   check(await s.page.isVisible('[data-act="archive:preview"][data-id="' + ar + '"]'), 'a Council member can preview a record they are allowed to see');
   await click(s, '[data-act="archive:preview"][data-id="' + ar + '"]'); await s.page.waitForSelector('#modal .ar-preview-image');
   await click(s, '#modal [data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
@@ -510,7 +555,7 @@ module.exports = async function (ctx) {
   check(ctx.fs.readFileSync(await dl2.path()).equals(PNG.buffer), 'and can download them');
   await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
   await fill(s, '#ar-title', 'Council filing test'); await fill(s, '#ar-date', '2026-11-13'); await s.page.setInputFiles('#ar-file', PNG);
-  await click(s, '[data-act="archive:save"]'); await s.settle(); docs = await s.docsNow();
+  await save(s); await s.settle(); docs = await s.docsNow();
   const councilFile = find(docs, 'archive', d => d.title === 'Council filing test'), councilFileId = councilFile ? councilFile.split('/')[1] : '';
   check(!!councilFile && !!docs['archive/' + councilFileId + '/parts/0'] && !!docs['archivePreviews/' + councilFileId + '/parts/0'], 'a Council member can add a record and its file and preview copy');
   await s.go('leaders'); t = await s.text();

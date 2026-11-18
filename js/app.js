@@ -563,6 +563,7 @@ var Hub = (function () {
     if (typeof Library !== 'undefined' && Library.isLibrarian(Store.settings(), user.id, can('*')) && (can('*') || !Store.preview())) tags.push('librarian');
     if (Store.previewCare() || (!Store.preview() && typeof Care !== 'undefined' && Store.list('careGroups').some(function (g) { return Care.isLeader(g, user.id); }))) tags.push('carer');
     if (!Store.preview() && isSenior(me)) tags.push('senior');
+    if (window.ArchiveUI && ArchiveUI.canAccess()) tags.push('archivist');   // Administrators and Council members
     if (attendee()) tags.push('attendee');   // e.g. news about Reply, which attendees may not have
     return tags;
   }

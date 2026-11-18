@@ -401,7 +401,7 @@ service cloud.firestore {
           || (m.get('roster', '') == 'declined' && m.to.hasOnly(churchSettings().get('rosterTeam', []))));
     }
     function mayWriteTo(m) {
-      return !m.keys().hasAny(['roster', 'turns']) && ((m.kind == 'office' && m.to.size() == 0 && attendeeMay('write'))
+      return !m.keys().hasAny(['roster', 'turns']) && ((m.kind == 'office' && m.to.size() == 0 && (attendeeMay('write') || (anyone() && m.get('about', '') == 'partnerApp')))
         || manager()
         || mayDirect(m)
         || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
@@ -413,7 +413,8 @@ service cloud.firestore {
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)
-        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
+        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
+        && (request.resource.data.get('about', '') == '' || (request.resource.data.about == 'partnerApp' && request.resource.data.kind == 'office'))
         && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster']
         && request.resource.data.get('replyTo', '') is string && request.resource.data.get('replyTo', '').size() <= 100
         && request.resource.data.get('some', false) is bool

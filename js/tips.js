@@ -17,8 +17,11 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.89';
+  var NEWS_FOR = '0.90';
   var NEWS = [
+    { date: '2026-11-18', who: ['admin', 'pastor'], app: 'people', text: TX('When someone applies to become a Church Partner, Administrators and Pastors now also get a message in Messages.') },
+    { date: '2026-11-18', who: ['everyone'], app: 'rosters', text: TX('Services are now shown in time order (8am, 10am, 5pm) and in their own colours on the roster, My serving and Settings.') },
+    { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters → Teams: use − and + to choose how many people a position needs at each service, for example 2 on the sound desk.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters → Teams now offers a Verger, Ushers and Recorded Music, and Collection Servers and Communion Servers as two separate positions – tap Add them.') },
     { date: '2026-11-18', who: ['staffwork'], app: 'people', text: TX('You can now drag the columns in Advanced search to put them in the order you want.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: tap a name and choose Change person to swap it in one go – the first person is told, and a message they haven’t opened is taken back.') },

@@ -139,6 +139,13 @@ var Serving = (function () {
   }
   /** The slot a dated service belongs to. */
   function slotOf(service) { return service ? service.slot || service.time || '' : ''; }
+  /** Services in the order they happen: by date, then by time (8am, 10am, 5pm). For .sort(). */
+  function byWhen(a, b) { var x = (a && a.date || '') + ' ' + (a && a.time || ''), y = (b && b.date || '') + ' ' + (b && b.time || ''); return x < y ? -1 : x > y ? 1 : 0; }
+  /** A service's colours: the look chosen for its regular or special service (Rosters → Services), wherever it is shown. */
+  function themeOfService(service, settings) {
+    var id = slotOf(service), x = savedSlots(settings).filter(function (y) { return y.id === id; })[0];
+    return themeOf(x || { id: id, time: service && service.time, special: service && service.special });
+  }
   /* ---------- Holy Communion ---------- */
   var COMMUNION_NAME = /communion|eucharist|lord.?s supper|holy table|chalice/i;
   /** Is this position only needed when there is communion? Its own tick, or (until it is ticked or unticked) its name. */
@@ -286,6 +293,6 @@ var Serving = (function () {
     runsAtSlot: runsAtSlot, toggleTimes: toggleTimes, structure: structure, updateSlot: updateSlot, DEPARTMENTS: DEPARTMENTS, missing: missing, timeLabel: timeLabel, findPosition: findPosition,
     isCommunion: isCommunion, communionWeeks: communionWeeks, toggleCommunionWeek: toggleCommunionWeek, communionOnDate: communionOnDate, hasCommunion: hasCommunion,
     usualCommunion: usualCommunion, nextCommunions: nextCommunions,
-    slots: slots, slotLabel: slotLabel, newSlotId: newSlotId, slotOf: slotOf, easter: function (y) { return ymd(easter(y)); }, specials: specials, specialDate: specialDate };
+    slots: slots, slotLabel: slotLabel, newSlotId: newSlotId, slotOf: slotOf, byWhen: byWhen, themeOfService: themeOfService, easter: function (y) { return ymd(easter(y)); }, specials: specials, specialDate: specialDate };
 })();
 if (typeof module !== 'undefined') module.exports = Serving;

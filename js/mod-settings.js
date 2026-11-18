@@ -59,7 +59,8 @@
     specials.forEach(function (x) { if (groups.indexOf(x.when) < 0) groups.push(x.when); });
     return '<section class="panel"><h2>' + T('Services that need a roster') + '</h2>' +
       (svcs.length ? '<div class="list">' + shown.map(function (s) {
-        return '<div class="item"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + (s.special ? ' <span class="tag">' + T('Special') + '</span>' : '') + '</b><small>' + esc(s.time + ' · ' + s.name + (s.venue && s.name.indexOf(s.venue) < 0 ? ' · ' + s.venue : '')) + '</small></span>' +
+        var th = Serving.themeOfService(s, st);
+        return '<div class="item svc-tint" style="--svc-ink:' + th.ink + ';--svc-line:' + th.line + ';--svc-soft:' + th.soft + '"><span class="grow"><b>' + esc(H.fmt(s.date, true)) + (s.special ? ' <span class="tag">' + T('Special') + '</span>' : '') + '</b><small>' + esc(s.time + ' · ' + s.name + (s.venue && s.name.indexOf(s.venue) < 0 ? ' · ' + s.venue : '')) + '</small></span>' +
           '<button class="icon-btn ghost" data-act="settings:delsvc" data-id="' + s.id + '" aria-label="' + esc(T('Remove the service on {date}', { date: H.fmt(s.date, true) })) + '" title="' + esc(T('Remove this service (and its roster)')) + '">' + H.icon(H.ICON.trash, 18) + '</button></div>';
       }).join('') + '</div>' + (svcs.length > 8 ? '<p class="hint"><button class="link" data-act="settings:allsvc">' + (allSvcs ? T('Show fewer') : T('Show all {n}', { n: svcs.length })) + '</button></p>' : '') : '<p class="muted">' + T('None planned.') + '</p>') +
       (svcs.some(function (s) { return !s.special; }) ? '<details class="sub"><summary>' + T('Stop holding a regular service…') + '</summary><p class="hint">' + T('Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Church Services and venues”.') + '</p>' +
@@ -271,7 +272,7 @@
       var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
       body = renderAccess(st, byRole);
     } else if (a === 'services') {
-      var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(function (x, y) { return x.date < y.date ? -1 : 1; });
+      var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(Serving.byWhen);
       body = renderSlots() + renderServices(st, svcs) + renderRosterTeam(st);
     } else body = renderGeneral(st);
     return layout(a, body);

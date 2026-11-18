@@ -239,17 +239,18 @@
           });
         }
         if (!is(c, ANY) || !isMe(c, a.fromId)) return false;
-        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
+        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
         if (a.some !== undefined && typeof a.some !== 'boolean') return false;
         if (a.replyTo !== undefined && (typeof a.replyTo !== 'string' || a.replyTo.length > 100)) return false;
         if (a.kind !== 'roster' && (a.roster !== undefined || a.turns !== undefined)) return false;
+        if (a.about !== undefined && a.about !== '' && !(a.about === 'partnerApp' && a.kind === 'office')) return false;
         if (a.turns !== undefined && (!Array.isArray(a.turns) || a.turns.length > 100)) return false;
         if (['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
         if (!Array.isArray(a.to) || (a.kind === 'office' ? a.to.length !== 0 : !a.to.length || a.to.length > 3000)
             || !Array.isArray(a.deliveredBy) || !a.deliveredBy.every(function (x) { return isMe(c, x); })
             || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
-        if (a.kind === 'office') return attendeeMay(c, 'write');
+        if (a.kind === 'office') return attendeeMay(c, 'write') || a.about === 'partnerApp';   // a partnership application: told to the office
         if (a.kind === 'roster') {   // ask / remind / off: roster coordinators; declined: to the roster team only (settings.rosterTeam)
           if (!Array.isArray(a.turns) || !a.turns.length) return false;
           if (a.roster === 'ask' || a.roster === 'remind' || a.roster === 'off') return rosterer(c);

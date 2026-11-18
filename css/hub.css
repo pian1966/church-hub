@@ -634,6 +634,16 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .svc-card { display: flex; flex-direction: column; gap: 8px; text-align: left; text-decoration: none; color: var(--ink); cursor: pointer;
   background: var(--surface); border: 1px solid var(--line); border-top: 4px solid var(--svc-line); border-radius: var(--radius); padding: 12px 14px; box-shadow: var(--shadow); font: inherit; }
 .svc-card:hover { border-color: var(--svc-line); }
+/* A service's colours where its date is shown: the roster's column heads, My serving, Settings → Church Services */
+.matrix th.svc-col { background: var(--svc-soft); box-shadow: inset 0 4px 0 var(--svc-line); }
+.matrix th.svc-col .muted { color: var(--svc-ink); }
+.item.svc-tint { box-shadow: inset 4px 0 0 var(--svc-line); }
+.item.svc-tint small { color: var(--svc-ink); }
+/* How many a position needs: a small − + beside "2 per service" (Rosters → Teams) */
+.need-step { display: inline-flex; gap: 4px; margin-right: 8px; vertical-align: middle; }
+.need-step button { width: 26px; height: 26px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font: inherit; font-weight: 700; line-height: 1; cursor: pointer; }
+.need-step button:hover:not(:disabled) { border-color: var(--accent); color: var(--accent-ink); }
+.need-step button:disabled { opacity: .35; cursor: default; }
 .svc-card.on { background: var(--svc-soft); border: 2px solid var(--svc-line); border-top-width: 4px; }
 .svc-top { display: flex; align-items: center; gap: 10px; }
 .svc-top b { display: block; font-size: 16px; color: var(--svc-ink); } .svc-top small { display: block; color: var(--muted); font-size: 12.5px; }
@@ -745,9 +755,9 @@ html[data-mode=dark] .legend i[style*="#F2EEEA"] { background: #2B2521 !importan
 .splash-cross { width: 30px; height: 30px; margin-top: 10px; fill: color-mix(in srgb, var(--accent) 45%, #fff); }
 .splash p { margin: 0; color: var(--side-muted); font-size: 13px; min-height: 1em; }
 /* Dark: each service's look (its pale shade and dark writing are set per service, so they are mixed here instead) */
-html[data-mode=dark] .svc-card.on, html[data-mode=dark] .svc-ico, html[data-mode=dark] .mood, html[data-mode=dark] .svc-hero { background: color-mix(in srgb, var(--svc-line) 20%, var(--surface)); }
+html[data-mode=dark] .matrix th.svc-col, html[data-mode=dark] .svc-card.on, html[data-mode=dark] .svc-ico, html[data-mode=dark] .mood, html[data-mode=dark] .svc-hero { background: color-mix(in srgb, var(--svc-line) 20%, var(--surface)); }
 html[data-mode=dark] .svc-card.on .svc-ico, html[data-mode=dark] .svc-card.on .mood { background: color-mix(in srgb, var(--svc-line) 32%, var(--surface)); }
-html[data-mode=dark] .svc-top b, html[data-mode=dark] .svc-ico, html[data-mode=dark] .mood, html[data-mode=dark] .svc-foot, html[data-mode=dark] .svc-hero h1, html[data-mode=dark] .svc-page .panel > h2 { color: color-mix(in srgb, var(--svc-line) 50%, #fff); }
+html[data-mode=dark] .matrix th.svc-col .muted, html[data-mode=dark] .item.svc-tint small, html[data-mode=dark] .svc-top b, html[data-mode=dark] .svc-ico, html[data-mode=dark] .mood, html[data-mode=dark] .svc-foot, html[data-mode=dark] .svc-hero h1, html[data-mode=dark] .svc-page .panel > h2 { color: color-mix(in srgb, var(--svc-line) 50%, #fff); }
 /* Dark: plain boxes that have no style of their own (e.g. Terminology's words) */
 html[data-mode=dark] input:not([type=checkbox]):not([type=radio]):not([type=color]):not([type=range]), html[data-mode=dark] select, html[data-mode=dark] textarea { background-color: var(--surface); color: var(--ink); border-color: var(--line-strong); }
 /* Dark: small round add / remove buttons (Advanced search filters) */

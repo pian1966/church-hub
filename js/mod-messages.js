@@ -84,11 +84,17 @@
     return html + '<section class="msg-chat">' + (fresh ? '<div class="msg-unread-bar">' + esc(TN('{n} unread message', '{n} unread messages', fresh)) + '</div>' : '') + list.map(function (m) {
       var isNew = Msg.isUnread(m, u.id, manager()) || justRead[m.id];
       var reply = Msg.mayReply(m, who(), data()) ? '<button class="btn small" data-act="messages:reply" data-id="' + esc(m.id) + '">' + T('Reply') + '</button>' : '';
-      var roster = m.kind === 'roster' ? rosterPart(m) : '';
-      return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(roster ? rosterTitle(m) : m.title || audName(m.kind, m.audience)) + '</b></div>' +
+      var roster = m.kind === 'roster' ? rosterPart(m) : m.about === 'partnerApp' ? appPart(m) : '';
+      return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.about === 'partnerApp' ? T('Partnership application') : roster ? rosterTitle(m) : m.title || audName(m.kind, m.audience)) + '</b></div>' +
         '<div class="msg-who">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
         replyContext(m) + (roster || '<p class="msg-body">' + bodyHtml(m.body) + '</p>') + '<div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
     }).join('') + '</section>';
+  }
+  /** Someone applied to become a Church Partner (sent to the Office from Me → Apply: Administrators and Pastors read it).
+   *  Shown in the reader's language, with the way to the application. */
+  function appPart(m) {
+    return '<p class="msg-body">' + esc(T('{name} has applied to become a Church Partner.', { name: m.fromName || T('Someone') })) + '</p>' +
+      '<p style="margin:8px 0 0"><a class="btn small" href="#/people/applications">' + T('Open the applications') + '</a></p>';
   }
   /* ---------- Roster messages (sent by Rosters: js/mod-rosters.js) ---------- */
   /** The heading, in the reader's language. */

@@ -1,5 +1,5 @@
 /*
- * Church Hub – leadership groups: the Church Council, the elders, ministry leaders and so on (each church names its own).
+ * Church & Trellis – leadership groups: the Church Council, the elders, ministry leaders and so on (each church names its own).
  * A leadership group: leaderBodies/{id} = { name, open, memberIds, names: { personId: 'First Last' },
  *   seats: { personId: { role, roles, title, portfolios: [..], kind, kindOther, from, to, term, termFrom } },  – who serves on it now
  *   past: [{ personId, name, role, roles, title, portfolios, kind, kindOther, from, to, term }],   – who served before (the church's record)

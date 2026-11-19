@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: applying to become a Church Partner, and name badges (js/people/apply.js).
+/* Church & Trellis – browser test, part: applying to become a Church Partner, and name badges (js/people/apply.js).
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {

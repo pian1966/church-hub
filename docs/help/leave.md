@@ -45,7 +45,7 @@ For: Administrators (and a stand-in approver)
 Also asked: Leave requests waiting. Approve a leave request.
 
 Open **Leave → Approvals** (requests also show on your Home **To do** list). Tap **Approve** or **Decline**. If a
-request is more than the person's allowance, Church Hub warns you; you can still **Approve anyway**.
+request is more than the person's allowance, Church & Trellis warns you; you can still **Approve anyway**.
 
 ## I'm going away. Who approves leave while I'm gone?
 For: Administrators
@@ -91,11 +91,11 @@ For: Administrators
 Also asked: Unavailable volunteers in Elvanto. The robot.
 
 Until the church stops using Elvanto, approved leave can be added to Elvanto's Unavailable Volunteers by the robot. Switch
-it on and see its results under **Leave → Elvanto**. Change leave in Church Hub, not in Elvanto – otherwise the robot can't
+it on and see its results under **Leave → Elvanto**. Change leave in Church & Trellis, not in Elvanto – otherwise the robot can't
 keep it up to date.
 
 ## Do emails go out about leave automatically?
 For: Staff, Administrators
 
-Not yet. Church Hub opens an email ready to send (for example **Let them know by email** after a decision, or the weekly
+Not yet. Church & Trellis opens an email ready to send (for example **Let them know by email** after a decision, or the weekly
 "who's away" email) – you press send in your email app. Approving from an email without signing in isn't available.

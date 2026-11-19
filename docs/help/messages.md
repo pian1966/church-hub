@@ -1,6 +1,6 @@
 # Messages
 
-Messages are sent and read inside Church Hub – not by email, WhatsApp or SMS.
+Messages are sent and read inside Church & Trellis – not by email, WhatsApp or SMS.
 
 ## Where do I read my messages?
 For: Everyone
@@ -14,7 +14,7 @@ them as read.
 For: Everyone
 Also asked: Push notifications. Email me when there's a message.
 
-Not yet. You see new messages when you open Church Hub. Phone notifications when the app is closed, and email or SMS for
+Not yet. You see new messages when you open Church & Trellis. Phone notifications when the app is closed, and email or SMS for
 people who don't use the app, are planned.
 
 ## Can I reply to a message?
@@ -48,7 +48,7 @@ Sent → What the signs mean** explains them, and you can show them as ticks, en
 ## Why did I get a message about the roster?
 For: Everyone who serves
 
-When you're put on the roster, Church Hub sends you a message – tap **Accept** or **Can't make it** right in it. You may
+When you're put on the roster, Church & Trellis sends you a message – tap **Accept** or **Can't make it** right in it. You may
 also get a reminder if you haven't replied. See [rosters.md](rosters.md).
 
 ## How do I send a message?
@@ -60,7 +60,7 @@ Also asked: Send a notice to staff. Message all Church Partners. Message one per
    **Church Partners**, and lists of groups below, each saying how many people it reaches (type in the search box to find one).
    Choose who it's for: **Chosen people** (tick them one by one), **Staff**, **Church Partners**, a care group, a midweek group
    or a message group. To leave some people out, choose **Only some of them** and untick them.
-3. Write a **Subject** and the **Message**, then **Send**. Church Hub confirms how many people it goes to.
+3. Write a **Subject** and the **Message**, then **Send**. Church & Trellis confirms how many people it goes to.
 
 To message one person, open their page in **People** and tap **Send a message**.
 Please don't put private or medical details in a message to a group.
@@ -73,14 +73,14 @@ No. A message goes to the people in the group when it was sent.
 ## Why does it say some people can't sign in yet?
 For: Administrators, Pastors
 
-They don't have Church Hub access yet, so they won't see the message until they're given access (People → Edit details →
+They don't have Church & Trellis access yet, so they won't see the message until they're given access (People → Edit details →
 App access). Contact them another way meanwhile.
 
 ## How do I see or delete messages I've sent?
 For: Senders, Administrators
 
 **Messages → Sent** lists what you've sent (for Administrators and Pastors this tab is called **All messages**). You can delete your own messages (**Delete the message**). Administrators and
-Pastors see every message sent in Church Hub and can delete any of them.
+Pastors see every message sent in Church & Trellis and can delete any of them.
 
 ## How do I make a message group, like "Worship team leaders"?
 For: Administrators, Pastors

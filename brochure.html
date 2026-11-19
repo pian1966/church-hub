@@ -3,15 +3,15 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Church Hub brochures: ?for=members (our congregation) or ?for=churches (other churches). Opened from About (admins).
+<!-- Church & Trellis brochures: ?for=members (our congregation) or ?for=churches (other churches). Opened from About (admins).
      KEEP UP TO DATE: when a release adds a feature (the middle number in js/version.js goes up), read both brochures, add or
      change what members or other churches would notice, then set reviewed-for below to that version's first two numbers.
      node tests/versions.test.js fails until you do. Keep each panel to what fits on its A4 third (check Print preview).
-     The church can change the wording, hide blocks, and choose the colour and font in Church Hub (About → Brochures → Edit;
+     The church can change the wording, hide blocks, and choose the colour and font in Church & Trellis (About → Brochures → Edit;
      js/brochure-kit.js, js/mod-about.js). Their edits are matched by place AND the original wording, so changing a line here makes
-     their edit of that line stop applying (Church Hub then lists it for them). Shown inside Church Hub with ?embed=1. -->
-<meta name="reviewed-for" content="0.95">
-<title>Church Hub brochure</title>
+     their edit of that line stop applying (Church & Trellis then lists it for them). Shown inside Church & Trellis with ?embed=1. -->
+<meta name="reviewed-for" content="0.96">
+<title>Church & Trellis brochure</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&amp;display=swap" rel="stylesheet">
 <style>
@@ -71,7 +71,7 @@
     * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
   @media screen and (max-width: 1160px) { .sheet { zoom: .5; } }
-  /* Inside Church Hub (?embed=1): no bar of its own; Church Hub's page has the buttons */
+  /* Inside Church & Trellis (?embed=1): no bar of its own; Church & Trellis's page has the buttons */
   .embed .bar { display: none; }
   .embed .sheets { padding: 12px 0 20px; gap: 18px; background: none; }
   .embed body, body.embed { background: none; }
@@ -79,7 +79,7 @@
 </head>
 <body>
 <div class="bar">
-  <b>Church Hub brochure</b>
+  <b>Church & Trellis brochure</b>
   <a href="?for=members" data-for="members">For our members</a>
   <a href="?for=churches" data-for="churches">For other churches</a>
   <button class="go" type="button" onclick="window.print()">Print or save as PDF</button>
@@ -115,7 +115,7 @@
   <div class="pn fold">
     <p class="eyebrow">Getting started</p>
     <h2>Three easy steps</h2>
-    <div class="step"><span class="num">1</span><div><h3>Open Church Hub</h3><p>On your phone or computer: <span class="url" data-fill="link">pian1966.github.io/church-hub</span>. Android phones can also get the app.</p></div></div>
+    <div class="step"><span class="num">1</span><div><h3>Open Church & Trellis</h3><p>On your phone or computer: <span class="url" data-fill="link">pian1966.github.io/church-hub</span>. Android phones can also get the app.</p></div></div>
     <div class="step"><span class="num">2</span><div><h3>Sign in</h3><p>Use the email address the church office has for you. No email? Ask the office for a sign-in code, then sign in with your cellphone number and a PIN.</p></div></div>
     <div class="step"><span class="num">3</span><div><h3>Check your page</h3><p>Open <b>Me</b>, make sure your details are right, and choose what others may see.</p></div></div>
     <div class="box"><h3>Need a hand?</h3><p contenteditable="true" spellcheck="false">Speak to the church office: [phone] · [email]</p></div>
@@ -123,7 +123,7 @@
   <div class="pn cover">
     <span class="o1"></span><span class="o2"></span>
     <div class="logo"><svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></div>
-    <div><h1>Church Hub</h1><p class="tag">Our church family, in your pocket.</p></div>
+    <div><h1>Church & Trellis</h1><p class="tag">Our church family, in your pocket.</p></div>
     <div class="strip"><p>Your details, your serving days and your Care Group – all in one friendly place.</p></div>
     <p class="who" data-fill="church">Your church</p>
   </div>
@@ -150,7 +150,7 @@
     <div class="item"><span class="ic"><svg><use href="#i-lock"/></svg></span><div><h3>You decide what's shared</h3><p>Each person sees only what their role needs, and what you've agreed to.</p></div></div>
     <div class="item"><span class="ic"><svg><use href="#i-shield"/></svg></span><div><h3>Built for privacy law</h3><p>Made to follow your country's privacy law, with a clear record of who has looked at sensitive details.</p></div></div>
     <div class="item"><span class="ic"><svg><use href="#i-phone"/></svg></span><div><h3>Easy on your data</h3><p>Works offline; small updates.</p></div></div>
-    <div class="card"><h3>Light or dark, in your language</h3><p>Switch to dark mode in the evening, and use Church Hub in the language you know best: more than 20 to choose from.</p></div>
+    <div class="card"><h3>Light or dark, in your language</h3><p>Switch to dark mode in the evening, and use Church & Trellis in the language you know best: more than 20 to choose from.</p></div>
   </div>
 </section>
 
@@ -176,7 +176,7 @@
   <div class="pn cover">
     <span class="o1"></span><span class="o2"></span>
     <div class="logo"><svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></div>
-    <div><h1>Church Hub</h1><p class="tag">Everything your church runs on, in one friendly place.</p></div>
+    <div><h1>Church & Trellis</h1><p class="tag">Everything your church runs on, in one friendly place.</p></div>
     <div class="strip"><p>People · Groups · Rosters · Staff leave · Messages · Library · Privacy</p></div>
     <p class="who" data-fill="origin">Every church, however small, deserves great church software.</p>
   </div>
@@ -228,7 +228,7 @@
 })();
 </script>
 <script>
-  // ?for=members|churches, &church=<name> (from Settings), &link=<the church's Church Hub address>. Only text is filled in.
+  // ?for=members|churches, &church=<name> (from Settings), &link=<the church's Church & Trellis address>. Only text is filled in.
   (function () {
     var q = new URLSearchParams(location.search), who = q.get('for') === 'churches' ? 'churches' : 'members';
     if (q.get('embed')) { document.body.classList.add('embed'); document.querySelectorAll('[contenteditable]').forEach(function (e) { e.removeAttribute('contenteditable'); }); }
@@ -239,7 +239,7 @@
     });
     var fill = { church: (q.get('church') || '').slice(0, 80), link: (q.get('link') || '').replace(/^https?:\/\//, '').replace(/\/+$/, '').slice(0, 120) };
     Object.keys(fill).forEach(function (k) { if (fill[k]) document.querySelectorAll('[data-fill="' + k + '"]').forEach(function (e) { e.textContent = fill[k]; }); });
-    document.title = who === 'churches' ? 'Church Hub – brochure for other churches' : 'Church Hub – brochure for our members';
+    document.title = who === 'churches' ? 'Church & Trellis – brochure for other churches' : 'Church & Trellis – brochure for our members';
   })();
 </script>
 </body>

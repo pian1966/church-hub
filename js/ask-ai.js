@@ -1,11 +1,11 @@
 /*
- * Church Hub – Ask in your own words, with AI. The question goes to Google's Gemini (through the church's own Firebase
+ * Church & Trellis – Ask in your own words, with AI. The question goes to Google's Gemini (through the church's own Firebase
  * project: Firebase AI Logic) together with a description of the search: which fields this person may search on, how
  * each can be compared and, for choices, the allowed values. No records about anyone are sent – no names from the
  * church, no households, no contact details (docs/POPIA.md, "Ask in your own words").
  * Gemini answers with filters as JSON; check() then accepts only fields, comparisons and values that exist for this
  * person, so the AI can't widen what they may see. Anything it leaves out or gets wrong is listed, like the rules do.
- * If the AI can't be reached, Church Hub uses the built-in rules (js/ask.js) instead.
+ * If the AI can't be reached, Church & Trellis uses the built-in rules (js/ask.js) instead.
  *
  *   AskAI.request(question, fields, ctx) → the body to send to Gemini's generateContent
  *   AskAI.check(answer, fields, ctx)     → { kind, filters, match, logic, refused, unknown, said, q, noPerson, ai: true } (as Ask.parse)
@@ -36,7 +36,7 @@ var AskAI = (function () {
   }
 
   var RULES = [
-    'You turn a question from a church office (staff or a leader) into a search for Church Hub, a church membership app. Reply with JSON only.',
+    'You turn a question from a church office (staff or a leader) into a search for Church & Trellis, a church membership app. Reply with JSON only.',
     'kind: "people" for questions about people; "services" for questions about church services and the serving roster.',
     'For people: filters is a list of { field, op, value, value2, unit } using ONLY the fields and ops given. Never invent a field.',
     'Choice and list values must be copied exactly from that field\'s options. Text values are lower case, as typed (e.g. "m" for "names beginning with M" with op "starts").',
@@ -45,7 +45,7 @@ var AskAI = (function () {
     'Questions about someone\'s husband, wife, spouse or partner use the fields whose key starts with "spouse". If a spouse "is not" something, also add { field: "spouse", op: "nempty" } so only people with a spouse are found.',
     'Category means church membership (e.g. Church Partner, Attender). "Members", "partners" and the church\'s own word for Church Partner mean category Church Partner, unless the question is about a husband or wife.',
     'match: "all" (every filter), "any" (at least one) or "logic" with logic like "(1 OR 2) AND 3", where the numbers are filter positions starting at 1.',
-    'For services: services = { from, to, slots (labels from the services list), part (morning, afternoon or evening), gaps ("some" = not all positions filled, "none" = all filled), personName, sameDay ("morning-evening" or "twice"), missingPos (position names) }. With no dates, leave from and to empty (Church Hub then shows services from today).',
+    'For services: services = { from, to, slots (labels from the services list), part (morning, afternoon or evening), gaps ("some" = not all positions filled, "none" = all filled), personName, sameDay ("morning-evening" or "twice"), missingPos (position names) }. With no dates, leave from and to empty (Church & Trellis then shows services from today).',
     'notUnderstood: the words of the question you could not turn into filters (empty when everything was used). understood: one short line saying what you searched for.',
     'If the question needs something no field covers, leave it out and put those words in notUnderstood. Never guess a value.'
   ].join('\n');

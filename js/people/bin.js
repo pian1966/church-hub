@@ -1,4 +1,4 @@
-/* Church Hub – People: the Bin. An Administrator moves a person to the Bin (a test person, someone added by mistake);
+/* Church & Trellis – People: the Bin. An Administrator moves a person to the Bin (a test person, someone added by mistake);
  * they disappear from every list and lose app access, but can be restored for 30 days. After that – or with
  * "Delete forever" – they are removed: completely if they never served on a roster or took leave, otherwise their personal
  * information is deleted and an anonymous record is kept so past rosters and leave still add up (as Privacy → Retention does). */

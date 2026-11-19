@@ -1,4 +1,4 @@
-/* Church Hub – words for Life groups (js/mod-life.js): Bible studies, life groups and midweek meetings.
+/* Church & Trellis – words for Life groups (js/mod-life.js): Bible studies, life groups and midweek meetings.
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([

@@ -1,4 +1,4 @@
-/* Church Hub – Leave (Leave Manager built in). Uses LeaveCore, the same rules file as Leave Manager. */
+/* Church & Trellis – Leave (Leave Manager built in). Uses LeaveCore, the same rules file as Leave Manager. */
 (function () {
   'use strict';
   var T = I18n.t, TN = I18n.tn;
@@ -143,18 +143,18 @@
     var order = { Failed: 0, Check: 1, Waiting: 2, Done: 3 };
     list.sort(function (a, b) { return (order[a.status] - order[b.status]) || (a.start < b.start ? 1 : -1); });
     var probs = ElvantoSync.problems(list, Date.now());
-    var h = '<p class="muted" style="margin-top:0">' + T('Approved leave goes into Elvanto’s {list} list, so nobody is rostered in Elvanto while they’re away. Elvanto can’t be updated directly, so a robot logs into Elvanto every 15 minutes and does it, like Leave Manager’s robot.', { list: '<b>Unavailable Volunteers</b>' }) + ' ' + T('Each entry has the note “Church Hub {id}”.', { id: '&lt;' + T('request ID') + '&gt;' }) + '</p>';
+    var h = '<p class="muted" style="margin-top:0">' + T('Approved leave goes into Elvanto’s {list} list, so nobody is rostered in Elvanto while they’re away. Elvanto can’t be updated directly, so a robot logs into Elvanto every 15 minutes and does it, like Leave Manager’s robot.', { list: '<b>Unavailable Volunteers</b>' }) + ' ' + T('Each entry has the note “Church & Trellis {id}”.', { id: '&lt;' + T('request ID') + '&gt;' }) + '</p>';
     h += '<div class="grid2"><section class="panel"><h2>' + T('Settings') + '</h2>' +
       '<label class="check"><input type="checkbox" id="el-on"' + (el.on ? ' checked' : '') + '><span><b>' + T('Keep Elvanto up to date') + '</b><br><span class="muted small">' + T('Switch on when you stop using Leave Manager (switch Leave Manager’s robot off at the same time), so entries aren’t made twice.') + '</span></span></label>' +
-      '<label class="check"><input type="checkbox" id="el-read"' + (el.read ? ' checked' : '') + '><span><b>' + T('Read Elvanto’s unavailable dates every night') + '</b><br><span class="muted small">' + T('Until you switch over, the robot reads who is unavailable in Elvanto (names and dates only). Check and add them to Church Hub under {link}.', { link: '<a href="#/import">' + T('Import') + '</a>' }) + '</span></span></label>' +
+      '<label class="check"><input type="checkbox" id="el-read"' + (el.read ? ' checked' : '') + '><span><b>' + T('Read Elvanto’s unavailable dates every night') + '</b><br><span class="muted small">' + T('Until you switch over, the robot reads who is unavailable in Elvanto (names and dates only). Check and add them to Church & Trellis under {link}.', { link: '<a href="#/import">' + T('Import') + '</a>' }) + '</span></span></label>' +
       '<label class="field">' + T('Elvanto web address') + '<input id="el-url" value="' + esc(el.url || '') + '" placeholder="https://yourchurch.elvanto.eu"></label>' +
-      '<label class="field">' + T('Robot’s Church Hub sign-in (email)') + '<input id="el-remail" value="' + esc(el.robotEmail || '') + '" placeholder="' + esc(T('e.g. robot@yourchurch.org')) + '"><small>' + T('The account you created for the robot in Firebase (see the setup guide).') + '</small></label>' +
+      '<label class="field">' + T('Robot’s Church & Trellis sign-in (email)') + '<input id="el-remail" value="' + esc(el.robotEmail || '') + '" placeholder="' + esc(T('e.g. robot@yourchurch.org')) + '"><small>' + T('The account you created for the robot in Firebase (see the setup guide).') + '</small></label>' +
       '<label class="field">' + T('Robot’s account ID (User UID)') + '<input id="el-ruid" placeholder="' + esc(T(el.robotEmail ? 'Saved – type a new one to change it' : 'Copy it from Firebase → Authentication → Users')) + '"></label>' +
       '<button class="btn small save" data-act="leave:elsave">' + T('Save') + '</button></section>' +
       '<section class="panel"><h2>' + T('Robot') + '</h2>' + (rs.lastRun ? '<p style="margin-top:0">' + T('Last ran {when}', { when: '<b>' + esc(utcLocal(rs.lastRun)) + '</b>' }) + (rs.done != null ? ' · ' + T('{n} done', { n: rs.done }) : '') + '.' + '</p>' : '<p class="muted" style="margin-top:0">' + T('The robot hasn’t run yet.') + '</p>') +
       (rs.fatal ? '<p class="note bad">It couldn’t finish: ' + esc(rs.fatal) + '</p>' : '') +
       (el.url ? '<p><a href="' + esc(rs.listUrl || el.url) + '" target="_blank" rel="noopener">' + T('Open Elvanto') + '</a> ' + T('→ People → Volunteers → Unavailable Volunteers') + '</p>' : '') +
-      '<p class="hint">' + T('Change leave in Church Hub, not in Elvanto – otherwise the robot can’t keep it up to date.') + '</p></section></div>';
+      '<p class="hint">' + T('Change leave in Church & Trellis, not in Elvanto – otherwise the robot can’t keep it up to date.') + '</p></section></div>';
     h += '<section class="block"><h2>' + T('Entries') + (probs.length ? ' <span class="tag bad">' + T('{n} to check', { n: probs.length }) + '</span>' : '') + '</h2>' + (list.length ? '<div class="list">' + list.slice(0, 200).map(function (e) {
       var tag = { Waiting: 'warn', Done: 'ok', Failed: 'bad', Check: 'bad' }[e.status] || 'grey';
       return '<div class="item" style="align-items:flex-start;flex-wrap:wrap"><span class="grow" style="min-width:220px"><b>' + esc(e.name || personName(e.personId)) + ' · ' + esc(range({ start: e.start, end: e.end })) + '</b>' +
@@ -565,7 +565,7 @@
       remind: function (el) {
         var d = data(), s = C.staffById(d, el.dataset.id), u = C.useItOrLoseIt(d, s.id, H.today());
         emailTo(personEmail(s.id), T('Your leave: use it or lose it'), T('Dear {name},', { name: firstName(s.id) }) + '\n\n' + T('A reminder that this leave will be lost if it isn’t taken in time:') + '\n' +
-          u.map(function (x) { return '• ' + C.fmtDays(x.left) + ' ' + x.type.name + ' – ' + T('take it by {date}', { date: H.fmt(x.until, true) }); }).join('\n') + '\n\n' + T('You can book it in Church Hub under Leave.') + '\n\n' + signOff(), s.name);
+          u.map(function (x) { return '• ' + C.fmtDays(x.left) + ' ' + x.type.name + ' – ' + T('take it by {date}', { date: H.fmt(x.until, true) }); }).join('\n') + '\n\n' + T('You can book it in Church & Trellis under Leave.') + '\n\n' + signOff(), s.name);
       },
       change: function (el) { requestDialog(null, el.dataset.id); },
       print: function (el) { var d = data(), st = C.staffById(d, el.dataset.id); LeaveReports.printPerson(d, el.dataset.id, +el.dataset.y || yearOf(d)); if (st) S.audit('Printed the leave report of ' + st.name, 'people/' + st.id); },
@@ -654,7 +654,7 @@
           S.leave().requests.push(r); S.saveLeave((r.status === 'Approved' ? 'Booked ' : 'Requested ') + p.type.name + ' for ' + p.staff.name);
           H.closeModal(); H.render(); H.toast(r.status === 'Approved' ? T('Booked') : T('Sent – the Administrator will approve it'));
           if (r.status === 'Pending' && r.staffId === H.user().id && officeEmail()) emailTo(officeEmail(), T('Leave request: {name}, {dates}', { name: p.staff.name, dates: range(r) }),
-            T('Hello,') + '\n\n' + T('I’ve asked for {type} for {dates} in Church Hub.', { type: p.type.name, dates: range(r) }) + (r.reason ? '\n' + r.reason : '') + '\n\n' + p.staff.name, T('The request is saved. You can also let the church office know.'));
+            T('Hello,') + '\n\n' + T('I’ve asked for {type} for {dates} in Church & Trellis.', { type: p.type.name, dates: range(r) }) + (r.reason ? '\n' + r.reason : '') + '\n\n' + p.staff.name, T('The request is saved. You can also let the church office know.'));
         } catch (e) { $('lf-err').hidden = false; $('lf-err').textContent = e.message; }
       },
       decide: function (el) {

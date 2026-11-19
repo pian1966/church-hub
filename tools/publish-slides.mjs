@@ -1,4 +1,4 @@
-// Church Hub – puts the conference presentation (docs/presentation/church-hub-presentation.pptx) into its Google Slides
+// Church & Trellis – puts the conference presentation (docs/presentation/church-hub-presentation.pptx) into its Google Slides
 // copy, so the shared Google Slides link always shows the latest slides. Run by .github/workflows/publish-slides.yml.
 // Needs two secrets, set up as docs/SLIDES-AUTOPUBLISH.md explains:
 //   SLIDES_ROBOT_KEY – the JSON key of a Google Cloud service account (the "robot") that the Slides file is shared with

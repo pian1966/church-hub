@@ -1,4 +1,4 @@
-/* Church Hub – People: a person's page: details, photo, consent, notes, ID number, serving, parents and guardians, homes, a death. */
+/* Church & Trellis – People: a person's page: details, photo, consent, notes, ID number, serving, parents and guardians, homes, a death. */
 (function (P) {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
@@ -304,7 +304,7 @@
       '<p class="hint" style="margin:4px 0 10px">' + esc(T('Who is responsible for {name}, who gives consent, who hears from the church, and who may collect {name}.', { name: p.firstName })) + '</p>' +
       (ls.length ? '<div class="list">' + ls.map(function (l) {
         var a = l.adultId ? S.get('people', l.adultId) : null;
-        return '<div class="item" style="flex-wrap:wrap">' + (a ? H.avatar(a, 32) : '') + '<span class="grow" style="min-width:160px"><b>' + (a ? '<a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a>' : esc(l.name || '')) + '</b><small>' + esc(T(l.relationship) + (a ? '' : (l.phone ? ' · ' + l.phone : '') + ' · ' + T('not in Church Hub'))) + '</small>' +
+        return '<div class="item" style="flex-wrap:wrap">' + (a ? H.avatar(a, 32) : '') + '<span class="grow" style="min-width:160px"><b>' + (a ? '<a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a>' : esc(l.name || '')) + '</b><small>' + esc(T(l.relationship) + (a ? '' : (l.phone ? ' · ' + l.phone : '') + ' · ' + T('not in Church & Trellis'))) + '</small>' +
           '<span>' + tag(l.canConsent, T('Can give consent')) + tag(l.primary, T('Primary contact')) + tag(l.mayCollect, T('May collect')) + (l.confirmed ? '' : ' <span class="tag warn">' + T('Please confirm') + '</span>') + '</span></span>' +
           '<button class="btn small" data-act="people:link" data-child="' + p.id + '" data-id="' + l.id + '">' + T('Edit') + '</button></div>';
       }).join('') + '</div>' : '<p class="note warn" style="margin:0">' + T('No parent or guardian recorded yet.') + '</p>') +
@@ -327,7 +327,7 @@
     l = l || Object.assign({ childId: childId, adultId: '', name: '', phone: '', relationship: 'Mother' }, HS.defaultsFor('Mother'));
     var outside = !l.adultId && !!l.name;
     H.modal(H.dialogHead(isNew ? T('Add a parent, guardian or collector') : T('Edit {name}', { name: linkName(l) }), T('For {name}', { name: H.name(c) })) + '<div class="dlg-body">' +
-      '<label class="field req">' + T('Who') + '<select class="findable" id="gl-who"><option value="">' + T('Choose…') + '</option><option value="__out"' + (outside ? ' selected' : '') + '>' + T('Someone not in Church Hub…') + '</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
+      '<label class="field req">' + T('Who') + '<select class="findable" id="gl-who"><option value="">' + T('Choose…') + '</option><option value="__out"' + (outside ? ' selected' : '') + '>' + T('Someone not in Church & Trellis…') + '</option>' + adultOptions(l.adultId, childId) + '</select></label>' +
       '<div id="gl-out" class="two"' + (outside ? '' : ' hidden') + '><label class="field req">' + T('Name') + '<input id="gl-name" value="' + esc(l.name || '') + '"></label><label class="field">' + T('Phone') + '<input id="gl-phone" type="tel" value="' + esc(l.phone || '') + '"></label></div>' +
       '<label class="field req">' + esc(T('Relationship to {name}', { name: c.firstName })) + '<select id="gl-rel">' + HS.RELATIONSHIPS.map(function (r) { return '<option value="' + esc(r) + '"' + (l.relationship === r ? ' selected' : '') + '>' + esc(T(r)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="check"><input type="checkbox" id="gl-consent"' + (l.canConsent ? ' checked' : '') + '><span><b>' + T('Can give consent') + '</b><br><span class="muted small">' + esc(T('A parent or legal guardian ({law}). Not step-parents, grandparents or collectors unless they are legal guardians.', { law: PrivacyLaw.forChurch(S.settings()).short })) + '</span></span></label>' +
@@ -342,7 +342,7 @@
   function ncDialog(childId) {
     var c = S.get('people', childId);
     H.modal(H.dialogHead(T('Not allowed to collect {name}', { name: c.firstName }), T('Children’s ministry will see an alert. Keep the note short and factual.')) + '<div class="dlg-body">' +
-      '<label class="field req">' + T('Who') + '<select class="findable" id="nc-who"><option value="__out">' + T('Someone not in Church Hub…') + '</option>' + adultOptions('', childId) + '</select></label>' +
+      '<label class="field req">' + T('Who') + '<select class="findable" id="nc-who"><option value="__out">' + T('Someone not in Church & Trellis…') + '</option>' + adultOptions('', childId) + '</select></label>' +
       '<label class="field req" id="nc-name-f">' + T('Name') + '<input id="nc-name"></label>' +
       '<label class="field">' + T('Note') + ' <small>' + T('(e.g. “Court order – call Karen”)') + '</small><input id="nc-note"></label><p id="nc-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary danger" data-act="people:ncsave" data-child="' + childId + '">' + T('Save') + '</button></div>', T('Not allowed to collect'));
@@ -360,7 +360,7 @@
   /** After a death (Administrators): off future rosters, teams, serving groups and away dates; future leave cancelled;
    *  sign-in removed (app access set to none). Past serving and leave stay, for the church's records. */
   /** After a death: is anything still to undo (future turns, teams, offers, groups, leave, links to children, sign-in)?
-   *  People who died before they came into Church Hub (e.g. from Elvanto) usually have nothing, so they aren't a to-do. */
+   *  People who died before they came into Church & Trellis (e.g. from Elvanto) usually have nothing, so they aren't a to-do. */
   function needsTidy(p) {
     if (!p || !deceased(p) || p.deathTidied) return false;
     var id = p.id, d = p.deceasedAt || H.today(), lv = S.leave();
@@ -397,7 +397,7 @@
   function exportPerson(p) {
     var pick = function (c) { return S.find(c, function (x) { return x.personId === p.id || (x.memberIds && x.memberIds.indexOf(p.id) >= 0); }); };
     var lv = Store.leave();
-    var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church Hub holds about this person (' + PrivacyLaw.forChurch(S.settings()).copyRight + ').',
+    var data = { exportedAt: Store.now(), by: H.name(H.user()), note: 'Everything Church & Trellis holds about this person (' + PrivacyLaw.forChurch(S.settings()).copyRight + ').',
       restricted: H.can('notes') && H.can('medical') ? '' : 'Pastoral notes and children’s medical notes are kept separately and only Pastors / Children’s ministry can read them. Ask them to add these if the request covers them.',
       person: p, family: familyOf(p), households: HS.householdsOf(p).map(function (h) { return S.get('families', h); }),
       responsibleAdults: S.find('guardians', function (l) { return l.childId === p.id || l.adultId === p.id; }), consents: pick('consents'), partnershipApplications: pick('partnerApps'), pastoralNotes: H.can('notes') ? pick('notes') : undefined, serving: { skills: pick('skills'), assignments: pick('assignments'), groups: pick('groups'), awayDates: pick('blockouts'), offersToServe: pick('serveOffers') }, translationSuggestions: pick('wordIdeas'), changesAskedFor: pick('detailChanges'),
@@ -463,7 +463,7 @@
     link: function (el) { linkDialog(el.dataset.child, el.dataset.id); },
     linksave: function (el) {
         var who = document.getElementById('gl-who').value, err = document.getElementById('gl-err'), name = document.getElementById('gl-name').value.trim();
-        if (!who || (who === '__out' && !name)) { err.textContent = T('Choose the person, or type the name of someone not in Church Hub.'); err.hidden = false; return; }
+        if (!who || (who === '__out' && !name)) { err.textContent = T('Choose the person, or type the name of someone not in Church & Trellis.'); err.hidden = false; return; }
         var childId = el.dataset.child, id = el.dataset.id;
         if (who !== '__out' && links(childId).some(function (l) { return l.adultId === who && l.id !== id; })) { err.textContent = T('That person is already listed for this child.'); err.hidden = false; return; }
         var l = id ? JSON.parse(JSON.stringify(S.get('guardians', id))) : { childId: childId };
@@ -535,14 +535,14 @@
         Store.codeGive(p.id, name, p.mobile || '', (Countries.church(S.settings()) || {}).dial || '').then(function (r) {
           S.audit('Gave a sign-in code to ' + H.name(p), 'people/' + p.id);   // never the code itself
           var link = codeLink(r.code), until = H.fmt(new Date(r.expires).toISOString().slice(0, 10), true);
-          slip = '<div class="code-slip print"><p><b>' + esc((S.settings() || {}).churchName || 'Church Hub') + '</b> · Church Hub</p><h1>' + esc(H.name(p)) + '</h1>' +
+          slip = '<div class="code-slip print"><p><b>' + esc((S.settings() || {}).churchName || 'Church & Trellis') + '</b> · Church & Trellis</p><h1>' + esc(H.name(p)) + '</h1>' +
             '<div class="code-qr">' + QR.svg(link, { px: 220 }) + '</div><p class="code-big">' + esc(showCode(r.code)) + '</p><p>' +
-            esc(T('Scan it with the phone’s camera, or open Church Hub → I have a sign-in code. Works once, until {date}.', { date: until })) + '</p></div>';
+            esc(T('Scan it with the phone’s camera, or open Church & Trellis → I have a sign-in code. Works once, until {date}.', { date: until })) + '</p></div>';
           var num = p.mobile ? Library.intl(p.mobile, (Countries.church(S.settings()) || {}).dial) : '';
-          var text = T('Hello {name}, here is your sign-in for Church Hub. Tap the link on your phone (it works once, until {date}): {link}', { name: P.known(p), date: until, link: link });
+          var text = T('Hello {name}, here is your sign-in for Church & Trellis. Tap the link on your phone (it works once, until {date}): {link}', { name: P.known(p), date: until, link: link });
           H.modal(H.dialogHead(T('Sign-in code for {name}', { name: H.name(p) })) + '<div class="dlg-body code-slip">' +
             '<div class="code-qr">' + QR.svg(link, { px: 180 }) + '</div><p class="code-big">' + esc(showCode(r.code)) + '</p>' +
-            '<p class="muted" style="text-align:center">' + esc(T('Scan it with the phone’s camera, or open Church Hub → I have a sign-in code. Works once, until {date}.', { date: until })) + '</p>' +
+            '<p class="muted" style="text-align:center">' + esc(T('Scan it with the phone’s camera, or open Church & Trellis → I have a sign-in code. Works once, until {date}.', { date: until })) + '</p>' +
             '<p class="hint" style="text-align:center">' + T('Once you close this, the code can’t be shown again – give a new one if it’s lost.') + '</p></div>' +
             '<div class="dlg-foot"><a class="btn" href="https://wa.me/' + esc(num) + '?text=' + encodeURIComponent(text) + '" target="_blank" rel="noopener">' + T('Send by WhatsApp') + '</a>' +
             '<button class="btn" data-act="people:printcode">' + T('Print') + '</button><button class="btn primary" data-act="hub:close">' + T('Done') + '</button></div>', T('Sign-in code'));

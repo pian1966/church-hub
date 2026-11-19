@@ -1,4 +1,4 @@
-/* Church Hub – Sesotho as written in Lesotho, worked out from the South African spelling in js/lang/st.js, so it is
+/* Church & Trellis – Sesotho as written in Lesotho, worked out from the South African spelling in js/lang/st.js, so it is
  * always as complete as that file and needs no file of its own. Pure and tested: node tests/sesotho.test.js
  *
  * The two spellings differ in a few regular ways (South Africa → Lesotho):
@@ -6,7 +6,7 @@
  *   d before i or u → l  (dintlha → lintlha, Modimo → Molimo)
  *   w before a vowel → o  (wa → oa, tswa → tsoa)    y before a vowel → e  (ya → ea, yona → eona)
  * A few things depend on grammar (e.g. "o" for "you" is "u" in Lesotho) and are left as they are, so it is a draft:
- * fluent speakers can improve any wording under Translations. Names and English words (Church Hub, Google…) are kept. */
+ * fluent speakers can improve any wording under Translations. Names and English words (Church & Trellis, Google…) are kept. */
 var Sesotho = (function () {
   'use strict';
   var KEEP = /^(Church|Hub|Google|Docs|Books|Search|WhatsApp|Firestore|Firebase|Elvanto|Claude|Gemini|Excel|Word|Android|iPhone|Safari|Chrome|Gmail|Outlook|Microsoft|Notion|Open|Library|Leave|Manager|Howick|Christ|Africa|South|PDF|CSV|ISBN|SMS|POPIA|JPEG|PNG|WebP|DVD|CD|app|email|online|offline|link|admin)$/i;

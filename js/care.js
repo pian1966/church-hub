@@ -1,5 +1,5 @@
 /*
- * Church Hub – care groups (the church may call them home groups, cell groups, classes…: Settings → Terminology (Church Words)).
+ * Church & Trellis – care groups (the church may call them home groups, cell groups, classes…: Settings → Terminology (Church Words)).
  * A care group: careGroups/{id} = { name, leaderIds, memberIds, names: { personId: 'First Last' }, type } – type 'life' for a
  * life group (Bible study, midweek group: js/mod-life.js), which works the same way. Leaders (carers)
  * are members too. A person may be in several care groups (and a carer in one, a member in another). Administrators

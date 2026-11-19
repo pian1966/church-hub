@@ -1,4 +1,4 @@
-/* Church Hub – People: applying to become a Church Partner (the church's own word: Member, Parishioner…) and name badges.
+/* Church & Trellis – People: applying to become a Church Partner (the church's own word: Member, Parishioner…) and name badges.
  *
  * Applications (collection partnerApps, one per person at a time), sent from the person's own page (Me → Apply):
  *   { personId, spouse, anniversary, children, since, faith: yes|no, story, otherChurch: yes|no, otherWhich, classOk: yes|no,
@@ -142,7 +142,7 @@
   }
   function saveB64(name, type, b64) {
     if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFileBase64 === 'function') { window.ChurchHubApp.saveFileBase64(name, type || 'application/octet-stream', b64); return; }
-    if (window.ChurchHubApp) { H.toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+    if (window.ChurchHubApp) { H.toast(T('Please update the Church & Trellis app to download files, or use a browser.'), true); return; }
     var bin = atob(b64), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     var url = URL.createObjectURL(new Blob([bytes], { type: type || 'application/octet-stream' }));
     if (fileOpenable(type) && window.open(url, '_blank', 'noopener')) { setTimeout(function () { URL.revokeObjectURL(url); }, 60000); return; }
@@ -196,7 +196,7 @@
       return S.loadApplicationDocumentFile(id).then(function (parts) {
         var b64 = parts.join(''), type = d.fileType || 'application/octet-stream', name = d.fileName || d.title || 'document';
         if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFileBase64 === 'function') { window.ChurchHubApp.saveFileBase64(name, type, b64); return; }
-        if (window.ChurchHubApp) { H.toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+        if (window.ChurchHubApp) { H.toast(T('Please update the Church & Trellis app to download files, or use a browser.'), true); return; }
         var bin = atob(b64), bytes = new Uint8Array(bin.length);
         for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
         var url = URL.createObjectURL(new Blob([bytes], { type: type })), a = document.createElement('a');
@@ -400,7 +400,7 @@
   /* ---------- inviting people to apply: by email, a QR code to scan, a poster and a paper form ----------
    * The form is on the person's own page, so they need to be able to sign in: inviting someone without access can give them
    * Basic access (Administrators, and Pastors who may give access). Their details get partnerInvited (the date), shown on
-   * their page. The link is this Church Hub's address + #/people/apply; it is remembered through signing in (app.js). */
+   * their page. The link is this Church & Trellis's address + #/people/apply; it is remembered through signing in (app.js). */
   function applyLink() { return location.origin + location.pathname.replace(/index\.html$/, '') + '#/people/apply'; }
   function canGiveAccess() { return H.can('*') || H.can('access.manage'); }
   function signsIn(p) { return !!(p.email && p.appRole && p.appRole !== 'none'); }
@@ -408,7 +408,7 @@
   function inviteText(names) {
     var st = S.settings() || {};
     return T('Dear {name},', { name: names }) + '\n\n' + T('Thank you for being part of {church}. We would love to invite you to become a {partner}: you can vote at church meetings, and lead or teach in the church.', { church: st.churchName || '', partner: partnerWord() }) +
-      '\n\n' + T('You can apply in Church Hub, on your phone or computer:') + '\n' + applyLink() + '\n\n' + T('Sign in with your email address, answer a few questions and send it. A Pastor will be in touch.') + '\n\n' + T('With love,') + '\n' + (st.churchName || '');
+      '\n\n' + T('You can apply in Church & Trellis, on your phone or computer:') + '\n' + applyLink() + '\n\n' + T('Sign in with your email address, answer a few questions and send it. A Pastor will be in touch.') + '\n\n' + T('With love,') + '\n' + (st.churchName || '');
   }
   /** The invitation for one or more people (ids): who it reaches, Basic access for those who can't sign in yet, the email. */
   function invite(ids) {
@@ -430,7 +430,7 @@
   function qrBlock(px) { return '<div class="qr-box">' + QR.svg(applyLink(), { px: px || 200 }) + '<p class="qr-link">' + esc(applyLink()) + '</p></div>'; }
   function invitePanel() {
     if (!canReview() || !window.QR) return '';
-    return '<section class="panel" id="app-invite" data-noauto><h2>' + T('Invite people') + '</h2><p class="hint" style="margin-top:0">' + T('Send the form by email from someone’s page, or tick people in Advanced search and choose Invite. For the welcome desk: the QR code below, a poster, or a paper form. To apply in Church Hub, people need to be able to sign in.') + '</p>' +
+    return '<section class="panel" id="app-invite" data-noauto><h2>' + T('Invite people') + '</h2><p class="hint" style="margin-top:0">' + T('Send the form by email from someone’s page, or tick people in Advanced search and choose Invite. For the welcome desk: the QR code below, a poster, or a paper form. To apply in Church & Trellis, people need to be able to sign in.') + '</p>' +
       '<div class="row" style="gap:18px;flex-wrap:wrap;align-items:center">' + qrBlock(150) + '<div class="btns" style="flex-direction:column;align-items:stretch">' +
       '<button class="btn" data-act="people:invitecopy">' + T('Copy the link') + '</button><button class="btn" data-act="people:invitposter">' + T('Print a poster') + '</button><button class="btn" data-act="people:invitepaper">' + T('Print a paper form') + '</button></div></div></section>';
   }
@@ -442,7 +442,7 @@
     return '<p class="badge-line">' + (p.partnerInvited ? '<span class="muted small">' + T('Invited to become a Church Partner on {date}', { date: esc(H.fmt(p.partnerInvited, true)) }) + '</span> ' : '') +
       '<button class="btn small" data-act="people:invite" data-id="' + p.id + '">' + T(p.partnerInvited ? 'Invite again' : 'Invite to become a Church Partner') + '</button></p>';
   }
-  /** A4 poster for the welcome desk, and a paper form (the same questions as Church Hub's, with lines to write on). */
+  /** A4 poster for the welcome desk, and a paper form (the same questions as Church & Trellis's, with lines to write on). */
   function posterHtml() {
     var st = S.settings() || {};
     return '<div class="sheet poster"><h1>' + esc(T('Become a {partner}', { partner: partnerWord() })) + '</h1><p class="big">' + esc(st.churchName || '') + '</p>' + qrBlock(380) +

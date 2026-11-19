@@ -17,7 +17,7 @@ Also asked: New member. Add a newcomer. Add a child.
 
 Tap **Add person**. Fill in the shaded boxes (first and last name, category, marital status – or **Not known** – and their
 household, or **+ New household…** if they live on their own). Choose whether they're an adult or a **Child (under 18)** in
-the household. Only add what the church needs, and ask for their consent when you add them. Church Hub warns you as you
+the household. Only add what the church needs, and ask for their consent when you add them. Church & Trellis warns you as you
 type if a similar person is already there.
 
 ## How do I change someone's details?
@@ -48,9 +48,9 @@ brought across from Elvanto land here too); pastoral matters go in **Pastoral no
 For: Administrators, Pastors
 Also asked: Add a husband or wife. Couple who live apart. Wrong person shown as spouse. Find someone's partner.
 
-Usually there's nothing to do: Church Hub works couples out from each household (two adults, both **Married** or both
+Usually there's nothing to do: Church & Trellis works couples out from each household (two adults, both **Married** or both
 **Partner**) and asks you to confirm them (**Yes, married to each other** on their page, or **Households → Couples to
-confirm**). To choose by hand – a couple who live apart, or when the household leaves Church Hub guessing – open either
+confirm**). To choose by hand – a couple who live apart, or when the household leaves Church & Trellis guessing – open either
 person → **Edit details** → **Spouse or partner**, choose the other person and **Save**: both records are linked, and their
 pages show each other as Spouse (or Partner). Choose **Going by their household** to undo it. The box is greyed out when the
 marital status is Single, Engaged, Divorced or Widowed (for someone who has died, use **Late spouse**).
@@ -59,7 +59,7 @@ marital status is Single, Engaged, Divorced or Widowed (for someone who has died
 For: Administrators
 Also asked: Sign-in code. Member without email. PIN. Forgot PIN. Church number. Lost phone. Print a sign-in slip.
 
-Open the person → under **App access**, tap **Give a sign-in code** → **Make the code**. Church Hub shows a QR code and an
+Open the person → under **App access**, tap **Give a sign-in code** → **Make the code**. Church & Trellis shows a QR code and an
 8-character code: **Send by WhatsApp** (to their mobile), **Print** a slip, or show them the screen. It works once, for 14 days;
 once you close the window it can't be shown again – give a new one if it's lost (the old one stops working). With the code
 the person chooses a 6-digit PIN, then signs in on any phone with their cellphone number (or a church number, if they have
@@ -70,7 +70,7 @@ sign in; **Switch off** stops it (a lost phone). **No access**, **Mark as left**
 Give the code only to that person: whoever has it can sign in as them. The church must first switch on **Anonymous** and
 **Email/Password** sign-in in Firebase (FIREBASE-SETUP.md steps 3–4).
 
-## How do I give someone access to Church Hub?
+## How do I give someone access to Church & Trellis?
 For: Administrators (Pastors if allowed)
 Also asked: Let someone sign in. Make someone a roster coordinator. Change someone's role.
 
@@ -83,7 +83,7 @@ For: Administrators, Pastors, Children's ministry
 Also asked: Who can fetch this child? Court order. Guardian consent.
 
 Open the child → **Parents, guardians and collection** → **Add a parent, guardian or collector**. Choose the person (or
-type the name and phone of someone not in Church Hub), the relationship, and tick **Can give consent**, **Primary contact**
+type the name and phone of someone not in Church & Trellis), the relationship, and tick **Can give consent**, **Primary contact**
 and/or **May collect**. **Add someone who may not collect** lists people who are not allowed to collect the child (shown with
 a red bar; every view is logged). Links made automatically need to be confirmed – they're on your Home **To do** list.
 
@@ -127,7 +127,7 @@ Yes – at the top of **People → Advanced search**, use **Ask in your own word
 you want, in English, then tap **Ask**. For example: *Church Partners who are men, with birthdays in April*, *women over 60
 who live in Howick*, *first names beginning with M*, *Church Partners whose wives' names begin with A*, *Church Partners who
 don't belong to a care group*, *people without an ID number*, or *10am services between 12 November
-and 2 February that don't have all positions filled*. Church Hub fills in the filters and shows what it understood, and any
+and 2 February that don't have all positions filled*. Church & Trellis fills in the filters and shows what it understood, and any
 words it didn't – you can then change the filters by hand. It only searches what your role may see.
 If the church has switched on AI (Settings → Apps), the question is understood by Google's Gemini AI and it says
 **Understood by AI as**; only your question is sent, never the church's records. Don't type private matters into it.

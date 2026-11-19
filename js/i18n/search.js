@@ -1,4 +1,4 @@
-/* Church Hub – words for Advanced search and Change selected… (js/people/search.js, js/people-search.js).
+/* Church & Trellis – words for Advanced search and Change selected… (js/people/search.js, js/people-search.js).
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
@@ -194,7 +194,7 @@ I18n.rows([
     ["Understood as", "Verstaan as", "Kuqondwe njengo", "Kuqondwe njenge"],
     ["Asking the AI…", "Vra tans die KI…", "Ngiyabuza i-AI…", "Ndibuza i-AI…"],
     ["Understood by AI as", "Deur KI verstaan as", "Kuqondwe yi-AI njengo", "Kuqondwe yi-AI njenge"],
-    ["The AI couldn’t be reached, so Church Hub’s own rules were used.", "Die KI kon nie bereik word nie, dus is Church Hub se eie reëls gebruik.", "I-AI ayitholakalanga, ngakho kusetshenziswe imithetho kaChurch Hub uqobo.", "I-AI ayifumanekanga, ngoko kusetyenziswe imithetho kaChurch Hub ngokwayo."],
+    ["The AI couldn’t be reached, so Church & Trellis’s own rules were used.", "Die KI kon nie bereik word nie, dus is Church & Trellis se eie reëls gebruik.", "I-AI ayitholakalanga, ngakho kusetshenziswe imithetho kaChurch & Trellis uqobo.", "I-AI ayifumanekanga, ngoko kusetyenziswe imithetho kaChurch & Trellis ngokwayo."],
     ["Your question is sent to Google’s Gemini AI to be understood. No church records are sent.", "Jou vraag word na Google se Gemini KI gestuur om dit te verstaan. Geen kerkrekords word gestuur nie.", "Umbuzo wakho uthunyelwa ku-Gemini AI kaGoogle ukuze uqondwe. Awekho amarekhodi ebandla athunyelwayo.", "Umbuzo wakho uthunyelwa kwi-Gemini AI kaGoogle ukuze uqondwe. Akukho zingxelo zebandla zithunyelwayo."],
     ["No one called “{name}” was found.", "Niemand genaamd “{name}” is gevind nie.", "Akatholakalanga umuntu obizwa ngokuthi “{name}”.", "Akukho mntu ubizwa ngokuba ngu-“{name}” ofunyenweyo."],
     ["You can’t see the rosters, so services can’t be searched.", "Jy kan nie die roosters sien nie, dus kan dienste nie gesoek word nie.", "Awukwazi ukubona izinhlu zokusebenza, ngakho izinkonzo azikwazi ukuseshwa.", "Awukwazi ukubona uluhlu lwabakhonzi, ngoko iinkonzo azinakukhangelwa."],
@@ -207,7 +207,7 @@ I18n.rows([
     ["No services match.", "Geen dienste pas nie.", "Azikho izinkonzo ezifanayo.", "Akukho nkonzo ezihambelanayo."],
     ["Couldn’t hear that – try again.", "Kon dit nie hoor nie – probeer weer.", "Asizwanga – zama futhi.", "Asikuva – zama kwakhona."],
     ["Listening… speak now", "Luister… praat nou", "Siyalalela… khuluma manje", "Siyamamela… thetha ngoku"],
-    ["Allow the microphone for Church Hub in your browser’s settings.", "Laat die mikrofoon vir Church Hub toe in jou blaaier se instellings.", "Vumela imakrofoni ye-Church Hub kuzilungiselelo zesiphequluli sakho.", "Vumela imakrofoni ye-Church Hub kwiisetingi zebhrawuza yakho."],
+    ["Allow the microphone for Church & Trellis in your browser’s settings.", "Laat die mikrofoon vir Church & Trellis toe in jou blaaier se instellings.", "Vumela imakrofoni ye-Church & Trellis kuzilungiselelo zesiphequluli sakho.", "Vumela imakrofoni ye-Church & Trellis kwiisetingi zebhrawuza yakho."],
     ["On {date}", "Op {date}", "Ngo-{date}", "Ngo-{date}"],
     ["{from} to {to}", "{from} tot {to}", "{from} kuya ku-{to}", "{from} ukuya ku-{to}"],
     ["From {date}", "Vanaf {date}", "Kusukela ngo-{date}", "Ukusuka ngo-{date}"],

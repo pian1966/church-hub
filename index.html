@@ -10,26 +10,26 @@
   r.setAttribute('data-mode', m === 'dark' || (!m && window.matchMedia && matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
   if (t && t.accent) { r.style.setProperty('--accent', t.accent); if (t.on) r.style.setProperty('--accent-on', t.on); r.style.setProperty('--side', t.side); r.style.setProperty('--side-2', t.side2);
     var mt = document.querySelector('meta[name="theme-color"]'); if (mt) mt.setAttribute('content', t.side); }
-} catch (e) { /* first visit or private window: Church Hub's own colours */ } })();</script>
-<title>Church Hub</title>
+} catch (e) { /* first visit or private window: Church & Trellis's own colours */ } })();</script>
+<title>Church & Trellis</title>
 <link rel="icon" type="image/png" sizes="48x48" href="assets/icons/favicon-48.png?v=70ccffa65b">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.png">
-<meta name="apple-mobile-web-app-title" content="Church Hub">
+<meta name="apple-mobile-web-app-title" content="Church & Trellis">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="css/hub.css?v=f1dd3992a2">
+<link rel="stylesheet" href="css/hub.css?v=9b3bb970db">
 </head>
 <body>
 <div id="app">
-  <!-- Shown while Church Hub loads: the church's colours from this device (above), the turning cross, the version (below) -->
-  <div class="splash" role="status" aria-label="Church Hub is loading">
+  <!-- Shown while Church & Trellis loads: the church's colours from this device (above), the turning cross, the version (below) -->
+  <div class="splash" role="status" aria-label="Church & Trellis is loading">
     <div class="splash-in">
       <div class="mark splash-mark"><svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 3v18M6 9h12"/></svg></div>
-      <h1>Church Hub</h1>
+      <h1>Church & Trellis</h1>
       <svg class="busy-cross splash-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>
       <p id="splash-v"></p>
     </div>
@@ -37,99 +37,99 @@
 </div>
 <div id="modal"></div>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<noscript>Church Hub needs JavaScript switched on.</noscript>
+<noscript>Church & Trellis needs JavaScript switched on.</noscript>
 <!-- Shared rules: leave (same file as Leave Manager) and rostering -->
 <script src="js/leave-core.js?v=69c2b1d31a"></script>
-<script src="js/countries.js?v=106c772635"></script>
-<script src="js/privacy-law.js?v=358667b6dc"></script>
-<script src="js/wording.js?v=cc5b10b8ca"></script>
-<script src="js/care.js?v=0376ba257d"></script>
-<script src="js/messages.js?v=555e441001"></script>
-<script src="js/leaders.js?v=cba54d762e"></script>
-<script src="js/archive.js?v=27c0075d31"></script>
-<script src="js/library.js?v=b813d6a03d"></script>
-<script src="js/coffee.js?v=10f6b0c29c"></script>
-<script src="js/tips.js?v=75254b8f8e"></script>
-<script src="js/richtext.js?v=0e1f04fe8d"></script>
-<script src="js/datebox.js?v=05d89a6d7a"></script>
-<script src="js/roster.js?v=54704cbded"></script>
-<script src="js/serving.js?v=a0de7f2fdd"></script>
-<script src="js/leave-import.js?v=170b7110fe"></script>
-<script src="js/elvanto-import.js?v=9f5f0c0033"></script>
-<script src="js/elvanto-sync.js?v=a5f323fd77"></script>
-<script src="js/households.js?v=cde971421e"></script>
-<script src="js/people-search.js?v=6c62a1f9a3"></script>
-<script src="js/ask.js?v=1f0f56ae25"></script>
-<script src="js/ask-ai.js?v=66df87b52f"></script>
-<script src="js/duplicates.js?v=842cb25c1a"></script>
-<script src="js/xlsx-lite.js?v=1b9fd1de25"></script>
-<script src="js/emails.js?v=942a189aae"></script>
-<script src="js/sesotho.js?v=5bb7ba49c2"></script>
-<script src="js/file-versions.js?v=809395ac75"></script>
-<script src="js/i18n.js?v=8c9dff1d8f"></script>
+<script src="js/countries.js?v=ac52520797"></script>
+<script src="js/privacy-law.js?v=0654291c79"></script>
+<script src="js/wording.js?v=1cc4bfba3b"></script>
+<script src="js/care.js?v=f9f00c8c04"></script>
+<script src="js/messages.js?v=b1e1b39441"></script>
+<script src="js/leaders.js?v=9d23545a33"></script>
+<script src="js/archive.js?v=fd68b69cbd"></script>
+<script src="js/library.js?v=f4280b6303"></script>
+<script src="js/coffee.js?v=4d4fb86390"></script>
+<script src="js/tips.js?v=95b9293ece"></script>
+<script src="js/richtext.js?v=c24d9737f7"></script>
+<script src="js/datebox.js?v=4022b096ca"></script>
+<script src="js/roster.js?v=4aa4ed9f1c"></script>
+<script src="js/serving.js?v=9f08a9c350"></script>
+<script src="js/leave-import.js?v=964262530d"></script>
+<script src="js/elvanto-import.js?v=6216f26694"></script>
+<script src="js/elvanto-sync.js?v=8db05e9840"></script>
+<script src="js/households.js?v=45c424e341"></script>
+<script src="js/people-search.js?v=4c35bfa365"></script>
+<script src="js/ask.js?v=28b589f837"></script>
+<script src="js/ask-ai.js?v=14c9a8b5c4"></script>
+<script src="js/duplicates.js?v=e03e4ea20a"></script>
+<script src="js/xlsx-lite.js?v=40a589c48e"></script>
+<script src="js/emails.js?v=7950b8546c"></script>
+<script src="js/sesotho.js?v=98472184a0"></script>
+<script src="js/file-versions.js?v=7164911af6"></script>
+<script src="js/i18n.js?v=221fd8eaa4"></script>
 <!-- The words, one file per part of the app (the same list as AREAS in js/i18n.js) -->
-<script src="js/i18n/common.js?v=e002d11ebc"></script>
-<script src="js/i18n/people.js?v=0fba7f3455"></script>
-<script src="js/i18n/profile.js?v=c5801ddd84"></script>
-<script src="js/i18n/edit.js?v=240c20ebf7"></script>
-<script src="js/i18n/households.js?v=71d74c019b"></script>
-<script src="js/i18n/search.js?v=da4bba228a"></script>
-<script src="js/i18n/rosters.js?v=6f32d9fbeb"></script>
-<script src="js/i18n/leave.js?v=01ff3c250f"></script>
-<script src="js/i18n/me.js?v=591d930f2e"></script>
-<script src="js/i18n/care.js?v=bbc377caf8"></script>
-<script src="js/i18n/life.js?v=6717aa997a"></script>
-<script src="js/i18n/leaders.js?v=2fb2585fe7"></script>
-<script src="js/i18n/archive.js?v=2d49508cbf"></script>
-<script src="js/i18n/library.js?v=686f64a14c"></script>
-<script src="js/i18n/messages.js?v=8eb35e01cf"></script>
-<script src="js/i18n/privacy.js?v=71b92552ad"></script>
-<script src="js/i18n/import.js?v=8e5942e4aa"></script>
-<script src="js/i18n/settings.js?v=4e3c02a7bb"></script>
-<script src="js/i18n/support.js?v=4bba20d4a6"></script>
-<script src="js/i18n/tips.js?v=6ecd63a548"></script>
+<script src="js/i18n/common.js?v=50c86205a3"></script>
+<script src="js/i18n/people.js?v=0349cf4321"></script>
+<script src="js/i18n/profile.js?v=935a4e667e"></script>
+<script src="js/i18n/edit.js?v=05103ecd9e"></script>
+<script src="js/i18n/households.js?v=530b494798"></script>
+<script src="js/i18n/search.js?v=ac0764e8d4"></script>
+<script src="js/i18n/rosters.js?v=b0dbde229a"></script>
+<script src="js/i18n/leave.js?v=01a0e009a0"></script>
+<script src="js/i18n/me.js?v=d0e0d4a623"></script>
+<script src="js/i18n/care.js?v=2476f64de3"></script>
+<script src="js/i18n/life.js?v=65faf226bf"></script>
+<script src="js/i18n/leaders.js?v=0703c7b8a2"></script>
+<script src="js/i18n/archive.js?v=71a490ce09"></script>
+<script src="js/i18n/library.js?v=df53beb2ca"></script>
+<script src="js/i18n/messages.js?v=36520b7467"></script>
+<script src="js/i18n/privacy.js?v=3ca0af278a"></script>
+<script src="js/i18n/import.js?v=f1a890ed20"></script>
+<script src="js/i18n/settings.js?v=52cd6b74c6"></script>
+<script src="js/i18n/support.js?v=186837ff7e"></script>
+<script src="js/i18n/tips.js?v=b0769ab53e"></script>
 <!-- Firebase connection (empty = demo) and the data layer -->
-<script src="js/version.js?v=e4933ba1a1"></script>
+<script src="js/version.js?v=9be4a9604b"></script>
 <script>(function () { var v = document.getElementById('splash-v'); if (v && window.ChurchHubVersion) v.textContent = 'Version ' + ChurchHubVersion.version; })();</script>
-<script src="js/church.js?v=e3a76691c5"></script>
-<script src="js/firebase-config.js?v=502ac18a8a"></script>
-<script src="js/store.js?v=6229066644"></script>
-<script src="js/sample.js?v=4cdbd662ab"></script>
-<script src="js/app.js?v=31374d8bc7"></script>
+<script src="js/church.js?v=949d497e09"></script>
+<script src="js/firebase-config.js?v=a665b777ff"></script>
+<script src="js/store.js?v=ccbfed1b00"></script>
+<script src="js/sample.js?v=6991522850"></script>
+<script src="js/app.js?v=aca18b11a7"></script>
 <!-- Modules: each becomes a card on Home. Add new ones here. -->
-<script src="js/mod-me.js?v=15ba2b3d55"></script>
-<script src="js/people/core.js?v=28bd2117fc"></script>
-<script src="js/people/directory.js?v=49da80f52a"></script>
-<script src="js/people/profile.js?v=9d2a555054"></script>
-<script src="js/people/edit.js?v=a60395bbae"></script>
-<script src="js/people/households.js?v=e2c4e45592"></script>
-<script src="js/people/search.js?v=f93e8dccb6"></script>
-<script src="js/people/changes.js?v=62a3b672aa"></script>
-<script src="js/qr.js?v=f25b9ae450"></script>
-<script src="js/badges.js?v=af75f4dc7e"></script>
-<script src="js/people/apply.js?v=d3dd93bb78"></script>
-<script src="js/people/bin.js?v=fee9ce26c6"></script>
-<script src="js/mod-people.js?v=c266ccc259"></script>
-<script src="js/mod-rosters.js?v=84b5eeec0d"></script>
-<script src="js/leave-views.js?v=cf2a53b8a6"></script>
-<script src="js/leave-reports.js?v=54252f0643"></script>
-<script src="js/mod-leave.js?v=09622d9827"></script>
-<script src="js/mod-care.js?v=a93db503a7"></script>
-<script src="js/mod-life.js?v=5cbd01dae6"></script>
-<script src="js/mod-leaders.js?v=ff066f3db4"></script>
-<script src="js/custom-groups.js?v=a18c3a5fdd"></script>
-<script src="js/mod-custom-groups.js?v=80bc2c3015"></script>
-<script src="js/mod-groups.js?v=2e8e73f139"></script>
-<script src="js/mod-archive.js?v=c766390dbd"></script>
-<script src="js/mod-library.js?v=ac651304b6"></script>
-<script src="js/mod-messages.js?v=0afb14538b"></script>
-<script src="js/mod-privacy.js?v=a1c23bf409"></script>
-<script src="js/mod-support.js?v=4b9ad76c94"></script>
-<script src="js/mod-import.js?v=889a553a4e"></script>
-<script src="js/mod-settings.js?v=2604fcb699"></script>
-<script src="js/mod-words.js?v=c6b0c8cb4f"></script>
-<script src="js/brochure-kit.js?v=8c7d289cbe"></script>
-<script src="js/mod-about.js?v=4b171fe78f"></script>
+<script src="js/mod-me.js?v=e4a337dc82"></script>
+<script src="js/people/core.js?v=2335c6e679"></script>
+<script src="js/people/directory.js?v=6921d14df5"></script>
+<script src="js/people/profile.js?v=9f648593fa"></script>
+<script src="js/people/edit.js?v=6b6a1137eb"></script>
+<script src="js/people/households.js?v=f165742231"></script>
+<script src="js/people/search.js?v=4fc26cc6e0"></script>
+<script src="js/people/changes.js?v=383470fe51"></script>
+<script src="js/qr.js?v=f83593778a"></script>
+<script src="js/badges.js?v=da21a9359e"></script>
+<script src="js/people/apply.js?v=e75faa1a8c"></script>
+<script src="js/people/bin.js?v=b859778b72"></script>
+<script src="js/mod-people.js?v=ddbf512019"></script>
+<script src="js/mod-rosters.js?v=b54eecf3b5"></script>
+<script src="js/leave-views.js?v=139c40930c"></script>
+<script src="js/leave-reports.js?v=6607f6ff8c"></script>
+<script src="js/mod-leave.js?v=e721566b5c"></script>
+<script src="js/mod-care.js?v=f3d315ea4e"></script>
+<script src="js/mod-life.js?v=425f2f210e"></script>
+<script src="js/mod-leaders.js?v=4fd1f8478b"></script>
+<script src="js/custom-groups.js?v=30e65579e7"></script>
+<script src="js/mod-custom-groups.js?v=4bf2ea8078"></script>
+<script src="js/mod-groups.js?v=a8686423da"></script>
+<script src="js/mod-archive.js?v=b818b463f2"></script>
+<script src="js/mod-library.js?v=ff5c62f65a"></script>
+<script src="js/mod-messages.js?v=2d1bb92fe8"></script>
+<script src="js/mod-privacy.js?v=26a2c95069"></script>
+<script src="js/mod-support.js?v=5af878cc9c"></script>
+<script src="js/mod-import.js?v=f5571bd4d8"></script>
+<script src="js/mod-settings.js?v=cc75af3081"></script>
+<script src="js/mod-words.js?v=8b92f6d662"></script>
+<script src="js/brochure-kit.js?v=0a0e15c375"></script>
+<script src="js/mod-about.js?v=e9050be55c"></script>
 <script>Hub.start();</script>
 </body>
 </html>

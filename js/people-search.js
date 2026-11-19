@@ -1,5 +1,5 @@
 /*
- * Church Hub – advanced people search, modelled on Elvanto's (People → Advanced Search).
+ * Church & Trellis – advanced people search, modelled on Elvanto's (People → Advanced Search).
  * Pure functions, tested with node: tests/people-search.test.js.
  *
  *  - A search is a list of filters { field, op, value, value2, unit } and a match: 'all', 'any' or 'logic'

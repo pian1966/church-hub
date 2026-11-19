@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: the demo as every role, then an Administrator going through every page (settings, leave, people, households, rosters).
+/* Church & Trellis – browser test, part: the demo as every role, then an Administrator going through every page (settings, leave, people, households, rosters).
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -69,10 +69,10 @@ module.exports = async function (ctx) {
   await s.go('people/p/p24'); await s.page.click('[data-act="people:edit"]'); await fillHome(s);
   await s.page.selectOption('#pf-late', '__out'); await s.page.fill('#pf-late-n', 'Pieter Botha'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); tt = await s.text();
-  check(tt.includes('Was married to Pieter Botha') && !tt.includes('Was married to Johan') && docs['details/p24'].lateSpouseName === 'Pieter Botha' && !docs['details/p24'].lateSpouseId, 'an Administrator can change who a widow was married to (someone not in Church Hub)');
+  check(tt.includes('Was married to Pieter Botha') && !tt.includes('Was married to Johan') && docs['details/p24'].lateSpouseName === 'Pieter Botha' && !docs['details/p24'].lateSpouseId, 'an Administrator can change who a widow was married to (someone not in Church & Trellis)');
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', 'p23'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); tt = await s.text();
-  check(tt.includes('Was married to Johan van der Merwe') && docs['details/p24'].lateSpouseId === 'p23' && !docs['details/p24'].lateSpouseName, '… or choose someone in Church Hub who has died');
+  check(tt.includes('Was married to Johan van der Merwe') && docs['details/p24'].lateSpouseId === 'p23' && !docs['details/p24'].lateSpouseName, '… or choose someone in Church & Trellis who has died');
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   tt = await s.text(); check(!tt.includes('Late spouse'), '… or nobody');
   // Maiden name: the box appears for a woman who is or was married (Elsa is now Widowed), not for a man
@@ -91,7 +91,7 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-spouse', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['details/p19'].spouseId && !docs['details/p27'].spouseId, '… and unlinked again on both');
   await s.go('people/p/p24');   // back to Elsa for the late spouse checks below
-  // Late spouse suggestions: clear Elsa's, and Church Hub should suggest Johan again (same household and surname)
+  // Late spouse suggestions: clear Elsa's, and Church & Trellis should suggest Johan again (same household and surname)
   await s.page.click('[data-act="people:edit"]'); await s.page.selectOption('#pf-late', ''); await s.page.click('[data-act="people:save"]'); await s.settle();
   await s.page.evaluate(() => { const e = Store.get('people', 'p24'); delete e.lateSpouseSet; });
   await s.go('people'); check((await s.page.textContent('a[href="#/people/late"]')).includes('1'), 'People shows how many late spouse suggestions there are');
@@ -307,13 +307,13 @@ module.exports = async function (ctx) {
   await s.go('privacy/audit'); check((await s.text()).includes('Signed in'), 'audit log shows sign-ins');
   await s.go('about'); await s.page.waitForSelector('#about-brochures');
   const bro = await s.page.$$eval('#about-brochures a', as => as.map(a => a.getAttribute('href')));
-  check(bro.length === 2 && bro[0] === '#/about/brochure/members' && bro[1] === '#/about/brochure/churches', 'About offers an Administrator both brochures, opened inside Church Hub');
-  // The brochure on its own (as the frame shows it), with this Church Hub's address: it fits
+  check(bro.length === 2 && bro[0] === '#/about/brochure/members' && bro[1] === '#/about/brochure/churches', 'About offers an Administrator both brochures, opened inside Church & Trellis');
+  // The brochure on its own (as the frame shows it), with this Church & Trellis's address: it fits
   const link = encodeURIComponent(new URL('.', s.page.url()).href), bp = await s.page.context().newPage();
   await bp.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());
   await bp.goto(new URL('brochure.html?for=members&link=' + link, s.page.url()).href);
   const bt = await bp.evaluate(() => [...document.querySelectorAll('.sheet')].filter(e => !e.hidden).map(e => e.innerText).join(' '));
-  check(/Three easy steps/.test(bt) && !/Switch without the stress/.test(bt) && /127\.0\.0\.1/.test(bt) && !/Christ Church Howick/i.test(bt), 'the generic members’ brochure opens with the Church Hub address and no local church branding');
+  check(/Three easy steps/.test(bt) && !/Switch without the stress/.test(bt) && /127\.0\.0\.1/.test(bt) && !/Christ Church Howick/i.test(bt), 'the generic members’ brochure opens with the Church & Trellis address and no local church branding');
   const fits = await bp.evaluate(() => [...document.querySelectorAll('.sheet:not([hidden]) .pn')].every(p => p.scrollHeight <= p.clientHeight + 1));
   check(fits, 'everything on the brochure fits on its page');
   await bp.goto(new URL('brochure.html?for=churches&link=' + link, s.page.url()).href);
@@ -323,7 +323,7 @@ module.exports = async function (ctx) {
   await s.go('about/brochure/members');
   const frame = async () => { await s.page.waitForFunction(() => { const f = document.getElementById('bro-frame'); return f && f.contentDocument && f.contentDocument.querySelector('[data-bk]'); }, null, { timeout: 15000 }); return s.page.frameLocator('#bro-frame'); };
   let f = await frame();
-  check(await f.locator('body.embed').count() === 1 && /127\.0\.0\.1/.test(await f.locator('body').innerText()), 'the brochure shows inside Church Hub, without its own bar, with this Church Hub’s address');
+  check(await f.locator('body.embed').count() === 1 && /127\.0\.0\.1/.test(await f.locator('body').innerText()), 'the brochure shows inside Church & Trellis, without its own bar, with this Church & Trellis’s address');
   await s.page.click('[data-act="about:broedit"]'); f = await frame();
   await f.locator('h2', { hasText: 'Three easy steps' }).click(); await s.page.keyboard.press('End'); await s.page.keyboard.type(' to start');
   await f.locator('.box p').first().click(); await s.page.keyboard.press('Control+A'); await s.page.keyboard.type('Phone the office: 033 330 0000');
@@ -353,10 +353,10 @@ module.exports = async function (ctx) {
   await s.page.evaluate(() => { const b = Store.brochures(); b.members.texts['m0:0'] = { o: 'Good to know', h: '<img src=x onerror="window.__bad=1">Hello<script>window.__bad=1</script>' }; Store.setBrochures(b); });
   await s.go('about'); await s.go('about/brochure/members'); f = await frame(); await s.page.waitForTimeout(300);
   check(await s.page.evaluate(() => !window.__bad && !document.getElementById('bro-frame').contentDocument.querySelector('.pn img')), 'anything saved is made safe: no pictures or scripts');
-  // When Church Hub's own wording changes, the church's old edit of it doesn't land on the wrong line
+  // When Church & Trellis's own wording changes, the church's old edit of it doesn't land on the wrong line
   await s.page.evaluate(() => { const b = Store.brochures(); b.members.texts['m0:11'] = { o: 'An older heading', h: 'Should not show' }; Store.setBrochures(b); });
   await s.go('about'); await s.go('about/brochure/members'); f = await frame(); await s.page.waitForTimeout(500);
-  check(!/Should not show/.test(await f.locator('body').innerText()) && /to wording Church Hub has since changed/.test(await s.page.textContent('#bro-note')), 'an edit of wording that has since changed isn’t used, and is listed');
+  check(!/Should not show/.test(await f.locator('body').innerText()) && /to wording Church & Trellis has since changed/.test(await s.page.textContent('#bro-note')), 'an edit of wording that has since changed isn’t used, and is listed');
   await s.page.selectOption('#bro-lang', 'af'); await s.page.waitForTimeout(500);
   await s.page.click('[data-act="about:broreset"]'); await s.page.click('[data-act="about:broreset"]'); await s.settle();
   await s.page.selectOption('#bro-lang', 'en'); await s.page.waitForTimeout(500);

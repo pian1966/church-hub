@@ -12,7 +12,7 @@ console.log('Recognising the tabs');
 ok(['staff', 'requests', 'adjustments', 'levels', 'types', 'terms', 'holidays', 'settings', 'history'].every(k => t[k]), 'every tab recognised from its headings');
 ok(t.staff.every(r => !('PIN' in r)), 'PINs are dropped as soon as the Staff tab is read');
 
-console.log('Planning against Church Hub people');
+console.log('Planning against Church & Trellis people');
 const people = [
   { id: 'p02', firstName: 'Thandi', lastName: 'Mokoena', email: 'thandi.mokoena@example.com', familyRole: 'adult' },
   { id: 'p05', firstName: 'Sipho', lastName: 'Dlamini', email: 'Sipho.Dlamini@example.com', familyRole: 'adult' },
@@ -23,19 +23,19 @@ const pl = LI.plan(t, people);
 const m = id => pl.matches.find(x => x.lm.id === id);
 ok(m('S1').personId === 'p02' && m('S1').by === 'email', 'matched by email (any capitals)');
 ok(m('S3').personId === 'p06' && m('S3').by === 'name', 'matched by name when the email differs');
-ok(m('S4').personId === null, 'someone not in Church Hub is reported, not guessed');
+ok(m('S4').personId === null, 'someone not in Church & Trellis is reported, not guessed');
 ok(pl.requests.length === 6 && pl.adjustments.length === 2, '6 requests and 2 adjustments read');
 ok(pl.data.types.find(x => x.code === 'WO').perTerm === 1 && pl.data.types.find(x => x.code === 'PSL').useBy === '1 Feb', 'leave types read like Leave Manager does');
 ok(pl.data.levels.find(l => l.level === 'Support Staff').ent.SSL === 21 && !('PSL' in pl.data.levels.find(l => l.level === 'Support Staff').ent), 'allowances: blank means not offered');
 ok(!('StandInID' in pl.data.settings) && pl.data.settings.LeaveYearStartMonth === '1', 'settings read (stand-in left behind)');
 ok(pl.data.staff.find(s => s.id === 'S3').workDays === 'Mon, Wed, Thu', 'own working days kept');
 
-console.log('Applying to Church Hub leave');
+console.log('Applying to Church & Trellis leave');
 const lv = { settings: {}, types: [], levels: [], holidays: [], terms: [], rules: [], requests: [{ id: 'LXYZ', staffId: 'p02', type: 'PSL', start: '2026-11-02', end: '2026-11-02', status: 'Pending' }], adjustments: [] };
 const idMap = Object.assign({}, pl.map);
 const n = LI.applyLeave(lv, pl, idMap, true);
 ok(n.added === 5 && n.skipped === 1, '5 requests added; Nomsa’s skipped until she is added');
-ok(lv.requests.some(r => r.id === 'LXYZ') && lv.requests.find(r => r.id === 'L260110-AAAA').staffId === 'p02', 'leave already in Church Hub is kept; staff IDs become Church Hub people');
+ok(lv.requests.some(r => r.id === 'LXYZ') && lv.requests.find(r => r.id === 'L260110-AAAA').staffId === 'p02', 'leave already in Church & Trellis is kept; staff IDs become Church & Trellis people');
 ok(lv.adjustments.length === 2 && lv.adjustments[0].staffId === 'p02', 'adjustments (carry-over) imported');
 ok(lv.terms.length === 4 && lv.types.length === 7, 'settings, terms and leave types replaced by the sheet’s');
 idMap.S4 = 'pNEW';
@@ -46,7 +46,7 @@ console.log('Same balances as Leave Manager');
 {
   // What Leave Manager itself works out from the sheet…
   const sheet = LI.sheetData(t); sheet.staff = sheet.staff.map(x => Object.assign({ role: 'Staff' }, x)); sheet.rules = sheet.rules || [];
-  // …and what Church Hub works out after importing it (with Nomsa added as a new person)
+  // …and what Church & Trellis works out after importing it (with Nomsa added as a new person)
   const lv2 = { settings: {}, types: [], levels: [], holidays: [], terms: [], rules: [], requests: [], adjustments: [] };
   const map2 = Object.assign({}, pl.map, { S4: 'pNEW' });
   LI.applyLeave(lv2, pl, map2, true);

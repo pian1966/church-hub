@@ -10,7 +10,7 @@ ok(c.accent === '#E8590C' && B.contrast(c.ink, '#FFFFFF') >= 4.5, 'the orange: h
 ok(/^#F/.test(c.soft) && /^#F/.test(c.paper), 'boxes and paper are light tints');
 c = B.colours('#FDC830');
 ok(B.contrast(c.ink, '#FFFFFF') >= 4.5 && c.onAccent === '#22201E', 'a light yellow: darker ink, and dark writing on the cover');
-ok(B.colours('nonsense').accent === '#E8590C', 'something that isn’t a colour: Church Hub’s orange');
+ok(B.colours('nonsense').accent === '#E8590C', 'something that isn’t a colour: Church & Trellis’s orange');
 
 console.log('Fonts');
 ok(B.font('Lora') === 'Lora' && B.font('Comic Sans') === 'Nunito', 'only the fonts on the list (otherwise Nunito)');

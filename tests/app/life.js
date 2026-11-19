@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: Life groups (Bible studies, midweek groups), and switching care groups off.
+/* Church & Trellis – browser test, part: Life groups (Bible studies, midweek groups), and switching care groups off.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -77,7 +77,7 @@ module.exports = async function (ctx) {
   seed['settings/church'].modules = Object.assign({}, seed['settings/church'].modules, { life: true });
   seed['careGroups/lg1'] = { type: 'life', name: 'Midweek', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
   seed['careGroups/cg1'] = { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14'], names: { p14: 'Tim Jacobs' } };
-  // What an Administrator's Church Hub keeps for Midweek Group leaders: who they are, and every adult's name
+  // What an Administrator's Church & Trellis keeps for Midweek Group leaders: who they are, and every adult's name
   seed['lifeLeaders/all'] = { ids: ['p14'] };
   Object.keys(seed).filter(k => /^people\/[^/]+$/.test(k)).forEach(k => {
     const p = seed[k]; if (p.familyRole === 'child' || p.active === false || p.category === 'Deceased') return;

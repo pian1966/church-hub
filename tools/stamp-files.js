@@ -1,4 +1,4 @@
-/* Church Hub – gives every file a fingerprint, so phones download only the files that changed.
+/* Church & Trellis – gives every file a fingerprint, so phones download only the files that changed.
  *
  * Each file index.html loads carries ?v=<fingerprint>, a short code made from the file's contents. A file that hasn't
  * changed keeps its code, so browsers and phones keep using the copy they already have; a changed file gets a new code

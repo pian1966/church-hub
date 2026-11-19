@@ -1,22 +1,22 @@
 /*
- * Church Hub → Elvanto robot (adapted from Leave Manager's robot; the Elvanto steps are the same).
+ * Church & Trellis → Elvanto robot (adapted from Leave Manager's robot; the Elvanto steps are the same).
  * Elvanto's API can't set "Unavailable Volunteers", so this logs into Elvanto with a browser and does it like a person would:
  * People → Volunteers → Unavailable Volunteers → Add Unavailability.
  *
- * Its work list is Church Hub's elvantoSync collection (see js/elvanto-sync.js). It signs in to Church Hub with its own
+ * Its work list is Church & Trellis's elvantoSync collection (see js/elvanto-sync.js). It signs in to Church & Trellis with its own
  * account, which the database rules (firestore.rules, robot()) allow to read that list and the church settings – nothing else.
  *
  * Runs in GitHub Actions (.github/workflows/elvanto-robot.yml). The repository is public, so the log never contains
  * names, dates or anything personal: only request IDs, counts and the shape of Elvanto's pages.
  *
  *   MODE=check    – is there work? (no browser) Prints and outputs "jobs=N"; records that the robot is alive.
- *   MODE=run      – do the work and report back to Church Hub (shown under Leave → Elvanto).
+ *   MODE=run      – do the work and report back to Church & Trellis (shown under Leave → Elvanto).
  *   MODE=explore  – log in and describe Elvanto's pages (field names, buttons) so the robot can be adjusted. Changes nothing.
  *   MODE=read     – (nightly) read Elvanto's whole Unavailable Volunteers list – names and dates only, never reasons – into
- *                   elvantoFound/unavailable, for an Administrator to check and apply in Church Hub (Import). Changes nothing
+ *                   elvantoFound/unavailable, for an Administrator to check and apply in Church & Trellis (Import). Changes nothing
  *                   in Elvanto. Only when "Read Elvanto's unavailable dates" is ticked under Leave → Elvanto.
  *
- * Env: ROBOT_EMAIL, ROBOT_PASSWORD (its Church Hub sign-in), ELVANTO_USERNAME, ELVANTO_PASSWORD;
+ * Env: ROBOT_EMAIL, ROBOT_PASSWORD (its Church & Trellis sign-in), ELVANTO_USERNAME, ELVANTO_PASSWORD;
  *      optional ELV_LIST_PATH, SITE_URL (default https://pian1966.github.io/church-hub/).
  *      For tests: AUTH_URL, FS_URL (stand-in servers), FIREBASE_CONFIG_FILE, FAKE_ELVANTO=1 (no browser; pretends each job worked),
  *      FAKE_ROWS (JSON: the table rows the list would show, for MODE=read), TODAY (yyyy-mm-dd).
@@ -24,12 +24,12 @@
 const fs = require('fs');
 const path = require('path');
 const MODE = process.env.MODE || 'run';
-const NOTE = 'Church Hub ';
+const NOTE = 'Church Hub ';   // kept after the rename to Church & Trellis: it matches the notes already on entries in Elvanto
 const noteFor = (id) => NOTE + id;
 const log = (...a) => console.log(...a);
 const clean = (s) => String(s || '').replace(/\s+/g, ' ').trim();
 
-/* ------------------------------ Church Hub (Firestore over HTTPS) ------------------------------ */
+/* ------------------------------ Church & Trellis (Firestore over HTTPS) ------------------------------ */
 function firebaseConfig() {
   const cfg = fs.readFileSync(process.env.FIREBASE_CONFIG_FILE || path.join(__dirname, '..', 'js', 'firebase-config.js'), 'utf8');
   const get = (k) => { const m = cfg.match(new RegExp(k + ":\\s*'([^']*)'")); return m ? m[1] : ''; };
@@ -52,7 +52,7 @@ async function signIn() {
   if (!CFG.apiKey || !CFG.projectId) throw new Error('js/firebase-config.js has no Firebase settings yet.');
   TOKEN = '';
   const j = await call(AUTH_URL + '/accounts:signInWithPassword?key=' + CFG.apiKey, { method: 'POST', body: JSON.stringify({ email: process.env.ROBOT_EMAIL, password: process.env.ROBOT_PASSWORD, returnSecureToken: true }) })
-    .catch(e => { throw new Error('The robot couldn’t sign in to Church Hub (check ROBOT_EMAIL and ROBOT_PASSWORD). ' + e.message); });
+    .catch(e => { throw new Error('The robot couldn’t sign in to Church & Trellis (check ROBOT_EMAIL and ROBOT_PASSWORD). ' + e.message); });
   TOKEN = j.idToken;
 }
 const docsBase = () => FS_URL + '/projects/' + CFG.projectId + '/databases/(default)/documents';
@@ -202,7 +202,7 @@ async function addUnavailability(page, base, job) {
     const t = (await opts.nth(i).innerText()).toLowerCase();
     if (t.includes(last) && t.includes(first)) { await opts.nth(i).click(); picked = true; break; }
   }
-  if (!picked) throw new Error('Couldn’t find this person in Elvanto’s search – check the person’s name matches Elvanto (Church Hub → People) (step: person, ' + n + ' suggestions).');
+  if (!picked) throw new Error('Couldn’t find this person in Elvanto’s search – check the person’s name matches Elvanto (Church & Trellis → People) (step: person, ' + n + ' suggestions).');
   await page.waitForTimeout(800);
   // 2. Dates
   const sd = await fieldNear(scope, /start|from|begin/i), ed = await fieldNear(scope, /end|to|until|finish/i);
@@ -298,7 +298,7 @@ function datesIn(text, year) {
 /**
  * The Unavailable Volunteers table, row by row (each row = its cells' text) → who is unavailable when.
  * Keeps only names and dates (never the reason); marks entries made for leave (note "Church Hub …" / "Leave Manager …"),
- * which are already in Church Hub. Past entries are left out.
+ * which are already in Church & Trellis. Past entries are left out.
  */
 function readRows(rows, today) {
   const year = +String(today).slice(0, 4), entries = [], seen = {};
@@ -343,8 +343,8 @@ async function main() {
   const settings = (await getDoc('settings/church')) || {}, elv = settings.elvanto || {};
   const base = String(elv.url || '').replace(/\/+$/, '');
   if (MODE === 'read') {
-    if (!elv.read) { log('Reading Elvanto’s unavailable dates is switched off in Church Hub (Leave → Elvanto).'); return; }
-    if (!base) throw new Error('The Elvanto web address isn’t set in Church Hub (Leave → Elvanto).');
+    if (!elv.read) { log('Reading Elvanto’s unavailable dates is switched off in Church & Trellis (Leave → Elvanto).'); return; }
+    if (!base) throw new Error('The Elvanto web address isn’t set in Church & Trellis (Leave → Elvanto).');
     let browser = null, page = null;
     if (!process.env.FAKE_ELVANTO) {
       const { chromium } = require('playwright');
@@ -363,12 +363,12 @@ async function main() {
   }
   const jobs = elv.on ? await waitingJobs() : [];
   if (MODE === 'check') {
-    log(elv.on ? 'jobs=' + jobs.length : 'Keeping Elvanto up to date is switched off in Church Hub.'); out('jobs=' + jobs.length);
+    log(elv.on ? 'jobs=' + jobs.length : 'Keeping Elvanto up to date is switched off in Church & Trellis.'); out('jobs=' + jobs.length);
     await patch('robotStatus/elvanto', { lastCheck: new Date().toISOString() }).catch(() => {});
     return;
   }
   if (MODE === 'run' && !jobs.length) { await patch('robotStatus/elvanto', { lastRun: new Date().toISOString(), done: 0, failed: 0, fatal: '' }).catch(() => {}); log('Nothing to do.'); return; }
-  if (!base) throw new Error('The Elvanto web address isn’t set in Church Hub (Leave → Elvanto).');
+  if (!base) throw new Error('The Elvanto web address isn’t set in Church & Trellis (Leave → Elvanto).');
   const results = []; let fatal = '', listPath = '';
   let browser = null, page = null;
   if (!process.env.FAKE_ELVANTO) {
@@ -415,7 +415,7 @@ async function main() {
   if (browser) await browser.close();
   await patch('robotStatus/elvanto', { lastRun: new Date().toISOString(), done: results.filter(r => r === 'done').length, failed: results.filter(r => r === 'failed' || r === 'check').length,
     fatal: fatal, listUrl: listPath ? base + listPath : '' }).catch(e => log('Couldn’t record the run:', e.message));
-  log('Reported', results.length, 'result(s) to Church Hub.');
+  log('Reported', results.length, 'result(s) to Church & Trellis.');
 }
 /** Write the outcome on the entry – unless it changed while the robot worked (then it stays Waiting for the next run). */
 async function report(job, res) {

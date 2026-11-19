@@ -9,7 +9,7 @@ On a conflict in `js/version.js`, take the higher version; in `index.html` / `js
 
 | Task | What | Needs first | Touches (shared files in bold) | Can run beside |
 | --- | --- | --- | --- | --- |
-| 001 | Church Hub's Google identity (a person, guided) | – | docs only | everything |
+| 001 | Church & Trellis's Google identity (a person, guided) | – | docs only | everything |
 | 002 | Trial page proving the automatic steps | 001 | `tools/` (new), docs | everything |
 | 030 | Measure reads per start | – | docs only (maybe `js/mod-about.js`) | everything |
 | 010 | Choosing the church | – | `js/church.js` (new), **`index.html`**, `sw.js`, tests | 030, 001, 002 |

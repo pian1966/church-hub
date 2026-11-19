@@ -1,4 +1,4 @@
-/* Church Hub – Leadership: the Church Council, the elders, ministry leaders – each church names its own groups.
+/* Church & Trellis – Leadership: the Church Council, the elders, ministry leaders – each church names its own groups.
  * Each person on a group has a role (Chair, Secretary…), a title (Churchwarden, Elder…) and portfolios (Finance, Youth…),
  * with the dates they serve; people whose time has ended are kept under "Served before". Off until an Administrator
  * switches it on (Settings → Apps). Administrators and Pastors set the groups up; everyone else sees the open groups and

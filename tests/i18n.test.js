@@ -75,7 +75,7 @@ for (const [code, name, , , from] of I18n.MORE) {
   const bad = keys.filter(k => parts(k) !== parts(words[k]) || !String(words[k]).trim() || (k.match(/<\/?\w+/g) || []).join() !== (String(words[k]).match(/<\/?\w+/g) || []).join());
   const missingHere = [...used].filter(x => !words[x]);
   check(!!pack && pack.mon.length === 12 && pack.dow.length === 7 && !bad.length, name + ': months, days, and every line keeps its {parts}' + (bad.length ? ': ' + bad.slice(0, 3).join(' | ') : ''));
-  // While Church Hub is used by one church only, these are translated in one go before it is released (docs/RELEASE.md):
+  // While Church & Trellis is used by one church only, these are translated in one go before it is released (docs/RELEASE.md):
   // a missing line shows in English and is only counted here. RELEASE=1 node tests/i18n.test.js makes it a failure.
   // Sesotho (Lesotho) is kept up to date with every change, like Afrikaans, isiZulu and isiXhosa
   if (process.env.RELEASE || EVERY_TIME.indexOf(code) >= 0) check(!missingHere.length, name + ': every text in the app is translated' + (missingHere.length ? ':\n      ' + missingHere.slice(0, process.env.ALL ? 9999 : 10).join('\n      ') : ''));

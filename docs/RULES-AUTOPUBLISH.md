@@ -1,6 +1,6 @@
 # Publishing the database rules automatically
 
-The security rules (`firestore.rules`) decide who can see what in Church Hub. Until now, whenever they changed, someone had to
+The security rules (`firestore.rules`) decide who can see what in Church & Trellis. Until now, whenever they changed, someone had to
 copy them into the Firebase console by hand (FIREBASE-SETUP.md step 7).
 
 After this one-time setup, GitHub does it for you: when a pull request that changes the rules is merged into `main`, GitHub
@@ -14,7 +14,7 @@ Allow about 10 minutes. Use the Google account that owns the Firebase project.
 
 ## Step 1 – Create the service account
 1. Open **https://console.cloud.google.com/iam-admin/serviceaccounts?project=church-hub-7ec02**, signed in with the Google
-   account that owns the Firebase project. The top should show **Church Hub CCH**. Leave the existing
+   account that owns the Firebase project. The top should show **Church & Trellis CCH**. Leave the existing
    *firebase-adminsdk* account alone – it can do everything, so it must never be given to GitHub.
 2. Click **+ Create service account**.
 3. Name: `GitHub rules publisher`. Click **Create and continue**.
@@ -53,7 +53,7 @@ From now on you don't need to re-publish the rules after a merge. (Copying them 
 | Yellow warning "Rules not published" | The secret is missing or misnamed – it must be exactly `FIREBASE_RULES_KEY` (step 3). |
 | "Test the rules" failed (red) | A rules test failed, so nothing was published – that is the safety net working. Ask Claude to look at the log. |
 | "Publish the rules" failed with "Permission denied" mentioning `serviceusage` | The role **Service Usage Consumer** is missing: IAM page → pencil next to github-rules-publisher → add it → re-run the failed job (wait a minute if it fails again). |
-| Other "permission denied" while publishing | Check the three roles in step 1, and that the project at the top was **church-hub-7ec02** ("Church Hub CCH"). |
+| Other "permission denied" while publishing | Check the three roles in step 1, and that the project at the top was **church-hub-7ec02** ("Church & Trellis CCH"). |
 | The project isn't in Google Cloud's project list | You're signed in with a different Google account: use the one that owns the Firebase project (Firebase → ⚙️ → Project settings → Service accounts → "Manage service account permissions" opens the right place). |
 | "This workflow does not exist" on GitHub | The workflow isn't in `main` yet – merge its pull request first. |
 | "Key creation is not allowed" in step 2 | An organisation policy blocks keys; publish by hand (FIREBASE-SETUP.md step 7) and ask Claude about "Workload Identity Federation" instead. |

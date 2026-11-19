@@ -1,7 +1,7 @@
-/* Church Hub – Email templates, placeholders and the day's email prompts (pure, tested: tests/emails.test.js).
+/* Church & Trellis – Email templates, placeholders and the day's email prompts (pure, tested: tests/emails.test.js).
  * Birthdays, wedding anniversaries (one email to the couple), the anniversary of a spouse's death, and newcomer welcomes.
  * Only people who agreed to receive email are suggested (the caller says who, with opts.canEmail).
- * Church Hub doesn't send these itself yet: it opens the church's email program or Gmail with the message ready. */
+ * Church & Trellis doesn't send these itself yet: it opens the church's email program or Gmail with the message ready. */
 var Emails = (function () {
   'use strict';
 

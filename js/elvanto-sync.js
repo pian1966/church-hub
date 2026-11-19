@@ -1,17 +1,17 @@
 /*
- * Church Hub – keeping Elvanto's "Unavailable Volunteers" list in step with approved leave (as Leave Manager did).
+ * Church & Trellis – keeping Elvanto's "Unavailable Volunteers" list in step with approved leave (as Leave Manager did).
  * Pure functions, tested with node: tests/elvanto-sync.test.js.
  *
  * Each leave request has at most one entry in the elvantoSync collection (same id as the request):
  *   { personId, name, start, end, want: 'Unavailable'|'Removed', have: 'yyyy-mm-dd to yyyy-mm-dd' | '', haveNote,
  *     status: 'Waiting'|'Done'|'Failed'|'Check', note }
  * "want" is what Elvanto should show; "have" is what the robot last put there; the robot (robot/robot.js) does every
- * Waiting entry and writes back status, note and have. Entries are marked in Elvanto with the note "Church Hub <id>"
+ * Waiting entry and writes back status, note and have. Entries are marked in Elvanto with the note "Church Hub <id>" (the old name, kept so existing entries still match)
  * (or "Leave Manager <id>" for leave that Leave Manager's robot entered before the switch-over).
  */
 var ElvantoSync = (function () {
   'use strict';
-  var NOTE = 'Church Hub ', LM_NOTE = 'Leave Manager ';
+  var NOTE = 'Church Hub ', /* kept after the rename to Church & Trellis: matches notes already in Elvanto */ LM_NOTE = 'Leave Manager ';
 
   function approved(r) { return !!r && r.status === 'Approved' && !r.synthetic; }
 

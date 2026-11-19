@@ -1,4 +1,4 @@
-/* Church Hub – People: the Add / Edit details window (with its duplicate warning), staff details, consent, recording a death, marking as left. */
+/* Church & Trellis – People: the Add / Edit details window (with its duplicate warning), staff details, consent, recording a death, marking as left. */
 (function (P) {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
@@ -95,7 +95,7 @@
     if (!ms.length) { box.innerHTML = ''; return; }
     var keep = document.getElementById('pf-dup-ok'), was = keep && keep.checked;
     box.className = 'note ' + (stop ? 'bad' : similar ? 'info' : 'warn');
-    box.innerHTML = '<b>' + (similar ? T('Similar names already in Church Hub:') : T('This may be someone already in Church Hub:')) + '</b>' + ms.map(function (m) {
+    box.innerHTML = '<b>' + (similar ? T('Similar names already in Church & Trellis:') : T('This may be someone already in Church & Trellis:')) + '</b>' + ms.map(function (m) {
       var q = S.get('people', m.id), hs = householdNames(q);
       return '<span style="display:block;margin-top:6px"><a href="#/people/p/' + q.id + '" data-act="hub:close">' + esc(H.name(q)) + '</a>' + (hs.length ? ' · ' + esc(hs[0]) : '') + ' <span class="muted small">(' + esc(m.reasons.join(', ')) + ')</span></span>';
     }).join('') +
@@ -154,8 +154,8 @@
           })(p.address || {}) +
         '' : '') +
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
-      (roleChoices(p).length ? '<label class="field">' + F('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church Hub.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') +
-        (Store.isLive() && signsInWith(p).length ? ' <b>' + esc(T('{names} also signs in with this email address: after signing in, they choose who is using Church Hub.', { names: signsInWith(p).map(H.name).join(', ') })) + '</b>' : '') + '</small></label>' : '') +
+      (roleChoices(p).length ? '<label class="field">' + F('App access') + '<select id="pf-role">' + roleChoices(p).map(function (r) { return '<option value="' + r + '"' + ((p.appRole || 'member') === r ? ' selected' : '') + '>' + esc(T(H.ROLES[r].label)) + '</option>'; }).join('') + '</select><small>' + T('What they can see and do in Church & Trellis.') + (Store.isLive() ? ' ' + T('They sign in with Google or an email link using the email address above.') : '') +
+        (Store.isLive() && signsInWith(p).length ? ' <b>' + esc(T('{names} also signs in with this email address: after signing in, they choose who is using Church & Trellis.', { names: signsInWith(p).map(H.name).join(', ') })) + '</b>' : '') + '</small></label>' : '') +
       // A newcomer who would like a name badge (laminated, printed with others under People → Name badges)
       (isNew && (admin || H.can('people.edit')) ? '<label class="check"><input type="checkbox" id="pf-badge"><span>' + T('Make a name badge') + '</span></label>' : '') +
       '<p id="pf-err" class="note bad" hidden></p></form>' +
@@ -243,8 +243,8 @@
     S.put('people', r, 'Spouse or partner: linked ' + H.name(r) + ' and ' + H.name(p));
   }
   /** Spouse or partner, chosen by hand (Administrators and Pastors): for a couple who live apart, or to settle it when the
-   *  household leaves Church Hub guessing. Saved as spouseId on both people (details/, like the rest of the couple's details);
-   *  "Going by their household" leaves it to Church Hub (Households.couples). */
+   *  household leaves Church & Trellis guessing. Saved as spouseId on both people (details/, like the rest of the couple's details);
+   *  "Going by their household" leaves it to Church & Trellis (Households.couples). */
   function spouseField(p) {
     var cur = p.spouseId ? S.get('people', p.spouseId) : null;
     var adults = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && x.active !== false && !x.mergedInto && !x.binnedAt && !deceased(x) && x.category !== 'Deceased'; })
@@ -253,9 +253,9 @@
     return '<div class="two" id="pf-spouse-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '><label class="field">' + F('Spouse or partner') + '<select class="findable" id="pf-spouse" data-was="' + esc(p.spouseId || '') + '">' +
       '<option value="">' + T('Going by their household') + '</option>' +
       adults.map(function (x) { return '<option value="' + x.id + '"' + (cur && cur.id === x.id ? ' selected' : '') + '>' + esc((x.lastName || '') + ', ' + (x.preferredName || x.firstName || '')) + '</option>'; }).join('') +
-      '</select><small>' + T('Choose them if they live apart, or to be sure. Otherwise Church Hub works it out from the household.') + '</small></label></div>';
+      '</select><small>' + T('Choose them if they live apart, or to be sure. Otherwise Church & Trellis works it out from the household.') + '</small></label></div>';
   }
-  /** Administrators: who a widow or widower was married to – someone in Church Hub who has died, or a name. */
+  /** Administrators: who a widow or widower was married to – someone in Church & Trellis who has died, or a name. */
   function lateSpouseField(p) {
     var cur = lateSpouse(p), show = p.familyRole !== 'child' && (p.maritalStatus === 'Widowed' || cur || p.lateSpouseName);
     var dead = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && !x.mergedInto && (deceased(x) || x.category === 'Deceased'); })
@@ -264,7 +264,7 @@
     var sel = cur ? cur.id : p.lateSpouseName ? '__out' : '';
     return '<div id="pf-late-f"' + (show ? '' : ' hidden') + '><label class="field">' + F('Late spouse') + '<select class="findable" id="pf-late"><option value="">' + T('Nobody recorded') + '</option>' +
       dead.map(function (x) { return '<option value="' + x.id + '"' + (sel === x.id ? ' selected' : '') + '>' + esc(x.lastName + ', ' + (x.preferredName || x.firstName)) + (x.deceasedAt ? ' (' + esc(T('died {date}', { date: H.fmt(x.deceasedAt, true) })) + ')' : '') + '</option>'; }).join('') +
-      '<option value="__out"' + (sel === '__out' ? ' selected' : '') + '>' + T('Someone not in Church Hub…') + '</option></select><small>' + T('Who they were married to. Shown on their record as “Was married to …”.') + '</small></label>' +
+      '<option value="__out"' + (sel === '__out' ? ' selected' : '') + '>' + T('Someone not in Church & Trellis…') + '</option></select><small>' + T('Who they were married to. Shown on their record as “Was married to …”.') + '</small></label>' +
       '<label class="field" id="pf-late-n-f"' + (sel === '__out' ? '' : ' hidden') + '>' + F('Their name') + '<input id="pf-late-n" value="' + esc(p.lateSpouseName || '') + '"></label></div>';
   }
 
@@ -361,7 +361,7 @@
         // Duplicates: very likely matches can't be saved, unless an Administrator has checked it's a different person
         var dups = dupMatches().filter(function (m) { return m.score >= 70; }), dupOk = document.getElementById('pf-dup-ok');
         if (dups.length && !(canDup() && dupOk && dupOk.checked)) {
-          dupWarn(); err.textContent = T(canDup() ? 'This looks like someone already in Church Hub. Open them instead, or tick “I’ve checked: this is a different person”.' : 'This looks like someone already in Church Hub, so it can’t be saved. Open them instead, or ask an Administrator.');
+          dupWarn(); err.textContent = T(canDup() ? 'This looks like someone already in Church & Trellis. Open them instead, or tick “I’ve checked: this is a different person”.' : 'This looks like someone already in Church & Trellis, so it can’t be saved. Open them instead, or ask an Administrator.');
           err.hidden = false; return;
         }
         p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref');
@@ -426,7 +426,7 @@
           }
         }
         if (Store.isLive() && p.appRole && p.appRole !== 'none' && p.appRole !== 'member' && !p.email) {   // members with no email sign in with a code
-           err.textContent = T('To give someone access to Church Hub, add their email address – that’s how they sign in.'); err.hidden = false; return; }
+           err.textContent = T('To give someone access to Church & Trellis, add their email address – that’s how they sign in.'); err.hidden = false; return; }
         var sharers = p.appRole && p.appRole !== 'none' && p.active !== false ? signsInWith(p) : [];
         if (Store.isLive() && sharers.length >= 4) { err.textContent = T('At most 4 people can share one email address to sign in. Give this person an email address of their own.'); err.hidden = false; return; }
         if (Store.isLive() && !(H.can('*')) && sharers.some(function (o) { return o.appRole === 'admin' || o.appRole === 'pastor'; })) {

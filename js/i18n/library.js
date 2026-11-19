@@ -1,4 +1,4 @@
-/* Church Hub – words for the Library (js/mod-library.js, js/library.js): the church’s books and who has borrowed them.
+/* Church & Trellis – words for the Library (js/mod-library.js, js/library.js): the church’s books and who has borrowed them.
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
@@ -77,7 +77,7 @@ I18n.rows([
     ["Take a photo", "Neem ’n foto", "Thatha isithombe", "Thatha ifoto"],
     ["Choose a picture", "Kies ’n prent", "Khetha isithombe", "Khetha umfanekiso"],
     ["Remove the picture", "Verwyder die prent", "Susa isithombe", "Susa umfanekiso"],
-    ["That isn’t a picture Church Hub can read.", "Dit is nie ’n prent wat Church Hub kan lees nie.", "Lesi akusona isithombe i-Church Hub engasifunda.", "Lo asingomfanekiso i-Church Hub enokuwufunda."],
+    ["That isn’t a picture Church & Trellis can read.", "Dit is nie ’n prent wat Church & Trellis kan lees nie.", "Lesi akusona isithombe i-Church & Trellis engasifunda.", "Lo asingomfanekiso i-Church & Trellis enokuwufunda."],
     ["{name} has no mobile number on record. Type one so the item can be traced.", "{name} het nie ’n selfoonnommer op rekord nie. Tik een sodat die item opgespoor kan word.", "U-{name} akanayo inombolo yeselula erekhodiwe. Thayipha eyodwa ukuze into ilandelelwe.", "U-{name} akanayo inombolo yeselula erekhodiweyo. Chwetheza enye ukuze into ilandelwe."],
     ["Mobile number", "Selfoonnommer", "Inombolo yeselula", "Inombolo yeselula"],
     ["Also save it in their details", "Stoor dit ook in hulle besonderhede", "Yigcine nasemininingwaneni yabo", "Yigcine nakwiinkcukacha zabo"],
@@ -110,10 +110,10 @@ I18n.rows([
     ["{n} borrower is due a friendly reminder", "{n} lener moet ’n vriendelike herinnering kry", "Umboleki ongu-{n} ufanele isikhumbuzo esinomusa", "Umboleki oyi-{n} ufanelwe sisikhumbuzo esinobubele"],
     ["{n} borrowers are due a friendly reminder", "{n} leners moet ’n vriendelike herinnering kry", "Ababoleki abangu-{n} bafanele isikhumbuzo esinomusa", "Ababoleki abayi-{n} bafanelwe sisikhumbuzo esinobubele"],
     ["Friendly reminder: you have had “{title}” from the church library for {n} days", "Vriendelike herinnering: jy het “{title}” van die kerkbiblioteek al {n} dae", "Isikhumbuzo esinomusa: usube ne-“{title}” evela emtatsheni wezincwadi wesonto izinsuku ezingu-{n}", "Isikhumbuzo esinobubele: ube ne-“{title}” evela kwithala leencwadi lecawa iintsuku eziyi-{n}"],
-    ["They also see it in Church Hub, on their To do list and the Library page.", "Hulle sien dit ook in Church Hub, op hul Om te doen-lys en die Biblioteek-blad.", "Nabo bayakubona ku-Church Hub, ohlwini lwabo lokuThi kwenziwe nasekhasini loMtapo wezincwadi.", "Nabo bayayibona kwi-Church Hub, kuluhlu lwabo lweZinto ekufuneka zenziwe nakwiphepha leThala leencwadi."],
+    ["They also see it in Church & Trellis, on their To do list and the Library page.", "Hulle sien dit ook in Church & Trellis, op hul Om te doen-lys en die Biblioteek-blad.", "Nabo bayakubona ku-Church & Trellis, ohlwini lwabo lokuThi kwenziwe nasekhasini loMtapo wezincwadi.", "Nabo bayayibona kwi-Church & Trellis, kuluhlu lwabo lweZinto ekufuneka zenziwe nakwiphepha leThala leencwadi."],
     ["By SMS", "Per SMS", "Nge-SMS", "Nge-SMS"],
     ["By WhatsApp", "Per WhatsApp", "Nge-WhatsApp", "Nge-WhatsApp"],
-    ["In Church Hub only", "Net in Church Hub", "Ku-Church Hub kuphela", "Kwi-Church Hub kuphela"],
+    ["In Church & Trellis only", "Net in Church & Trellis", "Ku-Church & Trellis kuphela", "Kwi-Church & Trellis kuphela"],
     ["Reminder sent", "Herinnering gestuur", "Isikhumbuzo sithunyelwe", "Isikhumbuzo sithunyelwe"],
     ["{n} library item borrowed", "{n} biblioteekitem geleen", "Into engu-{n} yasemtatsheni ebolekiwe", "Into eyi-{n} yethala ebolekiweyo"],
     ["{n} library items borrowed", "{n} biblioteekitems geleen", "Izinto ezingu-{n} zasemtatsheni ezibolekiwe", "Izinto ezi-{n} zethala ezibolekiweyo"],
@@ -138,7 +138,7 @@ I18n.rows([
     ["Permanently delete this book and its loan records? This cannot be undone.", "Hierdie boek en sy uitleenrekords permanent skrap? Dit kan nie ongedaan gemaak word nie.", "Ususe le ncwadi namarekhodi ayo okubolekwa unomphela? Lokhu ngeke kubuyiselwe emuva.", "Ucime le ncwadi neerekhodi zayo zokubolekwa ngokusisigxina? Oku akunakubuyiselwa umva."],
     ["Take out", "Haal uit", "Khipha", "Khupha"],
     ["A spreadsheet saved as CSV, with a heading on each column: Title (needed), and any of Author, Type, Category, Copies, Shelf, ISBN, Date acquired, How acquired, Donated by, Note.", "’n Sigblad gestoor as CSV, met ’n opskrif bo elke kolom: Title (nodig), en enige van Author, Type, Category, Copies, Shelf, ISBN, Date acquired, How acquired, Donated by, Note.", "Ishidi eligcinwe njenge-CSV, elinesihloko phezu kwekholamu ngayinye: Title (iyadingeka), kanye nanoma yiziphi kwezi: Author, Type, Category, Copies, Shelf, ISBN, Date acquired, How acquired, Donated by, Note.", "Iphepha-lokubala eligcinwe njenge-CSV, elinesihloko phezu kwekholamu nganye: Title (iyafuneka), kunye nayiphi na kwezi: Author, Type, Category, Copies, Shelf, ISBN, Date acquired, How acquired, Donated by, Note."],
-    ["Church Hub couldn’t find a Title column. The first row must hold the headings, one of them Title.", "Church Hub kon nie ’n Title-kolom vind nie. Die eerste ry moet die opskrifte bevat, een daarvan Title.", "I-Church Hub ayitholanga ikholamu ye-Title. Umugqa wokuqala kufanele ube nezihloko, esinye sazo kube yi-Title.", "I-Church Hub ayifumananga ikholamu ye-Title. Umqolo wokuqala kufuneka ube nezihloko, esinye sazo sibe yi-Title."],
+    ["Church & Trellis couldn’t find a Title column. The first row must hold the headings, one of them Title.", "Church & Trellis kon nie ’n Title-kolom vind nie. Die eerste ry moet die opskrifte bevat, een daarvan Title.", "I-Church & Trellis ayitholanga ikholamu ye-Title. Umugqa wokuqala kufanele ube nezihloko, esinye sazo kube yi-Title.", "I-Church & Trellis ayifumananga ikholamu ye-Title. Umqolo wokuqala kufuneka ube nezihloko, esinye sazo sibe yi-Title."],
     ["{n} new item will be added", "{n} nuwe item sal bygevoeg word", "Into entsha engu-{n} izongezwa", "Into entsha e-{n} iza kongezwa"],
     ["{n} new items will be added", "{n} nuwe items sal bygevoeg word", "Izinto ezintsha ezingu-{n} zizongezwa", "Izinto ezintsha ezi-{n} ziza kongezwa"],
     ["{n} is already in the library and will be left out", "{n} is reeds in die biblioteek en sal uitgelaat word", "Engu-{n} isivele isemtapweni futhi izoshiywa ngaphandle", "E-{n} sele ikwithala kwaye iza kushiywa ngaphandle"],

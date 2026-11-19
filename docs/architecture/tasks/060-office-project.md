@@ -8,7 +8,7 @@
 
 **Files:** `office/firestore.rules` (new), `office/firebase.json`, `tests/office-rules.test.mjs` (new; add to
 `tests.yml`), `js/office-config.js` (new; the office project's public config – not secret), `docs/OFFICE-SETUP.md`
-(a click-by-click guide for the owner: create the project under Church Hub's Google account, Firestore, Google
+(a click-by-click guide for the owner: create the project under Church & Trellis's Google account, Firestore, Google
 sign-in only, two-step sign-in on the account, publish `office/firestore.rules`, a service account for the robot
 with the Firestore user role → GitHub secret `OFFICE_KEY`).
 

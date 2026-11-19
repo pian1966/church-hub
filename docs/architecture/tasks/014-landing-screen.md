@@ -10,9 +10,9 @@ appears on the new address (040), never on Howick's current one.
 **Files:** `js/app.js` (a new stage beside `signedOut`), `js/i18n/common.js` + all `js/lang/*.js`, `css/hub.css`
 (reuse existing classes), `tests/app/signin.js`.
 
-**Screen:** Church Hub; one line saying what it is; three plain buttons –
+**Screen:** Church & Trellis; one line saying what it is; three plain buttons –
 **Open my church** (paste the link or the short code your church gave you → `?c=`),
-**Set up Church Hub for my church** (goes to the helper, 021; until then hidden),
+**Set up Church & Trellis for my church** (goes to the helper, 021; until then hidden),
 **Try the demo** (`?demo`). If churches are remembered on this device, list them by name first.
 
 **Acceptance:** browser test for each button; phone width looks right; every language has the lines

@@ -2,7 +2,7 @@
 
 **Model:** Middle for the screen; senior for the `google()` change in `js/store.js`; translations light.
 
-**Goal:** a church Administrator creates their church's Church Hub in about a minute.
+**Goal:** a church Administrator creates their church's Church & Trellis in about a minute.
 
 **Needs:** 020, 014, 011.
 
@@ -22,7 +22,7 @@ only), `js/app.js` (route), `js/i18n/newchurch.js` (new) + all `js/lang/*.js`, `
 3. "Your church's information will be kept in **<place>**. This can't be changed later." **Yes, continue**.
 4. The steps ticking off, with the turning cross. A step that needs the person shows one sentence, one button that
    opens the right Google page in a new tab, and **I've done it**.
-5. Done: the church's link and QR code (`js/qr.js`), **Copy link**, **Open Church Hub**; and "Add a second owner"
+5. Done: the church's link and QR code (`js/qr.js`), **Copy link**, **Open Church & Trellis**; and "Add a second owner"
    (link to the project's access page, `RISKS.md` R7).
 - Closing the tab and coming back offers **Continue setting up <name>**.
 - Refuse the countries on the not-served list with the kind explanation (list in settings of the website, start

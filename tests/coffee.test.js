@@ -9,7 +9,7 @@ console.log('One cup, where you live');
 check(C.KINDS.map(k => k.id).join() === 'street,cafe,chain', 'three kinds of cup: street stall, café, coffee chain');
 check(C.currencyFor('ZA') === 'ZAR' && C.currencyFor('IN') === 'INR' && C.currencyFor('KH') === 'KHR' && C.currencyFor('MW') === 'MWK' && C.currencyFor('DE') === 'EUR' && C.currencyFor('GB') === 'GBP' && C.currencyFor('XX') === 'USD', 'each country pays in its own money');
 const missingMoney = Countries.all().filter(c => !C.COUNTRY_CURRENCY[c.code]);
-check(!missingMoney.length, 'every country Church Hub knows has its own currency' + (missingMoney.length ? ': ' + missingMoney.map(c => c.code).join() : ''));
+check(!missingMoney.length, 'every country Church & Trellis knows has its own currency' + (missingMoney.length ? ': ' + missingMoney.map(c => c.code).join() : ''));
 check(Object.values(C.COUNTRY_CURRENCY).every(code => C.currency(code).code === code), '…and every currency has its symbol');
 check(C.money(50, 'ZAR') === 'R50' && C.money(1250, 'ZAR') === 'R1 250' && C.money(15, 'INR') === '₹15' && C.money(4000, 'KHR') === '៛4 000' && C.money(3.5, 'EUR') === '€3.50' && C.money(4.95, 'USD') === 'US$4.95', 'money is written the local way');
 check(C.example('ZA', 'chain') === 50 && C.example('IN', 'street') === 15 && C.example('MW', 'cafe') === 0, 'looked-up prices where we have them, none where we don’t');

@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: wedding anniversaries, leave from a staff page, couples, adding a person, checking before leaving, duplicates.
+/* Church & Trellis – browser test, part: wedding anniversaries, leave from a staff page, couples, adding a person, checking before leaving, duplicates.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -79,7 +79,7 @@ module.exports = async function (ctx) {
     check(!(await asks(s)), 'in the Android app the browser question is off (the app asks itself)');
     s = await session('tim.jacobs@example.com', seedDocs(), { app: {} });
     const words = await s.page.evaluate(() => { I18n.set('af'); return JSON.parse(window.churchHubLeaveText()); });
-    check(words[0] === 'Verlaat Church Hub?' && words[3] === 'Maak Church Hub toe', 'the Android question is in the chosen language');
+    check(words[0] === 'Verlaat Church & Trellis?' && words[3] === 'Maak Church & Trellis toe', 'the Android question is in the chosen language');
     await s.close();
   }
 
@@ -132,7 +132,7 @@ await s.page.waitForFunction(() => {
   await s.page.fill('#pf-email', 'unknown'); if (await s.page.$('#pf-marital')) await s.page.selectOption('#pf-marital', 'Married');
   const nBefore = Object.keys(await s.docsNow()).filter(k => k.startsWith('people/')).length;
   await s.page.click('[data-act="people:save"]'); await s.page.waitForTimeout(100);
-  check((await s.page.textContent('#pf-err')).includes('already in Church Hub') && Object.keys(await s.docsNow()).filter(k => k.startsWith('people/')).length === nBefore, 'a very likely duplicate can’t be saved');
+  check((await s.page.textContent('#pf-err')).includes('already in Church & Trellis') && Object.keys(await s.docsNow()).filter(k => k.startsWith('people/')).length === nBefore, 'a very likely duplicate can’t be saved');
   await s.page.check('#pf-dup-ok'); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();
   const newId = Object.keys(docs).filter(k => k.startsWith('people/') && docs[k].firstName === 'Timothy').map(k => k.slice(7))[0];
   check(!!newId && (docs['details/' + newId].notSame || []).includes('p14') && (docs['details/p14'].notSame || []).includes(newId), 'an Administrator can confirm it’s a different person; that is remembered on both');

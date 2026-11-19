@@ -1,6 +1,6 @@
-# Church Hub and POPIA
+# Church & Trellis and POPIA
 
-How Church Hub supports the **Protection of Personal Information Act 4 of 2013 (POPIA)**.
+How Church & Trellis supports the **Protection of Personal Information Act 4 of 2013 (POPIA)**.
 This is a design checklist, not legal advice – the church's Information Officer should review it.
 
 ## Why it matters for a church
@@ -10,7 +10,7 @@ This is a design checklist, not legal advice – the church's Information Office
 - **Health** information (allergies, medical notes) is also special personal information.
 
 ## The eight conditions and how the Hub meets them
-| Condition (POPIA) | In Church Hub |
+| Condition (POPIA) | In Church & Trellis |
 | --- | --- |
 | **Accountability** (s8) | Settings → Privacy names the **Information Officer** (and deputy). Every change and every view of sensitive data is written to the **audit log**. |
 | **Processing limitation** (s9–12) | Only fields the church needs. A **consent register** per person and purpose (church records, email, SMS, directory listing, photos, children's medical notes), with date, method and who recorded it. Children's consent is recorded against a guardian. |
@@ -25,7 +25,7 @@ This is a design checklist, not legal advice – the church's Information Office
 - **Marital status** (adults) is ordinary personal information, kept for pastoral care. It is stored with birthdays in the
   private details (Administrators, Pastors and the person themselves), not in the directory.
 - **After a death**: POPIA protects information about *living* people, but details of someone who died usually also say something
-  about their living family, so Church Hub keeps the same protection. The person stays on the records (marked Deceased),
+  about their living family, so Church & Trellis keeps the same protection. The person stays on the records (marked Deceased),
   leaves the directory, can't sign in and gets no messages. They appear under Privacy → Retention ("People who have left or
   died") so the church can decide when to delete their details.
 
@@ -43,13 +43,13 @@ This is a design checklist, not legal advice – the church's Information Office
 - **What is kept:** `invites/{code}` (the person it is for, their first name and initial, their cellphone number to fill in,
   the church's calling code, expiry, who made it, and – once used – the account id), `roles/{<number>-<v>@pin.church-hub.invalid}` (Member access for that
   person, the number they sign in with, set-up date) and `pinLogins/{number}` (which account that number signs in with now:
-  a version and the account id, no name). The PIN is kept only by Firebase Authentication as a password (never by Church Hub,
+  a version and the account id, no name). The PIN is kept only by Firebase Authentication as a password (never by Church & Trellis,
   never in the audit log). Codes are never written to the audit log, exports or searches; the audit log records "Gave a
   sign-in code to …", "Switched off the PIN sign-in of …", and the member's own actions under that made-up address.
 - **Who:** only Administrators make codes, list them and see or switch off PIN sign-ins (`firestore.rules`). A code gives only
   **Member** access for one adult with Member access, works once, for 14 days; a new code, No access, Mark as left and a
   death switch off that person's PIN sign-in and remove unused codes. Signing out leaves the PIN sign-in working.
-- **Number lookup:** anyone may ask whether a number has a Church Hub sign-in at this church (`pinLogins/{number}`, needed
+- **Number lookup:** anyone may ask whether a number has a Church & Trellis sign-in at this church (`pinLogins/{number}`, needed
   before signing in); it shows no name. A church in an area hostile to the gospel can give church numbers instead of using
   cellphone numbers.
 - **What it does not protect against:** whoever holds an unused code becomes that member – as whoever reads an inbox is that
@@ -83,7 +83,7 @@ This is a design checklist, not legal advice – the church's Information Office
 - **Who adds them:** Administrators and Pastors; Children's ministry for children; adults their own. Adding, changing and removing a photo is in the audit log. Deleting a person deletes their photo.
 
 ## Children: who gives consent and who may collect
-- POPIA s35 needs consent for a child from a "competent person" – a parent or legal guardian. Church Hub records, per child,
+- POPIA s35 needs consent for a child from a "competent person" – a parent or legal guardian. Church & Trellis records, per child,
   which adults **can give consent**; consent for a child can only be recorded from one of them. Step-parents, grandparents and
   collectors can't, unless they are legal guardians.
 - **Not allowed to collect** entries (e.g. a court order) can reveal a family's private circumstances. Only Administrators,
@@ -97,7 +97,7 @@ Advanced search only offers the details a role may already see, and never medica
 restrictions. Downloading results (CSV) is recorded in the audit log with how many people and which columns. Downloads
 should stay on church computers and be deleted once used.
 **Ask in your own words** uses the same search and limits, and each question is written in the audit log. The microphone uses
-the phone's or browser's own speech-to-text (Google's or Apple's speech service turns the sound into words); Church Hub keeps no
+the phone's or browser's own speech-to-text (Google's or Apple's speech service turns the sound into words); Church & Trellis keeps no
 recording, and the hint on the button says so. People who'd rather not can type instead.
 **With AI** (only when an Administrator switches it on in Settings → Apps, after the setup in `docs/AI-SEARCH-SETUP.md`):
 the question goes to Google's Gemini through the church's Firebase project (Firebase AI Logic, Gemini Developer API), with
@@ -107,7 +107,7 @@ service question is matched on the device. The question may contain a name if so
 agrees first, the privacy notice says so, and staff are asked not to type private matters (on the free tier Google may use
 requests to improve its products). Gemini's answer is checked on the device: only fields and values that person's role may
 search on are used (`js/ask-ai.js`, tested). The audit log marks such searches “(AI)”. Requests need App Check (reCAPTCHA),
-so only Church Hub can use the church's AI allowance. Switching it off stops all of it.
+so only Church & Trellis can use the church's AI allowance. Switching it off stops all of it.
 
 ## Applying to become a Church Partner
 Someone signed in (an adult who isn't a Church Partner yet) applies from their own page (Me → Become a Church Partner).
@@ -144,7 +144,7 @@ so they can sign in and apply; that is recorded in the audit log like any other 
 and those who have died are never invited. The QR code, poster and paper form carry only the link – no personal information.
 
 ## Offers to serve
-When someone offers to serve (Me → Serving), Church Hub keeps which position, how often, at which services, their optional note and the
+When someone offers to serve (Me → Serving), Church & Trellis keeps which position, how often, at which services, their optional note and the
 roster coordinator's reply. Purpose: planning rosters; basis: the person asked themselves. Only the person, Roster
 coordinators and Administrators can see it (database rules). Yes moves it onto the team list and deletes the offer;
 the person can withdraw it at any time; it is included in "export everything held about a person" and removed when
@@ -164,11 +164,11 @@ leaders only) carries address and spouse. Church Partners see shared details as 
 
 ## Changes people ask for (family details)
 Church Partners can ask, from Me → My details, for their marital status, wedding anniversary, spouse or partner and children
-to be changed. Church Hub keeps what they typed (names and birthdays of their children, their spouse's name, a note) and the
+to be changed. Church & Trellis keeps what they typed (names and birthdays of their children, their spouse's name, a note) and the
 office's reply. Purpose: keeping church records accurate; basis: the person asked themselves. Nothing on their record changes
 until an Administrator checks it. Only the person and Administrators can see it (database rules); the person can withdraw
 it at any time; it is included in "export everything held about a person", deleted once dealt with, and removed when
-someone is deleted. A child named in a request is only added to Church Hub by an Administrator, with the usual consent
+someone is deleted. A child named in a request is only added to Church & Trellis by an Administrator, with the usual consent
 from a parent or guardian.
 
 ## The Android app
@@ -182,7 +182,7 @@ The kind of leave and its reason (which can be about health) are shown only to t
 ## Approved leave in Elvanto
 When switched on, the name and dates of approved leave (never the kind of leave or the reason) go to Elvanto's Unavailable
 Volunteers list, as Leave Manager did. The robot that does it runs on GitHub's computers (outside South Africa) for a few
-minutes at a time and keeps nothing; its log never shows names or dates. Its Church Hub sign-in can only see that list.
+minutes at a time and keeps nothing; its log never shows names or dates. Its Church & Trellis sign-in can only see that list.
 The privacy notice should mention Elvanto and GitHub as operators.
 
 ## Moving data in from Elvanto and Leave Manager
@@ -209,8 +209,8 @@ Manager is retired, its Google Sheet should be archived (read-only) or deleted u
   all groups on the Care groups page, and/or as a tag on each person's page in People (`settings.careOnPeople`, a separate tick);
   people in the directory agreed to share their details with members (consent "Church directory"). The
   church's policy is that becoming a Church Partner includes this agreement: when someone is made a Church Partner (Edit details
-  or Change selected…) Church Hub records it ("Agreed on becoming a Church Partner"), and Settings → Who can see what offers to
-  record it for existing Church Partners who were never asked in Church Hub (anyone who said no is left alone). People can
+  or Change selected…) Church & Trellis records it ("Agreed on becoming a Church Partner"), and Settings → Who can see what offers to
+  record it for existing Church Partners who were never asked in Church & Trellis (anyone who said no is left alone). People can
   still say no later under Consent. Anyone not in the directory isn't shown.
 - Suggesting groups by area (Care groups → Suggest groups by where people live): Administrators and Pastors only, who already
   see home addresses. It reads the suburb/town and postal code the church already holds, for the same purpose (care and
@@ -233,7 +233,7 @@ directory. Co-leader and host are roles within the group, set by its leaders, Ad
 Adding people: every leader of a Midweek Group may add any adult to their group, attendees and people not in the church
 directory too (the church's decision, Nov 2026). For that they see every adult's **name only** (`pickNames/{id}`: first,
 last and known-as name – no photo, contact details, category or anything else), read only by Administrators, Pastors and
-the people listed as leading a Midweek Group (`lifeLeaders/all`); both are kept by Administrators' and Pastors' Church Hub
+the people listed as leading a Midweek Group (`lifeLeaders/all`); both are kept by Administrators' and Pastors' Church & Trellis
 (database rules, tested). Children, people who have left or died, and deleted records are not listed. Purpose: so a leader
 can welcome someone into their group without asking the office. Once added, the person shares only what their own consent
 allows, as above.
@@ -352,14 +352,14 @@ allows, as above.
   the librarian list is still current.
 
 ## Suggestions for better translations
-- When someone suggests better wording (Translations), Church Hub keeps the suggestion with their name and person ID, so the
+- When someone suggests better wording (Translations), Church & Trellis keeps the suggestion with their name and person ID, so the
   checker can thank them or ask what they meant. Purpose: improving the app's wording; basis: the person sends it themselves.
 - Who sees it: the person, the checkers of that language, and Administrators (database rules, tested). It holds no other
   personal information. The person can take back a suggestion that is still waiting; it is included in "export everything
   held about a person" and deleted when someone's information is deleted. Approved wording itself holds no names.
 
 ## Other countries
-Church Hub's privacy pages follow the church's country (Settings → Country): POPIA in South Africa, the GDPR in Europe
+Church & Trellis's privacy pages follow the church's country (Settings → Country): POPIA in South Africa, the GDPR in Europe
 (with each country's data protection authority), UK GDPR, and other countries' laws where listed (`js/privacy-law.js`).
 This document describes POPIA; churches elsewhere should check the same points against their own law.
 
@@ -370,12 +370,12 @@ This document describes POPIA; churches elsewhere should check the same points a
   the church really has (e.g. a stack of connect cards). Each person gets their own consent record – the answer, today's date,
   how it was given (required) and who recorded it – and the old answer is kept, marked as replaced; children are left out
   (their parent or guardian answers). Every record is in the audit log, and it can be undone straight away.
-- **Data on devices (offline copy, from 0.30.0):** so that Church Hub opens without the internet, it keeps a copy on the phone or
+- **Data on devices (offline copy, from 0.30.0):** so that Church & Trellis opens without the internet, it keeps a copy on the phone or
   computer of what the signed-in person may see (Firebase's offline copy in the browser's storage, `js/store.js`) – nothing more
-  than they could see by opening Church Hub there while signed in. Safeguards: the copy is **wiped when they sign out**, when an
+  than they could see by opening Church & Trellis there while signed in. Safeguards: the copy is **wiped when they sign out**, when an
   Administrator takes their access away (the next time the device is online), and before anyone else signs in on that device;
-  offline Church Hub is **view-only**, so nothing is changed from an old copy. Phones' own screen lock and encryption protect it
-  further. Remind people to sign out on shared computers (a copy left by another Church Hub tab still open is wiped at the next
+  offline Church & Trellis is **view-only**, so nothing is changed from an old copy. Phones' own screen lock and encryption protect it
+  further. Remind people to sign out on shared computers (a copy left by another Church & Trellis tab still open is wiped at the next
   sign-in). Viewing sensitive information offline is still audit-logged: the entry is sent when the device is next online
   (it is lost if they sign out before that).
 - **Information Officer registration:** the church registers its Information Officer with the Information Regulator (outside the app; recorded in Settings).
@@ -391,7 +391,7 @@ This document describes POPIA; churches elsewhere should check the same points a
 ## Shared sign-in (one email address for a couple)
 - Several people with one email address share one sign-in and choose who they are after signing in. Whoever reads that inbox
   can act as any of them, so the rules allow what any of them may do – no more than they could do before by signing in with
-  the shared address. Church Hub says so on Edit details; staff roles (Administrator, Pastor) on a shared address are best
+  the shared address. Church & Trellis says so on Edit details; staff roles (Administrator, Pastor) on a shared address are best
   avoided, and only an Administrator can set them up. Switching is written in the history log.
 
 ## Prayer cards (Subscription → Our prayer card)
@@ -400,4 +400,4 @@ points. A photo with recognisable people is only shown once an Administrator tic
 Prayer points are checked as they're typed for phone numbers, email addresses, links and @names, with a reminder to pray
 for things rather than people by name. Churches in countries where Christians face danger start hidden (no name, town,
 country or photo). Kept in `settings.prayerCard` (readable by everyone signed in to the church, as all settings are);
-changes are written to the audit log. Shared with other churches only once Church Hub's office exists.
+changes are written to the audit log. Shared with other churches only once Church & Trellis's office exists.

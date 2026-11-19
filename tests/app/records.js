@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: Leadership (Council, elders, leaders), the Archive (church records) and the Library.
+/* Church & Trellis – browser test, part: Leadership (Council, elders, leaders), the Archive (church records) and the Library.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -103,9 +103,9 @@ module.exports = async function (ctx) {
   check((await s.page.textContent('#ar-where')).includes('Council meetings › 2026 › October'), 'while typing, the form says which folder the date files it in');
   await s.page.setInputFiles('#ar-file', PNG); await click(s, '[data-act="archive:save"]');
   t = await s.page.textContent('#ar-check');
-  check(await s.page.isVisible('#ar-check') && await s.page.isHidden('#ar-form') && t.includes('Here’s what Church Hub is about to do') && t.includes('File “Council minutes – October” in Council meetings › 2026 › October.') &&
+  check(await s.page.isVisible('#ar-check') && await s.page.isHidden('#ar-form') && t.includes('Here’s what Church & Trellis is about to do') && t.includes('File “Council minutes – October” in Council meetings › 2026 › October.') &&
     t.includes('It is the first document for October 2026') && t.includes('Who can see it: Church Council.') && t.includes('face.png') && !t.includes('Please check the date') && !(await s.docsNow())[find(await s.docsNow(), 'archive', d => d.cat === 'minutes') || 'x'],
-    'before saving, Church Hub says what it is about to do, and nothing is saved yet');
+    'before saving, Church & Trellis says what it is about to do, and nothing is saved yet');
   await click(s, '[data-act="archive:back"]');
   check(await s.page.isVisible('#ar-form') && (await s.page.inputValue('#ar-title')) === 'Council minutes – October', 'Go back keeps what was typed');
   await save(s); await s.settle();
@@ -115,7 +115,7 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
   await fill(s, '#ar-title', 'Council agenda – September'); await fill(s, '#ar-date', '2026-10-13'); await fill(s, '#ar-link', 'https://example.org/agenda'); await click(s, '[data-act="archive:save"]');
   t = await s.page.textContent('#ar-check');
-  check(t.includes('Please check the date') && t.includes('speaks of September') && !!(await s.page.$('[data-act="archive:usedate"][data-date="2026-09-13"]')), 'a title that speaks of another month: Church Hub asks, and offers that month');
+  check(t.includes('Please check the date') && t.includes('speaks of September') && !!(await s.page.$('[data-act="archive:usedate"][data-date="2026-09-13"]')), 'a title that speaks of another month: Church & Trellis asks, and offers that month');
   await click(s, '[data-act="archive:usedate"]'); t = await s.page.textContent('#ar-check');
   check((await s.page.inputValue('#ar-date')) === '2026-09-13' && !t.includes('Please check the date') && t.includes('Council meetings › 2026 › September'), '… one tap puts the date right and shows the summary again');
   await s.page.check('#ar-noask'); await click(s, '#ar-foot [data-act="archive:save"][data-sure]'); await s.settle();
@@ -123,7 +123,7 @@ module.exports = async function (ctx) {
   check(!!agenda && docs[agenda].date === '2026-09-13' && await s.page.evaluate(() => Store.pref('archiveAsk')) === 'off', 'saved in September; the summary can be switched off on this device');
   await click(s, '[data-act="archive:add"]'); await s.page.waitForSelector('#ar-title');
   await fill(s, '#ar-title', 'Council minutes – October'); await fill(s, '#ar-date', '2026-10-13'); await fill(s, '#ar-link', 'https://example.org/again'); await click(s, '[data-act="archive:save"]');
-  check(await s.page.isVisible('#ar-check') && (await s.page.textContent('#ar-check')).includes('There is already a document called “Council minutes – October”'), 'with the summary off, Church Hub still asks about a likely mistake (the same title again)');
+  check(await s.page.isVisible('#ar-check') && (await s.page.textContent('#ar-check')).includes('There is already a document called “Council minutes – October”'), 'with the summary off, Church & Trellis still asks about a likely mistake (the same title again)');
   await click(s, '[data-act="hub:close"]'); await s.page.waitForFunction(() => !document.querySelector('#modal .overlay'));
   await click(s, '[data-act="archive:go"][data-folder="minutes"]'); await click(s, '[data-act="archive:go"][data-yr="2026"]');
   t = await s.text();
@@ -363,7 +363,7 @@ module.exports = async function (ctx) {
   await click(s, '[data-act="library:import"]');
   await s.page.setInputFiles('#lib-csv', { name: 'books.csv', mimeType: 'text/csv', buffer: Buffer.from('Title,Author,Type,Copies\nMere Christianity,C. S. Lewis,book,2\nKnowing God,J. I. Packer,,\n,Nobody,,\nThe Jesus Storybook Bible,Sally Lloyd-Jones,,1\n') });
   await s.page.waitForSelector('#lib-csv-plan:not([hidden])'); t = await s.page.textContent('#lib-csv-plan');
-  check(/2 new items will be added/.test(t) && /1 is already in the library/.test(t) && /1 row has no title/.test(t), 'importing a list: Church Hub says what it will add and what it leaves out');
+  check(/2 new items will be added/.test(t) && /1 is already in the library/.test(t) && /1 row has no title/.test(t), 'importing a list: Church & Trellis says what it will add and what it leaves out');
   await click(s, '[data-act="library:importgo"]'); await s.settle(); docs = await s.docsNow();
   const mc = find(docs, 'books', d => d.title === 'Mere Christianity');
   check(!!mc && docs[mc].copies === 2 && docs[mc].author === 'C. S. Lewis' && !!find(docs, 'books', d => d.title === 'The Jesus Storybook Bible') && Object.keys(docs).filter(k => /^books\//.test(k) && docs[k].title === 'Knowing God').length === 1, 'the new items are added, nothing twice');

@@ -1,4 +1,4 @@
-/* Church Hub – words for Me: a member's own details, days away and serving (js/mod-me.js).
+/* Church & Trellis – words for Me: a member's own details, days away and serving (js/mod-me.js).
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
@@ -14,8 +14,8 @@ I18n.rows([
     ['Kept by the church office', 'Deur die kerkkantoor bygehou', 'Kugcinwa yihhovisi lebandla', 'Kugcinwa yiofisi yecawe'],
     ['Something wrong or missing here? Please tell the church office and they will change it.', 'Is iets hier verkeerd of kort iets? Sê asseblief vir die kerkkantoor, dan sal hulle dit verander.', 'Kukhona okungalungile noma okushodayo lapha? Sicela utshele ihhovisi lebandla futhi bazokushintsha.', 'Ingaba kukho into engachanekanga okanye eswelekayo apha? Nceda uxelele iofisi yecawe kwaye baya kuyitshintsha.'],
     ['This phone or computer', 'Hierdie foon of rekenaar', 'Le foni noma ikhompyutha', 'Le fowuni okanye ikhompyutha'],
-    ['Get the Church Hub app for Android', 'Kry die Church Hub-app vir Android', 'Thola i-app ye-Church Hub ye-Android', 'Fumana i-app ye-Church Hub ye-Android'],
-    ['Church Hub app, version {v}', 'Church Hub-app, weergawe {v}', 'I-app ye-Church Hub, inguqulo {v}', 'I-app ye-Church Hub, uguqulelo {v}'],
+    ['Get the Church & Trellis app for Android', 'Kry die Church & Trellis-app vir Android', 'Thola i-app ye-Church & Trellis ye-Android', 'Fumana i-app ye-Church & Trellis ye-Android'],
+    ['Church & Trellis app, version {v}', 'Church & Trellis-app, weergawe {v}', 'I-app ye-Church & Trellis, inguqulo {v}', 'I-app ye-Church & Trellis, uguqulelo {v}'],
     ['Days away', 'Dae weg', 'Izinsuku ongekho', 'Iintsuku ongekho'],
     ['Days you can’t serve. You won’t be put on the roster on them.', 'Dae wat jy nie kan dien nie. Jy sal nie op daardie dae op die rooster geplaas word nie.', 'Izinsuku ongeke ukwazi ukukhonza ngazo. Ngeke ufakwe ohlelweni ngalezo zinsuku.', 'Iintsuku ongakwaziyo ukukhonza ngazo. Akusayi kufakwa kuludwe ngezo ntsuku.'],
     ['Add days away', 'Voeg dae weg by', 'Engeza izinsuku ongekho', 'Yongeza iintsuku ongekho'],
@@ -57,5 +57,5 @@ I18n.rows([
     ['That’s how you serve now. Choose another answer, or Cancel.', 'Dis hoe jy nou dien. Kies ’n ander antwoord, of Kanselleer.', 'Yileyo indlela okhonza ngayo manje. Khetha enye impendulo, noma Khansela.', 'Yile ndlela okhonza ngayo ngoku. Khetha enye impendulo, okanye Rhoxisa.'],
     ['Sent – the roster coordinator will be in touch', 'Gestuur – die roosterkoördineerder sal met jou in verbinding tree', 'Kuthunyelwe – umhleli wohlelo lokusebenza uzoxhumana nawe', 'Kuthunyelwe – umququzeleli woludwe lomsebenzi uya kuqhagamshelana nawe'],
     ['This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.', 'Hierdie taal is deur ’n rekenaar vertaal en word nog nagegaan. As iets vreemd lees, sê asseblief vir die kerkkantoor.', 'Lolu limi luhunyushwe yikhompyutha futhi lusahlolwa. Uma kukhona okufundeka kabi, sicela utshele ihhovisi lesonto.', 'Olu lwimi luguqulelwe yikhompyutha kwaye lusajongwa. Ukuba kukho into efundeka ngendlela engaqhelekanga, nceda uxelele iofisi yecawa.'],
-    ["If you untick something, Church Hub tells you what it means before anything is saved.", "As jy iets ontmerk, sê Church Hub vir jou wat dit beteken voordat enigiets gestoor word.", "Uma ususa uphawu entweni, i-Church Hub ikutshela ukuthi kusho ukuthini ngaphambi kokuba kulondolozwe lutho.", "Ukuba ususa uphawu kwinto, i-Church Hub ikuxelela ukuba ithetha ntoni phambi kokuba kugcinwe nantoni na."]
+    ["If you untick something, Church & Trellis tells you what it means before anything is saved.", "As jy iets ontmerk, sê Church & Trellis vir jou wat dit beteken voordat enigiets gestoor word.", "Uma ususa uphawu entweni, i-Church & Trellis ikutshela ukuthi kusho ukuthini ngaphambi kokuba kulondolozwe lutho.", "Ukuba ususa uphawu kwinto, i-Church & Trellis ikuxelela ukuba ithetha ntoni phambi kokuba kugcinwe nantoni na."]
 ]);

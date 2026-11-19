@@ -1,5 +1,5 @@
 /*
- * Church Hub – app shell.
+ * Church & Trellis – app shell.
  * Modules (people, rosters, leave, privacy, import, settings) register with Hub.register({...}) and appear as cards on Home.
  * A module object:
  *   id, name, desc (one line), icon (SVG path), tint, roles (who may open it; omit = everyone)
@@ -296,18 +296,18 @@ var Hub = (function () {
     menu: 'M4 6h16M4 12h16M4 18h16', eye: 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', download: 'M12 3v12M7 10l5 5 5-5M4 21h16', trash: 'M3 6h18M8 6V4h8v2M6 6l1 15h10l1-15', sparkle: 'M12 3l2 5 5 2-5 2-2 5-2-5-5-2 5-2z'
   };
 
-  /** Running inside the Church Hub Android app (android/), which adds window.ChurchHubApp. */
+  /** Running inside the Church & Trellis Android app (android/), which adds window.ChurchHubApp. */
   function inApp() { return !!(window.ChurchHubApp && window.ChurchHubApp.googleSignIn); }
   /** Opened from the phone's home screen (iPhone "Add to Home Screen", or Android's "Install app"), not in a browser tab. */
   function homeScreen() {
     try { return window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches); } catch (e) { return false; }
   }
-  /** Church Hub as an app on a phone: the Android app or the home-screen app. Email links open in the browser there,
+  /** Church & Trellis as an app on a phone: the Android app or the home-screen app. Email links open in the browser there,
    *  which keeps its own sign-in, so people paste the link instead. */
   function phoneApp() { return inApp() || homeScreen(); }
   function isIPhone() { var u = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1); }
 
-  /* ---------- prompts on Home and Me: a photo of yourself (in the apps), and putting Church Hub on an iPhone's home screen ---------- */
+  /* ---------- prompts on Home and Me: a photo of yourself (in the apps), and putting Church & Trellis on an iPhone's home screen ---------- */
   var LATER_DAYS = { selfie: 30, iphone: 60, langs: 3 }, photoAdded = false;   // photoAdded: just added here (the database may not have answered yet)
   function later(k) { var d = Store.pref(k + 'Later'); return d && (Date.now() - Date.parse(d)) < LATER_DAYS[k] * 864e5; }
   function prompts() {
@@ -318,12 +318,12 @@ var Hub = (function () {
         '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="hub:selfie">' + icon(ICON.plus, 18) + T('Take or choose a photo') + '</button>' +
         '<button class="btn" data-act="hub:later" data-k="selfie">' + T('Not now') + '</button></div><input type="file" id="selfie-file" accept="image/*" hidden></section>';
     if (user && isIPhone() && !homeScreen() && !later('iphone'))
-      out += '<section class="panel prompt" id="iphone-ask"><h2 style="margin:0 0 4px">' + T('Church Hub on your iPhone') + '</h2>' +
-        '<p class="small" style="margin:0">' + T('Tap the Share button (the square with an arrow), then “Add to Home Screen”. Church Hub then opens like an app, full screen, with its own icon.') + '</p>' +
+      out += '<section class="panel prompt" id="iphone-ask"><h2 style="margin:0 0 4px">' + T('Church & Trellis on your iPhone') + '</h2>' +
+        '<p class="small" style="margin:0">' + T('Tap the Share button (the square with an arrow), then “Add to Home Screen”. Church & Trellis then opens like an app, full screen, with its own icon.') + '</p>' +
         '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="iphone">' + T('Not now') + '</button></div></section>';
     return out;
   }
-  /* Administrators: the extra languages (all but Sesotho) are translated in one go before Church Hub is released (docs/RELEASE.md),
+  /* Administrators: the extra languages (all but Sesotho) are translated in one go before Church & Trellis is released (docs/RELEASE.md),
    * so Home reminds them every few days how many texts are still in English there. Japanese stands for all of them (it was added
    * last, so has the most waiting); the count is kept on this device for each version, so its file is fetched once per version. */
   var langGap = null;
@@ -344,7 +344,7 @@ var Hub = (function () {
     var n = langsWaiting(); if (!n) return '';
     return '<section class="panel prompt" id="langs-ask"><h2 style="margin:0 0 4px">' + T('Not every language is up to date') + '</h2>' +
       '<p class="small" style="margin:0">' + TN('{n} text is still in English in the {count} extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', '{n} texts are still in English in the {count} extra languages (German, French, Portuguese and the others). English, Afrikaans, isiZulu, isiXhosa and Sesotho are complete.', n, { count: I18n.MORE.filter(function (m) { return !m[4] && m[0] !== 'st'; }).length }) + '</p>' +
-      '<p class="small muted" style="margin:6px 0 0">' + T('That is fine while Church Hub is used only by this church. Before other churches use it, ask Claude to translate them.') + '</p>' +
+      '<p class="small muted" style="margin:6px 0 0">' + T('That is fine while Church & Trellis is used only by this church. Before other churches use it, ask Claude to translate them.') + '</p>' +
       '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="langs">' + T('Remind me in 3 days') + '</button></div></section>';
   }
   function wirePrompts() {
@@ -352,7 +352,7 @@ var Hub = (function () {
     f.addEventListener('change', function () {
       var file = f.files && f.files[0], me = user && Store.get('people', user.id); f.value = ''; if (!file || !me) return;
       cropPhoto(file).then(function (data) { photoAdded = true; return Store.setPhoto(me.id, data, 'Added a photo of ' + name(me) + ' (their own)').then(function () { render(); toast(T('Photo saved')); }); })
-        .catch(function () { toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.'), true); });
+        .catch(function () { toast(T('That file isn’t a picture Church & Trellis can read. Try a JPG or PNG photo.'), true); });
     });
   }
 
@@ -506,7 +506,7 @@ var Hub = (function () {
     if (mod && mod.after) mod.after(p.slice(1));
     loadPhotos();
     langWire(); markRequired();
-    var h = root.querySelector('main h1'); if (h) document.title = h.textContent + ' · Church Hub';
+    var h = root.querySelector('main h1'); if (h) document.title = h.textContent + ' · Church & Trellis';
   }
 
   var inWords = false;
@@ -532,18 +532,18 @@ var Hub = (function () {
     var on = enabled().map(function (m) { return m.id; });
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
-      '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
+      '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church & Trellis' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div class="side-mode">' + modePicker() + '</div>' +
-      (canViewAs() && !Store.preview() ? '<button class="side-viewas" data-act="hub:viewaspick" title="' + esc(T('See Church Hub as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button>' : '') + '</div>' +
+      (canViewAs() && !Store.preview() ? '<button class="side-viewas" data-act="hub:viewaspick" title="' + esc(T('See Church & Trellis as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button>' : '') + '</div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
       (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
-      '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>' + 'Church Hub' + '</b></a>' +
+      '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>' + 'Church & Trellis' + '</b></a>' +
       '<span class="top-r">' + (canViewAs() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
-      (Store.offline() ? '<div class="offline-bar" role="status">' + icon(ICON.eye, 18) + '<span>' + T('You’re offline – Church Hub is view-only until you’re back online.') + '</span></div>' : '') +
+      (Store.offline() ? '<div class="offline-bar" role="status">' + icon(ICON.eye, 18) + '<span>' + T('You’re offline – Church & Trellis is view-only until you’re back online.') + '</span></div>' : '') +
       (Store.preview() ? '<div class="viewas" role="status">' + icon(ICON.eye, 18) + '<span>' + T('Viewing as {role} – this is what they see. Nothing you do here is saved.', { role: '<b>' + esc(viewingAs()) + '</b>' }) + '</span>' +
         '<button class="btn small" data-act="hub:viewas" data-r="admin">' + esc(backLabel()) + '</button></div>' : '') +
       '<main id="main" tabindex="-1"><div class="page-body">' + body + '</div>' + improveLink(mod) + '</main></div>' +
@@ -613,15 +613,15 @@ var Hub = (function () {
   }
   function liveCard(inner) {
     return '<div class="signin"><div class="signin-card">' +
-      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
+      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church & Trellis' + '</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
       '<div class="signin-lang">' + I18n.picker() + '</div>' + inner + '</div></div>';
   }
   function renderLive() {
     var st = live, html;
     // A link to a page (e.g. the invitation to become a Church Partner, #/people/apply) is remembered through signing in,
-    // also when the sign-in link from the email opens Church Hub again without it
+    // also when the sign-in link from the email opens Church & Trellis again without it
     if (/^#\/\w/.test(location.hash) && location.hash !== '#/home') Store.pref('afterSignIn', location.hash + '|' + Date.now());
-    if (st.stage === 'loading') html = '<h1>' + 'Church Hub' + '</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
+    if (st.stage === 'loading') html = '<h1>' + 'Church & Trellis' + '</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
     else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
     else if (st.stage === 'linkSent' && phoneApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       '<ol class="steps"><li>' + T('Open the email on this phone.') + '</li><li>' + T('Press and hold the sign-in link, then choose Copy link.') + '</li><li>' + T('Come back here, paste it in the box and tap Sign in.') + '</li></ol>' +
@@ -630,7 +630,7 @@ var Hub = (function () {
     else if (st.stage === 'linkSent') html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. Open it on this device to sign in. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p><button class="btn" data-act="hub:restart">' + T('Use a different way') + '</button>';
     else if (st.stage === 'needEmail') html = '<h1>' + T('Confirm your email') + '</h1><p class="lead">' + T('For your safety, type the email address you asked the sign-in link for.') + '</p>' +
       '<form id="si-form" novalidate><label class="field">' + T('Email') + '<input id="si-email" type="email" autocomplete="email" required></label><p id="si-err" class="note bad" hidden></p><button class="btn primary" data-act="hub:finishlink">' + T('Sign in') + '</button></form>';
-    else if (st.stage === 'choosePerson') html = '<h1>' + T('Who is using Church Hub?') + '</h1><p class="lead">' + T('{email} is shared by more than one person. Choose who you are – you can switch at any time.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
+    else if (st.stage === 'choosePerson') html = '<h1>' + T('Who is using Church & Trellis?') + '</h1><p class="lead">' + T('{email} is shared by more than one person. Choose who you are – you can switch at any time.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       whoButtons(st.people, '') + '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button>';
     else if (st.stage === 'code') html = '<h1>' + T('Sign in with a code') + '</h1><p class="lead">' + T('Type the code the church office gave you. It has 8 letters and numbers.') + '</p>' +
       '<form id="si-form" novalidate><label class="field">' + T('Sign-in code') + '<input id="si-code" autocomplete="one-time-code" autocapitalize="characters" spellcheck="false" maxlength="12" placeholder="ABCD-EFGH" value="' + esc(st.code || '') + '" style="font-size:1.4rem;letter-spacing:.12em;text-transform:uppercase"></label>' +
@@ -641,7 +641,7 @@ var Hub = (function () {
       '<div class="btns"><button class="btn primary big-btn" data-act="hub:codeyes">' + T('Yes, that’s me') + '</button> <button class="btn" data-act="hub:codeno">' + T('No, that isn’t me') + '</button></div>';
     else if (st.stage === 'choosePin') html = '<h1>' + T('Choose your PIN') + '</h1><p class="lead">' + T('From now on you’ll sign in with your number and a 6-digit PIN, on any phone.') + '</p>' +
       '<form id="si-form" novalidate>' + (st.noNumber ?
-        '<p class="note">' + T('Church Hub will give you a church number to sign in with.') + ' <button class="link" type="button" data-act="hub:pinnumber">' + T('I do have a number') + '</button></p>' :
+        '<p class="note">' + T('Church & Trellis will give you a church number to sign in with.') + ' <button class="link" type="button" data-act="hub:pinnumber">' + T('I do have a number') + '</button></p>' :
         '<label class="field req">' + T('Your cellphone number') + '<input id="si-num" type="tel" inputmode="tel" autocomplete="tel" value="' + esc(st.number || '') + '"></label>' +
         '<p style="margin:-4px 0 12px"><button class="link" type="button" data-act="hub:pinnonumber">' + T('I don’t have my own number') + '</button></p>') +
       pinBox('si-pin', T('PIN (6 numbers)'), 'new-password') + pinBox('si-pin2', T('Type the PIN again'), 'new-password') +
@@ -658,11 +658,11 @@ var Hub = (function () {
       '<p class="fine">' + T('Forgot your PIN? Ask the church office for a new sign-in code.') + '</p>';
     else if (st.stage === 'noAccess') html = '<h1>' + T('No access yet') + '</h1><p class="lead">' + ({
       unverified: T('Your email address ({email}) hasn’t been verified. Sign in with Google or an email link instead.', { email: esc(st.email) }),
-      notReady: T('Church Hub hasn’t been set up yet. Please try again later.'),
+      notReady: T('Church & Trellis hasn’t been set up yet. Please try again later.'),
       noPerson: T('You have access, but your person record is missing. Please ask the church office.')
-    }[st.reason] || T('You are signed in as {email}, but this email address hasn’t been given access to Church Hub. Ask the church office to add it, or sign out and use another account.', { email: '<b>' + esc(st.email) + '</b>' })) + '</p>' +
+    }[st.reason] || T('You are signed in as {email}, but this email address hasn’t been given access to Church & Trellis. Ask the church office to add it, or sign out and use another account.', { email: '<b>' + esc(st.email) + '</b>' })) + '</p>' +
       '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button>';
-    else if (st.stage === 'setup') html = '<h1>' + T(st.needChurch ? 'Set up Church Hub' : 'Welcome') + '</h1><p class="lead">' + T(st.needChurch ? 'You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).' : 'Please add your name to finish setting up your access.') + '</p>' +
+    else if (st.stage === 'setup') html = '<h1>' + T(st.needChurch ? 'Set up Church & Trellis' : 'Welcome') + '</h1><p class="lead">' + T(st.needChurch ? 'You are the first Administrator. This creates the church’s settings, the leave rules and some starter serving teams (you can change them all later).' : 'Please add your name to finish setting up your access.') + '</p>' +
       '<form id="su-form" novalidate>' + reqKey() + (st.needChurch ? '<label class="field req">' + T('Church name') + '<input id="su-church" value="Christ Church Howick"></label>' : '') +
       '<div class="two"><label class="field req">' + T('Your first name') + '<input id="su-first" autocomplete="given-name"></label><label class="field req">' + T('Last name') + '<input id="su-last" autocomplete="family-name"></label></div>' +
       '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + T(st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">' + T('Sign out') + '</button>';
@@ -711,7 +711,7 @@ var Hub = (function () {
   function pinMessage(c) {
     return ({
       'pin/number': T('Check the number: type your cellphone number, or your 6-digit church number.'),
-      'pin/unknown': T('There’s no Church Hub sign-in for that number. Check it, or ask the church office for a sign-in code.'),
+      'pin/unknown': T('There’s no Church & Trellis sign-in for that number. Check it, or ask the church office for a sign-in code.'),
       'pin/wrong': T('That PIN isn’t right. Try again, or ask the church office for a new sign-in code.'),
       'pin/busy': T('Too many tries. Please wait a few minutes and try again.'),
       'pin/off': T('Signing in with a PIN isn’t switched on for this church yet. Please ask the church office.'),
@@ -753,7 +753,7 @@ var Hub = (function () {
     people.forEach(function (p) { (byRole[p.appRole] = byRole[p.appRole] || []).push(p); });
     var order = ['admin', 'pastor', 'rosters', 'kids', 'member'];
     root.innerHTML = '<div class="signin"><div class="signin-card">' +
-      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church Hub' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
+      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church & Trellis' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<div class="signin-lang">' + I18n.picker() + '</div><h1>' + T('Sign in') + '</h1>' +
       '<p class="lead">' + T('This is a demo with made-up people. Choose who to be: each role sees different things.') + '</p>' +
       order.filter(function (r) { return byRole[r]; }).map(function (r) {
@@ -1026,7 +1026,7 @@ var Hub = (function () {
   function download(filename, text, type) {
     // In the Android app (version with saveFile): saved in the phone's Downloads. Browsers: an ordinary download.
     if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFile === 'function') { window.ChurchHubApp.saveFile(filename, type || 'application/json', String(text)); return; }
-    if (window.ChurchHubApp) { toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+    if (window.ChurchHubApp) { toast(T('Please update the Church & Trellis app to download files, or use a browser.'), true); return; }
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([text], { type: type || 'application/json' }));
     a.download = filename; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
@@ -1040,13 +1040,13 @@ var Hub = (function () {
     signout: function () {
       if (!Store.isLive()) return hubActions.signoutyes();
       var pinNo = Store.live.isCodeSession();
-      modal(dialogHead(T('Sign out of Church Hub?')) + '<div class="dlg-body"><p style="margin:0">' + (/^c\d/.test(pinNo) ? T('You’ll sign in again with your church number ({number}) and PIN.', { number: churchNumber(pinNo) }) :
+      modal(dialogHead(T('Sign out of Church & Trellis?')) + '<div class="dlg-body"><p style="margin:0">' + (/^c\d/.test(pinNo) ? T('You’ll sign in again with your church number ({number}) and PIN.', { number: churchNumber(pinNo) }) :
         pinNo ? T('You’ll sign in again with your cellphone number and PIN.') : T('You will need to sign in again next time.')) + '</p></div>' +
         '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="hub:signoutyes">' + T('Sign out') + '</button></div>', T('Sign out'));
     },
-    /** Someone sharing the sign-in: choose who is using Church Hub now. */
+    /** Someone sharing the sign-in: choose who is using Church & Trellis now. */
     switchwho: function () {
-      modal(dialogHead(T('Who is using Church Hub?')) + '<div class="dlg-body">' + whoButtons(Store.live.household(), user && user.id) + '</div>', T('Switch person'));
+      modal(dialogHead(T('Who is using Church & Trellis?')) + '<div class="dlg-body">' + whoButtons(Store.live.household(), user && user.id) + '</div>', T('Switch person'));
     },
     choose: function (el) {
       if (user) Store.audit('Switched to someone else sharing this sign-in', 'people/' + user.id);
@@ -1104,7 +1104,7 @@ var Hub = (function () {
     codeyes: function () { live = { stage: 'choosePin', number: live.mobile || '', code: live.code || '' }; renderLive(); },
     pinnonumber: function () { live.noNumber = true; live.message = ''; renderLive(); },
     pinnumber: function () { live.noNumber = false; live.message = ''; renderLive(); },
-    /** Their number (or a church number) and a PIN: link the sign-in, then open Church Hub (a church number is shown first). */
+    /** Their number (or a church number) and a PIN: link the sign-in, then open Church & Trellis (a church number is shown first). */
     pinset: function (el, ev) {
       if (ev) ev.preventDefault();
       var v = function (id) { var x = document.getElementById(id); return x ? x.value.trim() : ''; };
@@ -1144,7 +1144,7 @@ var Hub = (function () {
     tipclose: function () { tipClosed = true; var c = document.getElementById('tips-card'); if (c) c.remove(); },
     tipsall: function () {
       var tips = Tips.forPerson(tipCtx());
-      modal(dialogHead(T('Did you know?'), T('Tips for getting the most out of Church Hub')) + '<div class="dlg-body"><ul class="tips-all">' + tips.map(function (t) {
+      modal(dialogHead(T('Did you know?'), T('Tips for getting the most out of Church & Trellis')) + '<div class="dlg-body"><ul class="tips-all">' + tips.map(function (t) {
         return '<li><span class="grow">' + esc(T(t.text)) + '</span>' + (t.href ? ' <a class="btn small" href="' + esc(t.href) + '">' + T('Show me') + '</a>' : '') + '</li>';
       }).join('') + '</ul></div>', T('Did you know?'));
     },
@@ -1170,11 +1170,11 @@ var Hub = (function () {
       langWire();
     },
     notice: function (el, ev) { ev.preventDefault(); modal(dialogHead(T('Privacy notice'), T('How we use your information')) + '<div class="dlg-body"><p>' + esc(Store.settings().privacyNotice) + '</p><p class="muted">' + T('Information Officer') + ': ' + esc(Store.settings().informationOfficer.name) + '</p></div>', T('Privacy notice')); },
-    /** "View as": an Administrator sees Church Hub the way a Pastor, Roster coordinator, Children's ministry or a Member would. */
+    /** "View as": an Administrator sees Church & Trellis the way a Pastor, Roster coordinator, Children's ministry or a Member would. */
     viewaspick: function () {
       var home = viewHome(); if (!home) return;
       var cur = Store.previewCare() ? 'carer' : Store.preview() || home;
-      modal(dialogHead(T('View as another role'), T('See what other people see when they sign in')) + '<div class="dlg-body"><p class="muted" style="margin-top:0">' + T('You stay signed in as yourself, but Church Hub shows only what that role may see.') + ' ' +
+      modal(dialogHead(T('View as another role'), T('See what other people see when they sign in')) + '<div class="dlg-body"><p class="muted" style="margin-top:0">' + T('You stay signed in as yourself, but Church & Trellis shows only what that role may see.') + ' ' +
         T('Nothing you do is saved while you’re viewing. Pastoral and medical notes stay hidden – only Pastors and Children’s ministry may see those.') + '</p><div class="viewas-pick">' +
         [home].concat(viewChoices()).map(function (r) {
           return '<button class="btn' + (r === cur ? ' primary' : '') + '" data-act="hub:viewas" data-r="' + (r === home ? 'admin' : r) + '"' + (r === cur ? ' aria-current="true"' : '') + '>' + esc(viewLabel(r)) + (r === home ? ' (' + T('you') + ')' : '') + '</button>';
@@ -1268,15 +1268,15 @@ var Hub = (function () {
 
   /** The Android back button: close an open window first (true = handled); otherwise the app goes back a page. */
   window.churchHubBack = function () { if (document.querySelector('#modal .overlay')) { closeModal(); return true; } return false; };
-  /** The Android app asks "Leave Church Hub?" in the chosen language before the back button closes it. */
+  /** The Android app asks "Leave Church & Trellis?" in the chosen language before the back button closes it. */
   window.churchHubReload = function () { leaveOk = Date.now(); location.reload(); };
-  window.churchHubLeaveText = function () { return JSON.stringify([T('Leave Church Hub?'), T('Are you sure you want to close Church Hub?'), T('Stay'), T('Close Church Hub')]); };
+  window.churchHubLeaveText = function () { return JSON.stringify([T('Leave Church & Trellis?'), T('Are you sure you want to close Church & Trellis?'), T('Stay'), T('Close Church & Trellis')]); };
 
   /* ---------- On a computer or phone browser: check before closing the tab or window while signed in ---------- */
   // Browsers show their own wording ("Leave site?"); a page can't change it. Not in the Android app, which asks itself.
   // Email, phone and WhatsApp links open another app without leaving, so they don't ask.
   var leaveOk = 0;
-  /** Back past Church Hub's first screen (a browser's Back, or the iPhone home-screen app) asks "Leave Church Hub?" first:
+  /** Back past Church & Trellis's first screen (a browser's Back, or the iPhone home-screen app) asks "Leave Church & Trellis?" first:
    *  an extra step in the history catches it. The Android app asks itself (MainActivity.confirmLeave). */
   var backGuard = false;
   function guardBack() {
@@ -1285,8 +1285,8 @@ var Hub = (function () {
     try { history.replaceState({ hubBase: 1 }, ''); history.pushState({ hubTop: 1 }, ''); } catch (e) { return; }
     window.addEventListener('popstate', function (ev) {
       if (!(ev.state && ev.state.hubBase) || !user) return;
-      modal(dialogHead(T('Leave Church Hub?')) + '<div class="dlg-body"><p style="margin:0">' + T('Are you sure you want to close Church Hub?') + '</p></div>' +
-        '<div class="dlg-foot"><button class="btn" data-act="hub:stay">' + T('Stay') + '</button><button class="btn primary" data-act="hub:leave">' + T('Close Church Hub') + '</button></div>', T('Leave Church Hub?'));
+      modal(dialogHead(T('Leave Church & Trellis?')) + '<div class="dlg-body"><p style="margin:0">' + T('Are you sure you want to close Church & Trellis?') + '</p></div>' +
+        '<div class="dlg-foot"><button class="btn" data-act="hub:stay">' + T('Stay') + '</button><button class="btn primary" data-act="hub:leave">' + T('Close Church & Trellis') + '</button></div>', T('Leave Church & Trellis?'));
     });
   }
   function watchLeaving() {
@@ -1302,13 +1302,13 @@ var Hub = (function () {
   }
 
   /* ---------- without the internet ---------- */
-  /** Church Hub opens without the internet: sw.js keeps a copy of its files on this device (the church's information is
+  /** Church & Trellis opens without the internet: sw.js keeps a copy of its files on this device (the church's information is
    *  kept by Store, live mode). Not for a copy opened straight from a computer's files. Offline, live mode is view-only. */
   function workOffline() {
     window.addEventListener('offline', onlineChanged);
     window.addEventListener('online', onlineChanged);
     if (!('serviceWorker' in navigator) || !/^https?:$/.test(location.protocol)) return;
-    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(keepFiles, function (e) { console.warn('Church Hub can’t keep a copy for offline use here', e && e.message); });
+    navigator.serviceWorker.register('sw.js', { updateViaCache: 'none' }).then(keepFiles, function (e) { console.warn('Church & Trellis can’t keep a copy for offline use here', e && e.message); });
   }
   /** Tell sw.js every file this page has loaded (scripts, styles, icons, the chosen language, the Firebase library), so
    *  they are kept from the very first visit. */
@@ -1381,7 +1381,7 @@ var Hub = (function () {
     });
     window.addEventListener('hashchange', function () { if (!user) return; closeModal(); render(); var m = document.getElementById('main'); if (m) m.focus({ preventScroll: true }); window.scrollTo(0, 0); });
     Store.onChange(function () { if (user) user = Store.get('people', user.id) || user; });
-    Store.onError(function (msg) { toast(msg === Store.OFFLINE_MSG ? T('You’re offline – Church Hub is view-only until you’re back online.') : msg, true); });
+    Store.onError(function (msg) { toast(msg === Store.OFFLINE_MSG ? T('You’re offline – Church & Trellis is view-only until you’re back online.') : msg, true); });
     workOffline();
     if (Store.isLive()) {
       // Someone else changed something: refresh the screen, unless this person is typing or has a dialog open.

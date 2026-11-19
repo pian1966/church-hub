@@ -4,7 +4,7 @@ The app keeps working after every phase. Christ Church Howick's live data never 
 (`church-hub-7ec02`) simply becomes "a church like any other". Tasks are in `tasks/`.
 
 ## Phase A – Prove it (no change to the app)
-- 001 Church Hub's own Google identity (a person does this, guided).
+- 001 Church & Trellis's own Google identity (a person does this, guided).
 - 002 The trial page: every automatic step tried against a throw-away Google account; results written to
   `SPIKE-RESULTS.md`.
 - 030 Measure how much a church reads per day.

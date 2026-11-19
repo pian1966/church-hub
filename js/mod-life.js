@@ -1,4 +1,4 @@
-/* Church Hub – Life groups: Bible studies, life groups and midweek meetings (the church may call them something else:
+/* Church & Trellis – Life groups: Bible studies, life groups and midweek meetings (the church may call them something else:
  * Settings → Terminology (Church Words)). Off until an Administrator switches them on (Settings → Apps).
  * A life group is a careGroups record with type 'life' (Store hands them out as lifeGroups, their cards as lifeShare), so
  * it works like a care group: leaders and members, a card per member, messages to the group. Differences: each group's

@@ -1,4 +1,4 @@
-/* Church Hub – Privacy (the church's country's law: POPIA, GDPR, … – js/privacy-law.js): Information Officer, checklist, data-subject requests, retention, breaches, audit log. */
+/* Church & Trellis – Privacy (the church's country's law: POPIA, GDPR, … – js/privacy-law.js): Information Officer, checklist, data-subject requests, retention, breaches, audit log. */
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;

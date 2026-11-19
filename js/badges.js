@@ -1,4 +1,4 @@
-/* Church Hub – name badge layouts: the church's own (A4, cut and laminate) and label paper, with or without gaps.
+/* Church & Trellis – name badge layouts: the church's own (A4, cut and laminate) and label paper, with or without gaps.
  * Pure (no screen, no data): People → Name badges → Badge layout keeps the choice in settings.badgeLayout,
  * and js/people/apply.js prints with Badges.sheets(). Tested by tests/badges.test.js.
  * Every measurement is in millimetres, from the top-left corner of the page. */

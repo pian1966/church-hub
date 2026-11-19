@@ -1,7 +1,7 @@
-# Church Hub – conference presentation
+# Church & Trellis – conference presentation
 
-A 17-slide presentation to introduce Church Hub at conferences and church gatherings: what a church management system is,
-why a church needs one, why we built Church Hub, who it is for, what it does (with three short clips), privacy, the
+A 17-slide presentation to introduce Church & Trellis at conferences and church gatherings: what a church management system is,
+why a church needs one, why we built Church & Trellis, who it is for, what it does (with three short clips), privacy, the
 price and how to move across. Speaker notes are on every slide.
 
 | File | What it is |
@@ -12,25 +12,25 @@ price and how to move across. Speaker notes are on every slide.
 | `img/` | The screenshots (`d-…` computer, `m-…` phone), the clips (`fill.gif`, `ask.gif`, `accept.gif`) and the QR codes |
 
 ## The slides
-1. Church Hub – every church, however small, deserves great church software
+1. Church & Trellis – every church, however small, deserves great church software
 2. What is a church management system? 3. Why your church needs one
-4. Why we built Church Hub 5. Who it's for: every church
+4. Why we built Church & Trellis 5. Who it's for: every church
 6. Everything in one place 7. Built in parts – use only what you need 8. The essential parts
 9. People 10. Ask in your own words (clip) 11. Rosters that fill the gaps (clip) 12. Volunteers reply from their phone (clip)
 13. Members help themselves 14. Safe, private and yours 15. The price of one cup of coffee a month
-16. Moving from another system? 17. See your church in Church Hub (QR codes to the demo and the website)
+16. Moving from another system? 17. See your church in Church & Trellis (QR codes to the demo and the website)
 
-Design: Church Hub's own colours (orange `E8590C`, dark `231E1A`) and font (Inter, which Google Slides has too). Animation is
+Design: Church & Trellis's own colours (orange `E8590C`, dark `231E1A`) and font (Inter, which Google Slides has too). Animation is
 kept to the three clips, on the screens that matter most; there are no slide transitions or build animations.
 
 ## Keeping it up to date
 The `.pptx` here is the master copy. It is rebuilt in the same pull request as any change that alters what the slides say,
 and at least whenever the middle version number goes up; the last slide says which version it describes
-("Slides for Church Hub 0.92.0 · 18 Nov 2026"), so any copy can be checked against **About** in the app. After each merge,
+("Slides for Church & Trellis 0.92.0 · 18 Nov 2026"), so any copy can be checked against **About** in the app. After each merge,
 GitHub puts the new slides into the Google Slides copy by itself (`docs/SLIDES-AUTOPUBLISH.md`) – don't edit that copy by
 hand, it is replaced; make your own copy (File → Make a copy) to tweak for a particular talk.
 
-## Making it again after Church Hub changes
+## Making it again after Church & Trellis changes
 ```bash
 python3 -m http.server 8765               # in the repository folder (another terminal)
 python3 docs/presentation/capture.py      # new screenshots and clips (needs Playwright, Pillow, ffmpeg; qrcode for the QR codes)

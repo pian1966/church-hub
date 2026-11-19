@@ -1,4 +1,4 @@
-/* Church Hub – Leave: the wallchart, month calendar and year planner (as in Leave Manager). Builds HTML only;
+/* Church & Trellis – Leave: the wallchart, month calendar and year planner (as in Leave Manager). Builds HTML only;
  * mod-leave.js shows it under Who's away and on a person's leave page. Uses LeaveCore for working days and rules. */
 var LeaveViews = (function () {
   'use strict';

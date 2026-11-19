@@ -61,7 +61,7 @@ open: true        // taking new people (shown on Find a group); false = full or 
 ## 3. The map
 - **Leaflet** (free, small) with **OpenStreetMap** tiles. Kept in `assets/` rather than loaded from another website,
   so it works on the church's site without extra setup and the page itself works offline (the map tiles need internet).
-- **Placing a pin**: when an address is saved, Church Hub asks OpenStreetMap's address search (Nominatim) once for that one
+- **Placing a pin**: when an address is saved, Church & Trellis asks OpenStreetMap's address search (Nominatim) once for that one
   address and stores `lat`/`lng` on the group. If it can't find it (common for estates and new streets), the leader
   drops the pin by tapping the map. Only the group's meeting place is ever looked up – never members' addresses.
 - **What people see on the map**:

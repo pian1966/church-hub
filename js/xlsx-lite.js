@@ -1,5 +1,5 @@
 /*
- * Church Hub – a small reader for Excel (.xlsx) files, enough to read a downloaded Google Sheet: every worksheet's cell values
+ * Church & Trellis – a small reader for Excel (.xlsx) files, enough to read a downloaded Google Sheet: every worksheet's cell values
  * (text, numbers, TRUE/FALSE). No outside library: an .xlsx file is a zip of XML files; the browser unzips with
  * DecompressionStream and reads the XML with DOMParser. Dates arrive as Excel day numbers (the reader of each table converts them).
  * Worksheet names are not needed: Leave Manager's tabs are recognised by their column headings.

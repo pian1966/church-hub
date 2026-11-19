@@ -1,5 +1,5 @@
 /*
- * Church Hub – Christ Church Howick's services, serving departments and positions (as in Elvanto).
+ * Church & Trellis – Christ Church Howick's services, serving departments and positions (as in Elvanto).
  * Used by Rosters (one click adds them as teams and positions) and by People (the Volunteer section).
  * A position with `times` only runs at those services, e.g. Creche Duty only at 8:00 (empty = every service).
  *
@@ -208,8 +208,8 @@ var Serving = (function () {
     ['dept-creche', 'Creche', [['pos-creche', 'Creche Duty', 1, EIGHT]]],
     ['dept-memorial', 'Memorial Service', [['pos-memorial-teas', 'Memorial Teas', 2, MEMORIAL]]]
   ];
-  // Elvanto's names that differ from Church Hub's
-  // Departments with another name earlier (Church Hub) or in Elvanto: their positions go in the same team
+  // Elvanto's names that differ from Church & Trellis's
+  // Departments with another name earlier (Church & Trellis) or in Elvanto: their positions go in the same team
   var DEPT_ALIASES = { operational: 'service leading', service: 'service leading' };
   var ALIASES = { guitarists: 'guitar', vocal: 'singers', vocals: 'singers', welcoming: 'welcoming & service assistant', servers: 'communion servers', 'servers (collection & communion)': 'communion servers', 'memorial duties': 'memorial teas' };
   function norm(s) { return String(s || '').trim().toLowerCase().replace(/[’']/g, '').replace(/[–-]/g, ' ').replace(/\s+/g, ' '); }
@@ -236,7 +236,7 @@ var Serving = (function () {
     return out;
   }
   function timeLabel(t, settings) { return slotLabel(t, settings); }
-  /** A position by name as Elvanto writes it ("Guitarists", "Communion - Leading") among Church Hub's positions. */
+  /** A position by name as Elvanto writes it ("Guitarists", "Communion - Leading") among Church & Trellis's positions. */
   function findPosition(name, positions) {
     var n = norm(name), a = norm(ALIASES[n] || n);
     return (positions || []).filter(function (x) { return norm(x.name) === a; })[0] || (positions || []).filter(function (x) { return norm(x.name) === n; })[0] || null;

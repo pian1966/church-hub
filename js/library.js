@@ -1,5 +1,5 @@
 /*
- * Church Hub – the church Library: the books the church owns, and who has borrowed which.
+ * Church & Trellis – the church Library: the books the church owns, and who has borrowed which.
  * An item (a book, DVD, CD…): books/{id} = { kind (KINDS; 'Book' when not set), title, author, cat, copies, acquired (date),
  *   how (Bought | Donated | Other), from (the donor or shop), shelf, isbn, note, out, cover } – out = how many copies are on
  *   loan, kept by the librarian so that everyone can see whether it is in, without seeing who has it; cover = the version

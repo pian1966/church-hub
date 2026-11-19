@@ -1,5 +1,5 @@
 /*
- * Church Hub – rostering engine (shared by the app, the future server, and the tests).
+ * Church & Trellis – rostering engine (shared by the app, the future server, and the tests).
  *
  * What makes it different from "random" rostering:
  *  - Together groups: a family or friends who want to serve at the SAME service.

@@ -1,4 +1,4 @@
-/* Church Hub – Messages: the church office, Pastors, carers and group leaders send messages to a care group, a message
+/* Church & Trellis – Messages: the church office, Pastors, carers and group leaders send messages to a care group, a message
  * group (e.g. Worship team leaders), the staff, every Church Partner or the Office; everyone reads theirs here, on a phone or a computer.
  * Rules (who goes in which audience, who may send, unread): js/messages.js. Data: messages, msgGroups (see that file). */
 (function () {
@@ -170,7 +170,7 @@
     var txt = TN('Goes to {n} person', 'Goes to {n} people', n);
     if (manager() && n) {
       var app = Msg.inApp(ids, S.list('people')).length;
-      if (app < n) txt += ' ' + T('{n} of them can’t sign in to Church Hub yet – reach them by email, WhatsApp or SMS as before.', { n: n - app });
+      if (app < n) txt += ' ' + T('{n} of them can’t sign in to Church & Trellis yet – reach them by email, WhatsApp or SMS as before.', { n: n - app });
     }
     return txt;
   }
@@ -283,7 +283,7 @@
 
   /* ---------- Sent ---------- */
   /** "Read by 3 of 5", opening to who has read it and who hasn't yet. */
-  /** "Message info", as on WhatsApp: read by, delivered to, and not delivered yet (they haven't opened Church Hub since). */
+  /** "Message info", as on WhatsApp: read by, delivered to, and not delivered yet (they haven't opened Church & Trellis since). */
   function readBy(m, s) {
     if (m.kind === 'office') return '';
     var r = Msg.readers(m), c = Msg.counts(m), a = { kind: m.kind, groupId: m.groupId }, names = function (ids) { return ids.map(function (id) { return personName(id, a); }).sort(function (x, y) { return x.localeCompare(y); }); };
@@ -347,7 +347,7 @@
     ['post', 'Envelopes', 'The envelope opens when it’s read', 'Like the post'],
     ['circle', 'Circles', 'The circle fills up as people read it', 'Like DingTalk · China'],
     ['words', 'Words', 'Says it in words: Sent, Delivered, Read', 'Like iMessage on iPhone, LINE (Japan, Thailand, Taiwan) and QQ (China)']];
-  var MEANINGS = [['sent', 'Sent: on its way. Not everyone has opened Church Hub since.'], ['delivered', 'Delivered: it has reached everyone, but no one has read it yet.'],
+  var MEANINGS = [['sent', 'Sent: on its way. Not everyone has opened Church & Trellis since.'], ['delivered', 'Delivered: it has reached everyone, but no one has read it yet.'],
     ['some', 'Read by some: it has reached everyone, and some have read it.'], ['read', 'Read: everyone has read it.']];
   function styleCard(x, chosen) {
     var steps = x[0] === 'words' ? ['sent', 'read'] : ['sent', 'delivered', 'some', 'read'];
@@ -377,7 +377,7 @@
   /** Sent: your own messages. All messages (Administrators and Pastors): everyone's. */
   function renderSent(everyone) {
     var u = me(), all = !!everyone && manager(), list = Msg.sent(S.list('messages'), u.id, all);
-    var html = head(all ? T('Every message sent in Church Hub, newest first. You can delete any of them.') : T('Messages you have sent, newest first.'), all ? 'all' : 'sent');
+    var html = head(all ? T('Every message sent in Church & Trellis, newest first. You can delete any of them.') : T('Messages you have sent, newest first.'), all ? 'all' : 'sent');
     if (!list.length) return html + '<p class="empty">' + T('Nothing sent yet.') + '</p>';
     if (list.some(function (m) { return m.fromId === u.id; })) html += legend();   // the signs are only on your own messages
     return html + '<section class="msg-chat">' + list.map(function (m) {

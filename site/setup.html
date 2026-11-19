@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Set up Church Hub for your church</title>
-<meta name="description" content="A friendly, step-by-step guide that takes your church from nothing to a working Church Hub – and reminds you what's still possible.">
+<title>Set up Church & Trellis for your church</title>
+<meta name="description" content="A friendly, step-by-step guide that takes your church from nothing to a working Church & Trellis – and reminds you what's still possible.">
 <!-- Read again whenever a feature is added (the middle version number goes up): see the top of site/setup-kit.js. -->
-<meta name="reviewed-for" content="0.95">
+<meta name="reviewed-for" content="0.96">
 <meta name="theme-color" content="#16212E">
 <link rel="icon" href="../assets/icons/favicon-48.png" sizes="48x48">
 <link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
@@ -235,7 +235,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
   <div class="wrap">
     <a class="brand" href="#/">
       <span class="mark"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></span>
-      <span>Church Hub<small>Setting up a church</small></span>
+      <span>Church & Trellis<small>Setting up a church</small></span>
     </a>
     <span class="grow"></span>
     <details class="menu" id="menu">
@@ -244,7 +244,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
         <a href="#/new">Set up another church</a>
         <button type="button" data-act="save">Save progress to a file</button>
         <button type="button" data-act="load">Open a progress file</button>
-        <a href="index.html">About Church Hub</a>
+        <a href="index.html">About Church & Trellis</a>
         <a href="https://github.com/pian1966/church-hub/blob/main/docs/FIREBASE-SETUP.md" target="_blank" rel="noopener">The full written guide</a>
         <hr><button type="button" data-act="forget" class="bad" id="forget">Remove this church from this computer</button>
       </div>
@@ -252,7 +252,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
   </div>
 </header>
 <main id="main" tabindex="-1"><div class="wrap" id="view"></div></main>
-<footer><div class="wrap"><span>Everything you type here stays on this computer – nothing is sent to Church Hub. Never type passwords here.</span><span id="ver"></span></div></footer>
+<footer><div class="wrap"><span>Everything you type here stays on this computer – nothing is sent to Church & Trellis. Never type passwords here.</span><span id="ver"></span></div></footer>
 <input type="file" id="file" accept=".json,application/json" hidden>
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
@@ -266,7 +266,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
   var K = SetupKit, esc = K.esc, view = document.getElementById('view');
   var KEY = 'church_hub_setup', VERSION = (window.ChurchHubVersion || {}).version || '0.0.0', NOW = VERSION.split('.').slice(0, 2).join('.');
   var rulesText = '', rulesAsked = false, seenThisVisit = {}, growTab = 'todo';
-  document.getElementById('ver').textContent = 'Up to date with Church Hub ' + VERSION;
+  document.getElementById('ver').textContent = 'Up to date with Church & Trellis ' + VERSION;
 
   /* ---------- saved progress (this browser only) ---------- */
   function load() { try { return JSON.parse(localStorage.getItem(KEY)) || { churches: {} }; } catch (e) { return { churches: {} }; } }
@@ -336,7 +336,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       return '<li><span><b>' + esc(ch.title) + '</b><span>' + esc(ch.blurb) + ' About ' + mins + ' minutes.</span></span></li>';
     }).join('') + '</ol></div>';
     if (!cs.length) {
-      return '<section class="hello"><div><p class="eyebrow">Welcome</p><h1>Let’s set up Church Hub for your church.</h1>' +
+      return '<section class="hello"><div><p class="eyebrow">Welcome</p><h1>Let’s set up Church & Trellis for your church.</h1>' +
         '<p class="lead">One friendly step at a time, from the church’s own Google account to your first sign-in. Stop whenever you like – this page remembers where you were.</p>' +
         '<div class="need"><span class="chip">' + icon('M3 5h18v12H3zM8 21h8M12 17v4', 16) + 'A computer</span><span class="chip">' + icon('M7 3h10v18H7zM11 18h2', 16) + 'The church office’s phone</span><span class="chip">' + icon('M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18', 16) + 'About an hour</span><span class="chip">' + icon('M12 3v18M6 9h12', 16) + 'No technical knowledge</span></div>' +
         '<div class="actions"><a class="btn primary" href="#/new">Start</a><button type="button" class="btn ghost" data-act="load">I have a progress file</button></div></div>' + journey + '</section>';
@@ -350,7 +350,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
 
   function newChurch() {
     return '<div style="max-width:620px;margin:0 auto"><a href="#/" class="linkbtn" style="text-decoration:none">‹ Back</a>' +
-      '<div class="card step" style="margin-top:14px"><p class="eyebrow">A new church</p><h1>Which church are we setting up?</h1><p class="why">Church Hub uses this to suggest addresses and to keep the church’s information close to home.</p>' +
+      '<div class="card step" style="margin-top:14px"><p class="eyebrow">A new church</p><h1>Which church are we setting up?</h1><p class="why">Church & Trellis uses this to suggest addresses and to keep the church’s information close to home.</p>' +
       '<form id="newform"><label class="field req"><span>Church name</span><input name="name" required autocomplete="organization" placeholder="e.g. St Mark’s Church, Pietermaritzburg"></label>' +
       '<label class="field req"><span>Country</span><select name="country" required>' + countryOptions(guessCountry()) + '</select></label>' +
       '<label class="field"><span>Your name</span><input name="you" autocomplete="name"></label>' +
@@ -359,11 +359,11 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
 
   function overview(ch) {
     var p = K.progress(ch), c = K.ctx(ch, Countries), t = today();
-    var head = '<section class="over-head">' + ring(p.done, p.total) + '<div class="grow"><p class="eyebrow">' + (p.live ? 'Church Hub is live' : 'Setting up') + '</p><h1>' + esc(ch.name) + '</h1>' +
+    var head = '<section class="over-head">' + ring(p.done, p.total) + '<div class="grow"><p class="eyebrow">' + (p.live ? 'Church & Trellis is live' : 'Setting up') + '</p><h1>' + esc(ch.name) + '</h1>' +
       '<p class="lead">' + (c.site && p.live ? '<a href="' + esc(c.site) + '" target="_blank" rel="noopener">' + esc(c.site.replace('https://', '')) + '</a> · ' : '') + esc(c.countryName) + ' · information kept in ' + esc(c.place) + '</p></div></section>';
     var next = p.next ? '<section class="card next' + (p.live ? ' live' : '') + '"><div><p class="eyebrow">Next up · about ' + p.next.mins + ' min</p><h2>' + esc(p.next.title) + '</h2><p>' + esc(p.next.why) + '</p></div>' +
       '<a class="btn primary" href="#/c/' + esc(ch.id) + '/s/' + p.next.id + '">' + (p.done ? 'Continue' : 'Start') + '</a></section>'
-      : '<section class="card next live"><div><p class="eyebrow">All set up</p><h2>' + esc(ch.name) + ' is running on Church Hub.</h2><p>Everything else below can be done whenever the church is ready.</p></div>' + (c.site ? '<a class="btn primary" href="' + esc(c.site) + '" target="_blank" rel="noopener">Open Church Hub</a>' : '') + '</section>';
+      : '<section class="card next live"><div><p class="eyebrow">All set up</p><h2>' + esc(ch.name) + ' is running on Church & Trellis.</h2><p>Everything else below can be done whenever the church is ready.</p></div>' + (c.site ? '<a class="btn primary" href="' + esc(c.site) + '" target="_blank" rel="noopener">Open Church & Trellis</a>' : '') + '</section>';
     var chapters = '<div class="chapters">' + K.CHAPTERS.map(function (chap) {
       var ss = K.stepsIn(chap.id), n = ss.filter(function (s) { return K.stepDone(ch, s.id); }).length, all = n === ss.length;
       return '<section class="card chapter' + (all ? ' done' : '') + '"><header><span class="tick' + (all ? ' on' : '') + '" style="width:40px;height:40px">' + (all ? '' : icon(ICON[chap.id], 18, '#4A5563')) + '</span>' +
@@ -386,7 +386,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
     });
     var shown = items.filter(function (x) { return x.bucket === growTab; });
     var newCount = items.filter(function (x) { return K.isNew(x.it, prev) && x.bucket === 'todo'; }).length;
-    var grow = '<div class="section-head"><div class="grow"><p class="eyebrow">' + (p.live ? 'Whenever you’re ready' : 'After setting up') + '</p><h2>Everything else Church Hub can do</h2>' +
+    var grow = '<div class="section-head"><div class="grow"><p class="eyebrow">' + (p.live ? 'Whenever you’re ready' : 'After setting up') + '</p><h2>Everything else Church & Trellis can do</h2>' +
       '<p>Come back to this list any time. Tick what the church has done, or put aside what it doesn’t need' + (newCount ? ' – <b>' + newCount + ' new since you last looked</b>' : '') + '.</p></div>' +
       '<div class="seg" role="tablist">' + [['todo', 'Still to do'], ['done', 'Done'], ['skip', 'Not for us']].map(function (x) {
         return '<button type="button" role="tab" aria-selected="' + (growTab === x[0]) + '" class="' + (growTab === x[0] ? 'on' : '') + '" data-tab="' + x[0] + '">' + x[1] + ' · ' + counts[x[0]] + '</button>';
@@ -395,8 +395,8 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       var xs = shown.filter(function (x) { return x.it.group === g.id; });
       if (!xs.length) return '';
       return '<section><h3>' + esc(g.title) + '</h3><div class="items">' + xs.map(function (x) { return growItem(ch, c, x, prev, t); }).join('') + '</div></section>';
-    }).join('') + '</div>' : '<div class="card empty" style="margin-top:18px">' + (growTab === 'done' ? 'Nothing ticked yet – it fills up as the church grows into Church Hub.' : growTab === 'skip' ? 'Nothing put aside.' : 'Everything is done. Wonderful!') + '</div>';
-    var coming = '<div class="section-head"><div class="grow"><p class="eyebrow">On the way</p><h2>Coming to Church Hub</h2><p>Not ready yet – this list grows as Church Hub does, and each one moves up when it arrives.</p></div></div>' +
+    }).join('') + '</div>' : '<div class="card empty" style="margin-top:18px">' + (growTab === 'done' ? 'Nothing ticked yet – it fills up as the church grows into Church & Trellis.' : growTab === 'skip' ? 'Nothing put aside.' : 'Everything is done. Wonderful!') + '</div>';
+    var coming = '<div class="section-head"><div class="grow"><p class="eyebrow">On the way</p><h2>Coming to Church & Trellis</h2><p>Not ready yet – this list grows as Church & Trellis does, and each one moves up when it arrives.</p></div></div>' +
       '<div class="coming">' + K.COMING.map(function (x) { return '<div><b>' + esc(x.title) + '</b><p>' + esc(x.what) + '</p></div>'; }).join('') + '</div>';
     return head + next + chapters + grow + coming;
   }
@@ -465,7 +465,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
     else if (ch) html = overview(ch);
     else html = welcome();
     view.innerHTML = html;
-    document.title = ch ? ch.name + ' – setting up Church Hub' : 'Set up Church Hub for your church';
+    document.title = ch ? ch.name + ' – setting up Church & Trellis' : 'Set up Church & Trellis for your church';
     if (ch && parts[2] !== 's') { if (!seenThisVisit[ch.id]) seenThisVisit[ch.id] = ch.seen || NOW; ch.seen = NOW; save(); }
     wire(ch, parts);
   }
@@ -529,8 +529,8 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
     var goTo = '#/c/' + ch.id + (next && !K.stepDone(ch, next.id) ? '/s/' + next.id : p.next ? '/s/' + p.next.id : '');
     var chapNow = K.stepsIn(s.chapter).every(function (x) { return K.stepDone(ch, x.id); });
     location.hash = goTo;
-    if (!was && s.id === 'signin') cheer('Church Hub is live!', esc(ch.name) + ' now has its own Church Hub. A few more things before anyone else joins.', 'Keep going', goTo);
-    else if (!was && !p.next) cheer('All set up!', esc(ch.name) + ' is ready for its people. Everything else Church Hub can do is waiting on the church’s list, whenever you’re ready.', 'See the list', '#/c/' + ch.id);
+    if (!was && s.id === 'signin') cheer('Church & Trellis is live!', esc(ch.name) + ' now has its own Church & Trellis. A few more things before anyone else joins.', 'Keep going', goTo);
+    else if (!was && !p.next) cheer('All set up!', esc(ch.name) + ' is ready for its people. Everything else Church & Trellis can do is waiting on the church’s list, whenever you’re ready.', 'See the list', '#/c/' + ch.id);
     else if (!was && chapNow && !chapDoneBefore) { confetti(); toast('“' + K.chapterOf(s.chapter).title + '” – done!'); }
   }
 
@@ -563,7 +563,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
     }
     if (act === 'load') { document.getElementById('file').click(); document.getElementById('menu').open = false; return; }
     if (act === 'forget' && ch) {
-      if (!window.confirm('Remove ' + ch.name + '’s setup progress from this computer? Nothing in the church’s Church Hub, Google or GitHub accounts changes.')) return;
+      if (!window.confirm('Remove ' + ch.name + '’s setup progress from this computer? Nothing in the church’s Church & Trellis, Google or GitHub accounts changes.')) return;
       delete db.churches[ch.id]; save(); location.hash = '#/'; return;
     }
   });
@@ -573,7 +573,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
       var d = JSON.parse(txt); if (!d || !d.churchHubSetup || !Array.isArray(d.churches)) throw 0;
       d.churches.forEach(function (c) { if (c && c.id && c.name) db.churches[c.id] = c; });
       save(); toast('Opened'); location.hash = d.churches.length === 1 ? '#/c/' + d.churches[0].id : '#/'; route();
-    }).catch(function () { toast('That isn’t a Church Hub setup file'); });
+    }).catch(function () { toast('That isn’t a Church & Trellis setup file'); });
     e.target.value = '';
   });
   document.addEventListener('click', function (e) { var m = document.getElementById('menu'); if (m.open && !m.contains(e.target)) m.open = false; });

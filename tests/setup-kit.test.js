@@ -1,5 +1,5 @@
 /* Tests for the setup tool (site/setup-kit.js, used by site/setup.html). Run: node tests/setup-kit.test.js
- * Besides the rules, this keeps the tool up to date as Church Hub grows: every part of the app must be covered. */
+ * Besides the rules, this keeps the tool up to date as Church & Trellis grows: every part of the app must be covered. */
 'use strict';
 const fs = require('fs'), path = require('path');
 const K = require('../site/setup-kit.js'), Countries = require('../js/countries.js');
@@ -37,7 +37,7 @@ ok(K.emailIdeas('Christ Church Howick')[0] === 'christchurchhowick@gmail.com', '
 ok(K.emailIdeas('St Mark’s Anglican Church, Durban')[0] === 'stmarksdurban@gmail.com', 'long names leave out the common words');
 ok(K.emailIdeas('The Methodist Church of Southern Africa, Pietermaritzburg Central').every(e => e.split('@')[0].length <= 30), 'Gmail ideas fit Gmail’s 30 letters');
 ok(K.githubIdea('Christ Church Howick') === 'christ-church-howick' && K.validGithub('christ-church-howick') && !K.validGithub('-x') && !K.validGithub('a--b') && !K.validGithub('a b'), 'GitHub username idea and check');
-ok(K.projectName('Christ Church Howick') === 'Church Hub CCH' && K.projectName('A very long church name indeed with many words here').length <= 30, 'Firebase project name (≤ 30 letters)');
+ok(K.projectName('Christ Church Howick') === 'Church & Trellis CCH' && K.projectName('A very long church name indeed with many words here').length <= 30, 'Firebase project name (≤ 30 letters)');
 ok(full.site === 'https://st-marks.github.io/church-hub/' && full.domain === 'st-marks.github.io' && full.email === 'stmarks@gmail.com', 'the church’s address and email, in small letters');
 
 // Where the information is kept

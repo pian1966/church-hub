@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: children's ministry, a Pastor and the roster coordinator on People; Church at a glance, advanced search, Change selected…, Settings services and offers to serve.
+/* Church & Trellis – browser test, part: children's ministry, a Pastor and the roster coordinator on People; Church at a glance, advanced search, Change selected…, Settings services and offers to serve.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -7,7 +7,7 @@ module.exports = async function (ctx) {
   console.log('Children’s ministry – parents, guardians and collection:');
   s = await session('grace.ndlovu@example.com', seedDocs());
   await s.go('people/p/p12'); let t = await s.text();
-  check(t.includes('Parents, guardians and collection') && t.includes('Jason Naidoo') && t.includes('Granny Naidoo') && t.includes('Trusted collector'), 'a child’s parents and a trusted collector (not in Church Hub) are shown');
+  check(t.includes('Parents, guardians and collection') && t.includes('Jason Naidoo') && t.includes('Granny Naidoo') && t.includes('Trusted collector'), 'a child’s parents and a trusted collector (not in Church & Trellis) are shown');
   await s.go('people/p/p13'); t = await s.text();
   check(t.includes('Not allowed to collect') && t.includes('J. Example') && t.includes('court order'), 'collection restrictions are shown on the child');
   await s.settle(); docs = await s.docsNow();
@@ -388,7 +388,7 @@ module.exports = async function (ctx) {
   await s.page.$eval('#st-th-c', e => { e.value = '#9333ea'; e.dispatchEvent(new Event('change', { bubbles: true })); });
   check(await s.page.$eval('#th-prev', e => e.getAttribute('style').includes('--a:#9333EA')) && (await s.page.textContent('#th-hex')) === '#9333EA', 'any colour: the sample and the turning cross change straight away, also where the colour window only says when it closes');
   // Our own picker (not the phone's colour window): drag across the colour area, slide the rainbow bar, type a code
-  check(await s.page.$eval('#st-th-c', e => e.type) === 'text' && !(await s.page.$('#st-theme input[type=color]')), 'any colour: Church Hub’s own picker, not the phone’s colour window');
+  check(await s.page.$eval('#st-th-c', e => e.type) === 'text' && !(await s.page.$('#st-theme input[type=color]')), 'any colour: Church & Trellis’s own picker, not the phone’s colour window');
   await s.page.fill('#th-hue', '0'); await s.page.$eval('#th-hue', e => e.dispatchEvent(new Event('input', { bubbles: true })));
   const sv = await s.page.$('#th-sv'); await sv.scrollIntoViewIfNeeded(); const box = await sv.boundingBox();
   await s.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await s.page.mouse.down(); await s.page.mouse.move(box.x + box.width + 30, box.y - 30, { steps: 4 }); await s.page.mouse.up();

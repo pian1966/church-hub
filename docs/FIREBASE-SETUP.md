@@ -1,8 +1,8 @@
-# Connecting Church Hub to Firebase – step by step
+# Connecting Church & Trellis to Firebase – step by step
 
 **Easier: the setup tool** at https://pian1966.github.io/church-hub/site/setup.html walks through all of this one step at a time (and the church's Google account and its own copy of the website before it), remembers where you were, and afterwards keeps a list of everything else the church can switch on. This page is the same steps written out in full.
 
-This connects Church Hub to the church's own database, stored in Johannesburg. It takes about 30 minutes.
+This connects Church & Trellis to the church's own database, stored in Johannesburg. It takes about 30 minutes.
 You don't need to be technical: follow each step and click exactly what it says.
 Google sometimes moves buttons around; if something isn't where this guide says, look for the same words nearby.
 
@@ -18,9 +18,9 @@ Google sometimes moves buttons around; if something isn't where this guide says,
 ## Step 1 – Create the project
 1. Go to **https://console.firebase.google.com** and check the round picture at the top right is the church's account.
 2. Click **Create a project** (or **Add project**).
-3. Project name: type `Church Hub CCH`. Firebase shows a project ID underneath (e.g. `church-hub-cch`); write it down. Click **Continue**.
+3. Project name: type `Church & Trellis CCH`. Firebase shows a project ID underneath (e.g. `church-hub-cch`); write it down. Click **Continue**.
 4. If it asks about Gemini / AI assistance, you can switch it off. Click **Continue**.
-5. **Google Analytics: switch it OFF** (Church Hub doesn't need it, and POPIA says collect only what you need). Click **Create project**.
+5. **Google Analytics: switch it OFF** (Church & Trellis doesn't need it, and POPIA says collect only what you need). Click **Create project**.
 6. Wait until it says the project is ready, then click **Continue**.
 
 The project stays on the free **Spark** plan. Don't add a credit card; a church this size stays well inside the free limits.
@@ -47,12 +47,12 @@ The project stays on the free **Spark** plan. Don't add a credit card; a church 
 ## Step 4 – Register the website and get its settings
 1. Click the **gear icon** next to **Project Overview** (top left) → **Project settings**.
 2. Scroll down to **Your apps** and click the **web** icon, which looks like `</>`.
-3. App nickname: `Church Hub website`. **Don't** tick "Firebase Hosting". Click **Register app**.
+3. App nickname: `Church & Trellis website`. **Don't** tick "Firebase Hosting". Click **Register app**.
 4. Firebase shows some code containing `const firebaseConfig = { ... }`. Leave this page open: you need four of its lines in step 6:
    `apiKey`, `authDomain`, `projectId` and `appId`. Click **Continue to console**.
 
 ## Step 5 – Add yourself as the first Administrator
-Church Hub only lets in people on its access list. The first name goes on it by hand; after that, Administrators give access inside Church Hub.
+Church & Trellis only lets in people on its access list. The first name goes on it by hand; after that, Administrators give access inside Church & Trellis.
 1. Go back to **Firestore** (step 2, point 1) and click the **Data** tab.
 2. Click **+ Start collection**. Collection ID: `roles` → **Next**.
 3. Document ID: type **the email address you will sign in with**, all in small letters (e.g. `office@example.org`).
@@ -76,7 +76,7 @@ to talk to, and every visitor's browser receives them anyway. The church's infor
 access list and the security rules (step 7). Step 8 also stops other websites from using them.
 
 ## Step 7 – Publish the security rules
-These decide who can see what (POPIA). Without them nobody can use Church Hub.
+These decide who can see what (POPIA). Without them nobody can use Church & Trellis.
 1. Open **https://github.com/pian1966/church-hub/blob/main/firestore.rules** and click the **Copy raw file** icon (two overlapping squares, top right of the file).
 2. In Firebase, go to **Firestore** → **Rules** tab.
 3. Select everything in the editor (Ctrl+A, or ⌘+A on a Mac) and paste (Ctrl+V / ⌘+V), replacing what was there.
@@ -87,7 +87,7 @@ Whenever `firestore.rules` changes on GitHub, repeat this step – or let GitHub
 
 ## Step 8 – Only let the church's website use the key
 1. Open **https://console.cloud.google.com/apis/credentials** (signed in as the church's account) and choose the
-   Church Hub project in the project picker at the top.
+   Church & Trellis project in the project picker at the top.
 2. Under **API Keys**, click **Browser key (auto created by Firebase)**.
 3. Under **Application restrictions**, choose **Websites**, then **Add** each of these two lines (use your project ID from step 1):
    - `https://pian1966.github.io/*`
@@ -98,7 +98,7 @@ Whenever `firestore.rules` changes on GitHub, repeat this step – or let GitHub
 1. Wait two minutes after step 6, then open **https://pian1966.github.io/church-hub/**. You should see **Sign in**
    (not the demo). The demo with made-up people is still at **https://pian1966.github.io/church-hub/?demo**.
 2. Click **Sign in with Google** and choose the email from step 5 (or use **Email me a link**).
-3. Church Hub asks you to **Set up Church Hub**: check the church name, type your name, click **Set up**.
+3. Church & Trellis asks you to **Set up Church & Trellis**: check the church name, type your name, click **Set up**.
    This creates the church settings, the leave rules (same as Leave Manager) and a few starter serving teams.
 4. You're in. Go to **Privacy** and fill in the Information Officer and privacy notice before adding anyone.
 

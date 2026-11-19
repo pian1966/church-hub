@@ -4,9 +4,9 @@
 probably needs a new kind of record for deletions and a rule for it – the "shape of the documents everyone loads"
 that `RISKS.md` (R5) and rule list say to escalate. Don't start building before the design is written.
 
-**Why:** many members pay for every megabyte. Church Hub keeps the church's information on the phone (Firestore's
+**Why:** many members pay for every megabyte. Church & Trellis keeps the church's information on the phone (Firestore's
 offline copy, `openDb()` in `js/store.js`) and an update doesn't wipe it, but each list is a live listener on a whole
-collection (`onSnapshot`, ~674, 713, 735, 777). When Church Hub has been closed for more than about 30 minutes,
+collection (`onSnapshot`, ~674, 713, 735, 777). When Church & Trellis has been closed for more than about 30 minutes,
 Firestore may send the whole of each list again rather than only the changes. On a big church that is the largest
 download in daily use, and it also counts towards the free 50 000 reads a day (R5).
 

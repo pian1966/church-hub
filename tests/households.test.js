@@ -23,7 +23,7 @@ const links = [
   { childId: 'kid', adultId: 'step', relationship: 'Step-parent', canConsent: false, confirmed: false },
   { childId: 'kid', adultId: '', name: 'Granny', relationship: 'Trusted collector', canConsent: true, confirmed: true }
 ];
-ok(HS.consentAdults('kid', links).map(l => l.adultId).join() === 'mum', 'only adults in Church Hub marked “can give consent”');
+ok(HS.consentAdults('kid', links).map(l => l.adultId).join() === 'mum', 'only adults in Church & Trellis marked “can give consent”');
 const nd = HS.needs(people, links);
 ok(nd.noConsenter.map(c => c.id).join() === 'lone' && nd.unconfirmed.map(c => c.id).join() === 'kid', 'to-dos: a child with nobody to consent; links still to confirm');
 ok(HS.defaultsFor('Step-parent').canConsent === false && HS.defaultsFor('Legal guardian').canConsent === true && HS.defaultsFor('Trusted collector').mayCollect, 'sensible defaults per relationship');

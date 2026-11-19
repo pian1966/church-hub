@@ -42,9 +42,9 @@ For: Administrators
 **Settings → What Pastors can do**. Pastors always see and edit everyone's details, households, children and pastoral notes;
 tick what else they may do (settings, giving access, ID numbers, leave, rosters, privacy, import, translations). You can choose
 one **Senior Pastor**, who gets their own ticks; the others show as Assistant Pastors. Pastors get the change the next time
-they open Church Hub. Medical notes always stay with Children's ministry.
+they open Church & Trellis. Medical notes always stay with Children's ministry.
 
-## How do I see Church Hub as another role sees it?
+## How do I see Church & Trellis as another role sees it?
 For: Administrators, the Senior Pastor
 Also asked: View as a member. Test what a roster coordinator sees.
 
@@ -63,10 +63,10 @@ regular service…**. Special services: see [rosters.md](rosters.md).
 ## How do emails get sent (birthdays, anniversaries, welcome)?
 For: Administrators
 
-Church Hub suggests emails (birthdays, anniversaries, late-spouse remembrance, newcomer welcome) only to people who agreed to
+Church & Trellis suggests emails (birthdays, anniversaries, late-spouse remembrance, newcomer welcome) only to people who agreed to
 email (a married couple gets one anniversary email together). Under **Send emails using** choose your email program or the
 church's Gmail (opens in the browser – be signed in there with the church's Gmail account), set the **Signed by** name, and
-edit the email templates. Church Hub opens each email ready to send – you press send.
+edit the email templates. Church & Trellis opens each email ready to send – you press send.
 
 ## How do I bring people across from Elvanto?
 For: Administrators
@@ -91,13 +91,13 @@ Switch on AI in **Settings → Apps → AI for “Ask in your own words”**. It
 church's Firebase project first (the setup guide is linked there: docs/AI-SEARCH-SETUP.md), and the Information Officer
 should agree, because questions go to Google's Gemini. No church records are sent – only the question.
 
-## Church Hub feels slow. What can I do?
+## Church & Trellis feels slow. What can I do?
 For: Administrators
 Also asked: It takes ages to load. Pages are slow.
 
 Straight after it was slow, open **About** and look at **Speed check**: how long opening took, how long each recent page took
 to draw, how long the browser was too busy to respond, and how many records were loaded. Send a screenshot of it to whoever
-looks after Church Hub. Closing other Church Hub tabs and using **Update now** under About can also help.
+looks after Church & Trellis. Closing other Church & Trellis tabs and using **Update now** under About can also help.
 
 ## How do I change the brochures?
 For: Administrators
@@ -109,16 +109,16 @@ Open **About → Brochures** and choose **For our members** or **For other churc
   **Done editing** when you've finished.
 - **Language**: choose a language in the brochure editor. Wording you change is saved for that language only; the original
   brochure wording remains the fallback when you have not changed a line in that language.
-- **Colour** and **Font**: Church Hub orange, your church's own colour (Settings → Colours) or any colour, and a choice of fonts.
+- **Colour** and **Font**: Church & Trellis orange, your church's own colour (Settings → Colours) or any colour, and a choice of fonts.
 - **Print or save as PDF**: A4 landscape, both sides, flipping on the short edge, then fold in three.
 If a red warning says a panel doesn't fit, shorten its text or hide a block. **Back to the original wording** clears wording
-changes for the language you selected; **Back to Church Hub's colour and font** resets the design. When Church Hub updates
+changes for the language you selected; **Back to Church & Trellis's colour and font** resets the design. When Church & Trellis updates
 a brochure's wording, any change you made to that line is listed so you can redo it. Only Administrators can open or change
 the editor; its saved wording is kept separately from general church settings.
 
-## How do I set up Church Hub at another church?
+## How do I set up Church & Trellis at another church?
 For: Administrators
-Also asked: Install Church Hub for a new church. Start using Church Hub. A friend's church wants it. Setup guide.
+Also asked: Install Church & Trellis for a new church. Start using Church & Trellis. A friend's church wants it. Setup guide.
 
 Open the setup tool: **https://pian1966.github.io/church-hub/site/setup.html** (also linked from the website as **Set up Church
 Hub for your church**). Use a computer. It goes one step at a time – the church's own Google account, its copy of the website,
@@ -129,9 +129,9 @@ own names, with copy buttons and links to the right pages. It remembers where yo
 For: Administrators
 Also asked: What haven't we set up yet? What's new for Administrators? Setup checklist.
 
-The setup tool keeps a list for each church it set up: **Everything else Church Hub can do** – Care Groups, Midweek Groups,
+The setup tool keeps a list for each church it set up: **Everything else Church & Trellis can do** – Care Groups, Midweek Groups,
 rosters, message groups, leave, the library, AI search and more – with **How**, **Done** and **Not for us**, and **New** beside
-anything added since you last looked. It also reminds you about once a month to bring the latest Church Hub into your
+anything added since you last looked. It also reminds you about once a month to bring the latest Church & Trellis into your
 church's copy. The list is kept on the computer you used; **More → Save progress to a file** carries it to another.
 
 ## How do I check which version we're on?

@@ -1,5 +1,5 @@
 /*
- * Church Hub – search in your own words ("Ask"): plain English, typed or spoken, turned into the same filters as Advanced
+ * Church & Trellis – search in your own words ("Ask"): plain English, typed or spoken, turned into the same filters as Advanced
  * search (people) or into a search of the roster (services). No outside service: a set of rules that understands the
  * usual ways of asking, and says what it understood and what it didn't, so nothing is guessed silently.
  * Pure functions, tested with node: tests/ask.test.js.

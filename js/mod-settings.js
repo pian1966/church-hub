@@ -1,4 +1,4 @@
-/* Church Hub – Settings: church details, apps on/off, who has access, service times. */
+/* Church & Trellis – Settings: church details, apps on/off, who has access, service times. */
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
@@ -87,7 +87,7 @@
     ['general', TX('General'), TX('Name and country'), 'church', 'M3 21h18M5 21V8l7-5 7 5v13M10 21v-6h4v6', 'church name country address province state county privacy law'],
     ['colours', TX('Colours'), TX('The church’s colour'), 'church', 'M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.7-1.2-.7-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11h.01M10 7.5h.01M14 7.5h.01', 'colour color theme brand logo cross buttons'],
     ['terminology', TX('Terminology (Church Words)'), TX('The words your church uses'), 'church', 'M4 7V5h16v2M9 19h6M12 5v14', 'words wording terms names music worship praise leader'],
-    ['apps', TX('Apps'), TX('Switch parts of Church Hub on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask'],
+    ['apps', TX('Apps'), TX('Switch parts of Church & Trellis on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask'],
     ['services', TX('Church Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
     ['application', TX('Membership application'), TX('Declaration, documents to read, loyalty'), 'features', 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5', 'partner partnership membership member application form declaration constitution statement of faith denomination affiliation loyalty links documents'],
     ['access', TX('Who can see what'), TX('What each access level can see'), 'access', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'see contact details directory care groups consent roles access level basic church partner roster children'],
@@ -176,7 +176,7 @@
       '<div class="two"><label class="field">' + T('The church’s meetings are called') + '<select id="wd-service">' + Object.keys(Wording.SERVICE).map(function (k) {
         return '<option value="' + k + '"' + (Wording.SERVICE[k][0] === words.service[0] ? ' selected' : '') + '>' + esc('Church ' + Wording.SERVICE[k][1]) + '</option>'; }).join('') +
         (Wording.SERVICE[words.service[0]] ? '' : '<option value="" selected>' + esc('Church ' + words.service[1]) + '</option>') + '</select><small>' + T('For example “Church Services” in Settings, and “a service” on the rosters.') + '</small></label></div>' +
-      '<div class="table-wrap"><table class="simple stack-phone"><thead><tr><th>' + T('Church Hub says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="simple stack-phone"><thead><tr><th>' + T('Church & Trellis says') + '</th><th>' + T('Your word') + '</th><th>' + T('More than one') + '</th></tr></thead><tbody>' +
       Wording.TERMS.map(function (t) {
         var adminChoice = t[0] === 'admin' ? '<select class="wd-admin-preset" aria-label="' + esc(T('Administrator title')) + '">' +
           [['Administrator', 'Administrator'], ['Church Administrator', 'Church Administrator'], ['Operations Manager', 'Operations Manager'], ['Secretary', 'Secretary'], ['', 'Custom wording']].map(function (x) {
@@ -208,7 +208,7 @@
 
     return '<div data-autoscope><p class="hint set-lead">' + T('Editable email templates for birthdays, anniversaries, late spouse remembrance, and newcomer welcome messages.') + '</p>' +
       '<section class="panel"><h2>' + T('Sending email') + '</h2>' +
-      '<p class="hint" style="margin-top:0">' + T('Choose how Church Hub opens emails to send.') + '</p>' +
+      '<p class="hint" style="margin-top:0">' + T('Choose how Church & Trellis opens emails to send.') + '</p>' +
       '<div class="two"><label class="field">' + T('Church email address') + '<input id="em-office" type="email" value="' + esc(st.emailOffice || '') + '"></label>' +
       '<label class="field">' + T('Church Gmail address') + '<input id="em-gmail" type="email" value="' + esc(st.emailGmail || '') + '"></label></div>' +
       '<div class="two"><label class="field">' + T('Send emails using') + methodSelect('em-method', curMethod, st) +
@@ -238,7 +238,7 @@
         }).join('') + '</select></div></div></div>' +
       '<button class="btn small" data-autosave data-act="settings:name">' + T('Save') + '</button></section>';
   }
-  /** Apps: each part of Church Hub with a switch. Switching off hides it for everyone; nothing is deleted. */
+  /** Apps: each part of Church & Trellis with a switch. Switching off hides it for everyone; nothing is deleted. */
   function renderApps(st) {
     return '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p><div class="set-rows">' + MODS.map(function (m) {
       return '<label class="set-row"><span class="set-l"><b>' + esc(T(m[1])) + '</b><small>' + esc(T(m[2])) + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" class="st-mod" value="' + m[0] + '"' + (H.isOn(m[0]) ? ' checked' : '') + ' aria-label="' + esc(T(m[1])) + '"></span></label>';
@@ -250,9 +250,9 @@
     var ai = st.ai || {}, cfg = window.CHURCH_HUB_FIREBASE || {}, live = S.isLive(), ready = !!cfg.appCheckKey;
     var guide = 'https://github.com/pian1966/church-hub/blob/main/docs/AI-SEARCH-SETUP.md';
     return '<section class="panel" id="set-ai"><h2>AI for “Ask in your own words”</h2>' +
-      '<p class="hint" style="margin-top:0">People → Advanced search understands questions much better with AI: the question (and the list of search fields – never anyone’s records) goes to Google’s Gemini, which turns it into filters. Church Hub checks them and runs the search as usual. If the AI can’t be reached, Church Hub’s own rules are used.</p>' +
+      '<p class="hint" style="margin-top:0">People → Advanced search understands questions much better with AI: the question (and the list of search fields – never anyone’s records) goes to Google’s Gemini, which turns it into filters. Church & Trellis checks them and runs the search as usual. If the AI can’t be reached, Church & Trellis’s own rules are used.</p>' +
       '<div class="set-rows"><label class="set-row"><span class="set-l"><b>Use AI to understand questions</b><small>' +
-        (!live ? 'Only when Church Hub is connected to the church’s Firebase project (not in the demo).' : ready ? 'Set up – switch on to use it.' : 'Not set up yet – follow the setup guide first (about 15 minutes).') +
+        (!live ? 'Only when Church & Trellis is connected to the church’s Firebase project (not in the demo).' : ready ? 'Set up – switch on to use it.' : 'Not set up yet – follow the setup guide first (about 15 minutes).') +
       '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="st-ai"' + (ai.on ? ' checked' : '') + (live ? '' : ' disabled') + '></span></label>' +
       '<div class="set-row"><label class="set-l" for="st-ai-model"><b>Model</b><small>Change only if Google retires this one (the setup guide says how to check).</small></label><span class="set-c"><input id="st-ai-model" value="' + esc(ai.model || AskAI.MODEL) + '" style="max-width:220px"></span></div></div>' +
       '<p class="hint"><a href="' + guide + '" target="_blank" rel="noopener">Setup guide (docs/AI-SEARCH-SETUP.md)</a> · Before switching on, the Information Officer should agree and the privacy notice should say questions go to Google’s Gemini.</p></section>';
@@ -286,7 +286,7 @@
    *  the turning cross, the logo and the menu, for everyone. Like Leave Manager's "My colour": a live sample at the top,
    *  round swatches, any colour by its code, and a Save button – nothing changes for anyone until it is saved. */
   // Bright colours that well-known churches use for their buttons and logos (Nov 2026: Alpha, Life.Church, Elevation, The Creek,
-  // UCC, Jesus People and others), with Church Hub's own orange first. Light ones get dark writing on buttons (Hub.themeFrom).
+  // UCC, Jesus People and others), with Church & Trellis's own orange first. Light ones get dark writing on buttons (Hub.themeFrom).
   var SWATCHES = ['#E8590C', '#F49A0D', '#F8A91F', '#FDC830', '#E42312', '#A6192E', '#E84A8A', '#6D3FC0', '#27375E',
     '#007EA9', '#00A8D8', '#2ABACC', '#71C5E8', '#9ECDC9', '#598D7F', '#2E7D4F', '#606951', '#1E1F23'];
   var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
@@ -300,7 +300,7 @@
       '<div class="th-prev" id="th-prev" style="' + themeVars(shown) + '">' +
         '<div class="th-pside"><span class="th-pmark">' + H.icon('M12 3v18M6 9h12', 18) + '</span><span class="th-pnav"></span><span class="th-pnav on"></span><span class="th-pnav"></span></div>' +
         '<div class="th-pmain"><span class="th-pbtn">' + H.icon(H.ICON.plus, 16) + T('Add') + '</span><span class="th-psave">' + T('Save') + '</span>' +
-        '<span class="th-plink">Church Hub</span><span class="th-pcross">' + CROSS_SVG + '</span></div></div>' +
+        '<span class="th-plink">Church & Trellis</span><span class="th-pcross">' + CROSS_SVG + '</span></div></div>' +
       '<div class="th-sws" role="radiogroup" aria-label="' + esc(T('Colours')) + '">' + SWATCHES.map(function (c) {
         return '<button type="button" class="th-sw' + (c === hex ? ' on' : '') + '" data-c="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === hex) + '" aria-label="' + c + '"></button>';
       }).join('') + '</div>' +
@@ -398,7 +398,7 @@
       '<p class="hint" style="margin-top:0">' + T('Everyone who signs in sees the name and photo of people in the church directory. Tick which of their contact details each kind of access may also see.') + '</p>' +
       '<div class="table-wrap"><table class="simple see-grid"><thead><tr><th>' + T('Contact detail') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
       P.SHARE.map(function (f) {
-        return '<tr><td>' + esc(T(f[1])) + (f[0] === 'spouse' ? ' ' + H.tip(T('The name of their husband, wife or partner, when both are in Church Hub.')) : '') + '</td>' + P.TIERS.map(function (t) {
+        return '<tr><td>' + esc(T(f[1])) + (f[0] === 'spouse' ? ' ' + H.tip(T('The name of their husband, wife or partner, when both are in Church & Trellis.')) : '') + '</td>' + P.TIERS.map(function (t) {
           return box('st-see" data-t="' + t[0], f[0], (see[t[0]] || []).indexOf(f[0]) >= 0, H.roleLabel(t[0]) + ': ' + T(f[1]));
         }).join('') + '</tr>';
       }).join('') + '</tbody></table></div>' + always +
@@ -442,7 +442,7 @@
 
   /** What Pastors can do: an Administrator ticks the Administrator abilities Pastors may have (settings.pastorCan).
    *  They may also choose the Senior Pastor (Rector, settings.seniorPastorId), who gets their own ticks (settings.seniorCan);
-   *  the other Pastors are then shown as Assistant Pastors (Assistant Ministers). Church Hub copies the ticks onto each
+   *  the other Pastors are then shown as Assistant Pastors (Assistant Ministers). Church & Trellis copies the ticks onto each
    *  Pastor's access-list entry, and the database rules check them there. */
   function renderPastorCan(st) {
     var on = st.pastorCan || [], son = st.seniorCan || [], admin = H.can('*'), dis = admin ? '' : ' disabled';
@@ -466,7 +466,7 @@
         '<small>' + T('The Pastor who leads the church can have more than the others. The other Pastors are then called Assistant Pastors.') + '</small></label>' +
       ticks +
       (admin ? '<div class="btns"><button class="btn small" data-autosave data-act="settings:pastorcan">' + T('Save') + '</button><button class="btn small ghost" data-act="settings:pastorall">' + T('Tick everything') + '</button></div>' +
-        '<p class="hint">' + T('Pastors get the change the next time they open Church Hub.') + (Store.isLive() ? ' ' + T('If you have changed the database rules file, publish it again first (FIREBASE-SETUP step 7).') : '') + '</p>'
+        '<p class="hint">' + T('Pastors get the change the next time they open Church & Trellis.') + (Store.isLive() ? ' ' + T('If you have changed the database rules file, publish it again first (FIREBASE-SETUP step 7).') : '') + '</p>'
         : '<p class="hint">' + T('Only an Administrator can change this.') + '</p>') + '</section>';
   }
 

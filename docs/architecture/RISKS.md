@@ -5,7 +5,7 @@
 | # | Decision | Why it is hard to undo |
 | --- | --- | --- |
 | H1 | The website's address | Sign-in links, each church's authorised domain and key restriction, installed home-screen apps and the offline copy are all tied to it. Choose it before the first other church. |
-| H2 | The Google account that owns the "Allow" window (task 001) | Moving it later means every church meets an unfamiliar window, and verification starts again. Use an account made for Church Hub, with a second person able to recover it. |
+| H2 | The Google account that owns the "Allow" window (task 001) | Moving it later means every church meets an unfamiliar window, and verification starts again. Use an account made for Church & Trellis, with a second person able to recover it. |
 | H3 | A church's data region (helper step 4) | Google does not allow it to be changed. Show it in words and ask "Is this right?". |
 | H4 | The shape of `public/hub` and of the church link (`?c=`) | Printed QR codes and shared links carry it. Only ever add fields. |
 | H5 | The rules-version rule (`rulesAtLeast`) | Every later website depends on it. Never remove it or lower the number. |
@@ -24,7 +24,7 @@ guided clicks. Escalate.
 **R2 – Unproven automatic steps** (task 002 settles each):
 - Switching on sign-in by API on a free project. *Fallback:* one guided click – the helper opens the church's
   Authentication page; the person clicks **Get started**; the helper carries on.
-- Google sign-in with Church Hub's shared client id. *Fallback:* email link only for that church, plus the guided
+- Google sign-in with Church & Trellis's shared client id. *Fallback:* email link only for that church, plus the guided
   click to enable Google in the console (which makes its own client id).
 - Reading `public/hub` with no key. *Fallback:* the longer church code (`TARGET.md` section 3).
 - AI Logic and App Check by API. *Fallback:* AI stays a guided setup.
@@ -44,8 +44,8 @@ over one Wi-Fi (or one mobile network that shares addresses) may be told to wait
 a little while"; print slips so people can link through the week, not all at once.
 
 **R3c – A phone that forgets.** The link lives in the phone's browser storage. Clearing it, or an iPhone that has not
-opened Church Hub in the browser for a week (not added to the home screen), loses it; the person needs a new code.
-Tell people to add Church Hub to the home screen or use the Android app.
+opened Church & Trellis in the browser for a week (not added to the home screen), loses it; the person needs a new code.
+Tell people to add Church & Trellis to the home screen or use the Android app.
 
 **R4 – Rules lag.** A church whose Administrator never clicks Update runs old rules. The app hides what needs newer
 rules, so nothing breaks, but a security fix does not reach that church until they click. For a fix that matters,
@@ -61,7 +61,7 @@ message naming the step, and `docs/FIREBASE-SETUP.md` remains as the by-hand rou
 **R7 – A church loses its Google account.** The data is theirs alone; nobody else can recover it. The helper should
 say so, and suggest adding a second owner (a link to the project's access page).
 
-**R8 – Church Hub's owner is still the publisher of software that holds sensitive information.** Not the operator of
+**R8 – Church & Trellis's owner is still the publisher of software that holds sensitive information.** Not the operator of
 anyone's database, but a short terms page ("each church owns and is responsible for its own information; provided
 as is") should be read by a lawyer once before the first other church. Not legal advice.
 
@@ -77,7 +77,7 @@ day. Unlikely, and it harms only that day's use, never the information. If it ev
 It lives only as a GitHub secret; the website accepts a list of public keys so a new one can be added and the old
 one retired. If it is lost, make a new pair and re-issue every licence from the office records.
 
-**R12 – Churches that cannot pay by card.** Many of the churches Church Hub is for have no bank card. The grant
+**R12 – Churches that cannot pay by card.** Many of the churches Church & Trellis is for have no bank card. The grant
 (waiver) route must be easy and kind, and "someone else pays for this church" must work (the payment only needs the
 church's id). Mobile money depends on the payment company chosen (task 059).
 
@@ -97,7 +97,7 @@ against a church.
   and that person's own browser.
 - Any wish to add a server, Cloud Function or shared database, or to keep anything centrally beyond the office
   record in `TARGET.md` section 10 (above all: nothing about a church's people).
-- Anything touching the licence signing key, how a licence is checked, or when Church Hub becomes view-only.
+- Anything touching the licence signing key, how a licence is checked, or when Church & Trellis becomes view-only.
 - Any change to who can read or write what, beyond the two rules added in 011 and 012.
 - A new way of signing in (R3 d), or changing the household sign-in.
 - Changing the shape of the documents everyone loads (R5).

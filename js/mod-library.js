@@ -1,4 +1,4 @@
-/* Church Hub – Library: the church's books, DVDs, CDs and more – what it has, how each was acquired, and who has borrowed what.
+/* Church & Trellis – Library: the church's books, DVDs, CDs and more – what it has, how each was acquired, and who has borrowed what.
  * Everyone who signs in can look through the library, see whether something is in, read the library's policy, and sees what
  * they have out themselves. The librarians (Administrators, and the people chosen by an Administrator or the Senior
  * Pastor) add items with a picture of the cover, lend them – to people on the church's list or to visitors, always with a
@@ -650,7 +650,7 @@
     if (b.cover && !coverCache[b.id + '|' + b.cover]) S.cover(b.id).then(function (d) { coverCache[b.id + '|' + b.cover] = d || ''; coverPreview(b); });
     function chooseCover(file) {
       if (!file) return;
-      shrinkCover(file).then(function (d) { newCover = d; coverPreview(b); }, function () { H.toast(T('That isn’t a picture Church Hub can read.'), true); });
+      shrinkCover(file).then(function (d) { newCover = d; coverPreview(b); }, function () { H.toast(T('That isn’t a picture Church & Trellis can read.'), true); });
     }
     ['lib-cam', 'lib-pic'].forEach(function (id) {
       var inp = document.getElementById(id); if (!inp) return;
@@ -737,7 +737,7 @@
   }
   function saveAs(name, type, b64) {
     if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFileBase64 === 'function') { window.ChurchHubApp.saveFileBase64(name, type || 'application/octet-stream', b64); return; }
-    if (window.ChurchHubApp) { H.toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+    if (window.ChurchHubApp) { H.toast(T('Please update the Church & Trellis app to download files, or use a browser.'), true); return; }
     var bin = atob(b64), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([bytes], { type: type || 'application/octet-stream' }));
@@ -826,7 +826,7 @@
       f.text().then(function (txt) {
         var plan = L.importPlan(L.parseCSV(txt), S.list('books'), H.today()), err = document.getElementById('lib-csv-err'), box = document.getElementById('lib-csv-plan'), go = document.getElementById('lib-csv-go');
         err.hidden = true; box.hidden = true; go.disabled = true; importDraft = null;
-        if (plan.error) { err.textContent = T('Church Hub couldn’t find a Title column. The first row must hold the headings, one of them Title.'); err.hidden = false; return; }
+        if (plan.error) { err.textContent = T('Church & Trellis couldn’t find a Title column. The first row must hold the headings, one of them Title.'); err.hidden = false; return; }
         importDraft = plan;
         box.innerHTML = '<b>' + esc(TN('{n} new item will be added', '{n} new items will be added', plan.add.length)) + '</b>' +
           (plan.dup ? '<br>' + esc(TN('{n} is already in the library and will be left out', '{n} are already in the library and will be left out', plan.dup)) : '') +
@@ -1133,10 +1133,10 @@
         H.modal(H.dialogHead(T('Send a reminder'), l.title + ' · ' + l.name) + '<div class="dlg-body">' +
           '<p class="muted small" style="margin-top:0">' + esc(held(l)) + (l.reminded ? ' · ' + esc(T('Reminded {date}', { date: H.fmt(l.reminded, true) })) : '') + '</p>' +
           '<label class="field">' + T('Message') + '<textarea id="lib-rem" rows="5" maxlength="600">' + esc(reminderText(l)) + '</textarea></label>' +
-          (app ? '<p class="hint">' + T('They also see it in Church Hub, on their To do list and the Library page.') + '</p>' : '') + '</div>' +
+          (app ? '<p class="hint">' + T('They also see it in Church & Trellis, on their To do list and the Library page.') + '</p>' : '') + '</div>' +
           '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' +
           (num ? '<button class="btn" data-act="library:remindsend" data-how="sms" data-id="' + esc(l.id) + '">' + T('By SMS') + '</button><button class="btn save" data-act="library:remindsend" data-how="wa" data-id="' + esc(l.id) + '">' + T('By WhatsApp') + '</button>' : '') +
-          (app ? '<button class="btn' + (num ? '' : ' save') + '" data-act="library:remindsend" data-how="app" data-id="' + esc(l.id) + '">' + T('In Church Hub only') + '</button>' : '') + '</div>', T('Send a reminder'));
+          (app ? '<button class="btn' + (num ? '' : ' save') + '" data-act="library:remindsend" data-how="app" data-id="' + esc(l.id) + '">' + T('In Church & Trellis only') + '</button>' : '') + '</div>', T('Send a reminder'));
       },
       remindsend: function (el) {
         var l = S.get('loans', el.dataset.id); if (!l || !librarian()) return;

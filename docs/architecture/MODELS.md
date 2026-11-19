@@ -20,7 +20,7 @@ Antigravity/Gemini on their free allowances all count as "light").
    `docs/architecture/handover/<task>-words.md`. A light model, on the **same branch**, then adds those lines to
    every `js/lang/<code>.js` (grep for a neighbouring line – never read the whole file), raises the version, updates
    the help page and the changelog, and runs the quick tests (`node tests/i18n.test.js`, `node tests/versions.test.js`).
-   Most of the tokens in a Church Hub feature go on this second half.
+   Most of the tokens in a Church & Trellis feature go on this second half.
 3. **Light models finish with the quick tests only**; GitHub runs the full browser test on the pull request.
 4. **One agent per shared file at a time** (`tasks/README.md`). Light-model work on language files conflicts with
    other light-model work on language files: one pull request at a time, or rebase before pushing.

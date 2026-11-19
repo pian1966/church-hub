@@ -10,7 +10,7 @@
 `js/lang/*.js`, `tests/app/signin.js`.
 
 **Steps**
-1. Firestore `resource-exhausted`: "Church Hub has reached today's free limit for this church. It works again
+1. Firestore `resource-exhausted`: "Church & Trellis has reached today's free limit for this church. It works again
    tomorrow morning (Pacific time midnight). Your Administrator can read more under About."
 2. Email link refused for quota: "Today's sign-in emails are used up. Use **Sign in with Google**, or try again
    tomorrow." Put the Google button first on the sign-in screen whenever it is available.

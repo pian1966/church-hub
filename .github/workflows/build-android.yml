@@ -1,10 +1,10 @@
 name: Build Android app
 
-# Builds the Church Hub Android app (ChurchHub.apk) and publishes it on the Releases page, where members
+# Builds the Church & Trellis Android app (ChurchHub.apk) and publishes it on the Releases page, where members
 # download it from: https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk
 #
 # The app shows the live website, so it only needs rebuilding when something in android/ changes.
-# One-time setup (docs/ANDROID.md): add the repository secret ANDROID_KEYSTORE – Church Hub's own signing key
+# One-time setup (docs/ANDROID.md): add the repository secret ANDROID_KEYSTORE – Church & Trellis's own signing key
 # (ChurchHub-ANDROID_KEYSTORE.txt). Without it the build still runs as a check, but nothing is published.
 
 on:
@@ -87,13 +87,13 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # Always the same release ("android"), so the download link never changes – and Church Hub's own
+          # Always the same release ("android"), so the download link never changes – and Church & Trellis's own
           # version releases (v0.1.0 …) stay the "latest" ones.
           ver="1.0.${GITHUB_RUN_NUMBER}"
           gh release delete android --yes --cleanup-tag || true
           gh release create android out/ChurchHub.apk \
-            --title "Church Hub for Android ${ver}" \
+            --title "Church & Trellis for Android ${ver}" \
             --notes "Install on Android: download **ChurchHub.apk** below, open it and tap Install. If your phone asks, allow your browser to install apps, and if Play Protect warns you tap More details → Install anyway. Installing a newer version keeps you signed in." \
             --latest=false
-          echo "### Published Church Hub for Android ${ver}" >> "$GITHUB_STEP_SUMMARY"
+          echo "### Published Church & Trellis for Android ${ver}" >> "$GITHUB_STEP_SUMMARY"
           echo "Download: https://github.com/${GITHUB_REPOSITORY}/releases/download/android/ChurchHub.apk" >> "$GITHUB_STEP_SUMMARY"

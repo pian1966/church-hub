@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: the Subscription page – a coffee a month, paying, a payment holiday, gifts, the prayer
+/* Church & Trellis – browser test, part: the Subscription page – a coffee a month, paying, a payment holiday, gifts, the prayer
  * circle and the prayer card (js/mod-support.js; the rules are tested in tests/coffee.test.js).
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';

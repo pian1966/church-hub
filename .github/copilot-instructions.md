@@ -1,4 +1,4 @@
-# Church Hub – instructions for GitHub Copilot
+# Church & Trellis – instructions for GitHub Copilot
 
 **Before changing anything, read `CLAUDE.md` (the project map and house rules) and `AGENTS.md` (how AI agents work here),
 and follow them exactly.** They apply to Copilot too. When this file and `CLAUDE.md` disagree, `CLAUDE.md` wins.

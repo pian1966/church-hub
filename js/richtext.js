@@ -1,5 +1,5 @@
 /*
- * Church Hub – simple formatting for documents people read in the app (the Library policy, Archive notes and the like).
+ * Church & Trellis – simple formatting for documents people read in the app (the Library policy, Archive notes and the like).
  * Typed as plain text, shown formatted – nothing else is allowed through, so it is always safe to show:
  *   # Heading, ## Smaller heading          – a line starting with # or ##
  *   - item  or  * item                      – a bulleted list

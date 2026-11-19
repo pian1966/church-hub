@@ -1,5 +1,5 @@
 /*
- * Church Hub – finding people entered twice (Administrators only). Pure functions, tested with node: tests/duplicates.test.js.
+ * Church & Trellis – finding people entered twice (Administrators only). Pure functions, tested with node: tests/duplicates.test.js.
  *
  * Two records are compared on what usually gives a duplicate away, and every suggestion says why:
  *  - Names: the same first name, a known short form ("Doug" / "Douglas", "Bill" / "William"), the "known as" name, a small

@@ -1,5 +1,5 @@
 /*
- * Church Hub – the church's own words for people and roles (Settings → Terminology (Church Words)).
+ * Church & Trellis – the church's own words for people and roles (Settings → Terminology (Church Words)).
  * Churches call the same things by different names: a Pastor may be a Priest, Minister or Clergy; a Church Partner a
  * Member or Parishioner. An Administrator picks a ready-made set for their kind of church and can rename any word.
  * Only what is shown on the screen changes (in English); what is stored stays the same ("Church Partner" in the database
@@ -7,12 +7,12 @@
  */
 var Wording = (function () {
   'use strict';
-  // key: [singular, plural] as Church Hub says it, and what it is
+  // key: [singular, plural] as Church & Trellis says it, and what it is
   var TERMS = [
     ['pastor', ['Pastor', 'Pastors'], 'The role that keeps pastoral notes'],
     ['senior', ['Senior Pastor', 'Senior Pastors'], 'The Pastor who leads the church (chosen in Settings → What Pastors can do)'],
     ['assistant', ['Assistant Pastor', 'Assistant Pastors'], 'The other Pastors, who work with the Senior Pastor'],
-    ['admin', ['Administrator', 'Administrators'], 'The person who manages Church Hub access and settings'],
+    ['admin', ['Administrator', 'Administrators'], 'The person who manages Church & Trellis access and settings'],
     ['partner', ['Church Partner', 'Church Partners'], 'A committed member of the church (a category)'],
     ['attender', ['Attender', 'Attenders'], 'Someone who comes regularly but isn’t a member (a category)'],
     ['visiting', ['Visiting Minister', 'Visiting Ministers'], 'A preacher or minister from elsewhere (a category)'],
@@ -39,7 +39,7 @@ var Wording = (function () {
   /** Quick choices for what the church's meetings are called: "Church Services", "Church Meetings", "Church Gatherings". */
   var SERVICE = { Service: ['Service', 'Services'], Meeting: ['Meeting', 'Meetings'], Gathering: ['Gathering', 'Gatherings'] };
   var SETS = {
-    general: { name: 'General (as Church Hub comes)', words: {} },
+    general: { name: 'General (as Church & Trellis comes)', words: {} },
     anglican: { name: 'Anglican / Episcopal', words: { pastor: ['Clergy', 'Clergy'], senior: ['Rector', 'Rectors'], assistant: ['Assistant Minister', 'Assistant Ministers'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Clergy', 'Visiting Clergy'], rosters: ['Rota coordinator', 'Rota coordinators'], office: ['Parish office', 'Parish offices'], care: ['Home group', 'Home groups'], carer: ['Home group leader', 'Home group leaders'] } },
     catholic: { name: 'Catholic', words: { pastor: ['Priest', 'Priests'], senior: ['Parish Priest', 'Parish Priests'], assistant: ['Assistant Priest', 'Assistant Priests'], partner: ['Parishioner', 'Parishioners'], visiting: ['Visiting Priest', 'Visiting Priests'], kids: ['Children’s catechesis', 'Children’s catechesis'], verger: ['Sacristan', 'Sacristans'], office: ['Parish office', 'Parish offices'], care: ['Small Christian Community', 'Small Christian Communities'], carer: ['Leader', 'Leaders'] } },
     methodist: { name: 'Methodist', words: { pastor: ['Minister', 'Ministers'], partner: ['Member', 'Members'], visiting: ['Visiting Preacher', 'Visiting Preachers'], care: ['Class', 'Classes'], carer: ['Class leader', 'Class leaders'] } },

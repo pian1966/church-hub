@@ -1,4 +1,4 @@
-# Church Hub – roadmap
+# Church & Trellis – roadmap
 
 Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed here; finished work moves to `docs/CHANGELOG.md` (no need to read it).
 
@@ -48,7 +48,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 **Later (if wanted)**
 - ⬜ Changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in
 - ⬜ Leave: other countries' public holidays (Leave still uses South Africa's); Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)
-- ⬜ Leave Manager features still not in Church Hub (rechecked 5 Nov 2026; the wallchart, calendar, year planner, reports,
+- ⬜ Leave Manager features still not in Church & Trellis (rechecked 5 Nov 2026; the wallchart, calendar, year planner, reports,
   payroll, Dashboard, cover rules, stand-in, Change and the email prompts were added in 0.16–0.19, dark mode in 0.37.0): emails sent
   automatically (today they open ready to send) and approving from the email without signing in; a leave History page
   (the audit log has the events); holidays and school terms updating themselves; the Google Calendar mirror; the Google
@@ -94,9 +94,9 @@ Groups and attendance, kids check-in on a tablet with medical alerts and leader 
 ## Phase 5 – Communication and calendar
 First step done (0.12.0): email prompts for birthdays, anniversaries and welcomes, opened in the church’s email program. Next: sending them automatically (formatted, with the church logo) through Afrihost or Gmail behind the scenes; then email (consent-aware, with opt-out, never to people who have died or left), SMS via a South African provider, app notifications, church calendar and website embeds.
 Messages inside the app done (0.21.0, Messages page). Next for messages:
-- ⬜ The number of unread messages on the Church Hub icon on the phone's home screen (comes with push notifications below:
+- ⬜ The number of unread messages on the Church & Trellis icon on the phone's home screen (comes with push notifications below:
   Android shows it from waiting notifications; iPhone home-screen apps once notifications are allowed)
-- ⬜ Phone notifications ("push") when a message arrives, even with Church Hub closed: Firebase Cloud Messaging in the
+- ⬜ Phone notifications ("push") when a message arrives, even with Church & Trellis closed: Firebase Cloud Messaging in the
   Android app and the home-screen app (iPhone: iOS 16.4 or later, added to the home screen), sent by a small server step
   (a Firebase Cloud Function on the Blaze plan, or the GitHub robot with a service-account secret). Ask permission
   kindly after sign-in; a switch on Me to turn them off.
@@ -117,7 +117,7 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
 - 🟡 Church: set up AI for Ask in your own words (`docs/AI-SEARCH-SETUP.md`) – App Check key added (0.45.1); still to do: privacy notice, App Check enforced for AI Logic, switch it on in Settings → Apps and try a question
 - ⬜ **Help: ask a question** – a Help page where people type or dictate (phone keyboard microphone, or a mic button using the
-  browser's speech recognition) a question about using Church Hub, and get an answer written for their question and role.
+  browser's speech recognition) a question about using Church & Trellis, and get an answer written for their question and role.
   The answers come only from the help pages in `docs/help/` (first draft done, Nov 2026): find the matching answers, send them
   with the question and the person's role to an AI model through a Firebase Cloud Function (key never in the app; e.g. Gemini
   through Firebase AI Logic), and show the reply with a link to the help page. Use the church's own words (Terminology) and the
@@ -134,7 +134,7 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
     each category is kept, with a reminder)
   - ⬜ Archive folders (0.92 follow-ups): let Council members make sub-folders too (now Administrators only, as folders
     live in settings); a financial-year option for date-sorted folders (e.g. March–February); drag a document onto a folder
-  - ⬜ Library: send the three-week reminder by BulkSMS from Church Hub itself
+  - ⬜ Library: send the three-week reminder by BulkSMS from Church & Trellis itself
   - ⬜ Library (0.52 follow-ups): fluent speakers to check the new Library words in the 19 further languages (drafted by AI);
     a text message (BulkSMS) to a borrower whose item is overdue, using the loan's mobile number; read the ISBN with the camera.
   - ⬜ Library (0.53 follow-ups): fluent speakers to check the 0.53 Library words (import, reports, lost) in the 19 further
@@ -155,7 +155,7 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
 - ⬜ **Marketplace** (plan: `docs/COMMUNITY-PLAN.md` part 3) – **Church Partners only** (decided 19 Nov 2026): For sale, Wanted, Free (later To lend), photo cards like Facebook
   Marketplace, up to 3 small photos, the area (suburb only); **nothing shows until a Marketplace keeper approves it**; the
   church's own rules accepted by posters, safety tips, *I'm interested* as a private message, mark sold, 30-day expiry; no
-  payments through Church Hub. Steps 3.1–3.3
+  payments through Church & Trellis. Steps 3.1–3.3
 - ⬜ **Finances – budget and "are we on track?"** (plan: `docs/FINANCE-PLAN.md`): the Treasurer imports the year's budget from
   the spreadsheet and the monthly management reports (about 10 a year, month and year to date; matching remembered; the PDF
   filed in the Archive); the Rector, pastors and Council see a traffic light (on track / watch / concern), income, expenses,
@@ -170,17 +170,17 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
 - ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request (add to CLAUDE.md rules
   once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
 
-## Phase 7 – Church Hub for other churches (hosted, gift-based) ⬜
+## Phase 7 – Church & Trellis for other churches (hosted, gift-based) ⬜
 > **Changed direction (11 Nov 2026):** each church keeps its own database in its own Google account, created for it
 > automatically – nobody hosts other churches' information. The plan and its tasks are in `docs/architecture/`
 > (start with `DECISION.md`). Steps 7.1, 7.2, 7.4, 7.5, 7.6 and 7.9 below are no longer needed; task 050 rewrites this phase.
 
-Goal: any church can start using Church Hub in minutes, with no Firebase, Google console or anything technical. We host it;
+Goal: any church can start using Church & Trellis in minutes, with no Firebase, Google console or anything technical. We host it;
 each church gives what it chooses once a year, with a small minimum. Today each church makes its own Firebase project
 (`FIREBASE-SETUP.md`); Christ Church Howick keeps working that way until it moves across (step 7.9).
 
 **What a church does (the target)**
-1. Goes to the Church Hub website → "Start using Church Hub for my church" → church name, country, their email.
+1. Goes to the Church & Trellis website → "Start using Church & Trellis for my church" → church name, country, their email.
 2. Opens the sign-in link in their email and becomes that church's first Administrator; the existing setup screen follows
    (services, leave rules, terminology, language).
 3. Brings people in: Elvanto export, a spreadsheet, or by hand.
@@ -205,7 +205,7 @@ each church gives what it chooses once a year, with a small minimum. Today each 
   database); one robot run works through every church that switched it on.
 - ⬜ 7.7 Countries we don't serve: no sign-up from countries where a church member list could put people in danger
   (for example China – where Google services are blocked anyway – North Korea, Iran, Eritrea, Afghanistan). Explain kindly why,
-  rather than a bare refusal. Church Hub is not end-to-end encrypted: we, Google and anyone able to compel either could read the data.
+  rather than a bare refusal. Church & Trellis is not end-to-end encrypted: we, Google and anyone able to compel either could read the data.
 - ⬜ 7.8 Gifts and reminders (see "The yearly gift" below): pay page, receipts, the yearly reminder (email + a note on the
   Administrator's Home), a church's gift history under Settings, and a page for us listing churches and gifts.
 - ⬜ 7.9 Move Christ Church Howick across (export from its own project, import into the shared one), then retire the single-church setup guide.
@@ -220,9 +220,9 @@ each church gives what it chooses once a year, with a small minimum. Today each 
   setup (the Coming item "Set up in about a minute" moves to the list); refuse the countries in 7.7 with the kind explanation;
   try it end to end once with a throw-away Google account and fix any wording Google has moved. Idea: a "Finish setting up"
   card on Administrators' Home inside the app that sees for itself what is done (care groups made, services added…).
-- ⬜ 7.10 A simple public website: what Church Hub does, the demo, languages, privacy and safety, how the gift works, sign up.
+- ⬜ 7.10 A simple public website: what Church & Trellis does, the demo, languages, privacy and safety, how the gift works, sign up.
   First version built (16 Nov 2026): `site/index.html`, at `/church-hub/site/`. Still to add: sign-up and a contact address
-  once Church Hub has its own web address. Its coffee prices copy `js/coffee.js` (16 Nov 2026): refresh both together (`docs/PRICES.md`).
+  once Church & Trellis has its own web address. Its coffee prices copy `js/coffee.js` (16 Nov 2026): refresh both together (`docs/PRICES.md`).
 
 **The subscription** – changed 16 Nov 2026 to a coffee a month (or ten a year), with gifts, paying for another church,
 payment holidays and praying instead; built as the Subscription page (`docs/architecture/TARGET.md` 10.5, `docs/PRICES.md`).
@@ -231,7 +231,7 @@ Still to do:
 - ⬜ Match bank payments to churches' references (the office robot, task 063/067) – today "We've paid" is taken on trust.
 - ⬜ Share prayer cards between churches through the office, so the prayer circle works outside the demo.
   The weekly card, the monthly reminder and the on/off switch are built (0.95.0); the office still has to collect each church's
-  card (only the public card, `Coffee.publicCard`), let Church Hub's owner check new cards before they go out, and give every
+  card (only the public card, `Coffee.publicCard`), let Church & Trellis's owner check new cards before they go out, and give every
   church the list. It can also keep a true history of who saw which card, so a joining church never causes an early repeat.
 - ⬜ Refresh coffee prices twice a year, and the "start hidden" countries each January (`docs/PRICES.md`).
 - ⬜ Card payments, once a payment company is chosen (task 059).
@@ -243,5 +243,5 @@ Still to do:
 - ⬜ Which countries are on the "don't serve" list.
 
 ## Working method
-One phase per fresh chat in the Claude Project "Church Hub", with the repository attached (Jules and Antigravity work here too – see AGENTS.md).
+One phase per fresh chat in the Claude Project "Church & Trellis", with the repository attached (Jules and Antigravity work here too – see AGENTS.md).
 Update this file at the end of each session: finished work moves to `docs/CHANGELOG.md`.

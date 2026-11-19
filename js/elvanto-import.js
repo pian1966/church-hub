@@ -1,5 +1,5 @@
 /*
- * Church Hub – reading an Elvanto People export (CSV) and working out what to import. Pure functions (no screen, no Store),
+ * Church & Trellis – reading an Elvanto People export (CSV) and working out what to import. Pure functions (no screen, no Store),
  * tested with node: tests/elvanto-import.test.js (made-up data in tests/fixtures/elvanto-people.csv).
  *
  * Only the columns below are ever read. Everything else in an export (ID numbers, notes, giving, security codes,
@@ -45,7 +45,7 @@ var ElvantoImport = (function () {
     ['province', TX('Province'), ['Province'], /^(home\s*)?(province|state)$/i],
     ['country', TX('Country'), ['Home Country'], /^home\s*country$/i]
   ];
-  /** What someone ticked in Elvanto's "Checklist of what to receive" → Church Hub's choices (as in the consent register). */
+  /** What someone ticked in Elvanto's "Checklist of what to receive" → Church & Trellis's choices (as in the consent register). */
   var RECEIVE = [
     [/who\s*is\s*jesus/i, '“Who is Jesus” (via WhatsApp)'],
     [/weekly\s*church\s*notices/i, 'Weekly Church Notices (via Email)'],
@@ -74,11 +74,11 @@ var ElvantoImport = (function () {
   }
 
   /**
-   * What the robot found in Elvanto's Unavailable Volunteers (names and dates) → what to do in Church Hub.
-   *   found: [{ name, from, to, fromLeave }], people: Church Hub's people, blockouts: their away dates.
+   * What the robot found in Elvanto's Unavailable Volunteers (names and dates) → what to do in Church & Trellis.
+   *   found: [{ name, from, to, fromLeave }], people: Church & Trellis's people, blockouts: their away dates.
    *   → [{ name, from, to, status, personId, choices }] with status
-   *      'new' (one person matches; not in Church Hub yet), 'have' (already an away date), 'leave' (made by Church Hub or
-   *      Leave Manager for leave – already in Church Hub), 'several' (more than one person with that name; choices = their ids),
+   *      'new' (one person matches; not in Church & Trellis yet), 'have' (already an away date), 'leave' (made by Church & Trellis or
+   *      Leave Manager for leave – already in Church & Trellis), 'several' (more than one person with that name; choices = their ids),
    *      'nomatch' (no one by that name; choices = people with the same surname).
    */
   function matchFound(found, people, blockouts) {
@@ -189,7 +189,7 @@ var ElvantoImport = (function () {
   }
   function yes(v) { return /^(yes|y|true|1)$/i.test(String(v || '').trim()); }
 
-  /** A sensible Church Hub category for an Elvanto category (the Administrator can change each one before importing). */
+  /** A sensible Church & Trellis category for an Elvanto category (the Administrator can change each one before importing). */
   function guessCategory(v) {
     var s = String(v || '');
     if (!s.trim()) return 'Church Partner';
@@ -250,7 +250,7 @@ var ElvantoImport = (function () {
   }
 
   /**
-   * Who each record is in Church Hub. Rules (in order):
+   * Who each record is in Church & Trellis. Rules (in order):
    *  1. same Elvanto ID;  2. same email AND same first name (families often share one email);
    *  3. same first and last name, for someone not yet linked to Elvanto (e.g. added by hand, with their own email).
    * A person is never matched twice in one import, so two rows always stay two people.
@@ -318,7 +318,7 @@ var ElvantoImport = (function () {
   /**
    * Who is responsible for each child, from Elvanto's family relationships: within a family, the "Primary" and "Spouse"
    * (or "Partner") are the children's parents – may consent, primary contact, may collect – to be confirmed by a person.
-   * Other relationships (Grandmother, Sibling, Other…) are household members only. ids: record row → Church Hub person id.
+   * Other relationships (Grandmother, Sibling, Other…) are household members only. ids: record row → Church & Trellis person id.
    */
   function guardianLinks(recs, ids) {
     var fam = {}, out = [];

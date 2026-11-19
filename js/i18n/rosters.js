@@ -1,4 +1,4 @@
-/* Church Hub – words for Rosters and services (js/mod-rosters.js, roster.js, serving.js).
+/* Church & Trellis – words for Rosters and services (js/mod-rosters.js, roster.js, serving.js).
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
@@ -276,7 +276,7 @@ I18n.rows([
     ["{n} people asked to serve", "{n} mense gevra om te dien", "Abantu abangu-{n} bacelwe ukukhonza", "Abantu abali-{n} bacelwe ukukhonza"],
     ["{n} person told in Messages", "{n} persoon in Boodskappe laat weet", "Umuntu ongu-{n} wazisiwe ku-Imilayezo", "Umntu o-{n} waziswe kwi-Imiyalezo"],
     ["{n} people told in Messages", "{n} mense in Boodskappe laat weet", "Abantu abangu-{n} bazisiwe ku-Imilayezo", "Abantu abali-{n} baziswe kwi-Imiyalezo"],
-    ["{n} can’t sign in to Church Hub yet – reach them by email, WhatsApp or SMS", "{n} kan nog nie by Church Hub aanmeld nie – bereik hulle per e-pos, WhatsApp of SMS", "Abangu-{n} abakakwazi ukungena ku-Church Hub – bathinte nge-imeyili, i-WhatsApp noma i-SMS", "Aba-{n} abakakwazi ukungena kwi-Church Hub – baqhagamshele nge-imeyile, i-WhatsApp okanye i-SMS"],
+    ["{n} can’t sign in to Church & Trellis yet – reach them by email, WhatsApp or SMS", "{n} kan nog nie by Church & Trellis aanmeld nie – bereik hulle per e-pos, WhatsApp of SMS", "Abangu-{n} abakakwazi ukungena ku-Church & Trellis – bathinte nge-imeyili, i-WhatsApp noma i-SMS", "Aba-{n} abakakwazi ukungena kwi-Church & Trellis – baqhagamshele nge-imeyile, i-WhatsApp okanye i-SMS"],
     ["Remind those who haven’t replied", "Herinner dié wat nog nie geantwoord het nie", "Khumbuza labo abangakaphenduli", "Khumbuza abo bangekaphenduli"],
     ["Everyone on these services has replied", "Almal by hierdie dienste het geantwoord", "Wonke umuntu kulezi zinkonzo uphendulile", "Wonke umntu kwezi nkonzo uphendulile"],
     ["Remind {n} person?", "Herinner {n} persoon?", "Khumbuza umuntu ongu-{n}?", "Khumbuza umntu o-{n}?"],

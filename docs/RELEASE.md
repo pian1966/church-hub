@@ -1,6 +1,6 @@
-# Before Church Hub goes to other churches
+# Before Church & Trellis goes to other churches
 
-While Church Hub is used by Christ Church Howick only, some work is saved up and done once, just before it is released.
+While Church & Trellis is used by Christ Church Howick only, some work is saved up and done once, just before it is released.
 
 ## 1. Translate the 21 extra languages
 

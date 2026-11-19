@@ -1,5 +1,5 @@
 /*
- * Church Hub – the Archive: the church's own records – Council minutes, architectural plans, staff contracts, annual
+ * Church & Trellis – the Archive: the church's own records – Council minutes, architectural plans, staff contracts, annual
  * appraisals and whatever else the church keeps. A record: archive/{id} = { title, cat, date, note, access, bodyId,
  *   aboutId, aboutName, shownTo, link, file: { name, type, size, parts }, by }. The file itself is kept apart, cut into
  * parts (archive/{id}/parts/{n} = { data: base64 }), and fetched only when someone opens it.
@@ -29,7 +29,7 @@ var Archive = (function () {
     { id: 'appraisals', name: TX('Annual appraisals'), access: 'private', person: true },
     { id: 'other', name: TX('Other records'), access: 'office' }
   ];
-  var MAX = 15 * 1024 * 1024;   // the largest file kept in Church Hub; anything bigger is kept elsewhere and linked
+  var MAX = 15 * 1024 * 1024;   // the largest file kept in Church & Trellis; anything bigger is kept elsewhere and linked
   var PART = 900000;            // letters of base64 per part: a database document holds at most 1 MB
   function copy(o) { return JSON.parse(JSON.stringify(o)); }
   function okAccess(a) { return ACCESS.some(function (x) { return x[0] === a; }); }

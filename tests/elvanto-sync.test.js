@@ -26,7 +26,7 @@ console.log('Leave brought in from Leave Manager');
 const lm = req({ id: 'L260110-AAAA', status: 'Approved', source: 'Leave Manager' });
 ok(S.job(lm, Object.assign({}, lm, { reason: 'changed' }), null, o) === null, 'approved there and unchanged: Leave Manager’s robot already put it in Elvanto');
 j = S.job(lm, Object.assign({}, lm, { status: 'Cancelled' }), null, o);
-ok(j && j.want === 'Removed' && j.have === '2026-11-02 to 2026-11-06' && j.haveNote === 'Leave Manager L260110-AAAA', 'cancelled in Church Hub: the robot removes Leave Manager’s entry (found by its note)');
+ok(j && j.want === 'Removed' && j.have === '2026-11-02 to 2026-11-06' && j.haveNote === 'Leave Manager L260110-AAAA', 'cancelled in Church & Trellis: the robot removes Leave Manager’s entry (found by its note)');
 j = S.job(lm, Object.assign({}, lm, { end: '2026-11-10' }), null, o);
 ok(j && j.want === 'Unavailable' && j.have && j.haveNote.indexOf('Leave Manager') === 0, 'dates changed: Leave Manager’s entry is replaced');
 

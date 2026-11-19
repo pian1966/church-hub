@@ -1,4 +1,4 @@
-/* Church Hub – Groups: one menu entry for every kind of group – Care Groups, Midweek Groups and Leadership – instead of one
+/* Church & Trellis – Groups: one menu entry for every kind of group – Care Groups, Midweek Groups and Leadership – instead of one
  * each. Its first tab, "My groups", shows the groups the person is in; the other tabs are the kinds of group they may open
  * (each still switched on or off on its own in Settings → Apps, and with its own privacy rules). Those pages keep their
  * own addresses (#/care, #/life, #/leaders); app.js puts these tabs above them (modules with inGroups: true).

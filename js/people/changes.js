@@ -1,4 +1,4 @@
-/* Church Hub – People: changes to family details that people ask for themselves (Me → My details), checked by an Administrator.
+/* Church & Trellis – People: changes to family details that people ask for themselves (Me → My details), checked by an Administrator.
  * Collection detailChanges, one request per person at a time:
  *   { personId, maritalStatus, anniversary, spouse, children, note, status: waiting|checked|declined, reply }
  * waiting  – the person asked; nothing on their record has changed yet.

@@ -1,5 +1,5 @@
 /*
- * Church Hub – administrator-created groups, separate from care, life and leadership groups.
+ * Church & Trellis – administrator-created groups, separate from care, life and leadership groups.
  * A group keeps only its name, description, member IDs and visibility; it has no contact details.
  */
 var CustomGroups = (function () {

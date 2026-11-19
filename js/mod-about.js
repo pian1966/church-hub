@@ -1,11 +1,11 @@
-/* Church Hub – About: for everyone. The version and its date, who made it, and a check for updates
+/* Church & Trellis – About: for everyone. The version and its date, who made it, and a check for updates
  * (the website: js/version.js read again from the server; the Android app: the latest app on GitHub's Releases page). */
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, T = I18n.t, V = window.ChurchHubVersion || { version: '?', date: '', developer: '', repo: '' };
   var check = { state: '', web: '', app: '' };   // state: '' | checking | done | failed
   // Every time About is opened, check again (also when coming back to it)
-  var back = false;   // was About opened from another page of Church Hub (so Close can go back to it)?
+  var back = false;   // was About opened from another page of Church & Trellis (so Close can go back to it)?
   window.addEventListener('hashchange', function (e) {
     if (/^#\/about/.test(location.hash)) { back = !/#\/about/.test(e.oldURL || '');   // after the brochures, Close goes Home
       if (check.state !== 'checking') check.state = ''; }
@@ -22,7 +22,7 @@
   function cleanSearch() { return location.search.replace(/([?&])u=\d+(&|$)/, function (m, a, b) { return b ? a : ''; }).replace(/^&/, '?'); }
   if (/[?&]u=\d+/.test(location.search)) { try { history.replaceState(history.state, '', location.pathname + cleanSearch() + location.hash); } catch (e) {} }
   function appVersion() { try { return window.ChurchHubApp && window.ChurchHubApp.version ? String(window.ChurchHubApp.version()) : ''; } catch (e) { return ''; } }
-  /** Church Hub's public website (site/index.html on GitHub Pages: "pian1966/church-hub" → https://pian1966.github.io/church-hub/site/).
+  /** Church & Trellis's public website (site/index.html on GitHub Pages: "pian1966/church-hub" → https://pian1966.github.io/church-hub/site/).
    *  Built from the repository, so it is the same address in the browser and in the Android app. */
   function siteUrl() { var r = String(V.repo || '').split('/'); return 'https://' + r[0] + '.github.io/' + (r[1] || '') + '/site/'; }
   function isoDate(d) { return /^\d{4}-\d{2}-\d{2}$/.test(d || '') ? H.fmt(d, true) : ''; }
@@ -39,7 +39,7 @@
     return fetch('js/version.js?t=' + Date.now(), { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); })
       .then(function (t) { var m = /version:\s*'(\d+(?:\.\d+)*)'/.exec(t); if (!m) throw new Error('no version'); return m[1]; });
   }
-  /** The newest Android app on GitHub ("Church Hub for Android 1.0.16" → "1.0.16"). */
+  /** The newest Android app on GitHub ("Church & Trellis for Android 1.0.16" → "1.0.16"). */
   function latestApp() {
     return fetch('https://api.github.com/repos/' + V.repo + '/releases/tags/android', { cache: 'no-store' }).then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(function (j) { var m = /(\d+\.\d+\.\d+)/.exec(j.name || j.body || ''); return m ? m[1] : ''; });
@@ -59,7 +59,7 @@
     else if (check.state === 'done') {
       var webNew = cmp(check.web, V.version) > 0, appNew = app && check.app && cmp(check.app, app) > 0;
       if (webNew) out += '<div class="note warn"><p style="margin:0 0 8px"><b>' + esc(T('Version {v} is ready.', { v: check.web })) + '</b></p><button class="btn small primary" data-act="about:reload">' + T('Update now') + '</button>' +
-        '<p class="hint" style="margin:8px 0 0">' + T('If it still shows the old version, close Church Hub and open it again in a few minutes.') + '</p></div>';
+        '<p class="hint" style="margin:8px 0 0">' + T('If it still shows the old version, close Church & Trellis and open it again in a few minutes.') + '</p></div>';
       if (appNew) out += '<div class="note warn"><p style="margin:0 0 8px"><b>' + esc(T('Version {v} of the Android app is ready.', { v: check.app })) + '</b></p>' +
         '<a class="btn small primary" href="https://github.com/' + esc(V.repo) + '/releases/download/android/ChurchHub.apk" target="_blank" rel="noopener">' + T('Download the new app') + '</a></div>';
       if (!webNew && !appNew) out = '<p class="note ok">' + T('You have the latest version.') + '</p>';
@@ -76,19 +76,19 @@
       (st.churchName ? '<dt>' + T('Made for') + '</dt><dd>' + esc(st.churchName) + '</dd>' : '') +
       '<dt>' + T('Developed by') + '</dt><dd>' + esc(V.developer) + '<span class="kv-sub">' + T('With help from Claude, an AI made by Anthropic') + '</span></dd>' +
       '<dt>' + T('Language') + '</dt><dd>' + esc(I18n.name ? I18n.name(I18n.get()) : I18n.get()) + '</dd>';
-    return '<div class="page-head"><div><h1>' + T('About Church Hub') + '</h1><p class="lead">' + T('Church Hub keeps the church’s people, rosters, Care Groups and staff management in one place.') + '</p></div></div>' +
+    return '<div class="page-head"><div><h1>' + T('About Church & Trellis') + '</h1><p class="lead">' + T('Church & Trellis keeps the church’s people, rosters, Care Groups and staff management in one place.') + '</p></div></div>' +
       // A round ✕ that floats at the top right and stays there while scrolling (like the arrows at the bottom right)
       '<button class="float-close" data-act="about:close" aria-label="' + esc(T('Close')) + '" title="' + esc(T('Close')) + '">' + H.icon(H.ICON.x, 20) + '</button>' +
-      '<div class="grid2"><section class="panel"><h2>Church Hub</h2><dl class="kv">' + dl + '</dl></section>' + updatePanel() +
+      '<div class="grid2"><section class="panel"><h2>Church & Trellis</h2><dl class="kv">' + dl + '</dl></section>' + updatePanel() +
       '<section class="panel"><h2>' + T('More') + '</h2><div class="list">' +
-        '<a class="item" href="' + esc(siteUrl()) + '" target="_blank" rel="noopener"><span class="grow"><b>' + T('Church Hub website') + '</b><small>' + T('What Church Hub offers, for every church') + '</small></span></a>' +
+        '<a class="item" href="' + esc(siteUrl()) + '" target="_blank" rel="noopener"><span class="grow"><b>' + T('Church & Trellis website') + '</b><small>' + T('What Church & Trellis offers, for every church') + '</small></span></a>' +
         '<a class="item" href="#" data-act="hub:notice"><span class="grow"><b>' + T('Privacy notice') + '</b></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '/blob/main/docs/CHANGELOG.md" target="_blank" rel="noopener"><span class="grow"><b>' + T('What’s new') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +
         '<a class="item" href="https://github.com/' + esc(V.repo) + '" target="_blank" rel="noopener"><span class="grow"><b>' + T('Source code') + '</b><small>' + T('Opens on GitHub') + '</small></span></a>' +
       '</div></section>' + brochures() + speedPanel() + '</div>';
   }
 
-  /** Administrators: how fast Church Hub is on this computer or phone – to send to whoever looks after Church Hub when it
+  /** Administrators: how fast Church & Trellis is on this computer or phone – to send to whoever looks after Church & Trellis when it
    *  feels slow. In English, like the other Administrator-only screens. Nothing here is personal information. */
   function speedPanel() {
     if (!H.can('*') || !H.speed) return '';
@@ -102,13 +102,13 @@
     rows.push(['Open for', sec(Date.now() - sp.opened)]);
     var c = st.counts || {}, big = Object.keys(c).sort(function (a, b) { return c[b] - c[a]; }).slice(0, 8).map(function (k) { return k + ' ' + c[k]; }).join(' · ');
     var pages = sp.pages.filter(function (x) { return x.page !== '#/about'; }).map(function (x) { return '<tr><td>' + esc(x.page) + '</td><td style="text-align:right">' + x.ms + ' ms</td></tr>'; }).join('');
-    return '<section class="panel"><h2>Speed check</h2><p class="hint" style="margin-top:0">If Church Hub feels slow, open this page straight afterwards and send a screenshot to whoever looks after Church Hub.</p>' +
+    return '<section class="panel"><h2>Speed check</h2><p class="hint" style="margin-top:0">If Church & Trellis feels slow, open this page straight afterwards and send a screenshot to whoever looks after Church & Trellis.</p>' +
       '<dl class="kv">' + rows.map(function (r) { return '<dt>' + esc(r[0]) + '</dt><dd>' + esc(r[1]) + '</dd>'; }).join('') + '<dt>Records</dt><dd>' + esc(big) + '</dd></dl>' +
       (pages ? '<h3 style="margin:14px 0 6px">Last pages drawn</h3><table class="table small"><tbody>' + pages + '</tbody></table>' : '') + '</section>';
   }
 
   /** Administrators and the Rector: the two printable brochures (brochure.html), filled in with the church's name and this
-   *  Church Hub's address. Administrators can also change their wording, colour and font; the Rector opens and prints them. */
+   *  Church & Trellis's address. Administrators can also change their wording, colour and font; the Rector opens and prints them. */
   function mayOpenBrochures() { return Store.isAdmin() || Store.isRector(); }
   function brochures() {
     if (!mayOpenBrochures()) return '';
@@ -116,9 +116,9 @@
     function a(who, title, sub) {
       return '<a class="item" href="#/about/brochure/' + who + '"><span class="grow"><b>' + title + '</b><small>' + sub + '</small></span></a>';
     }
-    return '<section class="panel" id="about-brochures"><h2>' + T('Brochures') + '</h2><p class="hint">' + T('Fold-out A4 brochures about Church Hub to print or save as PDF. They are kept up to date as new features are added.') + '</p><div class="list">' +
+    return '<section class="panel" id="about-brochures"><h2>' + T('Brochures') + '</h2><p class="hint">' + T('Fold-out A4 brochures about Church & Trellis to print or save as PDF. They are kept up to date as new features are added.') + '</p><div class="list">' +
       a('members', T('For our members'), T('How to start, and what members can do')) +
-      a('churches', T('For other churches'), T('What Church Hub offers, and the demo')) +
+      a('churches', T('For other churches'), T('What Church & Trellis offers, and the demo')) +
       '</div><p class="hint" style="margin-bottom:0">' + (Store.isAdmin() ? 'Open one to print it, or to change its wording, colour and font (Edit).' : 'Open one to print it or save it as a PDF. Administrators can change its wording, colour and font.') +
       (window.BrochureKit && BrochureKit.changed(Store.brochures()) ? ' <b>Your church has changed them.</b>' : '') + '</p></section>';
   }
@@ -137,7 +137,7 @@
     if (e.target.id === 'bro-font') broSetDesign({ font: e.target.value });
   });
 
-  /* ---------- Brochures: shown and edited inside Church Hub (Administrators) ----------
+  /* ---------- Brochures: shown and edited inside Church & Trellis (Administrators) ----------
    * brochure.html is shown in a frame (?embed=1); the church's wording, hidden blocks, colour and font (brochures/church,
    * rules in js/brochure-kit.js) are laid over it. Editing: click a text and type; the eye hides or shows a block. Changes save
    * by themselves. The page isn't redrawn while it is open (data-keep), so typing isn't lost. */
@@ -163,18 +163,18 @@
         '<div class="btns" style="margin:0"><button class="btn' + (bro.edit ? '' : ' primary') + '" data-act="about:broedit">' + (bro.edit ? H.icon(H.ICON.check, 18) + 'Done editing' : 'Edit the wording') + '</button>' +
         '<button class="btn' + (bro.edit ? '' : ' primary') + '" data-act="about:broprint">Print or save as PDF</button></div>' +
         (bro.edit ? '<p class="note info" style="margin:12px 0 0">Click any heading or text on the brochure and type. Use <b>Hide</b> on a block you don’t want, and <b>Show</b> to bring it back. Changes save by themselves. Keep an eye on the red warning: everything must fit on its third of the page.</p>' : '') +
-        '<div class="bro-design">' + I18n.picker('bro-lang') + '<span class="bro-l">Colour</span>' + sw(BrochureKit.DEFAULT.accent, 'Church Hub orange') + (own && own !== BrochureKit.DEFAULT.accent ? sw(own, 'The church’s colour (Settings → Colours)') : '') +
+        '<div class="bro-design">' + I18n.picker('bro-lang') + '<span class="bro-l">Colour</span>' + sw(BrochureKit.DEFAULT.accent, 'Church & Trellis orange') + (own && own !== BrochureKit.DEFAULT.accent ? sw(own, 'The church’s colour (Settings → Colours)') : '') +
           '<label class="bro-pick" title="Any colour"><input type="color" id="bro-colour" value="' + esc(d.accent) + '" aria-label="Any colour"></label>' +
           '<span class="bro-l">Font</span><select id="bro-font" aria-label="Font">' + BrochureKit.FONTS.map(function (f) { return '<option value="' + esc(f[0]) + '"' + (d.font === f[0] ? ' selected' : '') + '>' + esc(f[1]) + '</option>'; }).join('') + '</select></div>' +
         '<p class="hint" id="bro-note" style="margin:10px 0 0" aria-live="polite"></p>' +
         '<div class="btns" style="margin:10px 0 0">' +
           ((lang === 'en' ? BrochureKit.changed(b, who) : BrochureKit.changed(b[who].translations[lang], who)) ? '<button class="btn small" data-act="about:broreset" data-w="' + who + '">Back to the original wording</button>' : '') +
-          (d.accent !== BrochureKit.DEFAULT.accent || d.font !== BrochureKit.DEFAULT.font ? '<button class="btn small" data-act="about:brodesign">Back to Church Hub’s colour and font</button>' : '') + '</div>' +
+          (d.accent !== BrochureKit.DEFAULT.accent || d.font !== BrochureKit.DEFAULT.font ? '<button class="btn small" data-act="about:brodesign">Back to Church & Trellis’s colour and font</button>' : '') + '</div>' +
       '</section>' +
       '<div class="bro-wrap" data-keep><iframe id="bro-frame" title="' + esc(who === 'members' ? T('For our members') : T('For other churches')) + '" src="' + esc(broSrc(who)) + '"></iframe></div>';
   }
 
-  /** The brochure in the frame: remember Church Hub's own wording, lay the church's over it, and (editing) make it editable. */
+  /** The brochure in the frame: remember Church & Trellis's own wording, lay the church's over it, and (editing) make it editable. */
   function broLoad(who) {
     var fr = document.getElementById('bro-frame'), doc = fr && fr.contentDocument; if (!doc || !doc.body) return;
     var K = BrochureKit, b = broSaved(), lang = I18n.get(), base = b[who], translations = base.translations[lang] || { texts: {}, hidden: {} }, stale = [];
@@ -223,12 +223,12 @@
     if (f !== BrochureKit.DEFAULT.font) { if (!link) { link = doc.createElement('link'); link.id = 'bro-font-css'; link.rel = 'stylesheet'; doc.head.appendChild(link); } link.href = BrochureKit.fontHref(f); }
     r.setProperty('--font', "'" + f + "'");
   }
-  /** Warnings under the buttons: text that no longer fits its panel, and edits to wording Church Hub has since changed. */
+  /** Warnings under the buttons: text that no longer fits its panel, and edits to wording Church & Trellis has since changed. */
   function broCheck(doc, stale) {
     var over = [].slice.call(doc.querySelectorAll('.sheet:not([hidden]) .pn')).filter(function (p) { var o = p.scrollHeight > p.clientHeight + 1; p.classList.toggle('bro-over', o); return o; });
     var n = document.getElementById('bro-note'); if (!n) return;
     n.innerHTML = (over.length ? '<span class="note bad" style="display:block;margin:0 0 6px">' + (over.length === 1 ? 'One panel has' : over.length + ' panels have') + ' more than fits on its third of the page (marked in red when editing): shorten its text or hide a block.</span>' : '') +
-      (stale && stale.length ? '<span class="note warn" style="display:block;margin:0">' + stale.length + ' of your changes ' + (stale.length === 1 ? 'is' : 'are') + ' to wording Church Hub has since changed, so ' + (stale.length === 1 ? 'it isn’t' : 'they aren’t') + ' shown: ' +
+      (stale && stale.length ? '<span class="note warn" style="display:block;margin:0">' + stale.length + ' of your changes ' + (stale.length === 1 ? 'is' : 'are') + ' to wording Church & Trellis has since changed, so ' + (stale.length === 1 ? 'it isn’t' : 'they aren’t') + ' shown: ' +
         stale.slice(0, 3).map(function (x) { return '“' + esc(x.slice(0, 60)) + '”'; }).join(', ') + '. Edit the new wording if you still want to change it. <button class="btn small" data-act="about:brostale">Forget them</button></span>' : '');
   }
   function broEditable(doc, who, lang) {
@@ -249,7 +249,7 @@
       eye.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); el.classList.toggle('bro-off'); label(); broSave(doc, who, lang); });
     });
   }
-  /** Save what is on the brochure now: each text that differs from Church Hub's own, and the hidden blocks. */
+  /** Save what is on the brochure now: each text that differs from Church & Trellis's own, and the hidden blocks. */
   function broSave(doc, who, lang) {
     if (!Store.isAdmin()) return;
     var K = BrochureKit, b = broSaved(), before = JSON.stringify(b), target = lang === 'en' ? b[who] : (b[who].translations[lang] || { texts: {}, hidden: {} }), texts = {}, hidden = {};
@@ -276,7 +276,7 @@
   }
 
   H.register({
-    id: 'about', name: 'About', desc: 'Version, updates and who made Church Hub', tint: '#475569',
+    id: 'about', name: 'About', desc: 'Version, updates and who made Church & Trellis', tint: '#475569',
     icon: 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM12 16v-5M12 8h.01',
     stat: function () { return T('Version {v}', { v: V.version }); },
     render: function (parts) { return parts && parts[0] === 'brochure' && mayOpenBrochures() && window.BrochureKit ? renderBrochure(parts[1]) : render(); },

@@ -1,4 +1,4 @@
-/* Church Hub – Care groups: Administrators and Pastors set them up (Care groups page, or a person's Edit details); carers
+/* Church & Trellis – Care groups: Administrators and Pastors set them up (Care groups page, or a person's Edit details); carers
  * may add and remove members of their own group; every member sees their group on their Me page. Rules: js/care.js. */
 (function () {
   'use strict';

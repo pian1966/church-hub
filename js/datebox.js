@@ -1,4 +1,4 @@
-/* Church Hub – dates that can be typed. A phone's calendar opens on today, so a birthday in 1990 meant tapping back
+/* Church & Trellis – dates that can be typed. A phone's calendar opens on today, so a birthday in 1990 meant tapping back
  * month by month. Every date box (<input type="date">: birthdays, anniversaries, funerals, terms, leave, archives…)
  * gets a box to type in ("12 Aug 1990", "12/08/1990", "1990-08-12") next to a small
  * calendar button. The date box itself stays in the page and keeps the value as YYYY-MM-DD, so the code reading it

@@ -5,7 +5,7 @@
 
 **Model:** Light.
 
-**Goal:** the minimum price for every country Church Hub knows, from The Economist's Big Mac index.
+**Goal:** the minimum price for every country Church & Trellis knows, from The Economist's Big Mac index.
 
 **Files:** `js/bigmac.js` (new, pure: `{ asOf, prices: { ZA: { amount, currency }, … }, fallback: { XX: 'ZA', … } }`,
 `BigMac.minimum(countryCode)`), `tests/bigmac.test.js`, `docs/PRICES.md` (where the numbers come from and how to

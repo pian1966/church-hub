@@ -59,6 +59,20 @@ Members see their own family (and give consent for their children), smart lists 
   visited and a status (needs a visit → visited → follow up → resolved), with gentle reminders when no one has picked someone
   up, and people not in any Care Group flagged for the Office/ministers – so no one falls through the cracks. Only pastoral
   staff and the relevant leaders see the board; keep details minimal and POPIA-safe (read `docs/POPIA.md`)
+  - ⬜ **Seriously ill list** (asked 20 Nov 2026) – a section of the Care board for people who are seriously ill and need help:
+    **in hospital** (which hospital, ward if known) or **bedbound at home**. Putting someone on it sends a short note about their
+    situation through Messages to the leader(s) of each Care Group they're in, **and** to the church secretary and the pastors
+    (the Rector and the other ministers), so all of them can open the board and see everyone currently on the list. The
+    secretary is chosen as an extra person in Settings (like the roster "Also told when someone can't serve"), without other
+    rights. Updates (moved home, back in hospital, recovered, died) notify the same people; taking someone off keeps a dated
+    record for the pastors. Health details are special personal information: keep the note to the minimum needed to visit and
+    help, log who views it, and get the person's (or family's) consent where possible (`docs/POPIA.md`)
+  - ⬜ **Visit notes** (asked 20 Nov 2026) – anyone who visits someone on the list can note the visit: **when**, **where**
+    (hospital and ward, at home, elsewhere), **who visited** (one or more people), **how the person is** (their condition), and
+    **any special requests or needs** (e.g. communion, prayer, meals, lifts, help for the family). The notes show on that
+    person's card in date order, the latest visit's date updates "last visited", and the same people who were told about the
+    person (their Care Group leaders, the church secretary, the pastors) can read them. A new need can be flagged so the
+    pastors and secretary get a message about it. Same POPIA care as above: only what helps, nothing more
 
 ## Phase 3 – Rostering and services (built; follow-ups below)
 Accept/decline by email, swap requests, automatic reminders before a turn, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).

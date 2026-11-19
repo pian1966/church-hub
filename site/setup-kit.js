@@ -499,7 +499,7 @@ var SetupKit = (function () {
   var COMING = [
     { title: 'Set up in about a minute', what: 'One address for every church, and a setup that makes the database for you – no Firebase or GitHub screens.' },
     { title: 'The Android app for every church', what: 'Today the Android app is for one church; soon any church can use it.' },
-    { title: 'A care board', what: 'Who needs a visit, sent to the right Care Group leaders, so no one falls through the cracks.' },
+    { title: 'A care board', what: 'Who needs a visit – including who is seriously ill in hospital or at home – sent to the right Care Group leaders, the church secretary and the pastors, so no one falls through the cracks.' },
     { title: 'Sunday’s Bible passage', what: 'The passage being preached, on the service outline.' }
   ];
 

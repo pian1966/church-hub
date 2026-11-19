@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos'];
+    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos', 'studies'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church & Trellis as another role would see it. Nothing is saved while it is on. */
@@ -994,6 +994,12 @@ var Store = (function () {
         if (keeps) { want[pt + ':all'] = c(pt); return; }
         want[pt + ':live'] = c(pt).where('status', '==', 'live'); want[pt + ':done'] = c(pt).where('status', '==', 'done'); want[pt + ':mine'] = c(pt).where('personId', '==', me);
       });
+      // Midweek Groups online (js/studies.js): once Midweek Groups are switched on – Administrators and Pastors every
+      // group's links; everyone else their own groups' and those open to the whole church (firestore.rules studies)
+      if (me && (st.modules || {}).life === true) {
+        if (is('admin', 'pastor')) want['studies:all'] = c('studies');
+        else { want['studies:open'] = c('studies').where('open', '==', true); want['studies:mine'] = c('studies').where('to', 'array-contains', me); }
+      }
       var gone = false;
       Object.keys(extraSubs).forEach(function (k) { if (!want[k]) { try { extraSubs[k](); } catch (e) {} delete extraSubs[k]; delete raw[k]; gone = true; } });
       if (gone && ready) { rebuild(); remoteChanged(); }
@@ -1174,7 +1180,7 @@ var Store = (function () {
         var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
         db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
       });
-      [['board', /^board:/], ['market', /^market:/]].forEach(function (x) {   // Community board and Marketplace (extras())
+      [['board', /^board:/], ['market', /^market:/], ['studies', /^studies:/]].forEach(function (x) {   // Community board, Marketplace, Midweek Group links (extras())
         var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
         db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
       });

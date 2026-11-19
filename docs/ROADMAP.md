@@ -85,11 +85,9 @@ Groups and attendance, kids check-in on a tablet with medical alerts and leader 
 - ⬜ Life groups / Bible studies / small groups beside care groups, each kind switched on or off – full plan in `docs/GROUPS-PLAN.md`:
   1. ✅ done in 0.40.0 (see CHANGELOG); next: 2. meeting day, time and host; 3. Find a group and Ask to join; 4. a map of where
   groups meet; 5. a to-do so every Church Partner is in a group
-- ⬜ **Midweek Groups online – this week's links** (plan: `docs/COMMUNITY-PLAN.md` part 4): the leader (or a helper) posts the
-  week's meeting link (Google Meet, Zoom, YouTube) and the notes link (Google Doc) – the Meet link is remembered, so most weeks
-  only the notes are new; members get a message with **Join the meeting** and **Open the notes**, a Home card on the day and
-  Past studies on the group's page; a live-streamed study can be open to the whole church. Replaces the weekly WhatsApp for the
-  Wednesday Bible study. Steps 4.1–4.3
+- ⬜ Midweek Groups online (built in 0.99.0): a phone notification when the links arrive or the day comes (with push notifications,
+  Phase 5); the Wednesday Bible study to start using it instead of WhatsApp (Settings → Apps → Midweek Groups on, the group and
+  its leader added, then Post this week's links)
 - ⬜ Church: Settings → Apps – switch on **Life groups**, then add the groups and their leaders (leaders can rename them)
 - ⬜ At sign-out, show "Not allowed to collect" and the allowed collectors
 

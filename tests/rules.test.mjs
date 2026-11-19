@@ -71,6 +71,10 @@ await env.withSecurityRulesDisabled(async ctx => {
   await set('careGroups/cg2', { name: 'Howick', leaderIds: ['p05'], memberIds: ['p05', 'p01'], names: {} });
   await set('careGroups/cg3', { name: 'Merrivale', leaderIds: ['p15'], memberIds: ['p15', 'p14'], names: {} });
   await set('careGroups/lg1', { type: 'life', name: 'Tuesday Bible study', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: {} });
+  // Midweek Groups online: Clare leads lg3 and Tim is her co-leader; a study for lg1 (Tim leads it) and one open to everyone
+  await set('careGroups/lg3', { type: 'life', name: 'Wednesday study', leaderIds: ['p15'], memberIds: ['p15', 'p14', 'p05'], roles: { p14: 'coleader', p05: 'host' }, names: {} });
+  await set('studies/st1', { groupId: 'lg1', groupName: 'Tuesday Bible study', date: '2026-11-24', time: '19:00', meet: 'https://meet.google.com/abc-defg-hij', notes: '', topic: '', open: false, to: ['p14', 'p15'], fromId: 'p14', fromName: 'Tim' });
+  await set('studies/st2', { groupId: 'lg2', groupName: 'Thursday study', date: '2026-11-26', time: '19:00', meet: 'https://youtube.com/live/x', notes: '', topic: '', open: true, to: ['p15', 'p16'], fromId: 'p15', fromName: 'Clare' });
   await set('careGroups/cg1/share/p15', { firstName: 'Clare', lastName: 'Jacobs', ok: true, mobile: '082', birthday: '07-14' });
   await set('careGroups/cg2/share/p05', { firstName: 'Sipho', lastName: 'Dlamini', ok: false });
   // Messages: a message group Tim leads, one Clare leads; a message to Tim and Clare, and one to Thandi only
@@ -1219,6 +1223,35 @@ await t('Messages about a notice or listing: privately to its poster, while it i
   await cannot(db.attendee.collection('messages').add(about('board', 'live1', 'p14', 'Hope', 'p16')));
   await can(db.pastor.collection('messages').add(about('board', 'wait1', 'p14', 'Thandi', 'p02')));     // a keeper about their decision
   await cannot(db.rosters.collection('messages').add(Object.assign(about('board', 'live1', 'p14', 'Sipho', 'p05'), { about: 'secrets' })));
+});
+
+await t('Midweek Groups online: this week’s links – posted by leaders and co-leaders, read by the group (or everyone when open)', async () => {
+  const st = (o) => Object.assign({ groupId: 'lg3', groupName: 'Wednesday study', date: '2026-11-25', time: '19:00', meet: 'https://meet.google.com/aaa-bbbb-ccc', notes: 'https://docs.google.com/document/d/1', topic: 'Romans 8', open: false, showFrom: 0, to: ['p15', 'p14', 'p05'], fromId: 'p15', fromName: 'Clare', createdAt: 'x', updatedAt: 'x' }, o);
+  await can(read(db.member, 'studies/st1')); await cannot(read(db.rosters, 'studies/st1')); await can(read(db.pastor, 'studies/st1'));   // the group, Administrators and Pastors
+  await can(read(db.rosters, 'studies/st2')); await can(read(db.attendee, 'studies/st2'));                                            // open to the whole church
+  await can(list(db.member.collection('studies').where('to', 'array-contains', 'p14'))); await can(list(db.rosters.collection('studies').where('open', '==', true)));
+  await cannot(list(db.rosters.collection('studies')));
+  await can(db.member.doc('studies/n1').set(st({ fromId: 'p14', fromName: 'Tim' })));                    // Tim is a co-leader of lg3
+  await can(db.member.doc('studies/n2').set(st({ groupId: 'lg1', groupName: 'x', to: ['p14', 'p15'], fromId: 'p14' })));   // and leads lg1
+  await cannot(db.rosters.doc('studies/n3').set(st({ fromId: 'p05' })));                                  // Sipho is lg3's host, not a leader
+  await cannot(db.attendee.doc('studies/n4').set(st({ groupId: 'lg2', to: ['p15', 'p16'], fromId: 'p16' })));   // Hope is only a member of lg2
+  await cannot(db.member.doc('studies/n5').set(st({ fromId: 'p14', to: ['p15', 'p02'] })));              // someone not in the group
+  await cannot(db.member.doc('studies/n6').set(st({ fromId: 'p14', meet: 'javascript:alert(1)' })));       // only web links
+  await cannot(db.member.doc('studies/n7').set(st({ fromId: 'p14', meet: '', notes: '' })));               // at least one link
+  await cannot(db.member.doc('studies/n8').set(st({ fromId: 'p15' })));                                   // not in someone else's name
+  await cannot(db.member.doc('studies/n9').set(st({ fromId: 'p14', secret: 1 })));
+  await can(db.pastor.doc('studies/n10').set(st({ fromId: 'p02', fromName: 'Thandi' })));                  // Administrators and Pastors
+  await can(db.member.doc('studies/n1').update({ notes: 'https://docs.google.com/document/d/2' }));
+  await cannot(db.member.doc('studies/n1').update({ groupId: 'lg1' }));
+  await can(db.member.doc('studies/n1').delete()); await cannot(db.rosters.doc('studies/n10').delete());
+  // The message to the group (kind life, about study), which may wait for the day (showFrom)
+  const m = (o) => Object.assign({ kind: 'life', groupId: 'lg3', audience: 'Wednesday study', about: 'study', aboutId: 'n10', title: 'Wednesday study', body: 'Join', fromId: 'p14', fromName: 'Tim', to: ['p15', 'p14', 'p05'], deliveredBy: [], readBy: [], showFrom: 1795000000000, createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.member.doc('messages/st1').set(m({})));                                                     // a co-leader may send it
+  await cannot(db.rosters.doc('messages/st2').set(m({ fromId: 'p05' })));
+  await cannot(db.member.doc('messages/st3').set(m({ to: ['p02'] })));
+  await cannot(db.member.doc('messages/st4').set(m({ kind: 'care' })));
+  await cannot(db.member.doc('messages/st5').set(m({ showFrom: 'tomorrow' })));
+  await cannot(db.member.doc('messages/st6').set(m({ about: '', kind: 'life' })));                         // without about: only the leaders (mayWriteTo)
 });
 
 await t('the parts not built yet (Subscription records) are closed to everyone', async () => {

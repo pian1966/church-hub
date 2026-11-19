@@ -584,6 +584,17 @@ people marked as staff (including the older Staff category); it is not a second 
 - Unlike care groups, **children** can be in a midweek group (a youth group): Administrators and Pastors can add them (members
   don't see children, so leaders can't). A child's card follows the same consent, so normally only their name shows.
 - Groups fold like care groups (`CareUI.fold` with the words "leader"/"leaders").
+- **Online: this week's links** (0.99.0; rules `js/studies.js`, tested by `tests/studies.test.js`; plan `docs/COMMUNITY-PLAN.md` part 4).
+  `studies/{id}` = { groupId, groupName, date, time, meet, notes, topic, open, showFrom, to, fromId, fromName }. A group's leaders and
+  co-leaders (and Administrators and Pastors) post the meeting link and the notes link (http(s) only; known sites show their name,
+  others their address with "check this link"); the meeting link is remembered from last time. Posting also sends a message
+  (`kind: 'life'`, `about: 'study'`, `aboutId`) whose inbox card shows Join the meeting / Open the notes from the study itself, so a
+  changed link shows there too. **Send on the day**: the study and the message carry `showFrom` (ms) and `Msg.inbox`/`unread` hide
+  the message until then (no server needed; a phone notification comes with push notifications, Phase 5). On the day a Home card
+  (`homeCard`) shows the study, becoming Join now 15 minutes before. `open: true` (a live-streamed study): anyone signed in reads it
+  – Home that day and "Open to everyone" on the Midweek Groups page. Past studies are folded on the group's panel; a study is deleted
+  a year after it (when the next one is posted) and with its group. Loaded in `extras()` once Midweek Groups are on: Administrators
+  and Pastors all, everyone else `to array-contains me` and `open == true` (rules: `postsLife`, `okStudy`, `studyNote`).
 - **Adding people** (`CareUI.finder`, used by every "type part of their name" box): what was typed and its matches stay after
   someone is picked (`typed`, cleared when the box is emptied or the page changes; `{ keep: false }` for one-off picks like
   lending a book), and the box gets the focus back (`CareUI.again`), so several people are added from the same list.

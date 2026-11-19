@@ -26,6 +26,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Groups: one menu entry with tabs for Care Groups, Midweek Groups and Leadership (`inGroups: true`), "My groups" | `js/mod-groups.js`, `js/app.js` (`listed`, `groupMods`) | `js/i18n/common.js` | `tests/app/life.js` |
 | Care groups | `js/mod-care.js`, `js/care.js` | `js/i18n/care.js` | `tests/care.test.js`, `tests/app/care.js` |
 | Life groups (Bible studies, midweek groups; care-group records with `type: 'life'`) | `js/mod-life.js`, `js/care.js` | `js/i18n/life.js` | `tests/care.test.js`, `tests/app/life.js` |
+| Midweek Groups online: this week's meeting and notes links (`studies`), the message (about `study`), the Home card on the day, Past studies | `js/studies.js` (rules), `js/mod-life.js`, `js/mod-messages.js` (`studyPart`) | `js/i18n/life.js` | `tests/studies.test.js`, `tests/app/life.js`, `tests/rules.test.mjs` |
 | Leadership (the Council, elders, leaders: roles, titles, portfolios; `leaderBodies`) | `js/mod-leaders.js`, `js/leaders.js` | `js/i18n/leaders.js` | `tests/leaders.test.js`, `tests/app/records.js` |
 | Archives (inside Library; minutes, plans, contracts, appraisals; role access; files in parts) | `js/mod-archive.js`, `js/mod-library.js`, `js/archive.js`, `js/store.js` (`extras`, `saveFile`) | `js/i18n/archive.js` | `tests/archive.test.js`, `tests/app/records.js` |
 | Library (books, loans, librarians) | `js/mod-library.js`, `js/library.js` | `js/i18n/library.js` | `tests/library.test.js`, `tests/app/records.js` |
@@ -67,7 +68,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `access`, `badges`, `leaders`, `archive`, `library`, `community`, `sesotho`, `tips`, `coffee`, `church`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `care`, `messages`, `access`, `badges`, `leaders`, `archive`, `library`, `community`, `studies`, `sesotho`, `tips`, `coffee`, `church`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part

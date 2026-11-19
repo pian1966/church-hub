@@ -1441,3 +1441,17 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 .ar-folder .ar-sub { color: var(--muted); font-size: 13px; }
 .ar-folder .tag { max-width: 100%; white-space: normal; text-align: left; line-height: 1.3; }
 .ar-folder .ic { transition: transform .2s var(--ease-spring, ease); } .ar-folder:hover .ic { transform: scale(1.06) rotate(-3deg); }
+/* Midweek Groups online: this week's links (js/mod-life.js) */
+.st-block { margin: 10px 0 4px; }
+.st-next { padding: 12px 14px; border-radius: 14px; background: color-mix(in srgb, #3E7D5A 8%, var(--surface)); border: 1px solid color-mix(in srgb, #3E7D5A 18%, var(--line)); margin-bottom: 8px; }
+.st-next .btns { margin-top: 8px; }
+.st-links { flex-wrap: wrap; align-items: center; }
+.st-links .btn.primary { animation: st-glow 2s ease-in-out infinite; }
+@keyframes st-glow { 0%, 100% { box-shadow: 0 0 0 0 color-mix(in srgb, #3E7D5A 35%, transparent); } 50% { box-shadow: 0 0 0 6px transparent; } }
+@media (prefers-reduced-motion: reduce) { .st-links .btn.primary { animation: none; } }
+.st-check { display: block; width: 100%; font-size: 12px; }
+.st-past summary { cursor: pointer; font-weight: 600; font-size: 14px; margin: 6px 0; }
+.st-home { background: linear-gradient(135deg, color-mix(in srgb, #3E7D5A 14%, var(--surface)), var(--surface) 70%); border-color: color-mix(in srgb, #3E7D5A 25%, var(--line)); }
+.st-home .btns { margin-top: 10px; }
+.st-open { margin: 6px 0 10px; }
+#st-body small.ok { color: #1F8A4C; } #st-body small.bad { color: var(--bad); }

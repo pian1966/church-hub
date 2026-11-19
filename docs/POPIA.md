@@ -237,6 +237,12 @@ the people listed as leading a Midweek Group (`lifeLeaders/all`); both are kept 
 (database rules, tested). Children, people who have left or died, and deleted records are not listed. Purpose: so a leader
 can welcome someone into their group without asking the office. Once added, the person shares only what their own consent
 allows, as above.
+**This week's links** (0.99.0): a study holds the meeting link, the notes link, the topic, the date and time, who posted it and the
+list of the group's members when it was posted (so the rules know who may read it) – nothing new about anyone. Purpose: the group
+meeting; basis: the same as the group. Read by the group, Administrators and Pastors – or by anyone signed in when the leader
+opens it to the whole church (then only the group's name, the time, the topic and the links show, never its members). Posting,
+changing and deleting are in the audit log; a study is deleted a year after it took place. Church & Trellis stores the links only:
+nobody connects a Google account, and what is in the meeting or the document stays with Google (or Zoom, YouTube…).
 
 ## Messages inside the app
 - Purpose: keeping in touch with the people the church cares for (notices, care-group and team news). Basis: the church's

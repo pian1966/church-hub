@@ -431,13 +431,13 @@ service cloud.firestore {
       return !m.keys().hasAny(['roster', 'turns']) && ((m.kind == 'office' && m.to.size() == 0 && (attendeeMay('write') || (anyone() && m.get('about', '') == 'partnerApp')))
         || manager()
         || mayDirect(m)
-        || aboutItem(m)
         || ((m.kind == 'care' || m.kind == 'life') && meIn(get(careRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(careRef(m.groupId)).data.get('memberIds', [])))
         || (m.kind == 'group' && meIn(get(msgGroupRef(m.groupId)).data.get('leaderIds', [])) && m.to.hasOnly(get(msgGroupRef(m.groupId)).data.get('memberIds', []).concat(get(msgGroupRef(m.groupId)).data.get('leaderIds', []))))
         || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', []))));
     }
     // Roster messages are checked on their own (fewer steps: Firestore allows only so many per request)
-    function maySendTo(m) { return m.kind == 'roster' ? mayRosterNote(m) : mayWriteTo(m); }
+    // A message about a notice or listing is checked on its own as well (aboutItem): fewer steps.
+    function maySendTo(m) { return m.kind == 'roster' ? mayRosterNote(m) : (m.get('about', '') in ['board', 'market'] ? aboutItem(m) : mayWriteTo(m)); }
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)
@@ -794,7 +794,8 @@ service cloud.firestore {
     function keepsPart(p) {
       let st = churchSettings();
       let chosen = st.get('keepers', {});
-      return anyone() && (p in chosen ? meIn(chosen.get(p, [])) : (isRole(['admin', 'pastor']) || meIn(st.get('rosterExtra', [])))) && !attendee();
+      return anyone() && (p in chosen ? meIn(chosen.get(p, [])) && !attendee()
+        : isRole(['admin', 'pastor']) || (meIn(st.get('rosterExtra', [])) && !attendee()));
     }
     function in31Days(ms) { return ms is int && ms <= request.time.toMillis() + 31 * 86400000; }
     function okCommunity(p, d) {
@@ -815,21 +816,27 @@ service cloud.firestore {
             && d.get('photos', 0) is int && d.get('photos', 0) <= 3 && d.get('thumb', '') is string && d.get('thumb', '').size() <= 60000);
     }
     function seesItem(p, d) { return communityPerson() && (d.status in ['live', 'done'] || isMe(d.personId) || keepsPart(p)); }
+    // Cheap checks first, and the long one (okCommunity) last: Firestore allows 1000 steps per request.
     function newItem(p, d) {
-      return communityPerson() && isMe(d.personId) && okCommunity(p, d) && d.status == 'waiting' && in31Days(d.endsAt)
-        && d.get('note', '') == '' && d.get('renews', 0) == 0 && d.get('reports', []).size() == 0;
+      return d.status == 'waiting' && d.get('note', '') == '' && d.get('renews', 0) == 0 && d.get('reports', []).size() == 0
+        && in31Days(d.endsAt) && communityPerson() && isMe(d.personId) && okCommunity(p, d);
     }
-    function changesItem(p, b, d) {
-      let posterOk = anyone() && isMe(b.personId) && d.personId == b.personId && (
+    // The poster: a change goes back to the keepers; or sorted / sold, renewed (twice at most), or a lower price.
+    function posterChanges(p, b, d) {
+      return d.personId == b.personId && (
         (d.status == 'waiting' && in31Days(d.endsAt) && d.get('renews', 0) == b.get('renews', 0) && d.get('reports', []).size() == 0)
         || (b.status == 'live' && d.status == 'done' && onlyChanges(['status', 'doneAt', 'updatedAt']))
         || (b.status == 'live' && onlyChanges(['endsAt', 'renews', 'updatedAt']) && d.get('renews', 0) == b.get('renews', 0) + 1 && in31Days(d.endsAt))
-        || (p == 'market' && b.status == 'live' && onlyChanges(['price', 'updatedAt']) && d.get('price', 0) < b.get('price', 0)));
-      return okCommunity(p, d) && (posterOk
-        || (onlyChanges(['status', 'note', 'by', 'decidedAt', 'endsAt', 'reports', 'updatedAt']) && d.status in ['live', 'change', 'declined'] && in31Days(d.endsAt) && keepsPart(p))
-        || (communityPerson() && b.status == 'live' && onlyChanges(['reports', 'updatedAt'])
-          && d.reports.hasAll(b.get('reports', [])) && d.reports.removeAll(b.get('reports', [])).hasOnly(myIds())));
+        || (p == 'market' && b.status == 'live' && onlyChanges(['price', 'updatedAt']) && d.get('price', 0) < b.get('price', 0)))
+        && anyone() && isMe(b.personId);
     }
+    // A keeper decides (and may clear reports); anyone who sees a live one may add themselves to its reports.
+    function othersChange(p, b, d) {
+      return (onlyChanges(['status', 'note', 'by', 'decidedAt', 'endsAt', 'reports', 'updatedAt']) && d.status in ['live', 'change', 'declined'] && in31Days(d.endsAt) && keepsPart(p))
+        || (b.status == 'live' && onlyChanges(['reports', 'updatedAt']) && d.reports.hasAll(b.get('reports', []))
+          && d.reports.removeAll(b.get('reports', [])).hasOnly(myIds()) && communityPerson());
+    }
+    function changesItem(p, b, d) { return (posterChanges(p, b, d) || othersChange(p, b, d)) && okCommunity(p, d); }
     match /board/{id} {
       allow read: if seesItem('board', resource.data);
       allow create: if newItem('board', request.resource.data);

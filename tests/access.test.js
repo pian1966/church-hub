@@ -84,7 +84,7 @@ ok(/\['names', 'directory', 'write', 'reply'\]/.test(fake) && A.ATTENDEE_OPTIONS
 ok(/match \/subscription\/\{\w+\} \{ allow read, write: if false; \}/.test(rules), 'firestore.rules: subscription has its section, closed until built');
 for (const c of ['board', 'market']) ok(new RegExp('match /' + c + '/\\{id\\} \\{\\s*allow read: if seesItem\\(\'' + c + '\'').test(rules) && fake.includes(c + ': communityPolicy(\'' + c + '\')'), 'firestore.rules and its copy: ' + c + ' is open to whom js/access.js says (seesItem, keepsPart)');
 // Keepers: the first ones (js/access.js JOBS.keepers defaults) are the Administrators, the Pastors and settings rosterExtra – as in the rules
-ok(/isRole\(\['admin', 'pastor'\]\) \|\| meIn\(st\.get\('rosterExtra', \[\]\)\)/.test(rules) && /is\(c, \['admin', 'pastor'\]\) \|\| meIn\(c, st\.rosterExtra \|\| \[\]\)/.test(fake), 'firestore.rules and its copy: the first keepers match js/access.js');
+ok(/isRole\(\['admin', 'pastor'\]\) \|\| \(meIn\(st\.get\('rosterExtra', \[\]\)\)/.test(rules) && /is\(c, \['admin', 'pastor'\]\) \|\| meIn\(c, st\.rosterExtra \|\| \[\]\)/.test(fake), 'firestore.rules and its copy: the first keepers match js/access.js');
 ok(/communityPerson\(\) \{ return anyone\(\) && !attendee\(\); \}/.test(rules) && A.PARTS.filter(p => p.id === 'board' || p.id === 'market').every(p => p.perms[p.id + '.view'].kinds.join() === A.NOT_ATTENDEES.join()), 'never attendees, in the rules as in js/access.js');
 
 console.log(fails ? `\n${fails} FAILED` : '\nAll passed');

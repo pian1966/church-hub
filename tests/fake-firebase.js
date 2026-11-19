@@ -134,6 +134,11 @@
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care'])); } },
     names: { read: function (c) { return is(c, STAFF) || attendeeMay(c, 'names') || attendeeMay(c, 'directory'); },
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName'])); } },
+    // Every adult's name, for Midweek Group leaders (firestore.rules leadsLife); lifeLeaders/all lists those leaders
+    pickNames: { read: function (c) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && meIn(c, (docs['lifeLeaders/all'] || {}).ids || [])); },
+      write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName'])); } },
+    lifeLeaders: { read: function (c) { return is(c, ['admin', 'pastor']); },
+      write: function (c, op, id, b, a) { return is(c, ['admin', 'pastor']) && (op === 'delete' || (id === 'all' && onlyKeys(a, ['ids']) && Array.isArray(a.ids))); } },
     contacts: { read: function (c) { return is(c, STAFF); },
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['shareAddress', 'shareSpouse'])); } },
     photos: { read: function (c, id) { return child(id) ? is(c, ['admin', 'pastor', 'kids']) : is(c, STAFF) || mine(c, id) || (attendeeMay(c, 'directory') && docs['directory/' + id] !== undefined); },

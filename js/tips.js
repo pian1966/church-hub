@@ -4,7 +4,7 @@
  * something they can't use: a member hears that there is a library and that their Me page shows what they borrowed; a
  * librarian hears how to lend, repair or take out an item.
  * Tags (worked out in js/app.js, homeTags): everyone; the role (admin, pastor, rosters, kids, member); librarian; carer
- * (leads a Care Group); senior (the Senior Pastor); staffwork (sees the People list: Administrators, Pastors, Roster
+ * (leads a Care Group); lifelead (leads a Midweek Group); senior (the Senior Pastor); staffwork (sees the People list: Administrators, Pastors, Roster
  * coordinators, Children's ministry).
  * Texts are English, marked with TX and translated where they are shown (js/i18n/tips.js, js/lang/st.js).
  * To add news: put the newest line first in NEWS with the day it reached the website. Shown on Home for NEWS_DAYS days.
@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.94';
   var NEWS = [
+    { date: '2026-11-19', who: ['lifelead'], not: ['admin', 'pastor'], app: 'life', text: TX('Midweek Groups: every group leader can now add anyone to their group with “Add someone to the group”, people who only come to church too – they see just each person’s name.') },
     { date: '2026-11-19', who: ['admin', 'pastor'], app: 'life', text: TX('Midweek Groups: when a Pastor or Administrator who leads a group uses “Add someone to the group”, they can now choose anyone, not only people in the church directory – the same as from a person’s page.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: choose how many services to see side by side, from 2 to 8, and the top row (date, time and communion) stays in view as you scroll down.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: six services side by side with a slider to move across, an eye to hide a service for now, and departments can be put in order or joined together (Teams → ↑ ↓ and ⋯).') },

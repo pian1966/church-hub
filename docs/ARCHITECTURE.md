@@ -615,7 +615,8 @@ people marked as staff (including the older Staff category); it is not a second 
   access was before: the directory, replies); everyone else on Basic access is an **attendee**. Attendees get only what
   Settings → Attendees allows (`settings.attendeeCan`, default `['names', 'write']`): `names` – Church Partners' names on
   People (`names/{id}`: first, last and known-as name of Church Partners and staff in the directory, written with each
-  directory entry by `syncDirectory`); `directory` – the church directory as Church Partners see it; `write` – the Office,
+  directory entry by `syncDirectory`; separately, `pickNames/{id}` holds every adult's name for Midweek Group leaders adding
+  people – read by Administrators, Pastors and those in `lifeLeaders/all`, both kept by `syncDirectory`/`syncLifeLeaders`); `directory` – the church directory as Church Partners see it; `write` – the Office,
   ministers and their Midweek Group leaders (and a reply to a minister); `reply` – reply to any message. Without `names` or
   `directory` the People page is hidden (the application form still opens). Administrators and the Senior Pastor (Rector)
   change it; the Rector opens Settings with only Attendees and Membership application. The rules (`attendee()`,

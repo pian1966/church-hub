@@ -244,6 +244,21 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName']);
       allow delete: if isRole(['admin', 'pastor']) || mine(id);
     }
+    // pickNames: the name of every adult in the church (first, last and preferred name - nothing else), so a Midweek Group's
+    // leaders can add anyone to their group, attendees too. Read by Administrators, Pastors and anyone who leads a Midweek
+    // Group; lifeLeaders/all lists who that is. Administrators and Pastors keep both in step with People and the groups.
+    function leadsLife() { return anyone() && meIn(get(/databases/$(database)/documents/lifeLeaders/all).data.get('ids', [])); }
+    match /pickNames/{id} {
+      allow read: if isRole(['admin', 'pastor']) || leadsLife();
+      allow create, update: if isRole(['admin', 'pastor'])
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName']);
+      allow delete: if isRole(['admin', 'pastor']);
+    }
+    match /lifeLeaders/{doc} {
+      allow read, delete: if isRole(['admin', 'pastor']);
+      allow create, update: if isRole(['admin', 'pastor']) && doc == 'all'
+        && request.resource.data.keys().hasOnly(['ids']) && request.resource.data.ids is list;
+    }
     match /contacts/{id} {
       allow read: if staff();
       allow create, update: if (isRole(['admin', 'pastor']) || mine(id))

@@ -1341,6 +1341,7 @@ html[data-mode=dark] .comm-chip.on { background: #4A1F26; color: #F4B9C0; border
 .sp-pray-grid { margin-bottom: 18px; } .sp-all summary { cursor: pointer; font-weight: 600; margin-bottom: 12px; }
 .sp-home .sp-home-h { display: flex; align-items: center; gap: 8px; color: #6D3FC0; margin-bottom: 10px; } .sp-home .sp-home-h h2 { margin: 0; color: var(--ink); }
 .sp-home .pcard { box-shadow: none; } .sp-home .pcard .pc-pic { aspect-ratio: 21 / 9; } .sp-home .btns { margin-top: 12px; }
+.sp-nudge { border-left: 4px solid #F5B53B; margin-bottom: 18px; } .sp-nudge .sp-home-h { display: flex; align-items: center; gap: 8px; color: #6D3FC0; margin-bottom: 6px; } .sp-nudge .sp-home-h h2 { margin: 0; color: var(--ink); } .sp-nudge p { margin: 0 0 12px; max-width: 64ch; } .sp-onoff .hint { margin: 8px 0 0; }
 /* our prayer card */
 .sp-card-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 22px; align-items: start; }
 .sp-preview { position: sticky; top: 20px; } .sp-preview .pcard.big { flex-direction: column; } .sp-preview .pcard.big .pc-pic { aspect-ratio: 16 / 9; min-height: 0; }

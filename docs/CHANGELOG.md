@@ -478,3 +478,9 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 18 Nov 2026 (0.93.1): Archives (and a What's new line) – a document you have just added shows in its folder straight away, even if the list from the database hasn't brought it back yet; the Senior Pastor's list now brings back staff contracts and appraisals (private records); a Council member who chooses a "Who can see it" they don't belong to is told before saving (the database would refuse it, and the record seemed to disappear)
 - ✅ 0.94.0 Rosters: six services side by side with a slider above (and a clear scroll bar below); an eye on each service hides it for now ("Hidden for now" brings it back); departments in the order of a service (Welcome, Service Leading, Extra Slot, Hospitality, Music, Creche, Children, Teens, Technical) and moved with ↑ ↓ on Teams; ⋯ → Join with another team folds a second Music/Worship department into the first (positions, people and turns move across, nobody twice); an empty team can be deleted
 - ✅ 0.94.1 Rosters: choose 2–8 services side by side (the slider only shows when the roster is wider than the screen); the top row (date, time, communion) stays in view while scrolling down
+- ✅ 0.95.0 (19 Nov 2026): the prayer circle for every church. Home shows a new church's prayer card every week (the same for
+  everyone at a church that week; each church goes through all the others in its own shuffled order with no repeats until it
+  has seen them all – `Coffee.cardForWeek`). Every church keeps a prayer card and looks at it once a month: Home asks its
+  Administrators ("Update the prayer card" / "Keep it as it is"). Only an Administrator of a paying church can turn the weekly
+  card off; a church that prays instead of paying keeps it on. Wording moved from monthly to weekly in the app, the website
+  (prayer circle reworded, new question "Do we have to take part?"), the brochure, the setup tool and the presentation.

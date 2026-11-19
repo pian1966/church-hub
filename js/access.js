@@ -108,6 +108,13 @@ var Access = (function () {
       defaults: function (st, people) {
         return people.filter(function (p) { return p.appRole === 'admin' || p.appRole === 'pastor'; }).map(function (p) { return p.id; })
           .concat(st.rosterExtra || []);
+      } },
+    // Event organisers put events up, see who's coming and write to them (docs/COMMUNITY-PLAN.md part 1). Until the church
+    // chooses: the Administrators, the Pastors and the church secretary (the Office), as for keepers.
+    organisers: { key: 'organisers', label: TX('Event organisers'), one: TX('Event organiser'), parts: ['events'],
+      defaults: function (st, people) {
+        return people.filter(function (p) { return p.appRole === 'admin' || p.appRole === 'pastor'; }).map(function (p) { return p.id; })
+          .concat(st.rosterExtra || []);
       } }
   };
   /** The people (ids) with a job in a part: chosen in Settings, or the defaults. people: active people only, as the caller sees them. */
@@ -139,6 +146,12 @@ var Access = (function () {
         'market.keep': { kinds: [], job: 'keepers' }
       },
       settings: ['keepers.market', 'marketRules'] },
+    { id: 'events', name: TX('Events'), desc: TX('Church events people sign up for, with reminders 3 days and 1 day before'), optIn: true,
+      perms: {
+        'events.view': { kinds: EVERYONE },          // attendees see only the events meant for everyone (js/events.js sees)
+        'events.organise': { kinds: [], job: 'organisers' }
+      },
+      settings: ['organisers.events'] },
     { id: 'support', name: TX('Subscription'), desc: TX('A coffee a month keeps Church & Trellis going'),
       perms: {
         // As before: Administrators, and Pastors with the "settings" tick
@@ -205,6 +218,7 @@ var Access = (function () {
       careSee('member');
       can.push(line(TX('Reply to messages, and write to the Office, the ministers and their group leaders')));
       if (mods.board === true || mods.market === true) can.push(line(TX('Post on the Community board and the Marketplace (a keeper checks first)')));
+      if (mods.events === true) can.push(line(TX('Sign up for events, with reminders 3 days and 1 day before')));
     } else if (kind === 'attendee') {
       var on = attendeeCan(st);
       see.push(line(TX('Their own details, serving and messages')));
@@ -212,6 +226,7 @@ var Access = (function () {
       else if (on.indexOf('names') >= 0) see.push(line(TX('The names of Church Partners')));
       if (on.indexOf('write') >= 0) can.push(line(TX('Write to the Office, the ministers and their Midweek Group leaders')));
       if (on.indexOf('reply') >= 0) can.push(line(TX('Reply to any message sent to them')));
+      if (mods.events === true) can.push(line(TX('Sign up for events, with reminders 3 days and 1 day before')));
       if (!can.length) can.push(line(TX('Only read the messages the church sends them')));
     }
     return { see: see, can: can };

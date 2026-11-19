@@ -533,3 +533,14 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.98.1 (19 Nov 2026): Names listed A to Z, each a chip that opens the person's page, in Rosters → Teams and Serving
   together (plain text for someone who may not open people's pages), custom groups, Librarians, the board and Marketplace keepers,
   and Privacy → Retention (its Open button replaced by the name). `Hub.byName` sorts people A to Z. What's new in all five languages.
+- ✅ 0.101.0 (20 Nov 2026): **Events – organising, signing up and reminders** (`js/events.js`, `js/mod-events.js`,
+  `css/events.css`; plan: `docs/COMMUNITY-PLAN.md` part 1, steps 1.1–1.2 without the waiting list and questions). An Events page
+  of colourful cards with a date tile; organisers (Administrators, Pastors and the church secretary until the church chooses –
+  `Access.JOBS.organisers`) put events up (who it's for, sign-up, closing date, guests, email reminders on or off), see Who's
+  coming, download or print the list, message everyone coming, and cancel an event (everyone coming is told). Members tap
+  **I'll be there** (themselves and the household members they can see; others come as guests), Add to my calendar (.ics) and
+  I can't come after all. **Reminders 3 days and 1 day before**: in Messages always (each person's own app writes theirs on the
+  day, kind `event`, about `remind`, a fixed id so never twice), and by email for those who tick *Email me reminders too* – the
+  email robot (`robot/event-mail.js`, `.github/workflows/event-reminders.yml`, `docs/EVENT-EMAILS.md`) sends them every morning
+  through the church's Gmail in each person's language. Home shows "Coming up". Tests: `tests/events.test.js`,
+  `tests/event-mail.test.js`, `tests/app/events.js`, `tests/rules.test.mjs`. Words in all five languages.

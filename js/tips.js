@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.100';
+  var NEWS_FOR = '0.101';
   var NEWS = [
+    { date: '2026-11-20', who: ['admin'], text: TX('New: Events. Switch it on under Settings → Apps. Put events up, see who’s coming and write to them all; people sign up with one tap and are reminded 3 days and 1 day before – in Messages, and by email if they like.') },
+    { date: '2026-11-20', who: ['everyone'], app: 'events', text: TX('Events are here: see what’s coming up, tap I’ll be there, and we’ll remind you 3 days and 1 day before.') },
     { date: '2026-11-19', who: ['admin'], text: TX('Settings: who can see what, Attendees and What Pastors can do are now one page, Access and roles – a card for each kind of person says what they see and can do, with View as one tap away. Nothing about anyone’s access has changed.') },
     { date: '2026-11-19', who: ['lifelead'], app: 'life', text: TX('Midweek Group leaders: post this week’s meeting link and notes under Groups → Midweek Groups. Your group gets them in Messages, with Join the meeting and Open the notes – now or on the day.') },
     { date: '2026-11-19', who: ['everyone'], app: 'life', text: TX('On the day of your Midweek Group, Home shows a card with Join the meeting and Open the notes – it becomes Join now 15 minutes before.') },
@@ -92,6 +94,7 @@
 
   var TIPS = [
     // Everyone
+    { id: 'events-cal', who: ['everyone'], app: 'events', href: '#/events', text: TX('Signed up for an event? Open it and tap Add to my calendar – your phone reminds you too.') },
     { id: 'study-past', who: ['everyone'], app: 'life', href: '#/life', text: TX('Missed a Midweek Group? Its page keeps Past studies, with the notes for each week.') },
     { id: 'board-help', who: ['everyone'], app: 'board', href: '#/board', text: TX('Tap a note on the Community board to see all of it and write privately to the person who pinned it.') },
     { id: 'market-photos', who: ['everyone'], app: 'market', href: '#/market', text: TX('Listing something on the Marketplace? Add up to three photos – Church & Trellis makes them small, so they cost little data.') },

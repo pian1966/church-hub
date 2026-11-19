@@ -368,6 +368,20 @@ nobody connects a Google account, and what is in the meeting or the document sta
 - How long: 30 days live (renewed twice at most); ended, sorted/sold or declined items are deleted 30 days later by the next
   poster or keeper who opens the page (`Community.tidy`). Keepers' decisions are in the audit log.
 
+## Events
+- Purpose: organising the church's events – who is coming, and reminding them (3 days and 1 day before). Basis: the person
+  signs up themselves (consent); for a household member or guest they add, the church's legitimate interest in planning.
+- Who sees it: events are for signed-in people only (never the website); events for Church Partners are not shown to attendees.
+  A sign-up is seen by the person who made it, the people on it, and the organisers (`firestore.rules` organises; Administrators,
+  Pastors and the church secretary until the church chooses) – nobody else sees who is coming.
+- Kept on a sign-up: who signed up, the names of those coming, how many guests, the language for emails, and an email address
+  **only** if the person ticked *Email me reminders too* (consent, for that event only). The reminder in Messages is written by
+  the person's own app into their own inbox.
+- The email robot (`robot/event-mail.js`, GitHub Actions) reads events and sign-ups, sends the reminders through the church's
+  Gmail and notes which went (`mailed`); it can change nothing else, and its public log has counts only.
+- How long: sign-ups are deleted 30 days after the event, events a year after (`Events.staleSignup`, `staleEvent`, run when an
+  organiser opens Events). Putting up, changing, cancelling and deleting events, and signing up, are in the audit log.
+
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church & Trellis keeps the suggestion with their name and person ID, so the
   checker can thank them or ask what they meant. Purpose: improving the app's wording; basis: the person sends it themselves.

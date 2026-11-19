@@ -533,3 +533,10 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 0.98.1 (19 Nov 2026): Names listed A to Z, each a chip that opens the person's page, in Rosters → Teams and Serving
   together (plain text for someone who may not open people's pages), custom groups, Librarians, the board and Marketplace keepers,
   and Privacy → Retention (its Open button replaced by the name). `Hub.byName` sorts people A to Z. What's new in all five languages.
+- ✅ 0.101.0 (20 Nov 2026): Print the roster (Rosters → More → Print the roster; Pastors and others who may see the whole roster
+  from My serving). A4 landscape, a term at a time (this term or the next – the quarters, close to the school terms – or any
+  dates), one service per page (all the 8 o'clock services of the term together; special services on one page of their own).
+  Only positions with names are printed: positions a service doesn't have (Creche at 5pm, communion roles on a Sunday without
+  communion) and empty ones are left out completely, unless "Also print positions that are still empty" is ticked. People who
+  said no are left out; more than 13 Sundays split evenly over pages. Print, or "Save as PDF" in the print window. Rules in
+  `RosterCore.terms / printChoices / printSheets / pages` (tested in `tests/roster.test.js`). What's new, brochure and setup tool.

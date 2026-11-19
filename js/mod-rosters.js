@@ -227,7 +227,7 @@
       '<button class="btn" data-act="rosters:move" data-d="-' + Math.max(1, svcs.length) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + Math.max(1, svcs.length) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
       '<label class="ro-date" title="' + esc(T('Go to a date')) + '"><input type="date" id="ro-date" value="' + esc(svcs.length ? svcs[0].date : H.today()) + '" aria-label="' + esc(T('Go to a date')) + '"></label>' +
       (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>' +
-        H.menu(T('More'), ['<button data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>', '<button data-act="rosters:remind">' + H.icon(BELL, 16) + T('Remind those who haven’t replied') + '</button>']))) + tabs('');
+        H.menu(T('More'), ['<button data-act="rosters:print">' + H.icon(PRINTER, 16) + T('Print the roster') + '</button>', '<button data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>','<button data-act="rosters:remind">' + H.icon(BELL, 16) + T('Remind those who haven’t replied') + '</button>']))) + tabs('');
     if (state.preview) {
       var n = state.preview.assignments.length;
       html += '<div class="note info"><b>' + TN('{n} suggestion', '{n} suggestions', n) + '</b> ' + T('shown with a dashed border. Families and friends are kept together, people who are away are skipped, and turns are shared fairly.') +
@@ -282,6 +282,98 @@
       }).join('') + '<p class="hint">' + T('Add more people to the team, or ask someone directly with “+ Add someone”.') + '</p></section>';
     }
     return html;
+  }
+
+  /* ---------- printing the roster: A4 landscape, a term at a time, one service per sheet (RosterCore.printSheets) ---------- */
+  /** Pastors, Administrators, Roster coordinators – everyone who may see the whole roster. */
+  function canPrint() { return manager() || H.can('rosters.view'); }
+  var PRINTER = 'M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z';
+  function printData() { return Object.assign(engineData(), { teams: S.list('teams') }); }
+  function sheetName(key) { return key === 'special' ? T('Special services') : slotName(key); }
+  /** "Term 1 2027" when the dates are one of the terms offered, otherwise ''. */
+  function termName(from, to) {
+    var t = R.terms(H.today()).concat(R.terms(addMonths(H.today(), -3)))
+      .filter(function (x) { return x.from === from && x.to === to; })[0];
+    return t ? T('Term {n} {year}', { n: t.n, year: t.year }) : '';
+  }
+  function printDialog() {
+    if (!state.print) { var t = R.terms(H.today())[0]; state.print = { from: t.from, to: t.to, sheets: null, gaps: false }; }   // this term, every service
+    var pr = state.print;
+    H.modal(H.dialogHead(T('Print the roster'), T('On A4 landscape, one service per page. Print it, or choose “Save as PDF” as the printer to make a PDF.')) +
+      '<div class="dlg-body"><div id="ro-pr"></div>' +
+      '<div class="two" style="margin-top:6px"><label class="field">' + T('From') + '<input type="date" id="ro-pfrom" value="' + esc(pr.from) + '"></label>' +
+      '<label class="field">' + T('To') + '<input type="date" id="ro-pto" value="' + esc(pr.to) + '"></label></div>' +
+      '<label class="check"><input type="checkbox" id="ro-pgaps"' + (pr.gaps ? ' checked' : '') + '><span>' + T('Also print positions that are still empty, to fill in by hand') +
+      '<small class="muted" style="display:block;font-weight:400">' + T('Otherwise only positions with names on them are printed.') + '</small></span></label></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" id="ro-pgo" data-act="rosters:printgo">' + H.icon(PRINTER, 18) + T('Print') + '</button></div>', T('Print the roster'));
+    printParts();
+  }
+  /** The parts of the print window that change with the dates: the terms, which services, and how many pages. */
+  function printParts() {
+    var box = document.getElementById('ro-pr'), pr = state.print; if (!box || !pr) return;
+    var choices = R.printChoices(printData(), pr.from, pr.to);
+    var on = function (k) { return !pr.sheets || pr.sheets.indexOf(k) >= 0; };
+    var sheets = R.printSheets(printData(), { from: pr.from, to: pr.to, sheets: pr.sheets, gaps: pr.gaps });
+    var n = sheets.reduce(function (a, sh) { return a + R.pages(sh.services.length).length; }, 0);
+    box.innerHTML = '<p style="margin:0 0 6px"><b>' + T('Which term') + '</b></p><div class="pchips">' + R.terms(H.today()).map(function (t) {
+      var sel = pr.from === t.from && pr.to === t.to;
+      return '<button type="button" class="pchip' + (sel ? ' on' : '') + '" aria-pressed="' + sel + '" data-act="rosters:printterm" data-f="' + t.from + '" data-t="' + t.to + '">' + (sel ? H.icon(H.ICON.check, 15) : '') +
+        esc(T('Term {n} {year}', { n: t.n, year: t.year })) + ' <span class="muted small">' + esc(H.fmt(t.from) + ' – ' + H.fmt(t.to)) + '</span></button>';
+    }).join('') + '</div>' +
+      '<p style="margin:14px 0 6px"><b>' + T('Which services') + '</b></p>' +
+      (choices.length ? '<div class="pchips">' + choices.map(function (c) {
+        var o = on(c.key);
+        return '<button type="button" class="pchip' + (o ? ' on' : '') + '" aria-pressed="' + o + '" data-act="rosters:printsheet" data-k="' + esc(c.key) + '">' + (o ? H.icon(H.ICON.check, 15) : '') +
+          esc(sheetName(c.key)) + (c.name && c.key !== 'special' ? ' <span class="muted small">' + esc(c.name) + '</span>' : '') + ' <span class="muted small">(' + c.services + ')</span></button>';
+      }).join('') + '</div>' : '<p class="muted">' + T('There are no services between these dates.') + '</p>') +
+      '<p class="hint" id="ro-pn" style="margin-top:10px">' + (n ? esc(TN('{n} page', '{n} pages', n)) : esc(choices.length ? T('Nobody is on the roster for these services yet.') : '')) + '</p>';
+    var go = document.getElementById('ro-pgo'); if (go) go.disabled = !n;
+  }
+  if (typeof document !== 'undefined') document.addEventListener('change', function (e) {
+    var id = e.target && e.target.id, pr = state.print; if (!pr) return;
+    if (id === 'ro-pfrom' || id === 'ro-pto') {
+      var f = document.getElementById('ro-pfrom').value, t = document.getElementById('ro-pto').value;
+      if (f && t && t < f) { if (id === 'ro-pfrom') t = f; else f = t; document.getElementById('ro-pfrom').value = f; document.getElementById('ro-pto').value = t; }
+      if (f) pr.from = f; if (t) pr.to = t; printParts();
+    } else if (id === 'ro-pgaps') { pr.gaps = e.target.checked; printParts(); }
+  });
+  /** The pages themselves, put into #print-only and printed (the browser's print window also saves a PDF). */
+  function printRoster() {
+    var pr = state.print; if (!pr) return;
+    var st = S.settings() || {}, sheets = R.printSheets(printData(), { from: pr.from, to: pr.to, sheets: pr.sheets, gaps: pr.gaps, name: H.name });
+    if (!sheets.length) return;
+    var period = (termName(pr.from, pr.to) ? termName(pr.from, pr.to) + ' · ' : '') + H.fmt(pr.from, true) + ' – ' + H.fmt(pr.to, true);
+    var html = '';
+    sheets.forEach(function (sh) {
+      var parts = R.pages(sh.services.length), first = sh.services[0];
+      parts.forEach(function (pg, pi) {
+        var svcs = sh.services.slice(pg[0], pg[1]);
+        html += '<section class="ro-sheet"' + (sh.key !== 'special' && first ? ' style="' + svcStyle(first) + '"' : '') + '><div class="ro-ph"><div><h1>' + esc(T('Roster')) + ' · ' + esc(sheetName(sh.key)) +
+          (sh.key !== 'special' && first ? ' <span style="font-weight:400">' + esc(first.name) + '</span>' : '') + '</h1><p>' + esc(period) +
+          (parts.length > 1 ? ' · ' + esc(T('page {n} of {total}', { n: pi + 1, total: parts.length })) : '') + '</p></div><div class="ro-church">' + esc(st.churchName || '') + '</div></div>' +
+          '<table><colgroup><col class="ro-pc">' + svcs.map(function () { return '<col>'; }).join('') + '</colgroup><thead><tr><th scope="col"></th>' + svcs.map(function (s) {
+            return '<th scope="col">' + esc(H.fmt(s.date)) + (Serving.hasCommunion(s, st) ? ' ' + H.icon(CHALICE, 10) : '') +
+              (sh.key === 'special' || s.time !== first.time ? '<small>' + esc(sh.key === 'special' ? s.name : s.time) + '</small>' : '') + '</th>';
+          }).join('') + '</tr></thead><tbody>' +
+          sh.teams.map(function (tm) {
+            var rows = tm.rows.filter(function (r) { return pr.gaps || r.cells.slice(pg[0], pg[1]).some(function (c) { return c.names.length; }); });
+            if (!rows.length) return '';
+            return '<tr class="ro-team"><th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc(tm.name) + '</th></tr>' + rows.map(function (r) {
+              return '<tr><th scope="row">' + esc(r.position.name) + '</th>' + r.cells.slice(pg[0], pg[1]).map(function (c) {
+                return c.na ? '<td class="na"></td>' : '<td>' + c.names.map(function (n) { return '<span>' + esc(n) + '</span>'; }).join('') + '</td>';
+              }).join('') + '</tr>';
+            }).join('');
+          }).join('') + '</tbody></table>' +
+          '<div class="ro-pf"><span>' + H.icon(CHALICE, 10) + ' ' + esc(T('Holy Communion')) + '</span><span>' + esc(T('Printed {date}', { date: H.fmt(H.today(), true) })) + ' · Church &amp; Trellis</span></div></section>';
+      });
+    });
+    var box = document.getElementById('print-only') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'print-only' }));
+    H.closeModal();
+    box.className = 'roster'; box.innerHTML = html; document.documentElement.classList.add('printing');
+    var done = function () { document.documentElement.classList.remove('printing'); box.innerHTML = ''; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    S.audit('Printed the roster ' + pr.from + ' to ' + pr.to, 'assignments');
+    setTimeout(function () { try { window.print(); } catch (e) { done(); H.toast(T('Printing works best from a computer.'), true); } }, 50);
   }
 
   function slotDialog(a) {
@@ -607,7 +699,9 @@
     var mine = S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === me.id && s && s.date >= t; })
       .sort(function (a, b) { return Serving.byWhen(S.get('services', a.serviceId), S.get('services', b.serviceId)); });
     var sk = S.find('skills', function (k) { return k.personId === me.id; });
-    var html = head(T('My serving'), T('Your upcoming turns. Please reply so the roster can be planned.'), '') + tabs('mine');
+    // Pastors (and others who may see the whole roster but don't plan it) print it from here
+    var html = head(T('My serving'), T('Your upcoming turns. Please reply so the roster can be planned.'),
+      canPrint() && !manager() ? '<button class="btn" data-act="rosters:print">' + H.icon(PRINTER, 18) + T('Print the roster') + '</button>' : '') + tabs('mine');
     html += mine.length ? '<div class="list">' + mine.map(function (a) {
       var s = S.get('services', a.serviceId), po = pos(a.positionId);
       return '<div class="item svc-tint" style="' + svcStyle(s) + '"><span class="grow"><b>' + esc(po.name + ' · ' + (team(po.teamId) || {}).name) + '</b><small>' + esc(H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name) + '</small></span>' +
@@ -709,6 +803,21 @@
         H.toast(TN('{n} person asked to serve', '{n} people asked to serve', n) + (told ? ' · ' + told : ''));
       },
       discard: function () { state.preview = null; H.render(); },
+      print: function () { if (canPrint()) printDialog(); },
+      printterm: function (el) {
+        var pr = state.print; if (!pr) return; pr.from = el.dataset.f; pr.to = el.dataset.t;
+        var f = document.getElementById('ro-pfrom'), t = document.getElementById('ro-pto'); if (f) f.value = pr.from; if (t) t.value = pr.to;
+        printParts();
+      },
+      printsheet: function (el) {
+        var pr = state.print; if (!pr) return;
+        var all = R.printChoices(printData(), pr.from, pr.to).map(function (c) { return c.key; }), k = el.dataset.k;
+        var cur = pr.sheets ? pr.sheets.filter(function (x) { return all.indexOf(x) >= 0; }) : all.slice();
+        cur = cur.indexOf(k) >= 0 ? cur.filter(function (x) { return x !== k; }) : cur.concat([k]);
+        pr.sheets = cur.length === all.length ? null : cur;
+        printParts();
+      },
+      printgo: function () { printRoster(); },
       slot: function (el) {
         var a = S.get('assignments', el.dataset.id) || (state.preview && state.preview.assignments.filter(function (x) { return x.id === el.dataset.id; })[0]);
         if (a) slotDialog(a);

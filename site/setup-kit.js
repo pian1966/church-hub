@@ -427,7 +427,7 @@ var SetupKit = (function () {
       how: function (c) { return ol([open(c.app('rosters/teams'), 'Open Rosters → Teams') + ' and choose the starter teams, or add your own.', 'Put the departments in the order of your service with the ↑ ↓ arrows beside each name (the roster follows that order).']); } },
     { id: 'rosters', group: 'serving', title: 'Make the first roster', mods: ['rosters'], since: '0.1',
       what: 'Church & Trellis fills the roster fairly, keeps families together and asks volunteers in Messages.',
-      how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.']); } },
+      how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.', 'To put it up on the noticeboard: ' + ui('More') + ' → ' + ui('Print the roster') + '. Choose the term and the services – each service gets its own A4 page with only the positions it uses. Choose “Save as PDF” as the printer to make a PDF.']); } },
     { id: 'msggroups', group: 'talk', title: 'Message groups', mods: ['messages'], since: '0.1',
       what: 'Write to a care group, the staff or any list of people inside Church & Trellis – no data costs for SMS.',
       how: function (c) { return ol([open(c.app('messages/groups'), 'Open Messages → Groups') + ' and make the groups you write to often.', open(c.app('messages/send'), 'Send a first message') + ' to the staff.']); } },

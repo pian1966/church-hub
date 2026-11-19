@@ -493,3 +493,12 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 19 Nov 2026 (0.96.1): The name is shown as Church **&** Trellis with its "&" in the brand orange – the app's header and sign-in screens, the website, the setup tool, the brochure covers (dark "&" on the orange cover) and the presentation
 - ✅ 19 Nov 2026: The presentation file is now `church-and-trellis-presentation.pptx`; the Slides robot also names the Google Slides copy "Church & Trellis – conference presentation" when it next updates it
 - ✅ 19 Nov 2026 (0.96.2): Groundwork for the Community board, Marketplace and Subscription work: who can see what is kept in one place (`js/access.js`) instead of being copied in app.js, messages.js, Settings, People and Store, with a test that keeps `firestore.rules` and the browser test's copy in step; new parts plug in with their own permissions and jobs (keepers: the Administrators, Pastors and church secretary until chosen). Placeholders for the Community board and Marketplace (modules, permissions, closed rules sections, words) and a closed rules section for Subscription records. Nothing changes for anyone yet
+- ✅ 19 Nov 2026 (0.97.0): **Community board** and **Marketplace**, sharing one way of being looked after – the keepers
+  (`js/community.js`, `js/community-ui.js`, `js/mod-board.js`, `js/mod-market.js`, `css/community.css`). The board is a real
+  corkboard of tilted sticky notes (I need help, I can offer, Notice, Thank you) with pins and tape, a live preview while you
+  write, a note that flies onto the board and a "Sorted ✓" stamp; the latest 3 notices on Home and Me. The Marketplace has photo
+  cards (For sale, Wanted, Free), up to 3 photos made small on the phone, condition, category, area (suburb only), search, the
+  church's own rules, safety tips, a lower price that stays up. Everything waits for a keeper (Approve / Ask for a change /
+  Decline with a kind note sent in Messages); first keepers: Administrators, Pastors and the church secretary, chosen under
+  More → Keepers…; *I can help* / *I'm interested* is a private message; Report; renew twice; deleted 30 days after it ends.
+  Church Partners and staff only, never attendees. New rules: board, market, marketPhotos, and messages about them. Five languages.

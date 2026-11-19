@@ -194,9 +194,20 @@ abilities and attendee choices still match.
 (`admin`, `pastor`, `rosters`, `kids`, `partner` = Church Partner access, `attendee`), a Pastor's tick (`ability`), or a
 **job** in that part (`JOBS`, e.g. `keepers`: chosen people, kept in `settings.keepers.<part>`; until chosen, the
 Administrators, the Pastors and `settings.rosterExtra` – decided 19 Nov 2026). `Hub.can('board.keep')` then answers by
-itself; no part keeps its own access settings. A part marked `soon` is a placeholder: its module (`js/mod-board.js`,
-`js/mod-market.js`), permissions, closed `firestore.rules` section and words are ready, but `Hub` never opens it and
-Settings → Apps doesn't offer it. Take `soon` off when it is built (and write its rules to match `PARTS`).
+itself; no part keeps its own access settings. A part marked `soon` is a placeholder: its module, permissions, closed
+`firestore.rules` section and words are ready, but `Hub` never opens it and Settings → Apps doesn't offer it. Take `soon`
+off when it is built (and write its rules to match `PARTS`), as the Community board and the Marketplace were in 0.97.0.
+
+## Community board and Marketplace (0.97.0)
+Two parts (`board`, `market`), one way of being looked after: `js/community.js` (pure, tested: making, editing, keepers'
+decisions, what each person sees, renewing, reports, tidying, messages) and `js/community-ui.js` (the screens both share:
+Waiting for approval, decision dialogs, Keepers…, writing to the poster, report, renew, take down, photo shrinking).
+`js/mod-board.js` is the corkboard; `js/mod-market.js` the photo grid; `css/community.css` their look.
+Data: `board/{id}`, `market/{id}` (status waiting → live / change / declined; done = sorted or sold; `endsAt` in ms) and
+`marketPhotos/{id}` = `{ data: [up to 3 small JPEGs] }`, fetched only when a listing opens (`Store.listingPhotos`); the grid
+uses the listing's own tiny `thumb`. Store asks for them in `extras()` once switched on: keepers everything, everyone else
+`status == live`, `status == done` and their own. Messages to a poster are `kind: 'direct'` with `about` / `aboutId`
+(`firestore.rules` aboutItem). The latest 3 notices: Home (`homeCard`) and Me (`BoardUI.card`). POPIA: `docs/POPIA.md`.
 Still to come (ROADMAP): one Settings page (*Access and roles*) drawn from this file in place of the separate pages.
 
 ## Contact details by role (Settings → Who can see what)

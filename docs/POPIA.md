@@ -351,6 +351,17 @@ allows, as above.
   picture is previewed before it is saved to the church's database. The Administrator is reminded every 180 days to confirm
   the librarian list is still current.
 
+## Community board and Marketplace
+- Purpose: people of the church helping one another – asking for and offering help, notices and thanks (board); buying,
+  selling and giving away (Marketplace). Basis: consent – the poster chooses to share what they write.
+- Who sees it: signed-in Church Partners and staff only (never attendees, never the website); a notice or listing waits for a
+  keeper and is seen only by its poster and the keepers until approved (`firestore.rules` seesItem, keepsPart).
+- Kept: the poster's first name, what they wrote, a phone number only if they add one (board only – the Marketplace has none),
+  the area as a suburb (never an address), up to 3 small photos, who reported it, and the keeper's decision (first name, date,
+  note). Contact is a private message in Messages, never a public thread.
+- How long: 30 days live (renewed twice at most); ended, sorted/sold or declined items are deleted 30 days later by the next
+  poster or keeper who opens the page (`Community.tidy`). Keepers' decisions are in the audit log.
+
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church & Trellis keeps the suggestion with their name and person ID, so the
   checker can thank them or ask what they meant. Purpose: improving the app's wording; basis: the person sends it themselves.

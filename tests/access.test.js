@@ -51,8 +51,9 @@ ok(['admin', 'pastor', 'rosters', 'kids', 'partner'].every(k => A.allows('market
 ok(!A.allows('board.view', who('attendee')), 'Community board: not attendees until the church decides');
 ok(A.allows('support.manage', who('admin')) && A.allows('support.manage', who('pastor', 'p', { ticks: ['settings'] })) && !A.allows('support.manage', who('pastor', 'p', { ticks: ['leave'] })) && !A.allows('support.manage', who('partner')),
   'Subscription: Administrators, and Pastors with the “settings” tick (as before)');
-ok(A.PARTS.filter(p => p.soon).map(p => p.id).join() === 'board,market', 'the board and the marketplace are placeholders (not built yet)');
-ok(!A.apps().some(a => a[0] === 'board' || a[0] === 'market') && A.apps().length === A.APPS.length, 'placeholders aren’t offered in Settings → Apps');
+ok(A.PARTS.filter(p => p.soon).length === 0, 'no placeholders left: the board and the marketplace are built (0.97.0)');
+ok(A.apps().some(a => a[0] === 'board') && A.apps().some(a => a[0] === 'market') && A.apps().length === A.APPS.length + 2, 'Settings → Apps offers the Community board and the Marketplace (off until switched on)');
+ok(A.PARTS.filter(p => p.id === 'board' || p.id === 'market').every(p => p.optIn), 'both are off until an Administrator switches them on');
 
 console.log('Every part registered in the app is a known part');
 const modSrc = fs.readdirSync(path.join(__dirname, '..', 'js')).filter(f => /^mod-.*\.js$/.test(f)).map(f => read('js/' + f)).join('\n');
@@ -80,7 +81,11 @@ const fakeAny = (fake.match(/var ANY = \[([^\]]*)\], STAFF = \[([^\]]*)\]/) || [
 ok(fakeAny[1] && listIn(fakeAny[1]).join() === A.ROLE_IDS.join() && listIn(fakeAny[2]).join() === A.STAFF_ROLES.join(), 'tests/fake-firebase.js: the roles');
 ok((fake.match(/on = Array\.isArray\(on\) \? on : \[([^\]]*)\]/) || [])[1] !== undefined && listIn(fake.match(/on = Array\.isArray\(on\) \? on : \[([^\]]*)\]/)[1]).join() === A.ATTENDEE_CAN.join(), 'tests/fake-firebase.js: what attendees may do until the church chooses');
 ok(/\['names', 'directory', 'write', 'reply'\]/.test(fake) && A.ATTENDEE_OPTIONS.join() === 'names,directory,write,reply', 'tests/fake-firebase.js: what attendees may be allowed');
-for (const c of ['board', 'market', 'subscription']) ok(new RegExp('match /' + c + '/\\{\\w+\\} \\{ allow read, write: if false; \\}').test(rules) || !A.part(c === 'subscription' ? 'support' : c), 'firestore.rules: ' + c + ' has its section, closed until built');
+ok(/match \/subscription\/\{\w+\} \{ allow read, write: if false; \}/.test(rules), 'firestore.rules: subscription has its section, closed until built');
+for (const c of ['board', 'market']) ok(new RegExp('match /' + c + '/\\{id\\} \\{\\s*allow read: if seesItem\\(\'' + c + '\'').test(rules) && fake.includes(c + ': communityPolicy(\'' + c + '\')'), 'firestore.rules and its copy: ' + c + ' is open to whom js/access.js says (seesItem, keepsPart)');
+// Keepers: the first ones (js/access.js JOBS.keepers defaults) are the Administrators, the Pastors and settings rosterExtra – as in the rules
+ok(/isRole\(\['admin', 'pastor'\]\) \|\| meIn\(st\.get\('rosterExtra', \[\]\)\)/.test(rules) && /is\(c, \['admin', 'pastor'\]\) \|\| meIn\(c, st\.rosterExtra \|\| \[\]\)/.test(fake), 'firestore.rules and its copy: the first keepers match js/access.js');
+ok(/communityPerson\(\) \{ return anyone\(\) && !attendee\(\); \}/.test(rules) && A.PARTS.filter(p => p.id === 'board' || p.id === 'market').every(p => p.perms[p.id + '.view'].kinds.join() === A.NOT_ATTENDEES.join()), 'never attendees, in the rules as in js/access.js');
 
 console.log(fails ? `\n${fails} FAILED` : '\nAll passed');
 process.exit(fails ? 1 : 0);

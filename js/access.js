@@ -11,8 +11,8 @@
  *
  * A NEW PART OF THE APP plugs in here, with one entry in PARTS: its permission names (who has each by default) and the
  * jobs in it – instead of keeping its own access settings. Hub.can('<part>.<what>') then answers for it.
- * The parts marked `soon` are placeholders: named, with their permissions, rules sections and words ready, but not
- * built and not shown to anyone yet (docs/COMMUNITY-PLAN.md). Remove `soon` when the part is built.
+ * A part marked `soon` is a placeholder: named, with its permissions, rules section and words ready, but not built and not
+ * shown to anyone yet. Remove `soon` when the part is built (the Community board and the Marketplace were built in 0.97.0).
  *
  * Pure: no DOM, no Store. Tested with node: tests/access.test.js.
  */
@@ -124,14 +124,14 @@ var Access = (function () {
   // soon: a placeholder (not built – never shown); perms: { name: { kinds: who has it, ability: or Pastors with this tick,
   // job: or the people with this job in this part } }; settings: the keys in settings/church it keeps its choices in.
   var PARTS = [
-    { id: 'board', name: TX('Community board'), desc: TX('Pin notices and offers of help – a keeper checks each one first'), optIn: true, soon: true,
+    { id: 'board', name: TX('Community board'), desc: TX('Pin notices and offers of help – a keeper checks each one first'), optIn: true,
       perms: {
         'board.view': { kinds: NOT_ATTENDEES },    // attendees: a tick in Settings → Attendees may be added (decision waiting)
         'board.post': { kinds: NOT_ATTENDEES },
         'board.keep': { kinds: [], job: 'keepers' }
       },
       settings: ['keepers.board', 'boardNote'] },
-    { id: 'market', name: TX('Marketplace'), desc: TX('Buy, sell and give away within the church – a keeper checks each listing first'), optIn: true, soon: true,
+    { id: 'market', name: TX('Marketplace'), desc: TX('Buy, sell and give away within the church – a keeper checks each listing first'), optIn: true,
       perms: {
         // Decided 19 Nov 2026: Church Partners only – attendees never see it, whatever Settings → Attendees says
         'market.view': { kinds: NOT_ATTENDEES },

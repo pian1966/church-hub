@@ -149,15 +149,10 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   - ⬜ Fluent speakers to check the new wording in every language (drafted by Claude), including the 0.54 words (terms of
     office, library reminders, formatting buttons)
   - ⬜ Formatting (0.54): use it for other documents shown in the app – the privacy notice, help pages, the church's own notices
-- ⬜ **Community board** (plan: `docs/COMMUNITY-PLAN.md` part 2): a corkboard of sticky notes, pinned at a slight angle with
-  push-pins or tape – *I need help* (a plumber, a mechanic, a lift), *I can offer*, *Notice*, *Thank you* – so requests go on a
-  board people choose to look at instead of into everyone's inbox. Every notice waits for a **keeper** (a Church Partner the
-  Administrator nominates), who gets it in Messages to approve, ask for a change or decline; *I can help* is a private message;
-  notices end after 30 days or when *Sorted, thank you!*; the latest 3 notices show as tiny sticky notes on Home. Steps 2.1–2.3
-- ⬜ **Marketplace** (plan: `docs/COMMUNITY-PLAN.md` part 3) – **Church Partners only** (decided 19 Nov 2026): For sale, Wanted, Free (later To lend), photo cards like Facebook
-  Marketplace, up to 3 small photos, the area (suburb only); **nothing shows until a Marketplace keeper approves it**; the
-  church's own rules accepted by posters, safety tips, *I'm interested* as a private message, mark sold, 30-day expiry; no
-  payments through Church & Trellis. Steps 3.1–3.3
+- ⬜ **Community board and Marketplace – what's next** (built in 0.97.0; plan: `docs/COMMUNITY-PLAN.md`): decide whether
+  attendees may see and post on the board (a tick in Settings → Attendees), whether Thank-you notes need a keeper, and whether
+  30 days is right; *Check after posting* for people whose notices are always approved; *To lend* in the Marketplace; keepers
+  told of each new item in Messages too (today: Home's to-do list and a badge); fluent speakers to check the new words
 - ⬜ **Finances – budget and "are we on track?"** (plan: `docs/FINANCE-PLAN.md`): the Treasurer imports the year's budget from
   the spreadsheet and the monthly management reports (about 10 a year, month and year to date; matching remembered; the PDF
   filed in the Archive); the Rector, pastors and Council see a traffic light (on track / watch / concern), income, expenses,

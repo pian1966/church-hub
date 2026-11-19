@@ -925,7 +925,7 @@ service cloud.firestore {
         && d.get('guests', 0) is int && d.get('guests', 0) >= 0 && d.get('guests', 0) <= 10 && d.get('email', false) is bool
         && d.status in ['live', 'cancelled'] && d.get('byId', '') is string && d.get('byName', '') is string && d.get('byName', '').size() <= 100;
     }
-    function seesEvent(d) { return anyone() && (d.get('who', 'all') == 'all' || !attendee() || organises()); }
+    function seesEvent(d) { return anyone() && (d.who == 'all' || !attendee() || organises()); }
     match /events/{id} {
       allow read: if robot() || seesEvent(resource.data);
       allow create, update: if organises() && okEvent(request.resource.data);
@@ -946,7 +946,7 @@ service cloud.firestore {
         && (d.get('email', '') == '' || e.get('email', false) == true);
     }
     match /eventSignups/{id} {
-      allow read: if robot() || (anyone() && (isMe(resource.data.by) || meIn(resource.data.get('people', [])))) || organises();
+      allow read: if robot() || (anyone() && (isMe(resource.data.by) || meIn(resource.data.people))) || organises();
       allow create: if anyone() && isMe(request.resource.data.by) && okSignup(id, request.resource.data)
         && request.resource.data.get('mailed', []).size() == 0 && mayJoin(request.resource.data);
       allow update: if (robot() && onlyChanges(['mailed', 'updatedAt']) && request.resource.data.get('mailed', []) is list && request.resource.data.get('mailed', []).size() <= 2)

@@ -9,9 +9,14 @@ module.exports = async function (ctx) {
   check(!(await s.page.$('nav a[href="#/settings"]')) && await s.page.evaluate(() => !Hub.can('leave.manage')), 'a Pastor without ticks has no Settings and can’t approve leave');
   await finish(s);
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings/pastors');
-  check(await s.page.isVisible('#pastor-can'), 'Settings has “What Pastors can do”');
+  check(await s.page.isVisible('#pastor-can') && /#\/settings\/pastors$/.test(s.page.url()) && !!(await s.page.$('.set-link.on[href="#/settings/access"]')), 'the old address opens Access and roles, at “What Pastors can do”');
+  check(await s.page.$$eval('.acc-card', c => c.map(x => x.dataset.k).join()) === 'admin,pastor,rosters,kids,partner,attendee' && !!(await s.page.$('#st-att')) && !!(await s.page.$('#see-others')) && (await s.page.$$('#pastor-can')).length === 1,
+    'Access and roles: a card for each kind of person, then each setting once (contact details, What Pastors can do, Attendees)');
+  check(/Nothing more – tick what else below/.test(await s.page.textContent('.acc-card[data-k="pastor"]')) && !!(await s.page.$('.acc-card[data-k="rosters"] [data-act="hub:viewas"][data-r="rosters"]')), 'the cards say what each may do, with View as one tap away');
   for (const v of ['settings', 'leave']) await s.page.check('.st-pc[value="' + v + '"]');
   await s.page.waitForTimeout(1200); await s.settle(); await s.page.waitForTimeout(300);
+  await s.go('settings/access'); await s.page.waitForTimeout(200);
+  check(/Approve leave/.test(await s.page.textContent('.acc-card[data-k="pastor"]')), 'the Pastors’ card follows the ticks');
   await s.go('settings/terminology'); await s.page.uncheck('.st-minister-role[value="Seniors Minister"]');
   await s.page.waitForTimeout(1200); await s.settle(); await s.page.waitForTimeout(300);
   docs = await s.docsNow();

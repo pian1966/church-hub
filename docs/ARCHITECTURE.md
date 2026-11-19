@@ -208,10 +208,10 @@ Data: `board/{id}`, `market/{id}` (status waiting → live / change / declined; 
 uses the listing's own tiny `thumb`. Store asks for them in `extras()` once switched on: keepers everything, everyone else
 `status == live`, `status == done` and their own. Messages to a poster are `kind: 'direct'` with `about` / `aboutId`
 (`firestore.rules` aboutItem). The latest 3 notices: Home (`homeCard`) and Me (`BoardUI.card`). POPIA: `docs/POPIA.md`.
-Still to come (ROADMAP): one Settings page (*Access and roles*) drawn from this file in place of the separate pages.
+**Settings → Access and roles** (0.100.0) is drawn from this file: `Access.overviewKinds` and `Access.summary(kind, settings, share)` give one card per kind of person with what they see and can do in plain words, worked out from the same settings the rules read; then the jobs in one part (carers, Midweek Group leaders, keepers, librarians, `rosterExtra`, the Council), the contact-details and Care Groups grids, What Pastors can do and Attendees – each once. The old addresses `#/settings/attendees` and `#/settings/pastors` open it at that panel; the Senior Pastor without the Settings tick sees the cards and Attendees. The settings keys did not change (`seeOthers`, `seeCare`, `seeCareOwn`, `careOnPeople`, `pastorCan`, `seniorCan`, `seniorPastorId`, `attendeeCan`), so nobody gained or lost access and nothing needed moving across.
 
-## Contact details by role (Settings → Who can see what)
-The page has three panels (0.44): *What each kind of access can do* (with who has it), *Other people's contact details* (a grid:
+## Contact details by role (Settings → Access and roles)
+The page had three panels (0.44; since 0.100 part of *Access and roles*, where the cards replace the first): *What each kind of access can do* (with who has it), *Other people's contact details* (a grid:
 rows = mobile, email, address, spouse; columns = Basic access, Roster coordinator, Children's ministry) and *Care groups* (a grid of
 what each may see). The last two save together by themselves (`data-autoscope`). Each choice has an "i" tip (`Hub.tip`).
 **Care group on a person's page** (`settings.careOnPeople`, Basic access): the "Care group member · …" tag on people's pages and in

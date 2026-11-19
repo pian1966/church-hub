@@ -167,6 +167,56 @@ var Access = (function () {
     return false;
   }
 
+  /* ---------- Settings → Access and roles: what each kind of person sees and can do, in plain words ---------- */
+  // One card per kind of person (KINDS, with the Senior Pastor apart when one is chosen), worked out from the settings, so the
+  // words always match what the database rules allow. Each line is { t: text (translated where shown), list: [texts to join
+  // into {list}] }. share: the contact details Settings can tick, as [[id, label]] (js/people/core.js SHARE).
+  function line(t, list) { return list ? { t: t, list: list } : { t: t }; }
+  function contacts(st, tier, share) {
+    var on = ((st.seeOthers || {})[tier] || []), labels = (share || []).filter(function (f) { return on.indexOf(f[0]) >= 0; }).map(function (f) { return f[1]; });
+    return labels.length ? line(TX('In the church directory: their name, photo and {list}'), labels) : line(TX('In the church directory: names and photos only'));
+  }
+  function abilityLines(ticks) { return ABILITIES.filter(function (a) { return (ticks || []).indexOf(a[0]) >= 0; }).map(function (a) { return line(a[1]); }); }
+  /** The kinds shown on the page, in order: the Senior Pastor only when one is chosen. */
+  function overviewKinds(settings) { var st = settings || {}; return ['admin'].concat(st.seniorPastorId ? ['senior'] : []).concat(['pastor', 'rosters', 'kids', 'partner', 'attendee']); }
+  /** { see: [lines], can: [lines] } for one kind: 'admin', 'senior', 'pastor', 'rosters', 'kids', 'partner', 'attendee'. */
+  function summary(kind, settings, share) {
+    var st = settings || {}, see = [], can = [], mods = st.modules || {}, careAll = st.seeCare || [];
+    var careSee = function (tier) { if (careAll.indexOf(tier) >= 0) see.push(line(TX('Every Care Group and who is in it'))); };
+    if (kind === 'admin') {
+      see.push(line(TX('Everyone’s details and every part of Church & Trellis')), line(TX('Not pastoral notes or children’s medical notes')));
+      can.push(line(TX('Everything, including Settings, Privacy, Import and who has access')));
+    } else if (kind === 'pastor' || kind === 'senior') {
+      see.push(line(TX('Everyone’s details, households and children')), line(TX('Pastoral notes')));
+      can.push(line(TX('Change people’s details and households')));
+      var ticks = kind === 'senior' ? st.seniorCan : st.pastorCan;
+      can = can.concat(abilityLines(ticks));
+      if (kind === 'senior') can.push(line(TX('See Church & Trellis as the roles below theirs (View as)')), line(TX('Choose what attendees may do and write the membership application')));
+      else if (!(ticks || []).length) can.push(line(TX('Nothing more – tick what else below')));
+    } else if (kind === 'rosters') {
+      see.push(contacts(st, 'rosters', share)); careSee('rosters');
+      can.push(line(TX('Rosters, teams and services')));
+    } else if (kind === 'kids') {
+      see.push(line(TX('Children, their guardians and medical notes')), contacts(st, 'kids', share)); careSee('kids');
+      can.push(line(TX('Children’s medical notes (with a guardian’s consent)')));
+    } else if (kind === 'partner') {
+      see.push(line(TX('Their own details, serving and messages')), contacts(st, 'member', share));
+      see.push(line(st.seeCareOwn !== false ? TX('Everyone in their own Care Group') : TX('The carers of their own Care Group')));
+      careSee('member');
+      can.push(line(TX('Reply to messages, and write to the Office, the ministers and their group leaders')));
+      if (mods.board === true || mods.market === true) can.push(line(TX('Post on the Community board and the Marketplace (a keeper checks first)')));
+    } else if (kind === 'attendee') {
+      var on = attendeeCan(st);
+      see.push(line(TX('Their own details, serving and messages')));
+      if (on.indexOf('directory') >= 0) see.push(contacts(st, 'member', share));
+      else if (on.indexOf('names') >= 0) see.push(line(TX('The names of Church Partners')));
+      if (on.indexOf('write') >= 0) can.push(line(TX('Write to the Office, the ministers and their Midweek Group leaders')));
+      if (on.indexOf('reply') >= 0) can.push(line(TX('Reply to any message sent to them')));
+      if (!can.length) can.push(line(TX('Only read the messages the church sends them')));
+    }
+    return { see: see, can: can };
+  }
+
   /* ---------- Settings → Apps: the parts an Administrator can switch on or off ---------- */
   // [id, name, what it is]. The parts in PARTS that are built join the end of this list by themselves.
   var APPS = [['people', TX('People'), TX('Directory, households and consent')], ['rosters', TX('Rosters'), TX('Serving rosters, teams and serving together')], ['leave', TX('Leave'), TX('Staff leave (Leave Manager built in)')],
@@ -186,6 +236,7 @@ var Access = (function () {
     TIERS: TIERS, seesCare: seesCare,
     JOBS: JOBS, jobHolders: jobHolders,
     PARTS: PARTS, part: part, partPerms: partPerms, isPartPerm: isPartPerm, allows: allows,
+    summary: summary, overviewKinds: overviewKinds,
     APPS: APPS, apps: apps
   };
 })();

@@ -8,13 +8,12 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - 🟡 Tidy Privacy (Information Officer name had a placeholder – fixed in code for future setups), record own consent, approve privacy notice, register the Information Officer
 - ⬜ Confirm step 8 (key restricted to the website) is done
 - ⬜ Switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
-- ⬜ Settings → What others can see – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
-- ⬜ Choose the Care groups ticks in Settings → Who can see what, and click **Record that they agreed** for existing Church Partners if it appears
+- ⬜ Settings → Access and roles – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
+- ⬜ Choose the Care groups ticks in Settings → Access and roles, and click **Record that they agreed** for existing Church Partners if it appears
 - ⬜ Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
 - ⬜ Set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
 - ⬜ Re-publish the database rules (FIREBASE-SETUP step 7) after 0.69 – Archive security fixes (or let the "Publish database rules" workflow do it)
 - ⬜ Before releasing to other churches: translate the 21 extra languages in one go (`docs/RELEASE.md`; Home counts what is waiting)
-- ⬜ Decide what "Ministry roles the church uses" (Settings → Terminology) should do – it is saved but nothing uses it yet
 - ⬜ Fluent speakers check the isiZulu and isiXhosa (js/i18n/*.js – one line per text); then decide whether to translate staff screens too
 
 **Church to do – people and Leave**
@@ -31,21 +30,10 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 **Decide**
 - ⬜ Should Church Partners who aren't staff stop receiving colleagues' away dates at all (now hidden on screen only)?
 
-**Simplify who can see what, and what ministers can do** (asked 19 Nov 2026)
-- ⬜ Today these are spread over several places that overlap: Settings → **Who can see what** (what each kind of access can do,
-  other people's contact details, Care Groups), Settings → **Attendees**, Settings → **What Pastors can do** (two separate lists
-  of ticks – the Rector's `seniorCan` and the other Pastors' `pastorCan`), Settings → Terminology → **Ministry roles the church
-  uses** (saved but nothing uses it), plus access kept inside some parts themselves (Archive's role access, librarians, Leadership,
-  roster coordinators, the church secretary under Rosters). Bring them together into **one place** – e.g. a single Settings →
-  **Access and roles** page: one row per kind of person (Administrator, Rector, Pastors/ministers, Roster coordinators, Children's
-  ministry, Church Partners, Attendees, plus people with a job in one part – librarians, keepers, event organisers, the Treasurer)
-  and, for each, what they can **see** and what they can **do**, in plain words, with "View as" one tap away to check. Remove
-  the duplicates and either use or remove "Ministry roles the church uses". Keep the rules the same underneath (or change
-  `firestore.rules`, `plan()`, `tests/fake-firebase.js` and the tests together), and move existing churches' settings across
-  without anyone gaining or losing access. New parts on the roadmap (keepers, event organisers, the Treasurer, Finances) should
-  be added to this one place rather than getting their own access settings. Plan it first (Architect/Fable), then build in steps
-  - Step 1 done (0.96.2): the lists are in one file, `js/access.js`, which new parts plug into (keepers included). Still to do:
-    the single Settings page, moving existing churches' settings across, and using or removing "Ministry roles the church uses"
+**Who can see what, in one place** – built (0.96.2 `js/access.js`, 0.100.0 Settings → Access and roles). Still to do:
+- ⬜ Decide what "Ministry roles the church uses" (Settings → Terminology) should do – it is saved but nothing uses it yet
+  (e.g. offer those names as staff job titles, or remove it)
+- ⬜ Later: choose keepers, librarians and the church secretary on the Access and roles page itself (today: each where the job is done)
 
 **Later (if wanted)**
 - ⬜ Changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in

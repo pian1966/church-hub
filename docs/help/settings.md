@@ -25,21 +25,25 @@ screens use your words (in English); stored records don't change.
 
 ## How do I choose what each role can see?
 For: Administrators
-Also asked: Can members see phone numbers? Who can see what.
+Also asked: Can members see phone numbers? Who can see what. Attendees. Access and roles.
 
-**Settings → Who can see what** has three parts:
-1. **What each kind of access can do** – and how many people have each (tap the number to see who).
-2. **Other people's contact details** – a grid: tick which details (mobile, email, home address, spouse) each kind of access
-   sees of people in the church directory. Everyone sees their name and photo.
-3. **Care groups** – what each kind of access sees of the care groups: all groups and who is in each, which group someone is
-   in on their page in People, and everyone in their own group.
+Everything about access is on one page: **Settings → Access and roles**. From the top:
+1. **Who can do what** – a card for each kind of person (Administrator, Senior Pastor, Pastors, Roster coordinators,
+   Children's ministry, Church Partners, attendees): what they **see** and what they **can** do, in plain words, how many
+   people have it (tap the number to see who), **View as** to see Church & Trellis as they do, and **Change**.
+2. **Jobs in one part of the app** – carers, Midweek Group leaders, keepers, librarians, the church secretary for roster
+   replies and the Council: who they are, and where each is chosen.
+3. **Other people's contact details** – tick which details (mobile, email, home address, spouse) each kind of access sees of
+   people in the church directory. Everyone sees their name and photo.
+4. **Care Groups** – all groups and who is in each, which group someone is in on their page, and everyone in their own group.
+5. **What Pastors can do** and 6. **Attendees** (below).
 Ticks save by themselves. Point at or tap an **i** for an explanation. Administrators and Pastors always see everything.
-The Rector (Senior Pastor) can change these too if **What Pastors can do** gives them **Settings**.
+Change one person's access on their page in People (Edit details).
 
 ## What can Pastors do? Who is the Senior Pastor (Rector)?
 For: Administrators
 
-**Settings → What Pastors can do**. Pastors always see and edit everyone's details, households, children and pastoral notes;
+**Settings → Access and roles → What Pastors can do**. Pastors always see and edit everyone's details, households, children and pastoral notes;
 tick what else they may do (settings, giving access, ID numbers, leave, rosters, privacy, import, translations). You can choose
 one **Senior Pastor**, who gets their own ticks; the others show as Assistant Pastors. Pastors get the change the next time
 they open Church & Trellis. Medical notes always stay with Children's ministry.

@@ -189,7 +189,7 @@ module.exports = async function (ctx) {
   const rSeed = seedDocs(); rSeed['settings/church'].seniorPastorId = 'p02';
   s = await session('thandi.mokoena@example.com', rSeed); await s.go('settings');
   const links = await s.page.$$eval('.set-link', a => a.map(x => x.getAttribute('href')).join());
-  check(links === '#/settings/application,#/settings/attendees', 'the Senior Pastor opens Settings for the membership application and attendees only' + (links ? '' : ': ' + (await s.text()).slice(0, 200)));
+  check(links === '#/settings/application,#/settings/access', 'the Senior Pastor opens Settings for the membership application and Access and roles (attendees) only' + (links ? '' : ': ' + (await s.text()).slice(0, 200)));
   await s.go('settings/attendees');
   check(await s.page.$$eval('.st-att', c => c.map(x => x.value + ':' + x.checked).join()) === 'names:true,directory:false,write:true,reply:false', 'by default attendees see names and may write');
   await s.page.uncheck('.st-att[value="names"]'); await s.page.uncheck('.st-att[value="write"]'); await s.page.click('[data-act="settings:attendees"]'); await s.settle(); docs = await s.docsNow();

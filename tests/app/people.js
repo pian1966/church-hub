@@ -358,7 +358,7 @@ module.exports = async function (ctx) {
 
   console.log('The church’s colours (Settings → Colours)');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings');
-  check(await s.page.$$eval('.set-link', a => a.length) === 10 && await s.page.isVisible('.set-link.on[href="#/settings/general"]') && await s.page.isVisible('#st-name') && !(await s.page.$('#see-others')),
+  check(await s.page.$$eval('.set-link', a => a.length) === 8 && await s.page.isVisible('.set-link.on[href="#/settings/general"]') && await s.page.isVisible('#st-name') && !(await s.page.$('#see-others')),
     'Settings: a list of topics down the left, and one topic at a time (General first)');
   await s.page.fill('#set-q', 'birthday'); await s.page.waitForTimeout(100);
   check(JSON.stringify(await s.page.$$eval('.set-link', a => a.filter(x => !x.hidden).map(x => x.getAttribute('href')))) === '["#/settings/emails"]', 'searching the settings for “birthday” leaves Email templates');

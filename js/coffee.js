@@ -6,25 +6,26 @@
  *   - one café coffee a month, or ten a year when paid yearly (two months free);
  *   - plus, if the church wishes, a gift of whatever it thinks Church & Trellis is worth to it;
  *   - a church may pay for another, under-resourced church;
- *   - a church that cannot afford even one coffee a month uses Church & Trellis for free by promising to pray, every week,
+ *   - a church that cannot afford even one coffee a month uses Church & Trellis for free by promising to pray, every month,
  *     for another church that Church & Trellis shows it. Every church is welcome; nobody is turned away for being poor.
+ *   - a church that gives monthly may take a payment holiday – a free month, no questions asked – whenever it needs one;
+ *     a church that pays for the year switches to monthly to use it (decided 19 Nov 2026). Nothing is ever locked or deleted.
  *   - every church keeps a prayer card (a photo and two prayer points) and checks it once a month; every week each church
  *     is shown another church's card on everyone's Home (cardForWeek). A paying church may turn that off; a praying one may not.
  *
  * Prices: one cup of what the church would buy where it lives, in its own country's money – a street-stall cup, a café
  * coffee or a coffee-chain latte, as is honest for that church. EXAMPLES has the prices we've looked up (docs/PRICES.md);
  * everywhere else the church types its own.
- * Church & Trellis never takes card details: the Pay button opens the payment company's own page (PAY_URL, empty until the
- * owner chooses one – docs/architecture/tasks/059-billing-decisions.md).
+ * Paying: PayFast (chosen 19 Nov 2026), one payment at a time, through Church & Trellis's payment doorway (PAY_URL,
+ * tools/payfast-door.mjs). No bank or account details are kept here or anywhere in the app: they live with PayFast and in
+ * the doorway's secret settings on Cloudflare (docs/PAYFAST-SETUP.md). Church & Trellis never sees a card or bank details.
  */
 var Coffee = (function () {
   'use strict';
   var AS_OF = '2026-11';
-  var PAY_URL = '';   // a card-payment company's page, once chosen (task 059). Until then churches pay by bank transfer (BANK).
-  // Church & Trellis's own bank account (given by the owner, 16 Nov 2026) for bank transfers (EFT). The account number is meant
-  // to be shown to paying churches; nothing here can take money out of it. holder: the name on the account as on the
-  // owner's ID – Capitec needs it on payments from other countries; while empty, overseas churches are asked to write first.
-  var BANK = { bank: 'Capitec Bank', account: '2625071881', branch: '470010', swift: 'CABLZAJJ', type: 'Savings', beneficiary: 'Church & Trellis', holder: '' };
+  // The payment doorway (docs/PAYFAST-SETUP.md): 'https://churchandtrellis.com/pay' once the owner has set it up and says
+  // PayFast is live. While empty, Pay says "Payments open soon" – and nothing is locked meanwhile.
+  var PAY_URL = '';
   var YEAR_COFFEES = 10, MONTH_COFFEES = 1;
 
   // Each country's own money (ISO 4217), as people write it. whole: no cents shown. Countries not here: US dollars.
@@ -124,25 +125,31 @@ var Coffee = (function () {
   /** A gift of n cups (the little cups on the page): 0–20. */
   function giftOf(n, price, code) { n = Math.max(0, Math.min(20, Math.floor(+n || 0))); return round(parse(price) * n, code); }
 
-  /** The address the Pay button opens, or '' while payments aren't open. Only the church's id, the amount and currency go. */
-  function payLink(o) {
-    if (!PAY_URL || !o || !o.ref || !(o.total > 0)) return '';
-    return PAY_URL + (PAY_URL.indexOf('?') >= 0 ? '&' : '?') + 'ref=' + encodeURIComponent(o.ref) + '&amount=' + encodeURIComponent(o.total) +
-      '&currency=' + encodeURIComponent(o.currency) + (o.forChurch ? '&for=' + encodeURIComponent(o.forChurch) : '');
+  /**
+   * The address the Pay button opens (the payment doorway, which sends the church on to PayFast), or '' while payments
+   * aren't open. Only the amount, the currency, what it is for and the church's short reference go – nothing about people.
+   * o: { ref, total, currency, kind: 'month'|'year'|'gift', forChurch, ok, no } – ok/no: where PayFast sends them back to.
+   */
+  function payLink(o, url) {
+    url = url === undefined ? PAY_URL : url;
+    if (!url || !o || !o.ref || !(o.total > 0)) return '';
+    var q = { amount: o.total, currency: o.currency || 'ZAR', kind: o.kind === 'month' || o.kind === 'year' ? o.kind : 'gift', ref: o.ref, 'for': o.forChurch || '', ok: o.ok || '', no: o.no || '' };
+    return url + (url.indexOf('?') >= 0 ? '&' : '?') + Object.keys(q).filter(function (k) { return q[k] !== ''; })
+      .map(function (k) { return k + '=' + encodeURIComponent(q[k]); }).join('&');
   }
 
-  /** The payment reference a church types in its banking app: short, the same every time, and ours alone ("CH-7K2P9Q"). */
+  /** The church's own payment reference: short, the same every time, and ours alone ("CH-7K2P9Q"). PayFast keeps it with each payment. */
   function reference(churchId) { return 'CH-' + ('000000' + hash(churchId || 'church').toString(36).toUpperCase()).slice(-6); }
 
   /* ---------- the subscription over time: what is due, payment holidays, payments ----------
    * sub (settings.support): { plan: 'month'|'year'|'pray', startedAt, paidUntil: 'yyyy-mm-dd',
-   *   payments: [{ at, kind: 'month'|'year'|'gift', amount, currency, gift, forOther }], holidays: [{ at, from, until, plan, reason }] }
-   * Payments are recorded when the church says it has paid (a bank transfer, with its reference); Church & Trellis's office
-   * matches them to the bank statement later (TARGET.md section 10). Nothing is ever locked for being late. */
+   *   payments: [{ at, kind: 'month'|'year'|'gift', amount, currency, gift, forOther }], holidays: [{ at, from, until, plan }],
+   *   pending: { at, kind, total, currency, gift, forOther } – a payment begun at PayFast, recorded when PayFast sends them back }
+   * Church & Trellis's office matches payments to PayFast's list later (TARGET.md section 10). Nothing is ever locked for being late. */
   var WARN_DAYS = { month: 7, year: 30 }, LATE_DAYS = 30;
-  // A payment holiday: a free month, no questions asked. Monthly: up to 3 in any 12 months. Yearly: one, which moves the
-  // year's payment a month later. A church that needs more is pointed to praying instead (free, for as long as it needs).
-  var HOLIDAYS = { month: 3, year: 1 };
+  // A payment holiday: a free month, no questions asked, as often as a monthly church needs (decided 19 Nov 2026). It is for
+  // the coffee that is due next, so it can be taken from a month before the due date. A yearly church switches to monthly first.
+  var HOLIDAY_FROM = 31;   // days before the due date
   var KEEP = 24;   // payments and holidays kept in settings (the newest)
   function addMonths(iso, n) {
     var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); if (!m) return '';
@@ -172,23 +179,36 @@ var Coffee = (function () {
     var state = left > WARN_DAYS[sub.plan] ? 'ok' : left > 0 ? 'soon' : -left <= LATE_DAYS ? 'due' : 'late';
     return { state: state, due: due, daysLeft: left };
   }
-  /** May the church take a payment holiday now? { ok, left, max } – counted over the last 12 months. */
+  /**
+   * May the church take a payment holiday now? → { ok, why }
+   *   ok: a monthly church whose next coffee is due within a month (or is already due or late). As often as it needs.
+   *   why (when not ok): 'year' – a yearly church: switch to monthly to use it (switchToMonthly)
+   *                      'ahead' – paid more than a month ahead (e.g. the rest of a year): once that runs out
+   *                      'none' – not paying (or praying instead)
+   */
   function holidayAllowed(sub, today) {
     sub = sub || {};
-    if (!paying(sub) || !sub.paidUntil) return { ok: false, left: 0, max: 0 };
-    var since = addMonths(today, -12), max = HOLIDAYS[sub.plan];
-    var used = (sub.holidays || []).filter(function (h) { return h.at > since; }).length;
-    return { ok: used < max, left: Math.max(0, max - used), max: max };
+    if (!paying(sub) || !sub.paidUntil) return { ok: false, why: 'none' };
+    if (sub.plan === 'year') return { ok: false, why: 'year' };
+    return days(today, sub.paidUntil) > HOLIDAY_FROM ? { ok: false, why: 'ahead' } : { ok: true, why: '' };
   }
-  /** A payment holiday: the due date moves a month later, free. → the new sub (the old one is left as it was). */
-  function takeHoliday(sub, today, reason) {
+  /** A payment holiday: this month's coffee is skipped, free, and the due date moves a month later. → the new sub, or null. */
+  function takeHoliday(sub, today) {
     sub = Object.assign({}, sub || {});
     if (!holidayAllowed(sub, today).ok) return null;
     var from = sub.paidUntil < today && addMonths(sub.paidUntil, 1) <= today ? today : sub.paidUntil;
     var until = addMonths(from, 1);
-    sub.holidays = (sub.holidays || []).concat([{ at: today, from: from, until: until, plan: sub.plan, reason: String(reason || '').trim().slice(0, 300) }]).slice(-KEEP);
+    sub.holidays = (sub.holidays || []).concat([{ at: today, from: from, until: until, plan: sub.plan }]).slice(-KEEP);
     sub.paidUntil = until;
     return sub;
+  }
+  /**
+   * A yearly church changes to one coffee a month (to be able to take payment holidays). What it has paid stays paid: the
+   * first monthly coffee is due when its year runs out. → the new sub, or null if it isn't paying yearly.
+   */
+  function switchToMonthly(sub, today) {
+    if (!sub || sub.plan !== 'year') return null;
+    return Object.assign({}, sub, { plan: 'month', switchedAt: today });
   }
   /**
    * The church says it has paid. o: { kind: 'month'|'year'|'gift', amount, currency, gift, forOther }.
@@ -324,7 +344,7 @@ var Coffee = (function () {
 
   return { AS_OF: AS_OF, PAY_URL: PAY_URL, YEAR_COFFEES: YEAR_COFFEES, KINDS: KINDS, EXAMPLES: EXAMPLES, COUNTRY_CURRENCY: COUNTRY_CURRENCY,
     TAKE_CARE: TAKE_CARE, POINT_MAX: POINT_MAX, POINTS: POINTS,
-    BANK: BANK, reference: reference, HOLIDAYS: HOLIDAYS, addMonths: addMonths, status: status, holidayAllowed: holidayAllowed, takeHoliday: takeHoliday, recordPayment: recordPayment, nextAmount: nextAmount, kind: kind, example: example, cupOf: cupOf, parse: parse, currency: currency, currencyFor: currencyFor, money: money, quote: quote, giftOf: giftOf, payLink: payLink,
+    reference: reference, HOLIDAY_FROM: HOLIDAY_FROM, addMonths: addMonths, status: status, holidayAllowed: holidayAllowed, takeHoliday: takeHoliday, switchToMonthly: switchToMonthly, recordPayment: recordPayment, nextAmount: nextAmount, kind: kind, example: example, cupOf: cupOf, parse: parse, currency: currency, currencyFor: currencyFor, money: money, quote: quote, giftOf: giftOf, payLink: payLink,
     takeCare: takeCare, region: region, isDiscreet: isDiscreet, screen: screen, points: points, publicCard: publicCard, monthKey: monthKey, weekNo: weekNo, weekKey: weekKey, cardForWeek: cardForWeek, partnerFor: partnerFor, cardCheck: cardCheck, mayHideCards: mayHideCards, showsCards: showsCards, needing: needing };
 })();
 if (typeof module !== 'undefined') module.exports = Coffee;

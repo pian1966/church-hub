@@ -1362,11 +1362,11 @@ html[data-mode=dark] .comm-chip.on { background: #4A1F26; color: #F4B9C0; border
 .sp-promise-art { color: #6D3FC0; display: flex; justify-content: center; } .sp-vow { font-family: Georgia, 'Times New Roman', serif; font-size: 18px; line-height: 1.45; margin: 8px auto 6px; max-width: 40ch; }
 .sp-thanks-art { display: flex; justify-content: center; margin: 4px 0 6px; } .sp-thanks-art .cup-art { animation: sp-turn 1.2s cubic-bezier(.2,.8,.2,1) both; }
 @keyframes sp-turn { from { transform: rotate(-90deg) scale(.6); opacity: 0; } }
-.sp-pay-amt { font-weight: 600; font-size: 16px; }
-.sp-bank { margin: 10px auto 12px; max-width: 420px; text-align: left; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
-.sp-bank-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--line-2); } .sp-bank-row:last-child { border-bottom: 0; }
-.sp-bank dt { color: var(--muted); font-size: 13px; } .sp-bank dd { margin: 0; display: flex; align-items: center; gap: 8px; } .sp-bank dd b { font-variant-numeric: tabular-nums; letter-spacing: .02em; }
-.sp-bank .btn.small { min-height: 30px; padding: 0 10px; font-size: 12.5px; }
+.sp-pay-big { font-size: 34px; font-weight: 800; letter-spacing: -.02em; margin: 2px 0 0; font-variant-numeric: tabular-nums; } .sp-pay-big small { font-size: 15px; font-weight: 600; color: var(--muted); margin-left: 6px; letter-spacing: 0; }
+.sp-ways { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 14px 0 6px; }
+.sp-ways span { padding: 5px 12px; border-radius: 999px; background: var(--surface-2, #F6F1EA); border: 1px solid var(--line); font-size: 13px; font-weight: 600; }
+.sp-pending { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 18px; border-left: 4px solid var(--accent); } .sp-pending .btns { margin: 0; }
+.sp-thanks-page .btns { margin-top: 14px; } .sp-thanks-page .sp-kicker { font-size: 15px; }
 @media (max-width: 860px) {
   .sp-hero { grid-template-columns: 1fr; text-align: center; padding: 22px 18px; } .sp-hero-art { display: flex; justify-content: center; } .sp-hero-cup { width: 130px; }
   .sp-hero h2 { font-size: 20px; margin-left: auto; margin-right: auto; } .sp-hero p { margin: 0 auto; }

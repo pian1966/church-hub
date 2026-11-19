@@ -18,6 +18,8 @@ a price. Every country Church & Trellis knows must have a currency in `COUNTRY_C
 one of these countries starts with "Keep us hidden" on: other churches see only a wide region (`REGION`), never its name,
 town, country or photo. The church can turn it off, after a warning.
 
-## Bank details
-`BANK` in `js/coffee.js`: Capitec Bank, universal branch code 470010, SWIFT CABLZAJJ (for payments from other countries,
-which also need the account holder's name as on their ID – `holder`, still empty).
+## Paying
+Through PayFast (chosen 19 Nov 2026), via Church & Trellis's payment doorway (`Coffee.PAY_URL`, `tools/payfast-door.mjs`,
+set up with `docs/PAYFAST-SETUP.md`). No bank or account details are kept in the repository, the app or the website: the
+bank account is given to PayFast, and PayFast's merchant details live only in the doorway's secret settings on Cloudflare.
+PayFast takes rand only; the doorway changes a church's own money into rand when it pays, at that day's rate.

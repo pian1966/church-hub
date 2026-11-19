@@ -3,11 +3,14 @@
  *   #/support        choose a coffee, how often, a gift, and who it's for (our church or another church)
  *   #/support/pray   the prayer circle: the church we pray for this week, our promise, and the weekly card on/off
  *   #/support/card   our church's prayer card: photo, two prayer points, "keep us hidden"
+ *   #/support/thanks where PayFast sends a church back after paying (#/support/notpaid if it didn't)
+ * Paying: Pay opens Church & Trellis's payment doorway (Coffee.PAY_URL → PayFast, docs/PAYFAST-SETUP.md). No bank or account
+ * details are in the app. The payment on its way is kept on this device (Store.pref 'payPending') and recorded on return.
  * Every church is in the prayer circle (decided Nov 2026): everyone's Home shows a new church's prayer card every week
  * (Coffee.cardForWeek). A paying church's Administrator may turn that off (support.cardsOff); a church that prays instead
  * of paying may not. Every church keeps a prayer card and checks it once a month (Coffee.cardCheck): Home asks the
  * Administrator until it is done ("Keep it as it is" counts).
- * Kept in Settings: settings.support = { cup: { kind, price, currency }, plan, paidUntil, payments, holidays, choice, pledge, prayOn, cardsOff }
+ * Kept in Settings: settings.support = { cup: { kind, price, currency }, plan, paidUntil, payments, holidays, switchedAt, choice, pledge, prayOn, cardsOff }
  *                   settings.prayerCard = { photo, photoOk, place, points: [2], discreet, needsHelp, updated }
  * Nothing about the church's people is on the prayer card. Until Church & Trellis's office exists (TARGET.md section 10) the
  * card stays in the church's own settings; the demo shows made-up churches (js/sample.js SampleChurches). */
@@ -125,7 +128,7 @@
       '<p>' + T('Church & Trellis is for every church, in every nation, in (nearly) every language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.') + '</p>' +
       '<p class="sp-hero-more">' + T('The price is per church, not per person: one cup a month covers your whole church, however many people, groups and services you have.') + '</p>' +
       '<p class="sp-hero-more">' + T('Don’t mistake a low price for a lesser product. Church & Trellis competes with the best church management systems in the world. We keep the price low so that every church can have it, not because it does less.') + '</p>' +
-      (pledged() ? '<p class="sp-chip">' + H.icon(PRAY, 16) + T('Your church has promised to pray for another church each week') + '</p>' : '') +
+      (pledged() ? '<p class="sp-chip">' + H.icon(PRAY, 16) + T('Your church has promised to pray for another church each month') + '</p>' : '') +
       '</div></section>';
   }
   var PRAY = 'M12 2c2.5 3 4 5.2 4 7.5a4 4 0 0 1-8 0C8 7.2 9.5 5 12 2zM9.5 15h5v7h-5z';   // a candle: prayer
@@ -160,7 +163,7 @@
       '<div class="sp-plans" role="radiogroup" aria-label="' + esc(T('How would you like to give?')) + '">' +
         plan('month', '', none ? dash : C.money(m.total, m.currency), T('a month'), T('One coffee a month'), T('Stop or change whenever you like.')) +
         plan('year', T('Two coffees free'), none ? dash : C.money(y.total, y.currency), T('a year'), T('Ten coffees a year'), none ? T('Two months free when you pay for the year.') : T('You save {amount} by paying for the year.', { amount: C.money(y.saved, y.currency) })) +
-        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray, each week, for another church that uses Church & Trellis.')) +
+        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray, each month, for another church that uses Church & Trellis.')) +
       '</div></section>';
   }
   function gift() {
@@ -189,7 +192,7 @@
     var s = choice(), q = quote(), pray = s.plan === 'pray';
     var who = s.forWho === 'other' ? (s.otherId ? pcTitle(circle().filter(function (c) { return c.id === s.otherId; })[0] || {}) : T('Where it’s needed most')) : (st().churchName || T('Your church'));
     return '<section class="sp-total' + (pray ? ' pray' : '') + '"><div>' + (pray
-      ? '<b>' + T('Free, with a promise to pray') + '</b><small>' + T('Every week Church & Trellis shows your church another church to pray for.') + '</small>'
+      ? '<b>' + T('Free, with a promise to pray') + '</b><small>' + T('Each month, your church prays for another church that Church & Trellis shows you.') + '</small>'
       : !q.cup ? '<b>' + T('Type what one cup costs where you live.') + '</b><small>' + T('Then choose how often, and Pay.') + '</small>'
       : '<span class="sp-total-n">' + esc(C.money(q.total, q.currency)) + '<small>' + esc(q.per === 'year' ? T('a year') : T('a month')) + '</small></span>' +
         '<small>' + esc(TN1(q.coffees)) + (q.gift ? ' + ' + esc(T('a gift of {amount}', { amount: C.money(q.gift, q.currency) })) : '') + ' · ' + esc(T('for {who}', { who: who })) + '</small>') + '</div>' +
@@ -202,8 +205,8 @@
     var s = choice();
     var steps = drinks() + plans() + (s.plan === 'pray' ? '' : gift() + forWho()) + summary(), top = statusPanel();
     if (top) steps = '<details class="sp-more"><summary>' + T('Change your coffee or plan, or pay for another church') + '</summary>' + steps + '</details>';
-    return head('') + (top || hero()) + steps +
-      '<p class="sp-foot">' + T('You pay by bank transfer from your own banking app. Church & Trellis never sees your card or your bank details.') + '</p>';
+    return head('') + pendingPanel() + (top || hero()) + steps +
+      '<p class="sp-foot">' + T('You pay through PayFast – by card, Instant EFT or SnapScan. Church & Trellis never sees your card or your bank details.') + '</p>';
   }
 
   function renderPray() {
@@ -310,7 +313,7 @@
   /* ---------- dialogs ---------- */
   function promiseDialog() {
     H.modal(H.dialogHead(T('Your church’s promise'), T('The prayer circle')) + '<div class="dlg-body sp-promise-dlg">' + '<div class="sp-promise-art" aria-hidden="true">' + circleArt() + '</div>' +
-      '<p class="sp-vow">' + T('Each week, we will pray for the church Church & Trellis shows us – in a service, a prayer meeting or a Care Group – as part of the worldwide family of God.') + '</p>' +
+      '<p class="sp-vow">' + T('Each month, we will pray for a church Church & Trellis shows us – in a service, a prayer meeting or a Care Group – as part of the worldwide family of God.') + '</p>' +
       '<p class="hint">' + T('“Pray for each other.” – James 5:16') + '</p>' +
       '<label class="check"><input type="checkbox" id="sp-vow-ok"><span>' + T('We promise, on behalf of our church.') + '</span></label>' +
       '<div class="btns"><button class="btn primary" data-act="support:vow">' + T('Make our promise') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div></div>', T('Your church’s promise'));
@@ -329,29 +332,58 @@
   var prayInstead = false;   // the promise about to be made replaces paying
   var extra = 0;   // gift coffees tapped on the "Your subscription" card or Home
   var paying = null;   // the payment the open window is about
+  /** The payment on its way to PayFast (kept on this device until PayFast sends the church back). */
+  function pending() { try { var p = JSON.parse(S.pref('payPending') || 'null'); return p && p.total > 0 ? p : null; } catch (e) { return null; } }
+  function setPending(p) { S.pref('payPending', p ? JSON.stringify(p) : ''); }
+  function back(route) { return location.href.split('#')[0] + '#/' + route; }
+  function whatFor(o) {
+    return o.forOther ? T('For another church') : o.kind === 'year' ? T('Ten coffees a year') : o.kind === 'month' ? T('One coffee a month') : T('A gift');
+  }
   /**
-   * How to pay: Church & Trellis's bank details, the church's own reference, and "We've paid" (which records it).
-   * o: { kind: 'month'|'year'|'gift', total, currency, gift, forOther }
+   * "Thank you!" – what the church is about to give, and on to PayFast (card, Instant EFT or SnapScan) through the payment
+   * doorway. o: { kind: 'month'|'year'|'gift', total, currency, gift, forOther }
    */
   function payDialog(o) {
-    var ref = C.reference(selfId()), B = C.BANK; paying = o;
-    var link = C.payLink({ ref: ref, total: o.total, currency: o.currency, forChurch: o.forOther });
-    if (link) { window.open(link, '_blank', 'noopener'); return; }
-    var row = function (label, value, copy) {
-      return '<div class="sp-bank-row"><dt>' + esc(label) + '</dt><dd><b>' + esc(value) + '</b>' + (copy ? '<button class="btn small" data-act="support:copy" data-v="' + esc(value) + '">' + T('Copy') + '</button>' : '') + '</dd></div>';
-    };
-    var abroad = o.currency !== 'ZAR', tag = o.forOther ? (o.forOther === 'any' ? ' GIFT-ANY' : ' GIFT') : o.kind === 'gift' ? ' GIFT' : '';
-    var total = C.money(o.total, o.currency) + (o.kind === 'year' ? ' ' + T('a year') : o.kind === 'month' ? ' ' + T('a month') : '');
-    H.modal(H.dialogHead(T('Thank you!'), T('Pay by bank transfer')) + '<div class="dlg-body sp-thanks">' + '<div class="sp-thanks-art">' + cupArt(C.kind(myCup().kind).art, 84) + '</div>' +
-      '<p class="sp-pay-amt">' + esc(T('Please pay {total} into Church & Trellis’s account:', { total: total })) + '</p>' +
-      '<dl class="sp-bank">' + row(T('Bank'), B.bank) + row(T('Account number'), B.account, true) + row(T('Branch code'), B.branch, true) +
-        row(T('Account type'), T(B.type)) + row(T('Beneficiary'), B.beneficiary) + row(T('Reference'), ref + tag, true) + '</dl>' +
-      '<p class="hint">' + T('Always use this reference: it is how Church & Trellis knows the payment is from your church.') + (tag ? ' ' + T('“GIFT” tells us it is a gift or for another church.') : '') + '</p>' +
-      (abroad ? '<p class="note info">' + esc(B.holder
-        ? T('From outside South Africa: use SWIFT code {swift} and the account holder’s name {name}. Your bank changes your money into rand.', { swift: B.swift, name: B.holder })
-        : T('From outside South Africa: your bank needs Capitec’s SWIFT code ({swift}) and the account holder’s full name. Write to Church & Trellis for these before you pay.', { swift: B.swift })) + '</p>' : '') +
-      '<p class="hint">' + T('Church & Trellis never sees your card or your bank details. It can take a few days for a payment to show.') + '</p>' +
-      '<div class="btns"><button class="btn primary" data-act="support:paid">' + T('We’ve paid') + '</button><button class="btn" data-act="hub:close">' + T('Pay later') + '</button></div></div>', T('Thank you!'));
+    paying = o;
+    var link = C.payLink({ ref: C.reference(selfId()), total: o.total, currency: o.currency, kind: o.kind, forChurch: o.forOther, ok: back('support/thanks'), no: back('support/notpaid') });
+    var per = o.kind === 'year' ? T('a year') : o.kind === 'month' ? T('a month') : '';
+    H.modal(H.dialogHead(T('Thank you!'), whatFor(o)) + '<div class="dlg-body sp-thanks">' + '<div class="sp-thanks-art">' + cupArt(C.kind(myCup().kind).art, 84) + '</div>' +
+      '<p class="sp-pay-big">' + esc(C.money(o.total, o.currency)) + (per ? '<small>' + esc(per) + '</small>' : '') + '</p>' +
+      (o.gift && o.kind !== 'gift' ? '<p class="hint">' + esc(T('including a gift of {amount}', { amount: C.money(o.gift, o.currency) })) + '</p>' : '') +
+      (link
+        ? '<p class="sp-ways" aria-label="' + esc(T('Ways to pay')) + '"><span>' + T('Card') + '</span><span>' + T('Instant EFT') + '</span><span>' + T('SnapScan') + '</span></p>' +
+          (o.currency !== 'ZAR' ? '<p class="note info">' + esc(T('PayFast takes payment in rand. You’ll see the amount in rand on the next page, and your bank changes it from {currency}.', { currency: o.currency })) + '</p>' : '') +
+          '<div class="btns"><button class="btn primary" data-act="support:gopay" data-href="' + esc(link) + '">' + T('Continue to PayFast') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>'
+        : '<p class="sp-vow">' + T('Paying online opens very soon.') + '</p><p>' + T('Thank you for wanting to give. Please come back to this page in a few days – nothing is locked meanwhile.') + '</p>' +
+          '<div class="btns"><button class="btn primary" data-act="hub:close">' + T('Close') + '</button></div>') +
+      '<p class="hint">' + T('Church & Trellis never sees your card or your bank details.') + '</p></div>', T('Thank you!'));
+  }
+  /** A payment that was started but never came back from PayFast (a closed tab, a lost signal): did it go through? */
+  function pendingPanel() {
+    var p = pending(); if (!p || !admin()) return '';
+    return '<section class="panel sp-pending">' + H.icon('M12 7v5l3 2M12 3a9 9 0 1 0 0 18 9 9 0 0 0 0-18z', 20) + '<div class="grow"><b>' +
+      esc(T('You started a payment of {amount} on {date}. Did it go through?', { amount: C.money(p.total, p.currency), date: H.fmt(p.at, true) })) + '</b></div>' +
+      '<div class="btns"><button class="btn small save" data-act="support:pendok">' + T('Yes, it went through') + '</button><button class="btn small" data-act="support:pendno">' + T('No') + '</button></div></section>';
+  }
+  /** Record a payment that went through (PayFast sent the church back, or the Administrator says so). → the new due date, if it moved. */
+  function recordPaid(o) {
+    var cur = sup(), before = cur.paidUntil;
+    var base = Object.assign({}, cur, o.kind === 'month' || o.kind === 'year' ? { cup: cur.cup && cur.cup.currency === o.currency ? cur.cup : { kind: choice().kind, price: C.parse(choice().price), currency: o.currency } } : {});
+    var next = C.recordPayment(base, H.today(), { kind: o.kind === 'pray' ? 'gift' : o.kind, amount: o.total, currency: o.currency, gift: o.gift, forOther: o.forOther });
+    if (next.plan === 'month' || next.plan === 'year') next.pledge = next.pledge || null;
+    S.setSettings({ support: next }, 'Paid Church & Trellis through PayFast (' + C.money(o.total, o.currency) + ', ' + (o.forOther ? 'for another church' : o.kind) + ')');
+    extra = 0;
+    return next.paidUntil !== before && next.paidUntil ? next.paidUntil : '';
+  }
+  var thanked = null;   // what the thank-you page shows: { amount, until }
+  function renderThanks() {
+    var t = thanked || {};
+    return head('') + '<section class="sp-hero sp-thanks-page"><div class="sp-hero-art">' + heroArt() + '</div><div class="sp-hero-text">' +
+      '<p class="sp-kicker">' + T('Thank you!') + '</p>' +
+      '<h2>' + T('Your coffee keeps Church & Trellis going – for your church, and for churches that can’t pay.') + '</h2>' +
+      (t.amount ? '<p>' + esc(T('{amount}, through PayFast.', { amount: t.amount })) + (t.until ? ' ' + esc(T('Paid until {date}. Thank you!', { date: H.fmt(t.until, true) })) : '') + '</p>' : '') +
+      '<p class="hint">' + T('PayFast emails you a receipt.') + '</p>' +
+      '<div class="btns"><a class="btn primary" href="#/home">' + T('Home') + '</a><a class="btn" href="#/support">' + T('Subscription') + '</a></div></div></section>';
   }
   /** One-tap gift coffees: [+1] [+2] [+5] … on the subscription card and Home. */
   function giftChips() {
@@ -378,24 +410,30 @@
       '<div class="grow"><p class="sp-kicker">' + esc(sub.plan === 'year' ? T('Ten coffees a year') : T('One coffee a month')) + '</p><h2>' + esc(statusLine(stt, sub)) + '</h2>' +
       '<p class="sp-status-amt">' + esc(T('Next payment: {amount}', { amount: C.money(n.total, n.currency) })) + (g ? ' + ' + esc(T('a gift of {amount}', { amount: C.money(g, n.currency) })) : '') + '</p></div></div>' +
       (admin() ? giftChips() + '<div class="btns">' + '<button class="btn primary" data-act="support:paynext">' + esc(T('Pay {amount}', { amount: C.money(n.total + g, n.currency) })) + '</button>' +
-        (urgent || stt.state === 'holiday' ? '<button class="btn" data-act="support:holiday">' + T('Ask for a payment holiday') + '</button>' : '') +
-        (compact ? '<a class="btn" href="#/support">' + T('Subscription') + '</a>' : H.menu(T('More'), [(urgent ? '' : '<button data-act="support:holiday">' + T('Ask for a payment holiday') + '</button>'),
+        (hol.ok && urgent ? '<button class="btn" data-act="support:holiday">' + T('Take a payment holiday') + '</button>' : '') +
+        (compact ? '<a class="btn" href="#/support">' + T('Subscription') + '</a>' : H.menu(T('More'), [(hol.ok && urgent ? '' : '<button data-act="support:holiday">' + T('Take a payment holiday') + '</button>'),
           '<button data-act="support:gift">' + T('Give a one-off gift') + '</button>', '<button data-act="support:prayinstead">' + T('Pray instead') + '</button>'].filter(Boolean))) + '</div>' : '') +
-      (!compact && hol.max ? '<p class="hint sp-hol-left">' + esc(T('Payment holidays left this year: {n} of {max}', { n: hol.left, max: hol.max })) + '</p>' : '') + '</section>';
+      (!compact && sub.plan === 'month' ? '<p class="hint sp-hol-left">' + T('A hard month? Skip a coffee with a payment holiday – free, no questions asked, as often as you need.') + '</p>' : '') + '</section>';
   }
+  /**
+   * A payment holiday: monthly churches skip a coffee, free, no questions asked, as often as they need. A yearly church is
+   * offered to switch to monthly (what it has paid stays paid); a church paid well ahead is told when it can take one.
+   */
   function holidayDialog() {
-    var sub = sup(), today = H.today(), ok = C.holidayAllowed(sub, today), stt = C.status(sub, today), yearly = sub.plan === 'year';
-    var trial = C.takeHoliday(sub, today, ''), next = trial ? H.fmt(trial.paidUntil, true) : '';
-    H.modal(H.dialogHead(T('A payment holiday'), yearly ? T('Ten coffees a year') : T('One coffee a month')) + '<div class="dlg-body sp-hol">' +
-      '<div class="sp-hol-art" aria-hidden="true">' + cupArt(C.kind(myCup().kind).art, 72) + '<span class="sp-zz">z<span>z</span><span>z</span></span></div>' +
-      (ok.ok ? '<p class="sp-vow">' + esc(yearly ? T('Pay your year a month later, free – no questions asked.') : T('Skip this month’s coffee, free – no questions asked.')) + '</p>' +
-        '<p>' + esc(T('Your next payment moves to {date}. Church & Trellis keeps working exactly as before.', { date: next })) + '</p>' +
-        '<p class="hint">' + esc(yearly ? T('A yearly plan may take one payment holiday a year.') : T('A monthly plan may take up to three payment holidays a year. You have {n} left.', { n: ok.left })) + '</p>' +
-        '<label class="field"><span>' + T('Would you like to tell us why? It helps us pray for you.') + '</span><textarea id="sp-hol-why" rows="2" maxlength="300"></textarea></label>' +
-        '<div class="btns"><button class="btn primary" data-act="support:takehol">' + T('Take a payment holiday') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>'
-      : '<p class="sp-vow">' + T('You’ve used this year’s payment holidays.') + '</p>' +
-        '<p>' + T('If paying is hard for your church right now, you can pray instead: Church & Trellis stays free for as long as you need, while your church prays for another church each week.') + '</p>' +
-        '<div class="btns"><button class="btn primary" data-act="support:prayinstead">' + T('Pray instead') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>') +
+    var sub = sup(), today = H.today(), ok = C.holidayAllowed(sub, today), stt = C.status(sub, today);
+    var trial = ok.ok ? C.takeHoliday(sub, today) : null, until = H.fmt(sub.paidUntil, true), body;
+    if (ok.ok) body = '<p class="sp-vow">' + T('Skip this month’s coffee, free – no questions asked.') + '</p>' +
+      '<p>' + esc(T('Your next coffee moves to {date}. Church & Trellis keeps working exactly as before.', { date: H.fmt(trial.paidUntil, true) })) + '</p>' +
+      '<p class="hint">' + T('Take a payment holiday whenever you need one, as often as you need.') + '</p>' +
+      '<div class="btns"><button class="btn primary" data-act="support:takehol">' + T('Take a payment holiday') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>';
+    else if (ok.why === 'year') body = '<p class="sp-vow">' + T('Payment holidays are for churches that give one coffee a month.') + '</p>' +
+      '<p>' + esc(T('Switch to one coffee a month, and you can skip a month, free, whenever you need. Your year stays paid until {date}; after that it’s one coffee a month.', { date: until })) + '</p>' +
+      '<div class="btns"><button class="btn primary" data-act="support:monthly">' + T('Switch to one coffee a month') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>';
+    else body = '<p class="sp-vow">' + esc(T('Your church is paid until {date}.', { date: until })) + '</p>' +
+      '<p>' + T('When your next coffee is due, you can skip it here with a payment holiday – free, no questions asked.') + '</p>' +
+      '<div class="btns"><button class="btn primary" data-act="hub:close">' + T('Close') + '</button></div>';
+    H.modal(H.dialogHead(T('A payment holiday'), sub.plan === 'year' ? T('Ten coffees a year') : T('One coffee a month')) + '<div class="dlg-body sp-hol">' +
+      '<div class="sp-hol-art" aria-hidden="true">' + cupArt(C.kind(myCup().kind).art, 72) + '<span class="sp-zz">z<span>z</span><span>z</span></span></div>' + body +
       (stt.state === 'late' ? '<p class="hint">' + T('Nothing is ever locked or deleted for being late.') + '</p>' : '') + '</div>', T('A payment holiday'));
   }
   function giftDialog() {
@@ -416,9 +454,16 @@
     stat: function () { return pledged() ? T('In the prayer circle') : T('One coffee a month'); },
     render: function (parts) {
       var p = parts && parts[0];
-      return p === 'pray' ? renderPray() : p === 'card' ? renderCard() : renderChoose();
+      return p === 'pray' ? renderPray() : p === 'card' ? renderCard() : p === 'thanks' ? renderThanks() : renderChoose();
     },
     after: function (parts) {
+      // Back from PayFast: record the payment that went through (once), or forget the one that didn't.
+      if (parts && (parts[0] === 'thanks' || parts[0] === 'notpaid')) {
+        var p = pending(); if (p) setPending(null);
+        if (parts[0] === 'notpaid') { H.go('support'); H.toast(T('No payment was made. You can pay whenever you’re ready.')); return; }
+        if (p && admin()) { thanked = { amount: C.money(p.total, p.currency), until: recordPaid(p) }; H.render(); }
+        return;
+      }
       var cp = document.getElementById('sp-cup');
       if (cp) cp.addEventListener('input', H.pause(function () {
         var v = String(cp.value || '').replace(/[^\d.,]/g, ''); choice().price = v;
@@ -478,7 +523,7 @@
       holiday: function () { if (admin()) holidayDialog(); },
       takehol: function () {
         if (!admin()) return;
-        var why = document.getElementById('sp-hol-why'), next = C.takeHoliday(sup(), H.today(), why ? why.value : '');
+        var next = C.takeHoliday(sup(), H.today());
         if (!next) return;
         S.setSettings({ support: next }, 'Took a payment holiday (until ' + next.paidUntil + ')');
         H.closeModal(); H.render(); H.toast(T('Enjoy your payment holiday. God bless your church.'));
@@ -491,15 +536,21 @@
       giftamt: function () { var i = document.getElementById('sp-giftamt'), cu = cur(), a = C.parse(i && i.value);
         if (!(a > 0)) { H.toast(T('Type an amount first.'), true); return; }
         H.closeModal(); payDialog({ kind: 'gift', total: a, currency: cu, gift: a }); },
-      paid: function () {
-        if (!admin() || !paying) return;
-        var o = paying, cur = sup(), before = cur.paidUntil;
-        var base = Object.assign({}, cur, o.kind === 'month' || o.kind === 'year' ? { cup: cur.cup && cur.cup.currency === o.currency ? cur.cup : { kind: choice().kind, price: C.parse(choice().price), currency: o.currency } } : {});
-        var next = C.recordPayment(base, H.today(), { kind: o.kind === 'pray' ? 'gift' : o.kind, amount: o.total, currency: o.currency, gift: o.gift, forOther: o.forOther });
-        if (next.plan === 'month' || next.plan === 'year') next.pledge = next.pledge || null;
-        S.setSettings({ support: next }, 'Recorded a payment to Church & Trellis (' + C.money(o.total, o.currency) + ', ' + (o.forOther ? 'for another church' : o.kind) + ')');
-        paying = null; extra = 0; H.closeModal(); H.render();
-        H.toast(next.paidUntil !== before && next.paidUntil ? T('Thank you! Paid until {date}.', { date: H.fmt(next.paidUntil, true) }) : T('Thank you for your gift!'));
+      gopay: function (el) {
+        if (!admin() || !paying || !el.dataset.href) return;
+        setPending(Object.assign({ at: H.today() }, paying));
+        location.href = el.dataset.href;
+      },
+      pendok: function () {
+        var p = pending(); if (!admin() || !p) return;
+        setPending(null); var until = recordPaid(p); H.render();
+        H.toast(until ? T('Thank you! Paid until {date}.', { date: H.fmt(until, true) }) : T('Thank you for your gift!'));
+      },
+      pendno: function () { setPending(null); H.render(); },
+      monthly: function () {
+        var next = C.switchToMonthly(sup(), H.today()); if (!admin() || !next) return;
+        S.setSettings({ support: next }, 'Changed from ten coffees a year to one coffee a month');
+        H.closeModal(); H.render(); H.toast(T('Done – one coffee a month from {date}.', { date: H.fmt(next.paidUntil, true) }));
       },
       promise: function () { if (admin()) promiseDialog(); },
       vow: function () {
@@ -515,10 +566,6 @@
       leave: function (el) {
         if (!admin() || !H.confirmBtn(el, T('Click again: leave the prayer circle'))) return;
         S.setSettings({ support: Object.assign({}, sup(), { pledge: null, prayOn: false }, sup().plan === 'pray' ? { plan: '' } : {}) }, 'Left the prayer circle'); H.render();
-      },
-      copy: function (el) {
-        var v = el.dataset.v || '', done = function () { H.toast(T('Copied')); };
-        if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, function () { H.toast(v); }); else H.toast(v);
       },
       cardson: function () { if (admin()) setCards(true); },
       prayed: function () { S.pref('prayedFor', week()); H.render(); },

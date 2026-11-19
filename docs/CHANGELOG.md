@@ -493,3 +493,13 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 19 Nov 2026 (0.96.1): The name is shown as Church **&** Trellis with its "&" in the brand orange – the app's header and sign-in screens, the website, the setup tool, the brochure covers (dark "&" on the orange cover) and the presentation
 - ✅ 19 Nov 2026: The presentation file is now `church-and-trellis-presentation.pptx`; the Slides robot also names the Google Slides copy "Church & Trellis – conference presentation" when it next updates it
 - ✅ 19 Nov 2026 (0.96.2): Groundwork for the Community board, Marketplace and Subscription work: who can see what is kept in one place (`js/access.js`) instead of being copied in app.js, messages.js, Settings, People and Store, with a test that keeps `firestore.rules` and the browser test's copy in step; new parts plug in with their own permissions and jobs (keepers: the Administrators, Pastors and church secretary until chosen). Placeholders for the Community board and Marketplace (modules, permissions, closed rules sections, words) and a closed rules section for Subscription records. Nothing changes for anyone yet
+- ✅ 19 Nov 2026 (0.97.0): **Subscription to the owner's spec, paid through PayFast.** No bank or account details anywhere in the
+  app, website or repository any more (the Capitec details were taken out of `js/coffee.js`, the tests, `site/index.html` and
+  `docs/PRICES.md`). Pay opens Church & Trellis's payment doorway (`tools/payfast-door.mjs`, a Cloudflare Worker that keeps
+  PayFast's merchant details secret, changes other currencies into rand and signs the payment) and PayFast (card, Instant EFT,
+  SnapScan); back from PayFast, "Thank you!" records the payment; a payment that never came back is asked about. Until the owner
+  opens PayFast (`docs/PAYFAST-SETUP.md`), Pay says "opens very soon". Payment holidays: monthly churches skip a coffee whenever
+  they need, as often as they need, no questions asked (the "why" box is gone); yearly churches switch to monthly to take one,
+  keeping what they paid. Praying instead is a promise to pray each month. The website's Give box uses PayFast too, and its
+  payment-holiday answer now says how long a holiday lasts. All five languages; What's new; setup tool; brochure.
+

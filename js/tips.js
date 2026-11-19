@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.96';
+  var NEWS_FOR = '0.97';
   var NEWS = [
+    { date: '2026-11-19', who: ['admin'], app: 'support', text: TX("Subscription: a church that gives monthly can now take a payment holiday whenever it needs one, no questions asked (a yearly church switches to monthly first), and paying is moving to PayFast – card, Instant EFT or SnapScan – with no bank details shown.") },
     { date: '2026-11-19', who: ['everyone'], text: TX("Church Hub has a new name: Church & Trellis. Everything works as before, and nothing you have saved has changed.") },
     { date: '2026-11-19', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters now open with as many services as fit your screen. Use − and + to see from 1 to 16 side by side, or choose 1 month or 1 quarter and slide across.') },
     { date: '2026-11-19', who: ['lifelead'], not: ['admin', 'pastor'], app: 'life', text: TX('Midweek Groups: every group leader can now add anyone to their group with “Add someone to the group”, people who only come to church too – they see just each person’s name.') },

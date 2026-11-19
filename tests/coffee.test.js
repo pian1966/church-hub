@@ -33,9 +33,12 @@ check(q.base === 150 && q.total === 200, 'a gift is added to the total (₹150 +
 check(C.quote({ price: 6, currency: 'AUD', plan: 'month', gift: 'abc' }).total === 6, 'a gift that isn’t a number counts as nothing');
 check(C.quote({ plan: 'pray', price: 50, currency: 'ZAR' }).total === 0, 'praying instead costs nothing');
 check(C.giftOf(3, 50, 'ZAR') === 150 && C.giftOf(99, 50, 'ZAR') === 1000 && C.giftOf(-1, 50, 'ZAR') === 0, 'a gift of cups: 0 to 20');
-check(C.payLink({ ref: 'ch-x', total: 500, currency: 'ZAR' }) === '', 'no payment address until the owner chooses a payment company');
+check(C.payLink({ ref: 'CH-AB12CD', total: 500, currency: 'ZAR' }) === '', 'no payment address until PayFast is live (Pay says “Payments open soon”)');
+const link = C.payLink({ ref: 'CH-AB12CD', total: 4.95, currency: 'USD', kind: 'month', forChurch: '', ok: 'https://x.org/app/#/support/thanks' }, 'https://churchandtrellis.com/pay');
+check(link === 'https://churchandtrellis.com/pay?amount=4.95&currency=USD&kind=month&ref=CH-AB12CD&ok=https%3A%2F%2Fx.org%2Fapp%2F%23%2Fsupport%2Fthanks', 'Pay goes to the payment doorway with the amount, currency, kind and reference – nothing about people');
+check(/kind=gift/.test(C.payLink({ ref: 'CH-AB12CD', total: 50, kind: 'pray' }, 'https://p/pay')) && /&for=demo-ch-1/.test(C.payLink({ ref: 'CH-AB12CD', total: 50, kind: 'month', forChurch: 'demo-ch-1' }, 'https://p/pay')), 'gifts and payments for another church are marked as such');
 check(/^CH-[0-9A-Z]{6}$/.test(C.reference('church-hub-7ec02')) && C.reference('a') === C.reference('a') && C.reference('a') !== C.reference('b'), 'each church has its own short payment reference');
-check(C.BANK.branch === '470010' && /^\d{10}$/.test(C.BANK.account) && C.BANK.swift === 'CABLZAJJ', 'bank transfer details are complete');
+check(!('BANK' in C) && !/capitec|swift|branch\s*:|account\s*:/i.test(require('fs').readFileSync(__dirname + '/../js/coffee.js', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '')), 'no bank or account details in the app');
 
 console.log('What is due, and payment holidays');
 check(C.addMonths('2026-01-31', 1) === '2026-02-28' && C.addMonths('2026-12-15', 1) === '2027-01-15' && C.addMonths('2026-03-10', -12) === '2025-03-10', 'adding months keeps to real dates');
@@ -50,17 +53,21 @@ check(lapsed.paidUntil === '2027-04-01', 'after a long gap, a month from today')
 check(C.recordPayment(sub, '2026-11-20', { kind: 'gift', amount: 100 }).paidUntil === sub.paidUntil, 'a gift doesn’t move the due date');
 check(C.recordPayment(sub, '2026-11-20', { kind: 'month', amount: 50, forOther: 'demo-ch-1' }).paidUntil === sub.paidUntil, 'paying for another church doesn’t either');
 check(C.nextAmount(sub, 'ZA').total === 50, 'the next payment is one cup');
-let h = C.takeHoliday(sub, '2026-12-12', 'Our roof blew off');
-check(h.paidUntil === '2027-01-16' && h.holidays.length === 1 && h.holidays[0].reason === 'Our roof blew off', 'a payment holiday moves the due date a month later, free');
+check(C.holidayAllowed(sub, '2026-11-16').ok && C.holidayAllowed(sub, '2026-11-16').why === '', 'monthly: a payment holiday for the coffee that is due next');
+let h = C.takeHoliday(sub, '2026-12-12');
+check(h.paidUntil === '2027-01-16' && h.holidays.length === 1 && !('reason' in h.holidays[0]), 'a payment holiday moves the due date a month later, free – no questions asked');
 check(C.status(h, '2026-12-20').state === 'holiday', '…and shows as a holiday until then');
-h = C.takeHoliday(C.takeHoliday(h, '2027-01-10'), '2027-02-10');
-check(h && C.holidayAllowed(h, '2027-03-01').ok === false && C.takeHoliday(h, '2027-03-01') === null, 'monthly: up to three holidays in a year');
-check(C.holidayAllowed(h, '2028-03-01').ok, '…and they come back after twelve months');
+for (let i = 0, d = '2027-01-10'; i < 8; i++, d = C.addMonths(d, 1)) h = C.takeHoliday(h, d);
+check(h && h.holidays.length === 9 && h.paidUntil === '2027-09-16', 'as many payment holidays as a monthly church needs – nine in a row');
+check(C.takeHoliday(C.recordPayment(sub, '2026-11-20', { kind: 'month', amount: 50 }), '2026-11-21') === null && C.holidayAllowed(C.recordPayment(sub, '2026-11-20', { kind: 'month', amount: 50 }), '2026-11-21').why === 'ahead', 'not for a month that is already paid two months ahead');
 let y = C.recordPayment({}, '2026-11-16', { kind: 'year', amount: 500 });
 check(y.paidUntil === '2027-11-16' && C.status(y, '2027-10-20').state === 'soon' && C.status(y, '2027-09-01').state === 'ok', 'yearly: paid for a year, reminded 30 days before');
-let yh = C.takeHoliday(y, '2027-11-01');
-check(yh.paidUntil === '2027-12-16' && C.holidayAllowed(yh, '2027-12-20').ok === false, 'yearly: one holiday a year, moving the payment a month');
-check(C.takeHoliday({ plan: 'pray' }, '2026-11-16') === null && C.takeHoliday({}, '2026-11-16') === null, 'no holiday from nothing');
+check(C.takeHoliday(y, '2027-11-01') === null && C.holidayAllowed(y, '2027-11-01').why === 'year', 'yearly: no holiday – the church switches to monthly to use one');
+let ym = C.switchToMonthly(y, '2027-03-01');
+check(ym.plan === 'month' && ym.paidUntil === '2027-11-16' && ym.switchedAt === '2027-03-01' && C.status(ym, '2027-05-01').state === 'ok', 'switching to monthly keeps what was paid: the first monthly coffee is due when the year runs out');
+check(C.holidayAllowed(ym, '2027-05-01').why === 'ahead' && C.takeHoliday(ym, '2027-11-01').paidUntil === '2027-12-16', '…and a holiday can be taken for that first monthly coffee');
+check(C.switchToMonthly(sub, '2027-01-01') === null && C.switchToMonthly(null) === null, 'only a yearly church switches');
+check(C.takeHoliday({ plan: 'pray' }, '2026-11-16') === null && C.takeHoliday({}, '2026-11-16') === null && C.holidayAllowed({ plan: 'pray' }).why === 'none', 'no holiday from nothing');
 let late = C.takeHoliday(sub, '2027-03-01');
 check(late.paidUntil === '2027-04-01', 'a holiday taken long after the due date counts from today');
 
@@ -119,5 +126,29 @@ check(C.showsCards({}) && !C.showsCards({ plan: 'year', cardsOff: true }) && C.s
 check(C.monthKey('2026-11-16') === '2026-11', 'the month of a date');
 check(C.needing([{ id: 'x', needsHelp: true }, { id: 'y' }, { id: 'me', needsHelp: true }], 'me').map(c => c.id).join() === 'x', 'churches asking for help (not ourselves)');
 
-console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nAll checks passed');
-process.exit(fails ? 1 : 0);
+(async function () {
+  console.log('The payment doorway (tools/payfast-door.mjs)');
+  const D = (await import('../tools/payfast-door.mjs')).default._, crypto = require('crypto');
+  check(['', 'abc', 'Church & Trellis – ☕ ₹15', 'x'.repeat(200)].every(t => D.md5(t) === crypto.createHash('md5').update(t).digest('hex')), 'MD5 (PayFast’s signature) is right, accents and all');
+  check(D.enc("a b!'()*~-_.") === 'a+b%21%27%28%29%2A%7E-_.', 'values are encoded the way PayFast signs them');
+  check(D.signature([['a', '1'], ['b', ''], ['c', 'x y']], 'pass') === crypto.createHash('md5').update('a=1&c=x+y&passphrase=pass').digest('hex'), 'empty fields are left out and the passphrase goes last');
+  const U = q => new URL('https://churchandtrellis.com/pay?' + q);
+  check(D.readAsk(U('amount=50&currency=ZAR&kind=month&ref=CH-AB12CD')).ok && D.readAsk(U('amount=100&kind=gift&ref=HELP')).ok, 'a church’s coffee, and a gift from the website, are understood');
+  check(['amount=0&ref=CH-AB12CD', 'amount=50&ref=nobody', 'amount=50&ref=CH-AB12CD&kind=forever', 'amount=50&ref=CH-AB12CD&currency=R'].every(q => !D.readAsk(U(q)).ok), 'anything odd is turned away');
+  check(D.readAsk(U('amount=50&ref=CH-AB12CD&ok=javascript:alert(1)')).okUrl === 'https://churchandtrellis.com/', 'only https addresses to come back to');
+  const env = { MERCHANT_ID: 'TEST-ID', MERCHANT_KEY: 'TEST-KEY', PASSPHRASE: 'test phrase', SANDBOX: 'yes' };
+  const rates = async () => ({ ok: true, json: async () => ({ zar: { usd: 0.0577, inr: 5.389 } }) });
+  let page = await (await D.handle(new Request('https://churchandtrellis.com/pay?amount=4.95&currency=USD&kind=month&ref=CH-AB12CD'), env, rates)).text();
+  check(/R85\.79/.test(page) && /US\$|4\.95 USD/.test(page) && /sandbox\.payfast/.test(page) && /name="signature" value="[0-9a-f]{32}"/.test(page), 'US$4.95 becomes R85.79 at PayFast (sandbox while practising), signed');
+  check(/name="custom_str1" value="CH-AB12CD"/.test(page) && !/name="email_address"/.test(page), 'PayFast keeps the church’s reference, and nothing about anyone');
+  page = await (await D.handle(new Request('https://churchandtrellis.com/pay?amount=15&currency=INR&kind=month&ref=CH-AB12CD'), env, rates)).text();
+  check(/too small for PayFast/.test(page) && /for the year/.test(page), 'less than R5 (₹15): explained kindly, and paying for the year suggested');
+  page = await (await D.handle(new Request('https://churchandtrellis.com/pay?amount=50&currency=ZAR&kind=month&ref=CH-AB12CD'), {}, rates)).text();
+  check(/Payments open soon/.test(page), 'until the owner adds PayFast’s details: “Payments open soon”');
+  page = await (await D.handle(new Request('https://churchandtrellis.com/pay?amount=5&currency=XYZ&kind=gift&ref=HUB'), env, async () => ({ ok: false }))).text();
+  check(/try again/.test(page), 'no exchange rate: please try again shortly');
+  check(!/merchant_id\s*[:=]\s*['"]\d|passphrase\s*[:=]\s*['"]\w/i.test(require('fs').readFileSync(__dirname + '/../tools/payfast-door.mjs', 'utf8')), 'no PayFast details in the doorway’s code');
+
+  console.log(fails ? '\n' + fails + ' check(s) FAILED' : '\nAll checks passed');
+  process.exit(fails ? 1 : 0);
+})();

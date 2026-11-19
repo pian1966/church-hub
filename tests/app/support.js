@@ -16,25 +16,59 @@ module.exports = async function (ctx) {
   check(await s.page.inputValue('#sp-cup') === '50', 'choosing the coffee-chain cup puts back the price we know (R50)');
   await s.page.click('[data-act="support:plan"][data-p="month"]'); await s.page.click('[data-act="support:cups"][data-n="2"]');
   check(/R150/.test(await s.page.textContent('.sp-total')), 'two gift coffees are added to the month’s coffee (R150)');
-  await s.page.click('.sp-total [data-act="support:pay"]'); await s.page.waitForSelector('.sp-bank');
-  t = await s.page.textContent('.sp-bank');
-  check(/Capitec/.test(t) && /470010/.test(t) && /CH-[0-9A-Z]{6}/.test(t), 'Pay shows the bank details and the church’s own reference');
-  await s.page.click('[data-act="support:paid"]'); await s.settle();
+  // Paying: until PayFast is live, a kind “opens very soon”; never any bank details
+  await s.page.click('.sp-total [data-act="support:pay"]'); await s.page.waitForSelector('#modal .sp-thanks');
+  t = await s.page.textContent('#modal');
+  check(/R150/.test(t) && /opens very soon/.test(t) && !/Capitec|Account number|Branch code|SWIFT/i.test(await s.page.content()), 'Pay says paying online opens very soon – and no bank or account details are anywhere on the page');
+  await s.page.click('#modal [data-act="hub:close"]');
+  // Once PayFast is live: on to the payment doorway, then back to “Thank you”, which records the payment
+  await s.page.evaluate(() => { const pl = Coffee.payLink; Coffee.payLink = o => pl(o, 'https://churchandtrellis.com/pay'); });
+  await s.page.click('.sp-total [data-act="support:pay"]'); await s.page.waitForSelector('#modal [data-act="support:gopay"]');
+  const href = await s.page.getAttribute('#modal [data-act="support:gopay"]', 'data-href');
+  check(/^https:\/\/churchandtrellis\.com\/pay\?amount=150&currency=ZAR&kind=month&ref=CH-[0-9A-Z]{6}&ok=[^&]+support%2Fthanks&no=[^&]+support%2Fnotpaid$/.test(href) && /Card/.test(await s.page.textContent('#modal .sp-ways')),
+    'Continue to PayFast goes to the payment doorway with only the amount, currency, kind and the church’s reference (card, Instant EFT, SnapScan)');
+  await s.page.evaluate(() => { document.querySelector('#modal [data-act="support:gopay"]').dataset.href = '#/support/thanks'; });   // stand in for PayFast sending the church back
+  await s.page.click('#modal [data-act="support:gopay"]'); await s.page.waitForSelector('.sp-thanks-page'); await s.settle();
   let docs = await s.docsNow(), sup = docs['settings/church'].support || {};
-  check(sup.plan === 'month' && !!sup.paidUntil && sup.payments.length === 1 && sup.payments[0].amount === 150, '“We’ve paid” records the payment and starts the monthly plan');
-  check(await s.page.isVisible('.sp-status') && /Paid until/.test(await s.page.textContent('.sp-status')), 'the page now shows “Your subscription”');
-  // Due soon: Home reminds the Administrator, with one-tap gifts and a payment holiday
+  check(sup.plan === 'month' && !!sup.paidUntil && sup.payments.length === 1 && sup.payments[0].amount === 150 && /Paid until/.test(await s.text()), 'back from PayFast: “Thank you!”, the payment is recorded and the monthly plan starts');
+  check(await s.page.evaluate(() => !Store.pref('payPending')), '…once only (the payment on its way is forgotten)');
+  await s.go('support');
+  check(await s.page.isVisible('.sp-status') && /Paid until/.test(await s.page.textContent('.sp-status')) && /as often as you need/.test(await s.page.textContent('.sp-status')), 'the page now shows “Your subscription”, and that a payment holiday can be taken as often as needed');
+  // A payment that never came back: asked whether it went through; “not paid” from PayFast forgets it
+  await s.page.evaluate(() => Store.pref('payPending', JSON.stringify({ at: '2026-11-19', kind: 'gift', total: 100, currency: 'ZAR', gift: 100 })));
+  await s.go('home'); await s.go('support');
+  check(/You started a payment of R100/.test(await s.page.textContent('.sp-pending')), 'a payment that never came back from PayFast: “Did it go through?”');
+  await s.page.click('.sp-pending [data-act="support:pendno"]');
+  check(!(await s.page.$('.sp-pending')) && (await s.docsNow())['settings/church'].support.payments.length === 1, '“No” forgets it, and nothing is recorded');
+  await s.page.evaluate(() => Store.pref('payPending', JSON.stringify({ at: '2026-11-19', kind: 'gift', total: 100, currency: 'ZAR', gift: 100 })));
+  await s.go('support/notpaid'); await s.page.waitForTimeout(150);
+  check(await s.page.evaluate(() => !Store.pref('payPending')) && /#\/support$/.test(s.page.url()), 'cancelled at PayFast: nothing recorded, back on the Subscription page');
+  // Due soon: Home reminds the Administrator, with one-tap gifts and a payment holiday – no questions asked, as often as needed
   const due = new Date(Date.now() + 3 * 864e5).toISOString().slice(0, 10);
-  await s.page.evaluate(d => { const st = Store.settings(); Store.setSettings({ support: Object.assign({}, st.support, { paidUntil: d }) }); }, due);
+  const dueSoon = d => s.page.evaluate(d => { const st = Store.settings(); Store.setSettings({ support: Object.assign({}, st.support, { paidUntil: d }) }); }, d);
+  await dueSoon(due);
   await s.go('home'); t = await s.page.textContent('main');
   check(/Your next coffee is due in 3 days/.test(t) && await s.page.isVisible('.sp-status [data-act="support:extra"]'), 'Home reminds the Administrator a few days before the coffee is due, with gift coffees to add');
-  await s.page.click('.sp-status [data-act="support:holiday"]'); await s.page.waitForSelector('#sp-hol-why');
-  await s.page.fill('#sp-hol-why', 'A hard month'); await s.page.click('[data-act="support:takehol"]'); await s.settle();
+  for (let i = 0; i < 4; i++) {
+    if (i) { await dueSoon(due); await s.go('support'); await s.go('home'); }
+    await s.page.click('.sp-status [data-act="support:holiday"]'); await s.page.waitForSelector('#modal [data-act="support:takehol"]');
+    if (!i) check(!(await s.page.$('#modal textarea')) && /no questions asked/.test(await s.page.textContent('#modal')), 'a payment holiday asks no questions');
+    await s.page.click('#modal [data-act="support:takehol"]'); await s.settle();
+  }
   docs = await s.docsNow(); sup = docs['settings/church'].support;
-  check(sup.holidays.length === 1 && sup.paidUntil > due && sup.holidays[0].reason === 'A hard month', 'a payment holiday moves the due date a month later');
+  check(sup.holidays.length === 4 && sup.paidUntil > due && !sup.holidays.some(h => 'reason' in h), 'four payment holidays in a row – as often as a monthly church needs – each moving the due date a month');
   await s.go('home'); check(!(await s.page.$('.sp-status')), '…and the reminder goes away');
+  // A yearly church switches to monthly to take a payment holiday; what it paid stays paid
+  await s.page.evaluate(() => { const st = Store.settings(); Store.setSettings({ support: Object.assign({}, st.support, { plan: 'year', paidUntil: '2027-10-01' }) }); });
+  await s.go('home'); await s.go('support');
+  await s.page.click('.sp-status .menu > button, .sp-status [aria-haspopup]').catch(() => {});
+  await s.page.evaluate(() => document.querySelector('.sp-status [data-act="support:holiday"]').click()); await s.page.waitForSelector('#modal [data-act="support:monthly"]');
+  check(/one coffee a month/.test(await s.page.textContent('#modal')), 'a yearly church asking for a payment holiday is offered to switch to one coffee a month');
+  await s.page.click('#modal [data-act="support:monthly"]'); await s.settle();
+  sup = (await s.docsNow())['settings/church'].support;
+  check(sup.plan === 'month' && sup.paidUntil === '2027-10-01', '…and switching keeps the year it paid for');
   // Every church must have a prayer card: Home asks the Administrator until there is one
-  check(/Make your church’s prayer card/.test(await s.page.textContent('main')), 'Home asks the Administrator to make the church’s prayer card');
+  await s.go('home'); check(/Make your church’s prayer card/.test(await s.page.textContent('main')), 'Home asks the Administrator to make the church’s prayer card');
   // The prayer card: hidden when asked, warnings for phone numbers
   await s.go('support/card');
   check(/Take a photo/.test(await s.text()) && await s.page.getAttribute('.sp-photo-in[capture]', 'capture') === 'environment', 'the prayer card offers “Take a photo” (the phone’s camera) as well as “Choose a photo”');

@@ -293,16 +293,17 @@ Decided by the owner on 16 Nov 2026, replacing "one Big Mac a year". Built: `js/
   16 Nov 2026 from Starbucks prices in three currencies). About R50 a month or R500 a year in South Africa.
 - **Plus an optional gift** – gift coffees in one tap, or any amount, inviting the church to think what Church & Trellis is worth to it.
 - **Pay for another church**: a church that has asked for help, or "where it's needed most".
-- **Payment holidays**: a free month, no questions asked – up to three a year on the monthly plan, one a year (the year's
-  payment a month later) on the yearly plan. Nothing is ever locked for being late.
+- **Payment holidays**: a free month, no questions asked, whenever a monthly church needs one and as often as it needs
+  (decided 19 Nov 2026); a yearly church switches to monthly to take one. Nothing is ever locked for being late.
 - **Praying instead**: a church that cannot afford a coffee uses Church & Trellis free by promising to pray, once a month, for
   another church Church & Trellis shows it (the prayer circle). Its prayer card – a photo and two prayer points, never anything
   about its people – is what other churches pray over. Churches in the Open Doors top 50 countries start "hidden" (no name,
   town, country or photo; only a wide region).
-- Payment is by bank transfer (EFT) into Church & Trellis's account, with the church's own reference (`Coffee.reference`); the
-  church taps "We've paid", which records it in its settings. Card payments (`Coffee.PAY_URL`) wait for task 059. Until the
-  office (10.1) exists, payments are not checked against the bank and nothing is enforced.
-- Still the office robot's job later: match bank payments to references, issue licences, share prayer cards between churches.
+- Payment is through PayFast (decided 19 Nov 2026: card, Instant EFT, SnapScan), one payment at a time, via the payment doorway
+  (`Coffee.PAY_URL`, `tools/payfast-door.mjs`, `docs/PAYFAST-SETUP.md`) with the church's own reference (`Coffee.reference`);
+  coming back from PayFast records it in the church's settings. No bank or account details in the app or repository. Until the
+  office (10.1) exists, payments are not checked against PayFast and nothing is enforced.
+- Still the office robot's job later: match PayFast payments to references, issue licences, share prayer cards between churches.
 
 ### 10.6 The office robot (`.github/workflows/office-robot.yml`, `robot/office.js`)
 GitHub Actions on a timer (every 15 minutes, like the Elvanto robot; free). Secrets: the office service-account

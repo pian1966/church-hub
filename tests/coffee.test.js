@@ -83,16 +83,39 @@ check(C.screen('Email me at a@b.org or call +27 82 000 1234 www.x.org @pastor').
 check(C.screen('Pray for the youth in Kano', ['Kano']).join() === 'name' && C.screen('Pray for rain', ['Kano']).length === 0, 'warns when a discreet card names its town or church');
 check(C.points(['x'.repeat(500)])[0].length === C.POINT_MAX, 'a prayer point is kept short');
 
-console.log('The church to pray for each month');
-const list = ['a', 'b', 'c', 'd'].map(id => ({ id: 'ch-' + id, points: ['p'] }));
-const p1 = C.partnerFor('ch-a', '2026-11', list), p2 = C.partnerFor('ch-a', '2026-12', list);
-check(p1 && p1.id !== 'ch-a', 'never prays for itself');
-check(C.partnerFor('ch-a', '2026-11', list.slice().reverse()).id === p1.id, 'the same church all month, whatever order the list comes in');
-check(p1.id !== p2.id, 'a different church the next month');
-const seen = new Set(); for (let m = 1; m <= 3; m++) seen.add(C.partnerFor('ch-a', '2027-0' + m, list).id);
-check(seen.size === 3, 'over the months, every other church in turn');
-check(C.partnerFor('ch-a', '2026-11', [{ id: 'ch-a', points: ['p'] }]) === null && C.partnerFor('ch-a', 'bad', list) === null, 'nobody to pray for: none');
-check(C.partnerFor('ch-a', '2026-11', [{ id: 'ch-z', points: [] }]) === null, 'a church with no prayer points isn’t chosen');
+console.log('A new prayer card every week');
+check(C.weekKey('2026-11-19') === '2026-11-16' && C.weekKey('2026-11-16') === '2026-11-16' && C.weekKey('2026-11-22') === '2026-11-16' && C.weekKey('2026-11-23') === '2026-11-23', 'a week runs Monday to Sunday');
+check(C.weekNo('2026-11-23') - C.weekNo('2026-11-16') === 1 && C.weekKey('bad') === '', 'weeks count on, one at a time');
+const list = 'abcdefgh'.split('').map(id => ({ id: 'ch-' + id, points: ['p'] }));
+const wk = n => new Date(Date.UTC(2026, 10, 16) + n * 7 * 864e5).toISOString().slice(0, 10);
+const run = (self, weeks, l) => { const out = []; for (let i = 0; i < weeks; i++) out.push(C.cardForWeek(self, wk(i), l || list).id); return out; };
+let r = run('ch-a', 300);
+check(r.every(id => id !== 'ch-a'), 'never its own card');
+check(r.every((id, i) => i === 0 || id !== r[i - 1]), 'never the same card two weeks running (300 weeks)');
+let fullRounds = true;
+for (let i = 0; i + 7 <= r.length; i++) { const s = new Set(r.slice(i, i + 7)); if (s.size === 7) { for (let j = i; j + 7 <= r.length; j += 7) if (new Set(r.slice(j, j + 7)).size !== 7) fullRounds = false; break; } }
+check(fullRounds, 'each round shows all 7 other churches once before any comes back');
+const gaps = {}; r.forEach((id, i) => { if (gaps[id] !== undefined) gaps.min = Math.min(gaps.min === undefined ? 99 : gaps.min, i - gaps[id]); gaps[id] = i; });
+check(gaps.min >= 2, 'a card comes back at the soonest after a week in between');
+check(C.cardForWeek('ch-a', '2026-11-17', list).id === C.cardForWeek('ch-a', '2026-11-22', list.slice().reverse()).id, 'the same card all week, whatever order the list comes in');
+const r2 = run('ch-b', 30);
+check(run('ch-a', 30).filter((id, i) => id === r2[i]).length < 15, 'different churches see different cards in the same week');
+check(JSON.stringify(run('ch-a', 30)) === JSON.stringify(run('ch-a', 30, list.slice().reverse())), 'the order is the same on every phone');
+const two = [{ id: 'ch-a', points: ['p'] }, { id: 'ch-b', points: ['p'] }, { id: 'ch-c', points: ['p'] }];
+r = run('ch-a', 10, two);
+check(r.every((id, i) => i === 0 || id !== r[i - 1]) && new Set(r).size === 2, 'with only two other churches, they take turns');
+check(run('ch-a', 3, [{ id: 'ch-a', points: ['p'] }, { id: 'ch-b', points: ['p'] }]).join() === 'ch-b,ch-b,ch-b', 'with only one other church, that one every week');
+check(C.cardForWeek('ch-a', '2026-11-16', [{ id: 'ch-a', points: ['p'] }]) === null && C.cardForWeek('ch-a', 'bad', list) === null, 'nobody to pray for: none');
+check(C.cardForWeek('ch-a', '2026-11-16', [{ id: 'ch-z', points: [] }]) === null, 'a church with no prayer points isn’t chosen');
+
+console.log('Every church keeps its prayer card up to date');
+check(C.cardCheck({}, '2026-11-19').state === 'missing' && C.cardCheck({ points: ['  '] }, '2026-11-19').state === 'missing', 'no prayer points yet: the church is asked to make its card');
+check(C.cardCheck({ points: ['Rain'] }, '2026-11-19').state === 'due', 'a card never checked is due');
+let cc = C.cardCheck({ points: ['Rain'], updated: '2026-11-01' }, '2026-11-19');
+check(cc.state === 'ok' && cc.next === '2026-12-01', 'a card made this month is fine until a month later');
+check(C.cardCheck({ points: ['Rain'], updated: '2026-10-19' }, '2026-11-19').state === 'due', 'a month later it is due again');
+check(C.mayHideCards({ plan: 'month' }) && C.mayHideCards({}) && !C.mayHideCards({ plan: 'pray' }), 'paying churches may turn the weekly card off; churches that pray instead may not');
+check(C.showsCards({}) && !C.showsCards({ plan: 'year', cardsOff: true }) && C.showsCards({ plan: 'pray', cardsOff: true }), 'the weekly card shows unless a paying church turned it off');
 check(C.monthKey('2026-11-16') === '2026-11', 'the month of a date');
 check(C.needing([{ id: 'x', needsHelp: true }, { id: 'y' }, { id: 'me', needsHelp: true }], 'me').map(c => c.id).join() === 'x', 'churches asking for help (not ourselves)');
 

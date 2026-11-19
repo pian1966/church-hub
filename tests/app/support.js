@@ -33,6 +33,8 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); sup = docs['settings/church'].support;
   check(sup.holidays.length === 1 && sup.paidUntil > due && sup.holidays[0].reason === 'A hard month', 'a payment holiday moves the due date a month later');
   await s.go('home'); check(!(await s.page.$('.sp-status')), '…and the reminder goes away');
+  // Every church must have a prayer card: Home asks the Administrator until there is one
+  check(/Make your church’s prayer card/.test(await s.page.textContent('main')), 'Home asks the Administrator to make the church’s prayer card');
   // The prayer card: hidden when asked, warnings for phone numbers
   await s.go('support/card');
   check(/Take a photo/.test(await s.text()) && await s.page.getAttribute('.sp-photo-in[capture]', 'capture') === 'environment', 'the prayer card offers “Take a photo” (the phone’s camera) as well as “Choose a photo”');
@@ -43,12 +45,24 @@ module.exports = async function (ctx) {
   check(docs['settings/church'].prayerCard.points[0] === 'Rain for our farmers', 'the prayer card is saved in the church’s settings');
   await s.page.check('#sp-discreet'); await s.settle(); await s.page.waitForTimeout(200);
   check(/A church in Southern Africa/.test(await s.page.textContent('#sp-prev')) && !/Christ Church Howick|South Africa,/.test(await s.page.textContent('#sp-prev')), '“Keep us hidden” shows only a wide region to other churches');
-  // The prayer circle
-  await s.go('support/pray'); await s.page.click('main [data-act="support:promise"]'); await s.page.waitForSelector('#sp-vow-ok');
-  await s.page.check('#sp-vow-ok'); await s.page.click('[data-act="support:vow"]'); await s.settle();
-  docs = await s.docsNow(); sup = docs['settings/church'].support;
-  check(sup.pledge && sup.pledge.at && sup.plan === 'month', 'joining the prayer circle records the promise and keeps the church paying');
-  check(/Your church’s promise/.test(await s.text()), 'the Pray page shows the promise straight away');
+  await s.go('home'); check(!/Make your church’s prayer card/.test(await s.page.textContent('main')), '…and stops once the card is made');
+  // Once a month: look at the card again (change it, or keep it as it is)
+  await s.page.evaluate(() => { const st = Store.settings(); Store.setSettings({ prayerCard: Object.assign({}, st.prayerCard, { updated: '2020-01-01' }) }); });
+  await s.go('support'); await s.go('home'); check(/Time to look at your prayer card/.test(await s.page.textContent('main')), 'a month later, Home asks the Administrator to look at the prayer card again');
+  await s.page.click('main [data-act="support:keepcard"]'); await s.settle();
+  docs = await s.docsNow();
+  check(docs['settings/church'].prayerCard.updated > '2020-01-01' && !/Time to look at your prayer card/.test(await s.page.textContent('main')), '“Keep it as it is” counts as looking at it, and the reminder goes');
+  // The weekly prayer card: a paying church's Administrator may turn it off; a church that prays instead may not
+  await s.go('support/pray');
+  check(await s.page.isChecked('#sp-cardson') && !(await s.page.isDisabled('#sp-cardson')), 'a paying church’s Administrator sees the weekly prayer card switched on, and may turn it off');
+  await s.page.click('#sp-cardson'); await s.settle();
+  docs = await s.docsNow();
+  check(docs['settings/church'].support.cardsOff === true && /turned off the weekly prayer card/.test(await s.text()), 'turning it off is saved, and the page says so');
+  await s.page.click('main [data-act="support:cardson"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['settings/church'].support.cardsOff === false, '…and it can be turned on again');
+  await s.page.evaluate(() => { const st = Store.settings(); Store.setSettings({ support: Object.assign({}, st.support, { plan: 'pray', cardsOff: true }) }); });
+  await s.go('home'); await s.go('support/pray');
+  check(await s.page.isChecked('#sp-cardson') && await s.page.isDisabled('#sp-cardson') && /stays on/.test(await s.text()), 'a church that prays instead of paying can’t turn the weekly prayer card off');
   await finish(s);
 
   // A member: no Subscription page

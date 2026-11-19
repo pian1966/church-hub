@@ -997,7 +997,7 @@ await t('every adult’s name, for Midweek Group leaders adding people (attendee
   await can(read(db.member, 'pickNames/p16')); await can(list(db.member.collection('pickNames')));   // Tim leads a Midweek Group
   await cannot(read(db.member, 'lifeLeaders/all'));
   await cannot(read(db.attendee, 'pickNames/p15')); await cannot(read(db.rosters, 'pickNames/p15'));   // not leaders
-  await cannot(read(db.member, 'people/p16')); await cannot(read(db.member, 'directory/p16'));   // still nothing else about Hope
+  await cannot(read(db.member, 'people/p16'));   // still nothing else about Hope (the directory is open to Church Partners anyway, and Hope isn't in it)
   await can(db.pastor.doc('lifeLeaders/all').set({ ids: [] }));
   await cannot(read(db.member, 'pickNames/p16'));   // no longer a leader
 });

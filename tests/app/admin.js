@@ -183,11 +183,19 @@ module.exports = async function (ctx) {
   await s.page.click('section.panel:has([data-act="rosters:teammerge"][data-id="worship"]) .row-menu summary'); await s.page.click('[data-act="rosters:teammerge"][data-id="worship"]');
   await s.page.selectOption('#tm-to', 'dept-music'); await s.page.click('[data-act="rosters:teammergego"]'); await s.settle(); await s.page.waitForTimeout(300); docs = await s.docsNow();
   check(worshipPos.length && !docs['teams/worship'] && !Object.keys(docs).some(k => k.startsWith('positions/') && docs[k].teamId === 'worship'), 'Join with another team: Worship’s positions move into Music and Worship goes');
-  await s.go('rosters'); await s.page.click('[data-act="rosters:cols"][data-n="3"]'); await s.page.waitForTimeout(200);
-  const three = (await s.page.$$('.svc-col')).length;
-  await s.page.click('[data-act="rosters:cols"][data-n="8"]'); await s.page.waitForTimeout(200);
-  check(three > 0 && three <= 3 && (await s.page.$$('.svc-col')).length > three && await s.page.getAttribute('[data-act="rosters:cols"][data-n="8"]', 'aria-pressed') === 'true', 'Rosters: choose how many services side by side (3, then 8)');
-  await s.page.click('[data-act="rosters:cols"][data-n="6"]');
+  await s.go('rosters');
+  const fitN = (await s.page.$$('.svc-col')).length, fitOn = await s.page.getAttribute('[data-act="rosters:view"][data-v="fit"]', 'aria-pressed') === 'true';
+  for (let i = 0; i < 20; i++) { const minus = await s.page.$('[data-act="rosters:step"][data-d="-1"]:not([disabled])'); if (!minus) break; await minus.click(); await s.page.waitForTimeout(80); }
+  const one = (await s.page.$$('.svc-col')).length;
+  await s.page.click('[data-act="rosters:step"][data-d="1"]'); await s.page.waitForTimeout(150);
+  const two = (await s.page.$$('.svc-col')).length;
+  await s.page.click('[data-act="rosters:view"][data-v="month"]'); await s.page.waitForTimeout(150);
+  const month = (await s.page.$$('.svc-col')).length;
+  await s.page.click('[data-act="rosters:view"][data-v="quarter"]'); await s.page.waitForTimeout(150);
+  const quarter = (await s.page.$$('.svc-col')).length;
+  check(fitOn && fitN >= 1 && one === 1 && two === 2 && month >= 1 && quarter > month && await s.page.getAttribute('[data-act="rosters:view"][data-v="quarter"]', 'aria-pressed') === 'true',
+    'Rosters: fits the screen at first (' + fitN + '), − down to 1 service, + to 2, then 1 month (' + month + ') and 1 quarter (' + quarter + ')');
+  await s.page.click('[data-act="rosters:view"][data-v="fit"]');
   // Rosters → Services: each service's look, mood, departments and positions
   await s.go('rosters/services'); tt = await s.text();
   check((await s.page.$$('.svc-card')).length === 10 && tt.includes('Sunday services') && tt.includes('Special services') && tt.includes('Good Friday') && tt.includes('Tenebrae') && tt.includes('Memorial') && tt.includes('Sunday school') && tt.includes('Seniors') && tt.includes('Young adults'), 'Rosters → Services: Sunday services (8am, 10am, 5pm) and special services (Memorial, Christmas, Maundy Thursday, Tenebrae, Good Friday, Easter Sunday, Ascension), each with its mood');

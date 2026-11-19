@@ -28,8 +28,10 @@ roles when there's no communion) are left out. Members see their own turns under
 For: Roster coordinators, Administrators
 Also asked: Show more Sundays. The roster is too wide. Hide the evening service.
 
-On a computer or tablet, choose **Side by side:** above the roster – from 2 to 8 services at a time. When the roster is
-wider than the screen, a slider above it (and a scroll bar below) moves along. To leave a service out for now, tap the
+On a computer or tablet the roster opens with as many services as fit your screen (**Fits your screen**). Next to
+**Side by side:** use **−** and **+** to show from 1 to 16 services, tap **Fit my screen** to go back, or choose **1 month**
+or **1 quarter**. When the roster is wider than the screen, a slider above it (and a scroll bar below) moves along. On a
+phone you see one service at a time. To leave a service out for now, tap the
 **eye** on its heading; it moves to **Hidden for now**, where one tap brings it back (**Show all** brings them all back).
 
 ## How do I fill in the roster?

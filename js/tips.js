@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.95';
   var NEWS = [
+    { date: '2026-11-19', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters now open with as many services as fit your screen. Use − and + to see from 1 to 16 side by side, or choose 1 month or 1 quarter and slide across.') },
     { date: '2026-11-19', who: ['lifelead'], not: ['admin', 'pastor'], app: 'life', text: TX('Midweek Groups: every group leader can now add anyone to their group with “Add someone to the group”, people who only come to church too – they see just each person’s name.') },
     { date: '2026-11-19', who: ['everyone'], app: 'support', text: TX("Every week, Home now shows a different church to pray for – the same one for everyone at your church that week, so you can pray for it together on Sunday.") },
     { date: '2026-11-19', who: ['admin'], app: 'support', text: TX("Administrators: every church now keeps a prayer card and looks at it once a month – Home reminds you. A paying church can turn off the weekly prayer card under Subscription → Churches to pray for.") },

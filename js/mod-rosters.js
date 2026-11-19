@@ -2,7 +2,7 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, R = RosterCore, T = I18n.t, TN = I18n.tn;
-  var state = { start: 0, preview: null, gapsOpen: false, hidden: [], cols: 6 };   // hidden: services (8am, 5pm…) hidden from the roster for now, with the eye; cols: how many side by side
+  var state = { start: 0, preview: null, gapsOpen: false, hidden: [], cols: 6, view: 'fit' };   // hidden: services (8am, 5pm…) hidden from the roster for now, with the eye; cols: how many side by side; view: 'fit' (as many as fit the screen), 'n' (cols), 'month' or 'quarter'
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
   var FREQ = [['weekly', TX('Whenever necessary (could be every week)')], ['monthly', TX('Once a month')], ['emergency', TX('Only now and then in emergencies')]];
 
@@ -106,9 +106,16 @@
   }
   /** The departments in the church's order (Teams → ↑ ↓). */
   function teams() { return Serving.orderTeams(S.list('teams')); }
-  /** How many services the roster shows side by side (one on a phone). */
-  function cols() { return narrow() ? 1 : state.cols;
+  /** How many services the roster shows side by side (one on a phone; as many as fit the screen until someone chooses). */
+  function cols() { return narrow() ? 1 : state.view === 'fit' ? fitCols() : state.cols; }
+  /** As many services as fit comfortably beside the Position column (about 200px each). */
+  function fitCols() {
+    var m = document.querySelector('main'), w = (m ? m.clientWidth : Math.min(window.innerWidth - 248, 1180)) - 64;
+    return Math.max(1, Math.min(16, Math.floor((w - 180) / 200)));
   }
+  /** A month or a quarter: how many months the roster shows (0 when it shows a number of services). */
+  function months() { return narrow() ? 0 : state.view === 'month' ? 1 : state.view === 'quarter' ? 3 : 0; }
+  function addMonths(d, k) { var x = new Date(+d.slice(0, 4), +d.slice(5, 7) - 1 + k, +d.slice(8, 10)); return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
   /** A position only runs at some services (e.g. Creche Duty at 8:00): elsewhere its cell is shown as not needed. */
   /** A special service (Good Friday…) only has the positions chosen for it; a Sunday one every position unless narrowed down. */
   function specialIds() { return Serving.specialSlots(S.settings()).map(function (x) { return x.id; }); }
@@ -124,6 +131,12 @@
   function inView() {
     var all = S.list('services').slice().sort(Serving.byWhen).filter(function (s) { return state.hidden.indexOf(Serving.slotOf(s)) < 0; });
     var first = all.findIndex(function (s) { return s.date >= H.today(); }); if (first < 0) first = Math.max(0, all.length - 4);
+    if (months()) {   // a month or a quarter from the first service in view (it may run off the screen: the slider moves across)
+      var j = Math.max(0, Math.min(all.length - 1, first + state.start)); state.start = j - first;
+      if (!all.length) return [];
+      var end = addMonths(all[j].date, months());
+      return all.slice(j).filter(function (s) { return s.date < end; });
+    }
     var n = cols(), i = Math.max(0, Math.min(Math.max(0, all.length - n), first + state.start));
     state.start = i - first;   // at the end of the list: the last few services, not one column on its own
     return all.slice(i, i + n);
@@ -148,6 +161,12 @@
       if (r && document.activeElement !== r) r.value = room > 0 ? Math.round(w.scrollLeft / room * 100) : 0;
     }, true);
     window.addEventListener('resize', fitSlider);
+    // "Fits your screen": a wider or narrower window shows more or fewer services.
+    var fitWas = 0;
+    window.addEventListener('resize', function () {
+      if (state.view !== 'fit' || !document.getElementById('ro-wrap')) return;
+      var n = narrow() ? 1 : fitCols(); if (n !== fitWas) { fitWas = n; H.render(); }
+    });
   }
   /** The slider only shows when there is more roster than fits on the screen. */
   function fitSlider() {
@@ -198,7 +217,7 @@
     var all = S.list('assignments').concat(extra), away = awayList();
     var ed = engineData(), problems = R.check(ed, ids), st = S.settings();
     var html = head(T('Rosters'), T('Who is serving at each service. Families and friends who asked to serve together are kept together.'),
-      '<button class="btn" data-act="rosters:move" data-d="-' + cols() + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + cols() + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
+      '<button class="btn" data-act="rosters:move" data-d="-' + Math.max(1, svcs.length) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + Math.max(1, svcs.length) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
       '<label class="ro-date" title="' + esc(T('Go to a date')) + '"><input type="date" id="ro-date" value="' + esc(svcs.length ? svcs[0].date : H.today()) + '" aria-label="' + esc(T('Go to a date')) + '"></label>' +
       (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>' +
         H.menu(T('More'), ['<button data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>', '<button data-act="rosters:remind">' + H.icon(BELL, 16) + T('Remind those who haven’t replied') + '</button>']))) + tabs('');
@@ -215,8 +234,15 @@
     }).join('') + (state.hidden.length > 1 ? '<button type="button" class="btn small ghost" data-act="rosters:showslot" data-v="">' + T('Show all') + '</button>' : '') + '</div>';
     if (!svcs.length && state.hidden.length) return html + '<p class="empty">' + T('Every service is hidden. Tap one above to show it again.') + '</p>';
     html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
-    if (!narrow()) html += '<div class="ro-view"><div class="ro-cols" role="group" aria-label="' + esc(T('Services side by side')) + '"><span class="muted small">' + T('Side by side:') + '</span>' +
-      [2, 3, 4, 5, 6, 7, 8].map(function (n) { return '<button type="button" class="' + (state.cols === n ? 'on' : '') + '" aria-pressed="' + (state.cols === n) + '" data-act="rosters:cols" data-n="' + n + '" title="' + esc(TN('Show {n} service at a time', 'Show {n} services at a time', n)) + '">' + n + '</button>'; }).join('') + '</div>';
+    if (!narrow()) {
+      var shown = svcs.length, fit = state.view === 'fit';
+      var chip = function (v, label, on) { return '<button type="button" class="ro-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="rosters:view" data-v="' + v + '">' + label + '</button>'; };
+      html += '<div class="ro-view"><div class="ro-count" role="group" aria-label="' + esc(T('Services side by side')) + '"><span class="muted small">' + T('Side by side:') + '</span>' +
+        '<span class="ro-step"><button type="button" data-act="rosters:step" data-d="-1" aria-label="' + esc(T('Fewer services')) + '"' + (shown <= 1 ? ' disabled' : '') + '>−</button>' +
+        '<output id="ro-n" title="' + esc(TN('Show {n} service at a time', 'Show {n} services at a time', shown)) + '">' + TN('<b>{n}</b> service', '<b>{n}</b> services', shown) + '</output>' +
+        '<button type="button" data-act="rosters:step" data-d="1" aria-label="' + esc(T('More services')) + '"' + (shown >= 16 && !months() ? ' disabled' : '') + '>+</button></span>' +
+        chip('fit', fit ? '✓ ' + T('Fits your screen') : T('Fit my screen'), fit) + chip('month', T('1 month'), state.view === 'month') + chip('quarter', T('1 quarter'), state.view === 'quarter') + '</div>';
+    }
     if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label></div>';
     html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"' + (narrow() ? '' : ' style="min-width:' + (180 + 180 * svcs.length) + 'px"') + '><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
@@ -627,7 +653,8 @@
         });
       },
       move: function (el) { state.start += +el.dataset.d; state.preview = null; H.render(); },
-      cols: function (el) { state.cols = +el.dataset.n; state.preview = null; H.render(); },
+      step: function (el) { state.cols = Math.max(1, Math.min(16, inView().length + +el.dataset.d)); state.view = 'n'; state.preview = null; H.render(); },
+      view: function (el) { state.view = el.dataset.v; state.preview = null; H.render(); },
       hideslot: function (el) { if (state.hidden.indexOf(el.dataset.v) < 0) state.hidden.push(el.dataset.v); H.render(); },
       showslot: function (el) { var v = el.dataset.v; state.hidden = v ? state.hidden.filter(function (x) { return x !== v; }) : []; H.render(); },
       teammove: function (el) {

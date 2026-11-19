@@ -15,7 +15,7 @@ var ChurchHubFiles = {
   'js/lang/pt.js': '8ac2ce9a2a',
   'js/lang/sn.js': '3ddb5df2ac',
   'js/lang/ss.js': 'c71cd005ba',
-  'js/lang/st.js': '1a90e14283',
+  'js/lang/st.js': 'e3b8763e1a',
   'js/lang/sw.js': '84df8f4f9f',
   'js/lang/tn.js': '54d5bf8047',
   'js/lang/ts.js': 'dc4103ac81',

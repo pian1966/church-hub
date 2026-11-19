@@ -485,3 +485,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   card off; a church that prays instead of paying keeps it on. Wording moved from monthly to weekly in the app, the website
   (prayer circle reworded, new question "Do we have to take part?"), the brochure, the setup tool and the presentation.
 - ✅ 19 Nov 2026 (0.95.1): **Midweek Groups** – every group leader can add anyone to their group, attendees and people not in the church directory too, seeing only each adult's name (`pickNames`, read by Administrators, Pastors and Midweek Group leaders listed in `lifeLeaders/all`; both kept by Administrators' and Pastors' Church Hub; database rules changed and tested)
+- ✅ 19 Nov 2026 (0.95.2): Rosters open with as many services as fit the screen; − / + from 1 to 16 side by side; 1 month and 1 quarter (slide across) – replaces the 2–8 buttons

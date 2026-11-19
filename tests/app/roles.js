@@ -59,6 +59,24 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="rosters:svcpos"][data-p="door"]'); await s.settle(); docs = await s.docsNow();
   check(JSON.stringify(docs['positions/door'].times) === '["08:00","10:00"]', '… and switches positions on or off at a service');
   await s.page.click('[data-act="rosters:svcpos"][data-p="door"]'); await s.settle();
+  // Print the roster: a term at a time, only the positions with names on them
+  await s.go('rosters');
+  await s.page.evaluate(() => { window.print = () => { window.__printed = { html: document.getElementById('print-only').innerHTML, cls: document.getElementById('print-only').className, on: document.documentElement.classList.contains('printing') }; }; });
+  await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pr .pchip');
+  check((await s.page.$$('[data-act="rosters:printterm"]')).length === 2 && !!(await s.page.$('[data-act="rosters:printterm"].on')) && !!(await s.page.$('[data-act="rosters:printsheet"].on')), 'Print the roster: this term and the next, every service chosen');
+  const sv2 = await s.page.evaluate(() => Store.get('services', 'sv2').date);
+  await s.page.evaluate(d => { for (const id of ['ro-pfrom', 'ro-pto']) { const el = document.getElementById(id); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); } }, sv2);
+  check(/1 page/.test(await s.page.textContent('#ro-pn')) && !(await s.page.$('[data-act="rosters:printterm"].on')), '… any dates, with how many pages it makes');
+  await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 });
+  let printed = await s.page.evaluate(() => window.__printed);
+  check(printed.cls === 'roster' && printed.on && (printed.html.match(/class="ro-sheet"/g) || []).length === 1, '… one A4 page per service, made ready for the printer (or a PDF)');
+  check(['Keys', 'Guitar', 'Vocals', 'Sound desk', 'Sunday School'].every(x => printed.html.includes('>' + x + '<')) && !['>Door<', '>Greeter<', '>Projection<', '>Tea &amp; coffee<'].some(x => printed.html.includes(x)),
+    '… only positions with names on them: empty ones, and someone who said no, are left out completely');
+  await s.page.evaluate(() => { window.__printed = null; });
+  await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pgaps');
+  await s.page.check('#ro-pgaps'); await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 });
+  printed = await s.page.evaluate(() => window.__printed);
+  check(printed.html.includes('>Door<') && printed.html.includes('>Projection<'), '… or with the empty positions too, to fill in by hand');
   await s.go('rosters/teams'); t = await s.text();
   check(t.includes('at 10am') && t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
   await s.page.click('[data-act="rosters:offeryes"][data-id="so1"]'); await s.settle(); docs = await s.docsNow();

@@ -84,6 +84,7 @@ Accept/decline by email, swap requests, automatic reminders before a turn, sign-
 - ⬜ **Service outline (order of service)** for each Sunday service, and with it **the Bible passage being preached** – shown
   to the people serving and on Home. For the Scripture text itself, consider the YouVersion Platform API (check its terms and
   which translations it allows; otherwise show the reference with a link)
+- ⬜ Roster printing: let a church save its own term dates (school terms differ by year and country) instead of the quarters offered now
 
 ## Phase 4 – Groups, attendance and check-in
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.

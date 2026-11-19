@@ -312,5 +312,18 @@ I18n.rows([
     ["For a one-off change, such as Christmas or a fifth Sunday, tap “Communion” under that date in the roster.", "Vir ’n eenmalige verandering, soos Kersfees of ’n vyfde Sondag, tik op “Nagmaal” onder daardie datum in die rooster.", "Ukuze ushintshe kanye nje, njengoKhisimusi noma iSonto lesihlanu, thepha ku-“Isidlo Esingcwele” ngaphansi kwalolo suku ohlelweni.", "Ukutshintsha kube kanye, njengeKrismesi okanye iCawe yesihlanu, cofa “Isidlo esiNgcwele” phantsi kwaloo mhla kuludwe."],
     ["Communion positions", "Nagmaalposte", "Izikhundla zeSidlo Esingcwele", "Izikhundla zeSidlo esiNgcwele"],
     ["none yet", "nog geen nie", "akukabi khona", "akukabikho"],
-    ["Tap the positions that are only needed when there is communion.", "Tik op die poste wat net nodig is wanneer daar Nagmaal is.", "Thepha izikhundla ezidingeka kuphela uma kukhona Isidlo Esingcwele.", "Cofa izikhundla ezifunekayo kuphela xa kukho iSidlo esiNgcwele."]
+    ["Tap the positions that are only needed when there is communion.", "Tik op die poste wat net nodig is wanneer daar Nagmaal is.", "Thepha izikhundla ezidingeka kuphela uma kukhona Isidlo Esingcwele.", "Cofa izikhundla ezifunekayo kuphela xa kukho iSidlo esiNgcwele."],
+    ["Print the roster", "Druk die rooster", "Phrinta uhlelo", "Printa uludwe"],
+    ["On A4 landscape, one service per page. Print it, or choose “Save as PDF” as the printer to make a PDF.", "Op A4 dwars, een diens per bladsy. Druk dit, of kies “Save as PDF” as die drukker om ’n PDF te maak.", "Ku-A4 ngokuvundla, inkonzo eyodwa ekhasini ngalinye. Liphrinte, noma ukhethe “Save as PDF” njengephrinta ukuze wenze i-PDF.", "Kwi-A4 ngokuthe tyaba, inkonzo enye kwiphepha ngalinye. Liprinte, okanye ukhethe “Save as PDF” njengeprinta ukwenza i-PDF."],
+    ["Also print positions that are still empty, to fill in by hand", "Druk ook poste wat nog leeg is, om met die hand in te vul", "Phrinta nezikhundla ezisengenalutho, ukuze uzigcwalise ngesandla", "Printa nezikhundla ezingekabinanto, ukuze uzigcwalise ngesandla"],
+    ["Otherwise only positions with names on them are printed.", "Anders word net poste met name daarop gedruk.", "Uma kungenjalo kuphrintwa kuphela izikhundla ezinamagama.", "Ukuba akunjalo kuprintwa kuphela izikhundla ezinamagama."],
+    ["Which term", "Watter kwartaal", "Yiliphi ithemu", "Yeyiphi ikota"],
+    ["Which services", "Watter dienste", "Yiziphi izinkonzo", "Zeziphi iinkonzo"],
+    ["Term {n} {year}", "Kwartaal {n} {year}", "Ithemu {n} {year}", "Ikota {n} {year}"],
+    ["There are no services between these dates.", "Daar is geen dienste tussen hierdie datums nie.", "Azikho izinkonzo phakathi kwalezi zinsuku.", "Akukho nkonzo phakathi kwale mihla."],
+    ["{n} page", "{n} bladsy", "Ikhasi elingu-{n}", "Iphepha eli-{n}"],
+    ["{n} pages", "{n} bladsye", "Amakhasi angu-{n}", "Amaphepha ali-{n}"],
+    ["Nobody is on the roster for these services yet.", "Niemand is nog op die rooster vir hierdie dienste nie.", "Akekho osohlelweni lwalezi zinkonzo okwamanje.", "Akukho mntu ukuludwe lwezi nkonzo okwangoku."],
+    ["page {n} of {total}", "bladsy {n} van {total}", "ikhasi {n} kwangu-{total}", "iphepha {n} kwali-{total}"],
+    ["Printed {date}", "Gedruk {date}", "Kuphrintwe ngo-{date}", "Kuprintwe ngo-{date}"]
 ]);

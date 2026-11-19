@@ -4,6 +4,7 @@
 I18n.rows([
     ["Co-leader", "Mede-leier", "Umholi ozakwethu", "Inkokeli encedisayo"],
     ["Host", "Gasheer", "Umsingathi", "Umbuki zindwendwe"],
+    ["No one else to add.", "Niemand anders om by te voeg nie.", "Akekho omunye ongamengeza.", "Akukho mntu wumbi onokongezwa."],
     ["At {name}’s home", "By {name} se huis", "Ekhaya lika-{name}", "Ekhaya lika-{name}"],
     ["At the host’s home", "By die gasheer se huis", "Ekhaya lomsingathi", "Ekhaya lombuki zindwendwe"],
     ["When and where", "Wanneer en waar", "Nini futhi kuphi", "Nini kwaye phi"],

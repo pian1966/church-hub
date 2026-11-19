@@ -21,6 +21,7 @@
   var NEWS = [
     { date: '2026-11-19', who: ['everyone'], app: 'support', text: TX("Every week, Home now shows a different church to pray for – the same one for everyone at your church that week, so you can pray for it together on Sunday.") },
     { date: '2026-11-19', who: ['admin'], app: 'support', text: TX("Administrators: every church now keeps a prayer card and looks at it once a month – Home reminds you. A paying church can turn off the weekly prayer card under Subscription → Churches to pray for.") },
+    { date: '2026-11-19', who: ['admin', 'pastor'], app: 'life', text: TX('Midweek Groups: when a Pastor or Administrator who leads a group uses “Add someone to the group”, they can now choose anyone, not only people in the church directory – the same as from a person’s page.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: choose how many services to see side by side, from 2 to 8, and the top row (date, time and communion) stays in view as you scroll down.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: six services side by side with a slider to move across, an eye to hide a service for now, and departments can be put in order or joined together (Teams → ↑ ↓ and ⋯).') },
     { date: '2026-11-18', who: ['archivist'], app: 'library', text: TX('Archives: a document you add now shows in its folder straight away, and the Senior Pastor sees staff contracts and appraisals again.') },

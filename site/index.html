@@ -296,6 +296,9 @@ section { padding: 96px 0; }
 .bank dt { color: var(--ink-2); }
 .bank dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
 .bank .fine { margin-top: 20px; padding-top: 16px; border-top: 1px dashed var(--line); color: var(--ink-2); font-size: .92rem; }
+.bank .give-for { margin: 4px 0 18px; } .bank .give-for button { flex: 1; }
+.bank .give-btn { width: 100%; margin-top: 16px; justify-content: center; }
+.bank .give-btn[disabled] { opacity: .55; cursor: default; }
 @media (max-width: 900px) {
   .give { grid-template-columns: 1fr; gap: 28px; } .bank { padding: 28px 24px; }
   .ways-grid { grid-template-columns: 1fr; gap: 28px; }
@@ -596,14 +599,14 @@ footer a { color: var(--ink-2); }
         <div class="amount" id="amount" aria-live="polite">R50</div>
         <div class="per" id="per">a month, for your whole church (not per person)</div>
         <div class="usd" id="save"></div>
-        <p class="fine">These are suggested prices, not fixed charges, in your own country's money. The examples we suggest are a Tall Latte from Starbucks, a chai from a local café in India, or an iced coffee from a stall in Cambodia. Set the amount to whatever you think is fair (bear in mind that we don't get the full amount because of bank charges). Church & Trellis never sees your card or your bank details, so your personal details are secure.</p>
+        <p class="fine">These are suggested prices, not fixed charges, in your own country's money. The examples we suggest are a Tall Latte from Starbucks, a chai from a local café in India, or an iced coffee from a stall in Cambodia. Set the amount to whatever you think is fair (bear in mind that we don't get the full amount because of bank charges). You pay through PayFast, by card, Instant EFT or SnapScan, and Church & Trellis never sees your card or your bank details, so your personal details are secure.</p>
       </div>
       <div class="incl">
         <h3>Every church is welcome</h3>
         <ul>
           <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Every feature, for everyone.</b> <span>No paid tiers, and no extra charge per member, group or language.</span></div></li>
           <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Add a gift in one tap.</b> <span>What is Church & Trellis worth to your church? Think of the time it saves and what you can afford. Every extra coffee helps a church that can't pay.</span></div></li>
-          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>A hard month? Take a payment holiday.</b> <span>Skip a month free, no questions asked: up to three a year on the monthly plan, or one that moves your yearly payment a month later. Tell us why if you'd like, so we can pray for you.</span></div></li>
+          <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>A hard month? Take a payment holiday.</b> <span>Skip that month's coffee, free, no questions asked. Each holiday is one month, and monthly churches can take one whenever they need, as often as they need. Paying for the year? Switch to monthly to take one; what you've paid stays paid.</span></div></li>
           <li><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#5FC28A" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg><div><b>Nothing is ever locked for paying late.</b> <span>Nor deleted. Your Administrators get a friendly reminder before a coffee is due, and Church & Trellis keeps working: pay when you can.</span></div></li>
         </ul>
       </div>
@@ -625,7 +628,7 @@ footer a { color: var(--ink-2); }
         <div class="way">
           <svg width="44" height="44" viewBox="0 0 48 48" fill="none" stroke="#E8590C" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M24 6c-3 6-9 9-9 18v16h18V24c0-9-6-12-9-18z"/><path d="M15 40h18"/><path d="M24 24v8"/></svg>
           <b>Pray instead, for free</b>
-          <p>Can't afford a coffee? Promise to pray, each week, for another church that uses Church & Trellis. For your church, that promise is its subscription, for as long as you need.</p>
+          <p>Can't afford a coffee? Promise to pray, each month, for another church that uses Church & Trellis. For your church, that promise is its subscription, for as long as you need.</p>
         </div>
       </div>
     </div>
@@ -634,24 +637,23 @@ footer a { color: var(--ink-2); }
       <div class="give-text">
         <h3>Happy with what you use? You can still give.</h3>
         <p>You don't need to use Church & Trellis to help it. Any church, or anyone at all, can give towards it. Every gift helps keep Church & Trellis going, and pays for churches that can't afford even a coffee.</p>
-        <p>Choose where your gift goes by the reference you use:</p>
+        <p>Choose where your gift goes:</p>
         <ul>
-          <li><b>Where it's needed most</b>Reference <code>HELP</code> and your church's name (or yours). Pays for churches that can't afford it.</li>
-          <li><b>Keeping Church & Trellis going</b>Reference <code>HUB</code> and your church's name (or yours). Pays for looking after Church & Trellis and making it better.</li>
+          <li><b>Where it's needed most</b>Pays for churches that can't afford Church & Trellis.</li>
+          <li><b>Keeping Church & Trellis going</b>Pays for looking after Church & Trellis and making it better.</li>
         </ul>
       </div>
-      <div class="bank">
-        <h4>Give by bank transfer</h4>
-        <dl>
-          <dt>Bank</dt><dd>Capitec Bank</dd>
-          <dt>Account name</dt><dd>Church & Trellis</dd>
-          <dt>Account number</dt><dd>2625071881</dd>
-          <dt>Branch code</dt><dd>470010</dd>
-          <dt>Account type</dt><dd>Savings</dd>
-          <dt>Reference</dt><dd>HELP or HUB, and your name</dd>
-        </dl>
-        <p class="fine">Any amount, once or every month, from your own banking app. Gifts to Church & Trellis are not tax-deductible, so we can't give tax receipts. Giving from a bank outside South Africa will be possible soon.</p>
-      </div>
+      <form class="bank" id="giveform" action="#" novalidate>
+        <h4>Give through PayFast</h4>
+        <div class="seg plan give-for" role="radiogroup" aria-label="Where your gift goes" id="givefor">
+          <button type="button" role="radio" aria-checked="true" class="on" data-v="HELP">Where it's needed most</button>
+          <button type="button" role="radio" aria-checked="false" data-v="HUB">Keeping it going</button>
+        </div>
+        <label class="pick-label" for="giveamt">Your gift</label>
+        <div class="money"><span id="givesym">R</span><input id="giveamt" inputmode="decimal" autocomplete="off" value="100"></div>
+        <button class="btn give-btn" type="submit" id="givebtn">Give through PayFast</button>
+        <p class="fine" id="givenote">Card, Instant EFT or SnapScan, once or as often as you like. In your own money: PayFast takes it in rand and your bank changes it. Church & Trellis never sees your card or bank details. Gifts are not tax-deductible, so we can't give tax receipts.</p>
+      </form>
     </div>
 
     <div class="circle" id="prayer">
@@ -704,9 +706,9 @@ footer a { color: var(--ink-2); }
       <details><summary>Why does Church & Trellis make the price so low?</summary><p>Because we’ve been there!<br><br>Church & Trellis was born in a small, modestly resourced church that battled to pay its bills and grew tired of paying for church software in the currencies of the world’s richest countries. We didn’t see why churches in poorer countries should pay more than they can afford, or make do with less.<br><br>Every church gets all of Church & Trellis, at the price of a cup of coffee – where it is, not in Paris or Sydney!<br><br>We trust that well-resourced, generous churches will enjoy Church & Trellis and want to see it made available to everyone, by giving what they think it’s worth, or a portion of what they’re paying now for the same thing.</p></details>
       <details><summary>Does such a low price mean fewer features?</summary><p>No. Every church gets all of Church & Trellis, which stands alongside the best church management systems in the world. The price is low so that no church is left out, not because anything is missing.</p></details>
       <details><summary>We're in India (or Malawi, or Cambodia). Do we pay Starbucks prices?</summary><p>No. Your monthly fee is what one cup costs where you live, in your own money, and you choose the cup: chai from a stall, a café coffee or a coffee-chain latte. A church with plenty can choose more, wherever it is. A church that can’t afford a cup prays for another Church & Trellis church instead, for free.</p></details>
-      <details><summary>Can we give if we don't use Church & Trellis?</summary><p>Yes, gladly. You may be happy with the software you’re using and have no intention of changing, but we would love you to help us make Church & Trellis available to churches who can’t afford the prices of other systems. Any church or person can give, once or every month, by bank transfer (EFT): see <a href="#give">Happy with what you use? You can still give</a>. Use the reference HELP to pay for churches that can’t afford it, or HUB to help keep Church & Trellis going.</p></details>
-      <details><summary>How do we pay?</summary><p>By bank transfer (EFT) from your own banking app. Church & Trellis shows you its bank details and your church's own short reference, so we know the payment is from you. From outside South Africa, your bank changes your money into rand. Card payments are planned.</p></details>
-      <details><summary>What if we can't pay one month?</summary><p>Take a payment holiday: a free month, no questions asked. Monthly churches can take three a year, and yearly churches one. If paying is hard for longer, pray instead: Church & Trellis stays free for as long as you need. Nothing is ever locked or deleted for being late.</p></details>
+      <details><summary>Can we give if we don't use Church & Trellis?</summary><p>Yes, gladly. You may be happy with the software you’re using and have no intention of changing, but we would love you to help us make Church & Trellis available to churches who can’t afford the prices of other systems. Any church or person can give, once or as often as they like, through PayFast (card, Instant EFT or SnapScan): see <a href="#give">Happy with what you use? You can still give</a>. Choose whether your gift pays for churches that can’t afford it, or helps keep Church & Trellis going.</p></details>
+      <details><summary>How do we pay?</summary><p>Through PayFast, by card, Instant EFT or SnapScan. On the Subscription page, press Pay and PayFast does the rest; Church & Trellis never sees your card or bank details. Outside South Africa you give in your own money: PayFast takes it in rand and your bank changes it. There are no debit orders – you pay one coffee (or one year) at a time, and Church & Trellis reminds your Administrator a few days before the next one is due.</p></details>
+      <details><summary>What if we can't pay one month?</summary><p>Take a payment holiday: skip that month's coffee, free, no questions asked. A payment holiday lasts one month – the month whose coffee you skip – and your next coffee is simply due a month later. Monthly churches can take a holiday whenever they need one, as often as they need. If you pay for the year, switch to one coffee a month first (what you've already paid stays paid), and then take a holiday when the next coffee is due. If paying is hard for a long time, you can also pray instead: Church & Trellis stays free for as long as you need. Nothing is ever locked or deleted for being late.</p></details>
       <details><summary>Is our prayer card safe to share?</summary><p>A prayer card only holds what your church chooses: a photo, your town and two prayer points. Churches in countries where Christians face danger start hidden, shown only as “a church in” a wide region. Pray for things, not people by name: Church & Trellis flags phone numbers, email addresses and links before a card is saved.</p></details>
       <details><summary>Do we have to take part in the prayer circle?</summary><p>Every church that uses Church & Trellis has a prayer card and looks at it once a month: Church & Trellis reminds your Administrator until it's done, and keeping it as it is takes one tap. The weekly prayer card on Home is on for every church. A paying church's Administrator can turn it off, as a decision for your church's leadership; a church that uses Church & Trellis for free by praying keeps it on until it starts buying a coffee.</p></details>
       <details><summary>When can our church sign up?</summary><p>Church & Trellis is in daily use at a parish church in South Africa and is getting ready for other churches. The prayer circle starts when it opens to them: from then on, every church has a prayer card and a new church to pray for each week. Try the demo now and see if it's right for you.</p></details>
@@ -782,7 +784,7 @@ footer a { color: var(--ink-2); }
   var suggest = document.getElementById('suggest'), amount = document.getElementById('amount'), per = document.getElementById('per'), save = document.getElementById('save');
   function show(animate) {
     var x = c(), p = parse(state.price), yearly = state.plan === 'year';
-    sel.value = state.country; sym.textContent = x[3].trim(); if (document.activeElement !== input) input.value = state.price;
+    sel.value = state.country; sym.textContent = x[3].trim(); var gs = document.getElementById('givesym'); if (gs) { gs.textContent = x[3].trim(); gs.dataset.code = x[2]; } if (document.activeElement !== input) input.value = state.price;
     mark('cups', state.kind); mark('plan', state.plan);
     KINDS.forEach(function (k) { document.querySelector('[data-price="' + k.id + '"]').textContent = x[k.i] ? 'Suggested price: ' + money(x[k.i]) : 'You say how much'; });
     suggest.textContent = p && p === Number(c()[KINDS.filter(function (kk) { return kk.id === state.kind; })[0].i]) ? 'Suggested price' : 'Your price';
@@ -817,6 +819,26 @@ footer a { color: var(--ink-2); }
   // A thin line under the top bar once the page has scrolled.
   var top = document.getElementById('top');
   addEventListener('scroll', function () { top.classList.toggle('scrolled', scrollY > 8); }, { passive: true });
+  // Give through PayFast: the payment doorway (docs/PAYFAST-SETUP.md). PAY: the same address as Coffee.PAY_URL in the app,
+  // empty until PayFast is live. Only the amount, the currency and HELP or HUB are sent – never anyone's details.
+  var PAY = '';
+  var gf = document.getElementById('giveform');
+  if (gf) {
+    var gfor = 'HELP', gbtn = document.getElementById('givebtn');
+    if (!PAY) { gbtn.disabled = true; gbtn.textContent = 'Giving online opens very soon'; }
+    document.getElementById('givefor').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return; gfor = b.dataset.v;
+      [].forEach.call(this.querySelectorAll('button'), function (x) { x.classList.toggle('on', x === b); x.setAttribute('aria-checked', x === b); });
+    });
+    gf.addEventListener('submit', function (e) {
+      e.preventDefault(); if (!PAY) return;
+      var amt = parseFloat(String(document.getElementById('giveamt').value).replace(/\s/g, '').replace(',', '.'));
+      if (!(amt > 0)) { document.getElementById('giveamt').focus(); return; }
+      var cur = (document.getElementById('givesym').dataset.code) || 'ZAR', here = location.href.split('#')[0];
+      location.href = PAY + '?amount=' + encodeURIComponent(amt) + '&currency=' + cur + '&kind=gift&ref=' + gfor +
+        '&ok=' + encodeURIComponent(here + '#thanks') + '&no=' + encodeURIComponent(here + '#give');
+    });
+  }
 })();
 </script>
 

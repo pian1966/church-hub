@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.97';
+  var NEWS_FOR = '0.98';
   var NEWS = [
+    { date: '2026-11-19', who: ['admin'], app: 'support', text: TX("Subscription: a church that gives monthly can now take a payment holiday whenever it needs one, no questions asked (a yearly church switches to monthly first), and paying is moving to PayFast – card, Instant EFT or SnapScan – with no bank details shown.") },
     { date: '2026-11-19', who: ['admin'], text: TX('New: the Community board and the Marketplace. Switch them on under Settings → Apps. The pastors, the Administrators and the church secretary check everything before anyone sees it – change who under More → Keepers….') },
     { date: '2026-11-19', who: ['everyone'], app: 'board', text: TX('The Community board is here: pin a sticky note to ask for help, offer it or say thank you. The latest three show on your Home page.') },
     { date: '2026-11-19', who: ['everyone'], app: 'market', text: TX('The Marketplace is here: buy, sell and give away within the church. A keeper checks every listing before anyone sees it.') },

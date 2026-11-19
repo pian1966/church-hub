@@ -224,14 +224,15 @@ each church gives what it chooses once a year, with a small minimum. Today each 
 **The subscription** – changed 16 Nov 2026 to a coffee a month (or ten a year), with gifts, paying for another church,
 payment holidays and praying instead; built as the Subscription page (`docs/architecture/TARGET.md` 10.5, `docs/PRICES.md`).
 Still to do:
-- ⬜ Account holder's full name (as on the owner's ID) in `Coffee.BANK.holder`, so churches outside South Africa can pay (Capitec needs it).
-- ⬜ Match bank payments to churches' references (the office robot, task 063/067) – today "We've paid" is taken on trust.
+- ⬜ Open PayFast: the owner follows `docs/PAYFAST-SETUP.md` (PayFast account, the Cloudflare payment doorway, a sandbox test), then
+  Claude sets `PAY_URL` in `js/coffee.js` and `PAY` in `site/index.html` to https://churchandtrellis.com/pay (one line each).
+- ⬜ Match PayFast payments to churches' references (custom_str1; the office robot, task 063/067) – today the return from PayFast is
+  taken on trust. Later, PayFast's payment notifications (ITN) to the doorway could confirm each payment.
 - ⬜ Share prayer cards between churches through the office, so the prayer circle works outside the demo.
   The weekly card, the monthly reminder and the on/off switch are built (0.95.0); the office still has to collect each church's
   card (only the public card, `Coffee.publicCard`), let Church & Trellis's owner check new cards before they go out, and give every
   church the list. It can also keep a true history of who saw which card, so a joining church never causes an early repeat.
 - ⬜ Refresh coffee prices twice a year, and the "start hidden" countries each January (`docs/PRICES.md`).
-- ⬜ Card payments, once a payment company is chosen (task 059).
 - ⬜ Ask an accountant: is subscription money taxable income for the owner (it is, unless a registered NPO/PBO receives it)?
 
 **Decisions waiting**

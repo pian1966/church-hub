@@ -502,3 +502,13 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   Decline with a kind note sent in Messages); first keepers: Administrators, Pastors and the church secretary, chosen under
   More → Keepers…; *I can help* / *I'm interested* is a private message; Report; renew twice; deleted 30 days after it ends.
   Church Partners and staff only, never attendees. New rules: board, market, marketPhotos, and messages about them. Five languages.
+- ✅ 19 Nov 2026 (0.98.0): **Subscription to the owner's spec, paid through PayFast.** No bank or account details anywhere in the
+  app, website or repository any more (the Capitec details were taken out of `js/coffee.js`, the tests, `site/index.html` and
+  `docs/PRICES.md`). Pay opens Church & Trellis's payment doorway (`tools/payfast-door.mjs`, a Cloudflare Worker that keeps
+  PayFast's merchant details secret, changes other currencies into rand and signs the payment) and PayFast (card, Instant EFT,
+  SnapScan); back from PayFast, "Thank you!" records the payment; a payment that never came back is asked about. Until the owner
+  opens PayFast (`docs/PAYFAST-SETUP.md`), Pay says "opens very soon". Payment holidays: monthly churches skip a coffee whenever
+  they need, as often as they need, no questions asked (the "why" box is gone); yearly churches switch to monthly to take one,
+  keeping what they paid. Praying instead is a promise to pray each month. The website's Give box uses PayFast too, and its
+  payment-holiday answer now says how long a holiday lasts. All five languages; What's new; setup tool; brochure.
+

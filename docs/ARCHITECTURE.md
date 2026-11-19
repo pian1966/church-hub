@@ -880,8 +880,18 @@ The wedding anniversary sits right under marital status.
 
 ## Subscription and the prayer circle (`js/coffee.js`, `js/mod-support.js`)
 Administrators (and Pastors with "settings") open **Subscription**: choose a coffee and currency, monthly (one coffee) or
-yearly (ten), a gift, and who it's for (our church or another church); Pay shows Church & Trellis's bank details and the church's
-reference (`Coffee.reference`), and "We've paid" records it. Kept in `settings.support` = `{ drink, currency, plan, startedAt,
+yearly (ten), a gift, and who it's for (our church or another church). **Pay** opens the payment doorway (`Coffee.payLink` →
+`Coffee.PAY_URL`, `tools/payfast-door.mjs`, a Cloudflare Worker at churchandtrellis.com/pay; `docs/PAYFAST-SETUP.md`), which
+changes the church's money into rand, signs the payment with PayFast's secret passphrase and sends the church on to PayFast
+(card, Instant EFT, SnapScan). Only the amount, the currency, the kind (month/year/gift), another church's id and the church's
+reference (`Coffee.reference`, "CH-XXXXXX") go – no names. While `PAY_URL` is empty, Pay says "opens very soon". The payment on
+its way is kept on the device (`Store.pref('payPending')`); PayFast sends the church back to `#/support/thanks` (recorded once) or
+`#/support/notpaid`; a payment that never came back is asked about ("Did it go through?"). No bank or account details are
+anywhere in the app or repository. One payment at a time – no debit orders – so payment holidays need nothing at PayFast.
+**Payment holidays** (decided 19 Nov 2026): a church that gives monthly may skip the coffee that is due next (from 31 days before
+its due date, `Coffee.holidayAllowed`), free, no questions asked, as often as it needs (`Coffee.takeHoliday`: the due date
+moves a month). A yearly church switches to monthly first (`Coffee.switchToMonthly`: what it paid stays paid). Churches that
+can't pay promise to pray for another church each month. Kept in `settings.support` = `{ cup, plan, startedAt, switchedAt,
 paidUntil, payments[], holidays[], pledge, prayOn, cardsOff }` (the newest 24 payments and holidays) and `settings.prayerCard` =
 `{ photo, photoOk, place, points[2], discreet, needsHelp, updated }` – both in the church's own settings, so the Firestore rules
 didn't change. `Coffee.status()` decides the reminder (7 days before for monthly, 30 for yearly; due; late after 30 days);

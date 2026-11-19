@@ -138,7 +138,7 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   board people choose to look at instead of into everyone's inbox. Every notice waits for a **keeper** (a Church Partner the
   Administrator nominates), who gets it in Messages to approve, ask for a change or decline; *I can help* is a private message;
   notices end after 30 days or when *Sorted, thank you!*; the latest 3 notices show as tiny sticky notes on Home. Steps 2.1–2.3
-- ⬜ **Marketplace** (plan: `docs/COMMUNITY-PLAN.md` part 3): For sale, Wanted, Free (later To lend), photo cards like Facebook
+- ⬜ **Marketplace** (plan: `docs/COMMUNITY-PLAN.md` part 3) – **Church Partners only** (decided 19 Nov 2026): For sale, Wanted, Free (later To lend), photo cards like Facebook
   Marketplace, up to 3 small photos, the area (suburb only); **nothing shows until a Marketplace keeper approves it**; the
   church's own rules accepted by posters, safety tips, *I'm interested* as a private message, mark sold, 30-day expiry; no
   payments through Church Hub. Steps 3.1–3.3
@@ -147,9 +147,12 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   filed in the Archive); the Rector, pastors and Council see a traffic light (on track / watch / concern), income, expenses,
   shortfall, a year-end projection, a chart against budget, and **things to look at** – overspends, underspends, income
   falling, anomalies – with the Treasurer's notes; one-page print for the Council pack; later an optional AI summary. Staff
-  pay can show as one total. Steps 5.1–5.5
-- ⬜ Decide (Community and Finances): may attendees post on the board and marketplace? Do Thank-you notes need approval? Is 30
-  days right? The first keepers; the Treasurer(s), financial year, who sees Finances and the overspend thresholds
+  pay can show as one total. Decided (19 Nov 2026): the Treasurer is the *Treasurer* role on the Council in Leadership; **only
+  the Council** sees Finances to begin with (a setting to widen later); financial year a setting – May–April at Christ Church
+  Howick. Steps 5.1–5.5
+- ⬜ Keepers for the board and the marketplace (decided 19 Nov 2026): the pastors, the Administrators and the church secretary
+- ⬜ Decide (Community and Finances): may attendees see and post on the community board? Do Thank-you notes need approval? Is
+  30 days right? The overspend thresholds; should staff pay show as one total even to the Council?
 - ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request (add to CLAUDE.md rules
   once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
 

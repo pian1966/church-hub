@@ -4,12 +4,20 @@ Status: planned (19 Nov 2026), nothing built yet. Asked for by the church on 19 
 module (`js/mod-*.js`, `Hub.register`), switched on or off by an Administrator in **Settings → Apps**, and each step below is
 its own release and pull request. Read the matching section of `docs/POPIA.md` before building any of them.
 
+## Decided (19 Nov 2026)
+- **Marketplace: Church Partners only** – only Church Partners can see it and post on it. Attendees (Basic access) don't see
+  it at all (no menu entry, no Home card), whatever Settings → Attendees says.
+- **First keepers** (for the board and the marketplace): the **pastors**, the **Administrators** and the **church secretary**
+  (the extra person already named in Settings for roster declines). These are the defaults for every church; the
+  Administrator can add or remove keepers in Settings.
+
 The four parts share three ideas, built once and used by all:
 
 1. **Keepers (moderators).** An Administrator nominates one or more *keepers* for the Community board and for the
    Marketplace (Settings → Apps → the part → Keepers). A keeper must be a Church Partner. Keepers see a
    **Waiting for approval** tab and receive each new item in their **Messages** inbox with *Approve*, *Ask for a change* and
-   *Decline* (a kind reason goes back to the person). Administrators can always act as keepers. Nothing appears to anyone
+   *Decline* (a kind reason goes back to the person). By default the keepers are the pastors, the Administrators and the
+   church secretary (see Decided); a keeper must be a Church Partner or staff. Nothing appears to anyone
    else until a keeper approves it. Everyone can tap **Report** on a live item; the report goes to the keepers.
 2. **Contact through Messages, not public threads.** "I can help" / "I'm interested" sends a private message to the person
    who posted (the private replies built in 0.72.0). No public comment threads – this keeps arguments off the board, keeps
@@ -18,8 +26,8 @@ The four parts share three ideas, built once and used by all:
    can renew once or twice); *Sorted, thank you!* / *Sold* / *Found* takes them down at once. Ended items are deleted after a
    further 30 days (POPIA: keep no longer than needed).
 
-Who may post: Church Partners by default. Settings → Attendees gets new ticks so the church can let attendees (Basic access)
-post on the board and/or the marketplace too (`Msg.attendeeCan` style). Everything here is for signed-in people of the
+Who may post: Church Partners. The **marketplace is Church Partners only** (decided). For the **board**, Settings → Attendees
+gets a tick so a church can let attendees see and post on it too (`Msg.attendeeCan` style) – off by default. Everything here is for signed-in people of the
 church only – never public, never on the website.
 
 ---
@@ -169,8 +177,7 @@ Words in all five kept languages, What's new on Home, the setup tool (`GROW` ite
 the brochures, the presentation and the public website (`site/index.html`), as CLAUDE.md asks.
 
 ## Decisions waiting (defaults above until the church decides)
-- May attendees (Basic access) post on the board and the marketplace, or only Church Partners?
+- May attendees (Basic access) see and post on the **community board** (the marketplace is decided: Church Partners only)?
 - Should Thank-you notes need approval too, or go straight up?
 - Is 30 days right for notices and listings?
 - Event cost: EFT reference and *Paid* tick for now – later card payments with task 059?
-- Who are Christ Church Howick's first keepers for the board and the marketplace?

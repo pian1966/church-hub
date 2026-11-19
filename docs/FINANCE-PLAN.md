@@ -4,6 +4,16 @@ Status: planned (19 Nov 2026), nothing built yet. Asked for by the church on 19 
 (`js/mod-finance.js`, rules file `js/finance.js` – pure and tested), off until an Administrator switches it on in
 **Settings → Apps**. It sits beside Leadership and Archive and follows their access model.
 
+## Decided (19 Nov 2026)
+- **The Treasurer is a role on the Council** in Leadership: whoever holds the role *Treasurer* in the Council (`leaderBodies`)
+  is the Treasurer in Finances – no separate list in Settings. When the role passes to someone else at the end of a term,
+  Finances follows automatically.
+- **Only the Council sees Finances** to begin with – every current member of the Council (which includes the Treasurer).
+  Not Administrators, pastors or staff unless they are on the Council. Settings keeps a choice to widen this later
+  (e.g. a finance committee, the wardens, all pastors), but it starts as Council only.
+- **Financial year starts in May** (May–April) at Christ Church Howick. It is a setting, because it may change: changing it
+  starts the new pattern from the next budget year, and earlier years keep the months they were budgeted with.
+
 ## What the church asked for
 - The Rector, the pastors and the Council can see the **budget set for the year**.
 - The **Treasurer** updates it whenever the monthly management reports are produced (about 10 times a year), with the month
@@ -16,18 +26,21 @@ plain-language insights for boards. Its website doesn't show more than that. Chu
 the church's own figures and no extra subscription.)
 
 ## Who sees what
-- **Treasurer** (new: named in Settings → Apps → Finances, one or more, e.g. the Treasurer and the bookkeeper): sets the
-  budget, uploads reports, writes notes, sees every line.
-- **Administrators, the Rector, pastors and Council members** (Leadership bodies the Administrator ticks): see the dashboard,
-  the lines and the notes; can ask the Treasurer a question about a line (a message in Messages, with the line attached).
-- Nobody else. Members never see Finances.
+- **Treasurer** – the person holding the *Treasurer* role on the Council (Leadership): sets the budget, uploads reports,
+  writes notes, sees every line. (Later, if wanted: the Treasurer may name a bookkeeper to help upload.)
+- **Council members**: see the dashboard, the lines and the notes; can ask the Treasurer a question about a line (a message in
+  Messages, with the line attached).
+- **Nobody else, to begin with** – not Administrators, pastors or staff unless they are on the Council; members never.
+  An Administrator can switch Finances on, but **cannot see the figures** unless on the Council, and only a Council member who
+  is an Administrator (or the Rector, if on the Council) can widen who sees it later – so access can't be quietly given away.
+- The Council already has its members and term dates in Leadership; someone whose term ends loses access the same day.
 - **Salaries**: a budget line can be marked *Staff pay – show as one total*, so the Council view shows "Staff costs" as one line
   and individual pay is seen only by the Treasurer and Administrators (POPIA – pay is personal information).
 - **Giving by person is never here** – only totals.
 
 ## 1. The year's budget
-- **Financial year** chosen in Settings (January–December, or e.g. March–February) – shared with the Archive folders' financial-
-  year option on the roadmap.
+- **Financial year** chosen in Settings (Christ Church Howick: **May–April**; any starting month) – shared with the Archive
+  folders' financial-year option on the roadmap.
 - **Import the budget from the spreadsheet** the Treasurer already uses (Excel or CSV, read with `js/xlsx-lite.js`): Church Hub
   shows the columns and asks which is the line name, the account number (if any) and the amount(s). Or type it in.
 - Lines are grouped as **Income** (giving, collections, hall hire, interest…) and **Expenses** (staff costs, ministry, buildings,
@@ -45,7 +58,7 @@ the church's own figures and no extra subscription.)
   right, and the dashboard says which month the figures run to.
 - The Treasurer can attach the **PDF report** – it is filed in the Archive (Finance folder, sorted by Year → Month, as the Archive
   already does) so there's one copy.
-- After saving, the Rector and Council members get a short message: "March figures are in – 2 things to look at."
+- After saving, Council members get a short message: "March figures are in – 2 things to look at."
 
 ## 3. The dashboard – "Are we on track?"
 - One big **traffic light** for the year to date: **On track** (green), **Watch** (amber), **Concern** (red), with one plain
@@ -79,7 +92,7 @@ and the tests together; the Treasurer is a new kind of access – have the Archi
 lines are audit-logged.
 
 ## Build order (each its own release and pull request)
-5.1 Settings (switch, Treasurer, who sees it, financial year) and the budget (import or type, spread) →
+5.1 Settings (switch, financial year, who sees it – Council by default – the Treasurer taken from Leadership) and the budget (import or type, spread) →
 5.2 monthly figures (import, matching remembered, PDF to Archive, message) →
 5.3 the dashboard (traffic light, tiles, chart, things to look at, notes, thresholds) →
 5.4 print for the Council pack; revised budget →
@@ -87,7 +100,5 @@ lines are audit-logged.
 With every step: the five kept languages, What's new, the setup tool (`GROW`), brochures, presentation and website, as CLAUDE.md asks.
 
 ## Decisions waiting (defaults above until the church decides)
-- Christ Church Howick's financial year, and who the Treasurer(s) are.
-- Which Leadership bodies see Finances (the whole Council, or a finance committee too)?
 - The thresholds for "overspend" (10% and R2 000 to start?).
 - Should staff pay always show as one total to the Council?

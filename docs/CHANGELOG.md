@@ -517,3 +517,10 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   that becomes Join now 15 minutes before; Past studies on the group's page; a live-streamed study can be open to the whole church.
   New `studies` collection and rules (church to re-publish the database rules, or let the workflow do it). The phone notification
   for "on the day" comes with push notifications (Phase 5).
+- ✅ 19 Nov 2026 (0.100.0): **Who can see what, in one place** – Settings → *Access and roles* replaces the separate *Who can see what*,
+  *Attendees* and *What Pastors can do* pages: a card per kind of person (Administrator, Senior Pastor, Pastors, Roster
+  coordinators, Children's ministry, Church Partners, attendees) says what they see and can do in plain words (`Access.summary`,
+  tested), how many have it, with View as and Change; then the jobs in one part (carers, Midweek Group leaders, keepers,
+  librarians, the church secretary for roster replies, the Council) and each setting once. Same settings underneath – nobody's
+  access changed and nothing needed moving; the old addresses still work.
+

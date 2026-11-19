@@ -88,16 +88,17 @@
     ['apps', TX('Apps'), TX('Switch parts of Church & Trellis on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask'],
     ['services', TX('Church Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
     ['application', TX('Membership application'), TX('Declaration, documents to read, loyalty'), 'features', 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5', 'partner partnership membership member application form declaration constitution statement of faith denomination affiliation loyalty links documents'],
-    ['access', TX('Who can see what'), TX('What each access level can see'), 'access', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'see contact details directory care groups consent roles access level basic church partner roster children'],
-    ['attendees', TX('Attendees'), TX('What people who aren’t Church Partners can do'), 'access', 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 8v6M16 11h6', 'attendee attendees attender visitor newcomer basic access church partner names directory reply write messages office'],
-    ['pastors', TX('What Pastors can do'), TX('Extra abilities for Pastors'), 'access', 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', 'pastor senior rector assistant minister abilities permissions'],
+    // Who can see what, attendees and what Pastors can do are one page (asked for 19 Nov 2026): the old addresses still open it
+    ['access', TX('Access and roles'), TX('Who can see what, and what each kind of person can do'), 'access', 'M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z', 'who can see what access roles see contact details directory care groups consent level basic church partner roster children attendee attendees attender visitor newcomer names reply write messages office pastor pastors senior rector assistant minister abilities permissions keepers librarians leaders view as'],
     ['emails', TX('Email templates'), TX('Birthday, anniversary and welcome emails'), 'comms', 'M3 5h18v14H3zM3 6l9 7 9-7', 'email emails template birthday anniversary welcome newcomer gmail signed sign off']
   ];
   /** The Senior Pastor (Rector) without the "settings" tick: only what attendees may do and the membership application. */
-  var RECTOR_SECTIONS = ['attendees', 'application'];
+  var RECTOR_SECTIONS = ['access', 'application'];
+  /** The addresses the three pages had before they became one, and the panel each now opens at. */
+  var MERGED = { attendees: 'st-att', pastors: 'pastor-can' };
   function limited() { return !H.can('*') && !H.can('settings.manage'); }
   function shown() { return limited() ? SECTIONS.filter(function (x) { return RECTOR_SECTIONS.indexOf(x[0]) >= 0; }) : SECTIONS; }
-  function sectionOf(id) { var all = shown(); return all.filter(function (x) { return x[0] === id; })[0] || all[0]; }
+  function sectionOf(id) { var all = shown(); if (MERGED[id]) id = 'access'; return all.filter(function (x) { return x[0] === id; })[0] || all[0]; }
   /** Settings → Attendees: what people on Basic access who aren't Church Partners (or staff) may see and do (settings.attendeeCan). */
   var ATTENDEE_ROWS = Access.ATTENDEE_ROWS;   // js/access.js
   function renderAttendees(st) {
@@ -258,13 +259,8 @@
     else if (a === 'emails') body = renderEmailTemplates(st);
     else if (a === 'colours') body = renderTheme(st);
     else if (a === 'apps') body = renderApps(st);
-    else if (a === 'pastors') body = renderPastorCan(st);
-    else if (a === 'attendees') body = renderAttendees(st);
     else if (a === 'application') body = window.PeopleParts && PeopleParts.formSettings ? PeopleParts.formSettings() : '';
-    else if (a === 'access') {
-      var byRole = {}; S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child'; }).forEach(function (p) { (byRole[p.appRole || 'member'] = byRole[p.appRole || 'member'] || []).push(p); });
-      body = renderAccess(st, byRole);
-    } else if (a === 'services') {
+    else if (a === 'access') body = renderAccessPage(st, parts && MERGED[parts[0]]); else if (a === 'services') {
       var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(Serving.byWhen);
       body = renderSlots() + renderServices(st, svcs) + renderRosterTeam(st);
     } else body = renderGeneral(st);
@@ -274,8 +270,6 @@
   /** Who can see what: each access level, what it can use, which of other people's contact details it sees
    *  (only adults who agreed to be in the directory; name only unless ticked), and who has it. Administrators and
    *  Pastors always see everything; No access can't sign in. Saved as settings.seeOthers = { member, rosters, kids }. */
-  /** What each kind of access can do (Settings → Who can see what): js/access.js ROLES. */
-  var ACCESS = ['admin', 'pastor', 'rosters', 'kids', 'member', 'none'].map(function (r) { return [r, Access.ROLES[r].can]; });
   /** The church's colours (settings.theme = { id: 'custom', color } – older choices { id } still work): buttons, links,
    *  the turning cross, the logo and the menu, for everyone. Like Leave Manager's "My colour": a live sample at the top,
    *  round swatches, any colour by its code, and a Save button – nothing changes for anyone until it is saved. */
@@ -373,18 +367,13 @@
       });
     });
   }
-  function renderAccess(st, byRole) {
+  function renderAccess(st) {
     var P = window.PeopleParts, see = st.seeOthers || {}, care = st.seeCare || [];
     var roleHead = function (r) { return '<th scope="col" class="c">' + esc(H.roleLabel(r)) + '</th>'; };
     var always = '<p class="hint" style="margin:6px 0 0">' + T('Administrators and Pastors always see everything.') + '</p>';
     var box = function (cls, val, on, label) { return '<td class="c"><input type="checkbox" class="' + cls + '"' + (val ? ' value="' + val + '"' : '') + (on ? ' checked' : '') + ' aria-label="' + esc(label) + '"></td>'; };
     var none = '<td class="c muted">–</td>';
-    // 1. What each kind of access can do, and who has it
-    var html = '<section class="panel" id="access-kinds"><h2>' + T('What each kind of access can do') + '</h2>' +
-      '<div class="table-wrap"><table class="simple"><thead><tr><th>' + T('Access') + '</th><th>' + T('Can') + '</th><th class="c">' + T('People') + '</th></tr></thead><tbody>' +
-      ACCESS.map(function (r) { return '<tr><td><b>' + esc(H.roleLabel(r[0])) + '</b></td><td>' + esc(T(r[1])) + '</td><td class="c">' + whoHas(byRole[r[0]] || [], r[0]) + '</td></tr>'; }).join('') +
-      '</tbody></table></div><p class="hint">' + T('Change someone’s access from their profile (People → Edit details).') + '</p>' +
-      '<p class="hint">' + esc(T('Church Partners on Basic access get {access} automatically. Others on Basic access are attendees:', { access: H.partnerAccess() })) + ' <a href="#/settings/attendees">' + T('what attendees can do') + '</a></p></section>';
+    var html = '';
     if (!P) return html;
     // 2. Contact details of people in the church directory
     html += '<div data-autoscope>' +   // both panels below save together, by themselves
@@ -418,6 +407,68 @@
       })((H.can('*') || H.can('settings.manage')) && care.indexOf('member') >= 0 ? careHidden().length : 0) +
       '<button class="btn small" data-autosave data-act="settings:see">' + T('Save') + '</button></section></div>';
     return html;
+  }
+
+  /* ---------- Access and roles: everything about who can see what, on one page ---------- */
+  var KIND_ICON = { admin: 'M12 3l8 3v6c0 4.5-3.4 8-8 9-4.6-1-8-4.5-8-9V6z', senior: 'M12 2v6M9 5h6M5 21V11l7-3 7 3v10z', pastor: 'M12 2v6M9 5h6M6 21v-9h12v9', rosters: 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4',
+    kids: 'M12 7a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM8 22v-7l-2-4 6 2 6-2-2 4v7', partner: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8', attendee: 'M16 19v-1a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v1M9 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19 8v6M16 11h6' };
+  var KIND_TINT = { admin: '#E8590C', senior: '#7A4FD1', pastor: '#6D3FC0', rosters: '#007EA9', kids: '#E84A8A', partner: '#2E7D4F', attendee: '#B7791F' };
+  /** Where each kind is changed on this page, and which "View as" shows it. */
+  var KIND_PANEL = { senior: 'pastor-can', pastor: 'pastor-can', rosters: 'see-others', kids: 'see-others', partner: 'see-others', attendee: 'st-att' };
+  var KIND_VIEW = { pastor: 'pastor', rosters: 'rosters', kids: 'kids', partner: 'member', attendee: 'attendee' };
+  /** The people of each kind (active adults), for the counts. */
+  function peopleByKind(st) {
+    var out = {}, add = function (k, p) { (out[k] = out[k] || []).push(p); };
+    S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && p.category !== 'Deceased' && !p.binnedAt && !p.mergedInto && p.firstName !== 'Deleted'; }).forEach(function (p) {
+      var r = p.appRole || ''; if (!r || r === 'none') return;
+      if (r === 'member') { if (!p.email) return; add(Msg.partnerLevel(p) ? 'partner' : 'attendee', p); return; }
+      if (r === 'pastor' && st.seniorPastorId === p.id) add('senior', p); else add(r, p);
+    });
+    return out;
+  }
+  function kindLabel(k) { return k === 'senior' ? T('Senior Pastor') : k === 'partner' ? H.partnerAccess() : k === 'attendee' ? T('Attendees') : H.roleLabel(k); }
+  function lines(list) {
+    return '<ul class="acc-lines">' + list.map(function (l) { return '<li>' + esc(T(l.t, l.list ? { list: l.list.map(function (x) { return T(x); }).join(', ') } : undefined)) + '</li>'; }).join('') + '</ul>';
+  }
+  /** One card per kind of person: who, how many, what they see and can do – and View as, one tap away. */
+  function overview(st) {
+    var byKind = peopleByKind(st), share = (window.PeopleParts && PeopleParts.SHARE) || [], view = H.canViewAs && H.canViewAs();
+    var edit = !limited();
+    return '<section class="panel acc-over" id="access-kinds"><h2>' + T('Who can do what') + '</h2><p class="hint" style="margin-top:0">' +
+      T('Every kind of person who signs in, what they see and what they can do. Change someone’s access from their page in People (Edit details).') + '</p>' +
+      '<div class="acc-grid">' + Access.overviewKinds(st).map(function (k) {
+        var x = Access.summary(k, st, share), ps = byKind[k] || [], v = KIND_VIEW[k];
+        return '<article class="acc-card" style="--c:' + KIND_TINT[k] + '" data-k="' + k + '"><header><span class="acc-ic">' + H.icon(KIND_ICON[k], 18) + '</span><b>' + esc(kindLabel(k)) + '</b><span class="acc-n">' + whoHas(ps, k) + '</span></header>' +
+          '<p class="acc-h">' + T('Sees') + '</p>' + lines(x.see) + '<p class="acc-h">' + T('Can') + '</p>' + lines(x.can) +
+          '<div class="acc-act">' + (view && v && H.viewChoices().indexOf(v) >= 0 ? '<button class="btn small ghost" data-act="hub:viewas" data-r="' + v + '">' + H.icon(H.ICON.eye, 14) + T('View as') + '</button>' : '') +
+          (edit && KIND_PANEL[k] ? '<button class="btn small ghost" data-act="settings:jump" data-to="' + KIND_PANEL[k] + '">' + T('Change') + '</button>' : '') + '</div></article>';
+      }).join('') + '</div></section>';
+  }
+  /** People with a job in one part of the app – chosen in that part, listed here so everything about access is in one place. */
+  function jobs(st) {
+    var on = function (m) { return H.isOn(m); }, rows = [], ppl = function (ids) { return ids.map(function (id) { return S.get('people', id); }).filter(Boolean); };
+    var uniqIds = function (list, f) { var o = []; list.forEach(function (g) { f(g).forEach(function (id) { if (o.indexOf(id) < 0) o.push(id); }); }); return o; };
+    if (on('care')) rows.push(['carers', T('Care Group carers'), T('See everyone in their Care Group and message them'), ppl(uniqIds(S.list('careGroups'), function (g) { return g.leaderIds || []; })), '#/care', T('Groups → Care Groups')]);
+    if (on('life')) rows.push(['lifelead', T('Midweek Group leaders and co-leaders'), T('Add people to their group, message it and post the week’s links'), ppl(uniqIds(S.list('lifeGroups'), function (g) { return (g.leaderIds || []).concat(Object.keys(g.roles || {}).filter(function (id) { return g.roles[id] === 'coleader'; })); })), '#/life', T('Groups → Midweek Groups')]);
+    ['board', 'market'].forEach(function (pt) { if (on(pt)) rows.push(['keepers-' + pt, T(pt === 'board' ? 'Keepers of the Community board' : 'Keepers of the Marketplace'), T('Check every notice or listing before anyone sees it'), ppl(Access.jobHolders('keepers', pt, st, S.list('people').filter(function (p) { return p.active !== false; }))), '#/' + pt, T(pt === 'board' ? 'Community board → More → Keepers' : 'Marketplace → More → Keepers')]); });
+    if (on('library')) rows.push(['librarians', T('Librarians'), T('Lend items and see who has what'), ppl(st.librarianIds || []), '#/library', T('Library')]);
+    if (on('rosters')) rows.push(['rosterteam', T('Also told when someone can’t serve'), T('Besides Administrators and Roster coordinators – e.g. the church secretary'), ppl(st.rosterExtra || []), '#/settings/services', T('Settings → Church Services')]);
+    if (on('leaders')) rows.push(['council', T('Council members'), T('Open the Archive (minutes, plans, contracts)'), ppl(uniqIds(S.list('leaderBodies').filter(function (b) { return /council/i.test(b.name || ''); }), function (b) { return b.memberIds || []; })), '#/leaders', T('Groups → Leadership')]);
+    if (!rows.length) return '';
+    return '<section class="panel" id="access-jobs"><h2>' + T('Jobs in one part of the app') + '</h2><p class="hint" style="margin-top:0">' + T('Chosen people, whatever their access. Each is chosen where the job is done.') + '</p>' +
+      '<div class="list">' + rows.map(function (r) {
+        return '<div class="item acc-job" data-job="' + r[0] + '"><span class="grow"><b>' + esc(r[1]) + '</b><small>' + esc(r[2]) + '</small></span><span class="acc-n">' + whoHas(r[3], r[0]) + '</span>' +
+          (limited() ? '' : '<a class="btn small ghost" href="' + r[4] + '" title="' + esc(r[5]) + '">' + esc(r[5]) + '</a>') + '</div>';
+      }).join('') + '</div></section>';
+  }
+  /** The page: the overview, the jobs, then each choice once – contact details and Care Groups, what Pastors can do, attendees.
+   *  The Senior Pastor without the Settings tick sees the overview and the Attendees panel (as before). at: a panel to open at. */
+  function renderAccessPage(st, at) {
+    if (at) setTimeout(function () { var e = document.getElementById(at); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'start' }); }, 60);
+    var chips = limited() ? '' : '<nav class="acc-jump" aria-label="' + esc(T('On this page')) + '">' + [['access-kinds', T('Who can do what')], ['access-jobs', T('Jobs')], ['see-others', T('Contact details')], ['see-care', T('Care Groups')], ['pastor-can', T('What Pastors can do')], ['st-att', T('Attendees')]].map(function (c) {
+      return '<button type="button" data-act="settings:jump" data-to="' + c[0] + '">' + esc(c[1]) + '</button>'; }).join('') + '</nav>';
+    if (limited()) return overview(st) + renderAttendees(st);
+    return chips + overview(st) + jobs(st) + renderAccess(st) + renderPastorCan(st) + renderAttendees(st);
   }
 
   /** People in a care group whom Church Partners don't see on the Care groups page (it lists only the church directory),
@@ -657,6 +708,8 @@
         }
         H.toast(T('Opening email…'));
       },
+      /** Access and roles: go to one of its panels (a button, so the address stays on the page). */
+      jump: function (el) { var e = document.getElementById(el.dataset.to); if (e && e.scrollIntoView) e.scrollIntoView({ behavior: 'smooth', block: 'start' }); },
       pastorcan: function () {
         if (!H.can('*')) return;
         var ticked = function (cls) {

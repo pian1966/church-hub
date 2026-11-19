@@ -1455,3 +1455,21 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 .st-home .btns { margin-top: 10px; }
 .st-open { margin: 6px 0 10px; }
 #st-body small.ok { color: #1F8A4C; } #st-body small.bad { color: var(--bad); }
+/* Settings → Access and roles (js/mod-settings.js renderAccessPage) */
+.acc-jump { display: flex; flex-wrap: wrap; gap: 8px; margin: 0 0 14px; }
+.acc-jump button { border: 1px solid var(--line); background: var(--surface); color: inherit; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.acc-jump button:hover { border-color: var(--a, #E8590C); color: var(--a, #E8590C); }
+.acc-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
+.acc-card { --c: #6B625A; border: 1px solid color-mix(in srgb, var(--c) 22%, var(--line)); border-radius: 16px; padding: 14px 14px 10px; background: linear-gradient(160deg, color-mix(in srgb, var(--c) 9%, var(--surface)), var(--surface) 55%); display: flex; flex-direction: column; transition: transform .2s ease, box-shadow .2s ease; }
+.acc-card:hover { transform: translateY(-2px); box-shadow: 0 8px 22px -14px color-mix(in srgb, var(--c) 60%, transparent); }
+@media (prefers-reduced-motion: reduce) { .acc-card, .acc-card:hover { transition: none; transform: none; } }
+.acc-card header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.acc-card header b { flex: 1; font-size: 15px; }
+.acc-ic { width: 30px; height: 30px; border-radius: 10px; display: inline-grid; place-items: center; color: var(--c); background: color-mix(in srgb, var(--c) 15%, var(--surface)); }
+.acc-n { font-weight: 700; color: var(--muted); }
+.acc-h { margin: 8px 0 2px; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: color-mix(in srgb, var(--c) 75%, var(--muted)); }
+.acc-lines { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.45; }
+.acc-lines li { margin: 2px 0; }
+.acc-act { display: flex; gap: 6px; margin-top: auto; padding-top: 10px; flex-wrap: wrap; }
+.acc-job .btn { white-space: nowrap; }
+@media (max-width: 600px) { .acc-job { flex-wrap: wrap; } .acc-job .btn { margin-left: auto; } }

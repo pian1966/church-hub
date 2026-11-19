@@ -27,6 +27,25 @@ ok(A.attendeeCan({}).join() === 'names,write', 'names and writing unless the chu
 ok(A.attendeeCan({ attendeeCan: ['reply', 'odd'] }).join() === 'reply' && A.attendeeCan({ attendeeCan: [] }).length === 0, 'unknown choices dropped; none at all is allowed');
 ok(A.ATTENDEE_ROWS.length === A.ATTENDEE_OPTIONS.length && A.ATTENDEE_ROWS.every(r => r[1] && r[2]), 'every choice has its wording for Settings');
 
+console.log('Access and roles, in plain words');
+{
+  const share = [['mobile', 'Mobile'], ['email', 'Email'], ['address', 'Home address']];
+  const words = l => l.map(x => x.t + (x.list ? ':' + x.list.join('+') : '')).join(' | ');
+  ok(A.overviewKinds({}).join() === 'admin,pastor,rosters,kids,partner,attendee' && A.overviewKinds({ seniorPastorId: 'p2' })[1] === 'senior', 'one card per kind of person; the Senior Pastor only once one is chosen');
+  ok(/Not pastoral notes/.test(words(A.summary('admin', {}).see)), 'Administrators: everything except pastoral and medical notes');
+  const pa = A.summary('pastor', { pastorCan: ['leave'], seniorCan: ['settings'], seniorPastorId: 'p2' });
+  ok(/Approve leave/.test(words(pa.can)) && !/Change the church/.test(words(pa.can)), 'Pastors: what they always may, and only their own ticks');
+  ok(/Change the church/.test(words(A.summary('senior', { pastorCan: ['leave'], seniorCan: ['settings'], seniorPastorId: 'p2' }).can)) && /View as/.test(words(A.summary('senior', { seniorPastorId: 'p2' }).can)), '…the Senior Pastor theirs, and View as');
+  ok(/Nothing more/.test(words(A.summary('pastor', {}).can)), 'no ticks: says so');
+  ok(words(A.summary('rosters', { seeOthers: { rosters: ['mobile', 'email'] } }, share).see) === 'In the church directory: their name, photo and {list}:Mobile+Email', 'contact details follow Settings (Roster coordinators)');
+  ok(/names and photos only/.test(words(A.summary('partner', {}, share).see)) && /Everyone in their own Care Group/.test(words(A.summary('partner', {}).see)) && /carers of their own/.test(words(A.summary('partner', { seeCareOwn: false }).see)), 'Church Partners: the directory and their own Care Group, as set');
+  ok(/Every Care Group/.test(words(A.summary('kids', { seeCare: ['kids'] }).see)) && !/Every Care Group/.test(words(A.summary('kids', {}).see)), 'all Care Groups only when ticked');
+  ok(/Community board/.test(words(A.summary('partner', { modules: { board: true } }).can)) && !/Community board/.test(words(A.summary('partner', {}).can)), 'the Community board only when it is on');
+  const at = A.summary('attendee', {});
+  ok(/names of Church Partners/.test(words(at.see)) && /Write to the Office/.test(words(at.can)) && !/Reply/.test(words(at.can)), 'attendees: names and writing by default');
+  ok(/Only read/.test(words(A.summary('attendee', { attendeeCan: [] }).can)) && /church directory/.test(words(A.summary('attendee', { attendeeCan: ['directory'] }, share).see)), '…and what Settings → Attendees changes');
+}
+
 console.log('Care Groups');
 ok(A.seesCare({}, 'member') && !A.seesCare({ seeCareOwn: false }, 'member') && A.seesCare({ seeCare: ['kids'] }, 'kids') && !A.seesCare({}, 'rosters'),
   'Church Partners see their own group unless switched off; other roles only when ticked');

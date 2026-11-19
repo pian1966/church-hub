@@ -365,9 +365,8 @@ var SetupKit = (function () {
       why: 'Decide what members and visitors may see of each other – phone numbers, addresses, groups.',
       body: function (c) {
         return ol([
-          open(c.app('settings/access'), 'Who can see what') + ' – tick what each kind of access sees.',
-          open(c.app('settings/attendees'), 'Attendees') + ' – what people who aren’t Church Partners may do.',
-          open(c.app('settings/pastors'), 'What Pastors can do') + ' – and who the Senior Pastor is.'
+          open(c.app('settings/access'), 'Settings → Access and roles') + ' – one page: a card for each kind of person says what they see and can do (with View as to check).',
+          'On the same page: tick which contact details each kind of access sees, what Pastors can do (and who the Senior Pastor is), and what attendees – people who aren’t Church Partners – may do.'
         ]);
       } },
 

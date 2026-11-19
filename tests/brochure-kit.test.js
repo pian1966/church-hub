@@ -36,4 +36,8 @@ ok(translated.members.translations.af.texts.title.h === '<b>Drie stappe</b>' && 
   && !translated.members.translations.en && !translated.members.translations.invalid, 'language-specific text and hidden blocks are kept only for supported locale codes');
 ok(B.changed(translated, 'members') && B.changed(translated.members.translations.af, 'members'), 'language-specific changes are reported for the right brochure');
 
+console.log('Web addresses');
+ok(B.linkHtml('pian1966.github.io/church-hub') === '<span class="keep">pian1966.github.io/</span><span class="keep">church-hub</span>', 'an address breaks only after a slash');
+ok(B.linkHtml('a<b>/') === '<span class="keep">a&lt;b&gt;/</span>' && B.linkHtml('') === '', 'odd text is made safe');
+
 if (fails) { console.log('\n' + fails + ' failed'); process.exit(1); } else console.log('\nAll brochure editor tests passed');

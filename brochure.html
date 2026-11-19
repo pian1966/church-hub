@@ -39,7 +39,8 @@
   .ic svg { width: 24px; height: 24px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
   .num { flex: 0 0 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 19px; }
   .url { font-weight: 800; color: var(--ink); overflow-wrap: anywhere; }
-  .step .url { display: block; }
+  /* A web address keeps together: it moves to the next line whole, and only breaks inside when it is wider than the panel */
+  .keep { display: inline-block; max-width: 100%; overflow-wrap: anywhere; }
   .box { margin-top: auto; background: var(--soft); border-radius: 18px; padding: 20px 22px; }
   .box h3 { margin: 0 0 6px; }
   .card { margin-top: auto; background: var(--ink); border-radius: 18px; padding: 22px 24px; }
@@ -63,6 +64,10 @@
   .cover .who { font-size: 20px; font-weight: 900; color: var(--on-accent); }
   [contenteditable] { outline: 2px dashed var(--ink); outline-offset: 2px; border-radius: 4px; }
   [hidden] { display: none !important; }
+  /* Fit: when a panel's words don't quite fit (a wider font chosen in Church & Trellis, longer contact details, a church's own
+     wording), fitPanels() below shrinks that panel's contents a little, never below 88%. Anything still too long is reported. */
+  .pn > * { zoom: var(--fit, 1); }
+  body[data-measuring] .bro-off { display: none !important; }
   @page { size: A4 landscape; margin: 0; }
   @media print {
     body { background: none; }
@@ -117,7 +122,7 @@
   <div class="pn fold">
     <p class="eyebrow">Getting started</p>
     <h2>Three easy steps</h2>
-    <div class="step"><span class="num">1</span><div><h3>Open Church & Trellis</h3><p>On your phone or computer: <span class="url" data-fill="link">pian1966.github.io/church-hub</span>. Android phones can also get the app.</p></div></div>
+    <div class="step"><span class="num">1</span><div><h3>Open Church & Trellis</h3><p>On your phone or computer: <span class="keep"><span class="url" data-fill="link">pian1966.github.io/church-hub</span>.</span> Android phones can also get the app.</p></div></div>
     <div class="step"><span class="num">2</span><div><h3>Sign in</h3><p>Use the email address the church office has for you. No email? Ask the office for a sign-in code, then sign in with your cellphone number and a PIN.</p></div></div>
     <div class="step"><span class="num">3</span><div><h3>Check your page</h3><p>Open <b>Me</b>, make sure your details are right, and choose what others may see.</p></div></div>
     <div class="box"><h3>Need a hand?</h3><p contenteditable="true" spellcheck="false">Speak to the church office: [phone] · [email]</p></div>
@@ -169,10 +174,10 @@
   <div class="pn fold">
     <p class="eyebrow">See it for yourself</p>
     <h2>Try the demo today</h2>
-    <p>Explore a full church of made-up people – nothing to install, and nothing you change is kept.</p>
-    <div class="demo"><p class="eyebrow">Demo</p><p class="url" style="color:var(--text)"><span data-fill="link">pian1966.github.io/church-hub</span>/?demo</p></div>
-    <div><h3>Your data stays yours</h3><p>Each church keeps its records in its own Google account, set up with a friendly step-by-step guide. Access follows each person's role.</p></div>
-    <div><h3>For every church</h3><p>No church is turned away: a church that can't pay prays for another church each month instead. Members without email sign in with their cellphone number and a PIN.</p></div>
+    <p>A full church of made-up people: nothing to install, nothing kept.</p>
+    <div class="demo"><p class="eyebrow">Demo</p><p class="url" style="color:var(--text)"><span data-fill="link">pian1966.github.io/church-hub</span><span class="keep">/?demo</span></p></div>
+    <div><h3>Your data stays yours</h3><p>Each church keeps its records in its own Google account, set up with a friendly step-by-step guide.</p></div>
+    <div><h3>For every church</h3><p>No church is turned away: a church that can't pay prays for another church each month instead.</p></div>
     <div class="box"><h3>Let's talk</h3><p contenteditable="true" spellcheck="false">[your name] · [phone] · [email]</p></div>
   </div>
   <div class="pn cover">
@@ -196,7 +201,7 @@
     <p class="eyebrow">Serving and staff</p>
     <h2>Sundays that run smoothly</h2>
     <div class="item"><span class="ic"><svg><use href="#i-cal"/></svg></span><div><h3>Rosters that keep families together</h3><p>Families serve together, away days are skipped, communion roles only on communion Sundays, replies in Messages.</p></div></div>
-    <div class="item"><span class="ic"><svg><use href="#i-phone"/></svg></span><div><h3>Members help themselves</h3><p>Everyone updates their own details, privacy choices, days away and serving – on the web or the Android app – and Home shows each person a tip for the parts they can use.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-phone"/></svg></span><div><h3>Members help themselves</h3><p>Everyone updates their own details, privacy choices, days away and serving – on the web or the Android app, even without email – and Home shows each person a tip for the parts they can use.</p></div></div>
     <div class="item"><span class="ic"><svg><use href="#i-house"/></svg></span><div><h3>Leadership, records and library</h3><p>Leadership terms and reminders, Archives filed by year and month, and a church library with loans, requests and reminders.</p></div></div>
   </div>
   <div class="pn">
@@ -241,6 +246,35 @@
     });
     var fill = { church: (q.get('church') || '').slice(0, 80), link: (q.get('link') || '').replace(/^https?:\/\//, '').replace(/\/+$/, '').slice(0, 120) };
     Object.keys(fill).forEach(function (k) { if (fill[k]) document.querySelectorAll('[data-fill="' + k + '"]').forEach(function (e) { e.textContent = fill[k]; }); });
+    // Addresses break only after a "/" (the same as BrochureKit.linkHtml in Church & Trellis)
+    document.querySelectorAll('[data-fill="link"]').forEach(function (e) {
+      var t = e.textContent; e.textContent = '';
+      (t.match(/[^\/]*\/|[^\/]+$/g) || []).forEach(function (part) { var s = document.createElement('span'); s.className = 'keep'; s.textContent = part; e.appendChild(s); });
+    });
+    // Shrink a panel a little only when it doesn't fit; Church & Trellis calls this again after edits (window.fitPanels).
+    var STEPS = [1, .97, .94, .91, .88], queued = false;
+    // Too long = anything reaching into the panel's bottom margin (words can spill into it without making the panel scroll)
+    function over(pn) {
+      var r = pn.getBoundingClientRect(), k = r.height / (pn.offsetHeight || 1), limit = r.bottom - parseFloat(getComputedStyle(pn).paddingBottom) * k + 1;
+      return [].some.call(pn.children, function (c) { return c.offsetParent !== null && c.getBoundingClientRect().bottom > limit; });
+    }
+    function fitPanels() {
+      queued = false;
+      document.body.setAttribute('data-measuring', '');   // blocks hidden by the church don't print, so don't count them
+      document.querySelectorAll('.sheet:not([hidden]) .pn:not(.cover)').forEach(function (pn) {
+        for (var i = 0; i < STEPS.length; i++) { pn.style.setProperty('--fit', STEPS[i]); if (!over(pn)) break; }
+      });
+      var still = [].filter.call(document.querySelectorAll('.sheet:not([hidden]) .pn:not(.cover)'), over);
+      document.body.removeAttribute('data-measuring');
+      return still;   // panels that are too long even at 88%
+    }
+    function later() { if (!queued) { queued = true; requestAnimationFrame(fitPanels); } }
+    window.fitPanels = fitPanels;
+    if (document.fonts) { document.fonts.ready.then(later); document.fonts.addEventListener('loadingdone', later); }
+    window.addEventListener('load', later); window.addEventListener('beforeprint', fitPanels); document.addEventListener('input', later);
+    new MutationObserver(later).observe(document.body, { subtree: true, childList: true, characterData: true, attributeFilter: ['class', 'hidden'] });
+    new MutationObserver(later).observe(document.documentElement, { attributeFilter: ['style'] });   // the church's font and colour
+    later();
     document.title = who === 'churches' ? 'Church & Trellis – brochure for other churches' : 'Church & Trellis – brochure for our members';
   })();
 </script>

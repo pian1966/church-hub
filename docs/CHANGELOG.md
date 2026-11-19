@@ -523,6 +523,11 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   tested), how many have it, with View as and Change; then the jobs in one part (carers, Midweek Group leaders, keepers,
   librarians, the church secretary for roster replies, the Council) and each setting once. Same settings underneath – nobody's
   access changed and nothing needed moving; the old addresses still work.
+- ✅ 19 Nov 2026 (0.100.1): **Brochures fit their panels.** The other-church brochure's “Try the demo” panel ran off the page
+  (“Let's talk” was cut off): it is shorter, and signing in with a cellphone number moved to “Members help themselves”. Web addresses
+  now break only after a “/” (no more “church-” / “hub” or a lonely full stop), and a panel that is still a little too long – a wider
+  font chosen in About → Brochures, long contact details, a church's own wording – shrinks just that panel's text, never below 88%
+  (`fitPanels()` in `brochure.html`; anything longer is still reported in red). Checked with all seven brochure fonts.
 
 
 - ✅ 0.98.1 (19 Nov 2026): Names listed A to Z, each a chip that opens the person's page, in Rosters → Teams and Serving

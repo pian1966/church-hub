@@ -88,4 +88,19 @@ module.exports = async function (ctx) {
   await s.page.click('#ms-to-btn'); await s.page.waitForSelector('#modal .ms-choose'); const to = await s.page.$$eval('#modal .ms-choose .ms-aud', o => o.map(x => x.dataset.key));
   check(to.includes('life/lg1') && to.includes('care/cg1'), 'they can send a message to their life group (and their care group)');
   await finish(s);
+
+  console.log('Life groups (a Pastor who leads a group):');
+  const seed2 = seedDocs();
+  seed2['settings/church'].modules = Object.assign({}, seed2['settings/church'].modules, { life: true });
+  seed2['careGroups/lg2'] = { type: 'life', name: 'Wednesday Bible study', leaderIds: ['p02'], memberIds: ['p02'], names: { p02: 'Thandi Mokoena' } };
+  s = await session('thandi.mokoena@example.com', seed2); await s.go('groups'); await s.page.waitForTimeout(400);
+  const outside = await s.page.evaluate(() => Store.find('people', p => p.active !== false && p.familyRole !== 'child' && !p.inDirectory && p.category !== 'Deceased' && !p.mergedInto && !p.binnedAt && p.id !== 'p02').map(p => ({ id: p.id, name: Hub.name(p) })));
+  await s.page.$eval('[data-act="life:mineadd"][data-g="lg2"]', b => b.click());   // folded away until opened
+  await s.page.waitForSelector('#modal .cg-q[data-for="lmine"]');
+  const one = outside[0] || { id: '', name: 'nobody' };
+  await s.page.fill('#modal .cg-q[data-for="lmine"]', one.name); await s.page.waitForTimeout(400);
+  check(!!one.id && !!(await s.page.$('#modal .cg-pick[data-id="' + one.id + '"]')), 'a Pastor who leads a group can add anyone from Groups → My groups, not only people in the church directory (as from a person’s page)');
+  await s.page.click('#modal .cg-pick[data-id="' + one.id + '"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['careGroups/lg2'].memberIds.includes(one.id), '…and the person they choose is added to the group');
+  await finish(s);
 };

@@ -410,6 +410,15 @@ service cloud.firestore {
         : 'write' in on && (gid == '' ? minister(to0) : lifeLeader(gid, to0)));
     }
     function mayDirect(m) { return m.kind == 'direct' && m.to.size() == 1 && directOk(m, m.to[0]); }
+    // A private message to the person who pinned a notice or listed something (Community board, Marketplace: about, aboutId):
+    // from anyone who sees it while it is live ("I can help", "I'm interested"), or from a keeper about their decision.
+    function itemRef(p, id) { return /databases/$(database)/documents/$(p)/$(id); }
+    function aboutItem(m) {
+      return m.kind == 'direct' && m.to.size() == 1 && m.get('replyTo', '') == '' && m.get('about', '') in ['board', 'market']
+        && m.get('aboutId', '') is string && m.get('aboutId', '').size() > 0 && !isMe(m.to[0])
+        && aboutPoster(m.about, get(itemRef(m.about, m.aboutId)).data, m.to[0]);
+    }
+    function aboutPoster(p, x, to0) { return x.personId == to0 && ((x.status == 'live' && communityPerson()) || keepsPart(p)); }
     // Roster messages (kind roster): a roster coordinator or Administrator tells volunteers they are on the roster or
     // reminds them to reply (ask, remind); a volunteer who can't make it tells the roster team (declined) - the
     // Administrators, Roster coordinators and chosen people listed in settings.rosterTeam.
@@ -427,12 +436,14 @@ service cloud.firestore {
         || (m.kind == 'leaders' && meIn(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', [])) && m.to.hasOnly(get(/databases/$(database)/documents/leaderBodies/$(m.groupId)).data.get('memberIds', []))));
     }
     // Roster messages are checked on their own (fewer steps: Firestore allows only so many per request)
-    function maySendTo(m) { return m.kind == 'roster' ? mayRosterNote(m) : mayWriteTo(m); }
+    // A message about a notice or listing is checked on its own as well (aboutItem): fewer steps.
+    function maySendTo(m) { return m.kind == 'roster' ? mayRosterNote(m) : (m.get('about', '') in ['board', 'market'] ? aboutItem(m) : mayWriteTo(m)); }
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
       allow create: if anyone() && isMe(request.resource.data.fromId)
-        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
-        && (request.resource.data.get('about', '') == '' || (request.resource.data.about == 'partnerApp' && request.resource.data.kind == 'office'))
+        && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'aboutId', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
+        && (request.resource.data.get('about', '') == '' || (request.resource.data.about == 'partnerApp' && request.resource.data.kind == 'office')
+          || (request.resource.data.about in ['board', 'market'] && request.resource.data.kind == 'direct'))
         && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster']
         && request.resource.data.get('replyTo', '') is string && request.resource.data.get('replyTo', '').size() <= 100
         && request.resource.data.get('some', false) is bool
@@ -774,12 +785,79 @@ service cloud.firestore {
     // Their sections are here so the people building them each fill in their own, without clashing. Closed to everyone
     // until then. Who may do what is decided in js/access.js; write the rules to match it (and tests/fake-firebase.js,
     // tests/rules.test.mjs) when the part is built.
-    // Community board (docs/COMMUNITY-PLAN.md part 2): Church Partners and staff read approved notices and pin their own;
-    // keepers (settings keepers.board; until chosen: Administrators, Pastors and settings rosterExtra) approve them.
-    match /board/{id} { allow read, write: if false; }
-    // Marketplace (docs/COMMUNITY-PLAN.md part 3): Church Partners and staff only - never attendees; keepers (settings
-    // keepers.market) approve each listing; photos in parts like the Archive.
-    match /market/{id} { allow read, write: if false; }
+    // ---------- Community board and Marketplace (js/community.js; docs/COMMUNITY-PLAN.md parts 2 and 3) ----------
+    // Church Partners and staff (never attendees) see what is live and pin their own; it waits for a keeper first. Keepers
+    // (js/access.js JOBS.keepers): the people in settings keepers.board / keepers.market once the church chooses, until then
+    // the Administrators, the Pastors and the church secretary (settings rosterExtra); a keeper is never an attendee.
+    // status: waiting -> live (approved, for 30 days), change (asked for a change), declined; done = sorted / sold.
+    function communityPerson() { return anyone() && !attendee(); }
+    function keepsPart(p) {
+      let st = churchSettings();
+      let chosen = st.get('keepers', {});
+      return anyone() && (p in chosen ? meIn(chosen.get(p, [])) && !attendee()
+        : isRole(['admin', 'pastor']) || (meIn(st.get('rosterExtra', [])) && !attendee()));
+    }
+    function in31Days(ms) { return ms is int && ms <= request.time.toMillis() + 31 * 86400000; }
+    function okCommunity(p, d) {
+      return d.title is string && d.title.size() > 0 && d.title.size() <= 80
+        && d.get('body', '') is string && d.get('body', '').size() <= (p == 'market' ? 1000 : 600)
+        && d.personId is string && d.get('name', '') is string && d.get('name', '').size() <= 60
+        && d.status in ['waiting', 'live', 'change', 'declined', 'done'] && d.endsAt is int
+        && d.get('renews', 0) is int && d.get('renews', 0) <= 2
+        && d.get('note', '') is string && d.get('note', '').size() <= 300 && d.get('by', '') is string && d.get('by', '').size() <= 60
+        && d.get('reports', []) is list && d.get('reports', []).size() <= 50
+        && (p == 'board'
+          ? d.keys().hasOnly(['kind', 'title', 'body', 'phone', 'personId', 'name', 'status', 'endsAt', 'renews', 'note', 'by', 'decidedAt', 'doneAt', 'reports', 'createdAt', 'updatedAt'])
+            && d.kind in ['need', 'offer', 'notice', 'thanks'] && d.get('phone', '') is string && d.get('phone', '').size() <= 30
+          : d.keys().hasOnly(['kind', 'title', 'body', 'personId', 'name', 'status', 'endsAt', 'renews', 'note', 'by', 'decidedAt', 'doneAt', 'reports', 'createdAt', 'updatedAt', 'price', 'offer', 'condition', 'category', 'area', 'photos', 'thumb'])
+            && d.kind in ['sale', 'wanted', 'free'] && d.get('price', 0) is number && d.get('price', 0) >= 0
+            && d.get('condition', '') is string && d.get('condition', '').size() <= 20 && d.get('category', '') is string && d.get('category', '').size() <= 20
+            && d.get('area', '') is string && d.get('area', '').size() <= 60
+            && d.get('photos', 0) is int && d.get('photos', 0) <= 3 && d.get('thumb', '') is string && d.get('thumb', '').size() <= 60000);
+    }
+    function seesItem(p, d) { return communityPerson() && (d.status in ['live', 'done'] || isMe(d.personId) || keepsPart(p)); }
+    // Cheap checks first, and the long one (okCommunity) last: Firestore allows 1000 steps per request.
+    function newItem(p, d) {
+      return d.status == 'waiting' && d.get('note', '') == '' && d.get('renews', 0) == 0 && d.get('reports', []).size() == 0
+        && in31Days(d.endsAt) && communityPerson() && isMe(d.personId) && okCommunity(p, d);
+    }
+    // The poster: a change goes back to the keepers; or sorted / sold, renewed (twice at most), or a lower price.
+    function posterChanges(p, b, d) {
+      return d.personId == b.personId && (
+        (d.status == 'waiting' && in31Days(d.endsAt) && d.get('renews', 0) == b.get('renews', 0) && d.get('reports', []).size() == 0)
+        || (b.status == 'live' && d.status == 'done' && onlyChanges(['status', 'doneAt', 'updatedAt']))
+        || (b.status == 'live' && onlyChanges(['endsAt', 'renews', 'updatedAt']) && d.get('renews', 0) == b.get('renews', 0) + 1 && in31Days(d.endsAt))
+        || (p == 'market' && b.status == 'live' && onlyChanges(['price', 'updatedAt']) && d.get('price', 0) < b.get('price', 0)))
+        && anyone() && isMe(b.personId);
+    }
+    // A keeper decides (and may clear reports); anyone who sees a live one may add themselves to its reports.
+    function othersChange(p, b, d) {
+      return (onlyChanges(['status', 'note', 'by', 'decidedAt', 'endsAt', 'reports', 'updatedAt']) && d.status in ['live', 'change', 'declined'] && in31Days(d.endsAt) && keepsPart(p))
+        || (b.status == 'live' && onlyChanges(['reports', 'updatedAt']) && d.reports.hasAll(b.get('reports', []))
+          && d.reports.removeAll(b.get('reports', [])).hasOnly(myIds()) && communityPerson());
+    }
+    function changesItem(p, b, d) { return (posterChanges(p, b, d) || othersChange(p, b, d)) && okCommunity(p, d); }
+    match /board/{id} {
+      allow read: if seesItem('board', resource.data);
+      allow create: if newItem('board', request.resource.data);
+      allow update: if changesItem('board', resource.data, request.resource.data);
+      allow delete: if (anyone() && isMe(resource.data.personId)) || keepsPart('board');
+    }
+    match /market/{id} {
+      allow read: if seesItem('market', resource.data);
+      allow create: if newItem('market', request.resource.data);
+      allow update: if changesItem('market', resource.data, request.resource.data);
+      allow delete: if (anyone() && isMe(resource.data.personId)) || keepsPart('market');
+    }
+    // A listing's photos (up to 3 small pictures), apart so the list doesn't download them: seen by whoever sees the listing;
+    // written by its poster while it waits for a keeper (new photos are checked like everything else).
+    function listingRef(id) { return /databases/$(database)/documents/market/$(id); }
+    match /marketPhotos/{id} {
+      allow read: if seesItem('market', get(listingRef(id)).data);
+      allow create, update: if anyone() && isMe(getAfter(listingRef(id)).data.personId) && getAfter(listingRef(id)).data.status == 'waiting'
+        && request.resource.data.keys().hasOnly(['data', 'updatedAt', 'createdAt']) && request.resource.data.data is list && request.resource.data.data.size() <= 3;
+      allow delete: if keepsPart('market') || (anyone() && exists(listingRef(id)) && isMe(get(listingRef(id)).data.personId));
+    }
     // Subscription (js/mod-support.js; tasks 061, 067): the church's record of what it has paid, written by the
     // Church & Trellis office only. Today the Subscription page keeps its choices in settings/church.
     match /subscription/{doc} { allow read, write: if false; }

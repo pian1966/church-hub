@@ -177,7 +177,7 @@ function makeSampleData() {
     version: 1,
     settings: {
       churchName: 'Christ Church Howick', demo: true, dataVersion: 5,
-      modules: { people: true, rosters: true, leave: true, privacy: true, import: true, settings: true },
+      modules: { people: true, rosters: true, leave: true, privacy: true, import: true, settings: true, board: true, market: true },
       informationOfficer: { name: '[Information Officer]', email: '[email]', phone: '[phone]', registered: false, deputy: '' },
       retentionMonths: 24,
       privacyNotice: 'Christ Church Howick collects your personal information to keep church records, care for you, organise serving rosters and keep in touch. We only use it for these purposes, keep it secure, and store it in South Africa. You may ask to see, correct or delete your information at any time by contacting our Information Officer.'
@@ -189,8 +189,28 @@ function makeSampleData() {
     // Messages (js/messages.js): one message group and a message to the staff, so the Messages page has something to show
     msgGroups: [{ id: 'mg1', name: 'Welcome team', leaderIds: ['p17'], memberIds: ['p17', 'p14', 'p20'] }],
     messages: [{ id: 'ms1', kind: 'staff', groupId: '', audience: 'Staff', title: 'Staff meeting moved', body: 'This week’s staff meeting is on Thursday at 9:00 instead of Tuesday. Tea and rusks in the hall.',
-      fromId: 'p03', fromName: 'Pieter van Wyk', to: ['p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08'], readBy: ['p03', 'p05'], createdAt: off(-1) + ' 08:30', updatedAt: off(-1) + ' 08:30' }]
+      fromId: 'p03', fromName: 'Pieter van Wyk', to: ['p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08'], readBy: ['p03', 'p05'], createdAt: off(-1) + ' 08:30', updatedAt: off(-1) + ' 08:30' }],
+    // Community board and Marketplace (js/community.js): a few made-up notices and listings, and one of each waiting for a keeper
+    board: communitySample('board'), market: communitySample('market')
   };
+  function communitySample(part) {
+    var D = 864e5, t = Date.now(), at = function (d) { return off(d) + ' 09:00'; };
+    var item = function (id, d, x) { return Object.assign({ id: id, body: '', personId: '', name: '', status: 'live', endsAt: t + (30 + d) * D, renews: 0, note: '', by: x.status === 'waiting' ? '' : 'Linda', decidedAt: x.status === 'waiting' ? 0 : t + d * D, doneAt: 0, reports: [], createdAt: at(d), updatedAt: at(d) }, x); };
+    if (part === 'board') return [
+      item('bn1', -6, { kind: 'need', title: 'I need a plumber', body: 'Our geyser is leaking. Can anyone recommend a reliable plumber in Howick?', personId: 'p14', name: 'Tim', phone: '' }),
+      item('bn2', -4, { kind: 'offer', title: 'Lifts to the 10am from Hilton', body: 'I drive past Hilton College every Sunday and have three empty seats.', personId: 'p17', name: 'Megan', phone: '' }),
+      item('bn3', -2, { kind: 'thanks', title: 'Thank you for the meals!', body: 'To everyone who brought meals after our operation – we felt so loved. Thank you.', personId: 'p15', name: 'Clare', phone: '' }),
+      item('bn4', -1, { kind: 'notice', title: 'Lost: a blue umbrella', body: 'Left in the hall after the 10am service last Sunday.', personId: 'p20', name: 'Kavi', phone: '' }),
+      item('bn5', 0, { kind: 'offer', title: 'Free to a good home: kittens', body: 'Two playful kittens, 10 weeks old, litter-trained.', personId: 'p19', name: 'Sam', phone: '', status: 'waiting', endsAt: t + 30 * D })
+    ];
+    return [
+      item('mk1', -5, { kind: 'sale', title: 'Pine bookshelf', body: 'Five shelves, 1.8 m tall. Collect in Merrivale.', personId: 'p27', name: 'Ruth', price: 450, offer: true, condition: 'good', category: 'furniture', area: 'Merrivale', photos: 0, thumb: '' }),
+      item('mk2', -3, { kind: 'free', title: 'Baby clothes, 0–6 months', body: 'A big bag of clean baby clothes – boys and girls.', personId: 'p18', name: 'David', price: 0, offer: false, condition: 'good', category: 'children', area: 'Howick', photos: 0, thumb: '' }),
+      item('mk3', -2, { kind: 'wanted', title: 'Bicycle for a 10-year-old', body: 'Looking for a second-hand bicycle for our son.', personId: 'p25', name: 'Faith', price: 800, offer: false, condition: 'good', category: 'children', area: 'Hilton', photos: 0, thumb: '' }),
+      item('mk4', -1, { kind: 'sale', title: 'Children’s Bible storybooks', body: 'Set of 6, hardly read.', personId: 'p23', name: 'Johan', price: 120, offer: false, condition: 'likenew', category: 'books', area: 'Howick', photos: 0, thumb: '' }),
+      item('mk5', 0, { kind: 'sale', title: 'Electric kettle', body: '1.7 litre, works perfectly.', personId: 'p09', name: 'Anja', price: 150, offer: false, condition: 'good', category: 'household', area: 'Howick', photos: 0, thumb: '', status: 'waiting', endsAt: t + 30 * D })
+    ];
+  }
 }
 
 /* Made-up churches for the demo's prayer circle and "pay for another church" (js/mod-support.js). No real churches.

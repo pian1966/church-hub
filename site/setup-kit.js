@@ -432,6 +432,16 @@ var SetupKit = (function () {
     { id: 'emails', group: 'talk', title: 'Birthday, anniversary and welcome emails', mods: [], since: '0.1',
       what: 'Warm emails that go out on the right day, in the church’s own words.',
       how: function (c) { return ol([open(c.app('settings/emails'), 'Open Email templates') + ' and edit each email.']); } },
+    { id: 'board', group: 'talk', title: 'The Community board', mods: ['board'], since: '0.97',
+      what: 'A corkboard of sticky notes where people ask for help, offer it and say thank you – a keeper checks each one first, and the latest three show on everyone’s Home page.',
+      how: function (c) { return ol([open(c.app('settings/apps'), 'Open Settings → Apps') + ' and switch on ' + ui('Community board') + '.',
+        open(c.app('board'), 'Open the Community board') + ' → ' + ui('More') + ' → ' + ui('Keepers…') + ' – the pastors, the Administrators and the church secretary check notices until you choose others.',
+        ui('More') + ' → ' + ui('The note on the board…') + ' – say, in your own words, that the church doesn’t vouch for offers on the board.']); } },
+    { id: 'market', group: 'talk', title: 'The Marketplace', mods: ['market'], since: '0.97',
+      what: 'Buy, sell and give away within the church, for Church Partners only. Nothing shows until a keeper approves it.',
+      how: function (c) { return ol([open(c.app('settings/apps'), 'Open Settings → Apps') + ' and switch on ' + ui('Marketplace') + '.',
+        open(c.app('market'), 'Open the Marketplace') + ' → ' + ui('More') + ' → ' + ui('Marketplace rules…') + ' – read the rules everyone accepts first, and change them if you like.',
+        ui('More') + ' → ' + ui('Keepers…') + ' – choose who checks listings (it can be the same people as the board’s).']); } },
     { id: 'leave', group: 'office', title: 'Staff leave', mods: ['leave'], since: '0.1',
       what: 'Staff ask for leave, it is approved in one tap, and rosters know who is away.',
       how: function (c) { return ol([open(c.app('leave'), 'Open Leave') + ' and check the leave rules.', 'Coming from Leave Manager? ' + open(c.app('import/leave'), 'Import its records') + '.']); } },
@@ -456,7 +466,7 @@ var SetupKit = (function () {
     { id: 'share', group: 'extras', title: 'Tell the church', mods: [], since: '0.1',
       what: 'Share the church’s address; people can add it to their phone’s home screen like an app.',
       how: function (c) { return (c.site ? '<p>' + copy(c.site) + '</p>' : '') + '<div class="qr" data-qr="' + esc(c.site || '') + '"></div>'; } },
-    { id: 'coffee', group: 'extras', title: 'A coffee a month (or a prayer)', mods: ['support'], since: '0.97',
+    { id: 'coffee', group: 'extras', title: 'A coffee a month (or a prayer)', mods: ['support'], since: '0.98',
       what: 'Church & Trellis costs one cup of coffee a month for your whole church, at a suggested local price – paid through PayFast by card, Instant EFT or SnapScan – or nothing, if your church promises to pray each month for another church. A hard month? A church that gives monthly can take a payment holiday whenever it needs one, no questions asked.',
       how: function (c) { return ol([open(c.app('support'), 'Open Support Church & Trellis') + ' and choose what suits your church.']); } },
     { id: 'prayercard', group: 'extras', title: 'Your church’s prayer card (every church has one)', mods: ['support'], since: '0.95',
@@ -481,18 +491,14 @@ var SetupKit = (function () {
   /** App parts with nothing for an Administrator to set up (and why) – the test accepts these. */
   var NOT_SETUP = {
     me: 'Each member’s own page – covered by Church Partners.',
-    import: 'Covered by Bring people across from Elvanto.',
-    board: 'Not built yet – a placeholder (see COMING). When it is built, give it a GROW item instead.',
-    market: 'Not built yet – a placeholder (see COMING). When it is built, give it a GROW item instead.'
+    import: 'Covered by Bring people across from Elvanto.'
   };
   /** Not in Church & Trellis yet – shown so the church knows what is coming. Move an item to GROW when it is built. */
   var COMING = [
     { title: 'Set up in about a minute', what: 'One address for every church, and a setup that makes the database for you – no Firebase or GitHub screens.' },
     { title: 'The Android app for every church', what: 'Today the Android app is for one church; soon any church can use it.' },
     { title: 'A care board', what: 'Who needs a visit, sent to the right Care Group leaders, so no one falls through the cracks.' },
-    { title: 'Sunday’s Bible passage', what: 'The passage being preached, on the service outline.' },
-    { title: 'A community board', what: 'A corkboard where people pin notices and ask for or offer help – each one checked by a keeper first.' },
-    { title: 'A marketplace', what: 'Buy, sell and give away within the church, for Church Partners only – every listing checked by a keeper first.' }
+    { title: 'Sunday’s Bible passage', what: 'The passage being preached, on the service outline.' }
   ];
 
   /* ---------- progress ---------- */

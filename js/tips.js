@@ -17,10 +17,11 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.101';
+  var NEWS_FOR = '0.102';
   var NEWS = [
     { date: '2026-11-20', who: ['admin'], text: TX('New: Events. Switch it on under Settings → Apps. Put events up, see who’s coming and write to them all; people sign up with one tap and are reminded 3 days and 1 day before – in Messages, and by email if they like.') },
     { date: '2026-11-20', who: ['everyone'], app: 'events', text: TX('Events are here: see what’s coming up, tap I’ll be there, and we’ll remind you 3 days and 1 day before.') },
+    { date: '2026-11-20', who: ['rosters', 'admin', 'pastor'], text: TX("Print the roster a term at a time on A4: each service gets its own page, showing only the positions with names on them. Rosters → More → Print the roster (Pastors: on My serving). Choose “Save as PDF” to make a PDF.") },
     { date: '2026-11-19', who: ['admin'], text: TX('Settings: who can see what, Attendees and What Pastors can do are now one page, Access and roles – a card for each kind of person says what they see and can do, with View as one tap away. Nothing about anyone’s access has changed.') },
     { date: '2026-11-19', who: ['lifelead'], app: 'life', text: TX('Midweek Group leaders: post this week’s meeting link and notes under Groups → Midweek Groups. Your group gets them in Messages, with Join the meeting and Open the notes – now or on the day.') },
     { date: '2026-11-19', who: ['everyone'], app: 'life', text: TX('On the day of your Midweek Group, Home shows a card with Join the meeting and Open the notes – it becomes Join now 15 minutes before.') },

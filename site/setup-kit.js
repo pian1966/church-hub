@@ -427,7 +427,7 @@ var SetupKit = (function () {
       how: function (c) { return ol([open(c.app('rosters/teams'), 'Open Rosters → Teams') + ' and choose the starter teams, or add your own.', 'Put the departments in the order of your service with the ↑ ↓ arrows beside each name (the roster follows that order).']); } },
     { id: 'rosters', group: 'serving', title: 'Make the first roster', mods: ['rosters'], since: '0.1',
       what: 'Church & Trellis fills the roster fairly, keeps families together and asks volunteers in Messages.',
-      how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.']); } },
+      how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.', 'To put it up on the noticeboard: ' + ui('More') + ' → ' + ui('Print the roster') + '. Choose the term and the services – each service gets its own A4 page with only the positions it uses. Choose “Save as PDF” as the printer to make a PDF.']); } },
     { id: 'msggroups', group: 'talk', title: 'Message groups', mods: ['messages'], since: '0.1',
       what: 'Write to a care group, the staff or any list of people inside Church & Trellis – no data costs for SMS.',
       how: function (c) { return ol([open(c.app('messages/groups'), 'Open Messages → Groups') + ' and make the groups you write to often.', open(c.app('messages/send'), 'Send a first message') + ' to the staff.']); } },
@@ -444,7 +444,7 @@ var SetupKit = (function () {
       how: function (c) { return ol([open(c.app('settings/apps'), 'Open Settings → Apps') + ' and switch on ' + ui('Marketplace') + '.',
         open(c.app('market'), 'Open the Marketplace') + ' → ' + ui('More') + ' → ' + ui('Marketplace rules…') + ' – read the rules everyone accepts first, and change them if you like.',
         ui('More') + ' → ' + ui('Keepers…') + ' – choose who checks listings (it can be the same people as the board’s).']); } },
-    { id: 'events', group: 'talk', title: 'Events and sign-ups', mods: ['events'], since: '0.101',
+    { id: 'events', group: 'talk', title: 'Events and sign-ups', mods: ['events'], since: '0.102',
       what: 'Put church events up; people tap I’ll be there and are reminded 3 days and 1 day before – in Messages, and by email if they ask.',
       how: function (c) { return ol([open(c.app('settings/apps'), 'Open Settings → Apps') + ' and switch on ' + ui('Events') + '.',
         open(c.app('events'), 'Open Events') + ' → ' + ui('More') + ' → ' + ui('Event organisers…') + ' – the pastors, the Administrators and the church secretary put events up until you choose others.',
@@ -504,7 +504,7 @@ var SetupKit = (function () {
   var COMING = [
     { title: 'Set up in about a minute', what: 'One address for every church, and a setup that makes the database for you – no Firebase or GitHub screens.' },
     { title: 'The Android app for every church', what: 'Today the Android app is for one church; soon any church can use it.' },
-    { title: 'A care board', what: 'Who needs a visit, sent to the right Care Group leaders, so no one falls through the cracks.' },
+    { title: 'A care board', what: 'Who needs a visit – including who is seriously ill in hospital or at home – sent to the right Care Group leaders, the church secretary and the pastors, so no one falls through the cracks.' },
     { title: 'Sunday’s Bible passage', what: 'The passage being preached, on the service outline.' }
   ];
 

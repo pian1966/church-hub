@@ -272,9 +272,10 @@ async function icon(Comp, color, px = 256) {
     { text: 'Families and friends serve together', options: { bullet: true, breakLine: true } },
     { text: 'Days away and staff leave are skipped', options: { bullet: true, breakLine: true } },
     { text: 'Communion roles only on communion Sundays', options: { bullet: true, breakLine: true } },
-    { text: 'Change a name in one tap – they’re told', options: { bullet: true } }
-  ], { x: 0.6, y: 1.6, w: 3.2, h: 4.8, fontSize: 16, paraSpaceAfter: 12 });
-  s.addNotes('[Clip plays] Fill the gaps for me. Church & Trellis suggests who serves where, shares the turns fairly, keeps families together, skips people who are away, and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages.');
+    { text: 'Change a name in one tap – they’re told', options: { bullet: true, breakLine: true } },
+    { text: 'Print a term on A4 – a page per service', options: { bullet: true } }
+  ], { x: 0.6, y: 1.6, w: 3.2, h: 4.8, fontSize: 16, paraSpaceAfter: 10 });
+  s.addNotes('[Clip plays] Fill the gaps for me. Church & Trellis suggests who serves where, shares the turns fairly, keeps families together, skips people who are away, and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages. For the noticeboard, print a whole term on A4 – each service on its own page, showing only the positions that service uses.');
 
   // ========== 12. Volunteers reply (clip) ==========
   s = content('What it does', 'Volunteers reply from their phone');

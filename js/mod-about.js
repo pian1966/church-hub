@@ -213,7 +213,7 @@
   function broFill(doc) {
     var st = Store.settings() || {}, link = (location.origin + location.pathname.replace(/index\.html$/, '')).replace(/^https?:\/\//, '').replace(/\/+$/, '');
     doc.querySelectorAll('[data-fill="church"]').forEach(function (e) { if (st.churchName) e.textContent = st.churchName; });
-    doc.querySelectorAll('[data-fill="link"]').forEach(function (e) { e.textContent = link; });
+    doc.querySelectorAll('[data-fill="link"]').forEach(function (e) { e.innerHTML = BrochureKit.linkHtml(link); });
     doc.querySelectorAll('[data-fill="origin"]').forEach(function (e) { e.textContent = I18n.t('Every church, however small, deserves great church software.'); });
   }
   function broDesign(doc, d) {
@@ -225,7 +225,9 @@
   }
   /** Warnings under the buttons: text that no longer fits its panel, and edits to wording Church & Trellis has since changed. */
   function broCheck(doc, stale) {
-    var over = [].slice.call(doc.querySelectorAll('.sheet:not([hidden]) .pn')).filter(function (p) { var o = p.scrollHeight > p.clientHeight + 1; p.classList.toggle('bro-over', o); return o; });
+    // The brochure first shrinks a panel a little if it needs to, and says which are still too long
+    var still = doc.defaultView && doc.defaultView.fitPanels ? doc.defaultView.fitPanels() : null;
+    var over = [].slice.call(doc.querySelectorAll('.sheet:not([hidden]) .pn')).filter(function (p) { var o = still ? still.indexOf(p) >= 0 : p.scrollHeight > p.clientHeight + 1; p.classList.toggle('bro-over', o); return o; });
     var n = document.getElementById('bro-note'); if (!n) return;
     n.innerHTML = (over.length ? '<span class="note bad" style="display:block;margin:0 0 6px">' + (over.length === 1 ? 'One panel has' : over.length + ' panels have') + ' more than fits on its third of the page (marked in red when editing): shorten its text or hide a block.</span>' : '') +
       (stale && stale.length ? '<span class="note warn" style="display:block;margin:0">' + stale.length + ' of your changes ' + (stale.length === 1 ? 'is' : 'are') + ' to wording Church & Trellis has since changed, so ' + (stale.length === 1 ? 'it isn’t' : 'they aren’t') + ' shown: ' +

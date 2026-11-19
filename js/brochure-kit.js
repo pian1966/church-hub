@@ -95,6 +95,14 @@ var BrochureKit = (function () {
       }));
   }
 
-  return { DEFAULT: DEFAULT, FONTS: FONTS, colours: colours, font: font, fontHref: fontHref, norm: norm, clean: clean, tidy: tidy, changed: changed, contrast: function (a, b) { return contrast(rgb(a), rgb(b)); } };
+  /** A web address for the brochure, split after each "/" into pieces that keep together (class "keep"), so a long address
+   *  breaks neatly at a slash ("pian1966.github.io/" + "church-hub") instead of inside a word ("church-" + "hub"). */
+  function linkHtml(text) {
+    return (String(text || '').match(/[^\/]*\/|[^\/]+$/g) || []).map(function (part) {
+      return '<span class="keep">' + part.replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }) + '</span>';
+    }).join('');
+  }
+
+  return { DEFAULT: DEFAULT, linkHtml: linkHtml, FONTS: FONTS, colours: colours, font: font, fontHref: fontHref, norm: norm, clean: clean, tidy: tidy, changed: changed, contrast: function (a, b) { return contrast(rgb(a), rgb(b)); } };
 })();
 if (typeof module !== 'undefined') module.exports = BrochureKit;

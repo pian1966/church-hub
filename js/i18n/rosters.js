@@ -2,6 +2,10 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Services side by side", "Dienste langs mekaar", "Izinkonzo eceleni kwazo", "Iinkonzo ecaleni kwazo"],
+    ["Side by side:", "Langs mekaar:", "Eceleni kwazo:", "Ecaleni kwazo:"],
+    ["Show {n} service at a time", "Wys {n} diens op ’n slag", "Bonisa inkonzo engu-{n} ngesikhathi", "Bonisa inkonzo e-{n} ngexesha"],
+    ["Show {n} services at a time", "Wys {n} dienste op ’n slag", "Bonisa izinkonzo ezingu-{n} ngesikhathi", "Bonisa iinkonzo ezi-{n} ngexesha"],
     ["Every service is hidden. Tap one above to show it again.", "Elke diens is versteek. Tik op een hierbo om dit weer te wys.", "Zonke izinkonzo zifihliwe. Thepha eyodwa ngenhla ukuze uyibonise futhi.", "Zonke iinkonzo zifihliwe. Cofa enye ngentla ukuze uyibonise kwakhona."],
     ["Hide the {service} for now", "Versteek die {service} vir eers", "Fihla i-{service} okwamanje", "Fihla i-{service} okwangoku"],
     ["Show the {service} again", "Wys die {service} weer", "Bonisa i-{service} futhi", "Bonisa i-{service} kwakhona"],

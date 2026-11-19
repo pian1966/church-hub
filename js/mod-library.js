@@ -911,9 +911,9 @@
   function libsDialog() {
     var ids = ((S.settings() || {}).librarianIds || []).slice(), finder = window.CareUI && CareUI.finder;
     H.modal(H.dialogHead(T('Librarians'), T('Librarians can manage the library. Administrators always can.')) + '<div class="dlg-body">' +
-      (ids.length ? '<div class="list">' + ids.map(function (id) {
+      (ids.length ? '<div class="list">' + ids.slice().sort(function (a, b) { return H.byName(S.get('people', a), S.get('people', b)); }).map(function (id) {
         var p = S.get('people', id), name = p ? H.name(p) : T('Someone');
-        return '<div class="item">' + (p ? H.avatar(p, 32) : '') + '<span class="grow"><b>' + esc(name) + '</b></span><button class="icon-btn ghost" data-act="library:libout" data-id="' + esc(id) + '" aria-label="' + esc(T('Take {name} out', { name: name })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
+        return '<div class="item">' + (p ? H.avatar(p, 32) : '') + '<span class="grow">' + (p ? '<a class="name-chip" href="#/people/p/' + esc(p.id) + '" data-act="hub:close">' + esc(H.name(p)) + '</a>' : '<b>' + esc(name) + '</b>') + '</span><button class="icon-btn ghost" data-act="library:libout" data-id="' + esc(id) + '" aria-label="' + esc(T('Take {name} out', { name: name })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
       }).join('') + '</div>' : '<p class="muted small">' + T('No one yet.') + '</p>') +
       (finder ? '<div style="margin-top:10px">' + finder('lib-libs', everyone().filter(function (p) { return ids.indexOf(p.id) < 0 && p.familyRole !== 'child'; }), 'library:libadd', {}, libNote, T('Add someone: type part of their name')) + '</div>' : '') + '</div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Librarians'));

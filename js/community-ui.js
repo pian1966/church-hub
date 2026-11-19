@@ -88,9 +88,9 @@ var CommunityUI = (function () {
   function keepersDialog(part) {
     if (!manager()) return;
     var ids = keeperIds(part), chosen = Array.isArray(((S.settings() || {}).keepers || {})[part]);
-    var rows = ids.map(function (id) {
-      var p = S.get('people', id); if (!p) return '';
-      return '<div class="item">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc(H.personRole(p)) + '</small></span>' +
+    var rows = ids.map(function (id) { return S.get('people', id); }).filter(Boolean).sort(H.byName).map(function (p) {
+      var id = p.id;
+      return '<div class="item">' + H.avatar(p, 32) + '<span class="grow">' + '<a class="name-chip" href="#/people/p/' + esc(p.id) + '" data-act="hub:close">' + esc(H.name(p)) + '</a>' + '<small>' + esc(H.personRole(p)) + '</small></span>' +
         '<button class="icon-btn ghost" data-act="' + part + ':keeperout" data-id="' + esc(id) + '" aria-label="' + esc(T('Take {name} out', { name: H.name(p) })) + '">' + H.icon(H.ICON.x, 16) + '</button></div>';
     }).join('');
     var pick = S.find('people', function (p) { return alive(p) && ids.indexOf(p.id) < 0 && (p.category === 'Church Partner' || p.category === 'Staff' || (p.appRole && p.appRole !== 'member' && p.appRole !== 'none')); });

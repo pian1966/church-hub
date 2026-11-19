@@ -1455,3 +1455,4 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 .st-home .btns { margin-top: 10px; }
 .st-open { margin: 6px 0 10px; }
 #st-body small.ok { color: #1F8A4C; } #st-body small.bad { color: var(--bad); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }   /* names in a serving group, each opening the person's page */

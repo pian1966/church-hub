@@ -181,6 +181,24 @@ versions are asked to update). It adds `window.ChurchHubApp`; when present,
 the link from the email (Google's sign-in pop-up and email links can't open inside an app). Members open on `#/me`;
 `window.churchHubBack()` lets the back button close a dialog first.
 
+## Who can see what – one place (`js/access.js`; tested by `tests/access.test.js`)
+Every list that says who may see or do what is kept in `js/access.js` (`Access`), and the rest of the app reads it:
+the kinds of access (`ROLES`, `RESTRICTED`; `Hub.ROLES` is the same object), What Pastors can do (`ABILITIES`, shown as
+`Hub.PASTOR_CAN`; `pastorTicks` picks the Senior Pastor's or the other Pastors' ticks for `Hub.can` and for `Store`'s
+`roles/{email}.can`), what attendees may do (`ATTENDEE_ROWS`, `attendeeCan`; `Msg.attendeeCan` is the same function), the
+kinds of access Settings → Who can see what chooses for (`TIERS`, `seesCare`) and Settings → Apps (`APPS`, `apps()`).
+`firestore.rules` and `tests/fake-firebase.js` can't load it: `tests/access.test.js` checks that their lists of roles,
+abilities and attendee choices still match.
+
+**New parts plug in here** (`PARTS`): each names its permissions `<part>.<what>` and who has each – kinds of person
+(`admin`, `pastor`, `rosters`, `kids`, `partner` = Church Partner access, `attendee`), a Pastor's tick (`ability`), or a
+**job** in that part (`JOBS`, e.g. `keepers`: chosen people, kept in `settings.keepers.<part>`; until chosen, the
+Administrators, the Pastors and `settings.rosterExtra` – decided 19 Nov 2026). `Hub.can('board.keep')` then answers by
+itself; no part keeps its own access settings. A part marked `soon` is a placeholder: its module (`js/mod-board.js`,
+`js/mod-market.js`), permissions, closed `firestore.rules` section and words are ready, but `Hub` never opens it and
+Settings → Apps doesn't offer it. Take `soon` off when it is built (and write its rules to match `PARTS`).
+Still to come (ROADMAP): one Settings page (*Access and roles*) drawn from this file in place of the separate pages.
+
 ## Contact details by role (Settings → Who can see what)
 The page has three panels (0.44): *What each kind of access can do* (with who has it), *Other people's contact details* (a grid:
 rows = mobile, email, address, spouse; columns = Basic access, Roster coordinator, Children's ministry) and *Care groups* (a grid of
@@ -770,7 +788,7 @@ borrowed" on the Me page; `LibraryUI.roleChip()` shows Librarian there when the 
 
 ## What Pastors can do (Settings)
 `settings.pastorCan` lists the Administrator abilities Pastors have: settings, access, people, idnumbers, leave, rosters,
-privacy, import, words (`Hub.PASTOR_CAN` names them and the permissions each adds, e.g. leave → `leave.manage`).
+privacy, import, words (`Access.ABILITIES` in `js/access.js`, shown as `Hub.PASTOR_CAN`, names them and the permissions each adds, e.g. leave → `leave.manage`).
 When an Administrator saves it, `Store.syncPastors()` copies the list onto every Pastor's access-list entry
 (`roles/{email}.can`), and `syncRole` keeps it there when someone becomes a Pastor. The rules check that copy:
 `may('leave')` is true for Administrators and for Pastors with the tick. A Pastor with "settings" can change every setting

@@ -22,7 +22,7 @@
   function card() { return st().prayerCard || {}; }
   function country() { var c = Countries.church(st()); return c; }
   function selfId() { var cfg = window.CHURCH_HUB_FIREBASE || {}; return st().demo || !S.isLive() ? 'demo-self' : (cfg.projectId || 'church'); }
-  function admin() { return H.can('settings.manage') || H.can('*'); }
+  function admin() { return H.can('support.manage'); }   // js/access.js: Administrators, and Pastors with the "settings" tick
   function pledged() { return !!(sup().pledge && sup().pledge.at); }
   function inCircle() { return C.showsCards(sup()); }
   function week() { return C.weekKey(H.today()); }
@@ -411,7 +411,7 @@
   function TN1(n) { return n === 1 ? T('1 coffee') : T('{n} coffees', { n: n }); }
 
   H.register({
-    id: 'support', name: 'Subscription', desc: 'A coffee a month keeps Church & Trellis going', tint: '#8A5428', roles: ['admin'], perm: 'settings.manage',
+    id: 'support', name: 'Subscription', desc: 'A coffee a month keeps Church & Trellis going', tint: '#8A5428', roles: ['admin'], perm: 'support.manage',
     icon: 'M4 8h13v5a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6zM17 9h1.5a2.5 2.5 0 0 1 0 5H17M7 2v3M11 2v3',
     stat: function () { return pledged() ? T('In the prayer circle') : T('One coffee a month'); },
     render: function (parts) {

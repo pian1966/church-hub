@@ -32,11 +32,10 @@ var Msg = (function () {
   var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster'];
   var ROSTER_NOTES = ['ask', 'remind', 'declined', 'off'], MAX_TURNS = 100;
   var MAX_BODY = 4000, MAX_TITLE = 120;
-  /** What attendees may do when the church hasn't chosen (Settings → Attendees): see Church Partners' names, and write to
-   *  the Office, the ministers and their Midweek Group leaders. Also offered: 'directory' (the church directory, as Church
-   *  Partners see it) and 'reply' (reply to any message). */
-  var ATTENDEE_CAN = ['names', 'write'], ATTENDEE_OPTIONS = ['names', 'directory', 'write', 'reply'];
-  function attendeeCan(settings) { var c = (settings || {}).attendeeCan; return Array.isArray(c) ? c.filter(function (x) { return ATTENDEE_OPTIONS.indexOf(x) >= 0; }) : ATTENDEE_CAN.slice(); }
+  /** What attendees may do (Settings → Attendees): the choices and the default are kept with the rest of "who can see what"
+   *  in js/access.js. */
+  var A = typeof Access !== 'undefined' ? Access : require('./access.js');
+  var ATTENDEE_CAN = A.ATTENDEE_CAN, ATTENDEE_OPTIONS = A.ATTENDEE_OPTIONS, attendeeCan = A.attendeeCan;
   /** Church Partner access: Basic access plus being a Church Partner (or on the staff) – given by the category, automatically. */
   function partnerLevel(p) { return !!p && (p.category === 'Church Partner' || p.category === 'Staff'); }
   /** May this person write new messages / reply? who = { manager, attendee, can: [what attendees may do] } */

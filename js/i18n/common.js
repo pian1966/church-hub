@@ -540,4 +540,7 @@ I18n.rows([
     ["Choose a PIN that isn’t easy to guess (not 123456 or 111111).", "Kies ’n PIN wat nie maklik is om te raai nie (nie 123456 of 111111 nie).", "Khetha i-PIN okungelula ukuyiqagela (hhayi u-123456 noma u-111111).", "Khetha i-PIN engalulanga ukuqikelelwa (hayi u-123456 okanye u-111111)."],
     ["The two PINs aren’t the same.", "Die twee PIN’s is nie dieselfde nie.", "Ama-PIN amabili awafani.", "Ii-PIN ezimbini azifani."],
     ["Type your number and your PIN.", "Tik jou nommer en jou PIN.", "Thayipha inombolo yakho ne-PIN yakho.", "Chwetheza inombolo yakho ne-PIN yakho."],
+    ["Coming soon", "Kom binnekort", "Kuyeza maduze", "Kuyeza kungekudala"],
+    ["Keepers", "Toesighouers", "Abaqaphi", "Abajongi"],
+    ["Keeper", "Toesighouer", "Umqaphi", "Umjongi"],
 ]);

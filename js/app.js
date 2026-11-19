@@ -16,17 +16,9 @@ var Hub = (function () {
   var modules = [], user = null, root = null, T = I18n.t, TN = I18n.tn;
 
   /* ---------- roles and permissions (UI now; database security rules when on Firebase) ---------- */
-  var ROLES = {
-    admin: { label: 'Administrator', perms: ['*'] },          // everything except the two restricted kinds of notes below
-    pastor: { label: 'Pastor', perms: ['people.view', 'people.edit', 'notes', 'children', 'rosters.view', 'care.view'] },
-    rosters: { label: 'Roster coordinator', perms: ['people.basic', 'rosters.manage', 'rosters.view'] },
-    kids: { label: 'Children’s ministry', perms: ['people.basic', 'children', 'medical', 'rosters.view'] },
-    member: { label: 'Basic access', perms: [] },
-    none: { label: 'No access (can’t sign in)', perms: [] }
-  };
-  /** POPIA: children's medical notes are for Children's ministry only and pastoral notes for Pastors only –
-   *  not even Administrators see them (the database rules enforce the same). */
-  var RESTRICTED = ['medical', 'notes'];
+  // The kinds of access, what each may do, and the parts' own permissions are kept in one place: js/access.js.
+  var ROLES = Access.ROLES;
+  var RESTRICTED = Access.RESTRICTED;
   function roleLabel(r) {
     if (r === 'admin' && typeof Wording !== 'undefined') return Wording.words(Store.settings() || {}).admin[0];
     return T((ROLES[r] || ROLES.member).label);
@@ -80,27 +72,16 @@ var Hub = (function () {
   }
   function viewLabel(r) { return r === 'carer' ? T('Carer') + ' (' + roleLabel('member') + ')' : r === 'member' ? partnerAccess() : r === 'attendee' ? T('Attendee') + ' (' + roleLabel('member') + ')' : roleLabel(r); }
   function viewingAs() { var g = Store.previewCare(); return g ? T('Carer') + ' · ' + ((Store.get('careGroups', g) || {}).name || '') : viewLabel(Store.preview() || myRole()); }
-  /** What Pastors can do (Settings → What Pastors can do): each tick, the permissions it adds. The database rules check the same
-   *  ticks (may('…') in firestore.rules), copied onto each Pastor's access-list entry. */
+  /** What Pastors can do (Settings → What Pastors can do): the ticks and what each allows are in js/access.js (ABILITIES).
+   *  The database rules check the same ticks (may('…') in firestore.rules), copied onto each Pastor's access-list entry. */
   var TX = function (x) { return x; };   // a text kept in a list, translated where it is shown (the language test checks it)
-  var PASTOR_CAN = [
-    ['settings', TX('Change the church’s settings'), ['settings.manage']],
-    ['access', TX('Give and take away app access (Basic access, Roster coordinator, Children’s ministry)'), ['access.manage']],
-    ['people', TX('Check changes members ask for, move people to the Bin and delete their information'), ['people.delete', 'people.changes']],
-    ['idnumbers', TX('See and change ID numbers'), ['idnumbers']],
-    ['leave', TX('Approve leave, book leave for others and change the leave settings'), ['leave.manage']],
-    ['rosters', TX('Manage rosters, teams and services'), ['rosters.manage']],
-    ['privacy', TX('Privacy: requests, breaches, the audit log, exporting someone’s data'), ['privacy.manage']],
-    ['import', TX('Import from Elvanto and Leave Manager, and the Elvanto robot'), ['import.manage']],
-    ['words', TX('Approve better wording in every language'), ['words.manage']]
-  ];
+  var PASTOR_CAN = Access.ABILITIES;
   /** The Senior Pastor's ticks (settings.seniorCan) or the other Pastors' (settings.pastorCan). "View as Pastor" shows the other Pastors'. */
-  function pastorPerms() {
-    var st = Store.settings() || {}, me = user && !Store.preview() ? Store.get('people', user.id) || user : null;
-    var on = (isSenior(me) ? st.seniorCan : st.pastorCan) || [], out = [];
-    PASTOR_CAN.forEach(function (a) { if (on.indexOf(a[0]) >= 0) out = out.concat(a[2]); });
-    return out;
+  function pastorTicks() {
+    var me = user && !Store.preview() ? Store.get('people', user.id) || user : null;
+    return Access.pastorTicks(Store.settings(), isSenior(me) ? me.id : '');
   }
+  function pastorPerms() { return Access.abilityPerms(pastorTicks()); }
   function can(perm) {
     if (!user) return false;
     var p = (ROLES[myRole()] || ROLES.member).perms;
@@ -108,10 +89,10 @@ var Hub = (function () {
     // Settings → Who can see what: Roster coordinators, Children's ministry and Church Partners may see the care groups
     // (settings.seeCare; Church Partners only the people in the church directory). Church Partners also get the Care groups
     // page for their own group when "Their own group: see all its members" is ticked (settings.seeCareOwn).
-    if (perm === 'care.view' && !Store.previewCare()) {
-      var cst = Store.settings() || {};
-      if ((cst.seeCare || []).indexOf(myRole()) >= 0 || (myRole() === 'member' && cst.seeCareOwn !== false)) return true;
-    }
+    if (perm === 'care.view' && !Store.previewCare() && Access.seesCare(Store.settings(), myRole())) return true;
+    // A part's own permissions (js/access.js PARTS: e.g. 'board.keep'): by kind of person, a Pastor's tick, or a job
+    if (Access.isPartPerm(perm)) return Access.allows(perm, { kind: Access.kindOf(myRole(), attendee()), ticks: myRole() === 'pastor' ? pastorTicks() : [],
+      id: Store.preview() ? '' : user.id, settings: Store.settings(), people: Store.find('people', function (x) { return x.active !== false && !x.binnedAt && !x.mergedInto; }) });
     return p.indexOf(perm) >= 0 || (p.indexOf('*') >= 0 && RESTRICTED.indexOf(perm) < 0);
   }
 
@@ -368,7 +349,9 @@ var Hub = (function () {
     if (id === 'library' || id === 'archive') return on.library === true || on.archive === true;
     return m && m.optIn ? on[id] === true : on[id] !== false;
   }
-  function opens(m) { return isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm)) || (m.also && m.also())) && (!m.show || m.show()); }
+  /** A placeholder for a part not built yet (js/access.js PARTS, soon: true): its menu entry is ready but nobody sees it. */
+  function built(m) { return !(Access.part(m.id) || {}).soon; }
+  function opens(m) { return built(m) && isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm)) || (m.also && m.also())) && (!m.show || m.show()); }
   function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */

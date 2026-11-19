@@ -36,6 +36,8 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
 | Settings (incl. Attendees), countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
 | Language engine, 22 more languages (Sesotho kept up to date; the other 21 before a release); Sesotho as written in Lesotho, made from `st.js` | `js/i18n.js`, `js/lang/<code>.js`, `js/sesotho.js` | – | `tests/i18n.test.js`, `sesotho.test.js` |
+| Who can see what, in one place: roles, What Pastors can do, Attendees, Settings → Apps, each part's permissions and jobs (keepers) | `js/access.js` | (words of the parts that use it) | `tests/access.test.js` |
+| Community board, Marketplace (placeholders, not built: `soon` in `js/access.js`) | `js/mod-board.js`, `js/mod-market.js` | `js/i18n/board.js`, `market.js` | |
 | Security rules | `firestore.rules` | – | `tests/rules.test.mjs` |
 | Subscription: a coffee a month, payment holidays, gifts, paying for another church; the prayer circle and prayer cards (`homeCard` on Home) | `js/mod-support.js`, `js/coffee.js` | `js/i18n/support.js` | `tests/coffee.test.js`, `tests/app/support.js` |
 | Home: What’s new and Did you know? (tips by access level; add news to `NEWS` with its date) | `js/tips.js`, `js/app.js` (`tipsCard`, `homeTags`) | `js/i18n/tips.js` | `tests/tips.test.js`, `tests/app/records.js` |
@@ -65,7 +67,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`, `tips`, `coffee`, `church`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `care`, `messages`, `access`, `badges`, `leaders`, `archive`, `library`, `sesotho`, `tips`, `coffee`, `church`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
@@ -84,7 +86,11 @@ A session should say which tier it is running at, and stop and ask if the task's
   narrows it as you type (the select stays underneath and keeps the value, so `.value`, `change` and Playwright's `selectOption` work).
   `class="findable"` marks a list of names (its hint says so); `data-plain` leaves a select as it is. In tests, click `.find-in` to use the box.
 - Say "household" on screens for a `families` record. Boxes that must be filled in get `class="field req"`; never write "(optional)".
-- Changing who sees what means changing, together: `firestore.rules`, `plan()` in `js/store.js`, the POLICY copy in `tests/fake-firebase.js`,
+- **Who can see what is kept in one place: `js/access.js`** (roles, What Pastors can do, Attendees, Settings → Apps, and each
+  new part's permissions and jobs such as keepers). A new part adds an entry to its `PARTS` and asks `Hub.can('<part>.<what>')`
+  – it never keeps its own access settings. The Community board and Marketplace are placeholders there (`soon`): fill in
+  `js/mod-board.js` / `js/mod-market.js`, their `js/i18n/` files and their `firestore.rules` sections, then take `soon` off.
+- Changing who sees what means changing, together: `js/access.js`, `firestore.rules`, `plan()` in `js/store.js`, the POLICY copy in `tests/fake-firebase.js`,
   and `tests/rules.test.mjs` / `tests/app/*.js`. Once merged, `.github/workflows/publish-rules.yml` tests and publishes the rules (when the church has set up
   `docs/RULES-AUTOPUBLISH.md`); until then, tell the church to re-publish them (FIREBASE-SETUP.md step 7).
   Keep `firestore.rules` to plain keyboard characters (no curly quotes or dashes): the Firebase console rejects them.

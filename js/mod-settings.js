@@ -3,10 +3,8 @@
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
-  var MODS = [['people', TX('People'), TX('Directory, households and consent')], ['rosters', TX('Rosters'), TX('Serving rosters, teams and serving together')], ['leave', TX('Leave'), TX('Staff leave (Leave Manager built in)')],
-    ['care', TX('Care Groups'), TX('Small groups that care for one another')], ['life', TX('Midweek Groups'), TX('Bible studies, life groups, Connect Groups – their leaders name them')], ['leaders', TX('Leadership'), TX('Council, elders and leaders – their roles and portfolios')], ['library', TX('Library'), TX('The church’s library and Archives – books and church records in one place')],
-    ['messages', TX('Messages'), TX('Messages from the church to you and your groups')], ['privacy', TX('Privacy'), TX('Privacy law tools (consent, requests, breaches)')], ['import', TX('Import'), TX('Bring data across from Elvanto')],
-    ['words', TX('Translations'), TX('Members suggest better wording in their language')]];
+  /** Settings → Apps: the parts that can be switched on or off – kept with who can see what, in js/access.js. */
+  function mods() { return Access.apps(); }
 
   /** The number of people with an access level; point at it (or tap it) to see who they are. Long lists (e.g. "No access") stay a number. */
   function whoHas(ps, role) {
@@ -101,12 +99,7 @@
   function shown() { return limited() ? SECTIONS.filter(function (x) { return RECTOR_SECTIONS.indexOf(x[0]) >= 0; }) : SECTIONS; }
   function sectionOf(id) { var all = shown(); return all.filter(function (x) { return x[0] === id; })[0] || all[0]; }
   /** Settings → Attendees: what people on Basic access who aren't Church Partners (or staff) may see and do (settings.attendeeCan). */
-  var ATTENDEE_ROWS = [
-    ['names', TX('See the names of Church Partners'), TX('Names only, on the People page – no photos, phone numbers or addresses.')],
-    ['directory', TX('See the church directory'), TX('As Church Partners see it: photos and the contact details people agreed to share.')],
-    ['write', TX('Write to the Office, the ministers and their Midweek Group leaders'), TX('A message to one of them. They can also reply to a minister.')],
-    ['reply', TX('Reply to any message sent to them'), TX('Otherwise they only read the messages the church sends them.')]
-  ];
+  var ATTENDEE_ROWS = Access.ATTENDEE_ROWS;   // js/access.js
   function renderAttendees(st) {
     var on = Msg.attendeeCan(st), ppl = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (p.appRole || 'member') === 'member' && !!p.email; });
     var att = ppl.filter(function (p) { return !Msg.partnerLevel(p); }).length, par = ppl.length - att;
@@ -240,7 +233,7 @@
   }
   /** Apps: each part of Church & Trellis with a switch. Switching off hides it for everyone; nothing is deleted. */
   function renderApps(st) {
-    return '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p><div class="set-rows">' + MODS.map(function (m) {
+    return '<section class="panel"><h2>' + T('Apps') + '</h2><p class="hint" style="margin-top:0">' + T('Switch off what you don’t use – its card disappears for everyone. Nothing is deleted.') + '</p><div class="set-rows">' + mods().map(function (m) {
       return '<label class="set-row"><span class="set-l"><b>' + esc(T(m[1])) + '</b><small>' + esc(T(m[2])) + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" class="st-mod" value="' + m[0] + '"' + (H.isOn(m[0]) ? ' checked' : '') + ' aria-label="' + esc(T(m[1])) + '"></span></label>';
     }).join('') + '</div><p class="hint">' + T('More apps (groups, check-in, messages, calendar) arrive in later phases.') + '</p></section>' + renderAi(st);
   }
@@ -281,7 +274,8 @@
   /** Who can see what: each access level, what it can use, which of other people's contact details it sees
    *  (only adults who agreed to be in the directory; name only unless ticked), and who has it. Administrators and
    *  Pastors always see everything; No access can't sign in. Saved as settings.seeOthers = { member, rosters, kids }. */
-  var ACCESS = [['admin', 'Everything, including Privacy, Import and Settings – except pastoral and medical notes'], ['pastor', 'People, households, pastoral notes, children'], ['rosters', 'Rosters and teams; names and contact details only'], ['kids', 'Children, guardians and medical notes'], ['member', 'Their own details, serving and leave; the church directory'], ['none', 'Can’t sign in (kept on the church records only)']];
+  /** What each kind of access can do (Settings → Who can see what): js/access.js ROLES. */
+  var ACCESS = ['admin', 'pastor', 'rosters', 'kids', 'member', 'none'].map(function (r) { return [r, Access.ROLES[r].can]; });
   /** The church's colours (settings.theme = { id: 'custom', color } – older choices { id } still work): buttons, links,
    *  the turning cross, the logo and the menu, for everyone. Like Leave Manager's "My colour": a live sample at the top,
    *  round swatches, any colour by its code, and a Save button – nothing changes for anyone until it is saved. */

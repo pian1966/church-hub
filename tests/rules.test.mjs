@@ -1139,6 +1139,11 @@ console.log('Sign-in codes and PINs (members with no email)');
   });
 }
 
+await t('the parts not built yet (Community board, Marketplace, Subscription records) are closed to everyone', async () => {
+  for (const c of ['board/x', 'market/x', 'subscription/church']) {
+    await cannot(db.admin.doc(c).set({ a: 1 })); await cannot(read(db.admin, c)); await cannot(read(db.member, c));
+  }
+});
 await t('anything not listed is closed', async () => { await cannot(db.admin.doc('secrets/x').set({ a: 1 })); await cannot(read(db.admin, 'secrets/x')); });
 
 await env.cleanup();

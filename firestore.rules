@@ -76,6 +76,8 @@ service cloud.firestore {
     // What Pastors can do (Settings): an Administrator ticks abilities, which Church & Trellis copies onto each Pastor's
     // access-list entry as "can". The Senior Pastor (Rector), if one is chosen, gets their own ticks (seniorCan). may('leave') is true for Administrators, and for Pastors with that tick.
     // Abilities: settings, access, people, idnumbers, leave, rosters, privacy, import, words.
+    // (These lists - the abilities, the roles and what attendees may do - are kept in js/access.js;
+    // tests/access.test.js checks that this file still matches it.)
     function may(x) { return admin() || (isRole(['pastor']) && x in access().get('can', [])); }
     function rosterer() { return isRole(['admin', 'rosters']) || may('rosters'); }
     // The stand-in leave approver, between the dates on their access-list entry (Leave > Approvals > Stand-in approver)
@@ -767,6 +769,20 @@ service cloud.firestore {
         && request.resource.data.get('data', '') is string && request.resource.data.get('data', '').size() <= 900000;
       allow delete: if may('settings') || rector();
     }
+
+    // ---------- parts not built yet (js/access.js PARTS, marked soon) ----------
+    // Their sections are here so the people building them each fill in their own, without clashing. Closed to everyone
+    // until then. Who may do what is decided in js/access.js; write the rules to match it (and tests/fake-firebase.js,
+    // tests/rules.test.mjs) when the part is built.
+    // Community board (docs/COMMUNITY-PLAN.md part 2): Church Partners and staff read approved notices and pin their own;
+    // keepers (settings keepers.board; until chosen: Administrators, Pastors and settings rosterExtra) approve them.
+    match /board/{id} { allow read, write: if false; }
+    // Marketplace (docs/COMMUNITY-PLAN.md part 3): Church Partners and staff only - never attendees; keepers (settings
+    // keepers.market) approve each listing; photos in parts like the Archive.
+    match /market/{id} { allow read, write: if false; }
+    // Subscription (js/mod-support.js; tasks 061, 067): the church's record of what it has paid, written by the
+    // Church & Trellis office only. Today the Subscription page keeps its choices in settings/church.
+    match /subscription/{doc} { allow read, write: if false; }
 
     // ---------- POPIA registers (Administrators, and Pastors with "privacy") ----------
     match /dsr/{id} { allow read, write: if may('privacy'); }

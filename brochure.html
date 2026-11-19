@@ -25,7 +25,9 @@
   .bar button.go { background: var(--ink); border-color: var(--ink); color: #fff; }
   .bar small { flex-basis: 100%; color: var(--grey); }
   .sheets { display: flex; flex-direction: column; align-items: center; gap: 28px; padding: 28px 12px 60px; }
-  .sheet { width: 1123px; height: 794px; display: grid; grid-template-columns: 374px 375px 374px; background: var(--paper); overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.15); flex: none; }
+  .sheet { width: 1123px; height: 794px; display: grid; grid-template-columns: 374px 375px 374px; background: var(--paper); overflow: hidden; box-shadow: 0 6px 24px rgba(0,0,0,.15); flex: none; position: relative; }
+  /* Updated …: very pale, at the foot of the outside sheet's left panel (it has room to spare); outside the panels, so the church's edits aren't affected */
+  .updated { position: absolute; left: 0; width: 374px; bottom: 14px; text-align: center; font-size: 11px; color: #DCD3CB; pointer-events: none; }
   .pn { height: 794px; padding: 52px 40px 44px; display: flex; flex-direction: column; gap: 22px; position: relative; }
   .pn.fold { border-right: 1px dashed #EAD6C6; }
   .eyebrow { margin: 0; font-size: 13px; font-weight: 900; letter-spacing: .14em; text-transform: uppercase; color: var(--ink); }
@@ -101,6 +103,7 @@
 <main class="sheets">
 <!-- ================= For our members ================= -->
 <section class="sheet" data-show="members" aria-label="Outside">
+  <span class="updated" data-file="brochure.html"></span>
   <div class="pn fold">
     <p class="eyebrow">Good to know</p>
     <h2>Your questions, answered</h2>
@@ -153,6 +156,7 @@
 
 <!-- ================= For other churches ================= -->
 <section class="sheet" data-show="churches" aria-label="Outside">
+  <span class="updated" data-file="brochure.html"></span>
   <div class="pn fold">
     <p class="eyebrow">Moving from another system?</p>
     <h2>Switch without the stress</h2>
@@ -204,6 +208,25 @@
 </section>
 </main>
 
+<script>
+/* "Updated …" in very pale grey: when this file last changed on GitHub (the newest commit that touched it), in South
+ * African time like About in the app. Read from GitHub when the page opens, so it needs no typing; without a connection it
+ * stays empty. A church's own copy on GitHub (owner.github.io/repo) reads its own repository. */
+(function () {
+  var els = document.querySelectorAll('.updated'), el = els[0]; if (!el || !window.fetch) return;
+  var gh = /^([\w-]+)\.github\.io$/.exec(location.hostname), seg = location.pathname.split('/')[1];
+  var repo = gh && seg ? gh[1] + '/' + seg : 'pian1966/church-hub';
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], two = function (n) { return ('0' + n).slice(-2); };
+  fetch('https://api.github.com/repos/' + repo + '/commits?per_page=1&path=' + encodeURIComponent(el.getAttribute('data-file')))
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (c) {
+      var at = c && c[0] && c[0].commit && c[0].commit.committer && Date.parse(c[0].commit.committer.date); if (!at) return;
+      var d = new Date(at + 2 * 3600e3);   // South African time (UTC+2, no daylight saving)
+      var t = 'Updated ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear() + ', ' + two(d.getUTCHours()) + ':' + two(d.getUTCMinutes()) + ' SAST'; els.forEach(function (e) { e.textContent = t; });
+    })
+    .catch(function () {});
+})();
+</script>
 <script>
   // ?for=members|churches, &church=<name> (from Settings), &link=<the church's Church Hub address>. Only text is filled in.
   (function () {

@@ -321,6 +321,7 @@ section { padding: 96px 0; }
 footer { border-top: 1px solid var(--line); padding: 32px 0 44px; color: var(--ink-2); font-size: .92rem; }
 footer .wrap { display: flex; flex-wrap: wrap; gap: 12px 32px; justify-content: space-between; }
 footer a { color: var(--ink-2); }
+.updated { flex-basis: 100%; color: #CDD1D5; font-size: .78rem; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
@@ -716,6 +717,7 @@ footer a { color: var(--ink-2); }
   <div class="wrap">
     <span>Church Hub · Every church, however small, deserves great church software.</span>
     <span>Suggested cup prices: examples from November 2026; each church gives what is honest where it lives.</span>
+    <span class="updated" id="updated" data-file="site/index.html"></span>
   </div>
 </footer>
 
@@ -808,5 +810,24 @@ footer a { color: var(--ink-2); }
 })();
 </script>
 
+<script>
+/* "Updated …" in very pale grey: when this file last changed on GitHub (the newest commit that touched it), in South
+ * African time like About in the app. Read from GitHub when the page opens, so it needs no typing; without a connection it
+ * stays empty. A church's own copy on GitHub (owner.github.io/repo) reads its own repository. */
+(function () {
+  var el = document.getElementById('updated'); if (!el || !window.fetch) return;
+  var gh = /^([\w-]+)\.github\.io$/.exec(location.hostname), seg = location.pathname.split('/')[1];
+  var repo = gh && seg ? gh[1] + '/' + seg : 'pian1966/church-hub';
+  var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'], two = function (n) { return ('0' + n).slice(-2); };
+  fetch('https://api.github.com/repos/' + repo + '/commits?per_page=1&path=' + encodeURIComponent(el.getAttribute('data-file')))
+    .then(function (r) { return r.ok ? r.json() : []; })
+    .then(function (c) {
+      var at = c && c[0] && c[0].commit && c[0].commit.committer && Date.parse(c[0].commit.committer.date); if (!at) return;
+      var d = new Date(at + 2 * 3600e3);   // South African time (UTC+2, no daylight saving)
+      el.textContent = 'Updated ' + d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear() + ', ' + two(d.getUTCHours()) + ':' + two(d.getUTCMinutes()) + ' SAST';
+    })
+    .catch(function () {});
+})();
+</script>
 </body>
 </html>

@@ -322,7 +322,7 @@ async function icon(Comp, color, px = 256) {
   T(s, 'The price of one cup of coffee a month', { x: 0.8, y: 2.0, w: 7.4, h: 1.6, fontSize: 40, bold: true, color: HEX.white });
   T(s, 'For your whole church – not per person. A suggested price, in your own money: whatever a cup costs where you live.', { x: 0.8, y: 3.7, w: 7.2, h: 1.2, fontSize: 18, color: HEX.nightInk });
   {
-    const cards = [['Every feature, for everyone', 'No paid tiers. No charge per member, group or language.'], ['A hard month?', 'Take a payment holiday. Nothing is ever locked or deleted.'], ['Can’t pay at all?', 'Pledge to pray for another Church Hub church instead.']];
+    const cards = [['Every feature, for everyone', 'No paid tiers. No charge per member, group or language.'], ['A hard month?', 'Take a payment holiday. Nothing is ever locked or deleted.'], ['Can’t pay at all?', 'Pray for another church instead. Every week, Home shows one to pray for.']];
     for (let i = 0; i < 3; i++) {
       const y = 1.0 + i * 1.95;
       s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 8.75, y, w: 3.95, h: 1.7, rectRadius: 0.14, fill: { color: HEX.night2 }, line: { color: HEX.night2 } });
@@ -331,7 +331,7 @@ async function icon(Comp, color, px = 256) {
     }
   }
   T(s, 'A low price doesn’t mean less: every church gets all of Church Hub.', { x: 0.8, y: 5.6, w: 7.2, h: 0.8, fontSize: 16, italic: true, color: HEX.orange });
-  s.addNotes('And the price: one cup of coffee a month, for your whole church – not per person – at whatever a cup costs where you live. It is a suggested price; choose what is honest for your church. Every church gets every feature. A hard month? Take a payment holiday. A church that can’t pay at all can pledge to pray for another church instead. No church is turned away.');
+  s.addNotes('And the price: one cup of coffee a month, for your whole church – not per person – at whatever a cup costs where you live. It is a suggested price; choose what is honest for your church. Every church gets every feature. A hard month? Take a payment holiday. A church that can’t pay at all can pledge to pray for another church instead. No church is turned away. And every church is in the prayer circle: each church shares a prayer card – a photo and two things to pray for – and looks at it once a month, and every week Home shows everyone another church to pray for. So Church Hub doesn’t only run your church: it makes sure your church is prayed for.');
 
   // ========== 16. Moving from another system ==========
   s = content('Trust', 'Moving from another system?', true);

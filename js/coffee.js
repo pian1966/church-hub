@@ -6,8 +6,10 @@
  *   - one café coffee a month, or ten a year when paid yearly (two months free);
  *   - plus, if the church wishes, a gift of whatever it thinks Church Hub is worth to it;
  *   - a church may pay for another, under-resourced church;
- *   - a church that cannot afford even one coffee a month uses Church Hub for free by promising to pray, once a month,
+ *   - a church that cannot afford even one coffee a month uses Church Hub for free by promising to pray, every week,
  *     for another church that Church Hub shows it. Every church is welcome; nobody is turned away for being poor.
+ *   - every church keeps a prayer card (a photo and two prayer points) and checks it once a month; every week each church
+ *     is shown another church's card on everyone's Home (cardForWeek). A paying church may turn that off; a praying one may not.
  *
  * Prices: one cup of what the church would buy where it lives, in its own country's money – a street-stall cup, a café
  * coffee or a coffee-chain latte, as is honest for that church. EXAMPLES has the prices we've looked up (docs/PRICES.md);
@@ -261,24 +263,68 @@ var Coffee = (function () {
   /** "2026-11" for a date. */
   function monthKey(iso) { return String(iso || '').slice(0, 7); }
   function hash(s) { var h = 2166136261; s = String(s || ''); for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+  function utc(iso) { var m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso || ''); return m ? Date.UTC(+m[1], +m[2] - 1, +m[3]) : NaN; }
+  var MONDAY0 = Date.UTC(1970, 0, 5), WEEK = 7 * 864e5;
+  /** The number of a week (weeks start on Monday), counted from 5 Jan 1970. NaN for a bad date. */
+  function weekNo(iso) { var t = utc(iso); return isNaN(t) ? NaN : Math.floor((t - MONDAY0) / WEEK); }
+  /** The Monday a date's week starts on, "2026-11-16". Used as the key for "this week" (prayed, the card shown). */
+  function weekKey(iso) { var n = weekNo(iso); return isNaN(n) ? '' : new Date(MONDAY0 + n * WEEK).toISOString().slice(0, 10); }
+  /** A shuffle of 0..n-1 that is always the same for the same seed. */
+  function shuffle(n, seed) {
+    var a = [], x = seed >>> 0 || 1;
+    for (var i = 0; i < n; i++) a.push(i);
+    for (var j = n - 1; j > 0; j--) { x ^= x << 13; x >>>= 0; x ^= x >>> 17; x ^= x << 5; x >>>= 0; var k = x % (j + 1), t = a[j]; a[j] = a[k]; a[k] = t; }
+    return a;
+  }
   /**
-   * The church this church prays for this month: a different one each month, the same all month on every phone,
-   * never itself, and over the months every church in the list in turn. churches: [{ id, … }] (any order). null if none.
+   * The prayer card a church sees this week (decided Nov 2026: a new card every week on everyone's Home).
+   * Each church goes through all the other churches' cards in its own shuffled order – no card comes back until it has
+   * seen every other one – and then starts a fresh shuffle. Never its own card, never the same card two weeks running,
+   * the same card all week on every phone, and different churches see different cards in the same week.
+   * week: any date in the week. churches: [{ id, points, … }] (any order); churches with no prayer points are left out.
+   * Note: when a church joins or leaves, the round is reshuffled, so a card may come back a little early once.
    */
-  function partnerFor(selfId, month, churches) {
+  function cardForWeek(selfId, week, churches) {
     var list = (churches || []).filter(function (c) { return c && c.id && c.id !== selfId && (c.points || []).length; })
       .sort(function (a, b) { return a.id < b.id ? -1 : a.id > b.id ? 1 : 0; });
-    if (!list.length) return null;
-    var m = /^(\d{4})-(\d{2})$/.exec(month || ''); if (!m) return null;
-    var k = (+m[1]) * 12 + (+m[2] - 1);
-    return list[(hash(selfId) + k) % list.length];
+    var n = list.length, w = weekNo(week);
+    if (!n || isNaN(w)) return null;
+    if (n === 1) return list[0];
+    w += hash(selfId) % n;   // churches don't all start a new round in the same week
+    if (n === 2) return list[w % 2];
+    var round = Math.floor(w / n), pos = w % n;
+    var order = function (r) { return shuffle(n, hash(selfId + ':' + r)); };
+    var now = order(round);
+    // A new round never starts with the card the last round ended with (swapping the first two keeps the last in place).
+    if (now[0] === order(round - 1)[n - 1]) { var t = now[0]; now[0] = now[1]; now[1] = t; }
+    return list[now[pos]];
   }
+  /** Kept for older callers: the card for the first week of a month. */
+  function partnerFor(selfId, month, churches) { return /^\d{4}-\d{2}$/.test(month || '') ? cardForWeek(selfId, month + '-01', churches) : null; }
+
+  /**
+   * Every church keeps a prayer card, and looks at it once a month (decided Nov 2026: not optional). → { state, next }
+   *   'missing' – no prayer points yet: the Administrator is asked to make one
+   *   'due'     – a month (or more) since it was last made, changed or checked: update it, or keep it as it is
+   *   'ok'      – fine until `next`
+   * card.updated is the day it was last saved or checked ("Keep it as it is" counts).
+   */
+  function cardCheck(card, today) {
+    card = card || {};
+    if (!points(card.points).length) return { state: 'missing', next: '' };
+    var next = card.updated ? addMonths(card.updated, 1) : '';
+    return { state: !next || next <= today ? 'due' : 'ok', next: next };
+  }
+  /** May this church turn off the weekly prayer card? Yes if it pays; no while it prays instead of paying. */
+  function mayHideCards(sub) { return (sub || {}).plan !== 'pray'; }
+  /** Does everyone's Home show the weekly prayer card? Yes, unless a paying church's Administrator turned it off. */
+  function showsCards(sub) { sub = sub || {}; return !(sub.cardsOff === true && mayHideCards(sub)); }
   /** Churches that have asked for help, for "pay for another church". */
   function needing(churches, selfId) { return (churches || []).filter(function (c) { return c && c.needsHelp && c.id !== selfId; }); }
 
   return { AS_OF: AS_OF, PAY_URL: PAY_URL, YEAR_COFFEES: YEAR_COFFEES, KINDS: KINDS, EXAMPLES: EXAMPLES, COUNTRY_CURRENCY: COUNTRY_CURRENCY,
     TAKE_CARE: TAKE_CARE, POINT_MAX: POINT_MAX, POINTS: POINTS,
     BANK: BANK, reference: reference, HOLIDAYS: HOLIDAYS, addMonths: addMonths, status: status, holidayAllowed: holidayAllowed, takeHoliday: takeHoliday, recordPayment: recordPayment, nextAmount: nextAmount, kind: kind, example: example, cupOf: cupOf, parse: parse, currency: currency, currencyFor: currencyFor, money: money, quote: quote, giftOf: giftOf, payLink: payLink,
-    takeCare: takeCare, region: region, isDiscreet: isDiscreet, screen: screen, points: points, publicCard: publicCard, monthKey: monthKey, partnerFor: partnerFor, needing: needing };
+    takeCare: takeCare, region: region, isDiscreet: isDiscreet, screen: screen, points: points, publicCard: publicCard, monthKey: monthKey, weekNo: weekNo, weekKey: weekKey, cardForWeek: cardForWeek, partnerFor: partnerFor, cardCheck: cardCheck, mayHideCards: mayHideCards, showsCards: showsCards, needing: needing };
 })();
 if (typeof module !== 'undefined') module.exports = Coffee;

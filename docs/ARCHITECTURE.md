@@ -851,13 +851,29 @@ The wedding anniversary sits right under marital status.
 Administrators (and Pastors with "settings") open **Subscription**: choose a coffee and currency, monthly (one coffee) or
 yearly (ten), a gift, and who it's for (our church or another church); Pay shows Church Hub's bank details and the church's
 reference (`Coffee.reference`), and "We've paid" records it. Kept in `settings.support` = `{ drink, currency, plan, startedAt,
-paidUntil, payments[], holidays[], pledge, prayOn }` (the newest 24 payments and holidays) and `settings.prayerCard` =
-`{ photo, photoOk, place, points[2], discreet, needsHelp }` – both in the church's own settings, so the Firestore rules
+paidUntil, payments[], holidays[], pledge, prayOn, cardsOff }` (the newest 24 payments and holidays) and `settings.prayerCard` =
+`{ photo, photoOk, place, points[2], discreet, needsHelp, updated }` – both in the church's own settings, so the Firestore rules
 didn't change. `Coffee.status()` decides the reminder (7 days before for monthly, 30 for yearly; due; late after 30 days);
 modules can put a card on everyone's Home with `homeCard` (`js/app.js` `homeCards`): the due reminder (Administrators) and
-"This month we pray for" (everyone, once the church is in the prayer circle). The church to pray for comes from
-`Coffee.partnerFor` (a different church each month, the same on every phone). Until the office exists the circle is the
-demo's made-up churches (`SampleChurches` in `js/sample.js`); live churches see their promise kept and an explanation.
+"This week we pray for" (everyone) and, for Administrators, the monthly prayer-card reminder.
+
+**The prayer circle (decided 19 Nov 2026): every church takes part.** It is meant to make Church Hub more than
+administration: it makes sure every church is prayed for.
+- *A new card every week.* `Coffee.cardForWeek(selfId, date, churches)` picks the card for the week (Monday to Sunday,
+  `Coffee.weekKey`): the same for everyone at that church all week, so it can be prayed for together on Sunday. Each church
+  goes through all the other churches' cards in its own shuffled order (seeded by its id and the round), so no card comes back
+  until it has seen every other one, never its own, never the same card two weeks running, and different churches see different
+  cards in the same week. Nothing has to be stored: every phone works out the same answer. When a church joins or leaves, the
+  round is reshuffled, so a card may come back a little early once (the office can keep a true history later).
+- *On unless a paying church turns it off.* Only Administrators can (Subscription → Churches to pray for, `support.cardsOff`),
+  because it is the church leadership's decision. A church on the free "pray instead" plan can't (`Coffee.mayHideCards`) until it pays.
+- *Every church has a card and looks at it once a month* (`Coffee.cardCheck`: missing / due / ok; `prayerCard.updated` is the
+  day it was saved or checked). Until then Home and the Pray page ask its Administrators: "Make our prayer card", or "Update
+  the prayer card" / "Keep it as it is" (which only sets `updated`).
+- "We've prayed for them" is kept on the phone for the week (`pref prayedFor` = the week's Monday).
+
+Until the office exists the circle is the demo's made-up churches (`SampleChurches` in `js/sample.js`); live churches keep
+their card in their own settings and see an explanation instead of another church's card.
 
 ## Setup tool (`site/setup.html`, `site/setup-kit.js`; tested by `tests/setup-kit.test.js`)
 - One page outside the app (English, like the brochures and the website), at `/church-hub/site/setup.html`. It sets up Church Hub

@@ -1,9 +1,13 @@
 /* Church Hub – Subscription: "buy us a coffee" (Administrators). The rules (prices, plans, prayer cards, who to pray for)
  * are in js/coffee.js; this is the page and the Home card.
  *   #/support        choose a coffee, how often, a gift, and who it's for (our church or another church)
- *   #/support/pray   the prayer circle: the church we pray for this month, and our promise
+ *   #/support/pray   the prayer circle: the church we pray for this week, our promise, and the weekly card on/off
  *   #/support/card   our church's prayer card: photo, two prayer points, "keep us hidden"
- * Kept in Settings: settings.support = { cup: { kind, price, currency }, plan, paidUntil, payments, holidays, choice, pledge, prayOn }
+ * Every church is in the prayer circle (decided Nov 2026): everyone's Home shows a new church's prayer card every week
+ * (Coffee.cardForWeek). A paying church's Administrator may turn that off (support.cardsOff); a church that prays instead
+ * of paying may not. Every church keeps a prayer card and checks it once a month (Coffee.cardCheck): Home asks the
+ * Administrator until it is done ("Keep it as it is" counts).
+ * Kept in Settings: settings.support = { cup: { kind, price, currency }, plan, paidUntil, payments, holidays, choice, pledge, prayOn, cardsOff }
  *                   settings.prayerCard = { photo, photoOk, place, points: [2], discreet, needsHelp, updated }
  * Nothing about the church's people is on the prayer card. Until Church Hub's office exists (TARGET.md section 10) the
  * card stays in the church's own settings; the demo shows made-up churches (js/sample.js SampleChurches). */
@@ -20,8 +24,8 @@
   function selfId() { var cfg = window.CHURCH_HUB_FIREBASE || {}; return st().demo || !S.isLive() ? 'demo-self' : (cfg.projectId || 'church'); }
   function admin() { return H.can('settings.manage') || H.can('*'); }
   function pledged() { return !!(sup().pledge && sup().pledge.at); }
-  function inCircle() { return pledged() || sup().prayOn === true; }
-  function month() { return C.monthKey(H.today()); }
+  function inCircle() { return C.showsCards(sup()); }
+  function week() { return C.weekKey(H.today()); }
   function cur() { return C.currencyFor(country().code); }
   function myCup() { return C.cupOf(sup(), country().code); }
   function choice() {
@@ -40,7 +44,7 @@
     var c = country();
     return C.publicCard(card(), { id: selfId(), name: st().churchName, town: '', country: c.code, countryName: c.name, continent: c.continent });
   }
-  function partner() { return C.partnerFor(selfId(), month(), circle()); }
+  function partner() { return C.cardForWeek(selfId(), week(), circle()); }
   function quote() { var s = choice(); return C.quote({ price: s.price, currency: s.currency, plan: s.plan, gift: s.other !== '' ? s.other : C.giftOf(s.cups, s.price, s.currency) }); }
 
   /* ---------- pictures ---------- */
@@ -121,7 +125,7 @@
       '<p>' + T('Church Hub is for every church, in every nation, in (nearly) every language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.') + '</p>' +
       '<p class="sp-hero-more">' + T('The price is per church, not per person: one cup a month covers your whole church, however many people, groups and services you have.') + '</p>' +
       '<p class="sp-hero-more">' + T('Don’t mistake a low price for a lesser product. Church Hub competes with the best church management systems in the world. We keep the price low so that every church can have it, not because it does less.') + '</p>' +
-      (pledged() ? '<p class="sp-chip">' + H.icon(PRAY, 16) + T('Your church has promised to pray for another church each month') + '</p>' : '') +
+      (pledged() ? '<p class="sp-chip">' + H.icon(PRAY, 16) + T('Your church has promised to pray for another church each week') + '</p>' : '') +
       '</div></section>';
   }
   var PRAY = 'M12 2c2.5 3 4 5.2 4 7.5a4 4 0 0 1-8 0C8 7.2 9.5 5 12 2zM9.5 15h5v7h-5z';   // a candle: prayer
@@ -156,7 +160,7 @@
       '<div class="sp-plans" role="radiogroup" aria-label="' + esc(T('How would you like to give?')) + '">' +
         plan('month', '', none ? dash : C.money(m.total, m.currency), T('a month'), T('One coffee a month'), T('Stop or change whenever you like.')) +
         plan('year', T('Two coffees free'), none ? dash : C.money(y.total, y.currency), T('a year'), T('Ten coffees a year'), none ? T('Two months free when you pay for the year.') : T('You save {amount} by paying for the year.', { amount: C.money(y.saved, y.currency) })) +
-        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray, each month, for another church that uses Church Hub.')) +
+        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray, each week, for another church that uses Church Hub.')) +
       '</div></section>';
   }
   function gift() {
@@ -185,7 +189,7 @@
     var s = choice(), q = quote(), pray = s.plan === 'pray';
     var who = s.forWho === 'other' ? (s.otherId ? pcTitle(circle().filter(function (c) { return c.id === s.otherId; })[0] || {}) : T('Where it’s needed most')) : (st().churchName || T('Your church'));
     return '<section class="sp-total' + (pray ? ' pray' : '') + '"><div>' + (pray
-      ? '<b>' + T('Free, with a promise to pray') + '</b><small>' + T('Once a month Church Hub shows your church another church to pray for.') + '</small>'
+      ? '<b>' + T('Free, with a promise to pray') + '</b><small>' + T('Every week Church Hub shows your church another church to pray for.') + '</small>'
       : !q.cup ? '<b>' + T('Type what one cup costs where you live.') + '</b><small>' + T('Then choose how often, and Pay.') + '</small>'
       : '<span class="sp-total-n">' + esc(C.money(q.total, q.currency)) + '<small>' + esc(q.per === 'year' ? T('a year') : T('a month')) + '</small></span>' +
         '<small>' + esc(TN1(q.coffees)) + (q.gift ? ' + ' + esc(T('a gift of {amount}', { amount: C.money(q.gift, q.currency) })) : '') + ' · ' + esc(T('for {who}', { who: who })) + '</small>') + '</div>' +
@@ -203,21 +207,36 @@
   }
 
   function renderPray() {
-    var p = partner(), mine = ourCard();
+    var p = partner(), mine = ourCard(), sub = sup();
     var top = '';
     if (!inCircle()) top = '<section class="sp-circle-intro"><div class="sp-circle-art" aria-hidden="true">' + circleArt() + '</div><div><h2>' + T('The prayer circle') + '</h2>' +
-      '<p>' + T('Churches around the world praying for each other. Once a month Church Hub shows your church another church, with a photo and one or two things to pray for – and another church prays for you.') + '</p>' +
-      '<p>' + T('For a church that can’t afford a coffee, this promise is its subscription. Any church may join.') + '</p>' +
-      (admin() ? '<div class="btns"><button class="btn primary" data-act="support:promise">' + T('Join the prayer circle') + '</button><a class="btn" href="#/support/card">' + T('Make your prayer card') + '</a></div>' : '') + '</div></section>';
+      '<p>' + T('Churches around the world praying for each other. Every week Church Hub shows your church another church, with a photo and one or two things to pray for – and other churches pray for you.') + '</p>' +
+      '<p>' + T('Your church has turned off the weekly prayer card on Home. Other churches still pray for you.') + '</p>' +
+      (admin() ? '<div class="btns"><button class="btn primary" data-act="support:cardson">' + T('Show the weekly prayer card again') + '</button></div>' : '') + '</div></section>';
     var body = '';
-    if (inCircle() && p) body = '<section class="sp-month"><p class="sp-kicker">' + esc(T('This month, {church} prays for', { church: st().churchName || T('our church') })) + '</p>' + prayerCard(p, { big: true }) +
+    if (inCircle() && p) body = '<section class="sp-month"><p class="sp-kicker">' + esc(T('This week, {church} prays for', { church: st().churchName || T('our church') })) + '</p>' + prayerCard(p, { big: true }) +
       '<div class="sp-month-foot"><p>' + T('Pray for them in a Sunday service, a prayer meeting or a Care Group – or simply on your own this week.') + '</p>' + prayedBtn() + '</div></section>';
-    else if (inCircle()) body = '<p class="note info">' + T('The prayer circle starts when Church Hub opens to other churches. Your promise is kept, and the first church to pray for will appear here – and on everyone’s Home page.') + '</p>';
-    var promise = pledged() ? '<section class="panel sp-promise"><h2>' + T('Your church’s promise') + '</h2><p>' + esc(T('Made on {date} by {name}.', { date: H.fmt(sup().pledge.at, true), name: sup().pledge.by || '' })) + '</p>' +
-      (admin() ? H.menu(T('More'), ['<button data-act="support:leave">' + T('Leave the prayer circle') + '</button>']) : '') + '</section>' : '';
+    else if (inCircle()) body = '<p class="note info">' + T('The prayer circle starts when Church Hub opens to other churches. From then on, a new church to pray for appears here every week – and on everyone’s Home page.') + '</p>';
+    var promise = pledged() ? '<section class="panel sp-promise"><h2>' + T('Your church’s promise') + '</h2><p>' + esc(T('Made on {date} by {name}.', { date: H.fmt(sub.pledge.at, true), name: sub.pledge.by || '' })) + '</p>' +
+      (admin() && sub.plan === 'pray' ? '' : admin() ? H.menu(T('More'), ['<button data-act="support:leave">' + T('Leave the prayer circle') + '</button>']) : '') + '</section>' : '';
+    var onoff = admin() ? '<section class="panel sp-onoff">' +
+      '<label class="set-row"><span class="set-l"><b>' + T('A prayer card on Home every week') + '</b><small>' + T('Everyone at your church sees the same church that week, so you can pray for it together on Sunday.') + '</small></span>' +
+      '<span class="set-c sw"><input type="checkbox" role="switch" id="sp-cardson"' + (inCircle() ? ' checked' : '') + (C.mayHideCards(sub) ? '' : ' disabled') + ' aria-label="' + esc(T('A prayer card on Home every week')) + '"></span></label>' +
+      (C.mayHideCards(sub) ? '' : '<p class="hint">' + T('Your church prays instead of paying, so the weekly prayer card stays on. It can be turned off once your church buys a coffee.') + '</p>') + '</section>' : '';
     var others = circle().filter(function (c) { return !p || c.id !== p.id; });
     var rest = inCircle() && others.length ? '<details class="sp-all"><summary>' + esc(T('All the churches in the circle ({n})', { n: others.length })) + '</summary><div class="pcards">' + others.map(function (c) { return prayerCard(c); }).join('') + '</div></details>' : '';
-    return head('pray') + top + body + (inCircle() ? '<div class="grid2 sp-pray-grid">' + promise + '<section class="panel"><h2>' + T('Prayer card for your church') + '</h2><p>' + T('This is what other churches in the circle see when they pray for you.') + '</p>' + prayerCard(mine) + '<div class="btns"><a class="btn" href="#/support/card">' + T('Change your prayer card') + '</a></div></section></div>' : '') + rest;
+    return head('pray') + cardNudge() + top + body + '<div class="grid2 sp-pray-grid">' + promise + '<section class="panel"><h2>' + T('Prayer card for your church') + '</h2><p>' + T('This is what other churches in the circle see when they pray for you.') + '</p>' + prayerCard(mine) + '<div class="btns"><a class="btn" href="#/support/card">' + T('Change your prayer card') + '</a></div></section>' + onoff + '</div>' + rest;
+  }
+  /** Every church keeps a prayer card and checks it once a month: until it does, its Administrators are asked (Home, Pray page). */
+  function cardNudge(home) {
+    if (!admin() || S.preview()) return '';
+    var ck = C.cardCheck(card(), H.today());
+    if (ck.state === 'ok') return '';
+    var missing = ck.state === 'missing';
+    return '<section class="panel sp-nudge' + (home ? ' sp-home' : '') + '"><div class="sp-home-h">' + H.icon(PRAY, 18) + '<h2>' + T(missing ? 'Make your church’s prayer card' : 'Time to look at your prayer card') + '</h2></div>' +
+      '<p>' + T(missing ? 'Every church that uses Church Hub has a prayer card – a photo and two things to pray for – so that other churches can pray for you. It takes two minutes.' : 'Once a month, every church checks its prayer card, so other churches pray for what matters to you now. Change it, or keep it as it is.') + '</p>' +
+      '<div class="btns"><a class="btn primary" href="#/support/card">' + T(missing ? 'Make our prayer card' : 'Update the prayer card') + '</a>' +
+      (missing ? '' : '<button class="btn" data-act="support:keepcard">' + T('Keep it as it is') + '</button>') + '</div></section>';
   }
   function circleArt() {
     var dots = ''; for (var i = 0; i < 8; i++) { var a = i / 8 * Math.PI * 2; dots += '<circle cx="' + (60 + Math.cos(a) * 42).toFixed(1) + '" cy="' + (60 + Math.sin(a) * 42).toFixed(1) + '" r="9" />'; }
@@ -225,7 +244,7 @@
       '<path d="M60 44c5 7 8 11 8 16a8 8 0 0 1-16 0c0-5 3-9 8-16z" fill="#F5B53B"/><rect x="54" y="68" width="12" height="10" rx="2" fill="currentColor" opacity=".7"/></svg>';
   }
   function prayedBtn() {
-    var done = S.pref('prayedFor') === month();
+    var done = S.pref('prayedFor') === week();
     return done ? '<p class="sp-amen">' + H.icon('M5 12l5 5L20 7', 18) + T('Amen – thank you for praying.') + '</p>'
       : '<button class="btn small save" data-act="support:prayed">' + H.icon(PRAY, 16) + T('We’ve prayed for them') + '</button>';
   }
@@ -281,10 +300,17 @@
     if (pv) pv.innerHTML = prayerCard(C.publicCard(c, { id: selfId(), name: st().churchName, country: co.code, countryName: co.name, continent: co.continent }), { big: true });
   }
 
+  /** Turn the weekly prayer card on Home on or off (Administrators; churches that pray instead of paying can't turn it off). */
+  function setCards(on) {
+    if (!admin() || (!on && !C.mayHideCards(sup()))) { H.render(); return; }
+    S.setSettings({ support: Object.assign({}, sup(), { cardsOff: !on }) }, on ? 'Weekly prayer card on Home: on' : 'Weekly prayer card on Home: off');
+    H.render(); H.toast(T(on ? 'Everyone’s Home shows a church to pray for each week.' : 'The weekly prayer card is off. You can turn it on again here.'));
+  }
+
   /* ---------- dialogs ---------- */
   function promiseDialog() {
     H.modal(H.dialogHead(T('Your church’s promise'), T('The prayer circle')) + '<div class="dlg-body sp-promise-dlg">' + '<div class="sp-promise-art" aria-hidden="true">' + circleArt() + '</div>' +
-      '<p class="sp-vow">' + T('Each month, we will pray for the church Church Hub shows us – in a service, a prayer meeting or a Care Group – as part of the worldwide family of God.') + '</p>' +
+      '<p class="sp-vow">' + T('Each week, we will pray for the church Church Hub shows us – in a service, a prayer meeting or a Care Group – as part of the worldwide family of God.') + '</p>' +
       '<p class="hint">' + T('“Pray for each other.” – James 5:16') + '</p>' +
       '<label class="check"><input type="checkbox" id="sp-vow-ok"><span>' + T('We promise, on behalf of our church.') + '</span></label>' +
       '<div class="btns"><button class="btn primary" data-act="support:vow">' + T('Make our promise') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div></div>', T('Your church’s promise'));
@@ -368,7 +394,7 @@
         '<label class="field"><span>' + T('Would you like to tell us why? It helps us pray for you.') + '</span><textarea id="sp-hol-why" rows="2" maxlength="300"></textarea></label>' +
         '<div class="btns"><button class="btn primary" data-act="support:takehol">' + T('Take a payment holiday') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>'
       : '<p class="sp-vow">' + T('You’ve used this year’s payment holidays.') + '</p>' +
-        '<p>' + T('If paying is hard for your church right now, you can pray instead: Church Hub stays free for as long as you need, while your church prays for another church each month.') + '</p>' +
+        '<p>' + T('If paying is hard for your church right now, you can pray instead: Church Hub stays free for as long as you need, while your church prays for another church each week.') + '</p>' +
         '<div class="btns"><button class="btn primary" data-act="support:prayinstead">' + T('Pray instead') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>') +
       (stt.state === 'late' ? '<p class="hint">' + T('Nothing is ever locked or deleted for being late.') + '</p>' : '') + '</div>', T('A payment holiday'));
   }
@@ -403,6 +429,8 @@
         var v = String(o.value || '').replace(',', '.').replace(/[^\d.]/g, ''); choice().other = v; if (v !== '') choice().cups = 0;
         var pos = o.selectionStart; H.render(); var n = document.getElementById('sp-other'); if (n) { n.focus(); try { n.setSelectionRange(pos, pos); } catch (e) {} }
       }, 450));
+      var on = document.getElementById('sp-cardson');
+      if (on) on.addEventListener('change', function () { setCards(on.checked); });
       if (parts && parts[0] === 'card') {
         ['sp-place', 'sp-pt0', 'sp-pt1'].forEach(function (id) { var e = document.getElementById(id); if (e) e.addEventListener('input', liveCheck); });
         ['sp-photook', 'sp-help'].forEach(function (id) { var e = document.getElementById(id); if (e) e.addEventListener('change', liveCheck); });
@@ -423,13 +451,15 @@
         liveCheck();
       }
     },
-    /** Everyone's Home: the church we pray for this month (once the church is in the prayer circle and there is one). */
+    /** Everyone's Home: the church we pray for this week (unless a paying church turned it off), and – for Administrators –
+     * the subscription reminder and the monthly "look at your prayer card". */
     homeCard: function () {
       var due = '', stt = C.status(sup(), H.today());
       if (admin() && !S.preview() && (stt.state === 'soon' || stt.state === 'due' || stt.state === 'late')) due = statusPanel(true);
+      due += cardNudge(true);
       if (!inCircle()) return due;
       var p = partner(); if (!p) return due;
-      return due + '<section class="panel sp-home"><div class="sp-home-h">' + H.icon(PRAY, 18) + '<h2>' + T('This month we pray for') + '</h2></div>' + prayerCard(p) + '<div class="btns">' + prayedBtn() + '</div></section>';
+      return due + '<section class="panel sp-home"><div class="sp-home-h">' + H.icon(PRAY, 18) + '<h2>' + T('This week we pray for') + '</h2></div>' + prayerCard(p) + '<div class="btns">' + prayedBtn() + '</div></section>';
     },
     actions: {
       kind: function (el) {
@@ -479,7 +509,7 @@
         // Praying *instead* of paying (chosen on the plan page, or after the payment holidays ran out) makes prayer the plan;
         // a paying church joining the circle as well keeps paying.
         var instead = prayInstead || choice().plan === 'pray'; prayInstead = false;
-        S.setSettings({ support: Object.assign({}, sup(), { pledge: { at: H.today(), by: H.name(S.get('people', me.id) || me) }, prayOn: true }, instead ? { plan: 'pray' } : {}) }, instead ? 'Chose to pray instead of paying (prayer circle)' : 'Joined the prayer circle');
+        S.setSettings({ support: Object.assign({}, sup(), { pledge: { at: H.today(), by: H.name(S.get('people', me.id) || me) }, prayOn: true, cardsOff: false }, instead ? { plan: 'pray' } : {}) }, instead ? 'Chose to pray instead of paying (prayer circle)' : 'Joined the prayer circle');
         H.closeModal(); if (/^#\/support\/pray/.test(location.hash)) H.render(); else H.go('support/pray'); H.toast(T('Thank you – your church is in the prayer circle.'));
       },
       leave: function (el) {
@@ -490,7 +520,13 @@
         var v = el.dataset.v || '', done = function () { H.toast(T('Copied')); };
         if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(v).then(done, function () { H.toast(v); }); else H.toast(v);
       },
-      prayed: function () { S.pref('prayedFor', month()); H.render(); },
+      cardson: function () { if (admin()) setCards(true); },
+      prayed: function () { S.pref('prayedFor', week()); H.render(); },
+      keepcard: function () {
+        if (!admin()) return;
+        S.setSettings({ prayerCard: Object.assign({}, card(), { updated: H.today() }) }, 'Checked the church’s prayer card: kept as it is');
+        H.render(); H.toast(T('Thank you – your prayer card is up to date.'));
+      },
       nophoto: function () { if (!admin()) return; var c = readForm(); S.setSettings({ prayerCard: Object.assign(c, { photo: '', photoOk: false, points: C.points(c.points) }) }, 'Prayer card: photo removed'); H.render(); },
       savecard: function () {
         if (!admin()) return;

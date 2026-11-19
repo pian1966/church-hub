@@ -84,11 +84,20 @@
     return html + '<section class="msg-chat">' + (fresh ? '<div class="msg-unread-bar">' + esc(TN('{n} unread message', '{n} unread messages', fresh)) + '</div>' : '') + list.map(function (m) {
       var isNew = Msg.isUnread(m, u.id, manager()) || justRead[m.id];
       var reply = Msg.mayReply(m, who(), data()) ? '<button class="btn small" data-act="messages:reply" data-id="' + esc(m.id) + '">' + T('Reply') + '</button>' : '';
-      var roster = m.kind === 'roster' ? rosterPart(m) : m.about === 'partnerApp' ? appPart(m) : '';
-      return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.about === 'partnerApp' ? T('Partnership application') : roster ? rosterTitle(m) : m.title || audName(m.kind, m.audience)) + '</b></div>' +
+      var roster = m.kind === 'roster' ? rosterPart(m) : m.about === 'partnerApp' ? appPart(m) : m.about === 'study' ? studyPart(m) : '';
+      return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.about === 'partnerApp' ? T('Partnership application') : roster && m.kind === 'roster' ? rosterTitle(m) : m.title || audName(m.kind, m.audience)) + '</b></div>' +
         '<div class="msg-who">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
         replyContext(m) + (roster || '<p class="msg-body">' + bodyHtml(m.body) + '</p>') + '<div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
     }).join('') + '</section>';
+  }
+  /** A Midweek Group's links for this week (js/mod-life.js): the topic and two big buttons, Join the meeting and Open the notes,
+   *  from the study itself (so a changed link shows here too). '' when the study is gone (the message's own words show). */
+  function studyPart(m) {
+    var st = S.get('studies', m.aboutId); if (!st || !window.Studies) return '';
+    var btn = function (url, label, primary) { var a = Studies.about(url); return a.ok ? '<a class="btn small' + (primary ? ' primary' : '') + '" href="' + esc(a.url) + '" target="_blank" rel="noopener noreferrer">' + esc(label) + '</a>' + (a.site ? '' : '<small class="muted" style="display:block;width:100%">' + esc(a.host) + ' · ' + T('Check this link before you open it.') + '</small>') : ''; };
+    var k = Studies.state(st, Date.now()), soon = k === 'soon' || k === 'live';
+    return '<p class="msg-body">' + esc(H.fmt(st.date) + ' · ' + st.time) + (st.topic ? '<br><b>' + esc(st.topic) + '</b>' : '') + (k === 'past' ? '<br><span class="muted small">' + T('This study is over – the notes are still here.') + '</span>' : '') + '</p>' +
+      '<div class="btns" style="margin-top:8px">' + (st.meet && k !== 'past' ? btn(st.meet, T(soon ? 'Join now' : 'Join the meeting'), true) : '') + (st.notes ? btn(st.notes, T('Open the notes'), k === 'past' || !st.meet) : '') + '</div>';
   }
   /** Someone applied to become a Church Partner (sent to the Office from Me → Apply: Administrators and Pastors read it).
    *  Shown in the reader's language, with the way to the application. */
@@ -387,7 +396,7 @@
         (Msg.mayDelete(m, who()) ? H.menu('⋯', ['<button class="menu-danger" data-act="messages:del" data-id="' + esc(m.id) + '">' + H.icon(H.ICON.trash, 16) + T('Delete the message') + '</button>'], 'row-menu', T('Delete the message')) : '') + '</div>' +
         '<div class="msg-who">' + (mine ? '' : T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ') + T('To {who}', { who: audLong(m) }) + '</div>' +
         '<p class="msg-body">' + bodyHtml(m.body) + '</p>' +
-        '<div class="msg-foot"><span class="grow">' + (m.kind === 'office' ? '' : readBy(m, s)) + '</span><span class="msg-time">' + esc(when(m.createdAt)) + (mine ? statusMark(m) : '') + '</span></div></article>';
+        '<div class="msg-foot"><span class="grow">' + (m.showFrom && m.showFrom > Date.now() ? '<span class="tag grey">' + esc(T('Goes out {when}', { when: H.fmt(LeaveCore.iso(new Date(m.showFrom))) + ' ' + new Date(m.showFrom).toTimeString().slice(0, 5) })) + '</span>' : m.kind === 'office' ? '' : readBy(m, s)) + '</span><span class="msg-time">' + esc(when(m.createdAt)) + (mine ? statusMark(m) : '') + '</span></div></article>';
     }).join('') + '</section>';
   }
 

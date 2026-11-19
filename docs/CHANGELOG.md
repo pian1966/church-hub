@@ -511,6 +511,12 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   they need, as often as they need, no questions asked (the "why" box is gone); yearly churches switch to monthly to take one,
   keeping what they paid. Praying instead is a promise to pray each month. The website's Give box uses PayFast too, and its
   payment-holiday answer now says how long a holiday lasts. All five languages; What's new; setup tool; brochure.
+- ✅ 19 Nov 2026 (0.99.0): **Midweek Groups online – this week's links** (`docs/COMMUNITY-PLAN.md` part 4, steps 4.1–4.3). A group's
+  leaders and co-leaders post the meeting link and the notes link (the meeting link remembered from last week); the group gets a
+  message with Join the meeting and Open the notes – now, or on the day (it waits in Messages until then); a Home card on the day
+  that becomes Join now 15 minutes before; Past studies on the group's page; a live-streamed study can be open to the whole church.
+  New `studies` collection and rules (church to re-publish the database rules, or let the workflow do it). The phone notification
+  for "on the day" comes with push notifications (Phase 5).
 
 - ✅ 0.98.1 (19 Nov 2026): Names listed A to Z, each a chip that opens the person's page, in Rosters → Teams and Serving
   together (plain text for someone who may not open people's pages), custom groups, Librarians, the board and Marketplace keepers,

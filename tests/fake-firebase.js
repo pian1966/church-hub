@@ -133,7 +133,23 @@
     var p = a.about || '', x = (p === 'board' || p === 'market') ? docs[p + '/' + (a.aboutId || '')] : null;
     return a.kind === 'direct' && a.to.length === 1 && !a.replyTo && !!x && !isMe(c, a.to[0]) && x.personId === a.to[0] && ((x.status === 'live' && communityPerson(c)) || keepsPart(c, p));
   }
+  /** Midweek Groups online: this week's links (firestore.rules postsLife, okStudy, mayPostStudy). */
+  function postsLife(c, g) { return is(c, ANY) && !!g && g.type === 'life' && (meIn(c, g.leaderIds || []) || (meIn(c, g.memberIds || []) && (g.roles || {})[c.me] === 'coleader')); }
+  function okLink(u) { return u === undefined || (typeof u === 'string' && u.length <= 500 && (u === '' || /^https?:\/\/[^ ]+$/.test(u))); }
+  function okStudy(d) {
+    return onlyKeys(d, ['groupId', 'groupName', 'date', 'time', 'meet', 'notes', 'topic', 'open', 'showFrom', 'to', 'fromId', 'fromName', 'createdAt', 'updatedAt'])
+      && typeof d.groupId === 'string' && /^[0-9]{4}-[0-9]{2}-[0-9]{2}$/.test(d.date || '') && /^[0-2][0-9]:[0-5][0-9]$/.test(d.time || '')
+      && okLink(d.meet) && okLink(d.notes) && (d.meet || '') + (d.notes || '') !== '' && (d.topic === undefined || (typeof d.topic === 'string' && d.topic.length <= 120))
+      && (d.open === undefined || typeof d.open === 'boolean') && (d.showFrom === undefined || Number.isInteger(d.showFrom)) && Array.isArray(d.to) && d.to.length <= 3000;
+  }
+  function mayPostStudy(c, d) { var g = docs['careGroups/' + d.groupId]; return !!g && (is(c, ['admin', 'pastor']) || postsLife(c, g)) && d.to.every(function (x) { return (g.memberIds || []).indexOf(x) >= 0; }); }
   var POLICY = {
+    studies: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && (d.open === true || meIn(c, d.to || []))); },
+      write: function (c, op, id, b, a) {
+        if (op === 'delete') return is(c, ['admin', 'pastor']) || postsLife(c, docs['careGroups/' + b.groupId]);
+        if (!is(c, ANY) || !okStudy(a) || !mayPostStudy(c, a)) return false;
+        return op === 'create' ? isMe(c, a.fromId) : a.groupId === b.groupId;
+      } },
     board: communityPolicy('board'), market: communityPolicy('market'),
     marketPhotos: { read: function (c, id) { return seesItem(c, 'market', docs['market/' + id]); },
       write: function (c, op, id, b, a, after) {
@@ -293,11 +309,12 @@
           });
         }
         if (!is(c, ANY) || !isMe(c, a.fromId)) return false;
-        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'aboutId', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
+        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'aboutId', 'showFrom', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
+        if (a.showFrom !== undefined && !Number.isInteger(a.showFrom)) return false;
         if (a.some !== undefined && typeof a.some !== 'boolean') return false;
         if (a.replyTo !== undefined && (typeof a.replyTo !== 'string' || a.replyTo.length > 100)) return false;
         if (a.kind !== 'roster' && (a.roster !== undefined || a.turns !== undefined)) return false;
-        if (a.about !== undefined && a.about !== '' && !(a.about === 'partnerApp' && a.kind === 'office') && !((a.about === 'board' || a.about === 'market') && a.kind === 'direct')) return false;
+        if (a.about !== undefined && a.about !== '' && !(a.about === 'partnerApp' && a.kind === 'office') && !((a.about === 'board' || a.about === 'market') && a.kind === 'direct') && !(a.about === 'study' && a.kind === 'life')) return false;
         if (a.turns !== undefined && (!Array.isArray(a.turns) || a.turns.length > 100)) return false;
         if (['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
@@ -312,6 +329,7 @@
           return a.roster === 'declined' && a.to.every(function (x) { return team.indexOf(x) >= 0; });
         }
         if (a.about === 'board' || a.about === 'market') return aboutItem(c, a);   // checked on its own (firestore.rules maySendTo)
+        if (a.about === 'study') { var sg = docs['careGroups/' + a.groupId]; return !!sg && typeof a.aboutId === 'string' && !!a.aboutId && (mgr || postsLife(c, sg)) && a.to.every(function (x) { return (sg.memberIds || []).indexOf(x) >= 0; }); }
         if (mgr) return true;
         if (a.kind === 'direct') return mayDirect(c, a);
         if (a.kind === 'leaders') { var lb = docs['leaderBodies/' + a.groupId]; return !!lb && meIn(c, lb.memberIds || []) && a.to.every(function (x) { return (lb.memberIds || []).indexOf(x) >= 0; }); }

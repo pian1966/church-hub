@@ -108,6 +108,53 @@ module.exports = async function (ctx) {
   await s.go('messages/send'); await s.page.waitForTimeout(200);
   await s.page.click('#ms-to-btn'); await s.page.waitForSelector('#modal .ms-choose'); const to = await s.page.$$eval('#modal .ms-choose .ms-aud', o => o.map(x => x.dataset.key));
   check(to.includes('life/lg1') && to.includes('care/cg1'), 'they can send a message to their life group (and their care group)');
+  await s.page.keyboard.press('Escape').catch(() => {});
+
+  // Midweek Groups online: this week's meeting link and notes (js/studies.js)
+  const day = n => s.page.evaluate(k => { const d = new Date(); d.setDate(d.getDate() + k); return LeaveCore.iso(d); }, n);
+  const tomorrow = await day(1), nextWeek = await day(7);
+  await s.go('life'); await s.page.waitForTimeout(300);
+  check(!!(await s.page.$('[data-act="life:post"][data-g="lg1"]')), 'a group leader sees Post this week’s links on their group');
+  await s.page.click('[data-act="life:post"][data-g="lg1"]'); await s.page.waitForSelector('#st-meet');
+  await s.page.fill('#st-date', tomorrow); await s.page.fill('#st-time', '19:00');
+  await s.page.fill('#st-meet', 'not a link'); await s.page.waitForTimeout(50);
+  check((await s.page.textContent('#st-meet-k')).includes('doesn’t look like a web link'), 'a wrong link is pointed out while typing');
+  await s.page.fill('#st-meet', 'https://meet.google.com/abc-defg-hij'); await s.page.waitForTimeout(50);
+  check((await s.page.textContent('#st-meet-k')).includes('Google Meet'), '…and a Google Meet link is recognised');
+  await s.page.fill('#st-notes', 'https://docs.google.com/document/d/made-up/edit'); await s.page.fill('#st-topic', 'Romans 8');
+  await s.page.click('[data-act="life:savepost"]'); await s.settle(); docs = await s.docsNow();
+  const stKey = Object.keys(docs).find(k => /^studies\//.test(k)), stId = stKey ? stKey.split('/')[1] : '';
+  const sent = Object.keys(docs).filter(k => /^messages\//.test(k)).map(k => docs[k]).find(m => m.about === 'study' && m.aboutId === stId);
+  check(!!stKey && docs[stKey].date === tomorrow && docs[stKey].meet === 'https://meet.google.com/abc-defg-hij' && docs[stKey].to.includes('p15') && docs[stKey].topic === 'Romans 8', 'the links are saved for the group’s members');
+  check(!!sent && sent.kind === 'life' && sent.groupId === 'lg1' && sent.to.includes('p15') && !sent.showFrom, '…and sent to the group in Messages straight away');
+  t = await s.page.textContent('.my-life[data-g="lg1"]');
+  check(t.includes('Next study') && t.includes('Romans 8') && !!(await s.page.$('.my-life[data-g="lg1"] a.st-link[href="https://meet.google.com/abc-defg-hij"]')), 'the group’s page shows the next study with Join the meeting and Open the notes');
+  // Next week, sent on the day; the meeting link is remembered
+  await s.page.click('[data-act="life:post"][data-g="lg1"]:not([data-id])');
+  await s.page.waitForSelector('#st-meet');
+  check((await s.page.inputValue('#st-meet')) === 'https://meet.google.com/abc-defg-hij' && (await s.page.inputValue('#st-notes')) === '', 'next time, the meeting link is remembered – only the notes are new');
+  await s.page.fill('#st-date', nextWeek); await s.page.fill('#st-notes', 'https://example.org/week2.pdf');
+  await s.page.check('input[name="st-when"][value="day"]'); await s.page.fill('#st-at', '08:00');
+  await s.page.click('[data-act="life:savepost"]'); await s.settle(); docs = await s.docsNow();
+  const later = Object.keys(docs).filter(k => /^messages\//.test(k)).map(k => docs[k]).find(m => m.about === 'study' && m.showFrom);
+  check(!!later && later.showFrom > Date.now() + 5 * 864e5, 'Send on the day: the message waits until the morning of the study');
+  await finish(s);
+
+  console.log('Midweek Groups online (a member):');
+  const seed3 = JSON.parse(JSON.stringify(docs));
+  const today = await (async () => { const d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); })();
+  seed3['careGroups/lg9'] = { type: 'life', name: 'Youth live stream', leaderIds: ['p02'], memberIds: ['p02'], names: {} };
+  seed3['studies/stOpen'] = { groupId: 'lg9', groupName: 'Youth live stream', date: today, time: '23:59', meet: 'https://www.youtube.com/live/made-up', notes: 'https://unknown-site.example/notes', topic: 'Psalm 23', open: true, to: ['p02'], fromId: 'p02', fromName: 'Thandi' };
+  s = await session('clare.jacobs@example.com', seed3); await s.go('messages'); await s.page.waitForTimeout(400); t = await s.text();
+  check(t.includes('Romans 8') && !!(await s.page.$('.msg a.btn[href="https://meet.google.com/abc-defg-hij"]')) && !!(await s.page.$('.msg a.btn[href="https://docs.google.com/document/d/made-up/edit"]')),
+    'a member gets the message with Join the meeting and Open the notes');
+  check(!t.includes('week2.pdf'), '…but not next week’s yet: it arrives on the day');
+  await s.go('home'); await s.page.waitForTimeout(300); t = await s.text();
+  check(t.includes('Youth live stream') && t.includes('Psalm 23') && !!(await s.page.$('.st-home a[href="https://www.youtube.com/live/made-up"]')), 'on the day, a study open to the whole church is on Home, even for someone not in the group');
+  check(t.includes('Check this link before you open it.'), 'a link to an unknown site shows its address with “check this link”');
+  await s.go('life'); await s.page.waitForTimeout(200); t = await s.text();
+  check(t.includes('Open to everyone') && t.includes('Youth live stream'), 'the Midweek Groups page lists studies open to everyone');
+  check(!(await s.page.$('[data-act="life:post"]')), 'a member who doesn’t lead a group can’t post links');
   await finish(s);
 
   console.log('Life groups (a Pastor who leads a group):');

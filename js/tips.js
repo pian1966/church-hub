@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.98';
+  var NEWS_FOR = '0.99';
   var NEWS = [
+    { date: '2026-11-19', who: ['lifelead'], app: 'life', text: TX('Midweek Group leaders: post this week’s meeting link and notes under Groups → Midweek Groups. Your group gets them in Messages, with Join the meeting and Open the notes – now or on the day.') },
+    { date: '2026-11-19', who: ['everyone'], app: 'life', text: TX('On the day of your Midweek Group, Home shows a card with Join the meeting and Open the notes – it becomes Join now 15 minutes before.') },
     { date: '2026-11-19', who: ['rosters', 'admin'], text: TX('Names are now listed from A to Z in Rosters (teams and serving groups), Groups, the Librarians, the keepers and Privacy – tap a name to open the person’s page.') },
     { date: '2026-11-19', who: ['admin'], app: 'support', text: TX("Subscription: a church that gives monthly can now take a payment holiday whenever it needs one, no questions asked (a yearly church switches to monthly first), and paying is moving to PayFast – card, Instant EFT or SnapScan – with no bank details shown.") },
     { date: '2026-11-19', who: ['admin'], text: TX('New: the Community board and the Marketplace. Switch them on under Settings → Apps. The pastors, the Administrators and the church secretary check everything before anyone sees it – change who under More → Keepers….') },
@@ -89,6 +91,7 @@
 
   var TIPS = [
     // Everyone
+    { id: 'study-past', who: ['everyone'], app: 'life', href: '#/life', text: TX('Missed a Midweek Group? Its page keeps Past studies, with the notes for each week.') },
     { id: 'board-help', who: ['everyone'], app: 'board', href: '#/board', text: TX('Tap a note on the Community board to see all of it and write privately to the person who pinned it.') },
     { id: 'market-photos', who: ['everyone'], app: 'market', href: '#/market', text: TX('Listing something on the Marketplace? Add up to three photos – Church & Trellis makes them small, so they cost little data.') },
     { id: 'prayer-card', who: ['admin'], app: 'support', href: '#/support/card', text: TX('Give your church a prayer card under Subscription → Our prayer card: a photo and two things to pray for, so churches in the prayer circle can pray for you.') },

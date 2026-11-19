@@ -19,7 +19,7 @@
  * 'reply' – reply to any message sent to them. Without 'reply' they may still reply to a minister when they may write.
  * Anyone sending to a group may also tick only some of its people (some: true); carers and leaders still only reach
  * people in their own group.
- * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, replyTo, roster, turns, title, body, fromId, fromName, to: [personIds], deliveredBy: [personIds], readBy: [personIds] }
+ * messages/{id} = { kind, groupId, audience (its name when sent; one chosen person's name), some, replyTo, roster, turns, about, aboutId, showFrom, title, body, fromId, fromName, to: [personIds], deliveredBy: [personIds], readBy: [personIds] }
  * msgGroups/{id} = { name, memberIds, leaderIds, names: { personId: name } } – leaders are members too; names so leaders who
  *   aren't staff can tick people when writing.
  * The list of people (to) is worked out when the message is sent, so someone who joins a group later doesn't see older
@@ -170,11 +170,13 @@ var Msg = (function () {
 
   function newestFirst(a, b) { return String(a.createdAt || '') < String(b.createdAt || '') ? 1 : String(a.createdAt || '') > String(b.createdAt || '') ? -1 : 0; }
   /** Messages sent to this person, newest first; managers also receive the Office channel. */
-  function inbox(messages, pid, office) { return (messages || []).filter(function (m) { return (m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office' && m.fromId !== pid); }).sort(newestFirst); }
+  /** A message that waits for its day (showFrom: Midweek Group links sent "on the day") hasn't arrived yet – except for its sender. */
+  function arrived(m, pid, now) { return !m.showFrom || m.fromId === pid || m.showFrom <= (now === undefined ? Date.now() : now); }
+  function inbox(messages, pid, office, now) { return (messages || []).filter(function (m) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office' && m.fromId !== pid)) && arrived(m, pid, now); }).sort(newestFirst); }
   /** Messages this person sent (or, for Administrators and Pastors, everyone's: all = true), newest first. */
   function sent(messages, pid, all) { return (messages || []).filter(function (m) { return all || m.fromId === pid; }).sort(newestFirst); }
-  function isUnread(m, pid, office) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office')) && m.fromId !== pid && (m.readBy || []).indexOf(pid) < 0; }
-  function unread(messages, pid, office) { return (messages || []).filter(function (m) { return isUnread(m, pid, office); }); }
+  function isUnread(m, pid, office, now) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office')) && m.fromId !== pid && (m.readBy || []).indexOf(pid) < 0 && arrived(m, pid, now); }
+  function unread(messages, pid, office, now) { return (messages || []).filter(function (m) { return isUnread(m, pid, office, now); }); }
   /** Ticks, as on WhatsApp: 'sent' (✓ grey) – 'delivered' (✓✓ grey) once it has reached EVERYONE it went to – 'some'
    *  (✓✓, the first blue) once it has reached everyone and some have read it – 'read' (✓✓ blue) once everyone has opened it. people (optional): only those who can sign in count, as the others can never open it.
    *  A message to the Office (no list of people): delivered / read as soon as anyone in the office has it / opens it. */
@@ -243,7 +245,7 @@ var Msg = (function () {
     return JSON.stringify(x) === JSON.stringify(g) ? null : x;
   }
 
-  return { officeNotice: officeNotice, ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
+  return { arrived: arrived, officeNotice: officeNotice, ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
     counts: counts, KINDS: KINDS, rosterNote: rosterNote, MAX_TURNS: MAX_TURNS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
     inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, MARK_STYLES: MARK_STYLES, markStyle: markStyle, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();

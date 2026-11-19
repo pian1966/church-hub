@@ -89,6 +89,11 @@ const msgs = [
 ];
 ok(M.inbox(msgs, 'd').map(x => x.id).join() === 'm2,m1' && M.inbox(msgs, 'h').length === 0, 'the inbox: messages sent to me, newest first');
 ok(M.inbox(msgs, 'a', true).some(x => x.id === 'office') && M.inbox(msgs, 'b', false).every(x => x.kind !== 'office'), 'only the Office staff inbox includes the shared Office channel');
+{
+  const wait = { id: 'w1', kind: 'life', groupId: 'lg1', fromId: 'a', to: ['a', 'd'], readBy: [], showFrom: 2000, createdAt: '2026-11-19T10:00:00Z' };
+  ok(M.inbox([wait], 'd', false, 1000).length === 0 && M.unread([wait], 'd', false, 1000).length === 0 && M.inbox([wait], 'd', false, 2000).length === 1 && M.isUnread(wait, 'd', false, 3000), 'a message sent "on the day" arrives then (not before)');
+  ok(M.arrived(wait, 'a', 1000), 'its sender sees it straight away');
+}
 ok(M.unread(msgs, 'd').map(x => x.id).join() === 'm1,m2' && M.unread(msgs, 'b').map(x => x.id).join() === 'm3' && M.unread(msgs, 'c').length === 0 && M.unread(msgs, 'a', true).some(x => x.id === 'office'), 'unread: not opened yet, including Office messages for staff, and never my own');
 ok(M.sent(msgs, 'a').map(x => x.id).join() === 'm2,m3' && M.sent(msgs, 'x', true).length === 4, 'sent: mine, or everyone’s for Administrators and Pastors');
 ok(M.status({ fromId: 'a', deliveredBy: ['a'], readBy: ['a'] }) === 'sent'

@@ -38,6 +38,26 @@ name: you can add anyone in the church, including people who aren't Church Partn
 church directory. You only see their name, not their phone number, email or address. To take someone out, use **Take out
 of the group** (the × next to their name).
 
+## How do I send this week's meeting link and notes?
+For: Group leaders, co-leaders
+Also asked: Google Meet link. Zoom link. Notes for Bible study. Live stream. Instead of WhatsApp.
+
+On your group (Groups → **Midweek Groups**), tap **Post this week's links**. Paste the **meeting link** (Google Meet, Zoom,
+Teams or YouTube Live) and the **notes link** (a Google Doc, a PDF or any web link), and add the topic or passage if you like.
+The date and time come from when your group meets. Choose **Now**, or **On the day, at** a time – the message then waits in
+Messages until that morning. Next week the meeting link is filled in for you, so usually only the notes are new. To fix a
+link, tap **Change**: the message your group already has shows the new link.
+
+Tick **Open to the whole church** for a live-streamed study: everyone signed in sees it on Home that day and on the Midweek
+Groups page, even if they aren't in your group.
+
+## Where do I find the link to join, and the notes?
+For: Members
+
+In **Messages** – the message from your group has **Join the meeting** and **Open the notes**. On the day, Home shows a
+card for it, which becomes **Join now** 15 minutes before. Missed a week? Your group's page keeps **Past studies** with each
+week's notes. A link to a site Church & Trellis doesn't know shows its address, so you can check it before you open it.
+
 ## How do I message my group?
 For: Group leaders
 

@@ -1,4 +1,4 @@
-# Church Hub – changelog
+# Church & Trellis – changelog
 
 Finished work, moved here from `docs/ROADMAP.md` so the roadmap stays short. Nobody needs to read this to work on
 Church Hub; it is the history. Newest entries at the bottom of each section; add a line here when you tick something off.

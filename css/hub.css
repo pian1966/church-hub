@@ -1441,3 +1441,4 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 .ar-folder .ar-sub { color: var(--muted); font-size: 13px; }
 .ar-folder .tag { max-width: 100%; white-space: normal; text-align: left; line-height: 1.3; }
 .ar-folder .ic { transition: transform .2s var(--ease-spring, ease); } .ar-folder:hover .ic { transform: scale(1.06) rotate(-3deg); }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }   /* names in a serving group, each opening the person's page */

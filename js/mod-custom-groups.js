@@ -34,8 +34,8 @@
       (admin() ? '<button class="icon-btn ghost" data-act="customgroups:edit" data-id="' + esc(group.id) + '" aria-label="' + esc(T('Edit {name}', { name: group.name })) + '">' + H.icon('M4 20h4L20 8l-4-4L4 16zM14 6l4 4', 16) + '</button>' +
         '<button class="icon-btn ghost" data-act="customgroups:delete" data-id="' + esc(group.id) + '" aria-label="' + esc(T('Delete {name}', { name: group.name })) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</div>' +
       '<small class="muted">' + TN('{n} person', '{n} people', (group.memberIds || []).length) + '</small>' +
-      (admin() && group.memberIds && group.memberIds.length ? '<div class="list" style="margin-top:8px">' + group.memberIds.map(function (id) {
-        var p = S.get('people', id); return p ? '<div class="item"><span class="grow">' + esc(H.name(p)) + '</span></div>' : '';
+      (admin() && group.memberIds && group.memberIds.length ? '<div class="list" style="margin-top:8px">' + group.memberIds.map(function (id) { return S.get('people', id); }).filter(Boolean).sort(H.byName).map(function (p) {
+        return '<div class="item"><span class="grow">' + '<a class="name-chip" href="#/people/p/' + esc(p.id) + '">' + esc(H.name(p)) + '</a>' + '</span></div>';
       }).join('') + '</div>' : '') + '</section>';
   }
   function section() {

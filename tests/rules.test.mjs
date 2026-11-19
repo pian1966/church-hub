@@ -1139,8 +1139,90 @@ console.log('Sign-in codes and PINs (members with no email)');
   });
 }
 
-await t('the parts not built yet (Community board, Marketplace, Subscription records) are closed to everyone', async () => {
-  for (const c of ['board/x', 'market/x', 'subscription/church']) {
+// ---------- Community board and Marketplace (js/community.js): Church Partners and staff, a keeper approves each one ----------
+const DAY = 86400000, NOW = Date.now();
+const notice = x => Object.assign({ kind: 'need', title: 'I need a plumber', body: 'Leaking geyser', phone: '', personId: 'p14', name: 'Tim', status: 'waiting', endsAt: NOW + 30 * DAY, renews: 0, note: '', by: '', decidedAt: 0, doneAt: 0, reports: [], createdAt: 'x', updatedAt: 'x' }, x);
+const listing = x => Object.assign({ kind: 'sale', title: 'Pine bookshelf', body: '', personId: 'p14', name: 'Tim', status: 'waiting', endsAt: NOW + 30 * DAY, renews: 0, note: '', by: '', decidedAt: 0, doneAt: 0, reports: [],
+  price: 450, offer: false, condition: 'good', category: 'furniture', area: 'Hilton', photos: 1, thumb: 'data:image/jpeg;base64,AAAA', createdAt: 'x', updatedAt: 'x' }, x);
+const about = (part, id, to, from, fromId) => ({ kind: 'direct', groupId: '', audience: 'Tim', some: false, replyTo: '', about: part, aboutId: id, title: 'About your notice', body: 'I can help', fromId, fromName: from, to: [to], deliveredBy: [fromId], readBy: [fromId] });
+await t('Community board: Church Partners pin notices, which wait for a keeper', async () => {
+  await can(db.member.doc('board/b1').set(notice()));
+  await cannot(db.member.doc('board/b2').set(notice({ status: 'live' })));                 // not put up by themselves
+  await cannot(db.member.doc('board/b3').set(notice({ personId: 'p15' })));               // not as someone else
+  await cannot(db.attendee.doc('board/b4').set(notice({ personId: 'p16' })));             // attendees: not on the board
+  await cannot(db.member.doc('board/b5').set(notice({ endsAt: NOW + 90 * DAY })));        // 30 days at a time
+  await cannot(db.member.doc('board/b6').set(notice({ kind: 'advert' })));
+  await cannot(db.member.doc('board/b7').set(notice({ secret: 1 })));
+  await can(read(db.member, 'board/b1')); await can(read(db.pastor, 'board/b1')); await can(read(db.admin, 'board/b1'));
+  await cannot(read(db.rosters, 'board/b1')); await cannot(read(db.attendee, 'board/b1'));    // waiting: only its poster and the keepers
+  await cannot(db.rosters.doc('board/b1').update({ status: 'live', by: 'Sipho', decidedAt: NOW, endsAt: NOW + 30 * DAY, updatedAt: 'y' }));   // not a keeper
+});
+await t('Community board: a keeper approves; everyone else sees what is live', async () => {
+  await can(db.pastor.doc('board/b1').update({ status: 'live', by: 'Thandi', decidedAt: NOW, endsAt: NOW + 30 * DAY, updatedAt: 'y' }));
+  await can(read(db.rosters, 'board/b1')); await can(read(db.kids, 'board/b1')); await cannot(read(db.attendee, 'board/b1'));
+  await can(list(db.rosters.collection('board').where('status', '==', 'live'))); await can(list(db.rosters.collection('board').where('status', '==', 'done')));
+  await can(list(db.rosters.collection('board').where('personId', '==', 'p05'))); await cannot(list(db.rosters.collection('board')));
+  await can(list(db.pastor.collection('board'))); await cannot(list(db.attendee.collection('board').where('status', '==', 'live')));
+  await cannot(db.pastor.doc('board/b1').update({ title: 'Something else', updatedAt: 'y' }));   // keepers decide; they don't rewrite
+  await cannot(db.pastor.doc('board/b1').update({ status: 'live', endsAt: NOW + 200 * DAY, updatedAt: 'y' }));
+});
+await t('Community board: reports, renewing, sorted and taking down', async () => {
+  await can(db.rosters.doc('board/b1').update({ reports: ['p05'], updatedAt: 'z' }));
+  await cannot(db.rosters.doc('board/b1').update({ reports: ['p05', 'p01'], updatedAt: 'z' }));   // only themselves
+  await cannot(db.rosters.doc('board/b1').update({ title: 'Mine now', updatedAt: 'z' }));
+  await cannot(db.attendee.doc('board/b1').update({ reports: ['p05', 'p16'], updatedAt: 'z' }));
+  await can(db.member.doc('board/b1').update({ renews: 1, endsAt: NOW + 30 * DAY, updatedAt: 'r' }));
+  await cannot(db.member.doc('board/b1').update({ renews: 2, endsAt: NOW + 300 * DAY, updatedAt: 'r' }));
+  await cannot(db.member.doc('board/b1').update({ title: 'Changed while live', updatedAt: 'r' }));     // a change goes back to the keepers
+  await can(db.member.doc('board/b1').update({ title: 'I need a plumber today', status: 'waiting', reports: [], updatedAt: 'r' }));
+  await can(db.admin.doc('board/b1').update({ status: 'live', by: 'Linda', decidedAt: NOW, endsAt: NOW + 30 * DAY, updatedAt: 'y' }));
+  await can(db.member.doc('board/b1').update({ status: 'done', doneAt: NOW, updatedAt: 'd' }));
+  await can(db.member.doc('board/b8').set(notice({ title: 'Lift to church' })));
+  await cannot(db.rosters.doc('board/b8').delete()); await can(db.pastor.doc('board/b8').delete());
+  await can(db.member.doc('board/b9').set(notice({ title: 'Mine to take down' }))); await can(db.member.doc('board/b9').delete());
+});
+await t('Community board: the keepers the church chooses (settings keepers.board) replace the first ones', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ keepers: { board: ['p05'] }, rosterExtra: ['p15'] }); });
+  await can(db.member.doc('board/k1').set(notice({ title: 'Choose me' })));
+  await can(read(db.rosters, 'board/k1')); await cannot(read(db.pastor, 'board/k1'));
+  await cannot(db.pastor.doc('board/k1').update({ status: 'live', by: 'Thandi', decidedAt: NOW, endsAt: NOW + 30 * DAY, updatedAt: 'y' }));
+  await can(db.rosters.doc('board/k1').update({ status: 'change', note: 'Please add which suburb', by: 'Sipho', decidedAt: NOW, updatedAt: 'y' }));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ keepers: { market: [] } }); });
+  await cannot(read(db.rosters, 'board/k1'));   // back to the first keepers for the board
+  await can(read(db.pastor, 'board/k1'));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').update({ keepers: firebase.firestore.FieldValue.delete(), rosterExtra: firebase.firestore.FieldValue.delete() }); });
+});
+await t('Marketplace: Church Partners only; a keeper approves every listing; photos follow the listing', async () => {
+  await can(db.member.doc('market/m1').set(listing()));
+  await cannot(db.attendee.doc('market/m2').set(listing({ personId: 'p16' })));
+  await cannot(db.member.doc('market/m3').set(listing({ kind: 'auction' })));
+  await cannot(db.member.doc('market/m4').set(listing({ price: -5 })));
+  await cannot(db.member.doc('market/m5').set(listing({ phone: '082' })));   // contact through Messages, not a phone number
+  await can(db.member.doc('marketPhotos/m1').set({ data: ['data:image/jpeg;base64,AAAA'], updatedAt: 'x' }));
+  await cannot(db.member.doc('marketPhotos/m1').set({ data: ['a', 'b', 'c', 'd'], updatedAt: 'x' }));
+  await cannot(db.rosters.doc('marketPhotos/m1').set({ data: ['a'], updatedAt: 'x' }));
+  await cannot(read(db.rosters, 'market/m1')); await cannot(read(db.rosters, 'marketPhotos/m1')); await can(read(db.pastor, 'marketPhotos/m1'));
+  await can(db.admin.doc('market/m1').update({ status: 'live', by: 'Linda', decidedAt: NOW, endsAt: NOW + 30 * DAY, updatedAt: 'y' }));
+  await can(read(db.rosters, 'market/m1')); await can(read(db.rosters, 'marketPhotos/m1'));
+  await cannot(read(db.attendee, 'market/m1')); await cannot(read(db.attendee, 'marketPhotos/m1'));
+  await cannot(db.member.doc('marketPhotos/m1').set({ data: ['data:image/jpeg;base64,BBBB'], updatedAt: 'x' }));   // new photos: back to a keeper first
+  await can(db.member.doc('market/m1').update({ price: 400, updatedAt: 'p' }));       // a lower price stays up
+  await cannot(db.member.doc('market/m1').update({ price: 900, updatedAt: 'p' }));
+  await can(db.member.doc('market/m1').update({ status: 'done', doneAt: NOW, updatedAt: 'd' }));
+  await cannot(db.rosters.doc('marketPhotos/m1').delete()); await can(db.member.doc('marketPhotos/m1').delete()); await can(db.member.doc('market/m1').delete());
+});
+await t('Messages about a notice or listing: privately to its poster, while it is live (keepers about their decision)', async () => {
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('board/live1').set(notice({ status: 'live' })); await ctx.firestore().doc('board/wait1').set(notice()); });
+  await can(db.rosters.collection('messages').add(about('board', 'live1', 'p14', 'Sipho', 'p05')));
+  await cannot(db.rosters.collection('messages').add(about('board', 'wait1', 'p14', 'Sipho', 'p05')));   // not live yet
+  await cannot(db.rosters.collection('messages').add(about('board', 'live1', 'p15', 'Sipho', 'p05')));   // only to its poster
+  await cannot(db.attendee.collection('messages').add(about('board', 'live1', 'p14', 'Hope', 'p16')));
+  await can(db.pastor.collection('messages').add(about('board', 'wait1', 'p14', 'Thandi', 'p02')));     // a keeper about their decision
+  await cannot(db.rosters.collection('messages').add(Object.assign(about('board', 'live1', 'p14', 'Sipho', 'p05'), { about: 'secrets' })));
+});
+
+await t('the parts not built yet (Subscription records) are closed to everyone', async () => {
+  for (const c of ['subscription/church']) {
     await cannot(db.admin.doc(c).set({ a: 1 })); await cannot(read(db.admin, c)); await cannot(read(db.member, c));
   }
 });

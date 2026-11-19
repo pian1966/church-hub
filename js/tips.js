@@ -17,8 +17,11 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.96';
+  var NEWS_FOR = '0.97';
   var NEWS = [
+    { date: '2026-11-19', who: ['admin'], text: TX('New: the Community board and the Marketplace. Switch them on under Settings → Apps. The pastors, the Administrators and the church secretary check everything before anyone sees it – change who under More → Keepers….') },
+    { date: '2026-11-19', who: ['everyone'], app: 'board', text: TX('The Community board is here: pin a sticky note to ask for help, offer it or say thank you. The latest three show on your Home page.') },
+    { date: '2026-11-19', who: ['everyone'], app: 'market', text: TX('The Marketplace is here: buy, sell and give away within the church. A keeper checks every listing before anyone sees it.') },
     { date: '2026-11-19', who: ['everyone'], text: TX("Church Hub has a new name: Church & Trellis. Everything works as before, and nothing you have saved has changed.") },
     { date: '2026-11-19', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters now open with as many services as fit your screen. Use − and + to see from 1 to 16 side by side, or choose 1 month or 1 quarter and slide across.') },
     { date: '2026-11-19', who: ['lifelead'], not: ['admin', 'pastor'], app: 'life', text: TX('Midweek Groups: every group leader can now add anyone to their group with “Add someone to the group”, people who only come to church too – they see just each person’s name.') },
@@ -84,6 +87,8 @@
 
   var TIPS = [
     // Everyone
+    { id: 'board-help', who: ['everyone'], app: 'board', href: '#/board', text: TX('Tap a note on the Community board to see all of it and write privately to the person who pinned it.') },
+    { id: 'market-photos', who: ['everyone'], app: 'market', href: '#/market', text: TX('Listing something on the Marketplace? Add up to three photos – Church & Trellis makes them small, so they cost little data.') },
     { id: 'prayer-card', who: ['admin'], app: 'support', href: '#/support/card', text: TX('Give your church a prayer card under Subscription → Our prayer card: a photo and two things to pray for, so churches in the prayer circle can pray for you.') },
     { id: 'roster-team', who: ['admin'], app: 'rosters', href: '#/settings/services', text: TX('Administrators and Roster coordinators hear when someone can’t make a roster turn. To include someone else, such as the church secretary, add them under Settings → Church Services.') },
     { id: 'me-details', who: ['everyone'], app: 'me', href: '#/me', text: TX('Your Me page has your own details, and you can update your contact details there yourself.') },

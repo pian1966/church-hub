@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores'];
+    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church & Trellis as another role would see it. Nothing is saved while it is on. */
@@ -985,6 +985,15 @@ var Store = (function () {
         want['loans:all'] = c('loans');
         want['libraryDuplicateIgnores:all'] = c('libraryDuplicateIgnores');
       }
+      // Community board and Marketplace (js/community.js): Church Partners and staff, never attendees, once switched on –
+      // what is live or sorted/sold, their own, and everything for keepers (firestore.rules seesItem, keepsPart)
+      var partnerHere = role() !== 'attendee' && (role() !== 'member' || (!!mine && (!window.Msg || Msg.partnerLevel(mine))));
+      ['board', 'market'].forEach(function (pt) {
+        if (!me || !partnerHere || (st.modules || {})[pt] !== true) return;
+        var chosen = (st.keepers || {})[pt], keeps = !previewRole && (Array.isArray(chosen) ? chosen.indexOf(me) >= 0 : is('admin', 'pastor') || (st.rosterExtra || []).indexOf(me) >= 0);
+        if (keeps) { want[pt + ':all'] = c(pt); return; }
+        want[pt + ':live'] = c(pt).where('status', '==', 'live'); want[pt + ':done'] = c(pt).where('status', '==', 'done'); want[pt + ':mine'] = c(pt).where('personId', '==', me);
+      });
       var gone = false;
       Object.keys(extraSubs).forEach(function (k) { if (!want[k]) { try { extraSubs[k](); } catch (e) {} delete extraSubs[k]; delete raw[k]; gone = true; } });
       if (gone && ready) { rebuild(); remoteChanged(); }
@@ -1162,6 +1171,10 @@ var Store = (function () {
       var custom = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('customGroups') === 0; }));
       db.customGroups = Object.keys(custom).map(function (id) { var o = copy(custom[id]); o.id = id; return o; });
       [['leaderBodies', /^leaderBodies/], ['archive', /^archive:/], ['loans', /^loans/]].forEach(function (x) {   // each asked for in parts (plan(), extras())
+        var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
+        db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
+      });
+      [['board', /^board:/], ['market', /^market:/]].forEach(function (x) {   // Community board and Marketplace (extras())
         var all = merged.apply(null, Object.keys(raw).filter(function (k) { return x[1].test(k); }));
         db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
       });
@@ -1459,6 +1472,8 @@ var Store = (function () {
     function photoSet(pid, data) { return data ? write('photos/' + pid, { data: data, updatedAt: now() }) : del('photos/' + pid); }
     /** A library item's cover picture (covers/{id}), and the library's policy (libraryPolicy/policy): fetched only when shown. */
     function coverGet(id) { return doc('covers/' + id).get().then(function (s) { return s.exists ? (s.data().data || '') : ''; }, function () { return ''; }); }
+    function picsGet(id) { return doc('marketPhotos/' + id).get().then(function (s) { return s.exists ? (s.data().data || []) : []; }, function () { return []; }); }
+    function picsSet(id, list) { return list && list.length ? write('marketPhotos/' + id, { data: list, updatedAt: now() }) : del('marketPhotos/' + id); }
     function coverSet(id, data) { return data ? write('covers/' + id, { data: data, updatedAt: now() }) : del('covers/' + id); }
     function policyGet() { return doc('libraryPolicy/policy').get().then(function (s) { return s.exists ? s.data() : null; }); }
     function policySet(p) { return p ? write('libraryPolicy/policy', p) : del('libraryPolicy/policy'); }
@@ -1566,7 +1581,7 @@ var Store = (function () {
       choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, picsGet: picsGet, picsSet: picsSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -1716,6 +1731,18 @@ var Store = (function () {
       })());
       put('books', b, auditText);
       return done;
+    },
+    /** A Marketplace listing's photos (small JPEGs as data: addresses), fetched only when it is opened. [] when there are none. */
+    listingPhotos: function (id) {
+      if (LIVE) return Live.picsGet(id);
+      var x = ((db && db.marketPhotos) || []).filter(function (o) { return o.id === id; })[0]; return Promise.resolve(x ? (x.data || []).slice() : []);
+    },
+    /** Change a listing's photos ([] = none). Saved after the listing itself (the rules check who posted it). */
+    setListingPhotos: function (id, list) {
+      if (blocked()) return Promise.resolve();
+      if (LIVE) return Live.picsSet(id, list || []);
+      db.marketPhotos = (db.marketPhotos || []).filter(function (o) { return o.id !== id; }); if (list && list.length) db.marketPhotos.push({ id: id, data: list.slice() });
+      save(); return Promise.resolve();
     },
     /** What it takes to become a Church Partner, for everyone to read: { text, link, name, type, data } or null.
      *  Written by Administrators, Pastors with the "settings" tick and the Senior Pastor (Rector). */

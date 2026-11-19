@@ -91,7 +91,56 @@
       typeof d.name === 'string' && d.name.length > 0 && d.name.length <= 100 && typeof d.mobile === 'string' && d.mobile.length >= 7 && d.mobile.length <= 30 &&
       Object.keys(d).every(function (k) { return ['bookId', 'title', 'personId', 'name', 'mobile', 'visitor', 'out', 'due', 'back', 'note', 'status', 'requestedAt', 'createdAt', 'updatedAt'].indexOf(k) >= 0; });
   }
+  /** Community board and Marketplace (firestore.rules communityPerson, keepsPart, okCommunity, changesItem). */
+  function communityPerson(c) { return is(c, ANY) && !attendee(c); }
+  function keepsPart(c, p) {
+    var st = docs['settings/church'] || {}, chosen = st.keepers || {};
+    return is(c, ANY) && (Object.prototype.hasOwnProperty.call(chosen, p) ? meIn(c, chosen[p] || []) : (is(c, ['admin', 'pastor']) || meIn(c, st.rosterExtra || []))) && !attendee(c);
+  }
+  var DAY31 = 31 * 86400000, CM_KEYS = ['kind', 'title', 'body', 'personId', 'name', 'status', 'endsAt', 'renews', 'note', 'by', 'decidedAt', 'doneAt', 'reports', 'createdAt', 'updatedAt'];
+  function in31(ms) { return Number.isInteger(ms) && ms <= Date.now() + DAY31; }
+  function okCommunity(p, d) {
+    var str = function (v, n) { return v === undefined || (typeof v === 'string' && v.length <= n); };
+    var base = typeof d.title === 'string' && d.title.length > 0 && d.title.length <= 80 && str(d.body, p === 'market' ? 1000 : 600) && typeof d.personId === 'string' && str(d.name, 60)
+      && ['waiting', 'live', 'change', 'declined', 'done'].indexOf(d.status) >= 0 && Number.isInteger(d.endsAt) && Number.isInteger(d.renews || 0) && (d.renews || 0) <= 2
+      && str(d.note, 300) && str(d.by, 60) && Array.isArray(d.reports || []) && (d.reports || []).length <= 50;
+    if (!base) return false;
+    if (p === 'board') return onlyKeys(d, CM_KEYS.concat(['phone'])) && ['need', 'offer', 'notice', 'thanks'].indexOf(d.kind) >= 0 && str(d.phone, 30);
+    return onlyKeys(d, CM_KEYS.concat(['price', 'offer', 'condition', 'category', 'area', 'photos', 'thumb'])) && ['sale', 'wanted', 'free'].indexOf(d.kind) >= 0
+      && typeof (d.price || 0) === 'number' && (d.price || 0) >= 0 && str(d.condition, 20) && str(d.category, 20) && str(d.area, 60)
+      && Number.isInteger(d.photos || 0) && (d.photos || 0) <= 3 && str(d.thumb, 60000);
+  }
+  function seesItem(c, p, d) { return communityPerson(c) && (['live', 'done'].indexOf(d.status) >= 0 || isMe(c, d.personId) || keepsPart(c, p)); }
+  function communityPolicy(p) {
+    return { read: function (c, id, d) { return !!d && seesItem(c, p, d); },
+      write: function (c, op, id, b, a) {
+        if (op === 'delete') return (is(c, ANY) && isMe(c, b.personId)) || keepsPart(c, p);
+        if (op === 'create') return communityPerson(c) && isMe(c, a.personId) && okCommunity(p, a) && a.status === 'waiting' && in31(a.endsAt) && !a.note && !(a.renews || 0) && !(a.reports || []).length;
+        if (!okCommunity(p, a)) return false;
+        var poster = is(c, ANY) && isMe(c, b.personId) && a.personId === b.personId && (
+          (a.status === 'waiting' && in31(a.endsAt) && (a.renews || 0) === (b.renews || 0) && !(a.reports || []).length)
+          || (b.status === 'live' && a.status === 'done' && onlyChanges(b, a, ['status', 'doneAt', 'updatedAt']))
+          || (b.status === 'live' && onlyChanges(b, a, ['endsAt', 'renews', 'updatedAt']) && (a.renews || 0) === (b.renews || 0) + 1 && in31(a.endsAt))
+          || (p === 'market' && b.status === 'live' && onlyChanges(b, a, ['price', 'updatedAt']) && (a.price || 0) < (b.price || 0)));
+        var before = b.reports || [], after = a.reports || [];
+        return poster || (onlyChanges(b, a, ['status', 'note', 'by', 'decidedAt', 'endsAt', 'reports', 'updatedAt']) && ['live', 'change', 'declined'].indexOf(a.status) >= 0 && in31(a.endsAt) && keepsPart(c, p))
+          || (communityPerson(c) && b.status === 'live' && onlyChanges(b, a, ['reports', 'updatedAt']) && before.every(function (x) { return after.indexOf(x) >= 0; })
+            && after.filter(function (x) { return before.indexOf(x) < 0; }).every(function (x) { return c.ids.indexOf(x) >= 0; }));
+      } };
+  }
+  /** A private message about a notice or listing (firestore.rules aboutItem). */
+  function aboutItem(c, a) {
+    var p = a.about || '', x = (p === 'board' || p === 'market') ? docs[p + '/' + (a.aboutId || '')] : null;
+    return a.kind === 'direct' && a.to.length === 1 && !a.replyTo && !!x && !isMe(c, a.to[0]) && x.personId === a.to[0] && ((x.status === 'live' && communityPerson(c)) || keepsPart(c, p));
+  }
   var POLICY = {
+    board: communityPolicy('board'), market: communityPolicy('market'),
+    marketPhotos: { read: function (c, id) { return seesItem(c, 'market', docs['market/' + id]); },
+      write: function (c, op, id, b, a, after) {
+        if (op === 'delete') return keepsPart(c, 'market') || (is(c, ANY) && !!docs['market/' + id] && isMe(c, docs['market/' + id].personId));
+        var l = (after && after['market/' + id]) || docs['market/' + id];
+        return is(c, ANY) && !!l && isMe(c, l.personId) && l.status === 'waiting' && onlyKeys(a, ['data', 'updatedAt', 'createdAt']) && Array.isArray(a.data) && a.data.length <= 3;
+      } },
     roles: { read: function (c, id) { return c.signedIn && (id === c.email || may(c, 'access')); },
       write: function (c, op, id, b, a, after) {
         if (op === 'create' && pinClaim(c, id, a, after)) return true;
@@ -244,11 +293,11 @@
           });
         }
         if (!is(c, ANY) || !isMe(c, a.fromId)) return false;
-        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
+        if (!onlyKeys(a, ['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'aboutId', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])) return false;
         if (a.some !== undefined && typeof a.some !== 'boolean') return false;
         if (a.replyTo !== undefined && (typeof a.replyTo !== 'string' || a.replyTo.length > 100)) return false;
         if (a.kind !== 'roster' && (a.roster !== undefined || a.turns !== undefined)) return false;
-        if (a.about !== undefined && a.about !== '' && !(a.about === 'partnerApp' && a.kind === 'office')) return false;
+        if (a.about !== undefined && a.about !== '' && !(a.about === 'partnerApp' && a.kind === 'office') && !((a.about === 'board' || a.about === 'market') && a.kind === 'direct')) return false;
         if (a.turns !== undefined && (!Array.isArray(a.turns) || a.turns.length > 100)) return false;
         if (['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster'].indexOf(a.kind) < 0 || typeof a.body !== 'string' || !a.body.length || a.body.length > 4000) return false;
         if (a.title !== undefined && (typeof a.title !== 'string' || a.title.length > 120)) return false;
@@ -262,6 +311,7 @@
           var team = (docs['settings/church'] || {}).rosterTeam || [];
           return a.roster === 'declined' && a.to.every(function (x) { return team.indexOf(x) >= 0; });
         }
+        if (a.about === 'board' || a.about === 'market') return aboutItem(c, a);   // checked on its own (firestore.rules maySendTo)
         if (mgr) return true;
         if (a.kind === 'direct') return mayDirect(c, a);
         if (a.kind === 'leaders') { var lb = docs['leaderBodies/' + a.groupId]; return !!lb && meIn(c, lb.memberIds || []) && a.to.every(function (x) { return (lb.memberIds || []).indexOf(x) >= 0; }); }

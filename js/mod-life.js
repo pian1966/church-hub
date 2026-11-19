@@ -190,13 +190,15 @@
   }
   function leaderOf(gid) { var u = me(), g = S.get('lifeGroups', gid); return g && u && Care.isLeader(g, u.id) ? g : null; }
 
-  /** A group's leader adds people to their group: the list stays open for the next person. */
+  /** A group's leader adds people to their group: the list stays open for the next person. Ordinary leaders choose from the
+   * church directory; a leader who is also an Administrator or Pastor may add anyone, as they can from a person's page. */
   function mineAddDialog(gid) {
     var u = me(), g = leaderOf(gid); if (!g) return;
-    var choices = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (g.memberIds || []).indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); })
+    var all = manager();
+    var choices = all ? people(g.memberIds || []) : S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (g.memberIds || []).indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); })
       .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
     H.modal(H.dialogHead(T('Add someone to the group'), g.name) + '<div class="dlg-body">' + (choices.length && window.CareUI ? '<label class="field" style="margin-bottom:6px">' + T('Who') + '</label>' +
-      CareUI.finder('lmine', choices, 'life:mineaddsave', { g: g.id }, null, T('Type part of their name')) + '<p class="hint">' + T('People in the church directory.') + '</p>' : '<p class="muted">' + T('No one else in the church directory to add.') + '</p>') +
+      CareUI.finder('lmine', choices, 'life:mineaddsave', { g: g.id }, null, T('Type part of their name')) + (all ? '' : '<p class="hint">' + T('People in the church directory.') + '</p>') : '<p class="muted">' + T(all ? 'No one else to add.' : 'No one else in the church directory to add.') + '</p>') +
       '<p id="lg-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Add someone to the group'));
     var q = document.querySelector('.cg-q[data-for="lmine"]'); if (q) q.focus();
   }

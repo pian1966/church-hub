@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.94';
   var NEWS = [
+    { date: '2026-11-19', who: ['admin', 'pastor'], app: 'life', text: TX('Midweek Groups: when a Pastor or Administrator who leads a group uses “Add someone to the group”, they can now choose anyone, not only people in the church directory – the same as from a person’s page.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: choose how many services to see side by side, from 2 to 8, and the top row (date, time and communion) stays in view as you scroll down.') },
     { date: '2026-11-18', who: ['rosters', 'admin'], app: 'rosters', text: TX('Rosters: six services side by side with a slider to move across, an eye to hide a service for now, and departments can be put in order or joined together (Teams → ↑ ↓ and ⋯).') },
     { date: '2026-11-18', who: ['archivist'], app: 'library', text: TX('Archives: a document you add now shows in its folder straight away, and the Senior Pastor sees staff contracts and appraisals again.') },

@@ -512,3 +512,5 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   keeping what they paid. Praying instead is a promise to pray each month. The website's Give box uses PayFast too, and its
   payment-holiday answer now says how long a holiday lasts. All five languages; What's new; setup tool; brochure.
 
+- ✅ 0.98.1 (19 Nov 2026): Rosters → Teams and Serving together list people from A to Z, each name a chip that opens their
+  page (plain text for someone who may not open people's pages). What's new in all five languages.

@@ -76,6 +76,14 @@
     if (!m.error) S.put('messages', m, 'Told the roster team someone can’t make a serving turn');
   }
   function person(id) { return S.get('people', id); }
+  /** A to Z by the name people see (accents and capitals ignored). */
+  function byName(a, b) { return H.name(a).localeCompare(H.name(b), undefined, { sensitivity: 'base' }); }
+  /** A person's name, which opens their page when the viewer may see people (their page shows only what that person may see). */
+  function nameLink(p) {
+    if (!p) return '<b>' + esc(T('Someone')) + '</b>';
+    var open = H.can('*') || H.can('people.view') || H.can('people.basic') || p.id === (H.user() || {}).id;
+    return open ? '<a class="name-chip" href="#/people/p/' + esc(p.id) + '">' + esc(H.name(p)) + '</a>' : '<b>' + esc(H.name(p)) + '</b>';
+  }
   function pos(id) { return S.get('positions', id); }
   function team(id) { return S.get('teams', id); }
 
@@ -500,11 +508,11 @@
         H.menu('⋯', [tl.length > 1 ? '<button data-act="rosters:teammerge" data-id="' + esc(t.id) + '">' + T('Join with another team…') + '</button>' : '',
           ps.length ? '' : '<button class="menu-danger" data-act="rosters:teamdel" data-id="' + esc(t.id) + '">' + T('Delete team') + '</button>'], 'row-menu', T('More for {team}', { team: t.name })) + '</span>' : '';
       return '<section class="panel"><h2 class="team-h"><span class="grow">' + esc(t.name) + '</span>' + tools + '</h2>' + ps.map(function (p) {
-        var ks = S.find('skills', function (k) { return k.positionId === p.id; });
+        var ks = S.find('skills', function (k) { return k.positionId === p.id; }).sort(function (a, b) { return byName(person(a.personId), person(b.personId)); });
         return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b><span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
-            return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow"><b>' + esc(H.name(pp)) + '</b><small>' + esc(freqText(k.frequency)) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
+            return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow">' + nameLink(pp) + '<small>' + esc(freqText(k.frequency)) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
           }).join('') + '</div>' : '<p class="hint">' + T('No one yet.') + '</p>') + '</div>';
       }).join('') + '<button class="btn small" data-act="rosters:newpos" data-t="' + t.id + '">' + H.icon(H.ICON.plus, 16) + T('Add a position') + '</button></section>';
     }).join('') + '</div>';
@@ -549,7 +557,7 @@
       '<div class="note warn" style="margin:0"><b>' + H.icon(H.ICON.split, 16) + ' ' + T('Keep apart') + '</b><br>' + T('Never rostered at the same service – e.g. parents taking turns with a baby.') + '</div></div>';
     html += mine.length ? '<div class="list">' + mine.map(function (g) {
       return '<div class="item wrap-phone"><span class="ic" style="width:40px;height:40px;border-radius:12px;display:grid;place-items:center;background:' + (g.kind === 'together' ? '#E6EEF7;color:#1E4E8C' : '#FFF1CC;color:#7A5300') + '">' + H.icon(g.kind === 'together' ? H.ICON.link : H.ICON.split) + '</span>' +
-        '<span class="grow"><b>' + esc(g.name) + '</b><small>' + esc(g.memberIds.map(function (m) { return H.name(person(m)); }).join(', ')) + (g.note ? ' · ' + esc(g.note) : '') + '</small></span>' +
+        '<span class="grow"><b>' + esc(g.name) + '</b><span class="chip-row">' + g.memberIds.map(person).filter(Boolean).sort(byName).map(nameLink).join('') + '</span>' + (g.note ? '<small>' + esc(g.note) + '</small>' : '') + '</span>' +
         '<span class="tag ' + (g.kind === 'together' ? '' : 'warn') + '" style="--c:#2F6FB3">' + T(g.kind === 'apart' ? 'Keep apart' : g.strength === 'must' ? 'Always together' : 'Together when possible') + '</span>' +
         (manager() || g.memberIds.indexOf(me.id) >= 0 ? '<button class="btn small" data-act="rosters:group" data-id="' + g.id + '">' + T('Edit') + '</button>' : '') + '</div>';
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not in a serving group yet. Ask to serve with family or a friend, and the roster will keep you together.') + '</p>';

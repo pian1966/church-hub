@@ -31,6 +31,20 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 **Decide**
 - ⬜ Should Church Partners who aren't staff stop receiving colleagues' away dates at all (now hidden on screen only)?
 
+**Simplify who can see what, and what ministers can do** (asked 19 Nov 2026)
+- ⬜ Today these are spread over several places that overlap: Settings → **Who can see what** (what each kind of access can do,
+  other people's contact details, Care Groups), Settings → **Attendees**, Settings → **What Pastors can do** (two separate lists
+  of ticks – the Rector's `seniorCan` and the other Pastors' `pastorCan`), Settings → Terminology → **Ministry roles the church
+  uses** (saved but nothing uses it), plus access kept inside some parts themselves (Archive's role access, librarians, Leadership,
+  roster coordinators, the church secretary under Rosters). Bring them together into **one place** – e.g. a single Settings →
+  **Access and roles** page: one row per kind of person (Administrator, Rector, Pastors/ministers, Roster coordinators, Children's
+  ministry, Church Partners, Attendees, plus people with a job in one part – librarians, keepers, event organisers, the Treasurer)
+  and, for each, what they can **see** and what they can **do**, in plain words, with "View as" one tap away to check. Remove
+  the duplicates and either use or remove "Ministry roles the church uses". Keep the rules the same underneath (or change
+  `firestore.rules`, `plan()`, `tests/fake-firebase.js` and the tests together), and move existing churches' settings across
+  without anyone gaining or losing access. New parts on the roadmap (keepers, event organisers, the Treasurer, Finances) should
+  be added to this one place rather than getting their own access settings. Plan it first (Architect/Fable), then build in steps
+
 **Later (if wanted)**
 - ⬜ Changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in
 - ⬜ Leave: other countries' public holidays (Leave still uses South Africa's); Elvanto calendar events for staff leave (Leave Manager's optional extra, needs an Elvanto API key)

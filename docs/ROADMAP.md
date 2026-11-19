@@ -10,6 +10,8 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - ⬜ Switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
 - ⬜ Settings → Access and roles – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
 - ⬜ Choose the Care groups ticks in Settings → Access and roles, and click **Record that they agreed** for existing Church Partners if it appears
+- ⬜ Re-publish the database rules after 0.101 (people may note their first sign-in) – or let the "Publish database rules" workflow do it
+- ⬜ Decide: Play Store account, organisation or personal (docs/PLAY-STORE.md); then Claude adds the app bundle (.aab) to the Android build
 - ⬜ Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
 - ⬜ Set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
 - ⬜ Re-publish the database rules (FIREBASE-SETUP step 7) after 0.69 – Archive security fixes (or let the "Publish database rules" workflow do it)

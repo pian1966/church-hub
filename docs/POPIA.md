@@ -143,6 +143,16 @@ members). Several people are sent one email in Bcc, so nobody sees the others' a
 so they can sign in and apply; that is recorded in the audit log like any other change of access. Children, people who have left
 and those who have died are never invited. The QR code, poster and paper form carry only the link – no personal information.
 
+## Invitations to Church & Trellis
+- **What:** the date someone was invited to start using Church & Trellis (`appInvited`, kept with their details) and the day
+  they first signed in (`appFirstSeen`, on their record). Nothing about how often or when they use it afterwards.
+- **Purpose and basis:** helping everyone at the church get access to their rosters, groups and messages – the church's
+  legitimate interest in running its ministry, as for the rest of the church record.
+- **Who sees it:** Administrators and Pastors (People → Invitations, the person's page, Advanced search). The person writes
+  `appFirstSeen` on their own record when they first sign in; the rules let them change nothing else that way.
+- **Sending:** the email goes from the church's own email (everyone in Bcc), or WhatsApp opens on the sender's phone for one
+  person at a time – Church & Trellis sends nothing to WhatsApp itself. Giving Basic access is logged in the audit log.
+
 ## Offers to serve
 When someone offers to serve (Me → Serving), Church & Trellis keeps which position, how often, at which services, their optional note and the
 roster coordinator's reply. Purpose: planning rosters; basis: the person asked themselves. Only the person, Roster

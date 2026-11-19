@@ -288,10 +288,12 @@ var Hub = (function () {
   /** Church & Trellis as an app on a phone: the Android app or the home-screen app. Email links open in the browser there,
    *  which keeps its own sign-in, so people paste the link instead. */
   function phoneApp() { return inApp() || homeScreen(); }
+  function isAndroid() { return /Android/i.test(navigator.userAgent || ''); }
+  var APK = 'https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk';   // as in js/mod-me.js (docs/ANDROID.md)
   function isIPhone() { var u = navigator.userAgent || ''; return /iPhone|iPad|iPod/.test(u) || (/Macintosh/.test(u) && navigator.maxTouchPoints > 1); }
 
   /* ---------- prompts on Home and Me: a photo of yourself (in the apps), and putting Church & Trellis on an iPhone's home screen ---------- */
-  var LATER_DAYS = { selfie: 30, iphone: 60, langs: 3 }, photoAdded = false;   // photoAdded: just added here (the database may not have answered yet)
+  var LATER_DAYS = { selfie: 30, iphone: 60, android: 60, langs: 3 }, photoAdded = false;   // photoAdded: just added here (the database may not have answered yet)
   function later(k) { var d = Store.pref(k + 'Later'); return d && (Date.now() - Date.parse(d)) < LATER_DAYS[k] * 864e5; }
   function prompts() {
     var me = user && Store.get('people', user.id), out = '';
@@ -304,6 +306,10 @@ var Hub = (function () {
       out += '<section class="panel prompt" id="iphone-ask"><h2 style="margin:0 0 4px">' + T('Church & Trellis on your iPhone') + '</h2>' +
         '<p class="small" style="margin:0">' + T('Tap the Share button (the square with an arrow), then “Add to Home Screen”. Church & Trellis then opens like an app, full screen, with its own icon.') + '</p>' +
         '<div class="btns" style="margin-top:10px"><button class="btn" data-act="hub:later" data-k="iphone">' + T('Not now') + '</button></div></section>';
+    if (user && isAndroid() && !phoneApp() && !later('android'))
+      out += '<section class="panel prompt" id="android-ask"><h2 style="margin:0 0 4px">' + T('Church & Trellis app for Android') + '</h2>' +
+        '<p class="small" style="margin:0">' + T('Get the app: it opens full screen with its own icon. It isn’t in the Play Store yet, so your phone may ask you to allow installing it.') + '</p>' +
+        '<div class="btns" style="margin-top:10px"><a class="btn primary" href="' + APK + '" target="_blank" rel="noopener">' + T('Get the app') + '</a><button class="btn" data-act="hub:later" data-k="android">' + T('Not now') + '</button></div></section>';
     return out;
   }
   /* Administrators: the extra languages (all but Sesotho) are translated in one go before Church & Trellis is released (docs/RELEASE.md),
@@ -601,6 +607,14 @@ var Hub = (function () {
       '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>Church <span class="amp">&amp;</span> Trellis</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
       '<div class="signin-lang">' + I18n.picker() + '</div>' + inner + '</div></div>';
   }
+  /** Opened from an invitation (…#/start, People → Invitations): a welcome, and how to get Church & Trellis on this phone. */
+  function welcomeCard() {
+    var from = location.hash === '#/start' || /^#\/start\|/.test(Store.pref('afterSignIn') || ''); if (!from) return '';
+    var how = inApp() || homeScreen() ? '' : isAndroid() ?
+      '<p class="small">' + T('On this phone you can also use the Church & Trellis app. It isn’t in the Play Store yet, so your phone may ask you to allow installing it.') + '</p><p><a class="btn" href="' + APK + '" target="_blank" rel="noopener">' + T('Get the app for Android') + '</a></p>' :
+      isIPhone() ? '<p class="small">' + T('After signing in, tap the Share button (the square with an arrow), then “Add to Home Screen”. Church & Trellis then opens like an app, with its own icon.') + '</p>' : '';
+    return '<div class="note ok welcome-card"><b>' + T('Welcome!') + '</b><p class="small" style="margin:4px 0 0">' + T('{church} has invited you to Church & Trellis. Sign in below with the email address the church has for you (or your sign-in code). There is no password.', { church: esc((Store.settings() || {}).churchName || T('Your church')) }) + '</p>' + how + '</div>';
+  }
   function renderLive() {
     var st = live, html;
     // A link to a page (e.g. the invitation to become a Church Partner, #/people/apply) is remembered through signing in,
@@ -651,7 +665,7 @@ var Hub = (function () {
       '<form id="su-form" novalidate>' + reqKey() + (st.needChurch ? '<label class="field req">' + T('Church name') + '<input id="su-church" value="Christ Church Howick"></label>' : '') +
       '<div class="two"><label class="field req">' + T('Your first name') + '<input id="su-first" autocomplete="given-name"></label><label class="field req">' + T('Last name') + '<input id="su-last" autocomplete="family-name"></label></div>' +
       '<p id="su-err" class="note bad" hidden></p></form><button class="btn primary" data-act="hub:setup">' + T(st.needChurch ? 'Set up' : 'Continue') + '</button> <button class="btn" data-act="hub:signout">' + T('Sign out') + '</button>';
-    else html = '<h1>' + T('Sign in') + '</h1><p class="lead">' + T('For church staff, leaders and members who have been given access.') + '</p>' +
+    else html = welcomeCard() + '<h1>' + T('Sign in') + '</h1><p class="lead">' + T('For church staff, leaders and members who have been given access.') + '</p>' +
       (st.message ? '<p class="note bad">' + esc(st.message === 'unlinked' ? T('This sign-in has been switched off. Ask the church office for a new sign-in code.') : st.message) + '</p>' : '') +
       (inApp() && !(window.CHURCH_HUB_FIREBASE || {}).googleWebClientId ? '' : '<button class="btn primary big-btn" data-act="hub:google">' + icon('M21 12.2c0-.7-.1-1.3-.2-1.9H12v3.6h5c-.2 1.2-.9 2.2-1.9 2.8v2.4h3.1c1.8-1.7 2.8-4.1 2.8-6.9zM12 21c2.6 0 4.7-.9 6.3-2.3l-3.1-2.4c-.9.6-2 .9-3.2.9-2.5 0-4.6-1.7-5.3-3.9H3.5v2.4C5.1 18.9 8.3 21 12 21zM6.7 13.3a5.4 5.4 0 0 1 0-3.4V7.5H3.5a9 9 0 0 0 0 8.2zM12 6.6c1.4 0 2.6.5 3.6 1.4l2.7-2.7A9 9 0 0 0 3.5 7.5l3.2 2.4C7.4 8.2 9.5 6.6 12 6.6z', 18) + T('Sign in with Google') + '</button>' +
       '<p class="muted" style="text-align:center;margin:14px 0 6px">' + T('or get a sign-in link by email') + '</p>') +
@@ -709,6 +723,14 @@ var Hub = (function () {
     history.replaceState(null, '', location.pathname + location.search.replace(/([?&])j=[^&#]*(&|$)/, function (x, a, b) { return b ? a : ''; }).replace(/[?&]$/, '') + location.hash);
     return decodeURIComponent(m[1]);
   }
+  /** The first time someone signs in, note the day on their record (People → Invitations: who has started using Church & Trellis).
+   *  Not for "View as" or the demo. */
+  function firstSeen() {
+    if (!Store.isLive() || Store.preview() || !user) return;
+    var p = Store.get('people', user.id); if (!p || p.appFirstSeen) return;
+    p = JSON.parse(JSON.stringify(p)); p.appFirstSeen = today();
+    Store.put('people', p);
+  }
   var linkCode = '';
   function onLiveState(st) {
     live = st;
@@ -719,8 +741,10 @@ var Hub = (function () {
       Store.audit('Signed in', 'people/' + user.id);
       runUpgrades();
       keepFiles();
+      firstSeen();
       var after = (Store.pref('afterSignIn') || '').split('|'); Store.pref('afterSignIn', '');
       if ((!location.hash || location.hash === '#' || location.hash === '#/home') && after[0] && Date.now() - (+after[1] || 0) < 864e5) location.hash = after[0];   // within a day
+      if (location.hash === '#/start') location.hash = '#/home';   // the invitation's link (People → Invitations): Home, with its app prompts
       if (!location.hash || location.hash === '#') location.hash = phoneApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
       render();
     } else {

@@ -58,6 +58,7 @@
       var apps = P.appsWaiting(), badges = P.badgesWaiting();
       if (apps.length) out.push({ text: TN('{n} partnership application to review', '{n} partnership applications to review', apps.length), href: apps.length === 1 ? '#/people/applications/' + apps[0].id : '#/people/applications' });
       if (badges.length) out.push({ text: TN('{n} name badge to print', '{n} name badges to print', badges.length), href: '#/people/badges' });
+      if (P.welcomeTodo) out = out.concat(P.welcomeTodo());
       var asked = P.changesToCheck();
       if (asked.length) out.push({ text: TN('{n} change to family details to check', '{n} changes to family details to check', asked.length), href: '#/people/changes' });
       var noMarital = all ? S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && !p.maritalStatus; }) : [];
@@ -116,6 +117,7 @@
       if (p[0] === 'apply') return P.renderApplyForm();
       if (p[0] === 'applications') return P.renderApps(p[1]);
       if (p[0] === 'badges') return P.renderBadges(p[1]);
+      if (p[0] === 'welcome') return P.renderWelcome();
       return renderList();
     },
     after: function () {
@@ -141,6 +143,8 @@
         var nb = document.querySelector('[data-act="people:advbadges"]'), ni = document.querySelector('[data-act="people:advinvite"]');   // for those ticked, or everyone found
         if (nb) nb.textContent = n ? T('Add {n} ticked to name badges', { n: n }) : T('Add everyone found to name badges');
         if (ni) ni.textContent = n ? T('Invite {n} ticked to apply', { n: n }) : T('Invite everyone found to apply');
+        var na = document.querySelector('[data-act="people:advapp"]');
+        if (na) na.textContent = n ? T('Invite {n} ticked to Church & Trellis', { n: n }) : T('Invite everyone found to Church & Trellis');
         var all = document.getElementById('adv-selall'); if (all) all.checked = n && n === document.querySelectorAll('.adv-sel').length;
       });
       var adv = document.getElementById('adv');

@@ -223,5 +223,13 @@ I18n.rows([
     ["{name} serving more than once on the same day", "{name} dien meer as een keer op dieselfde dag", "U-{name} usebenza izikhathi ezingaphezu kweyodwa ngosuku olufanayo", "U-{name} ukhonza ngaphezu kwesihlandlo esinye ngosuku olunye"],
     ["{name} serving", "{name} dien", "U-{name} uyasebenza", "U-{name} uyakhonza"],
     ["Someone serving at a morning and an evening service on the same day", "Iemand dien by ’n oggend- en ’n aanddiens op dieselfde dag", "Othile usebenza enkonzweni yasekuseni neyakusihlwa ngosuku olufanayo", "Umntu ukhonza kwinkonzo yasekuseni neyangokuhlwa ngosuku olunye"],
-    ["Someone serving more than once on the same day", "Iemand dien meer as een keer op dieselfde dag", "Othile usebenza izikhathi ezingaphezu kweyodwa ngosuku olufanayo", "Umntu ukhonza ngaphezu kwesihlandlo esinye ngosuku olunye"]
+    ["Someone serving more than once on the same day", "Iemand dien meer as een keer op dieselfde dag", "Othile usebenza izikhathi ezingaphezu kweyodwa ngosuku olufanayo", "Umntu ukhonza ngaphezu kwesihlandlo esinye ngosuku olunye"],
+    ["Invite {n} ticked to Church & Trellis", "Nooi {n} gemerkte na Church & Trellis", "Mema abangu-{n} abamakiwe ku-Church & Trellis", "Mema aba-{n} abaphawuliweyo kwi-Church & Trellis"],
+    ["Invite everyone found to Church & Trellis", "Nooi almal wat gevind is na Church & Trellis", "Mema bonke abatholakele ku-Church & Trellis", "Mema bonke abafunyenweyo kwi-Church & Trellis"],
+    ["Using Church & Trellis", "Gebruik Church & Trellis", "Usebenzisa i-Church & Trellis", "Usebenzisa i-Church & Trellis"],
+    ["Signed in", "Aangemeld", "Ungenile", "Ungenile"],
+    ["Invited, not signed in yet", "Genooi, nog nie aangemeld nie", "Umenyiwe, akakangeni", "Umenyiwe, akakangeni"],
+    ["Not invited yet", "Nog nie genooi nie", "Akakamenywa", "Akakamenywa"],
+    ["Invited to Church & Trellis", "Genooi na Church & Trellis", "Umenyiwe ku-Church & Trellis", "Umenyiwe kwi-Church & Trellis"],
+    ["First signed in", "Eerste keer aangemeld", "Ungene okokuqala", "Ungene okokuqala"]
 ]);

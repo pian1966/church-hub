@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.100';
+  var NEWS_FOR = '0.101';
   var NEWS = [
+    { date: '2026-11-20', who: ['admin', 'pastor'], text: TX('Invite people to Church & Trellis by email or WhatsApp – one person from their page, or a whole Care Group, Midweek Group or serving team from Advanced search. It gives them access, and People → Invitations shows who hasn’t started yet, with Remind.') },
+    { date: '2026-11-20', who: ['everyone'], text: TX('On an Android phone, Home now offers the Church & Trellis app – tap Get the app.') },
     { date: '2026-11-19', who: ['admin'], text: TX('Settings: who can see what, Attendees and What Pastors can do are now one page, Access and roles – a card for each kind of person says what they see and can do, with View as one tap away. Nothing about anyone’s access has changed.') },
     { date: '2026-11-19', who: ['lifelead'], app: 'life', text: TX('Midweek Group leaders: post this week’s meeting link and notes under Groups → Midweek Groups. Your group gets them in Messages, with Join the meeting and Open the notes – now or on the day.') },
     { date: '2026-11-19', who: ['everyone'], app: 'life', text: TX('On the day of your Midweek Group, Home shows a card with Join the meeting and Open the notes – it becomes Join now 15 minutes before.') },

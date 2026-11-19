@@ -87,6 +87,11 @@
     add(all, TX('Privacy'), 'receive', TX('Would like to receive'), 'list', function (p) { return RECEIVE_P.filter(function (x) { return hasConsent(p.id, x); }); }, RECEIVE_P);
     add(all, TX('Privacy'), 'directory', TX('Shares contact details'), 'yesno', function (p) { return hasConsent(p.id, 'Church directory'); });
     add(H.can('access.manage'), TX('Privacy'), 'access', TX('App access'), 'choice', function (p) { return (H.ROLES[p.appRole || 'member'] || {}).label; }, Object.keys(H.ROLES).map(function (r) { return H.ROLES[r].label; }));
+    // Church & Trellis itself: invited, and signed in at least once (People → Invitations)
+    var appUse = function (p) { return p.appFirstSeen ? 'Signed in' : p.appInvited ? 'Invited, not signed in yet' : 'Not invited yet'; };
+    add(H.can('*') || H.can('people.edit'), TX('Privacy'), 'appUse', TX('Using Church & Trellis'), 'choice', appUse, [TX('Signed in'), TX('Invited, not signed in yet'), TX('Not invited yet')]);
+    add(H.can('*') || H.can('people.edit'), TX('Privacy'), 'appInvited', TX('Invited to Church & Trellis'), 'date', function (p) { return p.appInvited || ''; });
+    add(H.can('*') || H.can('people.edit'), TX('Privacy'), 'appFirstSeen', TX('First signed in'), 'date', function (p) { return p.appFirstSeen || ''; });
     add(all, TX('Staff'), 'staff', TX('Church staff member'), 'yesno', function (p) { return !!p.staff; });
     add(all, TX('Staff'), 'staffCategory', TX('Staff category'), 'text', function (p) { return p.staff ? p.staff.category : ''; });
     add(all, TX('Staff'), 'staffStart', TX('Started working'), 'date', function (p) { return p.staff ? p.staff.start : ''; });
@@ -368,6 +373,7 @@
       (r.rows.length ? '<button class="btn small" data-act="people:advcsv">' + H.icon(H.ICON.download, 16) + T('Download (CSV)') + '</button>' : '') +
       // For the ticked people, or everyone found: name badges to print, and an invitation to become a Church Partner
       (r.rows.length && (H.can('*') || H.can('people.edit')) ? '<button class="btn small" data-act="people:advbadges">' + (nSel ? T('Add {n} ticked to name badges', { n: nSel }) : T('Add everyone found to name badges')) + '</button>' +
+        (P.inviteApp ? '<button class="btn small" data-act="people:advapp">' + (nSel ? T('Invite {n} ticked to Church & Trellis', { n: nSel }) : T('Invite everyone found to Church & Trellis')) + '</button>' : '') +
         (P.invite && window.QR ? '<button class="btn small" data-act="people:advinvite">' + (nSel ? T('Invite {n} ticked to apply', { n: nSel }) : T('Invite everyone found to apply')) + '</button>' : '') : '') + '</div></div>' +
       (r.rows.length > 1 ? '<div style="margin-top:8px">' + sortSwitch() + '</div>' : '') +
       '<p class="hint">' + (what.length ? esc(what.join(A.match === 'all' ? ' · ' + T('and') + ' ' : A.match === 'any' ? ' · ' + T('or') + ' ' : ' · ')) + (A.match === 'logic' ? ' · ' + esc(T('Logic: {logic}', { logic: A.logic })) : '') : T('Everyone')) +
@@ -586,6 +592,7 @@
       var n = P.addBadges(list, 'Advanced search');
       H.toast(TN('{n} added to the name badges to print', '{n} added to the name badges to print', n));
     },
+    advapp: function () { var list = advPicked(); if (list.length) P.inviteApp(list.map(function (p) { return p.id; })); },
     advinvite: function () { var list = advPicked(); if (list.length) P.invite(list.map(function (p) { return p.id; })); },
     advcsv: function () { advCsv(); },
     bulk: function () { if (canBulk()) bulkDialog(); },

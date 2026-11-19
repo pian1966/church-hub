@@ -76,8 +76,7 @@
     if (!m.error) S.put('messages', m, 'Told the roster team someone can’t make a serving turn');
   }
   function person(id) { return S.get('people', id); }
-  /** A to Z by the name people see (accents and capitals ignored). */
-  function byName(a, b) { return H.name(a).localeCompare(H.name(b), undefined, { sensitivity: 'base' }); }
+  var byName = H.byName;
   /** A person's name, which opens their page when the viewer may see people (their page shows only what that person may see). */
   function nameLink(p) {
     if (!p) return '<b>' + esc(T('Someone')) + '</b>';

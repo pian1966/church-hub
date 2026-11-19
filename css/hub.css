@@ -1473,3 +1473,4 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 .acc-act { display: flex; gap: 6px; margin-top: auto; padding-top: 10px; flex-wrap: wrap; }
 .acc-job .btn { white-space: nowrap; }
 @media (max-width: 600px) { .acc-job { flex-wrap: wrap; } .acc-job .btn { margin-left: auto; } }
+.chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }   /* names in a serving group, each opening the person's page */

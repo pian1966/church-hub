@@ -2052,6 +2052,7 @@ I18n.add('st', {
     "Show the {service} again": "Bontsha {service} hape",
     "Hidden for now:": "Ho patilwe hajwale:",
     "Show all": "Bontsha tsohle",
+    "Names are now listed from A to Z in Rosters (teams and serving groups), Groups, the Librarians, the keepers and Privacy – tap a name to open the person’s page.": "Mabitso joale a thathamisitsoe ho tloha ho A ho isa ho Z ho Lenane la tshebeletso (dihlopha le dihlopha tsa tshebeletso), Dihlopha, Bahlokomedi ba laeborari, bahlokomedi le Lekunutu – tobetsa lebitso ho bula leqephe la motho.",
     "Rosters: six services side by side with a slider to move across, an eye to hide a service for now, and departments can be put in order or joined together (Teams → ↑ ↓ and ⋯).": "Lenane: ditshebeletso tse tshelela pela tse ding ka sesutumetsi sa ho tsamaya, leihlo la ho pata tshebeletso hajwale, mme mafapha a ka behwa ka tatellano kapa a kopanngwa (Dihlopha → ↑ ↓ le ⋯).",
     "Slide across to see more services": "Sutumetsa ka lehlakoreng ho bona ditshebeletso tse ding",
     "Move {team} up": "Isa {team} hodimo",

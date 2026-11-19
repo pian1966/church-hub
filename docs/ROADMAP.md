@@ -67,6 +67,9 @@ Accept/decline by email, swap requests, automatic reminders before a turn, sign-
 - ⬜ Later: rename a team, and rename a special service
 - ⬜ Church: Rosters → Services – choose the departments and positions for each special service (they start empty, except Memorial Teas)
 - ⬜ Later: a "See everything" map of services → departments → positions for the curious
+- ⬜ **Service outline (order of service)** for each Sunday service, and with it **the Bible passage being preached** – shown
+  to the people serving and on Home. For the Scripture text itself, consider the YouVersion Platform API (check its terms and
+  which translations it allows; otherwise show the reference with a link)
 
 ## Phase 4 – Groups, attendance and check-in
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.
@@ -153,63 +156,70 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
 - ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request (add to CLAUDE.md rules
   once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
 
-## Phase 7 – Church & Trellis for other churches (hosted, gift-based) ⬜
-> **Changed direction (11 Nov 2026):** each church keeps its own database in its own Google account, created for it
-> automatically – nobody hosts other churches' information. The plan and its tasks are in `docs/architecture/`
-> (start with `DECISION.md`). Steps 7.1, 7.2, 7.4, 7.5, 7.6 and 7.9 below are no longer needed; task 050 rewrites this phase.
-
-Goal: any church can start using Church & Trellis in minutes, with no Firebase, Google console or anything technical. We host it;
-each church gives what it chooses once a year, with a small minimum. Today each church makes its own Firebase project
-(`FIREBASE-SETUP.md`); Christ Church Howick keeps working that way until it moves across (step 7.9).
+## Phase 7 – Church & Trellis for every church ⬜
+**Decided (11 Nov 2026):** every church keeps its own database in its **own Google account**, and Church & Trellis creates it
+for them in about a minute – nobody hosts other churches' information, and nothing depends on the owner's personal accounts.
+The plan is `docs/architecture/DECISION.md` and `TARGET.md`; the work is in `docs/architecture/tasks/` (order and what can run
+side by side: `tasks/README.md`). Christ Church Howick keeps its own project (`church-hub-7ec02`) and needs no move.
 
 **What a church does (the target)**
-1. Goes to the Church & Trellis website → "Start using Church & Trellis for my church" → church name, country, their email.
-2. Opens the sign-in link in their email and becomes that church's first Administrator; the existing setup screen follows
-   (services, leave rules, terminology, language).
-3. Brings people in: Elvanto export, a spreadsheet, or by hand.
-4. Invites staff by email and chooses each one's role; then shares the link (or the Android app) with members.
-5. Gives the yearly gift (minimum or more). A year later: a gentle reminder to reconsider the amount.
+1. Goes to **churchandtrellis.com** → "Set up Church & Trellis for my church" → church name and country.
+2. Signs in with the church's own Google account and clicks **Allow**; a short list ticks itself off (about a minute).
+3. Lands on the existing setup screen as the first Administrator (services, leave rules, terminology, language).
+4. Brings people in (Elvanto export, a spreadsheet, or by hand) and shares the church's own link or QR code with members;
+   members without email get a sign-in code, then use their cellphone number and PIN.
+5. Pays a coffee a month (or ten a year) – or takes a payment holiday, or prays for another church instead.
 
-**Steps to build (each a small pull request)**
-- ⬜ 7.1 One database for many churches: every record belongs to a church (`churches/{churchId}/…`); `firestore.rules`,
-  `plan()` in `js/store.js`, `tests/fake-firebase.js` and `tests/rules.test.mjs` changed together so nobody can ever read
-  another church's data. Tests must prove it (a person in church A, signed in, gets nothing from church B).
-- ⬜ 7.2 Regions: a project per region so data stays near the church (Johannesburg `africa-south1` first; Europe for GDPR
-  next; the Americas later). The country chosen at sign-up picks the region.
-- ⬜ 7.3 Sign-up page: create a church, first Administrator by email link, the setup screen; stop the same church signing up
-  twice (name + country + email check); a short "Is this your church?" if a similar name exists.
-- ⬜ 7.4 Terms of use and the operator agreement: we become the "operator" (POPIA) / "processor" (GDPR) for every church.
-  Written terms each church accepts at sign-up, a data-processing agreement, breach steps (we tell the church, the church tells
-  its regulator), what happens to a church's data if it leaves (download everything, then deleted within 30 days).
-  Get a lawyer to look at these once before the first other church joins.
-- ⬜ 7.5 Safety before hosting others: daily backups (Firestore export or point-in-time recovery – needs the paid Blaze plan),
-  two-step sign-in for Administrators, a spending limit and alerts on the Google account, an independent security review of the rules.
-- ⬜ 7.6 Elvanto robot for many churches: each church's Elvanto key kept in Google Secret Manager (never in GitHub or the
-  database); one robot run works through every church that switched it on.
-- ⬜ 7.7 Countries we don't serve: no sign-up from countries where a church member list could put people in danger
-  (for example China – where Google services are blocked anyway – North Korea, Iran, Eritrea, Afghanistan). Explain kindly why,
-  rather than a bare refusal. Church & Trellis is not end-to-end encrypted: we, Google and anyone able to compel either could read the data.
-- ⬜ 7.8 Gifts and reminders (see "The yearly gift" below): pay page, receipts, the yearly reminder (email + a note on the
-  Administrator's Home), a church's gift history under Settings, and a page for us listing churches and gifts.
-- ⬜ 7.9 Move Christ Church Howick across (export from its own project, import into the shared one), then retire the single-church setup guide.
+**Done so far:** sign-in codes and PINs for the one-church setup (0.86–0.87, tasks 015–016); **choosing the church** – the
+"Which church?" step and each church's own link `?c=<projectId>` (0.96, task 010); the Subscription page (0.98, see below);
+the setup tool for doing it by hand (`site/setup.html`); the domain **churchandtrellis.com** (registered through Cloudflare, 19 Nov 2026).
+
+**Next, in this order**
+- ⬜ **001 – Church & Trellis's own Google account** (a person: the owner). A new Google account just for Church & Trellis,
+  not the personal Gmail; the presentation and other Church & Trellis items move to it too. Everything below waits for it.
+- ⬜ **002** – a trial page proving the automatic steps work from a browser (needs 001).
+- ⬜ **The data-layer chain, one after another** (each from the merged one before; Senior): 013 per-church device keys →
+  012 rules versions → 011 the public card → 031 plain-English quota messages → 061 licence check → 032 download only what changed.
+  030 (measure reads per start) can run any time.
+- ⬜ **014** landing screen; **020/021** the setup helper (engine, then screen with Google sign-in); **022** "Update the database
+  rules" button; **023** AI setup.
+- ⬜ **040** move to churchandtrellis.com (the website, the robot and the Android app's address; the console clicks are the owner's);
+  **041** the Android app for any church.
+- ⬜ **The office** (060 office project, 062 register a church, 063 office robot, 064 the owner's office page, 067 payments in the robot):
+  the short customer list – each church's name, country and the Google account that set it up, nothing about its people.
+- ⬜ **050** – guides, brochure, a short terms page and this phase brought up to date once the helper works.
+- ⬜ Countries we don't serve: no setup from countries where a church member list could put people in danger (for example
+  China, North Korea, Iran, Eritrea, Afghanistan). Explain kindly why, rather than a bare refusal. Church & Trellis is not
+  end-to-end encrypted: Google, and anyone able to compel it, could read the data.
+- ⬜ **Promises in writing** (decided 18 Nov 2026): no church's data is shared with third parties (other companies or
+  organisations); anyone can ask for their data to be deleted. Put both on the website, in the privacy notice and the
+  terms page (050). Today an Administrator can already export or delete a person (Privacy → Requests); still to add: a
+  "Delete my information" request on Me that reaches the Information Officer.
+
+**Sign-in codes and setup tool – still to do**
 - ⬜ Church: switch on **Anonymous** sign-in in Firebase (Authentication → Sign-in method → Add new provider → Anonymous), check
   **Email/Password** (the first switch) is on, so sign-in codes and PINs work, and re-publish the database rules (or let the
   workflow do it) after 0.87 – sign-in codes and PINs
-- ⬜ Sign-in codes, still to do (task 016): print slips for many people at once (People → Change selected…), a Settings switch;
+- ⬜ Sign-in codes (task 016): print slips for many people at once (People → Change selected…), a Settings switch;
   have the Architect (Fable) read the rules diff of 0.87 (MODELS.md asks for this for sign-in rules); a Settings choice for
   churches in areas hostile to the gospel to give only church numbers (not cellphone numbers)
-- ⬜ Setup tool follow-ups (`site/setup.html`, built 17 Nov 2026): when tasks 010/020/021 (one address, automatic setup) are
-  built, replace the tool's "The church's website" chapter and the GitHub steps with the church's own link and the automatic
-  setup (the Coming item "Set up in about a minute" moves to the list); refuse the countries in 7.7 with the kind explanation;
-  try it end to end once with a throw-away Google account and fix any wording Google has moved. Idea: a "Finish setting up"
-  card on Administrators' Home inside the app that sees for itself what is done (care groups made, services added…).
-- ⬜ 7.10 A simple public website: what Church & Trellis does, the demo, languages, privacy and safety, how the gift works, sign up.
-  First version built (16 Nov 2026): `site/index.html`, at `/church-hub/site/`. Still to add: sign-up and a contact address
-  once Church & Trellis has its own web address. Its coffee prices copy `js/coffee.js` (16 Nov 2026): refresh both together (`docs/PRICES.md`).
+- ⬜ Setup tool follow-ups (`site/setup.html`, built 17 Nov 2026): choosing the church (010) is built – when 020/021 (automatic
+  setup) are built, replace the tool's "The church's website" chapter and the GitHub steps with the church's own link and the
+  automatic setup (the Coming item "Set up in about a minute" moves to the list); refuse the countries above with the kind
+  explanation; try it end to end once with a throw-away Google account and fix any wording Google has moved. Idea: a
+  "Finish setting up" card on Administrators' Home that sees for itself what is done (care groups made, services added…).
 
-**The subscription** – changed 16 Nov 2026 to a coffee a month (or ten a year), with gifts, paying for another church,
-payment holidays and praying instead; built as the Subscription page (`docs/architecture/TARGET.md` 10.5, `docs/PRICES.md`).
-Still to do:
+**Public website** (`site/index.html`, first version 16 Nov 2026)
+- ⬜ Move it to **churchandtrellis.com** (task 040): the domain opens the general public page; each church reaches the app through
+  its own link and the one-time "Which church?" step. Then add a contact address and "Set up for my church" (once 021 works).
+- ⬜ Rework the "prayer circle" wording – not yet satisfactory.
+- ⬜ Coffee prices copy `js/coffee.js` (16 Nov 2026): refresh both together (`docs/PRICES.md`).
+- ⬜ Keep it in step with the app: when a feature changes, change the website too.
+
+**The subscription** – a coffee a month (or ten a year) at a suggested local price, per church, with gifts, paying for another
+church, payment holidays whenever needed (monthly churches, no questions asked; annual payers switch to monthly) and praying
+instead; built as the Subscription page (0.95–0.98; `docs/architecture/TARGET.md` 10.5, `docs/PRICES.md`). Nothing is ever
+locked or deleted for being late. Still to do:
 - ⬜ Open PayFast: the owner follows `docs/PAYFAST-SETUP.md` (PayFast account, the Cloudflare payment doorway, a sandbox test), then
   Claude sets `PAY_URL` in `js/coffee.js` and `PAY` in `site/index.html` to https://churchandtrellis.com/pay (one line each).
 - ⬜ Match PayFast payments to churches' references (custom_str1; the office robot, task 063/067) – today the return from PayFast is
@@ -222,8 +232,7 @@ Still to do:
 - ⬜ Ask an accountant: is subscription money taxable income for the owner (it is, unless a registered NPO/PBO receives it)?
 
 **Decisions waiting**
-- ⬜ Who runs it: personally, a company, or an NPO/PBO.
-- ⬜ The suggested amount by size, and whether the minimum is per church or per site.
+- ⬜ Who receives the subscription money: personally, a company, or an NPO/PBO (task 059).
 - ⬜ Which countries are on the "don't serve" list.
 
 ## Working method

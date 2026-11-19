@@ -1,4 +1,4 @@
-# Church Hub – changelog
+# Church & Trellis – changelog
 
 Finished work, moved here from `docs/ROADMAP.md` so the roadmap stays short. Nobody needs to read this to work on
 Church Hub; it is the history. Newest entries at the bottom of each section; add a line here when you tick something off.
@@ -524,3 +524,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   librarians, the church secretary for roster replies, the Council) and each setting once. Same settings underneath – nobody's
   access changed and nothing needed moving; the old addresses still work.
 
+
+- ✅ 0.98.1 (19 Nov 2026): Names listed A to Z, each a chip that opens the person's page, in Rosters → Teams and Serving
+  together (plain text for someone who may not open people's pages), custom groups, Librarians, the board and Marketplace keepers,
+  and Privacy → Retention (its Open button replaced by the name). `Hub.byName` sorts people A to Z. What's new in all five languages.

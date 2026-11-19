@@ -128,6 +128,8 @@ var Hub = (function () {
   }
   function today() { return LeaveCore.iso(new Date()); }
   function name(p) { return p ? ((p.preferredName || p.firstName) + ' ' + p.lastName) : ''; }
+  /** Sort people A to Z by the name shown (capitals and accents ignored): list.sort(Hub.byName). */
+  function byName(a, b) { return name(a).localeCompare(name(b), undefined, { sensitivity: 'base' }); }
   /** Search: every word typed appears somewhere, in any order – "andr pi" finds Andrew Pike, "pike and" too.
    *  Words in quotes must appear together, exactly: '"amber glen"' finds Amber Glen but not "Glen Amber" or "Amberglen". */
   function matches(text, query) {
@@ -1388,7 +1390,7 @@ var Hub = (function () {
   }
 
   return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
-    menu: menu, esc: esc, fmt: fmt, today: today, name: name, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal, autoForget: autoForget,
+    menu: menu, esc: esc, fmt: fmt, today: today, name: name, byName: byName, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal, autoForget: autoForget,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, canViewAs: function () { return canViewAs() && !Store.preview(); }, viewChoices: function () { return canViewAs() ? viewChoices() : []; }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

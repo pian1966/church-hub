@@ -370,7 +370,7 @@ async function icon(Comp, color, px = 256) {
   {   // which version of Church Hub these slides describe, so a copy can be checked against About in the app
     const v = (fs.readFileSync(path.join(__dirname, '../../js/version.js'), 'utf8').match(/version:\s*'([\d.]+)'/) || [])[1] || '';
     const when = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Johannesburg' });
-    T(s, 'Slides for Church Hub ' + v + ' · ' + when, { x: 8.0, y: 6.85, w: 4.9, h: 0.35, fontSize: 10, color: HEX.nightInk, align: 'right' });
+    T(s, 'Slides for Church Hub ' + v + ' · ' + when, { x: 8.0, y: 6.85, w: 4.9, h: 0.35, fontSize: 9, color: '5E554E', align: 'right' });   // dark grey on the dark slide: discreet
   }
   s.addNotes('Thank you. Scan the code to try the demo now – a whole church of made-up people, nothing to install. The website has the price, the setup guide and the answers to the questions churches ask. Every church, however small, deserves great church software.');
 

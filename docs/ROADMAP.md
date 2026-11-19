@@ -44,6 +44,8 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
   `firestore.rules`, `plan()`, `tests/fake-firebase.js` and the tests together), and move existing churches' settings across
   without anyone gaining or losing access. New parts on the roadmap (keepers, event organisers, the Treasurer, Finances) should
   be added to this one place rather than getting their own access settings. Plan it first (Architect/Fable), then build in steps
+  - Step 1 done (0.96.2): the lists are in one file, `js/access.js`, which new parts plug into (keepers included). Still to do:
+    the single Settings page, moving existing churches' settings across, and using or removing "Ministry roles the church uses"
 
 **Later (if wanted)**
 - ⬜ Changes made offline, saved when back online (today offline is view-only); and a "shared computer – don't keep a copy" choice at sign-in

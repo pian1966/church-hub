@@ -6,6 +6,8 @@ and follow them exactly.** They apply to Copilot too. When this file and `CLAUDE
 The rules that matter most – and that were missed in November 2026:
 
 ## 1. Security rules: check every role, never just the one you're adding
+- Who may see or do what on screen is kept in one place, `js/access.js` (see CLAUDE.md): add a new part's permissions there,
+  never as settings of its own.
 - Who may see or change what is enforced by `firestore.rules`. When you give a role new access, also check that it can
   **only** reach what it should: a person who may manage *some* records must not be able to change, delete or replace the
   files of records they may **not** see, nor change a record so that they can see it (e.g. open up a private staff contract).

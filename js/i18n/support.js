@@ -238,5 +238,6 @@ I18n.rows([
     ["Update the prayer card", "Werk die gebedskaart by", "Buyekeza ikhadi lomthandazo", "Hlaziya ikhadi lomthandazo"],
     ["Keep it as it is", "Hou dit soos dit is", "Lishiye linjalo", "Lishiye linjalo"],
     ["Everyone’s Home shows a church to pray for each week.", "Almal se Tuis wys elke week ’n kerk om voor te bid.", "Ikhasi Lasekhaya lawo wonke umuntu likhombisa isonto lokuthandazela njalo ngeviki.", "IKhaya lomntu wonke libonisa icawe yokuthandazela rhoqo ngeveki."],
-    ["The weekly prayer card is off. You can turn it on again here.", "Die weeklikse gebedskaart is af. Julle kan dit hier weer aanskakel.", "Ikhadi lomthandazo lamaviki onke licishiwe. Ningaphinda nilivule lapha.", "Ikhadi lomthandazo leveki nganye licinyiwe. Ningaphinda nilivule apha."]
+    ["The weekly prayer card is off. You can turn it on again here.", "Die weeklikse gebedskaart is af. Julle kan dit hier weer aanskakel.", "Ikhadi lomthandazo lamaviki onke licishiwe. Ningaphinda nilivule lapha.", "Ikhadi lomthandazo leveki nganye licinyiwe. Ningaphinda nilivule apha."],
+    ["A coffee a month keeps Church & Trellis going", "’n Koffie per maand hou Church & Trellis aan die gang", "Ikhofi elilodwa ngenyanga ligcina i-Church & Trellis iqhubeka", "Ikofu enye ngenyanga igcina i-Church & Trellis iqhubeka"]
 ]);

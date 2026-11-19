@@ -1396,10 +1396,7 @@ var Store = (function () {
       }, function (e) { console.error('check sign-in before removing it', e); });
     }
     /** What a Pastor can do (Settings): the Senior Pastor's own ticks (seniorCan), or the other Pastors' (pastorCan). */
-    function pastorCan(pid) {
-      var st = db.settings || {}, senior = !!st.seniorPastorId && st.seniorPastorId === pid;
-      return ((senior ? st.seniorCan : st.pastorCan) || []).slice().sort();
-    }
+    function pastorCan(pid) { return Access.pastorTicks(db.settings, pid); }   // js/access.js
     /** After an Administrator changes what Pastors can do, or who the Senior Pastor is: every Pastor's access-list entry gets the new ticks. */
     function syncPastors() {
       if (!is('admin')) return;

@@ -164,7 +164,7 @@ var PeopleParts = { actions: {} };
    * Children's ministry see a name only, plus what Settings ticks for their role – and only of adults who agreed
    * (consent "Church directory", shown as Contact details). Church Partners can't tap or copy them (drawn as pictures). */
   var SHARE = [['mobile', TX('Mobile')], ['email', TX('Email')], ['address', TX('Home address')], ['spouse', TX('Spouse or partner')]];
-  var TIERS = [['member', TX('Church Partners')], ['rosters', TX('Roster coordinator')], ['kids', TX('Children’s ministry')]];
+  var TIERS = Access.TIERS;   // js/access.js
   function seeTier() { return canSeeAll() ? '' : H.can('rosters.manage') ? 'rosters' : H.can('people.basic') ? 'kids' : 'member'; }
   function tierSees(f) { var t = seeTier(); return !t || (((S.settings() || {}).seeOthers || {})[t] || []).indexOf(f) >= 0; }
   function mayShare(p, f) {

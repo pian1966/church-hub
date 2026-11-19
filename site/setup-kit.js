@@ -481,14 +481,18 @@ var SetupKit = (function () {
   /** App parts with nothing for an Administrator to set up (and why) – the test accepts these. */
   var NOT_SETUP = {
     me: 'Each member’s own page – covered by Church Partners.',
-    import: 'Covered by Bring people across from Elvanto.'
+    import: 'Covered by Bring people across from Elvanto.',
+    board: 'Not built yet – a placeholder (see COMING). When it is built, give it a GROW item instead.',
+    market: 'Not built yet – a placeholder (see COMING). When it is built, give it a GROW item instead.'
   };
   /** Not in Church & Trellis yet – shown so the church knows what is coming. Move an item to GROW when it is built. */
   var COMING = [
     { title: 'Set up in about a minute', what: 'One address for every church, and a setup that makes the database for you – no Firebase or GitHub screens.' },
     { title: 'The Android app for every church', what: 'Today the Android app is for one church; soon any church can use it.' },
     { title: 'A care board', what: 'Who needs a visit, sent to the right Care Group leaders, so no one falls through the cracks.' },
-    { title: 'Sunday’s Bible passage', what: 'The passage being preached, on the service outline.' }
+    { title: 'Sunday’s Bible passage', what: 'The passage being preached, on the service outline.' },
+    { title: 'A community board', what: 'A corkboard where people pin notices and ask for or offer help – each one checked by a keeper first.' },
+    { title: 'A marketplace', what: 'Buy, sell and give away within the church, for Church Partners only – every listing checked by a keeper first.' }
   ];
 
   /* ---------- progress ---------- */

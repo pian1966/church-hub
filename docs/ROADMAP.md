@@ -69,6 +69,11 @@ Groups and attendance, kids check-in on a tablet with medical alerts and leader 
 - ⬜ Life groups / Bible studies / small groups beside care groups, each kind switched on or off – full plan in `docs/GROUPS-PLAN.md`:
   1. ✅ done in 0.40.0 (see CHANGELOG); next: 2. meeting day, time and host; 3. Find a group and Ask to join; 4. a map of where
   groups meet; 5. a to-do so every Church Partner is in a group
+- ⬜ **Midweek Groups online – this week's links** (plan: `docs/COMMUNITY-PLAN.md` part 4): the leader (or a helper) posts the
+  week's meeting link (Google Meet, Zoom, YouTube) and the notes link (Google Doc) – the Meet link is remembered, so most weeks
+  only the notes are new; members get a message with **Join the meeting** and **Open the notes**, a Home card on the day and
+  Past studies on the group's page; a live-streamed study can be open to the whole church. Replaces the weekly WhatsApp for the
+  Wednesday Bible study. Steps 4.1–4.3
 - ⬜ Church: Settings → Apps – switch on **Life groups**, then add the groups and their leaders (leaders can rename them)
 - ⬜ At sign-out, show "Not allowed to collect" and the allowed collectors
 
@@ -89,6 +94,10 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
   receive them (a switch on Me, like an opt-in, and changeable at any time) – in the app's Messages, and later by email for
   those who prefer it (consent-aware, with an easy opt-out, never to people who have died or left). Attendees as well as Church
   Partners can sign up; a past-notices list so anyone can read last week's again
+- ⬜ **Events – organising and registration** (plan: `docs/COMMUNITY-PLAN.md` part 1): an Events page of picture cards; organisers
+  (Administrators, the Office, *Event organisers*) set places, a closing date, a waiting list, guests, household sign-up and
+  their own questions; members tap **I'll be there** and add it to their calendar; Who's coming, a message to everyone signed
+  up, a reminder the day before, an optional cost with *Paid*, door check-in; later a sign-up link for guests. Steps 1.1–1.5
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
@@ -124,6 +133,23 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
   - ⬜ Fluent speakers to check the new wording in every language (drafted by Claude), including the 0.54 words (terms of
     office, library reminders, formatting buttons)
   - ⬜ Formatting (0.54): use it for other documents shown in the app – the privacy notice, help pages, the church's own notices
+- ⬜ **Community board** (plan: `docs/COMMUNITY-PLAN.md` part 2): a corkboard of sticky notes, pinned at a slight angle with
+  push-pins or tape – *I need help* (a plumber, a mechanic, a lift), *I can offer*, *Notice*, *Thank you* – so requests go on a
+  board people choose to look at instead of into everyone's inbox. Every notice waits for a **keeper** (a Church Partner the
+  Administrator nominates), who gets it in Messages to approve, ask for a change or decline; *I can help* is a private message;
+  notices end after 30 days or when *Sorted, thank you!*; the latest 3 notices show as tiny sticky notes on Home. Steps 2.1–2.3
+- ⬜ **Marketplace** (plan: `docs/COMMUNITY-PLAN.md` part 3): For sale, Wanted, Free (later To lend), photo cards like Facebook
+  Marketplace, up to 3 small photos, the area (suburb only); **nothing shows until a Marketplace keeper approves it**; the
+  church's own rules accepted by posters, safety tips, *I'm interested* as a private message, mark sold, 30-day expiry; no
+  payments through Church Hub. Steps 3.1–3.3
+- ⬜ **Finances – budget and "are we on track?"** (plan: `docs/FINANCE-PLAN.md`): the Treasurer imports the year's budget from
+  the spreadsheet and the monthly management reports (about 10 a year, month and year to date; matching remembered; the PDF
+  filed in the Archive); the Rector, pastors and Council see a traffic light (on track / watch / concern), income, expenses,
+  shortfall, a year-end projection, a chart against budget, and **things to look at** – overspends, underspends, income
+  falling, anomalies – with the Treasurer's notes; one-page print for the Council pack; later an optional AI summary. Staff
+  pay can show as one total. Steps 5.1–5.5
+- ⬜ Decide (Community and Finances): may attendees post on the board and marketplace? Do Thank-you notes need approval? Is 30
+  days right? The first keepers; the Treasurer(s), financial year, who sees Finances and the overspend thresholds
 - ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request (add to CLAUDE.md rules
   once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
 

@@ -1,5 +1,5 @@
 /*
- * Church Hub – a small QR code maker (no outside library): text as bytes, error correction level M (about 15% of the code
+ * Church & Trellis – a small QR code maker (no outside library): text as bytes, error correction level M (about 15% of the code
  * can be damaged), versions 1–10 (up to 213 bytes – plenty for a web address). Written from the QR Code standard
  * (ISO/IEC 18004); checked against the segno library's output in tests/qr.test.js.
  *   QR.matrix(text) → { size, dark: [[true|false]] }   QR.svg(text, opts) → '<svg …>' (black on white, with a quiet zone)

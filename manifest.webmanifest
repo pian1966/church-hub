@@ -1,6 +1,6 @@
 {
-  "name": "Church Hub",
-  "short_name": "Church Hub",
+  "name": "Church & Trellis",
+  "short_name": "Church & Trellis",
   "description": "Your details, days away and serving at church.",
   "id": "./",
   "start_url": "./#/me",

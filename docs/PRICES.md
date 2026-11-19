@@ -10,7 +10,7 @@ examples where we have looked them up:
 - Cambodia ៛4 000: iced coffee from a Phnom Penh stall, about US$1 (2026 menu prices).
 
 To add or refresh an example: look it up on the day, change only the number, run `node tests/coffee.test.js`. Never invent
-a price. Every country Church Hub knows must have a currency in `COUNTRY_CURRENCY` (the test checks); the public website
+a price. Every country Church & Trellis knows must have a currency in `COUNTRY_CURRENCY` (the test checks); the public website
 (`site/index.html`) carries a copy of the countries, currencies and examples – regenerate it when these change.
 
 ## Countries that start "hidden" (refresh each January)

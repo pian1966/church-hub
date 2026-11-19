@@ -1,7 +1,7 @@
 /*
- * Church Hub – connection to the church's Firebase project.
+ * Church & Trellis – connection to the church's Firebase project.
  *
- * While this is empty, Church Hub runs as a demo with made-up people.
+ * While this is empty, Church & Trellis runs as a demo with made-up people.
  * To go live, paste the values from Firebase console → Project settings → Your apps → "SDK setup and configuration" → Config
  * (see docs/FIREBASE-SETUP.md, step 6). Edit this file on GitHub; don't paste it into a chat.
  *
@@ -18,7 +18,7 @@ window.CHURCH_HUB_FIREBASE = window.CHURCH_HUB_FIREBASE || {
   // Empty = the app offers only the email link. This is not a password either.
   googleWebClientId: '',
   // For "Ask in your own words" with AI: the reCAPTCHA site key registered in Firebase → App Check (docs/AI-SEARCH-SETUP.md).
-  // Empty = no AI; Ask uses Church Hub's own rules. appCheckEnterprise: true if the key is a reCAPTCHA Enterprise key.
+  // Empty = no AI; Ask uses Church & Trellis's own rules. appCheckEnterprise: true if the key is a reCAPTCHA Enterprise key.
   // Not a password either: every visitor's browser receives it.
   appCheckKey: '6LdLIhkuAAAAAHvT7dL7BUAZkTOc76NgGYWl8N0G',
   appCheckEnterprise: true

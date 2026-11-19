@@ -1,4 +1,4 @@
-/* Church Hub – made-up sample data for the demo. No real people. */
+/* Church & Trellis – made-up sample data for the demo. No real people. */
 function makeSampleData() {
   'use strict';
   var C = LeaveCore, today = new Date(), yr = today.getFullYear();
@@ -194,7 +194,7 @@ function makeSampleData() {
 }
 
 /* Made-up churches for the demo's prayer circle and "pay for another church" (js/mod-support.js). No real churches.
- * Once Church Hub opens to other churches, the real list comes from Church Hub's office (TARGET.md section 10). */
+ * Once Church & Trellis opens to other churches, the real list comes from Church & Trellis's office (TARGET.md section 10). */
 var SampleChurches = [
   { id: 'demo-ch-1', name: 'Hope Chapel', town: 'Mangochi', country: 'MW', countryName: 'Malawi', continent: 'Africa', card: { place: 'Mangochi', points: ['Clean water for the village borehole, which broke in October', 'Our three new Sunday-school teachers'], needsHelp: true } },
   { id: 'demo-ch-2', name: 'St Andrew’s', town: 'Ballarat', country: 'AU', countryName: 'Australia', continent: 'Oceania', card: { points: ['Young families moving into the new estate near the church', 'Wisdom as we look for a youth worker'] } },

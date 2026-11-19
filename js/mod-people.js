@@ -1,4 +1,4 @@
-/* Church Hub – People: directory, households, profiles, consent (POPIA), restricted notes.
+/* Church & Trellis – People: directory, households, profiles, consent (POPIA), restricted notes.
  * The page is split into js/people/*.js (core, directory, profile, edit, households, search); this file registers it
  * with the Hub (to-do list, upgrades, which part draws which page, events) and loads last. */
 (function (P) {
@@ -183,7 +183,7 @@
         pf.value = '';   // the same file can be chosen again
         H.cropPhoto(f).then(function (data) {
           return S.setPhoto(p.id, data, (p.photo ? 'Changed the photo of ' : 'Added a photo of ') + H.name(p)).then(function () { H.render(); H.toast(T('Photo saved')); });
-        }).catch(function () { H.toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.')); });
+        }).catch(function () { H.toast(T('That file isn’t a picture Church & Trellis can read. Try a JPG or PNG photo.')); });
       });
       var q = document.getElementById('pp-q');
       if (q) q.addEventListener('input', H.pause(function () { var n0 = document.getElementById('pp-q'); if (!n0) return; state.q = n0.value; var pos = n0.selectionStart; H.render(); var n = document.getElementById('pp-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));

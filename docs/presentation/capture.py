@@ -1,4 +1,4 @@
-"""Church Hub - screenshots and short clips for the conference presentation (docs/presentation/).
+"""Church & Trellis - screenshots and short clips for the conference presentation (docs/presentation/).
 
 Everything comes from the demo (made-up people), shown as "Grace Community Church". Needs Python Playwright
 (pip install playwright && playwright install chromium), Pillow and ffmpeg, with the app served locally:

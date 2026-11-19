@@ -1,5 +1,5 @@
 /*
- * Church Hub – the app tested in a real browser, as every role: first the demo, then live mode (Firebase) against
+ * Church & Trellis – the app tested in a real browser, as every role: first the demo, then live mode (Firebase) against
  * tests/fake-firebase.js.
  * Uses the made-up sample people only. Checks that each role sees what it should, that its changes are saved
  * in the right documents, and that the app never asks the database for something the security rules refuse.

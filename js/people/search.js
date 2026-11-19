@@ -1,4 +1,4 @@
-/* Church Hub – People: Advanced search (filters, columns, CSV download) and Change selected… for many people at once. */
+/* Church & Trellis – People: Advanced search (filters, columns, CSV download) and Change selected… for many people at once. */
 (function (P) {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
@@ -199,7 +199,7 @@
       people: roster ? S.list('people').filter(function (p) { return !p.deletedAt; }).map(function (p) { return { id: p.id, names: H.names(p) }; }) : [] };
   }
   /** Ask: understand the question, then fill in the filters and search (people) or list the services. */
-  /** Ask: with AI when it is switched on (Settings → Apps), otherwise – or if the AI can't be reached – Church Hub's own rules. */
+  /** Ask: with AI when it is switched on (Settings → Apps), otherwise – or if the AI can't be reached – Church & Trellis's own rules. */
   var askTurn = 0;
   function ask(text) {
     text = String(text || '').trim(); if (!text) return;
@@ -250,7 +250,7 @@
         : (r.said || []).map(function (x) { return T(x[0], x[1] || undefined); });
       var none = r.kind === 'people' ? !r.filters.length : false;
       html += '<div class="ask-said" id="ask-said">' + (none ? '<p class="note bad" role="alert">' + T('Nothing in that was understood. Try one of the examples.') + '</p>' :
-        (r.aiFailed ? '<p class="hint">' + T('The AI couldn’t be reached, so Church Hub’s own rules were used.') + '</p>' : '') +
+        (r.aiFailed ? '<p class="hint">' + T('The AI couldn’t be reached, so Church & Trellis’s own rules were used.') + '</p>' : '') +
         '<p><b>' + T(r.ai ? 'Understood by AI as' : 'Understood as') + ':</b> ' + said.map(function (x) { return '<span class="tag">' + esc(x) + '</span>'; }).join(r.kind === 'people' && state.adv.match === 'logic' ? ' ' : ' ') +
         (r.kind === 'people' && state.adv.match === 'logic' ? ' <span class="muted small">(' + esc(state.adv.logic) + ')</span>' : '') + '</p>') +
         (r.noPerson ? '<p class="note bad">' + T('No one called “{name}” was found.', { name: esc(r.noPerson) }) + '</p>' : '') +
@@ -300,7 +300,7 @@
       var t = ''; for (var i = 0; i < ev.results.length; i++) t += ev.results[i][0].transcript;
       got = t; window.churchHubHeard(t, false);
     };
-    r.onerror = function (ev) { rec = null; micState(false, ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ? T('Allow the microphone for Church Hub in your browser’s settings.') : T('Couldn’t hear that – try again.')); };
+    r.onerror = function (ev) { rec = null; micState(false, ev.error === 'not-allowed' || ev.error === 'service-not-allowed' ? T('Allow the microphone for Church & Trellis in your browser’s settings.') : T('Couldn’t hear that – try again.')); };
     r.onend = function () { var had = rec; rec = null; if (had && got.trim()) window.churchHubHeard(got.trim(), true); else if (had) micState(false, ''); };
     micState(true, T('Listening… speak now'));
     try { r.start(); } catch (e) { rec = null; micState(false, T('Couldn’t hear that – try again.')); }

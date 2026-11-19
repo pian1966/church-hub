@@ -12,7 +12,7 @@
 **Steps**
 1. `EMAIL_KEY`, `WHO_KEY`, `OWNER_KEY` become functions of `cfg.projectId` (suffix `':' + projectId`).
    For the built-in project keep reading the old un-suffixed value once if the new one is missing, then write the
-   new one – so nobody at Christ Church Howick is asked for their email again or loses "who is using Church Hub".
+   new one – so nobody at Christ Church Howick is asked for their email again or loses "who is using Church & Trellis".
 2. `sendSignInLinkToEmail` → `url: location.origin + location.pathname + '?c=' + encodeURIComponent(cfg.projectId)`
    **only when** the church was chosen by `Church` (not the built-in one) – Howick's authorised link stays as is.
 3. After the email link completes, the address is cleaned as today; keep `?c=`.

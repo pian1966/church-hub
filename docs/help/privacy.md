@@ -1,6 +1,6 @@
 # Privacy and consent
 
-Church Hub follows South Africa's privacy law (POPIA), or the law of the church's own country. The church's data is
+Church & Trellis follows South Africa's privacy law (POPIA), or the law of the church's own country. The church's data is
 stored in South Africa. Every person's consent is recorded for each purpose, and views of sensitive information (pastoral
 notes, ID numbers, people not allowed to collect a child) are logged.
 
@@ -21,7 +21,7 @@ For: Everyone
 Also asked: What does each consent mean? Contact details consent. Do I need all of them?
 
 Tap or point at the **i** next to each one for an explanation. In short:
-- **Church records** – the basic one: the church may keep your details in Church Hub at all. It shows nothing to other members.
+- **Church records** – the basic one: the church may keep your details in Church & Trellis at all. It shows nothing to other members.
 - **Church directory** – your name and photo appear in the directory that everyone who signs in can see, with the contact
   details the church allows. Church Partners agree to this when they become Church Partners.
 - **Care group** – the people in your care group may see your photo, phone, email, address and birthday.
@@ -39,7 +39,7 @@ Also asked: Take me out of the directory. Unsubscribe. Stop messages.
 For: Everyone
 Also asked: My data. Delete my information. POPIA request. Right to be forgotten.
 
-Yes – ask the church's Information Officer (their name is in the privacy notice). They log your request in Church Hub and
+Yes – ask the church's Information Officer (their name is in the privacy notice). They log your request in Church & Trellis and
 answer within the time the law allows. They can export everything about you, correct it, or delete it.
 
 ## Who gives consent for a child?
@@ -73,8 +73,8 @@ Also asked: POPIA checklist. Information Officer. Audit log.
 For: Administrators
 Also asked: Data breach. Security compromise.
 
-Go to **Privacy → Breaches → Record an incident**. Describe what happened and whose information was affected. Church Hub
+Go to **Privacy → Breaches → Record an incident**. Describe what happened and whose information was affected. Church & Trellis
 shows the advice for your country's law: usually tell the regulator and the people affected as soon as possible, and record
 the dates you did.
 
-Note: this is how Church Hub helps you keep records – it isn't legal advice.
+Note: this is how Church & Trellis helps you keep records – it isn't legal advice.

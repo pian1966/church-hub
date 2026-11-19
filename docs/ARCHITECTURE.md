@@ -1,6 +1,6 @@
-# Church Hub – architecture
+# Church & Trellis – architecture
 
-Church Hub helps churches move from Elvanto, learning from tools such as Planning Center and ChurchSuite.
+Church & Trellis helps churches move from Elvanto, learning from tools such as Planning Center and ChurchSuite.
 It is built in phases; each phase is usable on its own. **Read this file first in every new working session.**
 
 ## Principles
@@ -48,7 +48,7 @@ js/mod-*.js               one file per module: me, people, rosters, leave, care,
 js/people/*.js            the People module in parts: core, directory, profile, edit, households, search (mod-people.js puts them together)
 android/                  the Android app: shows the website full screen + native Google sign-in (docs/ANDROID.md)
 manifest.webmanifest      home-screen icon and name (iPhone "Add to Home Screen", Android browsers)
-sw.js                     service worker: keeps Church Hub's files on the device so it opens without the internet (see Offline)
+sw.js                     service worker: keeps Church & Trellis's files on the device so it opens without the internet (see Offline)
 firestore.rules           database security rules: who may read/write what (POPIA)
 tests/*.test.js           one per pure rules file above (roster, leave-import, elvanto-import, elvanto-sync, households,
                           people-search, duplicates, i18n, countries, privacy-law, wording, serving, care, messages) and the robot
@@ -66,12 +66,12 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
 
 **Live mode**: Firebase Authentication (Google or email link) and Firestore in Johannesburg. Setup: the setup tool (`site/setup.html`, section "Setup tool") or `docs/FIREBASE-SETUP.md`.
 - *Access list* `roles/{email}` = `{ role, personId }`. Only Administrators write it, from People → Edit details → App access
-  (`No access` deletes it). The first Administrator is added by hand in the console, then Church Hub asks them to set up the church.
+  (`No access` deletes it). The first Administrator is added by hand in the console, then Church & Trellis asks them to set up the church.
 - *A shared sign-in*: people who share one email address (often a couple, up to 4) share `roles/{email}`. It keeps the first
   person (strongest role) in `role`/`personId`, and adds `roles` (every role among them, which the rules check), `also` (the others'
   ids, at most 3; the rules' `isMe()`/`meIn()` accept any of them) and `people` ({ id: { role, name, can, langs } }). After signing
-  in they choose who is using Church Hub (`stage: 'choosePerson'`, remembered on that device until sign-out) and can switch
-  (Switch person); Church Hub then loads as that person with their own role. `syncRole` rebuilds the entry from every person record
+  in they choose who is using Church & Trellis (`stage: 'choosePerson'`, remembered on that device until sign-out) and can switch
+  (Switch person); Church & Trellis then loads as that person with their own role. `syncRole` rebuilds the entry from every person record
   with that email and access, and only removes it when it was that person's. Only Administrators can share a Pastor's or
   Administrator's sign-in. Security: the inbox is the key, so whoever reads it can be any of them – the rules allow the union.
 - *One person, several documents*, because security rules protect whole documents, not fields. `store.js` splits on save and
@@ -96,7 +96,7 @@ Modules never know which mode they are in (apart from `Store.isLive()` for sign-
   **When changing who sees what, change `firestore.rules`, `plan()` in `store.js`, the POLICY copy in `tests/fake-firebase.js`
   and the tests together.**
 - Saves are written in the background; if the database refuses one, the person sees a plain-English message.
-  Without the internet Church Hub shows the copy kept on the device and is view-only (see Offline).
+  Without the internet Church & Trellis shows the copy kept on the device and is view-only (see Offline).
   Changes made by others appear automatically (unless the person is typing or has a dialog open).
 
 ### Collections
@@ -201,7 +201,7 @@ For everyone, and can't be switched off. Shows the version and its date from `js
 (`ChurchHubApp.version()`), the church, the developer, and links to the privacy notice, the changelog and the code.
 Check for updates (also run once when the page opens) fetches `js/version.js?t=…` from the website without the browser's
 copy and compares the numbers; a newer one offers Update now (reload). In the Android app it also reads the newest app
-from GitHub's `android` release ("Church Hub for Android 1.0.16") and offers the download. Raise the version with every
+from GitHub's `android` release ("Church & Trellis for Android 1.0.16") and offers the download. Raise the version with every
 change that goes live.
 
 ## Households and responsible adults
@@ -212,7 +212,7 @@ households). Pure rules in `js/households.js`, tested in `tests/households.test.
 - **Parents, guardians and collection** (on a child's profile; Administrators, Pastors and Children's ministry): each link has
   a relationship (Mother, Father, Parent, Step-parent, Legal guardian, Foster carer, Grandparent, Other relative, Trusted
   collector) and three ticks: *can give consent* (POPIA s35: a parent or legal guardian), *primary contact*, *may collect*.
-  A collector who isn't in Church Hub is a name + phone. Consent for a child can only be recorded from an adult who can consent.
+  A collector who isn't in Church & Trellis is a name + phone. Consent for a child can only be recorded from an adult who can consent.
   Adults see a "Responsible for" list; members can read only their own links.
 - **Not allowed to collect**: listed on the child's profile with a red bar; viewing it is audit-logged. Adding someone clears
   their "may collect".
@@ -363,28 +363,28 @@ Administrators then finish it (automatically if they recorded it, otherwise from
 serving groups and away dates; future leave cancelled; sign-in removed; their parent/guardian links and collection restrictions removed. Past serving and leave stay. Pastors get
 "Care for the family of …" on their to-do list for 8 weeks. "Recorded by mistake?" undoes it (teams and rosters must be re-added).
 The date of death and funeral can be corrected later in Edit details. Home only asks to finish a death when something is
-left to undo, so people who died before they came into Church Hub (e.g. from Elvanto) aren't a to-do; People → **Deceased**
+left to undo, so people who died before they came into Church & Trellis (e.g. from Elvanto) aren't a to-do; People → **Deceased**
 lists everyone who has died. **Late spouse**: recording a death remembers it on the widowed spouse (`lateSpouseId`), whose
 page then says "Was married to …" (and the reverse). Administrators can set it in Edit details (someone who died, a name, or
 nobody) and get suggestions under People → **Late spouses** (`Households.lateSpouseSuggestions`: same household, wedding
 date, email, phone, surname and age; "Not a couple" is remembered as `notLateSpouse`).
 Later phases must leave deceased people out of messages, birthday reminders and anniversaries.
 
-## Elvanto's unavailable dates → Church Hub (until switch-over)
+## Elvanto's unavailable dates → Church & Trellis (until switch-over)
 `MODE=read` of the robot (nightly 03:07, `.github/workflows/elvanto-robot.yml`; only if `settings.elvanto.read`) reads the whole
 Unavailable Volunteers list (all pages) – each row's name and dates, never the reason – with `readRows`/`datesIn` in
 `robot/robot.js` (tested), and writes `elvantoFound/unavailable` = { readAt, entries: [{ name, from, to, fromLeave }], rows,
 unread, pages } (robot writes only those fields; Administrators read/delete). Import → *Unavailable dates from Elvanto*
 matches names with `ElvantoImport.matchFound` (tested: known-as names, "Surname, First", several/no match → choose) and adds
-`blockouts` with `source: 'elvanto'`; entries made for leave (note "Church Hub …"/"Leave Manager …") count as already there.
+`blockouts` with `source: 'elvanto'`; entries made for leave (note "Church & Trellis …"/"Leave Manager …") count as already there.
 
 ## Offline (view only)
-- **Files** (`sw.js`): every file Church Hub uses (its own, the Firebase library, the font) is fetched fresh when online and a
+- **Files** (`sw.js`): every file Church & Trellis uses (its own, the Firebase library, the font) is fetched fresh when online and a
   copy kept; offline – or after 7 seconds on a weak signal – the copy is used. One copy per file (without `?v=`). Each file's `?v=` is a fingerprint of its contents (`tools/stamp-files.js`; language files' in `js/file-versions.js`), so a release downloads only the files that changed. `keepFiles()`
   in `js/app.js` tells it what the page loaded, so the first visit is already kept. Not intercepted: the database, sign-in, and
   anything fetched with `cache: 'no-store'` (About → Check for updates).
 - **Data** (live mode, `js/store.js`): Firestore's offline copy (`enablePersistence`, shared between tabs). Offline, the
-  sign-in comes from Firebase Auth's own storage and the access list from the copy, so Church Hub loads as usual. Wiped
+  sign-in comes from Firebase Auth's own storage and the access list from the copy, so Church & Trellis loads as usual. Wiped
   (`wipe()`: terminate, `clearPersistence`, open again) at sign-out, when the access list says they have no access, and when
   another email address's copy is still there (`church_hub_offline_owner`).
 - **View-only**: `Store.offline()` (live mode and `navigator.onLine === false`); `blocked()` refuses every save as it does
@@ -396,7 +396,7 @@ matches names with `ElvantoImport.matchFound` (tested: known-as names, "Surname,
 ## Phone apps and prompts
 `phoneApp()` in `js/app.js` = the Android app or a home-screen app (`navigator.standalone` / display-mode standalone): starts
 on Me and signs in by pasting the email link. `prompts()` adds to Home and My details: *Add a photo of yourself* (phone apps,
-adults without a photo; Not now → `Store.pref('selfieLater')`, 30 days) and, in an iPhone browser, how to add Church Hub to
+adults without a photo; Not now → `Store.pref('selfieLater')`, 30 days) and, in an iPhone browser, how to add Church & Trellis to
 the home screen (60 days).
 
 ## Approved leave in Elvanto (Unavailable Volunteers)
@@ -405,7 +405,7 @@ As in Leave Manager: `Store.saveLeave` tells `onLeaveChange` listeners which req
 want: Unavailable|Removed, have, haveNote, status: Waiting|Done|Failed|Check, note } – only when switched on
 (`settings.elvanto.on`, Leave → Elvanto). Imports are `quiet` (Leave Manager already put its leave in Elvanto); such leave,
 if changed later, is found in Elvanto by its note "Leave Manager ‹id›". The robot (`robot/robot.js`, `.github/workflows/elvanto-robot.yml`)
-signs in to Church Hub as its own user – `roles/{email}` = { role: 'robot', uid } – which the rules let read only church settings
+signs in to Church & Trellis as its own user – `roles/{email}` = { role: 'robot', uid } – which the rules let read only church settings
 and the Elvanto list, and report results (status, note, have, doneAt) and `robotStatus/elvanto`. Its Elvanto steps are Leave
 Manager's robot's. Results and problems show under Leave → Elvanto and on Home (failed, check by hand, waiting > 2 hours).
 
@@ -529,7 +529,7 @@ people marked as staff (including the older Staff category); it is not a second 
     each (rules: `careOwn()`, `careCarer()`). Carers always see everyone. The group record's names are hidden on screen only.
   - *All groups: see who is in each group* (`seeCare` includes `member`): `directory/{id}.care` =
     [{ id, name, carer }] (names only), written by `syncDirectory` (Administrators and Pastors when a group changes or Settings
-    are saved; each person for themselves at sign-in; Administrators and Pastors re-check everyone's entry 1.5 s after opening Church Hub – only differences are written). A read-only Care groups page built from the directory, and the tag on
+    are saved; each person for themselves at sign-in; Administrators and Pastors re-check everyone's entry 1.5 s after opening Church & Trellis – only differences are written). A read-only Care groups page built from the directory, and the tag on
     the People list. People not in the directory aren't shown.
   Church wording renames them (Home group, Cell group, Class and Class leader, Small Christian Community…).
 - Suggest groups by where people live (`Care.suggest`, tested): for every Church Partner (adult, active) in no group yet –
@@ -657,7 +657,7 @@ a link.
   can't be renamed; move a record by changing its date or folder. A record's `cat` is the folder it is in, at any depth.
   Administrators make, change and delete (empty) folders on the page (More → New folder / Change this folder); a folder's
   "who can see it" is the starting choice for new records only. No change to the rules: folders live in settings.
-- **Before saving** the record dialog shows what Church Hub is about to do (where it will be filed, who can see it, the
+- **Before saving** the record dialog shows what Church & Trellis is about to do (where it will be filed, who can see it, the
   file) and `Archive.checkDate()` asks about a date that looks wrong: in the future, before 1800, not the month or year
   the title or file name speaks of (`Archive.named()`, month names in English, Afrikaans, isiZulu, isiXhosa, Sesotho), not
   the date the month's other documents share, or a title already in that month. The summary can be switched off on a
@@ -817,8 +817,8 @@ The wedding anniversary sits right under marital status.
 
 ## Brochures and the brochure editor (About → Brochures; `brochure.html`, `js/brochure-kit.js`, `js/mod-about.js`)
 - About links to `#/about/brochure/members|churches` (Administrators). The page shows `brochure.html?for=…&embed=1` in a frame
-  (same site), with Church Hub's own buttons: **Edit the wording / Done editing**, **Print or save as PDF** (the frame prints),
-  a language picker, colour (Church Hub orange, the church's colour from Settings → Colours, or any colour) and font (a short
+  (same site), with Church & Trellis's own buttons: **Edit the wording / Done editing**, **Print or save as PDF** (the frame prints),
+  a language picker, colour (Church & Trellis orange, the church's colour from Settings → Colours, or any colour) and font (a short
   list of Google Fonts).
 - The church's changes are stored separately in `brochures/church`, not in the settings document. `Store.plan()` loads it only
   for an Administrator, `Store.isAdmin()` excludes "View as", and `Store.setBrochures()` checks the role before saving. The Rector
@@ -827,10 +827,10 @@ The wedding anniversary sits right under marital status.
   Administrators to read and write this document, and the Rector (`rector()`) to read it. Older `settings/church.brochures` data is moved to the private
   document by an Administrator's first load; while it remains there, non-Administrators (including the robot) cannot read settings.
 - `BrochureKit.tidy` keeps `design { accent, font }` and, per brochure,
-  `texts { key: { o: Church Hub's original text, h: their wording } }` and `hidden { key: original text }`. Keys are places
+  `texts { key: { o: Church & Trellis's original text, h: their wording } }` and `hidden { key: original text }`. Keys are places
   (`m0:11` = members, sheet 0, 12th text; `m0:b3` = a block). Optional `translations[language]` holds the same text and hidden
   maps for a selected language. Missing translated wording falls back to the English/default brochure; changing one language
-  does not alter another. An edit is only used while the original there is unchanged, so when Church Hub's wording changes in a
+  does not alter another. An edit is only used while the original there is unchanged, so when Church & Trellis's wording changes in a
   release the old edit is listed ("Forget them") instead of landing on the wrong line.
 - Editing: each heading and paragraph is contenteditable (plain paste; Enter in a heading does nothing), blocks get Hide/Show;
   saves by itself (600 ms after typing, and on leaving a text). Typed wording goes through `BrochureKit.clean` (bold, italic,
@@ -851,7 +851,7 @@ The wedding anniversary sits right under marital status.
 
 ## Subscription and the prayer circle (`js/coffee.js`, `js/mod-support.js`)
 Administrators (and Pastors with "settings") open **Subscription**: choose a coffee and currency, monthly (one coffee) or
-yearly (ten), a gift, and who it's for (our church or another church); Pay shows Church Hub's bank details and the church's
+yearly (ten), a gift, and who it's for (our church or another church); Pay shows Church & Trellis's bank details and the church's
 reference (`Coffee.reference`), and "We've paid" records it. Kept in `settings.support` = `{ drink, currency, plan, startedAt,
 paidUntil, payments[], holidays[], pledge, prayOn, cardsOff }` (the newest 24 payments and holidays) and `settings.prayerCard` =
 `{ photo, photoOk, place, points[2], discreet, needsHelp, updated }` – both in the church's own settings, so the Firestore rules
@@ -859,7 +859,7 @@ didn't change. `Coffee.status()` decides the reminder (7 days before for monthly
 modules can put a card on everyone's Home with `homeCard` (`js/app.js` `homeCards`): the due reminder (Administrators) and
 "This week we pray for" (everyone) and, for Administrators, the monthly prayer-card reminder.
 
-**The prayer circle (decided 19 Nov 2026): every church takes part.** It is meant to make Church Hub more than
+**The prayer circle (decided 19 Nov 2026): every church takes part.** It is meant to make Church & Trellis more than
 administration: it makes sure every church is prayed for.
 - *A new card every week.* `Coffee.cardForWeek(selfId, date, churches)` picks the card for the week (Monday to Sunday,
   `Coffee.weekKey`): the same for everyone at that church all week, so it can be prayed for together on Sunday. Each church
@@ -878,13 +878,13 @@ Until the office exists the circle is the demo's made-up churches (`SampleChurch
 their card in their own settings and see an explanation instead of another church's card.
 
 ## Setup tool (`site/setup.html`, `site/setup-kit.js`; tested by `tests/setup-kit.test.js`)
-- One page outside the app (English, like the brochures and the website), at `/church-hub/site/setup.html`. It sets up Church Hub
+- One page outside the app (English, like the brochures and the website), at `/church-hub/site/setup.html`. It sets up Church & Trellis
   at a new church as it works today: one church, one Firebase project, and – until one address serves every church
   (`docs/architecture/`, tasks 010 and 020–021) – the church's own copy (fork) of this repository on GitHub Pages.
 - `setup-kit.js` is pure and holds the content: `CHAPTERS` and `STEPS` (each `{ id, chapter, title, mins, why, body(c), fields?, ready? }`,
   bodies built from `Kit.ctx(church)` so every instruction shows that church's names, addresses and project id), `GROW` (everything
   a church can switch on afterwards, grouped, each with `mods` = the `Hub.register` ids it covers and `since` = the version it
-  arrived in; `every` makes a repeating job such as "Get the latest Church Hub"), `NOT_SETUP` (parts with nothing to set up) and
+  arrived in; `every` makes a repeating job such as "Get the latest Church & Trellis"), `NOT_SETUP` (parts with nothing to set up) and
   `COMING`. It also reads Firebase's pasted settings (`parseConfig`), writes the church's `js/firebase-config.js` (`configFile`,
   same keys as the repository's file) and picks the Firestore location from the country (`place`, TARGET.md section 5).
 - `setup.html` draws it: welcome, a church's overview (progress ring, Next up, chapters, the Grow list with Still to do / Done /

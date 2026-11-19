@@ -2,9 +2,9 @@
 
 ## How do I sign in?
 For: Everyone
-Also asked: How do I log in? What's my password? How do I get into Church Hub?
+Also asked: How do I log in? What's my password? How do I get into Church & Trellis?
 
-Church Hub has no password. Use the email address the church office has for you:
+Church & Trellis has no password. Use the email address the church office has for you:
 - **Sign in with Google** – if your email is a Gmail or Google address, tap it and choose your account.
 - **Email me a link** – type your email address and tap **Email me a link**. Open the email and tap the link, and you're signed in.
 
@@ -18,9 +18,9 @@ For: Everyone
 Also asked: Sign-in code. No email. Code from the office. The code doesn't work. PIN. Forgot my PIN. Church number. New phone.
 
 **The first time:** ask the church office for a **sign-in code**. Scan its QR code with your phone's camera (or tap the link
-they sent by WhatsApp), or open Church Hub, tap **I have a sign-in code** and type the 8 letters and numbers. Check the name
+they sent by WhatsApp), or open Church & Trellis, tap **I have a sign-in code** and type the 8 letters and numbers. Check the name
 is yours and tap **Yes, that's me**. Then check your cellphone number and choose a **6-digit PIN** (not an easy one like
-123456), typed twice. No number of your own? Tap **I don't have my own number**: Church Hub gives you a **church number** –
+123456), typed twice. No number of your own? Tap **I don't have my own number**: Church & Trellis gives you a **church number** –
 write it down. A code works **once** and for **14 days**; "Already been used" or "expired"? Ask the office for a new one.
 
 **After that:** tap **Sign in with my number** and type your cellphone number (or church number) and your PIN – on any phone,
@@ -32,7 +32,7 @@ For: Everyone
 Also asked: The email link didn't arrive. The link doesn't work.
 
 - Check the spam or junk folder, and that you typed the same email address the church office has for you.
-- Open the link on the same phone or computer where you asked for it. If you open it somewhere else, Church Hub asks you to
+- Open the link on the same phone or computer where you asked for it. If you open it somewhere else, Church & Trellis asks you to
   **Confirm your email** – type the same address again.
 - Links can only be used once and expire after a while. If it doesn't work, ask for a new one.
 
@@ -41,26 +41,26 @@ For: Everyone
 Also asked: The link opens in my browser instead of the app.
 
 Email links can't open inside the app. In the app tap **Email me a link** (or **I already have a sign-in link** if you
-already have one). Then open the email, **press and hold the sign-in link and choose Copy link**, come back to Church Hub,
+already have one). Then open the email, **press and hold the sign-in link and choose Copy link**, come back to Church & Trellis,
 paste it in the box and tap **Sign in**. If the church has set it up, **Sign in with Google** works in the Android app too.
 
 ## My spouse and I share one email address. How does that work?
 For: Everyone
-Also asked: We use the same email. How do I switch to my husband / wife? Who is using Church Hub?
+Also asked: We use the same email. How do I switch to my husband / wife? Who is using Church & Trellis?
 
-People who share an email address (up to four, often a couple) share one sign-in. After signing in, Church Hub asks
-**Who is using Church Hub?** – tap your name. Each person sees their own details, rosters and role. To change to the
+People who share an email address (up to four, often a couple) share one sign-in. After signing in, Church & Trellis asks
+**Who is using Church & Trellis?** – tap your name. Each person sees their own details, rosters and role. To change to the
 other person, tap **Switch person** (the people icon at the top; on a phone, under **More**). The device remembers who
 was using it until you sign out.
 
 ## Is there a phone app?
 For: Everyone
-Also asked: Can I install Church Hub? Is it on the Play Store / App Store?
+Also asked: Can I install Church & Trellis? Is it on the Play Store / App Store?
 
-- **Android**: there is a Church Hub app. Download it from the link on the Me page (**Get the Church Hub app for Android**)
+- **Android**: there is a Church & Trellis app. Download it from the link on the Me page (**Get the Church & Trellis app for Android**)
   or under **About**. It isn't in the Play Store, so your phone may ask you to allow installing it.
-- **iPhone**: open Church Hub in Safari, tap the Share button, then **Add to Home Screen**. Church Hub shows how
-  (**Church Hub on your iPhone**).
+- **iPhone**: open Church & Trellis in Safari, tap the Share button, then **Add to Home Screen**. Church & Trellis shows how
+  (**Church & Trellis on your iPhone**).
 - On any computer or phone you can also just use the website in a browser.
 
 ## How do I update the app?
@@ -68,19 +68,19 @@ For: Everyone
 Also asked: Am I on the latest version? Something looks old.
 
 Open **About** and tap **Check for updates**. If there's a newer version, tap **Update now**. In the Android app it also
-tells you when a newer app is available – tap **Download the new app**. Church Hub also checks once each time About opens.
+tells you when a newer app is available – tap **Download the new app**. Church & Trellis also checks once each time About opens.
 
-## Can I use Church Hub without the internet?
+## Can I use Church & Trellis without the internet?
 For: Everyone
 Also asked: It says I'm offline. Why can't I change anything?
 
-Yes, to look at things. Church Hub keeps a copy on your device, so you can open it and read your rosters, details and
+Yes, to look at things. Church & Trellis keeps a copy on your device, so you can open it and read your rosters, details and
 so on without a signal. While you're offline it is **view-only**: you can't make changes until you're back online. When
 the connection returns it says **Back online – you can make changes again.**
 
 ## How do I change the language?
 For: Everyone
-Also asked: Can I use Church Hub in Afrikaans / isiZulu / isiXhosa / another language?
+Also asked: Can I use Church & Trellis in Afrikaans / isiZulu / isiXhosa / another language?
 
 Use the **globe** drop-down: on a computer at the bottom of the menu on the left, on a phone under **More**, and on the
 sign-in screen. UK English, Afrikaans, isiZulu and isiXhosa are built in, with 19 more languages to choose from (including
@@ -98,7 +98,7 @@ Use the **Appearance** drop-down (the half-shaded circle) next to the language: 
 For: Everyone
 Also asked: Change my profile picture.
 
-In the Android app or a home-screen icon, Church Hub suggests **Add a photo of yourself** if you don't have one – tap
+In the Android app or a home-screen icon, Church & Trellis suggests **Add a photo of yourself** if you don't have one – tap
 **Take or choose a photo** (or **Not now** to be asked again in 30 days). On your own page you can also use **Add photo** /
 **Change photo**. Drag and zoom until your face fills the circle (**Choose the face**), then **Use this photo**. Photos
 must be JPG or PNG. Staff can add or change photos on a person's page.
@@ -116,7 +116,7 @@ Also asked: What is the to-do list?
 Home shows the apps you can use as cards, and your **To do** list – things that need you, such as roster turns to reply
 to, unread messages, or (for staff) requests waiting for an answer. **Nothing needs you right now.** means you're up to date.
 
-## Can I try Church Hub without real data?
+## Can I try Church & Trellis without real data?
 For: Everyone
 
 Yes – the demo has made-up people: choose **Try the demo with made-up people** on the sign-in screen, then choose who to

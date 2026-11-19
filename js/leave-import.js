@@ -1,5 +1,5 @@
 /*
- * Church Hub – reading a Leave Manager Google Sheet (downloaded as Excel, or its tabs as CSV files) and working out what to
+ * Church & Trellis – reading a Leave Manager Google Sheet (downloaded as Excel, or its tabs as CSV files) and working out what to
  * import. Pure functions (no screen, no Store), so it can be tested with node: see tests/leave-import.test.js.
  *
  * Leave Manager's tabs and columns are fixed (leave-manager/apps-script/Code.gs, HEADERS). Each table is recognised by its
@@ -141,7 +141,7 @@ var LeaveImport = (function () {
 
   /**
    * What importing would do.
-   * people: Church Hub people ([{id, firstName, lastName, preferredName, email, active, familyRole}]).
+   * people: Church & Trellis people ([{id, firstName, lastName, preferredName, email, active, familyRole}]).
    * Returns { data, matches: [{lm, personId|null, by}], requests, adjustments, skipped: {requests, adjustments}, unknownTypes, missing }
    */
   function plan(tables, people) {
@@ -170,7 +170,7 @@ var LeaveImport = (function () {
       unknownTypes: Object.keys(unknownTypes), missing: missing, splitName: splitName };
   }
 
-  /** The import, applied to a leave object (Church Hub's Store.leave()) with a staff-ID map (sheet ID → person ID). Returns counts. */
+  /** The import, applied to a leave object (Church & Trellis's Store.leave()) with a staff-ID map (sheet ID → person ID). Returns counts. */
   function applyLeave(lv, pl, idMap, withSettings) {
     var d = pl.data, n = { added: 0, updated: 0, adjustments: 0, skipped: 0 };
     if (withSettings) {

@@ -1,4 +1,4 @@
-// Church Hub – conference presentation. Builds church-hub-presentation.pptx (16:9) from the screenshots and clips in img/.
+// Church & Trellis – conference presentation. Builds church-hub-presentation.pptx (16:9) from the screenshots and clips in img/.
 // Run: node build.js   (needs pptxgenjs, react-icons, react, react-dom, sharp). See README.md; img/ comes from capture.py.
 const path = require('path');
 const fs = require('fs');
@@ -11,7 +11,7 @@ const SKILL = process.env.PPTX_SKILL || '';
 const IMG = p => path.join(__dirname, 'img', p);
 
 const THEME = {
-  name: 'Church Hub',
+  name: 'Church & Trellis',
   headFontFace: 'Inter', bodyFontFace: 'Inter',
   colors: { dk1: '1D1B19', lt1: 'FFFFFF', dk2: '231E1A', lt2: 'F6F4F1', accent1: 'E8590C', accent2: 'B8430A', accent3: '1F6B3A', accent4: '4A8AD4', accent5: 'F59E0B', accent6: '6D5BD0', hlink: 'B8430A', folHlink: '9A3F06' }
 };
@@ -26,8 +26,8 @@ async function icon(Comp, color, px = 256) {
 (async () => {
   const pres = new pptxgen();
   pres.layout = 'LAYOUT_WIDE';   // 13.333 x 7.5 in
-  pres.title = 'Church Hub – every church, however small, deserves great church software';
-  pres.author = 'Church Hub';
+  pres.title = 'Church & Trellis – every church, however small, deserves great church software';
+  pres.author = 'Church & Trellis';
   pres.theme = { headFontFace: THEME.headFontFace, bodyFontFace: THEME.bodyFontFace };
   const C = pres.SchemeColor;
   const W = 13.333, H = 7.5;
@@ -44,7 +44,7 @@ async function icon(Comp, color, px = 256) {
     title: 'Content', background: { color: HEX.white },
     objects: [
       { placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } },
-      { text: { text: 'Church Hub', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
+      { text: { text: 'Church & Trellis', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
     ],
     slideNumber: { x: 12.2, y: 7.0, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' }
   });
@@ -52,7 +52,7 @@ async function icon(Comp, color, px = 256) {
     title: 'Warm', background: { color: HEX.warm },
     objects: [
       { placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } },
-      { text: { text: 'Church Hub', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
+      { text: { text: 'Church & Trellis', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
     ],
     slideNumber: { x: 12.2, y: 7.0, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' }
   });
@@ -78,9 +78,9 @@ async function icon(Comp, color, px = 256) {
     s.addShape(pres.shapes.OVAL, { x, y, w: d, h: d, fill: { color: bg || HEX.soft }, line: { color: bg || HEX.soft } });
     s.addImage({ data: await icon(Comp, fg || HEX.orangeDk), x: x + d * 0.24, y: y + d * 0.24, w: d * 0.52, h: d * 0.52 });
   }
-  // The Church Hub mark: an orange rounded square with a thin white cross
+  // The Church & Trellis mark: an orange rounded square with a thin white cross
   function mark(s, x, y, d) {
-    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w: d, h: d, rectRadius: d * 0.22, fill: { color: HEX.orange }, line: { color: HEX.orange }, objectName: 'Church Hub mark' });
+    s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x, y, w: d, h: d, rectRadius: d * 0.22, fill: { color: HEX.orange }, line: { color: HEX.orange }, objectName: 'Church & Trellis mark' });
     // the app's mark (M12 3v18 M6 9h12, stroke 2, on a 24 grid drawn half the tile wide)
     const g = d / 2, gx = x + d / 4, gy = y + d / 4, u = g / 24, lw = 2 * u * 72;
     s.addShape(pres.shapes.LINE, { x: gx + 12 * u, y: gy + 3 * u, w: 0, h: 18 * u, line: { color: HEX.white, width: lw, cap: 'round' }, objectName: 'cross upright' });
@@ -92,11 +92,11 @@ async function icon(Comp, color, px = 256) {
   pres.addSection({ title: 'Opening' });
   let s = pres.addSlide({ masterName: 'Dark', sectionTitle: 'Opening' });
   mark(s, 0.8, 1.1, 0.95);
-  s.addText('Church Hub', { placeholder: 'title' });
+  s.addText('Church & Trellis', { placeholder: 'title' });
   s.addText('Every church, however small, deserves great church software.', { placeholder: 'body' });
   T(s, 'Made for every church, in every nation, in (nearly) every language', { x: 0.8, y: 5.9, w: 7, h: 0.5, fontSize: 14, color: HEX.nightMuted });
-  phone(s, 'm-home.jpg', 9.35, 0.75, 6.0, 'Church Hub Home on a phone');
-  s.addNotes('Welcome. Church Hub is church management software built by a church, for every church – however small, wherever it is, whatever it can afford. In the next few minutes: what a church management system is, why your church needs one, why we built our own, and what it can do for you.');
+  phone(s, 'm-home.jpg', 9.35, 0.75, 6.0, 'Church & Trellis Home on a phone');
+  s.addNotes('Welcome. Church & Trellis is church management software built by a church, for every church – however small, wherever it is, whatever it can afford. In the next few minutes: what a church management system is, why your church needs one, why we built our own, and what it can do for you.');
 
   // ========== 2. What is a church management system? ==========
   pres.addSection({ title: 'What and why' });
@@ -145,9 +145,9 @@ async function icon(Comp, color, px = 256) {
   }
   s.addNotes('Why you need one. Records spread over spreadsheets and phones go out of date, and leave with the person who kept them. Rosters cost hours of phone calls. Privacy law – POPIA here, GDPR in Europe – requires churches to protect personal information and know who has looked at it. And without one shared place, people slip through the cracks. A good church management system fixes all four.');
 
-  // ========== 4. Why I built Church Hub ==========
+  // ========== 4. Why I built Church & Trellis ==========
   pres.addSection({ title: 'Our story' });
-  s = content('Our story', 'Why we built Church Hub');
+  s = content('Our story', 'Why we built Church & Trellis');
   {
     const rows = [
       [Lu.LuCircleDollarSign, 'First-world prices, third-world church', 'Every month we paid for church software in dollars and pounds, out of rands.'],
@@ -163,9 +163,9 @@ async function icon(Comp, color, px = 256) {
     s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 7.85, y: 1.6, w: 4.85, h: 4.6, rectRadius: 0.2, fill: { color: HEX.dark }, line: { color: HEX.dark } });
     T(s, '“', { x: 8.25, y: 1.75, w: 1, h: 1, fontSize: 80, bold: true, color: HEX.orange });
     T(s, 'Why should a poor church pay more – or get less?', { x: 8.25, y: 2.75, w: 4.1, h: 2.0, fontSize: 30, bold: true, color: HEX.white });
-    T(s, 'Church Hub competes with the best church software in the world – at a price every church can afford.', { x: 8.25, y: 4.75, w: 4.1, h: 1.2, fontSize: 15, color: HEX.nightInk });
+    T(s, 'Church & Trellis competes with the best church software in the world – at a price every church can afford.', { x: 8.25, y: 4.75, w: 4.1, h: 1.2, fontSize: 15, color: HEX.nightInk });
   }
-  s.addNotes('Why did we build it? We were tired of paying for church software in first-world currency as a third-world church. Small churches pay more per person and get less – tiers, per-member charges, features locked away. So at Christ Church Howick we built Church Hub to replace what we used, run by our church office. And we decided no church should pay more or get less because it is poor.');
+  s.addNotes('Why did we build it? We were tired of paying for church software in first-world currency as a third-world church. Small churches pay more per person and get less – tiers, per-member charges, features locked away. So at Christ Church Howick we built Church & Trellis to replace what we used, run by our church office. And we decided no church should pay more or get less because it is poor.');
 
   // ========== 5. Who it's for ==========
   s = content('Our story', 'Who it’s for: every church', true);
@@ -179,10 +179,10 @@ async function icon(Comp, color, px = 256) {
     }
     T(s, [
       { text: 'Anglican, Catholic, Methodist, Presbyterian, Baptist, Pentecostal, Lutheran', options: { bold: true, breakLine: true } },
-      { text: 'Church Hub speaks your tradition: Rector or Senior Pastor, Parishioner or Member, Home group or Cell group – and you can rename any word.' }
+      { text: 'Church & Trellis speaks your tradition: Rector or Senior Pastor, Parishioner or Member, Home group or Cell group – and you can rename any word.' }
     ], { x: 0.6, y: 5.0, w: 12.1, h: 1.4, fontSize: 17, color: HEX.ink, paraSpaceAfter: 6 });
   }
-  s.addNotes('Who is it for? Every church. The same Church Hub runs a congregation of forty in a rural village and suburban and city churches with several services and teams of volunteers. More than twenty languages, and each person picks their own. It works with a weak signal, and it uses very little data. And it speaks your tradition’s words.');
+  s.addNotes('Who is it for? Every church. The same Church & Trellis runs a congregation of forty in a rural village and suburban and city churches with several services and teams of volunteers. More than twenty languages, and each person picks their own. It works with a weak signal, and it uses very little data. And it speaks your tradition’s words.');
 
   // ========== 6. Everything in one place ==========
   pres.addSection({ title: 'What it does' });
@@ -214,7 +214,7 @@ async function icon(Comp, color, px = 256) {
     }
     T(s, 'What you don’t use stays out of the way – a small church sees a small, simple app.', { x: 7.4, y: y + 0.85, w: 5.3, h: 0.9, fontSize: 16, color: HEX.muted });
   }
-  s.addNotes('Church Hub is built in parts. A small church might use only People and Rosters. Switch on Groups, Messages, staff Leave, the Library or Archives when you are ready – one switch each in Settings. What you don’t use disappears from the menus.');
+  s.addNotes('Church & Trellis is built in parts. A small church might use only People and Rosters. Switch on Groups, Messages, staff Leave, the Library or Archives when you are ready – one switch each in Settings. What you don’t use disappears from the menus.');
 
   // ========== 8. The essential modules ==========
   s = content('What it does', 'The essential parts');
@@ -237,7 +237,7 @@ async function icon(Comp, color, px = 256) {
       T(s, mods[i][2], { x: x + 0.3, y: y + 1.6, w: w - 0.5, h: 0.7, fontSize: 14, color: HEX.muted });
     }
   }
-  s.addNotes('These are the essential parts. People with households and consent. Rosters. Messages inside the app. Groups. Staff leave. A library, and protected archives for minutes and contracts – meeting papers file themselves into the right year and month, and Church Hub asks before saving anything under a date that looks wrong. Me – where members look after their own details. And privacy, built into everything.');
+  s.addNotes('These are the essential parts. People with households and consent. Rosters. Messages inside the app. Groups. Staff leave. A library, and protected archives for minutes and contracts – meeting papers file themselves into the right year and month, and Church & Trellis asks before saving anything under a date that looks wrong. Me – where members look after their own details. And privacy, built into everything.');
 
   // ========== 9. People ==========
   s = content('What it does', 'Know and care for your people', true);
@@ -258,9 +258,9 @@ async function icon(Comp, color, px = 256) {
   s = content('What it does', 'Ask in your own words');
   shot(s, 'ask.gif', 0.6, 1.5, 8.6, 8.6 * 619 / 1100, 'Asking a question in everyday words');
   T(s, 'Type – or say – what you’re looking for.', { x: 9.6, y: 1.6, w: 3.1, h: 1.4, fontSize: 22, bold: true });
-  T(s, 'Church Hub turns it into a search, shows what it understood, and finds the people.', { x: 9.6, y: 3.1, w: 3.1, h: 1.6, fontSize: 16, color: HEX.muted });
+  T(s, 'Church & Trellis turns it into a search, shows what it understood, and finds the people.', { x: 9.6, y: 3.1, w: 3.1, h: 1.6, fontSize: 16, color: HEX.muted });
   T(s, '“Church Partners who serve on the welcome team”', { x: 9.6, y: 4.85, w: 3.1, h: 1.2, fontSize: 16, italic: true, color: HEX.orangeDk });
-  s.addNotes('[Clip plays] No more building filters. Type or speak a question in everyday words – here, Church Partners who serve on the welcome team – and Church Hub turns it into a search and finds them. You only ever search what your role is allowed to see.');
+  s.addNotes('[Clip plays] No more building filters. Type or speak a question in everyday words – here, Church Partners who serve on the welcome team – and Church & Trellis turns it into a search and finds them. You only ever search what your role is allowed to see.');
 
   // ========== 11. Rosters (clip) ==========
   s = content('What it does', 'Rosters that fill the gaps for you', true);
@@ -272,7 +272,7 @@ async function icon(Comp, color, px = 256) {
     { text: 'Communion roles only on communion Sundays', options: { bullet: true, breakLine: true } },
     { text: 'Change a name in one tap – they’re told', options: { bullet: true } }
   ], { x: 0.6, y: 1.6, w: 3.2, h: 4.8, fontSize: 16, paraSpaceAfter: 12 });
-  s.addNotes('[Clip plays] Fill the gaps for me. Church Hub suggests who serves where, shares the turns fairly, keeps families together, skips people who are away, and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages.');
+  s.addNotes('[Clip plays] Fill the gaps for me. Church & Trellis suggests who serves where, shares the turns fairly, keeps families together, skips people who are away, and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages.');
 
   // ========== 12. Volunteers reply (clip) ==========
   s = content('What it does', 'Volunteers reply from their phone');
@@ -330,8 +330,8 @@ async function icon(Comp, color, px = 256) {
       T(s, cards[i][1], { x: 9.05, y: y + 0.72, w: 3.4, h: 0.85, fontSize: 14, color: HEX.nightInk });
     }
   }
-  T(s, 'A low price doesn’t mean less: every church gets all of Church Hub.', { x: 0.8, y: 5.6, w: 7.2, h: 0.8, fontSize: 16, italic: true, color: HEX.orange });
-  s.addNotes('And the price: one cup of coffee a month, for your whole church – not per person – at whatever a cup costs where you live. It is a suggested price; choose what is honest for your church. Every church gets every feature. A hard month? Take a payment holiday. A church that can’t pay at all can pledge to pray for another church instead. No church is turned away. And every church is in the prayer circle: each church shares a prayer card – a photo and two things to pray for – and looks at it once a month, and every week Home shows everyone another church to pray for. So Church Hub doesn’t only run your church: it makes sure your church is prayed for.');
+  T(s, 'A low price doesn’t mean less: every church gets all of Church & Trellis.', { x: 0.8, y: 5.6, w: 7.2, h: 0.8, fontSize: 16, italic: true, color: HEX.orange });
+  s.addNotes('And the price: one cup of coffee a month, for your whole church – not per person – at whatever a cup costs where you live. It is a suggested price; choose what is honest for your church. Every church gets every feature. A hard month? Take a payment holiday. A church that can’t pay at all can pledge to pray for another church instead. No church is turned away. And every church is in the prayer circle: each church shares a prayer card – a photo and two things to pray for – and looks at it once a month, and every week Home shows everyone another church to pray for. So Church & Trellis doesn’t only run your church: it makes sure your church is prayed for.');
 
   // ========== 16. Moving from another system ==========
   s = content('Trust', 'Moving from another system?', true);
@@ -354,7 +354,7 @@ async function icon(Comp, color, px = 256) {
   pres.addSection({ title: 'Close' });
   s = pres.addSlide({ masterName: 'Dark', sectionTitle: 'Close' });
   mark(s, 0.8, 0.9, 0.8);
-  T(s, 'See your church in Church Hub', { x: 0.8, y: 2.0, w: 6.8, h: 1.6, fontSize: 44, bold: true, color: HEX.white });
+  T(s, 'See your church in Church & Trellis', { x: 0.8, y: 2.0, w: 6.8, h: 1.6, fontSize: 44, bold: true, color: HEX.white });
   T(s, 'Try the demo – a whole church of made-up people. Nothing to install, nothing you change is kept.', { x: 0.8, y: 3.75, w: 6.6, h: 1.1, fontSize: 18, color: HEX.nightInk });
   T(s, 'Every church, however small, deserves great church software.', { x: 0.8, y: 5.6, w: 6.8, h: 0.8, fontSize: 18, italic: true, color: HEX.orange });
   {
@@ -367,10 +367,10 @@ async function icon(Comp, color, px = 256) {
       T(s, qr[i][2], { x: x + 0.1, y: 4.25, w: 2.1, h: 0.8, fontSize: 11, color: HEX.muted, align: 'center' });
     }
   }
-  {   // which version of Church Hub these slides describe, so a copy can be checked against About in the app
+  {   // which version of Church & Trellis these slides describe, so a copy can be checked against About in the app
     const v = (fs.readFileSync(path.join(__dirname, '../../js/version.js'), 'utf8').match(/version:\s*'([\d.]+)'/) || [])[1] || '';
     const when = new Date().toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'Africa/Johannesburg' });
-    T(s, 'Slides for Church Hub ' + v + ' · ' + when, { x: 8.0, y: 6.85, w: 4.9, h: 0.35, fontSize: 9, color: '5E554E', align: 'right' });   // dark grey on the dark slide: discreet
+    T(s, 'Slides for Church & Trellis ' + v + ' · ' + when, { x: 8.0, y: 6.85, w: 4.9, h: 0.35, fontSize: 9, color: '5E554E', align: 'right' });   // dark grey on the dark slide: discreet
   }
   s.addNotes('Thank you. Scan the code to try the demo now – a whole church of made-up people, nothing to install. The website has the price, the setup guide and the answers to the questions churches ask. Every church, however small, deserves great church software.');
 

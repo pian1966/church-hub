@@ -1,4 +1,4 @@
-/* Church Hub – People: the list of people (sort, filters) and Church at a glance (Administrators). */
+/* Church & Trellis – People: the list of people (sort, filters) and Church at a glance (Administrators). */
 (function (P) {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;

@@ -2,14 +2,14 @@
 
 **Model:** A person for the clicks; a light model for the guide and the three small file changes.
 
-**Goal:** Church Hub lives at its own address; the old one forwards; nobody at Christ Church Howick is locked out.
+**Goal:** Church & Trellis lives at its own address; the old one forwards; nobody at Christ Church Howick is locked out.
 
 **Needs:** the address bought by the owner; 021 tried end to end.
 
 **Order matters – a guide for the owner (`docs/NEW-ADDRESS.md`), then the changes:**
 1. In Christ Church Howick's own project, **add** (do not replace): authorised domain; the address in the key's
    website list; the address in the reCAPTCHA key's domains. (FIREBASE-SETUP steps 3.4 and 8; AI-SEARCH-SETUP 3a.)
-2. In Church Hub's Google identity (001): add the address as an authorised JavaScript origin; start verification.
+2. In Church & Trellis's Google identity (001): add the address as an authorised JavaScript origin; start verification.
 3. GitHub Pages custom domain (`CNAME` file; DNS records); wait for the padlock.
 4. Check sign-in at the new address for Howick (Google and email link) **before** step 5.
 5. GitHub Pages then forwards the old address by itself. `robot` `SITE_URL` default and the Android `APP_URL`

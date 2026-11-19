@@ -1,4 +1,4 @@
-/* Church Hub – People: Households (with couples to confirm), Late spouses and Find duplicates (Same person: fix…). */
+/* Church & Trellis – People: Households (with couples to confirm), Late spouses and Find duplicates (Same person: fix…). */
 (function (P) {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
@@ -62,8 +62,8 @@
     var open = S.find('people', function (p) { return p.familyRole !== 'child' && !p.mergedInto && !p.binnedAt && p.maritalStatus === 'Widowed' && !isDead(p) && !lateSpouse(p) && !p.lateSpouseName && !sug.some(function (x) { return x.a === p.id; }); });
     var died = function (p) { return p.deceasedAt ? T('died {date}', { date: H.fmt(p.deceasedAt, true) }) : T('has died'); };
     var card = function (p, note) { return '<a class="item" href="#/people/p/' + p.id + '">' + H.avatar(p, 32) + '<span class="grow"><b>' + esc(H.name(p)) + '</b><small>' + esc(note) + '</small></span></a>'; };
-    return back + '<div class="page-head"><div><h1>' + T('Late spouses') + '</h1><p class="lead">' + T('Widows and widowers – and people who have died – who were probably married to someone who has died. Church Hub compares households, wedding dates, email addresses, phone numbers, surnames and ages. Please check each one: these are only suggestions.') + '</p></div></div>' +
-      (sug.length ? '<p class="muted small">' + TN('{n} suggestion, most likely first.', '{n} suggestions, most likely first.', sug.length) + '</p>' : '<p class="empty">' + T('No suggestions. Everyone Church Hub could match has been checked.') + '</p>') +
+    return back + '<div class="page-head"><div><h1>' + T('Late spouses') + '</h1><p class="lead">' + T('Widows and widowers – and people who have died – who were probably married to someone who has died. Church & Trellis compares households, wedding dates, email addresses, phone numbers, surnames and ages. Please check each one: these are only suggestions.') + '</p></div></div>' +
+      (sug.length ? '<p class="muted small">' + TN('{n} suggestion, most likely first.', '{n} suggestions, most likely first.', sug.length) + '</p>' : '<p class="empty">' + T('No suggestions. Everyone Church & Trellis could match has been checked.') + '</p>') +
       sug.map(function (x) {
         var a = S.get('people', x.a), b = S.get('people', x.b);
         return '<section class="panel" style="margin-bottom:12px"><div class="row" style="flex-wrap:wrap;gap:8px"><h2 class="grow" style="margin:0;font-size:1rem">' + T(x.bothDied ? 'Probably married to each other' : 'Probably married') + '</h2><span class="tag ' + (x.score >= 80 ? 'ok' : 'grey') + '">' + T(x.score >= 80 ? 'Likely' : 'Possible') + '</span></div>' +
@@ -71,7 +71,7 @@
           '<div class="list" style="margin:10px 0">' + card(a, x.bothDied ? (a.maritalStatus ? T(a.maritalStatus) : '') + ' · ' + died(a) : x.stillMarried ? T('Still recorded as Married – Yes changes this to Widowed') : T('Widowed')) + card(b, died(b)) + '</div>' +
           '<div class="btns"><button class="btn small primary" data-act="people:lateyes" data-a="' + x.a + '" data-b="' + x.b + '">' + T('Yes, they were married') + '</button><button class="btn small" data-act="people:lateno" data-a="' + x.a + '" data-b="' + x.b + '">' + T('Not a couple') + '</button></div></section>';
       }).join('') +
-      (open.length ? '<section class="panel" style="margin-top:16px"><h2>' + T('Widowed, no match found ({n})', { n: open.length }) + '</h2><p class="hint" style="margin-top:0">' + T('Open each one and use {where} to choose someone, or type the name of someone who isn’t in Church Hub.', { where: '<b>' + T('Edit details → Late spouse') + '</b>' }) + '</p><div class="list">' +
+      (open.length ? '<section class="panel" style="margin-top:16px"><h2>' + T('Widowed, no match found ({n})', { n: open.length }) + '</h2><p class="hint" style="margin-top:0">' + T('Open each one and use {where} to choose someone, or type the name of someone who isn’t in Church & Trellis.', { where: '<b>' + T('Edit details → Late spouse') + '</b>' }) + '</p><div class="list">' +
         open.sort(function (a, b) { return (a.lastName + a.firstName).localeCompare(b.lastName + b.firstName); }).map(function (p) { return card(p, T('Widowed')); }).join('') + '</div></section>' : '');
   }
 
@@ -79,7 +79,7 @@
     var back = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>';
     if (!canDup()) return back + '<p class="empty">' + T('Finding duplicates is for Administrators and Pastors.') + '</p>';
     var found = DUP.find(dupPeople(), notDup(), P.dupSens());
-    return back + '<div class="page-head"><div><h1>' + T('Find duplicates') + '</h1><p class="lead">' + T('People who may have been entered twice. Church Hub compares names (including short forms like Doug and Douglas, “known as”, typing slips, swapped and maiden names), email, mobile, birthday and Elvanto ID. Families sharing an email or phone are not counted as duplicates.') + '</p></div></div>' +
+    return back + '<div class="page-head"><div><h1>' + T('Find duplicates') + '</h1><p class="lead">' + T('People who may have been entered twice. Church & Trellis compares names (including short forms like Doug and Douglas, “known as”, typing slips, swapped and maiden names), email, mobile, birthday and Elvanto ID. Families sharing an email or phone are not counted as duplicates.') + '</p></div></div>' +
       (found.length ? '<p class="muted small">' + TN('{n} pair to check, most likely first. Open each to compare.', '{n} pairs to check, most likely first. Open each to compare.', found.length) + ' <b>' + T('Same person: fix…') + '</b> ' + T('keeps one record, fills in what it’s missing from the other and moves consents, guardians and serving across.') + '</p>' : '<p class="empty">' + T('No duplicates found.') + '</p>') +
       sensPanel() + found.map(function (d) {
         var a = S.get('people', d.a), b = S.get('people', d.b);

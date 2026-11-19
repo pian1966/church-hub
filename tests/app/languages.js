@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: away dates (kind of leave and reason), languages, and better wording from the church (Translations).
+/* Church & Trellis – browser test, part: away dates (kind of leave and reason), languages, and better wording from the church (Translations).
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {

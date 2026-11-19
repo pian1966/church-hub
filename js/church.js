@@ -1,4 +1,4 @@
-/* Church Hub – which church? (docs/architecture/TARGET.md section 2; task 010)
+/* Church & Trellis – which church? (docs/architecture/TARGET.md section 2; task 010)
  *
  * One website can serve any church. Each church keeps its own Firebase project; this file decides, before js/store.js
  * loads, which church's project this page talks to. A church's own link carries its project id: …/?c=<projectId>.

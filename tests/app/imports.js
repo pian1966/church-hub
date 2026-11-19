@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: what the robot read in Elvanto, upgrading older data, the Elvanto import and the Leave Manager import.
+/* Church & Trellis – browser test, part: what the robot read in Elvanto, upgrading older data, the Elvanto import and the Leave Manager import.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -7,13 +7,13 @@ module.exports = async function (ctx) {
   console.log('Unavailable dates the robot read in Elvanto (Administrator):');
   s = await session('linda.pillay@example.com', seedDocs({ found: true }));
   await s.go('import/unavailable'); t = await s.text();
-  check(t.includes('Ready to add (2)') && t.includes('Choose who it is (1)') && t.includes('Megan Jacobs') && t.includes('Already in Church Hub (1)') && t.includes('couldn’t read'), 'Import shows what the robot found: ready, choose who, already in Church Hub');
+  check(t.includes('Ready to add (2)') && t.includes('Choose who it is (1)') && t.includes('Megan Jacobs') && t.includes('Already in Church & Trellis (1)') && t.includes('couldn’t read'), 'Import shows what the robot found: ready, choose who, already in Church & Trellis');
   await s.page.selectOption('.un-pick', 'p14'); await s.page.uncheck('.un-on >> nth=1');
   await s.page.click('[data-act="import:unapply"]'); await s.settle(); docs = await s.docsNow();
   const bo = Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].source === 'elvanto').map(k => docs[k]);
   check(bo.length === 2 && bo.some(b => b.personId === 'p15' && b.from === '2030-11-03' && b.to === '2030-11-05') && bo.some(b => b.personId === 'p14' && b.from === '2030-12-01') && !bo.some(b => b.from === '2030-11-10'),
     'Add makes away dates for the ticked ones (and the chosen person), not for the one left out');
-  t = await s.text(); check(t.includes('Ready to add (1)') && t.includes('Already in Church Hub (3)'), 'added ones move to “Already in Church Hub”');
+  t = await s.text(); check(t.includes('Ready to add (1)') && t.includes('Already in Church & Trellis (3)'), 'added ones move to “Already in Church & Trellis”');
   await s.go('leave/elvanto'); check(await s.page.isChecked('#el-read'), 'Leave → Elvanto has the switch for reading every night');
   await finish(s);
 
@@ -97,7 +97,7 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="import:lgo"]'); await s.page.click('[data-act="import:lgo"]'); await s.settle();
   docs = await s.docsNow();
   const nomsa = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].firstName === 'Nomsa');
-  check((await s.text()).includes('Imported') && docs['leaveRequests/L260110-AAAA'] && docs['leaveRequests/L260110-AAAA'].staffId === 'p02', 'requests imported for the right Church Hub person');
+  check((await s.text()).includes('Imported') && docs['leaveRequests/L260110-AAAA'] && docs['leaveRequests/L260110-AAAA'].staffId === 'p02', 'requests imported for the right Church & Trellis person');
   check(nomsa && docs[nomsa].appRole === 'none' && docs['details/' + nomsa.split('/')[1]].staff.category === 'Cleaning Staff' && docs['leaveRequests/L260801-EEEE'].staffId === nomsa.split('/')[1], 'Nomsa added as a staff member without app access, with her leave');
   check(docs['away/L260301-BBBB'] && !docs['away/L261020-DDDD'] && !docs['away/L260815-FFFF'], 'approved leave blocks rostering; waiting and cancelled leave don’t');
   check(docs['leave/config'].terms.length === 4 && docs['leave/config'].types.length === 7 && docs['details/p06'].staff.workDays === 'Mon, Wed, Thu', 'settings, terms and staff details taken from the sheet');

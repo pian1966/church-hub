@@ -1,6 +1,6 @@
 rules_version = '2';
 
-// Church Hub - who may read and write what (POPIA "security safeguards", s19).
+// Church & Trellis - who may read and write what (POPIA "security safeguards", s19).
 // Paste this whole file into Firebase console > Firestore Database > Rules > Publish.
 // Tested by tests/rules.test.mjs (runs automatically on GitHub after every change).
 //
@@ -9,7 +9,7 @@ rules_version = '2';
 // - roles/{email} says what they may do: admin, pastor, rosters, kids or member, and which person record is theirs.
 //   Only Administrators can change roles (and Pastors with the "access" tick, for the smaller roles). No roles document = no access at all.
 // - People who share one email address (often a couple) share one sign-in: their roles document lists everyone's roles
-//   (roles) and the other people it is for (also, at most 3). After signing in they choose who is using Church Hub;
+//   (roles) and the other people it is for (also, at most 3). After signing in they choose who is using Church & Trellis;
 //   the rules let the sign-in do what any of them may do (whoever reads that inbox can sign in as any of them anyway).
 // - Medical notes (children) are for Children's ministry only. Pastoral notes are for Pastors only.
 //   Administrators cannot read either; they can only delete them when someone asks to be deleted (POPIA s24).
@@ -19,7 +19,7 @@ rules_version = '2';
 //   Church Partner access; everyone else on Basic access is an attendee, who sees and does only what Settings > Attendees
 //   allows (settings attendeeCan: names, directory, write, reply; ['names', 'write'] if the church hasn't chosen).
 // - Members with no email: an Administrator gives a person a single-use sign-in code (invites/{code}, 14 days). The member's
-//   phone signs in "anonymously" to read it, then chooses a 6-digit PIN: the account gets a made-up address that only Church Hub
+//   phone signs in "anonymously" to read it, then chooses a 6-digit PIN: the account gets a made-up address that only Church & Trellis
 //   uses (<number>-<v>@pin.church-hub.invalid, number = their cellphone number, or "c" and a 6-digit church number) with the PIN
 //   as its password. In one write it records roles/{that address} (only ever Member access, for that person),
 //   pinLogins/{number} (which address that number uses now) and marks the code used. From then on they sign in on any phone
@@ -73,7 +73,7 @@ service cloud.firestore {
     // The Senior Pastor (Rector), chosen in Settings > What Pastors can do
     function rector() { return isRole(['pastor']) && isMe(churchSettings().get('seniorPastorId', '')); }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
-    // What Pastors can do (Settings): an Administrator ticks abilities, which Church Hub copies onto each Pastor's
+    // What Pastors can do (Settings): an Administrator ticks abilities, which Church & Trellis copies onto each Pastor's
     // access-list entry as "can". The Senior Pastor (Rector), if one is chosen, gets their own ticks (seniorCan). may('leave') is true for Administrators, and for Pastors with that tick.
     // Abilities: settings, access, people, idnumbers, leave, rosters, privacy, import, words.
     function may(x) { return admin() || (isRole(['pastor']) && x in access().get('can', [])); }
@@ -540,7 +540,7 @@ service cloud.firestore {
       allow delete: if may('import');
     }
     // What the robot found in Elvanto (nightly, when switched on): names and dates of Unavailable Volunteers, for an
-    // Administrator to check and apply in Church Hub (Import). The robot writes it; only Administrators read or delete it.
+    // Administrator to check and apply in Church & Trellis (Import). The robot writes it; only Administrators read or delete it.
     match /elvantoFound/{id} {
       allow read, delete: if may('import');
       allow create, update: if robot() && request.resource.data.keys().hasOnly(['readAt', 'entries', 'rows', 'unread', 'pages', 'applied']);

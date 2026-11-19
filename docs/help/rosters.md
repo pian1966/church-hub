@@ -39,10 +39,10 @@ For: Roster coordinators, Administrators
 Also asked: Make the roster. Auto roster. Generate the roster.
 
 1. Open **Rosters** and tap **Fill the gaps for me**.
-2. Church Hub suggests people for the empty slots (dashed border). Hover or tap a suggestion to see why it chose them.
+2. Church & Trellis suggests people for the empty slots (dashed border). Hover or tap a suggestion to see why it chose them.
 3. Tap **Keep these and ask people** – everyone suggested is asked to accept – or **Discard** to throw them away.
 
-If some slots can't be filled, Church Hub lists them under **Why some slots are still empty** (for example, not enough
+If some slots can't be filled, Church & Trellis lists them under **Why some slots are still empty** (for example, not enough
 people on the team, or everyone is away). Add more people to the team, or ask someone directly.
 
 ## How do I put a particular person on the roster, or take them off?
@@ -59,7 +59,7 @@ you in person.
 For: Roster coordinators, Administrators
 Also asked: Chase up volunteers. Nobody answered.
 
-On **Rosters**, open **More → Remind those who haven't replied**. Church Hub says how many people it will remind; tap
+On **Rosters**, open **More → Remind those who haven't replied**. Church & Trellis says how many people it will remind; tap
 **Send reminders** and each of them gets a message in **Messages**.
 
 ## How do I set which Sundays have Holy Communion?

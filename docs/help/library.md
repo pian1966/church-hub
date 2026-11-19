@@ -50,7 +50,7 @@ Also asked: A book was donated. We bought new books. Record where a book came fr
 
 On **Library**, tap **Add to the library**. Choose **What it is** (a book, DVD, CD, audiobook, magazine, game or other); only
 the title is needed. For the cover, drop a JPEG, PNG or WebP image into the cover box, or tap **Take a photo** to use the
-phone's camera or **Choose a picture**. Church Hub resizes it before saving. You can also fill
+phone's camera or **Choose a picture**. Church & Trellis resizes it before saving. You can also fill
 in the author, a category, how many copies there are, how it was acquired (bought or donated), from whom, the date, and its
 shelf. For books, tick one or more books and tap **Find covers for selected**, or choose **Find covers for all books** or
 **Find missing covers**. Check the preview and save an individual cover or all the covers found. The search uses the ISBN
@@ -69,7 +69,7 @@ For: Librarians
 Also asked: Check out a book. Return a book. Mark a book as returned.
 
 Tap **Lend** next to the item, check the **Date borrowed** date (three weeks unless you change it), type part of the borrower's
-name and pick them. Every borrower needs a mobile number so an item can be traced: if their record has none, Church Hub asks
+name and pick them. Every borrower needs a mobile number so an item can be traced: if their record has none, Church & Trellis asks
 you to type one. For **someone not on the church's list**, open that part and type their name and mobile number.
 When the item comes back, tap **Returned** next to it under **On loan**. You can add a note about damage or anything else;
 the borrower's mobile number is then cleared. Overdue items are marked, and Home tells you how many there are.
@@ -81,7 +81,7 @@ Also asked: Upload books from a spreadsheet. Bring in a book list. CSV.
 Save the list from Excel or Google Sheets as **CSV**. The first row must hold the headings, one of them **Title**; any of
 **Author**, **Type** (book, DVD, CD…), **Category**, **Copies**, **Shelf**, **ISBN**, **Date acquired**, **How acquired**
 (bought or donated), **Donated by** and **Note** are used too. On **Library**, tap **Import a list** and choose the file.
-Church Hub shows how many items it will add, and leaves out rows without a title and items already in the library (the same
+Church & Trellis shows how many items it will add, and leaves out rows without a title and items already in the library (the same
 ISBN, or the same title and author). Tap **Import**. You can change any item afterwards with the pencil.
 
 ## What if an item is lost, damaged or given away?
@@ -95,7 +95,7 @@ the library**, where **Put it back** returns it if it turns up. Only something a
 (under **Added by mistake?**).
 
 Administrators and librarians can also permanently **Purge** a loan or a removed book from its activity list or report.
-Church Hub asks you to confirm first. Purging a removed book also removes its linked loan records; the action is kept in the
+Church & Trellis asks you to confirm first. Purging a removed book also removes its linked loan records; the action is kept in the
 audit log. It cannot be undone.
 
 ## How do I see what was lent, returned or lost?

@@ -1,5 +1,5 @@
-/* Church Hub – browser test, part: without the internet. Live mode keeps a copy on the device, is view-only offline and
- * wipes the copy at sign-out; sw.js keeps Church Hub's files so it opens offline.
+/* Church & Trellis – browser test, part: without the internet. Live mode keeps a copy on the device, is view-only offline and
+ * wipes the copy at sign-out; sw.js keeps Church & Trellis's files so it opens offline.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -16,7 +16,7 @@ module.exports = async function (ctx) {
   await s.page.context().setOffline(true);
   await shows(() => !!document.querySelector('.offline-bar'));
   t = await s.page.textContent('.offline-bar').catch(() => '');
-  check(t.includes('view-only'), 'offline: says Church Hub is view-only');
+  check(t.includes('view-only'), 'offline: says Church & Trellis is view-only');
   check((await s.text()).length > 50, 'offline: their page is still shown');
   const before = Object.keys(await s.docsNow()).length;
   await s.page.evaluate(() => Store.put('blockouts', { personId: 'p14', from: '2030-01-01', to: '2030-01-02', note: 'offline' }));
@@ -40,8 +40,8 @@ module.exports = async function (ctx) {
   check(await s.page.evaluate(() => window.__fake.wiped === 1 && localStorage.getItem('church_hub_offline_owner') === 'tim.jacobs@example.com'), 'a copy left by someone else is wiped first');
   await finish(s);
 
-  console.log('Opening Church Hub with no internet (sw.js, demo):');
-  // Real "no internet": Church Hub comes from a web server of its own, which is switched off once the files are kept.
+  console.log('Opening Church & Trellis with no internet (sw.js, demo):');
+  // Real "no internet": Church & Trellis comes from a web server of its own, which is switched off once the files are kept.
   // (The browser's pretend-offline switch doesn't reliably reach sw.js on a busy test computer, which made this flaky.)
   const own = await ctx.serve(), DEMO = 'http://127.0.0.1:' + own.address().port + '/index.html?demo';
   const context = await ctx.browser.newContext(), page = await context.newPage(), errs = [];
@@ -58,7 +58,7 @@ module.exports = async function (ctx) {
   });
   let kept = false;
   for (const end = Date.now() + 30000; !kept && Date.now() < end;) { kept = await allKept(); if (!kept) await page.waitForTimeout(200); }
-  check(kept, 'keeps Church Hub’s files from the first visit');
+  check(kept, 'keeps Church & Trellis’s files from the first visit');
   await new Promise(r => { own.close(r); own.closeAllConnections(); });   // the internet is gone: every download now fails at once
   await page.goto(DEMO).catch(() => {});
   const ok = await page.waitForSelector('#si-any', { timeout: 15000 }).then(() => true, () => false);

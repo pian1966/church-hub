@@ -34,7 +34,7 @@ Also asked: Block out dates. I'm on holiday. Unavailable dates. Mark myself unav
 
 Open **Me → Days away** and tap **Add days away**. Choose the days (one or more stretches) and, if you like, a reason
 (**Only the roster team sees it**). You won't be put on the roster on those days. To take them off, use **Remove away
-dates**. If you're already on the roster on a day you're away, Church Hub warns you – tap **Can't make it** for that turn.
+dates**. If you're already on the roster on a day you're away, Church & Trellis warns you – tap **Can't make it** for that turn.
 Staff: approved leave is added here automatically (**From Leave**).
 
 ## Where do I see when I'm serving?
@@ -51,7 +51,7 @@ For: Everyone
 Also asked: Swap my turn. Cancel my duty. I'm sick on Sunday.
 
 On **Me → Serving**, find the turn and tap **Can't make it**. The roster coordinator sees it and can find someone else.
-Church Hub doesn't arrange swaps between people yet – if you've found someone to swap with, tell the roster coordinator.
+Church & Trellis doesn't arrange swaps between people yet – if you've found someone to swap with, tell the roster coordinator.
 
 ## How do I offer to help in a new area?
 For: Everyone
@@ -80,7 +80,7 @@ to keep you together. (Roster coordinators can also set people to be kept apart 
 ## Can I download the Android app from here?
 For: Everyone
 
-Yes – **Get the Church Hub app for Android** is on the Me page. See [getting-started.md](getting-started.md).
+Yes – **Get the Church & Trellis app for Android** is on the Me page. See [getting-started.md](getting-started.md).
 
 ## Where is my care group / midweek group?
 For: Members

@@ -1,4 +1,4 @@
-/* Church Hub – People: shared by every part of the People page: who may see what, consent, households, ages, couples, duplicates.
+/* Church & Trellis – People: shared by every part of the People page: who may see what, consent, households, ages, couples, duplicates.
  * The People page is several files in js/people/ (loaded in this order: core, directory, profile, edit, households, search),
  * put together by js/mod-people.js. Each file adds what it defines to PeopleParts, so the others can use it. */
 var PeopleParts = { actions: {} };
@@ -6,7 +6,7 @@ var PeopleParts = { actions: {} };
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
   var TX = function (s) { return s; };   // a text kept in a list, translated where it is shown (the language test checks it)
-  TX('Died'); TX('Funeral'); TX('Baptised'); TX('Confirmed'); TX('First visit');   // key dates Church Hub writes or Elvanto often has, shown translated
+  TX('Died'); TX('Funeral'); TX('Baptised'); TX('Confirmed'); TX('First visit');   // key dates Church & Trellis writes or Elvanto often has, shown translated
 
   var PURPOSES = [TX('Church records'), TX('Email'), TX('SMS'), TX('Church directory'), TX('Care group'), TX('Photos'), TX('Children’s medical notes')];
   var CATS = [TX('Church Partner'), TX('Attender'), TX('Visiting Minister'), TX('Staff'), TX('Former member'), TX('Deceased')];
@@ -83,7 +83,7 @@ var PeopleParts = { actions: {} };
       'Contact details agreed on becoming a Church Partner: ' + H.name(p));
     return true;
   }
-  /** Church Partners with no Contact details answer recorded at all (never asked in Church Hub): an Administrator may record
+  /** Church Partners with no Contact details answer recorded at all (never asked in Church & Trellis): an Administrator may record
    *  that they agreed when they became Church Partners (Settings → Who can see what). Someone who said no is left alone. */
   function partnersUnrecorded() {
     return S.find('people', function (p) {
@@ -112,7 +112,7 @@ var PeopleParts = { actions: {} };
   function lateSpouse(p) {
     if (!p || p.familyRole === 'child') return null;
     if (p.lateSpouseId) return S.get('people', p.lateSpouseId);
-    if (p.lateSpouseSet) return null;   // an Administrator chose "nobody" or someone not in Church Hub
+    if (p.lateSpouseSet) return null;   // an Administrator chose "nobody" or someone not in Church & Trellis
     if (p.maritalStatus !== 'Widowed' || deceased(p)) return null;
     var dead = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && (deceased(x) || x.category === 'Deceased') && !x.mergedInto && HS.householdsOf(p).some(function (h) { return HS.inHousehold(x, h); }); });
     return dead.length === 1 ? dead[0] : null;
@@ -203,19 +203,19 @@ var PeopleParts = { actions: {} };
   }
   /** Consent "Church directory" is shown as Contact details (name, phone, email and address shared with staff and leaders). */
   function purposeName(pur) { return pur === 'Care group' ? 'Care Group' : pur; }   // stored as "Care group"; a group's name is a proper noun   // (until 0.44 "Church directory" was shown as "Contact details", which was easy to mix up)
-  /** What each consent means, for the "i" next to it (Hub.tip) – how they differ, and what each one does in Church Hub. */
+  /** What each consent means, for the "i" next to it (Hub.tip) – how they differ, and what each one does in Church & Trellis. */
   var PURPOSE_TIP = {
-    'Church records': TX('The basic agreement: the church may keep their details in Church Hub at all. It doesn’t show anything to other members.'),
+    'Church records': TX('The basic agreement: the church may keep their details in Church & Trellis at all. It doesn’t show anything to other members.'),
     'Email': TX('Church news and information by email. The weekly notices and prayer emails are chosen separately, under “Would like to receive”.'),
     'SMS': TX('Reminders and urgent news by SMS.'),
     'Church directory': TX('Puts their name and photo in the church directory that everyone who signs in can see, with the contact details the church allows (Settings → Who can see what). Church Partners agree to this when they become Church Partners.'),
     'Care group': TX('Lets the people in their Care Group see their photo, phone, email, address and birthday. Without it the group sees only their name.'),
-    'Photos': TX('Photos of them taken at church events may be used, e.g. in the notices or on the website. Not the same as their own photo in Church Hub.'),
+    'Photos': TX('Photos of them taken at church events may be used, e.g. in the notices or on the website. Not the same as their own photo in Church & Trellis.'),
     'Children’s medical notes': TX('Allergies and medical notes kept so that leaders can keep the child safe. Only Children’s ministry can see them.')
   };
   /** What it means to say no to (or withdraw) each consent – shown in orange when someone unticks one, and next to a "No" on Me → Consent. */
   var PURPOSE_WITHOUT = {
-    'Church records': TX('Without this, the church can’t keep these details in Church Hub at all, so they may have to be removed – with no roster reminders, messages or Care Group contact through Church Hub.'),
+    'Church records': TX('Without this, the church can’t keep these details in Church & Trellis at all, so they may have to be removed – with no roster reminders, messages or Care Group contact through Church & Trellis.'),
     'Email': TX('Without this, no church emails are sent – which can include reminders of roster duties and changes to the roster, so a turn to serve might be missed.'),
     'SMS': TX('Without this, no SMS messages are sent – which can include roster reminders and urgent news, such as a service being cancelled.'),
     'Church directory': TX('Without this, the name and photo come out of the church directory, so other members can’t look up these contact details there.'),

@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: View as another role, and care groups.
+/* Church & Trellis – browser test, part: View as another role, and care groups.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -34,7 +34,7 @@ module.exports = async function (ctx) {
   await s.page.click('.viewas [data-act="hub:viewas"][data-r="admin"]'); await s.page.waitForSelector('.viewas', { state: 'detached' }); await s.settle();
   docs = await s.docsNow();
   const au = Object.values(docs).filter(d => d.action && /viewing/i.test(d.action)).map(d => d.action);
-  check(au.some(a => /Started viewing Church Hub as member/.test(a)) && au.some(a => /Stopped viewing as pastor/.test(a)), 'starting and stopping “View as” is in the audit log');
+  check(au.some(a => /Started viewing Church & Trellis as member/.test(a)) && au.some(a => /Stopped viewing as pastor/.test(a)), 'starting and stopping “View as” is in the audit log');
   await finish(s);
   s = await session('pieter.vanwyk@example.com', seedDocs()); await s.go('home');
   check(!(await s.page.$('[data-act="hub:viewaspick"]')) && await s.page.evaluate(() => Store.preview('member') === ''), 'only Administrators can use “View as”');
@@ -244,11 +244,11 @@ module.exports = async function (ctx) {
   check(t.includes('Care Group member · Hilton') && !(await inGroups(s, 'care')) === !(docs['settings/church'].seeCare || []).length, '… and Basic access sees the tags in People');
   await finish(s);
   // The setting was saved but the directory entries never got their groups (e.g. saved before the rules allowed it):
-  // the next time a Pastor (Minister) or Administrator opens Church Hub, the entries are brought up to date
+  // the next time a Pastor (Minister) or Administrator opens Church & Trellis, the entries are brought up to date
   const missed = JSON.parse(JSON.stringify(after));
   Object.keys(missed).filter(k => k.startsWith('directory/')).forEach(k => delete missed[k].care);
   s = await session('thandi.mokoena@example.com', missed); await s.page.waitForTimeout(2500); await s.settle(); docs = await s.docsNow();
-  check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true, 'a missed update is repaired when a Pastor opens Church Hub');
+  check(JSON.stringify(docs['directory/p18'].care) === JSON.stringify([{ id: 'cgP', name: 'Hilton' }]) && docs['directory/p15'].care[0].carer === true, 'a missed update is repaired when a Pastor opens Church & Trellis');
   await finish(s);
   s = await session('clare.jacobs@example.com', JSON.parse(JSON.stringify(after))); await s.go('me'); await s.page.waitForTimeout(400);
   await s.page.$$eval('#my-care details', d => d.forEach(x => { x.open = true; }));
@@ -260,7 +260,7 @@ module.exports = async function (ctx) {
   const jSeed = seedDocs();
   jSeed['people/p17'].category = 'Attender';   // Megan: not in the church directory
   Object.keys(jSeed).filter(k => k.startsWith('consents/') && jSeed[k].personId === 'p20' && jSeed[k].purpose === 'Church directory').forEach(k => delete jSeed[k]);
-  jSeed['people/p20'].category = 'Church Partner';   // Kavi: a Church Partner never asked in Church Hub
+  jSeed['people/p20'].category = 'Church Partner';   // Kavi: a Church Partner never asked in Church & Trellis
   s = await session('linda.pillay@example.com', jSeed);
   await s.go('people/p/p17'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-cat', 'Church Partner');
   await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();

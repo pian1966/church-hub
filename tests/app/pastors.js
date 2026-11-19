@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: What Pastors can do (Settings), and what a Pastor then sees and may save.
+/* Church & Trellis – browser test, part: What Pastors can do (Settings), and what a Pastor then sees and may save.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {

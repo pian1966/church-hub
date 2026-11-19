@@ -1,11 +1,11 @@
 /*
- * Church Hub – the brochure editor's rules (About → Brochures → Edit). The brochures themselves are brochure.html; the church's
- * own wording and design are kept in the private `brochures/church` document and laid over it when shown in Church Hub:
+ * Church & Trellis – the brochure editor's rules (About → Brochures → Edit). The brochures themselves are brochure.html; the church's
+ * own wording and design are kept in the private `brochures/church` document and laid over it when shown in Church & Trellis:
  *   { design: { accent: '#E8590C', font: 'Nunito' },
  *     members:  { texts: { key: { o: original text, h: their wording } }, hidden: { key: original text } },
  *     churches: { … } }
  * A text is found by its place (sheet and position) and is only replaced while the original there is still the same, so when
- * Church Hub's own wording changes in a new version, the church's old edit doesn't land on the wrong line (it is listed instead).
+ * Church & Trellis's own wording changes in a new version, the church's old edit doesn't land on the wrong line (it is listed instead).
  * Pure functions, tested with node: tests/brochure-kit.test.js. The page part (iframe, editing) is in js/mod-about.js.
  */
 var BrochureKit = (function () {
@@ -82,7 +82,7 @@ var BrochureKit = (function () {
     });
     return out;
   }
-  /** Is anything changed from Church Hub's own brochure? */
+  /** Is anything changed from Church & Trellis's own brochure? */
   function changed(b, who) {
     if (who && b && !b[who] && (b.texts || b.hidden)) {
       return !!(Object.keys(b.texts || {}).length || Object.keys(b.hidden || {}).length);

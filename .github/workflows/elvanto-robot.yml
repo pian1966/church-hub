@@ -1,11 +1,11 @@
-# Church Hub → Elvanto robot (see robot/robot.js; adapted from Leave Manager's robot).
-# Every 15 minutes it checks Church Hub's Elvanto list (Leave → Elvanto) for approved, changed or cancelled leave,
+# Church & Trellis → Elvanto robot (see robot/robot.js; adapted from Leave Manager's robot).
+# Every 15 minutes it checks Church & Trellis's Elvanto list (Leave → Elvanto) for approved, changed or cancelled leave,
 # and if there is any, logs into Elvanto and updates the Unavailable Volunteers list.
 # Every night (about 3am) it reads Elvanto's whole Unavailable Volunteers list – names and dates only – for an
-# Administrator to check and apply in Church Hub (Import → Unavailable dates from Elvanto), if switched on in Church Hub.
+# Administrator to check and apply in Church & Trellis (Import → Unavailable dates from Elvanto), if switched on in Church & Trellis.
 #
 # Repository secrets (Settings → Secrets and variables → Actions) – see docs/ELVANTO-ROBOT.md:
-#   ROBOT_EMAIL, ROBOT_PASSWORD   – the robot's own Church Hub sign-in (created in Firebase → Authentication)
+#   ROBOT_EMAIL, ROBOT_PASSWORD   – the robot's own Church & Trellis sign-in (created in Firebase → Authentication)
 #   ELVANTO_USERNAME, ELVANTO_PASSWORD – an Elvanto login the robot can use (without two-step verification)
 # This repository is public, so the robot never prints names or dates in its log.
 name: Elvanto robot
@@ -17,7 +17,7 @@ on:
   workflow_dispatch:
     inputs:
       mode:
-        description: 'run = do waiting work · read = read Elvanto’s unavailable dates for Church Hub · explore = describe Elvanto’s pages, change nothing'
+        description: 'run = do waiting work · read = read Elvanto’s unavailable dates for Church & Trellis · explore = describe Elvanto’s pages, change nothing'
         default: run
         type: choice
         options: [run, read, explore]

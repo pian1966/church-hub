@@ -24,7 +24,7 @@ ok(by('Brian').birthDate === '1975-03-12' && by('Sipho').birthDate === '' && by(
 ok(by('Grace').marital === 'Partner', 'marital status “Partner” understood');
 ok(by('Brian').family && by('Brian').family === by('Leo').family && !by('Sipho').family && !by('Grace').family, 'family members grouped; single people aren’t a “family of one”');
 
-console.log('Matching (empty Church Hub)');
+console.log('Matching (empty Church & Trellis)');
 const pl = E.plan(recs, []);
 ok(pl.added === 11 && pl.updated === 0, 'everyone added – nobody merged, though the Fouries and Naidoos share an email');
 ok(pl.families === 2 && pl.sharedEmails === 2, '2 families; 2 shared email addresses reported');
@@ -57,7 +57,7 @@ ok(col('gender') === 'Gender', 'the Gender column is found');
 console.log('More from Elvanto: dates, choices, volunteering, address');
 ok(E.monthDay('09-12') === '09-12' && E.monthDay('12-31') === '12-31' && E.monthDay('13-01') === '', 'birthdays without a year as Elvanto writes them (“09-12”, month first)');
 ok(JSON.stringify(E.receiveChoices('Weekly Church Notices (via Email), Missionary updates (via\nWhatsApp), "Who is Jesus" - A two minute WhatsApp message from Richard Sturdee, focussing on the person and work of our Lord')) ===
-  JSON.stringify(['“Who is Jesus” (via WhatsApp)', 'Weekly Church Notices (via Email)', 'Missionary updates (via WhatsApp)']), 'Checklist of what to receive → the same choices as Church Hub’s (the comma in “Who is Jesus” is fine)');
+  JSON.stringify(['“Who is Jesus” (via WhatsApp)', 'Weekly Church Notices (via Email)', 'Missionary updates (via WhatsApp)']), 'Checklist of what to receive → the same choices as Church & Trellis’s (the comma in “Who is Jesus” is fine)');
 ok(!E.receiveChoices('Special things or people to pray for (via Email)').includes('Special things or people to pray for (via WhatsApp)'), 'email and WhatsApp aren’t mixed up');
 ok(JSON.stringify(E.positionsOf('8:00 Reading, 10:00 Communion -\nLeading, Memorial Teas')) === JSON.stringify([{ time: '08:00', name: 'Reading' }, { time: '10:00', name: 'Communion - Leading' }, { time: '', name: 'Memorial Teas' }]), 'Department Positions → service and position (wrapped lines joined)');
 ok(E.province('KZn') === 'KwaZulu-Natal' && E.province('KwaZulu-Natal') === 'KwaZulu-Natal' && E.province('California') === 'California', 'provinces tidied (KZN → KwaZulu-Natal)');
@@ -82,8 +82,8 @@ console.log('Unavailable dates the robot found in Elvanto');
   ok(m[2].status === 'new' && m[2].personId === 'a', '“Surname, First name” works too');
   ok(m[3].status === 'several' && m[3].choices.join() === 'c,d', 'two people with the same name: choose');
   ok(m[4].status === 'nomatch' && m[4].choices.join() === 'a,b', 'no one by that name: people with the same surname offered (not people who left)');
-  ok(m[5].status === 'leave', 'entries made for leave are already in Church Hub');
-  ok(E.matchFound([{ name: 'Sam Smith', from: '2026-11-01', to: '2026-11-01' }], P, [{ personId: 'd', from: '2026-11-01', to: '2026-11-01', source: 'elvanto' }])[0].status === 'have', 'once someone has chosen who it is, it counts as already in Church Hub');
+  ok(m[5].status === 'leave', 'entries made for leave are already in Church & Trellis');
+  ok(E.matchFound([{ name: 'Sam Smith', from: '2026-11-01', to: '2026-11-01' }], P, [{ personId: 'd', from: '2026-11-01', to: '2026-11-01', source: 'elvanto' }])[0].status === 'have', 'once someone has chosen who it is, it counts as already in Church & Trellis');
 }
 
 console.log('Making the people');

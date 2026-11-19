@@ -1,4 +1,4 @@
-# 001 – Church Hub's own Google identity (done by a person, guided by the agent)
+# 001 – Church & Trellis's own Google identity (done by a person, guided by the agent)
 
 **Model:** A person, guided by a light model (it only writes a guide).
 
@@ -8,9 +8,9 @@
 
 **Steps (write these as a click-by-click guide in `docs/HUB-IDENTITY.md`, in the style of `docs/FIREBASE-SETUP.md`,
 then walk the owner through it):**
-1. Create a Google account for Church Hub itself. Add a recovery phone and a second trusted person's recovery email.
+1. Create a Google account for Church & Trellis itself. Add a recovery phone and a second trusted person's recovery email.
 2. In Google Cloud console create a project `church-hub-setup`. It will never hold church information.
-3. OAuth consent screen ("Google Auth Platform → Branding"): app name Church Hub, support email, External.
+3. OAuth consent screen ("Google Auth Platform → Branding"): app name Church & Trellis, support email, External.
    Leave it in **Testing** for now and add the owner's test Google accounts as test users.
 4. Scopes ("Data access"): add `https://www.googleapis.com/auth/cloud-platform`.
 5. Create an **OAuth client ID**, type Web application. Authorised JavaScript origins: the current website

@@ -1,9 +1,9 @@
-# Church Hub for Android – setting it up
+# Church & Trellis for Android – setting it up
 
 The Android app lets members look after **their own details, their days away and where they'd like to serve**,
 from their phone. Staff and leaders can use the same app: everyone signs in and sees what their access allows.
 
-**How it works.** The app shows the Church Hub website full screen, the same way the Leave Manager app does. New
+**How it works.** The app shows the Church & Trellis website full screen, the same way the Leave Manager app does. New
 features therefore appear in the app straight away, without anyone updating it. Members open on **Me**, which has three tabs:
 
 | Tab | What they can do |
@@ -21,7 +21,7 @@ The download link for members (after step 2):
 
 ## Step 1 – Give GitHub the signing key (once)
 
-Android only installs updates signed with the same key. Church Hub has **its own key**, in the file
+Android only installs updates signed with the same key. Church & Trellis has **its own key**, in the file
 **ChurchHub-ANDROID_KEYSTORE.txt** you were given (27 Oct 2026). It is separate from Leave Manager's key.
 
 1. **First, keep a safe copy** of ChurchHub-ANDROID_KEYSTORE.txt in the church's own private storage (e.g. a private
@@ -39,7 +39,7 @@ Never paste the key into a chat or into a file in the repository – the reposit
 1. Open **https://github.com/pian1966/church-hub/actions/workflows/build-android.yml**.
 2. Click **Run workflow** (on the right) → **Run workflow** (the green button).
 3. Wait about 3 minutes until the run has a green tick.
-4. Open **https://github.com/pian1966/church-hub/releases** – there is now **Church Hub for Android 1.0.N** with
+4. Open **https://github.com/pian1966/church-hub/releases** – there is now **Church & Trellis for Android 1.0.N** with
    **ChurchHub.apk** underneath.
 
 From now on GitHub rebuilds it by itself whenever something in the `android` folder changes. The download link above
@@ -52,16 +52,16 @@ people can tap **Sign in with Google** and pick their account, as they do in Lea
 Firebase console, signed in with the church's Google account.
 
 **3a. Tell Firebase about the app**
-1. Go to **https://console.firebase.google.com** → open the **Church Hub** project.
+1. Go to **https://console.firebase.google.com** → open the **Church & Trellis** project.
 2. Click the **gear icon** next to **Project Overview** → **Project settings**.
 3. Scroll down to **Your apps** → click **Add app** → choose the **Android** icon.
 4. Android package name: `org.christchurchhowick.churchhub`
-5. App nickname: `Church Hub Android`
+5. App nickname: `Church & Trellis Android`
 6. Debug signing certificate SHA-1: `34:6D:29:12:B8:5E:4B:C6:97:51:11:F6:7A:3A:53:8E:DE:BF:EB:9E`
    (this is the fingerprint of the signing key from step 1 – it is not a secret).
 7. Click **Register app**. Skip the next screens (**Next**, **Next**, **Continue to console**) – nothing needs downloading.
 
-**3b. Copy the Web client ID into Church Hub**
+**3b. Copy the Web client ID into Church & Trellis**
 1. In the Firebase console, open **Security → Authentication** (older screens: **Build → Authentication**) →
    **Sign-in method** tab → click **Google**.
 2. Open **Web SDK configuration**. Copy the **Web client ID** (it ends in `.apps.googleusercontent.com`).
@@ -83,10 +83,10 @@ The serving offers need the newest rules, so repeat **[FIREBASE-SETUP.md](FIREBA
    - The first time, Android asks to allow your browser (e.g. Chrome) to install apps: allow it.
    - If Google Play Protect says it doesn't recognise the app (it isn't from the Play Store), tap
      **More details → Install anyway**.
-2. Open **Church Hub** and sign in:
+2. Open **Church & Trellis** and sign in:
    - **Sign in with Google** (after step 3): pick your account.
    - **Email me a link**: type your email and tap the button. Open the email on the same phone, **press and hold** the
-     sign-in link, choose **Copy link**, go back to Church Hub, paste it in the box and tap **Sign in**.
+     sign-in link, choose **Copy link**, go back to Church & Trellis, paste it in the box and tap **Sign in**.
      (Tapping the link instead signs you in to the website in Chrome – that works too, just not in the app.)
 3. Check **Me → My details**, **Days away** and **Serving**.
 4. Send members the download link (WhatsApp or email works well). They need access first: People → their profile →
@@ -95,17 +95,17 @@ The serving offers need the newest rules, so repeat **[FIREBASE-SETUP.md](FIREBA
 **iPhones:** the iPhone version is the home-screen app (no App Store needed). Open **https://pian1966.github.io/church-hub/**
 in **Safari** → **Share** (the square with an arrow) → **Add to Home Screen** → **Add**. It opens full screen like an app, with
 its own icon, starts on **Me**, and works the same as the Android app: to sign in with the email link, press and hold the link
-in the email, **Copy**, then paste it into Church Hub (iPhones keep the home-screen app's sign-in apart from Safari's).
-Church Hub reminds iPhone users in Safari how to do this. **Add photo** offers **Take Photo** and **Photo Library**.
+in the email, **Copy**, then paste it into Church & Trellis (iPhones keep the home-screen app's sign-in apart from Safari's).
+Church & Trellis reminds iPhone users in Safari how to do this. **Add photo** offers **Take Photo** and **Photo Library**.
 
 ## Questions
 
 - **Do people need to update the app?** Almost never – new features come through the website. If the `android`
   folder changes, GitHub builds a new version; installing it over the old one keeps people signed in.
-  Version history worth an update: **28 Oct 2026** – the back button asks "Leave Church Hub?" before closing the app.
+  Version history worth an update: **28 Oct 2026** – the back button asks "Leave Church & Trellis?" before closing the app.
   **29 Oct 2026** – downloads work (Advanced search CSV, a person's data export: saved in the phone's **Downloads**, with
   an **Open** button; phones older than Android 10 get the share menu), and **Add photo** offers the **camera** as well as
-  the gallery. Older versions say "Please update the Church Hub app to download files" instead of doing nothing.
+  the gallery. Older versions say "Please update the Church & Trellis app to download files" instead of doing nothing.
 - **Is the key restricted to the website (FIREBASE-SETUP step 8) a problem?** No – the app opens the church's
   website address, so the restriction still matches.
 - **Can we put it in the Google Play Store later?** Yes: the same app can be uploaded with a Google Play developer

@@ -1,7 +1,7 @@
-# Church Hub – for AI coding agents (Jules, Antigravity / Gemini and others)
+# Church & Trellis – for AI coding agents (Jules, Antigravity / Gemini and others)
 
 **Read `CLAUDE.md` first and follow it exactly.** It is the project map (which file does what) and the house rules,
-written for Claude but meant for every agent working on Church Hub. When this file and `CLAUDE.md` disagree, `CLAUDE.md` wins.
+written for Claude but meant for every agent working on Church & Trellis. When this file and `CLAUDE.md` disagree, `CLAUDE.md` wins.
 
 The rules people most often miss:
 - Every new piece of screen text goes through `T('…')`, with a line in `js/i18n/<area>.js` (English, Afrikaans, isiZulu,

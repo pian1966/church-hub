@@ -1,5 +1,5 @@
 /*
- * Church Hub – countries: what an address looks like in each country (the list of provinces, states, counties…,
+ * Church & Trellis – countries: what an address looks like in each country (the list of provinces, states, counties…,
  * what the postcode is called), the dialling code, and which privacy law applies (see js/privacy-law.js).
  * The church's own country is chosen in Settings (settings.country, South Africa until changed); each person's address
  * can be in another country. Addresses keep the country's English name (as Elvanto exports it), so older records still fit.

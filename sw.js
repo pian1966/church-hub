@@ -1,8 +1,8 @@
 /*
- * Church Hub – works without the internet (view only).
+ * Church & Trellis – works without the internet (view only).
  *
- * This "service worker" keeps a copy of Church Hub's own files (pages, scripts, styles, icons, the Firebase library and
- * the font) on the phone or computer, so Church Hub still opens when there is no connection. The church's information
+ * This "service worker" keeps a copy of Church & Trellis's own files (pages, scripts, styles, icons, the Firebase library and
+ * the font) on the phone or computer, so Church & Trellis still opens when there is no connection. The church's information
  * itself is kept by Firebase's offline copy (js/store.js), which is wiped when someone signs out.
  *
  * Online, every file is fetched fresh first (so a new version shows at once) and the copy is updated; only when that
@@ -27,7 +27,7 @@ self.addEventListener('activate', function (e) {
   }).then(function () { return self.clients.claim(); }));
 });
 
-/** One copy per file: Church Hub's own files without their ?v=…, the start page as index.html. */
+/** One copy per file: Church & Trellis's own files without their ?v=…, the start page as index.html. */
 function key(url) {
   var u = new URL(url);
   if (u.origin !== self.location.origin) return u.href;

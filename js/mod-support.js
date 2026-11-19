@@ -1,4 +1,4 @@
-/* Church Hub – Subscription: "buy us a coffee" (Administrators). The rules (prices, plans, prayer cards, who to pray for)
+/* Church & Trellis – Subscription: "buy us a coffee" (Administrators). The rules (prices, plans, prayer cards, who to pray for)
  * are in js/coffee.js; this is the page and the Home card.
  *   #/support        choose a coffee, how often, a gift, and who it's for (our church or another church)
  *   #/support/pray   the prayer circle: the church we pray for this week, our promise, and the weekly card on/off
@@ -9,7 +9,7 @@
  * Administrator until it is done ("Keep it as it is" counts).
  * Kept in Settings: settings.support = { cup: { kind, price, currency }, plan, paidUntil, payments, holidays, choice, pledge, prayOn, cardsOff }
  *                   settings.prayerCard = { photo, photoOk, place, points: [2], discreet, needsHelp, updated }
- * Nothing about the church's people is on the prayer card. Until Church Hub's office exists (TARGET.md section 10) the
+ * Nothing about the church's people is on the prayer card. Until Church & Trellis's office exists (TARGET.md section 10) the
  * card stays in the church's own settings; the demo shows made-up churches (js/sample.js SampleChurches). */
 (function () {
   'use strict';
@@ -116,15 +116,15 @@
     }).join('') + '</nav>';
   }
   function head(tab) {
-    return '<div class="page-head"><div><h1>' + T('Subscription') + '</h1><p class="lead">' + T('Church Hub for the price of a coffee.') + '</p></div></div>' + tabs(tab);
+    return '<div class="page-head"><div><h1>' + T('Subscription') + '</h1><p class="lead">' + T('Church & Trellis for the price of a coffee.') + '</p></div></div>' + tabs(tab);
   }
   function hero() {
     return '<section class="sp-hero"><div class="sp-hero-art">' + heroArt() + '</div><div class="sp-hero-text">' +
       '<p class="sp-kicker">' + T('Every church, however small, deserves great church software.') + '</p>' +
-      '<h2>' + T('Give us the price of one cup of coffee a month – whatever a cup costs where you live – and Church Hub keeps going, for you and for churches that can’t.') + '</h2>' +
-      '<p>' + T('Church Hub is for every church, in every nation, in (nearly) every language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.') + '</p>' +
+      '<h2>' + T('Give us the price of one cup of coffee a month – whatever a cup costs where you live – and Church & Trellis keeps going, for you and for churches that can’t.') + '</h2>' +
+      '<p>' + T('Church & Trellis is for every church, in every nation, in (nearly) every language. No church is ever turned away for being poor: a church that can’t afford a coffee pays in prayer instead.') + '</p>' +
       '<p class="sp-hero-more">' + T('The price is per church, not per person: one cup a month covers your whole church, however many people, groups and services you have.') + '</p>' +
-      '<p class="sp-hero-more">' + T('Don’t mistake a low price for a lesser product. Church Hub competes with the best church management systems in the world. We keep the price low so that every church can have it, not because it does less.') + '</p>' +
+      '<p class="sp-hero-more">' + T('Don’t mistake a low price for a lesser product. Church & Trellis competes with the best church management systems in the world. We keep the price low so that every church can have it, not because it does less.') + '</p>' +
       (pledged() ? '<p class="sp-chip">' + H.icon(PRAY, 16) + T('Your church has promised to pray for another church each week') + '</p>' : '') +
       '</div></section>';
   }
@@ -156,16 +156,16 @@
         '<span class="sp-plan-cups" aria-hidden="true">' + (id === 'pray' ? H.icon(PRAY, 26) : new Array(id === 'year' ? 10 : 1).join('.').split('.').map(function () { return '<i></i>'; }).join('')) + '</span>' +
         '<span class="sp-big">' + esc(big) + (per ? '<small>' + esc(per) + '</small>' : '') + '</span><b>' + esc(line) + '</b><span class="sp-sub">' + esc(sub) + '</span></button>';
     };
-    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">2</span><div><h2>' + T('How would you like to give?') + '</h2><p>' + T('Every way gives your church all of Church Hub.') + '</p></div></div>' +
+    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">2</span><div><h2>' + T('How would you like to give?') + '</h2><p>' + T('Every way gives your church all of Church & Trellis.') + '</p></div></div>' +
       '<div class="sp-plans" role="radiogroup" aria-label="' + esc(T('How would you like to give?')) + '">' +
         plan('month', '', none ? dash : C.money(m.total, m.currency), T('a month'), T('One coffee a month'), T('Stop or change whenever you like.')) +
         plan('year', T('Two coffees free'), none ? dash : C.money(y.total, y.currency), T('a year'), T('Ten coffees a year'), none ? T('Two months free when you pay for the year.') : T('You save {amount} by paying for the year.', { amount: C.money(y.saved, y.currency) })) +
-        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray, each week, for another church that uses Church Hub.')) +
+        plan('pray', '', T('Free'), '', T('Pray instead'), T('Can’t afford a coffee? Promise to pray, each week, for another church that uses Church & Trellis.')) +
       '</div></section>';
   }
   function gift() {
     var s = choice(), cupPrice = C.parse(s.price);
-    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">3</span><div><h2>' + T('Add a gift, if you’d like') + '</h2><p>' + T('What is Church Hub worth to your church? Think of the time it saves and what you can afford – every extra coffee helps a church that can’t pay.') + '</p></div></div>' +
+    return '<section class="sp-step"><div class="sp-step-h"><span class="sp-n">3</span><div><h2>' + T('Add a gift, if you’d like') + '</h2><p>' + T('What is Church & Trellis worth to your church? Think of the time it saves and what you can afford – every extra coffee helps a church that can’t pay.') + '</p></div></div>' +
       '<div class="sp-gift"><div class="sp-gift-cups" role="radiogroup" aria-label="' + esc(T('Extra coffees')) + '">' +
         [0, 1, 2, 3, 4, 5, 6].map(function (n) {
           var on = s.other === '' && s.cups === n;
@@ -181,15 +181,15 @@
         '<button type="button" role="radio" aria-checked="' + (s.forWho === 'us') + '" class="sp-whob' + (s.forWho === 'us' ? ' on' : '') + '" data-act="support:who" data-w="us">' + H.icon(H.ICON.home, 22) + '<b>' + T('Your church') + '</b><small>' + esc(st().churchName || '') + '</small></button>' +
         '<button type="button" role="radio" aria-checked="' + (s.forWho === 'other') + '" class="sp-whob' + (s.forWho === 'other' ? ' on' : '') + '" data-act="support:who" data-w="other">' + H.icon('M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z', 22) + '<b>' + T('Another church') + '</b><small>' + T('An under-resourced church') + '</small></button>' +
       '</div>' +
-      (s.forWho === 'other' ? '<div class="sp-others"><p class="hint">' + T('Choose a church that has asked for help, or let Church Hub give it where it’s needed most.') + '</p><div class="pcards" role="radiogroup">' +
-        '<article class="pcard pick any' + (!s.otherId ? ' on' : '') + '" role="radio" tabindex="0" aria-checked="' + !s.otherId + '" data-act="support:other" data-id=""><div class="pc-pic pc-ph pc-any">' + H.icon('M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z', 40) + '</div><div class="pc-body"><h3>' + T('Where it’s needed most') + '</h3><p>' + T('Church Hub gives it to the church that has waited longest for help.') + '</p></div></article>' +
+      (s.forWho === 'other' ? '<div class="sp-others"><p class="hint">' + T('Choose a church that has asked for help, or let Church & Trellis give it where it’s needed most.') + '</p><div class="pcards" role="radiogroup">' +
+        '<article class="pcard pick any' + (!s.otherId ? ' on' : '') + '" role="radio" tabindex="0" aria-checked="' + !s.otherId + '" data-act="support:other" data-id=""><div class="pc-pic pc-ph pc-any">' + H.icon('M12 21s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 11c0 5.6-7 10-7 10z', 40) + '</div><div class="pc-body"><h3>' + T('Where it’s needed most') + '</h3><p>' + T('Church & Trellis gives it to the church that has waited longest for help.') + '</p></div></article>' +
         need.map(function (c) { return prayerCard(c, { pick: true, on: s.otherId === c.id }); }).join('') + '</div></div>' : '') + '</section>';
   }
   function summary() {
     var s = choice(), q = quote(), pray = s.plan === 'pray';
     var who = s.forWho === 'other' ? (s.otherId ? pcTitle(circle().filter(function (c) { return c.id === s.otherId; })[0] || {}) : T('Where it’s needed most')) : (st().churchName || T('Your church'));
     return '<section class="sp-total' + (pray ? ' pray' : '') + '"><div>' + (pray
-      ? '<b>' + T('Free, with a promise to pray') + '</b><small>' + T('Every week Church Hub shows your church another church to pray for.') + '</small>'
+      ? '<b>' + T('Free, with a promise to pray') + '</b><small>' + T('Every week Church & Trellis shows your church another church to pray for.') + '</small>'
       : !q.cup ? '<b>' + T('Type what one cup costs where you live.') + '</b><small>' + T('Then choose how often, and Pay.') + '</small>'
       : '<span class="sp-total-n">' + esc(C.money(q.total, q.currency)) + '<small>' + esc(q.per === 'year' ? T('a year') : T('a month')) + '</small></span>' +
         '<small>' + esc(TN1(q.coffees)) + (q.gift ? ' + ' + esc(T('a gift of {amount}', { amount: C.money(q.gift, q.currency) })) : '') + ' · ' + esc(T('for {who}', { who: who })) + '</small>') + '</div>' +
@@ -203,20 +203,20 @@
     var steps = drinks() + plans() + (s.plan === 'pray' ? '' : gift() + forWho()) + summary(), top = statusPanel();
     if (top) steps = '<details class="sp-more"><summary>' + T('Change your coffee or plan, or pay for another church') + '</summary>' + steps + '</details>';
     return head('') + (top || hero()) + steps +
-      '<p class="sp-foot">' + T('You pay by bank transfer from your own banking app. Church Hub never sees your card or your bank details.') + '</p>';
+      '<p class="sp-foot">' + T('You pay by bank transfer from your own banking app. Church & Trellis never sees your card or your bank details.') + '</p>';
   }
 
   function renderPray() {
     var p = partner(), mine = ourCard(), sub = sup();
     var top = '';
     if (!inCircle()) top = '<section class="sp-circle-intro"><div class="sp-circle-art" aria-hidden="true">' + circleArt() + '</div><div><h2>' + T('The prayer circle') + '</h2>' +
-      '<p>' + T('Churches around the world praying for each other. Every week Church Hub shows your church another church, with a photo and one or two things to pray for – and other churches pray for you.') + '</p>' +
+      '<p>' + T('Churches around the world praying for each other. Every week Church & Trellis shows your church another church, with a photo and one or two things to pray for – and other churches pray for you.') + '</p>' +
       '<p>' + T('Your church has turned off the weekly prayer card on Home. Other churches still pray for you.') + '</p>' +
       (admin() ? '<div class="btns"><button class="btn primary" data-act="support:cardson">' + T('Show the weekly prayer card again') + '</button></div>' : '') + '</div></section>';
     var body = '';
     if (inCircle() && p) body = '<section class="sp-month"><p class="sp-kicker">' + esc(T('This week, {church} prays for', { church: st().churchName || T('our church') })) + '</p>' + prayerCard(p, { big: true }) +
       '<div class="sp-month-foot"><p>' + T('Pray for them in a Sunday service, a prayer meeting or a Care Group – or simply on your own this week.') + '</p>' + prayedBtn() + '</div></section>';
-    else if (inCircle()) body = '<p class="note info">' + T('The prayer circle starts when Church Hub opens to other churches. From then on, a new church to pray for appears here every week – and on everyone’s Home page.') + '</p>';
+    else if (inCircle()) body = '<p class="note info">' + T('The prayer circle starts when Church & Trellis opens to other churches. From then on, a new church to pray for appears here every week – and on everyone’s Home page.') + '</p>';
     var promise = pledged() ? '<section class="panel sp-promise"><h2>' + T('Your church’s promise') + '</h2><p>' + esc(T('Made on {date} by {name}.', { date: H.fmt(sub.pledge.at, true), name: sub.pledge.by || '' })) + '</p>' +
       (admin() && sub.plan === 'pray' ? '' : admin() ? H.menu(T('More'), ['<button data-act="support:leave">' + T('Leave the prayer circle') + '</button>']) : '') + '</section>' : '';
     var onoff = admin() ? '<section class="panel sp-onoff">' +
@@ -234,7 +234,7 @@
     if (ck.state === 'ok') return '';
     var missing = ck.state === 'missing';
     return '<section class="panel sp-nudge' + (home ? ' sp-home' : '') + '"><div class="sp-home-h">' + H.icon(PRAY, 18) + '<h2>' + T(missing ? 'Make your church’s prayer card' : 'Time to look at your prayer card') + '</h2></div>' +
-      '<p>' + T(missing ? 'Every church that uses Church Hub has a prayer card – a photo and two things to pray for – so that other churches can pray for you. It takes two minutes.' : 'Once a month, every church checks its prayer card, so other churches pray for what matters to you now. Change it, or keep it as it is.') + '</p>' +
+      '<p>' + T(missing ? 'Every church that uses Church & Trellis has a prayer card – a photo and two things to pray for – so that other churches can pray for you. It takes two minutes.' : 'Once a month, every church checks its prayer card, so other churches pray for what matters to you now. Change it, or keep it as it is.') + '</p>' +
       '<div class="btns"><a class="btn primary" href="#/support/card">' + T(missing ? 'Make our prayer card' : 'Update the prayer card') + '</a>' +
       (missing ? '' : '<button class="btn" data-act="support:keepcard">' + T('Keep it as it is') + '</button>') + '</div></section>';
   }
@@ -272,7 +272,7 @@
       '<label class="set-row"><span class="set-l"><b>' + T('We’d be grateful for help paying') + '</b><small>' + T('Churches that pay for another church will see your card.') + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="sp-help"' + (c.needsHelp ? ' checked' : '') + ' aria-label="' + esc(T('We’d be grateful for help paying')) + '"></span></label>' +
       (admin() ? '<div class="btns"><button class="btn primary" data-act="support:savecard">' + T('Save the prayer card') + '</button></div>' : '') + '</section>';
     var preview = '<section class="sp-preview"><p class="sp-kicker">' + T('How other churches see it') + '</p><div id="sp-prev">' + prayerCard(ourCard(), { big: true }) + '</div>' +
-      (S.isLive() && !st().demo ? '<p class="hint">' + T('Kept in your own church’s settings until Church Hub opens to other churches.') + '</p>' : '') + '</section>';
+      (S.isLive() && !st().demo ? '<p class="hint">' + T('Kept in your own church’s settings until Church & Trellis opens to other churches.') + '</p>' : '') + '</section>';
     return head('card') + '<div class="sp-card-grid">' + form + preview + '</div>';
   }
 
@@ -310,7 +310,7 @@
   /* ---------- dialogs ---------- */
   function promiseDialog() {
     H.modal(H.dialogHead(T('Your church’s promise'), T('The prayer circle')) + '<div class="dlg-body sp-promise-dlg">' + '<div class="sp-promise-art" aria-hidden="true">' + circleArt() + '</div>' +
-      '<p class="sp-vow">' + T('Each week, we will pray for the church Church Hub shows us – in a service, a prayer meeting or a Care Group – as part of the worldwide family of God.') + '</p>' +
+      '<p class="sp-vow">' + T('Each week, we will pray for the church Church & Trellis shows us – in a service, a prayer meeting or a Care Group – as part of the worldwide family of God.') + '</p>' +
       '<p class="hint">' + T('“Pray for each other.” – James 5:16') + '</p>' +
       '<label class="check"><input type="checkbox" id="sp-vow-ok"><span>' + T('We promise, on behalf of our church.') + '</span></label>' +
       '<div class="btns"><button class="btn primary" data-act="support:vow">' + T('Make our promise') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div></div>', T('Your church’s promise'));
@@ -330,7 +330,7 @@
   var extra = 0;   // gift coffees tapped on the "Your subscription" card or Home
   var paying = null;   // the payment the open window is about
   /**
-   * How to pay: Church Hub's bank details, the church's own reference, and "We've paid" (which records it).
+   * How to pay: Church & Trellis's bank details, the church's own reference, and "We've paid" (which records it).
    * o: { kind: 'month'|'year'|'gift', total, currency, gift, forOther }
    */
   function payDialog(o) {
@@ -343,14 +343,14 @@
     var abroad = o.currency !== 'ZAR', tag = o.forOther ? (o.forOther === 'any' ? ' GIFT-ANY' : ' GIFT') : o.kind === 'gift' ? ' GIFT' : '';
     var total = C.money(o.total, o.currency) + (o.kind === 'year' ? ' ' + T('a year') : o.kind === 'month' ? ' ' + T('a month') : '');
     H.modal(H.dialogHead(T('Thank you!'), T('Pay by bank transfer')) + '<div class="dlg-body sp-thanks">' + '<div class="sp-thanks-art">' + cupArt(C.kind(myCup().kind).art, 84) + '</div>' +
-      '<p class="sp-pay-amt">' + esc(T('Please pay {total} into Church Hub’s account:', { total: total })) + '</p>' +
+      '<p class="sp-pay-amt">' + esc(T('Please pay {total} into Church & Trellis’s account:', { total: total })) + '</p>' +
       '<dl class="sp-bank">' + row(T('Bank'), B.bank) + row(T('Account number'), B.account, true) + row(T('Branch code'), B.branch, true) +
         row(T('Account type'), T(B.type)) + row(T('Beneficiary'), B.beneficiary) + row(T('Reference'), ref + tag, true) + '</dl>' +
-      '<p class="hint">' + T('Always use this reference: it is how Church Hub knows the payment is from your church.') + (tag ? ' ' + T('“GIFT” tells us it is a gift or for another church.') : '') + '</p>' +
+      '<p class="hint">' + T('Always use this reference: it is how Church & Trellis knows the payment is from your church.') + (tag ? ' ' + T('“GIFT” tells us it is a gift or for another church.') : '') + '</p>' +
       (abroad ? '<p class="note info">' + esc(B.holder
         ? T('From outside South Africa: use SWIFT code {swift} and the account holder’s name {name}. Your bank changes your money into rand.', { swift: B.swift, name: B.holder })
-        : T('From outside South Africa: your bank needs Capitec’s SWIFT code ({swift}) and the account holder’s full name. Write to Church Hub for these before you pay.', { swift: B.swift })) + '</p>' : '') +
-      '<p class="hint">' + T('Church Hub never sees your card or your bank details. It can take a few days for a payment to show.') + '</p>' +
+        : T('From outside South Africa: your bank needs Capitec’s SWIFT code ({swift}) and the account holder’s full name. Write to Church & Trellis for these before you pay.', { swift: B.swift })) + '</p>' : '') +
+      '<p class="hint">' + T('Church & Trellis never sees your card or your bank details. It can take a few days for a payment to show.') + '</p>' +
       '<div class="btns"><button class="btn primary" data-act="support:paid">' + T('We’ve paid') + '</button><button class="btn" data-act="hub:close">' + T('Pay later') + '</button></div></div>', T('Thank you!'));
   }
   /** One-tap gift coffees: [+1] [+2] [+5] … on the subscription card and Home. */
@@ -367,7 +367,7 @@
     if (stt.state === 'holiday') return T('On a payment holiday – the next coffee is due on {date}.', { date: when });
     if (stt.state === 'soon') return stt.daysLeft === 1 ? T('Your next coffee is due tomorrow.') : T('Your next coffee is due in {n} days, on {date}.', { n: stt.daysLeft, date: when });
     if (stt.state === 'due') return stt.daysLeft === 0 ? T('Your coffee is due today.') : T('Your coffee was due on {date}.', { date: when });
-    if (stt.state === 'late') return T('Your coffee was due on {date}. Church Hub keeps working – pay when you can, or take a payment holiday.', { date: when });
+    if (stt.state === 'late') return T('Your coffee was due on {date}. Church & Trellis keeps working – pay when you can, or take a payment holiday.', { date: when });
     return T('Paid until {date}. Thank you!', { date: when });
   }
   function statusPanel(compact) {
@@ -389,19 +389,19 @@
     H.modal(H.dialogHead(T('A payment holiday'), yearly ? T('Ten coffees a year') : T('One coffee a month')) + '<div class="dlg-body sp-hol">' +
       '<div class="sp-hol-art" aria-hidden="true">' + cupArt(C.kind(myCup().kind).art, 72) + '<span class="sp-zz">z<span>z</span><span>z</span></span></div>' +
       (ok.ok ? '<p class="sp-vow">' + esc(yearly ? T('Pay your year a month later, free – no questions asked.') : T('Skip this month’s coffee, free – no questions asked.')) + '</p>' +
-        '<p>' + esc(T('Your next payment moves to {date}. Church Hub keeps working exactly as before.', { date: next })) + '</p>' +
+        '<p>' + esc(T('Your next payment moves to {date}. Church & Trellis keeps working exactly as before.', { date: next })) + '</p>' +
         '<p class="hint">' + esc(yearly ? T('A yearly plan may take one payment holiday a year.') : T('A monthly plan may take up to three payment holidays a year. You have {n} left.', { n: ok.left })) + '</p>' +
         '<label class="field"><span>' + T('Would you like to tell us why? It helps us pray for you.') + '</span><textarea id="sp-hol-why" rows="2" maxlength="300"></textarea></label>' +
         '<div class="btns"><button class="btn primary" data-act="support:takehol">' + T('Take a payment holiday') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>'
       : '<p class="sp-vow">' + T('You’ve used this year’s payment holidays.') + '</p>' +
-        '<p>' + T('If paying is hard for your church right now, you can pray instead: Church Hub stays free for as long as you need, while your church prays for another church each week.') + '</p>' +
+        '<p>' + T('If paying is hard for your church right now, you can pray instead: Church & Trellis stays free for as long as you need, while your church prays for another church each week.') + '</p>' +
         '<div class="btns"><button class="btn primary" data-act="support:prayinstead">' + T('Pray instead') + '</button><button class="btn" data-act="hub:close">' + T('Not now') + '</button></div>') +
       (stt.state === 'late' ? '<p class="hint">' + T('Nothing is ever locked or deleted for being late.') + '</p>' : '') + '</div>', T('A payment holiday'));
   }
   function giftDialog() {
     var c = myCup().price ? myCup() : { price: C.parse(choice().price), currency: cur() }, cu = c.currency;
     H.modal(H.dialogHead(T('Give a one-off gift'), T('Thank you for your generosity')) + '<div class="dlg-body sp-thanks">' +
-      '<p>' + T('Every gift helps Church Hub grow and pays for churches that can’t. How many coffees would you like to give?') + '</p>' +
+      '<p>' + T('Every gift helps Church & Trellis grow and pays for churches that can’t. How many coffees would you like to give?') + '</p>' +
       '<div class="sp-giftgrid">' + [1, 2, 5, 10, 20].map(function (n) {
         return '<button class="sp-gg" data-act="support:giftn" data-n="' + n + '">' + '<span class="sp-gc-cup" aria-hidden="true"></span><b>' + esc(TN1(n)) + '</b><small>' + esc(C.money(C.giftOf(n, c.price, cu), cu)) + '</small></button>';
       }).join('') + '</div>' +
@@ -411,7 +411,7 @@
   function TN1(n) { return n === 1 ? T('1 coffee') : T('{n} coffees', { n: n }); }
 
   H.register({
-    id: 'support', name: 'Subscription', desc: 'A coffee a month keeps Church Hub going', tint: '#8A5428', roles: ['admin'], perm: 'settings.manage',
+    id: 'support', name: 'Subscription', desc: 'A coffee a month keeps Church & Trellis going', tint: '#8A5428', roles: ['admin'], perm: 'settings.manage',
     icon: 'M4 8h13v5a6 6 0 0 1-6 6H10a6 6 0 0 1-6-6zM17 9h1.5a2.5 2.5 0 0 1 0 5H17M7 2v3M11 2v3',
     stat: function () { return pledged() ? T('In the prayer circle') : T('One coffee a month'); },
     render: function (parts) {
@@ -446,7 +446,7 @@
           H.cropPhoto(file).then(function (data) {
             if (!data) return;
             var c = readForm(); S.setSettings({ prayerCard: Object.assign(c, { photo: data, photoOk: false, points: C.points(c.points), updated: H.today() }) }, 'Prayer card: photo added'); H.render(); H.toast(T('Photo saved'));
-          }).catch(function () { H.toast(T('That file isn’t a picture Church Hub can read. Try a JPG or PNG photo.')); });
+          }).catch(function () { H.toast(T('That file isn’t a picture Church & Trellis can read. Try a JPG or PNG photo.')); });
         }); });
         liveCheck();
       }
@@ -497,7 +497,7 @@
         var base = Object.assign({}, cur, o.kind === 'month' || o.kind === 'year' ? { cup: cur.cup && cur.cup.currency === o.currency ? cur.cup : { kind: choice().kind, price: C.parse(choice().price), currency: o.currency } } : {});
         var next = C.recordPayment(base, H.today(), { kind: o.kind === 'pray' ? 'gift' : o.kind, amount: o.total, currency: o.currency, gift: o.gift, forOther: o.forOther });
         if (next.plan === 'month' || next.plan === 'year') next.pledge = next.pledge || null;
-        S.setSettings({ support: next }, 'Recorded a payment to Church Hub (' + C.money(o.total, o.currency) + ', ' + (o.forOther ? 'for another church' : o.kind) + ')');
+        S.setSettings({ support: next }, 'Recorded a payment to Church & Trellis (' + C.money(o.total, o.currency) + ', ' + (o.forOther ? 'for another church' : o.kind) + ')');
         paying = null; extra = 0; H.closeModal(); H.render();
         H.toast(next.paidUntil !== before && next.paidUntil ? T('Thank you! Paid until {date}.', { date: H.fmt(next.paidUntil, true) }) : T('Thank you for your gift!'));
       },

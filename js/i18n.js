@@ -1,5 +1,5 @@
 /*
- * Church Hub – languages for the screens members use: English, Afrikaans, isiZulu and isiXhosa.
+ * Church & Trellis – languages for the screens members use: English, Afrikaans, isiZulu and isiXhosa.
  * Tested with node: tests/i18n.test.js (every T('…') text in the app has all four languages).
  *
  * How it works: code writes the English text inside T('…'); T looks it up here and returns the chosen language,

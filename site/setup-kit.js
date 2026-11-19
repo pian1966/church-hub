@@ -1,7 +1,7 @@
 /*
- * Church Hub – the setup tool's content and rules (used by site/setup.html; tested by tests/setup-kit.test.js).
+ * Church & Trellis – the setup tool's content and rules (used by site/setup.html; tested by tests/setup-kit.test.js).
  *
- * The setup tool takes a church from nothing to a working Church Hub: a Google account for the church, the church's copy
+ * The setup tool takes a church from nothing to a working Church & Trellis: a Google account for the church, the church's copy
  * of the website on GitHub, its Firebase database, the first sign-in, the settings to do before anyone joins, and then a
  * list of everything else the church can switch on whenever it is ready ("Grow"). Everything a person types stays in
  * their own browser.
@@ -57,8 +57,8 @@ var SetupKit = (function () {
   }
   function validGithub(u) { return /^[A-Za-z0-9](?:[A-Za-z0-9]|-(?=[A-Za-z0-9])){0,38}$/.test(String(u || '')); }
   function validEmail(e) { return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(String(e || '').trim()); }
-  /** The Firebase project's name (4–30 characters): "Church Hub" and the church's initials. */
-  function projectName(name) { var i = initials(name); return ('Church Hub ' + (i.length >= 2 ? i : slug(name, 12))).slice(0, 30); }
+  /** The Firebase project's name (4–30 characters): "Church & Trellis" and the church's initials. */
+  function projectName(name) { var i = initials(name); return ('Church & Trellis ' + (i.length >= 2 ? i : slug(name, 12))).slice(0, 30); }
 
   /* ---------- where the church's information is kept (Firestore locations; can't be changed later) ---------- */
   var PLACES = {
@@ -107,7 +107,7 @@ var SetupKit = (function () {
   function configFile(cfg, churchName) {
     var q = function (v) { return "'" + String(v || '').replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'"; };
     return '/*\n' +
-      ' * Church Hub – connection to ' + String(churchName || 'the church').replace(/\*\//g, '') + '’s Firebase project.\n' +
+      ' * Church & Trellis – connection to ' + String(churchName || 'the church').replace(/\*\//g, '') + '’s Firebase project.\n' +
       ' * Made by the setup tool (site/setup.html). These values are not passwords: every visitor’s browser receives them anyway.\n' +
       ' * What keeps the church’s information safe is sign-in, the security rules in firestore.rules, and the website\n' +
       ' * restriction on the key. The demo stays available at the same address with ?demo on the end.\n' +
@@ -158,7 +158,7 @@ var SetupKit = (function () {
   /* ---------- the setup itself: chapters and steps ---------- */
   var CHAPTERS = [
     { id: 'ready', title: 'Get ready', blurb: 'The church’s own Google account, so the church – not a person – owns everything.' },
-    { id: 'website', title: 'The church’s website', blurb: 'The church’s own copy of Church Hub, free on GitHub.' },
+    { id: 'website', title: 'The church’s website', blurb: 'The church’s own copy of Church & Trellis, free on GitHub.' },
     { id: 'database', title: 'The church’s database', blurb: 'A private, free database on Google, near your church.' },
     { id: 'open', title: 'Connect and open', blurb: 'Tell the website where its database is, and sign in.' },
     { id: 'first', title: 'Before anyone joins', blurb: 'Privacy, the church’s words, services and staff.' }
@@ -168,7 +168,7 @@ var SetupKit = (function () {
   // `mods` names the app parts (Hub.register ids) a step sets up – see NOT_SETUP and the test.
   var STEPS = [
     { id: 'church', chapter: 'ready', title: 'About the church', mins: 1,
-      why: 'Church Hub uses these to suggest addresses and choose where the church’s information is kept.',
+      why: 'Church & Trellis uses these to suggest addresses and choose where the church’s information is kept.',
       fields: [{ key: 'name', label: 'Church name', req: true }, { key: 'country', label: 'Country', type: 'country', req: true }, { key: 'you', label: 'Your name' }],
       body: function (c) { return note('The church’s information will be kept in <b>' + esc(c.place) + '</b>, the nearest place Google offers. You can change this until the database is made – after that it is fixed.'); },
       ready: function (ch) { return !!(ch.name && ch.country); } },
@@ -180,7 +180,7 @@ var SetupKit = (function () {
         return '<p>Already have one the church office controls? Type it below and tick this step. Otherwise:</p>' + ol([
           open('https://accounts.google.com/signup', 'Create a Google account') + ' – it opens in a new tab.',
           'First and last name: the church’s name, for example ' + ui(c.name) + '.',
-          'When Google asks what the account is for, choose ' + ui('For my personal use') + '. A free Gmail address is all Church Hub needs – you don’t need to pay for Google Workspace.',
+          'When Google asks what the account is for, choose ' + ui('For my personal use') + '. A free Gmail address is all Church & Trellis needs – you don’t need to pay for Google Workspace.',
           'Choose an address. Ideas (tap one to copy it): ' + c.emailIdeas.map(function (e) { return copy(e.replace('@gmail.com', ''), e); }).join(' '),
           'Use the <b>church office’s</b> phone number for the security code, so the account never depends on one person’s phone.',
           'Write the password on paper and keep it in the church safe (or the church’s password manager). <b>Never type it into this tool.</b>'
@@ -199,7 +199,7 @@ var SetupKit = (function () {
       } },
 
     { id: 'github', chapter: 'website', title: 'A GitHub account for the church', mins: 5,
-      why: 'GitHub gives the church a free website address for Church Hub. No programming involved.',
+      why: 'GitHub gives the church a free website address for Church & Trellis. No programming involved.',
       fields: [{ key: 'gh', label: 'The church’s GitHub username', req: true, check: 'github', idea: 'githubIdea' }],
       body: function (c) {
         return ol([
@@ -210,7 +210,7 @@ var SetupKit = (function () {
       },
       ready: function (ch) { return validGithub(ch.gh); } },
 
-    { id: 'copy', chapter: 'website', title: 'Make the church’s copy of Church Hub', mins: 2,
+    { id: 'copy', chapter: 'website', title: 'Make the church’s copy of Church & Trellis', mins: 2,
       why: 'The church gets its own copy, so its address and settings are its own.',
       body: function (c) {
         return ol([
@@ -238,7 +238,7 @@ var SetupKit = (function () {
           'Click ' + ui('Create a project') + ' (or ' + ui('Get started with a Firebase project') + ').',
           'Name: ' + copy(c.projectName) + '. Click ' + ui('Continue') + '.',
           'If it offers Gemini or AI assistance, switch it off. ' + ui('Continue') + '.',
-          'Switch <b>Google Analytics off</b> – Church Hub doesn’t need it. Click ' + ui('Create project') + ', wait, then ' + ui('Continue') + '.'
+          'Switch <b>Google Analytics off</b> – Church & Trellis doesn’t need it. Click ' + ui('Create project') + ', wait, then ' + ui('Continue') + '.'
         ]) + note('The church stays on the free <b>Spark</b> plan. Don’t add a bank card.');
       } },
 
@@ -273,14 +273,14 @@ var SetupKit = (function () {
         return ol([
           'Click the ' + ui('gear') + ' next to ' + ui('Project Overview') + ' (top left) → ' + ui('Project settings') + '.',
           'Scroll to ' + ui('Your apps') + ' and click the web icon ' + ui('</>') + '.',
-          'Nickname: ' + copy('Church Hub website') + '. Don’t tick Firebase Hosting. Click ' + ui('Register app') + '.',
+          'Nickname: ' + copy('Church & Trellis website') + '. Don’t tick Firebase Hosting. Click ' + ui('Register app') + '.',
           'Select all the code Firebase shows (it starts with ' + ui('import') + ' or ' + ui('const firebaseConfig') + '), copy it, and paste it in the box below.'
         ]) + note('These lines are not passwords – every visitor’s phone receives them. Sign-in and the security rules keep the information safe.');
       },
       ready: function (ch) { return parseConfig(ch.cfgText).ok; } },
 
     { id: 'fb-admin', chapter: 'database', title: 'Make yourself the first Administrator', mins: 3,
-      why: 'Church Hub only lets in people on its access list. The first name goes on by hand; after that you add people inside Church Hub.',
+      why: 'Church & Trellis only lets in people on its access list. The first name goes on by hand; after that you add people inside Church & Trellis.',
       fields: [{ key: 'adminEmail', label: 'The email you will sign in with', type: 'email', req: true }],
       body: function (c) {
         var e = c.adminEmail || 'your email';
@@ -297,18 +297,18 @@ var SetupKit = (function () {
       why: 'The rules decide who may see what – for example, only pastors read pastoral notes.',
       body: function (c) {
         return ol([
-          '<button type="button" class="copy rules" data-rules="1">Copy the rules</button> – Church Hub puts the latest rules on your clipboard.',
+          '<button type="button" class="copy rules" data-rules="1">Copy the rules</button> – Church & Trellis puts the latest rules on your clipboard.',
           (c.projectId ? open(c.fb('firestore/databases/-default-/security/rules'), 'Open the rules page') : 'Open ' + ui('Firestore') + ' → ' + ui('Rules')) + '.',
           'Click in the editor, select everything (' + ui('Ctrl+A') + ', or ' + ui('⌘+A') + ' on a Mac) and paste (' + ui('Ctrl+V') + ' / ' + ui('⌘+V') + ').',
           'Click ' + ui('Publish') + '.'
-        ]) + note('When Church Hub’s rules change, it tells Administrators to do this again (it’s on your Keep it up to date list).');
+        ]) + note('When Church & Trellis’s rules change, it tells Administrators to do this again (it’s on your Keep it up to date list).');
       } },
 
     { id: 'fb-key', chapter: 'database', title: 'Let only the church’s website use it', mins: 3,
       why: 'This stops other websites from borrowing the church’s database address.',
       body: function (c) {
         return ol([
-          open('https://console.cloud.google.com/apis/credentials' + (c.projectId ? '?project=' + c.projectId : ''), 'Open the keys page') + ' (signed in as the church’s account' + (c.projectId ? '' : '; choose the Church Hub project at the top') + ').',
+          open('https://console.cloud.google.com/apis/credentials' + (c.projectId ? '?project=' + c.projectId : ''), 'Open the keys page') + ' (signed in as the church’s account' + (c.projectId ? '' : '; choose the Church & Trellis project at the top') + ').',
           'Under ' + ui('API Keys') + ', click ' + ui('Browser key (auto created by Firebase)') + '.',
           'Under ' + ui('Application restrictions') + ' choose ' + ui('Websites') + ', then ' + ui('Add') + ' each of these: ' +
             copy(c.domain ? 'https://' + c.domain + '/*' : 'https://<username>.github.io/*') + ' ' + copy(c.projectId ? 'https://' + c.projectId + '.firebaseapp.com/*' : 'https://<project>.firebaseapp.com/*'),
@@ -317,7 +317,7 @@ var SetupKit = (function () {
       } },
 
     { id: 'connect', chapter: 'open', title: 'Connect the website to the database', mins: 3,
-      why: 'One small file tells the church’s copy of Church Hub where its database is.',
+      why: 'One small file tells the church’s copy of Church & Trellis where its database is.',
       body: function (c) {
         return ol([
           '<button type="button" class="copy file" data-file="1">Copy the church’s settings file</button>',
@@ -328,12 +328,12 @@ var SetupKit = (function () {
       } },
 
     { id: 'signin', chapter: 'open', title: 'Sign in for the first time', mins: 3,
-      why: 'You become the church’s first Administrator, and Church Hub sets up its starter settings.',
+      why: 'You become the church’s first Administrator, and Church & Trellis sets up its starter settings.',
       body: function (c) {
         return ol([
-          'Wait two minutes after the last step, then ' + open(c.app(), 'Open Church Hub') + '. You should see ' + ui('Sign in') + '.',
+          'Wait two minutes after the last step, then ' + open(c.app(), 'Open Church & Trellis') + '. You should see ' + ui('Sign in') + '.',
           'Click ' + ui('Sign in with Google') + ' and choose ' + (c.adminEmail ? ui(c.adminEmail) : 'the email from “first Administrator”') + ' (or use ' + ui('Email me a link') + ').',
-          'Church Hub says ' + ui('Set up Church Hub') + ': check the church’s name, type your name and click ' + ui('Set up') + '.'
+          'Church & Trellis says ' + ui('Set up Church & Trellis') + ': check the church’s name, type your name and click ' + ui('Set up') + '.'
         ]) + note('Seeing the demo instead? The browser kept the old page – wait a minute and refresh. Seeing “No access yet”? Check the email in the first-Administrator step matches exactly.');
       } },
 
@@ -348,7 +348,7 @@ var SetupKit = (function () {
       } },
 
     { id: 'settings', chapter: 'first', title: 'The church’s name, colour and words', mins: 5, mods: ['settings'],
-      why: 'Church Hub speaks your church’s language – Rector or Pastor, Parishioner or Member.',
+      why: 'Church & Trellis speaks your church’s language – Rector or Pastor, Parishioner or Member.',
       body: function (c) {
         return ol([
           open(c.app('settings/general'), 'Name and country') + ' – check the church’s name and country.',
@@ -424,10 +424,10 @@ var SetupKit = (function () {
       what: 'Departments and positions – one click sets up a starter set you can change.',
       how: function (c) { return ol([open(c.app('rosters/teams'), 'Open Rosters → Teams') + ' and choose the starter teams, or add your own.', 'Put the departments in the order of your service with the ↑ ↓ arrows beside each name (the roster follows that order).']); } },
     { id: 'rosters', group: 'serving', title: 'Make the first roster', mods: ['rosters'], since: '0.1',
-      what: 'Church Hub fills the roster fairly, keeps families together and asks volunteers in Messages.',
+      what: 'Church & Trellis fills the roster fairly, keeps families together and asks volunteers in Messages.',
       how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.']); } },
     { id: 'msggroups', group: 'talk', title: 'Message groups', mods: ['messages'], since: '0.1',
-      what: 'Write to a care group, the staff or any list of people inside Church Hub – no data costs for SMS.',
+      what: 'Write to a care group, the staff or any list of people inside Church & Trellis – no data costs for SMS.',
       how: function (c) { return ol([open(c.app('messages/groups'), 'Open Messages → Groups') + ' and make the groups you write to often.', open(c.app('messages/send'), 'Send a first message') + ' to the staff.']); } },
     { id: 'emails', group: 'talk', title: 'Birthday, anniversary and welcome emails', mods: [], since: '0.1',
       what: 'Warm emails that go out on the right day, in the church’s own words.',
@@ -457,22 +457,22 @@ var SetupKit = (function () {
       what: 'Share the church’s address; people can add it to their phone’s home screen like an app.',
       how: function (c) { return (c.site ? '<p>' + copy(c.site) + '</p>' : '') + '<div class="qr" data-qr="' + esc(c.site || '') + '"></div>'; } },
     { id: 'coffee', group: 'extras', title: 'A coffee a month (or a prayer)', mods: ['support'], since: '0.80',
-      what: 'Church Hub costs one cup of coffee a month at your local price – or nothing, if your church prays for another church instead.',
-      how: function (c) { return ol([open(c.app('support'), 'Open Support Church Hub') + ' and choose what suits your church.']); } },
+      what: 'Church & Trellis costs one cup of coffee a month at your local price – or nothing, if your church prays for another church instead.',
+      how: function (c) { return ol([open(c.app('support'), 'Open Support Church & Trellis') + ' and choose what suits your church.']); } },
     { id: 'prayercard', group: 'extras', title: 'Your church’s prayer card (every church has one)', mods: ['support'], since: '0.95',
-      what: 'Every church that uses Church Hub shares a photo and two things to pray for, and looks at them once a month. Every week, everyone’s Home shows another church to pray for – and other churches pray for yours.',
+      what: 'Every church that uses Church & Trellis shares a photo and two things to pray for, and looks at them once a month. Every week, everyone’s Home shows another church to pray for – and other churches pray for yours.',
       how: function (c) { return ol([open(c.app('support/card'), 'Open your prayer card') + ' and add a photo and two prayer points. Pray for things, not people by name.',
         'Each month Home asks you to look at it again: change it, or tap ' + ui('Keep it as it is') + '.',
         'Churches that pay may turn off the weekly card on Home under ' + ui('Churches to pray for') + '; churches that pray instead of paying keep it on.']); } },
     { id: 'autorules', group: 'care', title: 'Let GitHub publish the security rules', mods: [], since: '0.31',
-      what: 'A one-time setup (about 10 minutes) so the rules update themselves whenever Church Hub changes them.',
+      what: 'A one-time setup (about 10 minutes) so the rules update themselves whenever Church & Trellis changes them.',
       how: function () { return ol([open(DOCS + 'RULES-AUTOPUBLISH.md', 'Follow the guide') + ' in the church’s copy.']); } },
-    { id: 'sync', group: 'care', title: 'Get the latest Church Hub', mods: ['about'], since: '0.1', every: 30,
-      what: 'New features arrive on the main Church Hub first. Bring them into the church’s copy about once a month.',
+    { id: 'sync', group: 'care', title: 'Get the latest Church & Trellis', mods: ['about'], since: '0.1', every: 30,
+      what: 'New features arrive on the main Church & Trellis first. Bring them into the church’s copy about once a month.',
       how: function (c) {
         return ol([(c.repo ? open(c.repo, 'Open the church’s copy') : 'Open the church’s copy on GitHub') + ' (signed in as the church).',
           'Click ' + ui('Sync fork') + ' → ' + ui('Update branch') + '. Done – the website updates within a few minutes.',
-          'If Church Hub says the rules changed, publish them again: ' + '<button type="button" class="copy rules" data-rules="1">Copy the rules</button> ' + (c.projectId ? open(c.fb('firestore/databases/-default-/security/rules'), 'Open the rules page') : '') + ' → paste → ' + ui('Publish') + '.']);
+          'If Church & Trellis says the rules changed, publish them again: ' + '<button type="button" class="copy rules" data-rules="1">Copy the rules</button> ' + (c.projectId ? open(c.fb('firestore/databases/-default-/security/rules'), 'Open the rules page') : '') + ' → paste → ' + ui('Publish') + '.']);
       } },
     { id: 'backup', group: 'care', title: 'Check the church’s accounts', mods: [], since: '0.1', every: 180,
       what: 'Twice a year: can the second owner still get in, and are the passwords and backup codes still in the safe?',
@@ -483,7 +483,7 @@ var SetupKit = (function () {
     me: 'Each member’s own page – covered by Church Partners.',
     import: 'Covered by Bring people across from Elvanto.'
   };
-  /** Not in Church Hub yet – shown so the church knows what is coming. Move an item to GROW when it is built. */
+  /** Not in Church & Trellis yet – shown so the church knows what is coming. Move an item to GROW when it is built. */
   var COMING = [
     { title: 'Set up in about a minute', what: 'One address for every church, and a setup that makes the database for you – no Firebase or GitHub screens.' },
     { title: 'The Android app for every church', what: 'Today the Android app is for one church; soon any church can use it.' },

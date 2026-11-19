@@ -1,5 +1,5 @@
 /*
- * Church Hub – tests for firestore.rules, run against Google's Firestore emulator (made-up people only).
+ * Church & Trellis – tests for firestore.rules, run against Google's Firestore emulator (made-up people only).
  * They run automatically on GitHub after every push (.github/workflows/tests.yml).
  *
  * To run on a computer with Java 21 and Node 22:

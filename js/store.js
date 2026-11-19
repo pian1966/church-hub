@@ -1,5 +1,5 @@
 /*
- * Church Hub – data layer. All data goes through Store; modules never touch the browser storage or Firebase directly.
+ * Church & Trellis – data layer. All data goes through Store; modules never touch the browser storage or Firebase directly.
  * Reads come from an in-memory copy (fast, synchronous); writes update the copy at once and are saved in the background.
  *
  * Two modes, same interface:
@@ -22,13 +22,13 @@ var Store = (function () {
     'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
-  /** "View as": an Administrator looking at Church Hub as another role would see it. Nothing is saved while it is on. */
-  var previewRole = '', previewCare = '', PREVIEW_MSG = 'You’re only viewing Church Hub as another role – nothing is saved. Switch back to Administrator to make changes.';
+  /** "View as": an Administrator looking at Church & Trellis as another role would see it. Nothing is saved while it is on. */
+  var previewRole = '', previewCare = '', PREVIEW_MSG = 'You’re only viewing Church & Trellis as another role – nothing is saved. Switch back to Administrator to make changes.';
   function previewing() { if (!previewRole) return false; tell(PREVIEW_MSG); return true; }
   function tell(msg) { errorListeners.forEach(function (fn) { try { fn(msg); } catch (x) { console.error(x); } }); }
-  /** No internet (live mode): Church Hub shows the copy kept on this device and is view-only – nothing can be changed,
+  /** No internet (live mode): Church & Trellis shows the copy kept on this device and is view-only – nothing can be changed,
    *  so nobody's change waits on a phone and later overwrites someone else's. The demo keeps working as normal. */
-  var OFFLINE_MSG = 'You’re offline – Church Hub is view-only until you’re back online.', toldOffline = 0;
+  var OFFLINE_MSG = 'You’re offline – Church & Trellis is view-only until you’re back online.', toldOffline = 0;
   function offline() { return LIVE && typeof navigator !== 'undefined' && navigator.onLine === false; }
   /** Saving isn't possible now (viewing as another role, or offline): says why, at most every few seconds for offline. */
   function blocked() {
@@ -410,7 +410,7 @@ var Store = (function () {
     }
 
     /* ---------- Ask in your own words, with AI: Gemini through the church's Firebase project (docs/AI-SEARCH-SETUP.md) ----------
-     * Firebase AI Logic only answers apps that prove they are Church Hub (App Check, with a reCAPTCHA key in firebase-config.js).
+     * Firebase AI Logic only answers apps that prove they are Church & Trellis (App Check, with a reCAPTCHA key in firebase-config.js).
      * The App Check library is loaded the first time someone asks, not before. js/ask-ai.js decides what is sent. */
     var appCheckOn = null;
     function appCheck() {
@@ -450,7 +450,7 @@ var Store = (function () {
     }
 
     /* ---------- the copy kept on this device, for when there is no internet ---------- */
-    /** Firestore keeps what this person may see on the device (IndexedDB), so Church Hub opens and shows it offline.
+    /** Firestore keeps what this person may see on the device (IndexedDB), so Church & Trellis opens and shows it offline.
      *  It is wiped when they sign out, and before someone else signs in on the same device (docs/POPIA.md, Data on devices). */
     function openDb() {
       fs = fb.firestore();
@@ -460,7 +460,7 @@ var Store = (function () {
       try { localStorage.removeItem(OWNER_KEY); } catch (x) {}
       if (!fs || !fs.clearPersistence) return Promise.resolve();
       var old = fs;
-      // Another Church Hub tab still open keeps the copy in use: it is wiped at the next sign-in instead (OWNER_KEY)
+      // Another Church & Trellis tab still open keeps the copy in use: it is wiped at the next sign-in instead (OWNER_KEY)
       return old.terminate().then(function () { return old.clearPersistence(); }).catch(function (e) { console.warn('Couldn’t wipe the offline copy yet', e && e.code); })
         .then(function () { openDb(); });
     }
@@ -476,7 +476,7 @@ var Store = (function () {
       onState = stateFn;
       onState({ stage: 'loading' });
       loadSdk(function (e) {
-        if (e) return onState({ stage: 'error', message: 'Church Hub couldn’t connect. Check your internet connection and refresh the page.' });
+        if (e) return onState({ stage: 'error', message: 'Church & Trellis couldn’t connect. Check your internet connection and refresh the page.' });
         fb = window.firebase;
         if (!fb.apps.length) fb.initializeApp(cfg);
         auth = fb.auth(); openDb();
@@ -563,7 +563,7 @@ var Store = (function () {
         }
         var r = snap.data();
         session = { email: email, role: r.role, personId: r.personId || '', langs: r.langs || [], can: r.can || [], standInFrom: r.standInFrom || 0, standInTo: r.standInTo || 0, household: [] };
-        // One sign-in shared by several people (one email address): they choose who is using Church Hub (remembered on this device)
+        // One sign-in shared by several people (one email address): they choose who is using Church & Trellis (remembered on this device)
         if (session.personId && (r.also || []).length) {
           var ppl = r.people || {};
           session.household = [r.personId].concat(r.also).map(function (pid) {
@@ -583,8 +583,8 @@ var Store = (function () {
         subscribe();
       }).catch(function (e) {
         onState(e && e.code === 'permission-denied' ? { stage: 'noAccess', email: email } : { stage: 'error', message: offlineNow() ?
-          'You’re offline, and this device has no copy of Church Hub yet. Connect to the internet once, then it will open offline too.' :
-          'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
+          'You’re offline, and this device has no copy of Church & Trellis yet. Connect to the internet once, then it will open offline too.' :
+          'Church & Trellis couldn’t load. Check your internet connection and refresh the page.' });
       });
     }
 
@@ -674,7 +674,7 @@ var Store = (function () {
         return drop.then(function () { throw e && /^(pin|codes)\//.test(e.code || '') ? e : fail('codes/error'); });
       });
     }
-    /** After the PIN is chosen (and a church number shown): open Church Hub as that member. */
+    /** After the PIN is chosen (and a church number shown): open Church & Trellis as that member. */
     function begin() { claiming = false; if (auth.currentUser) startSession(auth.currentUser); }
     /** "No, that isn't me" (or the code didn't work): nothing is linked, and the anonymous sign-in is dropped. */
     function cancelCode() {
@@ -715,8 +715,8 @@ var Store = (function () {
         subscribe();
       }).catch(function (e) {
         if (e && e.code === 'permission-denied') { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut', message: 'unlinked' }); }); }
-        onState({ stage: 'error', message: offlineNow() ? 'You’re offline, and this device has no copy of Church Hub yet. Connect to the internet once, then it will open offline too.' :
-          'Church Hub couldn’t load. Check your internet connection and refresh the page.' });
+        onState({ stage: 'error', message: offlineNow() ? 'You’re offline, and this device has no copy of Church & Trellis yet. Connect to the internet once, then it will open offline too.' :
+          'Church & Trellis couldn’t load. Check your internet connection and refresh the page.' });
       });
     }
     /** Signed in with a number and PIN? Resolves to that number ('c…' for a church number), or '' for an email sign-in. */
@@ -765,7 +765,7 @@ var Store = (function () {
       }).catch(function (e) { console.error('sign-in codes', e && e.code); });
     }
 
-    /** Someone sharing the sign-in chose who they are (or switched): load Church Hub as that person. */
+    /** Someone sharing the sign-in chose who they are (or switched): load Church & Trellis as that person. */
     function usePerson(h) {
       session.role = h.role; session.personId = h.personId; session.langs = h.langs; session.can = h.can;
       try { localStorage.setItem(WHO_KEY + session.email, h.personId); } catch (x) {}
@@ -1516,7 +1516,7 @@ var Store = (function () {
       set('people/' + pid, person);
       set('details/' + pid, { keyDates: [], familyRole: 'adult' });
       set('roles/' + session.email, { role: 'admin', personId: pid, name: info.firstName + ' ' + info.lastName });
-      var e = { at: now(), who: info.firstName + ' ' + info.lastName, action: info.churchName ? 'Set up Church Hub' : 'Created own person record', target: 'settings', byEmail: session.email, ts: fb.firestore.FieldValue.serverTimestamp() };
+      var e = { at: now(), who: info.firstName + ' ' + info.lastName, action: info.churchName ? 'Set up Church & Trellis' : 'Created own person record', target: 'settings', byEmail: session.email, ts: fb.firestore.FieldValue.serverTimestamp() };
       batch.set(fs.collection('audit').doc(uid('au')), e);
       return batch.commit().then(function () { session.personId = pid; stop(); subscribe(); });
     }
@@ -1599,7 +1599,7 @@ var Store = (function () {
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, rosterTeam: rosterTeam, setRosterExtra: setRosterExtra, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, isRector: isRector, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
-    /** No internet (live mode only): Church Hub is view-only, showing the copy kept on this device. */
+    /** No internet (live mode only): Church & Trellis is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */
     reviewLangs: function () {
@@ -1638,7 +1638,7 @@ var Store = (function () {
       db.careShare = all('careShare').filter(function (x) { return !(x.personId === pid && x.groupId === gid); });
       if (LIVE) Live.unshare(gid, pid); save(); changed();
     },
-    /** "View as": an Administrator sees Church Hub as another role would (Pastor, Roster coordinator, Children's ministry, Member).
+    /** "View as": an Administrator sees Church & Trellis as another role would (Pastor, Roster coordinator, Children's ministry, Member).
      *  Live, only what that role may load is loaded (less, never more: not pastoral or medical notes, which Administrators may not
      *  read). Nothing can be saved meanwhile. Not remembered: signing in again or refreshing returns to Administrator. */
     preview: function (r, careGroup) {
@@ -1651,7 +1651,7 @@ var Store = (function () {
           var who = function (x, g) { return g ? 'carer of the care group ' + ((get('careGroups', g) || {}).name || g) : x; };
           if (was) audit('Stopped viewing as ' + who(was, wasCare), 'settings');
           previewRole = ''; previewCare = '';
-          if (r) audit('Started viewing Church Hub as ' + who(r, careGroup) + ' (nothing saved meanwhile)', 'settings');
+          if (r) audit('Started viewing Church & Trellis as ' + who(r, careGroup) + ' (nothing saved meanwhile)', 'settings');
           previewRole = r; previewCare = careGroup;
           if (LIVE) Live.preview(); else changed();
         }

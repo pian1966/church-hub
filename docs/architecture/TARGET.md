@@ -81,10 +81,10 @@ Progress (step ids done, the project id) is saved in `localStorage` so "Continue
 | 4 | Create database | `POST firestore.googleapis.com/v1/projects/<p>/databases?databaseId=(default)` `{locationId, type:'FIRESTORE_NATIVE'}`; poll | `locationId` from the country (section 5). **Cannot be changed later.** |
 | 5 | Publish rules | `POST firebaserules.googleapis.com/v1/projects/<p>/rulesets` with the text of `firestore.rules` (fetched from the site, `cache:'no-store'`), then create or patch release `cloud.firestore` | Reused by "Update the database rules" (section 6). |
 | 6 | Register the website | `POST firebase.googleapis.com/v1beta1/projects/<p>/webApps` `{displayName}`; poll; `GET …/webApps/<id>/config` → `apiKey`, `appId` | |
-| 7 | Switch on sign-in | `PATCH identitytoolkit.googleapis.com/admin/v2/projects/<p>/config` (`signIn.email.enabled`, `passwordRequired:false`, `signIn.anonymous.enabled` for sign-in codes (section 9), add the hub's domain to `authorizedDomains`); `POST …/defaultSupportedIdpConfigs?idpId=google.com` `{enabled, clientId: <Church Hub's shared web client id>, clientSecret}` | **Proven by 002** – two doubts: whether sign-in can be switched on by API on a free project, and whether Google sign-in accepts a shared client id. Fallbacks in `RISKS.md` R2. |
+| 7 | Switch on sign-in | `PATCH identitytoolkit.googleapis.com/admin/v2/projects/<p>/config` (`signIn.email.enabled`, `passwordRequired:false`, `signIn.anonymous.enabled` for sign-in codes (section 9), add the hub's domain to `authorizedDomains`); `POST …/defaultSupportedIdpConfigs?idpId=google.com` `{enabled, clientId: <Church & Trellis's shared web client id>, clientSecret}` | **Proven by 002** – two doubts: whether sign-in can be switched on by API on a free project, and whether Google sign-in accepts a shared client id. Fallbacks in `RISKS.md` R2. |
 | 8 | Lock the key to the website | `apikeys.googleapis.com/v2`: find the browser key, set `browserKeyRestrictions.allowedReferrers` to the hub's address and `<p>.firebaseapp.com` | Replaces FIREBASE-SETUP step 8. |
 | 9 | First Administrator and the public card | Firestore REST with the same token (owner access bypasses rules): `roles/<email lower-case> = {role:'admin'}`; `public/hub` (section 3) | Email = the Google account that ran the helper, unless they type another. |
-| 10 | Finish | save the config locally, go to `?c=<p>` | The existing "Set up Church Hub" screen takes over. |
+| 10 | Finish | save the config locally, go to `?c=<p>` | The existing "Set up Church & Trellis" screen takes over. |
 
 Members' Google sign-in on the website: use Google Identity Services with the shared client id to get an ID token,
 then `auth.signInWithCredential(GoogleAuthProvider.credential(idToken))` – the path the Android app already uses
@@ -115,7 +115,7 @@ So the app must always work against **older** rules.
 - `js/version.js` gains `RULES` (the version shipped with this website) and each module may declare
   `needsRules: n` in `Hub.register`. A module whose rules are not there yet is hidden, and `plan()`/`extras()` must
   not subscribe to its collections (otherwise every member sees "permission" errors).
-- Administrators see a banner when `RULES` is newer than the church's: **Update Church Hub's database rules** →
+- Administrators see a banner when `RULES` is newer than the church's: **Update Church & Trellis's database rules** →
   Google sign-in (as the project's owner) → step 5 → done. Others see nothing.
 - **Every change to `firestore.rules` raises `rulesVersion()`** and is written so the *previous* website still works
   against it and the *new* website still works against the previous rules. Add to `CLAUDE.md` when task 012 merges.
@@ -145,11 +145,11 @@ Google sign-in and the email link – it replaces neither. Administrators, Pasto
 using Google or the email link; a code can only ever make someone a **Member**.
 
 ### How it works for people
-- Administrator: People → a person → App access → **Give a sign-in code**. Church Hub shows a QR code, a short
+- Administrator: People → a person → App access → **Give a sign-in code**. Church & Trellis shows a QR code, a short
   code to type (8 letters and numbers, no look-alikes such as 0/O or 1/I), and **Send by WhatsApp**
   (opens WhatsApp with the link ready). **Print sign-in slips** makes a page of slips for many people at once
   (name, QR, code) – for the Sunday a church starts.
-- Member: taps the link, scans the QR, or opens Church Hub and types the code → "You're signing in as
+- Member: taps the link, scans the QR, or opens Church & Trellis and types the code → "You're signing in as
   **Thandi M.** – is that you?" → in. That phone stays signed in.
 - A code works once and for 14 days. A new phone, or a phone whose browser was cleared, needs a new code.
 - The Administrator sees each person's linked phones (date linked) and can remove one. **No access** and
@@ -221,14 +221,14 @@ when the church's rules are new enough.
 - Anyone on the internet can create an anonymous account in a church's project; without a spent code it can read
   nothing but `public/hub`, `rulesAtLeast` and (by exact id only) an invite.
 
-## 10. The Church Hub office: a record of churches, and the yearly subscription
+## 10. The Church & Trellis office: a record of churches, and the yearly subscription
 
-Decided 11 Nov 2026 by the owner: Church Hub keeps a small central record of the churches that use it (for billing),
+Decided 11 Nov 2026 by the owner: Church & Trellis keeps a small central record of the churches that use it (for billing),
 and continued use depends on a yearly subscription. This is the **only** central data; it never includes anything
 about a church's people.
 
 ### 10.1 What is kept, and where
-A second, tiny Firebase project owned by Church Hub's own Google account (task 001) – "the office". Free plan.
+A second, tiny Firebase project owned by Church & Trellis's own Google account (task 001) – "the office". Free plan.
 
 ```
 churches/{projectId}  = { name, country, ownerEmail,        // the Google account that set the church up
@@ -243,7 +243,7 @@ Office rules: a signed-in, verified Google user may create `churches/{projectId}
 Owner emails (a short list in the rules) read everything and write `grants`. `licences`: `get` for anyone, no
 `list`. `payments`: nobody but the robot (which uses a service account and so bypasses rules).
 
-The church is told, at setup, in one sentence: "Church Hub keeps your church's name, country and this email address
+The church is told, at setup, in one sentence: "Church & Trellis keeps your church's name, country and this email address
 to send your yearly reminder and receipt. Nothing about your people ever leaves your church's own Google account."
 
 ### 10.2 Registering (and proving the church is yours)
@@ -262,7 +262,7 @@ The website carries the matching **public** key(s) (`js/licence.js`, an array so
 the signature with the browser's built-in WebCrypto. Nobody without the private key can make one.
 
 - The robot writes the newest licence to the office `licences/{projectId}`.
-- An Administrator's Church Hub fetches it at most once a day (one read on the office project) and copies it into
+- An Administrator's Church & Trellis fetches it at most once a day (one read on the office project) and copies it into
   the church's own `public/hub.licence`. Everyone else reads it from their own church, as part of what they
   already load – so members never touch the office project, and it works offline.
 - `public/hub` allowed keys therefore include `reg` and `licence` (task 011 already lists them).
@@ -281,7 +281,7 @@ Never deleted, never locked out of reading or downloading: the information is th
 `Version.LICENCE_ENFORCED` (false until the owner switches it on) – while false, only the banners show and nothing
 becomes view-only. The office being unreachable never makes anything worse: the last copied licence is used.
 
-**Plain truth about enforcement:** Church Hub's code is public and each church owns its database, so this is a
+**Plain truth about enforcement:** Church & Trellis's code is public and each church owns its database, so this is a
 lock on the official website, not on the data. A technical person could run their own copy without it. That is
 accepted; it keeps honest churches honest and costs nothing to run.
 
@@ -291,15 +291,15 @@ Decided by the owner on 16 Nov 2026, replacing "one Big Mac a year". Built: `js/
 - **One cup a month, or ten a year** (two months free), at what one cup costs where the church lives, in its own
   country's money: a street-stall cup, a café coffee or a coffee-chain latte, whichever is honest for that church (changed
   16 Nov 2026 from Starbucks prices in three currencies). About R50 a month or R500 a year in South Africa.
-- **Plus an optional gift** – gift coffees in one tap, or any amount, inviting the church to think what Church Hub is worth to it.
+- **Plus an optional gift** – gift coffees in one tap, or any amount, inviting the church to think what Church & Trellis is worth to it.
 - **Pay for another church**: a church that has asked for help, or "where it's needed most".
 - **Payment holidays**: a free month, no questions asked – up to three a year on the monthly plan, one a year (the year's
   payment a month later) on the yearly plan. Nothing is ever locked for being late.
-- **Praying instead**: a church that cannot afford a coffee uses Church Hub free by promising to pray, once a month, for
-  another church Church Hub shows it (the prayer circle). Its prayer card – a photo and two prayer points, never anything
+- **Praying instead**: a church that cannot afford a coffee uses Church & Trellis free by promising to pray, once a month, for
+  another church Church & Trellis shows it (the prayer circle). Its prayer card – a photo and two prayer points, never anything
   about its people – is what other churches pray over. Churches in the Open Doors top 50 countries start "hidden" (no name,
   town, country or photo; only a wide region).
-- Payment is by bank transfer (EFT) into Church Hub's account, with the church's own reference (`Coffee.reference`); the
+- Payment is by bank transfer (EFT) into Church & Trellis's account, with the church's own reference (`Coffee.reference`); the
   church taps "We've paid", which records it in its settings. Card payments (`Coffee.PAY_URL`) wait for task 059. Until the
   office (10.1) exists, payments are not checked against the bank and nothing is enforced.
 - Still the office robot's job later: match bank payments to references, issue licences, share prayer cards between churches.

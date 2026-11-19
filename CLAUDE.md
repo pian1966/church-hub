@@ -1,4 +1,4 @@
-# Working on Church Hub – the map
+# Working on Church & Trellis – the map
 
 Plain HTML/CSS/JavaScript, no build step (`index.html`, or the GitHub Pages site). Talk to the church in plain English; the users are not technical.
 
@@ -40,7 +40,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Subscription: a coffee a month, payment holidays, gifts, paying for another church; the prayer circle and prayer cards (`homeCard` on Home) | `js/mod-support.js`, `js/coffee.js` | `js/i18n/support.js` | `tests/coffee.test.js`, `tests/app/support.js` |
 | Home: What’s new and Did you know? (tips by access level; add news to `NEWS` with its date) | `js/tips.js`, `js/app.js` (`tipsCard`, `homeTags`) | `js/i18n/tips.js` | `tests/tips.test.js`, `tests/app/records.js` |
 | Demo data | `js/sample.js` | – | |
-| Setup tool: sets up Church Hub at a new church from nothing (Google account, the church's copy on GitHub, Firebase, first sign-in, the settings before anyone joins) and keeps a come-back-later list of everything else a church can switch on, plus what's coming. English, one page outside the app | `site/setup.html` (the screens), `site/setup-kit.js` (the steps, the list, the rules) | – (English) | `tests/setup-kit.test.js`, `tests/versions.test.js` |
+| Setup tool: sets up Church & Trellis at a new church from nothing (Google account, the church's copy on GitHub, Firebase, first sign-in, the settings before anyone joins) and keeps a come-back-later list of everything else a church can switch on, plus what's coming. English, one page outside the app | `site/setup.html` (the screens), `site/setup-kit.js` (the steps, the list, the rules) | – (English) | `tests/setup-kit.test.js`, `tests/versions.test.js` |
 | Conference presentation (17 slides, speaker notes, three GIF clips; the last slide names the version it describes). The .pptx is the master copy; GitHub puts each new one into the Google Slides copy (`docs/SLIDES-AUTOPUBLISH.md`) | `docs/presentation/build.js`, `docs/presentation/capture.py`, `tools/publish-slides.mjs` | – (English) | |
 | Public website for other churches (features, languages, the coffee price and prayer circle – prices copied from `js/coffee.js`; one file, English, not part of the app or its version) | `site/index.html` | – | |
 
@@ -71,7 +71,7 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part
   that uses it (`common.js` if several parts use it), **and** in `js/lang/st.js` (Sesotho, kept up to date like the other four):
   it is large, so don't read it – find a neighbouring English line with grep and add yours next to it. `node tests/i18n.test.js`
-  fails if any of these five misses a line. **Don't** add new lines to the other 21 `js/lang/<code>.js` files: until Church Hub
+  fails if any of these five misses a line. **Don't** add new lines to the other 21 `js/lang/<code>.js` files: until Church & Trellis
   is released to other churches they are translated in one go (`docs/RELEASE.md`); meanwhile they show English, the test
   counts them, and Home reminds Administrators every 3 days. Never copy the English in as a "translation".
 - **Screen layout** (every page the same, so the app feels like one app): `page-head` (h1, one-line lead, then buttons on the
@@ -117,7 +117,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   middle number goes up, set `NEWS_FOR` to it (`node tests/versions.test.js` checks it). When merging main into a branch, keep
   both sides' news lines.
   The church can reword the brochures (About → Brochures → Edit): their edits are tied to the original wording, so a line you
-  change stops carrying their edit of it (Church Hub lists it for them) – change wording only where the feature changed.
+  change stops carrying their edit of it (Church & Trellis lists it for them) – change wording only where the feature changed.
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.
   GitHub Copilot reads `.github/copilot-instructions.md` (also pointing here, with the rules it has missed): keep it in step.
   Work on your own branch from the latest `main`; on a conflict in `js/version.js` / `index.html`, take the higher version.

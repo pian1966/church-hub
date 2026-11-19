@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: Leave – cover rules and blocked days, and the stand-in approver.
+/* Church & Trellis – browser test, part: Leave – cover rules and blocked days, and the stand-in approver.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {

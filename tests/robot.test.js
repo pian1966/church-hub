@@ -1,4 +1,4 @@
-// Run: node tests/robot.test.js – the Elvanto robot's side that talks to Church Hub (sign-in, work list, reporting),
+// Run: node tests/robot.test.js – the Elvanto robot's side that talks to Church & Trellis (sign-in, work list, reporting),
 // against stand-in Google servers. The Elvanto browser steps are Leave Manager's robot's and are skipped (FAKE_ELVANTO=1).
 const http = require('http'), { execFile } = require('child_process'), path = require('path'), fs = require('fs'), os = require('os');
 let fails = 0;
@@ -80,9 +80,9 @@ srv.listen(0, '127.0.0.1', async () => {
     ok(calls.every(c => c.referer === 'https://pian1966.github.io/church-hub/'), 'says it comes from the church’s website (the key only works from there)');
     ok(DB['robotStatus/elvanto'] && DB['robotStatus/elvanto'].data.lastCheck, 'records that it is alive');
     reset(false); r = await runRobot('check');
-    ok(/jobs=0/.test(r.out), 'nothing to do while switched off in Church Hub');
+    ok(/jobs=0/.test(r.out), 'nothing to do while switched off in Church & Trellis');
     r = await runRobot('check', { ROBOT_PASSWORD: 'wrong' });
-    ok(r.err && /couldn’t sign in to Church Hub/.test(r.stdout), 'a wrong password is reported plainly');
+    ok(r.err && /couldn’t sign in to Church & Trellis/.test(r.stdout), 'a wrong password is reported plainly');
 
     console.log('Doing the work and reporting back');
     reset(true); r = await runRobot('run');
@@ -95,7 +95,7 @@ srv.listen(0, '127.0.0.1', async () => {
 
     console.log('Reading the list every night');
     reset(true); r = await runRobot('read', { FAKE_ROWS: JSON.stringify([['Anna Example', '3 Nov 2026', '5 Nov 2026', 'Hospital']]), TODAY: '2026-10-29' });
-    ok(!DB['elvantoFound/unavailable'] && /switched off/.test(r.stdout), 'does nothing until “Read Elvanto’s unavailable dates” is ticked in Church Hub');
+    ok(!DB['elvantoFound/unavailable'] && /switched off/.test(r.stdout), 'does nothing until “Read Elvanto’s unavailable dates” is ticked in Church & Trellis');
     DB['settings/church'].data.elvanto.read = true;
     r = await runRobot('read', { FAKE_ROWS: JSON.stringify([['Anna Example', '3 Nov 2026', '5 Nov 2026', 'Hospital']]), TODAY: '2026-10-29' });
     const F = (DB['elvantoFound/unavailable'] || {}).data || {};

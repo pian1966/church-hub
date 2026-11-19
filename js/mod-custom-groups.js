@@ -1,4 +1,4 @@
-/* Church Hub – the built-in Staff list and Administrator-managed custom groups, shown under Groups. */
+/* Church & Trellis – the built-in Staff list and Administrator-managed custom groups, shown under Groups. */
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn, G = CustomGroups;

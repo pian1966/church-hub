@@ -22,7 +22,7 @@ Status: planned (19 Nov 2026), nothing built yet. Asked for by the church on 19 
   overspends and underspends** highlighted.
 
 (Compared: ChurchHUB.AI at getchurchhub.com, a different product, offers a "Budget Analyzer" that turns spreadsheets into
-plain-language insights for boards. Its website doesn't show more than that. Church Hub does the same job inside the app, with
+plain-language insights for boards. Its website doesn't show more than that. Church & Trellis does the same job inside the app, with
 the church's own figures and no extra subscription.)
 
 ## Who sees what
@@ -41,7 +41,7 @@ the church's own figures and no extra subscription.)
 ## 1. The year's budget
 - **Financial year** chosen in Settings (Christ Church Howick: **May–April**; any starting month) – shared with the Archive
   folders' financial-year option on the roadmap.
-- **Import the budget from the spreadsheet** the Treasurer already uses (Excel or CSV, read with `js/xlsx-lite.js`): Church Hub
+- **Import the budget from the spreadsheet** the Treasurer already uses (Excel or CSV, read with `js/xlsx-lite.js`): Church & Trellis
   shows the columns and asks which is the line name, the account number (if any) and the amount(s). Or type it in.
 - Lines are grouped as **Income** (giving, collections, hall hire, interest…) and **Expenses** (staff costs, ministry, buildings,
   diocesan assessment, missions…), with sub-groups the Treasurer chooses.
@@ -52,7 +52,7 @@ the church's own figures and no extra subscription.)
 
 ## 2. Monthly management reports (about 10 a year)
 - The Treasurer taps **Add this month's figures** and uploads the management accounts spreadsheet (actual for the month and
-  year to date). Church Hub matches each row to a budget line by account number or name, and **remembers the matching** so
+  year to date). Church & Trellis matches each row to a budget line by account number or name, and **remembers the matching** so
   next month it is automatic; anything new or unmatched is asked about once.
 - **Skipped months are fine**: a report can cover two months (e.g. December–January); year-to-date figures keep everything
   right, and the dashboard says which month the figures run to.

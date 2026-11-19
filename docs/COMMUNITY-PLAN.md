@@ -55,7 +55,7 @@ its own organisers, e.g. the youth leader for a youth camp):
 - **I'll be there** → choose who in the household is coming → answer the questions → done, with *Add to my calendar*
   (an .ics file – works on every phone, no Google needed) and *I can't come after all*.
 - **Home**: a small "Coming up" card with the next one or two events people can sign up for.
-- **Guests without Church Hub** (later step): a sign-up link the Office can share on WhatsApp or the website – name, cellphone,
+- **Guests without Church & Trellis** (later step): a sign-up link the Office can share on WhatsApp or the website – name, cellphone,
   email and consent only, kept until 30 days after the event. Needs a careful rules review (writing without signing in).
 
 **Build order**: 1.1 events and the Events page (no sign-up) → 1.2 sign-up, places, waiting list, questions, Who's coming,
@@ -125,7 +125,7 @@ the seller with the item attached).
 **Marketplace rules**: the Administrator writes or uploads the rules (a default is supplied: no weapons, alcohol,
 medicines, animals for breeding, business advertising beyond a member's own skills, nothing illegal); posters tick that they
 accept them. Safety tips on every listing (meet at church after a service, don't pay before seeing the item). No payments go
-through Church Hub, and the church is not a party to any sale.
+through Church & Trellis, and the church is not a party to any sale.
 
 **Keepers**: may be the same people as the board's keepers or others (Settings). They see the photos before approving.
 
@@ -137,7 +137,7 @@ listings, mark sold, expiry and renew → 3.3 To lend, reports.
 ## 4. Midweek Groups online: this week's meeting links (inside `js/mod-life.js`)
 
 Christ Church Howick live-streams its Wednesday night Bible study and each week sends the **Google Meet link** and the link
-to a **Google Doc of the notes** on WhatsApp. This brings that into Church Hub.
+to a **Google Doc of the notes** on WhatsApp. This brings that into Church & Trellis.
 
 **For the group's leader** (or a helper the leader names in the group):
 - On the group's page, **Post this week's links**: the meeting link (Google Meet, Zoom, Teams or YouTube Live), the notes
@@ -156,7 +156,7 @@ to a **Google Doc of the notes** on WhatsApp. This brings that into Church Hub.
 - On the group's page, **Past studies**: each week's topic and notes link, so anyone who missed a week can catch up.
 
 **Safety**: only http(s) links; known meeting and document sites show their name and icon; any other link shows the address
-plainly with a gentle "check this link" note. Church Hub stores the links only – nobody needs to connect a Google account.
+plainly with a gentle "check this link" note. Church & Trellis stores the links only – nobody needs to connect a Google account.
 
 **Build order**: 4.1 Post this week's links, the message, Home card on the day, Past studies → 4.2 open to the whole church →
 4.3 Send on the day (with push notifications, Phase 5).

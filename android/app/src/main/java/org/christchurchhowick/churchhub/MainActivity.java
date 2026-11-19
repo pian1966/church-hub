@@ -49,9 +49,9 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 /**
- * Church Hub for Android.
+ * Church & Trellis for Android.
  *
- * The app shows the Church Hub website full screen (members land on "Me": their details, days away and serving),
+ * The app shows the Church & Trellis website full screen (members land on "Me": their details, days away and serving),
  * so everyone always has the newest version without updating the app. Like the Leave Manager app, it adds what a
  * phone app should do: Android's own "Sign in with Google", the back button, links opening in the right app,
  * choosing files (and taking a photo with the camera), saving downloads, and an offline screen. Church data is never
@@ -125,7 +125,7 @@ public class MainActivity extends Activity {
     @Override
     @SuppressWarnings("deprecation")
     public void onBackPressed() {
-        // Let Church Hub close an open window first; then go back a page; then leave the app.
+        // Let Church & Trellis close an open window first; then go back a page; then leave the app.
         web.evaluateJavascript("(window.churchHubBack && window.churchHubBack()) ? 'y' : 'n'", result -> {
             if (result != null && result.contains("y")) return;
             if (web.canGoBack()) web.goBack();
@@ -133,10 +133,10 @@ public class MainActivity extends Activity {
         });
     }
 
-    /** Before the back button closes the app: "Leave Church Hub?", in the language chosen in Church Hub (js/app.js). */
+    /** Before the back button closes the app: "Leave Church & Trellis?", in the language chosen in Church & Trellis (js/app.js). */
     private void confirmLeave() {
         web.evaluateJavascript("window.churchHubLeaveText ? window.churchHubLeaveText() : ''", result -> {
-            String[] t = { "Leave Church Hub?", "Are you sure you want to close Church Hub?", "Stay", "Close Church Hub" };
+            String[] t = { "Leave Church & Trellis?", "Are you sure you want to close Church & Trellis?", "Stay", "Close Church & Trellis" };
             try {
                 Object v = new JSONTokener(result).nextValue();
                 if (v instanceof String && !((String) v).isEmpty()) {
@@ -312,7 +312,7 @@ public class MainActivity extends Activity {
             }
         }
         if (data != null) {   // not text: nothing to put in the share menu
-            Toast.makeText(this, "This phone couldn't save " + safe + ". Please open Church Hub in a browser to download it.", Toast.LENGTH_LONG).show();
+            Toast.makeText(this, "This phone couldn't save " + safe + ". Please open Church & Trellis in a browser to download it.", Toast.LENGTH_LONG).show();
             return;
         }
         // Older phones, or saving didn't work: the share menu, with the file's text
@@ -325,7 +325,7 @@ public class MainActivity extends Activity {
         catch (ActivityNotFoundException e) { Toast.makeText(this, "No app on this phone can save that.", Toast.LENGTH_LONG).show(); }
     }
 
-    /** Functions the Church Hub page can call, as window.ChurchHubApp.*. */
+    /** Functions the Church & Trellis page can call, as window.ChurchHubApp.*. */
     private class Bridge {
         @JavascriptInterface
         public String version() { return BuildConfig.VERSION_NAME; }
@@ -406,7 +406,7 @@ public class MainActivity extends Activity {
         Intent talk = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         talk.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL, RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
         talk.putExtra(RecognizerIntent.EXTRA_LANGUAGE, lang == null || lang.trim().isEmpty() ? "en-ZA" : lang.trim());
-        talk.putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask Church Hub");
+        talk.putExtra(RecognizerIntent.EXTRA_PROMPT, "Ask Church & Trellis");
         talk.putExtra(RecognizerIntent.EXTRA_MAX_RESULTS, 1);
         try { startActivityForResult(talk, LISTEN); }
         catch (ActivityNotFoundException e) {
@@ -433,6 +433,6 @@ public class MainActivity extends Activity {
             "@media (prefers-color-scheme:dark){body{background:#1D1B19;color:#E9E2DB}}" +
             "h1{font-size:1.3rem}p{color:#645B53;max-width:280px;margin:8px auto 20px}" +
             "button{background:#E8590C;color:#fff;border:0;border-radius:10px;padding:12px 22px;font-size:1rem}</style></head>" +
-            "<body><div><h1>You're offline</h1><p>Church Hub needs the internet to show your details and the rosters. Check your Wi-Fi or mobile data.</p>" +
+            "<body><div><h1>You're offline</h1><p>Church & Trellis needs the internet to show your details and the rosters. Check your Wi-Fi or mobile data.</p>" +
             "<button onclick='ChurchHubApp.retry()'>Try again</button></div></body></html>";
 }

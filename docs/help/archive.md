@@ -53,11 +53,11 @@ Each category is a folder, and folders can hold other folders. A folder can sort
 by each document's date – **Council minutes** does this from the start – so a meeting held in March 2026 lands in
 **2026 → March** by itself. The path at the top shows which folder you're in; tap any part of it to go back up.
 
-## Why does Church Hub ask about the date before saving?
+## Why does Church & Trellis ask about the date before saving?
 For: Administrators, Council members
 Also asked: The date looks wrong. Check before saving.
 
-Before saving, Church Hub tells you what it is about to do (for example, which folder the record will go into). If the
+Before saving, Church & Trellis tells you what it is about to do (for example, which folder the record will go into). If the
 date looks wrong – in the future, a typing slip, a different month from the one in the title or file name, another date
 for the same meeting, or the same title again – it asks, and one tap uses the date it suggests. Once you trust it, you can
 switch the summary off on your device under **More**.
@@ -89,7 +89,7 @@ paste its link into the record – remember that whoever can see the record also
 ## Is opening a record written down?
 For: Everyone
 
-Yes. Each time someone downloads a record that isn't for everyone, or opens its link, Church Hub writes it in the audit
+Yes. Each time someone downloads a record that isn't for everyone, or opens its link, Church & Trellis writes it in the audit
 log (Privacy → Audit log): who, which record and when.
 
 ## Can I download a record on my phone?

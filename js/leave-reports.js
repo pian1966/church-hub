@@ -1,4 +1,4 @@
-/* Church Hub – Leave: the leave managers' Dashboard (as in Leave Manager), printable leave reports and the payroll file.
+/* Church & Trellis – Leave: the leave managers' Dashboard (as in Leave Manager), printable leave reports and the payroll file.
  * Builds HTML and files only; mod-leave.js shows them. Uses LeaveCore for balances, cover rules and "use it or lose it". */
 var LeaveReports = (function () {
   'use strict';

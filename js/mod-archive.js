@@ -1,11 +1,11 @@
-/* Church Hub – Archive: the church's records in one safe place – Council minutes, architectural plans, staff contracts,
- * annual appraisals and anything else. Each record has a date, a category, a file (kept in Church Hub, up to 15 MB) or a
+/* Church & Trellis – Archive: the church's records in one safe place – Council minutes, architectural plans, staff contracts,
+ * annual appraisals and anything else. Each record has a date, a category, a file (kept in Church & Trellis, up to 15 MB) or a
  * link to where it is kept, and says who can see it. Off until an Administrator switches it on (Settings → Apps).
  * The Archive is part of the Library and is available only to Administrators and Council members; within that group,
  * each record keeps its existing visibility rule (everyone / a leadership group / Administrators and Pastors / private).
  * Administrators add records and see them all.
  * Records sit in folders (the church's categories; a folder may be inside another). A folder that sorts by date shows
- * Year → Month folders made from each record's date. Before saving, Church Hub says where the record will go and asks
+ * Year → Month folders made from each record's date. Before saving, Church & Trellis says where the record will go and asks
  * about a date that looks wrong; the summary can be switched off on a device (Store.pref 'archiveAsk'), the date
  * questions can't. Administrators make and change folders.
  * Opening a record that isn't for everyone is written in the audit log. Rules: js/archive.js (tested), firestore.rules (archive). */
@@ -205,7 +205,7 @@
   /** Hand a file (base64) to the browser or the Android app to save. */
   function saveAs(name, type, b64) {
     if (window.ChurchHubApp && typeof window.ChurchHubApp.saveFileBase64 === 'function') { window.ChurchHubApp.saveFileBase64(name, type || 'application/octet-stream', b64); return; }
-    if (window.ChurchHubApp) { H.toast(T('Please update the Church Hub app to download files, or use a browser.'), true); return; }
+    if (window.ChurchHubApp) { H.toast(T('Please update the Church & Trellis app to download files, or use a browser.'), true); return; }
     var bin = atob(b64), bytes = new Uint8Array(bin.length); for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
     var a = document.createElement('a');
     a.href = URL.createObjectURL(new Blob([bytes], { type: type || 'application/octet-stream' }));
@@ -312,7 +312,7 @@
     }[w.code];
     return '<div class="note warn ar-warn" data-code="' + w.code + '"><span>' + esc(text) + '</span>' + (fix ? ' ' + fix : '') + '</div>';
   }
-  /** Shows, in the same dialog, what Church Hub is about to do – and any question about the date – before saving. */
+  /** Shows, in the same dialog, what Church & Trellis is about to do – and any question about the date – before saving. */
   function review(rec, old, file, warns) {
     var box = document.getElementById('ar-check'), formEl = document.getElementById('ar-form'), ft = document.getElementById('ar-foot'); if (!box) return;
     var c = A.cat(S.settings(), rec.cat), to = place(rec.cat, rec.date), from = old ? place(old.cat, old.date) : '', lines = [];
@@ -321,12 +321,12 @@
     if (c && c.byDate && !sameMonth.length) lines.push(T('It is the first document for {month}, so that folder will appear by itself.', { month: monthName(+rec.date.slice(5, 7)) + ' ' + rec.date.slice(0, 4) }));
     lines.push(T('Who can see it: {who}.', { who: accessText(rec) }));
     if (rec.shownTo) lines.push(T('{name} can see it too.', { name: rec.aboutName }));
-    if (file) lines.push(T('Keep {file} ({size}) in Church Hub.', { file: file.name, size: A.sizeText(file.size) }));
+    if (file) lines.push(T('Keep {file} ({size}) in Church & Trellis.', { file: file.name, size: A.sizeText(file.size) }));
     else if (rec.link && (!old || old.link !== rec.link)) lines.push(T('Keep a link to where it is kept.'));
     if (rec.displayOnApplication && !(old && old.displayOnApplication)) lines.push(T('Show it on the Membership Application Form, where everyone who signs in can read it.'));
     box.innerHTML = (warns.length ? '<h3 class="ar-check-h">' + T('Please check the date') + '</h3>' + warns.map(function (w) { return warning(w, rec); }).join('') : '') +
-      '<h3 class="ar-check-h">' + T('Here’s what Church Hub is about to do') + '</h3><ul class="ar-plan">' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' +
-      (asks() ? '<label class="set-row ar-noask"><span class="set-l"><b>' + T('Don’t show this summary again') + '</b><small>' + T('Save straight away from now on. Church Hub will still ask when a date looks wrong. You can switch it back on under More.') + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="ar-noask" aria-label="' + esc(T('Don’t show this summary again')) + '"></span></label>' : '');
+      '<h3 class="ar-check-h">' + T('Here’s what Church & Trellis is about to do') + '</h3><ul class="ar-plan">' + lines.map(function (l) { return '<li>' + esc(l) + '</li>'; }).join('') + '</ul>' +
+      (asks() ? '<label class="set-row ar-noask"><span class="set-l"><b>' + T('Don’t show this summary again') + '</b><small>' + T('Save straight away from now on. Church & Trellis will still ask when a date looks wrong. You can switch it back on under More.') + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="ar-noask" aria-label="' + esc(T('Don’t show this summary again')) + '"></span></label>' : '');
     formEl.hidden = true; box.hidden = false; keyNote(true);
     ft.innerHTML = '<button class="btn" data-act="archive:back">' + T('Go back and change it') + '</button><button class="btn primary save" data-act="archive:save" data-id="' + esc(old ? old.id : '') + '" data-sure="1">' + T(warns.length ? 'Save anyway' : 'Save') + '</button>';
     var first = ft.querySelector('.save'); if (first) first.focus();
@@ -347,7 +347,7 @@
       '<label class="field req">' + T('Name') + '<input id="af-name" maxlength="60" value="' + esc(c.name ? T(c.name) : '') + '"></label>' +
       '<label class="field">' + T('Inside') + '<select id="af-parent"><option value="">' + T('At the top of the Archives') + '</option>' + tree(c.id || null).map(function (x) { return opt(x.c.id, x.path, c.parent); }).join('') + '</select></label>' +
       '<label class="field">' + T('Who can see new documents in it') + '<select id="af-access">' + A.ACCESS.map(function (a) { return opt(a[0], T(a[1]), c.access); }).join('') + '</select><small>' + T('Each document can still be changed. Documents already in the folder keep who can see them.') + '</small></label>' +
-      '<label class="set-row"><span class="set-l"><b>' + T('Sort by year and month') + '</b><small>' + T('Church Hub puts each document into a year and a month by its date – for meetings held every month. Nobody has to make the year and month folders.') + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="af-bydate"' + (c.byDate ? ' checked' : '') + ' aria-label="' + esc(T('Sort by year and month')) + '"></span></label>' +
+      '<label class="set-row"><span class="set-l"><b>' + T('Sort by year and month') + '</b><small>' + T('Church & Trellis puts each document into a year and a month by its date – for meetings held every month. Nobody has to make the year and month folders.') + '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="af-bydate"' + (c.byDate ? ' checked' : '') + ' aria-label="' + esc(T('Sort by year and month')) + '"></span></label>' +
       '<p id="af-err" class="note bad" hidden></p></div>' +
       '<div class="dlg-foot">' + (isNew ? '' : '<button class="btn ar-del" data-act="archive:folderdel" data-id="' + esc(c.id) + '"' + (used || inner ? ' disabled title="' + esc(T('Move or delete what is in it first.')) + '"' : '') + '>' + H.icon(H.ICON.trash, 16) + T('Delete') + '</button><span class="grow"></span>') +
       '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="archive:foldersave" data-id="' + esc(c.id) + '">' + T('Save') + '</button></div>', isNew ? T('New folder') : T('Change this folder'));
@@ -479,7 +479,7 @@
         var again = document.querySelector('#ar-foot .save'); if (again) { again.dataset.review = '1'; again.click(); }   // show the summary again with the new date
       },
       back: function () { back(); },
-      asks: function () { S.pref('archiveAsk', asks() ? 'off' : 'on'); H.render(); H.toast(asks() ? T('Church Hub will show a summary before saving') : T('Church Hub will save straight away (it still asks about a date that looks wrong)')); },
+      asks: function () { S.pref('archiveAsk', asks() ? 'off' : 'on'); H.render(); H.toast(asks() ? T('Church & Trellis will show a summary before saving') : T('Church & Trellis will save straight away (it still asks about a date that looks wrong)')); },
       newfolder: function () { if (folderAdmin()) folderDialog(null, state.folder); },
       folder: function (el) { var f = A.cat(S.settings(), el.dataset.id); if (f && folderAdmin()) folderDialog(f); },
       foldersave: function (el) {

@@ -13,6 +13,6 @@
 kind and end date, last payment → filter (ending soon, ended, never paid) → **Give a free year** (reason required)
 → **Download as a spreadsheet**. Totals at the top.
 
-**Acceptance:** works against the fake office; a non-owner sees "This page is for Church Hub's owner".
+**Acceptance:** works against the fake office; a non-owner sees "This page is for Church & Trellis's owner".
 
 **Do not:** show or fetch anything from a church's own project.

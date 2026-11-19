@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: approved leave sent to Elvanto, and a staff member’s leave.
+/* Church & Trellis – browser test, part: approved leave sent to Elvanto, and a staff member’s leave.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {

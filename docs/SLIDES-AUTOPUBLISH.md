@@ -1,8 +1,8 @@
 # Keeping the Google Slides copy of the presentation up to date
 
 The conference presentation is built in this repository (`docs/presentation/church-hub-presentation.pptx`), and it's
-updated whenever Church Hub changes in a way the slides talk about. The last slide says which version it describes
-(for example "Slides for Church Hub 0.92.0 · 18 Nov 2026"), so you can compare any copy with **About** in the app.
+updated whenever Church & Trellis changes in a way the slides talk about. The last slide says which version it describes
+(for example "Slides for Church & Trellis 0.92.0 · 18 Nov 2026"), so you can compare any copy with **About** in the app.
 
 After this one-time setup, GitHub also puts every new version into **your Google Slides file**, so its link always shows
 the latest slides. You can see each run under **Actions → Publish the slides**.
@@ -22,34 +22,34 @@ special account for this – choose one of these:
 
 - **The Google account that owns the presentation** (the one you're signed in with when you open it in Google Slides).
   This is the simplest: nothing new to create.
-- **A new Google account just for Church Hub**, if you'd rather keep it apart from your own. Create one free at
+- **A new Google account just for Church & Trellis**, if you'd rather keep it apart from your own. Create one free at
   **https://accounts.google.com/signup** (a new Gmail address), then share the presentation with it as an Editor – or
   move the presentation into it – before you start.
 
   **Choosing a name for a new account.** Try these on the sign-up page and take the first that is free (Google says if
   a name is taken):
-  - `churchhub.app@gmail.com` – matches the web address Church Hub may use
+  - `churchhub.app@gmail.com` – matches the web address Church & Trellis may use
   - `churchhub.office@gmail.com`, `churchhub.team@gmail.com` or `hello.churchhub@gmail.com`
   - if those are taken: `churchhubsoftware@gmail.com`, `getchurchhub@gmail.com` or `churchhub.za@gmail.com`
 
   Avoid a person's or a church's name, so the account can be handed on one day, and words like "robot" or "slides" –
   the account will probably hold more than the presentation (the website, subscriptions). Gmail ignores dots, so
-  `church.hub` and `churchhub` are the same address. Set the account's name to **Church Hub**, so emails show as from
-  Church Hub. Once Church Hub has its own web address, a matching email (such as `hello@churchhub.app`) can be added in
+  `church.hub` and `churchhub` are the same address. Set the account's name to **Church & Trellis**, so emails show as from
+  Church & Trellis. Once Church & Trellis has its own web address, a matching email (such as `hello@churchhub.app`) can be added in
   front of this account.
 
-Don't use a church's own Google account (the one a church makes when it sets up Church Hub): that account belongs to the
-church, while the presentation belongs to Church Hub. If you start with one account and change your mind later, just
+Don't use a church's own Google account (the one a church makes when it sets up Church & Trellis): that account belongs to the
+church, while the presentation belongs to Church & Trellis. If you start with one account and change your mind later, just
 repeat these steps with the other one.
 
 ## Step 1 – A Google Cloud project with Google Drive switched on
 1. Open **https://console.cloud.google.com/projectcreate**, signed in with the account you chose above. Accept the terms if asked.
-2. Project name: `Church Hub slides`. Click **Create** and wait a few seconds.
+2. Project name: `Church & Trellis slides`. Click **Create** and wait a few seconds.
 3. Open **https://console.cloud.google.com/apis/library/drive.googleapis.com** – check the project at the top says
-   **Church Hub slides** – and click **Enable**.
+   **Church & Trellis slides** – and click **Enable**.
 
 ## Step 2 – Create the robot
-1. Open **https://console.cloud.google.com/iam-admin/serviceaccounts** (project **Church Hub slides**).
+1. Open **https://console.cloud.google.com/iam-admin/serviceaccounts** (project **Church & Trellis slides**).
 2. Click **+ Create service account**.
 3. Name: `Slides robot`. Click **Create and continue**.
 4. Don't give it any roles: click **Continue**, then **Done**.

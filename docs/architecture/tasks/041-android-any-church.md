@@ -6,7 +6,7 @@
 
 **Needs:** 010, 040.
 
-**Files:** `android/` (a second product flavour: new `applicationId`, name "Church Hub", `APP_URL` = the new
+**Files:** `android/` (a second product flavour: new `applicationId`, name "Church & Trellis", `APP_URL` = the new
 address with no church), `.github/workflows/build-android.yml`, `docs/ANDROID.md`.
 
 **Steps:** flavours `howick` (unchanged id – existing installs keep updating) and `hub`. In `hub`, links of the

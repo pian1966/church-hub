@@ -1,5 +1,5 @@
 /*
- * A stand-in for the Firebase library, used only by tests/app.test.js to run Church Hub's live mode in a browser
+ * A stand-in for the Firebase library, used only by tests/app.test.js to run Church & Trellis's live mode in a browser
  * without the internet. It keeps documents in memory and refuses every read and write that firestore.rules refuses,
  * using a copy of those rules written in JavaScript (POLICY below). Keep POLICY in step with firestore.rules;
  * the real rules are tested separately by tests/rules.test.mjs against Google's emulator.
@@ -476,7 +476,7 @@
     });
   }
 
-  /* ---------- the firebase global (compat API, only what Church Hub uses) ---------- */
+  /* ---------- the firebase global (compat API, only what Church & Trellis uses) ---------- */
   var fs = { doc: function (p) { return new DocRef(p); }, collection: function (c) { return new Query(c); },
     runTransaction: function (fn) {
       var ops = [], tx = {

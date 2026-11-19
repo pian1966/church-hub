@@ -1,4 +1,4 @@
-/* Church Hub – Me: a person's own details, days away and where they'd like to serve.
+/* Church & Trellis – Me: a person's own details, days away and where they'd like to serve.
  * The members' part of the Android app (and of the website on a phone). It reuses the People and Rosters dialogs
  * (edit my details, consent, add away dates, accept a turn), so those rules stay in one place.
  *
@@ -89,8 +89,8 @@
     html += window.LifeUI ? LifeUI.mePanel() : '';   // their life groups (Bible studies, midweek groups)
     // Signing out and the language are in the menu (left on a computer, ☰ on a phone); here only notes about this device
     var device = (I18n.isDraft() ? '<p class="hint">' + T('This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.') + '</p>' : '') +
-      (window.ChurchHubApp ? '<p class="hint">' + T('Church Hub app, version {v}', { v: esc(appVersion()) }) + '</p>' :
-        /Android/i.test(navigator.userAgent) ? '<p class="hint"><a href="' + APK + '" target="_blank" rel="noopener">' + T('Get the Church Hub app for Android') + '</a></p>' : '');
+      (window.ChurchHubApp ? '<p class="hint">' + T('Church & Trellis app, version {v}', { v: esc(appVersion()) }) + '</p>' :
+        /Android/i.test(navigator.userAgent) ? '<p class="hint"><a href="' + APK + '" target="_blank" rel="noopener">' + T('Get the Church & Trellis app for Android') + '</a></p>' : '');
     if (device) html += '<section class="panel"><h2>' + T('This phone or computer') + '</h2>' + device + '</section>';
     return html + '</div>';
   }
@@ -107,7 +107,7 @@
       return '<div class="item"><span class="grow"><b>' + esc(T(PP ? PP.purposeName(pur) : pur)) + '</b> ' + (PP ? PP.purposeTip(pur) : '') +
         (no && PP ? '<small class="muted">' + esc(PP.purposeWithout(pur)) + '</small>' : '') + '</span>' +
         (c ? (c.given ? '<span class="tag ok">' + T('Yes') + '</span>' : '<span class="tag grey">' + T('No') + '</span>') : '<span class="tag grey">' + T('Not asked yet') + '</span>') + '</div>';
-    }).join('') + '</div><p class="hint" style="margin-top:12px">' + T('If you untick something, Church Hub tells you what it means before anything is saved.') + '</p>';
+    }).join('') + '</div><p class="hint" style="margin-top:12px">' + T('If you untick something, Church & Trellis tells you what it means before anything is saved.') + '</p>';
     return html;
   }
   function appVersion() { try { return window.ChurchHubApp.version(); } catch (e) { return ''; } }

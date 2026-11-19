@@ -1,11 +1,11 @@
 /*
- * Church Hub – households and the adults responsible for children (as in Planning Center and ChurchSuite, combined).
+ * Church & Trellis – households and the adults responsible for children (as in Planning Center and ChurchSuite, combined).
  * Pure functions, tested with node: tests/households.test.js.
  *
  *  - A household (the `families` collection) is where people live. A person's main household is `familyId`; a child of
  *    separated parents can also be in other households (`householdIds`). Households are named after their adults.
  *  - Responsible adults are links on the child (`guardians` collection), independent of households:
- *      { childId, adultId | name + phone (someone not in Church Hub), relationship, canConsent, primary, mayCollect, confirmed }
+ *      { childId, adultId | name + phone (someone not in Church & Trellis), relationship, canConsent, primary, mayCollect, confirmed }
  *    canConsent: may give consent for the child (POPIA s35: a "competent person" – a parent or legal guardian).
  *    primary: gets messages about the child.  mayCollect: may sign the child out.  confirmed: checked by a person
  *    (links made automatically from households or Elvanto start unconfirmed).

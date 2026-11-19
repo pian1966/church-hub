@@ -1,4 +1,4 @@
-/* Church Hub – Rosters: matrix, auto-fill (together/apart, away, fair turns), teams, serving groups, away dates, my serving. */
+/* Church & Trellis – Rosters: matrix, auto-fill (together/apart, away, fair turns), teams, serving groups, away dates, my serving. */
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, R = RosterCore, T = I18n.t, TN = I18n.tn;
@@ -15,10 +15,10 @@
     var s = S.get('services', a.serviceId), po = pos(a.positionId);
     return s && po ? po.name + ' · ' + H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name : '';
   }
-  /** Who can open Church Hub to read it (the others are reached by email, WhatsApp or SMS as before). */
+  /** Who can open Church & Trellis to read it (the others are reached by email, WhatsApp or SMS as before). */
   function signsIn(pid) { return Msg.inApp([pid], S.list('people')).length > 0; }
   /** Send each person one message about their turns: note 'ask' (just put on the roster) or 'remind' (still waiting
-   *  for their reply). Returns { sent, missed } – missed: people who can't sign in to Church Hub yet. */
+   *  for their reply). Returns { sent, missed } – missed: people who can't sign in to Church & Trellis yet. */
   function tell(list, note) {
     var me = H.user(), out = { sent: 0, missed: 0 };
     if (!me || !H.isOn('messages')) return out;
@@ -42,7 +42,7 @@
   function untell(a) {
     var me = H.user(); if (!me || !H.isOn('messages') || !a || a.status === 'declined' || a.personId === me.id) return '';
     var asks = S.find('messages', function (m) { return m.kind === 'roster' && (m.roster === 'ask' || m.roster === 'remind') && (m.turns || []).indexOf(a.id) >= 0 && (m.to || []).indexOf(a.personId) >= 0; });
-    if (!asks.length) return '';   // never told (they can't sign in to Church Hub, or the message was already deleted)
+    if (!asks.length) return '';   // never told (they can't sign in to Church & Trellis, or the message was already deleted)
     var mgr = H.can('*') || H.can('people.edit') || me.appRole === 'pastor', seen = false;
     asks.forEach(function (m) {
       if ((m.readBy || []).indexOf(a.personId) >= 0) { seen = true; return; }
@@ -63,7 +63,7 @@
   /** "3 people told in Messages" (and how many can't sign in yet). */
   function toldText(r) {
     var t = r.sent ? TN('{n} person told in Messages', '{n} people told in Messages', r.sent) : '';
-    if (r.missed) t += (t ? ' · ' : '') + TN('{n} can’t sign in to Church Hub yet – reach them by email, WhatsApp or SMS', '{n} can’t sign in to Church Hub yet – reach them by email, WhatsApp or SMS', r.missed);
+    if (r.missed) t += (t ? ' · ' : '') + TN('{n} can’t sign in to Church & Trellis yet – reach them by email, WhatsApp or SMS', '{n} can’t sign in to Church & Trellis yet – reach them by email, WhatsApp or SMS', r.missed);
     return t;
   }
   /** Someone can't make a turn: the roster team hears about it in Messages (Administrators, Roster coordinators and the

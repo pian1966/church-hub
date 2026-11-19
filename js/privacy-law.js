@@ -1,5 +1,5 @@
 /*
- * Church Hub – the privacy law the Privacy pages follow, from the church's country (Settings → Country).
+ * Church & Trellis – the privacy law the Privacy pages follow, from the church's country (Settings → Country).
  * South Africa: POPIA. EU and EEA: GDPR. UK: UK GDPR. Others as listed; any other country gets general wording.
  * Each law: short name, full name, what the responsible person is called, the regulator, whether the church may have to
  * register, what to do after a breach, how many days to answer a request, and the clause that gives a copy of one's data.

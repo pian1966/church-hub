@@ -1,30 +1,30 @@
 /*
- * Church Hub – the subscription: "buy us a coffee". Pure (no screen, no Store), tested with node: tests/coffee.test.js.
+ * Church & Trellis – the subscription: "buy us a coffee". Pure (no screen, no Store), tested with node: tests/coffee.test.js.
  * Used by js/mod-support.js (the Subscription page and the Home prayer card).
  *
- * The idea (decided Nov 2026 by Church Hub's owner, replacing the Big Mac a year in docs/architecture/TARGET.md 10.5):
+ * The idea (decided Nov 2026 by Church & Trellis's owner, replacing the Big Mac a year in docs/architecture/TARGET.md 10.5):
  *   - one café coffee a month, or ten a year when paid yearly (two months free);
- *   - plus, if the church wishes, a gift of whatever it thinks Church Hub is worth to it;
+ *   - plus, if the church wishes, a gift of whatever it thinks Church & Trellis is worth to it;
  *   - a church may pay for another, under-resourced church;
- *   - a church that cannot afford even one coffee a month uses Church Hub for free by promising to pray, every week,
- *     for another church that Church Hub shows it. Every church is welcome; nobody is turned away for being poor.
+ *   - a church that cannot afford even one coffee a month uses Church & Trellis for free by promising to pray, every week,
+ *     for another church that Church & Trellis shows it. Every church is welcome; nobody is turned away for being poor.
  *   - every church keeps a prayer card (a photo and two prayer points) and checks it once a month; every week each church
  *     is shown another church's card on everyone's Home (cardForWeek). A paying church may turn that off; a praying one may not.
  *
  * Prices: one cup of what the church would buy where it lives, in its own country's money – a street-stall cup, a café
  * coffee or a coffee-chain latte, as is honest for that church. EXAMPLES has the prices we've looked up (docs/PRICES.md);
  * everywhere else the church types its own.
- * Church Hub never takes card details: the Pay button opens the payment company's own page (PAY_URL, empty until the
+ * Church & Trellis never takes card details: the Pay button opens the payment company's own page (PAY_URL, empty until the
  * owner chooses one – docs/architecture/tasks/059-billing-decisions.md).
  */
 var Coffee = (function () {
   'use strict';
   var AS_OF = '2026-11';
   var PAY_URL = '';   // a card-payment company's page, once chosen (task 059). Until then churches pay by bank transfer (BANK).
-  // Church Hub's own bank account (given by the owner, 16 Nov 2026) for bank transfers (EFT). The account number is meant
+  // Church & Trellis's own bank account (given by the owner, 16 Nov 2026) for bank transfers (EFT). The account number is meant
   // to be shown to paying churches; nothing here can take money out of it. holder: the name on the account as on the
   // owner's ID – Capitec needs it on payments from other countries; while empty, overseas churches are asked to write first.
-  var BANK = { bank: 'Capitec Bank', account: '2625071881', branch: '470010', swift: 'CABLZAJJ', type: 'Savings', beneficiary: 'Church Hub', holder: '' };
+  var BANK = { bank: 'Capitec Bank', account: '2625071881', branch: '470010', swift: 'CABLZAJJ', type: 'Savings', beneficiary: 'Church & Trellis', holder: '' };
   var YEAR_COFFEES = 10, MONTH_COFFEES = 1;
 
   // Each country's own money (ISO 4217), as people write it. whole: no cents shown. Countries not here: US dollars.
@@ -137,7 +137,7 @@ var Coffee = (function () {
   /* ---------- the subscription over time: what is due, payment holidays, payments ----------
    * sub (settings.support): { plan: 'month'|'year'|'pray', startedAt, paidUntil: 'yyyy-mm-dd',
    *   payments: [{ at, kind: 'month'|'year'|'gift', amount, currency, gift, forOther }], holidays: [{ at, from, until, plan, reason }] }
-   * Payments are recorded when the church says it has paid (a bank transfer, with its reference); Church Hub's office
+   * Payments are recorded when the church says it has paid (a bank transfer, with its reference); Church & Trellis's office
    * matches them to the bank statement later (TARGET.md section 10). Nothing is ever locked for being late. */
   var WARN_DAYS = { month: 7, year: 30 }, LATE_DAYS = 30;
   // A payment holiday: a free month, no questions asked. Monthly: up to 3 in any 12 months. Yearly: one, which moves the

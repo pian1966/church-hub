@@ -1,4 +1,4 @@
-/* Church Hub – Translations: anyone signed in may suggest better wording in their language; the people who check that
+/* Church & Trellis – Translations: anyone signed in may suggest better wording in their language; the people who check that
  * language (chosen by an Administrator) and Administrators decide. Approved wording is kept in words/{language} and used at
  * once (I18n.override), before the wording built into js/i18n.js and js/lang/<code>.js.
  * Suggestions: wordIdeas = { lang, en, text, note, personId, name, status waiting|used|declined, reply, reviewedBy, reviewedAt }.
@@ -28,7 +28,7 @@
   function useApproved() { langs().forEach(function (l) { var d = wordsDoc(l[0]); I18n.override(l[0], d ? d.words : {}); }); }
 
   function head() {
-    return '<div class="page-head"><div><h1>' + T('Translations') + '</h1><p class="lead">' + T('Help Church Hub read well in your language: suggest better wording for any text, and someone who speaks it checks it.') + '</p></div></div>';
+    return '<div class="page-head"><div><h1>' + T('Translations') + '</h1><p class="lead">' + T('Help Church & Trellis read well in your language: suggest better wording for any text, and someone who speaks it checks it.') + '</p></div></div>';
   }
   function tabs(a) {
     var t = [['', T('Suggest')]], n = waiting().length;
@@ -97,7 +97,7 @@
       '<p class="small muted" style="margin:0">' + T('English') + '</p><p style="margin-top:2px">' + esc(en) + '</p>' +
       '<p class="small muted" style="margin:0">' + T('Now') + '</p><p style="margin-top:2px">' + esc(now || T('Not translated yet – shows in English')) + '</p>' +
       '<label class="field req">' + T('Your wording') + '<textarea id="w-text" rows="3" maxlength="3000" data-own-words>' + esc(now) + '</textarea>' +
-      (parts.length ? '<small>' + T('Keep the parts in curly brackets exactly as they are: {parts}', { parts: esc(parts.join(' ')) }) + ' ' + T('Church Hub puts a name, number or date there.') + '</small>' : '') +
+      (parts.length ? '<small>' + T('Keep the parts in curly brackets exactly as they are: {parts}', { parts: esc(parts.join(' ')) }) + ' ' + T('Church & Trellis puts a name, number or date there.') + '</small>' : '') +
       (/<b>/.test(en) ? '<small>' + T('Keep the bold marks exactly as in the English.') + '</small>' : '') + '</label>' +
       '<label class="field">' + T('Anything the checker should know') + '<input id="w-note" maxlength="500" placeholder="' + esc(T('e.g. this is the word we use at church')) + '"></label>' +
       H.reqKey() + '<p id="w-err" class="note bad" hidden></p></div>' +
@@ -140,7 +140,7 @@
           '<button class="btn small" data-act="words:edit" data-id="' + esc(w.id) + '">' + T('Change it first') + '</button>' +
           '<button class="btn small" data-act="words:decline" data-id="' + esc(w.id) + '">' + T('Not this time') + '</button></div></div>';
       }).join('') : '<p class="muted">' + T('Nothing waiting. Thank you!') + '</p>') + '</section>';
-    html += '<section class="panel"><h2>' + T('Changed wording in use') + '</h2><p class="hint" style="margin-top:0">' + T('These show instead of the wording that came with Church Hub. Download them so they can also be built into the app.') + '</p>' +
+    html += '<section class="panel"><h2>' + T('Changed wording in use') + '</h2><p class="hint" style="margin-top:0">' + T('These show instead of the wording that came with Church & Trellis. Download them so they can also be built into the app.') + '</p>' +
       (used.length ? used.map(function (c) {
         var w = wordsDoc(c).words, all = english();
         return '<details><summary><b>' + esc(langName(c)) + '</b> · ' + TN('{n} text', '{n} texts', Object.keys(w).length) + '</summary><div class="list">' + Object.keys(w).sort().map(function (en) {
@@ -169,12 +169,12 @@
     var people = S.find('people', canSignIn).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
     var checkers = S.find('people', function (p) { return (p.reviewLangs || []).length; });
     return head() + tabs('checkers') + '<section class="panel"><h2>' + T('Who checks each language') + '</h2>' +
-      '<p class="hint" style="margin-top:0">' + T('Choose someone who speaks the language well. They see the suggestions for it and decide which wording to use. They can already sign in to Church Hub.') + '</p>' +
+      '<p class="hint" style="margin-top:0">' + T('Choose someone who speaks the language well. They see the suggestions for it and decide which wording to use. They can already sign in to Church & Trellis.') + '</p>' +
       '<div class="row" style="flex-wrap:wrap;gap:12px;align-items:flex-end"><label class="field req" style="margin:0">' + T('Person') + '<select id="w-who"><option value="">' + T('Choose…') + '</option>' +
       people.map(function (p) { return '<option value="' + esc(p.id) + '">' + esc(H.name(p)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field req" style="margin:0">' + T('Language') + langSelect('w-l2', chosen()) + '</label>' +
       '<button class="btn primary" data-act="words:addchecker">' + H.icon(H.ICON.plus, 18) + T('Add') + '</button></div>' +
-      (S.isLive() ? '<p class="hint">' + T('They see the suggestions the next time they open Church Hub (or refresh the page).') + '</p>' : '') + '</section>' +
+      (S.isLive() ? '<p class="hint">' + T('They see the suggestions the next time they open Church & Trellis (or refresh the page).') + '</p>' : '') + '</section>' +
       '<section class="panel">' + (checkers.length ? '<div class="list">' + langs().map(function (l) {
         var who = checkers.filter(function (p) { return p.reviewLangs.indexOf(l[0]) >= 0; });
         if (!who.length) return '';

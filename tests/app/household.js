@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: one sign-in shared by several people (a couple with one email address).
+/* Church & Trellis – browser test, part: one sign-in shared by several people (a couple with one email address).
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -29,9 +29,9 @@ module.exports = async function (ctx) {
   shared['people/p11'].email = JASON; shared['people/p11'].appRole = 'rosters'; delete shared['roles/' + PRIYA];
   shared['roles/' + JASON] = r;
   s = await session(JASON, shared);
-  check((await s.page.textContent('.signin-card')).includes('Who is using Church Hub?'), 'signing in with the shared address asks who is using Church Hub');
+  check((await s.page.textContent('.signin-card')).includes('Who is using Church & Trellis?'), 'signing in with the shared address asks who is using Church & Trellis');
   await s.page.click('[data-act="hub:choose"][data-id="p11"]'); await s.page.waitForSelector('.app'); await s.settle();
-  check((await s.page.textContent('.who')).includes('Priya Naidoo') && !!(await s.page.$('[data-act="hub:switchwho"]')), 'Priya chose herself: Church Hub opens as her, with a Switch person button');
+  check((await s.page.textContent('.who')).includes('Priya Naidoo') && !!(await s.page.$('[data-act="hub:switchwho"]')), 'Priya chose herself: Church & Trellis opens as her, with a Switch person button');
   await s.go('rosters'); check(!(await s.text()).includes('No access'), 'as Priya: the rosters (her role)');
   await s.page.click('[data-act="hub:switchwho"]'); await s.page.click('#modal [data-act="hub:choose"][data-id="p10"]');
   await s.page.waitForFunction(() => (document.querySelector('.who') || {}).textContent && document.querySelector('.who').textContent.includes('Jason Naidoo'), null, { timeout: 8000 }); await s.settle();

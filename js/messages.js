@@ -1,5 +1,5 @@
 /*
- * Church Hub – messages inside the app (Messages page; js/mod-messages.js). A message goes to everyone in one audience:
+ * Church & Trellis – messages inside the app (Messages page; js/mod-messages.js). A message goes to everyone in one audience:
  *   care     a care group (its carers and members)               – sent by Administrators, Pastors or the group's carers
  *   group    a message group, e.g. Worship team leaders (msgGroups) – sent by Administrators, Pastors or the group's leaders
  *   leaders  a leadership group, e.g. the Church Council (leaderBodies) – sent by Administrators, Pastors or anyone on it
@@ -159,7 +159,7 @@ var Msg = (function () {
   }
 
   /**
-   * A note to the church office (Administrators and Pastors) that Church Hub sends for someone, e.g. about: 'partnerApp' –
+   * A note to the church office (Administrators and Pastors) that Church & Trellis sends for someone, e.g. about: 'partnerApp' –
    * they applied to become a Church Partner. Sent even by attendees who may not write to the Office themselves.
    */
   function officeNotice(about, from, title, body) {
@@ -220,7 +220,7 @@ var Msg = (function () {
     var to = uniq(m.to || []).filter(function (x) { return x !== m.fromId; }), r = m.readBy || [];
     return { read: to.filter(function (x) { return r.indexOf(x) >= 0; }), unread: to.filter(function (x) { return r.indexOf(x) < 0; }) };
   }
-  /** Of the people a message goes to, those who can open it: they can sign in to Church Hub (Administrators and Pastors know). */
+  /** Of the people a message goes to, those who can open it: they can sign in to Church & Trellis (Administrators and Pastors know). */
   function inApp(ids, people) {
     return (ids || []).filter(function (id) { var p = byId(people, id); return !!p && !!p.email && !!p.appRole && p.appRole !== 'none'; });
   }

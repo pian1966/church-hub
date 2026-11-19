@@ -1,4 +1,4 @@
-/* Church Hub – words for a person's page (js/people/profile.js).
+/* Church & Trellis – words for a person's page (js/people/profile.js).
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
@@ -78,7 +78,7 @@ I18n.rows([
     ['Volunteering: {name}', 'Vrywillige diens: {name}', 'Ukuzinikela: {name}', 'Ukuzinikela: {name}'],
     ['Which services they serve at, and in which departments and positions. Rostering uses this.', 'By watter dienste hulle dien, en in watter departemente en posisies. Die rooster gebruik dit.', 'Izinkonzo abakhonza kuzo, nasemiphakathini nasezikhundleni ziphi. Uhlelo lusebenzisa lokhu.', 'Iinkonzo abakhonza kuzo, nakumasebe nezikhundla ziphi. Uludwe lusebenzisa oku.'],
     ['Who is responsible for {name}, who gives consent, who hears from the church, and who may collect {name}.', 'Wie verantwoordelik is vir {name}, wie toestemming gee, wie van die kerk hoor, en wie {name} mag afhaal.', 'Ngubani onakekela u-{name}, ngubani ovumayo, ngubani ozwa okuvela ebandleni, nokuthi ngubani ongalanda u-{name}.', 'Ngubani onoxanduva ngo-{name}, ngubani ovumayo, ngubani ova ngecawe, nokuba ngubani onokulanda u-{name}.'],
-    ['not in Church Hub', 'nie in Church Hub nie', 'akekho ku-Church Hub', 'akakho kwi-Church Hub'],
+    ['not in Church & Trellis', 'nie in Church & Trellis nie', 'akekho ku-Church & Trellis', 'akakho kwi-Church & Trellis'],
     ['Can give consent', 'Kan toestemming gee', 'Angavuma', 'Unokuvuma'],
     ['Primary contact', 'Hoofkontak', 'Oxhumana naye omkhulu', 'Oqhagamshelwana naye ophambili'],
     ['May collect', 'Mag afhaal', 'Angalanda', 'Unokulanda'],
@@ -105,7 +105,7 @@ I18n.rows([
     ['Another household', 'Nog ’n huishouding', 'Elinye ikhaya', 'Elinye ikhaya'],
     ['Downloaded everything held about {name}', 'Alles oor {name} afgelaai', 'Kulandwe konke okugcinwe ngo-{name}', 'Kukhutshelwe konke okugcinwe ngo-{name}'],
     ['Taken off rosters, teams, leave and sign-in', 'Van roosters, spanne, verlof en aanmelding afgehaal', 'Basusiwe ohlwini lokusebenza, emathimbeni, ekhefini nasekungeneni', 'Basusiwe kuludwe lomsebenzi, emaqeleni, ekhefini nasekungeneni'],
-    ['Choose the person, or type the name of someone not in Church Hub.', 'Kies die persoon, of tik die naam van iemand wat nie in Church Hub is nie.', 'Khetha umuntu, noma ubhale igama lomuntu ongekho ku-Church Hub.', 'Khetha umntu, okanye ubhale igama lomntu ongekho kwi-Church Hub.'],
+    ['Choose the person, or type the name of someone not in Church & Trellis.', 'Kies die persoon, of tik die naam van iemand wat nie in Church & Trellis is nie.', 'Khetha umuntu, noma ubhale igama lomuntu ongekho ku-Church & Trellis.', 'Khetha umntu, okanye ubhale igama lomntu ongekho kwi-Church & Trellis.'],
     ['That person is already listed for this child.', 'Daardie persoon is reeds vir hierdie kind gelys.', 'Lowo muntu usevele ebhalwe kule ngane.', 'Loo mntu sele ebhalwe kulo mntwana.'],
     ['Type their name, or choose them from the list.', 'Tik hul naam, of kies hulle uit die lys.', 'Bhala igama lakhe, noma umkhethe ohlwini.', 'Bhala igama lakhe, okanye umkhethe kuluhlu.'],
     ['Saved – Children’s ministry will see an alert', 'Gestoor – kinderbediening sal ’n waarskuwing sien', 'Kulondoloziwe – inkonzo yezingane izobona isexwayiso', 'Kugcinwe – inkonzo yabantwana iza kubona isilumkiso'],
@@ -133,8 +133,8 @@ I18n.rows([
     ["Give a sign-in code", "Gee ’n aanmeldkode", "Nikeza ikhodi yokungena", "Nika ikhowudi yokungena"],
     ["Give it only to {name}: whoever has the code can sign in as them.", "Gee dit net aan {name}: wie ook al die kode het, kan as hulle aanmeld.", "Yinike u-{name} kuphela: noma ubani onekhodi angangena njengaye.", "Yinike u-{name} kuphela: nabani na onekhowudi angangena njengaye."],
     ["Make the code", "Maak die kode", "Yenza ikhodi", "Yenza ikhowudi"],
-    ["Scan it with the phone’s camera, or open Church Hub → I have a sign-in code. Works once, until {date}.", "Skandeer dit met die foon se kamera, of maak Church Hub oop → Ek het ’n aanmeldkode. Werk een keer, tot {date}.", "Yiskena ngekhamera yefoni, noma uvule i-Church Hub → Nginayo ikhodi yokungena. Isebenza kanye, kuze kube ngu-{date}.", "Yiskena ngekhamera yefowuni, okanye uvule i-Church Hub → Ndinayo ikhowudi yokungena. Isebenza kanye, de kube ngu-{date}."],
-    ["Hello {name}, here is your sign-in for Church Hub. Tap the link on your phone (it works once, until {date}): {link}", "Hallo {name}, hier is jou aanmelding vir Church Hub. Tik op die skakel op jou foon (dit werk een keer, tot {date}): {link}", "Sawubona {name}, nansi indlela yakho yokungena ku-Church Hub. Thepha isixhumanisi efonini yakho (sisebenza kanye, kuze kube ngu-{date}): {link}", "Molo {name}, nantsi indlela yakho yokungena kwi-Church Hub. Cofa ikhonkco kwifowuni yakho (lisebenza kanye, de kube ngu-{date}): {link}"],
+    ["Scan it with the phone’s camera, or open Church & Trellis → I have a sign-in code. Works once, until {date}.", "Skandeer dit met die foon se kamera, of maak Church & Trellis oop → Ek het ’n aanmeldkode. Werk een keer, tot {date}.", "Yiskena ngekhamera yefoni, noma uvule i-Church & Trellis → Nginayo ikhodi yokungena. Isebenza kanye, kuze kube ngu-{date}.", "Yiskena ngekhamera yefowuni, okanye uvule i-Church & Trellis → Ndinayo ikhowudi yokungena. Isebenza kanye, de kube ngu-{date}."],
+    ["Hello {name}, here is your sign-in for Church & Trellis. Tap the link on your phone (it works once, until {date}): {link}", "Hallo {name}, hier is jou aanmelding vir Church & Trellis. Tik op die skakel op jou foon (dit werk een keer, tot {date}): {link}", "Sawubona {name}, nansi indlela yakho yokungena ku-Church & Trellis. Thepha isixhumanisi efonini yakho (sisebenza kanye, kuze kube ngu-{date}): {link}", "Molo {name}, nantsi indlela yakho yokungena kwi-Church & Trellis. Cofa ikhonkco kwifowuni yakho (lisebenza kanye, de kube ngu-{date}): {link}"],
     ["Sign-in code for {name}", "Aanmeldkode vir {name}", "Ikhodi yokungena ka-{name}", "Ikhowudi yokungena ka-{name}"],
     ["Once you close this, the code can’t be shown again – give a new one if it’s lost.", "Sodra jy dit toemaak, kan die kode nie weer gewys word nie – gee ’n nuwe een as dit verloor word.", "Uma usuvalile lokhu, ikhodi ngeke iphinde iboniswe – nikeza entsha uma ilahlekile.", "Wakuba uvalile oku, ikhowudi ayinakuphinda iboniswe – nika entsha ukuba ilahlekile."],
     ["Send by WhatsApp", "Stuur per WhatsApp", "Thumela nge-WhatsApp", "Thumela nge-WhatsApp"],

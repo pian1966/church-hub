@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: signing in: strangers, the sign-in screen, email links, the Android app, iPhone, downloads, first-time setup.
+/* Church & Trellis – browser test, part: signing in: strangers, the sign-in screen, email links, the Android app, iPhone, downloads, first-time setup.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -22,11 +22,11 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('.app')), 'Google sign-in works (email in any capitals)');
   // Going Back past the first screen asks first
   await s.page.goBack().catch(() => {}); await s.page.waitForSelector('[data-act="hub:stay"]', { timeout: 3000 }).catch(() => {});
-  check((await s.page.textContent('#modal').catch(() => '')).includes('Leave Church Hub?'), 'Back past the first screen asks “Leave Church Hub?”');
+  check((await s.page.textContent('#modal').catch(() => '')).includes('Leave Church & Trellis?'), 'Back past the first screen asks “Leave Church & Trellis?”');
   await s.page.click('[data-act="hub:stay"]'); await s.settle();
-  check(!!(await s.page.$('.app')) && !(await s.page.$('#modal .overlay')), '“Stay” keeps them in Church Hub');
+  check(!!(await s.page.$('.app')) && !(await s.page.$('#modal .overlay')), '“Stay” keeps them in Church & Trellis');
   await s.page.click('.side [data-act="hub:signout"]');
-  check((await s.page.textContent('#modal')).includes('Sign out of Church Hub?') && !!(await s.page.$('.app')), 'Sign out asks first');
+  check((await s.page.textContent('#modal')).includes('Sign out of Church & Trellis?') && !!(await s.page.$('.app')), 'Sign out asks first');
   await s.page.click('[data-act="hub:signoutyes"]'); await s.settle();
   check((await s.page.textContent('.signin-card')).includes('Sign in with Google'), 'signing out returns to the sign-in screen');
   await finish(s);
@@ -53,7 +53,7 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="hub:google"]'); await s.page.waitForSelector('.app', { timeout: 5000 }).catch(() => {});
   check(await s.page.evaluate(() => window.__appGoogle === 'web-client.apps.googleusercontent.com' && window.__fake.credentials[0] === 'id-token-for-web-client.apps.googleusercontent.com'), 'Sign in with Google uses Android’s account picker and gives Firebase its ID token');
   check(!!(await s.page.$('.app')) && (await s.page.evaluate(() => location.hash)) === '#/me', 'members open on Me in the app');
-  t = await s.text(); check(t.includes('Church Hub app, version 1.0.7'), 'Me shows the app version');
+  t = await s.text(); check(t.includes('Church & Trellis app, version 1.0.7'), 'Me shows the app version');
   await s.page.click('[data-act="people:edit"]'); check(await s.page.evaluate(() => window.churchHubBack() === true && !document.querySelector('#modal .overlay')), 'the back button closes an open window first');
   check(await s.page.evaluate(() => window.churchHubBack() === false), '…then lets the app go back a page');
   await finish(s);
@@ -62,13 +62,13 @@ module.exports = async function (ctx) {
   const IPHONE = 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1';
   s = await session('tim.jacobs@example.com', seedDocs(), { ua: IPHONE });
   await s.go('home'); t = await s.text();
-  check(t.includes('Church Hub on your iPhone') && t.includes('Add to Home Screen') && !t.includes('Add a photo of yourself'), 'iPhone in Safari: how to put Church Hub on the home screen (no photo prompt in a browser)');
+  check(t.includes('Church & Trellis on your iPhone') && t.includes('Add to Home Screen') && !t.includes('Add a photo of yourself'), 'iPhone in Safari: how to put Church & Trellis on the home screen (no photo prompt in a browser)');
   await s.page.click('[data-act="hub:later"][data-k="iphone"]'); await s.go('me'); await s.go('home');
-  check(!(await s.text()).includes('Church Hub on your iPhone'), '“Not now” puts it away');
+  check(!(await s.text()).includes('Church & Trellis on your iPhone'), '“Not now” puts it away');
   await finish(s);
   s = await session('tim.jacobs@example.com', seedDocs(), { ua: IPHONE, standalone: true });
   await s.go('me'); t = await s.text();
-  check(t.includes('Add a photo of yourself') && !t.includes('Church Hub on your iPhone'), 'home-screen app: asks for a photo of yourself on My details');
+  check(t.includes('Add a photo of yourself') && !t.includes('Church & Trellis on your iPhone'), 'home-screen app: asks for a photo of yourself on My details');
   await s.page.setInputFiles('#selfie-file', PNG); await s.page.waitForSelector('#crop-ok'); await s.page.click('#crop-ok'); await s.settle(); docs = await s.docsNow();
   check(docs['photos/p14'] && docs['people/p14'].photo && !(await s.text()).includes('Add a photo of yourself'), 'they take or choose one, choose the face, and the prompt goes');
   await finish(s);
@@ -85,7 +85,7 @@ module.exports = async function (ctx) {
   await finish(s);
   s = await session('linda.pillay@example.com', seedDocs(), { app: {} });
   await s.go('people/search'); await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.click('[data-act="people:advcsv"]'); await s.page.waitForTimeout(100);
-  check((await s.page.textContent('#toast')).includes('update the Church Hub app'), 'an older app version is asked to update instead of nothing happening');
+  check((await s.page.textContent('#toast')).includes('update the Church & Trellis app'), 'an older app version is asked to update instead of nothing happening');
   await finish(s);
 
   s = await session('', seedDocs(), { app: {} });
@@ -103,7 +103,7 @@ module.exports = async function (ctx) {
   /* ---------- First Administrator on an empty database ---------- */
   console.log('First-time setup:');
   s = await session('first.admin@example.com', seedDocs({ empty: true }));
-  check((await s.page.textContent('.signin-card')).includes('Set up Church Hub'), 'first Administrator is asked to set up the church');
+  check((await s.page.textContent('.signin-card')).includes('Set up Church & Trellis'), 'first Administrator is asked to set up the church');
   await s.page.fill('#su-first', 'Test'); await s.page.fill('#su-last', 'Admin'); await s.page.click('[data-act="hub:setup"]');
   await s.page.waitForSelector('.app', { timeout: 5000 }).catch(() => {});
   docs = await s.docsNow();
@@ -172,7 +172,7 @@ module.exports = async function (ctx) {
   check((await s.page.textContent('.signin-card')).includes('isn’t right'), 'a wrong PIN is turned away');
   await s.page.fill('#si-num', '084 000 0000'); await s.page.fill('#si-pin', '480215'); await s.page.click('[data-act="hub:pinsignin"]');
   await s.page.waitForSelector('#si-err:not([hidden])', { timeout: 5000 }).catch(() => {});
-  check((await s.page.textContent('.signin-card')).includes('no Church Hub sign-in for that number'), 'a number with no PIN is told so');
+  check((await s.page.textContent('.signin-card')).includes('no Church & Trellis sign-in for that number'), 'a number with no PIN is told so');
   await s.page.fill('#si-num', '+27 82 555 0101'); await s.page.fill('#si-pin', '480215'); await s.page.click('[data-act="hub:pinsignin"]');
   await s.page.waitForSelector('.app', { timeout: 8000 }).catch(() => {}); await s.settle();
   check(!!(await s.page.$('.app')) && (await s.page.textContent('.side')).includes('Megan'), 'their number (in either form) and PIN sign them in again – as on a new phone');
@@ -203,11 +203,11 @@ module.exports = async function (ctx) {
   await s.page.evaluate(a => { window.__fake.accounts = a; }, accounts);
   await s.page.click('[data-act="hub:pinstart"]'); await s.page.fill('#si-num', '0825550101'); await s.page.fill('#si-pin', '480215'); await s.page.click('[data-act="hub:pinsignin"]');
   await s.page.waitForSelector('.signin-card .note.bad', { timeout: 5000 }).catch(() => {}); await s.page.waitForTimeout(200);
-  check((await s.page.textContent('.signin-card')).includes('switched off') && !(await s.page.$('.app')), 'the old PIN no longer opens Church Hub');
+  check((await s.page.textContent('.signin-card')).includes('switched off') && !(await s.page.$('.app')), 'the old PIN no longer opens Church & Trellis');
   await s.page.click('[data-act="hub:havecode"]'); await s.page.fill('#si-code', code2); await s.page.click('[data-act="hub:claimcode"]');
   await s.page.waitForSelector('[data-act="hub:codeyes"]', { timeout: 5000 }); await s.page.click('[data-act="hub:codeyes"]');
   await s.page.click('[data-act="hub:pinnonumber"]');
-  check((await s.page.textContent('.signin-card')).includes('church number'), '“I don’t have my own number”: Church Hub will give them a church number');
+  check((await s.page.textContent('.signin-card')).includes('church number'), '“I don’t have my own number”: Church & Trellis will give them a church number');
   await s.page.fill('#si-pin', '730518'); await s.page.fill('#si-pin2', '730518'); await s.page.click('[data-act="hub:pinset"]');
   await s.page.waitForSelector('[data-act="hub:pinbegin"]', { timeout: 8000 }).catch(() => {});
   const shown = ((await s.page.textContent('.signin-card .code-big').catch(() => '')) || '').trim();

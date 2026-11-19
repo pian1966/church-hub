@@ -1,4 +1,4 @@
-/* Church Hub – browser test, part: Advanced search → Ask in your own words (js/ask.js, js/people/search.js), typed and spoken.
+/* Church & Trellis – browser test, part: Advanced search → Ask in your own words (js/ask.js, js/people/search.js), typed and spoken.
  * One part of tests/app.test.js, which starts the browser and runs every part in turn: node tests/app.test.js */
 'use strict';
 module.exports = async function (ctx) {
@@ -89,6 +89,6 @@ module.exports = async function (ctx) {
   reply = null;
   await askA('women over 60');
   ta = await saidA();
-  check(/couldn’t be reached/.test(await a.page.textContent('#ask-said')) && ta.length === 2 && /Gender is “Female”/.test(ta[0]), 'the AI can’t be reached: Church Hub’s own rules are used, and it says so');
+  check(/couldn’t be reached/.test(await a.page.textContent('#ask-said')) && ta.length === 2 && /Gender is “Female”/.test(ta[0]), 'the AI can’t be reached: Church & Trellis’s own rules are used, and it says so');
   await finish(a);
 };

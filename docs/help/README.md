@@ -12,8 +12,8 @@ church (not for developers), in plain English, and are meant to be used two ways
 | Page | Covers |
 | --- | --- |
 | [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates |
-| [me.md](me.md) | The Me page: my details, consent, days away, my serving, offers to serve |
-| [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: teams, services, filling the roster, together/apart |
+| [me.md](me.md) | The Me page: my details, consent, days away, my serving, offers to serve, becoming a Church Partner |
+| [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, teams, services, communion, reminders, together/apart |
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |
 | [care-groups.md](care-groups.md) | Care groups for members, carers and staff |
 | [midweek-groups.md](midweek-groups.md) | Midweek groups (Bible studies, life groups) for members, leaders and staff |

@@ -8,16 +8,31 @@ are kept together, people who are away are skipped, turns are shared fairly, and
 For: Everyone
 Also asked: Confirm my duty. Say no to a roster. Reply to the roster.
 
-Open **Me → Serving** (or **Rosters → My serving**). Under your upcoming turns tap **Accept** or **Can't make it**. Turns
-waiting for your reply also show on your Home **To do** list.
+When you're put on the roster you get a message in **Messages** – tap **Accept** or **Can't make it** right there. You can
+also reply on **Me → Serving** (or **Rosters → My serving**). Turns waiting for your reply also show on your Home **To do**
+list. If you say you can't make it, the roster team (Administrators, Roster coordinators and anyone the church chose, such
+as the church secretary) gets a message so they can find someone else.
 
 ## How do I see the whole roster?
 For: Roster coordinators, Administrators
 Also asked: Who is on duty this Sunday? Show the roster.
 
-Open **Rosters**. The table shows each position down the side and the services across the top. Use **‹ Earlier** and
-**Later ›** to move between dates. Colours show **Accepted**, **Waiting for a reply**, and suggestions (dashed border).
-Members see their own turns under **My serving**.
+Open **Rosters**. The table shows each position down the side, in the order of a service (Welcome, Service Leading,
+Hospitality, Music and so on), and the services across the top in time order, each in its own colour. Use **‹ Earlier**
+and **Later ›** to move between dates, or **Go to a date** to jump straight to a day. Colours show **Accepted**, **Waiting
+for a reply**, and suggestions (dashed border). The top row (date, time, communion) stays in view as you scroll down.
+Departments and positions that aren't needed at any of the services you're looking at (e.g. Creche at 8am, or communion
+roles when there's no communion) are left out. Members see their own turns under **My serving**.
+
+## How many services can I see at once?
+For: Roster coordinators, Administrators
+Also asked: Show more Sundays. The roster is too wide. Hide the evening service.
+
+On a computer or tablet the roster opens with as many services as fit your screen (**Fits your screen**). Next to
+**Side by side:** use **−** and **+** to show from 1 to 16 services, tap **Fit my screen** to go back, or choose **1 month**
+or **1 quarter**. When the roster is wider than the screen, a slider above it (and a scroll bar below) moves along. On a
+phone you see one service at a time. To leave a service out for now, tap the
+**eye** on its heading; it moves to **Hidden for now**, where one tap brings it back (**Show all** brings them all back).
 
 ## How do I fill in the roster?
 For: Roster coordinators, Administrators
@@ -35,7 +50,27 @@ For: Roster coordinators, Administrators
 Also asked: Change who is serving. Remove someone from the roster. Mark someone as accepted.
 
 On **Rosters**, tap the slot (the position on that date). Choose the person and **Add them**, or use **Take off the
-roster**. You can also **Mark accepted** or **Mark "can't make it"** for someone who told you in person.
+roster**. To swap someone, tap their name and use **Change person**: pick someone else and the turn moves in one go. The
+new person is asked, and the first person's "You're on the roster" message is taken back if they haven't opened it (or
+they get a short "No longer needed" note). You can also **Mark accepted** or **Mark "can't make it"** for someone who told
+you in person.
+
+## Some people haven't replied. How do I remind them?
+For: Roster coordinators, Administrators
+Also asked: Chase up volunteers. Nobody answered.
+
+On **Rosters**, open **More → Remind those who haven't replied**. Church Hub says how many people it will remind; tap
+**Send reminders** and each of them gets a message in **Messages**.
+
+## How do I set which Sundays have Holy Communion?
+For: Roster coordinators, Administrators
+Also asked: Communion servers every week. Only roster communion helpers when there's communion. Christmas communion.
+
+Open **Rosters → Services**, choose the service and set which weeks of the month it has communion (every week, the 1st to
+5th Sunday, the last Sunday, or never). Then tap the **Communion positions** – the ones only needed when there is
+communion. Communion servers and providers are only asked for on those days. For a one-off change, such as Christmas or a
+fifth Sunday, tap **Communion** under that date in the roster and choose **Communion this time** or **No communion this
+time**.
 
 ## How do I set up teams and positions?
 For: Roster coordinators, Administrators
@@ -43,8 +78,13 @@ Also asked: Add a department. Add a position. Create a new ministry team.
 
 Open **Rosters → Teams**.
 - First time: **Set up the church's departments** adds the church's departments and positions in one click.
-- **New team** adds a department (e.g. *Prayer*); **Add a position** adds a position to it (e.g. *Camera*), with how many
-  people are needed per service.
+- **New team** adds a department (e.g. *Prayer*); **Add a position** adds a position to it (e.g. *Camera*). Use **−** and
+  **+** to set how many people it needs per service (e.g. 2 on the sound desk).
+- New suggested positions (such as Verger, Ushers or Recorded Music) are offered with **Add them**.
+- Move a department up or down with the **↑ ↓** arrows; the roster shows them in that order.
+- Two teams doing the same thing (e.g. Music and Worship)? On one of them, open **⋯ → Join with another team**: its
+  positions, people and turns move across, and nobody is in it twice.
+- A team with no positions can be removed with **⋯ → Delete team**.
 - Teams can't be renamed yet.
 
 ## How do I add someone to a team?

@@ -33,8 +33,10 @@ study*). Leaders can't change who leads it.
 ## How do I add or remove people from my group?
 For: Group leaders
 
-Open your group: **Add someone to the group** (type part of their name – people in the church directory), or **Take out of
-the group**.
+Open **Groups → My groups** (or your group on **Midweek groups**) and tap **Add someone to the group**. Type part of their
+name: you can add anyone in the church, including people who aren't Church Partners yet and people who aren't in the
+church directory. You only see their name, not their phone number, email or address. To take someone out, use **Take out
+of the group** (the × next to their name).
 
 ## How do I message my group?
 For: Group leaders

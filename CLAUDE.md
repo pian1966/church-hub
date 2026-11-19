@@ -11,6 +11,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 |---|---|---|---|
 | Shell: sign-in, roles, router, Home, UI helpers | `js/app.js` | `js/i18n/common.js` | `tests/app/admin.js`, `signin.js` |
 | Data layer (demo or Firestore), who may ask for what (`plan()`) | `js/store.js`, `js/firebase-config.js` | – | `tests/rules.test.mjs`, `tests/fake-firebase.js` |
+| Which church a page talks to (`?c=<projectId>`, remembered on the device; loads before `firebase-config.js`) | `js/church.js` | – | `tests/church.test.js`, `tests/app/signin.js` |
 | Offline (view only): files kept on the device, the data copy, the notice | `sw.js`, `js/store.js` (`wipe`, `blocked`), `js/app.js` (`workOffline`) | `js/i18n/common.js` | `tests/app/offline.js` |
 | People: registers the page, to-do list, upgrades, events | `js/mod-people.js` (loads last) | `js/i18n/people.js` | `tests/app/people.js` |
 | People: shared helpers (who sees what, consent, ages, couples) | `js/people/core.js` | `js/i18n/people.js` | |
@@ -64,7 +65,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`, `tips`, `coffee`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `care`, `messages`, `badges`, `leaders`, `archive`, `library`, `sesotho`, `tips`, `coffee`, `church`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part

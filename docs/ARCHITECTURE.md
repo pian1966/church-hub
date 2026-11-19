@@ -16,6 +16,7 @@ It is built in phases; each phase is usable on its own. **Read this file first i
 ```
 index.html                the single page app (no build step)
 css/hub.css               design tokens + components
+js/church.js              Church: which church this page talks to (?c=<projectId>, remembered on the device; TARGET.md section 2)
 js/firebase-config.js     the church's Firebase project (empty = demo mode)
 js/store.js               data layer: Store.get/put/remove/audit – demo (this browser) or live (Firestore)
 js/roster.js              RosterCore: the rostering engine (pure functions, unit-tested)

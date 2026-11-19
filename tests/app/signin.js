@@ -31,6 +31,13 @@ module.exports = async function (ctx) {
   check((await s.page.textContent('.signin-card')).includes('Sign in with Google'), 'signing out returns to the sign-in screen');
   await finish(s);
 
+  console.log('Which church (?c=):');
+  s = await session('', seedDocs());
+  await s.page.evaluate(() => localStorage.setItem('church_hub_church:demo-other', JSON.stringify({ apiKey: 'k', authDomain: 'localhost', projectId: 'demo-other', appId: 'x' })));
+  await s.page.goto(BASE + '?c=demo-other'); await s.page.waitForSelector('.signin-card h1');
+  check(await s.page.evaluate(() => window.CHURCH_HUB_FIREBASE.projectId === 'demo-other' && localStorage.getItem('church_hub_current') === 'demo-other'), 'a church’s own link opens that church and the device remembers it');
+  await finish(s);
+
   console.log('Email link opened in a different browser (e.g. tapped in Gmail):');
   s = await session('', seedDocs());
   await s.page.goto(BASE + '?apiKey=x&mode=signIn&oobCode=abc'); await s.page.waitForSelector('.signin-card h1'); await s.page.waitForTimeout(300);

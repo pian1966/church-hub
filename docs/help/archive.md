@@ -45,10 +45,28 @@ First set up the Council under **Leadership**, so the Archive knows who is on it
 record in **Council minutes**, with the date of the meeting. The Archive tells you which months of this year have nothing
 filed yet (it starts counting from the first minutes you file).
 
+## How are records arranged in folders?
+For: Administrators, Council members
+Also asked: Year folders. Month folders. Where did my minutes go?
+
+Each category is a folder, and folders can hold other folders. A folder can sort itself into **Year → Month** folders
+by each document's date – **Council minutes** does this from the start – so a meeting held in March 2026 lands in
+**2026 → March** by itself. The path at the top shows which folder you're in; tap any part of it to go back up.
+
+## Why does Church Hub ask about the date before saving?
+For: Administrators, Council members
+Also asked: The date looks wrong. Check before saving.
+
+Before saving, Church Hub tells you what it is about to do (for example, which folder the record will go into). If the
+date looks wrong – in the future, a typing slip, a different month from the one in the title or file name, another date
+for the same meeting, or the same title again – it asks, and one tap uses the date it suggests. Once you trust it, you can
+switch the summary off on your device under **More**.
+
 ## How do I find a record?
 For: Administrators, Council members
 
-In **Library → Archives**, type part of its title in **Search the archive**, or choose a category and a year.
+In **Library → Archives**, type part of its title in **Search the archive**. Search looks through every folder and shows
+where each record is kept.
 
 ## Where are the archive documents kept?
 For: Administrators, Council members

@@ -1,6 +1,7 @@
 # The Me page – your details, days away and serving
 
-**Me** is everyone's own page: **My details**, **Days away** and **Serving**. On a phone it is the first tab for members.
+**Me** is everyone's own page: **My details**, **Consent**, **Days away** and **Serving**. On a phone it is the first tab
+for members.
 
 ## How do I change my phone number, email or address?
 For: Everyone
@@ -23,7 +24,7 @@ spouse or partner (their full name) and **Your children** (one per line, with th
 For: Everyone
 Also asked: I don't want to be in the church directory. Stop sending me WhatsApps. Privacy choices.
 
-Open **Me → My details**, go to **Consent** and tap **Change my choices**. You can give or withdraw each one – for
+Open **Me → Consent**: it shows each choice and, for a *No*, what that means. Tap **Change my choices**. You can give or withdraw each one – for
 example being in the church directory, sharing your details with your care group, and what you'd like to receive (weekly
 notices, prayer needs, missionary updates). Withdrawing takes effect straight away. See also [privacy.md](privacy.md).
 
@@ -40,7 +41,8 @@ Staff: approved leave is added here automatically (**From Leave**).
 For: Everyone
 Also asked: When am I on duty? My roster. What's my next turn?
 
-Open **Me → Serving**. **Coming up** lists your turns on the roster. Reply to each with **Accept** or **Can't make it**,
+Open **Me → Serving**. **Coming up** lists your turns on the roster (you also get a message in **Messages** each time
+you're put on it). Reply to each with **Accept** or **Can't make it**,
 so the roster coordinator knows. **Where I serve** shows your teams and positions. If you're not on the roster soon, it
 says **You're not on the roster in the coming weeks.**
 
@@ -85,3 +87,19 @@ For: Members
 
 If you're in one, **My care group** and **My midweek groups** show on the Me page. See [care-groups.md](care-groups.md)
 and [midweek-groups.md](midweek-groups.md).
+
+## How do I become a Church Partner?
+For: Adults who aren't Church Partners yet
+Also asked: Join the church. Become a member. Membership. Vote at church meetings.
+
+On your **Me** page, under **Become a Church Partner**, read what the church asks of its Church Partners (the Rector or
+church office writes this, or links to a document), then tap **Apply to become a Church Partner**. Your details are filled
+in from **My details** – correct anything there first. The church office gets a message, and your Me page shows that your
+application is waiting for a reply. You need to be 18 or older. Becoming a Church Partner means agreeing to be in the
+church directory.
+
+## Where do I see the books I've borrowed?
+For: Everyone
+
+If you've borrowed something from the church library, a chip on your Me page (and a reminder on Home) opens **Library →
+Items I have borrowed**. See [library.md](library.md).

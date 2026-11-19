@@ -19,15 +19,37 @@ people who don't use the app, are planned.
 
 ## Can I reply to a message?
 For: Everyone
+Also asked: Answer a message. Reply privately.
 
-Not yet – replies are planned. For now, contact the sender another way.
+Yes – tap **Reply** on the message. Your reply goes privately to the person who sent it, and only they see it (not the
+whole group). People who aren't Church Partners yet can always reply to a minister; whether they can reply to other
+messages is up to the church (**Settings → Attendees**).
 
 ## Who can send messages?
 For: Everyone
-Also asked: Why can't I write a message?
+Also asked: Why can't I write a message? Can I message the minister?
 
-Administrators and Pastors (to anyone), carers (to their care group), midweek group leaders (to their midweek group) and
-message-group leaders (to their message group). Members can read messages but not send them.
+- **Administrators and Pastors**: anyone – chosen people, the staff, all Church Partners or any group.
+- **Carers, Midweek Group leaders and message-group leaders**: their own group. **Leadership** members: their own body
+  (e.g. the Council).
+- **Everyone else**: the **Office**, the ministers, and the leaders of their own Midweek Groups.
+
+For people who aren't Church Partners yet (attendees), the church decides under **Settings → Attendees** whether they may
+write at all. Applying to become a Church Partner always reaches the Office.
+
+## What do the ticks mean?
+For: Everyone
+Also asked: Has my message been read? Blue ticks.
+
+One grey tick: sent. Two grey ticks: it has reached everyone. Two blue ticks: everyone has read it (in a group message the
+first tick turns blue once some have read it). Tap the ticks by your message's time for a short explanation, and **Read by** shows who has read it. **Messages →
+Sent → What the signs mean** explains them, and you can show them as ticks, envelopes, circles that fill up, or words.
+
+## Why did I get a message about the roster?
+For: Everyone who serves
+
+When you're put on the roster, Church Hub sends you a message – tap **Accept** or **Can't make it** right in it. You may
+also get a reminder if you haven't replied. See [rosters.md](rosters.md).
 
 ## How do I send a message?
 For: Administrators, Pastors, carers, group leaders
@@ -63,5 +85,5 @@ Pastors see every message sent in Church Hub and can delete any of them.
 ## How do I make a message group, like "Worship team leaders"?
 For: Administrators, Pastors
 
-Open **Messages → Groups** and tap **Add a message group**. Name it, add people, and mark who leads it (**Leader**) – leaders
+Open **Messages → Message groups** and tap **Add a message group**. Name it, add people, and mark who leads it (**Leader**) – leaders
 can send messages to the group. You can **Rename** or **Delete the group** later.

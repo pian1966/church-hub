@@ -230,6 +230,13 @@ When and where a Midweek Group meets is on the group (seen by its members): the 
 host's home" or a place and its address. A host's home address is never copied onto the group: Administrators and Pastors
 see it from People, and the members only from the host's own card, which carries it only if the host is in the church
 directory. Co-leader and host are roles within the group, set by its leaders, Administrators and Pastors.
+Adding people: every leader of a Midweek Group may add any adult to their group, attendees and people not in the church
+directory too (the church's decision, Nov 2026). For that they see every adult's **name only** (`pickNames/{id}`: first,
+last and known-as name – no photo, contact details, category or anything else), read only by Administrators, Pastors and
+the people listed as leading a Midweek Group (`lifeLeaders/all`); both are kept by Administrators' and Pastors' Church Hub
+(database rules, tested). Children, people who have left or died, and deleted records are not listed. Purpose: so a leader
+can welcome someone into their group without asking the office. Once added, the person shares only what their own consent
+allows, as above.
 
 ## Messages inside the app
 - Purpose: keeping in touch with the people the church cares for (notices, care-group and team news). Basis: the church's

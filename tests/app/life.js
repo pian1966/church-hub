@@ -22,6 +22,9 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="life:lead"][data-g="' + gid + '"][data-id="p14"]'); await s.settle();
   docs = await s.docsNow();
   check(docs[key].memberIds.includes('p14') && docs[key].leaderIds.includes('p14'), 'someone is added and made its group leader');
+  check(JSON.stringify((docs['lifeLeaders/all'] || {}).ids) === '["p14"]', 'the leaders of Midweek Groups are kept in a list, for the database rules');
+  check(!!docs['pickNames/p14'] && !docs['pickNames/p16'] && Object.keys(docs['pickNames/p14']).sort().join() === 'firstName,lastName,preferredName',
+    '…and every adult’s name is filled in for them (names only; no children)');
   // a youth group: children can be added; what was typed stays, so several people are added from the same list
   await s.go('life'); await s.page.fill('.cg-q[data-for="lg-' + gid + '"]', 'jacobs'); await s.page.waitForTimeout(400);
   const kids = await s.page.$$eval('.cg-hits[data-for="lg-' + gid + '"] .cg-pick', b => b.map(x => x.dataset.id));
@@ -74,6 +77,12 @@ module.exports = async function (ctx) {
   seed['settings/church'].modules = Object.assign({}, seed['settings/church'].modules, { life: true });
   seed['careGroups/lg1'] = { type: 'life', name: 'Midweek', leaderIds: ['p14'], memberIds: ['p14', 'p15'], names: { p14: 'Tim Jacobs', p15: 'Clare Jacobs' } };
   seed['careGroups/cg1'] = { name: 'Hilton', leaderIds: ['p14'], memberIds: ['p14'], names: { p14: 'Tim Jacobs' } };
+  // What an Administrator's Church Hub keeps for Midweek Group leaders: who they are, and every adult's name
+  seed['lifeLeaders/all'] = { ids: ['p14'] };
+  Object.keys(seed).filter(k => /^people\/[^/]+$/.test(k)).forEach(k => {
+    const p = seed[k]; if (p.familyRole === 'child' || p.active === false || p.category === 'Deceased') return;
+    seed['pickNames/' + k.split('/')[1]] = { firstName: p.firstName || '', lastName: p.lastName || '', preferredName: p.preferredName || '' };
+  });
   s = await session('tim.jacobs@example.com', seed); await s.go('life'); await s.page.waitForTimeout(400);
   t = await s.text();
   check(t.includes('Midweek') && t.includes('Clare') && !t.includes('Hilton'), 'a leader sees their life group (not their care group) on the Life groups page');
@@ -84,6 +93,18 @@ module.exports = async function (ctx) {
   check(t.includes('My Midweek Groups') && t.includes('Thursday Bible study'), 'their life groups are on their Me page');
   await s.go('groups'); t = await s.text();
   check(t.includes('Thursday Bible study') && t.includes('Hilton'), 'Groups → My groups: their Midweek Group and their Care Group together');
+  // An ordinary leader adds an attendee: they choose from every adult's name, and see nothing else about them
+  await s.go('groups'); await s.page.waitForTimeout(400);
+  const guest = await s.page.evaluate(() => Store.list('pickNames').filter(p => !Store.get('people', p.id)).map(p => ({ id: p.id, name: Hub.name(p) }))[0]) || { id: '', name: 'nobody' };
+  await s.page.$eval('[data-act="life:mineadd"][data-g="lg1"]', b => b.click());
+  await s.page.waitForSelector('#modal .cg-q[data-for="lmine"]');
+  await s.page.fill('#modal .cg-q[data-for="lmine"]', guest.name); await s.page.waitForTimeout(400);
+  check(!!guest.id && !!(await s.page.$('#modal .cg-pick[data-id="' + guest.id + '"]')) && !(await s.page.textContent('#modal')).includes('People in the church directory'),
+    'a group leader can add an attendee who isn’t in the church directory: they choose from everyone’s names');
+  await s.page.click('#modal .cg-pick[data-id="' + guest.id + '"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['careGroups/lg1'].memberIds.includes(guest.id) && docs['careGroups/lg1'].names[guest.id] === guest.name, '…and they are added to the group, with their name');
+  check(await s.page.evaluate(id => !Store.get('people', id), guest.id), '…but the leader still sees only their name, nothing else about them');
+  await s.page.click('[data-act="hub:close"]');
   await s.go('messages/send'); await s.page.waitForTimeout(200);
   await s.page.click('#ms-to-btn'); await s.page.waitForSelector('#modal .ms-choose'); const to = await s.page.$$eval('#modal .ms-choose .ms-aud', o => o.map(x => x.dataset.key));
   check(to.includes('life/lg1') && to.includes('care/cg1'), 'they can send a message to their life group (and their care group)');

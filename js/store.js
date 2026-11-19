@@ -796,6 +796,9 @@ var Store = (function () {
       var seenSt = lastSettings || {}, att = r === 'attendee', attCan = window.Msg ? Msg.attendeeCan(seenSt) : ['names'];
       if (r !== 'member' && (!att || attCan.indexOf('directory') >= 0)) add('directory', coll('directory'));
       if (r === 'admin' || r === 'pastor' || (att && (attCan.indexOf('names') >= 0 || attCan.indexOf('directory') >= 0))) add('names', coll('names'));
+      // Every adult's name, for Midweek Group leaders adding people (pickNames); who those leaders are (lifeLeaders/all).
+      // Administrators and Pastors keep both in step; a leader is given the names in extras(), once their groups are known.
+      if (is('admin', 'pastor')) { add('pickNames', coll('pickNames')); add('lifeLeaders', doc('lifeLeaders/all')); }
       if (is('admin')) add('customGroups', coll('customGroups'));
       else {
         add('customGroupsChurch', coll('customGroups').where('visibility', '==', 'church'));
@@ -884,7 +887,7 @@ var Store = (function () {
           else if (snap.exists) m[snap.id] = snap.data();
           raw[s.key] = m; stats.snaps++; stats.sizes[s.key] = Object.keys(m).length;
           if (s.key === 'careGroups' && !is('admin', 'pastor')) shares(Object.keys(m));
-          if (s.key === 'settings' || s.key === 'people' || s.key.indexOf('leaderBodies') === 0) extras();
+          if (s.key === 'settings' || s.key === 'people' || s.key === 'careGroups' || s.key.indexOf('leaderBodies') === 0) extras();
           if (s.key === 'settings') { careAll(m.church); if (!is('admin', 'pastor') && raw.careGroups) shares(Object.keys(raw.careGroups)); }
           if (!snap.metadata.hasPendingWrites) forget(s.coll);
           if (first) { first = false; if (--pending === 0) whenLoaded(); }
@@ -973,6 +976,10 @@ var Store = (function () {
         if (partner || ac.indexOf('directory') >= 0) want.directory = c('directory');
         if (partner || ac.indexOf('names') >= 0 || ac.indexOf('directory') >= 0) want.names = c('names');
       }
+      // A Midweek Group's leader (not an Administrator or Pastor): every adult's name, to add people to their group
+      var cgRaw = raw.careGroups || {};
+      if (!is('admin', 'pastor') && me && Object.keys(cgRaw).some(function (id) { var g = cgRaw[id] || {}; return g.type === 'life' && (g.leaderIds || []).indexOf(me) >= 0; }))
+        want['pickNames:lead'] = c('pickNames');
       if (is('pastor') && !previewRole && me && st.seniorPastorId === me) want['brochure:rector'] = fs.doc('brochures/church');   // the Rector reads the brochure wording
       if (!is('admin') && !previewRole && me && (st.librarianIds || []).indexOf(me) >= 0) {
         want['loans:all'] = c('loans');
@@ -1087,6 +1094,11 @@ var Store = (function () {
       // that had a directory before (Administrators and Pastors)
       if (!previewRole && !offlineNow() && is('admin', 'pastor') && !careDir && Object.keys(raw.directory || {}).length && !Object.keys(raw.names || {}).length)
         setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
+      // Midweek Group leaders: who they are, and every adult's name filled in once (Administrators and Pastors)
+      if (!previewRole && !offlineNow() && is('admin', 'pastor')) setTimeout(function () {
+        if (!ready || !session || previewRole || offlineNow() || !is('admin', 'pastor')) return;
+        syncLifeLeaders();
+      }, 1700);
       if (!previewRole && !offlineNow() && is('admin')) setTimeout(function () { if (ready && session && !previewRole && !offlineNow() && is('admin')) { syncMinisters(); syncRosterTeam(); } }, 2000);
       onState({ stage: 'ready', person: meP, email: session.email, role: role() });
     }
@@ -1145,6 +1157,8 @@ var Store = (function () {
       ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books', 'applicationDocuments'].forEach(function (c) { db[c] = arr(c); });
       var ignoredDuplicates = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('libraryDuplicateIgnores') === 0; }));
       db.libraryDuplicateIgnores = Object.keys(ignoredDuplicates).map(function (id) { var o = copy(ignoredDuplicates[id]); o.id = id; return o; });
+      var picks = merged('pickNames', 'pickNames:lead');   // every adult's name (Administrators, Pastors, Midweek Group leaders)
+      db.pickNames = Object.keys(picks).map(function (id) { var o = copy(picks[id]); o.id = id; return o; });
       var custom = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('customGroups') === 0; }));
       db.customGroups = Object.keys(custom).map(function (id) { var o = copy(custom[id]); o.id = id; return o; });
       [['leaderBodies', /^leaderBodies/], ['archive', /^archive:/], ['loans', /^loans/]].forEach(function (x) {   // each asked for in parts (plan(), extras())
@@ -1245,11 +1259,31 @@ var Store = (function () {
       // Names only, for attendees: Church Partners (and staff) in the directory
       var nm = ok && (p.category === 'Church Partner' || p.category === 'Staff') ? { firstName: p.firstName || '', lastName: p.lastName || '', preferredName: p.preferredName || '' } : null;
       if (!same(nm, known('names/' + pid))) { if (nm) write('names/' + pid, nm); else del('names/' + pid); }
+      // Every adult's name, for Midweek Group leaders adding people (Administrators and Pastors keep it)
+      if (is('admin', 'pastor') && !previewRole) {
+        var pk = pickable(p) ? { firstName: p.firstName || '', lastName: p.lastName || '', preferredName: p.preferredName || '' } : null;
+        if (!same(pk, known('pickNames/' + pid))) { if (pk) write('pickNames/' + pid, pk); else del('pickNames/' + pid); }
+      }
       var lead = {};
       if (ok && addr && (allows('rosters', 'address') || allows('kids', 'address'))) lead.shareAddress = addr;
       if (ok && spouse && (allows('rosters', 'spouse') || allows('kids', 'spouse'))) lead.shareSpouse = spouse;
       if (!Object.keys(lead).length) lead = null;
       if (!same(lead, known('contacts/' + pid))) { if (lead) write('contacts/' + pid, lead); else del('contacts/' + pid); }
+    }
+    /** Someone a Midweek Group's leader may add: an adult who is still at the church. */
+    function pickable(p) {
+      return !!p && p.active !== false && p.familyRole !== 'child' && p.category !== 'Deceased' && !p.binnedAt && !p.mergedInto && p.firstName !== 'Deleted';
+    }
+    /** Administrators and Pastors: who leads a Midweek Group (lifeLeaders/all), so the rules let them read every adult's name. */
+    function syncLifeLeaders() {
+      if (!is('admin', 'pastor') || previewRole) return;
+      var ids = [];
+      list('lifeGroups').forEach(function (g) { (g.leaderIds || []).forEach(function (id) { if (ids.indexOf(id) < 0) ids.push(id); }); });
+      ids.sort();
+      var was = known('lifeLeaders/all');
+      if (!same(ids, (was && was.ids) || [])) write('lifeLeaders/all', { ids: ids });
+      // The first leader: everyone's name is filled in once (afterwards each change to a person keeps it in step)
+      if (ids.length && !Object.keys(raw.pickNames || {}).length && !Object.keys(local).some(function (k) { return k.indexOf('pickNames/') === 0; })) resyncDirectory();
     }
     /** Do Church Partners (Basic access) see anyone's care groups: all groups on the Care groups page, or a person's groups on
      *  their page in People? Then each directory entry carries the person's groups (names only). */
@@ -1394,7 +1428,7 @@ var Store = (function () {
       if (c === 'careShare') return del('careGroups/' + prev.groupId + '/share/' + prev.personId);
       if (c === 'notes' || c === 'officeNotes') return putNotes(prev.personId, c);
       if (c === 'careGroups') { del(c + '/' + prev.id); careDirectory(prev, null); return; }
-      if (c === 'people') { ['people', 'details', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
+      if (c === 'people') { ['people', 'details', 'directory', 'pickNames', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { del(x + '/' + prev.id); }); return; }
       if (c === 'archive') fileSave(prev.id, [], (prev.file && prev.file.parts) || 0).catch(function (e) { console.error('delete the file', e); });   // its file goes too
       if (c === 'leaderBodies') syncCouncilPreviewMembers(prev.memberIds || []);
       if (c === 'books' && prev.cover) del('covers/' + prev.id);   // and a library item's cover picture
@@ -1404,6 +1438,7 @@ var Store = (function () {
     function careDirectory(prev, now) {
       var ids = ((prev && prev.memberIds) || []).concat((now && now.memberIds) || []);
       ids.filter(function (x, i) { return ids.indexOf(x) === i; }).forEach(function (pid) { if (get('people', pid)) syncDirectory(pid); });
+      if ((prev && prev.type === 'life') || (now && now.type === 'life')) syncLifeLeaders();
     }
     /** I opened a message: add me to its readBy (arrayUnion, so two people opening it at once don't undo each other). */
     function markRead(id) {

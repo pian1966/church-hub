@@ -190,13 +190,25 @@
   }
   function leaderOf(gid) { var u = me(), g = S.get('lifeGroups', gid); return g && u && Care.isLeader(g, u.id) ? g : null; }
 
-  /** A group's leader adds people to their group: the list stays open for the next person. Ordinary leaders choose from the
-   * church directory; a leader who is also an Administrator or Pastor may add anyone, as they can from a person's page. */
+  /** Who a group's leader may add. An Administrator or Pastor: anyone, as from a person's page. Any other leader: every
+   *  adult by name – attendees too, names only (pickNames, kept by Administrators and Pastors). all: false while those names
+   *  haven't reached this device yet, when only the church directory can be offered. */
+  function addable(g) {
+    var u = me(), out = g.memberIds || [];
+    if (manager()) return { all: true, list: people(out) };
+    var picks = S.list('pickNames');
+    if (picks.length) return { all: true, list: picks.filter(function (p) { return out.indexOf(p.id) < 0; }) };
+    if (!S.isLive()) return { all: true, list: people(out).filter(function (p) { return p.familyRole !== 'child'; }) };   // the demo has no rules
+    return { all: false, list: S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && out.indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); }) };
+  }
+  /** Someone being added: their record, or just their name (pickNames). */
+  function addee(id) { return S.get('people', id) || S.get('pickNames', id); }
+
+  /** A group's leader adds people to their group: the list stays open for the next person. */
   function mineAddDialog(gid) {
-    var u = me(), g = leaderOf(gid); if (!g) return;
-    var all = manager();
-    var choices = all ? people(g.memberIds || []) : S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' && (g.memberIds || []).indexOf(p.id) < 0 && (p.inDirectory || p.id === u.id); })
-      .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
+    var g = leaderOf(gid); if (!g) return;
+    var can = addable(g), all = can.all;
+    var choices = can.list.slice().sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
     H.modal(H.dialogHead(T('Add someone to the group'), g.name) + '<div class="dlg-body">' + (choices.length && window.CareUI ? '<label class="field" style="margin-bottom:6px">' + T('Who') + '</label>' +
       CareUI.finder('lmine', choices, 'life:mineaddsave', { g: g.id }, null, T('Type part of their name')) + (all ? '' : '<p class="hint">' + T('People in the church directory.') + '</p>') : '<p class="muted">' + T(all ? 'No one else to add.' : 'No one else in the church directory to add.') + '</p>') +
       '<p id="lg-err" class="note bad" hidden></p></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Close') + '</button></div>', T('Add someone to the group'));
@@ -263,7 +275,7 @@
       /* a group's leader */
       mineadd: function (el) { mineAddDialog(el.dataset.g); },
       mineaddsave: function (el) {
-        var g = leaderOf(el.dataset.g), p = S.get('people', el.dataset.id); if (!g) return;
+        var g = leaderOf(el.dataset.g), p = addee(el.dataset.id); if (!g) return;
         if (!p) { var e = document.getElementById('lg-err'); e.textContent = T('Choose someone to add.'); e.hidden = false; return; }
         var x = JSON.parse(JSON.stringify(g)); x.memberIds.push(p.id); x.names = x.names || {}; x.names[p.id] = Care.nameOf(p);
         S.put('lifeGroups', x, 'Group leader added ' + H.name(p) + ' to the midweek group ' + g.name); openFold('my-' + g.id + ':m'); H.render(); H.toast(T('{name} added to the group', { name: H.name(p) }));

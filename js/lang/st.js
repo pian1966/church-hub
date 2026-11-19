@@ -1362,6 +1362,7 @@ I18n.add('st', {
     "People in the church directory.": "Batho ba bukaneng ya kereke.",
     "No one else in the church directory to add.": "Ha ho motho e mong bukaneng ya kereke ya ka kenngwang.",
     "No one else to add.": "Ha ho motho e mong ya ka kenngwang.",
+    "Midweek Groups: every group leader can now add anyone to their group with “Add someone to the group”, people who only come to church too – they see just each person’s name.": "Dihlopha tsa bohareng ba beke: moetapele e mong le e mong wa sehlopha jwale a ka kenya mang kapa mang sehlopheng sa hae ka “Kenya motho sehlopheng”, esita le batho ba tlang kerekeng feela – o bona lebitso la motho feela.",
     "Midweek Groups: when a Pastor or Administrator who leads a group uses “Add someone to the group”, they can now choose anyone, not only people in the church directory – the same as from a person’s page.": "Dihlopha tsa bohareng ba beke: ha Moruti kapa Motsamaisi ya etellang sehlopha pele a sebedisa “Kenya motho sehlopheng”, jwale a ka kgetha mang kapa mang, e seng feela batho ba bukaneng ya kereke – jwalo ka leqepheng la motho.",
     "Choose someone to add.": "Kgetha motho ya ka kenngwang.",
     "Added to the group": "O kentswe sehlopheng",

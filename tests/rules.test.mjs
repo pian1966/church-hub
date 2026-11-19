@@ -983,6 +983,24 @@ await t('attendees: Church Partners’ names but not the directory, unless Setti
   await cannot(read(db.attendee, 'names/p15')); await cannot(read(db.attendee, 'directory/p15'));
   await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: firebase.firestore.FieldValue.delete() }));
 });
+await t('every adult’s name, for Midweek Group leaders adding people (attendees too): names only', async () => {
+  await can(db.admin.doc('pickNames/p16').set({ firstName: 'Hope', lastName: 'Visitor', preferredName: '' }));
+  await cannot(db.admin.doc('pickNames/p16').set({ firstName: 'Hope', lastName: 'Visitor', mobile: '082' }));   // names only
+  await can(db.pastor.doc('pickNames/p15').set({ firstName: 'Clare', lastName: 'Jacobs', preferredName: '' }));
+  await cannot(db.member.doc('pickNames/p15').set({ firstName: 'X', lastName: 'Y', preferredName: '' }));
+  // Tim isn't a leader yet: no names
+  await cannot(read(db.member, 'pickNames/p16')); await cannot(list(db.member.collection('pickNames')));
+  await cannot(db.member.doc('lifeLeaders/all').set({ ids: ['p14'] }));   // a member can't make themself a leader
+  await cannot(db.admin.doc('lifeLeaders/other').set({ ids: ['p14'] }));
+  await cannot(db.admin.doc('lifeLeaders/all').set({ ids: ['p14'], more: 1 }));
+  await can(db.admin.doc('lifeLeaders/all').set({ ids: ['p14'] }));
+  await can(read(db.member, 'pickNames/p16')); await can(list(db.member.collection('pickNames')));   // Tim leads a Midweek Group
+  await cannot(read(db.member, 'lifeLeaders/all'));
+  await cannot(read(db.attendee, 'pickNames/p15')); await cannot(read(db.rosters, 'pickNames/p15'));   // not leaders
+  await cannot(read(db.member, 'people/p16'));   // still nothing else about Hope (the directory is open to Church Partners anyway, and Hope isn't in it)
+  await can(db.pastor.doc('lifeLeaders/all').set({ ids: [] }));
+  await cannot(read(db.member, 'pickNames/p16'));   // no longer a leader
+});
 await t('attendees: write to the Office, a minister and their Midweek Group leader; reply to a minister', async () => {
   const m = x => Object.assign({ groupId: '', audience: '', title: '', body: 'Hello', deliveredBy: ['p16'], readBy: ['p16'], fromId: 'p16', fromName: 'Hope' }, x);
   await can(db.attendee.doc('messages/a1').set(m({ kind: 'office', to: [] })));

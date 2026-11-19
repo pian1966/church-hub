@@ -484,3 +484,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   Administrators ("Update the prayer card" / "Keep it as it is"). Only an Administrator of a paying church can turn the weekly
   card off; a church that prays instead of paying keeps it on. Wording moved from monthly to weekly in the app, the website
   (prayer circle reworded, new question "Do we have to take part?"), the brochure, the setup tool and the presentation.
+- ✅ 19 Nov 2026 (0.95.1): **Midweek Groups** – every group leader can add anyone to their group, attendees and people not in the church directory too, seeing only each adult's name (`pickNames`, read by Administrators, Pastors and Midweek Group leaders listed in `lifeLeaders/all`; both kept by Administrators' and Pastors' Church Hub; database rules changed and tested)

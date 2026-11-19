@@ -5,7 +5,7 @@ Everything comes from the demo (made-up people), shown as "Grace Community Churc
 
     python3 -m http.server 8765          # in the repository folder
     python3 docs/presentation/capture.py # writes docs/presentation/img/
-    cd docs/presentation && node build.js  # builds church-hub-presentation.pptx
+    cd docs/presentation && node build.js  # builds church-and-trellis-presentation.pptx
 
 The clips are animated GIFs (Google Slides plays GIFs; it drops videos when a .pptx is converted).
 """

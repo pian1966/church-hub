@@ -330,6 +330,8 @@ a.stat { color: var(--ink); text-decoration: none; } a.stat:hover { border-color
 .signin { min-height: 100vh; display: grid; place-items: center; padding: 24px 16px; background: var(--side); }
 .signin-card { background: var(--surface); border-radius: 20px; padding: 26px; width: min(560px, 100%); box-shadow: 0 20px 60px rgba(0,0,0,.3); }
 .signin-card h1 { margin: 16px 0 4px; font-size: 26px; }
+/* The name: Church & Trellis, its "&" always in the brand orange */
+.amp { color: var(--accent); }
 .brand.big { padding: 0; color: var(--ink); } .brand.big small { color: var(--muted); }
 .role-h { font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); margin: 18px 0 8px; }
 .pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }

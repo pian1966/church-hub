@@ -1,6 +1,6 @@
 # Keeping the Google Slides copy of the presentation up to date
 
-The conference presentation is built in this repository (`docs/presentation/church-hub-presentation.pptx`), and it's
+The conference presentation is built in this repository (`docs/presentation/church-and-trellis-presentation.pptx`), and it's
 updated whenever Church & Trellis changes in a way the slides talk about. The last slide says which version it describes
 (for example "Slides for Church & Trellis 0.92.0 · 18 Nov 2026"), so you can compare any copy with **About** in the app.
 

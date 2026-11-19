@@ -1,4 +1,4 @@
-// Church & Trellis – puts the conference presentation (docs/presentation/church-hub-presentation.pptx) into its Google Slides
+// Church & Trellis – puts the conference presentation (docs/presentation/church-and-trellis-presentation.pptx) into its Google Slides
 // copy, so the shared Google Slides link always shows the latest slides. Run by .github/workflows/publish-slides.yml.
 // Needs two secrets, set up as docs/SLIDES-AUTOPUBLISH.md explains:
 //   SLIDES_ROBOT_KEY – the JSON key of a Google Cloud service account (the "robot") that the Slides file is shared with
@@ -7,7 +7,8 @@
 import { readFileSync } from 'node:fs';
 import { createSign } from 'node:crypto';
 
-const PPTX = new URL('../docs/presentation/church-hub-presentation.pptx', import.meta.url);
+const SLIDES_NAME = 'Church & Trellis – conference presentation';
+const PPTX = new URL('../docs/presentation/church-and-trellis-presentation.pptx', import.meta.url);
 const PPTX_TYPE = 'application/vnd.openxmlformats-officedocument.presentationml.presentation';
 
 function b64url(x) { return Buffer.from(x).toString('base64').replace(/=+$/, '').replace(/\+/g, '-').replace(/\//g, '_'); }
@@ -46,7 +47,15 @@ async function main() {
   });
   const u = await up.json();
   if (!up.ok) throw new Error('Google Drive did not accept the slides (' + up.status + '): ' + ((u.error && u.error.message) || ''));
-  console.log('Slides updated: “' + u.name + '” at ' + u.modifiedTime);
+  // The Google Slides file's name follows the app's name (renamed to Church & Trellis in Nov 2026).
+  let name = u.name;
+  if (name !== SLIDES_NAME) {
+    const rn = await fetch('https://www.googleapis.com/drive/v3/files/' + encodeURIComponent(id) + '?supportsAllDrives=true&fields=name', {
+      method: 'PATCH', headers: Object.assign({ 'Content-Type': 'application/json' }, auth), body: JSON.stringify({ name: SLIDES_NAME })
+    });
+    if (rn.ok) name = (await rn.json()).name; else console.log('::warning::Slides updated, but Google Drive did not rename the file (' + rn.status + ').');
+  }
+  console.log('Slides updated: “' + name + '” at ' + u.modifiedTime);
 }
 
 main().catch(e => { console.log('::error::' + e.message); process.exit(1); });

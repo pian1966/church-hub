@@ -1,4 +1,4 @@
-// Church & Trellis – conference presentation. Builds church-hub-presentation.pptx (16:9) from the screenshots and clips in img/.
+// Church & Trellis – conference presentation. Builds church-and-trellis-presentation.pptx (16:9) from the screenshots and clips in img/.
 // Run: node build.js   (needs pptxgenjs, react-icons, react, react-dom, sharp). See README.md; img/ comes from capture.py.
 const path = require('path');
 const fs = require('fs');
@@ -15,6 +15,8 @@ const THEME = {
   headFontFace: 'Inter', bodyFontFace: 'Inter',
   colors: { dk1: '1D1B19', lt1: 'FFFFFF', dk2: '231E1A', lt2: 'F6F4F1', accent1: 'E8590C', accent2: 'B8430A', accent3: '1F6B3A', accent4: '4A8AD4', accent5: 'F59E0B', accent6: '6D5BD0', hlink: 'B8430A', folHlink: '9A3F06' }
 };
+/** The name as rich text: Church & Trellis with its "&" in the brand orange. */
+const NAME = () => [{ text: 'Church ' }, { text: '&', options: { color: 'E8590C' } }, { text: ' Trellis' }];
 const HEX = { ink: '1D1B19', dark: '231E1A', warm: 'F6F4F1', orange: 'E8590C', orangeDk: 'B8430A', soft: 'FFE8D9', muted: '645B53', line: 'E7E1DA', white: 'FFFFFF', night2: '3A322C', nightInk: 'E9E2DB', nightMuted: 'B7ADA4', green: '1F6B3A' };
 
 async function icon(Comp, color, px = 256) {
@@ -44,7 +46,7 @@ async function icon(Comp, color, px = 256) {
     title: 'Content', background: { color: HEX.white },
     objects: [
       { placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } },
-      { text: { text: 'Church & Trellis', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
+      { text: { text: NAME(), options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
     ],
     slideNumber: { x: 12.2, y: 7.0, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' }
   });
@@ -52,7 +54,7 @@ async function icon(Comp, color, px = 256) {
     title: 'Warm', background: { color: HEX.warm },
     objects: [
       { placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } },
-      { text: { text: 'Church & Trellis', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
+      { text: { text: NAME(), options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
     ],
     slideNumber: { x: 12.2, y: 7.0, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' }
   });
@@ -92,7 +94,7 @@ async function icon(Comp, color, px = 256) {
   pres.addSection({ title: 'Opening' });
   let s = pres.addSlide({ masterName: 'Dark', sectionTitle: 'Opening' });
   mark(s, 0.8, 1.1, 0.95);
-  s.addText('Church & Trellis', { placeholder: 'title' });
+  s.addText(NAME(), { placeholder: 'title' });
   s.addText('Every church, however small, deserves great church software.', { placeholder: 'body' });
   T(s, 'Made for every church, in every nation, in (nearly) every language', { x: 0.8, y: 5.9, w: 7, h: 0.5, fontSize: 14, color: HEX.nightMuted });
   phone(s, 'm-home.jpg', 9.35, 0.75, 6.0, 'Church & Trellis Home on a phone');
@@ -374,7 +376,7 @@ async function icon(Comp, color, px = 256) {
   }
   s.addNotes('Thank you. Scan the code to try the demo now – a whole church of made-up people, nothing to install. The website has the price, the setup guide and the answers to the questions churches ask. Every church, however small, deserves great church software.');
 
-  const out = path.join(__dirname, 'church-hub-presentation.pptx');
+  const out = path.join(__dirname, 'church-and-trellis-presentation.pptx');
   await pres.writeFile({ fileName: out });
   if (SKILL) { const { applyTheme } = require(path.join(SKILL, 'scripts/apply_theme.js')); await applyTheme(out, THEME); }
   console.log('written', out);

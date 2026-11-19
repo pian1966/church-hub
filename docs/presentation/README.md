@@ -6,7 +6,7 @@ price and how to move across. Speaker notes are on every slide.
 
 | File | What it is |
 |---|---|
-| `church-hub-presentation.pptx` | The slides (16:9). Open in PowerPoint, Keynote or LibreOffice, or upload to Google Drive and open with Google Slides |
+| `church-and-trellis-presentation.pptx` | The slides (16:9). Open in PowerPoint, Keynote or LibreOffice, or upload to Google Drive and open with Google Slides |
 | `build.js` | Builds the .pptx from the pictures in `img/` (Node: `pptxgenjs`, `react-icons`, `react`, `react-dom`, `sharp`) |
 | `capture.py` | Takes the screenshots and records the clips from the demo (made-up people, shown as "Grace Community Church") |
 | `img/` | The screenshots (`d-…` computer, `m-…` phone), the clips (`fill.gif`, `ask.gif`, `accept.gif`) and the QR codes |
@@ -34,7 +34,7 @@ hand, it is replaced; make your own copy (File → Make a copy) to tweak for a p
 ```bash
 python3 -m http.server 8765               # in the repository folder (another terminal)
 python3 docs/presentation/capture.py      # new screenshots and clips (needs Playwright, Pillow, ffmpeg; qrcode for the QR codes)
-cd docs/presentation && node build.js     # writes church-hub-presentation.pptx
+cd docs/presentation && node build.js     # writes church-and-trellis-presentation.pptx
 ```
 `build.js` writes the theme's colours too when `PPTX_SKILL` points to a folder with `scripts/apply_theme.js` (Claude's pptx skill);
 without it the slides look the same, only PowerPoint's theme palette keeps Office's colours.
@@ -43,6 +43,6 @@ other than the suggested-price wording on the website, and the demo's made-up pe
 
 ## Google Slides
 Google Slides plays animated GIFs but drops videos when it converts a .pptx – that is why the clips are GIFs.
-To make a Google Slides copy: in Google Drive, **New → File upload** → choose `church-hub-presentation.pptx`, then right-click it →
+To make a Google Slides copy: in Google Drive, **New → File upload** → choose `church-and-trellis-presentation.pptx`, then right-click it →
 **Open with → Google Slides** (Drive keeps the original and makes a Google Slides copy). The two computer clips make the file
 about 8 MB, too large for Claude's Google Drive connector (about 3 MB), so the upload is done by hand.

@@ -532,14 +532,14 @@ var Hub = (function () {
     var on = enabled().map(function (m) { return m.id; });
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
-      '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>' + 'Church & Trellis' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
+      '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>Church <span class="amp">&amp;</span> Trellis</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div class="side-mode">' + modePicker() + '</div>' +
       (canViewAs() && !Store.preview() ? '<button class="side-viewas" data-act="hub:viewaspick" title="' + esc(T('See Church & Trellis as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button>' : '') + '</div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
       (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
-      '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>' + 'Church & Trellis' + '</b></a>' +
+      '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>Church <span class="amp">&amp;</span> Trellis</b></a>' +
       '<span class="top-r">' + (canViewAs() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
@@ -613,7 +613,7 @@ var Hub = (function () {
   }
   function liveCard(inner) {
     return '<div class="signin"><div class="signin-card">' +
-      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church & Trellis' + '</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
+      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>Church <span class="amp">&amp;</span> Trellis</b><small>' + esc((Store.settings() || {}).churchName || 'Christ Church Howick') + '</small></span></div>' +
       '<div class="signin-lang">' + I18n.picker() + '</div>' + inner + '</div></div>';
   }
   function renderLive() {
@@ -753,7 +753,7 @@ var Hub = (function () {
     people.forEach(function (p) { (byRole[p.appRole] = byRole[p.appRole] || []).push(p); });
     var order = ['admin', 'pastor', 'rosters', 'kids', 'member'];
     root.innerHTML = '<div class="signin"><div class="signin-card">' +
-      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>' + 'Church & Trellis' + '</b><small>' + esc(s.churchName) + '</small></span></div>' +
+      '<div class="brand big"><span class="mark">' + icon('M12 3v18M6 9h12', 22) + '</span><span><b>Church <span class="amp">&amp;</span> Trellis</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<div class="signin-lang">' + I18n.picker() + '</div><h1>' + T('Sign in') + '</h1>' +
       '<p class="lead">' + T('This is a demo with made-up people. Choose who to be: each role sees different things.') + '</p>' +
       order.filter(function (r) { return byRole[r]; }).map(function (r) {

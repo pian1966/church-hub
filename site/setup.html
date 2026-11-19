@@ -41,6 +41,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .top .wrap { display: flex; align-items: center; gap: 14px; height: 64px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font: 800 1.15rem var(--display); letter-spacing: -0.02em; }
 .mark { width: 34px; height: 34px; border-radius: 10px; background: var(--ink); display: grid; place-items: center; flex: none; }
+.amp { color: var(--orange); }
 .brand small { font: 600 .8rem var(--body); color: var(--ink-3); letter-spacing: 0; display: block; margin-top: -3px; }
 .grow { flex: 1; }
 .menu { position: relative; }
@@ -235,7 +236,7 @@ footer .wrap { display: flex; gap: 16px; flex-wrap: wrap; justify-content: space
   <div class="wrap">
     <a class="brand" href="#/">
       <span class="mark"><svg width="20" height="20" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></span>
-      <span>Church & Trellis<small>Setting up a church</small></span>
+      <span>Church <span class="amp">&amp;</span> Trellis<small>Setting up a church</small></span>
     </a>
     <span class="grow"></span>
     <details class="menu" id="menu">

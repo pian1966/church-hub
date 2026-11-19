@@ -1,5 +1,5 @@
 # Puts the conference presentation into its Google Slides copy, so the shared Google Slides link always shows the latest
-# slides. Runs when a new church-hub-presentation.pptx reaches main (a pull request is merged), and on demand
+# slides. Runs when a new church-and-trellis-presentation.pptx reaches main (a pull request is merged), and on demand
 # (Actions → Publish the slides → Run workflow). The .pptx in the repository stays the master copy.
 #
 # Repository secrets (Settings → Secrets and variables → Actions) – see docs/SLIDES-AUTOPUBLISH.md:
@@ -12,7 +12,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'docs/presentation/church-hub-presentation.pptx'
+      - 'docs/presentation/church-and-trellis-presentation.pptx'
       - 'tools/publish-slides.mjs'
       - '.github/workflows/publish-slides.yml'
   workflow_dispatch:

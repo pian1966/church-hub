@@ -10,7 +10,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 - ⬜ Switch on Email link sign-in in Firebase (Authentication → Sign-in method → Email/Password → both switches)
 - ⬜ Settings → Access and roles – choose what each role sees (name only until you do), and ask people to renew their Contact details consent under the new wording
 - ⬜ Choose the Care groups ticks in Settings → Access and roles, and click **Record that they agreed** for existing Church Partners if it appears
-- ⬜ Re-publish the database rules after 0.101 (people may note their first sign-in) – or let the "Publish database rules" workflow do it
+- ⬜ Re-publish the database rules after 0.102 (people may note their first sign-in) – or let the "Publish database rules" workflow do it
 - ⬜ Decide: Play Store account, organisation or personal (docs/PLAY-STORE.md); then Claude adds the app bundle (.aab) to the Android build
 - ⬜ Android app setup (docs/ANDROID.md): keep ChurchHub-ANDROID_KEYSTORE.txt safe and add it as the secret, build, optional Google sign-in (Web client ID), try it, send the link
 - ⬜ Set up the robot (docs/ELVANTO-ROBOT.md steps 1–5), switch over with step 6
@@ -61,6 +61,20 @@ Members see their own family (and give consent for their children), smart lists 
   visited and a status (needs a visit → visited → follow up → resolved), with gentle reminders when no one has picked someone
   up, and people not in any Care Group flagged for the Office/ministers – so no one falls through the cracks. Only pastoral
   staff and the relevant leaders see the board; keep details minimal and POPIA-safe (read `docs/POPIA.md`)
+  - ⬜ **Seriously ill list** (asked 20 Nov 2026) – a section of the Care board for people who are seriously ill and need help:
+    **in hospital** (which hospital, ward if known) or **bedbound at home**. Putting someone on it sends a short note about their
+    situation through Messages to the leader(s) of each Care Group they're in, **and** to the church secretary and the pastors
+    (the Rector and the other ministers), so all of them can open the board and see everyone currently on the list. The
+    secretary is chosen as an extra person in Settings (like the roster "Also told when someone can't serve"), without other
+    rights. Updates (moved home, back in hospital, recovered, died) notify the same people; taking someone off keeps a dated
+    record for the pastors. Health details are special personal information: keep the note to the minimum needed to visit and
+    help, log who views it, and get the person's (or family's) consent where possible (`docs/POPIA.md`)
+  - ⬜ **Visit notes** (asked 20 Nov 2026) – anyone who visits someone on the list can note the visit: **when**, **where**
+    (hospital and ward, at home, elsewhere), **who visited** (one or more people), **how the person is** (their condition), and
+    **any special requests or needs** (e.g. communion, prayer, meals, lifts, help for the family). The notes show on that
+    person's card in date order, the latest visit's date updates "last visited", and the same people who were told about the
+    person (their Care Group leaders, the church secretary, the pastors) can read them. A new need can be flagged so the
+    pastors and secretary get a message about it. Same POPIA care as above: only what helps, nothing more
 
 ## Phase 3 – Rostering and services (built; follow-ups below)
 Accept/decline by email, swap requests, automatic reminders before a turn, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).
@@ -72,6 +86,7 @@ Accept/decline by email, swap requests, automatic reminders before a turn, sign-
 - ⬜ **Service outline (order of service)** for each Sunday service, and with it **the Bible passage being preached** – shown
   to the people serving and on Home. For the Scripture text itself, consider the YouVersion Platform API (check its terms and
   which translations it allows; otherwise show the reference with a link)
+- ⬜ Roster printing: let a church save its own term dates (school terms differ by year and country) instead of the quarters offered now
 
 ## Phase 4 – Groups, attendance and check-in
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.

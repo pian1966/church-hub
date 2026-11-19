@@ -240,6 +240,73 @@ var RosterCore = (function () {
     return out;
   }
 
-  return { runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS };
+  /* ---------- printing the roster (A4 landscape, a term at a time) ---------- */
+  function iso(y, m, d) { var x = new Date(y, m, d, 12); return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
+  /**
+   * The terms offered when printing: [{ n, year, from, to }] – this term and the next, as the four quarters of the year
+   * (Jan–Mar, Apr–Jun, Jul–Sep, Oct–Dec, close to the school terms); the dates can be changed before printing.
+   */
+  function terms(today) {
+    var y = +today.slice(0, 4), q = Math.floor((+today.slice(5, 7) - 1) / 3), out = [];
+    for (var k = 0; k < 2; k++) {
+      var qq = q + k, yy = y + Math.floor(qq / 4); qq = qq % 4;
+      out.push({ n: qq + 1, year: yy, from: iso(yy, qq * 3, 1), to: iso(yy, qq * 3 + 3, 0) });
+    }
+    return out;
+  }
+  /** Which sheet a service is printed on: its regular service (8:00, 10:00…), or 'special' for all special services together. */
+  function sheetOf(svc, special) { var k = slotOf(svc); return special && special.indexOf(k) >= 0 ? 'special' : k; }
+  /** The sheets that can be printed between two dates: [{ key, services: n }], in the order of their first service. */
+  function printChoices(data, from, to) {
+    var out = [], at = {};
+    (data.services || []).filter(function (s) { return s.date >= from && s.date <= to; })
+      .sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; })
+      .forEach(function (s) { var k = sheetOf(s, data.specialSlots); if (!at[k]) { at[k] = { key: k, services: 0, first: s }; out.push(at[k]); } at[k].services++; });
+    return out.sort(function (a, b) { return a.key === 'special' ? 1 : b.key === 'special' ? -1 : (a.first.time < b.first.time ? -1 : a.first.time > b.first.time ? 1 : 0); })
+      .map(function (x) { return { key: x.key, services: x.services, name: x.key === 'special' ? '' : x.first.name }; });
+  }
+  /**
+   * The roster as sheets to print: one per regular service (all the 8 o'clock services of the term on one sheet…).
+   * A position is printed only where someone is on it: positions that service doesn't have (Creche at 5pm, communion roles
+   * without communion) and positions nobody is on are left out completely – unless opts.gaps, which keeps the positions
+   * that service needs even when they are still empty, to fill in by hand. People who said no are not printed.
+   * opts: { from, to, sheets: [keys from printChoices], gaps, name: function (person) }.
+   * Returns [{ key, services: [svc], teams: [{ teamId, name, rows: [{ position, cells: [{ names: [], na }] }] }] }];
+   * na = the position isn't needed at that service. Sheets with nothing on them are left out.
+   */
+  function printSheets(data, opts) {
+    opts = opts || {};
+    var people = byId(data.people), teamsById = byId(data.teams), nm = opts.name || fullName, want = opts.sheets;
+    var svcs = (data.services || []).filter(function (s) { return s.date >= opts.from && s.date <= opts.to; })
+      .sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; });
+    var keys = printChoices(data, opts.from, opts.to).map(function (c) { return c.key; }).filter(function (k) { return !want || want.indexOf(k) >= 0; });
+    return keys.map(function (key) {
+      var here = svcs.filter(function (s) { return sheetOf(s, data.specialSlots) === key; }), teams = [], byTeam = {};
+      (data.positions || []).forEach(function (pos) {
+        var any = false, needed = false;
+        var cells = here.map(function (s) {
+          var names = (data.assignments || []).filter(function (a) { return a.serviceId === s.id && a.positionId === pos.id && a.status !== 'declined'; })
+            .map(function (a) { return people[a.personId] ? nm(people[a.personId]) : ''; }).filter(Boolean);
+          var runs = runsAt(pos, s, data.specialSlots, data.noCommunion);
+          if (names.length) any = true; if (runs) needed = true;
+          return { names: names, na: !runs && !names.length };
+        });
+        if (!any && !(opts.gaps && needed)) return;
+        if (!byTeam[pos.teamId]) { byTeam[pos.teamId] = { teamId: pos.teamId, name: (teamsById[pos.teamId] || {}).name || '', rows: [] }; teams.push(byTeam[pos.teamId]); }
+        byTeam[pos.teamId].rows.push({ position: pos, cells: cells });
+      });
+      return { key: key, services: here, teams: teams };
+    }).filter(function (sh) { return sh.teams.length; });
+  }
+  /** Splits a sheet's services into pages that fit across A4 landscape: [[first, last+1], …] of about equal size. */
+  function pages(n, most) {
+    most = most || 13; if (n <= most) return [[0, n]];
+    var k = Math.ceil(n / most), size = Math.ceil(n / k), out = [];
+    for (var i = 0; i < n; i += size) out.push([i, Math.min(n, i + size)]);
+    return out;
+  }
+
+  return { runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
+    terms: terms, printChoices: printChoices, printSheets: printSheets, pages: pages };
 })();
 if (typeof module !== 'undefined') module.exports = RosterCore;

@@ -171,5 +171,55 @@ console.log('Holy Communion: communion positions only where there is communion')
   ok(!R.runsAt(pos[1], services[1], [], ['s1']) && R.runsAt(pos[1], services[0], [], ['s1']) && R.runsAt(pos[0], services[1], [], ['s1']), 'runsAt knows about communion');
 }
 
+console.log('Printing the roster: a term at a time, only what each service needs');
+{
+  const t = R.terms('2026-11-20');
+  ok(t[0].n === 4 && t[0].from === '2026-10-01' && t[0].to === '2026-12-31', 'this term: October to December');
+  ok(t[1].n === 1 && t[1].year === 2027 && t[1].from === '2027-01-01' && t[1].to === '2027-03-31', 'next term rolls into the new year');
+  ok(R.terms('2027-05-02')[0].to === '2027-06-30', 'the second term ends on 30 June');
+
+  const pos = [
+    { id: 'preach', teamId: 'lead', name: 'Preaching', needed: 1 },
+    { id: 'creche', teamId: 'kids', name: 'Creche', needed: 1, times: ['08:00'] },
+    { id: 'band', teamId: 'music', name: 'Band', needed: 2, times: ['17:00'] },
+    { id: 'comm', teamId: 'comm', name: 'Communion', needed: 1, communion: true },
+    { id: 'tea', teamId: 'hosp', name: 'Tea', needed: 1 }
+  ];
+  const svcs = [
+    { id: 'a8', date: '2027-01-03', time: '08:00', name: 'Family' }, { id: 'a17', date: '2027-01-03', time: '17:00', name: 'Evening' },
+    { id: 'b8', date: '2027-01-10', time: '08:00', name: 'Family' }, { id: 'b17', date: '2027-01-10', time: '17:00', name: 'Evening' },
+    { id: 'gf', date: '2027-03-26', time: '09:00', name: 'Good Friday', slot: 'good-friday' },
+    { id: 'apr', date: '2027-04-04', time: '08:00', name: 'Family' }
+  ];
+  const as = (id, serviceId, positionId, personId, status = 'accepted') => ({ id, serviceId, positionId, personId, status });
+  const d = { people, teams: [{ id: 'lead', name: 'Service Leading' }, { id: 'kids', name: 'Children' }, { id: 'music', name: 'Music' }],
+    positions: pos, services: svcs, specialSlots: ['good-friday'], noCommunion: ['a8', 'a17', 'b17'],
+    assignments: [as('1', 'a8', 'preach', 'p1'), as('2', 'b8', 'preach', 'p4', 'pending'), as('3', 'a8', 'creche', 'p2'),
+      as('4', 'a17', 'band', 'p5'), as('5', 'a17', 'band', 'p6', 'declined'), as('6', 'b8', 'comm', 'p7'), as('7', 'gf', 'preach', 'p9'), as('8', 'apr', 'preach', 'p10')] };
+  const choices = R.printChoices(d, '2027-01-01', '2027-03-31');
+  ok(choices.map(c => c.key).join() === '08:00,17:00,special' && choices[0].services === 2 && choices[0].name === 'Family', 'one choice per service, special services last');
+
+  const eight = R.printSheets(d, { from: '2027-01-01', to: '2027-03-31', sheets: ['08:00'] });
+  ok(eight.length === 1 && eight[0].services.map(s => s.id).join() === 'a8,b8', 'the 8 o’clock sheet has only the 8 o’clock services of the term');
+  const rows8 = eight[0].teams.flatMap(t => t.rows.map(r => r.position.id));
+  ok(rows8.join() === 'preach,creche,comm', 'positions nobody is on, and the 5pm band, are left out completely');
+  ok(eight[0].teams[0].name === 'Service Leading' && eight[0].teams[0].rows[0].cells.map(c => c.names.join()).join('|') === 'Jason Naidoo|Sam Peters', 'names under each date, waiting replies included');
+  const comm = eight[0].teams.find(t => t.teamId === 'comm').rows[0].cells;
+  ok(comm[0].na && !comm[1].na && comm[1].names[0] === 'Thabo Nkosi', 'a communion role shows as not needed on a Sunday without communion');
+
+  const five = R.printSheets(d, { from: '2027-01-01', to: '2027-03-31', sheets: ['17:00'] })[0];
+  ok(five.teams.length === 1 && five.teams[0].rows[0].cells[0].names.join() === 'Lerato Khumalo', 'people who said no are not printed');
+
+  const gaps = R.printSheets(d, { from: '2027-01-01', to: '2027-03-31', sheets: ['17:00'], gaps: true })[0];
+  const g = gaps.teams.flatMap(t => t.rows.map(r => r.position.id));
+  ok(g.includes('preach') && g.includes('tea') && !g.includes('creche') && !g.includes('comm'), 'with gaps: empty positions the service needs are kept, others still left out');
+
+  const all = R.printSheets(d, { from: '2027-01-01', to: '2027-03-31', name: p => p.firstName });
+  ok(all.map(s => s.key).join() === '08:00,17:00,special' && all[2].teams[0].rows[0].cells[0].names[0] === 'Ruth', 'every service when none are chosen, names as the app shows them');
+  ok(R.printSheets(d, { from: '2027-02-01', to: '2027-02-28' }).length === 0, 'nothing to print in a month without services');
+
+  ok(JSON.stringify(R.pages(13)) === '[[0,13]]' && JSON.stringify(R.pages(14)) === '[[0,7],[7,14]]' && R.pages(27).length === 3, 'more Sundays than fit across a page are split evenly');
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

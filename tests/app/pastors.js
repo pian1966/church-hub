@@ -7,6 +7,13 @@ module.exports = async function (ctx) {
   console.log('What Pastors can do:');
   s = await session('thandi.mokoena@example.com', seedDocs()); await s.go('home');
   check(!(await s.page.$('nav a[href="#/settings"]')) && await s.page.evaluate(() => !Hub.can('leave.manage')), 'a Pastor without ticks has no Settings and can’t approve leave');
+  await s.go('rosters/mine');
+  await s.page.evaluate(() => { window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
+  await s.page.click('.page-head [data-act="rosters:print"]'); await s.page.waitForSelector('[data-act="rosters:printgo"]');
+  await s.page.evaluate(() => { const d = Store.get('services', 'sv2').date; for (const id of ['ro-pfrom', 'ro-pto']) { const el = document.getElementById(id); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); } });
+  await s.page.click('[data-act="rosters:printgo"]');
+  await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 }).catch(() => {});
+  check(/ro-sheet/.test(await s.page.evaluate(() => window.__printed || '')), 'a Pastor prints the whole roster from My serving');
   await finish(s);
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings/pastors');
   check(await s.page.isVisible('#pastor-can') && /#\/settings\/pastors$/.test(s.page.url()) && !!(await s.page.$('.set-link.on[href="#/settings/access"]')), 'the old address opens Access and roles, at “What Pastors can do”');

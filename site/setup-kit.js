@@ -427,7 +427,7 @@ var SetupKit = (function () {
       how: function (c) { return ol([open(c.app('rosters/teams'), 'Open Rosters → Teams') + ' and choose the starter teams, or add your own.', 'Put the departments in the order of your service with the ↑ ↓ arrows beside each name (the roster follows that order).']); } },
     { id: 'rosters', group: 'serving', title: 'Make the first roster', mods: ['rosters'], since: '0.1',
       what: 'Church & Trellis fills the roster fairly, keeps families together and asks volunteers in Messages.',
-      how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.']); } },
+      how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + ', choose a service and fill it.', 'To put it up on the noticeboard: ' + ui('More') + ' → ' + ui('Print the roster') + '. Choose the term and the services – each service gets its own A4 page with only the positions it uses. Choose “Save as PDF” as the printer to make a PDF.']); } },
     { id: 'msggroups', group: 'talk', title: 'Message groups', mods: ['messages'], since: '0.1',
       what: 'Write to a care group, the staff or any list of people inside Church & Trellis – no data costs for SMS.',
       how: function (c) { return ol([open(c.app('messages/groups'), 'Open Messages → Groups') + ' and make the groups you write to often.', open(c.app('messages/send'), 'Send a first message') + ' to the staff.']); } },
@@ -465,7 +465,7 @@ var SetupKit = (function () {
     { id: 'codes', group: 'people', title: 'Sign-in codes and PINs for members with no email', mods: [], since: '0.87',
       what: 'Give a member a code on a slip or by WhatsApp: with it they choose a PIN, then sign in on any phone with their cellphone number (or a church number) and PIN. Free; Member access only.',
       how: function (c) { return ol(['Check ' + ui('Anonymous') + ' and ' + ui('Email/Password') + ' sign-in are switched on in ' + (c.projectId ? open(c.fb('authentication/providers'), 'Firebase → Sign-in method') : 'Firebase → Authentication → Sign-in method') + '.', open(c.app('people'), 'Open People') + ', open the person → ' + ui('Give a sign-in code') + '.']); } },
-    { id: 'invite', group: 'people', title: 'Invite people to start using Church & Trellis', mods: ['people'], since: '0.101',
+    { id: 'invite', group: 'people', title: 'Invite people to start using Church & Trellis', mods: ['people'], since: '0.102',
       what: 'Send people their invitation by email or WhatsApp – one person, a Care Group, a Midweek Group, a serving team or everyone. It gives them access, and its link shows them how to get the app on their phone. People → Invitations shows who hasn’t started yet, with Remind.',
       how: function (c) { return ol([open(c.app('people/search'), 'Open Advanced search') + ', find the people (for example Care Group is …) and choose ' + ui('Invite everyone found to Church & Trellis') + '. For one person, open their page → ' + ui('Invite to Church & Trellis') + '.', 'Send the email, or tap ' + ui('WhatsApp') + ' for each person. People with no email address get a sign-in code instead.', 'A week later, ' + open(c.app('people/welcome'), 'open Invitations') + ' and remind anyone who hasn’t started.']); } },
     { id: 'share', group: 'extras', title: 'Tell the church', mods: [], since: '0.1',
@@ -502,7 +502,7 @@ var SetupKit = (function () {
   var COMING = [
     { title: 'Set up in about a minute', what: 'One address for every church, and a setup that makes the database for you – no Firebase or GitHub screens.' },
     { title: 'The Android app for every church', what: 'Today the Android app is for one church; soon any church can use it.' },
-    { title: 'A care board', what: 'Who needs a visit, sent to the right Care Group leaders, so no one falls through the cracks.' },
+    { title: 'A care board', what: 'Who needs a visit – including who is seriously ill in hospital or at home – sent to the right Care Group leaders, the church secretary and the pastors, so no one falls through the cracks.' },
     { title: 'Sunday’s Bible passage', what: 'The passage being preached, on the service outline.' }
   ];
 

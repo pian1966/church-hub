@@ -18,6 +18,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | People: the list and Church at a glance | `js/people/directory.js` | `js/i18n/people.js` | |
 | People: a person's page (photo, notes, ID, guardians, homes, serving) | `js/people/profile.js` | `js/i18n/profile.js` | `tests/app/people-details.js` |
 | People: Add / Edit details, consent, a death, marking as left | `js/people/edit.js` | `js/i18n/edit.js` | `tests/app/people-details.js` |
+| Inviting people to Church & Trellis (email, WhatsApp, sign-in codes), People → Invitations, the first sign-in (`appFirstSeen`); the welcome on the sign-in screen (`#/start`) and Home's Android app prompt are in `js/app.js` | `js/people/welcome.js` | `js/i18n/people.js` | `tests/app/welcome.js` |
 | Households, couples, late spouses, duplicates | `js/people/households.js`, `js/households.js`, `js/duplicates.js` | `js/i18n/households.js` | `tests/households.test.js`, `duplicates.test.js` |
 | Advanced search, Change selected… | `js/people/search.js`, `js/people-search.js` | `js/i18n/search.js` | `tests/people-search.test.js`, `tests/app/people.js` |
 | Rosters, services | `js/mod-rosters.js`, `js/roster.js`, `js/serving.js` | `js/i18n/rosters.js` | `tests/roster.test.js`, `serving.test.js`, `tests/app/roles.js` |

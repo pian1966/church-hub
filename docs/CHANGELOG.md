@@ -530,6 +530,14 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   (`fitPanels()` in `brochure.html`; anything longer is still reported in red). Checked with all seven brochure fonts.
 
 
+- ✅ 20 Nov 2026 (0.102.0): **Invite people to Church & Trellis** (`js/people/welcome.js`). Administrators and Pastors invite one
+  person (their page), the people found or ticked in Advanced search (a Care Group, Midweek Group, serving team…) or those
+  selected on the People list: one email in Bcc, or WhatsApp one by one with their name; Basic access for those who can't sign
+  in yet; sign-in codes for those with no email. The link (`#/start`) welcomes them on the sign-in screen and offers the Android
+  app or Add to Home Screen. `details.appInvited` and `people.appFirstSeen` (the first sign-in, written by the person – rules
+  allow it on their own record); People → Invitations with Remind / Remind all; a Home to-do after 7 days; Advanced search
+  fields Using Church & Trellis, Invited, First signed in. Home offers the Android app on Android phones. `docs/PLAY-STORE.md`:
+  the Play Store's cost and steps.
 - ✅ 0.98.1 (19 Nov 2026): Names listed A to Z, each a chip that opens the person's page, in Rosters → Teams and Serving
   together (plain text for someone who may not open people's pages), custom groups, Librarians, the board and Marketplace keepers,
   and Privacy → Retention (its Open button replaced by the name). `Hub.byName` sorts people A to Z. What's new in all five languages.

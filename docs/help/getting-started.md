@@ -57,8 +57,8 @@ was using it until you sign out.
 For: Everyone
 Also asked: Can I install Church & Trellis? Is it on the Play Store / App Store?
 
-- **Android**: there is a Church & Trellis app. Download it from the link on the Me page (**Get the Church & Trellis app for Android**)
-  or under **About**. It isn't in the Play Store, so your phone may ask you to allow installing it.
+- **Android**: there is a Church & Trellis app. Tap **Get the app** on Home (or the link on the Me page, **Get the Church & Trellis app for Android**,
+  or under **About**). It isn't in the Play Store, so your phone may ask you to allow installing it.
 - **iPhone**: open Church & Trellis in Safari, tap the Share button, then **Add to Home Screen**. Church & Trellis shows how
   (**Church & Trellis on your iPhone**).
 - On any computer or phone you can also just use the website in a browser.

@@ -212,6 +212,8 @@ await t('birthdays and staff details: Admin and Pastor; Children’s ministry on
 });
 await t('members may correct their own name and contact details only', async () => {
   await can(db.member.doc('people/p14').update({ mobile: '083 111 2222' }));
+  await can(db.member.doc('people/p14').update({ appFirstSeen: '2026-11-20' }));   // the day they first signed in (People → Invitations)
+  await cannot(db.member.doc('people/p15').update({ appFirstSeen: '2026-11-20' }));
   await cannot(db.member.doc('people/p14').update({ category: 'Staff' }));
   await cannot(db.member.doc('people/p15').update({ mobile: '1' }));
   await cannot(db.member.doc('details/p14').update({ birthDate: '2000-01-01' }));

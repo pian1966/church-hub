@@ -89,3 +89,8 @@
 .ns-new { margin-top: 10px; }
 .ns-new .two { margin-bottom: 0; }
 @media (max-width: 420px) { .ns-tiles { grid-template-columns: 1fr 1fr; gap: 8px; } .ns-tile { padding: 16px 6px; } }
+.ns-guests { display: flex; align-items: center; gap: 8px; margin-top: 10px; font-size: 14px; }
+.ns-guests > span { font-weight: 600; }
+.ns-guests output { min-width: 1.4em; text-align: center; font-weight: 700; font-size: 16px; }
+.ns-guests .icon-btn { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface); font-size: 18px; line-height: 1; }
+.ns-guests .icon-btn:disabled { opacity: .4; }

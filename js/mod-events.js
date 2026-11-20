@@ -432,7 +432,7 @@
   /** A photo of the paper sign-up sheet (or the names typed or said): each name found in People and checked, then added. */
   function scanSheet(id) {
     var e = S.get('events', id); if (!e || !addable(e) || !window.NameScan) return;
-    NameScan.open({ title: T('Names from a sheet') + ': ' + e.title, sub: H.fmt(e.date, true) + ' · ' + timeText(e), mode: 'event', canNew: newPeople(),
+    NameScan.open({ title: T('Names from a sheet') + ': ' + e.title, sub: H.fmt(e.date, true) + ' · ' + timeText(e), mode: 'event', canNew: newPeople(), guests: +e.guests || 0,
       people: S.find('people', alive), already: function (pid) { return coming(e, pid); },
       done: function (r) {
         var u = S.get('people', (me() || {}).id) || me(), made = r.fresh.map(function (f) { return { ids: [NameScan.addPerson(f, 'a sign-up sheet for an event').id], guests: f.guests }; });

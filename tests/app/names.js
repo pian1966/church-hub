@@ -35,13 +35,18 @@ module.exports = async function (ctx) {
   await s.page.click('.ns-row[data-row="4"] [data-ns="new"]');
   check(await s.page.inputValue('.ns-row[data-row="4"] [data-ns-f="first"]') === 'Nomsa' && await s.page.inputValue('.ns-row[data-row="4"] [data-ns-f="last"]') === 'Dube', 'New visitor: the name is filled in, ready to correct');
   check(/Add 5 people/.test(await s.page.textContent('#ns-go')), 'now five');
+  check(await s.page.textContent('.ns-row[data-row="2"] .ns-guests output') === '1' && /1 guest/.test(await s.page.textContent('#ns-sum')), 'Sam’s “+1” on the sheet: one guest, counted');
+  await s.page.click('.ns-row[data-row="3"] [data-ns="g"][data-d="1"]'); await s.page.click('.ns-row[data-row="3"] [data-ns="g"][data-d="1"]');
+  check(await s.page.isDisabled('.ns-row[data-row="3"] [data-ns="g"][data-d="1"]'), 'the + stops at the event’s limit (2)');
+  check(await s.page.textContent('.ns-row[data-row="3"] .ns-guests output') === '2' && /3 guests/.test(await s.page.textContent('#ns-sum')), 'Megan brings two guests – no more than the event allows');
+  check(!(await s.page.isVisible('.ns-row[data-row="5"] .ns-guests')), 'no guests box for someone already coming');
   await s.page.click('#ns-go'); await s.settle();
   let docs = await s.docsNow();
   const nomsa = Object.keys(docs).find(k => k.startsWith('people/') && docs[k].firstName === 'Nomsa');
   check(!!nomsa && docs[nomsa].category === 'Attender' && docs[nomsa].source === 'photo' && docs[nomsa].appRole === 'none', 'Nomsa is added to People as an Attender, with no sign-in');
   const nid = nomsa && nomsa.split('/')[1];
   check(docs['eventSignups/ev1_p10'] && docs['eventSignups/ev1_p10'].people.join() === 'p10,p11' && docs['eventSignups/ev1_p10'].addedBy === 'p02', 'Jason and Priya: one sign-up for their household, added by Thandi');
-  check(docs['eventSignups/ev1_p19'] && docs['eventSignups/ev1_p19'].guests === 1 && !!docs['eventSignups/ev1_p17'] && !!docs['eventSignups/ev1_' + nid], 'Sam with his guest, Megan, and Nomsa are on the list');
+  check(docs['eventSignups/ev1_p19'] && docs['eventSignups/ev1_p19'].guests === 1 && !!docs['eventSignups/ev1_p17'] && docs['eventSignups/ev1_p17'].guests === 2 && !!docs['eventSignups/ev1_' + nid], 'Sam with his guest, Megan with her two, and Nomsa are on the list');
   check(/5 people are on the list/.test(await s.page.textContent('#toast, .toast').catch(() => '')) || /Nomsa Dube/.test(await s.text()), 'Who’s coming shows them');
 
   // Saying a name in Add people: what is heard a little wrong still finds them ("Sounds like"); someone new is registered there and then
@@ -84,6 +89,7 @@ module.exports = async function (ctx) {
   });
   await s.go('people');
   await s.page.click('[data-act="people:scan"]'); await s.page.waitForSelector('.ns-file', { state: 'attached' });
+  check(/from Google Photos or your gallery/.test(await s.page.textContent('#modal')), 'Choose a photo says it can come from Google Photos');
   check(/goes to Google’s Gemini AI to read the handwriting\. Church & Trellis doesn’t keep it/.test(await s.page.textContent('#modal')), 'it says where the photo goes, and that Church & Trellis doesn’t keep it');
   await s.page.setInputFiles('.ns-file >> nth=0', PNG); await s.page.waitForSelector('.ns-list', { timeout: 10000 });
   const body = JSON.parse(sent[0] || '{}'), text = JSON.stringify(body);

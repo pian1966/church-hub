@@ -388,6 +388,10 @@ nobody connects a Google account, and what is in the meeting or the document sta
   down on a paper sign-up sheet (basis: the person asked to be signed up). Such a sign-up is in the person's own name (so they
   see it and can take themselves off), is marked with who added it (`addedBy`), never holds an email address, and only the
   staff member who added it (or an organiser) can change or remove it. Nobody else sees who is coming.
+- The sign-up report (0.105.0; Events → More → Sign-up report): organisers and staff print it, save it as a PDF or download it,
+  with each person's cellphone (and email if ticked) – only the contact details that viewer may already see (Settings → Access
+  and roles), as pictures for Church Partners, who can't download them. Every print and download is in the audit log, and the
+  page itself says to keep it safe and shred it after the event.
 - Kept on a sign-up: who signed up, the names of those coming, how many guests, the language for emails, and an email address
   **only** if the person ticked *Email me reminders too* (consent, for that event only). The reminder in Messages is written by
   the person's own app into their own inbox.
@@ -395,7 +399,7 @@ nobody connects a Google account, and what is in the meeting or the document sta
   Gmail and notes which went (`mailed`); it can change nothing else, and its public log has counts only.
 - How long: sign-ups are deleted 30 days after the event, events a year after (`Events.staleSignup`, `staleEvent`, run when an
   organiser opens Events). Putting up, changing, cancelling and deleting events, and signing up, are in the audit log.
-- **A whole paper sheet at once** (0.105.0, Events → From a sheet; `js/name-scan.js`, `js/name-list.js`): staff take a photo of the
+- **A whole paper sheet at once** (0.106.0, Events → From a sheet; `js/name-scan.js`, `js/name-list.js`): staff take a photo of the
   sign-up sheet, or type or say the names. A photo is made small on the phone and sent to Google's Gemini through the church's
   Firebase project (the AI switch in Settings → Apps, as for Ask in your own words) **only to read the handwriting**: no names or
   records from Church & Trellis go with it. Matching the names to people is done on the phone, and the staff member checks every
@@ -409,7 +413,7 @@ nobody connects a Google account, and what is in the meeting or the document sta
   list. Only their name, and a mobile number or email address if given. Basis: they asked to come; the church's legitimate
   interest in knowing who is coming. The audit log notes "Added … (registering for an event)" or "(from a sign-up sheet …)".
 
-## Visitors from a photo (People → From a photo, 0.105.0)
+## Visitors from a photo (People → From a photo, 0.106.0)
 - Administrators and Pastors photograph visitor cards or a welcome sheet; Gemini reads the names and any mobile numbers and
   email addresses written with them (as for sign-up sheets above: nothing from the church is sent, the photo is never saved by
   Church & Trellis, the same free-tier caveat). Names already in People are found on the phone and left out; every new person is
@@ -417,7 +421,7 @@ nobody connects a Google account, and what is in the meeting or the document sta
 - Basis: the visitor wrote their details on the card to be contacted (the card should say so). Consent for the directory and
   other purposes is recorded separately afterwards (Consent → Paper connect card), as for anyone added by hand.
 
-## Saying a name (the microphone, 0.105.0; `js/voice.js`)
+## Saying a name (the microphone, 0.106.0; `js/voice.js`)
 - A microphone beside People's search and every "find someone" box. It uses the phone's or browser's own speech-to-text
   (Chrome: Google's speech service; Safari: Apple's; the Android app: the phone's), which turns the sound into words.
   Church & Trellis keeps no recording. What was heard is matched to names **on the phone** (`NameList.rank`); nothing else is sent.

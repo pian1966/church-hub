@@ -15,6 +15,15 @@ module.exports = async function (ctx) {
   check(/3 coming/.test(t), 'the card shows how many are coming (Tim, Clare and a guest)');
   await s.go('events/e/ev1'); t = await s.text();
   check(/Who’s coming/.test(t) && /Tim Jacobs, Clare Jacobs/.test(t) && /\+ 1 guest/.test(t), 'Who’s coming lists them, with the guest');
+  // The sign-up report: everyone coming, with their cellphone numbers, ready to print or save as a PDF
+  await s.page.click('.ev-who-h [data-act="events:report"]'); await s.page.waitForSelector('[data-act="events:repprint"]');
+  t = await s.page.textContent('#ev-rep');
+  check(/Men’s breakfast/.test(t) && /1 event · 3 coming/.test(t), 'the report starts with this event chosen');
+  await s.page.evaluate(() => { window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
+  await s.page.click('[data-act="events:repprint"]'); await s.page.waitForFunction(() => !!window.__printed);
+  const tim = (await s.docsNow())['people/p14'], pr = await s.page.evaluate(() => window.__printed);
+  check(/Tim Jacobs, Clare Jacobs/.test(pr) && !!tim.mobile && pr.includes(tim.mobile) && /Cellphone/.test(pr) && /shred it after the event/.test(pr), 'printed: who is coming, with their cellphone numbers, and a reminder to keep it safe');
+  await s.page.evaluate(() => { document.documentElement.classList.remove('printing'); document.getElementById('print-only').innerHTML = ''; });
   await s.go('events'); await s.page.click('[data-act="events:new"]'); await s.page.waitForSelector('#ev-title');
   await s.page.click('[data-act="events:save"]');
   check(/Give the event a name/.test(await s.page.textContent('#ev-err')), 'an event needs a name');

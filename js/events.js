@@ -144,6 +144,17 @@ var Events = (function () {
   function names(signups, eventId) {
     return of(signups, eventId).slice().sort(function (a, b) { return String((a.names || [])[0] || '').localeCompare(String((b.names || [])[0] || '')); });
   }
+  /**
+   * The sign-up report (asked for 20 Nov 2026): for each chosen event that takes sign-ups (ids; all when none are given),
+   * soonest first: { event, rows: its sign-ups A–Z, count }. The screens add each person's cellphone as the viewer may see it.
+   */
+  function report(events, signups, ids) {
+    return (events || []).filter(function (e) { return e.signup && (!ids || ids.indexOf(e.id) >= 0); })
+      .sort(function (a, b) { return startOf(a) - startOf(b); })
+      .map(function (e) { return { event: e, rows: names(signups, e.id), count: count(signups, e.id) }; });
+  }
+  /** Who to phone about a sign-up (person ids): the one who signed up, then the others coming – each once. */
+  function contacts(s) { var out = []; [s.by].concat(s.people || []).forEach(function (id) { if (id && out.indexOf(id) < 0) out.push(id); }); return out; }
   /** Everyone coming who can be sent a message (person ids). */
   function coming(signups, eventId) {
     var out = []; of(signups, eventId).forEach(function (s) { (s.people || []).concat([s.by]).forEach(function (id) { if (id && out.indexOf(id) < 0) out.push(id); }); });
@@ -247,7 +258,7 @@ var Events = (function () {
   var WORDS = [TX('today'), TX('tomorrow'), TX('in {n} days')];
   return { REMIND: REMIND, MAX_GUESTS: MAX_GUESTS, okDate: okDate, okTime: okTime, okEmail: okEmail, startOf: startOf, endOf: endOf, daysTo: daysTo,
     make: make, sees: sees, upcoming: upcoming, past: past, signupState: signupState, signupId: signupId, signup: signup, add: add, of: of, mine: mine, count: count,
-    names: names, coming: coming, due: due, reminderId: reminderId, when: when, reminder: reminder, toRemind: toRemind, messageAll: messageAll,
+    names: names, report: report, contacts: contacts, coming: coming, due: due, reminderId: reminderId, when: when, reminder: reminder, toRemind: toRemind, messageAll: messageAll,
     emailsDue: emailsDue, mailedAfter: mailedAfter, email: email, ics: ics, staleSignup: staleSignup, staleEvent: staleEvent, WORDS: WORDS };
 })();
 if (typeof module !== 'undefined') module.exports = Events;

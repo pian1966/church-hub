@@ -52,7 +52,7 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 
 ## Phase 2 – People and pastoral care
 Members see their own family (and give consent for their children), smart lists (leave out people who have died), follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
-- ⬜ **Names from a photo – follow-ups** (0.105.0 built Events → From a sheet, People → From a photo and the microphone):
+- ⬜ **Names from a photo – follow-ups** (0.106.0 built Events → From a sheet, People → From a photo and the microphone):
   record consent from a visitor card in the same step (Consent → Paper connect card); decide whether Roster coordinators and
   Children's ministry may add someone new to People when registering them for an event (the rules allow Administrators and
   Pastors only); try the same reading for attendance registers and Midweek Group sign-up sheets.

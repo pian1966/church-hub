@@ -17,11 +17,12 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.105';
+  var NEWS_FOR = '0.106';
   var NEWS = [
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], text: TX('Say a name instead of typing it: tap the microphone in People’s search, or in any box where you look for someone. Names that sound like what you said come up too – tap the right one.') },
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Events: a whole paper sign-up sheet at once – open the event, tap From a sheet and take a photo. Church & Trellis reads the names and finds them in People; you check each one. Pastors and Administrators can register someone who isn’t in People yet.') },
     { date: '2026-11-20', who: ['admin', 'pastor'], text: TX('Visitor cards: People → From a photo reads the names (and any phone numbers and email addresses) and adds the new people as Attenders, after you check each one.') },
+    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Events: print everyone who has signed up, with their cellphone numbers – or save it as a PDF. Events → More → Sign-up report, or Print on an event.') },
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Events: anyone on the staff can now add people to an event – for those who put their name down on a sheet. Open the event and tap Add people under Who’s coming.') },
     { date: '2026-11-20', who: ['admin'], text: TX('New: Events. Switch it on under Settings → Apps. Put events up, see who’s coming and write to them all; people sign up with one tap and are reminded 3 days and 1 day before – in Messages, and by email if they like.') },
     { date: '2026-11-20', who: ['everyone'], app: 'events', text: TX('Events are here: see what’s coming up, tap I’ll be there, and we’ll remind you 3 days and 1 day before.') },

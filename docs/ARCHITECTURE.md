@@ -844,7 +844,7 @@ Catholic Parish Priest / Assistant Priest; otherwise "Senior" / "Assistant" + th
   service questions are matched on the device. The result has the same shape as `Ask.parse`, so `people/search.js` uses it the
   same way (`useAnswer`); if the call fails, `Ask.parse` is used and the screen says so.
 
-## Names from a sheet, a photo or the microphone (0.105.0; `js/name-list.js` rules, `js/name-scan.js` screens, `js/voice.js`)
+## Names from a sheet, a photo or the microphone (0.106.0; `js/name-list.js` rules, `js/name-scan.js` screens, `js/voice.js`)
 - `NameList.request(image, ctx)` builds a Gemini `generateContent` body: the reading rules, a JSON schema
   (`names: [{ written, first, last, title, family, guests, mobile, email, crossed, unsure }]`) and the photo as `inlineData`.
   Nothing from the church is sent. `ctx.contacts` (People → From a photo) also asks for mobile and email. `Store.ai(body, ms)`

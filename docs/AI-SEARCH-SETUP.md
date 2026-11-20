@@ -1,6 +1,6 @@
 # AI for “Ask in your own words” – one-time setup
 
-> **Also reads photos of names (0.105.0).** Once AI is on, staff can photograph a paper sign-up sheet (Events → From a sheet) or
+> **Also reads photos of names (0.106.0).** Once AI is on, staff can photograph a paper sign-up sheet (Events → From a sheet) or
 > visitor cards (People → From a photo) and Gemini reads the handwriting; every name is checked before anyone is added. Tell your
 > privacy notice. Nothing more to set up.
 

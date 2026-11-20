@@ -22,6 +22,7 @@
     var n = (m.to || []).length;
     if (m.kind === 'people') return m.audience ? esc(m.audience) : esc(TN('{n} person', '{n} people', n));
     if (m.kind === 'direct') { var u = me(); return u && (m.to || []).indexOf(u.id) >= 0 ? T('you') : esc(m.audience || T('Someone')); }
+    if (m.kind === 'event') { var w = me(); return w && (m.to || []).indexOf(w.id) >= 0 ? T('you') : esc(TN('Everyone coming ({n})', 'Everyone coming ({n})', n)); }
     if (m.kind === 'roster') {
       var v = me(); if (v && (m.to || []).indexOf(v.id) >= 0) return T('you');
       if (m.roster === 'declined') return T('the roster team');
@@ -84,7 +85,7 @@
     return html + '<section class="msg-chat">' + (fresh ? '<div class="msg-unread-bar">' + esc(TN('{n} unread message', '{n} unread messages', fresh)) + '</div>' : '') + list.map(function (m) {
       var isNew = Msg.isUnread(m, u.id, manager()) || justRead[m.id];
       var reply = Msg.mayReply(m, who(), data()) ? '<button class="btn small" data-act="messages:reply" data-id="' + esc(m.id) + '">' + T('Reply') + '</button>' : '';
-      var roster = m.kind === 'roster' ? rosterPart(m) : m.about === 'partnerApp' ? appPart(m) : m.about === 'study' ? studyPart(m) : '';
+      var roster = m.kind === 'roster' ? rosterPart(m) : m.about === 'partnerApp' ? appPart(m) : m.about === 'study' ? studyPart(m) : m.kind === 'event' ? eventPart(m) : '';
       return '<article class="msg in' + (isNew ? ' new' : '') + '" data-id="' + esc(m.id) + '"><div class="msg-top"><b>' + esc(m.about === 'partnerApp' ? T('Partnership application') : roster && m.kind === 'roster' ? rosterTitle(m) : m.title || audName(m.kind, m.audience)) + '</b></div>' +
         '<div class="msg-who">' + T('From {name}', { name: esc(m.fromName || T('Someone')) }) + ' · ' + T('To {who}', { who: audLong(m) }) + '</div>' +
         replyContext(m) + (roster || '<p class="msg-body">' + bodyHtml(m.body) + '</p>') + '<div class="msg-foot">' + reply + '<span class="msg-time">' + esc(when(m.createdAt)) + '</span></div></article>';
@@ -98,6 +99,12 @@
     var k = Studies.state(st, Date.now()), soon = k === 'soon' || k === 'live';
     return '<p class="msg-body">' + esc(H.fmt(st.date) + ' · ' + st.time) + (st.topic ? '<br><b>' + esc(st.topic) + '</b>' : '') + (k === 'past' ? '<br><span class="muted small">' + T('This study is over – the notes are still here.') + '</span>' : '') + '</p>' +
       '<div class="btns" style="margin-top:8px">' + (st.meet && k !== 'past' ? btn(st.meet, T(soon ? 'Join now' : 'Join the meeting'), true) : '') + (st.notes ? btn(st.notes, T('Open the notes'), k === 'past' || !st.meet) : '') + '</div>';
+  }
+  /** About an event (js/mod-events.js): a reminder 3 days or 1 day before, or a message from its organisers – the words, and
+   *  the way to the event (where people can add it to their calendar, or say they can't come after all). */
+  function eventPart(m) {
+    var ev = H.isOn('events') ? S.get('events', m.aboutId) : null;
+    return '<p class="msg-body">' + bodyHtml(m.body) + '</p>' + (ev ? '<p style="margin:8px 0 0"><a class="btn small primary" href="#/events/e/' + encodeURIComponent(ev.id) + '">' + T('Open the event') + '</a></p>' : '');
   }
   /** Someone applied to become a Church Partner (sent to the Office from Me → Apply: Administrators and Pastors read it).
    *  Shown in the reader's language, with the way to the application. */

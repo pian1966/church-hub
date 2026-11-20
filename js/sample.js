@@ -177,7 +177,7 @@ function makeSampleData() {
     version: 1,
     settings: {
       churchName: 'Christ Church Howick', demo: true, dataVersion: 5,
-      modules: { people: true, rosters: true, leave: true, privacy: true, import: true, settings: true, board: true, market: true },
+      modules: { people: true, rosters: true, leave: true, privacy: true, import: true, settings: true, board: true, market: true, events: true },
       informationOfficer: { name: '[Information Officer]', email: '[email]', phone: '[phone]', registered: false, deputy: '' },
       retentionMonths: 24,
       privacyNotice: 'Christ Church Howick collects your personal information to keep church records, care for you, organise serving rosters and keep in touch. We only use it for these purposes, keep it secure, and store it in South Africa. You may ask to see, correct or delete your information at any time by contacting our Information Officer.'
@@ -191,7 +191,15 @@ function makeSampleData() {
     messages: [{ id: 'ms1', kind: 'staff', groupId: '', audience: 'Staff', title: 'Staff meeting moved', body: 'This week’s staff meeting is on Thursday at 9:00 instead of Tuesday. Tea and rusks in the hall.',
       fromId: 'p03', fromName: 'Pieter van Wyk', to: ['p01', 'p02', 'p03', 'p04', 'p05', 'p06', 'p07', 'p08'], readBy: ['p03', 'p05'], createdAt: off(-1) + ' 08:30', updatedAt: off(-1) + ' 08:30' }],
     // Community board and Marketplace (js/community.js): a few made-up notices and listings, and one of each waiting for a keeper
-    board: communitySample('board'), market: communitySample('market')
+    board: communitySample('board'), market: communitySample('market'),
+    // Events (js/events.js): a breakfast in 5 days that Tim and Clare signed up for (reminders start 3 days before), one for Church
+    // Partners, and a carol service without sign-up
+    events: [
+      { id: 'ev1', title: 'Men’s breakfast', about: 'Bacon, eggs and a short talk. Bring a friend!', date: off(5), time: '07:30', end: '09:00', place: 'Church hall', address: '', who: 'all', signup: true, closes: '', guests: 2, email: true, status: 'live', byId: 'p03', byName: 'Pieter van Wyk', createdAt: off(-7) + ' 09:00', updatedAt: off(-7) + ' 09:00' },
+      { id: 'ev2', title: 'Church Partners’ evening', about: 'Hearing the vision for next year, with supper.', date: off(10), time: '18:30', end: '20:30', place: 'Church hall', address: '', who: 'partners', signup: true, closes: off(8), guests: 0, email: true, status: 'live', byId: 'p03', byName: 'Pieter van Wyk', createdAt: off(-3) + ' 09:00', updatedAt: off(-3) + ' 09:00' },
+      { id: 'ev3', title: 'Carols by candlelight', about: '', date: off(20), time: '19:00', end: '', place: 'Howick Falls park', address: 'Falls Drive, Howick', who: 'all', signup: false, closes: '', guests: 0, email: false, status: 'live', byId: 'p03', byName: 'Pieter van Wyk', createdAt: off(-1) + ' 09:00', updatedAt: off(-1) + ' 09:00' }
+    ],
+    eventSignups: [{ id: 'ev1_p14', eventId: 'ev1', by: 'p14', people: ['p14', 'p15'], names: ['Tim Jacobs', 'Clare Jacobs'], guests: 1, email: '', lang: 'en', mailed: [], createdAt: off(-2) + ' 10:00', updatedAt: off(-2) + ' 10:00' }]
   };
   function communitySample(part) {
     var D = 864e5, t = Date.now(), at = function (d) { return off(d) + ' 09:00'; };

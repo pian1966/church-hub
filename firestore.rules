@@ -444,9 +444,17 @@ service cloud.firestore {
       return m.kind == 'life' && m.get('aboutId', '') is string && m.get('aboutId', '').size() > 0
         && (manager() || postsLife(g)) && m.to.hasOnly(g.get('memberIds', []));
     }
+    // Events (js/events.js): a reminder (about remind) goes from a person to their own inbox, about an event they can see;
+    // a message to everyone coming (about event) is from the event's organisers
+    function eventNote(m) {
+      return m.kind == 'event' && m.get('aboutId', '') is string && m.get('aboutId', '').size() > 0
+        && ((m.about == 'remind' && m.to.size() == 1 && isMe(m.to[0]) && exists(eventRef(m.aboutId)))
+          || (m.about == 'event' && organises()));
+    }
     function maySendTo(m) {
       return m.kind == 'roster' ? mayRosterNote(m)
-        : (m.get('about', '') in ['board', 'market'] ? aboutItem(m) : (m.get('about', '') == 'study' ? studyNote(m) : mayWriteTo(m)));
+        : (m.kind == 'event' ? eventNote(m)
+        : (m.get('about', '') in ['board', 'market'] ? aboutItem(m) : (m.get('about', '') == 'study' ? studyNote(m) : mayWriteTo(m))));
     }
     match /messages/{id} {
       allow read: if manager() || (anyone() && (meIn(resource.data.get('to', [])) || isMe(resource.data.get('fromId', ''))));
@@ -454,9 +462,10 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['kind', 'groupId', 'audience', 'some', 'replyTo', 'roster', 'turns', 'about', 'aboutId', 'showFrom', 'title', 'body', 'fromId', 'fromName', 'to', 'deliveredBy', 'readBy', 'createdAt', 'updatedAt'])
         && (request.resource.data.get('about', '') == '' || (request.resource.data.about == 'partnerApp' && request.resource.data.kind == 'office')
           || (request.resource.data.about in ['board', 'market'] && request.resource.data.kind == 'direct')
-          || (request.resource.data.about == 'study' && request.resource.data.kind == 'life'))
+          || (request.resource.data.about == 'study' && request.resource.data.kind == 'life')
+          || (request.resource.data.about in ['remind', 'event'] && request.resource.data.kind == 'event'))
         && request.resource.data.get('showFrom', 0) is int
-        && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster']
+        && request.resource.data.kind in ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster', 'event']
         && request.resource.data.get('replyTo', '') is string && request.resource.data.get('replyTo', '').size() <= 100
         && request.resource.data.get('some', false) is bool
         && request.resource.data.body is string && request.resource.data.body.size() > 0 && request.resource.data.body.size() <= 4000
@@ -892,6 +901,60 @@ service cloud.firestore {
       allow create, update: if anyone() && isMe(getAfter(listingRef(id)).data.personId) && getAfter(listingRef(id)).data.status == 'waiting'
         && request.resource.data.keys().hasOnly(['data', 'updatedAt', 'createdAt']) && request.resource.data.data is list && request.resource.data.data.size() <= 3;
       allow delete: if keepsPart('market') || (anyone() && exists(listingRef(id)) && isMe(get(listingRef(id)).data.personId));
+    }
+    // ---------- Events (js/events.js; docs/COMMUNITY-PLAN.md part 1) ----------
+    // Organisers (js/access.js JOBS.organisers): the people in settings organisers.events once the church chooses, until then
+    // the Administrators, the Pastors and the church secretary (settings rosterExtra); never an attendee. They put events up,
+    // see every sign-up and write to everyone coming. Everyone signed in sees the events for everyone; Church Partners and
+    // staff also those for Church Partners. A person signs up themselves (and people in their household); the email robot
+    // reads the sign-ups to send reminders by email to those who asked, and notes which it sent (mailed).
+    function eventRef(id) { return /databases/$(database)/documents/events/$(id); }
+    function organises() {
+      let st = churchSettings();
+      let chosen = st.get('organisers', {});
+      return anyone() && ('events' in chosen ? meIn(chosen.get('events', [])) && !attendee()
+        : isRole(['admin', 'pastor']) || (meIn(st.get('rosterExtra', [])) && !attendee()));
+    }
+    function okDay(s) { return s is string && s.matches('[0-9]{4}-[0-9]{2}-[0-9]{2}'); }
+    function okClock(s) { return s is string && (s == '' || s.matches('[0-2][0-9]:[0-5][0-9]')); }
+    function okEvent(d) {
+      return d.keys().hasOnly(['title', 'about', 'date', 'time', 'end', 'place', 'address', 'who', 'signup', 'closes', 'guests', 'email', 'status', 'byId', 'byName', 'createdAt', 'updatedAt'])
+        && d.title is string && d.title.size() > 0 && d.title.size() <= 80 && d.get('about', '') is string && d.get('about', '').size() <= 1500
+        && okDay(d.date) && okClock(d.time) && d.time != '' && okClock(d.get('end', ''))
+        && d.get('place', '') is string && d.get('place', '').size() <= 80 && d.get('address', '') is string && d.get('address', '').size() <= 160
+        && d.who in ['all', 'partners'] && d.signup is bool && (d.get('closes', '') == '' || okDay(d.get('closes', '')))
+        && d.get('guests', 0) is int && d.get('guests', 0) >= 0 && d.get('guests', 0) <= 10 && d.get('email', false) is bool
+        && d.status in ['live', 'cancelled'] && d.get('byId', '') is string && d.get('byName', '') is string && d.get('byName', '').size() <= 100;
+    }
+    function seesEvent(d) { return anyone() && (d.who == 'all' || !attendee() || organises()); }
+    match /events/{id} {
+      allow read: if robot() || seesEvent(resource.data);
+      allow create, update: if organises() && okEvent(request.resource.data);
+      allow delete: if organises();
+    }
+    function okSignup(id, d) {
+      return d.keys().hasOnly(['eventId', 'by', 'people', 'names', 'guests', 'email', 'lang', 'mailed', 'createdAt', 'updatedAt'])
+        && d.eventId is string && d.by is string && id == d.eventId + '_' + d.by
+        && d.people is list && d.people.size() > 0 && d.people.size() <= 12 && d.get('names', []) is list && d.get('names', []).size() <= 12
+        && d.get('guests', 0) is int && d.get('guests', 0) >= 0 && d.get('guests', 0) <= 10
+        && d.get('email', '') is string && d.get('email', '').size() <= 200 && d.get('lang', '') is string && d.get('lang', '').size() <= 10
+        && d.get('mailed', []) is list && d.get('mailed', []).size() <= 2;
+    }
+    // Signing up (or changing it): only while the event is on and takes sign-ups, and never changing what the robot noted
+    function mayJoin(d) {
+      let e = get(eventRef(d.eventId)).data;
+      return e.signup == true && e.status == 'live' && seesEvent(e) && d.get('guests', 0) <= e.get('guests', 0)
+        && (d.get('email', '') == '' || e.get('email', false) == true);
+    }
+    match /eventSignups/{id} {
+      allow read: if robot() || (anyone() && (isMe(resource.data.by) || meIn(resource.data.people))) || organises();
+      allow create: if anyone() && isMe(request.resource.data.by) && okSignup(id, request.resource.data)
+        && request.resource.data.get('mailed', []).size() == 0 && mayJoin(request.resource.data);
+      allow update: if (robot() && onlyChanges(['mailed', 'updatedAt']) && request.resource.data.get('mailed', []) is list && request.resource.data.get('mailed', []).size() <= 2)
+        || (anyone() && isMe(resource.data.by) && okSignup(id, request.resource.data) && request.resource.data.by == resource.data.by
+          && request.resource.data.get('mailed', []) == resource.data.get('mailed', []) && mayJoin(request.resource.data))
+        || (organises() && okSignup(id, request.resource.data));
+      allow delete: if (anyone() && isMe(resource.data.by)) || organises();
     }
     // Subscription (js/mod-support.js; tasks 061, 067): the church's record of what it has paid, written by the
     // Church & Trellis office only. Today the Subscription page keeps its choices in settings/church.

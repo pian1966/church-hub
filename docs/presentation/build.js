@@ -205,7 +205,7 @@ async function icon(Comp, color, px = 256) {
   shot(s, 'd-apps-c.jpg', 0.68, 1.58, 6.2, 6.2 * 1800 / 2416, 'Settings, Apps: switching parts on and off');
   T(s, 'Start with People and Rosters. Switch on the rest when your church is ready – one switch each in Settings.', { x: 7.4, y: 1.6, w: 5.3, h: 1.5, fontSize: 20, bold: true });
   {
-    const parts = ['People', 'Rosters', 'Groups', 'Messages', 'Staff leave', 'Library', 'Archives', 'Leadership', 'Community board', 'Marketplace', 'Privacy', 'Ask in your own words'];
+    const parts = ['People', 'Rosters', 'Groups', 'Messages', 'Staff leave', 'Library', 'Archives', 'Leadership', 'Events', 'Community board', 'Marketplace', 'Privacy', 'Ask in your own words'];
     let x = 7.4, y = 3.35;
     for (const p of parts) {
       const w = 0.35 + p.length * 0.105;
@@ -216,7 +216,7 @@ async function icon(Comp, color, px = 256) {
     }
     T(s, 'What you don’t use stays out of the way – a small church sees a small, simple app.', { x: 7.4, y: y + 0.85, w: 5.3, h: 0.9, fontSize: 16, color: HEX.muted });
   }
-  s.addNotes('Church & Trellis is built in parts. A small church might use only People and Rosters. Switch on Groups, Messages, staff Leave, the Library or Archives when you are ready – one switch each in Settings. New: a Community board, like a corkboard of sticky notes where people ask for or offer help, and a Marketplace to buy, sell and give away within the church – a keeper checks everything before anyone sees it. What you don’t use disappears from the menus.');
+  s.addNotes('Church & Trellis is built in parts. A small church might use only People and Rosters. Switch on Groups, Messages, staff Leave, the Library or Archives when you are ready – one switch each in Settings. New: Events – people tap I’ll be there and are reminded 3 days and 1 day before, in Messages and by email if they like. And a Community board, like a corkboard of sticky notes where people ask for or offer help, and a Marketplace to buy, sell and give away within the church – a keeper checks everything before anyone sees it. What you don’t use disappears from the menus.');
 
   // ========== 8. The essential modules ==========
   s = content('What it does', 'The essential parts');

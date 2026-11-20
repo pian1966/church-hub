@@ -71,7 +71,11 @@ ok(!A.allows('board.view', who('attendee')), 'Community board: not attendees unt
 ok(A.allows('support.manage', who('admin')) && A.allows('support.manage', who('pastor', 'p', { ticks: ['settings'] })) && !A.allows('support.manage', who('pastor', 'p', { ticks: ['leave'] })) && !A.allows('support.manage', who('partner')),
   'Subscription: Administrators, and Pastors with the “settings” tick (as before)');
 ok(A.PARTS.filter(p => p.soon).length === 0, 'no placeholders left: the board and the marketplace are built (0.97.0)');
-ok(A.apps().some(a => a[0] === 'board') && A.apps().some(a => a[0] === 'market') && A.apps().length === A.APPS.length + 2, 'Settings → Apps offers the Community board and the Marketplace (off until switched on)');
+ok(A.apps().some(a => a[0] === 'board') && A.apps().some(a => a[0] === 'market') && A.apps().some(a => a[0] === 'events') && A.apps().length === A.APPS.length + 3, 'Settings → Apps offers the Community board, the Marketplace and Events (off until switched on)');
+ok(['admin', 'pastor', 'rosters', 'kids', 'partner', 'attendee'].every(k => A.allows('events.view', who(k))) && !A.allows('events.organise', who('partner', 'x')) && !A.allows('events.organise', who('attendee', 's')),
+  'Events: everyone sees them (attendees only those for everyone); organising is a job');
+ok(A.jobHolders('organisers', 'events', { rosterExtra: ['s'] }, [{ id: 'a', appRole: 'admin' }, { id: 'p', appRole: 'pastor' }, { id: 's' }, { id: 'm', appRole: 'member' }]).join() === 'a,p,s'
+  && A.jobHolders('organisers', 'events', { organisers: { events: ['m'] } }, [{ id: 'a', appRole: 'admin' }, { id: 'm' }]).join() === 'm', 'organisers: Administrators, Pastors and the church secretary until the church chooses');
 ok(A.PARTS.filter(p => p.id === 'board' || p.id === 'market').every(p => p.optIn), 'both are off until an Administrator switches them on');
 
 console.log('Every part registered in the app is a known part');

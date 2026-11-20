@@ -5,7 +5,7 @@
  * free tier Google may keep requests to improve its products – docs/POPIA.md).
  * Every name is checked by the person before anything is added. POPIA: docs/POPIA.md "Events" and "Visitors from a photo".
  *
- *   NameScan.open({ title, sub, mode: 'event' | 'people', people, already(id) → bool, canNew, done({ chosen, fresh }) })
+ *   NameScan.open({ title, sub, mode: 'event' | 'people', people, already(id) → bool, canNew, guests (most each may bring), done({ chosen, fresh }) })
  *     chosen: [{ ids, guests }] – people already in Church & Trellis; fresh: [{ first, last, mobile, email, guests }] – new.
  *     done returns a message for the toast (or an error message, with ok: false, to keep the window open).
  *   NameScan.addPerson(f, what)  → the new person (an Attender, in a household of their own); what goes in the audit log.
@@ -16,6 +16,8 @@ var NameScan = (function () {
   var CAM = 'M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', PIC = 'M4 5h16v14H4zM4 16l5-5 4 4 3-3 4 4M15 9.5a1.5 1.5 0 1 0 0-.01';
   var st = null;
 
+  /** iPhones and iPads: their photo chooser shows the phone's own Photos, not Google Photos (Android's includes Google Photos). */
+  function iPhone() { return typeof navigator !== 'undefined' && (/iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)); }
   function aiOk() { return !!(S.aiReady && S.aiReady() && window.NameList); }
   function person(id) { return S.get('people', id); }
   function label(ids) {
@@ -44,7 +46,8 @@ var NameScan = (function () {
       (note ? '<p class="note warn" role="alert">' + esc(note) + '</p>' : '') +
       '<p class="hint" style="margin-top:0">' + esc(o.mode === 'people' ? T('Take a photo of visitor cards or a welcome sheet. Church & Trellis reads the names (and any phone numbers and email addresses) and you check each one before they are added.') :
         T('Take a photo of the sign-up sheet. Church & Trellis reads the names, finds them in People, and you check each one before they are added.')) + '</p>' +
-      '<div class="ns-tiles">' + tile(true, CAM, T('Take a photo'), o.mode === 'people' ? T('of the cards or sheet') : T('of the sheet')) + tile(false, PIC, T('Choose a photo'), T('already on this phone')) + '</div>' +
+      '<div class="ns-tiles">' + tile(true, CAM, T('Take a photo'), o.mode === 'people' ? T('of the cards or sheet') : T('of the sheet')) + tile(false, PIC, T('Choose a photo'), T('from Google Photos or your gallery')) + '</div>' +
+      (ok && iPhone() ? '<p class="hint">' + T('Photo in Google Photos? Open it there, tap Share → Save to device, then choose it here.') + '</p>' : '') +
       (ok ? '<p class="ns-privacy">' + H.icon('M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z', 14) + ' ' + T('The photo goes to Google’s Gemini AI to read the handwriting. Church & Trellis doesn’t keep it.') + '</p>'
         : '<p class="ns-privacy">' + T('Reading photos needs AI. An Administrator can switch it on in Settings → Apps. Meanwhile, type the names below.') + '</p>') +
       '<details class="ns-type"' + (ok ? '' : ' open') + '><summary>' + T('Or type the names') + '</summary>' +
@@ -94,7 +97,7 @@ var NameScan = (function () {
   function review(rows) {
     var o = st.o, people = o.people;
     st.rows = NameList.match(rows, people).map(function (m) {
-      var r = { m: m, kind: '', ids: [], other: false, fresh: { first: m.row.first, last: m.row.last, mobile: m.row.mobile || '', email: m.row.email || '' } };
+      var r = { m: m, kind: '', ids: [], other: false, guests: Math.min(m.row.guests || 0, +o.guests || 0), fresh: { first: m.row.first, last: m.row.last, mobile: m.row.mobile || '', email: m.row.email || '' } };
       if (o.mode === 'people') { if (m.status === 'sure') { r.kind = 'skip'; r.ids = m.ids; } else if (m.status === 'none') r.kind = 'new'; }
       else if (m.status === 'sure') { r.kind = 'p'; r.ids = m.ids; }
       return r;
@@ -132,15 +135,24 @@ var NameScan = (function () {
         '<label class="field req">' + T('Surname') + '<input data-ns-f="last" data-i="' + i + '" value="' + esc(r.fresh.last) + '" maxlength="60"></label></div>' +
         (ppl ? '<div class="two"><label class="field">' + T('Mobile') + '<input data-ns-f="mobile" data-i="' + i + '" type="tel" value="' + esc(r.fresh.mobile) + '" maxlength="30"></label>' +
           '<label class="field">' + T('Email') + '<input data-ns-f="email" data-i="' + i + '" type="email" value="' + esc(r.fresh.email) + '" maxlength="120"></label></div>' : '') +
-        '<small class="muted">' + T('Added to People as an Attender, in a household of their own. You can add more details later.') + '</small></div>' : '') + '</li>';
+        '<small class="muted">' + T('Added to People as an Attender, in a household of their own. You can add more details later.') + '</small></div>' : '') + guestsBox(r, i) + '</li>';
+  }
+  /** Guests this person brings (events that allow guests): a small − 2 + beside them, filled in from "+2" on the sheet. */
+  function guestsBox(r, i) {
+    var max = +st.o.guests || 0;
+    if (!max || st.o.mode !== 'event' || !(r.kind === 'new' || (r.kind === 'p' && r.ids.length && !isAlready(r)))) return '';
+    return '<div class="ns-guests"><span>' + T('Bringing guests?') + '</span><button type="button" class="icon-btn" data-ns="g" data-d="-1" data-i="' + i + '" aria-label="' + esc(T('One less')) + '"' + (r.guests ? '' : ' disabled') + '>−</button>' +
+      '<output aria-live="polite">' + r.guests + '</output><button type="button" class="icon-btn" data-ns="g" data-d="1" data-i="' + i + '" aria-label="' + esc(T('One more')) + '"' + (r.guests < max ? '' : ' disabled') + '>+</button>' +
+      '<small class="muted">' + esc(TN('Up to {n} guest', 'Up to {n} guests', max)) + '</small></div>';
   }
   function redraw(i) {
     var li = document.querySelector('#modal [data-row="' + i + '"]'); if (!li) return;
     li.outerHTML = row(st.rows[i], i); sum();
   }
   function counts() {
-    var c = { add: 0, fresh: 0, ask: 0, seen: {} };
+    var c = { add: 0, fresh: 0, ask: 0, guests: 0, seen: {} };
     st.rows.forEach(function (r) {
+      if (r.kind === 'new' || (r.kind === 'p' && r.ids.length && !isAlready(r))) c.guests += r.guests || 0;
       if (r.kind === 'new') { c.fresh++; return; }
       if (!done(r)) { c.ask++; return; }
       if (r.kind === 'p') r.ids.forEach(function (id) { if (!c.seen[id] && !(st.o.already && st.o.already(id))) { c.seen[id] = 1; c.add++; } });
@@ -150,7 +162,7 @@ var NameScan = (function () {
   function sum() {
     var c = counts(), n = c.add + c.fresh, s = document.getElementById('ns-sum'), b = document.getElementById('ns-go');
     if (s) s.innerHTML = '<b>' + esc(TN('{n} name read', '{n} names read', st.rows.length)) + '</b>' + (c.ask ? ' · <span class="ns-ask">' + esc(TN('{n} to check', '{n} to check', c.ask)) + '</span>' : ' · ' + esc(T('all checked'))) +
-      (c.fresh ? ' · ' + esc(TN('{n} new', '{n} new', c.fresh)) : '');
+      (c.fresh ? ' · ' + esc(TN('{n} new', '{n} new', c.fresh)) : '') + (c.guests && st.o.mode === 'event' ? ' · ' + esc(TN('{n} guest', '{n} guests', c.guests)) : '');
     if (b) { b.textContent = st.o.mode === 'people' ? TN('Add {n} person', 'Add {n} people', c.fresh) : TN('Add {n} person', 'Add {n} people', n); b.disabled = !n; }
   }
 
@@ -166,6 +178,7 @@ var NameScan = (function () {
     if (act === 'back') { st.reading = null; return start(); }
     if (act === 'save') return save();
     if (!r) return;
+    if (act === 'g') { r.guests = Math.max(0, Math.min(+st.o.guests || 0, (r.guests || 0) + (+b.dataset.d))); redraw(i); return; }
     if (act === 'opt') { var ids = r.m.options[+b.dataset.k]; r.kind = st.o.mode === 'people' ? 'skip' : 'p'; r.ids = ids.slice(); r.other = false; }
     else if (act === 'other') { if (r.other && !r.ids.length) { r.other = false; r.kind = ''; } else { r.other = true; r.kind = 'p'; r.ids = []; } }
     else if (act === 'new') { r.kind = 'new'; r.ids = []; r.other = false; }
@@ -184,11 +197,11 @@ var NameScan = (function () {
   function save() {
     var err = document.getElementById('ns-err'), chosen = [], fresh = [], bad = -1;
     st.rows.forEach(function (r, i) {
-      if (r.kind === 'p' && r.ids.length) chosen.push({ ids: r.ids.filter(function (id) { return !(st.o.already && st.o.already(id)); }), guests: r.m.row.guests });
+      if (r.kind === 'p' && r.ids.length) chosen.push({ ids: r.ids.filter(function (id) { return !(st.o.already && st.o.already(id)); }), guests: r.guests });
       if (r.kind === 'new') {
         var f = r.fresh, first = String(f.first || '').trim(), last = String(f.last || '').trim();
         if ((!first || !last) && bad < 0) bad = i;
-        fresh.push({ first: first, last: last, mobile: String(f.mobile || '').trim(), email: NameList.okEmail(f.email), guests: r.m.row.guests });
+        fresh.push({ first: first, last: last, mobile: String(f.mobile || '').trim(), email: NameList.okEmail(f.email), guests: r.guests });
       }
     });
     if (bad >= 0) { err.textContent = T('Each new person needs a first name and a surname.'); var li = document.querySelector('#modal [data-row="' + bad + '"]'); if (li) li.scrollIntoView({ block: 'center' }); return; }

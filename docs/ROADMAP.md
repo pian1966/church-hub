@@ -55,7 +55,8 @@ Members see their own family (and give consent for their children), smart lists 
 - ⬜ **Names from a photo – follow-ups** (0.106.0 built Events → From a sheet, People → From a photo and the microphone):
   record consent from a visitor card in the same step (Consent → Paper connect card); decide whether Roster coordinators and
   Children's ministry may add someone new to People when registering them for an event (the rules allow Administrators and
-  Pastors only); try the same reading for attendance registers and Midweek Group sign-up sheets.
+  Pastors only); try the same reading for attendance registers and Midweek Group sign-up sheets; share a photo straight from
+  Google Photos to Church & Trellis (Share → Church & Trellis: a web share target, and an intent filter in the Android app).
 - ⬜ Save searches as smart lists; use them for emails and SMS
 - ⬜ Partnership applications: an email to Administrators and Pastors when one arrives, as well as the message in Messages (needs a Firebase function); apply without an account yet (email link first); print badges from the Android app
 - ⬜ Ask in your own words: more kinds of questions (leave, care and midweek groups, messages), and save an asked question as a smart list

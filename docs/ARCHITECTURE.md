@@ -858,7 +858,11 @@ Catholic Parish Priest / Assistant Priest; otherwise "Senior" / "Assistant" + th
   at most the event's limit).
 - `NameScan.open(opts)`: take or choose a photo (or type / say the names) → reading (the photo with a scanning beam) → a row per
   name with pills: the match(es), Someone else… (a findable list), New visitor / Add as new (Administrators and Pastors), Leave out.
-  Events (`mode: 'event'`): found people are added with `Events.add` (marked `addedBy`), new people first go into People.
+  Events (`mode: 'event'`, `guests` = the event's limit): each chosen or new person gets a guests counter (− n +, filled in from
+  "+2" on the sheet, at most the limit); found people are added with `Events.add` (marked `addedBy`), new people first go into People.
+  Choose a photo is a plain `<input type="file" accept="image/*">`: Android's chooser (and the Android app's, `MainActivity`
+  `onShowFileChooser`) includes Google Photos. Google's Photos Picker API is not used: its photos can't be downloaded by a web
+  page (no CORS on `baseUrl`) and Church & Trellis has no server; iPhones get a hint to save the photo to the device first.
   People (`mode: 'people'`): names already in People are left out by default; new ones are added (`NameScan.addPerson`: an
   Attender in a new household, `appRole` = `Store.defaultRole()`, `emailUnknown` / `mobileUnknown` when not written, *First visit*).
 - Events → Add people: the finder's `none` option offers "Add “…” as someone new" (also "Not in People yet? Add them"), which

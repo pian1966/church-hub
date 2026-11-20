@@ -105,5 +105,18 @@ I18n.rows([
     ["Choose someone else", "Kies iemand anders", "Khetha omunye umuntu", "Khetha omnye umntu"],
     ["Add to the list", "Voeg by die lys", "Engeza ohlwini", "Yongeza kuluhlu"],
     ["{name} is on the list.", "{name} is op die lys.", "U-{name} usohlwini.", "U-{name} ukuluhlu."],
-    ["See who’s coming to events, and add people who put their name down on a sheet", "Sien wie na geleenthede kom, en voeg mense by wat hul naam op ’n lys geskryf het", "Ukubona ukuthi ubani oza emicimbini, nokwengeza abantu ababhale amagama abo ephepheni", "Ukubona ukuba ngubani oza kwimisitho, nokongeza abantu ababhale amagama abo ephepheni"]
+    ["See who’s coming to events, and add people who put their name down on a sheet", "Sien wie na geleenthede kom, en voeg mense by wat hul naam op ’n lys geskryf het", "Ukubona ukuthi ubani oza emicimbini, nokwengeza abantu ababhale amagama abo ephepheni", "Ukubona ukuba ngubani oza kwimisitho, nokongeza abantu ababhale amagama abo ephepheni"],
+    ["Sign-up report…", "Inskrywingsverslag…", "Umbiko wokubhalisa…", "Ingxelo yokubhalisa…"],
+    ["Sign-up report", "Inskrywingsverslag", "Umbiko wokubhalisa", "Ingxelo yokubhalisa"],
+    ["No events with sign-ups coming up.", "Geen geleenthede met inskrywing wat voorlê nie.", "Ayikho imicimbi enokubhalisa ezayo.", "Akukho misitho inokubhalisa ezayo."],
+    ["Everyone signed up, with their cellphone numbers. Print it, or choose “Save as PDF” as the printer to make a PDF.", "Almal wat ingeskryf het, met hul selfoonnommers. Druk dit, of kies “Save as PDF” as die drukker om ’n PDF te maak.", "Bonke ababhalisile, nezinombolo zabo zamaselula. Kuphrinte, noma ukhethe “Save as PDF” njengephrinta ukwenza i-PDF.", "Bonke ababhalisileyo, neenombolo zabo zeeselula. Kushicilele, okanye ukhethe “Save as PDF” njengomshicileli ukwenza i-PDF."],
+    ["Also show email addresses", "Wys ook e-posadresse", "Bonisa namakheli e-imeyili", "Bonisa needilesi ze-imeyile"],
+    ["It has people’s personal details on it: keep it safe, and shred it after the event.", "Dit bevat mense se persoonlike besonderhede: hou dit veilig, en vernietig dit ná die geleentheid.", "Inemininingwane yomuntu siqu yabantu: yigcine iphephile, bese uyidabula ngemva komcimbi.", "Ineenkcukacha zobuqu zabantu: yigcine ikhuselekile, uze uyikrazule emva komsitho."],
+    ["Download (spreadsheet)", "Laai af (sigblad)", "Landa (i-spreadsheet)", "Khuphela (i-spreadsheet)"],
+    ["Which events", "Watter geleenthede", "Yimiphi imicimbi", "Yeyiphi imisitho"],
+    ["{n} event", "{n} geleentheid", "umcimbi ongu-{n}", "umsitho o-{n}"],
+    ["{n} events", "{n} geleenthede", "imicimbi engu-{n}", "imisitho e-{n}"],
+    ["Cellphone", "Selfoon", "Iselula", "Iselula"],
+    ["Personal information – keep it safe, and shred it after the event.", "Persoonlike inligting – hou dit veilig, en vernietig dit ná die geleentheid.", "Imininingwane yomuntu siqu – yigcine iphephile, bese uyidabula ngemva komcimbi.", "Iinkcukacha zobuqu – zigcine zikhuselekile, uze uzikrazule emva komsitho."],
+    ["Event", "Geleentheid", "Umcimbi", "Umsitho"]
 ]);

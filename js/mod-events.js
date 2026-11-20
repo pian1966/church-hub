@@ -12,7 +12,8 @@
   'use strict';
   var H = Hub, S = Store, E = Events, T = I18n.t, TN = I18n.tn, esc = H.esc;
   var CAL = 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4';
-  var state = { tab: '', tidied: false, written: {}, timer: null, pick: {} };
+  var PRINTER = 'M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z';
+  var state = { tab: '', tidied: false, written: {}, timer: null, pick: {}, rep: null };
   var ERR = { title: 'Give the event a name.', date: 'Choose the day.', time: 'Choose the time it starts.', end: 'It must end after it starts.',
     closes: 'Sign-up must close on or before the day of the event.', past: 'That is in the past.', people: 'Choose who is coming.',
     guests: 'That is more guests than this event allows.', email: 'Check the email address.', closed: 'Sign-up for this event has closed.' };
@@ -75,7 +76,9 @@
     var all = events(), up = E.upcoming(all, t), mine = up.filter(function (e) { return mySignup(e); }), past = org ? E.past(all, t) : [];
     if (tab === 'mine' && !mine.length) tab = '';
     if (tab === 'past' && !past.length) tab = '';
-    var more = manager() ? H.menu(T('More'), ['<button class="btn ghost" data-act="events:organisers">' + T('Event organisers…') + '</button>']) : '';
+    var moreItems = [adder() && all.some(function (e) { return e.signup; }) ? '<button class="btn ghost" data-act="events:report">' + H.icon(PRINTER, 16) + ' ' + T('Sign-up report…') + '</button>' : '',
+      manager() ? '<button class="btn ghost" data-act="events:organisers">' + T('Event organisers…') + '</button>' : ''].filter(Boolean);
+    var more = moreItems.length ? H.menu(T('More'), moreItems) : '';
     var html = '<div class="page-head"><div><h1>' + T('Events') + '</h1><p class="lead">' + T('What’s coming up at church. Tap I’ll be there – we’ll remind you 3 days and 1 day before.') + '</p></div>' +
       '<div class="btns">' + more + (org ? '<button class="btn primary" data-act="events:new">' + H.icon('M12 5v14M5 12h14', 16) + ' ' + T('New event') + '</button>' : '') + '</div></div>';
     if (mine.length || past.length) html += '<nav class="seg"><a href="#/events"' + (tab === '' ? ' class="on"' : '') + '>' + T('Coming up') + '</a>' +
@@ -97,8 +100,7 @@
     var menu = org ? H.menu(T('More'), [
       '<button class="btn ghost" data-act="events:edit" data-id="' + esc(e.id) + '">' + T('Change the event') + '</button>',
       e.signup ? '<button class="btn ghost" data-act="events:write" data-id="' + esc(e.id) + '">' + T('Message everyone coming') + '</button>' : '',
-      e.signup ? '<button class="btn ghost" data-act="events:csv" data-id="' + esc(e.id) + '">' + T('Download the list') + '</button>' : '',
-      e.signup ? '<button class="btn ghost" data-act="events:print">' + T('Print the list') + '</button>' : '',
+      e.signup ? '<button class="btn ghost" data-act="events:report" data-id="' + esc(e.id) + '">' + H.icon(PRINTER, 16) + ' ' + T('Sign-up report…') + '</button>' : '',
       e.status === 'cancelled' ? '<button class="btn ghost" data-act="events:restore" data-id="' + esc(e.id) + '">' + T('It’s on again') + '</button>' : '<button class="btn ghost" data-act="events:cancel" data-id="' + esc(e.id) + '">' + T('Cancel the event…') + '</button>',
       '<button class="btn ghost danger" data-act="events:del" data-id="' + esc(e.id) + '">' + T('Delete') + '</button>'].filter(Boolean)) : '';
     var main = !s && st === 'open' ? '<button class="btn primary" data-act="events:join" data-id="' + esc(e.id) + '">' + T('I’ll be there') + '</button>' : '';
@@ -130,7 +132,8 @@
   function whoComing(e) {
     var list = E.names(signups(), e.id), c = E.count(signups(), e.id), u = me() || {};
     var addBtn = addable(e) ? '<button class="btn small" data-act="events:add" data-id="' + esc(e.id) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + T('Add people') + '</button>' : '';
-    var h2 = '<div class="ev-who-h"><h2>' + T('Who’s coming') + '</h2>' + addBtn + '</div>';
+    var repBtn = list.length ? '<button class="btn small ghost" data-act="events:report" data-id="' + esc(e.id) + '">' + H.icon(PRINTER, 14) + ' ' + T('Print') + '</button>' : '';
+    var h2 = '<div class="ev-who-h"><h2>' + T('Who’s coming') + '</h2><div class="btns">' + repBtn + addBtn + '</div></div>';
     var head = '<div class="ev-count"><b>' + c.total + '</b><span>' + esc(TN('{n} coming', '{n} coming', c.total).replace(/^\d+\s*/, '')) + '</span>' +
       (c.guests ? '<small>' + esc(TN('{n} person', '{n} people', c.people)) + ' + ' + esc(TN('{n} guest', '{n} guests', c.guests)) + '</small>' : '') + '</div>';
     if (!list.length) return '<section class="panel ev-who">' + h2 + '<p class="muted">' + T('Nobody has signed up yet.') + '</p></section>';
@@ -250,11 +253,96 @@
     H.closeModal(); H.render();
     H.toast(cancelling ? T('Cancelled.') + (m.to.length ? ' ' + T('Everyone coming has been told.') : '') : T('Sent'));
   }
-  function csv(id) {
-    var e = S.get('events', id); if (!e || !organiser()) return;
+  /* ---------- the sign-up report: printed, saved as a PDF, or downloaded (organisers and staff) ---------- */
+  var PP = function () { return window.PeopleParts || {}; };
+  /** A person's cellphone as this viewer may see it ('' when it isn't shared with them). */
+  function phoneOf(p) { var P = PP(); return p && P.mayShare && P.mayShare(p, 'mobile') ? String(p.mobile || '') : ''; }
+  function emailOf(p) { var P = PP(); return p && P.mayShare && P.mayShare(p, 'email') && !/@pin\.church-hub\.invalid$/i.test(p.email || '') ? String(p.email || '') : ''; }
+  /** May this viewer have contact details as plain text (a print or a download)? Church Partners who organise see them as pictures only. */
+  function plainContacts() { var P = PP(); return !P.seeTier || P.seeTier() !== 'member'; }
+  /** One sign-up's people to contact: [{ name, phone, email }] (the one who signed up first; children only if nobody else has a number). */
+  function contactRows(s) {
+    var out = E.contacts(s).map(function (id) { var p = S.get('people', id); return p ? { p: p, name: H.name(p), phone: phoneOf(p), email: emailOf(p) } : null; }).filter(Boolean);
+    var adults = out.filter(function (c) { return c.p.familyRole !== 'child'; });
+    return adults.length ? adults : out;
+  }
+  function repEvents() { return E.upcoming(events(), now()).filter(function (e) { return e.signup && e.status !== 'cancelled'; }); }
+  function reportDialog(id) {
+    if (!adder()) return;
+    var choices = repEvents(), one = id ? S.get('events', id) : null;
+    if (one && choices.indexOf(one) < 0) choices = [one].concat(choices);
+    if (!choices.length) { H.toast(T('No events with sign-ups coming up.'), true); return; }
+    if (!state.rep || id) state.rep = { ids: one ? [one.id] : choices.map(function (e) { return e.id; }), email: false };
+    H.modal(H.dialogHead(T('Sign-up report'), T('Everyone signed up, with their cellphone numbers. Print it, or choose “Save as PDF” as the printer to make a PDF.')) +
+      '<div class="dlg-body"><div id="ev-rep"></div>' +
+      '<label class="check" style="margin-top:12px"><input type="checkbox" id="ev-rep-mail"' + (state.rep.email ? ' checked' : '') + '><span>' + T('Also show email addresses') + '</span></label>' +
+      '<p class="hint">' + T('It has people’s personal details on it: keep it safe, and shred it after the event.') + '</p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="events:repcsv">' + T('Download (spreadsheet)') + '</button><button class="btn primary" data-act="events:repprint">' + H.icon(PRINTER, 18) + ' ' + T('Print or save as PDF') + '</button></div>', T('Sign-up report'));
+    state.repChoices = choices.map(function (e) { return e.id; });
+    var m = document.getElementById('ev-rep-mail'); if (m) m.addEventListener('change', function () { state.rep.email = m.checked; });
+    repParts();
+  }
+  function repParts() {
+    var box = document.getElementById('ev-rep'), r = state.rep; if (!box || !r) return;
+    var ids = state.repChoices || [], sel = E.report(events(), signups(), r.ids), n = sel.reduce(function (a, x) { return a + x.count.total; }, 0);
+    box.innerHTML = '<p style="margin:0 0 6px"><b>' + T('Which events') + '</b></p><div class="pchips">' + ids.map(function (eid) {
+      var e = S.get('events', eid); if (!e) return '';
+      var o = r.ids.indexOf(eid) >= 0, c = E.count(signups(), eid).total;
+      return '<button type="button" class="pchip' + (o ? ' on' : '') + '" aria-pressed="' + o + '" data-act="events:repone" data-id="' + esc(eid) + '">' + (o ? H.icon(H.ICON.check, 15) : '') +
+        '<span>' + esc(e.title) + '<small>' + esc(H.fmt(e.date, true)) + ' · ' + esc(TN('{n} coming', '{n} coming', c)) + '</small></span></button>';
+    }).join('') + '</div><p class="muted small" style="margin:8px 0 0">' + esc(TN('{n} event', '{n} events', sel.length)) + ' · ' + esc(TN('{n} coming', '{n} coming', n)) + '</p>';
+    var go = document.querySelector('[data-act="events:repprint"]'); if (go) go.disabled = !sel.length;
+  }
+  /** The pages: one event after another, each starting on a new A4 page. */
+  function printReport() {
+    var r = state.rep; if (!r || !adder()) return;
+    var sel = E.report(events(), signups(), r.ids); if (!sel.length) return;
+    var st = S.settings() || {}, plain = plainContacts(), mail = r.email;
+    var cell = function (v, p, f) { if (!v) return '<span class="er-none">–</span>'; return plain ? esc(v) : (PP().contactHtml ? PP().contactHtml(p, f) : ''); };
+    var html = sel.map(function (x) {
+      var e = x.event, c = x.count;
+      return '<section class="er-sheet"><div class="er-head"><div><h1>' + esc(e.title) + '</h1><p>' + esc(H.fmt(e.date, true) + ' · ' + timeText(e) + (where(e) ? ' · ' + where(e) : '')) + '</p></div>' +
+        '<div class="er-count"><b>' + c.total + '</b><span>' + esc(TN('{n} coming', '{n} coming', c.total).replace(/^\d+\s*/, '')) + '</span>' +
+        (c.guests ? '<small>' + esc(TN('{n} person', '{n} people', c.people)) + ' + ' + esc(TN('{n} guest', '{n} guests', c.guests)) + '</small>' : '') + '</div></div>' +
+        (x.rows.length ? '<table><thead><tr><th class="er-n">#</th><th>' + esc(T('Name')) + '</th><th>' + esc(T('Cellphone')) + '</th>' + (mail ? '<th>' + esc(T('Email')) + '</th>' : '') +
+          '<th class="er-g">' + esc(T('Guests')) + '</th><th>' + esc(T('Notes')) + '</th><th class="er-tick">✓</th></tr></thead><tbody>' + x.rows.map(function (s, i) {
+            var who = contactRows(s), by = s.addedBy ? S.get('people', s.addedBy) : null, many = who.length > 1;
+            var label = function (k) { return many ? '<small>' + esc(k.p.preferredName || k.p.firstName || '') + '</small> ' : ''; };
+            var notes = [by ? T('Added by {name}', { name: H.name(by) }) : '', s.email ? T('Email reminders') : ''].filter(Boolean);
+            return '<tr><td class="er-n">' + (i + 1) + '</td><td><b>' + esc((s.names || []).join(', ')) + '</b></td>' +
+              '<td>' + who.map(function (k) { return '<div>' + (k.phone ? label(k) : '') + cell(k.phone, k.p, 'mobile') + '</div>'; }).filter(function (d, j) { return who[j].phone || j === 0; }).join('') + '</td>' +
+              (mail ? '<td>' + who.map(function (k) { return k.email ? '<div>' + cell(k.email, k.p, 'email') + '</div>' : ''; }).join('') + '</td>' : '') +
+              '<td class="er-g">' + (s.guests || '') + '</td><td class="er-notes">' + esc(notes.join(' · ')) + '</td><td class="er-tick"><i></i></td></tr>';
+          }).join('') + '</tbody></table>' : '<p>' + esc(T('Nobody has signed up yet.')) + '</p>') +
+        '<div class="er-foot"><span>' + esc(T('Personal information – keep it safe, and shred it after the event.')) + '</span><span>' + esc(st.churchName || '') + ' · ' +
+        esc(T('Printed {date}', { date: H.fmt(H.today(), true) })) + ' · Church &amp; Trellis</span></div></section>';
+    }).join('');
+    var box = document.getElementById('print-only') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'print-only' }));
+    H.closeModal();
+    box.className = 'evrep'; box.innerHTML = html; document.documentElement.classList.add('printing');
+    var done = function () { document.documentElement.classList.remove('printing'); box.innerHTML = ''; window.removeEventListener('afterprint', done); };
+    window.addEventListener('afterprint', done);
+    S.audit(audit('printed the sign-up report (' + sel.length + (sel.length === 1 ? ' event' : ' events') + ', with cellphone numbers' + (mail ? ' and email addresses' : '') + ')'), 'eventSignups');
+    setTimeout(function () { try { window.print(); } catch (err) { done(); H.toast(T('Printing works best from a computer.'), true); } }, 50);
+  }
+  /** The same as a spreadsheet (.csv, opens in Excel or Google Sheets): one row per sign-up. */
+  function reportCsv() {
+    var r = state.rep; if (!r || !adder()) return;
+    var sel = E.report(events(), signups(), r.ids); if (!sel.length) return;
+    var plain = plainContacts(), mail = r.email && plain;
     var q = function (v) { return '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"'; };
-    var rows = [[T('Name'), T('Guests'), T('Email reminders')]].concat(E.names(signups(), e.id).map(function (s) { return [(s.names || []).join(', '), s.guests || 0, s.email ? T('Yes') : '']; }));
-    H.download((e.title + ' ' + e.date).replace(/[^\w\- ]+/g, '').replace(/\s+/g, '-') + '.csv', '﻿' + rows.map(function (r) { return r.map(q).join(','); }).join('\r\n'), 'text/csv');
+    var join = function (who, f) { return who.filter(function (k) { return k[f]; }).map(function (k) { return (who.length > 1 ? (k.p.preferredName || k.p.firstName) + ': ' : '') + k[f]; }).join('; '); };
+    var rows = [[T('Event'), T('Date'), T('Name'), T('Cellphone')].concat(mail ? [T('Email')] : []).concat([T('Guests'), T('Notes')])];
+    sel.forEach(function (x) {
+      x.rows.forEach(function (s) {
+        var who = contactRows(s), by = s.addedBy ? S.get('people', s.addedBy) : null;
+        rows.push([x.event.title, x.event.date, (s.names || []).join(', '), plain ? join(who, 'phone') : ''].concat(mail ? [join(who, 'email')] : [])
+          .concat([s.guests || 0, [by ? T('Added by {name}', { name: H.name(by) }) : '', s.email ? T('Email reminders') : ''].filter(Boolean).join(' · ')]));
+      });
+    });
+    H.download((sel.length === 1 ? sel[0].event.title + ' ' + sel[0].event.date : T('Sign-up report') + ' ' + H.today()).replace(/[^\w\- ]+/g, '').replace(/\s+/g, '-') + '.csv',
+      '\ufeff' + rows.map(function (rw) { return rw.map(q).join(','); }).join('\r\n'), 'text/csv');
+    S.audit(audit('downloaded the sign-up report (' + sel.length + (sel.length === 1 ? ' event' : ' events') + ')'), 'eventSignups');
   }
 
   /* ---------- staff: adding people (e.g. from a paper sign-up sheet) ---------- */
@@ -401,8 +489,13 @@
       addpick: function (el) { addDialog(el.dataset.event, el.dataset.id); },
       addsave: addSave,
       out: function (el) { var s = S.get('eventSignups', el.dataset.id); if (!s || !(organiser() || (s.addedBy && s.addedBy === (me() || {}).id)) || !H.confirmBtn(el, '✕?')) return; S.remove('eventSignups', s.id, audit('took someone off the list for an event')); H.render(); },
-      csv: function (el) { csv(el.dataset.id); },
-      print: function () { window.print(); },
+      report: function (el) { reportDialog(el.dataset.id || ''); },
+      repone: function (el) {
+        var r = state.rep, id = el.dataset.id; if (!r) return;
+        r.ids = r.ids.indexOf(id) >= 0 ? r.ids.filter(function (x) { return x !== id; }) : r.ids.concat([id]); repParts();
+      },
+      repprint: printReport,
+      repcsv: reportCsv,
       organisers: organisersDialog,
       orgin: function (el) { if (manager()) setOrganisers(organiserIds().concat([el.dataset.id]), 'added an organiser'); },
       orgout: function (el) { if (manager()) setOrganisers(organiserIds().filter(function (x) { return x !== el.dataset.id; }), 'took an organiser out'); },

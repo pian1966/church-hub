@@ -38,7 +38,6 @@
 .ev-who h2 { margin: 0 0 10px; font-size: 17px; }
 .ev-who-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ev-who-h h2 { margin-bottom: 10px; }
-.ev-who-h .btn { margin-bottom: 10px; }
 .ev-added { display: block; color: var(--muted, #6b6b6b); font-size: 12px; margin-top: 1px; }
 .ev-person small { display: block; font-size: 11px; color: var(--muted, #6b6b6b); }
 .ev-count { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
@@ -76,4 +75,26 @@
 .ev-home .ev-grid { margin-top: 6px; }
 @media (max-width: 520px) { .ev-hero { flex-direction: column; } .ev-hero .ev-date { align-self: flex-start; flex: 0 0 auto; width: 64px; } .ev-grid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .ev-card, .ev-knob::after, .ev-yes > svg { transition: none; animation: none; } }
-@media print { .ev-card, .ev-hero, .ev-mine, .ev-note, .ev-back, .page-head .btns, .row-menu, .ev-who-h .btn { display: none !important; } .ev-who { border: 0; box-shadow: none; } }
+@media print { .ev-card, .ev-hero, .ev-mine, .ev-note, .ev-back, .page-head .btns, .row-menu, .ev-who-h .btns { display: none !important; } .ev-who { border: 0; box-shadow: none; } }
+.ev-who-h .btns { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; } .ev-who-h .btns .btn { margin-bottom: 0; }
+/* The sign-up report on paper (Events → More → Sign-up report): A4 portrait, one event after another, each on a new page */
+@media print {
+  #print-only.evrep { font-family: Inter, Arial, sans-serif; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  #print-only.evrep .er-sheet { page: eventsA4; break-after: page; page-break-after: always; }
+  #print-only.evrep .er-sheet:last-child { break-after: auto; page-break-after: auto; }
+  #print-only.evrep .er-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm; border-bottom: 1.6pt solid #7A4FD0; padding-bottom: 2.5mm; margin-bottom: 4mm; }
+  #print-only.evrep .er-head h1 { font-size: 18pt; margin: 0; line-height: 1.15; } #print-only.evrep .er-head p { margin: 1.2mm 0 0; font-size: 10.5pt; color: #333; }
+  #print-only.evrep .er-count { text-align: right; line-height: 1.1; } #print-only.evrep .er-count b { display: block; font-size: 22pt; color: #7A4FD0; }
+  #print-only.evrep .er-count span { font-size: 9pt; text-transform: uppercase; letter-spacing: .05em; } #print-only.evrep .er-count small { display: block; font-size: 8.5pt; color: #444; margin-top: .8mm; }
+  #print-only.evrep table { width: 100%; border-collapse: collapse; font-size: 10pt; line-height: 1.3; }
+  #print-only.evrep th { text-align: left; font-size: 8.5pt; text-transform: uppercase; letter-spacing: .04em; color: #444; border-bottom: 1pt solid #999; padding: 1.4mm 2mm; background: #f3effb; }
+  #print-only.evrep td { border-bottom: .5pt solid #ccc; padding: 2mm; vertical-align: top; overflow-wrap: anywhere; }
+  #print-only.evrep tbody tr:nth-child(even) td { background: #faf8fd; }
+  #print-only.evrep tr { break-inside: avoid; page-break-inside: avoid; } #print-only.evrep thead { display: table-header-group; }
+  #print-only.evrep .er-n { width: 8mm; color: #666; text-align: right; } #print-only.evrep .er-g { width: 14mm; text-align: center; }
+  #print-only.evrep .er-tick { width: 9mm; text-align: center; } #print-only.evrep td.er-tick i { display: inline-block; width: 4mm; height: 4mm; border: .8pt solid #777; border-radius: 1mm; }
+  #print-only.evrep td small { color: #555; font-size: 8.5pt; } #print-only.evrep .er-notes { font-size: 8.5pt; color: #444; } #print-only.evrep .er-none { color: #aaa; }
+  #print-only.evrep td a { color: #000; text-decoration: none; }
+  #print-only.evrep .er-foot { display: flex; justify-content: space-between; gap: 6mm; font-size: 7.5pt; color: #555; margin-top: 4mm; border-top: .5pt solid #ccc; padding-top: 1.5mm; }
+}
+@page eventsA4 { size: A4 portrait; margin: 12mm; }

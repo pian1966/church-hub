@@ -1,14 +1,14 @@
-/* Church & Trellis – Events: what's coming up at church, signing up, and reminders 3 days and 1 day before.
- * The rules: js/events.js; the look: css/events.css. Plan: docs/COMMUNITY-PLAN.md part 1. Switched on in Settings → Apps.
+/* Church & Trellis \u2013 Events: what's coming up at church, signing up, and reminders 3 days and 1 day before.
+ * The rules: js/events.js; the look: css/events.css. Plan: docs/COMMUNITY-PLAN.md part 1. Switched on in Settings \u2192 Apps.
  * Routes: #/events (coming up), #/events/mine (what I signed up for), #/events/past (organisers), #/events/e/<id> (one event).
  * Organisers (js/access.js JOBS.organisers: Administrators, Pastors and the church secretary until the church chooses) put
  * events up, see who's coming, write to everyone coming and cancel an event (everyone coming is told).
- * Anyone on the staff (and the organisers) may also see who's coming and add people – e.g. those who put their name down on a
+ * Anyone on the staff (and the organisers) may also see who's coming and add people \u2013 e.g. those who put their name down on a
  * paper sheet (Add people; js/events.js add). The sign-up is in that person's name, so they see it and get the reminders.
  * A whole sheet: From a sheet takes a photo (or the names typed or said) and matches every name (js/name-scan.js, js/name-list.js).
  * Someone not in People yet: Administrators and Pastors add them there and then (an Attender in a household of their own).
- * Reminders: in Messages always – each person's own Church & Trellis writes theirs on the day it is due (remind() below);
- * by email for those who ticked "Email me reminders too" – the email robot sends those (robot/event-mail.js).
+ * Reminders: in Messages always \u2013 each person's own Church & Trellis writes theirs on the day it is due (remind() below);
+ * by email for those who ticked "Email me reminders too" \u2013 the email robot sends those (robot/event-mail.js).
  * POPIA: docs/POPIA.md "Events". */
 (function () {
   'use strict';
@@ -27,7 +27,7 @@
   function adder() { return !S.preview() && H.can('events.add'); }
   /** May add someone new to People (to register them for an event): Administrators and Pastors (firestore.rules people create). */
   function newPeople() { return !S.preview() && (H.can('*') || H.can('people.edit')); }
-  /** May people be added to this event now? (after the closing date too – paper sheets come in late) */
+  /** May people be added to this event now? (after the closing date too \u2013 paper sheets come in late) */
   function addable(e) { var st = E.signupState(e, now()); return adder() && (st === 'open' || st === 'closed'); }
   function kind() { var u = me(); return u ? Access.kindOf(u.appRole || 'member', H.attendee()) : 'attendee'; }
   function events() { var org = organiser(), k = kind(); return S.list('events').filter(function (e) { return E.sees(e, k, org); }); }
@@ -44,7 +44,7 @@
   function church() { return ((S.settings() || {}).churchName) || ''; }
   /** A soft colour for each event, always the same for the same event (its id). */
   function hue(e) { var h = 0, s = String(e.id || e.title || ''); for (var i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) % 360; return [18, 152, 206, 262, 330, 42, 190][h % 7]; }
-  function timeText(e) { return e.time + (e.end ? '–' + e.end : ''); }
+  function timeText(e) { return e.time + (e.end ? '\u2013' + e.end : ''); }
   function where(e) { return [e.place, e.address].filter(Boolean).join(', '); }
   function audit(what) { return 'Events: ' + what; }
 
@@ -56,7 +56,7 @@
   function tags(e, s) {
     var t = [], st = E.signupState(e, now());
     if (e.status === 'cancelled') t.push('<span class="tag bad">' + T('Cancelled') + '</span>');
-    else if (s) t.push('<span class="tag good">' + T('You’re going') + ' ✓</span>');
+    else if (s) t.push('<span class="tag good">' + T('You\u2019re going') + ' \u2713</span>');
     else if (st === 'closed') t.push('<span class="tag grey">' + T('Sign-up closed') + '</span>');
     if (e.who === 'partners') t.push('<span class="tag grey">' + T('Church Partners') + '</span>');
     if ((organiser() || adder()) && e.signup) { var c = E.count(signups(), e.id); t.push('<span class="tag">' + esc(TN('{n} coming', '{n} coming', c.total)) + '</span>'); }
@@ -64,9 +64,9 @@
   }
   function card(e) {
     var s = mySignup(e), open = E.signupState(e, now()) === 'open';
-    var act = !s && open ? '<button class="btn primary ev-go" data-act="events:join" data-id="' + esc(e.id) + '">' + T('I’ll be there') + '</button>' : '';
+    var act = !s && open ? '<button class="btn primary ev-go" data-act="events:join" data-id="' + esc(e.id) + '">' + T('I\u2019ll be there') + '</button>' : '';
     return '<article class="ev-card' + (e.status === 'cancelled' ? ' off' : '') + '" style="--ev:' + hue(e) + '"><a class="ev-hit" href="#/events/e/' + encodeURIComponent(e.id) + '">' + tile(e) +
-      '<div class="ev-main"><h3>' + esc(e.title) + '</h3><p class="ev-meta">' + esc(timeText(e)) + (where(e) ? ' · ' + esc(e.place || e.address) : '') + '</p>' + tags(e, s) + '</div></a>' +
+      '<div class="ev-main"><h3>' + esc(e.title) + '</h3><p class="ev-meta">' + esc(timeText(e)) + (where(e) ? ' � ' + esc(e.place || e.address) : '') + '</p>' + tags(e, s) + '</div></a>' +
       (act ? '<div class="ev-act">' + act + '</div>' : '') + '</article>';
   }
   function grid(list) { return '<div class="ev-grid">' + list.map(card).join('') + '</div>'; }
@@ -80,10 +80,10 @@
     var all = events(), up = E.upcoming(all, t), mine = up.filter(function (e) { return mySignup(e); }), past = org ? E.past(all, t) : [];
     if (tab === 'mine' && !mine.length) tab = '';
     if (tab === 'past' && !past.length) tab = '';
-    var moreItems = [adder() && all.some(function (e) { return e.signup; }) ? '<button class="btn ghost" data-act="events:report">' + H.icon(PRINTER, 16) + ' ' + T('Sign-up report…') + '</button>' : '',
-      manager() ? '<button class="btn ghost" data-act="events:organisers">' + T('Event organisers…') + '</button>' : ''].filter(Boolean);
+    var moreItems = [adder() && all.some(function (e) { return e.signup; }) ? '<button class="btn ghost" data-act="events:report">' + H.icon(PRINTER, 16) + ' ' + T('Sign-up report\u2026') + '</button>' : '',
+      manager() ? '<button class="btn ghost" data-act="events:organisers">' + T('Event organisers\u2026') + '</button>' : ''].filter(Boolean);
     var more = moreItems.length ? H.menu(T('More'), moreItems) : '';
-    var html = '<div class="page-head"><div><h1>' + T('Events') + '</h1><p class="lead">' + T('What’s coming up at church. Tap I’ll be there – we’ll remind you 3 days and 1 day before.') + '</p></div>' +
+    var html = '<div class="page-head"><div><h1>' + T('Events') + '</h1><p class="lead">' + T('What\u2019s coming up at church. Tap I\u2019ll be there \u2013 we\u2019ll remind you 3 days and 1 day before.') + '</p></div>' +
       '<div class="btns">' + more + (org ? '<button class="btn primary" data-act="events:new">' + H.icon('M12 5v14M5 12h14', 16) + ' ' + T('New event') + '</button>' : '') + '</div></div>';
     if (mine.length || past.length) html += '<nav class="seg"><a href="#/events"' + (tab === '' ? ' class="on"' : '') + '>' + T('Coming up') + '</a>' +
       (mine.length ? '<a href="#/events/mine"' + (tab === 'mine' ? ' class="on"' : '') + '>' + T('My events') + '</a>' : '') +
@@ -91,7 +91,7 @@
     if (tab === 'mine') return html + grid(mine);
     if (tab === 'past') return html + grid(past);
     if (!up.length) return html + '<div class="ev-empty">' + H.icon(CAL, 40) + '<p><b>' + T('Nothing planned yet.') + '</b></p><p class="muted">' +
-      (org ? T('Put up the first event – people sign up with one tap and get reminders.') : T('When the church plans an event, it shows here.')) + '</p>' +
+      (org ? T('Put up the first event \u2013 people sign up with one tap and get reminders.') : T('When the church plans an event, it shows here.')) + '</p>' +
       (org ? '<button class="btn primary" data-act="events:new">' + T('New event') + '</button>' : '') + '</div>';
     return html + grid(up);
   }
@@ -99,16 +99,16 @@
   /* ---------- one event ---------- */
   function eventPage(id) {
     var e = S.get('events', id), org = organiser();
-    if (!e || !E.sees(e, kind(), org)) return '<div class="page-head"><div><h1>' + T('Events') + '</h1></div></div><p class="empty">' + T('This event isn’t here any more.') + ' <a href="#/events">' + T('See what’s coming up') + '</a></p>';
+    if (!e || !E.sees(e, kind(), org)) return '<div class="page-head"><div><h1>' + T('Events') + '</h1></div></div><p class="empty">' + T('This event isn\u2019t here any more.') + ' <a href="#/events">' + T('See what\u2019s coming up') + '</a></p>';
     var s = mySignup(e), st = E.signupState(e, now()), u = me();
     var menu = org ? H.menu(T('More'), [
       '<button class="btn ghost" data-act="events:edit" data-id="' + esc(e.id) + '">' + T('Change the event') + '</button>',
       e.signup ? '<button class="btn ghost" data-act="events:write" data-id="' + esc(e.id) + '">' + T('Message everyone coming') + '</button>' : '',
-      e.signup ? '<button class="btn ghost" data-act="events:report" data-id="' + esc(e.id) + '">' + H.icon(PRINTER, 16) + ' ' + T('Sign-up report…') + '</button>' : '',
-      e.status === 'cancelled' ? '<button class="btn ghost" data-act="events:restore" data-id="' + esc(e.id) + '">' + T('It’s on again') + '</button>' : '<button class="btn ghost" data-act="events:cancel" data-id="' + esc(e.id) + '">' + T('Cancel the event…') + '</button>',
-      '<button class="btn ghost danger" data-act="events:del" data-id="' + esc(e.id) + '">' + T('Delete') + '</button>'].filter(Boolean)) : '';
-    var main = !s && st === 'open' ? '<button class="btn primary" data-act="events:join" data-id="' + esc(e.id) + '">' + T('I’ll be there') + '</button>' : '';
-    var html = '<p class="ev-back"><a href="#/events">← ' + T('Events') + '</a></p><div class="page-head"><div><h1>' + esc(e.title) + '</h1><p class="lead">' + esc(H.fmt(e.date, true) + ' · ' + timeText(e)) + '</p></div>' +
+      e.signup ? '<button class="btn ghost" data-act="events:report" data-id="' + esc(e.id) + '">' + H.icon(PRINTER, 16) + ' ' + T('Sign-up report\u2026') + '</button>' : '',
+      e.status === 'cancelled' ? '<button class="btn ghost" data-act="events:restore" data-id="' + esc(e.id) + '">' + T('It\u2019s on again') + '</button>' : '<button class="btn ghost" data-act="events:cancel" data-id="' + esc(e.id) + '">' + T('Cancel the event\u2026') + '</button>',
+      '<button class="btn ghost danger" data-act="events:delask" data-id="' + esc(e.id) + '">' + T('Delete') + '</button>'].filter(Boolean)) : '';
+    var main = !s && st === 'open' ? '<button class="btn primary" data-act="events:join" data-id="' + esc(e.id) + '">' + T('I\u2019ll be there') + '</button>' : '';
+    var html = '<p class="ev-back"><a href="#/events">\u2190 ' + T('Events') + '</a></p><div class="page-head"><div><h1>' + esc(e.title) + '</h1><p class="lead">' + esc(H.fmt(e.date, true) + ' � ' + timeText(e)) + '</p></div>' +
       '<div class="btns">' + menu + main + '</div></div>';
     html += '<section class="panel ev-hero" style="--ev:' + hue(e) + '">' + tile(e) + '<div class="ev-main">' +
       (e.status === 'cancelled' ? '<p class="ev-cancelled">' + T('This event has been cancelled.') + '</p>' : '') +
@@ -117,8 +117,8 @@
       tags(e, null) + '</div></section>';
     if (s) html += mine(e, s);
     else if (e.signup && e.status !== 'cancelled' && (st === 'open' || st === 'closed')) html += '<p class="ev-note">' + H.icon('M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0', 16) + '<span>' +
-      (st === 'open' ? T('Signed up? We’ll remind you in Messages 3 days and 1 day before.') + (e.email ? ' ' + T('By email too, if you like.') : '') : T('Sign-up for this event has closed.')) + '</span></p>';
-    else if (!e.signup) html += '<p class="ev-note">' + H.icon(CAL, 16) + '<span>' + T('No need to sign up – just come.') + ' <button class="link" data-act="events:ics" data-id="' + esc(e.id) + '">' + T('Add to my calendar') + '</button></span></p>';
+      (st === 'open' ? T('Signed up? We\u2019ll remind you in Messages 3 days and 1 day before.') + (e.email ? ' ' + T('By email too, if you like.') : '') : T('Sign-up for this event has closed.')) + '</span></p>';
+    else if (!e.signup) html += '<p class="ev-note">' + H.icon(CAL, 16) + '<span>' + T('No need to sign up \u2013 just come.') + ' <button class="link" data-act="events:ics" data-id="' + esc(e.id) + '">' + T('Add to my calendar') + '</button></span></p>';
     if ((org || adder()) && e.signup) html += whoComing(e);
     return html;
   }
@@ -126,11 +126,11 @@
   function mine(e, s) {
     var who = (s.names || []).join(', ') + (s.guests ? ' + ' + TN('{n} guest', '{n} guests', s.guests) : ''), mineToChange = s.by === (me() || {}).id;
     var open = E.signupState(e, now()) === 'open';
-    return '<section class="panel ev-mine"><div class="ev-yes">' + H.icon('M20 6 9 17l-5-5', 22) + '<div><b>' + T('You’re going') + '</b><p>' + esc(who) + '</p>' +
-      '<p class="muted small">' + T('We’ll remind you in Messages 3 days and 1 day before.') + (s.email ? ' ' + esc(T('And by email, to {email}.', { email: s.email })) : '') + '</p></div></div>' +
+    return '<section class="panel ev-mine"><div class="ev-yes">' + H.icon('M20 6 9 17l-5-5', 22) + '<div><b>' + T('You\u2019re going') + '</b><p>' + esc(who) + '</p>' +
+      '<p class="muted small">' + T('We\u2019ll remind you in Messages 3 days and 1 day before.') + (s.email ? ' ' + esc(T('And by email, to {email}.', { email: s.email })) : '') + '</p></div></div>' +
       '<div class="btns"><button class="btn" data-act="events:ics" data-id="' + esc(e.id) + '">' + H.icon(CAL, 16) + ' ' + T('Add to my calendar') + '</button>' +
       (mineToChange && open ? '<button class="btn ghost" data-act="events:join" data-id="' + esc(e.id) + '">' + T('Change') + '</button>' : '') +
-      (mineToChange && e.status !== 'cancelled' && now() < E.startOf(e) ? '<button class="btn ghost" data-act="events:leave" data-id="' + esc(e.id) + '">' + T('I can’t come after all') + '</button>' : '') + '</div></section>';
+      (mineToChange && e.status !== 'cancelled' && now() < E.startOf(e) ? '<button class="btn ghost" data-act="events:leave" data-id="' + esc(e.id) + '">' + T('I can\u2019t come after all') + '</button>' : '') + '</div></section>';
   }
   /** The names of one sign-up, each one clickable: staff who may edit people open that person's details; others open their profile. */
   function nameLinks(s, canEdit) {
@@ -141,7 +141,7 @@
         : '<a class="name-chip" href="#/people/p/' + esc(p.id) + '">' + esc(n) + '</a>';
     }).join(', ');
   }
-  /** The "⋯" menu of one sign-up: take one person off (not the one the sign-up is in the name of), or all of them. */
+  /** The "\u22ef" menu of one sign-up: take one person off (not the one the sign-up is in the name of), or all of them. */
   function outItems(s) {
     var ids = s.people || [], items = [];
     if (ids.length > 1) ids.forEach(function (pid, i) {
@@ -171,13 +171,29 @@
     } else S.remove('eventSignups', s.id, audit('took someone off the list for ' + title));
     H.closeModal(); H.render(); H.toast(T('Taken off the list.'));
   }
+  /** Asks first, in a dialog that stays open. A two-tap button inside a menu closes with the menu, so it never gets its second tap. */
+  function delDialog(id) {
+    var e = S.get('events', id); if (!e || !organiser()) return;
+    var n = E.of(signups(), e.id).length;
+    H.modal(H.dialogHead(T('Delete this event?'), e.title) + '<div class="dlg-body"><p>' +
+      esc(T('\u201c{title}\u201d will be removed for good.', { title: e.title })) + '</p>' +
+      (n ? '<p class="hint">' + esc(TN('{n} sign-up will be removed too.', '{n} sign-ups will be removed too.', n)) + '</p>' : '') + '</div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Back') + '</button>' +
+      '<button class="btn primary danger" data-act="events:delyes" data-id="' + esc(e.id) + '">' + T('Yes, delete') + '</button></div>', T('Delete'));
+  }
+  function delYes(el) {
+    var e = S.get('events', el.dataset.id); if (!e || !organiser()) return;
+    E.of(signups(), e.id).forEach(function (s) { S.remove('eventSignups', s.id); });
+    S.remove('events', e.id, audit('deleted ' + e.title + ' (' + e.date + ')'));
+    H.closeModal(); H.go('events'); H.toast(T('Deleted'));
+  }
   /** Organisers and staff: who's coming (staff may add people, and take off those they added). */
   function whoComing(e) {
     var list = E.names(signups(), e.id), c = E.count(signups(), e.id), u = me() || {};
     var addBtn = addable(e) ? (window.NameScan ? '<button class="btn small ghost" data-act="events:scan" data-id="' + esc(e.id) + '">' + H.icon('M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 14) + ' ' + T('From a sheet') + '</button>' : '') +
       '<button class="btn small" data-act="events:add" data-id="' + esc(e.id) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + T('Add people') + '</button>' : '';
     var repBtn = list.length ? '<button class="btn small ghost" data-act="events:report" data-id="' + esc(e.id) + '">' + H.icon(PRINTER, 14) + ' ' + T('Print') + '</button>' : '';
-    var h2 = '<div class="ev-who-h"><h2>' + T('Who’s coming') + '</h2><div class="btns">' + repBtn + addBtn + '</div></div>';
+    var h2 = '<div class="ev-who-h"><h2>' + T('Who\u2019s coming') + '</h2><div class="btns">' + repBtn + addBtn + '</div></div>';
     var head = '<div class="ev-count"><b>' + c.total + '</b><span>' + esc(TN('{n} coming', '{n} coming', c.total).replace(/^\d+\s*/, '')) + '</span>' +
       (c.guests ? '<small>' + esc(TN('{n} person', '{n} people', c.people)) + ' + ' + esc(TN('{n} guest', '{n} guests', c.guests)) + '</small>' : '') + '</div>';
     if (!list.length) return '<section class="panel ev-who">' + h2 + '<p class="muted">' + T('Nobody has signed up yet.') + '</p></section>';
@@ -186,8 +202,8 @@
       var by = s.addedBy ? S.get('people', s.addedBy) : null, mayOut = organiser() || (s.addedBy && s.addedBy === u.id);
       return '<li><span class="grow"><b>' + nameLinks(s, canEdit) + '</b>' + (s.guests ? ' <small>+ ' + esc(TN('{n} guest', '{n} guests', s.guests)) + '</small>' : '') +
         (by ? '<small class="ev-added">' + esc(T('Added by {name}', { name: H.name(by) })) + '</small>' : '') + '</span>' +
-        (s.email ? '<span class="tag grey" title="' + esc(T('Email reminders')) + '">✉</span>' : '') +
-        (mayOut ? H.menu('⋯', outItems(s), 'row-menu', T('More')) : '') + '</li>';
+        (s.email ? '<span class="tag grey" title="' + esc(T('Email reminders')) + '">\u2709</span>' : '') +
+        (mayOut ? H.menu('\u22ef', outItems(s), 'row-menu', T('More')) : '') + '</li>';
     }).join('') + '</ul></section>';
   }
 
@@ -196,21 +212,21 @@
     if (!organiser()) return;
     var e = id ? S.get('events', id) : null, d = e || { title: '', about: '', date: '', time: '10:00', end: '', place: '', address: '', who: 'all', signup: true, closes: '', guests: 4, email: true };
     H.modal(H.dialogHead(e ? T('Change the event') : T('New event'), T('People see it under Events, and can sign up with one tap.')) + '<div class="dlg-body ev-form">' +
-      '<label class="field req">' + T('Name') + '<input id="ev-title" maxlength="80" value="' + esc(d.title) + '" placeholder="' + esc(T('e.g. Men’s breakfast')) + '"></label>' +
+      '<label class="field req">' + T('Name') + '<input id="ev-title" maxlength="80" value="' + esc(d.title) + '" placeholder="' + esc(T('e.g. Men\u2019s breakfast')) + '"></label>' +
       '<div class="two"><label class="field req">' + T('Date') + '<input id="ev-date" type="date" value="' + esc(d.date) + '"></label>' +
       '<div class="two ev-times"><label class="field req">' + T('Starts') + '<input id="ev-time" type="time" value="' + esc(d.time) + '"></label>' +
       '<label class="field">' + T('Ends') + '<input id="ev-end" type="time" value="' + esc(d.end || '') + '"></label></div></div>' +
       '<div class="two"><label class="field">' + T('Place') + '<input id="ev-place" maxlength="80" value="' + esc(d.place) + '" placeholder="' + esc(T('e.g. Church hall')) + '"></label>' +
-      '<label class="field">' + T('Address') + '<input id="ev-address" maxlength="160" value="' + esc(d.address) + '"><small>' + T('Only if it isn’t at church – a map link is shown.') + '</small></label></div>' +
-      '<label class="field">' + T('What it’s about') + '<textarea id="ev-about" rows="4" maxlength="1500">' + esc(d.about) + '</textarea></label>' +
-      '<p class="ev-q">' + T('Who it’s for') + '</p><div class="ev-pills" role="radiogroup">' + [['all', T('Everyone')], ['partners', T('Church Partners')]].map(function (w) {
+      '<label class="field">' + T('Address') + '<input id="ev-address" maxlength="160" value="' + esc(d.address) + '"><small>' + T('Only if it isn\u2019t at church \u2013 a map link is shown.') + '</small></label></div>' +
+      '<label class="field">' + T('What it\u2019s about') + '<textarea id="ev-about" rows="4" maxlength="1500">' + esc(d.about) + '</textarea></label>' +
+      '<p class="ev-q">' + T('Who it\u2019s for') + '</p><div class="ev-pills" role="radiogroup">' + [['all', T('Everyone')], ['partners', T('Church Partners')]].map(function (w) {
         return '<button type="button" class="ev-pill' + (d.who === w[0] ? ' on' : '') + '" role="radio" aria-checked="' + (d.who === w[0]) + '" data-act="events:who" data-w="' + w[0] + '">' + esc(w[1]) + '</button>';
       }).join('') + '</div><input type="hidden" id="ev-who" value="' + esc(d.who) + '">' +
-      sw('ev-signup', T('People sign up'), T('They tap I’ll be there; you see who’s coming. They get reminders 3 days and 1 day before.'), d.signup) +
+      sw('ev-signup', T('People sign up'), T('They tap I\u2019ll be there; you see who\u2019s coming. They get reminders 3 days and 1 day before.'), d.signup) +
       '<div class="ev-more" id="ev-more"' + (d.signup ? '' : ' hidden') + '>' +
       '<div class="two"><label class="field">' + T('Sign-up closes') + '<input id="ev-closes" type="date" value="' + esc(d.closes || '') + '"><small>' + T('Leave empty to keep it open until the day.') + '</small></label>' +
       '<label class="field">' + T('Guests each may bring') + '<input id="ev-guests" type="number" min="0" max="' + E.MAX_GUESTS + '" inputmode="numeric" value="' + (+d.guests || 0) + '"><small>' + T('Family members without their own sign-in come as guests, so allow a few.') + '</small></label></div>' +
-      sw('ev-email', T('Offer reminders by email too'), T('People who ask get the reminders by email as well as in Messages. Needs the church’s email robot (Settings → Apps → Events).'), d.email !== false) + '</div>' +
+      sw('ev-email', T('Offer reminders by email too'), T('People who ask get the reminders by email as well as in Messages. Needs the church\u2019s email robot (Settings \u2192 Apps \u2192 Events).'), d.email !== false) + '</div>' +
       '<p class="cm-err" id="ev-err" role="alert"></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="events:save"' + (e ? ' data-id="' + esc(e.id) + '"' : '') + '>' + (e ? T('Save') : T('Put it up')) + '</button></div>', T('New event'), true);
     var t = document.getElementById('ev-signup'); if (t) t.addEventListener('change', function () { document.getElementById('ev-more').hidden = !t.checked; });
@@ -231,7 +247,7 @@
     x = S.put('events', x, audit((old ? 'changed ' : 'put up ') + x.title + ' (' + x.date + ')'));
     H.closeModal();
     if (old) H.render(); else H.go('events/e/' + x.id);
-    H.toast(old ? T('Saved') : T('It’s up. People can see it under Events.'));
+    H.toast(old ? T('Saved') : T('It\u2019s up. People can see it under Events.'));
   }
 
   /* ---------- signing up ---------- */
@@ -241,20 +257,20 @@
     var s = mySignup(e), fam = household(), picked = s ? (s.people || []).slice() : [u.id];
     state.pick = {}; picked.forEach(function (x) { state.pick[x] = 1; });
     var email = s && s.email ? s.email : E.okEmail(u.email) ? u.email : '';
-    H.modal(H.dialogHead(e.title, H.fmt(e.date, true) + ' · ' + timeText(e)) + '<div class="dlg-body ev-join">' +
-      '<p class="ev-q">' + (fam.length > 1 ? T('Who’s coming?') : T('You’re coming')) + '</p><div class="ev-people">' + fam.map(function (p) {
+    H.modal(H.dialogHead(e.title, H.fmt(e.date, true) + ' � ' + timeText(e)) + '<div class="dlg-body ev-join">' +
+      '<p class="ev-q">' + (fam.length > 1 ? T('Who\u2019s coming?') : T('You\u2019re coming')) + '</p><div class="ev-people">' + fam.map(function (p) {
         var onP = !!state.pick[p.id];
         return '<button type="button" class="ev-person' + (onP ? ' on' : '') + '" aria-pressed="' + onP + '" data-act="events:pick" data-id="' + esc(p.id) + '"' + (fam.length === 1 ? ' disabled' : '') + '>' + H.avatar(p, 34) +
-          '<span>' + esc(p.preferredName || p.firstName) + '</span><i aria-hidden="true">✓</i></button>';
+          '<span>' + esc(p.preferredName || p.firstName) + '</span><i aria-hidden="true">\u2713</i></button>';
       }).join('') + '</div>' +
-      (e.guests ? '<p class="ev-q">' + T('Bringing guests?') + '</p><div class="ev-step"><button type="button" class="icon-btn" data-act="events:step" data-d="-1" aria-label="' + esc(T('One less')) + '">−</button>' +
+      (e.guests ? '<p class="ev-q">' + T('Bringing guests?') + '</p><div class="ev-step"><button type="button" class="icon-btn" data-act="events:step" data-d="-1" aria-label="' + esc(T('One less')) + '">\u2212</button>' +
         '<output id="ev-g" aria-live="polite">' + (s ? s.guests || 0 : 0) + '</output><button type="button" class="icon-btn" data-act="events:step" data-d="1" data-max="' + e.guests + '" aria-label="' + esc(T('One more')) + '">+</button>' +
-        '<small class="muted">' + esc(TN('Up to {n} guest', 'Up to {n} guests', e.guests)) + '</small></div><p class="hint" style="margin:6px 0 0">' + T('Family members who aren’t shown above count as guests.') + '</p>' : '') +
-      '<div class="ev-remind">' + H.icon('M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0', 18) + '<span>' + T('We’ll remind you in Messages 3 days and 1 day before.') + '</span></div>' +
+        '<small class="muted">' + esc(TN('Up to {n} guest', 'Up to {n} guests', e.guests)) + '</small></div><p class="hint" style="margin:6px 0 0">' + T('Family members who aren\u2019t shown above count as guests.') + '</p>' : '') +
+      '<div class="ev-remind">' + H.icon('M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0', 18) + '<span>' + T('We\u2019ll remind you in Messages 3 days and 1 day before.') + '</span></div>' +
       (e.email ? sw('ev-mail', T('Email me reminders too'), T('Only for this event. Your email address is kept with your sign-up and deleted after the event.'), !!(s && s.email)) +
         '<label class="field" id="ev-mail-box"' + (s && s.email ? '' : ' hidden') + '>' + T('Email address') + '<input id="ev-mail-to" type="email" maxlength="200" value="' + esc(email) + '" autocomplete="email"></label>' : '') +
       '<p class="cm-err" id="ev-err" role="alert"></p></div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="events:signup" data-id="' + esc(e.id) + '">' + (s ? T('Save') : T('I’ll be there')) + '</button></div>', e.title);
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="events:signup" data-id="' + esc(e.id) + '">' + (s ? T('Save') : T('I\u2019ll be there')) + '</button></div>', e.title);
     var m = document.getElementById('ev-mail'); if (m) m.addEventListener('change', function () { document.getElementById('ev-mail-box').hidden = !m.checked; if (m.checked) { var i = document.getElementById('ev-mail-to'); if (i && !i.value) i.focus(); } });
   }
   function signup(el) {
@@ -266,11 +282,11 @@
     if (old) { x.mailed = old.mailed || []; x.createdAt = old.createdAt; }
     S.put('eventSignups', x, audit((old ? 'changed a sign-up for ' : 'signed up for ') + e.title));
     H.closeModal(); H.render();
-    H.toast(old ? T('Saved') : T('Wonderful – see you there! We’ll remind you 3 days and 1 day before.'));
+    H.toast(old ? T('Saved') : T('Wonderful \u2013 see you there! We\u2019ll remind you 3 days and 1 day before.'));
     remindSoon();
   }
   function leave(el) {
-    var e = S.get('events', el.dataset.id), s = e && mySignup(e); if (!s || !H.confirmBtn(el, T('Yes, I can’t come'))) return;
+    var e = S.get('events', el.dataset.id), s = e && mySignup(e); if (!s || !H.confirmBtn(el, T('Yes, I can\u2019t come'))) return;
     S.remove('eventSignups', s.id, audit('cancelled a sign-up for ' + e.title));
     H.render(); H.toast(T('Thank you for letting us know. Maybe next time!'));
   }
@@ -281,7 +297,7 @@
     var n = E.coming(signups(), e.id).filter(function (x) { return x !== (me() || {}).id; }).length;
     if (!n && !cancelling) { H.toast(T('Nobody has signed up yet.'), true); return; }
     var title = cancelling ? T('Cancelled: {title}', { title: e.title }) : e.title;
-    var text = cancelling ? T('We’re sorry – {title} on {day} has been cancelled.', { title: e.title, day: H.fmt(e.date, true) }) : '';
+    var text = cancelling ? T('We\u2019re sorry \u2013 {title} on {day} has been cancelled.', { title: e.title, day: H.fmt(e.date, true) }) : '';
     H.modal(H.dialogHead(cancelling ? T('Cancel the event') : T('Message everyone coming'), n ? TN('It goes to {n} person.', 'It goes to {n} people.', n) : T('Nobody has signed up yet.')) + '<div class="dlg-body">' +
       (n ? '<label class="field req">' + T('Subject') + '<input id="ev-mt" maxlength="120" value="' + esc(title) + '"></label><label class="field req">' + T('Message') + '<textarea id="ev-mb" rows="5" maxlength="4000">' + esc(text) + '</textarea></label>' : '') +
       (cancelling ? '<p class="hint">' + T('The event stays on the list, marked Cancelled, so people who look for it know.') + '</p>' : '') + '</div>' +
@@ -318,10 +334,10 @@
     if (one && choices.indexOf(one) < 0) choices = [one].concat(choices);
     if (!choices.length) { H.toast(T('No events with sign-ups coming up.'), true); return; }
     if (!state.rep || id) state.rep = { ids: one ? [one.id] : choices.map(function (e) { return e.id; }), email: false };
-    H.modal(H.dialogHead(T('Sign-up report'), T('Everyone signed up, with their cellphone numbers. Print it, or choose “Save as PDF” as the printer to make a PDF.')) +
+    H.modal(H.dialogHead(T('Sign-up report'), T('Everyone signed up, with their cellphone numbers. Print it, or choose \u201cSave as PDF\u201d as the printer to make a PDF.')) +
       '<div class="dlg-body"><div id="ev-rep"></div>' +
       '<label class="check" style="margin-top:12px"><input type="checkbox" id="ev-rep-mail"' + (state.rep.email ? ' checked' : '') + '><span>' + T('Also show email addresses') + '</span></label>' +
-      '<p class="hint">' + T('It has people’s personal details on it: keep it safe, and shred it after the event.') + '</p></div>' +
+      '<p class="hint">' + T('It has people\u2019s personal details on it: keep it safe, and shred it after the event.') + '</p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="events:repcsv">' + T('Download (spreadsheet)') + '</button><button class="btn primary" data-act="events:repprint">' + H.icon(PRINTER, 18) + ' ' + T('Print or save as PDF') + '</button></div>', T('Sign-up report'));
     state.repChoices = choices.map(function (e) { return e.id; });
     var m = document.getElementById('ev-rep-mail'); if (m) m.addEventListener('change', function () { state.rep.email = m.checked; });
@@ -334,8 +350,8 @@
       var e = S.get('events', eid); if (!e) return '';
       var o = r.ids.indexOf(eid) >= 0, c = E.count(signups(), eid).total;
       return '<button type="button" class="pchip' + (o ? ' on' : '') + '" aria-pressed="' + o + '" data-act="events:repone" data-id="' + esc(eid) + '">' + (o ? H.icon(H.ICON.check, 15) : '') +
-        '<span>' + esc(e.title) + '<small>' + esc(H.fmt(e.date, true)) + ' · ' + esc(TN('{n} coming', '{n} coming', c)) + '</small></span></button>';
-    }).join('') + '</div><p class="muted small" style="margin:8px 0 0">' + esc(TN('{n} event', '{n} events', sel.length)) + ' · ' + esc(TN('{n} coming', '{n} coming', n)) + '</p>';
+        '<span>' + esc(e.title) + '<small>' + esc(H.fmt(e.date, true)) + ' � ' + esc(TN('{n} coming', '{n} coming', c)) + '</small></span></button>';
+    }).join('') + '</div><p class="muted small" style="margin:8px 0 0">' + esc(TN('{n} event', '{n} events', sel.length)) + ' � ' + esc(TN('{n} coming', '{n} coming', n)) + '</p>';
     var go = document.querySelector('[data-act="events:repprint"]'); if (go) go.disabled = !sel.length;
   }
   /** The pages: one event after another, each starting on a new A4 page. */
@@ -343,24 +359,24 @@
     var r = state.rep; if (!r || !adder()) return;
     var sel = E.report(events(), signups(), r.ids); if (!sel.length) return;
     var st = S.settings() || {}, plain = plainContacts(), mail = r.email;
-    var cell = function (v, p, f) { if (!v) return '<span class="er-none">–</span>'; return plain ? esc(v) : (PP().contactHtml ? PP().contactHtml(p, f) : ''); };
+    var cell = function (v, p, f) { if (!v) return '<span class="er-none">\u2013</span>'; return plain ? esc(v) : (PP().contactHtml ? PP().contactHtml(p, f) : ''); };
     var html = sel.map(function (x) {
       var e = x.event, c = x.count;
-      return '<section class="er-sheet"><div class="er-head"><div><h1>' + esc(e.title) + '</h1><p>' + esc(H.fmt(e.date, true) + ' · ' + timeText(e) + (where(e) ? ' · ' + where(e) : '')) + '</p></div>' +
+      return '<section class="er-sheet"><div class="er-head"><div><h1>' + esc(e.title) + '</h1><p>' + esc(H.fmt(e.date, true) + ' � ' + timeText(e) + (where(e) ? ' � ' + where(e) : '')) + '</p></div>' +
         '<div class="er-count"><b>' + c.total + '</b><span>' + esc(TN('{n} coming', '{n} coming', c.total).replace(/^\d+\s*/, '')) + '</span>' +
         (c.guests ? '<small>' + esc(TN('{n} person', '{n} people', c.people)) + ' + ' + esc(TN('{n} guest', '{n} guests', c.guests)) + '</small>' : '') + '</div></div>' +
         (x.rows.length ? '<table><thead><tr><th class="er-n">#</th><th>' + esc(T('Name')) + '</th><th>' + esc(T('Cellphone')) + '</th>' + (mail ? '<th>' + esc(T('Email')) + '</th>' : '') +
-          '<th class="er-g">' + esc(T('Guests')) + '</th><th>' + esc(T('Notes')) + '</th><th class="er-tick">✓</th></tr></thead><tbody>' + x.rows.map(function (s, i) {
+          '<th class="er-g">' + esc(T('Guests')) + '</th><th>' + esc(T('Notes')) + '</th><th class="er-tick">\u2713</th></tr></thead><tbody>' + x.rows.map(function (s, i) {
             var who = contactRows(s), by = s.addedBy ? S.get('people', s.addedBy) : null, many = who.length > 1;
             var label = function (k) { return many ? '<small>' + esc(k.p.preferredName || k.p.firstName || '') + '</small> ' : ''; };
             var notes = [by ? T('Added by {name}', { name: H.name(by) }) : '', s.email ? T('Email reminders') : ''].filter(Boolean);
             return '<tr><td class="er-n">' + (i + 1) + '</td><td><b>' + esc((s.names || []).join(', ')) + '</b></td>' +
               '<td>' + who.map(function (k) { return '<div>' + (k.phone ? label(k) : '') + cell(k.phone, k.p, 'mobile') + '</div>'; }).filter(function (d, j) { return who[j].phone || j === 0; }).join('') + '</td>' +
               (mail ? '<td>' + who.map(function (k) { return k.email ? '<div>' + cell(k.email, k.p, 'email') + '</div>' : ''; }).join('') + '</td>' : '') +
-              '<td class="er-g">' + (s.guests || '') + '</td><td class="er-notes">' + esc(notes.join(' · ')) + '</td><td class="er-tick"><i></i></td></tr>';
+              '<td class="er-g">' + (s.guests || '') + '</td><td class="er-notes">' + esc(notes.join(' � ')) + '</td><td class="er-tick"><i></i></td></tr>';
           }).join('') + '</tbody></table>' : '<p>' + esc(T('Nobody has signed up yet.')) + '</p>') +
-        '<div class="er-foot"><span>' + esc(T('Personal information – keep it safe, and shred it after the event.')) + '</span><span>' + esc(st.churchName || '') + ' · ' +
-        esc(T('Printed {date}', { date: H.fmt(H.today(), true) })) + ' · Church &amp; Trellis</span></div></section>';
+        '<div class="er-foot"><span>' + esc(T('Personal information \u2013 keep it safe, and shred it after the event.')) + '</span><span>' + esc(st.churchName || '') + ' � ' +
+        esc(T('Printed {date}', { date: H.fmt(H.today(), true) })) + ' � Church &amp; Trellis</span></div></section>';
     }).join('');
     var box = document.getElementById('print-only') || document.body.appendChild(Object.assign(document.createElement('div'), { id: 'print-only' }));
     H.closeModal();
@@ -382,7 +398,7 @@
       x.rows.forEach(function (s) {
         var who = contactRows(s), by = s.addedBy ? S.get('people', s.addedBy) : null;
         rows.push([x.event.title, x.event.date, (s.names || []).join(', '), plain ? join(who, 'phone') : ''].concat(mail ? [join(who, 'email')] : [])
-          .concat([s.guests || 0, [by ? T('Added by {name}', { name: H.name(by) }) : '', s.email ? T('Email reminders') : ''].filter(Boolean).join(' · ')]));
+          .concat([s.guests || 0, [by ? T('Added by {name}', { name: H.name(by) }) : '', s.email ? T('Email reminders') : ''].filter(Boolean).join(' � ')]));
       });
     });
     H.download((sel.length === 1 ? sel[0].event.title + ' ' + sel[0].event.date : T('Sign-up report') + ' ' + H.today()).replace(/[^\w\- ]+/g, '').replace(/\s+/g, '-') + '.csv',
@@ -399,12 +415,12 @@
   function coming(e, pid) { return !!E.mine(signups(), e.id, pid); }
   function addDialog(id, pid) {
     var e = S.get('events', id); if (!e || !addable(e)) return;
-    var sub = H.fmt(e.date, true) + ' · ' + timeText(e);
+    var sub = H.fmt(e.date, true) + ' � ' + timeText(e);
     if (!pid) {
       var pick = S.find('people', alive).sort(H.byName);
       var finder = window.CareUI && CareUI.finder ? CareUI.finder('ev-add', pick, 'events:addpick', { event: e.id }, function (p) { return coming(e, p.id) ? T('Already coming') : ''; },
         T('Find someone: type part of their name'), { keep: false, none: newPeople() ? function (q) {
-          return '<button type="button" class="btn small ev-newp" data-act="events:newp" data-id="' + esc(e.id) + '" data-q="' + esc(q) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + esc(T('Add “{name}” as someone new', { name: q })) + '</button>';
+          return '<button type="button" class="btn small ev-newp" data-act="events:newp" data-id="' + esc(e.id) + '" data-q="' + esc(q) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + esc(T('Add \u201c{name}\u201d as someone new', { name: q })) + '</button>';
         } : null }) : '';
       H.modal(H.dialogHead(T('Add people') + ': ' + e.title, sub) + '<div class="dlg-body"><p class="hint" style="margin-top:0">' +
         T('For people who put their name down on a sheet or told you in person. It is in their name, so they see it under Events and get the reminders.') + '</p>' + finder +
@@ -418,12 +434,12 @@
     if (coming(e, p.id)) { H.toast(T('{name} is already on the list.', { name: H.name(p) }), true); return; }
     var fam = familyOf(p); state.pick = {}; state.pick[p.id] = 1;
     H.modal(H.dialogHead(T('Add people') + ': ' + e.title, sub) + '<div class="dlg-body ev-join">' +
-      '<p class="ev-q">' + (fam.length > 1 ? T('Who’s coming?') : esc(H.name(p))) + '</p><div class="ev-people">' + fam.map(function (x) {
+      '<p class="ev-q">' + (fam.length > 1 ? T('Who\u2019s coming?') : esc(H.name(p))) + '</p><div class="ev-people">' + fam.map(function (x) {
         var already = coming(e, x.id), onP = !!state.pick[x.id];
         return '<button type="button" class="ev-person' + (onP ? ' on' : '') + '" aria-pressed="' + onP + '" data-act="events:pick" data-id="' + esc(x.id) + '"' + (fam.length === 1 || already ? ' disabled' : '') +
-          (already ? ' title="' + esc(T('Already coming')) + '"' : '') + '>' + H.avatar(x, 34) + '<span>' + esc(x.preferredName || x.firstName) + (already ? ' <small>' + esc(T('Already coming')) + '</small>' : '') + '</span><i aria-hidden="true">✓</i></button>';
+          (already ? ' title="' + esc(T('Already coming')) + '"' : '') + '>' + H.avatar(x, 34) + '<span>' + esc(x.preferredName || x.firstName) + (already ? ' <small>' + esc(T('Already coming')) + '</small>' : '') + '</span><i aria-hidden="true">\u2713</i></button>';
       }).join('') + '</div>' +
-      (e.guests ? '<p class="ev-q">' + T('Bringing guests?') + '</p><div class="ev-step"><button type="button" class="icon-btn" data-act="events:step" data-d="-1" aria-label="' + esc(T('One less')) + '">−</button>' +
+      (e.guests ? '<p class="ev-q">' + T('Bringing guests?') + '</p><div class="ev-step"><button type="button" class="icon-btn" data-act="events:step" data-d="-1" aria-label="' + esc(T('One less')) + '">\u2212</button>' +
         '<output id="ev-g" aria-live="polite">0</output><button type="button" class="icon-btn" data-act="events:step" data-d="1" data-max="' + e.guests + '" aria-label="' + esc(T('One more')) + '">+</button>' +
         '<small class="muted">' + esc(TN('Up to {n} guest', 'Up to {n} guests', e.guests)) + '</small></div>' : '') +
       '<p class="cm-err" id="ev-err" role="alert"></p></div>' +
@@ -445,7 +461,7 @@
   function newPersonDialog(id, q) {
     var e = S.get('events', id); if (!e || !addable(e) || !newPeople()) return;
     var r = (window.NameList && q ? NameList.fromText(q)[0] : null) || { first: '', last: '' };
-    H.modal(H.dialogHead(T('Someone new') + ': ' + e.title, H.fmt(e.date, true) + ' · ' + timeText(e)) + '<div class="dlg-body">' +
+    H.modal(H.dialogHead(T('Someone new') + ': ' + e.title, H.fmt(e.date, true) + ' � ' + timeText(e)) + '<div class="dlg-body">' +
       '<p class="hint" style="margin-top:0">' + T('They are added to People as an Attender, in a household of their own, and put on the list. You can add more details later.') + '</p>' +
       '<div class="two"><label class="field req">' + T('First name') + '<span class="mic-wrap"><input id="ev-nf" maxlength="40" value="' + esc(r.first) + '" autocomplete="off">' + (window.Voice ? Voice.button('#ev-nf', { mode: 'name', last: '#ev-nl' }) : '') + '</span></label>' +
       '<label class="field req">' + T('Surname') + '<input id="ev-nl" maxlength="60" value="' + esc(r.last) + '" autocomplete="off"></label></div>' +
@@ -462,7 +478,7 @@
     var same = window.NameList ? NameList.match([{ first: f.first, last: f.last }], S.find('people', alive))[0] : null;
     if (same && same.status === 'sure' && !el.dataset.sure) {   // they may be in People already
       el.dataset.sure = '1';
-      err.textContent = T('{name} is already in People. Go back and choose them – or tap Add them again if this is someone else.', { name: H.name(S.get('people', same.ids[0])) });
+      err.textContent = T('{name} is already in People. Go back and choose them \u2013 or tap Add them again if this is someone else.', { name: H.name(S.get('people', same.ids[0])) });
       return;
     }
     var p = NameScan.addPerson(f, 'registering for an event');
@@ -472,7 +488,7 @@
   /** A photo of the paper sign-up sheet (or the names typed or said): each name found in People and checked, then added. */
   function scanSheet(id) {
     var e = S.get('events', id); if (!e || !addable(e) || !window.NameScan) return;
-    NameScan.open({ title: T('Names from a sheet') + ': ' + e.title, sub: H.fmt(e.date, true) + ' · ' + timeText(e), mode: 'event', canNew: newPeople(), guests: +e.guests || 0,
+    NameScan.open({ title: T('Names from a sheet') + ': ' + e.title, sub: H.fmt(e.date, true) + ' � ' + timeText(e), mode: 'event', canNew: newPeople(), guests: +e.guests || 0,
       people: S.find('people', alive), already: function (pid) { return coming(e, pid); },
       done: function (r) {
         var u = S.get('people', (me() || {}).id) || me(), made = r.fresh.map(function (f) { return { ids: [NameScan.addPerson(f, 'a sign-up sheet for an event').id], guests: f.guests }; });
@@ -486,7 +502,7 @@
           n += x.people.length;
         });
         return { message: TN('{n} person is on the list.', '{n} people are on the list.', n) + (made.length ? ' ' + TN('{n} new person added to People.', '{n} new people added to People.', made.length) : '') +
-          (missed.length ? ' ' + T('Couldn’t add: {names}.', { names: missed.join(', ') }) : '') };
+          (missed.length ? ' ' + T('Couldn\u2019t add: {names}.', { names: missed.join(', ') }) : '') };
       } });
   }
 
@@ -502,7 +518,7 @@
     var pick = S.find('people', function (p) { return alive(p) && p.familyRole !== 'child' && ids.indexOf(p.id) < 0 && (p.category === 'Church Partner' || p.category === 'Staff' || (p.appRole && p.appRole !== 'member' && p.appRole !== 'none')); });
     var finder = window.CareUI && CareUI.finder ? CareUI.finder('ev-orgs', pick, 'events:orgin', {}, null, T('Add an organiser: type part of their name')) : '';
     H.modal(H.dialogHead(T('Event organisers'), T('Events')) + '<div class="dlg-body"><p class="hint" style="margin-top:0">' +
-      T('Organisers put events up, see who’s coming and write to them. Until you choose, they are the Administrators, the Pastors and the church secretary.') + '</p>' +
+      T('Organisers put events up, see who\u2019s coming and write to them. Until you choose, they are the Administrators, the Pastors and the church secretary.') + '</p>' +
       '<div class="list">' + rows + '</div><div style="margin-top:10px">' + finder + '</div>' +
       (chosen ? '<p><button class="link" data-act="events:orgreset">' + T('Use the first organisers again') + '</button></p>' : '') + '</div>' +
       '<div class="dlg-foot"><button class="btn primary" data-act="hub:close">' + T('Done') + '</button></div>', T('Event organisers'));
@@ -515,7 +531,7 @@
 
   /* ---------- reminders in Messages: 3 days and 1 day before ---------- */
   // Each person's own Church & Trellis writes their reminder into their inbox once it is due (fixed id: never twice). There is
-  // no server, so a reminder arrives when the app is next open – on Home, Messages or anywhere – and the menu badge shows it.
+  // no server, so a reminder arrives when the app is next open \u2013 on Home, Messages or anywhere \u2013 and the menu badge shows it.
   function remind() {
     var u = me();
     if (!u || S.preview() || !H.isOn('events') || !H.isOn('messages') || (S.offline && S.offline())) return;
@@ -543,7 +559,7 @@
     var t = now(), soon = E.upcoming(events(), t).filter(function (e) { return e.status !== 'cancelled' && E.startOf(e) - t < 45 * 864e5; }).slice(0, 2);
     if (!soon.length) return '';
     return '<section class="panel ev-home"><div class="cm-home-h"><h2>' + H.icon(CAL, 18) + ' ' + T('Coming up') + '</h2></div>' + grid(soon) +
-      '<p class="cm-home-more"><a href="#/events">' + T('All events') + ' →</a></p></section>';
+      '<p class="cm-home-more"><a href="#/events">' + T('All events') + ' \u2192</a></p></section>';
   }
 
   H.register({
@@ -577,12 +593,9 @@
       write: function (el) { writeDialog(el.dataset.id, false); },
       cancel: function (el) { writeDialog(el.dataset.id, true); },
       send: send,
-      restore: function (el) { var e = S.get('events', el.dataset.id); if (!e || !organiser()) return; S.put('events', Object.assign({}, e, { status: 'live' }), audit(e.title + ' is on again')); H.render(); H.toast(T('It’s on again.')); },
-      del: function (el) {
-        var e = S.get('events', el.dataset.id); if (!e || !organiser() || !H.confirmBtn(el, T('Delete it and its sign-ups?'))) return;
-        E.of(signups(), e.id).forEach(function (s) { S.remove('eventSignups', s.id); });
-        S.remove('events', e.id, audit('deleted ' + e.title + ' (' + e.date + ')')); H.go('events'); H.toast(T('Deleted'));
-      },
+      restore: function (el) { var e = S.get('events', el.dataset.id); if (!e || !organiser()) return; S.put('events', Object.assign({}, e, { status: 'live' }), audit(e.title + ' is on again')); H.render(); H.toast(T('It\u2019s on again.')); },
+      delask: function (el) { delDialog(el.dataset.id); },
+      delyes: delYes,
       add: function (el) { addDialog(el.dataset.id); },
       addpick: function (el) { addDialog(el.dataset.event, el.dataset.id); },
       addsave: addSave,

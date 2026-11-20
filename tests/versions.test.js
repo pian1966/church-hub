@@ -15,6 +15,15 @@ const stamp = require('../tools/stamp-files.js'), RUN = ' – run: node tools/st
 const tags = [...html.matchAll(/(?:src|href)="([^"]+\.(?:js|css))(\?v=([^"]*))?"/g)].filter(m => !/^https?:/.test(m[1]));
 const wrong = tags.filter(m => m[3] !== stamp.code(m[1])).map(m => m[1]);
 ok(tags.length > 40, 'found the files index.html loads (' + tags.length + ')');
+// Every app file in js/, js/people/, js/i18n/ and css/ must be loaded by index.html. A merge that takes only one side of a
+// conflict in index.html drops the other side's new files, and that feature quietly disappears from the app.
+// (js/lang/ files are loaded one at a time by js/i18n.js, through js/file-versions.js, so they are not listed.)
+const loaded = new Set(tags.map(m => m[1]));
+const appFiles = ['js', 'js/people', 'js/i18n', 'css'].flatMap(dir => fs.readdirSync(path.join(root, dir))
+  .filter(f => /\.(js|css)$/.test(f)).map(f => dir + '/' + f));
+const notLoaded = appFiles.filter(f => !loaded.has(f));
+ok(!notLoaded.length, 'index.html loads every file in js/, js/people/, js/i18n/ and css/' + (notLoaded.length ? ' – missing: ' +
+  notLoaded.join(', ') + '. If a merge dropped them, put their <script>/<link> lines back (keep both sides of a conflict), then run: node tools/stamp-files.js' : ''));
 ok(!wrong.length, 'every file is loaded with its fingerprint' + (wrong.length ? ' – out of date: ' + wrong.join(', ') + RUN : ''));
 ok(stamp.stampedHtml(html) === html, 'every other fingerprint in index.html (icons) is up to date' + (stamp.stampedHtml(html) === html ? '' : RUN));
 ok(/src="js\/file-versions\.js\?v=[^"]+"[^]*src="js\/i18n\.js/.test(html), 'index.html loads js/file-versions.js before js/i18n.js');

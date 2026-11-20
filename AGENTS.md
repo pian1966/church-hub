@@ -23,7 +23,8 @@ Claude also works on this repository, often at the same time.
 - If you run on someone's computer (Antigravity), before changing any file run `git switch main`, `git pull`, then
   `git switch -c <short-name-for-the-task>`. When done, push that branch and open a pull request (or tell the person how).
 - Keep a pull request to one job. If GitHub says it has conflicts (often in `js/version.js` and `index.html`), update the
-  branch from `main` and take the higher version number.
+  branch from `main` and take the higher version number. In `index.html`, keep the lines from **both** sides (never drop a
+  `<script>` or `<link>` line), then run `node tools/stamp-files.js`.
 - At the end, move finished work from `docs/ROADMAP.md` to `docs/CHANGELOG.md`, as `CLAUDE.md` says.
 
 ## Running the tests

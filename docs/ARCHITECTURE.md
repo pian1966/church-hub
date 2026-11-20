@@ -844,6 +844,32 @@ Catholic Parish Priest / Assistant Priest; otherwise "Senior" / "Assistant" + th
   service questions are matched on the device. The result has the same shape as `Ask.parse`, so `people/search.js` uses it the
   same way (`useAnswer`); if the call fails, `Ask.parse` is used and the screen says so.
 
+## Names from a sheet, a photo or the microphone (0.105.0; `js/name-list.js` rules, `js/name-scan.js` screens, `js/voice.js`)
+- `NameList.request(image, ctx)` builds a Gemini `generateContent` body: the reading rules, a JSON schema
+  (`names: [{ written, first, last, title, family, guests, mobile, email, crossed, unsure }]`) and the photo as `inlineData`.
+  Nothing from the church is sent. `ctx.contacts` (People → From a photo) also asks for mobile and email. `Store.ai(body, ms)`
+  sends it (60 seconds for a photo). `NameList.rows` tidies the answer (crossed-out names dropped); `fromText` does the same for
+  typed or said names ("John & Mary Smith", "Mr & Mrs Naidoo +2", "The Smiths", "Smith, John", a mobile or email on the line).
+- `NameList.match(rows, people)` (on the phone): first name, the name they go by, surname, maiden name; slips of the pen
+  (Levenshtein), short forms (Tom/Thomas, Dave/David) and names that sound alike (`sound()`: silent h's, c/k, v/w, a leading
+  n/m before a consonant – Nkosi/Kosi). `sure` only when one person fits well and clearly better than anyone else and the
+  handwriting wasn't marked hard to read; otherwise `maybe` (choices) or `none`. A household ("The Smiths") matches only one
+  household with exactly that surname. `NameList.group` makes one sign-up per household (the first adult leads; guests added up,
+  at most the event's limit).
+- `NameScan.open(opts)`: take or choose a photo (or type / say the names) → reading (the photo with a scanning beam) → a row per
+  name with pills: the match(es), Someone else… (a findable list), New visitor / Add as new (Administrators and Pastors), Leave out.
+  Events (`mode: 'event'`): found people are added with `Events.add` (marked `addedBy`), new people first go into People.
+  People (`mode: 'people'`): names already in People are left out by default; new ones are added (`NameScan.addPerson`: an
+  Attender in a new household, `appRole` = `Store.defaultRole()`, `emailUnknown` / `mobileUnknown` when not written, *First visit*).
+- Events → Add people: the finder's `none` option offers "Add “…” as someone new" (also "Not in People yet? Add them"), which
+  checks for a likely match first, adds them to People and opens the household step.
+- `Voice.button(target, opts)`: a microphone using the browser's `SpeechRecognition` (English of the church's country, up to 5
+  alternatives) or the Android app's `ChurchHubApp.listen` (answers through `window.churchHubHeard`, which Voice borrows and gives
+  back). What was heard goes into the box with an `input` event (`mode: 'append'` adds a line; `'name'` fills first and surname)
+  and the alternatives in `data-spoken`. `CareUI.finder` (every "find someone" box), `findables()` lists of names
+  (`class="findable"`), People's search and Add person show it; each adds "Sounds like" names (`NameList.rank`) after the exact
+  matches. Enter never adds a sounds-like guess.
+
 ## Explanations ("i" tips) and the consent names
 `Hub.tip(text)` draws a small "i"; its text floats above the page on hover, keyboard focus or a tap (`tipShow` in `js/app.js`).
 Consents use their own names everywhere – "Church directory" is no longer shown as "Contact details" (which was also the name of

@@ -179,23 +179,35 @@
   var finders = {}, typed = {}, lastFinder = '';
   function finder(key, people, act, data, note, placeholder, opts) {
     var keep = !opts || opts.keep !== false; if (!keep) delete typed[key];
-    finders[key] = { people: people, act: act, data: data || {}, note: note || function () { return ''; }, keep: keep };
-    var q = typed[key] || '';
-    return '<div class="cg-find"><input class="cg-q" data-for="' + esc(key) + '" placeholder="' + esc(placeholder) + '" autocomplete="off" aria-label="' + esc(placeholder) + '" value="' + esc(q) + '">' +
+    finders[key] = { people: people, act: act, data: data || {}, note: note || function () { return ''; }, keep: keep, none: opts && opts.none };
+    var q = typed[key] || '', mic = window.Voice ? Voice.button('.cg-q[data-for="' + key + '"]') : '';
+    return '<div class="cg-find' + (mic ? ' has-mic' : '') + '"><input class="cg-q" data-for="' + esc(key) + '" placeholder="' + esc(placeholder) + '" autocomplete="off" aria-label="' + esc(placeholder) + '" value="' + esc(q) + '">' + mic +
       '<div class="cg-hits list" data-for="' + esc(key) + '" aria-live="polite">' + hitsHtml(finders[key], q) + '</div></div>';
   }
-  function hitsHtml(f, q) {
+  function hitsHtml(f, q, spoken) {
     q = String(q || '').trim(); if (!q) return '';
     var hits = f.people.filter(function (p) { return H.matches(H.name(p) + ' ' + (p.firstName || '') + ' ' + (p.preferredName || '') + ' ' + (p.lastName || ''), q); });
+    // Names that sound like it (said aloud, or spelt by ear): after the exact matches, marked "Sounds like" (js/name-list.js rank)
+    var like = [];
+    if (window.NameList && hits.length < 8 && q.length >= 3) {
+      var have = {}; hits.forEach(function (p) { have[p.id] = 1; });
+      var byId = {}; f.people.forEach(function (p) { byId[p.id] = p; });
+      like = NameList.rank(spoken || q, f.people.filter(function (p) { return !have[p.id]; })).slice(0, 8 - hits.length).map(function (h) { return byId[h.id]; });
+    }
     var attrs = Object.keys(f.data).map(function (k) { return ' data-' + k + '="' + esc(f.data[k]) + '"'; }).join('');
-    return hits.length ? hits.slice(0, 8).map(function (p) {
-      return '<button type="button" class="item cg-pick" data-act="' + f.act + '" data-id="' + esc(p.id) + '"' + attrs + '>' + H.avatar(p, 28) + '<span class="grow"><b>' + esc(H.name(p)) + '</b>' + (f.note(p) ? '<small>' + esc(f.note(p)) + '</small>' : '') + '</span>' + H.icon(H.ICON.plus, 16) + '</button>';
-    }).join('') + (hits.length > 8 ? '<p class="hint" style="margin:4px 0 0">' + T('{n} more – type more of the name', { n: hits.length - 8 }) + '</p>' : '') : '<p class="muted small" style="margin:6px 0 0">' + T('No one matches') + '</p>';
+    var one = function (p, sounds) {
+      var n = [sounds ? T('Sounds like') : '', f.note(p)].filter(Boolean).join(' · ');
+      return '<button type="button" class="item cg-pick' + (sounds ? ' cg-like' : '') + '" data-act="' + f.act + '" data-id="' + esc(p.id) + '"' + attrs + '>' + H.avatar(p, 28) + '<span class="grow"><b>' + esc(H.name(p)) + '</b>' + (n ? '<small>' + esc(n) + '</small>' : '') + '</span>' + H.icon(H.ICON.plus, 16) + '</button>';
+    };
+    var none = f.none ? f.none(q) : '';
+    if (!hits.length && !like.length) return '<p class="muted small" style="margin:6px 0 0">' + T('No one matches') + '</p>' + none;
+    return hits.slice(0, 8).map(function (p) { return one(p, false); }).join('') + like.map(function (p) { return one(p, true); }).join('') +
+      (hits.length > 8 ? '<p class="hint" style="margin:4px 0 0">' + T('{n} more – type more of the name', { n: hits.length - 8 }) + '</p>' : '') + none;
   }
   function showHits(inp) {
     var f = finders[inp.dataset.for], box = document.querySelector('.cg-hits[data-for="' + inp.dataset.for + '"]'); if (!f || !box) return;
     var q = inp.value.trim(); if (f.keep && q) typed[inp.dataset.for] = inp.value; else delete typed[inp.dataset.for];
-    box.innerHTML = hitsHtml(f, q);
+    box.innerHTML = hitsHtml(f, q, inp.dataset.spoken && inp.dataset.spoken.split('|')[0] === q ? inp.dataset.spoken : '');
   }
   /** Back to the box where someone was just picked, ready for the next one (not while a dialog is open over the page). */
   function again() {
@@ -210,7 +222,7 @@
     document.addEventListener('keydown', function (ev) {   // Enter adds the first match
       if (ev.key !== 'Enter' || !ev.target.classList || !ev.target.classList.contains('cg-q')) return;
       ev.preventDefault(); showHits(ev.target);   // typed fast and pressed Enter: search now
-      var b = document.querySelector('.cg-hits[data-for="' + ev.target.dataset.for + '"] .cg-pick'); if (b) b.click();
+      var b = document.querySelector('.cg-hits[data-for="' + ev.target.dataset.for + '"] .cg-pick:not(.cg-like)'); if (b) b.click();   // never a sounds-like guess
     });
     document.addEventListener('click', function (ev) {   // picked someone: come back to the same list afterwards
       var b = ev.target.closest && ev.target.closest('.cg-pick'), box = b && b.closest('.cg-hits'); if (!box) return;

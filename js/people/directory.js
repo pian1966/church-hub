@@ -172,6 +172,17 @@
       (P.invite && window.QR ? '<button class="btn small" data-act="people:pickinvite">' + T('Invite to apply') + '</button>' : '') +
       (P.canBulk && P.canBulk() ? '<button class="btn small" data-act="people:pickchange">' + T('Change selected…') + '</button>' : '') + '</div></div>';
   }
+  /** Names that sound like what was searched for (said with the microphone, or spelt by ear) – tap one to open them. */
+  function soundsLike(list, shown, bare) {
+    var q = state.q.trim(); if (bare || q.length < 3 || shown.length >= 5 || !window.NameList || /[@\d]/.test(q)) return '';
+    var have = {}; shown.forEach(function (p) { have[p.id] = 1; });
+    var spoken = state.spoken && state.spoken.split('|')[0] === q ? state.spoken : q;
+    var like = NameList.rank(spoken, list.filter(function (p) { return !have[p.id]; })).slice(0, 5).map(function (h) { return S.get('people', h.id); }).filter(Boolean);
+    if (!like.length) return '';
+    return '<div class="pp-like"><span class="muted small">' + T('Sounds like') + ':</span> ' + like.map(function (p) {
+      return '<a class="pp-like-p" href="#/people/p/' + encodeURIComponent(p.id) + '">' + H.avatar(p, 24) + '<span>' + esc(H.name(p)) + '</span></a>';
+    }).join('') + '</div>';
+  }
   function renderList() {
     var filters = [['all', 'Everyone'], ['Church Partner', 'Church Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
     if (canSeeAll()) filters.push(['deceased', 'Deceased']);   // people who have died are kept for the records, out of the other lists
@@ -186,14 +197,14 @@
       return matchesPerson(p, q);
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : bare ? T('The names of the church’s Church Partners.') : T('People who agreed to be in the church directory.')) + '</p></div>' +
-      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + P.binLink() + (H.can('*') || H.can('people.edit') ? '<a class="btn" href="#/people/badges">' + T('Name badges') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.badgesWaiting().length) + '</a><a class="btn" href="#/people/applications">' + T('Partnership applications') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appsWaiting().length) + '</a><a class="btn" href="#/people/welcome">' + T('Invitations') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appWaiting ? P.appWaiting().length : 0) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
+      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + P.binLink() + (H.can('*') || H.can('people.edit') ? '<a class="btn" href="#/people/badges">' + T('Name badges') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.badgesWaiting().length) + '</a><a class="btn" href="#/people/applications">' + T('Partnership applications') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appsWaiting().length) + '</a><a class="btn" href="#/people/welcome">' + T('Invitations') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appWaiting ? P.appWaiting().length : 0) + '</a>' : '') + (window.NameScan && (H.can('*') || H.can('people.edit')) && !S.preview() ? '<button class="btn" data-act="people:scan">' + H.icon('M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 18) + T('From a photo') + '</button>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
-      '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + (bare ? T('Type part of their name') : T('Search by name, household, email or phone')) + '" value="' + esc(state.q) + '"></label>' +
+      '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + (bare ? T('Type part of their name') : T('Search by name, household, email or phone')) + '" value="' + esc(state.q) + '">' + (window.Voice ? Voice.button('#pp-q') : '') + '</label>' +
         (canBasic() ? '<a class="adv-link" href="#/people/search">' + T('Advanced search') + '</a>' : '') + '</div>' +
       (filters.length > 1 ? '<div class="seg" role="group" aria-label="' + T('Show') + '">' + filters.map(function (f) { return '<button data-act="people:filter" data-f="' + f[0] + '" class="' + (state.f === f[0] ? 'on' : '') + '" aria-pressed="' + (state.f === f[0]) + '">' + T(f[1]) + '</button>'; }).join('') + '</div>' : '') + '</div>' +
       '<div class="row pp-sortrow"><p class="muted small" id="pp-count">' + (pick && shown.length ? '<label class="pp-tick pp-tickall"><input type="checkbox" id="pp-selall" aria-label="' + esc(T('Tick everyone shown')) + '"' + (shown.every(function (p) { return pick[p.id]; }) ? ' checked' : '') + '></label>' : '') + TN('{n} person', '{n} people', shown.length) + '</p>' +
         sortSwitch() + '</div>' +
-      (pick ? (P.bulkUndoNote ? P.bulkUndoNote() : '') + pickBar() : '') +
+      (pick ? (P.bulkUndoNote ? P.bulkUndoNote() : '') + pickBar() : '') + soundsLike(list, shown, bare) +
       (shown.length ? '<div class="list" id="pp-list">' + shown.map(function (p) {
         if (bare && !isMe(p)) return '<div class="item pp-row pp-name"><span class="grow"><b>' + listName(p) + '</b></span></div>';   // a name, nothing more
         var fam = familyOf(p), tags = '';

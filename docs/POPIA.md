@@ -395,6 +395,33 @@ nobody connects a Google account, and what is in the meeting or the document sta
   Gmail and notes which went (`mailed`); it can change nothing else, and its public log has counts only.
 - How long: sign-ups are deleted 30 days after the event, events a year after (`Events.staleSignup`, `staleEvent`, run when an
   organiser opens Events). Putting up, changing, cancelling and deleting events, and signing up, are in the audit log.
+- **A whole paper sheet at once** (0.105.0, Events → From a sheet; `js/name-scan.js`, `js/name-list.js`): staff take a photo of the
+  sign-up sheet, or type or say the names. A photo is made small on the phone and sent to Google's Gemini through the church's
+  Firebase project (the AI switch in Settings → Apps, as for Ask in your own words) **only to read the handwriting**: no names or
+  records from Church & Trellis go with it. Matching the names to people is done on the phone, and the staff member checks every
+  name before anyone is added; nothing is added on the AI's word alone. Church & Trellis never saves the photo. The sheet holds
+  only names people wrote down to be signed up (basis: they asked to be signed up). On Gemini's free tier Google may keep
+  requests to improve its products, so the Information Officer agrees before AI is switched on and the privacy notice says that
+  photos of sign-up sheets and visitor cards are read by Google's Gemini; a church that wants more should use a paid (billed)
+  Gemini plan, where requests are not used that way. Without AI, names are typed or said instead.
+- **Someone who isn't in People yet** (a visitor, a neighbour): Administrators and Pastors (who may add people to People –
+  `firestore.rules` people create) add them as an Attender, in a household of their own, with no sign-in, then put them on the
+  list. Only their name, and a mobile number or email address if given. Basis: they asked to come; the church's legitimate
+  interest in knowing who is coming. The audit log notes "Added … (registering for an event)" or "(from a sign-up sheet …)".
+
+## Visitors from a photo (People → From a photo, 0.105.0)
+- Administrators and Pastors photograph visitor cards or a welcome sheet; Gemini reads the names and any mobile numbers and
+  email addresses written with them (as for sign-up sheets above: nothing from the church is sent, the photo is never saved by
+  Church & Trellis, the same free-tier caveat). Names already in People are found on the phone and left out; every new person is
+  checked (and can be corrected) before they are added as an Attender with *First visit* today, no sign-in.
+- Basis: the visitor wrote their details on the card to be contacted (the card should say so). Consent for the directory and
+  other purposes is recorded separately afterwards (Consent → Paper connect card), as for anyone added by hand.
+
+## Saying a name (the microphone, 0.105.0; `js/voice.js`)
+- A microphone beside People's search and every "find someone" box. It uses the phone's or browser's own speech-to-text
+  (Chrome: Google's speech service; Safari: Apple's; the Android app: the phone's), which turns the sound into words.
+  Church & Trellis keeps no recording. What was heard is matched to names **on the phone** (`NameList.rank`); nothing else is sent.
+  People who'd rather not can type.
 
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church & Trellis keeps the suggestion with their name and person ID, so the

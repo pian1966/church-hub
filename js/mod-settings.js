@@ -85,7 +85,7 @@
     ['general', TX('General'), TX('Name and country'), 'church', 'M3 21h18M5 21V8l7-5 7 5v13M10 21v-6h4v6', 'church name country address province state county privacy law'],
     ['colours', TX('Colours'), TX('The church’s colour'), 'church', 'M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.7-1.2-.7-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11h.01M10 7.5h.01M14 7.5h.01', 'colour color theme brand logo cross buttons'],
     ['terminology', TX('Terminology (Church Words)'), TX('The words your church uses'), 'church', 'M4 7V5h16v2M9 19h6M12 5v14', 'words wording terms names music worship praise leader'],
-    ['apps', TX('Apps'), TX('Switch parts of Church & Trellis on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask'],
+    ['apps', TX('Apps'), TX('Switch parts of Church & Trellis on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask photo handwriting sign-up sheet visitor cards'],
     ['services', TX('Church Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
     ['application', TX('Membership application'), TX('Declaration, documents to read, loyalty'), 'features', 'M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5', 'partner partnership membership member application form declaration constitution statement of faith denomination affiliation loyalty links documents'],
     // Who can see what, attendees and what Pastors can do are one page (asked for 19 Nov 2026): the old addresses still open it
@@ -243,13 +243,14 @@
   function renderAi(st) {
     var ai = st.ai || {}, cfg = window.CHURCH_HUB_FIREBASE || {}, live = S.isLive(), ready = !!cfg.appCheckKey;
     var guide = 'https://github.com/pian1966/church-hub/blob/main/docs/AI-SEARCH-SETUP.md';
-    return '<section class="panel" id="set-ai"><h2>AI for “Ask in your own words”</h2>' +
+    return '<section class="panel" id="set-ai"><h2>AI for “Ask in your own words” and reading photos of names</h2>' +
       '<p class="hint" style="margin-top:0">People → Advanced search understands questions much better with AI: the question (and the list of search fields – never anyone’s records) goes to Google’s Gemini, which turns it into filters. Church & Trellis checks them and runs the search as usual. If the AI can’t be reached, Church & Trellis’s own rules are used.</p>' +
+      '<p class="hint">The same switch lets staff take a photo of a paper sign-up sheet (Events → From a sheet) or of visitor cards (People → From a photo): Gemini reads the handwriting, and each name is checked before anyone is added. Without AI, names are typed or said instead.</p>' +
       '<div class="set-rows"><label class="set-row"><span class="set-l"><b>Use AI to understand questions</b><small>' +
         (!live ? 'Only when Church & Trellis is connected to the church’s Firebase project (not in the demo).' : ready ? 'Set up – switch on to use it.' : 'Not set up yet – follow the setup guide first (about 15 minutes).') +
       '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="st-ai"' + (ai.on ? ' checked' : '') + (live ? '' : ' disabled') + '></span></label>' +
       '<div class="set-row"><label class="set-l" for="st-ai-model"><b>Model</b><small>Change only if Google retires this one (the setup guide says how to check).</small></label><span class="set-c"><input id="st-ai-model" value="' + esc(ai.model || AskAI.MODEL) + '" style="max-width:220px"></span></div></div>' +
-      '<p class="hint"><a href="' + guide + '" target="_blank" rel="noopener">Setup guide (docs/AI-SEARCH-SETUP.md)</a> · Before switching on, the Information Officer should agree and the privacy notice should say questions go to Google’s Gemini.</p></section>';
+      '<p class="hint"><a href="' + guide + '" target="_blank" rel="noopener">Setup guide (docs/AI-SEARCH-SETUP.md)</a> · Before switching on, the Information Officer should agree and the privacy notice should say questions, and photos of sign-up sheets and visitor cards, go to Google’s Gemini.</p></section>';
   }
 
   function render(parts) {

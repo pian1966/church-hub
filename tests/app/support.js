@@ -44,7 +44,7 @@ module.exports = async function (ctx) {
   await s.go('support/notpaid'); await s.page.waitForTimeout(150);
   check(await s.page.evaluate(() => !Store.pref('payPending')) && /#\/support$/.test(s.page.url()), 'cancelled at PayFast: nothing recorded, back on the Subscription page');
   // Due soon: Home reminds the Administrator, with one-tap gifts and a payment holiday – no questions asked, as often as needed
-  const due = new Date(Date.now() + 3 * 864e5).toISOString().slice(0, 10);
+  const due = (d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'))(new Date(Date.now() + 3 * 864e5));   // the local day (not UTC), so it passes after midnight too
   const dueSoon = d => s.page.evaluate(d => { const st = Store.settings(); Store.setSettings({ support: Object.assign({}, st.support, { paidUntil: d }) }); }, d);
   await dueSoon(due);
   await s.go('home'); t = await s.page.textContent('main');

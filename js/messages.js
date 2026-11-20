@@ -12,6 +12,9 @@
  *            make it), from the volunteer to the roster team (settings.rosterTeam: Administrators, Roster coordinators and
  *            the people chosen under Settings -> Church Services). turns: the assignment ids it is about, so the inbox shows
  *            them in the reader's language with Accept / Can't make it.
+ *   event    about an event (js/events.js; never chosen on the Write page): about 'remind' – a reminder 3 days or 1 day before,
+ *            written by the person's own Church & Trellis into their own inbox (from and to themselves; it counts as a new
+ *            message all the same, and isn't listed as sent); about 'event' – the organisers to everyone coming.
  *   direct   one person: a reply to a message (replyTo: its id) goes back to its sender only; or a new message to a
  *            minister (a Pastor) or to a leader of one of your own Midweek Groups (groupId: that group)
  * Attendees (Basic access, not Church Partners or staff – Hub.attendee()) only do what Settings → Attendees allows
@@ -29,7 +32,7 @@
  */
 var Msg = (function () {
   'use strict';
-  var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster'];
+  var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster', 'event'];
   var ROSTER_NOTES = ['ask', 'remind', 'declined', 'off'], MAX_TURNS = 100;
   var MAX_BODY = 4000, MAX_TITLE = 120;
   /** What attendees may do (Settings → Attendees): the choices and the default are kept with the rest of "who can see what"
@@ -174,8 +177,10 @@ var Msg = (function () {
   function arrived(m, pid, now) { return !m.showFrom || m.fromId === pid || m.showFrom <= (now === undefined ? Date.now() : now); }
   function inbox(messages, pid, office, now) { return (messages || []).filter(function (m) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office' && m.fromId !== pid)) && arrived(m, pid, now); }).sort(newestFirst); }
   /** Messages this person sent (or, for Administrators and Pastors, everyone's: all = true), newest first. */
-  function sent(messages, pid, all) { return (messages || []).filter(function (m) { return all || m.fromId === pid; }).sort(newestFirst); }
-  function isUnread(m, pid, office, now) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office')) && m.fromId !== pid && (m.readBy || []).indexOf(pid) < 0 && arrived(m, pid, now); }
+  function sent(messages, pid, all) { return (messages || []).filter(function (m) { return (all || m.fromId === pid) && !selfNote(m); }).sort(newestFirst); }
+  /** An event reminder, written by a person's own Church & Trellis into their own inbox (js/events.js reminder). */
+  function selfNote(m) { return !!m && m.kind === 'event' && m.about === 'remind'; }
+  function isUnread(m, pid, office, now) { return ((m.to || []).indexOf(pid) >= 0 || (office && m.kind === 'office')) && (m.fromId !== pid || selfNote(m)) && (m.readBy || []).indexOf(pid) < 0 && arrived(m, pid, now); }
   function unread(messages, pid, office, now) { return (messages || []).filter(function (m) { return isUnread(m, pid, office, now); }); }
   /** Ticks, as on WhatsApp: 'sent' (✓ grey) – 'delivered' (✓✓ grey) once it has reached EVERYONE it went to – 'some'
    *  (✓✓, the first blue) once it has reached everyone and some have read it – 'read' (✓✓ blue) once everyone has opened it. people (optional): only those who can sign in count, as the others can never open it.
@@ -245,7 +250,7 @@ var Msg = (function () {
     return JSON.stringify(x) === JSON.stringify(g) ? null : x;
   }
 
-  return { arrived: arrived, officeNotice: officeNotice, ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
+  return { arrived: arrived, selfNote: selfNote, officeNotice: officeNotice, ATTENDEE_CAN: ATTENDEE_CAN, ATTENDEE_OPTIONS: ATTENDEE_OPTIONS, attendeeCan: attendeeCan, partnerLevel: partnerLevel, mayWrite: mayWrite, mayReply: mayReply, reply: reply, isMinister: isMinister,
     counts: counts, KINDS: KINDS, rosterNote: rosterNote, MAX_TURNS: MAX_TURNS, MAX_BODY: MAX_BODY, MAX_TITLE: MAX_TITLE, recipients: recipients, audiences: audiences, maySend: maySend, make: make,
     inbox: inbox, sent: sent, isUnread: isUnread, unread: unread, status: status, MARK_STYLES: MARK_STYLES, markStyle: markStyle, seen: seen, readers: readers, inApp: inApp, mayDelete: mayDelete, nameOf: nameOf, placeIn: placeIn, takeOut: takeOut, leads: leads };
 })();

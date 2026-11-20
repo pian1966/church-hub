@@ -116,10 +116,12 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
   receive them (a switch on Me, like an opt-in, and changeable at any time) – in the app's Messages, and later by email for
   those who prefer it (consent-aware, with an easy opt-out, never to people who have died or left). Attendees as well as Church
   Partners can sign up; a past-notices list so anyone can read last week's again
-- ⬜ **Events – organising and registration** (plan: `docs/COMMUNITY-PLAN.md` part 1): an Events page of picture cards; organisers
-  (Administrators, the Office, *Event organisers*) set places, a closing date, a waiting list, guests, household sign-up and
-  their own questions; members tap **I'll be there** and add it to their calendar; Who's coming, a message to everyone signed
-  up, a reminder the day before, an optional cost with *Paid*, door check-in; later a sign-up link for guests. Steps 1.1–1.5
+- ⬜ **Events – the rest** (plan: `docs/COMMUNITY-PLAN.md` part 1; Events, sign-up and reminders 3 days and 1 day before were
+  built in 0.102.0): a picture or poster on each event; places with a waiting list that moves people up; the organiser's own
+  questions (dietary/medical as a ready-made choice with a POPIA note); an event naming its own organisers; repeating and
+  several-day events; an optional cost with *Paid*; door check-in and walk-ins; later a sign-up link for guests. Steps 1.2–1.5
+- ⬜ Church: to send event reminders by email too, set up the email robot (`docs/EVENT-EMAILS.md`, about 15 minutes)
+- ⬜ Event reminders as phone notifications (with push notifications), so they arrive even when the app isn't opened
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.

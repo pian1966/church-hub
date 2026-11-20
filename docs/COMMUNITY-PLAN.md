@@ -1,6 +1,6 @@
 # Plan: Events, Community board, Marketplace and Midweek Group online links
 
-Status: the Community board (part 2) and the Marketplace (part 3) were built in 0.97.0 (19 Nov 2026) – see docs/CHANGELOG.md; Midweek Groups online (part 4) was built in 0.99.0 (19 Nov 2026) – "Send on the day" without a server: the message waits in Messages until then (the phone notification comes with push notifications); Events (part 1) is still planned. Asked for by the church on 19 Nov 2026. Each of the four parts is its own
+Status: the Community board (part 2) and the Marketplace (part 3) were built in 0.97.0 (19 Nov 2026) – see docs/CHANGELOG.md; Midweek Groups online (part 4) was built in 0.99.0 (19 Nov 2026) – "Send on the day" without a server: the message waits in Messages until then (the phone notification comes with push notifications); Events (part 1) – events, sign-up and reminders 3 days and 1 day before (in Messages, and by email through the email robot) – was built in 0.102.0 (20 Nov 2026); the waiting list, questions, cost and check-in are still to come. Asked for by the church on 19 Nov 2026. Each of the four parts is its own
 module (`js/mod-*.js`, `Hub.register`), switched on or off by an Administrator in **Settings → Apps**, and each step below is
 its own release and pull request. Read the matching section of `docs/POPIA.md` before building any of them.
 

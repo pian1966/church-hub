@@ -1,0 +1,47 @@
+# Church & Trellis – event reminders by email (robot/event-mail.js; set up: docs/EVENT-EMAILS.md).
+# Every morning it emails the reminders that are due – 3 days and 1 day before an event – to the people who ticked
+# "Email me reminders too" when they signed up. The reminders in Messages don't need this: the app writes those itself.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   ROBOT_EMAIL, ROBOT_PASSWORD     – the robot's own Church & Trellis sign-in (the same as the Elvanto robot's)
+#   GMAIL_USER, GMAIL_APP_PASSWORD  – the church's Gmail address and an app password for it (never the real password)
+# Until they are set, the job says so and stops. This repository is public: the log shows counts only.
+name: Event reminders by email
+
+on:
+  schedule:
+    - cron: '41 4 * * *'        # 06:41 in Johannesburg
+  workflow_dispatch:
+
+concurrency:
+  group: event-reminders
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      TZ: Africa/Johannesburg       # the church's time zone: "3 days before" counts in the church's days
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+
+      - name: Install the email sender
+        run: mkdir -p /tmp/mailer && npm install --prefix /tmp/mailer --no-audit --no-fund nodemailer@6.9.16
+
+      - name: Send the reminders that are due
+        env:
+          ROBOT_EMAIL: ${{ secrets.ROBOT_EMAIL }}
+          ROBOT_PASSWORD: ${{ secrets.ROBOT_PASSWORD }}
+          GMAIL_USER: ${{ secrets.GMAIL_USER }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
+          MAIL_FROM_NAME: ${{ vars.MAIL_FROM_NAME }}
+          NODE_PATH: /tmp/mailer/node_modules
+        run: node robot/event-mail.js

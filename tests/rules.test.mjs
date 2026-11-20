@@ -1256,6 +1256,49 @@ await t('Midweek Groups online: this week’s links – posted by leaders and co
   await cannot(db.member.doc('messages/st6').set(m({ about: '', kind: 'life' })));                         // without about: only the leaders (mayWriteTo)
 });
 
+await t('Events: organisers put them up; people sign up themselves; reminders to their own inbox; the email robot notes what it sent', async () => {
+  const ev = (o) => Object.assign({ title: 'Men’s breakfast', about: '', date: '2026-11-28', time: '07:30', end: '', place: 'Hall', address: '', who: 'all', signup: true, closes: '', guests: 2, email: true, status: 'live', byId: 'p02', byName: 'Thandi', createdAt: 'x', updatedAt: 'x' }, o);
+  const su = (ev, by, o) => Object.assign({ eventId: ev, by: by, people: [by], names: ['A'], guests: 0, email: '', lang: 'en', mailed: [], createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.pastor.doc('events/e1').set(ev({})));                                                       // Pastors and Administrators organise (until the church chooses)
+  await can(db.admin.doc('events/e2').set(ev({ who: 'partners' })));
+  await cannot(db.member.doc('events/e3').set(ev({})));                                                    // not a Church Partner who isn't an organiser
+  await cannot(db.rosters.doc('events/e3').set(ev({})));
+  await cannot(db.pastor.doc('events/e4').set(ev({ secret: 1 }))); await cannot(db.pastor.doc('events/e4').set(ev({ who: 'friends' }))); await cannot(db.pastor.doc('events/e4').set(ev({ guests: 99 })));
+  await can(read(db.attendee, 'events/e1')); await cannot(read(db.attendee, 'events/e2')); await can(read(db.member, 'events/e2'));   // attendees: events for everyone only
+  await can(list(db.attendee.collection('events').where('who', '==', 'all'))); await cannot(list(db.attendee.collection('events'))); await can(list(db.member.collection('events')));
+  // Signing up
+  await can(db.member.doc('eventSignups/e1_p14').set(su('e1', 'p14', { people: ['p14', 'p15'], guests: 1, email: 'tim@example.com' })));
+  await cannot(db.member.doc('eventSignups/e1_p15').set(su('e1', 'p15')));                                 // not in someone else's name
+  await cannot(db.member.doc('eventSignups/x_p14').set(su('e1', 'p14')));                                  // the id is event_person
+  await cannot(db.attendee.doc('eventSignups/e2_p16').set(su('e2', 'p16')));                               // an event for Church Partners
+  await can(db.attendee.doc('eventSignups/e1_p16').set(su('e1', 'p16')));
+  await cannot(db.rosters.doc('eventSignups/e1_p05').set(su('e1', 'p05', { guests: 3 })));                 // more guests than allowed
+  await cannot(db.rosters.doc('eventSignups/e1_p05').set(su('e1', 'p05', { mailed: ['3'] })));
+  await can(read(db.member, 'eventSignups/e1_p14')); await cannot(read(db.attendee, 'eventSignups/e1_p14')); await can(read(db.pastor, 'eventSignups/e1_p14'));
+  await can(list(db.member.collection('eventSignups').where('by', '==', 'p14'))); await cannot(list(db.attendee.collection('eventSignups')));
+  await can(db.member.doc('eventSignups/e1_p14').update({ guests: 2 })); await cannot(db.member.doc('eventSignups/e1_p14').update({ mailed: ['3'] }));
+  // A reminder: from a person to their own inbox, about an event; the organisers to everyone coming
+  const rm = (o) => Object.assign({ kind: 'event', about: 'remind', aboutId: 'e1', audience: 'Men’s breakfast', title: 'Reminder', body: 'In 3 days', fromId: 'p14', fromName: 'Men’s breakfast', to: ['p14'], deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.member.doc('messages/er_e1_p14_3').set(rm({})));
+  await cannot(db.member.doc('messages/er_x').set(rm({ to: ['p15'] })));                                  // only to oneself
+  await cannot(db.member.doc('messages/er_y').set(rm({ aboutId: 'nope' })));                              // about a real event
+  await cannot(db.member.doc('messages/er_z').set(rm({ about: 'event', to: ['p15', 'p16'] })));           // only organisers write to everyone coming
+  await can(db.pastor.doc('messages/ev1').set(rm({ about: 'event', fromId: 'p02', to: ['p14', 'p15', 'p16'] })));
+  await can(db.member.doc('messages/er_e1_p14_3').update({ readBy: ['p14'] }));
+  await cannot(db.member.doc('messages/er_e1_p14_3').set(rm({ body: 'changed' })));                       // never written twice
+  // The email robot reads events and sign-ups and notes which reminders went – nothing else
+  await can(list(robotDb.collection('events'))); await can(list(robotDb.collection('eventSignups')));
+  await can(robotDb.doc('eventSignups/e1_p14').update({ mailed: ['3'], updatedAt: 'y' }));
+  await cannot(robotDb.doc('eventSignups/e1_p14').update({ email: 'x@example.com' }));
+  await cannot(robotDb.doc('events/e1').update({ title: 'x' }));
+  await cannot(db.member.doc('eventSignups/e1_p14').update({ guests: 1, mailed: [] }));                    // what the robot noted stays
+  // Cancelling closes sign-up; taking people off the list; deleting
+  await can(db.pastor.doc('events/e1').update({ status: 'cancelled' }));
+  await cannot(db.rosters.doc('eventSignups/e1_p05').set(su('e1', 'p05')));
+  await can(db.pastor.doc('eventSignups/e1_p16').delete()); await can(db.member.doc('eventSignups/e1_p14').delete());
+  await cannot(db.member.doc('events/e1').delete()); await can(db.pastor.doc('events/e1').delete());
+});
+
 await t('the parts not built yet (Subscription records) are closed to everyone', async () => {
   for (const c of ['subscription/church']) {
     await cannot(db.admin.doc(c).set({ a: 1 })); await cannot(read(db.admin, c)); await cannot(read(db.member, c));

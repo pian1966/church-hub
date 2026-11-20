@@ -132,6 +132,45 @@
       (mineToChange && open ? '<button class="btn ghost" data-act="events:join" data-id="' + esc(e.id) + '">' + T('Change') + '</button>' : '') +
       (mineToChange && e.status !== 'cancelled' && now() < E.startOf(e) ? '<button class="btn ghost" data-act="events:leave" data-id="' + esc(e.id) + '">' + T('I can’t come after all') + '</button>' : '') + '</div></section>';
   }
+  /** The names of one sign-up, each one clickable: staff who may edit people open that person's details; others open their profile. */
+  function nameLinks(s, canEdit) {
+    return (s.names || []).map(function (n, i) {
+      var p = (s.people || [])[i] ? S.get('people', s.people[i]) : null;
+      if (!p) return esc(n);
+      return canEdit ? '<button type="button" class="link" data-act="people:edit" data-id="' + esc(p.id) + '">' + esc(n) + '</button>'
+        : '<a class="name-chip" href="#/people/p/' + esc(p.id) + '">' + esc(n) + '</a>';
+    }).join(', ');
+  }
+  /** The "⋯" menu of one sign-up: take one person off (not the one the sign-up is in the name of), or all of them. */
+  function outItems(s) {
+    var ids = s.people || [], items = [];
+    if (ids.length > 1) ids.forEach(function (pid, i) {
+      if (pid === s.by) return;
+      items.push('<button class="btn ghost danger" data-act="events:out" data-id="' + esc(s.id) + '" data-p="' + esc(pid) + '">' + esc(T('Take {name} off the list', { name: (s.names || [])[i] || '' })) + '</button>');
+    });
+    items.push('<button class="btn ghost danger" data-act="events:out" data-id="' + esc(s.id) + '">' + (ids.length > 1 ? T('Take all of them off the list') : T('Take off the list')) + '</button>');
+    return items;
+  }
+  /** Asks first (in a window, because a two-tap button does not survive inside a menu that closes), then takes them off. */
+  function outDialog(sid, pid) {
+    var s = S.get('eventSignups', sid), e = s && S.get('events', s.eventId), u = me() || {};
+    if (!s || !e || !(organiser() || (s.addedBy && s.addedBy === u.id))) return;
+    var idx = pid ? (s.people || []).indexOf(pid) : -1, one = idx >= 0 && (s.people || []).length > 1 && pid !== s.by;
+    var who = one ? (s.names || [])[idx] : (s.names || []).join(', ');
+    H.modal(H.dialogHead(T('Take off the list'), e.title) + '<div class="dlg-body"><p>' + esc(T('Take {name} off the list for {event}?', { name: who, event: e.title })) + '</p>' +
+      (!one && s.guests ? '<p class="hint">' + esc(T('Their guests are taken off too.')) + '</p>' : '') + '</div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Back') + '</button><button class="btn primary danger" data-act="events:outyes" data-id="' + esc(s.id) + '"' + (one ? ' data-p="' + esc(pid) + '"' : '') + '>' + T('Yes, take off') + '</button></div>', T('Take off the list'));
+  }
+  function outYes(el) {
+    var s = S.get('eventSignups', el.dataset.id), u = me() || {}, pid = el.dataset.p || '';
+    if (!s || !(organiser() || (s.addedBy && s.addedBy === u.id))) return;
+    var e = S.get('events', s.eventId), idx = pid ? (s.people || []).indexOf(pid) : -1, title = e ? e.title : 'an event';
+    if (idx >= 0 && (s.people || []).length > 1 && pid !== s.by) {
+      S.put('eventSignups', Object.assign({}, s, { people: s.people.filter(function (x, i) { return i !== idx; }), names: (s.names || []).filter(function (x, i) { return i !== idx; }) }),
+        audit('took one person off the list for ' + title));
+    } else S.remove('eventSignups', s.id, audit('took someone off the list for ' + title));
+    H.closeModal(); H.render(); H.toast(T('Taken off the list.'));
+  }
   /** Organisers and staff: who's coming (staff may add people, and take off those they added). */
   function whoComing(e) {
     var list = E.names(signups(), e.id), c = E.count(signups(), e.id), u = me() || {};
@@ -142,12 +181,13 @@
     var head = '<div class="ev-count"><b>' + c.total + '</b><span>' + esc(TN('{n} coming', '{n} coming', c.total).replace(/^\d+\s*/, '')) + '</span>' +
       (c.guests ? '<small>' + esc(TN('{n} person', '{n} people', c.people)) + ' + ' + esc(TN('{n} guest', '{n} guests', c.guests)) + '</small>' : '') + '</div>';
     if (!list.length) return '<section class="panel ev-who">' + h2 + '<p class="muted">' + T('Nobody has signed up yet.') + '</p></section>';
+    var canEdit = H.can('*') || H.can('people.edit');
     return '<section class="panel ev-who print-list">' + h2 + head + '<ul class="ev-list">' + list.map(function (s) {
       var by = s.addedBy ? S.get('people', s.addedBy) : null, mayOut = organiser() || (s.addedBy && s.addedBy === u.id);
-      return '<li><span class="grow"><b>' + esc((s.names || []).join(', ')) + '</b>' + (s.guests ? ' <small>+ ' + esc(TN('{n} guest', '{n} guests', s.guests)) + '</small>' : '') +
+      return '<li><span class="grow"><b>' + nameLinks(s, canEdit) + '</b>' + (s.guests ? ' <small>+ ' + esc(TN('{n} guest', '{n} guests', s.guests)) + '</small>' : '') +
         (by ? '<small class="ev-added">' + esc(T('Added by {name}', { name: H.name(by) })) + '</small>' : '') + '</span>' +
         (s.email ? '<span class="tag grey" title="' + esc(T('Email reminders')) + '">✉</span>' : '') +
-        (mayOut ? H.menu('⋯', ['<button class="btn ghost danger" data-act="events:out" data-id="' + esc(s.id) + '">' + T('Take off the list') + '</button>'], 'row-menu', T('More')) : '') + '</li>';
+        (mayOut ? H.menu('⋯', outItems(s), 'row-menu', T('More')) : '') + '</li>';
     }).join('') + '</ul></section>';
   }
 
@@ -549,7 +589,8 @@
       newp: function (el) { newPersonDialog(el.dataset.id, el.dataset.q || ''); },
       newsave: newSave,
       scan: function (el) { scanSheet(el.dataset.id); },
-      out: function (el) { var s = S.get('eventSignups', el.dataset.id); if (!s || !(organiser() || (s.addedBy && s.addedBy === (me() || {}).id)) || !H.confirmBtn(el, '✕?')) return; S.remove('eventSignups', s.id, audit('took someone off the list for an event')); H.render(); },
+      out: function (el) { outDialog(el.dataset.id, el.dataset.p || ''); },
+      outyes: outYes,
       report: function (el) { reportDialog(el.dataset.id || ''); },
       repone: function (el) {
         var r = state.rep, id = el.dataset.id; if (!r) return;

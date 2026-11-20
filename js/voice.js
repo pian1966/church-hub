@@ -44,7 +44,7 @@ var Voice = (function () {
     try { box.focus({ preventScroll: true }); var n = box.value.length; box.setSelectionRange(n, n); } catch (e) { /* not every box can */ }
   }
   function listen(btn) {
-    var R = Rec(); if (!R && !app()) return;
+    var R = app() ? null : Rec(); if (!R && !app()) return;   // in the Android app always its own speech window: its web view may offer the browser's speech feature, which is not allowed there
     if (now) { var same = now.btn === btn; stop(); if (same) return; }
     var scope = btn.closest('.dialog, .find-box, .cg-find, label, .mic-wrap') || document;
     var box = (btn.dataset.mic && (scope.querySelector(btn.dataset.mic) || document.querySelector(btn.dataset.mic))) || (btn.parentNode && btn.parentNode.querySelector('input, textarea'));

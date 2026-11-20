@@ -105,7 +105,9 @@ A session should say which tier it is running at, and stop and ask if the task's
 - Every change that reaches the website raises the version in `js/version.js` (`node tools/stamp-files.js` then writes its date and time – South African time – itself; don't type them): the middle number for new
   features, the last for fixes. Then run `node tools/stamp-files.js`: it gives each file in `index.html` (and each language
   file) a fingerprint of its contents after `?v=`, so phones download only the files that changed; `node tests/versions.test.js`
-  checks it. Don't type `?v=` numbers by hand. On a merge conflict in `index.html` or `js/file-versions.js`, take either side and run it again.
+  checks it. Don't type `?v=` numbers by hand. On a merge conflict in `js/file-versions.js`, take either side and run it again. On a conflict in `index.html`, **keep the lines
+  from both sides** – never drop a `<script>` or `<link>` line, or that side's feature quietly vanishes from the app – then run it again
+  (it fixes every `?v=`); `node tests/versions.test.js` fails if a file in `js/` or `css/` isn't loaded.
 - Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.
@@ -129,5 +131,5 @@ A session should say which tier it is running at, and stop and ask if the task's
   change stops carrying their edit of it (Church & Trellis lists it for them) – change wording only where the feature changed.
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.
   GitHub Copilot reads `.github/copilot-instructions.md` (also pointing here, with the rules it has missed): keep it in step.
-  Work on your own branch from the latest `main`; on a conflict in `js/version.js` / `index.html`, take the higher version.
+  Work on your own branch from the latest `main`; on a conflict in `js/version.js`, take the higher version; in `index.html`, keep both sides' lines (see the version rule).
 - At the end of a session: tick finished work off `docs/ROADMAP.md` by moving it to `docs/CHANGELOG.md`, and add new to-dos.

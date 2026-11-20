@@ -21,7 +21,14 @@
  *                       email reminders), status: 'live' | 'cancelled', byId, byName, createdAt, updatedAt }
  * eventSignups/{eventId_personId} = { eventId, by (who signed up), people: [person ids coming], names: [their names],
  *                       guests, email ('' or the address for reminders), lang (the language for the email), mailed: ['3', '1'],
+ *                       addedBy (only when someone on the staff added them, e.g. from a sign-up sheet: their person id),
  *                       createdAt, updatedAt }
+ *
+ * Adding people (asked for by the church, 20 Nov 2026): anyone on the staff (Administrators, Pastors, Roster coordinators,
+ * Children's ministry) and the organisers may put people on the list – for people who put their name down on a paper
+ * sheet. The sign-up is made in the person's own name (by = them), so it is theirs: they see "You're going", get the
+ * reminders in Messages, and can change it or say they can't come. No email address is kept (they can tick that themselves).
+ * Staff may add people after sign-up has closed, but not to a cancelled event or one that has started.
  *
  * POPIA: purpose – organising the church's events; the person signs up themselves, so the organisers (and only they)
  * see who is coming. An email address is kept on the sign-up only when the person ticks "Email me reminders too" (consent),
@@ -108,6 +115,20 @@ var Events = (function () {
     if (email && (!e.email || !okEmail(email))) return { error: 'email' };
     return { id: signupId(e.id, me.id), eventId: e.id, by: me.id, people: picked, names: picked.map(function (id) { return nameOf(known[id]); }),
       guests: g, email: email, lang: line(i.lang || 'en', 10), mailed: [] };
+  }
+  /**
+   * Someone on the staff puts a person (and those of their household who are coming) on the list. person = the one whose
+   * sign-up it is; input = { people: [ids], guests }; people = that person's household (with names); staff = who is adding.
+   * Allowed after sign-up has closed (paper sheets come in late), not once the event is cancelled or has started.
+   * Returns the record, or { error: 'people' | 'guests' | 'closed' }.
+   */
+  function add(e, person, input, people, staff, now) {
+    var st = signupState(e, now);
+    if (st !== 'open' && st !== 'closed') return { error: 'closed' };
+    var x = signup(Object.assign({}, e, { closes: '' }), person, { people: (input || {}).people, guests: (input || {}).guests, email: '', lang: 'en' }, people, now);
+    if (x.error) return x;
+    x.addedBy = (staff && staff.id) || '';
+    return x;
   }
   /** The sign-ups of one event. */
   function of(signups, eventId) { return (signups || []).filter(function (s) { return s.eventId === eventId; }); }
@@ -225,7 +246,7 @@ var Events = (function () {
   function fill(s, v) { return String(s).replace(/\{(\w+)\}/g, function (m, k) { return v && v[k] !== undefined ? v[k] : m; }); }
   var WORDS = [TX('today'), TX('tomorrow'), TX('in {n} days')];
   return { REMIND: REMIND, MAX_GUESTS: MAX_GUESTS, okDate: okDate, okTime: okTime, okEmail: okEmail, startOf: startOf, endOf: endOf, daysTo: daysTo,
-    make: make, sees: sees, upcoming: upcoming, past: past, signupState: signupState, signupId: signupId, signup: signup, of: of, mine: mine, count: count,
+    make: make, sees: sees, upcoming: upcoming, past: past, signupState: signupState, signupId: signupId, signup: signup, add: add, of: of, mine: mine, count: count,
     names: names, coming: coming, due: due, reminderId: reminderId, when: when, reminder: reminder, toRemind: toRemind, messageAll: messageAll,
     emailsDue: emailsDue, mailedAfter: mailedAfter, email: email, ics: ics, staleSignup: staleSignup, staleEvent: staleEvent, WORDS: WORDS };
 })();

@@ -1005,7 +1005,9 @@ var Store = (function () {
       if (me && (st.modules || {}).events === true) {
         var chosenOrg = (st.organisers || {}).events;
         var organises = !previewRole && (Array.isArray(chosenOrg) ? chosenOrg.indexOf(me) >= 0 && partnerHere : is('admin', 'pastor') || ((st.rosterExtra || []).indexOf(me) >= 0 && partnerHere));
-        if (organises) { want['events:all'] = c('events'); want['eventSignups:all'] = c('eventSignups'); }
+        // Staff (and organisers) see every sign-up, so they can add people from a paper sheet without adding anyone twice
+        var staffHere = !previewRole && is('admin', 'pastor', 'rosters', 'kids');
+        if (organises || staffHere) { want['events:all'] = c('events'); want['eventSignups:all'] = c('eventSignups'); }
         else {
           if (partnerHere) want['events:all'] = c('events'); else want['events:open'] = c('events').where('who', '==', 'all');
           want['eventSignups:by'] = c('eventSignups').where('by', '==', me);

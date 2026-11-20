@@ -1292,6 +1292,16 @@ await t('Events: organisers put them up; people sign up themselves; reminders to
   await cannot(robotDb.doc('eventSignups/e1_p14').update({ email: 'x@example.com' }));
   await cannot(robotDb.doc('events/e1').update({ title: 'x' }));
   await cannot(db.member.doc('eventSignups/e1_p14').update({ guests: 1, mailed: [] }));                    // what the robot noted stays
+  // Staff add people (e.g. from a paper sign-up sheet): in that person's name, marked with who added them, no email address
+  await can(db.rosters.doc('eventSignups/e1_p10').set(su('e1', 'p10', { people: ['p10', 'p11'], addedBy: 'p05' })));
+  await cannot(db.rosters.doc('eventSignups/e1_p12').set(su('e1', 'p12', { addedBy: 'p02' })));            // only as themselves
+  await cannot(db.rosters.doc('eventSignups/e1_p12').set(su('e1', 'p12', { addedBy: 'p05', email: 'x@example.com' })));
+  await cannot(db.rosters.doc('eventSignups/e1_p12').set(su('e1', 'p12', { addedBy: 'p05', guests: 3 })));
+  await cannot(db.member.doc('eventSignups/e1_p12').set(su('e1', 'p12', { addedBy: 'p14' })));              // only the staff
+  await can(list(db.rosters.collection('eventSignups'))); await can(list(db.kids.collection('eventSignups'))); await cannot(list(db.member.collection('eventSignups')));
+  await can(db.rosters.doc('eventSignups/e1_p10').update({ guests: 1 }));
+  await cannot(db.kids.doc('eventSignups/e1_p10').delete());                                               // not one they added
+  await can(db.rosters.doc('eventSignups/e1_p10').delete());
   // Cancelling closes sign-up; taking people off the list; deleting
   await can(db.pastor.doc('events/e1').update({ status: 'cancelled' }));
   await cannot(db.rosters.doc('eventSignups/e1_p05').set(su('e1', 'p05')));

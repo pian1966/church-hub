@@ -52,6 +52,24 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); check(Object.keys(docs).filter(k => k.startsWith('messages/er_')).length === 1, 'and it is written only once');
   await finish(s);
 
+  // Sipho, a Roster coordinator – on the staff, not an organiser: sees who's coming, and adds Jason and Priya from a paper sheet
+  s = await session('sipho.dlamini@example.com', seed2);
+  await s.go('events/e/ev1'); t = await s.text();
+  check(/Who’s coming/.test(t) && /Tim Jacobs, Clare Jacobs/.test(t) && await s.page.isVisible('[data-act="events:add"]') && !(await s.page.isVisible('.page-head details.menu')), 'staff see who’s coming and Add people (not the organisers’ menu)');
+  await s.page.click('[data-act="events:add"]'); await s.page.waitForSelector('#modal .cg-q');
+  await s.page.fill('#modal .cg-q', 'Tim'); await s.page.waitForSelector('#modal .cg-pick');
+  check(/Already coming/.test(await s.page.textContent('#modal .cg-hits')), 'Tim shows as already coming');
+  await s.page.fill('#modal .cg-q', 'Jason'); await s.page.waitForSelector('#modal .cg-pick:has-text("Jason")');
+  await s.page.click('#modal .cg-pick:has-text("Jason")'); await s.page.waitForSelector('[data-act="events:addsave"]');
+  await s.page.click('.ev-person:has-text("Priya")');
+  await s.page.click('[data-act="events:addsave"]'); await s.settle();
+  docs = await s.docsNow(); const added = docs['eventSignups/ev1_p10'];
+  check(!!added && added.people.join() === 'p10,p11' && added.addedBy === 'p05' && !added.email, 'Jason and Priya are on the list, in Jason’s name, marked as added by Sipho');
+  check(await s.page.isVisible('#modal .cg-q'), 'ready for the next name on the sheet');
+  await s.page.click('#modal .dlg-foot [data-act="hub:close"]');
+  check(/Added by Sipho Dlamini/.test(await s.text()) && /Jason Naidoo, Priya Naidoo/.test(await s.text()), 'the list shows them, and who added them');
+  await finish(s);
+
   // Jason, who only comes to church (an attendee): sees events for everyone, not the Church Partners' evening
   s = await session('jason.naidoo@example.com', seed2);
   await s.go('events'); t = await s.text();

@@ -445,7 +445,7 @@ var SetupKit = (function () {
         open(c.app('market'), 'Open the Marketplace') + ' → ' + ui('More') + ' → ' + ui('Marketplace rules…') + ' – read the rules everyone accepts first, and change them if you like.',
         ui('More') + ' → ' + ui('Keepers…') + ' – choose who checks listings (it can be the same people as the board’s).']); } },
     { id: 'events', group: 'talk', title: 'Events and sign-ups', mods: ['events'], since: '0.103',
-      what: 'Put church events up; people tap I’ll be there and are reminded 3 days and 1 day before – in Messages, and by email if they ask.',
+      what: 'Put church events up; people tap I’ll be there and are reminded 3 days and 1 day before – in Messages, and by email if they ask. Anyone on the staff can add people who put their name down on a paper sheet.',
       how: function (c) { return ol([open(c.app('settings/apps'), 'Open Settings → Apps') + ' and switch on ' + ui('Events') + '.',
         open(c.app('events'), 'Open Events') + ' → ' + ui('More') + ' → ' + ui('Event organisers…') + ' – the pastors, the Administrators and the church secretary put events up until you choose others.',
         'Reminders in Messages need nothing more. For reminders by email too, follow ' + open(DOCS + 'EVENT-EMAILS.md', 'Event reminders by email') + ' (about 15 minutes, once).']); } },

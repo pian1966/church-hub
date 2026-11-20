@@ -431,15 +431,15 @@ var Store = (function () {
       appCheckOn.catch(function () { appCheckOn = null; });
       return appCheckOn;
     }
-    /** Send a request to Gemini's generateContent; resolves with its JSON reply (15 seconds at most). */
-    function aiAsk(body, model) {
+    /** Send a request to Gemini's generateContent; resolves with its JSON reply (15 seconds at most, or ms – a photo takes longer). */
+    function aiAsk(body, model, ms) {
       if (!session || offlineNow()) return Promise.reject(new Error('offline'));
       var me = auth && auth.currentUser;
       return Promise.all([appCheck().then(function (ac) { return ac.getToken(false); }), me ? me.getIdToken() : Promise.resolve('')]).then(function (t) {
         if (!t[0] || !t[0].token) throw new Error('No App Check token');
         var h = { 'Content-Type': 'application/json', 'x-goog-api-key': cfg.apiKey, 'X-Firebase-AppCheck': t[0].token, 'x-goog-api-client': 'gl-js/' + VERSION + ' fire/' + VERSION };
         if (t[1]) h.Authorization = 'Firebase ' + t[1];
-        var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, timer = ctl ? setTimeout(function () { ctl.abort(); }, 15000) : null;
+        var ctl = typeof AbortController !== 'undefined' ? new AbortController() : null, timer = ctl ? setTimeout(function () { ctl.abort(); }, ms || 15000) : null;
         var url = 'https://firebasevertexai.googleapis.com/v1beta/projects/' + encodeURIComponent(cfg.projectId) + '/models/' + encodeURIComponent(model) + ':generateContent';
         return fetch(url, { method: 'POST', headers: h, body: JSON.stringify(body), signal: ctl ? ctl.signal : undefined }).then(function (r) {
           clearTimeout(timer);
@@ -1627,7 +1627,7 @@ var Store = (function () {
   function careOnPeople(st) { st = st || {}; return st.careOnPeople === undefined ? (st.seeCare || []).indexOf('member') >= 0 : !!st.careOnPeople; }
   /** Ask in your own words, with AI: switched on in Settings → Apps, set up (a reCAPTCHA key in firebase-config.js), live and online. */
   function aiReady() { if (!LIVE || !cfg.appCheckKey || !db || offline() || previewRole) return false; var st = settings() || {}; return !!(st.ai && st.ai.on); }
-  function ai(body) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite')); }
+  function ai(body, ms) { var st = settings() || {}; return Live.aiAsk(body, (st.ai && st.ai.model) || (typeof AskAI !== 'undefined' ? AskAI.MODEL : 'gemini-3.5-flash-lite'), ms); }
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, rosterTeam: rosterTeam, setRosterExtra: setRosterExtra, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, isRector: isRector, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,

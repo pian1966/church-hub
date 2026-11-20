@@ -116,7 +116,7 @@
       // Leaving or removing someone: at the top, apart from the details
       (!isNew && (admin || H.can('people.delete')) ? '<div class="pf-top"><button type="button" class="btn small" data-act="people:archive" data-id="' + p.id + '" title="' + esc(T('They’ve left the church: hidden from lists, history kept')) + '">' + H.icon(LEFT, 16) + T('Mark as left') + '</button>' +
         '<button type="button" class="btn small" data-act="people:bin" data-id="' + p.id + '" title="' + esc(T('For a test person or someone added by mistake. They can be restored for 30 days.')) + '">' + H.icon(H.ICON.trash, 16) + T('Move to Bin') + '</button></div>' : '') +
-      '<div class="two"><label class="field req">' + F('First name') + '<input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name"></label>' +
+      '<div class="two"><label class="field req">' + F('First name') + '<span class="mic-wrap"><input id="pf-first" required value="' + esc(p.firstName) + '" autocomplete="given-name">' + (!p.id && window.Voice ? Voice.button('#pf-first', { mode: 'name', last: '#pf-last' }) : '') + '</span></label>' +
       '<label class="field req">' + F('Last name') + '<input id="pf-last" required value="' + esc(p.lastName) + '" autocomplete="family-name"></label></div>' +
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
       '<div class="two"><label class="field">' + F('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
@@ -329,6 +329,17 @@
 
   Object.assign(P.actions, {
     add: function () { editDialog(null); },
+    /** Visitor cards or a welcome sheet: names (and any phone numbers and email addresses) read from a photo, or typed or said,
+     *  checked one by one, then added as Attenders (js/name-scan.js). Names already in People are found and left out. */
+    scan: function () {
+      if (!(H.can('*') || H.can('people.edit')) || S.preview() || !window.NameScan) return;
+      NameScan.open({ title: T('Add people from a photo'), sub: T('Visitor cards or a welcome sheet'), mode: 'people', canNew: true,
+        people: S.find('people', function (p) { return p.active !== false && !p.binnedAt && !p.mergedInto && p.category !== 'Deceased'; }),
+        done: function (r) {
+          var made = r.fresh.map(function (f) { return NameScan.addPerson(Object.assign({ firstVisit: true }, f), 'a photo of visitor cards'); });
+          return { message: made.length ? TN('{n} person added to People.', '{n} people added to People.', made.length) : T('Nobody new to add.') };
+        } });
+    },
     edit: function (el) { editDialog(S.get('people', el.dataset.id)); var f = el.dataset.focus && document.getElementById(el.dataset.focus); if (f) { f.focus(); f.scrollIntoView({ block: 'center' }); } },
     consent: function (el) { consentDialog(S.get('people', el.dataset.id)); },
     save: function () { H.autoForget(); savePerson(false); },   // Add person, or Done: everything checked, then the window closes

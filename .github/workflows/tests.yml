@@ -107,8 +107,8 @@ jobs:
         name: Subscription (coffee prices, payment holidays, the prayer circle)
         run: node tests/coffee.test.js && node tests/community.test.js && node tests/studies.test.js
       - if: steps.changes.outputs.skip != 'true'
-        name: Events (signing up, reminders 3 days and 1 day before) and the email robot
-        run: node tests/events.test.js && node tests/event-mail.test.js
+        name: Events (signing up, reminders 3 days and 1 day before), the email robot, and names from a photo of a sheet
+        run: node tests/events.test.js && node tests/event-mail.test.js && node tests/name-list.test.js
       - if: steps.changes.outputs.skip != 'true'
         name: Keep the test browser and the database emulator between runs
         uses: actions/cache@v4

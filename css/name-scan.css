@@ -1,0 +1,91 @@
+/* Church & Trellis – saying a name (the microphone, js/voice.js), "Sounds like" names, and names from a photo of a sheet
+ * (js/name-scan.js). Phone width first (390px). */
+
+/* ---------- the microphone ---------- */
+.mic-btn { flex: 0 0 auto; display: inline-grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; border: 0; padding: 0; cursor: pointer;
+  background: var(--accent-soft); color: var(--accent-ink); transition: transform .15s var(--ease-out, ease), background .2s ease; }
+.mic-btn:hover { transform: scale(1.06); }
+.mic-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mic-btn.listening { background: var(--bad, #C0392B); color: #fff; animation: mic-pulse 1.2s ease-out infinite; }
+@keyframes mic-pulse { 0% { box-shadow: 0 0 0 0 rgba(192, 57, 43, .45); } 100% { box-shadow: 0 0 0 14px rgba(192, 57, 43, 0); } }
+@media (prefers-reduced-motion: reduce) { .mic-btn.listening { animation: none; } }
+.search .mic-btn { margin-left: 4px; width: 32px; height: 32px; }
+.mic-wrap { position: relative; display: block; }
+.mic-wrap > .mic-btn { position: absolute; right: 6px; top: 6px; width: 32px; height: 32px; }
+.mic-wrap > input { padding-right: 46px; }
+.mic-wrap > textarea { padding-right: 46px; }
+.cg-find.has-mic { position: relative; }
+.cg-find.has-mic > .cg-q { padding-right: 48px; }
+.cg-find.has-mic > .mic-btn { position: absolute; right: 6px; top: 5px; }
+.find-box.has-mic > .find-in { padding-right: 76px; }
+.find-box.has-mic > .mic-btn { position: absolute; right: 34px; top: 50%; margin-top: -16px; width: 32px; height: 32px; }
+.find-box.has-mic.find-inline > .find-in { padding-right: 70px; }
+
+/* ---------- names that sound like it ---------- */
+.cg-pick.cg-like small { color: var(--accent-ink); }
+.pp-like { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: -4px 0 12px; }
+.pp-like-p { display: inline-flex; align-items: center; gap: 6px; padding: 3px 12px 3px 3px; border-radius: 999px; background: var(--accent-soft); color: var(--accent-ink);
+  text-decoration: none; font-weight: 600; font-size: 14px; }
+.pp-like-p:hover { filter: brightness(.97); }
+.ev-also { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; }
+.ev-newp { margin-top: 8px; }
+.ev-who-h .btns { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ---------- names from a photo: taking it ---------- */
+.ns-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 6px 0 10px; }
+.ns-tile { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; text-align: center; padding: 22px 10px; border-radius: 18px; cursor: pointer;
+  background: linear-gradient(160deg, hsl(262 70% 96%), var(--surface) 70%); border: 1px solid hsl(262 40% 88%); color: var(--ink);
+  box-shadow: 0 1px 2px rgba(0,0,0,.04), 0 10px 26px -18px hsl(262 50% 40% / .55); transition: transform .18s ease, box-shadow .18s ease; }
+.ns-tile svg { color: hsl(262 45% 50%); margin-bottom: 4px; }
+.ns-tile b { font-size: 16px; }
+.ns-tile small { color: var(--muted); }
+.ns-tile:hover { transform: translateY(-2px); }
+.ns-tile:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ns-tile.off { cursor: default; opacity: .5; filter: grayscale(.8); transform: none; }
+.ns-privacy { display: flex; gap: 6px; align-items: flex-start; color: var(--muted); font-size: 13px; margin: 4px 2px 12px; }
+.ns-privacy svg { flex: 0 0 auto; margin-top: 2px; }
+.ns-type summary { cursor: pointer; font-weight: 600; color: var(--accent-ink); padding: 6px 0; }
+.ns-type .btn { margin-top: 2px; }
+
+/* ---------- reading it ---------- */
+.ns-reading { display: flex; flex-direction: column; align-items: center; gap: 14px; padding: 8px 0 4px; text-align: center; }
+.ns-photo { position: relative; width: min(260px, 70vw); border-radius: 14px; overflow: hidden; box-shadow: 0 10px 30px -14px rgba(0,0,0,.4); }
+.ns-photo img { display: block; width: 100%; max-height: 300px; object-fit: cover; filter: saturate(.85); }
+.ns-beam { position: absolute; left: 0; right: 0; height: 36%; top: -36%;
+  background: linear-gradient(180deg, transparent, hsl(262 80% 70% / .35) 70%, hsl(262 90% 75% / .9) 98%, transparent);
+  animation: ns-scan 1.8s ease-in-out infinite; }
+@keyframes ns-scan { 0% { top: -36%; } 100% { top: 100%; } }
+@media (prefers-reduced-motion: reduce) { .ns-beam { animation: none; top: 0; height: 100%; background: hsl(262 80% 70% / .18); } }
+
+/* ---------- checking every name ---------- */
+.ns-sum { margin: 0 0 10px; }
+.ns-ask { color: var(--warn, #B7791F); font-weight: 700; }
+.ns-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.ns-row { border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; background: var(--surface); transition: border-color .2s ease, background .2s ease; }
+.ns-row.ok { border-color: color-mix(in srgb, var(--ok, #1F8A4C) 45%, var(--line)); }
+.ns-row.new { border-color: color-mix(in srgb, var(--accent) 45%, var(--line)); background: color-mix(in srgb, var(--accent-soft) 35%, var(--surface)); }
+.ns-row.ask { border-color: color-mix(in srgb, var(--warn, #B7791F) 55%, var(--line)); background: color-mix(in srgb, var(--warn-soft, #FDF3E1) 55%, var(--surface)); }
+.ns-row.skip, .ns-row.already { opacity: .62; }
+.ns-w { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 8px; margin-bottom: 8px; position: relative; padding-right: 26px; }
+.ns-ink { font-family: "Segoe Print", "Bradley Hand", "Comic Sans MS", cursive; font-size: 17px; color: hsl(222 55% 30%); }
+.ns-note { color: var(--warn, #B7791F); font-weight: 600; }
+.ns-mark { position: absolute; right: 0; top: 0; width: 22px; height: 22px; border-radius: 50%; }
+.ns-row.ok .ns-mark, .ns-row.new .ns-mark { background: var(--ok, #1F8A4C); }
+.ns-row.new .ns-mark { background: var(--accent); }
+.ns-row.ok .ns-mark::after, .ns-row.new .ns-mark::after { content: "✓"; color: #fff; font-size: 13px; font-weight: 800; display: grid; place-items: center; height: 100%; }
+.ns-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.ns-pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); border-radius: 999px;
+  padding: 4px 12px 4px 4px; min-height: 34px; font: inherit; font-size: 14px; cursor: pointer; transition: background .15s ease, border-color .15s ease, transform .1s ease; }
+.ns-pill:not(:has(.avatar, img)) { padding-left: 12px; }
+.ns-pill small { color: var(--muted); font-weight: 400; }
+.ns-pill:active { transform: scale(.97); }
+.ns-pill.on { background: var(--accent); border-color: var(--accent); color: #fff; }
+.ns-pill.on small { color: rgba(255,255,255,.8); }
+.ns-pill.ghost { border-style: dashed; color: var(--muted); }
+.ns-pill.ghost.on { border-style: solid; color: #fff; background: var(--muted); border-color: var(--muted); }
+.ns-pill.new { color: var(--accent-ink); }
+.ns-pill.new.on { color: #fff; }
+.ns-find { margin: 8px 0 0; }
+.ns-new { margin-top: 10px; }
+.ns-new .two { margin-bottom: 0; }
+@media (max-width: 420px) { .ns-tiles { grid-template-columns: 1fr 1fr; gap: 8px; } .ns-tile { padding: 16px 6px; } }

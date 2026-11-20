@@ -52,6 +52,10 @@ Status key: 🟡 in progress · ⬜ planned. Only work still to do is listed her
 
 ## Phase 2 – People and pastoral care
 Members see their own family (and give consent for their children), smart lists (leave out people who have died), follow-up workflows (newcomer "connect" form starts them), birthdays and key-date reminders, background-check tracking, forms, members updating their own details (with approval).
+- ⬜ **Names from a photo – follow-ups** (0.106.0 built Events → From a sheet, People → From a photo and the microphone):
+  record consent from a visitor card in the same step (Consent → Paper connect card); decide whether Roster coordinators and
+  Children's ministry may add someone new to People when registering them for an event (the rules allow Administrators and
+  Pastors only); try the same reading for attendance registers and Midweek Group sign-up sheets.
 - ⬜ Save searches as smart lists; use them for emails and SMS
 - ⬜ Partnership applications: an email to Administrators and Pastors when one arrives, as well as the message in Messages (needs a Firebase function); apply without an account yet (email link first); print badges from the Android app
 - ⬜ Ask in your own words: more kinds of questions (leave, care and midweek groups, messages), and save an asked question as a smart list

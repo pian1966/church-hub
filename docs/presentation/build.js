@@ -254,7 +254,7 @@ async function icon(Comp, color, px = 256) {
     { text: 'Duplicates spotted as you type', options: { bold: true, breakLine: true } },
     { text: 'And name badges printed on your own labels', options: { color: HEX.muted } }
   ], { x: 0.6, y: 1.6, w: 4.2, h: 4.6, fontSize: 18 });
-  s.addNotes('People: households kept together, consent recorded for each person, duplicates spotted as you type, and name badges printed on your own labels. Pastoral notes stay with the pastors, children’s medical notes with the children’s ministry.');
+  s.addNotes('People: households kept together, consent recorded for each person, duplicates spotted as you type, and name badges printed on your own labels. Looking for someone? Tap the microphone and say their name – names that sound like it come up too. And a paper sign-up sheet or a pile of visitor cards? Take a photo: Church & Trellis reads the names, finds them, and you check each one before anyone is added. Pastoral notes stay with the pastors, children’s medical notes with the children’s ministry.');
 
   // ========== 10. Ask in your own words (clip) ==========
   s = content('What it does', 'Ask in your own words');

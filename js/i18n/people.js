@@ -366,5 +366,11 @@ I18n.rows([
     ["Signed in for the first time on {date}", "Die eerste keer aangemeld op {date}", "Ungene okokuqala ngo-{date}", "Ungene okokuqala nge-{date}"],
     ["Scan to start", "Skandeer om te begin", "Skena ukuze uqale", "Skena ukuze uqalise"],
     ["People still need access to sign in: invite them first, or give them access on their page.", "Mense het steeds toegang nodig om aan te meld: nooi hulle eers, of gee hulle toegang op hul bladsy.", "Abantu basadinga ukufinyelela ukuze bangene: baqale ubamema, noma ubanike ukufinyelela ekhasini labo.", "Abantu basafuna ufikelelo ukuze bangene: qala ubamemile, okanye ubanike ufikelelo kwiphepha labo."],
-    ["Remind them", "Herinner hulle", "Bakhumbuze", "Bakhumbuze"]
+    ["Remind them", "Herinner hulle", "Bakhumbuze", "Bakhumbuze"],
+    ["From a photo", "Van ’n foto af", "Kusuka esithombeni", "Ukusuka kwifoto"],
+    ["Add people from a photo", "Voeg mense by van ’n foto af", "Engeza abantu kusuka esithombeni", "Yongeza abantu ukusuka kwifoto"],
+    ["Visitor cards or a welcome sheet", "Besoekerskaartjies of ’n welkomlys", "Amakhadi ezivakashi noma iphepha lokwamukela", "Amakhadi eendwendwe okanye iphepha lokwamkela"],
+    ["{n} person added to People.", "{n} persoon by Mense gevoeg.", "Umuntu ongu-{n} wengezwe ku-Abantu.", "Umntu o-{n} wongezwe kwi-Abantu."],
+    ["{n} people added to People.", "{n} mense by Mense gevoeg.", "Abantu abangu-{n} bengezwe ku-Abantu.", "Abantu aba-{n} bongezwe kwi-Abantu."],
+    ["Nobody new to add.", "Niemand nuuts om by te voeg nie.", "Akekho omusha ongengezwa.", "Akukho mntu mtsha wokongezwa."]
 ]);

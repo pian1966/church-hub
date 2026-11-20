@@ -806,6 +806,7 @@ var Hub = (function () {
       if (sel.getAttribute('style')) box.setAttribute('style', sel.getAttribute('style'));
       box.innerHTML = '<input type="text" class="find-in" autocomplete="off" spellcheck="false" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="' + lid + '">' +
         '<span class="find-arrow" aria-hidden="true"></span><ul class="find-list" id="' + lid + '" role="listbox" hidden></ul>';
+      if (names && window.Voice && Voice.can()) { box.classList.add('has-mic'); box.insertAdjacentHTML('beforeend', Voice.button('.find-in')); }   // say the name (js/voice.js)
       sel.parentNode.insertBefore(box, sel);
       sel.classList.add('find-sel'); sel.tabIndex = -1;
       var inp = box.querySelector('input'), list = box.querySelector('ul'), shown = [], at = -1, typed = false;
@@ -835,6 +836,11 @@ var Hub = (function () {
         var q = typed ? inp.value.trim() : '', c = cur();
         shown = all.filter(function (o) { return o.keep || !q || matches(o.t, q); });
         var real = shown.filter(function (o) { return !o.keep; }).length;
+        if (names && q.length >= 3 && real < 6 && window.NameList) {   // names that sound like it (said aloud, or spelt by ear)
+          var spoken = inp.dataset.spoken && inp.dataset.spoken.split('|')[0] === q ? inp.dataset.spoken : q;
+          var like = NameList.rank(spoken, all.map(function (o, i) { return o.keep || o.off || shown.indexOf(o) >= 0 ? null : NameList.asPerson(i, o.t); }).filter(Boolean)).slice(0, 6 - real);
+          like.forEach(function (h) { shown.push(all[h.id]); }); real += like.length;
+        }
         list.innerHTML = shown.map(function (o, i) {
           return '<li role="option" id="' + lid + '-' + i + '" data-i="' + i + '" class="' + (o.keep ? 'keep' : '') + (o === c ? ' chosen' : '') + (o.off ? ' off' : '') + '"' + (o.off ? ' aria-disabled="true"' : '') + '>' + esc(o.t) + '</li>';
         }).join('') + (q && !real ? '<li class="none" aria-disabled="true">' + esc(names ? T('Nobody matches that – try fewer letters') : T('Nothing matches that – try fewer letters')) + '</li>' : '');

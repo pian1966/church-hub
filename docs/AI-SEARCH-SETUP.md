@@ -1,5 +1,10 @@
 # AI for “Ask in your own words” – one-time setup
 
+> **Also reads photos of names (0.106.0).** Once AI is on, staff can photograph a paper sign-up sheet (Events → From a sheet) or
+> visitor cards (People → From a photo) and Gemini reads the handwriting; every name is checked before anyone is added. Tell your
+> privacy notice. Nothing more to set up.
+
+
 With this switched on, **People → Advanced search → Ask in your own words** sends each question to Google's **Gemini** AI,
 through the church's own Firebase project, and Gemini turns it into search filters. Church & Trellis checks every filter
 (only fields that person may search on, only real values) and runs the search on the device as before. If the AI can't

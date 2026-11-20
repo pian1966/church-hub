@@ -5,6 +5,8 @@
  * events up, see who's coming, write to everyone coming and cancel an event (everyone coming is told).
  * Anyone on the staff (and the organisers) may also see who's coming and add people – e.g. those who put their name down on a
  * paper sheet (Add people; js/events.js add). The sign-up is in that person's name, so they see it and get the reminders.
+ * A whole sheet: From a sheet takes a photo (or the names typed or said) and matches every name (js/name-scan.js, js/name-list.js).
+ * Someone not in People yet: Administrators and Pastors add them there and then (an Attender in a household of their own).
  * Reminders: in Messages always – each person's own Church & Trellis writes theirs on the day it is due (remind() below);
  * by email for those who ticked "Email me reminders too" – the email robot sends those (robot/event-mail.js).
  * POPIA: docs/POPIA.md "Events". */
@@ -23,6 +25,8 @@
   function organiser() { return !S.preview() && H.can('events.organise'); }
   function manager() { return !S.preview() && H.can('settings.manage'); }
   function adder() { return !S.preview() && H.can('events.add'); }
+  /** May add someone new to People (to register them for an event): Administrators and Pastors (firestore.rules people create). */
+  function newPeople() { return !S.preview() && (H.can('*') || H.can('people.edit')); }
   /** May people be added to this event now? (after the closing date too – paper sheets come in late) */
   function addable(e) { var st = E.signupState(e, now()); return adder() && (st === 'open' || st === 'closed'); }
   function kind() { var u = me(); return u ? Access.kindOf(u.appRole || 'member', H.attendee()) : 'attendee'; }
@@ -131,7 +135,8 @@
   /** Organisers and staff: who's coming (staff may add people, and take off those they added). */
   function whoComing(e) {
     var list = E.names(signups(), e.id), c = E.count(signups(), e.id), u = me() || {};
-    var addBtn = addable(e) ? '<button class="btn small" data-act="events:add" data-id="' + esc(e.id) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + T('Add people') + '</button>' : '';
+    var addBtn = addable(e) ? (window.NameScan ? '<button class="btn small ghost" data-act="events:scan" data-id="' + esc(e.id) + '">' + H.icon('M4 8h3l2-3h6l2 3h3v11H4zM12 17a4 4 0 1 0 0-8 4 4 0 0 0 0 8z', 14) + ' ' + T('From a sheet') + '</button>' : '') +
+      '<button class="btn small" data-act="events:add" data-id="' + esc(e.id) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + T('Add people') + '</button>' : '';
     var repBtn = list.length ? '<button class="btn small ghost" data-act="events:report" data-id="' + esc(e.id) + '">' + H.icon(PRINTER, 14) + ' ' + T('Print') + '</button>' : '';
     var h2 = '<div class="ev-who-h"><h2>' + T('Who’s coming') + '</h2><div class="btns">' + repBtn + addBtn + '</div></div>';
     var head = '<div class="ev-count"><b>' + c.total + '</b><span>' + esc(TN('{n} coming', '{n} coming', c.total).replace(/^\d+\s*/, '')) + '</span>' +
@@ -358,9 +363,13 @@
     if (!pid) {
       var pick = S.find('people', alive).sort(H.byName);
       var finder = window.CareUI && CareUI.finder ? CareUI.finder('ev-add', pick, 'events:addpick', { event: e.id }, function (p) { return coming(e, p.id) ? T('Already coming') : ''; },
-        T('Find someone: type part of their name'), { keep: false }) : '';
+        T('Find someone: type part of their name'), { keep: false, none: newPeople() ? function (q) {
+          return '<button type="button" class="btn small ev-newp" data-act="events:newp" data-id="' + esc(e.id) + '" data-q="' + esc(q) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + esc(T('Add “{name}” as someone new', { name: q })) + '</button>';
+        } : null }) : '';
       H.modal(H.dialogHead(T('Add people') + ': ' + e.title, sub) + '<div class="dlg-body"><p class="hint" style="margin-top:0">' +
-        T('For people who put their name down on a sheet or told you in person. It is in their name, so they see it under Events and get the reminders.') + '</p>' + finder + '</div>' +
+        T('For people who put their name down on a sheet or told you in person. It is in their name, so they see it under Events and get the reminders.') + '</p>' + finder +
+        '<p class="ev-also">' + (newPeople() ? '<button class="link" data-act="events:newp" data-id="' + esc(e.id) + '">' + T('Not in People yet? Add them') + '</button>' : '') +
+        (window.NameScan ? '<button class="link" data-act="events:scan" data-id="' + esc(e.id) + '">' + T('A whole sheet? Take a photo') + '</button>' : '') + '</p></div>' +
         '<div class="dlg-foot"><button class="btn primary" data-act="hub:close">' + T('Done') + '</button></div>', T('Add people'));
       var q = document.querySelector('#modal .cg-q'); if (q) q.focus();
       return;
@@ -390,6 +399,55 @@
     S.put('eventSignups', x, audit('added ' + x.people.length + (x.people.length === 1 ? ' person' : ' people') + ' to the list for ' + e.title));
     H.render(); addDialog(e.id);
     H.toast(T('{name} is on the list.', { name: (x.names || []).join(', ') }));
+  }
+
+  /** Someone who isn't in People yet (a visitor, a friend from the neighbourhood): added to People as an Attender, then to the list. */
+  function newPersonDialog(id, q) {
+    var e = S.get('events', id); if (!e || !addable(e) || !newPeople()) return;
+    var r = (window.NameList && q ? NameList.fromText(q)[0] : null) || { first: '', last: '' };
+    H.modal(H.dialogHead(T('Someone new') + ': ' + e.title, H.fmt(e.date, true) + ' · ' + timeText(e)) + '<div class="dlg-body">' +
+      '<p class="hint" style="margin-top:0">' + T('They are added to People as an Attender, in a household of their own, and put on the list. You can add more details later.') + '</p>' +
+      '<div class="two"><label class="field req">' + T('First name') + '<span class="mic-wrap"><input id="ev-nf" maxlength="40" value="' + esc(r.first) + '" autocomplete="off">' + (window.Voice ? Voice.button('#ev-nf', { mode: 'name', last: '#ev-nl' }) : '') + '</span></label>' +
+      '<label class="field req">' + T('Surname') + '<input id="ev-nl" maxlength="60" value="' + esc(r.last) + '" autocomplete="off"></label></div>' +
+      '<div class="two"><label class="field">' + T('Mobile') + '<input id="ev-nm" type="tel" maxlength="30"></label><label class="field">' + T('Email') + '<input id="ev-ne" type="email" maxlength="120"></label></div>' +
+      '<p class="cm-err" id="ev-err" role="alert"></p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="events:add" data-id="' + esc(e.id) + '">' + T('Back') + '</button><button class="btn primary" data-act="events:newsave" data-id="' + esc(e.id) + '">' + T('Add them') + '</button></div>', T('Someone new'));
+    var f = document.getElementById(r.first ? 'ev-nm' : 'ev-nf'); if (f) f.focus();
+  }
+  function newSave(el) {
+    var e = S.get('events', el.dataset.id); if (!e || !addable(e) || !newPeople()) return;
+    var f = { first: val('ev-nf').trim(), last: val('ev-nl').trim(), mobile: val('ev-nm').trim(), email: val('ev-ne').trim() }, err = document.getElementById('ev-err');
+    if (!f.first || !f.last) { err.textContent = T('Each new person needs a first name and a surname.'); return; }
+    if (f.email && !E.okEmail(f.email)) { err.textContent = T(ERR.email); return; }
+    var same = window.NameList ? NameList.match([{ first: f.first, last: f.last }], S.find('people', alive))[0] : null;
+    if (same && same.status === 'sure' && !el.dataset.sure) {   // they may be in People already
+      el.dataset.sure = '1';
+      err.textContent = T('{name} is already in People. Go back and choose them – or tap Add them again if this is someone else.', { name: H.name(S.get('people', same.ids[0])) });
+      return;
+    }
+    var p = NameScan.addPerson(f, 'registering for an event');
+    addDialog(e.id, p.id);
+    H.toast(T('{name} is now in People.', { name: H.name(p) }));
+  }
+  /** A photo of the paper sign-up sheet (or the names typed or said): each name found in People and checked, then added. */
+  function scanSheet(id) {
+    var e = S.get('events', id); if (!e || !addable(e) || !window.NameScan) return;
+    NameScan.open({ title: T('Names from a sheet') + ': ' + e.title, sub: H.fmt(e.date, true) + ' · ' + timeText(e), mode: 'event', canNew: newPeople(),
+      people: S.find('people', alive), already: function (pid) { return coming(e, pid); },
+      done: function (r) {
+        var u = S.get('people', (me() || {}).id) || me(), made = r.fresh.map(function (f) { return { ids: [NameScan.addPerson(f, 'a sign-up sheet for an event').id], guests: f.guests }; });
+        var groups = NameList.group(r.chosen.concat(made), S.list('people'), e.guests), n = 0, missed = [];
+        groups.forEach(function (g) {
+          var lead = S.get('people', g.lead), ids = g.people.filter(function (x) { return !coming(e, x); }); if (!lead || !ids.length) return;
+          if (ids[0] !== lead.id) lead = S.get('people', ids[0]);
+          var x = E.add(e, lead, { people: ids, guests: g.guests }, familyOf(lead), u, now());
+          if (x.error) { missed.push(H.name(lead)); return; }
+          S.put('eventSignups', x, audit('added ' + x.people.length + (x.people.length === 1 ? ' person' : ' people') + ' to the list for ' + e.title + ' (from a sheet)'));
+          n += x.people.length;
+        });
+        return { message: TN('{n} person is on the list.', '{n} people are on the list.', n) + (made.length ? ' ' + TN('{n} new person added to People.', '{n} new people added to People.', made.length) : '') +
+          (missed.length ? ' ' + T('Couldn’t add: {names}.', { names: missed.join(', ') }) : '') };
+      } });
   }
 
   /* ---------- choosing the organisers (Administrators) ---------- */
@@ -488,6 +546,9 @@
       add: function (el) { addDialog(el.dataset.id); },
       addpick: function (el) { addDialog(el.dataset.event, el.dataset.id); },
       addsave: addSave,
+      newp: function (el) { newPersonDialog(el.dataset.id, el.dataset.q || ''); },
+      newsave: newSave,
+      scan: function (el) { scanSheet(el.dataset.id); },
       out: function (el) { var s = S.get('eventSignups', el.dataset.id); if (!s || !(organiser() || (s.addedBy && s.addedBy === (me() || {}).id)) || !H.confirmBtn(el, '✕?')) return; S.remove('eventSignups', s.id, audit('took someone off the list for an event')); H.render(); },
       report: function (el) { reportDialog(el.dataset.id || ''); },
       repone: function (el) {

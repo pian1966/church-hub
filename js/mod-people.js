@@ -190,7 +190,7 @@
         }).catch(function () { H.toast(T('That file isn’t a picture Church & Trellis can read. Try a JPG or PNG photo.')); });
       });
       var q = document.getElementById('pp-q');
-      if (q) q.addEventListener('input', H.pause(function () { var n0 = document.getElementById('pp-q'); if (!n0) return; state.q = n0.value; var pos = n0.selectionStart; H.render(); var n = document.getElementById('pp-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));
+      if (q) q.addEventListener('input', H.pause(function () { var n0 = document.getElementById('pp-q'); if (!n0) return; state.q = n0.value; state.spoken = n0.dataset.spoken || ''; var pos = n0.selectionStart; H.render(); var n = document.getElementById('pp-q'); if (n) { n.focus(); n.setSelectionRange(pos, pos); } }, 350));
     },
     actions: P.actions
   });

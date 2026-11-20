@@ -118,5 +118,19 @@ I18n.rows([
     ["{n} events", "{n} geleenthede", "imicimbi engu-{n}", "imisitho e-{n}"],
     ["Cellphone", "Selfoon", "Iselula", "Iselula"],
     ["Personal information – keep it safe, and shred it after the event.", "Persoonlike inligting – hou dit veilig, en vernietig dit ná die geleentheid.", "Imininingwane yomuntu siqu – yigcine iphephile, bese uyidabula ngemva komcimbi.", "Iinkcukacha zobuqu – zigcine zikhuselekile, uze uzikrazule emva komsitho."],
-    ["Event", "Geleentheid", "Umcimbi", "Umsitho"]
+    ["Event", "Geleentheid", "Umcimbi", "Umsitho"],
+    ["From a sheet", "Van ’n lys af", "Kusuka ephepheni", "Ukusuka ephepheni"],
+    ["Add “{name}” as someone new", "Voeg “{name}” as iemand nuuts by", "Engeza u-“{name}” njengomuntu omusha", "Yongeza u-“{name}” njengomntu omtsha"],
+    ["Not in People yet? Add them", "Nog nie in Mense nie? Voeg hulle by", "Akakabi ku-Abantu? Mengeze", "Akakabikho kwi-Abantu? Mongeze"],
+    ["A whole sheet? Take a photo", "’n Hele lys? Neem ’n foto", "Iphepha lonke? Thatha isithombe", "Iphepha lonke? Thatha ifoto"],
+    ["Someone new", "Iemand nuuts", "Umuntu omusha", "Umntu omtsha"],
+    ["They are added to People as an Attender, in a household of their own, and put on the list. You can add more details later.", "Hulle word as ’n Bywoner in Mense bygevoeg, in hul eie huishouding, en op die lys geplaas. Jy kan later meer besonderhede byvoeg.", "Bangezwa ku-Abantu njengoHambela, emndenini wabo, futhi bafakwe ohlwini. Ungangeza eminye imininingwane kamuva.", "Bongezwa kwi-Abantu njengoMzimasi, kwikhaya labo, baze bafakwe kuluhlu. Ungongeza ezinye iinkcukacha kamva."],
+    ["{name} is already in People. Go back and choose them – or tap Add them again if this is someone else.", "{name} is reeds in Mense. Gaan terug en kies hulle – of tik weer Voeg hulle by as dit iemand anders is.", "U-{name} usevele ukhona ku-Abantu. Buyela emuva umkhethe – noma uthephe kabusha u-Mengeze uma kungomunye umuntu.", "U-{name} sele ekhona kwi-Abantu. Buyela umva umkhethe – okanye ucofe kwakhona u-Mongeze ukuba ngomnye umntu."],
+    ["{name} is now in People.", "{name} is nou in Mense.", "U-{name} manje useku-Abantu.", "U-{name} ngoku ukwi-Abantu."],
+    ["Names from a sheet", "Name van ’n lys af", "Amagama asephepheni", "Amagama asephepheni"],
+    ["{n} person is on the list.", "{n} persoon is op die lys.", "Umuntu ongu-{n} usohlwini.", "Umntu o-{n} ukuluhlu."],
+    ["{n} people are on the list.", "{n} mense is op die lys.", "Abantu abangu-{n} basohlwini.", "Abantu aba-{n} bakuluhlu."],
+    ["{n} new person added to People.", "{n} nuwe persoon by Mense gevoeg.", "Umuntu omusha ongu-{n} wengezwe ku-Abantu.", "Umntu omtsha o-{n} wongezwe kwi-Abantu."],
+    ["{n} new people added to People.", "{n} nuwe mense by Mense gevoeg.", "Abantu abasha abangu-{n} bengezwe ku-Abantu.", "Abantu abatsha aba-{n} bongezwe kwi-Abantu."],
+    ["Couldn’t add: {names}.", "Kon nie byvoeg nie: {names}.", "Akwenzekanga ukwengeza: {names}.", "Akukwazekanga ukongeza: {names}."]
 ]);

@@ -106,7 +106,7 @@
       e.signup ? '<button class="btn ghost" data-act="events:write" data-id="' + esc(e.id) + '">' + T('Message everyone coming') + '</button>' : '',
       e.signup ? '<button class="btn ghost" data-act="events:report" data-id="' + esc(e.id) + '">' + H.icon(PRINTER, 16) + ' ' + T('Sign-up report…') + '</button>' : '',
       e.status === 'cancelled' ? '<button class="btn ghost" data-act="events:restore" data-id="' + esc(e.id) + '">' + T('It’s on again') + '</button>' : '<button class="btn ghost" data-act="events:cancel" data-id="' + esc(e.id) + '">' + T('Cancel the event…') + '</button>',
-      '<button class="btn ghost danger" data-act="events:del" data-id="' + esc(e.id) + '">' + T('Delete') + '</button>'].filter(Boolean)) : '';
+      '<button class="btn ghost danger" data-act="events:delask" data-id="' + esc(e.id) + '">' + T('Delete') + '</button>'].filter(Boolean)) : '';
     var main = !s && st === 'open' ? '<button class="btn primary" data-act="events:join" data-id="' + esc(e.id) + '">' + T('I’ll be there') + '</button>' : '';
     var html = '<p class="ev-back"><a href="#/events">← ' + T('Events') + '</a></p><div class="page-head"><div><h1>' + esc(e.title) + '</h1><p class="lead">' + esc(H.fmt(e.date, true) + ' · ' + timeText(e)) + '</p></div>' +
       '<div class="btns">' + menu + main + '</div></div>';
@@ -170,6 +170,22 @@
         audit('took one person off the list for ' + title));
     } else S.remove('eventSignups', s.id, audit('took someone off the list for ' + title));
     H.closeModal(); H.render(); H.toast(T('Taken off the list.'));
+  }
+  /** Asks first, in a dialog that stays open. A two-tap button inside a menu closes with the menu, so it never gets its second tap. */
+  function delDialog(id) {
+    var e = S.get('events', id); if (!e || !organiser()) return;
+    var n = E.of(signups(), e.id).length;
+    H.modal(H.dialogHead(T('Delete this event?'), e.title) + '<div class="dlg-body"><p>' +
+      esc(T('“{title}” will be removed for good.', { title: e.title })) + '</p>' +
+      (n ? '<p class="hint">' + esc(TN('{n} sign-up will be removed too.', '{n} sign-ups will be removed too.', n)) + '</p>' : '') + '</div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Back') + '</button>' +
+      '<button class="btn primary danger" data-act="events:delyes" data-id="' + esc(e.id) + '">' + T('Yes, delete') + '</button></div>', T('Delete'));
+  }
+  function delYes(el) {
+    var e = S.get('events', el.dataset.id); if (!e || !organiser()) return;
+    E.of(signups(), e.id).forEach(function (s) { S.remove('eventSignups', s.id); });
+    S.remove('events', e.id, audit('deleted ' + e.title + ' (' + e.date + ')'));
+    H.closeModal(); H.go('events'); H.toast(T('Deleted'));
   }
   /** Organisers and staff: who's coming (staff may add people, and take off those they added). */
   function whoComing(e) {
@@ -578,11 +594,8 @@
       cancel: function (el) { writeDialog(el.dataset.id, true); },
       send: send,
       restore: function (el) { var e = S.get('events', el.dataset.id); if (!e || !organiser()) return; S.put('events', Object.assign({}, e, { status: 'live' }), audit(e.title + ' is on again')); H.render(); H.toast(T('It’s on again.')); },
-      del: function (el) {
-        var e = S.get('events', el.dataset.id); if (!e || !organiser() || !H.confirmBtn(el, T('Delete it and its sign-ups?'))) return;
-        E.of(signups(), e.id).forEach(function (s) { S.remove('eventSignups', s.id); });
-        S.remove('events', e.id, audit('deleted ' + e.title + ' (' + e.date + ')')); H.go('events'); H.toast(T('Deleted'));
-      },
+      delask: function (el) { delDialog(el.dataset.id); },
+      delyes: delYes,
       add: function (el) { addDialog(el.dataset.id); },
       addpick: function (el) { addDialog(el.dataset.event, el.dataset.id); },
       addsave: addSave,

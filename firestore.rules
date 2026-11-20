@@ -194,12 +194,13 @@ service cloud.firestore {
     }
 
     // ---------- people ----------
-    // Name, family and contact details. Members may correct their own name and contact details.
+    // Name, family and contact details. Members may correct their own name and contact details, and note the day they
+    // first signed in (appFirstSeen: People > Invitations shows who has started using Church & Trellis).
     match /people/{id} {
       allow read: if staff() || mine(id);
       allow create: if isRole(['admin', 'pastor']);
       allow update: if isRole(['admin', 'pastor'])
-        || (mine(id) && onlyChanges(['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'updatedAt']))
+        || (mine(id) && onlyChanges(['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'appFirstSeen', 'updatedAt']))
         || (isRole(['kids']) && resource.data.familyRole == 'child' && onlyChanges(['photo', 'updatedAt']));
       allow delete: if may('people');
     }

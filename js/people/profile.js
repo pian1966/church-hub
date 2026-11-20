@@ -117,7 +117,7 @@
       (p.source === 'elvanto' && H.can('*') ? ' <span class="tag" style="--c:#7C3AED">' + T('From Elvanto') + '</span>' : '') +   // where the record came from: Administrators only
       (deceased(p) ? ' <span class="tag grey">' + esc(T('Died {date}', { date: H.fmt(p.deceasedAt, true) })) + '</span>' : '');
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
-      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + '</div></div>' +
+      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + (P.welcomeLine ? P.welcomeLine(p) : '') + '</div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +
       (groupKinds(p).length ? '<button class="btn" data-act="people:groups" data-id="' + p.id + '">' + T('Groups') + '</button>' : '') +
       (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
@@ -534,6 +534,7 @@
         var name = (P.known(p) + ' ' + (p.lastName || '').slice(0, 1) + '.').trim();
         Store.codeGive(p.id, name, p.mobile || '', (Countries.church(S.settings()) || {}).dial || '').then(function (r) {
           S.audit('Gave a sign-in code to ' + H.name(p), 'people/' + p.id);   // never the code itself
+          if (!p.appFirstSeen && P.markAppInvited) P.markAppInvited([p], false);   // a code is an invitation to Church & Trellis (People → Invitations)
           var link = codeLink(r.code), until = H.fmt(new Date(r.expires).toISOString().slice(0, 10), true);
           slip = '<div class="code-slip print"><p><b>' + esc((S.settings() || {}).churchName || 'Church & Trellis') + '</b> · Church & Trellis</p><h1>' + esc(H.name(p)) + '</h1>' +
             '<div class="code-qr">' + QR.svg(link, { px: 220 }) + '</div><p class="code-big">' + esc(showCode(r.code)) + '</p><p>' +
@@ -629,5 +630,5 @@
       }
   });
 
-  Object.assign(P, { adultOptions: adultOptions, canPhoto: canPhoto, coupleLine: coupleLine, coupleTodo: coupleTodo, coupleWord: coupleWord, exportPerson: exportPerson, guardiansPanel: guardiansPanel, homeDialog: homeDialog, leaveButton: leaveButton, linkDialog: linkDialog, ncDialog: ncDialog, needsTidy: needsTidy, renderPerson: renderPerson, tidyDeath: tidyDeath, volunteerDialog: volunteerDialog, volunteerPanel: volunteerPanel, wedOf: wedOf });
+  Object.assign(P, { adultOptions: adultOptions, canPhoto: canPhoto, coupleLine: coupleLine, coupleTodo: coupleTodo, coupleWord: coupleWord, exportPerson: exportPerson, guardiansPanel: guardiansPanel, homeDialog: homeDialog, leaveButton: leaveButton, linkDialog: linkDialog, ncDialog: ncDialog, needsTidy: needsTidy, codeable: codeable, renderPerson: renderPerson, tidyDeath: tidyDeath, volunteerDialog: volunteerDialog, volunteerPanel: volunteerPanel, wedOf: wedOf });
 })(PeopleParts);

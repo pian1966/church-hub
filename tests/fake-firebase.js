@@ -222,7 +222,7 @@
     people: { read: function (c, id) { return is(c, STAFF) || mine(c, id); },
       write: function (c, op, id, b, a) {
         if (op === 'delete') return may(c, 'people');
-        return is(c, ['admin', 'pastor']) || (op === 'update' && mine(c, id) && onlyChanges(b, a, ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'updatedAt']))
+        return is(c, ['admin', 'pastor']) || (op === 'update' && mine(c, id) && onlyChanges(b, a, ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'appFirstSeen', 'updatedAt']))
           || (op === 'update' && is(c, ['kids']) && b.familyRole === 'child' && onlyChanges(b, a, ['photo', 'updatedAt']));
       } },
     details: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || mine(c, id) || (is(c, ['kids']) && !!d && d.familyRole === 'child'); },

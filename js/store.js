@@ -320,7 +320,7 @@ var Store = (function () {
     var EMAIL_KEY = 'church_hub_signin_email', WHO_KEY = 'church_hub_who:', OWNER_KEY = 'church_hub_offline_owner';
     // Fields that live in people/{id}; everything else (except medical) goes to details/{id}.
     var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
-      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs'];
+      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs', 'appFirstSeen'];
     var DIRECTORY = 'Church directory';
     var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false;
     /** For About → Speed check (Administrators): how long loading took and how much the database sent and was sent. */

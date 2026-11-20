@@ -168,6 +168,7 @@
     return '<div class="pick-bar" id="pp-pickbar" role="region" aria-label="' + esc(T('Selected people')) + '"' + (n ? '' : ' hidden') + '><span class="pick-n" id="pp-pickn">' + TN('{n} person selected', '{n} people selected', n) + '</span>' +
       '<div class="btns"><button class="btn small" data-act="people:pickclear">' + T('Clear') + '</button>' +
       '<button class="btn small" data-act="people:pickbadges">' + T('Add to name badges') + '</button>' +
+      (P.inviteApp && (H.can('*') || H.can('people.edit')) ? '<button class="btn small" data-act="people:pickapp">' + T('Invite to Church & Trellis') + '</button>' : '') +
       (P.invite && window.QR ? '<button class="btn small" data-act="people:pickinvite">' + T('Invite to apply') + '</button>' : '') +
       (P.canBulk && P.canBulk() ? '<button class="btn small" data-act="people:pickchange">' + T('Change selected…') + '</button>' : '') + '</div></div>';
   }
@@ -185,7 +186,7 @@
       return matchesPerson(p, q);
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : bare ? T('The names of the church’s Church Partners.') : T('People who agreed to be in the church directory.')) + '</p></div>' +
-      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + P.binLink() + (H.can('*') || H.can('people.edit') ? '<a class="btn" href="#/people/badges">' + T('Name badges') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.badgesWaiting().length) + '</a><a class="btn" href="#/people/applications">' + T('Partnership applications') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appsWaiting().length) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
+      '<div class="btns">' + (canSeeAll() ? '<a class="btn" href="#/people/families">' + T('Households') + '</a>' + (canDup() ? '<a class="btn" href="#/people/duplicates">' + T('Find duplicates') + '</a>' : '') + (H.can('*') ? '<a class="btn" href="#/people/late">' + T('Late spouses') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(lateSuggestions().length) + '</a>' : '') + P.binLink() + (H.can('*') || H.can('people.edit') ? '<a class="btn" href="#/people/badges">' + T('Name badges') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.badgesWaiting().length) + '</a><a class="btn" href="#/people/applications">' + T('Partnership applications') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appsWaiting().length) + '</a><a class="btn" href="#/people/welcome">' + T('Invitations') + (function (n) { return n ? ' <span class="count">' + n + '</span>' : ''; })(P.appWaiting ? P.appWaiting().length : 0) + '</a>' : '') + '<button class="btn primary" data-act="people:add">' + H.icon(H.ICON.plus, 18) + T('Add person') + '</button>' : '<a class="btn" href="#/people/p/' + H.user().id + '">' + T('My details') + '</a>') + '</div></div>' +
       (H.can('*') ? renderStats() : '') +
       '<div class="row pp-searchrow" style="margin-bottom:14px"><div class="pp-searchcol"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search people') + '</span><input id="pp-q" type="search" placeholder="' + (bare ? T('Type part of their name') : T('Search by name, household, email or phone')) + '" value="' + esc(state.q) + '"></label>' +
         (canBasic() ? '<a class="adv-link" href="#/people/search">' + T('Advanced search') + '</a>' : '') + '</div>' +
@@ -215,6 +216,7 @@
       var n = P.addBadges(list, 'People list'); state.pick = {}; H.render();
       H.toast(TN('{n} added to the name badges to print', '{n} added to the name badges to print', n));
     },
+    pickapp: function () { var list = picked(); if (list.length && P.inviteApp) P.inviteApp(list.map(function (p) { return p.id; })); },
     pickinvite: function () { var list = picked(); if (list.length && P.invite) P.invite(list.map(function (p) { return p.id; })); },
     pickchange: function () { var list = picked(); if (list.length && P.canBulk && P.canBulk()) P.bulkDialog(list.map(function (p) { return p.id; })); },
     sort: function (el) { state.sort = el.dataset.k; Store.pref('peopleSort', state.sort); if (state.adv) { state.adv.sort = 'name'; state.adv.dir = 1; } H.render(); }

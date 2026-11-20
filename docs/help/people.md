@@ -78,6 +78,25 @@ Open the person → **Edit details** → **App access**, and choose what they ca
 coordinator, Children's ministry, Member (Basic access) or **No access**. They sign in with Google or an email link using
 the email address on their record. People who share an email address share one sign-in.
 
+## How do I invite people to start using Church & Trellis?
+For: Administrators, Pastors
+Also asked: Send the app to the church. Invite a Care Group. Get people signed in. Who hasn't started yet? Remind them.
+
+- **One person:** open their page → **Invite to Church & Trellis**.
+- **A group** (a Care Group, a Midweek Group, a serving team, all the Attenders…): **People → Advanced search**, find them
+  (e.g. **Care Group** is …), then **Invite everyone found to Church & Trellis** (or tick some first). On the People list,
+  **Select** people and choose **Invite to Church & Trellis**.
+
+Anyone with an email address who can't sign in yet is given **Basic access** (untick it if you'd rather not). Send the
+message as **one email** (everyone in Bcc), or open **Or send it by WhatsApp** and tap **WhatsApp** for each person – WhatsApp
+opens with the message ready, greeting them by name; tap Send there. People with **no email address** are listed with
+**Give a sign-in code** (Administrators). **Show the QR code** gives the same link for a notice slide or the welcome desk.
+
+The link opens a welcome on the sign-in screen and, on an Android phone, **Get the app for Android**; on an iPhone it says
+how to **Add to Home Screen**. **People → Invitations** lists who was invited but hasn't signed in yet (with **Remind** and
+**Remind all**) and who has started; Home reminds you a week after an invitation. Advanced search can also find
+**Using Church & Trellis**: Signed in, Invited – not signed in yet, or Not invited yet.
+
 ## How do I add a child's parents, guardians, and who may collect them?
 For: Administrators, Pastors, Children's ministry
 Also asked: Who can fetch this child? Court order. Guardian consent.

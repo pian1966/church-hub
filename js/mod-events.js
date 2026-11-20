@@ -3,6 +3,8 @@
  * Routes: #/events (coming up), #/events/mine (what I signed up for), #/events/past (organisers), #/events/e/<id> (one event).
  * Organisers (js/access.js JOBS.organisers: Administrators, Pastors and the church secretary until the church chooses) put
  * events up, see who's coming, write to everyone coming and cancel an event (everyone coming is told).
+ * Anyone on the staff (and the organisers) may also see who's coming and add people – e.g. those who put their name down on a
+ * paper sheet (Add people; js/events.js add). The sign-up is in that person's name, so they see it and get the reminders.
  * Reminders: in Messages always – each person's own Church & Trellis writes theirs on the day it is due (remind() below);
  * by email for those who ticked "Email me reminders too" – the email robot sends those (robot/event-mail.js).
  * POPIA: docs/POPIA.md "Events". */
@@ -19,6 +21,9 @@
   function me() { return H.user(); }
   function organiser() { return !S.preview() && H.can('events.organise'); }
   function manager() { return !S.preview() && H.can('settings.manage'); }
+  function adder() { return !S.preview() && H.can('events.add'); }
+  /** May people be added to this event now? (after the closing date too – paper sheets come in late) */
+  function addable(e) { var st = E.signupState(e, now()); return adder() && (st === 'open' || st === 'closed'); }
   function kind() { var u = me(); return u ? Access.kindOf(u.appRole || 'member', H.attendee()) : 'attendee'; }
   function events() { var org = organiser(), k = kind(); return S.list('events').filter(function (e) { return E.sees(e, k, org); }); }
   function signups() { return S.list('eventSignups'); }
@@ -49,7 +54,7 @@
     else if (s) t.push('<span class="tag good">' + T('You’re going') + ' ✓</span>');
     else if (st === 'closed') t.push('<span class="tag grey">' + T('Sign-up closed') + '</span>');
     if (e.who === 'partners') t.push('<span class="tag grey">' + T('Church Partners') + '</span>');
-    if (organiser() && e.signup) { var c = E.count(signups(), e.id); t.push('<span class="tag">' + esc(TN('{n} coming', '{n} coming', c.total)) + '</span>'); }
+    if ((organiser() || adder()) && e.signup) { var c = E.count(signups(), e.id); t.push('<span class="tag">' + esc(TN('{n} coming', '{n} coming', c.total)) + '</span>'); }
     return t.length ? '<p class="ev-tags">' + t.join(' ') + '</p>' : '';
   }
   function card(e) {
@@ -108,7 +113,7 @@
     else if (e.signup && e.status !== 'cancelled' && (st === 'open' || st === 'closed')) html += '<p class="ev-note">' + H.icon('M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9M13.7 21a2 2 0 0 1-3.4 0', 16) + '<span>' +
       (st === 'open' ? T('Signed up? We’ll remind you in Messages 3 days and 1 day before.') + (e.email ? ' ' + T('By email too, if you like.') : '') : T('Sign-up for this event has closed.')) + '</span></p>';
     else if (!e.signup) html += '<p class="ev-note">' + H.icon(CAL, 16) + '<span>' + T('No need to sign up – just come.') + ' <button class="link" data-act="events:ics" data-id="' + esc(e.id) + '">' + T('Add to my calendar') + '</button></span></p>';
-    if (org && e.signup) html += whoComing(e);
+    if ((org || adder()) && e.signup) html += whoComing(e);
     return html;
   }
   /** My sign-up: who's coming, and what I can do about it. */
@@ -121,16 +126,20 @@
       (mineToChange && open ? '<button class="btn ghost" data-act="events:join" data-id="' + esc(e.id) + '">' + T('Change') + '</button>' : '') +
       (mineToChange && e.status !== 'cancelled' && now() < E.startOf(e) ? '<button class="btn ghost" data-act="events:leave" data-id="' + esc(e.id) + '">' + T('I can’t come after all') + '</button>' : '') + '</div></section>';
   }
-  /** Organisers: who's coming. */
+  /** Organisers and staff: who's coming (staff may add people, and take off those they added). */
   function whoComing(e) {
-    var list = E.names(signups(), e.id), c = E.count(signups(), e.id);
+    var list = E.names(signups(), e.id), c = E.count(signups(), e.id), u = me() || {};
+    var addBtn = addable(e) ? '<button class="btn small" data-act="events:add" data-id="' + esc(e.id) + '">' + H.icon('M12 5v14M5 12h14', 14) + ' ' + T('Add people') + '</button>' : '';
+    var h2 = '<div class="ev-who-h"><h2>' + T('Who’s coming') + '</h2>' + addBtn + '</div>';
     var head = '<div class="ev-count"><b>' + c.total + '</b><span>' + esc(TN('{n} coming', '{n} coming', c.total).replace(/^\d+\s*/, '')) + '</span>' +
       (c.guests ? '<small>' + esc(TN('{n} person', '{n} people', c.people)) + ' + ' + esc(TN('{n} guest', '{n} guests', c.guests)) + '</small>' : '') + '</div>';
-    if (!list.length) return '<section class="panel ev-who"><h2>' + T('Who’s coming') + '</h2><p class="muted">' + T('Nobody has signed up yet.') + '</p></section>';
-    return '<section class="panel ev-who print-list"><h2>' + T('Who’s coming') + '</h2>' + head + '<ul class="ev-list">' + list.map(function (s) {
-      return '<li><span class="grow"><b>' + esc((s.names || []).join(', ')) + '</b>' + (s.guests ? ' <small>+ ' + esc(TN('{n} guest', '{n} guests', s.guests)) + '</small>' : '') + '</span>' +
+    if (!list.length) return '<section class="panel ev-who">' + h2 + '<p class="muted">' + T('Nobody has signed up yet.') + '</p></section>';
+    return '<section class="panel ev-who print-list">' + h2 + head + '<ul class="ev-list">' + list.map(function (s) {
+      var by = s.addedBy ? S.get('people', s.addedBy) : null, mayOut = organiser() || (s.addedBy && s.addedBy === u.id);
+      return '<li><span class="grow"><b>' + esc((s.names || []).join(', ')) + '</b>' + (s.guests ? ' <small>+ ' + esc(TN('{n} guest', '{n} guests', s.guests)) + '</small>' : '') +
+        (by ? '<small class="ev-added">' + esc(T('Added by {name}', { name: H.name(by) })) + '</small>' : '') + '</span>' +
         (s.email ? '<span class="tag grey" title="' + esc(T('Email reminders')) + '">✉</span>' : '') +
-        H.menu('⋯', ['<button class="btn ghost danger" data-act="events:out" data-id="' + esc(s.id) + '">' + T('Take off the list') + '</button>'], 'row-menu', T('More')) + '</li>';
+        (mayOut ? H.menu('⋯', ['<button class="btn ghost danger" data-act="events:out" data-id="' + esc(s.id) + '">' + T('Take off the list') + '</button>'], 'row-menu', T('More')) : '') + '</li>';
     }).join('') + '</ul></section>';
   }
 
@@ -248,6 +257,53 @@
     H.download((e.title + ' ' + e.date).replace(/[^\w\- ]+/g, '').replace(/\s+/g, '-') + '.csv', '﻿' + rows.map(function (r) { return r.map(q).join(','); }).join('\r\n'), 'text/csv');
   }
 
+  /* ---------- staff: adding people (e.g. from a paper sign-up sheet) ---------- */
+  /** The person and the others in their household (as I see them), them first. */
+  function familyOf(p) {
+    var fam = p.familyId ? S.find('people', function (x) { return x.id !== p.id && x.familyId === p.familyId && alive(x); }) : [];
+    return [p].concat(fam.sort(function (a, b) { return (a.familyRole === 'child') - (b.familyRole === 'child') || H.byName(a, b); }));
+  }
+  function coming(e, pid) { return !!E.mine(signups(), e.id, pid); }
+  function addDialog(id, pid) {
+    var e = S.get('events', id); if (!e || !addable(e)) return;
+    var sub = H.fmt(e.date, true) + ' · ' + timeText(e);
+    if (!pid) {
+      var pick = S.find('people', alive).sort(H.byName);
+      var finder = window.CareUI && CareUI.finder ? CareUI.finder('ev-add', pick, 'events:addpick', { event: e.id }, function (p) { return coming(e, p.id) ? T('Already coming') : ''; },
+        T('Find someone: type part of their name'), { keep: false }) : '';
+      H.modal(H.dialogHead(T('Add people') + ': ' + e.title, sub) + '<div class="dlg-body"><p class="hint" style="margin-top:0">' +
+        T('For people who put their name down on a sheet or told you in person. It is in their name, so they see it under Events and get the reminders.') + '</p>' + finder + '</div>' +
+        '<div class="dlg-foot"><button class="btn primary" data-act="hub:close">' + T('Done') + '</button></div>', T('Add people'));
+      var q = document.querySelector('#modal .cg-q'); if (q) q.focus();
+      return;
+    }
+    var p = S.get('people', pid); if (!p) return;
+    if (coming(e, p.id)) { H.toast(T('{name} is already on the list.', { name: H.name(p) }), true); return; }
+    var fam = familyOf(p); state.pick = {}; state.pick[p.id] = 1;
+    H.modal(H.dialogHead(T('Add people') + ': ' + e.title, sub) + '<div class="dlg-body ev-join">' +
+      '<p class="ev-q">' + (fam.length > 1 ? T('Who’s coming?') : esc(H.name(p))) + '</p><div class="ev-people">' + fam.map(function (x) {
+        var already = coming(e, x.id), onP = !!state.pick[x.id];
+        return '<button type="button" class="ev-person' + (onP ? ' on' : '') + '" aria-pressed="' + onP + '" data-act="events:pick" data-id="' + esc(x.id) + '"' + (fam.length === 1 || already ? ' disabled' : '') +
+          (already ? ' title="' + esc(T('Already coming')) + '"' : '') + '>' + H.avatar(x, 34) + '<span>' + esc(x.preferredName || x.firstName) + (already ? ' <small>' + esc(T('Already coming')) + '</small>' : '') + '</span><i aria-hidden="true">✓</i></button>';
+      }).join('') + '</div>' +
+      (e.guests ? '<p class="ev-q">' + T('Bringing guests?') + '</p><div class="ev-step"><button type="button" class="icon-btn" data-act="events:step" data-d="-1" aria-label="' + esc(T('One less')) + '">−</button>' +
+        '<output id="ev-g" aria-live="polite">0</output><button type="button" class="icon-btn" data-act="events:step" data-d="1" data-max="' + e.guests + '" aria-label="' + esc(T('One more')) + '">+</button>' +
+        '<small class="muted">' + esc(TN('Up to {n} guest', 'Up to {n} guests', e.guests)) + '</small></div>' : '') +
+      '<p class="cm-err" id="ev-err" role="alert"></p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="events:add" data-id="' + esc(e.id) + '">' + T('Choose someone else') + '</button>' +
+      '<button class="btn primary" data-act="events:addsave" data-id="' + esc(e.id) + '" data-p="' + esc(p.id) + '">' + T('Add to the list') + '</button></div>', T('Add people'));
+  }
+  function addSave(el) {
+    var e = S.get('events', el.dataset.id), p = S.get('people', el.dataset.p), u = S.get('people', (me() || {}).id) || me();
+    if (!e || !p || !u || !addable(e)) return;
+    var people = Object.keys(state.pick).filter(function (k) { return state.pick[k] && !coming(e, k); });
+    var x = E.add(e, p, { people: people, guests: +((document.getElementById('ev-g') || {}).textContent || 0) }, familyOf(p), u, now());
+    if (x.error) { document.getElementById('ev-err').textContent = T(ERR[x.error]); return; }
+    S.put('eventSignups', x, audit('added ' + x.people.length + (x.people.length === 1 ? ' person' : ' people') + ' to the list for ' + e.title));
+    H.render(); addDialog(e.id);
+    H.toast(T('{name} is on the list.', { name: (x.names || []).join(', ') }));
+  }
+
   /* ---------- choosing the organisers (Administrators) ---------- */
   function organiserIds() { return Access.jobHolders('organisers', 'events', S.settings(), S.find('people', function (p) { return alive(p) && p.familyRole !== 'child'; })); }
   function organisersDialog() {
@@ -341,7 +397,10 @@
         E.of(signups(), e.id).forEach(function (s) { S.remove('eventSignups', s.id); });
         S.remove('events', e.id, audit('deleted ' + e.title + ' (' + e.date + ')')); H.go('events'); H.toast(T('Deleted'));
       },
-      out: function (el) { var s = S.get('eventSignups', el.dataset.id); if (!s || !organiser() || !H.confirmBtn(el, '✕?')) return; S.remove('eventSignups', s.id, audit('took someone off the list for an event')); H.render(); },
+      add: function (el) { addDialog(el.dataset.id); },
+      addpick: function (el) { addDialog(el.dataset.event, el.dataset.id); },
+      addsave: addSave,
+      out: function (el) { var s = S.get('eventSignups', el.dataset.id); if (!s || !(organiser() || (s.addedBy && s.addedBy === (me() || {}).id)) || !H.confirmBtn(el, '✕?')) return; S.remove('eventSignups', s.id, audit('took someone off the list for an event')); H.render(); },
       csv: function (el) { csv(el.dataset.id); },
       print: function () { window.print(); },
       organisers: organisersDialog,

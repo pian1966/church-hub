@@ -149,7 +149,9 @@ var Access = (function () {
     { id: 'events', name: TX('Events'), desc: TX('Church events people sign up for, with reminders 3 days and 1 day before'), optIn: true,
       perms: {
         'events.view': { kinds: EVERYONE },          // attendees see only the events meant for everyone (js/events.js sees)
-        'events.organise': { kinds: [], job: 'organisers' }
+        'events.organise': { kinds: [], job: 'organisers' },
+        // 20 Nov 2026: anyone on the staff (and the organisers) may see who's coming and add people – e.g. from a paper sign-up sheet
+        'events.add': { kinds: STAFF_ROLES.slice(), job: 'organisers' }
       },
       settings: ['organisers.events'] },
     { id: 'support', name: TX('Subscription'), desc: TX('A coffee a month keeps Church & Trellis going'),
@@ -205,13 +207,16 @@ var Access = (function () {
       var ticks = kind === 'senior' ? st.seniorCan : st.pastorCan;
       can = can.concat(abilityLines(ticks));
       if (kind === 'senior') can.push(line(TX('See Church & Trellis as the roles below theirs (View as)')), line(TX('Choose what attendees may do and write the membership application')));
-      else if (!(ticks || []).length) can.push(line(TX('Nothing more – tick what else below')));
+      if (mods.events === true) can.push(line(TX('See who’s coming to events, and add people who put their name down on a sheet')));
+      if (kind !== 'senior' && !(ticks || []).length) can.push(line(TX('Nothing more – tick what else below')));
     } else if (kind === 'rosters') {
       see.push(contacts(st, 'rosters', share)); careSee('rosters');
       can.push(line(TX('Rosters, teams and services')));
+      if (mods.events === true) can.push(line(TX('See who’s coming to events, and add people who put their name down on a sheet')));
     } else if (kind === 'kids') {
       see.push(line(TX('Children, their guardians and medical notes')), contacts(st, 'kids', share)); careSee('kids');
       can.push(line(TX('Children’s medical notes (with a guardian’s consent)')));
+      if (mods.events === true) can.push(line(TX('See who’s coming to events, and add people who put their name down on a sheet')));
     } else if (kind === 'partner') {
       see.push(line(TX('Their own details, serving and messages')), contacts(st, 'member', share));
       see.push(line(st.seeCareOwn !== false ? TX('Everyone in their own Care Group') : TX('The carers of their own Care Group')));

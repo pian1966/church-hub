@@ -559,3 +559,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
   email robot (`robot/event-mail.js`, `.github/workflows/event-reminders.yml`, `docs/EVENT-EMAILS.md`) sends them every morning
   through the church's Gmail in each person's language. Home shows "Coming up". Tests: `tests/events.test.js`,
   `tests/event-mail.test.js`, `tests/app/events.js`, `tests/rules.test.mjs`. Words in all five languages.
+- ✅ 0.104.0 (20 Nov 2026): **Staff add people to events** – anyone on the staff (Administrators, Pastors, Roster coordinators, Children's ministry) and the organisers see Who's coming and tap **Add people** to put someone (and those of their household who are coming, plus guests) on the list, e.g. from a paper sign-up sheet. In the person's own name, marked "Added by", no email address; allowed after sign-up closes. `Events.add`, `firestore.rules` (mayAdd), `events.add` in `js/access.js`.

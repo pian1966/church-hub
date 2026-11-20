@@ -44,6 +44,15 @@ const c = E.count([s, s2, { eventId: 'other', people: ['x'], guests: 4 }], 'ev1'
 ok(c.signups === 2 && c.people === 3 && c.guests === 1 && c.total === 4, 'counts: people and guests');
 ok(E.coming([s, s2], 'ev1').sort().join() === 'p01,p02,p03', 'everyone coming, for a message');
 
+console.log('Staff adding people (a paper sign-up sheet)');
+const staff = { id: 'p09', firstName: 'Sipho', lastName: 'Dlamini' };
+const ad = E.add(e, ben, { people: ['p02', 'p03'], guests: 1 }, [ben, kid], staff, NOW);
+ok(!ad.error && ad.id === 'ev1_p02' && ad.by === 'p02' && ad.people.join() === 'p02,p03' && ad.names.join(', ') === 'Ben Botha, Lily Botha' && ad.guests === 1 && ad.addedBy === 'p09' && ad.email === '', 'in Ben’s own name, with Lily and a guest, marked with who added them; no email address');
+ok(E.mine([ad], 'ev1', 'p03') === ad, 'Lily is on the list too (so she gets the reminders)');
+ok(E.add(e, ben, { people: ['p01'] }, [ben, kid], staff, NOW).error === 'people' && E.add(e, ben, { people: ['p02'], guests: 3 }, [ben], staff, NOW).error === 'guests', 'only their household, and no more guests than allowed');
+ok(!E.add(e, ben, { people: ['p02'] }, [ben], staff, at(2026, 11, 27, 9)).error, 'after sign-up has closed too (paper sheets come in late)');
+ok(E.add(Object.assign({}, e, { status: 'cancelled' }), ben, { people: ['p02'] }, [ben], staff, NOW).error === 'closed' && E.add(e, ben, { people: ['p02'] }, [ben], staff, at(2026, 11, 28, 8)).error === 'closed', 'not to a cancelled event, or once it has started');
+
 console.log('Reminders: 3 days and 1 day before');
 ok(E.due(e, at(2026, 11, 24, 9)) === 0, '4 days before: nothing yet');
 ok(E.due(e, at(2026, 11, 25, 0, 1)) === 3 && E.due(e, at(2026, 11, 26, 20)) === 3, '3 and 2 days before: the 3-day reminder');

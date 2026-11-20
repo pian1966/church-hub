@@ -383,7 +383,11 @@ nobody connects a Google account, and what is in the meeting or the document sta
   signs up themselves (consent); for a household member or guest they add, the church's legitimate interest in planning.
 - Who sees it: events are for signed-in people only (never the website); events for Church Partners are not shown to attendees.
   A sign-up is seen by the person who made it, the people on it, and the organisers (`firestore.rules` organises; Administrators,
-  Pastors and the church secretary until the church chooses) – nobody else sees who is coming.
+  Pastors and the church secretary until the church chooses) – and, since 0.104.0, anyone on the staff (Administrators, Pastors,
+  Roster coordinators, Children's ministry: `firestore.rules` staff()), who may also add people – e.g. those who put their name
+  down on a paper sign-up sheet (basis: the person asked to be signed up). Such a sign-up is in the person's own name (so they
+  see it and can take themselves off), is marked with who added it (`addedBy`), never holds an email address, and only the
+  staff member who added it (or an organiser) can change or remove it. Nobody else sees who is coming.
 - Kept on a sign-up: who signed up, the names of those coming, how many guests, the language for emails, and an email address
   **only** if the person ticked *Email me reminders too* (consent, for that event only). The reminder in Messages is written by
   the person's own app into their own inbox.

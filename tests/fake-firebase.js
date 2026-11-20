@@ -158,25 +158,31 @@
   }
   function seesEvent(c, d) { return is(c, ANY) && !!d && ((d.who || 'all') === 'all' || !attendee(c) || organises(c)); }
   function okSignup(id, d) {
-    return onlyKeys(d, ['eventId', 'by', 'people', 'names', 'guests', 'email', 'lang', 'mailed', 'createdAt', 'updatedAt']) && typeof d.eventId === 'string' && typeof d.by === 'string'
+    return onlyKeys(d, ['eventId', 'by', 'people', 'names', 'guests', 'email', 'lang', 'mailed', 'addedBy', 'createdAt', 'updatedAt']) && typeof d.eventId === 'string' && typeof d.by === 'string'
       && id === d.eventId + '_' + d.by && Array.isArray(d.people) && d.people.length > 0 && d.people.length <= 12 && Array.isArray(d.names || []) && (d.names || []).length <= 12
       && Number.isInteger(d.guests || 0) && (d.guests || 0) >= 0 && (d.guests || 0) <= 10 && typeof (d.email || '') === 'string' && (d.email || '').length <= 200
-      && Array.isArray(d.mailed || []) && (d.mailed || []).length <= 2;
+      && Array.isArray(d.mailed || []) && (d.mailed || []).length <= 2 && typeof (d.addedBy || '') === 'string';
   }
   function mayJoin(c, d) {
     var e = docs['events/' + d.eventId];
     return !!e && e.signup === true && e.status === 'live' && seesEvent(c, e) && (d.guests || 0) <= (e.guests || 0) && (!d.email || e.email === true);
   }
+  function staffer(c) { return is(c, ['admin', 'pastor', 'rosters', 'kids']); }
+  function mayAdd(c, d) {
+    var e = docs['events/' + d.eventId];
+    return staffer(c) && !!d.addedBy && isMe(c, d.addedBy) && !d.email && !(d.mailed || []).length && !!e && e.signup === true && e.status === 'live' && (d.guests || 0) <= (e.guests || 0);
+  }
   var POLICY = {
     events: { read: function (c, id, d) { return c.robot || seesEvent(c, d); },
       write: function (c, op, id, b, a) { return organises(c) && (op === 'delete' || okEvent(a)); } },
-    eventSignups: { read: function (c, id, d) { return c.robot || (is(c, ANY) && !!d && (isMe(c, d.by) || meIn(c, d.people || []))) || organises(c); },
+    eventSignups: { read: function (c, id, d) { return c.robot || (is(c, ANY) && !!d && (isMe(c, d.by) || meIn(c, d.people || []))) || organises(c) || staffer(c); },
       write: function (c, op, id, b, a) {
-        if (op === 'delete') return (is(c, ANY) && isMe(c, b.by)) || organises(c);
-        if (op === 'create') return is(c, ANY) && isMe(c, a.by) && okSignup(id, a) && !(a.mailed || []).length && mayJoin(c, a);
+        if (op === 'delete') return (is(c, ANY) && isMe(c, b.by)) || organises(c) || (staffer(c) && !!b.addedBy && isMe(c, b.addedBy));
+        if (op === 'create') return (is(c, ANY) && isMe(c, a.by) && okSignup(id, a) && !(a.mailed || []).length && mayJoin(c, a)) || (okSignup(id, a) && mayAdd(c, a));
         return (c.robot && onlyChanges(b, a, ['mailed', 'updatedAt']) && Array.isArray(a.mailed || []) && (a.mailed || []).length <= 2)
           || (is(c, ANY) && isMe(c, b.by) && okSignup(id, a) && a.by === b.by && JSON.stringify(a.mailed || []) === JSON.stringify(b.mailed || []) && mayJoin(c, a))
-          || (organises(c) && okSignup(id, a));
+          || (organises(c) && okSignup(id, a))
+          || (staffer(c) && !!b.addedBy && isMe(c, b.addedBy) && okSignup(id, a) && a.by === b.by && mayAdd(c, a));
       } },
     studies: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && (d.open === true || meIn(c, d.to || []))); },
       write: function (c, op, id, b, a) {

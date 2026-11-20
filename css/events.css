@@ -36,6 +36,11 @@
 @keyframes ev-pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .ev-who { margin-top: 14px; }
 .ev-who h2 { margin: 0 0 10px; font-size: 17px; }
+.ev-who-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+.ev-who-h h2 { margin-bottom: 10px; }
+.ev-who-h .btn { margin-bottom: 10px; }
+.ev-added { display: block; color: var(--muted, #6b6b6b); font-size: 12px; margin-top: 1px; }
+.ev-person small { display: block; font-size: 11px; color: var(--muted, #6b6b6b); }
 .ev-count { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
 .ev-count b { font-size: 32px; line-height: 1; }
 .ev-count small { color: var(--muted); }
@@ -71,4 +76,4 @@
 .ev-home .ev-grid { margin-top: 6px; }
 @media (max-width: 520px) { .ev-hero { flex-direction: column; } .ev-hero .ev-date { align-self: flex-start; flex: 0 0 auto; width: 64px; } .ev-grid { grid-template-columns: 1fr; } }
 @media (prefers-reduced-motion: reduce) { .ev-card, .ev-knob::after, .ev-yes > svg { transition: none; animation: none; } }
-@media print { .ev-card, .ev-hero, .ev-mine, .ev-note, .ev-back, .page-head .btns, .row-menu { display: none !important; } .ev-who { border: 0; box-shadow: none; } }
+@media print { .ev-card, .ev-hero, .ev-mine, .ev-note, .ev-back, .page-head .btns, .row-menu, .ev-who-h .btn { display: none !important; } .ev-who { border: 0; box-shadow: none; } }

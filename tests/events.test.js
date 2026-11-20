@@ -53,6 +53,13 @@ ok(E.add(e, ben, { people: ['p01'] }, [ben, kid], staff, NOW).error === 'people'
 ok(!E.add(e, ben, { people: ['p02'] }, [ben], staff, at(2026, 11, 27, 9)).error, 'after sign-up has closed too (paper sheets come in late)');
 ok(E.add(Object.assign({}, e, { status: 'cancelled' }), ben, { people: ['p02'] }, [ben], staff, NOW).error === 'closed' && E.add(e, ben, { people: ['p02'] }, [ben], staff, at(2026, 11, 28, 8)).error === 'closed', 'not to a cancelled event, or once it has started');
 
+console.log('The sign-up report');
+const later = Object.assign({}, e, { id: 'ev9', date: '2026-12-05' }), noSU = Object.assign({}, noSign, { id: 'ev8' });
+const rp = E.report([later, noSU, e], [s, s2], null);
+ok(rp.map(x => x.event.id).join() === 'ev1,ev9' && rp[0].count.total === 4, 'every event with sign-ups, soonest first, with how many are coming');
+ok(E.report([later, e], [], ['ev9']).map(x => x.event.id).join() === 'ev9', 'or just the ones chosen');
+ok(E.contacts({ by: 'p01', people: ['p02', 'p01', 'p03'] }).join() === 'p01,p02,p03', 'who to phone: the one who signed up first, each once');
+
 console.log('Reminders: 3 days and 1 day before');
 ok(E.due(e, at(2026, 11, 24, 9)) === 0, '4 days before: nothing yet');
 ok(E.due(e, at(2026, 11, 25, 0, 1)) === 3 && E.due(e, at(2026, 11, 26, 20)) === 3, '3 and 2 days before: the 3-day reminder');

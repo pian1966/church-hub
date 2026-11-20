@@ -388,6 +388,10 @@ nobody connects a Google account, and what is in the meeting or the document sta
   down on a paper sign-up sheet (basis: the person asked to be signed up). Such a sign-up is in the person's own name (so they
   see it and can take themselves off), is marked with who added it (`addedBy`), never holds an email address, and only the
   staff member who added it (or an organiser) can change or remove it. Nobody else sees who is coming.
+- The sign-up report (0.105.0; Events → More → Sign-up report): organisers and staff print it, save it as a PDF or download it,
+  with each person's cellphone (and email if ticked) – only the contact details that viewer may already see (Settings → Access
+  and roles), as pictures for Church Partners, who can't download them. Every print and download is in the audit log, and the
+  page itself says to keep it safe and shred it after the event.
 - Kept on a sign-up: who signed up, the names of those coming, how many guests, the language for emails, and an email address
   **only** if the person ticked *Email me reminders too* (consent, for that event only). The reminder in Messages is written by
   the person's own app into their own inbox.

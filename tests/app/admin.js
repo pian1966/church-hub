@@ -314,9 +314,11 @@ module.exports = async function (ctx) {
   await bp.goto(new URL('brochure.html?for=members&link=' + link, s.page.url()).href);
   const bt = await bp.evaluate(() => [...document.querySelectorAll('.sheet')].filter(e => !e.hidden).map(e => e.innerText).join(' '));
   check(/Three easy steps/.test(bt) && !/Switch without the stress/.test(bt) && /127\.0\.0\.1/.test(bt) && !/Christ Church Howick/i.test(bt), 'the generic members’ brochure opens with the Church & Trellis address and no local church branding');
+  await bp.evaluate(() => window.fitPanels && window.fitPanels());
   const fits = await bp.evaluate(() => [...document.querySelectorAll('.sheet:not([hidden]) .pn')].every(p => p.scrollHeight <= p.clientHeight + 1));
   check(fits, 'everything on the brochure fits on its page');
   await bp.goto(new URL('brochure.html?for=churches&link=' + link, s.page.url()).href);
+  await bp.evaluate(() => window.fitPanels && window.fitPanels());   // shrink long pages now: the fit runs a moment after load, and this check must not run first
   check(await bp.evaluate(() => [...document.querySelectorAll('.pn')].every(p => p.closest('.sheet').hidden || p.scrollHeight <= p.clientHeight + 1) && /Switch without the stress/.test(document.body.innerText) && !/Christ Church Howick/i.test(document.body.innerText)), 'the brochure for other churches opens, fits and has no local church branding');
   await bp.close();
   // The brochure editor (About → Brochures): change a heading and a contact box, hide a block, choose a colour and font

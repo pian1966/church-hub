@@ -474,7 +474,7 @@ var Store = (function () {
     /* ---------- sign-in ---------- */
     function boot(stateFn) {
       onState = stateFn;
-      onState({ stage: 'loading' });
+      onState({ stage: 'loading', step: 'connecting' });
       loadSdk(function (e) {
         if (e) return onState({ stage: 'error', message: 'Church & Trellis couldn’t connect. Check your internet connection and refresh the page.' });
         fb = window.firebase;
@@ -552,7 +552,7 @@ var Store = (function () {
     function startSession(u) {
       if (u.isAnonymous || isPin(u)) return startCodeSession(u);   // a number-and-PIN sign-in (or a code being used)
       var email = (u.email || '').toLowerCase();
-      onState({ stage: 'loading', email: email });
+      onState({ stage: 'loading', email: email, step: 'checking' });
       if (!u.emailVerified) return onState({ stage: 'noAccess', email: email, reason: 'unverified' });
       // Offline: straight from the copy on this device (otherwise Firestore first waits to be sure there's no connection)
       var role = function () { return offlineNow() ? doc('roles/' + email).get({ source: 'cache' }).catch(function () { return doc('roles/' + email).get(); }) : doc('roles/' + email).get(); };
@@ -702,7 +702,7 @@ var Store = (function () {
       if (claiming) return;
       if (u.isAnonymous) { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut' }); }); }   // a code left half-used
       var email = String(u.email).toLowerCase();
-      onState({ stage: 'loading', email: '' });
+      onState({ stage: 'loading', email: '', step: 'checking' });
       var get = function () { return offlineNow() ? doc('roles/' + email).get({ source: 'cache' }).catch(function () { return doc('roles/' + email).get(); }) : doc('roles/' + email).get(); };
       ownCopy(email).then(get).then(function (snap) {
         if (!snap.exists) {   // switched off by the church (or never finished): they need a new code
@@ -878,7 +878,9 @@ var Store = (function () {
       lastSettings = raw.settings && raw.settings.church ? copy(raw.settings.church) : lastSettings;
       db = blank(); raw = {}; ready = false; local = {};
       var sources = plan(); pending = sources.length;
+      var total = sources.length;
       stats.start = Date.now(); stats.loaded = 0;
+      onState({ stage: 'loading', email: session ? session.email : '', step: 'syncing', done: 0, total: total });
       sources.forEach(function (s) {
         var first = true;
         unsubs.push(s.ref.onSnapshot(function (snap) {
@@ -890,13 +892,23 @@ var Store = (function () {
           if (s.key === 'settings' || s.key === 'people' || s.key === 'careGroups' || s.key.indexOf('leaderBodies') === 0) extras();
           if (s.key === 'settings') { careAll(m.church); if (!is('admin', 'pastor') && raw.careGroups) shares(Object.keys(raw.careGroups)); }
           if (!snap.metadata.hasPendingWrites) forget(s.coll);
-          if (first) { first = false; if (--pending === 0) whenLoaded(); }
+          if (first) {
+            first = false;
+            var loaded = total - pending;
+            if (--pending === 0) whenLoaded();
+            else onState({ stage: 'loading', email: session ? session.email : '', step: 'syncing', done: loaded + 1, total: total });
+          }
           else if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
         }, function (e) {
           // An attendee isn't allowed the church directory (or names) unless Settings → Attendees says so: expected, not an error
           if (s.key === 'directory' || s.key === 'names') console.warn('Not loaded (not allowed): ' + s.key); else console.error('Could not load ' + s.key, e);
           raw[s.key] = raw[s.key] || {};
-          if (first) { first = false; if (--pending === 0) whenLoaded(); }
+          if (first) {
+            first = false;
+            var loaded = total - pending;
+            if (--pending === 0) whenLoaded();
+            else onState({ stage: 'loading', email: session ? session.email : '', step: 'syncing', done: loaded + 1, total: total });
+          }
         }));
       });
     }

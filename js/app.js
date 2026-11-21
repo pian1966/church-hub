@@ -615,19 +615,69 @@ var Hub = (function () {
       isIPhone() ? '<p class="small">' + T('After signing in, tap the Share button (the square with an arrow), then “Add to Home Screen”. Church & Trellis then opens like an app, with its own icon.') + '</p>' : '';
     return '<div class="note ok welcome-card"><b>' + T('Welcome!') + '</b><p class="small" style="margin:4px 0 0">' + T('{church} has invited you to Church & Trellis. Sign in below with the email address the church has for you (or your sign-in code). There is no password.', { church: esc((Store.settings() || {}).churchName || T('Your church')) }) + '</p>' + how + '</div>';
   }
+  function splashHtml() {
+    return '<div class="splash" role="status" aria-label="' + esc(T('Loading…')) + '"><div class="splash-in">' +
+      '<div class="mark splash-mark">' + icon('M12 3v18M6 9h12', 28) + '</div>' +
+      '<h1>Church <span class="amp">&amp;</span> Trellis</h1>' +
+      '<div class="splash-loader" id="splash-loader">' +
+      '<svg class="busy-cross splash-cross" viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>' +
+      '<div class="splash-bar"><div class="splash-fill indeterminate" id="splash-fill"></div></div>' +
+      '<p class="splash-msg" id="splash-msg">' + esc(T('Loading…')) + '</p>' +
+      '<p class="splash-slow" id="splash-slow" hidden></p>' +
+      '</div>' +
+      '<p id="splash-v">' + (window.ChurchHubVersion ? 'Version ' + ChurchHubVersion.version : '') + '</p>' +
+      '</div></div>';
+  }
+
+  var splashTimer = null;
+  function updateSplash(st) {
+    if (!root) root = document.getElementById('app');
+    if (!root.querySelector('.splash')) {
+      root.innerHTML = splashHtml();
+    }
+    var fill = document.getElementById('splash-fill');
+    var msg = document.getElementById('splash-msg');
+    if (fill && msg) {
+      if (st.step === 'connecting') {
+        fill.className = 'splash-fill indeterminate';
+        fill.style.width = '';
+        msg.textContent = T('Loading…');
+      } else if (st.step === 'checking') {
+        fill.className = 'splash-fill indeterminate';
+        fill.style.width = '';
+        msg.textContent = T('Signing you in…');
+      } else if (st.step === 'syncing') {
+        var total = Math.max(1, st.total || 1);
+        var done = Math.min(total, st.done || 0);
+        var pct = Math.round((done / total) * 100);
+        fill.className = 'splash-fill';
+        fill.style.width = Math.max(15, pct) + '%';
+        msg.textContent = T('Getting the latest church records…');
+      } else {
+        fill.className = 'splash-fill indeterminate';
+        msg.textContent = T(st.email ? 'Signing you in…' : 'Loading…');
+      }
+    }
+    if (!splashTimer) {
+      splashTimer = setTimeout(function () {
+        if (live && live.stage === 'loading') {
+          var slow = document.getElementById('splash-slow');
+          if (slow) {
+            slow.hidden = false;
+            slow.innerHTML = esc(T('This is taking longer than usual. Check your internet connection. If nothing changes, tap Try again.')) +
+              ' <button type="button" onclick="window.churchHubReload()">' + esc(T('Try again')) + '</button>';
+          }
+        }
+      }, 7000);
+    }
+  }
+
   function renderLive() {
     var st = live, html;
     // A link to a page (e.g. the invitation to become a Church Partner, #/people/apply) is remembered through signing in,
     // also when the sign-in link from the email opens Church & Trellis again without it
     if (/^#\/\w/.test(location.hash) && location.hash !== '#/home') Store.pref('afterSignIn', location.hash + '|' + Date.now());
-    if (st.stage === 'loading') {
-      // Shown while the app opens and fetches the church's data: say so, so it does not look stuck or crashed.
-      html = '<h1>' + 'Church & Trellis' + '</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>' +
-        '<p class="note" id="load-why">' + T('Church & Trellis is loading your church’s information. The first time, or on a slow connection, this can take a minute. Please wait – nothing is wrong, the app has not crashed.') + '</p>' +
-        '<p class="note bad" id="load-slow" hidden>' + T('This is taking longer than usual. Check your internet connection. If nothing changes, tap Try again.') + '</p>' +
-        '<button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
-      setTimeout(function () { var n = document.getElementById('load-slow'); if (n && live.stage === 'loading') n.hidden = false; }, 15000);
-    }
+    if (st.stage === 'loading') { updateSplash(st); return; }
     else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
     else if (st.stage === 'linkSent' && phoneApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       '<ol class="steps"><li>' + T('Open the email on this phone.') + '</li><li>' + T('Press and hold the sign-in link, then choose Copy link.') + '</li><li>' + T('Come back here, paste it in the box and tap Sign in.') + '</li></ol>' +
@@ -744,6 +794,7 @@ var Hub = (function () {
     if (switching && st.stage === 'ready') { var d = switching; switching = null; user = st.person; Store.setUser(user); d(); return; }   // "View as" finished loading
     switching = null;
     if (st.stage === 'ready') {
+      clearTimeout(splashTimer); splashTimer = null;
       user = st.person; Store.setUser(user);
       Store.audit('Signed in', 'people/' + user.id);
       runUpgrades();
@@ -754,7 +805,10 @@ var Hub = (function () {
       if (location.hash === '#/start') location.hash = '#/home';   // the invitation's link (People → Invitations): Home, with its app prompts
       if (!location.hash || location.hash === '#') location.hash = phoneApp() && !can('people.basic') && !can('people.view') && !can('*') && enabled().indexOf(moduleById('me')) >= 0 ? '#/me' : '#/home';
       render();
+    } else if (st.stage === 'loading') {
+      updateSplash(st);
     } else {
+      clearTimeout(splashTimer); splashTimer = null;
       user = null; Store.setUser(null);
       if (st.stage === 'signedOut' && linkCode) { var c = linkCode; linkCode = ''; return useCode(c); }   // opened from a code's link
       renderLive();

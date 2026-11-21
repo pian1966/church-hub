@@ -620,7 +620,14 @@ var Hub = (function () {
     // A link to a page (e.g. the invitation to become a Church Partner, #/people/apply) is remembered through signing in,
     // also when the sign-in link from the email opens Church & Trellis again without it
     if (/^#\/\w/.test(location.hash) && location.hash !== '#/home') Store.pref('afterSignIn', location.hash + '|' + Date.now());
-    if (st.stage === 'loading') html = '<h1>' + 'Church & Trellis' + '</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>';
+    if (st.stage === 'loading') {
+      // Shown while the app opens and fetches the church's data: say so, so it does not look stuck or crashed.
+      html = '<h1>' + 'Church & Trellis' + '</h1><p class="lead">' + T(st.email ? 'Signing you in…' : 'Loading…') + '</p>' +
+        '<p class="note" id="load-why">' + T('Church & Trellis is loading your church’s information. The first time, or on a slow connection, this can take a minute. Please wait – nothing is wrong, the app has not crashed.') + '</p>' +
+        '<p class="note bad" id="load-slow" hidden>' + T('This is taking longer than usual. Check your internet connection. If nothing changes, tap Try again.') + '</p>' +
+        '<button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
+      setTimeout(function () { var n = document.getElementById('load-slow'); if (n && live.stage === 'loading') n.hidden = false; }, 15000);
+    }
     else if (st.stage === 'error') html = '<h1>' + T('Something went wrong') + '</h1><p class="note bad">' + esc(st.message) + '</p><button class="btn" onclick="window.churchHubReload()">' + T('Try again') + '</button>';
     else if (st.stage === 'linkSent' && phoneApp()) html = '<h1>' + T('Check your email') + '</h1><p class="lead">' + T('We sent a sign-in link to {email}. It may take a minute, and could land in your spam folder.', { email: '<b>' + esc(st.email) + '</b>' }) + '</p>' +
       '<ol class="steps"><li>' + T('Open the email on this phone.') + '</li><li>' + T('Press and hold the sign-in link, then choose Copy link.') + '</li><li>' + T('Come back here, paste it in the box and tap Sign in.') + '</li></ol>' +

@@ -1094,6 +1094,8 @@ I18n.add('st', {
     "Sign in": "Kena",
     "Loading…": "E a kenya…",
     "Signing you in…": "Re a o kenya…",
+    "Church & Trellis is loading your church’s information. The first time, or on a slow connection, this can take a minute. Please wait – nothing is wrong, the app has not crashed.": "Church & Trellis e loaisa tlhahisoleseling ea kereke ea hao. Ka nako ea pele, kapa ka khokahano e liehang, sena se ka nka metsotso e meng. Ka kopo emela – ha ho letho le fosahetseng, lenaneo ha le senyehile.",
+    "This is taking longer than usual. Check your internet connection. If nothing changes, tap Try again.": "Ho nka nako e telele ho feta ha ho tloaelehile. Hlahloba khokahano ea hao ea marang-rang. Haeba ho se letho le fetohang, tobetsa Leka hape.",
     "Something went wrong": "Ho na le se sa tsamaeng hantle",
     "Try again": "Leka hape",
     "Back to the top": "Kgutlela hodimo",

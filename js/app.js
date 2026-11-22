@@ -792,6 +792,7 @@ var Hub = (function () {
   function onLiveState(st) {
     live = st;
     if (switching && st.stage === 'ready') { var d = switching; switching = null; user = st.person; Store.setUser(user); d(); return; }   // "View as" finished loading
+        if (switching && st.stage === 'loading') { updateSplash(st); return; }   // still loading the new role: keep waiting
     switching = null;
     if (st.stage === 'ready') {
       clearTimeout(splashTimer); splashTimer = null;

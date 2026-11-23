@@ -1195,6 +1195,8 @@ html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366
 .tips-card .tips-news { margin: 0 0 12px; padding-left: 1.2em; }
 .tips-card .tips-news li + li { margin-top: 4px; }
 .tips-card .tip-text { margin: 0; }
+/* Names of buttons and menu items inside a tip or news line: look like the buttons they point to */
+.ui-name { display: inline-block; padding: 0 .5em; margin: 0 .05em; border: 1px solid var(--accent, #E8590C); border-radius: 7px; background: var(--surface, #fff); color: var(--accent-ink, inherit); font-weight: 700; line-height: 1.5; white-space: nowrap; }
 .tips-card .btns { margin-top: 12px; flex-wrap: wrap; }
 .tips-all { list-style: none; margin: 0; padding: 0; }
 .tips-all li { display: flex; gap: 10px; align-items: center; padding: 10px 0; }

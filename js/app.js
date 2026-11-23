@@ -559,6 +559,16 @@ var Hub = (function () {
     if (attendee()) tags.push('attendee');   // e.g. news about Reply, which attendees may not have
     return tags;
   }
+  /** A tip or news line with the names of buttons and menu items (item.btn, English) shown as little buttons, so people can see
+   * what to look for. The names are found in the line as it is shown, in the person's language, through T(); a name that
+   * is worded differently in a translation is simply left plain. */
+  function withButtons(item, text) {
+    var out = esc(text), names = (item.btn || []).map(function (b) { return esc(T(b)); }).filter(Boolean);
+    if (!names.length) return out;
+    names.sort(function (a, b) { return b.length - a.length; });
+    var re = new RegExp('(?<![\\p{L}\\p{N}])(' + names.map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')(?![\\p{L}\\p{N}])', 'gu');
+    return out.replace(re, '<span class="ui-name">$1</span>');
+  }
   function tipCtx() { return { tags: homeTags(), on: function (id) { var m = moduleById(id); return !!m && opens(m); } }; }
   function tipsCard() {
     if (tipClosed || typeof Tips === 'undefined') return '';
@@ -566,8 +576,8 @@ var Hub = (function () {
     if (!tip && tips.length) { var r = Tips.next(tips, Store.pref('tipsSeen').split(',').filter(Boolean)); tip = r.tip; tipShown = tip.id; Store.pref('tipsSeen', r.seen.join(',')); }
     if (!tip && !news.length) return '';
     return '<section class="panel tips-card" id="tips-card">' +
-      (news.length ? '<h2>' + T('What’s new') + '</h2><ul class="tips-news">' + news.map(function (n) { return '<li>' + esc(T(n.text)) + '</li>'; }).join('') + '</ul>' : '') +
-      (tip ? '<h2>' + T('Did you know?') + '</h2><p class="tip-text" data-tip="' + esc(tip.id) + '">' + esc(T(tip.text)) + '</p>' : '') +
+      (news.length ? '<h2>' + T('What’s new') + '</h2><ul class="tips-news">' + news.map(function (n) { return '<li>' + withButtons(n, T(n.text)) + '</li>'; }).join('') + '</ul>' : '') +
+      (tip ? '<h2>' + T('Did you know?') + '</h2><p class="tip-text" data-tip="' + esc(tip.id) + '">' + withButtons(tip, T(tip.text)) + '</p>' : '') +
       '<div class="btns">' + (tip && tip.href ? '<a class="btn small" href="' + esc(tip.href) + '">' + T('Show me') + '</a>' : '') +
       (tips.length > 1 ? '<button class="btn small" data-act="hub:tipnext">' + T('Another tip') + '</button>' : '') +
       (tips.length > 1 ? '<button class="btn small" data-act="hub:tipsall">' + T('All tips') + '</button>' : '') +
@@ -1222,7 +1232,7 @@ var Hub = (function () {
     tipsall: function () {
       var tips = Tips.forPerson(tipCtx());
       modal(dialogHead(T('Did you know?'), T('Tips for getting the most out of Church & Trellis')) + '<div class="dlg-body"><ul class="tips-all">' + tips.map(function (t) {
-        return '<li><span class="grow">' + esc(T(t.text)) + '</span>' + (t.href ? ' <a class="btn small" href="' + esc(t.href) + '">' + T('Show me') + '</a>' : '') + '</li>';
+        return '<li><span class="grow">' + withButtons(t, T(t.text)) + '</span>' + (t.href ? ' <a class="btn small" href="' + esc(t.href) + '">' + T('Show me') + '</a>' : '') + '</li>';
       }).join('') + '</ul></div>', T('Did you know?'));
     },
     later: function (el) { Store.pref(el.dataset.k + 'Later', new Date().toISOString()); var b = el.closest('.prompt'); if (b) b.remove(); },

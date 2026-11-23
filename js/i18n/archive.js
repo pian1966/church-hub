@@ -66,6 +66,7 @@ I18n.rows([
     ["Folders", "Vouers", "Amafolda", "Iifolda"],
     ["Folder", "Vouer", "Ifolda", "Ifolda"],
     ["Empty", "Leeg", "Akunalutho", "Ayinanto"],
+    ["Latest documents", "Jongste dokumente", "Amadokhumenti amuva", "Amaxwebhu akutshanje"],
     ["Nothing in this folder yet.", "Nog niks in hierdie vouer nie.", "Akukabikho lutho kule folda.", "Akukabikho nto kule folda."],
     ["Show a summary before saving", "Wys ’n opsomming voor dit gestoor word", "Bonisa isifinyezo ngaphambi kokugcina", "Bonisa isishwankathelo phambi kokugcina"],
     ["New folder inside this one", "Nuwe vouer hierbinne", "Ifolda entsha ngaphakathi kule", "Ifolda entsha ngaphakathi kule"],

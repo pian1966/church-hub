@@ -208,7 +208,7 @@
   }
   function page(parts) {
     var archiveOn = H.isOn('archive'), archivePage = archiveOn && ((parts || [])[0] === 'archives' || !libraryOn());
-    if (archivePage) return sectionTabs('archives') + ArchiveUI.page();
+    if (archivePage) return ArchiveUI.page(sectionTabs('archives'));
     // Someone who has borrowed something lands on Items I have borrowed; the catalogue is the Library tab (library/all)
     var first = (parts || [])[0] || '';
     if ((first === 'borrowed' || !first) && myLoans().length) return borrowedPage();

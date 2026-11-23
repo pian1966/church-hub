@@ -70,8 +70,6 @@
         '<dt>' + T('Mobile') + '</dt><dd>' + (p.mobile ? esc(p.mobile) : none(p.mobileUnknown)) + '</dd>' : '') +
       '</dl><div class="btns" style="margin-top:12px"><button class="btn primary" data-act="people:edit" data-id="' + esc(p.id) + '">' + T('Change my details') + '</button></div>' +
       (Store.isLive() ? '<p class="hint">' + T('You sign in with your email address, so if you change it, sign in with the new one next time.') + '</p>' : '') + '</section>';
-    if (window.LeaveUI) html += LeaveUI.meCard();   // staff: what they have left this leave year
-    if (window.BoardUI) html += BoardUI.card();   // the latest 3 notices on the Community board (js/mod-board.js)
     // Kept by the church office: shown so people can check them, changed by the office
     var office = '';
     if (p.birthDate) office += '<dt>' + T('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + '</dd>';
@@ -86,14 +84,18 @@
       '<p class="hint">' + T(child ? 'Something wrong or missing here? Please tell the church office and they will change it.' : 'Something wrong or missing, such as your marriage or children? Ask to change it, and the church office will check it.') + '</p>' +
       (window.PeopleParts ? PeopleParts.changesMePanel() : '') + '</section>';
     html += window.PeopleParts && PeopleParts.applyMePanel ? PeopleParts.applyMePanel() : '';   // apply to become a Church Partner
-    html += window.CareUI ? CareUI.mePanel() : '';   // their care group, if they are in one
-    html += window.LifeUI ? LifeUI.mePanel() : '';   // their life groups (Bible studies, midweek groups)
+    if (window.LeaveUI) html += LeaveUI.meCard();   // staff: what they have left this leave year
+    if (window.BoardUI) html += BoardUI.card();   // the latest 3 notices on the Community board (js/mod-board.js)
     // Signing out and the language are in the menu (left on a computer, ☰ on a phone); here only notes about this device
     var device = (I18n.isDraft() ? '<p class="hint">' + T('This language was translated by computer and is still being checked. If something reads oddly, please tell the church office.') + '</p>' : '') +
       (window.ChurchHubApp ? '<p class="hint">' + T('Church & Trellis app, version {v}', { v: esc(appVersion()) }) + '</p>' :
         /Android/i.test(navigator.userAgent) ? '<p class="hint"><a href="' + APK + '" target="_blank" rel="noopener">' + T('Get the Church & Trellis app for Android') + '</a></p>' : '');
     if (device) html += '<section class="panel"><h2>' + T('This phone or computer') + '</h2>' + device + '</section>';
-    return html + '</div>';
+    html += '</div>';
+    // My details come first; the groups come last, under their own headings, so nothing floats off to the side
+    var care = window.CareUI ? CareUI.mePanel() : '';   // their care group, if they are in one
+    if (care) html += '<div class="grid2 me-groups" style="margin-top:16px">' + care + '</div>';
+    return html + (window.LifeUI ? LifeUI.mePanel() : '');   // their life groups (Bible studies, midweek groups)
   }
   /* ---------- consent (its own tab, so it's easy to find) ---------- */
   function renderConsent() {

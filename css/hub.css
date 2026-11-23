@@ -56,7 +56,10 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .lead { margin: 6px 0 0; color: var(--muted); font-size: 15px; max-width: 70ch; }
 .crumb { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 600; text-decoration: none; margin-bottom: 8px; }
 .block { margin-bottom: 26px; }
-.block > h2, .panel > h2 { font-size: 16px; margin: 0 0 10px; }
+.block > h2, .panel > h2 { font-size: 18px; margin: 0 0 10px; }
+/* A group's name inside its card, and a heading above a run of cards: same family of sizes as the card headings (they used to fall back to the browser's 24px) */
+.cg-head h2, .my-care > .row > h2 { font-size: 18px; }
+h2.sect-h { font-size: 20px; margin: 22px 0 10px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
 .panel + .panel { margin-top: 16px; }
 /* A person who has died (js/people/profile.js): their information blocks are grey. Setting --surface on the block greys
@@ -76,8 +79,9 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 /* ---------- controls ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14.5px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .btn:hover { border-color: #B9AEA3; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-on, #fff); }
-.btn.primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+/* The main button is pale orange (like .btn.save), so the headings stay the first thing you see; solid orange only for danger */
+.btn.primary { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, var(--surface)); color: var(--accent-ink); }
+.btn.primary:hover, .btn.primary:focus-visible { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 60%, var(--surface)); }
 .btn.danger, .btn.primary.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
 .btn.small { min-height: 36px; padding: 0 12px; font-size: 13.5px; border-radius: 10px; }
 .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }

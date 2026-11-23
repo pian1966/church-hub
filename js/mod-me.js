@@ -149,8 +149,8 @@
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on the roster in the coming weeks.') + '</p>') + '</section>';
     // Where I serve now
     html += '<section class="block"><h2>' + T('Where I serve') + '</h2>' + (sk.length ? '<div class="list">' + sk.map(function (k) {
-      var o = offerFor(k.positionId);
-      return '<div class="item"><span class="grow"><b>' + esc(posName(k.positionId)) + '</b><small>' + esc(freqText(k.frequency)) + '</small>' + offerLine(o) + '</span>' +
+      var o = offerFor(k.positionId), pp = pos(k.positionId);
+      return '<div class="item"><span class="grow"><b>' + esc(posName(k.positionId)) + '</b>' + (pp && pp.tooltip ? ' <span class="tooltip-hint" title="' + esc(pp.tooltip) + '">' + H.icon('M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 14) + '</span>' : '') + '<small>' + esc(freqText(k.frequency)) + '</small>' + offerLine(o) + '</span>' +
         (o ? '<button class="btn small" data-act="me:withdraw" data-id="' + esc(o.id) + '">' + (o.status === 'waiting' ? T('Withdraw') : T('OK')) + '</button>' :
           '<button class="btn small" data-act="me:change" data-p="' + esc(k.positionId) + '">' + T('Change') + '</button>') + '</div>';
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on a serving team yet. Choose below where you’d like to help.') + '</p>') + '</section>';

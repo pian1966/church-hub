@@ -4185,6 +4185,11 @@ I18n.add('st', {
     "Staff Group": "Sehlopha sa basebetsi",
     "All Borrowers": "Bakalimi bohle",
 
+    "Set tooltip": "Hlela i-tooltip",
+    "Tooltip text for this position (shown when mouse hovers over it). Leave blank for no tooltip.": "Toeletso ya tooltip ka posisiponi (o bonanang ka ho na le litsela tsa litsela tsa litseleng). Le na le phapano ea ho ea ka se lleli sefe. Ho tsoa tlokotsi ea sefe ho ea ka se telelle se fe. Ho tsoa tlokotsi ea sefe ho ea ka se telelle se fe.",
+    "Tooltip text for {position} (shown when mouse hovers over it). Leave blank to remove.": "Toeletso ya tooltip ka {position} (o bonanang ka ho na le litsela tsa litsela tsa litseleng). Le na le phapano ea ho ea ka se lleli sefe ho ea ka se telelle se fe.",
+    "tooltip set": "tooltip li setisitse",
+    "tooltip removed": "tooltip li tlositse",
 },
 
 });

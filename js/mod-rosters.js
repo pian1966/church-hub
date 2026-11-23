@@ -580,6 +580,17 @@
       '<p class="hint">' + esc(T('Its positions, the people on them and their turns on the roster move across. A position with the same name is joined to the one already there, so nobody is listed twice. Then {team} is removed.', { team: t.name })) + '</p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="rosters:teammergego" data-id="' + esc(t.id) + '">' + T('Join them') + '</button></div>', T('Join with another team'));
   }
+  var openPos = {};   // which positions' lists of names are open on Teams (they stay open when the page redraws)
+  if (typeof document !== 'undefined') document.addEventListener('toggle', function (ev) {
+    var d = ev.target; if (d && d.matches && d.matches('details.pos-names') && d.dataset.p) { if (d.open) openPos[d.dataset.p] = true; else delete openPos[d.dataset.p]; }
+  }, true);
+  /** The ⋯ on a position: its tooltip and deleting it (for those who plan the roster, and the Rector for tooltips). */
+  function posMenu(p) {
+    var items = [];
+    if (manager() || H.isRector()) items.push('<button data-act="rosters:settooltip" data-p="' + esc(p.id) + '">' + (p.tooltip ? T('Edit the tooltip…') : T('Add a tooltip…')) + '</button>');
+    if (manager()) items.push('<button class="menu-danger" data-act="rosters:posdel" data-p="' + esc(p.id) + '">' + T('Delete this position…') + '</button>');
+    return items.length ? H.menu('⋯', items, 'row-menu', T('More for {position}', { position: p.name })) : '';
+  }
   function renderTeams() {
     var html = head(T('Teams'), T('Who can serve in each position, and how often they’d like to.'), '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + T('New team') + '</button>') + tabs('teams');
     html += renderOffers();
@@ -600,11 +611,11 @@
           ps.length ? '' : '<button class="menu-danger" data-act="rosters:teamdel" data-id="' + esc(t.id) + '">' + T('Delete team') + '</button>'], 'row-menu', T('More for {team}', { team: t.name })) + '</span>' : '';
       return '<section class="panel"><h2 class="team-h"><span class="grow">' + esc(t.name) + '</span>' + tools + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; }).sort(function (a, b) { return byName(person(a.personId), person(b.personId)); });
-        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b>' + (p.tooltip ? ' <span class="tooltip-hint" title="' + esc(p.tooltip) + '">' + H.icon('M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 14) + '</span>' : '') + (manager() || H.isRector() ? ' <button type="button" class="icon-btn ghost" data-act="rosters:settooltip" data-p="' + p.id + '" title="' + T('Set tooltip') + '">' + H.icon('M4 20h4L19 9l-4-4L4 16v4z', 14) + '</button>' : '') + '<span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
-          (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
+        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b>' + (p.tooltip ? ' <span class="tooltip-hint" title="' + esc(p.tooltip) + '">' + H.icon('M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 14) + '</span>' : '') + '<span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button>' + posMenu(p) + '</div>' +
+          (ks.length ? '<details class="pos-names" data-p="' + esc(p.id) + '"' + (openPos[p.id] ? ' open' : '') + '><summary>' + esc(TN('{n} person', '{n} people', ks.length)) + '</summary><div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
             return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow">' + nameLink(pp) + '<small>' + esc(freqText(k.frequency)) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
-          }).join('') + '</div>' : '<p class="hint">' + T('No one yet.') + '</p>') + '</div>';
+          }).join('') + '</div></details>' : '<p class="hint">' + T('No one yet.') + '</p>') + '</div>';
       }).join('') + '<button class="btn small" data-act="rosters:newpos" data-t="' + t.id + '">' + H.icon(H.ICON.plus, 16) + T('Add a position') + '</button></section>';
     }).join('') + '</div>';
     return html;
@@ -934,14 +945,45 @@
         var b = document.querySelector('[data-act="rosters:needed"][data-p="' + p.id + '"][data-d="' + el.dataset.d + '"]'); if (b && !b.disabled) b.focus();
       },
       newpos: function (el) { var n = prompt(T('Name of the position (e.g. Camera)')); if (!n || !n.trim()) return; var k = parseInt(prompt(T('How many people are needed per service?'), '1'), 10) || 1; var t = prompt(T('Tooltip text for this position (shown when mouse hovers over it). Leave blank for no tooltip.')); if (!t) t = ''; S.put('positions', { teamId: el.dataset.t, name: n.trim(), needed: k, tooltip: t }, 'Added position ' + n.trim()); H.render(); },
+      /** A small box for a position's tooltip (the words people see when they point at the position on the roster). */
       settooltip: function (el) {
         var p = pos(el.dataset.p);
         if (!p || !(manager() || H.isRector())) return;
-        var t = prompt(T('Tooltip text for {position} (shown when mouse hovers over it). Leave blank to remove.', { position: p.name }), p.tooltip || '');
-        p = JSON.parse(JSON.stringify(p));
-        p.tooltip = t || '';
-        S.put('positions', p, p.name + ': ' + (t ? T('tooltip set') : T('tooltip removed')));
-        H.render();
+        H.modal(H.dialogHead(T('Tooltip for {position}', { position: p.name }), T('Shown when someone points at this position on the roster.')) +
+          '<div class="dlg-body"><label class="field">' + T('Tooltip') + '<textarea id="tt-text" rows="3" maxlength="300">' + esc(p.tooltip || '') + '</textarea></label></div>' +
+          '<div class="dlg-foot">' + (p.tooltip ? '<button class="btn" data-act="rosters:savetooltip" data-p="' + esc(p.id) + '" data-clear="1">' + T('Remove tooltip') + '</button>' : '') +
+          '<button class="btn primary" data-act="rosters:savetooltip" data-p="' + esc(p.id) + '">' + T('Save') + '</button></div>', T('Tooltip'));
+      },
+      savetooltip: function (el) {
+        var p = pos(el.dataset.p), box = document.getElementById('tt-text');
+        if (!p || !(manager() || H.isRector())) return;
+        var t = el.dataset.clear ? '' : (box ? box.value.trim() : '');
+        p = JSON.parse(JSON.stringify(p)); p.tooltip = t;
+        S.put('positions', p, p.name + ': ' + (t ? 'tooltip set' : 'tooltip removed'));
+        H.closeModal(); H.render();
+      },
+      /** Delete a position that was entered by mistake or is no longer used – after saying what goes with it. */
+      posdel: function (el) {
+        var p = pos(el.dataset.p); if (!p || !manager()) return;
+        var ppl = S.find('skills', function (k) { return k.positionId === p.id; }).length,
+            coming = S.find('assignments', function (a) { var sv = S.get('services', a.serviceId); return a.positionId === p.id && sv && sv.date >= H.today(); }).length,
+            past = S.find('assignments', function (a) { return a.positionId === p.id; }).length - coming;
+        H.modal(H.dialogHead(T('Delete {position}?', { position: p.name })) + '<div class="dlg-body">' +
+          '<p>' + T('{position} will be taken off every roster and off the team. This can’t be undone.', { position: esc(p.name) }) + '</p><ul class="small muted">' +
+          '<li>' + esc(TN('{n} person is on this position’s team – they stay in People.', '{n} people are on this position’s team – they stay in People.', ppl)) + '</li>' +
+          '<li>' + esc(TN('{n} coming turn on the roster will be removed.', '{n} coming turns on the roster will be removed.', coming)) + '</li>' +
+          (past ? '<li>' + esc(TN('{n} past turn will be removed from the history.', '{n} past turns will be removed from the history.', past)) + '</li>' : '') +
+          '</ul><p class="hint">' + T('If it is only not needed for a while, switch it off under Rosters → Services instead.') + '</p></div>' +
+          '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn danger" data-act="rosters:posdelgo" data-p="' + esc(p.id) + '">' + T('Delete position') + '</button></div>', T('Delete position'));
+      },
+      posdelgo: function (el) {
+        var p = pos(el.dataset.p); if (!p || !manager()) return;
+        S.find('assignments', function (a) { return a.positionId === p.id; }).forEach(function (a) { S.remove('assignments', a.id); });
+        S.find('skills', function (k) { return k.positionId === p.id; }).forEach(function (k) { S.remove('skills', k.id); });
+        S.find('serveOffers', function (o) { return o.positionId === p.id; }).forEach(function (o) { S.remove('serveOffers', o.id); });
+        S.remove('positions', p.id, 'Deleted the position ' + p.name);
+        delete openPos[p.id];
+        H.closeModal(); H.render(); H.toast(T('{position} deleted', { position: p.name }));
       },
       addmember: function (el) {
         var po = pos(el.dataset.p), have = S.find('skills', function (k) { return k.positionId === po.id; }).map(function (k) { return k.personId; });

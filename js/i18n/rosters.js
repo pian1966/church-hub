@@ -325,5 +325,10 @@ I18n.rows([
     ["{n} pages", "{n} bladsye", "Amakhasi angu-{n}", "Amaphepha ali-{n}"],
     ["Nobody is on the roster for these services yet.", "Niemand is nog op die rooster vir hierdie dienste nie.", "Akekho osohlelweni lwalezi zinkonzo okwamanje.", "Akukho mntu ukuludwe lwezi nkonzo okwangoku."],
     ["page {n} of {total}", "bladsy {n} van {total}", "ikhasi {n} kwangu-{total}", "iphepha {n} kwali-{total}"],
-    ["Printed {date}", "Gedruk {date}", "Kuphrintwe ngo-{date}", "Kuprintwe ngo-{date}"]
+    ["Printed {date}", "Gedruk {date}", "Kuphrintwe ngo-{date}", "Kuprintwe ngo-{date}"],
+    ["Set tooltip", "Stel tooltip in", "Hlela i-tooltip", "Hlela i-tooltip"],
+    ["Tooltip text for this position (shown when mouse hovers over it). Leave blank for no tooltip.", "Tooltip-tekst vir hierdie posisie (word gewys as die muis oor dit skyf). Laat leeg sonder 'n tooltip.", "Umbuzo we-tooltip kweli sikelelo (uyabonwa ngemuva kokuthi igwa libheke ngayo). Ningaki ngane ukuba kungaphandle komsebenzi we-tooltip.", "Umbuzo we-tooltip kweli sikelelo (uyabonwa ngemuva kokuthi igwa libheke ngayo). Ningaki ngane ukuba kungaphandle komsebenzi we-tooltip."],
+    ["Tooltip text for {position} (shown when mouse hovers over it). Leave blank to remove.", "Tooltip-tekst vir {position} (word gewys as die muis oor dit skyf). Laat leeg om te verwyder.", "Umbuzo we-tooltip kwe-{position} (uyabonwa ngemuva kokuthi igwa libheke ngayo). Ningaki ngane ukuba ukususa.", "Umbuzo we-tooltip kwe-{position} (uyabonwa ngemuva kokuthi igwa libheke ngayo). Ningaki ngane ukuba ukususa."],
+    ["tooltip set", "tooltip ingestel", "i-tooltip ihleliwe", "i-tooltip ihleliwe"],
+    ["tooltip removed", "tooltip verwyder", "i-tooltip isusisiwe", "i-tooltip isusisiwe"]
 ]);

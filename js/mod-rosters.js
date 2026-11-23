@@ -259,7 +259,7 @@
       return svcs.some(function (s) { return runsAt(p, s); }) || all.some(function (a) { return a.positionId === p.id && ids.indexOf(a.serviceId) >= 0; });
     }).forEach(function (p) {
       if (p.teamId !== lastTeam) { lastTeam = p.teamId; html += '<tr class="team-row"><th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th></tr>'; }
-      html += '<tr><th scope="row">' + esc(p.name) + '<small>' + T('{n} needed', { n: p.needed }) + '</small></th>' + svcs.map(function (s) {
+      html += '<tr><th scope="row">' + esc(p.name) + (p.tooltip ? ' <span class="tooltip-hint" title="' + esc(p.tooltip) + '">' + H.icon('M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 14) + '</span>' : '') + '<small>' + T('{n} needed', { n: p.needed }) + '</small></th>' + svcs.map(function (s) {
         var here = all.filter(function (a) { return a.serviceId === s.id && a.positionId === p.id; });
         var live = here.filter(function (a) { return a.status !== 'declined'; }).length;
         var cells = here.map(function (a) {
@@ -600,7 +600,7 @@
           ps.length ? '' : '<button class="menu-danger" data-act="rosters:teamdel" data-id="' + esc(t.id) + '">' + T('Delete team') + '</button>'], 'row-menu', T('More for {team}', { team: t.name })) + '</span>' : '';
       return '<section class="panel"><h2 class="team-h"><span class="grow">' + esc(t.name) + '</span>' + tools + '</h2>' + ps.map(function (p) {
         var ks = S.find('skills', function (k) { return k.positionId === p.id; }).sort(function (a, b) { return byName(person(a.personId), person(b.personId)); });
-        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b><span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
+        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b>' + (p.tooltip ? ' <span class="tooltip-hint" title="' + esc(p.tooltip) + '">' + H.icon('M12 1a11 11 0 1 0 11 11A11.013 11.013 0 0 0 12 1zM12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8z', 14) + '</span>' : '') + (manager() || H.isRector() ? ' <button type="button" class="icon-btn ghost" data-act="rosters:settooltip" data-p="' + p.id + '" title="' + T('Set tooltip') + '">' + H.icon('M4 20h4L19 9l-4-4L4 16v4z', 14) + '</button>' : '') + '<span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button></div>' +
           (ks.length ? '<div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId);
             return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow">' + nameLink(pp) + '<small>' + esc(freqText(k.frequency)) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
@@ -933,7 +933,16 @@
         p = JSON.parse(JSON.stringify(p)); p.needed = n; S.put('positions', p, p.name + ': ' + n + ' needed per service'); H.render();
         var b = document.querySelector('[data-act="rosters:needed"][data-p="' + p.id + '"][data-d="' + el.dataset.d + '"]'); if (b && !b.disabled) b.focus();
       },
-      newpos: function (el) { var n = prompt(T('Name of the position (e.g. Camera)')); if (!n || !n.trim()) return; var k = parseInt(prompt(T('How many people are needed per service?'), '1'), 10) || 1; S.put('positions', { teamId: el.dataset.t, name: n.trim(), needed: k }, 'Added position ' + n.trim()); H.render(); },
+      newpos: function (el) { var n = prompt(T('Name of the position (e.g. Camera)')); if (!n || !n.trim()) return; var k = parseInt(prompt(T('How many people are needed per service?'), '1'), 10) || 1; var t = prompt(T('Tooltip text for this position (shown when mouse hovers over it). Leave blank for no tooltip.')); if (!t) t = ''; S.put('positions', { teamId: el.dataset.t, name: n.trim(), needed: k, tooltip: t }, 'Added position ' + n.trim()); H.render(); },
+      settooltip: function (el) {
+        var p = pos(el.dataset.p);
+        if (!p || !(manager() || H.isRector())) return;
+        var t = prompt(T('Tooltip text for {position} (shown when mouse hovers over it). Leave blank to remove.', { position: p.name }), p.tooltip || '');
+        p = JSON.parse(JSON.stringify(p));
+        p.tooltip = t || '';
+        S.put('positions', p, p.name + ': ' + (t ? T('tooltip set') : T('tooltip removed')));
+        H.render();
+      },
       addmember: function (el) {
         var po = pos(el.dataset.p), have = S.find('skills', function (k) { return k.positionId === po.id; }).map(function (k) { return k.personId; });
         var people = S.find('people', function (p) { return p.active !== false && have.indexOf(p.id) < 0; }).sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });

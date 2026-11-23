@@ -793,6 +793,7 @@ html[data-mode=dark] .legend i[style*="#F2EEEA"] { background: #2B2521 !importan
 .splash-fill { height: 100%; width: 0%; background: var(--accent, #E8590C); border-radius: 99px; transition: width .25s ease-out; }
 .splash-fill.indeterminate { width: 40%; animation: splash-slide 1.4s ease-in-out infinite; }
 @keyframes splash-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(300%); } }
+@media (prefers-reduced-motion: reduce) { .splash-fill.indeterminate { animation: none; width: 100%; opacity: .6; } }
 .splash-msg { margin: 0; color: rgba(255, 255, 255, .88); font-size: 13px; min-height: 1.2em; font-weight: 500; }
 .splash-slow { margin: 4px 0 0; color: rgba(255, 255, 255, .7); font-size: 12px; }
 .splash-slow button { color: #fff; text-decoration: underline; background: none; border: none; font: inherit; cursor: pointer; padding: 0 4px; }

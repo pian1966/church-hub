@@ -349,5 +349,7 @@ I18n.rows([
     ["{n} past turns will be removed from the history.", "{n} verlede beurte sal uit die geskiedenis verwyder word.", "Izikhathi ezi-{n} ezidlule zizosuswa emlandweni.", "Amaxesha ama-{n} adlulayo aya kususwa kwimbali."],
     ["If it is only not needed for a while, switch it off under Rosters → Services instead.", "As dit net 'n tydjie nie nodig is nie, skakel dit eerder af onder Roosters → Dienste.", "Uma kungadingeki isikhashana nje, yivale ngaphansi kwe-Rosters → Services.", "Ukuba ayifuneki nje okwexeshana, yivale phantsi kwe-Rosters → Services."],
     ["Delete position", "Skrap posisie", "Susa isikhundla", "Cima isikhundla"],
-    ["{position} deleted", "{position} geskrap", "I-{position} isusiwe", "I-{position} icinyiwe"]
+    ["{position} deleted", "{position} geskrap", "I-{position} isusiwe", "I-{position} icinyiwe"],
+    ["New position", "Nuwe posisie", "Isikhundla esisha", "Isikhundla esitsha"],
+    ["optional", "opsioneel", "ngokuzithandela", "ukhetho"]
 ]);

@@ -311,7 +311,12 @@ service cloud.firestore {
 
     // ---------- rosters ----------
     match /teams/{id} { allow read: if anyone(); allow write: if rosterer(); }
-    match /positions/{id} { allow read: if anyone(); allow write: if rosterer(); }
+    match /positions/{id} {
+      allow read: if anyone();
+      allow write: if rosterer();
+      // Any Pastor (the Rector and assistant ministers) may write a position's tooltip, and nothing else about it
+      allow update: if isRole(['pastor']) && onlyChanges(['tooltip']);
+    }
     match /services/{id} { allow read: if anyone(); allow write: if rosterer(); }
     match /skills/{id} {
       allow read: if staff() || mine(resource.data.personId);

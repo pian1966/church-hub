@@ -458,8 +458,8 @@
     if (!rows.length) return '';
     return '<section class="panel" id="access-jobs"><h2>' + T('Jobs in one part of the app') + '</h2><p class="hint" style="margin-top:0">' + T('Chosen people, whatever their access. Each is chosen where the job is done.') + '</p>' +
       '<div class="list">' + rows.map(function (r) {
-        return '<div class="item acc-job" data-job="' + r[0] + '"><span class="grow"><b>' + esc(r[1]) + '</b><small>' + esc(r[2]) + '</small></span><span class="acc-n">' + whoHas(r[3], r[0]) + '</span>' +
-          (limited() ? '' : '<a class="btn small ghost" href="' + r[4] + '" title="' + esc(r[5]) + '">' + esc(r[5]) + '</a>') + '</div>';
+        return '<div class="item acc-job" data-job="' + r[0] + '"><div class="acc-job-top"><b>' + esc(r[1]) + '</b><span class="acc-n">' + whoHas(r[3], r[0]) + '</span></div><small>' + esc(r[2]) + '</small>' +
+          (limited() ? '' : '<a class="acc-where" href="' + r[4] + '"><span>' + T('Where:') + '</span> ' + esc(r[5]) + '</a>') + '</div>';
       }).join('') + '</div></section>';
   }
   /** The page: the overview, the jobs, then each choice once – contact details and Care Groups, what Pastors can do, attendees.

@@ -375,6 +375,7 @@ I18n.rows([
     ["Open the Archive (minutes, plans, contracts)", "Maak die Argief oop (notules, planne, kontrakte)", "Bavula i-Archive (imizuzu, amapulani, izinkontileka)", "Bavula i-Archive (imizuzu, iiplani, iikhontrakthi)"],
     ["Groups → Leadership", "Groepe → Leierskap", "Amaqembu → Ubuholi", "Amaqela → Ubunkokeli"],
     ["Jobs in one part of the app", "Take in een deel van die app", "Imisebenzi engxenyeni eyodwa ye-app", "Imisebenzi kwinxalenye enye ye-app"],
+    ["Where:", "Waar:", "Kuphi:", "Phi:"],
     ["Chosen people, whatever their access. Each is chosen where the job is done.", "Gekose mense, wat ook al hul toegang. Elkeen word gekies waar die werk gedoen word.", "Abantu abakhethiwe, noma ngabe banokufinyelela okunjani. Ngamunye ukhethwa lapho umsebenzi wenziwa khona.", "Abantu abakhethiweyo, nokuba banofikelelo olunjani. Ngamnye ukhethwa apho umsebenzi wenziwa khona."],
     ["On this page", "Op hierdie blad", "Kuleli khasi", "Kweli phepha"],
     ["Jobs", "Take", "Imisebenzi", "Imisebenzi"],

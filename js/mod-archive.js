@@ -69,17 +69,27 @@
     var b = r.bodyId ? S.get('leaderBodies', r.bodyId) : null, a = A.ACCESS.filter(function (x) { return x[0] === r.access; })[0];
     return r.access === 'body' ? (b ? b.name : T('The members of a leadership group')) : T(a ? a[1] : 'Administrators and the Senior Pastor only');
   }
+  /** The little coloured "page" at the start of a document: what kind of file it is, at a glance. */
+  var KINDS = { pdf: ['PDF', '#C0392B'], doc: ['DOC', '#2B6CB0'], docx: ['DOC', '#2B6CB0'], odt: ['DOC', '#2B6CB0'], rtf: ['DOC', '#2B6CB0'],
+    xls: ['XLS', '#1F8A4C'], xlsx: ['XLS', '#1F8A4C'], csv: ['CSV', '#1F8A4C'], ppt: ['PPT', '#D9730D'], pptx: ['PPT', '#D9730D'],
+    jpg: ['IMG', '#7C5CBF'], jpeg: ['IMG', '#7C5CBF'], png: ['IMG', '#7C5CBF'], gif: ['IMG', '#7C5CBF'], webp: ['IMG', '#7C5CBF'],
+    txt: ['TXT', '#6B625A'], md: ['TXT', '#6B625A'] };
+  function badge(r) {
+    if (!r.file) return '<span class="ar-badge" style="--c:#0E7C86" aria-hidden="true">' + H.icon(H.ICON.link, 20) + '</span>';
+    var ext = (String(r.file.name || '').toLowerCase().match(/\.([a-z0-9]+)$/) || [])[1] || '', k = KINDS[ext] || [ext ? ext.slice(0, 4).toUpperCase() : 'FILE', '#6B625A'];
+    return '<span class="ar-badge" style="--c:' + k[1] + '" aria-hidden="true">' + esc(k[0]) + '</span>';
+  }
   function item(r, edit, where) {
     var bits = [H.fmt(r.date, true)];
-    if (where) bits.unshift(place(r.cat, r.date));
     if (r.aboutName) bits.push(T('About {name}', { name: r.aboutName }));
     if (r.file) bits.push(r.file.name + ' (' + A.sizeText(r.file.size) + ')');
-    return '<div class="item rec-item ar-item" data-find="' + esc([r.title, r.note, r.aboutName, r.file ? r.file.name : '', where ? place(r.cat, r.date) : ''].join(' ')) + '">' +
-      '<span class="grow"><b data-own-words>' + esc(r.title) + '</b><small>' + bits.map(esc).join(' · ') + '</small>' + (r.note ? (window.RichText && RichText.formatted(r.note) ? '<div class="rich small" data-own-words>' + RichText.html(r.note) + '</div>' : '<small data-own-words>' + esc(r.note) + '</small>') : '') +
-      (edit ? '<small><span class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText(r)) + '</span>' + (r.shownTo ? ' <span class="tag grey">' + esc(T('Shown to {name}', { name: r.aboutName })) + '</span>' : '') + '</small>' : '') + '</span><span class="rec-acts">' +
+    return '<div class="item rec-item ar-item" data-find="' + esc([r.title, r.note, r.aboutName, r.file ? r.file.name : '', where ? place(r.cat, r.date) : ''].join(' ')) + '">' + badge(r) +
+      '<span class="grow ar-body"><b data-own-words>' + esc(r.title) + '</b>' + (where ? '<small class="ar-where-tag">' + H.icon(FOLDER, 13) + ' ' + esc(place(r.cat, r.date)) + '</small>' : '') +
+      '<small class="ar-meta">' + bits.map(esc).join(' · ') + '</small>' + (r.note ? (window.RichText && RichText.formatted(r.note) ? '<div class="rich small ar-note" data-own-words>' + RichText.html(r.note) + '</div>' : '<small class="ar-note" data-own-words>' + esc(r.note) + '</small>') : '') +
+      (edit ? '<small class="ar-tags"><span class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText(r)) + '</span>' + (r.shownTo ? ' <span class="tag grey">' + esc(T('Shown to {name}', { name: r.aboutName })) + '</span>' : '') + '</small>' : '') + '</span><span class="rec-acts">' +
+      (mayPreview(r) ? '<button class="btn small primary" data-act="archive:preview" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.eye, 16) + T('Preview') + '</button>' : '') +
+      (A.embedUrl(r.link) ? '<button class="btn small primary" data-act="archive:linkpreview" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.eye, 16) + T('Preview') + '</button>' : '') +
       (r.file ? '<button class="btn small" data-act="archive:open" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.download, 16) + T('Download') + '</button>' : '') +
-      (mayPreview(r) ? '<button class="btn small" data-act="archive:preview" data-id="' + esc(r.id) + '">👁 ' + T('Preview') + '</button>' : '') +
-      (A.embedUrl(r.link) ? '<button class="btn small" data-act="archive:linkpreview" data-id="' + esc(r.id) + '">' + T('Preview') + '</button>' : '') +
       (A.link(r.link) ? '<a class="btn small" href="' + esc(A.link(r.link)) + '" target="_blank" rel="noopener noreferrer" data-act="archive:link" data-id="' + esc(r.id) + '">' + H.icon(H.ICON.link, 16) + T('Open the link') + '</a>' : '') +
       (edit ? '<button class="icon-btn ghost" data-act="archive:edit" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Edit {name}', { name: r.title })) + '" title="' + esc(T('Edit')) + '">' + H.icon(PEN, 16) + '</button>' +
         '<button class="icon-btn ghost" data-act="archive:del" data-id="' + esc(r.id) + '" aria-label="' + esc(T('Delete {name}', { name: r.title })) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 16) + '</button>' : '') + '</span></div>';
@@ -90,9 +100,16 @@
     var miss = A.missingMonths(recs, catId, yr, yr + '-' + (m < 10 ? '0' : '') + m);
     return miss.length ? '<p class="note warn" style="margin:0 0 12px">' + esc(T('Nothing filed yet for: {months}', { months: miss.map(monthName).join(', ') + ' ' + yr })) + '</p>' : '';
   }
-  /** A folder (or a year or month inside one) as a tile to open. */
-  function tile(attrs, name, sub, extra) {
-    return '<button class="appcard ar-folder" data-act="archive:go"' + attrs + '><span class="ic" style="--c:#7A5C3E">' + H.icon(FOLDER, 22) + '</span><b data-own-words>' + esc(name) + '</b><span class="ar-sub">' + esc(sub) + '</span>' + (extra || '') + '</button>';
+  /** Each folder keeps its own colour (made from its id, so it is the same every visit). */
+  var HUES = ['#7A5C3E', '#B8430A', '#2B6CB0', '#1F8A4C', '#7C5CBF', '#0E7C86', '#B7791F', '#A23B72'];
+  function hue(id) { var n = 0; String(id || '').split('').forEach(function (ch) { n += ch.charCodeAt(0); }); return HUES[n % HUES.length]; }
+  var CAL = 'M3 6h18v14H3zM3 10h18M8 3v4M16 3v4';
+  /** A folder (or a year or month inside one) as a tile to open: a coloured icon, its name, how much is in it. */
+  function tile(attrs, name, sub, extra, o) {
+    o = o || {};
+    var lead = o.big ? '<span class="ar-big" aria-hidden="true">' + esc(o.big) + '</span>' : '<span class="ic">' + H.icon(o.icon || FOLDER, 22) + '</span>';
+    return '<button class="appcard ar-folder' + (o.big ? ' ar-cal' : '') + '" data-act="archive:go"' + attrs + ' style="--c:' + (o.hue || HUES[0]) + '">' + lead +
+      '<span class="ar-ft"><b data-own-words>' + esc(name) + '</b><span class="ar-sub">' + esc(sub) + '</span>' + (extra || '') + '</span><span class="ar-go" aria-hidden="true">›</span></button>';
   }
   function crumbs() {
     var st = S.settings(), bits = ['<button class="linkish" data-act="archive:go" data-folder="">' + T('Archives') + '</button>'], p = A.path(st, state.folder), last = p[p.length - 1];
@@ -105,32 +122,37 @@
   }
   /** What is inside the folder being looked at: folders first, then Year → Month folders or the documents themselves. */
   function browse(all, edit) {
-    var st = S.settings(), f = state.folder ? A.cat(st, state.folder) : null, html = '', tiles = [];
+    var st = S.settings(), f = state.folder ? A.cat(st, state.folder) : null, html = '', tiles = [], cal = false;
     var lock = function (c) { return edit ? '<small class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText({ access: c.access, bodyId: '' })) + '</small>' : ''; };
     var sub = function (n) { return n ? TN('{n} record', '{n} records', n) : T('Empty'); };
     A.kids(st, f ? f.id : '').forEach(function (c) {
       var n = A.count(st, all, c.id);
-      if (n || edit) tiles.push(tile(' data-folder="' + esc(c.id) + '"', T(c.name), sub(n), lock(c)));
+      if (n || edit) tiles.push(tile(' data-folder="' + esc(c.id) + '"', T(c.name), sub(n), lock(c), { hue: hue(c.id) }));
     });
     if (!f) {
       var known = {}; cats().forEach(function (c) { known[c.id] = 1; });
       var stray = A.list(all, '', '').filter(function (r) { return !known[r.cat]; });
       html += tiles.length ? '<div class="cards ar-tiles">' + tiles.join('') + '</div>' : '';
+      var latest = all.slice().sort(function (a, b) { return String(b.date || '').localeCompare(String(a.date || '')); }).slice(0, 4);
+      if (all.length >= 3) html += '<h2 class="ar-label">' + T('Latest documents') + '</h2><div class="list ar-docs">' + latest.map(function (r) { return item(r, edit, true); }).join('') + '</div>';
       if (stray.length) html += '<section class="panel ar-panel"><h2 style="margin:0 0 8px">' + T('Other records') + '</h2><div class="list">' + stray.map(function (r) { return item(r, edit); }).join('') + '</div></section>';
       return html;
     }
-    var mine = A.list(all, f.id, ''), recs = [];
-    if (f.byDate && !state.yr) A.years(mine).forEach(function (y) { tiles.push(tile(' data-folder="' + esc(f.id) + '" data-yr="' + esc(y) + '"', y, sub(A.list(mine, f.id, y).length))); });
-    else if (f.byDate && !state.mo) A.months(mine, state.yr).forEach(function (x) { tiles.push(tile(' data-folder="' + esc(f.id) + '" data-yr="' + esc(state.yr) + '" data-mo="' + x.m + '"', monthName(x.m), sub(x.n))); });
+    var mine = A.list(all, f.id, ''), recs = [], h = hue(f.id);
+    if (f.byDate && !state.yr) { cal = true; A.years(mine).forEach(function (y) { tiles.push(tile(' data-folder="' + esc(f.id) + '" data-yr="' + esc(y) + '"', y, sub(A.list(mine, f.id, y).length), '', { hue: h, icon: CAL })); }); }
+    else if (f.byDate && !state.mo) { cal = true; A.months(mine, state.yr).forEach(function (x) { tiles.push(tile(' data-folder="' + esc(f.id) + '" data-yr="' + esc(state.yr) + '" data-mo="' + x.m + '"', monthName(x.m), sub(x.n), '', { hue: h, big: monthName(x.m).slice(0, 3) })); }); }
     else recs = f.byDate ? A.inMonth(mine, f.id, state.yr, state.mo) : mine;
+    var title = state.mo ? monthName(state.mo) + ' ' + state.yr : state.yr || T(f.name);
+    html += '<div class="ar-head"><h2 data-own-words>' + esc(title) + '</h2>' + (edit ? '<span class="tag grey">' + H.icon(H.ICON.lock, 12) + ' ' + esc(accessText({ access: f.access, bodyId: '' })) + '</span>' : '') + '</div>';
     if (edit && f.byDate && state.yr && !state.mo) html += gaps(all, f.id, state.yr);
-    if (tiles.length) html += '<div class="cards ar-tiles">' + tiles.join('') + '</div>';
+    if (tiles.length) html += '<div class="cards ar-tiles' + (cal ? ' ar-cals' : '') + '">' + tiles.join('') + '</div>';
     if (recs.length) html += '<div class="list ar-docs">' + recs.map(function (r) { return item(r, edit); }).join('') + '</div>';
-    if (!tiles.length && !recs.length) html += '<div class="empty">' + T('Nothing in this folder yet.') + (edit ? '<div class="btns" style="justify-content:center;margin-top:10px"><button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button></div>' : '') + '</div>';
+    if (!tiles.length && !recs.length) html += '<div class="empty ar-empty">' + H.icon(BOX, 34) + '<p>' + T('Nothing in this folder yet.') + '</p>' + (edit ? '<button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button>' : '') + '</div>';
     return html;
   }
-  function page() {
-    if (!canAccess()) return '<div class="page-head"><div><h1>' + T('Archives') + '</h1></div></div><p class="note warn" role="status">' +
+  function page(tabs) {
+    tabs = tabs || '';
+    if (!canAccess()) return '<div class="page-head"><div><h1>' + T('Archives') + '</h1></div></div>' + tabs + '<p class="note warn" role="status">' +
       T('Restricted View — Access restricted to Council members and Administrators only.') + '</p>';
     var edit = keeper(), all = visible(), st = S.settings();
     if (state.folder && !A.cat(st, state.folder)) state.folder = '', state.yr = '', state.mo = 0;
@@ -143,10 +165,10 @@
       if (f) more.splice(1, 0, '<button data-act="archive:folder" data-id="' + esc(f.id) + '">' + H.icon(PEN, 16) + T('Change this folder') + '</button>');
     }
     var html = '<div class="page-head"><div><h1>' + T('Archives') + '</h1><p class="lead">' + T('The church’s records, kept safely in one place. Each record says who can see it.') + '</p></div>' +
-      '<div class="btns">' + (edit ? '<button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button>' : '') + H.menu(T('More'), more) + '</div></div>';
-    if (!all.length && !folderAdmin()) return html + '<p class="empty">' + T('No records yet.') + '</p>';
-    if (all.length) html += '<label class="search" style="margin-bottom:14px">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search the archive') + '</span><input id="ar-q" type="search" placeholder="' + esc(T('Search the archive')) + '" value="' + esc(state.q) + '" autocomplete="off"></label>';
-    html += '<div id="ar-browse">' + crumbs() + (!all.length && !f ? '<p class="empty">' + T('No records yet.') + '</p>' : '') + browse(all, edit) + '</div>';
+      '<div class="btns">' + (edit ? '<button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button>' : '') + H.menu(T('More'), more) + '</div></div>' + tabs;
+    if (!all.length && !folderAdmin()) return html + '<div class="empty ar-empty">' + H.icon(BOX, 34) + '<p>' + T('No records yet.') + '</p></div>';
+    if (all.length) html += '<label class="search ar-search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search the archive') + '</span><input id="ar-q" type="search" placeholder="' + esc(T('Search the archive')) + '" value="' + esc(state.q) + '" autocomplete="off"></label>';
+    html += '<div id="ar-browse">' + crumbs() + (!all.length && !f ? '<div class="empty ar-empty">' + H.icon(BOX, 34) + '<p>' + T('No records yet.') + '</p>' + (edit ? '<button class="btn primary" data-act="archive:add">' + H.icon(H.ICON.plus, 16) + T('Add a record') + '</button>' : '') + '</div>' : '') + browse(all, edit) + '</div>';
     html += '<div id="ar-results" class="list" hidden>' + A.list(all, '', '').map(function (r) { return item(r, edit, true); }).join('') + '</div>';
     return html + '<p class="empty" id="ar-none" hidden>' + T('Nothing matches.') + '</p>';
   }

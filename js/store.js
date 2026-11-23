@@ -380,7 +380,9 @@ var Store = (function () {
     function known(path) {
       if (path in local) return local[path];
       var s = path.split('/'), from = { people: ['people'], details: ['details', 'detailsMe'], medical: ['medical'], directory: ['directory'], names: ['names'] }[s[0]] || [s[0]];
-      var m = merged.apply(null, from); return m[s[1]] === undefined ? null : m[s[1]];
+      var v;   // later collections win, as in merged(), but without copying every record just to read one
+      from.forEach(function (k) { var m = raw[k]; if (m && m[s[1]] !== undefined) v = m[s[1]]; });
+      return v === undefined ? null : v;
     }
     function role() { return session ? previewRole || session.role : ''; }
     function is() { return Array.prototype.indexOf.call(arguments, role()) >= 0; }
@@ -1313,9 +1315,10 @@ var Store = (function () {
      *  directory/{id} – everyone signed in: name and photo, plus what Settings lets Church Partners see (mobile, email,
      *  address, spouse). contacts/{id} – staff and leaders only: address and spouse, when Settings lets Roster coordinators
      *  or Children's ministry see them (they already read names, email and mobile from people/{id}). */
+    var dirCtx = null;   // set while resyncDirectory() runs: the latest directory consents and the couples, worked out once
     function syncDirectory(pid) {
       if (!(is('admin', 'pastor') || pid === session.personId)) return;
-      var p = get('people', pid), latest = find('consents', function (c) { return c.personId === pid && c.purpose === DIRECTORY && !c.withdrawnAt; })
+      var p = get('people', pid), latest = dirCtx ? dirCtx.consent[pid] : find('consents', function (c) { return c.personId === pid && c.purpose === DIRECTORY && !c.withdrawnAt; })
         .sort(function (a, b) { return a.date < b.date ? 1 : -1; })[0];
       var ok = p && p.familyRole !== 'child' && p.active !== false && latest && latest.given, see = (db.settings && db.settings.seeOthers) || {};
       var allows = function (tier, f) { return (see[tier] || []).indexOf(f) >= 0; };
@@ -1375,7 +1378,7 @@ var Store = (function () {
     /** Their spouse or partner's name, from their household (Administrators and Pastors can work it out; anyone else keeps what is there). */
     function spouseOf(p, dirWas, leadWas) {
       if (is('admin', 'pastor') && window.Households) {
-        var c = Households.couples(list('people'), list('families')).filter(function (x) { return x.a === p.id || x.b === p.id; })[0];
+        var c = dirCtx ? dirCtx.couple[p.id] : Households.couples(list('people'), list('families')).filter(function (x) { return x.a === p.id || x.b === p.id; })[0];
         var o = c && get('people', c.a === p.id ? c.b : c.a);
         return o ? ((o.preferredName || o.firstName || '') + ' ' + (o.lastName || '')).trim() : '';
       }
@@ -1387,7 +1390,17 @@ var Store = (function () {
     function resyncDirectory() {
       if (!is('admin', 'pastor') || previewRole) return 0;
       var n = 0, bad = 0;
-      list('people').forEach(function (p) { try { syncDirectory(p.id); n++; } catch (e) { bad++; console.warn('Couldn’t update the directory entry of ' + p.id, e); } });
+      // Worked out once for everyone, not again for each person (with a thousand people that froze the phone for seconds)
+      var ctx = { consent: {}, couple: {} };
+      list('consents').forEach(function (c) {
+        if (c.purpose !== DIRECTORY || c.withdrawnAt) return;
+        var was = ctx.consent[c.personId]; if (!was || was.date < c.date) ctx.consent[c.personId] = c;
+      });
+      if (window.Households) Households.couples(list('people'), list('families')).forEach(function (x) { if (!ctx.couple[x.a]) ctx.couple[x.a] = x; if (!ctx.couple[x.b]) ctx.couple[x.b] = x; });
+      dirCtx = ctx;
+      try {
+        list('people').forEach(function (p) { try { syncDirectory(p.id); n++; } catch (e) { bad++; console.warn('Couldn’t update the directory entry of ' + p.id, e); } });
+      } finally { dirCtx = null; }
       if (bad) console.warn(bad + ' directory entries couldn’t be updated');
       return n;
     }

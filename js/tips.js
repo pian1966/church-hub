@@ -19,20 +19,20 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.107';
   var NEWS = [
-    { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], text: TX('Rosters → Teams: the Administrator, the Rector and the assistant ministers can now write a position’s tooltip, and a new position is added in one box. On a phone, tap the small i beside a position to read its tooltip.') },
-    { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], text: TX('Rosters → Teams: a position that was added by mistake, or isn’t used any more, can now be deleted (⋯ beside it). Each position’s names fold away until you tap them, and its tooltip is set from the same ⋯ menu.') },
-    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Adding names from a sheet to an event: each person now has their own guests counter (filled in from “+2” on the sheet). Choose a photo also opens Google Photos on Android.') },
-    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], text: TX('Say a name instead of typing it: tap the microphone in People’s search, or in any box where you look for someone. Names that sound like what you said come up too – tap the right one.') },
-    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Events: a whole paper sign-up sheet at once – open the event, tap From a sheet and take a photo. Church & Trellis reads the names and finds them in People; you check each one. Pastors and Administrators can register someone who isn’t in People yet.') },
-    { date: '2026-11-20', who: ['admin', 'pastor'], text: TX('Visitor cards: People → From a photo reads the names (and any phone numbers and email addresses) and adds the new people as Attenders, after you check each one.') },
-    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Events: print everyone who has signed up, with their cellphone numbers – or save it as a PDF. Events → More → Sign-up report, or Print on an event.') },
-    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Events: anyone on the staff can now add people to an event – for those who put their name down on a sheet. Open the event and tap Add people under Who’s coming.') },
-    { date: '2026-11-20', who: ['admin'], text: TX('New: Events. Switch it on under Settings → Apps. Put events up, see who’s coming and write to them all; people sign up with one tap and are reminded 3 days and 1 day before – in Messages, and by email if they like.') },
-    { date: '2026-11-20', who: ['everyone'], app: 'events', text: TX('Events are here: see what’s coming up, tap I’ll be there, and we’ll remind you 3 days and 1 day before.') },
+    { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'Teams'], text: TX('Rosters → Teams: the Administrator, the Rector and the assistant ministers can now write a position’s tooltip, and a new position is added in one box. On a phone, tap the small i beside a position to read its tooltip.') },
+    { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'Teams'], text: TX('Rosters → Teams: a position that was added by mistake, or isn’t used any more, can now be deleted (⋯ beside it). Each position’s names fold away until you tap them, and its tooltip is set from the same ⋯ menu.') },
+    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', btn: ['Choose a photo'], text: TX('Adding names from a sheet to an event: each person now has their own guests counter (filled in from “+2” on the sheet). Choose a photo also opens Google Photos on Android.') },
+    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], btn: ['People'], text: TX('Say a name instead of typing it: tap the microphone in People’s search, or in any box where you look for someone. Names that sound like what you said come up too – tap the right one.') },
+    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', btn: ['From a sheet'], text: TX('Events: a whole paper sign-up sheet at once – open the event, tap From a sheet and take a photo. Church & Trellis reads the names and finds them in People; you check each one. Pastors and Administrators can register someone who isn’t in People yet.') },
+    { date: '2026-11-20', who: ['admin', 'pastor'], btn: ['People', 'From a photo'], text: TX('Visitor cards: People → From a photo reads the names (and any phone numbers and email addresses) and adds the new people as Attenders, after you check each one.') },
+    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', btn: ['Events', 'More', 'Sign-up report', 'Print'], text: TX('Events: print everyone who has signed up, with their cellphone numbers – or save it as a PDF. Events → More → Sign-up report, or Print on an event.') },
+    { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', btn: ['Add people'], text: TX('Events: anyone on the staff can now add people to an event – for those who put their name down on a sheet. Open the event and tap Add people under Who’s coming.') },
+    { date: '2026-11-20', who: ['admin'], btn: ['Settings', 'Apps'], text: TX('New: Events. Switch it on under Settings → Apps. Put events up, see who’s coming and write to them all; people sign up with one tap and are reminded 3 days and 1 day before – in Messages, and by email if they like.') },
+    { date: '2026-11-20', who: ['everyone'], app: 'events', btn: ['I’ll be there'], text: TX('Events are here: see what’s coming up, tap I’ll be there, and we’ll remind you 3 days and 1 day before.') },
     { date: '2026-11-20', who: ['admin', 'pastor'], text: TX('Invite people to Church & Trellis by email or WhatsApp – one person from their page, or a whole Care Group, Midweek Group or serving team from Advanced search. It gives them access, and People → Invitations shows who hasn’t started yet, with Remind.') },
-    { date: '2026-11-20', who: ['everyone'], text: TX('On an Android phone, Home now offers the Church & Trellis app – tap Get the app.') },
+    { date: '2026-11-20', who: ['everyone'], btn: ['Get the app'], text: TX('On an Android phone, Home now offers the Church & Trellis app – tap Get the app.') },
     { date: '2026-11-20', who: ['rosters', 'admin', 'pastor'], text: TX("Print the roster a term at a time on A4: each service gets its own page, showing only the positions with names on them. Rosters → More → Print the roster (Pastors: on My serving). Choose “Save as PDF” to make a PDF.") },
-    { date: '2026-11-19', who: ['admin'], text: TX('Settings: who can see what, Attendees and What Pastors can do are now one page, Access and roles – a card for each kind of person says what they see and can do, with View as one tap away. Nothing about anyone’s access has changed.') },
+    { date: '2026-11-19', who: ['admin'], btn: ['Access and roles', 'View as'], text: TX('Settings: who can see what, Attendees and What Pastors can do are now one page, Access and roles – a card for each kind of person says what they see and can do, with View as one tap away. Nothing about anyone’s access has changed.') },
     { date: '2026-11-19', who: ['lifelead'], app: 'life', text: TX('Midweek Group leaders: post this week’s meeting link and notes under Groups → Midweek Groups. Your group gets them in Messages, with Join the meeting and Open the notes – now or on the day.') },
     { date: '2026-11-19', who: ['everyone'], app: 'life', text: TX('On the day of your Midweek Group, Home shows a card with Join the meeting and Open the notes – it becomes Join now 15 minutes before.') },
     { date: '2026-11-19', who: ['rosters', 'admin'], text: TX('Names are now listed from A to Z in Rosters (teams and serving groups), Groups, the Librarians, the keepers and Privacy – tap a name to open the person’s page.') },
@@ -105,50 +105,50 @@
 
   var TIPS = [
     // Everyone
-    { id: 'events-cal', who: ['everyone'], app: 'events', href: '#/events', text: TX('Signed up for an event? Open it and tap Add to my calendar – your phone reminds you too.') },
-    { id: 'study-past', who: ['everyone'], app: 'life', href: '#/life', text: TX('Missed a Midweek Group? Its page keeps Past studies, with the notes for each week.') },
+    { id: 'events-cal', btn: ['Add to my calendar'], who: ['everyone'], app: 'events', href: '#/events', text: TX('Signed up for an event? Open it and tap Add to my calendar – your phone reminds you too.') },
+    { id: 'study-past', btn: ['Past studies'], who: ['everyone'], app: 'life', href: '#/life', text: TX('Missed a Midweek Group? Its page keeps Past studies, with the notes for each week.') },
     { id: 'board-help', who: ['everyone'], app: 'board', href: '#/board', text: TX('Tap a note on the Community board to see all of it and write privately to the person who pinned it.') },
     { id: 'market-photos', who: ['everyone'], app: 'market', href: '#/market', text: TX('Listing something on the Marketplace? Add up to three photos – Church & Trellis makes them small, so they cost little data.') },
-    { id: 'prayer-card', who: ['admin'], app: 'support', href: '#/support/card', text: TX('Give your church a prayer card under Subscription → Our prayer card: a photo and two things to pray for, so churches in the prayer circle can pray for you.') },
-    { id: 'roster-team', who: ['admin'], app: 'rosters', href: '#/settings/services', text: TX('Administrators and Roster coordinators hear when someone can’t make a roster turn. To include someone else, such as the church secretary, add them under Settings → Church Services.') },
+    { id: 'prayer-card', btn: ['Subscription', 'Our prayer card'], who: ['admin'], app: 'support', href: '#/support/card', text: TX('Give your church a prayer card under Subscription → Our prayer card: a photo and two things to pray for, so churches in the prayer circle can pray for you.') },
+    { id: 'roster-team', btn: ['Settings', 'Church Services'], who: ['admin'], app: 'rosters', href: '#/settings/services', text: TX('Administrators and Roster coordinators hear when someone can’t make a roster turn. To include someone else, such as the church secretary, add them under Settings → Church Services.') },
     { id: 'me-details', who: ['everyone'], app: 'me', href: '#/me', text: TX('Your Me page has your own details, and you can update your contact details there yourself.') },
     { id: 'me-away', who: ['everyone'], app: 'me', href: '#/me', text: TX('Going away? Add your days away on your Me page, so nobody puts you on a roster while you’re gone.') },
-    { id: 'me-serve', who: ['everyone'], app: 'me', href: '#/me', text: TX('When you’re put on a roster, you can accept or decline the turn under Me → Serving.') },
-    { id: 'me-offer', who: ['everyone'], app: 'me', href: '#/me', text: TX('Would you like to help? Under Me → Serving you can offer to serve in a team.') },
+    { id: 'me-serve', btn: ['Me', 'Serving'], who: ['everyone'], app: 'me', href: '#/me', text: TX('When you’re put on a roster, you can accept or decline the turn under Me → Serving.') },
+    { id: 'me-offer', btn: ['Me', 'Serving'], who: ['everyone'], app: 'me', href: '#/me', text: TX('Would you like to help? Under Me → Serving you can offer to serve in a team.') },
     { id: 'me-lang', who: ['everyone'], app: 'me', href: '#/me', text: TX('Church & Trellis speaks your language. Choose English, Afrikaans, isiZulu, isiXhosa, Sesotho or another language on your Me page.') },
-    { id: 'lib-there', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library/all', text: TX('The church has a library. Open Library to see what is there – what you have borrowed shows on your Me page.') },
-    { id: 'lib-ask', who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library/all', text: TX('Seen a book you’d like to read? Tap Request to borrow in the Library, and a librarian will get it ready for you.') },
+    { id: 'lib-there', btn: ['Library'], who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library/all', text: TX('The church has a library. Open Library to see what is there – what you have borrowed shows on your Me page.') },
+    { id: 'lib-ask', btn: ['Request to borrow'], who: ['everyone'], not: ['librarian'], app: 'library', href: '#/library/all', text: TX('Seen a book you’d like to read? Tap Request to borrow in the Library, and a librarian will get it ready for you.') },
     { id: 'msg-office', who: ['everyone'], app: 'messages', href: '#/messages', text: TX('Messages from the church arrive under Messages. You can write to the church office there too.') },
-    { id: 'groups-mine', who: ['everyone'], app: 'groups', href: '#/groups', text: TX('Groups → My groups shows the groups you belong to.') },
+    { id: 'groups-mine', btn: ['Groups', 'My groups'], who: ['everyone'], app: 'groups', href: '#/groups', text: TX('Groups → My groups shows the groups you belong to.') },
     { id: 'offline', who: ['everyone'], text: TX('No internet? Church & Trellis still shows what you last saw, view only, until you’re back online.') },
     { id: 'say-name', who: ['admin', 'pastor', 'rosters', 'kids'], href: '#/people', text: TX('Looking for someone? Tap the microphone and say their name – even if it’s heard a little wrong, names that sound like it come up.') },
     // Librarians
-    { id: 'lib-lend', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('As a librarian, you lend an item with its Lend button, and tap Returned when it comes back.') },
-    { id: 'lib-repair', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Something damaged? In the item’s ⋯ menu, choose Mark as damaged – nobody can borrow it until it is repaired or put back.') },
-    { id: 'lib-out', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Lost, or no longer needed? In the item’s ⋯ menu choose Withdraw from circulation or Take out of the library – it can be put back later.') },
+    { id: 'lib-lend', btn: ['Lend', 'Returned'], who: ['librarian'], app: 'library', href: '#/library/all', text: TX('As a librarian, you lend an item with its Lend button, and tap Returned when it comes back.') },
+    { id: 'lib-repair', btn: ['⋯', 'Mark as damaged'], who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Something damaged? In the item’s ⋯ menu, choose Mark as damaged – nobody can borrow it until it is repaired or put back.') },
+    { id: 'lib-out', btn: ['⋯', 'Withdraw from circulation', 'Take out of the library'], who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Lost, or no longer needed? In the item’s ⋯ menu choose Withdraw from circulation or Take out of the library – it can be put back later.') },
     { id: 'lib-remind', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Three weeks after a loan Church & Trellis reminds the borrower. You can also send the reminder by WhatsApp or SMS.') },
     { id: 'lib-requests', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Members can ask to borrow an item. Their requests wait at the top of the Library for you to say yes or no.') },
-    { id: 'lib-reports', who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Library → More → Reports shows what was lent, returned, lost and added in any period.') },
+    { id: 'lib-reports', btn: ['Library', 'More', 'Reports'], who: ['librarian'], app: 'library', href: '#/library/all', text: TX('Library → More → Reports shows what was lent, returned, lost and added in any period.') },
     // Care Group carers
     { id: 'carer-msg', who: ['carer'], app: 'messages', href: '#/messages', text: TX('As a carer, you can send a message to everyone in your Care Group from Messages.') },
     // Roster coordinators
-    { id: 'ros-fill', who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Fill the gaps for me (on Rosters) suggests fair turns, keeping everyone’s days away and leave in mind.') },
-    { id: 'ros-offers', who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Offers to serve from members wait for you at the top of Rosters → Teams.') },
+    { id: 'ros-fill', btn: ['Fill the gaps for me'], who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Fill the gaps for me (on Rosters) suggests fair turns, keeping everyone’s days away and leave in mind.') },
+    { id: 'ros-offers', btn: ['Rosters', 'Teams'], who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Offers to serve from members wait for you at the top of Rosters → Teams.') },
     // Children's ministry
     { id: 'kids-medical', who: ['kids'], app: 'people', text: TX('Children’s medical notes are seen only by Children’s ministry – not even Administrators see them.') },
     // Pastors
     { id: 'pastor-notes', who: ['pastor'], app: 'people', text: TX('Pastoral notes on a person’s page are seen only by Pastors.') },
-    { id: 'senior-viewas', who: ['senior'], text: TX('As Senior Pastor you can use View as… to see Church & Trellis the way another role sees it.') },
+    { id: 'senior-viewas', btn: ['View as…'], who: ['senior'], text: TX('As Senior Pastor you can use View as… to see Church & Trellis the way another role sees it.') },
     // Staff who see the People list
-    { id: 'people-search', who: ['staffwork'], app: 'people', href: '#/people', text: TX('Advanced search on People finds people by almost anything – their age, a birthday coming up, the service they serve at.') },
+    { id: 'people-search', btn: ['Advanced search'], who: ['staffwork'], app: 'people', href: '#/people', text: TX('Advanced search on People finds people by almost anything – their age, a birthday coming up, the service they serve at.') },
     // Administrators and Council members (who open the Archives)
     { id: 'archive-search', who: ['archivist'], app: 'library', href: '#/library/archives', text: TX('Searching the Archives looks through every folder at once, and shows where each document is filed.') },
     // Administrators
-    { id: 'admin-viewas', who: ['admin'], text: TX('Use View as… in the menu to see exactly what a Pastor, a Roster coordinator or a member sees.') },
-    { id: 'admin-apps', who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Apps switches parts of Church & Trellis on and off, such as the Library or Midweek Groups.') },
-    { id: 'admin-change', who: ['admin'], app: 'people', href: '#/people', text: TX('In Advanced search you can tick people in the results and change one thing for all of them at once.') },
-    { id: 'admin-dupes', who: ['admin', 'pastor'], app: 'people', href: '#/people', text: TX('Find duplicates (on People) helps you join two records of the same person into one.') },
-    { id: 'admin-see', who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Who can see what decides which contact details each role may see.') }
+    { id: 'admin-viewas', btn: ['View as…'], who: ['admin'], text: TX('Use View as… in the menu to see exactly what a Pastor, a Roster coordinator or a member sees.') },
+    { id: 'admin-apps', btn: ['Settings', 'Apps'], who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Apps switches parts of Church & Trellis on and off, such as the Library or Midweek Groups.') },
+    { id: 'admin-change', btn: ['Advanced search'], who: ['admin'], app: 'people', href: '#/people', text: TX('In Advanced search you can tick people in the results and change one thing for all of them at once.') },
+    { id: 'admin-dupes', btn: ['Find duplicates'], who: ['admin', 'pastor'], app: 'people', href: '#/people', text: TX('Find duplicates (on People) helps you join two records of the same person into one.') },
+    { id: 'admin-see', btn: ['Settings', 'Who can see what'], who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Who can see what decides which contact details each role may see.') }
   ];
 
   /** ctx: { tags: ['everyone', 'member', …], on: function (appId) → may this person open that part? } */

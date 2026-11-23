@@ -86,6 +86,20 @@ module.exports = async function (ctx) {
   check(docs['skills/kp14sound'].frequency === 'weekly', 'Yes to “serve more often” changes how often');
   await s.page.click('[data-act="rosters:offerno"][data-id="soTim1"]'); await s.page.fill('#of-reply', 'The door team is full until January'); await s.page.click('[data-act="rosters:offernosend"]'); await s.settle(); docs = await s.docsNow();
   check(docs['serveOffers/soTim1'].status === 'declined' && docs['serveOffers/soTim1'].reply === 'The door team is full until January' && !Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p14' && docs[k].positionId === 'door'), 'Not now sends a short reply and leaves the team as it was');
+  // Teams: names fold away, the tooltip is set from the ⋯ menu, and a position can be deleted
+  await s.page.evaluate(() => { Store.put('positions', { id: 'zzold', teamId: Store.list('teams')[0].id, name: 'Zzold position', needed: 1 }); Store.put('skills', { id: 'zzsk', personId: 'p15', positionId: 'zzold', frequency: 'weekly' }); });
+  await s.go('rosters'); await s.go('rosters/teams');
+  check(await s.page.evaluate(() => { const d = document.querySelector('details.pos-names'); return !!d && !d.open; }), 'Teams: each position’s names are folded away until tapped');
+  check(!(await s.page.$('[data-act="rosters:settooltip"]:not(.menu-list *)')) , 'the tooltip pencil under the position name is gone');
+  await s.page.evaluate(() => { const b = [...document.querySelectorAll('h2.team-h ~ div')].find(d => d.textContent.includes('Zzold position')); b.querySelector('details.menu > summary').click(); });
+  await s.page.click('[data-act="rosters:settooltip"][data-p="zzold"]'); await s.page.fill('#tt-text', 'Only for the old hall'); await s.page.click('[data-act="rosters:savetooltip"]'); await s.settle();
+  docs = await s.docsNow(); check(docs['positions/zzold'] && docs['positions/zzold'].tooltip === 'Only for the old hall', 'the tooltip is saved from a small box');
+  await s.page.evaluate(() => { const b = [...document.querySelectorAll('h2.team-h ~ div')].find(d => d.textContent.includes('Zzold position')); b.querySelector('details.menu > summary').click(); });
+  await s.page.click('[data-act="rosters:posdel"][data-p="zzold"]');
+  check((await s.page.textContent('.dialog')).includes('1 person is on this position'), 'deleting says what goes with the position');
+  await s.page.click('[data-act="rosters:posdelgo"]'); await s.settle();
+  docs = await s.docsNow(); check(!docs['positions/zzold'] && !docs['skills/zzsk'], 'a position that was entered by mistake can be deleted, with its team entries');
+  t = await s.text(); check(!t.includes('Zzold position'), '… and it is gone from Teams');
   await finish(s);
 
   /* ---------- Member ---------- */

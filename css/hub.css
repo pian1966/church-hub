@@ -1505,3 +1505,12 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 /* ---------- tooltip hint on positions ---------- */
 .tooltip-hint { display: inline-flex; align-items: center; color: var(--muted); margin-left: 6px; cursor: default; }
 .tooltip-hint:hover { color: var(--accent-ink); }
+
+/* ---------- Teams: a position's names fold away; its ⋯ menu ---------- */
+.pos-head .row-menu { flex: 0 0 auto; }
+.pos-names { margin-top: 8px; }
+.pos-names > summary { cursor: pointer; color: var(--muted); font-size: .9rem; list-style: none; display: inline-flex; align-items: center; gap: 6px; padding: 2px 0; }
+.pos-names > summary::-webkit-details-marker { display: none; }
+.pos-names > summary::before { content: '›'; display: inline-block; transition: transform .15s; font-weight: 700; }
+.pos-names[open] > summary::before { transform: rotate(90deg); }
+.pos-names > summary:hover { color: var(--accent-ink); }

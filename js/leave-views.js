@@ -57,6 +57,7 @@ var LeaveViews = (function () {
           var h = hits[0], t = typeOf(d, h.r.type); used[h.r.type || ''] = 1;
           cls.push('lv-on'); if (h.r.status === 'Pending') cls.push('lv-pend'); if (h.half) cls.push('lv-half');
           st = ' style="--c:' + esc(t.colour) + '"'; tip.push(t.name + (h.r.status === 'Pending' ? ' (' + T('Waiting') + ')' : ''));
+          if (h.r.reason && String(h.r.reason).trim()) tip.push('“' + String(h.r.reason).trim() + '”');
           if (work) count[ds] = (count[ds] || 0) + (h.half ? 0.5 : 1);
         }
         if (c.hol[ds]) tip.push(c.hol[ds]);

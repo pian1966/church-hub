@@ -457,7 +457,7 @@ var Store = (function () {
      *  It is wiped when they sign out, and before someone else signs in on the same device (docs/POPIA.md, Data on devices). */
     function openDb() {
       fs = fb.firestore();
-      if (fs.enablePersistence) fs.enablePersistence({ synchronizeTabs: true }).catch(function (e) { console.warn('No offline copy on this device', e && e.code); });
+      if (fs.enablePersistence) fs.enablePersistence({ synchronizeTabs: true }).then(function () { stats.marks.copyOpen = Math.round(performance.now()); }, function (e) { console.warn('No offline copy on this device', e && e.code); });
     }
     function wipe() {
       try { localStorage.removeItem(OWNER_KEY); } catch (x) {}
@@ -491,6 +491,7 @@ var Store = (function () {
         }
         // "Not signed in yet" must not replace the "Confirm your email" question, or the screen of a link still being checked.
         auth.onAuthStateChanged(function (u) {
+          authGen++;
           stop();
           if (u) startSession(u);
           else if (linkStage === 'needEmail') onState({ stage: 'needEmail' });
@@ -530,6 +531,9 @@ var Store = (function () {
         .then(function () { try { localStorage.setItem(EMAIL_KEY, email); } catch (x) {} });
     }
     function pendingEmail() { try { return localStorage.getItem(EMAIL_KEY) || ''; } catch (x) { return ''; } }
+    /** Counts every change of who is signed in. A look-up that was started for an earlier sign-in (a slow network, then the person signed out or
+     *  switched account) must not open Church & Trellis when it finally answers: it checks its number first. */
+    var authGen = 0;
     var linkStage = '';   // '' | 'needEmail' (waiting for them to type it) | 'checking' (sign-in link being checked)
     function finishEmailLink(email, link) {
       linkStage = 'checking';
@@ -544,6 +548,7 @@ var Store = (function () {
       });
     }
     function signOut() {
+      authGen++;
       stop();
       // Let the last saves (e.g. the "Signed out" audit entry) reach the database first – but don't wait forever offline.
       var flushed = fs ? Promise.race([fs.waitForPendingWrites().catch(function () {}), new Promise(function (r) { setTimeout(r, 3000); })]) : Promise.resolve();
@@ -555,13 +560,15 @@ var Store = (function () {
     /* ---------- session: who is this, and what may they see ---------- */
     function startSession(u) {
       if (u.isAnonymous || isPin(u)) return startCodeSession(u);   // a number-and-PIN sign-in (or a code being used)
-      var email = (u.email || '').toLowerCase();
+      var email = (u.email || '').toLowerCase(), g = authGen;
       stats.marks.signedIn = Math.round(performance.now());
       onState({ stage: 'loading', email: email, step: 'checking' });
       if (!u.emailVerified) return onState({ stage: 'noAccess', email: email, reason: 'unverified' });
       // Offline: straight from the copy on this device (otherwise Firestore first waits to be sure there's no connection)
       var role = function () { return offlineNow() ? doc('roles/' + email).get({ source: 'cache' }).catch(function () { return doc('roles/' + email).get(); }) : doc('roles/' + email).get(); };
-      ownCopy(email).then(role).then(function (snap) {
+      ownCopy(email).then(function () { stats.marks.copyChecked = Math.round(performance.now()); return role(); }).then(function (snap) {
+        stats.marks.accessKnown = Math.round(performance.now());
+        if (g !== authGen) return;   // signed out or switched account while this was being looked up
         if (!snap.exists) {   // their access was taken away: the copy on this device goes too
           if (!(snap.metadata && snap.metadata.fromCache)) wipe();
           return onState({ stage: 'noAccess', email: email });
@@ -583,10 +590,11 @@ var Store = (function () {
         if (!session.personId) {
           if (r.role !== 'admin') return onState({ stage: 'noAccess', email: email, reason: 'noPerson' });
           // An Administrator added by hand: set up the church only if nobody has yet, otherwise just their own record.
-          return doc('settings/church').get().then(function (st) { onState({ stage: 'setup', email: email, needChurch: !st.exists }); });
+          return doc('settings/church').get().then(function (st) { if (g === authGen) onState({ stage: 'setup', email: email, needChurch: !st.exists }); });
         }
         subscribe();
       }).catch(function (e) {
+        if (g !== authGen) return;
         onState(e && e.code === 'permission-denied' ? { stage: 'noAccess', email: email } : { stage: 'error', message: offlineNow() ?
           'You’re offline, and this device has no copy of Church & Trellis yet. Connect to the internet once, then it will open offline too.' :
           'Church & Trellis couldn’t load. Check your internet connection and refresh the page.' });
@@ -706,10 +714,11 @@ var Store = (function () {
     function startCodeSession(u) {
       if (claiming) return;
       if (u.isAnonymous) { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut' }); }); }   // a code left half-used
-      var email = String(u.email).toLowerCase();
+      var email = String(u.email).toLowerCase(), g = authGen;
       onState({ stage: 'loading', email: '', step: 'checking' });
       var get = function () { return offlineNow() ? doc('roles/' + email).get({ source: 'cache' }).catch(function () { return doc('roles/' + email).get(); }) : doc('roles/' + email).get(); };
       ownCopy(email).then(get).then(function (snap) {
+        if (g !== authGen) return;
         if (!snap.exists) {   // switched off by the church (or never finished): they need a new code
           if (!(snap.metadata && snap.metadata.fromCache)) wipe();
           codeQuiet = true;
@@ -719,6 +728,7 @@ var Store = (function () {
         session = { email: email, code: true, login: r.login || '', role: 'member', personId: r.personId || '', langs: [], can: [], standInFrom: 0, standInTo: 0, household: [] };
         subscribe();
       }).catch(function (e) {
+        if (g !== authGen) return;
         if (e && e.code === 'permission-denied') { codeQuiet = true; return auth.signOut().then(function () { onState({ stage: 'signedOut', message: 'unlinked' }); }); }
         onState({ stage: 'error', message: offlineNow() ? 'You’re offline, and this device has no copy of Church & Trellis yet. Connect to the internet once, then it will open offline too.' :
           'Church & Trellis couldn’t load. Check your internet connection and refresh the page.' });

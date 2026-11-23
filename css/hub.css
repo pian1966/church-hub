@@ -902,6 +902,16 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 /* Who can see what: a grid of ticks, one column per kind of access */
 .see-grid td.c, .see-grid th.c, #access-kinds .c { text-align: center; }
 .see-grid td:first-child { min-width: 180px; }
+/* On a phone each row of these tables is a card: the thing first, then one line per kind of access with its box at the right */
+@media (max-width: 560px) {
+  table.see-grid td:first-child { min-width: 0; font-weight: 700; padding: 0 0 6px; }
+  table.see-grid tr { margin-bottom: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  table.see-grid td.c { text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line-2); }
+  table.see-grid td.c[data-label]::before { margin: 0; flex: 1; font-size: 14px; font-weight: 500; color: var(--ink); }
+  table.see-grid td.c input[type=checkbox] { flex: none; width: 22px; height: 22px; margin: 0; }
+  table.see-grid td.c.muted { display: block; border-top: 0; padding: 4px 0 0; font-size: 13px; }
+  table.see-grid td.c.dash { display: none; }
+}
 
 /* Applying to become a Church Partner (js/people/apply.js) */
 .yn { border: 0; padding: 0; margin: 0 0 14px; } .yn legend { margin-bottom: 6px; font-weight: 600; font-size: 14px; }

@@ -372,7 +372,7 @@
     var P = window.PeopleParts, see = st.seeOthers || {}, care = st.seeCare || [];
     var roleHead = function (r) { return '<th scope="col" class="c">' + esc(H.roleLabel(r)) + '</th>'; };
     var always = '<p class="hint" style="margin:6px 0 0">' + T('Administrators and Pastors always see everything.') + '</p>';
-    var box = function (cls, val, on, label) { return '<td class="c"><input type="checkbox" class="' + cls + '"' + (val ? ' value="' + val + '"' : '') + (on ? ' checked' : '') + ' aria-label="' + esc(label) + '"></td>'; };
+    var box = function (cls, val, on, label) { return '<td class="c" data-label="' + esc(String(label).split(': ')[0]) + '"><input type="checkbox" class="' + cls + '"' + (val ? ' value="' + val + '"' : '') + (on ? ' checked' : '') + ' aria-label="' + esc(label) + '"></td>'; };
     var none = '<td class="c muted">–</td>';
     var html = '';
     if (!P) return html;
@@ -380,7 +380,7 @@
     html += '<div data-autoscope>' +   // both panels below save together, by themselves
       '<section class="panel" id="see-others"><h2>' + T('Other people’s contact details') + ' ' + H.tip(T('Only people who agreed to “Church directory” are shown to others. People with Basic access see contact details as pictures: they can read them, but can’t tap or copy them.')) + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('Everyone who signs in sees the name and photo of people in the church directory. Tick which of their contact details each kind of access may also see.') + '</p>' +
-      '<div class="table-wrap"><table class="simple see-grid"><thead><tr><th>' + T('Contact detail') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="simple see-grid stack-phone"><thead><tr><th>' + T('Contact detail') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
       P.SHARE.map(function (f) {
         return '<tr><td>' + esc(T(f[1])) + (f[0] === 'spouse' ? ' ' + H.tip(T('The name of their husband, wife or partner, when both are in Church & Trellis.')) : '') + '</td>' + P.TIERS.map(function (t) {
           return box('st-see" data-t="' + t[0], f[0], (see[t[0]] || []).indexOf(f[0]) >= 0, H.roleLabel(t[0]) + ': ' + T(f[1]));
@@ -394,13 +394,13 @@
     var row = function (label, tip, cells) { return '<tr><td>' + esc(label) + ' ' + H.tip(tip) + '</td>' + cells + '</tr>'; };
     html += '<section class="panel" id="see-care"><h2>' + T('Care Groups') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + T('What each kind of access sees of the Care Groups. Carers always see everyone in their own group.') + '</p>' +
-      '<div class="table-wrap"><table class="simple see-grid"><thead><tr><th>' + T('They may') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="simple see-grid stack-phone"><thead><tr><th>' + T('They may') + '</th>' + P.TIERS.map(function (t) { return roleHead(t[0]); }).join('') + '</tr></thead><tbody>' +
       row(T('See all Care Groups and who is in each'), T('Names only, on the Care Groups page. Church Partners see only people who are in the church directory.'),
         P.TIERS.map(function (t) { return box('st-care', t[0], care.indexOf(t[0]) >= 0, H.roleLabel(t[0]) + ': ' + T('See all Care Groups and who is in each')); }).join('')) +
       row(T('See which Care Group someone is in, on their page in People'), T('A “Care Group member” or “Carer” tag with the group’s name, on the person’s page and in the directory.'),
         box('st-careppl', '', S.careOnPeople(), H.roleLabel('member') + ': ' + T('See which Care Group someone is in, on their page in People')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">' + T('when they may see all Care Groups') + '</td>') +
       row(T('See everyone in their own Care Group, not just the carers'), T('Members of a Care Group see each other’s cards (photo, phone, email, address, birthday) if each one agreed to “Care Group”.'),
-        box('st-careown', '', st.seeCareOwn !== false, H.roleLabel('member') + ': ' + T('See everyone in their own Care Group, not just the carers')) + '<td class="c muted" colspan="' + (P.TIERS.length - 1) + '">–</td>') +
+        box('st-careown', '', st.seeCareOwn !== false, H.roleLabel('member') + ': ' + T('See everyone in their own Care Group, not just the carers')) + '<td class="c muted dash" colspan="' + (P.TIERS.length - 1) + '">–</td>') +
       '</tbody></table></div>' + always +
       (function (n) {   // "All groups" for Church Partners shows only people in the church directory: say how many are left out
         return n ? '<p class="hint care-hidden">' + TN('{n} person in a Care Group isn’t in the church directory, so Church Partners don’t see them on the Care Groups page.', '{n} people in Care Groups aren’t in the church directory, so Church Partners don’t see them on the Care Groups page.', n) +

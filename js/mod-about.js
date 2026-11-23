@@ -99,7 +99,7 @@
     rows.push(['Browser too busy to respond', sec(sp.busyMs) + ' in all since opening' + (sp.busyLongest ? ' · longest ' + sec(sp.busyLongest) : '')]);
     if (st.start) rows.push(['Updates from the database', st.snaps + ' · redone ' + st.rebuilds + ' times, ' + sec(st.rebuildMs) + ' in all, slowest ' + sec(st.slowestRebuild)]);
     if (st.start) rows.push(['Saved from this device', String(st.writes)]);
-    var mk = st.marks || {}, tl = [['app code ready', sp.appJs], ['Firebase loaded', mk.sdk], ['signed in', mk.signedIn], ['records loaded', mk.ready]].filter(function (x) { return x[1]; }).map(function (x) { return x[0] + ' ' + sec(x[1]); }).join(' → ');
+    var mk = st.marks || {}, tl = [['app code ready', sp.appJs], ['Firebase loaded', mk.sdk], ['signed in', mk.signedIn], ['offline copy open', mk.copyOpen], ['copy checked', mk.copyChecked], ['access known', mk.accessKnown], ['records loaded', mk.ready]].filter(function (x) { return x[1]; }).map(function (x) { return x[0] + ' ' + sec(x[1]); }).join(' → ');
     if (tl) rows.push(['Timeline (seconds after opening)', tl]);
     if ((sp.longs || []).length) rows.push(['Longest busy spells', sp.longs.map(function (x) { return 'at ' + sec(x.at) + ' for ' + sec(x.ms); }).join(' · ')]);
     rows.push(['Open for', sec(Date.now() - sp.opened)]);

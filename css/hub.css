@@ -902,6 +902,16 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 /* Who can see what: a grid of ticks, one column per kind of access */
 .see-grid td.c, .see-grid th.c, #access-kinds .c { text-align: center; }
 .see-grid td:first-child { min-width: 180px; }
+/* On a phone each row of these tables is a card: the thing first, then one line per kind of access with its box at the right */
+@media (max-width: 560px) {
+  table.see-grid td:first-child { min-width: 0; font-weight: 700; padding: 0 0 6px; }
+  table.see-grid tr { margin-bottom: 10px; padding: 12px 14px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface); }
+  table.see-grid td.c { text-align: left; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 8px 0; border-top: 1px solid var(--line-2); }
+  table.see-grid td.c[data-label]::before { margin: 0; flex: 1; font-size: 14px; font-weight: 500; color: var(--ink); }
+  table.see-grid td.c input[type=checkbox] { flex: none; width: 22px; height: 22px; margin: 0; }
+  table.see-grid td.c.muted { display: block; border-top: 0; padding: 4px 0 0; font-size: 13px; }
+  table.see-grid td.c.dash { display: none; }
+}
 
 /* Applying to become a Church Partner (js/people/apply.js) */
 .yn { border: 0; padding: 0; margin: 0 0 14px; } .yn legend { margin-bottom: 6px; font-weight: 600; font-size: 14px; }
@@ -1501,8 +1511,13 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 .acc-lines { margin: 0; padding-left: 18px; font-size: 13.5px; line-height: 1.45; }
 .acc-lines li { margin: 2px 0; }
 .acc-act { display: flex; gap: 6px; margin-top: auto; padding-top: 10px; flex-wrap: wrap; }
-.acc-job .btn { white-space: nowrap; }
-@media (max-width: 600px) { .acc-job { flex-wrap: wrap; } .acc-job .btn { margin-left: auto; } }
+.acc-job { flex-direction: column; align-items: stretch; gap: 4px; padding: 14px 16px; }
+.acc-job-top { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.acc-job-top b { flex: 1; min-width: 0; font-size: 15px; }
+.acc-job small { line-height: 1.4; }
+.acc-where { align-self: flex-start; margin-top: 6px; padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; font-size: 13px; font-weight: 600; color: var(--ink); text-decoration: none; background: var(--surface); }
+.acc-where span { font-weight: 500; color: var(--muted); }
+.acc-where:hover { border-color: var(--a, #E8590C); color: var(--a, #E8590C); }
 .chip-row { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 2px; }   /* names in a serving group, each opening the person's page */
 
 /* ---------- tooltip hint on positions ---------- */

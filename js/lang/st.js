@@ -47,6 +47,7 @@ I18n.add('st', {
     "Open the Archive (minutes, plans, contracts)": "Ba bula Archive (metsotso, meralo, dikonteraka)",
     "Groups → Leadership": "Dihlopha → Boetapele",
     "Jobs in one part of the app": "Mesebetsi karolong e le nngwe ya app",
+    "Where:": "Hokae:",
     "Chosen people, whatever their access. Each is chosen where the job is done.": "Batho ba kgethilweng, ho sa tsotellehe phihlello ya bona. E mong le e mong o kgethwa moo mosebetsi o etswang teng.",
     "On this page": "Leqepheng lena",
     "Jobs": "Mesebetsi",

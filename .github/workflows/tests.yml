@@ -5,14 +5,25 @@
 # A branch is tested once its pull request is open (not on every push as well, which ran the same tests twice at once);
 # main is tested again after each merge, in case two pull requests that passed on their own don't work together.
 # The test browser and the database emulator are kept between runs (cached), so they aren't downloaded every time.
+#
+# SPEED: the work is split into jobs that run side by side – the quick node tests plus the database rules ("checks"),
+# and the browser test cut into four parts that run on four machines at once ("Browser A–D"; each runs some of the
+# parts in tests/app/ through PARTS=…). A last job called "test" waits for all of them and is the one "Protect main"
+# looks at, so its name must stay "test". A new file in tests/app/ must be added to one of the four lists below
+# (the "checks" job fails until it is). A newer push to the same pull request cancels the older run.
 name: Tests
 on:
   push: { branches: [main] }
   pull_request:
 permissions: { contents: read, pull-requests: read }
+concurrency:
+  group: tests-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 jobs:
-  test:
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      skip: ${{ steps.changes.outputs.skip }}
     steps:
       - name: Only the website or the documentation changed?
         id: changes
@@ -35,94 +46,114 @@ jobs:
             echo 'skip=true' >> "$GITHUB_OUTPUT"
             echo 'Only the website or the documentation changed - the tests are skipped.'
           fi
-      - if: steps.changes.outputs.skip != 'true'
-        uses: actions/checkout@v5
-      - if: steps.changes.outputs.skip != 'true'
-        uses: actions/setup-node@v5
+  checks:
+    needs: changes
+    if: needs.changes.outputs.skip != 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with: { node-version: 22 }
-      - if: steps.changes.outputs.skip != 'true'
-        uses: actions/setup-java@v5
+      - uses: actions/setup-java@v5
         with: { distribution: temurin, java-version: 21 }
-      - if: steps.changes.outputs.skip != 'true'
-        name: Rostering rules
+      - name: Every browser-test part is in one of the four lists
+        run: |
+          for f in tests/app/*.js; do
+            n=$(basename "$f" .js)
+            grep -Eq "parts: '([^']*,)?$n(,[^']*)?'" .github/workflows/tests.yml || { echo "::error title=Browser test part missing::tests/app/$n.js is not in any list in .github/workflows/tests.yml, so GitHub would never run it. Add it to one of the four Browser lists (and to the default list in tests/app.test.js)."; exit 1; }
+          done
+      - name: Rostering rules
         run: node tests/roster.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Leave Manager import
+      - name: Leave Manager import
         run: node tests/leave-import.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Elvanto import
+      - name: Elvanto import
         run: node tests/elvanto-import.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Elvanto updates (leave → Unavailable Volunteers) and the robot
+      - name: Elvanto updates (leave → Unavailable Volunteers) and the robot
         run: node tests/elvanto-sync.test.js && node tests/robot.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Households and guardians
+      - name: Households and guardians
         run: node tests/households.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Version numbers (every file fetched again after an update)
+      - name: Version numbers (every file fetched again after an update)
         run: node tests/versions.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Generic brochure branding
+      - name: Generic brochure branding
         run: node tests/brochure.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Languages
+      - name: Languages
         run: node tests/i18n.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Advanced people search
+      - name: Advanced people search
         run: node tests/people-search.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: People list search (names, contact details, addresses)
+      - name: People list search (names, contact details, addresses)
         run: node tests/directory-search.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Finding duplicates
+      - name: Finding duplicates
         run: node tests/duplicates.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Countries (addresses, regions)
+      - name: Countries (addresses, regions)
         run: node tests/countries.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Setup tool (covers every part of the app)
+      - name: Setup tool (covers every part of the app)
         run: node tests/setup-kit.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Church wording
+      - name: Church wording
         run: node tests/wording.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Privacy law by country
+      - name: Privacy law by country
         run: node tests/privacy-law.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Services and special services
+      - name: Services and special services
         run: node tests/serving.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Care groups
+      - name: Care groups
         run: node tests/care.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Messages
+      - name: Messages
         run: node tests/messages.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Leadership groups, the Archive and the Library
+      - name: Leadership groups, the Archive and the Library
         run: node tests/leaders.test.js && node tests/archive.test.js && node tests/library.test.js && node tests/richtext.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Home tips and what's new
+      - name: Home tips and what's new
         run: node tests/tips.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Subscription (coffee prices, payment holidays, the prayer circle)
+      - name: Subscription (coffee prices, payment holidays, the prayer circle)
         run: node tests/coffee.test.js && node tests/community.test.js && node tests/studies.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Events (signing up, reminders 3 days and 1 day before), the email robot, and names from a photo of a sheet
+      - name: Events (signing up, reminders 3 days and 1 day before), the email robot, and names from a photo of a sheet
         run: node tests/events.test.js && node tests/event-mail.test.js && node tests/name-list.test.js
-      - if: steps.changes.outputs.skip != 'true'
-        name: Keep the test browser and the database emulator between runs
+      - name: Keep the database emulator between runs
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.cache/ms-playwright
-            ~/.cache/firebase/emulators
-          key: test-tools-playwright-1.64-firebase-15
-      - if: steps.changes.outputs.skip != 'true'
-        name: Install test tools
-        run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13 playwright@1.64
-      - if: steps.changes.outputs.skip != 'true'
-        name: Database security rules (firestore.rules)
+          path: ~/.cache/firebase/emulators
+          key: test-tools-firebase-15
+      - name: Install test tools
+        run: npm i --no-save firebase-tools@15 @firebase/rules-unit-testing@6 firebase@13
+      - name: Database security rules (firestore.rules)
         run: npx firebase emulators:exec --only firestore --project demo-church-hub "node tests/rules.test.mjs"
-      - if: steps.changes.outputs.skip != 'true'
-        name: App in a browser, every role (demo and live)
-        run: npx playwright install --with-deps chromium && node tests/app.test.js
+
+  browser:
+    needs: changes
+    if: needs.changes.outputs.skip != 'true'
+    name: Browser ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false          # let every part finish, so one failure doesn't hide another
+      matrix:
+        include:
+          - { name: A, parts: 'records,names,welcome,household,offline' }
+          - { name: B, parts: 'people,admin,elvanto-leave,community,leave-more,ask' }
+          - { name: C, parts: 'care,roles,messages,imports,pastors' }
+          - { name: D, parts: 'partners,people-details,signin,life,support,events,languages' }
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with: { node-version: 22 }
+      - name: Keep the test browser between runs
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: test-tools-playwright-1.64
+      - name: Install the test browser
+        run: npm i --no-save playwright@1.64 && npx playwright install --with-deps chromium
+      - name: App in a browser, every role (demo and live)
+        env: { PARTS: '${{ matrix.parts }}' }
+        run: node tests/app.test.js
+
+  # The one check "Protect main" waits for. Green when everything passed, or when the tests were skipped on purpose.
+  test:
+    if: always()
+    needs: [changes, checks, browser]
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "changes=${{ needs.changes.result }} checks=${{ needs.checks.result }} browser=${{ needs.browser.result }}"
+          case "${{ needs.changes.result }}${{ needs.checks.result }}${{ needs.browser.result }}" in
+            *failure*|*cancelled*) echo "::error title=Tests::A test part failed or was cancelled."; exit 1;;
+          esac

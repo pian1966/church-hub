@@ -322,9 +322,9 @@ var Store = (function () {
     var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
       'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs', 'appFirstSeen'];
     var DIRECTORY = 'Church directory';
-    var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false;
+    var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false, lastWrite = 0;
     /** For About → Speed check (Administrators): how long loading took and how much the database sent and was sent. */
-    var stats = { start: 0, loaded: 0, snaps: 0, rebuilds: 0, rebuildMs: 0, slowestRebuild: 0, writes: 0, sizes: {} };
+    var stats = { marks: {}, start: 0, loaded: 0, snaps: 0, rebuilds: 0, rebuildMs: 0, slowestRebuild: 0, writes: 0, sizes: {} };
     var savedLeave = { requests: {}, adjustments: {}, config: '' }, remoteTimer = null;
     var MAX_SHARED = 4;   // people who may share one sign-in (one email address); the rules allow the first and 3 others
     var extraSubs = {};   // the Archive and a librarian's loans: asked for once the settings are known (extras())
@@ -338,9 +338,10 @@ var Store = (function () {
     }
     function clean(o) { var c = copy(o); if (c) delete c.id; return c; }
     function doc(path) { return fs.doc(path); }
-    function write(path, data) { local[path] = clean(data); return doc(path).set(clean(data)).catch(function (e) { delete local[path]; err(e, 'save this'); }); }
+    function write(path, data) { lastWrite = Date.now(); local[path] = clean(data); return doc(path).set(clean(data)).catch(function (e) { delete local[path]; err(e, 'save this'); }); }
     /** Change only some fields of a document (for someone allowed to change only those, e.g. the Senior Pastor choosing librarians). */
-    function patch(path, data) { return doc(path).update(clean(data)).catch(function (e) { err(e, 'save this'); }); }
+
+    function patch(path, data) { lastWrite = Date.now(); return doc(path).update(clean(data)).catch(function (e) { err(e, 'save this'); }); }
     function syncCouncilPreviewMembers(ids) {
       if (!session || previewRole || !is('admin', 'pastor')) return Promise.resolve();
       var councilIds = {};
@@ -374,7 +375,7 @@ var Store = (function () {
     function migrateBrochure(value) {
       return doc('brochures/church').set(clean(value)).then(clearLegacyBrochure, function (e) { err(e, 'move the brochure wording to its private settings'); });
     }
-    function del(path) { local[path] = null; return doc(path).delete().catch(function (e) { delete local[path]; err(e, 'delete this'); }); }
+    function del(path) { lastWrite = Date.now(); local[path] = null; return doc(path).delete().catch(function (e) { delete local[path]; err(e, 'delete this'); }); }
     /** What the database holds for one document, as far as we know (our own unconfirmed writes count). */
     function known(path) {
       if (path in local) return local[path];
@@ -477,6 +478,7 @@ var Store = (function () {
       onState({ stage: 'loading', step: 'connecting' });
       loadSdk(function (e) {
         if (e) return onState({ stage: 'error', message: 'Church & Trellis couldn’t connect. Check your internet connection and refresh the page.' });
+        stats.marks.sdk = Math.round(performance.now());
         fb = window.firebase;
         if (!fb.apps.length) fb.initializeApp(cfg);
         auth = fb.auth(); openDb();
@@ -552,6 +554,7 @@ var Store = (function () {
     function startSession(u) {
       if (u.isAnonymous || isPin(u)) return startCodeSession(u);   // a number-and-PIN sign-in (or a code being used)
       var email = (u.email || '').toLowerCase();
+      stats.marks.signedIn = Math.round(performance.now());
       onState({ stage: 'loading', email: email, step: 'checking' });
       if (!u.emailVerified) return onState({ stage: 'noAccess', email: email, reason: 'unverified' });
       // Offline: straight from the copy on this device (otherwise Firestore first waits to be sure there's no connection)
@@ -865,7 +868,7 @@ var Store = (function () {
       if (is('admin', 'pastor')) add('officeNotes', coll('officeNotes'));
       if (may('import')) { add('elvantoSync', coll('elvantoSync')); add('robotStatus', coll('robotStatus')); add('elvantoFound', coll('elvantoFound')); }
       else add('elvantoSync', own('elvantoSync'));
-      if (may('privacy')) { ['dsr', 'breaches'].forEach(function (c) { add(c, coll(c)); }); add('audit', coll('audit').orderBy('ts', 'desc').limit(1000)); }
+      if (may('privacy')) ['dsr', 'breaches'].forEach(function (c) { add(c, coll(c)); });   // the audit log (1000 entries) is only for Privacy: asked for a few seconds later, see lateAudit()
       if (may('settings')) add('emailPrompts', coll('emailPrompts'));
       if (may('leave')) { add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', coll('leaveAdjustments')); }
       else if (standingIn()) { add('leaveRequests', coll('leaveRequests')); add('leaveAdjustments', own('leaveAdjustments', 'staffId')); }
@@ -898,7 +901,7 @@ var Store = (function () {
             if (--pending === 0) whenLoaded();
             else onState({ stage: 'loading', email: session ? session.email : '', step: 'syncing', done: loaded + 1, total: total });
           }
-          else if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
+          else if (ready) rebuildSoon(!snap.metadata.hasPendingWrites);
         }, function (e) {
           // An attendee isn't allowed the church directory (or names) unless Settings → Attendees says so: expected, not an error
           if (s.key === 'directory' || s.key === 'names') console.warn('Not loaded (not allowed): ' + s.key); else console.error('Could not load ' + s.key, e);
@@ -930,7 +933,7 @@ var Store = (function () {
         if (shareSubs[g] && shareKeys[g] === k) return;
         if (shareSubs[g]) stopOne(g);
         shareKeys[g] = k;
-        var changed = function () { if (ready) { rebuild(); remoteChanged(); } };
+        var changed = function () { if (ready) rebuildSoon(true); };
         if (!ids) {
           shareSubs[g] = fs.collection('careGroups/' + g + '/share').onSnapshot(function (snap) {
             var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw['share:' + g] = m; changed();
@@ -956,7 +959,7 @@ var Store = (function () {
       if (!want || careAllSub) return;
       careAllSub = fs.collection('careGroups').onSnapshot(function (snap) {
         var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw.careGroupsAll = m;
-        if (ready) { rebuild(); remoteChanged(); }
+        if (ready) rebuildSoon(true);
       }, function (e) { console.warn('Could not load every care group (re-publish the database rules?)', e && e.code); careAllSub = null; });
     }
     /** Lists that depend on the church's settings or on my leadership groups, so they can only be asked for once those
@@ -1033,7 +1036,7 @@ var Store = (function () {
         if (extraSubs[k]) return;
         extraSubs[k] = want[k].onSnapshot(function (snap) {
           var m = {}; if (snap.docs) snap.docs.forEach(function (d) { m[d.id] = d.data(); }); else if (snap.exists) m[snap.id] = snap.data(); raw[k] = m;   // a collection, or one document
-          if (ready) { rebuild(); if (!snap.metadata.hasPendingWrites) remoteChanged(); }
+          if (ready) rebuildSoon(!snap.metadata.hasPendingWrites);
         }, function (e) { console.warn('Could not load ' + k + ' (re-publish the database rules?)', e && e.code); delete extraSubs[k]; });
       });
     }
@@ -1104,10 +1107,21 @@ var Store = (function () {
       });
     }
     function forget(coll) { Object.keys(local).forEach(function (k) { if (k.split('/')[0] === coll) delete local[k]; }); }
-    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); careAll(null); stopExtras(); ready = false; }
+    function stop() { unsubs.forEach(function (u) { try { u(); } catch (e) {} }); unsubs = []; shares([]); careAll(null); stopExtras(); ready = false; clearTimeout(rebuildTimer); rebuildTimer = null; rebuildWantsRemote = false; }
     function remoteChanged() {
       clearTimeout(remoteTimer);
       remoteTimer = setTimeout(function () { remoteListeners.forEach(function (fn) { try { fn(); } catch (e) { console.error(e); } }); }, 300);
+    }
+    /** The audit log is only shown under Privacy, so it is fetched after the first screen is up and the phone has had a moment to settle. */
+    function lateAudit() {
+      if (previewRole || !may('privacy')) return;
+      setTimeout(function () {
+        if (!ready || !session || previewRole || raw.audit) return;
+        unsubs.push(fs.collection('audit').orderBy('ts', 'desc').limit(1000).onSnapshot(function (snap) {
+          var m = {}; snap.docs.forEach(function (d) { m[d.id] = d.data(); }); raw.audit = m; stats.sizes.audit = snap.docs.length;
+          if (ready) rebuildSoon(false);
+        }, function (e) { console.warn('Audit log not loaded', e && e.code); }));
+      }, 6000);
     }
     function whenLoaded() {
       rebuild();
@@ -1121,7 +1135,7 @@ var Store = (function () {
       if (!db.settings && role() === 'admin') return onState({ stage: 'setup', email: session.email, needChurch: true });
       if (!db.settings) return onState({ stage: 'noAccess', email: session.email, reason: 'notReady' });
       if (!meP) return onState(role() === 'admin' ? { stage: 'setup', email: session.email } : { stage: 'noAccess', email: session.email, reason: 'noPerson' });
-      ready = true; stats.loaded = Date.now();
+      ready = true; stats.loaded = Date.now(); stats.marks.ready = Math.round(performance.now());
       if (!previewRole && is('admin', 'pastor')) syncCouncilPreviewMembers();
       // My own directory entry shows my care groups when Settings asks for it (carers may have added me)
       var dirMe = (raw.directory || {})[session.personId];
@@ -1141,6 +1155,7 @@ var Store = (function () {
         syncLifeLeaders();
       }, 1700);
       if (!previewRole && !offlineNow() && is('admin')) setTimeout(function () { if (ready && session && !previewRole && !offlineNow() && is('admin')) { syncMinisters(); syncRosterTeam(); } }, 2000);
+      lateAudit();
       onState({ stage: 'ready', person: meP, email: session.email, role: role() });
     }
     /** Administrators: the ministers' names in Settings (settings.ministers), so everyone may write to them. */
@@ -1162,6 +1177,22 @@ var Store = (function () {
     /* ---------- putting the pieces back together ---------- */
     function arr(key) { var m = raw[key] || {}; return Object.keys(m).map(function (id) { var o = copy(m[id]); o.id = id; return o; }); }
     function merged() { var out = {}; Array.prototype.slice.call(arguments).forEach(function (k) { var m = raw[k] || {}; Object.keys(m).forEach(function (id) { out[id] = m[id]; }); }); return out; }
+    /** Updates that arrive from the server (each part of the church's records answers a second time once it has been checked
+     *  online) are gathered and put together once, a moment later – not once each, which froze the phone just after it looked ready. */
+    var rebuildTimer = null, rebuildWantsRemote = false;
+    function rebuildSoon(remote) {
+      if (remote) rebuildWantsRemote = true;
+      // Only the burst of updates just after opening is gathered; after that, and right after anything this person saves, it is immediate
+      var now = Date.now();
+      if (!rebuildTimer && (now - lastWrite < 3000 || now - stats.loaded > 10000)) { rebuild(); if (rebuildWantsRemote) { rebuildWantsRemote = false; remoteChanged(); } return; }
+      if (rebuildTimer) return;
+      rebuildTimer = setTimeout(function () {
+        rebuildTimer = null;
+        if (!ready) { rebuildWantsRemote = false; return; }
+        rebuild();
+        if (rebuildWantsRemote) { rebuildWantsRemote = false; remoteChanged(); }
+      }, 100);
+    }
     function rebuild() {
       var t0 = Date.now();
       rebuildAll();
@@ -1457,6 +1488,7 @@ var Store = (function () {
       if (entries.length) write(c + '/' + pid, { entries: entries }); else del(c + '/' + pid);
     }
     function put(c, obj, prev) {
+      lastWrite = Date.now();
       stats.writes++;
       if (c === 'people') return putPerson(obj);
       if (c === 'careShare') { var d = copy(obj); delete d.groupId; delete d.personId; return write('careGroups/' + obj.groupId + '/share/' + obj.personId, d); }   // one card per group: id = group:person

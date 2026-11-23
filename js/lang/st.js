@@ -100,6 +100,7 @@ I18n.add('st', {
     "For people who put their name down on a sheet or told you in person. It is in their name, so they see it under Events and get the reminders.": "Bakeng sa batho ba ngotseng mabitso a bona pampiring kapa ba o boleletseng ka molomo. E ka lebitso la bona, kahoo ba e bona tlasa Diketsahalo mme ba fumana dikgopotso.",
     "{name} is already on the list.": "{name} o se a le lenaneng.",
     "Choose someone else": "Kgetha motho e mong",
+    "Rosters → Teams: the Administrator, the Rector and the assistant ministers can now write a position’s tooltip, and a new position is added in one box. On a phone, tap the small i beside a position to read its tooltip.": "Rosters → Teams: Motsamaisi, Rector le baruti ba thusang jwale ba ka ngola tooltip ea boemo, 'me boemo bo bocha bo kenngoa lebokosong le le leng. Ho mohala, tobetsa i e nyenyane haufi le boemo ho bala tooltip ea bona.",
     "Rosters → Teams: a position that was added by mistake, or isn’t used any more, can now be deleted (⋯ beside it). Each position’s names fold away until you tap them, and its tooltip is set from the same ⋯ menu.": "Rosters → Teams: boemo bo kentsweng ka phoso, kapa bo sa sebediswang, jwale bo ka hlakolwa (⋯ haufi le bona). Mabitso a boemo ka bong a ipata ho fihlela o a tobetsa, mme tooltip ea bona e behoa ho menu eo ea ⋯.",
     "Adding names from a sheet to an event: each person now has their own guests counter (filled in from “+2” on the sheet). Choose a photo also opens Google Photos on Android.": "Ho kenya mabitso a tswang leqepheng ketsahalong: motho ka mong jwale o na le palo ya hae ya baeti (e tlatswa ho tswa ho “+2” leqepheng). Kgetha foto e bula le Google Photos ho Android.",
     "Say a name instead of typing it: tap the microphone in People’s search, or in any box where you look for someone. Names that sound like what you said come up too – tap the right one.": "Bua lebitso ho ena le ho le ngola: tobetsa maekrofounu patlong ya Batho, kapa lebokoseng lefe kapa lefe moo o batlang motho. Mabitso a utlwahalang jwalo ka seo o se buileng a hlaha le ona – tobetsa le nepahetseng.",
@@ -4210,6 +4211,8 @@ I18n.add('st', {
     "If it is only not needed for a while, switch it off under Rosters → Services instead.": "Haeba ha e hlokahale nakoana feela, e tima ho Rosters → Services.",
     "Delete position": "Hlakola boemo",
     "{position} deleted": "{position} e hlakotsoe",
+    "New position": "Boemo bo bocha",
+    "optional": "ka boikhethelo",
 },
 
 });

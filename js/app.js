@@ -452,10 +452,10 @@ var Hub = (function () {
     var inMenu = !!sel.closest('#modal'); render(); if (inMenu) { closeModal(); hubActions.menu(); }
   });
   /** About → Speed check (Administrators): how long each page took to draw, and how long the browser was too busy to respond. */
-  var speed = { pages: [], busyMs: 0, busyLongest: 0, opened: Date.now() };
+  var speed = { pages: [], longs: [], appJs: Math.round(performance.now()), busyMs: 0, busyLongest: 0, opened: Date.now() };
   try {
     if (typeof PerformanceObserver !== 'undefined' && (PerformanceObserver.supportedEntryTypes || []).indexOf('longtask') >= 0)
-      new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { speed.busyMs += e.duration; if (e.duration > speed.busyLongest) speed.busyLongest = e.duration; }); }).observe({ entryTypes: ['longtask'] });
+      new PerformanceObserver(function (l) { l.getEntries().forEach(function (e) { speed.busyMs += e.duration; if (e.duration > speed.busyLongest) speed.busyLongest = e.duration; speed.longs.push({ at: Math.round(e.startTime), ms: Math.round(e.duration) }); speed.longs.sort(function (x, y) { return y.ms - x.ms; }); speed.longs.length = Math.min(speed.longs.length, 5); }); }).observe({ entryTypes: ['longtask'] });
   } catch (e) { /* not in this browser */ }
   function render() {
     var t0 = Date.now();
@@ -791,16 +791,16 @@ var Hub = (function () {
   var linkCode = '';
   function onLiveState(st) {
     live = st;
-    if (switching && st.stage === 'ready') { var d = switching; switching = null; user = st.person; Store.setUser(user); d(); return; }   // "View as" finished loading
-        if (switching && st.stage === 'loading') { updateSplash(st); return; }   // still loading the new role: keep waiting
+    if (switching && st.stage === 'ready') { clearTimeout(splashTimer); splashTimer = null; var d = switching; switching = null; user = st.person; Store.setUser(user); d(); return; }   // "View as" finished loading
+    if (switching && st.stage === 'loading') { updateSplash(st); return; }   // still loading the new role: keep waiting
     switching = null;
     if (st.stage === 'ready') {
       clearTimeout(splashTimer); splashTimer = null;
       user = st.person; Store.setUser(user);
       Store.audit('Signed in', 'people/' + user.id);
       runUpgrades();
-      keepFiles();
       firstSeen();
+      setTimeout(keepFiles, 4000);   // not needed for the first screen: a few seconds later, so the phone answers taps sooner
       var after = (Store.pref('afterSignIn') || '').split('|'); Store.pref('afterSignIn', '');
       if ((!location.hash || location.hash === '#' || location.hash === '#/home') && after[0] && Date.now() - (+after[1] || 0) < 864e5) location.hash = after[0];   // within a day
       if (location.hash === '#/start') location.hash = '#/home';   // the invitation's link (People → Invitations): Home, with its app prompts

@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.107';
   var NEWS = [
+    { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], text: TX('Rosters → Teams: the Administrator, the Rector and the assistant ministers can now write a position’s tooltip, and a new position is added in one box. On a phone, tap the small i beside a position to read its tooltip.') },
     { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], text: TX('Rosters → Teams: a position that was added by mistake, or isn’t used any more, can now be deleted (⋯ beside it). Each position’s names fold away until you tap them, and its tooltip is set from the same ⋯ menu.') },
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', text: TX('Adding names from a sheet to an event: each person now has their own guests counter (filled in from “+2” on the sheet). Choose a photo also opens Google Photos on Android.') },
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], text: TX('Say a name instead of typing it: tap the microphone in People’s search, or in any box where you look for someone. Names that sound like what you said come up too – tap the right one.') },

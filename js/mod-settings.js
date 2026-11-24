@@ -49,6 +49,13 @@
       (finder ? '<div style="margin-top:10px">' + finder('st-rteam', pick, 'settings:rtadd', {}, null, T('Add someone: type part of their name')) + '</div>' : '') + '</section>';
   }
 
+  /** Whether volunteers see who else is serving at their services (Me → Serving): names and positions only (settings.crewView). */
+  function renderCrewView(st) {
+    return '<section class="panel" id="st-crew"><h2>' + T('Who’s serving with you') + '</h2>' +
+      '<label class="check"><input type="checkbox" id="st-crewview" data-act="settings:crewview"' + (st.crewView !== false ? ' checked' : '') + '><span><b>' + T('Volunteers see who else is serving at their services') + '</b><br>' +
+      '<span class="muted small">' + T('Names and jobs only, under each of their turns on Me → Serving – like the printed roster. No contact details.') + '</span></span></label></section>';
+  }
+
   var allSvcs = false;   // show every upcoming service, not just the next few
   /** Services that need a roster: the upcoming ones (remove any you won't hold), regular ones for some weeks, and special ones. */
   function renderServices(st, svcs) {
@@ -263,7 +270,7 @@
     else if (a === 'application') body = window.PeopleParts && PeopleParts.formSettings ? PeopleParts.formSettings() : '';
     else if (a === 'access') body = renderAccessPage(st, parts && MERGED[parts[0]]); else if (a === 'services') {
       var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(Serving.byWhen);
-      body = renderSlots() + renderServices(st, svcs) + renderRosterTeam(st);
+      body = renderSlots() + renderServices(st, svcs) + renderRosterTeam(st) + renderCrewView(st);
     } else body = renderGeneral(st);
     return layout(a, body);
   }
@@ -865,6 +872,7 @@
         S.put('services', { date: date, time: time, name: name, slot: like, venue: venue, special: true }, 'Added a special service: ' + name + ' on ' + date);
         H.render(); H.toast(T('{name} added – make its roster under Rosters', { name: name }));
       },
+      crewview: function (el) { S.setSettings({ crewView: !!el.checked }, 'Volunteers see who else is serving at their services: ' + (el.checked ? 'on' : 'off')); H.toast(T('Saved')); },
       rtadd: function (el) {
         var p = S.get('people', el.dataset.id), ids = ((S.settings() || {}).rosterExtra || []).slice(); if (!p || ids.indexOf(p.id) >= 0) return;
         ids.push(p.id); S.setRosterExtra(ids, H.name(p) + ' now hears about roster replies'); H.render(); H.toast(T('{name} added', { name: H.name(p) }));

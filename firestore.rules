@@ -322,13 +322,55 @@ service cloud.firestore {
       allow read: if staff() || mine(resource.data.personId);
       allow write: if rosterer();
     }
-    // Members can accept or decline their own turns, nothing else.
+    // Members can accept or decline their own turns, nothing else - and someone asked to take another's place
+    // (serveSwaps, same id) may take that turn over: it becomes theirs, accepted.
+    function swapPath(id) { return /databases/$(database)/documents/serveSwaps/$(id); }
+    function takesOver(id) {
+      let s = get(swapPath(id)).data;
+      return mine(s.toId) && s.status in ['asked', 'taken'] && resource.data.personId == s.fromId
+        && request.resource.data.personId == s.toId && request.resource.data.status == 'accepted'
+        && onlyChanges(['personId', 'status', 'updatedAt', 'createdAt']);   // createdAt: a turn saved before it was noted
+    }
     match /assignments/{id} {
       allow read: if staff() || mine(resource.data.personId);
       allow create, delete: if rosterer();
       allow update: if rosterer()
         || (mine(resource.data.personId) && onlyChanges(['status', 'updatedAt'])
-            && request.resource.data.status in ['accepted', 'declined']);
+            && request.resource.data.status in ['accepted', 'declined'])
+        || (anyone() && exists(swapPath(id)) && takesOver(id));
+    }
+    // Someone who can't make a turn asks someone else to take their place (id = the turn's id). They may only ask people
+    // the roster team listed as free for it (the turn's cover); the person asked says yes (taken) or no (declined).
+    match /serveSwaps/{id} {
+      allow read: if rosterer() || (anyone() && (isMe(resource.data.fromId) || isMe(resource.data.toId)));
+      allow create, update: if rosterer()
+        || (mine(request.resource.data.fromId) && request.resource.data.status == 'asked'
+            && request.resource.data.keys().hasOnly(['fromId', 'fromName', 'toId', 'toName', 'serviceId', 'positionId', 'status', 'turn', 'createdAt', 'updatedAt'])
+            && (resource == null || (resource.data.fromId == request.resource.data.fromId && resource.data.status in ['asked', 'declined']))
+            && get(/databases/$(database)/documents/assignments/$(id)).data.personId == request.resource.data.fromId
+            && request.resource.data.toId in get(/databases/$(database)/documents/assignments/$(id)).data.get('cover', []))
+        || (resource != null && mine(resource.data.toId) && resource.data.status == 'asked'
+            && onlyChanges(['status', 'updatedAt']) && request.resource.data.status in ['taken', 'declined']);
+      allow delete: if rosterer() || mine(resource.data.fromId);
+    }
+    // Who's serving at each service (id = the service's id): names and positions only, kept up to date by the roster team's
+    // app; read by the people serving there, unless the church switched it off (settings crewView).
+    match /crews/{id} {
+      allow read: if rosterer() || (anyone() && meIn(resource.data.get('people', [])) && churchSettings().get('crewView', true) == true);
+      allow write: if rosterer();
+    }
+    // Before planning a term, the roster team asks volunteers whether they'll be away (people = who was asked). Each one
+    // answers by adding themselves to free (no days away) or away (they added days away) - nothing else.
+    match /awayAsks/{id} {
+      allow read: if rosterer() || (anyone() && meIn(resource.data.get('people', [])));
+      allow create, delete: if rosterer();
+      allow update: if rosterer()
+        || (anyone() && meIn(resource.data.get('people', [])) && onlyChanges(['free', 'away', 'updatedAt'])
+            && request.resource.data.get('free', []) is list && request.resource.data.get('away', []) is list
+            && request.resource.data.get('free', []).hasAll(resource.data.get('free', []))
+            && request.resource.data.get('away', []).hasAll(resource.data.get('away', []))
+            && request.resource.data.get('free', []).removeAll(resource.data.get('free', [])).hasOnly(myIds())
+            && request.resource.data.get('away', []).removeAll(resource.data.get('away', [])).hasOnly(myIds()));
     }
     // Serve together / keep apart. Members may set up groups they are part of.
     match /groups/{id} {
@@ -428,10 +470,16 @@ service cloud.firestore {
     // Roster messages (kind roster): a roster coordinator or Administrator tells volunteers they are on the roster or
     // reminds them to reply (ask, remind); a volunteer who can't make it tells the roster team (declined) - the
     // Administrators, Roster coordinators and chosen people listed in settings.rosterTeam.
+    // Taking someone's place: the one who asks writes to the one asked, and the answer goes back (the turn's swap says who)
+    function swapNote(m) {
+      let s = get(swapPath(m.turns[0])).data;
+      return (isMe(s.fromId) && m.to[0] == s.toId) || (isMe(s.toId) && m.to[0] == s.fromId);
+    }
     function mayRosterNote(m) {
       return m.get('turns', []) is list && m.get('turns', []).size() > 0 && m.get('turns', []).size() <= 100
-        && ((m.get('roster', '') in ['ask', 'remind', 'off'] && rosterer())
-          || (m.get('roster', '') == 'declined' && m.to.hasOnly(churchSettings().get('rosterTeam', []))));
+        && ((m.get('roster', '') in ['ask', 'remind', 'off', 'awayask'] && rosterer())
+          || (m.get('roster', '') in ['declined', 'covered'] && m.to.hasOnly(churchSettings().get('rosterTeam', [])))
+          || (m.get('roster', '') == 'cover' && m.to.size() == 1 && swapNote(m)));
     }
     function mayWriteTo(m) {
       return !m.keys().hasAny(['roster', 'turns']) && ((m.kind == 'office' && m.to.size() == 0 && (attendeeMay('write') || (anyone() && m.get('about', '') == 'partnerApp')))

@@ -270,7 +270,32 @@
     assignments: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
       write: function (c, op, id, b, a) {
         if (rosterer(c)) return true;
-        return op === 'update' && mine(c, b.personId) && onlyChanges(b, a, ['status', 'updatedAt']) && ['accepted', 'declined'].indexOf(a.status) >= 0;
+        if (op !== 'update') return false;
+        if (mine(c, b.personId) && onlyChanges(b, a, ['status', 'updatedAt']) && ['accepted', 'declined'].indexOf(a.status) >= 0) return true;
+        var sw = docs['serveSwaps/' + id];   // taking someone's place (firestore.rules takesOver)
+        return !!sw && mine(c, sw.toId) && ['asked', 'taken'].indexOf(sw.status) >= 0 && b.personId === sw.fromId && a.personId === sw.toId && a.status === 'accepted'
+          && onlyChanges(b, a, ['personId', 'status', 'updatedAt', 'createdAt']);
+      } },
+    serveSwaps: { read: function (c, id, d) { return rosterer(c) || (is(c, ANY) && !!d && (isMe(c, d.fromId) || isMe(c, d.toId))); },
+      write: function (c, op, id, b, a) {
+        if (rosterer(c)) return true;
+        if (op === 'delete') return mine(c, b.fromId);
+        var turn = docs['assignments/' + id];
+        if (mine(c, a.fromId) && a.status === 'asked' && onlyKeys(a, ['fromId', 'fromName', 'toId', 'toName', 'serviceId', 'positionId', 'status', 'turn', 'createdAt', 'updatedAt'])
+          && (!b || (b.fromId === a.fromId && ['asked', 'declined'].indexOf(b.status) >= 0))
+          && !!turn && turn.personId === a.fromId && (turn.cover || []).indexOf(a.toId) >= 0) return true;
+        return !!b && mine(c, b.toId) && b.status === 'asked' && onlyChanges(b, a, ['status', 'updatedAt']) && ['taken', 'declined'].indexOf(a.status) >= 0;
+      } },
+    crews: { read: function (c, id, d) { return rosterer(c) || (is(c, ANY) && !!d && meIn(c, d.people || []) && (docs['settings/church'] || {}).crewView !== false); },
+      write: function (c) { return rosterer(c); } },
+    awayAsks: { read: function (c, id, d) { return rosterer(c) || (is(c, ANY) && !!d && meIn(c, d.people || [])); },
+      write: function (c, op, id, b, a) {
+        if (rosterer(c)) return true;
+        if (op !== 'update' || !is(c, ANY) || !meIn(c, b.people || []) || !onlyChanges(b, a, ['free', 'away', 'updatedAt'])) return false;
+        return ['free', 'away'].every(function (k) {
+          var was = b[k] || [], now = a[k] || [];
+          return Array.isArray(now) && was.every(function (x) { return now.indexOf(x) >= 0; }) && now.filter(function (x) { return was.indexOf(x) < 0; }).every(function (x) { return isMe(c, x); });
+        });
       } },
     groups: { read: function (c, id, d) { return is(c, STAFF) || (is(c, ANY) && !!d && meIn(c, d.memberIds)); },
       write: function (c, op, id, b, a) {
@@ -364,9 +389,10 @@
         if (a.kind === 'office') return attendeeMay(c, 'write') || a.about === 'partnerApp';   // a partnership application: told to the office
         if (a.kind === 'roster') {   // ask / remind / off: roster coordinators; declined: to the roster team only (settings.rosterTeam)
           if (!Array.isArray(a.turns) || !a.turns.length) return false;
-          if (a.roster === 'ask' || a.roster === 'remind' || a.roster === 'off') return rosterer(c);
+          if (a.roster === 'ask' || a.roster === 'remind' || a.roster === 'off' || a.roster === 'awayask') return rosterer(c);
+          if (a.roster === 'cover') { var sw = docs['serveSwaps/' + a.turns[0]]; return !!sw && a.to.length === 1 && ((isMe(c, sw.fromId) && a.to[0] === sw.toId) || (isMe(c, sw.toId) && a.to[0] === sw.fromId)); }
           var team = (docs['settings/church'] || {}).rosterTeam || [];
-          return a.roster === 'declined' && a.to.every(function (x) { return team.indexOf(x) >= 0; });
+          return (a.roster === 'declined' || a.roster === 'covered') && a.to.every(function (x) { return team.indexOf(x) >= 0; });
         }
         if (a.kind === 'event') {   // an event reminder to oneself, or the organisers to everyone coming (firestore.rules eventNote)
           if (typeof a.aboutId !== 'string' || !a.aboutId) return false;

@@ -9,7 +9,7 @@
 (function () {
   'use strict';
   var H = Hub, esc = H.esc, S = Store, T = I18n.t, TN = I18n.tn;
-  var FREQ = ['weekly', 'monthly', 'emergency'];
+  var FREQ = ['weekly', 'monthly', 'quarterly', 'emergency'];
   var PURPOSES = ['Church records', 'Email', 'SMS', 'Church directory', 'Care group', 'Photos'];
   var APK = 'https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk';   // built by .github/workflows/build-android.yml
 
@@ -21,6 +21,8 @@
   function freqText(f) {
     if (f === 'weekly') return T('Whenever necessary (could be every week)');
     if (f === 'monthly') return T('Once a month');
+    if (f === 'quarterly') return T('Once a quarter (every 3 months or so)');
+    if (f === 'break') return T('Taking a break for now');
     if (f === 'emergency') return T('Only now and then in emergencies');
     return f === 'occasional' ? T('Now and then') : T('Every 2 weeks');
   }
@@ -138,28 +140,56 @@
     return html;
   }
 
-  /* ---------- serving ---------- */
+  /* ---------- serving: the one place for a person's own serving ----------
+   * 1 Coming up (turns to answer), 2 Where I serve (each position with its services and how often),
+   * 3 When I can serve (days away, serving with family or friends), 4 Where would you like to help? (offer somewhere new). */
+  function chip(x) { return '<span class="svc-chip" style="' + RosterServices.themeStyle(Serving.themeOf(x)) + '">' + esc(Serving.slotLabel(x.id, S.settings())) + '</span>'; }
+  function slotOfTurn(s) { var id = Serving.slotOf(s); return Serving.savedSlots(S.settings()).filter(function (x) { return x.id === id; })[0] || { id: id, label: s.time || id, time: s.time }; }
   function renderServe() {
-    var turns = upcomingTurns(), sk = mySkills(), skillPos = sk.map(function (k) { return k.positionId; });
-    var html = head(T('Serving'), T('Your turns on the roster, where you serve, and where you’d like to help.'), '', 'serve');
-    // Coming up
-    html += '<section class="block"><h2>' + T('Coming up') + '</h2>' + (turns.length ? '<div class="list">' + turns.map(function (a) {
-      var s = service(a.serviceId);
-      return '<div class="item svc-tint" style="' + (window.RosterServices ? RosterServices.svcStyle(s) : '') + '"><span class="grow"><b>' + esc(posName(a.positionId)) + '</b><small>' + esc(H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name) + '</small></span>' +
-        (a.status === 'pending' ? '<span class="btns"><button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Accept') + '</button></span>' :
-          '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + (a.status === 'accepted' ? T('Accepted') : T('Said no')) + '</span>') + '</div>';
-    }).join('') + '</div>' : '<p class="empty">' + T('You’re not on the roster in the coming weeks.') + '</p>') + '</section>';
-    // Where I serve now
-    html += '<section class="block"><h2>' + T('Where I serve') + '</h2>' + (sk.length ? '<div class="list">' + sk.map(function (k) {
-      var o = offerFor(k.positionId), pp = pos(k.positionId);
-      return '<div class="item"><span class="grow"><b>' + esc(posName(k.positionId)) + '</b>' + (pp && pp.tooltip ? ' ' + H.tip(pp.tooltip) : '') + '<small>' + esc(freqText(k.frequency)) + '</small>' + offerLine(o) + '</span>' +
+    var turns = upcomingTurns(), sk = mySkills(), skillPos = sk.map(function (k) { return k.positionId; }), st = S.settings();
+    var print = window.RosterHelpers && RosterHelpers.canPrint() ? '<button class="btn" data-act="rosters:print">' + T('Print the roster') + '</button>' : '';
+    var html = head(T('Serving'), T('Your turns, the positions you fill, and when you can serve.'), print, 'serve');
+    // 1 Coming up: each turn says the day, the service and the position, with Yes / Can't make it
+    var waiting = turns.filter(function (a) { return a.status === 'pending'; }).length;
+    var why = !sk.length ? T('You’re not on a serving team yet. Choose below where you’d like to help.')
+      : sk.every(function (k) { return k.frequency === 'emergency'; }) ? T('You’re a backup, so you’ll only be asked when someone is needed.')
+      : T('You’re not on the roster in the coming weeks.');
+    // Before the roster is made: "Are you away?"; and anyone asking me to take their place
+    var RH = window.RosterHelpers, u = me(), td = H.today();
+    var asksMe = S.find('serveSwaps', function (x) { var sv = service(x.serviceId); return x.toId === u.id && (x.status === 'asked' || x.status === 'taken') && sv && sv.date >= td; })
+      .sort(function (a, b) { return Serving.byWhen(service(a.serviceId), service(b.serviceId)); });
+    waiting += asksMe.filter(function (x) { return x.status === 'asked'; }).length;
+    if (RH) html += RH.myAsks().map(RH.askCard).join('');
+    // My own turns that someone else is now taking (they are theirs now, so they aren't in my list any more)
+    var passed = S.find('serveSwaps', function (x) { var sv = service(x.serviceId); return x.fromId === u.id && x.status === 'taken' && sv && sv.date >= td; });
+    html += '<section class="block"><h2>' + T('Coming up') + (waiting ? ' <span class="tag warn">' + esc(TN('{n} to answer', '{n} to answer', waiting)) + '</span>' : '') + '</h2>' +
+      (waiting ? '<p class="muted" style="margin-top:0">' + T('Please reply so the roster can be planned.') + '</p>' : '') +
+      (asksMe.length && RH ? '<div class="list" style="margin-bottom:10px">' + asksMe.map(RH.swapCard).join('') + '</div>' : '') +
+      (turns.length || passed.length ? '<div class="list">' + turns.filter(function (a) { return !asksMe.some(function (x) { return x.id === a.id; }); }).map(function (a) {
+        var s = service(a.serviceId), x = slotOfTurn(s), p = pos(a.positionId), d = LeaveCore.parse(s.date);
+        return '<div class="item svc-tint turn" style="' + RosterServices.svcStyle(s) + '"><span class="me-cal" aria-hidden="true"><b>' + d.getDate() + '</b>' + esc(H.mon()[d.getMonth()]) + '</span>' +
+          '<span class="grow"><b>' + esc(p ? p.name : T('A position that has been removed')) + '</b><small>' + esc(H.fmt(s.date, true)) + '</small><span class="svc-chips">' + chip(x) + (p && team(p.teamId) ? '<span class="svc-note">' + esc(team(p.teamId).name) + '</span>' : '') + '</span></span>' +
+          (a.status === 'pending' ? '<span class="btns"><button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Yes, I’ll be there') + '</button></span>' :
+            '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + (a.status === 'accepted' ? T('Accepted') : T('Said no')) + '</span>') +
+          swapBit(a) + (RH ? RH.crewCard(a) : '') + '</div>';
+      }).join('') + passed.map(function (x) {
+        var sv = service(x.serviceId), p = pos(x.positionId);
+        return '<div class="item svc-tint turn passed" style="' + RosterServices.svcStyle(sv) + '"><span class="grow"><b>' + esc(p ? p.name : '') + '</b><small>' + esc(H.fmt(sv.date, true)) + '</small><small class="me-offer">' + esc(RH.swapLine(x)) + '</small></span><span class="tag ok">' + T('Covered') + '</span></div>';
+      }).join('') + '</div>' : asksMe.length ? '' : '<p class="empty">' + esc(why) + '</p>') + '</section>';
+    // 2 Where I serve: every position names its services – never a blank that means "all"
+    if (sk.length) html += '<section class="block"><h2>' + T('Where I serve') + '</h2><div class="list">' + sk.map(function (k) {
+      var o = offerFor(k.positionId), pp = pos(k.positionId), at = Serving.skillSlots(k, pp, st), tm = pp && team(pp.teamId);
+      return '<div class="item my-pos"><span class="grow"><b>' + esc(pp.name) + '</b>' + (pp.tooltip ? ' ' + H.tip(pp.tooltip) : '') + (tm ? ' <span class="muted small">' + esc(tm.name) + '</span>' : '') +
+        '<span class="svc-chips">' + (at.length ? at.map(chip).join('') : '<span class="tag grey">' + T('Not at any service at the moment') + '</span>') + '<span class="svc-note">' + esc(T(Serving.freqShort(k.frequency))) + '</span></span>' + offerLine(o) + '</span>' +
         (o ? '<button class="btn small" data-act="me:withdraw" data-id="' + esc(o.id) + '">' + (o.status === 'waiting' ? T('Withdraw') : T('OK')) + '</button>' :
           '<button class="btn small" data-act="me:change" data-p="' + esc(k.positionId) + '">' + T('Change') + '</button>') + '</div>';
-    }).join('') + '</div>' : '<p class="empty">' + T('You’re not on a serving team yet. Choose below where you’d like to help.') + '</p>') + '</section>';
-    // Where I'd like to help: first the service, then a department and its positions (in that service's colours)
-    var sl = Serving.allSlots(S.settings()).map(function (x) { return { x: x, d: Serving.structure(x, S.list('teams'), S.list('positions')) }; }).filter(function (y) { return y.d.length; });
+    }).join('') + '</div><p class="hint">' + T('“Any week” means you could be asked any Sunday; “Backup only” means only when someone is needed.') + '</p></section>';
+    // 3 When I can serve: days away and serving with family or friends, side by side
+    html += availability();
+    // 4 Where would you like to help? First the service, then a department and its positions (in that service's colours)
+    var sl = Serving.allSlots(st).map(function (x) { return { x: x, d: Serving.structure(x, S.list('teams'), S.list('positions')) }; }).filter(function (y) { return y.d.length; });
     html += '<section class="block"><h2>' + T('Where would you like to help?') + '</h2><p class="muted" style="margin-top:0">' + T('First choose which Sunday service you come to (or a special service), then tap a position you’d like to help with. The roster coordinator will be in touch before you’re put on the roster.') + '</p>';
-    if (!sl.length) return html + '<p class="empty">' + T('Nothing to sign up for yet.') + '</p></section>' + together();
+    if (!sl.length) return html + '<p class="empty">' + T('Nothing to sign up for yet.') + '</p></section>';
     var cur = sl.filter(function (y) { return y.x.id === pickSlot; })[0] || sl.filter(function (y) { return !y.x.special && sk.some(function (k) { return servesAt(k, y.x); }); })[0] || sl[0];
     pickSlot = cur.x.id;
     function cards(list, label) {
@@ -185,18 +215,34 @@
     if (asked.length) html += '<div class="list" style="margin-top:12px">' + asked.map(function (o) {
       return '<div class="item"><span class="grow"><b>' + esc(posName(o.positionId)) + '</b>' + offerLine(o) + '</span><button class="btn small" data-act="me:withdraw" data-id="' + esc(o.id) + '">' + (o.status === 'waiting' ? T('Withdraw') : T('OK')) + '</button></div>';
     }).join('') + '</div>';
-    html += '</section>';
-    return html + together();
+    return html + '</section>';
   }
-  function together() {
-    return '<section class="panel"><h2>' + T('Serve with family or friends') + '</h2><p class="muted" style="margin-top:0">' + T('Tell us who you’d like to serve with, and the roster will keep you together.') + '</p><a class="btn" href="#/rosters/together">' + T('Serving together') + '</a></section>';
+  /** Under a turn I can't make: whom I asked to take my place, and – if they said no – a way to ask someone else. */
+  function swapBit(a) {
+    var RH = window.RosterHelpers, sw = RH && RH.swapOf(a.id);
+    if (a.status !== 'declined') return '';
+    if (!sw) return (a.cover || []).length && H.isOn('messages') ? '<span class="turn-more"><button class="link" data-act="rosters:reask" data-id="' + esc(a.id) + '">' + T('Ask someone to take my place') + '</button></span>' : '';
+    return '<span class="turn-more"><small class="me-offer">' + esc(RH.swapLine(sw)) + '</small>' + (sw.status === 'declined' && (a.cover || []).length > 1 ? ' <button class="link" data-act="rosters:reask" data-id="' + esc(a.id) + '">' + T('Ask someone else') + '</button>' : '') + '</span>';
+  }
+  /** When I can serve: my next days away, and who I serve with – with a way to change each. */
+  function availability() {
+    var u = me(), away = myAway(), gs = S.find('groups', function (g) { return g.kind === 'together' && (g.memberIds || []).indexOf(u.id) >= 0; });
+    return '<section class="block"><h2>' + T('When I can serve') + '</h2><div class="grid2">' +
+      '<div class="panel" style="margin:0"><h3 style="margin-top:0">' + T('Days away') + '</h3>' + (away.length ? '<div class="list">' + away.slice(0, 3).map(function (a) {
+        return '<div class="item"><span class="grow"><b>' + esc(dates(a)) + '</b><small>' + esc(reasonText(a.reason)) + '</small></span></div>';
+      }).join('') + '</div>' + (away.length > 3 ? '<p class="hint">' + esc(TN('and {n} more', 'and {n} more', away.length - 3)) + '</p>' : '') : '<p class="muted" style="margin-top:0">' + T('None – you can be asked on any Sunday you serve.') + '</p>') +
+      '<p style="margin:10px 0 0"><button class="btn small" data-act="rosters:addaway">' + H.icon(H.ICON.plus, 16) + T('Add days away') + '</button> ' + (away.length ? '<a class="btn small" href="#/me/away">' + T('See all') + '</a>' : '') + '</p></div>' +
+      '<div class="panel" style="margin:0"><h3 style="margin-top:0">' + T('Serve with family or friends') + '</h3>' + (gs.length ? '<div class="list">' + gs.map(function (g) {
+        return '<div class="item"><span class="grow"><b>' + esc(g.name) + '</b><small>' + esc(g.memberIds.filter(function (m) { return m !== u.id; }).map(function (m) { return H.name(S.get('people', m)); }).filter(Boolean).join(', ')) + '</small></span><span class="tag">' + T(g.strength === 'must' ? 'Always together' : 'Together when possible') + '</span></div>';
+      }).join('') + '</div>' : '<p class="muted" style="margin-top:0">' + T('Tell us who you’d like to serve with, and the roster will keep you together.') + '</p>') +
+      '<p style="margin:10px 0 0"><a class="btn small" href="#/rosters/together">' + (gs.length ? T('Change') : T('Serving together')) + '</a></p></div></div></section>';
   }
   /** Does this skill include that service? (No services ticked = every service the position runs at.) */
   function servesAt(k, x) { var p = pos(k.positionId); return p && Serving.runsAtSlot(p, x) && (!k.times || !k.times.length || k.times.indexOf(x.id) >= 0); }
   /** Under a position: what the person asked for and what the roster coordinator said. */
   function offerLine(o) {
     if (!o) return '';
-    var asked = o.kind === 'stop' ? T('You asked to stop serving here.') : o.kind === 'change' ? T('You asked to serve: {how}.', { how: freqText(o.frequency).toLowerCase() }) : T('You offered to help: {how}.', { how: freqText(o.frequency).toLowerCase() });
+    var asked = o.kind === 'stop' ? T('You asked to stop serving here.') : o.frequency === 'break' ? T('You asked for a break here.') : o.kind === 'change' ? T('You asked to serve: {how}.', { how: freqText(o.frequency).toLowerCase() }) : T('You offered to help: {how}.', { how: freqText(o.frequency).toLowerCase() });
     if (o.status === 'declined') return '<small class="me-offer">' + esc(asked) + ' <span class="tag grey">' + T('Not now') + '</span>' + (o.reply ? ' ' + esc(T('The roster coordinator says: “{text}”', { text: o.reply })) : '') + '</small>';
     return '<small class="me-offer">' + esc(asked) + ' <span class="tag warn">' + T('Waiting for the roster coordinator') + '</span></small>';
   }
@@ -220,6 +266,7 @@
       }).join('') +
       (current && FREQ.indexOf(current.frequency) < 0 ? '<p class="hint">' + T('Your current preference is {how}. Choose a new option only if you want to change it.', { how: freqText(current.frequency) }) + '</p>' : '') +
       '<p class="hint">' + T('Add any days you’re unavailable under Days away. You won’t be asked or scheduled to serve then.') + '</p>' +
+      (current && current.frequency !== 'break' ? '<label class="check"><input type="radio" name="mo-f" value="break"><span><b>' + T('I’d like a break for now') + '</b><br><span class="muted small">' + T('You stay on the team, but aren’t asked until you change this back.') + '</span></span></label>' : '') +
       (current ? '<label class="check"><input type="radio" name="mo-f" value="stop"><span><b>' + T('I’d like to stop serving here') + '</b></span></label>' : '') + '</fieldset>' +
       '<label class="field">' + T('Anything the roster coordinator should know?') + '<textarea id="mo-note" rows="2" maxlength="300" placeholder="' + (current ? T('e.g. busy with exams until June') : T('e.g. I’ve helped with this before')) + '"></textarea><small>' + T('Only the roster team sees it.') + '</small></label>' +
       '<p id="mo-err" class="note bad" hidden></p></div>' +
@@ -257,8 +304,8 @@
         var current = mySkills().filter(function (k) { return k.positionId === pid; })[0];
         if (!f) { err.textContent = T('Please choose how often.'); err.hidden = false; return; }
         var kind = f.value === 'stop' ? 'stop' : el.dataset.k, sl = slotsFor(pid);
-        var times = sl.length > 1 ? [].map.call(document.querySelectorAll('.mo-t:checked'), function (x) { return x.value; }) : [];
-        if (kind !== 'stop' && sl.length > 1 && !times.length) { err.textContent = T('Please tick at least one service.'); err.hidden = false; return; }
+        var times = f.value === 'break' ? (current && current.times || []).slice() : sl.length > 1 ? [].map.call(document.querySelectorAll('.mo-t:checked'), function (x) { return x.value; }) : [];
+        if (kind !== 'stop' && f.value !== 'break' && sl.length > 1 && !times.length) { err.textContent = T('Please tick at least one service.'); err.hidden = false; return; }
         if (times.length === sl.length) times = [];   // every service
         var sameTimes = current && JSON.stringify((current.times || []).slice().sort()) === JSON.stringify(times.slice().sort());
         if (kind === 'change' && current && current.frequency === f.value && sameTimes) { err.textContent = T('That’s how you serve now. Choose another answer, or Cancel.'); err.hidden = false; return; }

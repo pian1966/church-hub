@@ -167,15 +167,16 @@ module.exports = async function (ctx) {
   check(docs['teams/dept-operational'] && docs['teams/dept-music'] && docs['teams/dept-creche'] && posDocs.length === 30 && docs['positions/pos-verger'] && docs['positions/pos-collection'] && docs['positions/pos-ushers'] && docs['positions/pos-recorded'] && docs['teams/dept-memorial'] && JSON.stringify(docs['positions/pos-creche'].times) === '["08:00"]' && docs['positions/pos-host'].times.length === 0,
     'Rosters → Teams adds the church’s 8 departments and 30 positions, with Verger, Ushers, Collection Servers and Recorded Music (Creche Duty only at 8:00): ' + posDocs.length);
   await s.page.click('[data-act="rosters:needed"][data-p="pos-sound"][data-d="1"]'); await s.settle(); docs = await s.docsNow();
-  check(docs['positions/pos-sound'].needed === 2 && /2 per service/.test(await s.text()), 'Teams: + makes it 2 on the Sound Desk');
+  check(docs['positions/pos-sound'].needed === 2 && /2 needed at each service/.test(await s.text()), 'Teams: + makes it 2 on the Sound Desk');
   await s.page.click('[data-act="rosters:needed"][data-p="pos-sound"][data-d="-1"]'); await s.settle(); docs = await s.docsNow();
   check(docs['positions/pos-sound'].needed === 1 && await s.page.isDisabled('[data-act="rosters:needed"][data-p="pos-sound"][data-d="-1"]'), '… − takes it back to 1, and no fewer');
   check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
-  check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && (await s.text()).includes('8am only'), 'once added, the offer goes, and 8am-only positions say so');
+  check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && await s.page.$$eval('.pos-row', rs => { const r = rs.find(x => x.querySelector('[data-p="pos-creche"]')); return !!r && [...r.querySelectorAll('.svc-chip')].map(c => c.textContent).join() === '8am'; }), 'once added, the offer goes, and 8am-only positions show only the 8am chip');
   check(docs['teams/dept-operational'].name === 'Service Leading', 'the department for preaching, hosting, reading and prayer is called Service Leading');
   // The order of departments, and joining a second music department to the first
   let order = await s.page.$$eval('.team-h .grow', e => e.map(x => x.textContent));
   check(order.indexOf('Welcome') === 0 && order.indexOf('Hospitality') < order.indexOf('Music') && order.indexOf('Creche') < order.indexOf('Children') && order.indexOf('Teens') < order.indexOf('Technical'), 'departments follow a service: Welcome, Service Leading, Extra Slot, Hospitality, Music, Creche, Children, Teens, Technical – ' + order.join(', '));
+  await s.page.click('.page-head details.menu > summary'); await s.page.click('.page-head [data-act="rosters:arrange"]');
   await s.page.click('[data-act="rosters:teammove"][data-id="tech"][data-d="-1"]'); await s.settle(); docs = await s.docsNow();
   order = await s.page.$$eval('.team-h .grow', e => e.map(x => x.textContent));
   check(order.indexOf('Technical') < order.indexOf('Teens') && typeof docs['teams/tech'].order === 'number', '↑ moves Technical above Teens, and the order is saved');

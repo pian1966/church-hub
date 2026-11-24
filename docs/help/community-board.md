@@ -14,6 +14,13 @@ if you like. Add a **Phone number to show** only if you want people to phone you
 Tap **Send to a keeper**. It shows **Waiting for a keeper** until a keeper puts it up, and you get a message when it's up. Prayer
 requests and pastoral needs belong with the ministers – write to the Office instead.
 
+## Someone replied to my notice. Where is it?
+For: Everyone
+Also asked: I can help. Reply to a notice. A keeper asked me to change my notice.
+
+Tap **I can help** on a notice to write to its owner. It goes privately to them in **Messages**. If a keeper asks you to change
+a notice, or doesn't put it up, they tell you why in Messages.
+
 ## How long does a notice stay up? How do I renew or take it down?
 For: Everyone
 Also asked: My notices. Renew. Remove my notice. It's sorted now.

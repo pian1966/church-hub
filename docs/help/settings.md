@@ -15,12 +15,13 @@ For: Administrators
 **Settings → Church**: church name, **Country** (sets provinces/states, postcodes, phone numbers and the privacy law),
 and the church's colour (**Save the church's colour**) – everyone sees it.
 
-## How do I turn the soft pictures at the top of each page off?
-For: Administrators, Senior Pastor
-Also asked: Watercolour pictures. Plain pages. Page pictures. Banners. Header pictures.
+## Can I change or turn off the pictures at the top of each page?
+For: Administrators, the Rector
+Also asked: Plain pages. Page pictures. Remove the header pictures. Line art.
 
-Open **Settings → Colours**. Under **Page pictures** choose **Soft watercolour** (a picture at the top of every page, in the colours of
-that part of the app) or **Plain (original)**. Everyone at your church sees the choice the church makes here.
+Every page has a picture at the top, in the colours of that part of the app. To change it, open **Settings → Colours →
+Page pictures** and choose **Soft watercolour**, **Warm line art** or **Plain (original)**. Everyone at your church sees the
+choice you make.
 
 ## How do I use our own church words (e.g. Rector, Parishioner)?
 For: Administrators

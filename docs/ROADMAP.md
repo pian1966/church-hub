@@ -91,7 +91,6 @@ Accept/decline by email, swap requests, automatic reminders before a turn, sign-
 - ⬜ **Service outline (order of service)** for each Sunday service, and with it **the Bible passage being preached** – shown
   to the people serving and on Home. For the Scripture text itself, consider the YouVersion Platform API (check its terms and
   which translations it allows; otherwise show the reference with a link)
-- ⬜ Roster printing: let a church save its own term dates (school terms differ by year and country) instead of the quarters offered now
 
 ## Phase 4 – Groups, attendance and check-in
 Groups and attendance, kids check-in on a tablet with medical alerts and leader ratios, headcounts, volunteer check-in.
@@ -131,7 +130,7 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
 - 🟡 Church: set up AI for Ask in your own words (`docs/AI-SEARCH-SETUP.md`) – App Check key added (0.45.1); still to do: privacy notice, App Check enforced for AI Logic, switch it on in Settings → Apps and try a question
-- 🟡 **Help: ask a question** – built in 0.109.0 (`docs/CHANGELOG.md`); church to do: switch on AI (`docs/AI-SEARCH-SETUP.md`) for written answers (without it, Help shows the matching help pages), add the AI sentence to the privacy notice, and try some real questions. Follow-ups:
+- 🟡 **Help: ask a question** – built in 0.111.0 (`docs/CHANGELOG.md`); church to do: switch on AI (`docs/AI-SEARCH-SETUP.md`) for written answers (without it, Help shows the matching help pages), add the AI sentence to the privacy notice, and try some real questions. Follow-ups:
   - ⬜ A monthly limit per church (today: 12 questions to the AI per ten minutes from one device; the free Gemini allowance does the rest)
   - ⬜ A thumbs up/down under each answer, and a list for Administrators of questions that found no answer, so they know which help pages to write (needs a decision on keeping questions: POPIA – today nothing is kept)
   - ⬜ Help pages in the member's own language (today the AI translates the answer; the pages themselves are English)
@@ -176,7 +175,7 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
 - ⬜ Decide (Community and Finances): may attendees see and post on the community board? Do Thank-you notes need approval? Is
   30 days right? The overspend thresholds; should staff pay show as one total even to the Council?
 - ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request – Help now reads these pages
-  and answers from them (add this rule to CLAUDE.md; the Help page exists as of 0.109.0). Church to read through the help pages and correct anything that doesn't match how they work.
+  and answers from them (add this rule to CLAUDE.md; the Help page exists as of 0.111.0). Church to read through the help pages and correct anything that doesn't match how they work.
 
 ## Phase 7 – Church & Trellis for every church ⬜
 **Decided (11 Nov 2026):** every church keeps its own database in its **own Google account**, and Church & Trellis creates it

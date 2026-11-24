@@ -24,6 +24,18 @@ for a reply**, and suggestions (dashed border). The top row (date, time, communi
 Departments and positions that aren't needed at any of the services you're looking at (e.g. Creche at 8am, or communion
 roles when there's no communion) are left out. Members see their own turns under **My serving**.
 
+## How do I print or download the roster?
+For: Everyone
+Also asked: Print the roster. Roster as a PDF. Roster for the notice board. Save the roster. Portrait or landscape.
+
+Roster coordinators: **Rosters → More → Print or download the roster**. Everyone else: **Rosters → My serving → Print or
+download the roster**. Choose **how long** (1 month, 6 weeks, 2 months, a quarter, 6 months or a year, starting on the date
+you pick – the next Sunday to begin with), the **page shape** (portrait or landscape) and **which services** (each regular
+service gets its own page, in its own colours). The positions run down the side and every Sunday across the top. Tap
+**Download PDF** to keep or send it, or **Print**. A Sunday on which a service isn't held stays in the table as a grey
+column that says so, so nobody thinks it was forgotten. Positions nobody is on are left out, unless you tick **Also print
+positions that are still empty**. Volunteers see the names of Church Partners who are serving – no contact details.
+
 ## How many services can I see at once?
 For: Roster coordinators, Administrators
 Also asked: Show more Sundays. The roster is too wide. Hide the evening service.
@@ -97,8 +109,13 @@ Also asked: Add a department. Add a position. Create a new ministry team.
 
 Open **Rosters → Teams**.
 - First time: **Set up the church's departments** adds the church's departments and positions in one click.
-- **New team** adds a department (e.g. *Prayer*); **Add a position** adds a position to it (e.g. *Camera*). Use **−** and
-  **+** to set how many people it needs per service (e.g. 2 on the sound desk).
+- **New team** adds a department (e.g. *Prayer*); **Add a position** adds a position to it (e.g. *Camera*) in one box. Use
+  **−** and **+** to set how many people it needs per service (e.g. 2 on the sound desk).
+- Each position shows the services it is needed at (8am, 10am, 5pm) and how many people can serve any week, once a month or
+  as a backup. Tap **8am**, **10am** or **5pm** to see only that service's teams. A position's names fold away until you tap them.
+- A position added by mistake, or no longer used, can be removed with **⋯ → Delete position**.
+- A position's **tooltip** (a short note about what the job involves) is written from the same **⋯** menu by the Administrator,
+  the Rector and the assistant ministers. On a phone, tap the small **i** beside a position to read it.
 - New suggested positions (such as Verger, Ushers or Recorded Music) are offered with **Add them**.
 - Move a department up or down with the **↑ ↓** arrows; the roster shows them in that order.
 - Two teams doing the same thing (e.g. Music and Worship)? On one of them, open **⋯ → Join with another team**: its
@@ -127,10 +144,18 @@ Also asked: Married couple on the same Sunday. Parents shouldn't serve at the sa
 
 Open **Rosters → Serving together**.
 - **Serve together**: choose at least two people and how important it is – **Always together** (rostered together or not
-  at all, e.g. a family sharing a car) or **Together when possible**.
+  at all, e.g. a family sharing a car) or **Together when possible**. "Together" means the same service, not always the same job.
 - **Keep apart**: they will never be rostered at the same service – e.g. parents taking turns with a baby.
 
 Members can tap **Ask to serve with someone** there, or use **Serve with family or friends** on the Me page.
+
+## Can volunteers see who else is serving at their service?
+For: Administrators, Roster coordinators
+Also asked: Who's serving with you. Show or hide the crew. Turn off names on Me → Serving.
+
+Yes. Under each of a volunteer's turns on **Me → Serving**, **Who's serving with you** shows the other people serving at that
+service, with their short names and jobs (no contact details), only to people serving there. To switch it off, open
+**Settings → Church Services** and untick **Volunteers see who else is serving at their services**.
 
 ## How do I see who is away?
 For: Roster coordinators, Administrators

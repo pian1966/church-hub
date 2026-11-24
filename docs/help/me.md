@@ -1,7 +1,9 @@
 # The Me page – your details, days away and serving
 
 **Me** is everyone's own page: **My details**, **Consent**, **Days away** and **Serving**. On a phone it is the first tab
-for members.
+for members. Your own details come first on the page and your groups (your Care Group, then your Midweek Groups) come last.
+**Serving** is the one place for everything about your own serving: your turns to answer, each position you serve in with
+its services (8am, 10am, 5pm), your days away and who you serve with.
 
 ## How do I change my phone number, email or address?
 For: Everyone
@@ -48,7 +50,7 @@ says **You're not on the roster in the coming weeks.**
 
 ## I can't make a turn I accepted. What do I do?
 For: Everyone
-Also asked: Swap my turn. Cancel my duty. I'm sick on Sunday.
+Also asked: Swap my turn. Cancel my duty. I'm sick on Sunday. Ask someone to take my place.
 
 On **Me → Serving**, find the turn and tap **Can't make it**. Church & Trellis asks: *Would you like to ask someone to take your
 place? They're on the same team and free that day.* Either choose **No – just let the roster team know**, or choose a name
@@ -73,6 +75,15 @@ Before a new term's roster is made, the roster team may ask everyone on a team w
 away soon?**, and a card on **Me → Serving**, **Planning the roster for {dates}**. Tap **Add days away** to say which days, or **I'm free
 – no days away** if there are none. It takes a moment, and means nobody is put on the roster on a day you can't come.
 
+## Can I see who else is serving at my service?
+For: Everyone
+Also asked: Who is on with me? Who's serving with you. Who else is on Sunday? My crew.
+
+Yes. On **Me → Serving**, under each of your turns, **Who's serving with you** lists the others serving at that service,
+with their short names and jobs – your own team first. It shows names and jobs only, like the printed roster, never contact
+details, and only people serving at that service can see it. If your church has switched it off, you won't see it (the
+Administrator can change this under **Settings → Church Services**).
+
 ## How do I offer to help in a new area?
 For: Everyone
 Also asked: I'd like to join the welcome team. How do I volunteer? Join a team.
@@ -86,10 +97,10 @@ position until you tap OK.
 
 ## How do I serve more or less often, or stop serving somewhere?
 For: Everyone
-Also asked: I'm too busy, can I serve less? Leave a team. Change services.
+Also asked: I'm too busy, can I serve less? Leave a team. Change services. Serve once a quarter. Take a break for now.
 
-On **Me → Serving**, find the position and tap **Change how you serve**. Choose a new frequency or services, **I'd like a break for now** (you stay on the team, but aren't asked until you change this
-back), or **I'd like to stop serving here**, add a note (e.g. *busy with exams until June*), and send it to the roster coordinator.
+On **Me → Serving**, find the position and tap **Change how you serve**. Choose a new frequency (including **Once a
+quarter**) or services, **I'd like a break for now** (you stay on the team), or **I'd like to stop serving here**, add a note (e.g. *busy with exams until June*), and send it to the roster coordinator.
 
 ## Can I serve with my family or friends?
 For: Everyone

@@ -171,6 +171,9 @@ someone is deleted or dies.
 - **"Are you away?"** (`awayAsks`): the dates being planned, who was asked (ids) and who answered "free" or added days away. Each
   person may only add their own answer; the roster team sees the lists. Days away themselves are kept as before (`blockouts`:
   dates and a reason only the roster team sees).
+- **Who's serving with you** (`crews`): for each upcoming service, the short names (first name and initial) and positions of the
+  people serving there – nothing else. Read only by those serving at that service (and the roster team), like the printed roster
+  on the noticeboard; the church can switch it off (Settings → Church Services). Kept up to date by the roster team's app.
 - Lawful basis: the church's legitimate interest in organising volunteers who have offered to serve (as for the rest of rosters).
   Both are included in "export everything held about a person" and removed when someone's record is deleted.
 
@@ -441,7 +444,7 @@ nobody connects a Google account, and what is in the meeting or the document sta
   Church & Trellis keeps no recording. What was heard is matched to names **on the phone** (`NameList.rank`); nothing else is sent.
   People who'd rather not can type.
 
-## Help: ask a question (0.109.0; `js/help.js`, `js/mod-help.js`)
+## Help: ask a question (0.111.0; `js/help.js`, `js/mod-help.js`)
 - **Purpose:** so anyone can get a plain answer about using Church & Trellis without phoning the office. For everyone who is signed in.
 - **What is read:** the help pages in `docs/help/` – public text written for the church, no church data (the repository is public).
 - **What goes to the AI (Google's Gemini, through the church's own Firebase project; the same AI switch as Ask in your own
@@ -509,3 +512,11 @@ Prayer points are checked as they're typed for phone numbers, email addresses, l
 for things rather than people by name. Churches in countries where Christians face danger start hidden (no name, town,
 country or photo). Kept in `settings.prayerCard` (readable by everyone signed in to the church, as all settings are);
 changes are written to the audit log. Shared with other churches only once Church & Trellis's office exists.
+
+## Who is serving where (the printed or downloaded roster)
+Purpose: so volunteers know who they serve with and can keep the roster. Basis: serving is the activity the person agreed to, and the roster is the
+kind of list a church normally puts on a notice board. Who sees it: staff all of it; a Church Partner, and an attendee while Settings → Attendees lets
+attendees see names, can read which person is on which position at which service (name, position, date – the printed roster shows nothing more). No
+contact details, away dates, reasons or leave are in it: those stay with the person and the roster team. Someone who said no is not printed. Printing or
+downloading is written to the audit log (dates only).
+

@@ -147,7 +147,7 @@
   function slotOfTurn(s) { var id = Serving.slotOf(s); return Serving.savedSlots(S.settings()).filter(function (x) { return x.id === id; })[0] || { id: id, label: s.time || id, time: s.time }; }
   function renderServe() {
     var turns = upcomingTurns(), sk = mySkills(), skillPos = sk.map(function (k) { return k.positionId; }), st = S.settings();
-    var print = window.RosterHelpers && RosterHelpers.canPrint() ? '<button class="btn" data-act="rosters:print">' + T('Print the roster') + '</button>' : '';
+    var print = window.RosterHelpers && RosterHelpers.canPrint() ? '<button class="btn" data-act="rosters:print">' + T('Print or download the roster') + '</button>' : '';
     var html = head(T('Serving'), T('Your turns, the positions you fill, and when you can serve.'), print, 'serve');
     // 1 Coming up: each turn says the day, the service and the position, with Yes / Can't make it
     var waiting = turns.filter(function (a) { return a.status === 'pending'; }).length;
@@ -171,7 +171,7 @@
           '<span class="grow"><b>' + esc(p ? p.name : T('A position that has been removed')) + '</b><small>' + esc(H.fmt(s.date, true)) + '</small><span class="svc-chips">' + chip(x) + (p && team(p.teamId) ? '<span class="svc-note">' + esc(team(p.teamId).name) + '</span>' : '') + '</span></span>' +
           (a.status === 'pending' ? '<span class="btns"><button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Yes, I’ll be there') + '</button></span>' :
             '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + (a.status === 'accepted' ? T('Accepted') : T('Said no')) + '</span>') +
-          swapBit(a) + '</div>';
+          swapBit(a) + (RH ? RH.crewCard(a) : '') + '</div>';
       }).join('') + passed.map(function (x) {
         var sv = service(x.serviceId), p = pos(x.positionId);
         return '<div class="item svc-tint turn passed" style="' + RosterServices.svcStyle(sv) + '"><span class="grow"><b>' + esc(p ? p.name : '') + '</b><small>' + esc(H.fmt(sv.date, true)) + '</small><small class="me-offer">' + esc(RH.swapLine(x)) + '</small></span><span class="tag ok">' + T('Covered') + '</span></div>';

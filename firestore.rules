@@ -331,8 +331,12 @@ service cloud.firestore {
         && request.resource.data.personId == s.toId && request.resource.data.status == 'accepted'
         && onlyChanges(['personId', 'status', 'updatedAt', 'createdAt']);   // createdAt: a turn saved before it was noted
     }
+    // Everyone who may see Church Partners' names may read who is serving where (so a volunteer can print the whole
+    // roster), unless the church switched that off (settings crewView, as for crews); the names themselves come from
+    // names/. No contact details are in an assignment.
     match /assignments/{id} {
-      allow read: if staff() || mine(resource.data.personId);
+      allow read: if staff() || mine(resource.data.personId)
+        || ((attendeeMay('names') || attendeeMay('directory')) && churchSettings().get('crewView', true) == true);
       allow create, delete: if rosterer();
       allow update: if rosterer()
         || (mine(resource.data.personId) && onlyChanges(['status', 'updatedAt'])
@@ -352,6 +356,12 @@ service cloud.firestore {
         || (resource != null && mine(resource.data.toId) && resource.data.status == 'asked'
             && onlyChanges(['status', 'updatedAt']) && request.resource.data.status in ['taken', 'declined']);
       allow delete: if rosterer() || mine(resource.data.fromId);
+    }
+    // Who's serving at each service (id = the service's id): names and positions only, kept up to date by the roster team's
+    // app; read by the people serving there, unless the church switched it off (settings crewView).
+    match /crews/{id} {
+      allow read: if rosterer() || (anyone() && meIn(resource.data.get('people', [])) && churchSettings().get('crewView', true) == true);
+      allow write: if rosterer();
     }
     // Before planning a term, the roster team asks volunteers whether they'll be away (people = who was asked). Each one
     // answers by adding themselves to free (no days away) or away (they added days away) - nothing else.

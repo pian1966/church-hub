@@ -51,7 +51,9 @@ Also asked: Year folders. Month folders. Where did my minutes go?
 
 Each category is a folder, and folders can hold other folders. A folder can sort itself into **Year → Month** folders
 by each document's date – **Council minutes** does this from the start – so a meeting held in March 2026 lands in
-**2026 → March** by itself. The path at the top shows which folder you're in; tap any part of it to go back up.
+**2026 → March** by itself. Each folder is a coloured tile (year and month folders look like calendar tiles). The path at
+the top shows which folder you're in; tap any part of it to go back up. Each document starts with a badge showing what
+kind of file it is, with **Preview** and **Download** beside it, and the newest documents are on the first page.
 
 ## Why does Church & Trellis ask about the date before saving?
 For: Administrators, Council members

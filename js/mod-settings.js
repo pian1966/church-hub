@@ -49,6 +49,13 @@
       (finder ? '<div style="margin-top:10px">' + finder('st-rteam', pick, 'settings:rtadd', {}, null, T('Add someone: type part of their name')) + '</div>' : '') + '</section>';
   }
 
+  /** Whether volunteers see who else is serving at their services (Me → Serving): names and positions only (settings.crewView). */
+  function renderCrewView(st) {
+    return '<section class="panel" id="st-crew"><h2>' + T('Who’s serving with you') + '</h2>' +
+      '<label class="check"><input type="checkbox" id="st-crewview" data-act="settings:crewview"' + (st.crewView !== false ? ' checked' : '') + '><span><b>' + T('Volunteers see who else is serving at their services') + '</b><br>' +
+      '<span class="muted small">' + T('Names and jobs only, under each of their turns on Me → Serving – like the printed roster. No contact details.') + '</span></span></label></section>';
+  }
+
   var allSvcs = false;   // show every upcoming service, not just the next few
   /** Services that need a roster: the upcoming ones (remove any you won't hold), regular ones for some weeks, and special ones. */
   function renderServices(st, svcs) {
@@ -264,7 +271,7 @@
     else if (a === 'application') body = window.PeopleParts && PeopleParts.formSettings ? PeopleParts.formSettings() : '';
     else if (a === 'access') body = renderAccessPage(st, parts && MERGED[parts[0]]); else if (a === 'services') {
       var svcs = S.list('services').filter(function (s) { return s.date >= H.today(); }).sort(Serving.byWhen);
-      body = renderSlots() + renderServices(st, svcs) + renderRosterTeam(st);
+      body = renderSlots() + renderServices(st, svcs) + renderRosterTeam(st) + renderCrewView(st);
     } else body = renderGeneral(st);
     return layout(a, body);
   }
@@ -283,12 +290,13 @@
   function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   /** Page pictures: the soft watercolour picture behind every page's heading, or Plain (settings.look = 'plain'). */
   function renderLook(st) {
-    var plain = window.Banners && Banners.plain(st), prev = window.Banners ? '<span class="hero-bg">' + Banners.svg('library') + '</span>' : '';
-    function opt(v, title, inner) { var on = (v === 'plain') === !!plain; return '<button type="button" class="look-opt" role="radio" aria-checked="' + on + '" data-act="settings:look" data-v="' + v + '">' + inner + '<b>' + title + '</b></button>'; }
+    var cur = window.Banners ? Banners.look(st) : 'watercolour', art = window.Banners ? '<span class="hero-bg">' + Banners.svg('library') + '</span>' : '';
+    function opt(v, title, inner) { return '<button type="button" class="look-opt" role="radio" aria-checked="' + (cur === v) + '" data-act="settings:look" data-v="' + v + '">' + inner + '<b>' + title + '</b></button>'; }
     return '<section class="panel" id="st-look"><h2>' + T('Page pictures') + '</h2>' +
-      '<p class="hint" style="margin-top:0">' + T('A soft watercolour picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.') + '</p>' +
+      '<p class="hint" style="margin-top:0">' + T('A picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.') + '</p>' +
       '<div class="look-pick" role="radiogroup" aria-label="' + esc(T('Page pictures')) + '">' +
-        opt('watercolour', T('Soft watercolour'), '<span class="look-prev wash">' + prev + '<i>' + T('Library') + '</i><u></u><u></u></span>') +
+        opt('watercolour', T('Soft watercolour'), '<span class="look-prev wash">' + art + '<i>' + T('Library') + '</i><u></u><u></u></span>') +
+        opt('line', T('Warm line art'), '<span class="look-prev hero line">' + art + '<i>' + T('Library') + '</i><u></u><u></u></span>') +
         opt('plain', T('Plain (original)'), '<span class="look-prev"><i>' + T('Library') + '</i><u></u><u></u></span>') +
       '</div></section>';
   }
@@ -785,9 +793,9 @@
         H.render(); H.toast(T('Saved'));
       },
       look: function (el) {
-        var v = el && el.dataset && el.dataset.v === 'plain' ? 'plain' : 'watercolour';
-        if (((S.settings().look === 'plain') ? 'plain' : 'watercolour') === v) { H.toast(T('Saved')); return; }
-        S.setSettings({ look: v }, 'Page pictures: ' + (v === 'plain' ? 'plain (the original look)' : 'soft watercolour'));
+        var d = el && el.dataset && el.dataset.v, v = d === 'plain' || d === 'line' ? d : 'watercolour';
+        if ((window.Banners ? Banners.look(S.settings()) : 'watercolour') === v) { H.toast(T('Saved')); return; }
+        S.setSettings({ look: v }, 'Page pictures: ' + (v === 'plain' ? 'plain (the original look)' : v === 'line' ? 'warm line art' : 'soft watercolour'));
         H.render(); H.toast(T('Saved'));
       },
       theme: function () {
@@ -865,6 +873,7 @@
         S.put('services', { date: date, time: time, name: name, slot: like, venue: venue, special: true }, 'Added a special service: ' + name + ' on ' + date);
         H.render(); H.toast(T('{name} added – make its roster under Rosters', { name: name }));
       },
+      crewview: function (el) { S.setSettings({ crewView: !!el.checked }, 'Volunteers see who else is serving at their services: ' + (el.checked ? 'on' : 'off')); H.toast(T('Saved')); },
       rtadd: function (el) {
         var p = S.get('people', el.dataset.id), ids = ((S.settings() || {}).rosterExtra || []).slice(); if (!p || ids.indexOf(p.id) >= 0) return;
         ids.push(p.id); S.setRosterExtra(ids, H.name(p) + ' now hears about roster replies'); H.render(); H.toast(T('{name} added', { name: H.name(p) }));

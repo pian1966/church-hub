@@ -9,16 +9,23 @@ var Banners = (function () {
   /* Which colour and picture each part of the app gets (by the first part of the address, #/library/... → library) */
   var TINT = { library: '#2F7A78', archives: '#8A5A2B', borrowed: '#6A4C93', messages: '#3563A8', market: '#C2571A', board: '#B7791F',
     care: '#BE4560', midweek: '#3F4B94', groups: '#BE4560', people: '#2E7D6B', rosters: '#2F6F9F', leave: '#C98A1B', events: '#B5483A',
-    settings: '#5B6770', privacy: '#2F6B4F', support: '#A5532B', home: '#E8590C', me: '#BE4560', about: '#5B6770', generic: '#2F7A78' };
-  var ALIAS = { life: 'midweek', care: 'care', groups: 'groups', leaders: 'groups', import: 'settings', words: 'settings', 'church-settings': 'settings' };
+    settings: '#5B6770', import: '#6B8E23', words: '#1F8FA8', privacy: '#2F6B4F', support: '#A5532B', home: '#E8590C', me: '#C0527A', about: '#7A5C99', generic: '#2F7A78' };
+  var ALIAS = { life: 'midweek', care: 'care', leaders: 'groups' };
 
   /** The picture for an address like "#/library/archives" ('' when this page has none). */
   function keyOf(hash) {
     var p = String(hash || '').replace(/^#\/?/, '').split('?')[0].split('/'), a = p[0] || 'home';
     if (a === 'library') return p[1] === 'archives' ? 'archives' : p[1] === 'borrowed' ? 'borrowed' : 'library';
-    if (TINT[a]) return a;
-    return ALIAS[a] || 'generic';
+    if (own(TINT, a)) return a;
+    return own(ALIAS, a) ? ALIAS[a] : a;
   }
+  /** A small number made from a page's name, so a page with no picture of its own still gets its own colour and picture (and keeps them). */
+  function seed(s) { var h = 7, i; s = String(s || ''); for (i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0; return h; }
+  /** The colour of a page: its own, or one made from its name. */
+  function tintOf(key) { return own(TINT, key) ? TINT[key] : 'hsl(' + (seed(key) % 360) + ' 42% 40%)'; }
+  /** The picture of a page: its own, or one of the four general ones chosen from its name. */
+  function sceneOf(key) { return own(SCENE, key) ? SCENE[key] : SCENE['generic' + ((seed(key) >>> 3) % 4)]; }
+  function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
   function plain(settings) { return !!settings && settings.look === 'plain'; }
 
   /* ---------- the little drawings (class a/b = main shapes, c = warm touch, w = paper) ---------- */
@@ -128,33 +135,66 @@ var Banners = (function () {
     me: function () {
       return figure(320, 182, 2.1, 'a') + heart(430, 70, 1.2, 'c') + heart(210, 100, .8, 'b') + star(160, 50, 8, 'b') + star(500, 150, 8, 'b');
     },
-    about: function () { return SCENE.generic(); },
-    generic: function () {
+
+    import: function () {
+      var out = rect(250, 120, 140, 56, 'a', 8) + rect(240, 106, 160, 18, 'b', 6) + path('M300 106v-8h40v8', 'a');
+      out += rect(150, 36, 54, 70, 'w', 5) + path('M160 54h34M160 68h34M160 82h20', 'a') + rect(214, 24, 54, 70, 'c', 5) + path('M224 42h34M224 56h34M224 70h20', 'w');
+      out += rect(430, 30, 54, 70, 'w', 5) + path('M440 48h34M440 62h34M440 76h20', 'a');
+      out += path('M320 38v46M300 66l20 20l20 -20', 'c') + path('M282 70l-26 -16M358 70l26 -16', 'b') + star(520, 150, 8, 'b') + circ(130, 150, 7, 'a');
+      return out;
+    },
+    settings: function () {
+      var out = '', i, a;
+      for (i = 0; i < 8; i++) { a = i * 45; out += '<g transform="rotate(' + a + ' 330 100)">' + rect(322, 38, 16, 22, 'a', 3) + '</g>'; }
+      out += circ(330, 100, 44, 'a') + circ(330, 100, 18, 'w');
+      out += rect(150, 60, 110, 8, 'b', 4) + circ(200, 64, 11, 'c') + rect(150, 110, 110, 8, 'b', 4) + circ(236, 114, 11, 'w') + rect(150, 160, 110, 8, 'b', 4) + circ(176, 164, 11, 'c');
+      out += rect(430, 40, 80, 8, 'b', 4) + circ(480, 44, 10, 'a') + rect(430, 140, 80, 8, 'b', 4) + circ(448, 144, 10, 'c') + star(500, 100, 9, 'b');
+      return out;
+    },
+    words: function () {
+      return path('M150 40h140a16 16 0 0 1 16 16v54a16 16 0 0 1 -16 16h-90l-30 24v-24h-20a16 16 0 0 1 -16 -16v-54a16 16 0 0 1 16 -16z', 'a') + '<text class="t" x="178" y="98" font-size="52" font-weight="700">Aa</text>' +
+        path('M360 70h120a16 16 0 0 1 16 16v50a16 16 0 0 1 -16 16h-14v22l-28 -22h-78a16 16 0 0 1 -16 -16v-50a16 16 0 0 1 16 -16z', 'c') + '<text class="t2" x="382" y="132" font-size="50" font-weight="700">文</text>' +
+        path('M300 24h90a14 14 0 0 1 14 14v26a14 14 0 0 1 -14 14h-10v18l-22 -18h-58a14 14 0 0 1 -14 -14v-26a14 14 0 0 1 14 -14z', 'w') + '<text class="t" x="322" y="66" font-size="30" font-weight="700">Я</text>' +
+        circ(520, 40, 14, 'b') + path('M512 40h16M520 32v16', 'w') + star(130, 150, 8, 'b') + circ(520, 170, 6, 'a');
+    },
+    generic0: function () {
       var out = '', i;
       for (i = 0; i < 6; i++) out += path('M' + (190 + i * 60) + ' 20L' + (220 + i * 60) + ' 50L' + (190 + i * 60) + ' 80L' + (160 + i * 60) + ' 50z', i % 2 ? 'b' : 'a');
       for (i = 0; i < 5; i++) out += path('M' + (220 + i * 60) + ' 80L' + (250 + i * 60) + ' 110L' + (220 + i * 60) + ' 140L' + (190 + i * 60) + ' 110z', i % 2 ? 'a' : 'b');
       return out + leaf(250, 180, -20, 1.3, 'c') + leaf(310, 180, 18, 1.1, 'a') + leaf(450, 180, -10, 1.4, 'a') + circ(490, 40, 8, 'c');
-    }
+    },
+    generic1: function () {
+      return circ(420, 76, 32, 'c') + hills() + path('M200 50q10 -12 20 0q10 -12 20 0M250 34q8 -9 16 0q8 -9 16 0', 'a') + star(520, 40, 8, 'b') + star(150, 90, 7, 'b');
+    },
+    generic2: function () {
+      return circ(240, 100, 54, 'b') + circ(330, 80, 70, 'a') + circ(430, 118, 46, 'b') + circ(500, 56, 26, 'c') + circ(180, 160, 22, 'a') + star(300, 40, 9, 'w') + star(450, 40, 7, 'w') + circ(366, 150, 14, 'w');
+    },
+    generic3: function () {
+      var out = rect(318, 80, 14, 102, 'a', 5) + circ(325, 66, 46, 'b') + circ(285, 90, 34, 'a') + circ(368, 92, 36, 'a') + circ(325, 40, 28, 'a') + circ(300, 70, 7, 'c') + circ(350, 56, 7, 'c') + circ(340, 100, 7, 'c');
+      return out + leaf(210, 182, -18, 1.2, 'b') + leaf(250, 182, 14, 1.0, 'a') + leaf(440, 182, -12, 1.2, 'a') + leaf(480, 182, 18, 1.0, 'b') + star(150, 50, 8, 'b');
+    },
+    about: function () { return SCENE.generic0(); },
+    generic: function () { return SCENE.generic0(); }
   };
 
   /** The scene as a picture (an <svg> ready to put inside the heading). */
-  function svg(key) { return '<svg class="hero-art" viewBox="0 0 560 200" preserveAspectRatio="xMaxYMid meet" aria-hidden="true" focusable="false">' + (SCENE[key] || SCENE.generic)() + '</svg>'; }
+  function svg(key) { return '<svg class="hero-art" viewBox="0 0 560 200" preserveAspectRatio="xMaxYMid meet" aria-hidden="true" focusable="false">' + sceneOf(key)() + '</svg>'; }
 
   /** Is this heading a page's own title (not a person's page, a form or a message with a "back" link)? */
   function eligible(head) { return !!head && !head.querySelector('.crumb') && !head.classList.contains('hero') && !head.closest('.dialog, dialog, .modal, [role=dialog]'); }
 
   /** Turn the heading of the page shown in `root` into a picture banner (or put it back to plain). */
   function decorate(root, hash, settings) {
-    var head = root && root.querySelector('main .page-head');
+    var head = root && root.querySelector('main .page-head, main .me-who');
     if (!head) return false;
     if (plain(settings) || !eligible(head)) return false;
     var key = keyOf(hash);
-    head.classList.add('hero', 'wash');
-    head.style.setProperty('--tint', TINT[key] || TINT.generic);
+    head.classList.add('hero', 'wash', 'page-head');
+    head.style.setProperty('--tint', tintOf(key));
     head.insertAdjacentHTML('afterbegin', '<span class="hero-bg" aria-hidden="true">' + svg(key) + '</span>');
     return true;
   }
 
-  return { decorate: decorate, keyOf: keyOf, plain: plain, svg: svg, TINT: TINT };
+  return { decorate: decorate, keyOf: keyOf, plain: plain, svg: svg, TINT: TINT, tintOf: tintOf, sceneOf: sceneOf, SCENE: SCENE };
 })();
 if (typeof module !== 'undefined') module.exports = Banners;

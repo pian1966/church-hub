@@ -1629,3 +1629,11 @@ html[data-mode=dark] .hero-art .w { fill: #fff; fill-opacity: .22; stroke: rgba(
 .look-prev i + u { position: absolute; left: 12px; top: 40px; width: 55%; height: 6px; border-radius: 3px; background: var(--line); }
 .look-prev i + u + u { top: 54px; width: 40%; }
 @media print { .hero-bg { display: none; } .page-head.hero { background: none; min-height: 0; padding: 0; } .page-head.hero > div:not(.hero-bg) { max-width: none; } }
+
+.hero-art .t { fill: color-mix(in srgb, var(--tint) 70%, #000); fill-opacity: .8; font-family: Inter, system-ui, sans-serif; }
+.hero-art .t2 { fill: #fff; fill-opacity: .95; font-family: Inter, system-ui, sans-serif; }
+html[data-mode=dark] .hero-art .t { fill: #fff; fill-opacity: .85; }
+.me-who.hero { flex-direction: row; align-items: center; gap: 18px; margin-bottom: 22px; }
+.me-who.hero > :not(.hero-bg) { position: relative; z-index: 1; }
+.me-who.hero > div:not(.hero-bg) { max-width: 44%; }
+@media (max-width: 700px) { .me-who.hero { flex-direction: column; align-items: flex-start; padding-top: 112px; } .me-who.hero > div:not(.hero-bg) { max-width: 100%; } }

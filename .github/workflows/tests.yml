@@ -73,6 +73,8 @@ jobs:
         run: node tests/elvanto-sync.test.js && node tests/robot.test.js
       - name: Households and guardians
         run: node tests/households.test.js
+      - name: Page pictures (soft watercolour headings)
+        run: node tests/banners.test.js
       - name: Version numbers (every file fetched again after an update)
         run: node tests/versions.test.js
       - name: Generic brochure branding

@@ -1,7 +1,7 @@
 /* Church & Trellis – soft watercolour pictures at the top of every page.
  * Banners.decorate(main) turns the page's own heading (.page-head) into a picture banner: the title, the one-line lead and
  * the buttons stay exactly as they were (so nothing about how they work changes); a painted background and a small
- * scene for that part of the app are added behind them. A church can choose "Warm line art" or "Plain" instead (Settings → Colours →
+ * scene for that part of the app are added behind them. A church can choose "Warm line art" or "Plain" instead (Settings → Themes →
  * Page pictures; settings.look = 'line' | 'plain'). Pure drawing – no data is read or written here. Test: tests/banners.test.js */
 var Banners = (function () {
   'use strict';

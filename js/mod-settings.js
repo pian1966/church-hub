@@ -90,7 +90,7 @@
   var GROUPS = [['church', TX('Church')], ['features', TX('Features')], ['access', TX('People and access')], ['comms', TX('Communication')]];
   var SECTIONS = [
     ['general', TX('General'), TX('Name and country'), 'church', 'M3 21h18M5 21V8l7-5 7 5v13M10 21v-6h4v6', 'church name country address province state county privacy law'],
-    ['colours', TX('Colours'), TX('The church’s colour'), 'church', 'M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.7-1.2-.7-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11h.01M10 7.5h.01M14 7.5h.01', 'colour color theme brand logo cross buttons'],
+    ['colours', TX('Themes'), TX('The church’s colour and page pictures'), 'church', 'M12 3a9 9 0 1 0 0 18c1.1 0 1.5-.8 1.5-1.5 0-.9-.7-1.2-.7-2 0-.8.7-1.5 1.5-1.5H17a4 4 0 0 0 4-4c0-5-4-9-9-9zM7.5 11h.01M10 7.5h.01M14 7.5h.01', 'themes theme colour colours color pictures page pictures watercolour line art plain brand logo cross buttons'],
     ['terminology', TX('Terminology (Church Words)'), TX('The words your church uses'), 'church', 'M4 7V5h16v2M9 19h6M12 5v14', 'words wording terms names music worship praise leader'],
     ['apps', TX('Apps'), TX('Switch parts of Church & Trellis on or off'), 'features', 'M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z', 'modules switch on off people rosters leave care groups messages privacy import translations ai gemini artificial intelligence ask photo handwriting sign-up sheet visitor cards'],
     ['services', TX('Church Services'), TX('Service times, venues and rosters'), 'features', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4', 'service services times venue campus roster special good friday christmas easter weekly'],
@@ -289,22 +289,22 @@
   var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
   function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
   /** Page pictures: the soft watercolour picture behind every page's heading, or Plain (settings.look = 'plain'). */
-  function renderLook(st) {
-    var cur = window.Banners ? Banners.look(st) : 'watercolour', art = window.Banners ? '<span class="hero-bg">' + Banners.svg('library') + '</span>' : '';
-    function opt(v, title, inner) { return '<button type="button" class="look-opt" role="radio" aria-checked="' + (cur === v) + '" data-act="settings:look" data-v="' + v + '">' + inner + '<b>' + title + '</b></button>'; }
+  function renderLook(st, mine) {
+    var own = mine && H.myLook(), cur = window.Banners ? Banners.look(mine ? { look: own || st.look } : st) : 'watercolour', art = window.Banners ? '<span class="hero-bg">' + Banners.svg('library') + '</span>' : '';
+    function opt(v, title, inner) { return '<button type="button" class="look-opt" role="radio" aria-checked="' + (cur === v) + '" data-act="' + (mine ? 'me:mylook' : 'settings:look') + '" data-v="' + v + '">' + inner + '<b>' + title + '</b></button>'; }
     return '<section class="panel" id="st-look"><h2>' + T('Page pictures') + '</h2>' +
-      '<p class="hint" style="margin-top:0">' + T('A picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.') + '</p>' +
+      '<p class="hint" style="margin-top:0">' + (mine ? T('A picture at the top of every page, in the colours of that part of the app. This is your own choice, on this device.') : T('A picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.')) + '</p>' +
       '<div class="look-pick" role="radiogroup" aria-label="' + esc(T('Page pictures')) + '">' +
         opt('watercolour', T('Soft watercolour'), '<span class="look-prev wash">' + art + '<i>' + T('Library') + '</i><u></u><u></u></span>') +
         opt('line', T('Warm line art'), '<span class="look-prev hero line">' + art + '<i>' + T('Library') + '</i><u></u><u></u></span>') +
         opt('plain', T('Plain (original)'), '<span class="look-prev"><i>' + T('Library') + '</i><u></u><u></u></span>') +
       '</div></section>';
   }
-  function renderTheme(st) {
-    var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex), hsv = toHsv(hex);
+  function renderTheme(st, mine) {
+    var t = H.themeOf(st), hex = (mine && H.myColor()) || ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex), hsv = toHsv(hex);
     pick = { h: hsv.h, s: hsv.s, v: hsv.v };
     return '<section class="panel" id="st-theme" data-noauto><h2>' + T('Colours') + '</h2>' +
-      '<p class="hint" style="margin-top:0">' + T('The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.') + '</p>' +
+      '<p class="hint" style="margin-top:0">' + (mine ? T('Your own colour for buttons, links, the turning cross and the menu. Only you see it, on this device.') : T('The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.')) + '</p>' +
       // The live sample: the menu with the logo, a button, a Save button, a link and the turning cross
       '<div class="th-prev" id="th-prev" style="' + themeVars(shown) + '">' +
         '<div class="th-pside"><span class="th-pmark">' + H.icon('M12 3v18M6 9h12', 18) + '</span><span class="th-pnav"></span><span class="th-pnav on"></span><span class="th-pnav"></span></div>' +
@@ -324,7 +324,7 @@
             '<input id="st-th-c" class="th-hexin" value="' + esc(hex) + '" maxlength="7" spellcheck="false" autocomplete="off" autocapitalize="characters" inputmode="text"></div>' +
         '</div><code id="th-hex" hidden>' + esc(hex) + '</code></div>' +
       '<p class="hint" id="th-dark"' + (shown.light ? '' : ' hidden') + '>' + T('Writing on buttons will be dark, so it stays easy to read.') + '</p>' +
-      '<button class="btn save" data-act="settings:theme">' + T('Save the church’s colour') + '</button></section>';
+      (mine ? '<button class="btn save" data-act="me:mytheme">' + T('Save my colour') + '</button>' : '<button class="btn save" data-act="settings:theme">' + T('Save the church’s colour') + '</button>') + '</section>';
   }
   /** Colours as hue (0–360), saturation and brightness (0–1), for the picker. */
   function toHsv(hex) {
@@ -611,6 +611,8 @@
     H.modal(html, T('Send email'));
   }
 
+  window.ThemePicker = { theme: renderTheme, look: renderLook };   // also drawn on Me → Themes, for each person's own choice
+
   H.register({
     id: 'settings', name: 'Settings', desc: 'Church details, apps and access', icon: H.ICON.settings, tint: '#6B625A', roles: ['admin'], perm: 'settings.manage',
     also: function () { return H.isRector(); },   // the Senior Pastor (Rector): Attendees and the membership application
@@ -795,15 +797,15 @@
       look: function (el) {
         var d = el && el.dataset && el.dataset.v, v = d === 'plain' || d === 'line' ? d : 'watercolour';
         if ((window.Banners ? Banners.look(S.settings()) : 'watercolour') === v) { H.toast(T('Saved')); return; }
-        S.setSettings({ look: v }, 'Page pictures: ' + (v === 'plain' ? 'plain (the original look)' : v === 'line' ? 'warm line art' : 'soft watercolour'));
+        S.setSettings({ look: v }, 'Themes: page pictures – ' + (v === 'plain' ? 'plain (the original look)' : v === 'line' ? 'warm line art' : 'soft watercolour'));
         H.render(); H.toast(T('Saved'));
       },
       theme: function () {
         var hex = (document.getElementById('th-hex').textContent || '').trim().toUpperCase(); if (!/^#[0-9A-F]{6}$/.test(hex)) return;
         var cur = S.settings().theme || {};
         if (cur.id === 'custom' && String(cur.color).toUpperCase() === hex) { H.toast(T('Saved')); return; }
-        S.setSettings({ theme: { id: 'custom', color: hex } }, 'Colours: the church’s colour is now ' + hex);
-        H.applyTheme(H.themeOf(S.settings())); H.render(); H.toast(T('Saved'));
+        S.setSettings({ theme: { id: 'custom', color: hex } }, 'Themes: the church’s colour is now ' + hex);
+        H.applyTheme(H.themeFor(S.settings())); H.render(); H.toast(T('Saved'));
       },
       name: function () {
         var st = S.settings(), n = document.getElementById('st-name').value.trim(), c = document.getElementById('st-country').value, say = [];

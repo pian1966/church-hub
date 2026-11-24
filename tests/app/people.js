@@ -356,7 +356,7 @@ module.exports = async function (ctx) {
   check(ms < 1500, 'drawing Home again is quick (' + Math.round(ms) + ' ms)');
   await finish(s);
 
-  console.log('The church’s colours (Settings → Colours)');
+  console.log('The church’s colours (Settings → Themes)');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('settings');
   check(await s.page.$$eval('.set-link', a => a.length) === 8 && await s.page.isVisible('.set-link.on[href="#/settings/general"]') && await s.page.isVisible('#st-name') && !(await s.page.$('#see-others')),
     'Settings: a list of topics down the left, and one topic at a time (General first)');

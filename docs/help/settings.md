@@ -16,12 +16,21 @@ For: Administrators
 and the church's colour (**Save the church's colour**) – everyone sees it.
 
 ## Can I change or turn off the pictures at the top of each page?
-For: Administrators, the Rector
-Also asked: Plain pages. Page pictures. Remove the header pictures. Line art.
+For: Everyone
+Also asked: Plain pages. Page pictures. Remove the header pictures. Line art. My own colour. Themes.
 
-Every page has a picture at the top, in the colours of that part of the app. To change it, open **Settings → Colours →
-Page pictures** and choose **Soft watercolour**, **Warm line art** or **Plain (original)**. Everyone at your church sees the
-choice you make.
+Every page has a picture at the top, in the colours of that part of the app. To choose your own, open **Me → Themes**
+and pick **Soft watercolour**, **Warm line art** or **Plain (original)**. Only you see your choice, on the device you chose it on.
+To go back to your church's choice, tap **Use the church's theme**. Administrators and the Rector choose what everyone sees
+until they pick their own, under **Settings → Themes → Page pictures**.
+
+## How do I choose my own colour for Church & Trellis?
+For: Everyone
+Also asked: Change the colour. My colour. Buttons colour. Themes.
+
+Open **Me → Themes**, pick a colour (or any colour by its code) and tap **Save my colour**. Buttons, links and the menu
+change to it, for you only, on this device. Tap **Use the church's theme** to go back to your church's colour.
+Administrators and the Rector set the church's colour under **Settings → Themes**.
 
 ## How do I use our own church words (e.g. Rector, Parishioner)?
 For: Administrators
@@ -130,7 +139,7 @@ Open **About → Brochures** and choose **For our members** or **For other churc
   **Done editing** when you've finished.
 - **Language**: choose a language in the brochure editor. Wording you change is saved for that language only; the original
   brochure wording remains the fallback when you have not changed a line in that language.
-- **Colour** and **Font**: Church & Trellis orange, your church's own colour (Settings → Colours) or any colour, and a choice of fonts.
+- **Colour** and **Font**: Church & Trellis orange, your church's own colour (Settings → Themes) or any colour, and a choice of fonts.
 - **Print or save as PDF**: A4 landscape, both sides, flipping on the short edge, then fold in three.
 If a red warning says a panel doesn't fit, shorten its text or hide a block. **Back to the original wording** clears wording
 changes for the language you selected; **Back to Church & Trellis's colour and font** resets the design. When Church & Trellis updates

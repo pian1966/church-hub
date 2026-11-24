@@ -378,7 +378,7 @@ var Hub = (function () {
   function go(path) { location.hash = '#/' + path; }
 
   /* ---------- rendering ---------- */
-  /* ---------- the church's colours (Settings → Colours) ----------
+  /* ---------- the church's colours (Settings → Themes) ----------
    * Each theme: the accent (buttons, links, the turning cross, the logo), a darker shade for writing on light backgrounds,
    * a pale shade, and the menu's own dark colour. "Your own colour" works out the shades, darkened if needed so white
    * writing on buttons stays readable. Remembered on each device (Store.pref) so the sign-in screen has it too. */
@@ -410,6 +410,13 @@ var Hub = (function () {
     if (t.id === 'custom' && hexRgb(t.color)) return themeFrom(t.color);
     return THEMES.filter(function (x) { return x.id === t.id; })[0] || THEMES[0];
   }
+  /** Each person's own theme on this device (Me → Themes): their colour and their page pictures. Empty = the church's choice. */
+  function myColor() { var c = Store.pref('myColor'); return hexRgb(c) ? c.toUpperCase() : ''; }
+  function myLook() { var l = Store.pref('myLook'); return l === 'plain' || l === 'line' || l === 'watercolour' ? l : ''; }
+  /** The theme in use: the person's own colour if they chose one, otherwise the church's. */
+  function themeFor(st) { var c = myColor(); return c ? themeFrom(c) : themeOf(st); }
+  /** The church's settings with the person's own page pictures laid over them (for drawing the picture at the top of a page). */
+  function lookSettings(st) { var l = myLook(); if (!l) return st; var o = {}; for (var k in (st || {})) o[k] = st[k]; o.look = l; return o; }
   /** Light or dark: each person's own choice on each device (Store.pref('mode'): 'light', 'dark' or '' = same as the device). */
   function modeChoice() { return Store.pref('mode') || ''; }
   function isDark() {
@@ -418,7 +425,7 @@ var Hub = (function () {
   }
   function applyMode() {
     var dark = isDark(); document.documentElement.setAttribute('data-mode', dark ? 'dark' : 'light');
-    themeKey = ''; applyTheme(Store.settings && Store.settings() ? themeOf(Store.settings()) : null);
+    themeKey = ''; applyTheme(Store.settings && Store.settings() ? themeFor(Store.settings()) : null);
   }
   if (typeof window !== 'undefined' && window.matchMedia) {
     try { window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', function () { if (!modeChoice()) applyMode(); }); } catch (e) { /* older browsers */ }
@@ -467,7 +474,7 @@ var Hub = (function () {
   function draw() {
     if (switching) return;   // "View as": the right information is still loading
     if (!document.documentElement.getAttribute('data-mode')) applyMode();
-    if (Store.settings && Store.settings()) applyTheme(themeOf(Store.settings())); else applyTheme();
+    if (Store.settings && Store.settings()) applyTheme(themeFor(Store.settings())); else applyTheme();
     if (!user) return renderSignIn();
     modules.forEach(function (m) { if (m.beforeRender) { try { m.beforeRender(); } catch (e) { console.error(m.id, e); } } });   // e.g. approved translations
     var p = parts();
@@ -492,7 +499,7 @@ var Hub = (function () {
     var gt = root.querySelector('main .groups-tabs'), ph = root.querySelector('main .page-head');
     if (gt && ph && (gt.compareDocumentPosition(ph) & 4)) ph.parentNode.insertBefore(gt, ph.nextSibling);
     if (samePage && wasOpen.length) root.querySelectorAll('details').forEach(function (d) { if (wasOpen.indexOf(keyOf(d)) >= 0) d.open = true; });   // a refresh keeps unfolded sections open
-    if (window.Banners) Banners.decorate(root, location.hash, Store.settings && Store.settings());   // soft watercolour picture behind the page's heading (Settings → Colours → Page pictures)
+    if (window.Banners) Banners.decorate(root, location.hash, lookSettings(Store.settings && Store.settings()));   // the picture behind the page's heading (Me → Themes, or the church's choice in Settings → Themes)
     ourWords(root);
     wirePrompts();
     if (mod && mod.after) mod.after(p.slice(1));
@@ -1494,6 +1501,6 @@ var Hub = (function () {
 
   return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     menu: menu, esc: esc, fmt: fmt, today: today, name: name, byName: byName, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal, autoForget: autoForget,
-    THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, applyTheme: applyTheme,
+    THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, themeFor: themeFor, myColor: myColor, myLook: myLook, applyTheme: applyTheme,
     dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, tags: function () { return user ? homeTags() : ['everyone']; }, myLabel: myLabel, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, canViewAs: function () { return canViewAs() && !Store.preview(); }, viewChoices: function () { return canViewAs() ? viewChoices() : []; }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

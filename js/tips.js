@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.111';
+  var NEWS_FOR = '0.112';
   var NEWS = [
+    { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Cancel this service…'], text: TX("Rosters: a service that is cancelled keeps a narrow column on the roster – on screen, on paper and in the PDF – with the note written up its side. Tap ⋯ under its date → Cancel this service…; everyone on it stays on the roster, can be sent a friendly message, and comes back when you put the service back.") },
+    { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX("If a service you were rostered on is cancelled, Me → Serving now says Cancelled (and you may get a friendly message), and the printed roster keeps a narrow column for it.") },
     { date: '2026-11-24', who: ['everyone'], app: 'help', btn: ['Help'], text: TX('New: Help. Type or say a question about using Church & Trellis and get an answer written for you from the help pages – or browse them by topic.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Every page now has a soft watercolour picture at the top. Administrators and the Rector can choose warm line art instead, or go back to plain, under Settings → Colours → Page pictures.') },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('On each of your turns on Me → Serving you can now see who else is serving at that service – names and jobs, your own team first.') },
@@ -145,6 +147,7 @@
     // Care Group carers
     { id: 'carer-msg', who: ['carer'], app: 'messages', href: '#/messages', text: TX('As a carer, you can send a message to everyone in your Care Group from Messages.') },
     // Roster coordinators
+    { id: 'ros-cancel', btn: ['Rosters', 'Cancel this service…'], who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX("Service cancelled? Don’t delete it: tap ⋯ under its date on Rosters and choose Cancel this service… – the roster keeps a narrow column for it, and you can tell everyone on it kindly.") },
     { id: 'ros-fill', btn: ['Fill the gaps for me'], who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Fill the gaps for me (on Rosters) suggests fair turns, keeping everyone’s days away and leave in mind.') },
     { id: 'ros-offers', btn: ['Rosters', 'Teams'], who: ['rosters', 'admin'], app: 'rosters', href: '#/rosters', text: TX('Offers to serve from members wait for you at the top of Rosters → Teams.') },
     // Children's ministry

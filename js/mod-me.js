@@ -122,7 +122,7 @@
     var u = me(), list = myAway();
     var clashes = upcomingTurns().filter(function (a) {
       var d = service(a.serviceId).date;
-      return a.status !== 'declined' && list.some(function (w) { return w.from <= d && w.to >= d; });
+      return a.status !== 'declined' && !RosterCore.isCancelled(service(a.serviceId)) && list.some(function (w) { return w.from <= d && w.to >= d; });
     });
     var html = head(T('Days away'), T('Days you can’t serve. You won’t be put on the roster on them.'),
       '<button class="btn primary" data-act="rosters:addaway">' + H.icon(H.ICON.plus, 18) + T('Add days away') + '</button>', 'away');
@@ -169,9 +169,10 @@
         var s = service(a.serviceId), x = slotOfTurn(s), p = pos(a.positionId), d = LeaveCore.parse(s.date);
         return '<div class="item svc-tint turn" style="' + RosterServices.svcStyle(s) + '"><span class="me-cal" aria-hidden="true"><b>' + d.getDate() + '</b>' + esc(H.mon()[d.getMonth()]) + '</span>' +
           '<span class="grow"><b>' + esc(p ? p.name : T('A position that has been removed')) + '</b><small>' + esc(H.fmt(s.date, true)) + '</small><span class="svc-chips">' + chip(x) + (p && team(p.teamId) ? '<span class="svc-note">' + esc(team(p.teamId).name) + '</span>' : '') + '</span></span>' +
-          (a.status === 'pending' ? '<span class="btns"><button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Yes, I’ll be there') + '</button></span>' :
+          (RosterCore.isCancelled(s) ? '<span class="tag grey" title="' + esc(s.cancelReason || T('The service is not taking place this Sunday')) + '">' + T('Cancelled') + '</span>' :
+            a.status === 'pending' ? '<span class="btns"><button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Yes, I’ll be there') + '</button></span>' :
             '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + (a.status === 'accepted' ? T('Accepted') : T('Said no')) + '</span>') +
-          swapBit(a) + (RH ? RH.crewCard(a) : '') + '</div>';
+          (RosterCore.isCancelled(s) ? (s.cancelReason ? '<small class="muted" style="flex-basis:100%">' + esc(s.cancelReason) + '</small>' : '') : swapBit(a) + (RH ? RH.crewCard(a) : '')) + '</div>';
       }).join('') + passed.map(function (x) {
         var sv = service(x.serviceId), p = pos(x.positionId);
         return '<div class="item svc-tint turn passed" style="' + RosterServices.svcStyle(sv) + '"><span class="grow"><b>' + esc(p ? p.name : '') + '</b><small>' + esc(H.fmt(sv.date, true)) + '</small><small class="me-offer">' + esc(RH.swapLine(x)) + '</small></span><span class="tag ok">' + T('Covered') + '</span></div>';
@@ -277,7 +278,7 @@
   H.register({
     id: 'me', name: 'Me', desc: 'Your details, days away and serving', icon: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM4 21a8 8 0 0 1 16 0', tint: '#0F766E',
     stat: function (u) {
-      var t = H.today(), next = S.find('assignments', function (a) { var s = service(a.serviceId); return a.personId === u.id && a.status !== 'declined' && s && s.date >= t; })
+      var t = H.today(), next = S.find('assignments', function (a) { var s = service(a.serviceId); return a.personId === u.id && a.status !== 'declined' && s && s.date >= t && !RosterCore.isCancelled(s); })
         .map(function (a) { return service(a.serviceId).date; }).sort()[0];
       return next ? T('Serving next on {date}', { date: H.fmt(next) }) : T('Your details, days away and serving');
     },

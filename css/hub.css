@@ -292,6 +292,14 @@ button.item { width: 100%; border: 0; background: transparent; text-align: left;
 .my-pos .grow b { font-size: 15px; }
 html[data-mode=dark] .svc-chip, html[data-mode=dark] .ro-chip.svc.on, html[data-mode=dark] .item.turn .me-cal { background: color-mix(in srgb, var(--svc-line) 22%, var(--surface)); color: color-mix(in srgb, var(--svc-line) 50%, #fff); }
 .matrix .team-row th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 8px 14px; }
+.matrix .team-row td.tm { background: var(--surface-2); padding: 0; }
+/* A cancelled service: one narrow hatched column, its note written up the side */
+.matrix thead th.svc-col.cx { min-width: 0; width: 76px; max-width: 76px; padding: 12px 6px; }
+.matrix thead th.svc-col.cx .tag { display: block; width: fit-content; margin-top: 6px; }
+.matrix thead th.svc-col.cx .row-menu { display: block; margin-top: 4px; }
+.matrix td.cx { min-width: 0; width: 76px; max-width: 76px; padding: 10px 0; text-align: center; vertical-align: top; color: var(--muted); font-weight: 600; font-size: 12.5px;
+  background: repeating-linear-gradient(135deg, var(--surface-2) 0 6px, var(--surface) 6px 12px); border-left: 1px solid var(--line-2); border-right: 1px solid var(--line-2); }
+.matrix td.cx .vt { writing-mode: vertical-rl; transform: rotate(180deg); display: inline-block; max-height: 22em; line-height: 1.35; }
 .slot { display: flex; flex-direction: column; gap: 4px; }
 .chip { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; border-radius: 10px; padding: 7px 9px; border: 1px solid transparent; font-size: 13.5px; font-weight: 600; cursor: pointer; min-height: 38px; background: var(--ok-soft); color: #173F27; }
 .chip.pending { background: var(--warn-soft); color: #4D3500; }
@@ -989,8 +997,12 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   #print-only.roster tr.ro-team th { background: #eee; font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; padding-top: .8mm; padding-bottom: .8mm; }
   #print-only.roster td span { display: block; } #print-only.roster td.na { background: repeating-linear-gradient(135deg, #f3f3f3 0 2mm, #fff 2mm 4mm); }
   #print-only.roster thead { display: table-header-group; }
-  #print-only.roster thead th.off, #print-only.roster td.off { background: #E6E6E6; color: #444; font-weight: 700; font-size: 7.5pt; text-align: center; vertical-align: top; }
-  #print-only.roster td.off { padding-top: 3mm; }
+  #print-only.roster col.ro-off { width: 12mm; }
+  #print-only.roster thead th.off, #print-only.roster td.off { background: #E6E6E6; color: #444; font-weight: 700; font-size: 7pt; text-align: center; vertical-align: top; }
+  #print-only.roster thead th.off { padding: 1mm .4mm; line-height: 1.15; overflow-wrap: break-word; } #print-only.roster thead th.off small { font-size: 6pt; }
+  #print-only.roster td.off { padding: 2mm 0; overflow: hidden; }
+  /* the note on a day with no service: turned on its side, reading upwards, in a column only as wide as its lines */
+  #print-only.roster td.off .vt { display: inline-block; vertical-align: top; writing-mode: vertical-rl; transform: rotate(180deg); text-align: center; line-height: 1.3; }
   #print-only.roster tr { break-inside: avoid; page-break-inside: avoid; }
   #print-only.roster .ro-pf { display: flex; justify-content: space-between; font-size: 7.5pt; color: #555; margin-top: 2mm; }
 }

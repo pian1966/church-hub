@@ -273,9 +273,9 @@ async function icon(Comp, color, px = 256) {
     { text: 'Ask who’s away before each term – days away and leave are skipped', options: { bullet: true, breakLine: true } },
     { text: 'Communion roles only on communion Sundays', options: { bullet: true, breakLine: true } },
     { text: 'Change a name in one tap – they’re told', options: { bullet: true, breakLine: true } },
-    { text: 'Print or download it as a PDF – portrait or landscape', options: { bullet: true } }
+    { text: 'Print or download it – cancelled services stay marked', options: { bullet: true } }
   ], { x: 0.6, y: 1.6, w: 3.2, h: 4.8, fontSize: 16, paraSpaceAfter: 10 });
-  s.addNotes('[Clip plays] Fill the gaps for me. Church & Trellis suggests who serves where, shares the turns fairly, keeps families together, skips people who are away (before planning a term, one tap asks every volunteer whether they’ll be away), and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages. For the noticeboard, anyone can print or download the roster as a PDF – a month up to a year, portrait or landscape, every Sunday across the top in each service’s colours, and a Sunday with no service says so instead of disappearing.');
+  s.addNotes('[Clip plays] Fill the gaps for me. Church & Trellis suggests who serves where, shares the turns fairly, keeps families together, skips people who are away (before planning a term, one tap asks every volunteer whether they’ll be away), and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages. For the noticeboard, anyone can print or download the roster as a PDF – a month up to a year, portrait or landscape, every Sunday across the top in each service’s colours, and a Sunday with no service – or a cancelled one – stays as a narrow column that says so instead of disappearing.');
 
   // ========== 12. Volunteers reply (clip) ==========
   s = content('What it does', 'Volunteers reply from their phone');

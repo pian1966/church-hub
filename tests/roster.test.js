@@ -226,6 +226,29 @@ console.log('Printing the roster: every Sunday is a column, only what each servi
   ok(R.printSheets(gap, { from: '2027-01-11', to: '2027-01-31', sheets: ['08:00'] })[0].columns.map(c => c.date).join() === '2027-01-17,2027-01-24', 'the range can start in the middle');
   ok(R.printSheets(d, { from: '2027-01-01', to: '2027-12-31', sheets: ['08:00'] })[0].columns.pop().date === '2027-04-04', 'Sundays after the last planned service are not planned yet – they are not shown as cancelled');
 
+  // A cancelled service stays as a column too – its people are kept on the roster but not printed – and puts back as it was
+  const cx = Object.assign({}, d, { services: d.services.map(s => s.id === 'b8' ? R.setCancelled(s, true, '  Public holiday  ') : s) });
+  const cs = R.printSheets(cx, { from: '2027-01-01', to: '2027-01-12', sheets: ['08:00'] })[0];
+  ok(cs.columns.map(c => c.date + (c.held ? '' : c.cancelled ? '*cancelled' : '*')).join() === '2027-01-03,2027-01-10*cancelled', 'the cancelled 8 o’clock service keeps its column, marked cancelled');
+  ok(cs.columns[1].reason === 'Public holiday' && cs.columns[1].service.id === 'b8', 'with its reason (trimmed) and the service behind it');
+  const crow = cs.teams[0].rows[0].cells;
+  ok(crow[1].off && crow[1].names.length === 0 && crow[0].names[0] === 'Jason Naidoo', 'nobody is printed under it, the other Sunday is as before');
+  ok(cs.teams.flatMap(t => t.rows.map(r => r.position.id)).join() === 'preach,creche,comm', 'a position that only has people on the cancelled day keeps its row (comm: Thabo was on it)');
+  ok(d.assignments.some(a => a.serviceId === 'b8' && a.personId === 'p4'), 'the people stay on the roster, so putting the service back brings them back');
+  const back = R.setCancelled(cx.services.find(s => s.id === 'b8'), false);
+  ok(!('cancelled' in back) && !('cancelReason' in back) && JSON.stringify(back) === JSON.stringify(d.services.find(s => s.id === 'b8')), 'put back = the service exactly as it was');
+  ok(R.isCancelled(cx.services.find(s => s.id === 'b8')) && !R.isCancelled(d.services[0]) && !R.isCancelled(null), 'isCancelled');
+  ok(R.setCancelled(d.services[0], true, 'x'.repeat(100)).cancelReason.length === 40 && !('cancelReason' in R.setCancelled(d.services[0], true, '  ')), 'the reason is kept short, and left out when empty');
+  const day = [{ id: 'm', date: '2027-01-10', cancelled: true }, { id: 'n', date: '2027-01-10' }, { id: 'o', date: '2027-01-10' }, { id: 'q', date: '2027-01-17' }];
+  ok(R.cancelTargets(day, 'n', false).map(x => x.id).join() === 'n' && R.cancelTargets(day, 'n', true).map(x => x.id).join() === 'n,o', 'cancelling a whole day takes every service that day not already cancelled');
+  ok(R.cancelTargets(day, 'm', true, true).map(x => x.id).join() === 'm' && R.cancelTargets(day, 'zz', true).length === 0, '… and putting a whole day back takes the cancelled ones; an unknown service is nothing');
+  const only = Object.assign({}, d, { services: d.services.map(s => s.id === 'a8' || s.id === 'b8' ? R.setCancelled(s, true) : s) });
+  const none = R.printSheets(only, { from: '2027-01-01', to: '2027-01-12', sheets: ['08:00'] });
+  ok(none.length === 1 && none[0].columns.every(c => c.cancelled) && none[0].teams.length > 0, 'a sheet whose services are all cancelled still shows the placeholders');
+  const t1 = R.offText({ cancelled: true, reason: 'Heavy rain' }), t2 = R.offText({ cancelled: true }), t3 = R.offText({});
+  ok(t1.note === 'Cancelled: Heavy rain' && t1.short === 'Cancelled' && t2.note === 'The service is not taking place this Sunday' && t3.short === 'No service', 'what the narrow column says: the reason, the sentence, or just “No service”');
+  ok(R.fitNote(t2, 120, 2, 7) === t2.note && R.fitNote(t2, 25, 2, 7) === 'Cancelled' && R.fitNote(R.offText({}), 25, 2, 7) === 'No service', 'the whole sentence along a tall column; the short words when the table is too low');
+
   ok(JSON.stringify(R.pages(13)) === '[[0,13]]' && JSON.stringify(R.pages(14)) === '[[0,7],[7,14]]' && R.pages(27).length === 3, 'more Sundays than fit across a page are split evenly');
   ok(JSON.stringify(R.pages(8, 7)) === '[[0,4],[4,8]]', 'and fewer fit across a portrait page');
 }

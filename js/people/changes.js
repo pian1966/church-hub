@@ -20,7 +20,7 @@
   function mePanel() {
     var c = mine(), p = S.get('people', (H.user() || {}).id);
     if (p && p.familyRole === 'child') return '';
-    if (!c) return '<div class="btns" style="margin-top:12px"><button class="btn" data-act="people:askchange">' + T('Ask to change these') + '</button></div>';
+    if (!c) return '<div class="btns" style="margin-top:12px"><button class="btn primary" data-act="people:askchange">' + T('Ask to change these') + '</button></div>';
     var asked = '<small>' + esc(summary(c)) + '</small>';
     if (c.status === 'declined') return '<div class="note" style="margin-top:12px">' + asked + '<p style="margin:6px 0">' + '<span class="tag grey">' + T('Not changed') + '</span>' +
       (c.reply ? ' ' + esc(T('The church office says: “{text}”', { text: c.reply })) : '') + '</p><button class="btn small" data-act="people:withdrawchange">' + T('OK') + '</button></div>';

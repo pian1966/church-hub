@@ -35,7 +35,7 @@
 .ev-yes p { margin: 2px 0 0; }
 @keyframes ev-pop { from { transform: scale(.3); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 .ev-who { margin-top: 14px; }
-.ev-who h2 { margin: 0 0 10px; font-size: 17px; }
+.ev-who h2 { margin: 0 0 10px; font-size: 18px; }
 .ev-who-h { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
 .ev-who-h h2 { margin-bottom: 10px; }
 .ev-added { display: block; color: var(--muted, #6b6b6b); font-size: 12px; margin-top: 1px; }

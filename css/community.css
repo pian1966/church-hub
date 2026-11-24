@@ -81,7 +81,7 @@
 .cm-err { color: var(--bad); font-weight: 600; min-height: 1em; margin: 6px 0 0; }
 .cm-down { color: var(--bad); }
 .cm-keeper-note { margin: 14px 0 0; padding: 10px 14px; border-radius: 12px; background: var(--warn-soft); color: var(--warn); }
-.cm-h2 { font-size: 17px; margin: 22px 0 10px; } .cm-h2:first-child { margin-top: 0; }
+.cm-h2 { font-size: 18px; margin: 22px 0 10px; } .cm-h2:first-child { margin-top: 0; }
 .cm-q { display: flex; gap: 14px; align-items: flex-start; padding: 14px; margin-bottom: 12px; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); animation: cmin .3s ease both; }
 .cm-q[data-reported] { border-color: color-mix(in srgb, var(--bad) 35%, var(--line)); }
 .cm-q-body { margin: 4px 0; white-space: pre-line; }
@@ -91,7 +91,7 @@
 .cm-mini { list-style: none; margin: 0; padding: 4px; width: 120px; flex: 0 0 auto; }
 .cm-empty { display: grid; place-items: center; gap: 6px; padding: 30px; color: var(--ok); }
 .cm-home .cm-home-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.cm-home h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 17px; }
+.cm-home h2 { display: flex; align-items: center; gap: 8px; margin: 0 0 12px; font-size: 18px; }
 .cm-home-more { margin: 10px 0 0; text-align: right; font-weight: 600; }
 @keyframes cmin { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 

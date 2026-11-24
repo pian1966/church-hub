@@ -321,7 +321,18 @@ var Serving = (function () {
       var same = theirs.filter(function (q) { return norm(q.name) === norm(p.name); })[0];
       if (!same) { out.positions.push(Object.assign({}, p, { teamId: to })); return; }
       out.removePositions.push(p.id);
-      if ((p.needed || 0) > (same.needed || 0)) out.positions.push(Object.assign({}, same, { needed: p.needed }));
+      // Keep the larger number at every service: the usual one, and any service with its own number (neededBy).
+      var need = Math.max(p.needed || 1, same.needed || 1), by = {}, slots = {};
+      [p, same].forEach(function (q) { Object.keys(q.neededBy || {}).forEach(function (k) { slots[k] = 1; }); });
+      Object.keys(slots).forEach(function (k) {
+        var at = function (q) { var n = q.neededBy && q.neededBy[k]; return typeof n === 'number' && n >= 1 ? n : (q.needed || 1); };
+        var n = Math.max(at(p), at(same)); if (n !== need) by[k] = n;
+      });
+      var sameBy = JSON.stringify(same.neededBy || {}), newBy = JSON.stringify(by);
+      if (need !== (same.needed || 1) || sameBy !== newBy) {
+        var keep = Object.assign({}, same, { needed: need }); delete keep.neededBy; if (Object.keys(by).length) keep.neededBy = by;
+        out.positions.push(keep);
+      }
       (skills || []).filter(function (k) { return k.positionId === p.id; }).forEach(function (k) {
         var has = (skills || []).some(function (x) { return x.positionId === same.id && x.personId === k.personId; });
         if (has) out.removeSkills.push(k.id); else out.skills.push(Object.assign({}, k, { positionId: same.id }));

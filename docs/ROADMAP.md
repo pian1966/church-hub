@@ -256,6 +256,14 @@ locked or deleted for being late. Still to do:
 - ⬜ Who receives the subscription money: personally, a company, or an NPO/PBO (task 059).
 - ⬜ Which countries are on the "don't serve" list.
 
+## One app, one feel ⬜ – later, after roster testing
+**Decided (24 Nov 2026):** don't rewrite from scratch or change language; review and unify instead. The reasons, the plan
+and the brief to paste into a Fable session are in `docs/architecture/COHESION-PLAN.md`.
+- ⬜ **Architect (Fable):** review every page for where it disagrees with the others, write `docs/DESIGN-SYSTEM.md` (the standard
+  building blocks and how the page themes apply), say which code is tangled, and write the tasks. No code changes.
+- ⬜ **Implementer (Opus):** move the app onto the design system one page at a time, tests green after each pull request.
+- ⬜ Rebuild only the parts the review finds genuinely tangled (perhaps `js/store.js` or `js/app.js`).
+
 ## Working method
 One phase per fresh chat in the Claude Project "Church & Trellis", with the repository attached (Jules and Antigravity work here too – see AGENTS.md).
 Update this file at the end of each session: finished work moves to `docs/CHANGELOG.md`.

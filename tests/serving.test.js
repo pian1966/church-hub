@@ -81,6 +81,12 @@ const mg = S.mergeTeam('m2', 'm1', MP, MK, [{ id: 'x', positionId: 'b', personId
 ok(mg.removePositions.join() === 'b' && mg.positions.map(p => p.id + p.teamId + p.needed).join() === 'am13,cm11', 'merging: the same position joins the one already there (keeping the larger number needed), a new one moves across');
 ok(mg.removeSkills.join() === 'k2' && mg.skills.map(k => k.id + k.positionId).join() === 'k3a' && mg.assignments.map(a => a.positionId).join() === 'a', 'its people and their turns go with it, nobody twice');
 
+const NP = [{ id: 'd1', teamId: 'w1', name: 'Door', needed: 1, neededBy: { '10:00': 2 } }, { id: 'd2', teamId: 'w2', name: 'Door', needed: 1, neededBy: { '17:00': 3 } }];
+const nm = S.mergeTeam('w2', 'w1', NP, [], []), kept = nm.positions[0] || {};
+ok(nm.removePositions.join() === 'd2' && kept.id === 'd1' && kept.needed === 1 && kept.neededBy && kept.neededBy['10:00'] === 2 && kept.neededBy['17:00'] === 3, 'merging keeps each service’s own number (2 at the 10am, 3 at the 5pm)');
+const nm2 = S.mergeTeam('w2', 'w1', [{ id: 'e1', teamId: 'w1', name: 'Keys', needed: 2, neededBy: { '08:00': 1 } }, { id: 'e2', teamId: 'w2', name: 'Keys', needed: 1 }], [], []);
+ok(!nm2.positions.length, '… and changes nothing when the position already there needs as many everywhere');
+
 console.log('Volunteering in plain words');
 ok(S.freqShort('quarterly') === 'Once a quarter' && S.freqShort('break') === 'Taking a break' && S.fillCount([{ positionId: 'door', frequency: 'break' }], { id: 'door' }).resting === 1, 'once a quarter, and taking a break (counted apart)');
 ok(S.freqShort('weekly') === 'Any week' && S.freqShort('emergency') === 'Backup only' && S.freqShort('monthly') === 'Once a month' && S.freqShort('fortnightly') === 'Every 2 weeks' && S.freqShort('occasional') === 'Now and then', 'how often, in a few words (never a code such as “emergency”)');

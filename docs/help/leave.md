@@ -30,8 +30,9 @@ confirm). Changing leave that's already approved sends it back to the Administra
 For: Staff
 Also asked: Staff calendar. Who's on leave? Wallchart.
 
-Open **Leave → Who's away**. Choose **Wallchart**, **Calendar** or **List**. It shows dates only – not the kind of leave
-or the reason.
+Open **Leave → Who's away**. Choose **Wallchart**, **Calendar** or **List**. On the **Wallchart**, point at (or tap) a
+coloured day to see the person's name, the kind of leave and the reason they gave, if any. The **List** shows the kind of
+leave to Administrators only.
 
 ## Will I lose leave I don't take?
 For: Staff

@@ -13,7 +13,7 @@ church (not for developers), in plain English, and are meant to be used two ways
 ## Pages
 | Page | Covers |
 | --- | --- |
-| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates, using Help |
+| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates, using Help (and its privacy), the Home page, why something isn't visible, what the words mean |
 | [me.md](me.md) | The Me page: my details, consent, days away, my serving, taking someone's place, offers to serve, becoming a Church Partner |
 | [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, asking who's away, teams, services, communion, reminders, together/apart |
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |
@@ -22,7 +22,6 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [leadership.md](leadership.md) | Leadership groups (the Council, elders, leaders): roles, titles and portfolios |
 | [archive.md](archive.md) | Library → Archives: minutes, plans, contracts and other church records, and who can see them |
 | [library.md](library.md) | The church Library: finding, borrowing and returning books; for librarians |
-| [events.md](events.md) | Events: seeing what's coming up, signing up, reminders; for organisers: putting up an event, the sign-up list, paper sheets from a photo |
 | [messages.md](messages.md) | Reading and sending messages inside Church & Trellis |
 | [people.md](people.md) | For staff: adding and editing people, households, children, duplicates, searching, a death |
 | [events.md](events.md) | Events: signing up, guests, reminders; for organisers: putting up an event, who's coming, the sign-up report, adding people, a photo of a sheet, cancelling |

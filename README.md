@@ -1,9 +1,10 @@
 # Church & Trellis
 
 Church & Trellis helps churches care for people and organise their work. It includes a people directory, households, consent and
-privacy tools; service rosters and leave; Care Groups, Midweek Groups and leadership; messages; and a Library with
+privacy tools; service rosters and leave; Care Groups, Midweek Groups and leadership; messages; events and sign-ups; a
+Community board and Marketplace; a coffee-a-month subscription; Help that answers questions about using it; and a Library with
 protected Archives for Administrators and Council members, alongside lending, reports and book records. Members can
-update their details, serving and days away. Access is controlled by role, and each church uses its own Firebase project
+update their details, serving and days away, and choose their own colours and page pictures (Me → Themes). Access is controlled by role, and each church uses its own Firebase project
 and records – set up with the setup tool below. It is built in parts (modules): a church switches on only what it needs
 in Settings → Apps, and each part is its own `js/mod-*.js` registered with `Hub.register`.
 

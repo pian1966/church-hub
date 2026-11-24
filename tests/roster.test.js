@@ -221,5 +221,21 @@ console.log('Printing the roster: a term at a time, only what each service needs
   ok(JSON.stringify(R.pages(13)) === '[[0,13]]' && JSON.stringify(R.pages(14)) === '[[0,7],[7,14]]' && R.pages(27).length === 3, 'more Sundays than fit across a page are split evenly');
 }
 
+console.log('Once a quarter, taking a break, and someone to take your place');
+{
+  const one = (f) => ({ people: [people[0]], positions: [{ id: 'door', name: 'Door', needed: 1 }], skills: [skill('p1', 'door', f)], services, assignments: [], groups: [], away: [] });
+  const q = R.autoFill(one('quarterly'), services.map(s => s.id));
+  ok(q.assignments.length === 1 && q.assignments[0].serviceId === 's0', 'once a quarter: asked once, then not again for 12 weeks');
+  const b = R.autoFill(one('break'), ['s0'], { emergency: true });
+  ok(b.assignments.length === 0 && b.gaps[0].why[0].includes('break'), 'taking a break: never asked, not even in an emergency');
+  const d = base();
+  d.skills = skills.concat([skill('p8', 'door', 'emergency'), skill('p9', 'door', 'break')]);
+  d.away = [{ personId: 'p4', from: '2026-11-01', to: '2026-11-01', reason: 'Away' }];
+  d.assignments = [{ id: 'x1', serviceId: 's0', positionId: 'door', personId: 'p1', status: 'declined' }, { id: 'x2', serviceId: 's0', positionId: 'door', personId: 'p5', status: 'accepted' }];
+  d.groups = [{ id: 'g', kind: 'apart', memberIds: ['p3', 'p5'] }];
+  const c = R.coverFor(d, d.assignments[0]);
+  ok(c.join() === 'p10,p8', 'someone to take your place: on the team and free that day (not away, not serving already, not kept apart, not on a break), backups last: ' + c.join());
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

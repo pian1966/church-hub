@@ -17,8 +17,13 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.107';
+  var NEWS_FOR = '0.108';
   var NEWS = [
+    { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Can’t make it'], text: TX('Can’t make a turn? Tap Can’t make it and you can ask someone on your team who is free that day to take your place – they answer with one tap, and the roster team is told.') },
+    { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('Before a new term’s roster is made, you may be asked whether you’ll be away: add your days away, or tap I’m free. And you can now choose to serve once a quarter, or take a break without leaving the team.') },
+    { date: '2026-11-24', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'More', 'Ask who’s away…'], text: TX('Before filling a new term: Rosters → More → Ask who’s away… asks every volunteer to add their days away or say they’re free, and the roster shows who has answered, with Remind the others.') },
+    { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('All your serving is now in one place: Me → Serving. It shows your turns to answer, each position you serve in with its services (8am, 10am, 5pm), your days away and who you serve with.') },
+    { date: '2026-11-24', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'Teams'], text: TX('Rosters → Teams now shows the services each position is needed at, and how many can serve any week, once a month or as a backup. Tap 8am, 10am or 5pm to see only that service’s teams.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Every page now has a soft watercolour picture at the top. Administrators and the Rector can switch back to plain under Settings → Colours → Page pictures.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Easier to read: on your own page your details now come first and your groups last, headings are a little bigger, and the main buttons are a softer orange on every page.') },
     { date: '2026-11-24', who: ['admin', 'archivist'], app: 'library', text: TX('Archives look much friendlier: each folder is a coloured tile, documents show what kind of file they are with Preview and Download beside them, you always see where you are, and the newest documents are on the first page.') },

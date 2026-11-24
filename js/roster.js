@@ -14,7 +14,8 @@
  *   people:       [{ id, firstName, lastName, active }]
  *   positions:    [{ id, teamId, name, needed, times }]           needed = people per service; times = the services it runs at
  *                                                                  (e.g. ['08:00']; empty or missing = every service)
- *   skills:       [{ personId, positionId, frequency, times }]     new frequency: 'weekly' | 'monthly' | 'emergency';
+ *   skills:       [{ personId, positionId, frequency, times }]     new frequency: 'weekly' | 'monthly' | 'quarterly' (12 weeks apart at least)
+ *                                                                  | 'emergency' (backup only) | 'break' (taking a break: stays on the team, never asked);
  *                                                                  legacy 'fortnightly' and 'occasional' remain readable;
  *                                                                  times = the services they serve at (empty or missing = any)
  *   services:     [{ id, date, time, name, slot }]                 slot = the regular service (time + venue); missing = time
@@ -27,7 +28,7 @@
 var RosterCore = (function () {
   'use strict';
 
-  var FREQ_DAYS = { weekly: 7, fortnightly: 14, monthly: 28, occasional: 56, emergency: 56 };
+  var FREQ_DAYS = { weekly: 7, fortnightly: 14, monthly: 28, occasional: 56, quarterly: 84, emergency: 56 };
   /** Texts people see, in their language when the app has one (I18n); plain English in tests. */
   function T(s, v) {
     if (typeof I18n !== 'undefined' && I18n.t) return I18n.t(s, v);
@@ -99,6 +100,7 @@ var RosterCore = (function () {
       var p = people[personId];
       if (!p || p.active === false) return T('not active');
       if (!skillFor(personId, positionId)) return T('not on this team');
+      if (skillFor(personId, positionId).frequency === 'break') return T('taking a break');
       if (skillFor(personId, positionId).frequency === 'emergency' && !opts.emergency) return T('only available in emergencies');
       var kt = skillFor(personId, positionId).times;
       if (kt && kt.length && slotOf(svc) && kt.indexOf(slotOf(svc)) < 0) return T('serves at other services');
@@ -111,7 +113,7 @@ var RosterCore = (function () {
       if (apart) return T('kept apart from someone already serving');
       var k = skillFor(personId, positionId), gap = FREQ_DAYS[k.frequency] || 14;
       var last = lastServed(personId, svc.date);
-      if (last && daysBetween(last, svc.date) < Math.min(gap, 7) ) return T('served too recently');
+      if (last && daysBetween(last, svc.date) < (k.frequency === 'quarterly' ? gap : Math.min(gap, 7))) return T('served too recently');   // once a quarter: at least 12 weeks apart
       return '';
     }
 
@@ -306,7 +308,29 @@ var RosterCore = (function () {
     return out;
   }
 
-  return { runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
+
+  /**
+   * Who could take someone's place on a turn they can't make (Me → Serving, "Ask someone else"): people on the same team
+   * who serve at that service, are free that day (not away, not already serving or said no there, not kept apart from someone
+   * serving) and aren't taking a break – regular volunteers first, then backups. Returns person ids (not the turn's own person).
+   */
+  function coverFor(data, a) {
+    var svc = (data.services || []).filter(function (s) { return s.id === a.serviceId; })[0]; if (!svc) return [];
+    var people = byId(data.people), all = data.assignments || [];
+    var at = function (pid) { return all.some(function (x) { return x.serviceId === svc.id && x.personId === pid && x.id !== a.id; }); };
+    var serving = function (pid) { return all.some(function (x) { return x.serviceId === svc.id && x.personId === pid && x.status !== 'declined'; }); };
+    var out = (data.skills || []).filter(function (k) {
+      var p = people[k.personId];
+      if (k.positionId !== a.positionId || k.personId === a.personId || !p || p.active === false || k.frequency === 'break') return false;
+      if (k.times && k.times.length && slotOf(svc) && k.times.indexOf(slotOf(svc)) < 0) return false;
+      if (awayReason(data, k.personId, svc.date) || at(k.personId)) return false;
+      return !groupsOf(data, k.personId, 'apart').some(function (g) { return g.memberIds.some(function (o) { return o !== k.personId && o !== a.personId && serving(o); }); });
+    });
+    out.sort(function (x, y) { return (x.frequency === 'emergency') - (y.frequency === 'emergency'); });
+    return out.map(function (k) { return k.personId; }).filter(function (id, i, l) { return l.indexOf(id) === i; });
+  }
+
+  return { coverFor: coverFor, runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
     terms: terms, printChoices: printChoices, printSheets: printSheets, pages: pages };
 })();
 if (typeof module !== 'undefined') module.exports = RosterCore;

@@ -35,6 +35,11 @@
     S.purge(p.id);                                   // pastoral and medical notes, which even Administrators can't read
     ['guardians', 'noCollect'].forEach(function (c) { S.find(c, function (l) { return l.childId === p.id || l.adultId === p.id || l.personId === p.id; }).forEach(function (l) { S.remove(c, l.id); }); });
     ['consents', 'notes', 'skills', 'blockouts', 'serveOffers', 'detailChanges', 'wordIdeas', 'partnerApps'].forEach(function (c) { S.find(c, function (x) { return x.personId === p.id; }).forEach(function (x) { S.remove(c, x.id); }); });
+    // Taking someone's place and "Are you away?": the asks they made or were sent, and their answers (0.108.0)
+    S.find('serveSwaps', function (x) { return x.fromId === p.id || x.toId === p.id; }).forEach(function (x) { S.remove('serveSwaps', x.id); });
+    S.find('awayAsks', function (q) { return ['people', 'free', 'away'].some(function (k) { return (q[k] || []).indexOf(p.id) >= 0; }); }).forEach(function (q) {
+      q = JSON.parse(JSON.stringify(q)); ['people', 'free', 'away'].forEach(function (k) { q[k] = (q[k] || []).filter(function (m) { return m !== p.id; }); }); S.put('awayAsks', q);
+    });
     S.list('groups').slice().forEach(function (g) { if ((g.memberIds || []).indexOf(p.id) >= 0) { g = JSON.parse(JSON.stringify(g)); g.memberIds = g.memberIds.filter(function (m) { return m !== p.id; }); if (g.memberIds.length < 2) S.remove('groups', g.id); else S.put('groups', g); } });
     [['careGroups', 'careShare'], ['lifeGroups', 'lifeShare']].forEach(function (k) {   // care groups and life groups
       S.list(k[0]).slice().forEach(function (g) {

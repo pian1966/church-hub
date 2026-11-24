@@ -21,7 +21,7 @@ module.exports = async function (ctx) {
   s = await session('tim.jacobs@example.com', seedDocs());
   await s.page.selectOption('.side-lang .lang-sel', 'zu'); await s.page.waitForTimeout(80);
   check((await s.page.textContent('.side nav')).includes('Abantu') && (await s.page.getAttribute('html', 'lang')) === 'zu', 'a member can switch the screens to isiZulu');
-  await s.go('rosters/mine'); check((await s.text()).includes('Ukukhonza kwami'), 'My serving in isiZulu');
+  await s.go('me/serve'); check((await s.text()).includes('Okuzayo'), 'Serving in isiZulu');
   await s.page.reload(); await s.page.waitForSelector('.app');
   check((await s.page.textContent('.side nav')).includes('Abantu'), 'the language is remembered on this device');
   await s.page.selectOption('.side-lang .lang-sel', 'af'); await s.go('people/p/p14');
@@ -44,11 +44,11 @@ module.exports = async function (ctx) {
 
   console.log('Translations (suggesting and checking better wording):');
   s = await session('tim.jacobs@example.com', seedDocs());
-  await s.go('rosters/mine'); await s.page.selectOption('.side-lang .lang-sel', 'zu'); await s.page.waitForTimeout(80);
+  await s.go('me/serve'); await s.page.selectOption('.side-lang .lang-sel', 'zu'); await s.page.waitForTimeout(80);
   check(!!(await s.page.$('.improve a')), 'in another language, every page offers to improve its wording');
   await s.page.click('.improve a'); await s.page.waitForTimeout(80);
   const onPage = await s.page.$$eval('#w-list .item small', x => x.map(e => e.textContent));
-  check(onPage.length > 3 && onPage.some(x => x.includes('My serving')) && !onPage.some(x => x.includes('Shaded boxes')), '…which lists the texts that were on that page');
+  check(onPage.length > 3 && onPage.some(x => x.includes('Coming up')) && !onPage.some(x => x.includes('Shaded boxes')), '…which lists the texts that were on that page');
   await s.page.fill('#w-q', 'sign out'); await s.page.waitForTimeout(500);
   await s.page.click('#w-list [data-act="words:suggest"]'); await s.page.fill('#w-text', 'Phuma'); await s.page.click('[data-act="words:send"]');
   check((await s.page.textContent('#w-err')).length > 0, 'the same wording as now isn’t sent');

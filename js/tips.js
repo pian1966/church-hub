@@ -17,7 +17,7 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.108';
+  var NEWS_FOR = '0.109';
   var NEWS = [
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('On each of your turns on Me → Serving you can now see who else is serving at that service – names and jobs, your own team first.') },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Can’t make it'], text: TX('Can’t make a turn? Tap Can’t make it and you can ask someone on your team who is free that day to take your place – they answer with one tap, and the roster team is told.') },

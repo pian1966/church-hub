@@ -287,10 +287,10 @@ async function icon(Comp, color, px = 256) {
       { text: 'Requests arrive in Messages', options: { bullet: true, breakLine: true } },
       { text: 'Accept or say you can’t make it – one tap', options: { bullet: true, breakLine: true } },
       { text: 'Can’t make it? Ask someone free that day to take your place', options: { bullet: true, breakLine: true } },
-      { text: 'A gentle reminder for those who haven’t replied', options: { bullet: true } }
+      { text: 'See who’s serving with you that Sunday', options: { bullet: true } }
     ], { x: 0.6, y: 2.5, w: 4.8, h: 3.5, fontSize: 17, color: HEX.ink, paraSpaceAfter: 12 });
   }
-  s.addNotes('[Clip plays] The volunteer sees the request in Messages and taps Accept. If they can’t make it, they can ask someone on the same team who is free that day to take their place – that person says yes with one tap and the turn is theirs – and the roster team hears about it at once. Coordinators can send a gentle reminder to anyone who hasn’t replied.');
+  s.addNotes('[Clip plays] The volunteer sees the request in Messages and taps Accept. If they can’t make it, they can ask someone on the same team who is free that day to take their place – that person says yes with one tap and the turn is theirs – and the roster team hears about it at once. Under each turn they can see who else is serving at that service – names and jobs only – and coordinators can send a gentle reminder to anyone who hasn’t replied.');
 
   // ========== 13. Members help themselves ==========
   s = content('What it does', 'Members help themselves', true);

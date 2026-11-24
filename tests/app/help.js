@@ -42,7 +42,8 @@ module.exports = async function (ctx) {
   s = await session('linda.pillay@example.com', seedDocs());
   await s.go('help'); await s.page.waitForSelector('.help-tiles');
   t = await tiles(s);
-  check(t.length === 14 && t.includes('Settings'), 'an Administrator sees all 14 topics');
+  const nPages = await s.page.evaluate(() => Help.PAGES.length);   // every page in docs/help/ (the test no longer needs changing when a page is added)
+  check(t.length === nPages && nPages >= 18 && t.includes('Settings') && t.includes('Events') && t.includes('Subscription'), 'an Administrator sees all ' + nPages + ' topics');
   await finish(s);
 
   /* ---------- with AI: an answer written from the help pages ---------- */

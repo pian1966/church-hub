@@ -215,6 +215,10 @@ await t('members may correct their own name and contact details only', async () 
   await can(db.member.doc('people/p14').update({ appFirstSeen: '2026-11-20' }));   // the day they first signed in (People → Invitations)
   await cannot(db.member.doc('people/p15').update({ appFirstSeen: '2026-11-20' }));
   await cannot(db.member.doc('people/p14').update({ category: 'Staff' }));
+  await can(db.member.doc('people/p14').update({ noCelebrate: true }));   // Me → Celebrate my birthday and anniversary
+  await can(db.member.doc('people/p14').update({ noCelebrate: false }));
+  await cannot(db.member.doc('people/p14').update({ noCelebrate: 'yes' }));
+  await cannot(db.member.doc('people/p15').update({ noCelebrate: true }));
   await cannot(db.member.doc('people/p15').update({ mobile: '1' }));
   await cannot(db.member.doc('details/p14').update({ birthDate: '2000-01-01' }));
 });
@@ -265,6 +269,12 @@ await t('directory: everyone signed in can read; it holds only the contact detai
   for (const r of roles) await can(list(db[r].collection('directory')));
   await can(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', preferredName: '', mobile: '082', email: 'tim@example.com', shareAddress: '1 Oak St', shareSpouse: 'Clare Jacobs' }));
   await cannot(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', birthDate: '1980-01-01' }));
+  // the day of a birthday or wedding (MM-DD), never a year
+  await can(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', birthDay: '03-09', weddingDay: '11-24' }));
+  await can(db.pastor.doc('directory/p15').set({ firstName: 'Clare', lastName: 'Jacobs', birthDay: '07-14' }));
+  await cannot(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', birthDay: '1980-03-09' }));
+  await cannot(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', weddingDay: '2001-11-24' }));
+  await cannot(db.member.doc('directory/p14').set({ firstName: 'Tim', lastName: 'Jacobs', birthDay: 309 }));
   await cannot(db.member.doc('directory/p15').set({ firstName: 'X', lastName: 'Y' }));
 });
 await t('families: staff roles only', () => only('families/f2', ['admin', 'pastor', 'kids', 'rosters']));
@@ -562,6 +572,7 @@ await t('care groups: members see their own group and its cards; carers add and 
   // each person writes only their own card, only in a group they are in, and only the card's fields
   const card = { firstName: 'Tim', lastName: 'Jacobs', ok: true, mobile: '083', updatedAt: 'x', createdAt: 'x' };
   await can(db.member.doc('careGroups/cg1/share/p14').set(card));
+  await can(db.member.doc('careGroups/cg1/share/p14').set(Object.assign({}, card, { birthday: '03-09', quiet: true })));   // turned celebrations off
   await cannot(db.member.doc('careGroups/cg2/share/p14').set(card));
   await cannot(db.member.doc('careGroups/cg1/share/p15').set(Object.assign({}, card, { firstName: 'Clare' })));
   await cannot(db.member.doc('careGroups/cg1/share/p14').set(Object.assign({}, card, { medical: 'x' })));

@@ -228,7 +228,7 @@
     people: { read: function (c, id) { return is(c, STAFF) || mine(c, id); },
       write: function (c, op, id, b, a) {
         if (op === 'delete') return may(c, 'people');
-        return is(c, ['admin', 'pastor']) || (op === 'update' && mine(c, id) && onlyChanges(b, a, ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'appFirstSeen', 'updatedAt']))
+        return is(c, ['admin', 'pastor']) || (op === 'update' && mine(c, id) && onlyChanges(b, a, ['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'appFirstSeen', 'noCelebrate', 'updatedAt']) && (a.noCelebrate === undefined || typeof a.noCelebrate === 'boolean'))
           || (op === 'update' && is(c, ['kids']) && b.familyRole === 'child' && onlyChanges(b, a, ['photo', 'updatedAt']));
       } },
     details: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || mine(c, id) || (is(c, ['kids']) && !!d && d.familyRole === 'child'); },
@@ -236,7 +236,8 @@
     medical: { read: function (c) { return is(c, ['kids']); }, write: function (c, op) { return is(c, ['kids']) || (op === 'delete' && may(c, 'people')); } },
     notes: { read: function (c) { return is(c, ['pastor']); }, write: function (c, op) { return is(c, ['pastor']) || (op === 'delete' && may(c, 'people')); } },
     directory: { read: function (c) { return is(c, STAFF) || attendeeMay(c, 'directory'); },
-      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care'])); } },
+      write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || (onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care', 'birthDay', 'weddingDay'])
+        && ['birthDay', 'weddingDay'].every(function (k) { return a[k] === undefined || (typeof a[k] === 'string' && /^[0-1][0-9]-[0-3][0-9]$/.test(a[k])); }))); } },
     names: { read: function (c) { return is(c, STAFF) || attendeeMay(c, 'names') || attendeeMay(c, 'directory'); },
       write: function (c, op, id, b, a) { return (is(c, ['admin', 'pastor']) || mine(c, id)) && (op === 'delete' || onlyKeys(a, ['firstName', 'lastName', 'preferredName'])); } },
     // Every adult's name, for Midweek Group leaders (firestore.rules leadsLife); lifeLeaders/all lists those leaders
@@ -359,7 +360,7 @@
       },
       write: function (c, op, pid, b, a, gid) {
         if (op === 'delete') return is(c, ['admin', 'pastor']) || mine(c, pid) || leadsCare(c, gid);
-        return (is(c, ['admin', 'pastor']) || (mine(c, pid) && inCare(c, gid))) && onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
+        return (is(c, ['admin', 'pastor']) || (mine(c, pid) && inCare(c, gid))) && onlyKeys(a, ['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'quiet', 'photo', 'leader', 'updatedAt', 'createdAt'])
           && (a.photo === undefined || (typeof a.photo === 'string' && a.photo.length < 40000));
       } },
     messages: { read: function (c, id, d) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && !!d && (meIn(c, (d.to || [])) || isMe(c, d.fromId))); },

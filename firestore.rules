@@ -72,6 +72,8 @@ service cloud.firestore {
     function attendeeMay(x) { return anyone() && (!attendee() || attendeeCan(x)); }
     // The Senior Pastor (Rector), chosen in Settings > What Pastors can do
     function rector() { return isRole(['pastor']) && isMe(churchSettings().get('seniorPastorId', '')); }
+    // A day and month (MM-DD) - never a year, so a birthday in the directory can't give away anyone's age.
+    function dayOnly(v) { return v is string && v.matches('^[0-1][0-9]-[0-3][0-9]$'); }
     function onlyChanges(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
     // What Pastors can do (Settings): an Administrator ticks abilities, which Church & Trellis copies onto each Pastor's
     // access-list entry as "can". The Senior Pastor (Rector), if one is chosen, gets their own ticks (seniorCan). may('leave') is true for Administrators, and for Pastors with that tick.
@@ -200,7 +202,8 @@ service cloud.firestore {
       allow read: if staff() || mine(id);
       allow create: if isRole(['admin', 'pastor']);
       allow update: if isRole(['admin', 'pastor'])
-        || (mine(id) && onlyChanges(['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'appFirstSeen', 'updatedAt']))
+        || (mine(id) && onlyChanges(['firstName', 'lastName', 'preferredName', 'email', 'mobile', 'photo', 'appFirstSeen', 'noCelebrate', 'updatedAt'])
+            && request.resource.data.get('noCelebrate', false) is bool)
         || (isRole(['kids']) && resource.data.familyRole == 'child' && onlyChanges(['photo', 'updatedAt']));
       allow delete: if may('people');
     }
@@ -237,7 +240,8 @@ service cloud.firestore {
     match /directory/{id} {
       allow read: if staff() || attendeeMay('directory');
       allow create, update: if (isRole(['admin', 'pastor']) || mine(id))
-        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care']);
+        && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'mobile', 'email', 'shareAddress', 'shareSpouse', 'photo', 'care', 'birthDay', 'weddingDay'])
+        && dayOnly(request.resource.data.get('birthDay', '01-01')) && dayOnly(request.resource.data.get('weddingDay', '01-01'));
       allow delete: if isRole(['admin', 'pastor']) || mine(id);
     }
     // names: the names of Church Partners in the directory - all an attendee sees of other people (when Settings allows).
@@ -423,7 +427,7 @@ service cloud.firestore {
       match /share/{pid} {
         allow read: if isRole(['admin', 'pastor']) || (inCare(gid) && (careOwn() || mine(pid) || leadsCare(gid) || careCarer(gid, pid)));
         allow create, update: if (isRole(['admin', 'pastor']) || (mine(pid) && inCare(gid)))
-          && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'photo', 'leader', 'updatedAt', 'createdAt'])
+          && request.resource.data.keys().hasOnly(['firstName', 'lastName', 'preferredName', 'ok', 'mobile', 'email', 'address', 'birthday', 'quiet', 'photo', 'leader', 'updatedAt', 'createdAt'])
           && (request.resource.data.get('photo', '') is string) && request.resource.data.get('photo', '').size() < 40000;
         allow delete: if isRole(['admin', 'pastor']) || mine(pid) || leadsCare(gid);
       }

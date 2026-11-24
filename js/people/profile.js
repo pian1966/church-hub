@@ -117,7 +117,8 @@
       (p.source === 'elvanto' && H.can('*') ? ' <span class="tag" style="--c:#7C3AED">' + T('From Elvanto') + '</span>' : '') +   // where the record came from: Administrators only
       (deceased(p) ? ' <span class="tag grey">' + esc(T('Died {date}', { date: H.fmt(p.deceasedAt, true) })) + '</span>' : '') +
       // 🎂 / 💍 only where this page already shows the birthday or the anniversary (see the rows below)
-      (window.CelebrateUI ? ' ' + (full ? CelebrateUI.tag(p, { birthday: !!(p.birthDate || p.birthDay), anniversary: !child }) : child && canChildren() && p.birthDate ? CelebrateUI.tag(p, { anniversary: false }) : '') : '');
+      (window.CelebrateUI ? ' ' + (full ? CelebrateUI.tag(p, { birthday: !!(p.birthDate || p.birthDay), anniversary: !child }) : child && canChildren() && p.birthDate ? CelebrateUI.tag(p, { anniversary: false }) :
+        !child && p.inDirectory ? CelebrateUI.tag(p) : '') : '');   // the directory carries the day only for those who agreed
     var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
       '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + (P.welcomeLine ? P.welcomeLine(p) : '') + '</div></div>' +
       '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +

@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'serveSwaps', 'awayAsks', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos', 'studies', 'events', 'eventSignups'];
+    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'serveSwaps', 'awayAsks', 'crews', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos', 'studies', 'events', 'eventSignups'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church & Trellis as another role would see it. Nothing is saved while it is on. */
@@ -798,7 +798,7 @@ var Store = (function () {
     /** What to load for each role – mirrors firestore.rules, so no request is refused. */
     function plan() {
       var me = session.personId, r = role(), staff = is('admin', 'pastor', 'rosters', 'kids'), p = [];
-      var COLL = { leaveConfig: 'leave', detailsMe: 'details', consentsMe: 'consents', consentsMed: 'consents', consentsPhotos: 'consents', messagesTo: 'messages', messagesFrom: 'messages', serveSwapsFrom: 'serveSwaps', serveSwapsTo: 'serveSwaps', awayAsksMe: 'awayAsks', leaderBodiesOpen: 'leaderBodies', leaderBodiesMine: 'leaderBodies', loansMe: 'loans' };
+      var COLL = { leaveConfig: 'leave', detailsMe: 'details', consentsMe: 'consents', consentsMed: 'consents', consentsPhotos: 'consents', messagesTo: 'messages', messagesFrom: 'messages', serveSwapsFrom: 'serveSwaps', serveSwapsTo: 'serveSwaps', awayAsksMe: 'awayAsks', crewsMe: 'crews', leaderBodiesOpen: 'leaderBodies', leaderBodiesMine: 'leaderBodies', loansMe: 'loans' };
       var add = function (key, ref) { p.push({ key: key, ref: ref, coll: COLL[key] || key }); };
       var coll = function (c) { return fs.collection(c); }, own = function (c, field) { return fs.collection(c).where(field || 'personId', '==', me); };
       add('settings', doc('settings/church'));
@@ -853,8 +853,12 @@ var Store = (function () {
       add('serveOffers', (is('admin', 'rosters') || may('rosters')) && realRoster ? coll('serveOffers') : own('serveOffers'));
       // Taking someone's place on a turn (serveSwaps, id = the turn's id) and "Are you away?" before planning (awayAsks):
       // the roster team sees them all; everyone else the ones they asked or were asked, and the asks sent to them
-      if ((is('admin', 'rosters') || may('rosters')) && realRoster) { add('serveSwaps', coll('serveSwaps')); add('awayAsks', coll('awayAsks')); }
-      else { add('serveSwapsFrom', own('serveSwaps', 'fromId')); add('serveSwapsTo', coll('serveSwaps').where('toId', '==', me)); add('awayAsksMe', coll('awayAsks').where('people', 'array-contains', me)); }
+      // Who's serving at each service (crews, id = the service's id: names and positions only), for the people serving there
+      if ((is('admin', 'rosters') || may('rosters')) && realRoster) { add('serveSwaps', coll('serveSwaps')); add('awayAsks', coll('awayAsks')); add('crews', coll('crews')); }
+      else {
+        add('serveSwapsFrom', own('serveSwaps', 'fromId')); add('serveSwapsTo', coll('serveSwaps').where('toId', '==', me)); add('awayAsksMe', coll('awayAsks').where('people', 'array-contains', me));
+        if ((lastSettings || {}).crewView !== false) add('crewsMe', coll('crews').where('people', 'array-contains', me));
+      }
       // Changes to family details people asked for: Administrators check them all; everyone else sees their own
       add('detailChanges', may('people') ? coll('detailChanges') : own('detailChanges'));
       // Applications to become a Church Partner: Administrators and Pastors read them all; everyone else their own
@@ -1267,7 +1271,7 @@ var Store = (function () {
       });
       var cgs = merged('careGroupsAll', 'careGroups');   // my own groups, and every group when Settings allows (careAll)
       db.careGroups = Object.keys(cgs).map(function (id) { var o = copy(cgs[id]); o.id = id; return o; });
-      [['serveSwaps', 'serveSwapsFrom', 'serveSwapsTo'], ['awayAsks', 'awayAsksMe']].forEach(function (x) {
+      [['serveSwaps', 'serveSwapsFrom', 'serveSwapsTo'], ['awayAsks', 'awayAsksMe'], ['crews', 'crews', 'crewsMe']].forEach(function (x) {
         var all = merged.apply(null, x);
         db[x[0]] = Object.keys(all).map(function (id) { var o = copy(all[id]); o.id = id; return o; });
       });

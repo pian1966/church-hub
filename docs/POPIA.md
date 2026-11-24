@@ -171,6 +171,9 @@ someone is deleted or dies.
 - **"Are you away?"** (`awayAsks`): the dates being planned, who was asked (ids) and who answered "free" or added days away. Each
   person may only add their own answer; the roster team sees the lists. Days away themselves are kept as before (`blockouts`:
   dates and a reason only the roster team sees).
+- **Who's serving with you** (`crews`): for each upcoming service, the short names (first name and initial) and positions of the
+  people serving there – nothing else. Read only by those serving at that service (and the roster team), like the printed roster
+  on the noticeboard; the church can switch it off (Settings → Church Services). Kept up to date by the roster team's app.
 - Lawful basis: the church's legitimate interest in organising volunteers who have offered to serve (as for the rest of rosters).
   Both are included in "export everything held about a person" and removed when someone's record is deleted.
 

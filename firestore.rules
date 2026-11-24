@@ -353,6 +353,12 @@ service cloud.firestore {
             && onlyChanges(['status', 'updatedAt']) && request.resource.data.status in ['taken', 'declined']);
       allow delete: if rosterer() || mine(resource.data.fromId);
     }
+    // Who's serving at each service (id = the service's id): names and positions only, kept up to date by the roster team's
+    // app; read by the people serving there, unless the church switched it off (settings crewView).
+    match /crews/{id} {
+      allow read: if rosterer() || (anyone() && meIn(resource.data.get('people', [])) && churchSettings().get('crewView', true) == true);
+      allow write: if rosterer();
+    }
     // Before planning a term, the roster team asks volunteers whether they'll be away (people = who was asked). Each one
     // answers by adding themselves to free (no days away) or away (they added days away) - nothing else.
     match /awayAsks/{id} {

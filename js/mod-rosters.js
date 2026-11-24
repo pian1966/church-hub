@@ -139,6 +139,39 @@
     return T('{name} can’t take your place.', { name: sw.toName });
   }
 
+  /* ---------- Who's serving with you (crews; id = the service's id) ----------
+   * Volunteers can't read each other's turns, so the roster team's app keeps, for each upcoming service, the names (short) and
+   * positions of the people serving there – read only by them (firestore.rules crews). Off when the church switches it off
+   * (Settings → Church Services: settings.crewView). Kept up to date a moment after anything changes on a planner's device. */
+  function shortName(p) { var f = (p.preferredName || p.firstName || '').trim(), l = (p.lastName || '').trim(); return (f + (l ? ' ' + l.charAt(0) + '.' : '')).trim(); }
+  function crewOn() { return (S.settings() || {}).crewView !== false; }
+  var crewTimer = null;
+  function syncCrews() {
+    if (!manager() || (S.preview && S.preview()) || !H.user()) return;
+    var t = H.today(), svcs = S.list('services').filter(function (x) { return x.date >= t; }), ids = svcs.map(function (x) { return x.id; });
+    var want = crewOn() ? R.crews({ people: S.list('people'), assignments: S.list('assignments') }, ids, shortName) : {};
+    svcs.forEach(function (x) {
+      var have = S.get('crews', x.id), w = want[x.id];
+      if (!w) { if (have) S.remove('crews', x.id); return; }
+      if (!have || JSON.stringify([have.people, have.list]) !== JSON.stringify([w.people, w.list])) S.put('crews', { id: x.id, people: w.people, list: w.list });
+    });
+  }
+  if (S.onChange) S.onChange(function () { if (!manager()) return; clearTimeout(crewTimer); crewTimer = setTimeout(function () { try { syncCrews(); } catch (e) { console.error(e); } }, 1200); });
+  /** Under a turn on Me → Serving: who else is serving at that service – your own team first, then the others by team. */
+  function crewCard(a) {
+    var u = H.user(), c = S.get('crews', a.serviceId); if (!u || !c || !crewOn() || a.status === 'declined') return '';
+    var list = (c.list || []).filter(function (x) { return x.id !== u.id; }); if (!list.length) return '';
+    var my = (pos(a.positionId) || {}).teamId, order = teams().map(function (t) { return t.id; }), groups = {};
+    list.forEach(function (x) { var tid = (pos(x.p) || {}).teamId || ''; (groups[tid] = groups[tid] || []).push(x); });
+    var keys = Object.keys(groups).sort(function (x, y) { return (y === my) - (x === my) || order.indexOf(x) - order.indexOf(y); });
+    return '<details class="crew"><summary>' + esc(TN('{n} other person serving with you', '{n} others serving with you', list.length)) + '</summary>' + keys.map(function (tid) {
+      var tm = team(tid);
+      return '<div class="crew-team"><p class="crew-h">' + esc(tm ? tm.name : T('Other')) + (tid === my ? ' · ' + esc(T('your team')) : '') + '</p>' + groups[tid].map(function (x) {
+        return '<div class="crew-p"><span class="crew-n">' + esc(x.n) + '</span><small>' + esc((pos(x.p) || {}).name || '') + '</small></div>';
+      }).join('') + '</div>';
+    }).join('') + '</details>';
+  }
+
   /* ---------- "Are you away?" before planning a term (awayAsks) ----------
    * The roster team asks every volunteer (who uses the app) whether they'll be away; each answers "I'm free" or adds days
    * away. Rosters shows who has answered, with a reminder for the rest. */
@@ -825,7 +858,7 @@
     var people = S.find('people', function (p) { return p.active !== false && p.familyRole !== 'child' || (p.familyRole === 'child' && S.find('skills', function (k) { return k.personId === p.id; }).length); })
       .sort(function (a, b) { return H.name(a).localeCompare(H.name(b)); });
     var fams = S.list('families');
-    H.modal(H.dialogHead(isNew ? (g.kind === 'apart' ? T('Keep people apart') : T('Serve together')) : T('Edit {name}', { name: g.name }), g.kind === 'apart' ? T('They will never be rostered at the same service.') : T('The roster will put them at the same service.')) +
+    H.modal(H.dialogHead(isNew ? (g.kind === 'apart' ? T('Keep people apart') : T('Serve together')) : T('Edit {name}', { name: g.name }), g.kind === 'apart' ? T('They will never be rostered at the same service.') : T('The roster will put them at the same service – not always in the same job.')) +
       '<div class="dlg-body"><input type="hidden" id="gr-id" value="' + esc(g.id || '') + '"><input type="hidden" id="gr-kind" value="' + g.kind + '">' +
       '<label class="field">' + T('Name') + '<input id="gr-name" value="' + esc(g.name) + '" placeholder="' + (g.kind === 'apart' ? T('e.g. Megan & David (baby at home)') : T('e.g. Naidoo family, or Sam & Kavi')) + '"></label>' +
       (g.kind === 'together' ? '<fieldset class="field" style="border:0;padding:0;margin:0 0 14px"><legend style="margin-bottom:6px">' + T('How important is it?') + '</legend>' +
@@ -1231,5 +1264,5 @@
       unskill: function (el) { S.remove('skills', el.dataset.id, 'Removed from a team'); H.render(); }
     }, serviceActions)
   });
-  window.RosterHelpers = { swapCard: swapCard, swapLine: swapLine, swapOf: swapOf, askCard: askCard, myAsks: myAsks, awayList: awayList, canPrint: function () { return canPrint() && !manager(); }, svcChip: svcChip };
+  window.RosterHelpers = { crewCard: crewCard, syncCrews: syncCrews, swapCard: swapCard, swapLine: swapLine, swapOf: swapOf, askCard: askCard, myAsks: myAsks, awayList: awayList, canPrint: function () { return canPrint() && !manager(); }, svcChip: svcChip };
 })();

@@ -286,6 +286,8 @@
           && !!turn && turn.personId === a.fromId && (turn.cover || []).indexOf(a.toId) >= 0) return true;
         return !!b && mine(c, b.toId) && b.status === 'asked' && onlyChanges(b, a, ['status', 'updatedAt']) && ['taken', 'declined'].indexOf(a.status) >= 0;
       } },
+    crews: { read: function (c, id, d) { return rosterer(c) || (is(c, ANY) && !!d && meIn(c, d.people || []) && (docs['settings/church'] || {}).crewView !== false); },
+      write: function (c) { return rosterer(c); } },
     awayAsks: { read: function (c, id, d) { return rosterer(c) || (is(c, ANY) && !!d && meIn(c, d.people || [])); },
       write: function (c, op, id, b, a) {
         if (rosterer(c)) return true;

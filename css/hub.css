@@ -1658,6 +1658,35 @@ html[data-mode=dark] .hero-art .w { fill: #fff; fill-opacity: .22; stroke: rgba(
 .look-prev i + u { position: absolute; left: 12px; top: 40px; width: 55%; height: 6px; border-radius: 3px; background: var(--line); }
 .look-prev i + u + u { top: 54px; width: 40%; }
 @media print { .hero-bg { display: none; } .page-head.hero { background: none; min-height: 0; padding: 0; } .page-head.hero > div:not(.hero-bg) { max-width: none; } }
+
+.hero-art .t { fill: color-mix(in srgb, var(--tint) 70%, #000); fill-opacity: .8; font-family: Inter, system-ui, sans-serif; }
+.hero-art .t2 { fill: #fff; fill-opacity: .95; font-family: Inter, system-ui, sans-serif; }
+html[data-mode=dark] .hero-art .t { fill: #fff; fill-opacity: .85; }
+.me-who.hero { flex-direction: row; align-items: center; gap: 18px; margin-bottom: 22px; }
+.me-who.hero > :not(.hero-bg) { position: relative; z-index: 1; }
+.me-who.hero > div:not(.hero-bg) { max-width: 44%; }
+@media (max-width: 700px) { .me-who.hero { flex-direction: column; align-items: flex-start; padding-top: 112px; } .me-who.hero > div:not(.hero-bg) { max-width: 100%; } }
+
+/* Page pictures, "Warm line art": a cream page with a faint trellis pattern and outline drawings (settings.look = 'line') */
+.hero.line { --lk: #4A3A2E; --lk2: #FFFDF9; --lkc: #FFE0C8; }
+.page-head.hero.line { background: #FFF9F2; border: 1px solid #EFE2D2; --ttl: #2A211B; }
+.page-head.hero.line .lead { color: #5E5148; opacity: 1; }
+.hero.line .hero-bg { background: none; }
+.hero.line .hero-bg::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cpath d='M0 22L22 0L44 22L22 44Z' fill='none' stroke='%23E8590C' stroke-opacity='.14' stroke-width='1.4'/%3E%3C/svg%3E"); -webkit-mask-image: linear-gradient(90deg, transparent 28%, #000 100%); mask-image: linear-gradient(90deg, transparent 28%, #000 100%); }
+.hero.line .hero-art .a, .hero.line .hero-art .b { fill: none; stroke: var(--lk); stroke-width: 2.4; }
+.hero.line .hero-art .b { stroke-opacity: .55; }
+.hero.line .hero-art .w { fill: var(--lk2); fill-opacity: 1; stroke: var(--lk); stroke-width: 2.4; }
+.hero.line .hero-art .c { fill: var(--lkc); fill-opacity: 1; stroke: #E8590C; stroke-width: 2.4; }
+.hero.line .hero-art .t, .hero.line .hero-art .t2 { fill: var(--lk); fill-opacity: 1; stroke: none; }
+html[data-mode=dark] .hero.line { --lk: #E9D9C6; --lk2: #342C26; --lkc: #5A3A27; }
+html[data-mode=dark] .page-head.hero.line { background: #2A2420; border-color: #3D342D; --ttl: #F3E7DA; }
+html[data-mode=dark] .page-head.hero.line .lead { color: #D8CABB; }
+html[data-mode=dark] .hero.line .hero-art .a, html[data-mode=dark] .hero.line .hero-art .b { fill: none; }
+html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk); }
+.look-prev.line { --tint: #2F7A78; background: #FFF9F2; }
+.look-prev.line u { display: none; }
+.look-prev.line .hero-bg { position: absolute; inset: 0; }
+.look-prev.line .hero-art { width: 80%; }
 /* Who's serving with you (under a turn on Me → Serving) */
 .item .crew { flex-basis: 100%; padding-left: 56px; margin-top: -2px; }
 .crew > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; list-style: none; display: inline-flex; gap: 6px; }

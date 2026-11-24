@@ -3,7 +3,8 @@
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
     ["Page pictures", "Bladsyprentjies", "Izithombe zamakhasi", "Imifanekiso yamaphepha"],
-    ["A soft watercolour picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.", "’n Sagte waterverf-prent bo-aan elke bladsy, in die kleure van daardie deel van die toep. Almal sien die keuse wat die kerk hier maak.", "Isithombe se-watercolour esithambile phezulu kwelinye nelinye ikhasi, ngemibala yaleyo ngxenye ye-app. Wonke umuntu ubona okukhethwe yisonto lapha.", "Umfanekiso othambileyo we-watercolour phezulu kwiphepha ngalinye, ngemibala yaloo nxalenye ye-app. Wonke umntu ubona oko likhethe ibandla apha."],
+    ["A picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.", "’n Prent bo-aan elke bladsy, in die kleure van daardie deel van die toep. Almal sien die keuse wat die kerk hier maak.", "Isithombe phezulu kwelinye nelinye ikhasi, ngemibala yaleyo ngxenye ye-app. Wonke umuntu ubona okukhethwe yisonto lapha.", "Umfanekiso phezulu kwiphepha ngalinye, ngemibala yaloo nxalenye ye-app. Wonke umntu ubona oko likhethe ibandla apha."],
+    ["Warm line art", "Warm lynkuns", "Imidwebo yemigqa efudumele", "Imizobo yemigca efudumeleyo"],
     ["Soft watercolour", "Sagte waterverf", "I-watercolour ethambile", "I-watercolour ethambileyo"],
     ["Plain (original)", "Gewoon (oorspronklik)", "Okuvamile (kwasekuqaleni)", "Okuqhelekileyo (kwasekuqaleni)"],
     ["Church Services and venues", "Kerkdienste en plekke", "Izinkonzo Zesonto nezindawo", "Iinkonzo zeCawe neendawo"],

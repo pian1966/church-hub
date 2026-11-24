@@ -1,8 +1,8 @@
 /* Church & Trellis – soft watercolour pictures at the top of every page.
  * Banners.decorate(main) turns the page's own heading (.page-head) into a picture banner: the title, the one-line lead and
  * the buttons stay exactly as they were (so nothing about how they work changes); a painted background and a small
- * scene for that part of the app are added behind them. A church can choose "Plain" instead (Settings → Colours →
- * Page pictures; settings.look = 'plain'). Pure drawing – no data is read or written here. Test: tests/banners.test.js */
+ * scene for that part of the app are added behind them. A church can choose "Warm line art" or "Plain" instead (Settings → Colours →
+ * Page pictures; settings.look = 'line' | 'plain'). Pure drawing – no data is read or written here. Test: tests/banners.test.js */
 var Banners = (function () {
   'use strict';
 
@@ -27,6 +27,8 @@ var Banners = (function () {
   function sceneOf(key) { return own(SCENE, key) ? SCENE[key] : SCENE['generic' + ((seed(key) >>> 3) % 4)]; }
   function own(o, k) { return Object.prototype.hasOwnProperty.call(o, k); }
   function plain(settings) { return !!settings && settings.look === 'plain'; }
+  /** Which look the church chose: 'watercolour' (the default), 'line' (warm line art) or 'plain' (the original). */
+  function look(settings) { var l = settings && settings.look; return l === 'plain' || l === 'line' ? l : 'watercolour'; }
 
   /* ---------- the little drawings (class a/b = main shapes, c = warm touch, w = paper) ---------- */
   function rect(x, y, w, h, c, r) { return '<rect class="' + c + '" x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="' + (r == null ? 3 : r) + '"/>'; }
@@ -189,12 +191,12 @@ var Banners = (function () {
     if (!head) return false;
     if (plain(settings) || !eligible(head)) return false;
     var key = keyOf(hash);
-    head.classList.add('hero', 'wash', 'page-head');
+    head.classList.add('hero', look(settings) === 'line' ? 'line' : 'wash', 'page-head');
     head.style.setProperty('--tint', tintOf(key));
     head.insertAdjacentHTML('afterbegin', '<span class="hero-bg" aria-hidden="true">' + svg(key) + '</span>');
     return true;
   }
 
-  return { decorate: decorate, keyOf: keyOf, plain: plain, svg: svg, TINT: TINT, tintOf: tintOf, sceneOf: sceneOf, SCENE: SCENE };
+  return { decorate: decorate, keyOf: keyOf, plain: plain, look: look, svg: svg, TINT: TINT, tintOf: tintOf, sceneOf: sceneOf, SCENE: SCENE };
 })();
 if (typeof module !== 'undefined') module.exports = Banners;

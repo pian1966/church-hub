@@ -17,5 +17,6 @@ ok(future.every(k => /^<svg/.test(B.svg(k)) && B.tintOf(k)), 'a page added later
 ok(B.tintOf('reports') === B.tintOf('reports') && B.svg('youth') === B.svg('youth'), 'a new page keeps the same look every time');
 ok(new Set(future.map(B.tintOf)).size >= 4, 'new pages are given different colours');
 ok(B.plain({ look: 'plain' }) && !B.plain({}) && !B.plain({ look: 'watercolour' }) && !B.plain(null), 'only “plain” turns the pictures off');
+ok(B.look({}) === 'watercolour' && B.look(null) === 'watercolour' && B.look({ look: 'line' }) === 'line' && B.look({ look: 'plain' }) === 'plain' && B.look({ look: 'nonsense' }) === 'watercolour', 'three looks: watercolour (the default), warm line art and plain');
 console.log(fails ? '\n' + fails + ' banner test(s) FAILED' : '\nAll banner tests passed');
 process.exit(fails ? 1 : 0);

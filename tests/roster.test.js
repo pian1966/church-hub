@@ -278,5 +278,19 @@ console.log('Who’s serving with you');
   ok(Object.keys(c).join() === 's0' && c.s0.people.join() === 'p1,p2' && c.s0.list.map(x => x.n + ':' + x.p).join() === 'Jason N.:door,Priya N.:tea', 'names and positions at each service chosen, not those who said no, short names only');
 }
 
+console.log('A different number needed at one service (neededBy)');
+{
+  const P = ['a', 'b', 'c', 'd'].map(x => ({ id: x, firstName: x.toUpperCase(), lastName: 'X' }));
+  const pos = [{ id: 'door', teamId: 't', name: 'Door', needed: 2, neededBy: { '17:00': 1 } }];
+  const sk = P.map(p => ({ personId: p.id, positionId: 'door', frequency: 'weekly' }));
+  const sv = [{ id: 'm', date: '2026-11-01', time: '10:00' }, { id: 'e', date: '2026-11-01', time: '17:00' }];
+  ok(R.neededFor(pos[0], sv[0]) === 2 && R.neededFor(pos[0], sv[1]) === 1 && R.neededFor({ needed: 3 }, sv[1]) === 3 && R.neededFor({}, sv[1]) === 1, 'neededFor: the service’s own number, else the usual one, else 1');
+  const r = R.autoFill({ people: P, positions: pos, skills: sk, services: sv, assignments: [], groups: [], away: [] }, ['m', 'e']);
+  const n = id => r.assignments.filter(x => x.serviceId === id).length;
+  ok(n('m') === 2 && n('e') === 1, 'auto-fill rosters 2 at the 10am and 1 at the 5pm');
+  const g = R.autoFill({ people: [P[0]], positions: pos, skills: [sk[0]], services: sv, assignments: [], groups: [], away: [] }, ['m', 'e']);
+  ok(g.gaps.length === 1 && g.gaps[0].serviceId === 'm' && g.gaps[0].missing === 1, 'with one volunteer only the 10am has a gap (1 missing); the 5pm is full');
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

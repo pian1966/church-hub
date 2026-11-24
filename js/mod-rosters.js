@@ -269,6 +269,15 @@
   /** A special service (Good Friday…) only has the positions chosen for it; a Sunday one every position unless narrowed down. */
   function specialIds() { return Serving.specialSlots(S.settings()).map(function (x) { return x.id; }); }
   function runsAt(p, s) { return R.runsAt(p, s, specialIds()) && !noCommunionFor(p, s); }
+  /** How many people a position needs at one regular service (its own number there, else the same everywhere). */
+  function neededSlot(p, slotId) { var n = p.neededBy && p.neededBy[slotId]; return typeof n === 'number' && n >= 1 ? n : (p.needed || 1); }
+  /** The row label on the roster: "2 needed", or "1–2 needed" when the services shown need different numbers. */
+  function neededLabel(p, svcs) {
+    var ns = svcs.filter(function (s) { return runsAt(p, s); }).map(function (s) { return R.neededFor(p, s); });
+    if (!ns.length) ns = [p.needed || 1];
+    var lo = Math.min.apply(null, ns), hi = Math.max.apply(null, ns);
+    return lo === hi ? T('{n} needed', { n: lo }) : T('{a}–{b} needed', { a: lo, b: hi });
+  }
   /** A communion role (Communion – Providing, Servers…) at a service without Holy Communion: nobody is asked. */
   function noCommunionFor(p, s) { return Serving.isCommunion(p) && !Serving.hasCommunion(s, S.settings()); }
   var EYE_OFF = 'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM4 4l16 16';   // the eye, crossed out
@@ -484,7 +493,7 @@
           : '<th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th>') + '</tr>';
         firstRow = false;
       }
-      html += '<tr><th scope="row">' + esc(p.name) + (p.tooltip ? ' ' + H.tip(p.tooltip) : '') + '<small>' + T('{n} needed', { n: p.needed }) + '</small></th>' + svcs.map(function (s) {
+      html += '<tr><th scope="row">' + esc(p.name) + (p.tooltip ? ' ' + H.tip(p.tooltip) : '') + '<small>' + neededLabel(p, svcs) + '</small></th>' + svcs.map(function (s) {
         if (R.isCancelled(s)) return cxCell(s);
         var here = all.filter(function (a) { return a.serviceId === s.id && a.positionId === p.id; });
         var live = here.filter(function (a) { return a.status !== 'declined'; }).length;
@@ -495,7 +504,7 @@
           return '<button class="chip ' + cls + '" data-act="rosters:slot" data-id="' + esc(a.id) + '" title="' + esc(a.reason || (isAway ? isAway : T({ accepted: 'Accepted', pending: 'Waiting for a reply', declined: 'Said no' }[a.status] || a.status)) + (swapOf(a.id) && a.status === 'declined' ? ' · ' + swapLine(swapOf(a.id)) : '')) + '">' + esc(H.name(who)) + '<span class="tg">' + tg + '</span></button>';
         }).join('');
         if (!runsAt(p, s) && !here.length) return '<td class="na"><span class="muted small">' + esc(noCommunionFor(p, s) && R.runsAt(p, s, ed.specialSlots) ? T('No communion') : T('Not at {time}', { time: slotName(Serving.slotOf(s)) })) + '</span></td>';
-        for (var i = live; i < p.needed && runsAt(p, s); i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ ' + T('Add someone') + '</button>';
+        for (var i = live; i < R.neededFor(p, s) && runsAt(p, s); i++) cells += '<button class="chip gap" data-act="rosters:assign" data-s="' + s.id + '" data-p="' + p.id + '">+ ' + T('Add someone') + '</button>';
         return '<td><div class="slot">' + cells + '</div></td>';
       }).join('') + '</tr>';
     });
@@ -904,9 +913,12 @@
       return '<section class="panel team-panel"><h2 class="team-h"><span class="grow">' + esc(t.name) + '</span>' + tools + '</h2>' + ps.map(function (p) {
         var ks = skills.filter(function (k) { return k.positionId === p.id && (!slot || Serving.servesAt(k, p, slot)); }).sort(function (a, b) { return byName(person(a.personId), person(b.personId)); });
         var where = Serving.positionSlots(p, st).map(function (y) { return y.id; }).join();
-        var step = manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '';
+        var cur = slot ? neededSlot(p, slot.id) : (p.needed || 1), sd = slot ? ' data-s="' + esc(slot.id) + '"' : '';
+        var step = manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '"' + sd + ' data-d="-1"' + (cur > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '"' + sd + ' data-d="1"' + (cur < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '';
+        var needLine = slot ? T('{n} needed at the {service} service', { n: cur, service: slot.label }) : T('{n} needed at each service', { n: p.needed }) +
+          Serving.positionSlots(p, st).filter(function (y) { return neededSlot(p, y.id) !== (p.needed || 1); }).map(function (y) { return ' · ' + T('{n} at the {service} service', { n: neededSlot(p, y.id), service: y.label }); }).join('');
         return '<div class="pos-row"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + (p.tooltip ? ' ' + H.tip(p.tooltip) : '') + '</b>' + neededAt(p) +
-          '<span class="muted small need-line">' + step + T('{n} needed at each service', { n: p.needed }) + '</span></span>' +
+          '<span class="muted small need-line">' + step + needLine + '</span></span>' +
           '<button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button>' + posMenu(p) + '</div>' +
           (ks.length ? '<details class="pos-names" data-p="' + esc(p.id) + '"' + (openPos[p.id] ? ' open' : '') + '><summary>' + esc(fillLine(Serving.fillCount(ks, p))) + '</summary><div class="list" style="margin-top:8px">' + ks.map(function (k) {
             var pp = person(k.personId), mine = Serving.skillSlots(k, p, st);
@@ -1027,7 +1039,7 @@
   /* ---------- module ---------- */
   function nextGaps() {
     var s = upcoming()[0]; if (!s) return null;
-    var n = 0; orderedPositions().forEach(function (p) { if (runsAt(p, s)) n += Math.max(0, p.needed - S.find('assignments', function (a) { return a.serviceId === s.id && a.positionId === p.id && a.status !== 'declined'; }).length); });
+    var n = 0; orderedPositions().forEach(function (p) { if (runsAt(p, s)) n += Math.max(0, R.neededFor(p, s) - S.find('assignments', function (a) { return a.serviceId === s.id && a.positionId === p.id && a.status !== 'declined'; }).length); });
     return { s: s, n: n };
   }
   var MOD; H.register(MOD = {
@@ -1288,8 +1300,15 @@
       /** How many people a position needs at each service (e.g. 2 on the sound desk): − and + on Teams. */
       needed: function (el) {
         var p = pos(el.dataset.p); if (!p || !manager()) return;
-        var n = Math.max(1, Math.min(20, (p.needed || 1) + (+el.dataset.d))); if (n === p.needed) return;
-        p = JSON.parse(JSON.stringify(p)); p.needed = n; S.put('positions', p, p.name + ': ' + n + ' needed per service'); H.render();
+        var sl = el.dataset.s || '', cur = sl ? neededSlot(p, sl) : (p.needed || 1);
+        var n = Math.max(1, Math.min(20, cur + (+el.dataset.d))); if (n === cur) return;
+        p = JSON.parse(JSON.stringify(p));
+        if (!sl) { p.needed = n; }
+        else {   // one service's own number; the same as the usual number means no special number
+          var by = p.neededBy || {}; if (n === (p.needed || 1)) delete by[sl]; else by[sl] = n;
+          if (Object.keys(by).length) p.neededBy = by; else delete p.neededBy;
+        }
+        S.put('positions', p, p.name + ': ' + n + ' needed' + (sl ? ' at ' + sl : ' per service')); H.render();
         var b = document.querySelector('[data-act="rosters:needed"][data-p="' + p.id + '"][data-d="' + el.dataset.d + '"]'); if (b && !b.disabled) b.focus();
       },
       newpos: function (el) {

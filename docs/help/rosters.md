@@ -125,7 +125,9 @@ Also asked: Add a department. Add a position. Create a new ministry team.
 Open **Rosters → Teams**.
 - First time: **Set up the church's departments** adds the church's departments and positions in one click.
 - **New team** adds a department (e.g. *Prayer*); **Add a position** adds a position to it (e.g. *Camera*) in one box. Use
-  **−** and **+** to set how many people it needs per service (e.g. 2 on the sound desk).
+  **−** and **+** to set how many people it needs per service (e.g. 2 on the sound desk). To need a different number at one service
+  (e.g. 2 at the 10am but 1 at the 5pm), tap that service (**8am**, **10am** or **5pm**) at the top first, then **−** or **+**: the number you
+  set there applies to that service only, and the roster, the gaps and the printed roster follow it.
 - Each position shows the services it is needed at (8am, 10am, 5pm) and how many people can serve any week, once a month or
   as a backup. Tap **8am**, **10am** or **5pm** to see only that service's teams. A position's names fold away until you tap them.
 - A position added by mistake, or no longer used, can be removed with **⋯ → Delete position**.

@@ -170,6 +170,12 @@ module.exports = async function (ctx) {
   check(docs['positions/pos-sound'].needed === 2 && /2 needed at each service/.test(await s.text()), 'Teams: + makes it 2 on the Sound Desk');
   await s.page.click('[data-act="rosters:needed"][data-p="pos-sound"][data-d="-1"]'); await s.settle(); docs = await s.docsNow();
   check(docs['positions/pos-sound'].needed === 1 && await s.page.isDisabled('[data-act="rosters:needed"][data-p="pos-sound"][data-d="-1"]'), '… − takes it back to 1, and no fewer');
+  await s.page.click('[data-act="rosters:teamslot"][data-s="10:00"]'); await s.settle();
+  await s.page.click('[data-act="rosters:needed"][data-p="pos-sound"][data-s="10:00"][data-d="1"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['positions/pos-sound'].needed === 1 && docs['positions/pos-sound'].neededBy && docs['positions/pos-sound'].neededBy['10:00'] === 2 && /2 needed at the 10am service/.test(await s.text()), 'Teams: with the 10am chosen, + makes the Sound Desk 2 at the 10am only');
+  await s.page.click('[data-act="rosters:needed"][data-p="pos-sound"][data-s="10:00"][data-d="-1"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['positions/pos-sound'].needed === 1 && !docs['positions/pos-sound'].neededBy, '… − at the 10am goes back to the usual number and the special number is dropped');
+  await s.page.click('[data-act="rosters:teamslot"][data-s=""]'); await s.settle();
   check(docs['positions/pos-tea'].teamId === 'hosp' && !docs['teams/dept-hospitality'], 'an existing team with the same name (Hospitality) is used, not doubled');
   check(!(await s.page.$('[data-act="rosters:setupdepts"]')) && await s.page.$$eval('.pos-row', rs => { const r = rs.find(x => x.querySelector('[data-p="pos-creche"]')); return !!r && [...r.querySelectorAll('.svc-chip')].map(c => c.textContent).join() === '8am'; }), 'once added, the offer goes, and 8am-only positions show only the 8am chip');
   check(docs['teams/dept-operational'].name === 'Service Leading', 'the department for preaching, hosting, reading and prayer is called Service Leading');

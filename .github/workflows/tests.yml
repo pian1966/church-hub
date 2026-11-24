@@ -129,7 +129,7 @@ jobs:
       fail-fast: false          # let every part finish, so one failure doesn't hide another
       matrix:
         include:
-          - { name: A, parts: 'records,names,welcome,household,offline' }
+          - { name: A, parts: 'records,names,welcome,household,offline,help' }
           - { name: B, parts: 'people,admin,elvanto-leave,community,leave-more,ask' }
           - { name: C, parts: 'care,roles,messages,imports,pastors' }
           - { name: D, parts: 'partners,people-details,signin,life,support,events,languages' }

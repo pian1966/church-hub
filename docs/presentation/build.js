@@ -302,7 +302,7 @@ async function icon(Comp, color, px = 256) {
       T(s, labels[i][1], { x: x - 0.4, y: 1.5 + h + 0.25, w: h * 390 / 844 + 0.8, h: 0.45, fontSize: 17, bold: true, align: 'center' });
     }
   }
-  s.addNotes('Members look after their own details, privacy choices, days away and serving – here in isiZulu, and in dark mode in the evening. Fewer requests for the church office, and records that stay up to date.');
+  s.addNotes('Members look after their own details, privacy choices, days away and serving – here in isiZulu, and in dark mode in the evening. There is also a Help page: they type or say a question about using Church & Trellis and get an answer written for them, in their own language, from the church’s help pages. Fewer requests for the church office, and records that stay up to date.');
 
   // ========== 14. Privacy ==========
   pres.addSection({ title: 'Trust' });

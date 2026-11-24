@@ -52,9 +52,28 @@ says **You're not on the roster in the coming weeks.**
 For: Everyone
 Also asked: Swap my turn. Cancel my duty. I'm sick on Sunday. Ask someone to take my place.
 
-On **Me → Serving**, find the turn and tap **Can't make it**. You can then ask someone on your team who is free that day
-to take your place. They are asked in **Messages** and answer with one tap; the roster team is told either way, and if
-nobody can, the roster coordinator can find someone else.
+On **Me → Serving**, find the turn and tap **Can't make it**. Church & Trellis asks: *Would you like to ask someone to take your
+place? They're on the same team and free that day.* Either choose **No – just let the roster team know**, or choose a name
+(**Ask {name}**) and tap **Send**. The roster team is told either way, and sees who you asked. The person you asked gets a message
+and answers with one tap: if they say **Yes, I'll do it**, the turn is theirs and you're told; if they say **Sorry, I can't**, you're
+told and can tap **Ask someone else** (or **Ask someone to take my place** if you first said no). Only people who use Church &
+Trellis, on your team and free that day, are offered.
+
+## Someone asked me to take their place. How do I answer?
+For: Everyone
+Also asked: Cover for someone. Swap a turn. Can you take my place? Yes, I'll do it.
+
+You get a message, **Can you take my place?**, and a card on **Me → Serving** saying who asks and which service and position. Tap
+**Yes, I'll do it** – the turn becomes yours (already accepted) and the person is thanked in **Messages** – or **Sorry, I can't**, and
+they can ask someone else. The roster team is told when you say yes.
+
+## The roster team asked "Are you away soon?" What do I do?
+For: Everyone
+Also asked: Are you away on any Sundays? I'm free. Days away before the roster is made. Planning the roster.
+
+Before a new term's roster is made, the roster team may ask everyone on a team whether they'll be away. You get a message, **Are you
+away soon?**, and a card on **Me → Serving**, **Planning the roster for {dates}**. Tap **Add days away** to say which days, or **I'm free
+– no days away** if there are none. It takes a moment, and means nobody is put on the roster on a day you can't come.
 
 ## Can I see who else is serving at my service?
 For: Everyone
@@ -65,20 +84,13 @@ with their short names and jobs – your own team first. It shows names and jobs
 details, and only people serving at that service can see it. If your church has switched it off, you won't see it (the
 Administrator can change this under **Settings → Church Services**).
 
-## The church asked whether I'll be away. What do I do?
-For: Everyone
-Also asked: Ask who's away. I'm free. Days away before the new term. Term roster.
-
-Before a new term's roster is made, the church may ask every volunteer in **Messages** whether they will be away. Either
-add your days away (**Me → Days away**) or tap **I'm free** if you can serve any day. It helps the roster coordinator avoid
-putting you down on a Sunday you can't do.
-
 ## How do I offer to help in a new area?
 For: Everyone
 Also asked: I'd like to join the welcome team. How do I volunteer? Join a team.
 
 On **Me → Serving**, under where you'd like to help, choose the position and tap **Offer to help** (**I'd like to help**).
-Say how often you could serve (every week, every 2 weeks, once a month or now and then), which services, and anything
+Say how often you could serve (**Whenever necessary (could be every week)**, **Once a month**, **Once a quarter (every 3 months or
+so)** or **Only now and then in emergencies**), which services, and anything
 the roster coordinator should know, then **Send to the roster coordinator**. It shows **Waiting for the roster
 coordinator** until they answer; you can **Withdraw** it. If they reply **Not now**, you'll see their reply under the
 position until you tap OK.

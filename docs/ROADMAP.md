@@ -130,13 +130,11 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
 - 🟡 Church: set up AI for Ask in your own words (`docs/AI-SEARCH-SETUP.md`) – App Check key added (0.45.1); still to do: privacy notice, App Check enforced for AI Logic, switch it on in Settings → Apps and try a question
-- ⬜ **Help: ask a question** – a Help page where people type or dictate (phone keyboard microphone, or a mic button using the
-  browser's speech recognition) a question about using Church & Trellis, and get an answer written for their question and role.
-  The answers come only from the help pages in `docs/help/` (first draft done, Nov 2026): find the matching answers, send them
-  with the question and the person's role to an AI model through a Firebase Cloud Function (key never in the app; e.g. Gemini
-  through Firebase AI Logic), and show the reply with a link to the help page. Use the church's own words (Terminology) and the
-  person's language. A monthly limit per church; without AI (switched off or limit reached), a plain searchable FAQ of the same
-  pages. Never send personal information with the question.
+- 🟡 **Help: ask a question** – built in 0.111.0 (`docs/CHANGELOG.md`); church to do: switch on AI (`docs/AI-SEARCH-SETUP.md`) for written answers (without it, Help shows the matching help pages), add the AI sentence to the privacy notice, and try some real questions. Follow-ups:
+  - ⬜ A monthly limit per church (today: 12 questions to the AI per ten minutes from one device; the free Gemini allowance does the rest)
+  - ⬜ A thumbs up/down under each answer, and a list for Administrators of questions that found no answer, so they know which help pages to write (needs a decision on keeping questions: POPIA – today nothing is kept)
+  - ⬜ Help pages in the member's own language (today the AI translates the answer; the pages themselves are English)
+  - ⬜ A "Help" button on each page that opens Help already asking about that page
 - 🟡 **Leadership, Archive and Library** (built in 0.51, off until switched on in Settings → Apps). Church to do: switch them on,
   set up the Council under Leadership, name the librarians, and – if GitHub doesn't publish the database rules by itself yet –
   re-publish them (FIREBASE-SETUP.md step 7), or the three pages stay empty. Archives are now a Library tab; only
@@ -176,8 +174,8 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), El
 - ⬜ Keepers for the board and the marketplace (decided 19 Nov 2026): the pastors, the Administrators and the church secretary
 - ⬜ Decide (Community and Finances): may attendees see and post on the community board? Do Thank-you notes need approval? Is
   30 days right? The overspend thresholds; should staff pay show as one total even to the Council?
-- ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request (add to CLAUDE.md rules
-  once the Help page exists). Church to read through the help pages and correct anything that doesn't match how they work.
+- ⬜ Keep `docs/help/` up to date: when a screen or button changes, change its answer in the same pull request – Help now reads these pages
+  and answers from them (add this rule to CLAUDE.md; the Help page exists as of 0.111.0). Church to read through the help pages and correct anything that doesn't match how they work.
 
 ## Phase 7 – Church & Trellis for every church ⬜
 **Decided (11 Nov 2026):** every church keeps its own database in its **own Google account**, and Church & Trellis creates it

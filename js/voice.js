@@ -26,7 +26,7 @@ var Voice = (function () {
   function button(target, opts) {
     if (!can()) return '';
     opts = opts || {};
-    var lab = T('Say the name');
+    var lab = opts.label || T('Say the name');
     return '<button type="button" class="mic-btn' + (opts.cls ? ' ' + opts.cls : '') + '" data-mic="' + esc(target) + '"' + (opts.mode ? ' data-mic-mode="' + esc(opts.mode) + '"' : '') +
       (opts.last ? ' data-mic-last="' + esc(opts.last) + '"' : '') + ' aria-label="' + esc(lab) + '" title="' + esc(lab) + '">' + icon() + '</button>';
   }

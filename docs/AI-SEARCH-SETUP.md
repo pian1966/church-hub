@@ -1,5 +1,10 @@
 # AI for “Ask in your own words” – one-time setup
 
+> **Also answers questions in Help (0.109.0).** With AI switched on, **Help** writes an answer to a question about using
+> Church & Trellis, in the person's language, using only the help pages in `docs/help/`. What is sent: the question, a few help
+> pages, the person's kind of access and the church's own words – never anyone's records. Tell your privacy notice. Nothing more
+> to set up. (Without AI, Help shows the matching help pages.)
+
 > **Also reads photos of names (0.106.0).** Once AI is on, staff can photograph a paper sign-up sheet (Events → From a sheet) or
 > visitor cards (People → From a photo) and Gemini reads the handwriting; every name is checked before anyone is added. Tell your
 > privacy notice. Nothing more to set up.

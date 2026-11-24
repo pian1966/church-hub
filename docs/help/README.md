@@ -4,16 +4,18 @@ These pages answer the questions people are likely to ask about using Church & T
 church (not for developers), in plain English, and are meant to be used two ways:
 
 1. **Read as they are** – a searchable help / FAQ page.
-2. **By the planned "Ask a question" helper** – a person types or dictates a question; Church & Trellis finds the
-   matching answers here and an AI writes a reply for that person's question and role, using **only** these pages
-   (see ROADMAP, "Help: ask a question").
+2. **By Help in the app** (js/help.js, js/mod-help.js) – a person types or says a question; Church & Trellis finds the
+   matching answers here and, if the church has switched on AI (Settings → Apps), an AI writes a reply for that person's question,
+   kind of access, language and the church's own words, using **only** these pages, and shows the pages it used. Without AI the
+   matching pages are shown as they are. **Help reads these files straight from the website, so a change here is live as soon as it is
+   merged; every page must be listed in `Help.PAGES` in js/help.js** (`node tests/help.test.js` checks it).
 
 ## Pages
 | Page | Covers |
 | --- | --- |
-| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates |
-| [me.md](me.md) | The Me page: my details, consent, days away, my serving, offers to serve, becoming a Church Partner |
-| [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, teams, services, communion, reminders, together/apart |
+| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates, using Help |
+| [me.md](me.md) | The Me page: my details, consent, days away, my serving, taking someone's place, offers to serve, becoming a Church Partner |
+| [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, asking who's away, teams, services, communion, reminders, together/apart |
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |
 | [care-groups.md](care-groups.md) | Care groups for members, carers and staff |
 | [midweek-groups.md](midweek-groups.md) | Midweek groups (Bible studies, life groups) for members, leaders and staff |
@@ -21,9 +23,12 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [archive.md](archive.md) | Library → Archives: minutes, plans, contracts and other church records, and who can see them |
 | [library.md](library.md) | The church Library: finding, borrowing and returning books; for librarians |
 | [events.md](events.md) | Events: seeing what's coming up, signing up, reminders; for organisers: putting up an event, the sign-up list, paper sheets from a photo |
-| [community.md](community.md) | The Community board and the Marketplace: notices, listings, and how keepers check them |
 | [messages.md](messages.md) | Reading and sending messages inside Church & Trellis |
 | [people.md](people.md) | For staff: adding and editing people, households, children, duplicates, searching, a death |
+| [events.md](events.md) | Events: signing up, guests, reminders; for organisers: putting up an event, who's coming, the sign-up report, adding people, a photo of a sheet, cancelling |
+| [community-board.md](community-board.md) | The Community board: pinning, renewing and reporting notices; for keepers: checking notices, choosing keepers |
+| [marketplace.md](marketplace.md) | The Marketplace: listing, the rules, contacting a seller, marking sold; for keepers: checking listings |
+| [subscription.md](subscription.md) | For Administrators: the price of a coffee, paying, payment holidays, praying instead, gifts, the prayer circle and prayer card |
 | [privacy.md](privacy.md) | Consent, what others can see, and the Privacy pages for Administrators |
 | [settings.md](settings.md) | For Administrators: settings, apps, services, wording, roles, View as, imports, setting up Church & Trellis at another church |
 | [translations.md](translations.md) | Languages and suggesting better wording |

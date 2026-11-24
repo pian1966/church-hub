@@ -46,21 +46,24 @@ or **1 quarter**. When the roster is wider than the screen, a slider above it (a
 phone you see one service at a time. To leave a service out for now, tap the
 **eye** on its heading; it moves to **Hidden for now**, where one tap brings it back (**Show all** brings them all back).
 
-## How do I ask everyone whether they'll be away before a new term?
-For: Roster coordinators, Administrators, Pastors
-Also asked: Ask who's away. Collect days away. Who has answered? Remind the others.
-
-Before filling a new term, open **Rosters → More → Ask who's away…**. Every volunteer who uses the app is asked in
-**Messages** to add their days away or tap **I'm free**. The roster shows who has answered, and **Remind the others** nudges
-those who haven't. Then **Fill the gaps for me** can avoid the days people said they'd be away.
-
-## Someone says they can't make their turn. What happens?
+## Before I make the roster, how do I find out who is away?
 For: Roster coordinators, Administrators
-Also asked: Swap. Take my place. Decline. Replacement.
+Also asked: Ask who's away. Ask everyone for their days away. Term planning. Who's free?
 
-When a volunteer taps **Can't make it** they can ask someone on their team who is free that day to take their place. That
-person is asked in **Messages** and answers with one tap, and the roster team is told. If nobody takes it, the slot shows
-as a gap, and you can fill it as usual.
+On **Rosters**, open **More → Ask who's away…**. Choose the term (or type the **From** and **To** days) and tap **Ask them**. Everyone on a
+team who uses Church & Trellis (and isn't taking a break) gets a message, **Are you away soon?**, and a card on **Me → Serving**. Each
+person adds their days away or taps **I'm free – no days away**. **Rosters** then shows **Days away for {dates}** – how many have
+answered, **{free} free, {away} away** – and **Remind the others** nudges those who haven't. People who can't sign in yet are counted, so
+you can reach them by email, WhatsApp or SMS yourself. Their days away then count when you **fill the roster**.
+
+## Someone can't make their turn. What happens?
+For: Roster coordinators, Administrators
+Also asked: Declined a turn. Cover for a turn. Someone asked to swap. Take my place.
+
+When someone taps **Can't make it**, you get a message in **Messages**. They may first ask a teammate who is free that day to take their
+place: if that person says **Yes, I'll do it**, the turn becomes theirs (already accepted) and the roster team is told, so there is
+nothing for you to do. If they say **Sorry, I can't**, or nobody is asked, the turn shows as **Can't make it** and you can put
+someone else on it (**Change person**).
 
 ## How do I fill in the roster?
 For: Roster coordinators, Administrators

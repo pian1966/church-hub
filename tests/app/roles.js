@@ -65,7 +65,7 @@ module.exports = async function (ctx) {
     window.print = () => { window.__printed = { html: document.getElementById('print-only').innerHTML, cls: document.getElementById('print-only').className, on: document.documentElement.classList.contains('printing') }; };
     Hub.download = (name, text, type) => { window.__downloaded = { name, text, type }; };
   });
-  const openPrint = async () => { await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pr .pchip'); };
+  const openPrint = async () => { await s.page.click('.page-head [data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pr .pchip'); };
   await openPrint();
   check((await s.page.$$('[data-act="rosters:printweeks"]')).length === 6 && !!(await s.page.$('[data-act="rosters:printweeks"][data-w="6"].on')) && !!(await s.page.$('[data-act="rosters:printshape"][data-v="landscape"].on')) && !!(await s.page.$('[data-act="rosters:printsheet"].on')),
     'Print or download the roster: 1 month to a year (6 weeks to begin with), portrait or landscape (landscape to begin with), every service chosen');

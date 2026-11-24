@@ -5,9 +5,9 @@
  * version: three numbers (major.minor.patch), date: YYYY-MM-DD, time: HH:MM in South African time (UTC+2). The date and time are written by
  * node tools/stamp-files.js (the time it runs) – don't type them by hand. About shows them as SAST for everyone. */
 var ChurchHubVersion = {
-  version: '0.107.12',
+  version: '0.107.13',
   date: '2026-11-24',
-  time: '01:49',
+  time: '02:23',
   developer: 'pian1966',
   repo: 'pian1966/church-hub'
 };

@@ -492,6 +492,7 @@ var Hub = (function () {
     var gt = root.querySelector('main .groups-tabs'), ph = root.querySelector('main .page-head');
     if (gt && ph && (gt.compareDocumentPosition(ph) & 4)) ph.parentNode.insertBefore(gt, ph.nextSibling);
     if (samePage && wasOpen.length) root.querySelectorAll('details').forEach(function (d) { if (wasOpen.indexOf(keyOf(d)) >= 0) d.open = true; });   // a refresh keeps unfolded sections open
+    if (window.Banners) Banners.decorate(root, location.hash, Store.settings && Store.settings());   // soft watercolour picture behind the page's heading (Settings → Colours → Page pictures)
     ourWords(root);
     wirePrompts();
     if (mod && mod.after) mod.after(p.slice(1));

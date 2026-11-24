@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.107';
   var NEWS = [
+    { date: '2026-11-24', who: ['everyone'], text: TX('Every page now has a soft watercolour picture at the top. Administrators and the Rector can switch back to plain under Settings → Colours → Page pictures.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Easier to read: on your own page your details now come first and your groups last, headings are a little bigger, and the main buttons are a softer orange on every page.') },
     { date: '2026-11-24', who: ['admin', 'archivist'], app: 'library', text: TX('Archives look much friendlier: each folder is a coloured tile, documents show what kind of file they are with Preview and Download beside them, you always see where you are, and the newest documents are on the first page.') },
     { date: '2026-11-23', who: ['everyone'], text: TX('In Did you know? and What’s new, the names of buttons and menu items now look like little buttons, so it is easy to see what to tap.') },

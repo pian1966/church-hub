@@ -46,7 +46,7 @@ async function icon(Comp, color, px = 256) {
     title: 'Content', background: { color: HEX.white },
     objects: [
       { placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } },
-      { text: { text: NAME(), options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
+      { text: { text: 'Church & Trellis', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
     ],
     slideNumber: { x: 12.2, y: 7.0, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' }
   });
@@ -54,7 +54,7 @@ async function icon(Comp, color, px = 256) {
     title: 'Warm', background: { color: HEX.warm },
     objects: [
       { placeholder: { options: { name: 'title', type: 'title', x: 0.6, y: 0.4, w: 12.1, h: 0.9, fontSize: 36, bold: true, color: C.text1, valign: 'middle', align: 'left', margin: 0 }, text: '' } },
-      { text: { text: NAME(), options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
+      { text: { text: 'Church & Trellis', options: { x: 0.6, y: 7.0, w: 3, h: 0.3, fontSize: 10, color: HEX.muted, margin: 0 } } }
     ],
     slideNumber: { x: 12.2, y: 7.0, w: 0.5, h: 0.3, fontSize: 10, color: HEX.muted, align: 'right' }
   });

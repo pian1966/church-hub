@@ -171,7 +171,7 @@
           '<span class="grow"><b>' + esc(p ? p.name : T('A position that has been removed')) + '</b><small>' + esc(H.fmt(s.date, true)) + '</small><span class="svc-chips">' + chip(x) + (p && team(p.teamId) ? '<span class="svc-note">' + esc(team(p.teamId).name) + '</span>' : '') + '</span></span>' +
           (a.status === 'pending' ? '<span class="btns"><button class="btn small" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + esc(a.id) + '" data-s="accepted">' + T('Yes, I’ll be there') + '</button></span>' :
             '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + (a.status === 'accepted' ? T('Accepted') : T('Said no')) + '</span>') +
-          swapBit(a) + '</div>';
+          swapBit(a) + (RH ? RH.crewCard(a) : '') + '</div>';
       }).join('') + passed.map(function (x) {
         var sv = service(x.serviceId), p = pos(x.positionId);
         return '<div class="item svc-tint turn passed" style="' + RosterServices.svcStyle(sv) + '"><span class="grow"><b>' + esc(p ? p.name : '') + '</b><small>' + esc(H.fmt(sv.date, true)) + '</small><small class="me-offer">' + esc(RH.swapLine(x)) + '</small></span><span class="tag ok">' + T('Covered') + '</span></div>';

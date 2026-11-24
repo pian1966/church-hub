@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.108';
   var NEWS = [
+    { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('On each of your turns on Me → Serving you can now see who else is serving at that service – names and jobs, your own team first.') },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Can’t make it'], text: TX('Can’t make a turn? Tap Can’t make it and you can ask someone on your team who is free that day to take your place – they answer with one tap, and the roster team is told.') },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('Before a new term’s roster is made, you may be asked whether you’ll be away: add your days away, or tap I’m free. And you can now choose to serve once a quarter, or take a break without leaving the team.') },
     { date: '2026-11-24', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'More', 'Ask who’s away…'], text: TX('Before filling a new term: Rosters → More → Ask who’s away… asks every volunteer to add their days away or say they’re free, and the roster shows who has answered, with Remind the others.') },

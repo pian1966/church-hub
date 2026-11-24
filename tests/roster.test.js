@@ -237,5 +237,14 @@ console.log('Once a quarter, taking a break, and someone to take your place');
   ok(c.join() === 'p10,p8', 'someone to take your place: on the team and free that day (not away, not serving already, not kept apart, not on a break), backups last: ' + c.join());
 }
 
+console.log('Who’s serving with you');
+{
+  const d = base();
+  d.assignments = [{ serviceId: 's0', positionId: 'tea', personId: 'p2', status: 'accepted' }, { serviceId: 's0', positionId: 'door', personId: 'p1', status: 'pending' },
+    { serviceId: 's0', positionId: 'door', personId: 'p4', status: 'declined' }, { serviceId: 's1', positionId: 'door', personId: 'p5', status: 'accepted' }];
+  const c = R.crews(d, ['s0'], p => p.firstName + ' ' + p.lastName[0] + '.');
+  ok(Object.keys(c).join() === 's0' && c.s0.people.join() === 'p1,p2' && c.s0.list.map(x => x.n + ':' + x.p).join() === 'Jason N.:door,Priya N.:tea', 'names and positions at each service chosen, not those who said no, short names only');
+}
+
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');
 process.exit(fails ? 1 : 0);

@@ -330,6 +330,15 @@ await t('taking someone’s place: ask only someone the roster team listed as fr
   await cannot(clare.doc('messages/cov5').set(m({ roster: 'covered', turns: ['sw14'], fromId: 'p15', to: ['p14'] })));
   await can(read(clare, 'assignments/sw14')); await cannot(db.member.doc('assignments/sw14').update({ status: 'declined', updatedAt: 'z' }));   // it is Clare's now
 });
+await t('who’s serving with you: names and positions, for the people serving at that service only (unless switched off)', async () => {
+  await can(db.rosters.doc('crews/s1').set({ people: ['p14', 'p15'], list: [{ id: 'p14', n: 'Tim J.', p: 'door' }, { id: 'p15', n: 'Clare J.', p: 'door' }] }));
+  await cannot(db.member.doc('crews/s9').set({ people: ['p14'], list: [] }));
+  await can(read(db.member, 'crews/s1')); await cannot(read(db.attendee, 'crews/s1'));
+  await can(list(db.member.collection('crews').where('people', 'array-contains', 'p14'))); await cannot(list(db.member.collection('crews')));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').set({ crewView: false }, { merge: true }); });
+  await cannot(read(db.member, 'crews/s1')); await can(read(db.rosters, 'crews/s1'));
+  await env.withSecurityRulesDisabled(async ctx => { await ctx.firestore().doc('settings/church').set({ crewView: true }, { merge: true }); });
+});
 await t('are you away? the roster team asks; each person only adds their own answer', async () => {
   await can(db.rosters.doc('awayAsks/q1').set({ from: '2027-01-01', to: '2027-03-31', people: ['p14', 'p15'], free: [], away: [], fromId: 'p05' }));
   await cannot(db.member.doc('awayAsks/q2').set({ from: '2027-01-01', to: '2027-03-31', people: ['p14'], free: [], away: [] }));

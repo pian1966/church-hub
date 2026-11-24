@@ -330,7 +330,26 @@ var RosterCore = (function () {
     return out.map(function (k) { return k.personId; }).filter(function (id, i, l) { return l.indexOf(id) === i; });
   }
 
-  return { coverFor: coverFor, runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
+
+  /**
+   * Who is serving at each service, for the volunteers there (Me → Serving, "Who's serving with you"): names and positions only.
+   * Returns { serviceId: { people: [personIds], list: [{ id, n (short name), p (positionId) }] } }, leaving out anyone who said no.
+   * shortName(person) → e.g. "Thandi M." (the app decides how names are shown).
+   */
+  function crews(data, serviceIds, shortName) {
+    var people = byId(data.people), out = {};
+    (data.assignments || []).forEach(function (a) {
+      if (a.status === 'declined' || serviceIds.indexOf(a.serviceId) < 0) return;
+      var p = people[a.personId]; if (!p) return;
+      var c = out[a.serviceId] = out[a.serviceId] || { people: [], list: [] };
+      if (c.people.indexOf(a.personId) < 0) c.people.push(a.personId);
+      c.list.push({ id: a.personId, n: shortName ? shortName(p) : fullName(p), p: a.positionId });
+    });
+    Object.keys(out).forEach(function (k) { out[k].people.sort(); out[k].list.sort(function (x, y) { return x.p < y.p ? -1 : x.p > y.p ? 1 : x.n < y.n ? -1 : x.n > y.n ? 1 : 0; }); });
+    return out;
+  }
+
+  return { crews: crews, coverFor: coverFor, runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
     terms: terms, printChoices: printChoices, printSheets: printSheets, pages: pages };
 })();
 if (typeof module !== 'undefined') module.exports = RosterCore;

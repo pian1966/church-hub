@@ -15,6 +15,13 @@ For: Administrators
 **Settings → Church**: church name, **Country** (sets provinces/states, postcodes, phone numbers and the privacy law),
 and the church's colour (**Save the church's colour**) – everyone sees it.
 
+## Can I turn off the watercolour pictures at the top of each page?
+For: Administrators, the Rector
+Also asked: Plain pages. Page pictures. Remove the header pictures.
+
+Every page has a soft watercolour picture at the top. To go back to plain pages, open **Settings → Colours → Page pictures**
+and choose **Plain**; choose **Soft watercolour** again whenever you like. Everyone at your church sees the choice you make.
+
 ## How do I use our own church words (e.g. Rector, Parishioner)?
 For: Administrators
 Also asked: Change "Church Partner" to "Member". Rename Pastor. Terminology.

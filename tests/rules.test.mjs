@@ -298,6 +298,52 @@ await t('members see only their own turns, and may only accept or decline them',
   await cannot(db.member.doc('assignments/a15').update({ status: 'declined' }));
   await can(db.rosters.doc('assignments/a16').set({ personId: 'p15', status: 'pending' }));
 });
+await t('taking someone’s place: ask only someone the roster team listed as free; they take the turn over, nothing else', async () => {
+  await env.withSecurityRulesDisabled(async ctx => {
+    const d = ctx.firestore();
+    await d.doc('roles/clare@example.com').set({ role: 'member', personId: 'p15' });
+    await d.doc('settings/church').set({ rosterTeam: ['p01', 'p05'] }, { merge: true });
+    await d.doc('assignments/sw14').set({ personId: 'p14', serviceId: 's1', positionId: 'door', status: 'declined', cover: ['p15'], coverNames: ['Clare'], createdAt: 'x', updatedAt: 'x' });
+    await d.doc('assignments/sw15').set({ personId: 'p14', serviceId: 's2', positionId: 'door', status: 'declined', cover: [], createdAt: 'x', updatedAt: 'x' });
+  });
+  const clare = env.authenticatedContext('uid-clare', { email: 'clare@example.com', email_verified: true }).firestore();
+  const turn = { personId: 'p14', serviceId: 's1', positionId: 'door', status: 'declined', cover: ['p15'], coverNames: ['Clare'], createdAt: 'x', updatedAt: 'x' };
+  const sw = { fromId: 'p14', fromName: 'Tim', toId: 'p15', toName: 'Clare', serviceId: 's1', positionId: 'door', status: 'asked', turn, createdAt: 'x', updatedAt: 'x' };
+  await cannot(db.member.doc('serveSwaps/sw15').set(Object.assign({}, sw, { serviceId: 's2' })));                  // nobody listed as free for that turn
+  await cannot(db.member.doc('serveSwaps/sw14').set(Object.assign({}, sw, { toId: 'p16' })));                       // only someone listed
+  await cannot(db.member.doc('serveSwaps/sw14').set(Object.assign({}, sw, { status: 'taken' })));
+  await cannot(clare.doc('serveSwaps/sw14').set(Object.assign({}, sw, { fromId: 'p15', toId: 'p14' })));            // not their turn
+  await cannot(clare.doc('assignments/sw14').update({ personId: 'p15', status: 'accepted', updatedAt: 'y' }));       // not asked yet
+  await can(db.member.doc('serveSwaps/sw14').set(sw));
+  const m = (o) => Object.assign({ kind: 'roster', groupId: '', audience: '', title: '', body: 'Door, 6 Dec', fromName: 'x', deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.member.doc('messages/cov1').set(m({ roster: 'cover', turns: ['sw14'], fromId: 'p14', to: ['p15'] })));  // asks the one they chose
+  await cannot(db.member.doc('messages/cov2').set(m({ roster: 'cover', turns: ['sw14'], fromId: 'p14', to: ['p16'] })));
+  await can(read(clare, 'serveSwaps/sw14')); await cannot(read(db.attendee, 'serveSwaps/sw14'));
+  await can(list(clare.collection('serveSwaps').where('toId', '==', 'p15')));
+  await cannot(clare.doc('assignments/sw14').update({ personId: 'p15', status: 'accepted', positionId: 'keys', updatedAt: 'y' }));   // nothing else
+  await cannot(db.attendee.doc('assignments/sw14').update({ personId: 'p16', status: 'accepted', updatedAt: 'y' }));
+  await can(clare.doc('assignments/sw14').update({ personId: 'p15', status: 'accepted', updatedAt: 'y' }));          // takes it over
+  await can(clare.doc('serveSwaps/sw14').update({ status: 'taken', updatedAt: 'y' }));
+  await cannot(clare.doc('serveSwaps/sw14').update({ status: 'asked', updatedAt: 'z' }));
+  await can(clare.doc('messages/cov3').set(m({ roster: 'cover', turns: ['sw14'], fromId: 'p15', to: ['p14'] })));     // tells the one who asked
+  await can(clare.doc('messages/cov4').set(m({ roster: 'covered', turns: ['sw14'], fromId: 'p15', to: ['p01', 'p05'] })));   // and the roster team
+  await cannot(clare.doc('messages/cov5').set(m({ roster: 'covered', turns: ['sw14'], fromId: 'p15', to: ['p14'] })));
+  await can(read(clare, 'assignments/sw14')); await cannot(db.member.doc('assignments/sw14').update({ status: 'declined', updatedAt: 'z' }));   // it is Clare's now
+});
+await t('are you away? the roster team asks; each person only adds their own answer', async () => {
+  await can(db.rosters.doc('awayAsks/q1').set({ from: '2027-01-01', to: '2027-03-31', people: ['p14', 'p15'], free: [], away: [], fromId: 'p05' }));
+  await cannot(db.member.doc('awayAsks/q2').set({ from: '2027-01-01', to: '2027-03-31', people: ['p14'], free: [], away: [] }));
+  await can(read(db.member, 'awayAsks/q1')); await cannot(read(db.attendee, 'awayAsks/q1'));
+  await can(list(db.member.collection('awayAsks').where('people', 'array-contains', 'p14'))); await cannot(list(db.member.collection('awayAsks')));
+  await cannot(db.member.doc('awayAsks/q1').update({ free: ['p15'] }));                                             // not for someone else
+  await cannot(db.member.doc('awayAsks/q1').update({ to: '2027-06-30' }));
+  await can(db.member.doc('awayAsks/q1').update({ free: ['p14'], updatedAt: 'x' }));
+  await cannot(db.member.doc('awayAsks/q1').update({ free: [], updatedAt: 'y' }));                                  // can't take anyone off
+  await can(list(db.rosters.collection('awayAsks')));
+  const m = (o) => Object.assign({ kind: 'roster', groupId: '', audience: '', title: '', body: 'Away?', fromName: 'x', deliveredBy: [], readBy: [], createdAt: 'x', updatedAt: 'x' }, o);
+  await can(db.rosters.doc('messages/aw1').set(m({ roster: 'awayask', turns: ['q1'], fromId: 'p05', to: ['p14'] })));
+  await cannot(db.member.doc('messages/aw2').set(m({ roster: 'awayask', turns: ['q1'], fromId: 'p14', to: ['p15'] })));
+});
 await t('serving groups: members see and change only groups they are in', async () => {
   await can(list(db.member.collection('groups').where('memberIds', 'array-contains', 'p14')));
   await cannot(read(db.member, 'groups/g2'));

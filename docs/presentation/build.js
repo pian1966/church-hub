@@ -270,12 +270,12 @@ async function icon(Comp, color, px = 256) {
   T(s, [
     { text: 'One tap fills the gaps – fairly', options: { bullet: true, breakLine: true } },
     { text: 'Families and friends serve together', options: { bullet: true, breakLine: true } },
-    { text: 'Days away and staff leave are skipped', options: { bullet: true, breakLine: true } },
+    { text: 'Ask who’s away before each term – days away and leave are skipped', options: { bullet: true, breakLine: true } },
     { text: 'Communion roles only on communion Sundays', options: { bullet: true, breakLine: true } },
     { text: 'Change a name in one tap – they’re told', options: { bullet: true, breakLine: true } },
     { text: 'Print a term on A4 – a page per service', options: { bullet: true } }
   ], { x: 0.6, y: 1.6, w: 3.2, h: 4.8, fontSize: 16, paraSpaceAfter: 10 });
-  s.addNotes('[Clip plays] Fill the gaps for me. Church & Trellis suggests who serves where, shares the turns fairly, keeps families together, skips people who are away, and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages. For the noticeboard, print a whole term on A4 – each service on its own page, showing only the positions that service uses.');
+  s.addNotes('[Clip plays] Fill the gaps for me. Church & Trellis suggests who serves where, shares the turns fairly, keeps families together, skips people who are away (before planning a term, one tap asks every volunteer whether they’ll be away), and only asks for communion roles when there is communion. Keep the suggestions, and everyone is asked in Messages. For the noticeboard, print a whole term on A4 – each service on its own page, showing only the positions that service uses.');
 
   // ========== 12. Volunteers reply (clip) ==========
   s = content('What it does', 'Volunteers reply from their phone');
@@ -286,11 +286,11 @@ async function icon(Comp, color, px = 256) {
     T(s, [
       { text: 'Requests arrive in Messages', options: { bullet: true, breakLine: true } },
       { text: 'Accept or say you can’t make it – one tap', options: { bullet: true, breakLine: true } },
-      { text: 'Coordinators hear at once when someone can’t', options: { bullet: true, breakLine: true } },
+      { text: 'Can’t make it? Ask someone free that day to take your place', options: { bullet: true, breakLine: true } },
       { text: 'A gentle reminder for those who haven’t replied', options: { bullet: true } }
     ], { x: 0.6, y: 2.5, w: 4.8, h: 3.5, fontSize: 17, color: HEX.ink, paraSpaceAfter: 12 });
   }
-  s.addNotes('[Clip plays] The volunteer sees the request in Messages and taps Accept. If they can’t make it, the roster team hears at once. Coordinators can send a gentle reminder to anyone who hasn’t replied.');
+  s.addNotes('[Clip plays] The volunteer sees the request in Messages and taps Accept. If they can’t make it, they can ask someone on the same team who is free that day to take their place – that person says yes with one tap and the turn is theirs – and the roster team hears about it at once. Coordinators can send a gentle reminder to anyone who hasn’t replied.');
 
   // ========== 13. Members help themselves ==========
   s = content('What it does', 'Members help themselves', true);

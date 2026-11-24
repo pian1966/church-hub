@@ -160,6 +160,20 @@ coordinators and Administrators can see it (database rules). Yes moves it onto t
 the person can withdraw it at any time; it is included in "export everything held about a person" and removed when
 someone is deleted or dies.
 
+## Taking someone's place, and "Are you away?" (0.108.0)
+- **Who could take your place** (`assignments.cover`, `coverNames`): when the roster team asks someone to serve, Church & Trellis
+  notes up to 8 people on the same team who are free that day and use the app – names only – on that person's own turn. Purpose:
+  so someone who can't make it can ask a team-mate themselves (as on the printed roster, which shows names). Only the person
+  whose turn it is (and the roster team) can read it. Nothing about why others are or aren't free is stored there.
+- **The ask** (`serveSwaps`, one per turn): who asked whom, for which turn, and the answer. Read by those two people and the roster
+  team only. The rules let someone ask only a person listed as free for that turn, and the person asked may only take the turn
+  over (it becomes theirs, accepted) – nothing else about it.
+- **"Are you away?"** (`awayAsks`): the dates being planned, who was asked (ids) and who answered "free" or added days away. Each
+  person may only add their own answer; the roster team sees the lists. Days away themselves are kept as before (`blockouts`:
+  dates and a reason only the roster team sees).
+- Lawful basis: the church's legitimate interest in organising volunteers who have offered to serve (as for the rest of rosters).
+  Both are included in "export everything held about a person" and removed when someone's record is deleted.
+
 ## Contact details: what others can see
 The consent "Church directory" is shown as **Contact details**: name, phone, email and home address may be seen by church
 staff and leaders, and by members as far as the church allows. Settings → What others can see decides, per role (Church

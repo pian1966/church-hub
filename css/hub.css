@@ -1597,3 +1597,12 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
   .ar-cals .ar-go { display: none; }
   .ar-item .rec-acts { flex-basis: 100%; justify-content: flex-start; margin-left: 58px; }
 }
+/* Me → Serving: asking someone to take your place, and "Are you away?" before the roster is made */
+.item.turn { flex-wrap: wrap; }
+.item .turn-more { flex-basis: 100%; padding-left: 56px; margin-top: -4px; }
+.item .turn-more .link { font-size: 13px; }
+.away-ask { margin-bottom: 14px; }
+.away-ask .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.swap-card { flex-wrap: wrap; }
+.item.passed { opacity: .8; }
+.away-panel .row { align-items: center; gap: 10px; }

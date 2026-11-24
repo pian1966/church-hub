@@ -82,6 +82,7 @@ ok(mg.removePositions.join() === 'b' && mg.positions.map(p => p.id + p.teamId + 
 ok(mg.removeSkills.join() === 'k2' && mg.skills.map(k => k.id + k.positionId).join() === 'k3a' && mg.assignments.map(a => a.positionId).join() === 'a', 'its people and their turns go with it, nobody twice');
 
 console.log('Volunteering in plain words');
+ok(S.freqShort('quarterly') === 'Once a quarter' && S.freqShort('break') === 'Taking a break' && S.fillCount([{ positionId: 'door', frequency: 'break' }], { id: 'door' }).resting === 1, 'once a quarter, and taking a break (counted apart)');
 ok(S.freqShort('weekly') === 'Any week' && S.freqShort('emergency') === 'Backup only' && S.freqShort('monthly') === 'Once a month' && S.freqShort('fortnightly') === 'Every 2 weeks' && S.freqShort('occasional') === 'Now and then', 'how often, in a few words (never a code such as “emergency”)');
 const door = { id: 'door', name: 'Door', times: [] }, kids = { id: 'kids', name: 'Creche', times: ['08:00'] }, off = { id: 'off', name: 'Old', times: ['none'] };
 ok(S.positionSlots(door, {}).map(x => x.id).join() === '08:00,10:00,17:00' && S.positionSlots(kids, {}).map(x => x.id).join() === '08:00' && !S.positionSlots(off, {}).length, 'a position’s services are always spelt out (no services ticked = every Sunday service)');

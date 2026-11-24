@@ -334,10 +334,10 @@ var Serving = (function () {
 
   /* ---------- volunteering in plain words (Me → Serving, Rosters → Teams) ---------- */
   /** How often someone serves, in a few words for lists: weekly = "Any week" (whenever needed), emergency = "Backup only". */
-  var FREQ_SHORT = { weekly: TX('Any week'), monthly: TX('Once a month'), emergency: TX('Backup only'), fortnightly: TX('Every 2 weeks'), occasional: TX('Now and then') };
+  var FREQ_SHORT = { weekly: TX('Any week'), monthly: TX('Once a month'), quarterly: TX('Once a quarter'), emergency: TX('Backup only'), 'break': TX('Taking a break'), fortnightly: TX('Every 2 weeks'), occasional: TX('Now and then') };
   function freqShort(f) { return FREQ_SHORT[f] || FREQ_SHORT.fortnightly; }
-  /** The kind of volunteer, for counting: 'backup' (emergency only) or 'regular' (everyone else). */
-  function freqKind(f) { return f === 'emergency' ? 'backup' : f === 'monthly' || f === 'occasional' ? 'monthly' : 'weekly'; }
+  /** The kind of volunteer, for counting: 'weekly', 'monthly' (once a month or less), 'backup' (emergency only) or 'resting' (taking a break). */
+  function freqKind(f) { return f === 'emergency' ? 'backup' : f === 'break' ? 'resting' : f === 'monthly' || f === 'occasional' || f === 'quarterly' ? 'monthly' : 'weekly'; }
   /** The services a position is needed at – always a real list (an empty `times` means every Sunday service). */
   function positionSlots(pos, settings) { return pos ? allSlots(settings).filter(function (x) { return runsAtSlot(pos, x); }) : []; }
   /** The services someone serves at in a position: the position's services, narrowed to the ones they chose (none chosen = all). */
@@ -349,7 +349,7 @@ var Serving = (function () {
   function servesAt(skill, pos, slot) { var t = (skill && skill.times) || []; return !!pos && runsAtSlot(pos, slot) && (!t.length || t.indexOf(slot.id) >= 0); }
   /** Who can fill a position, counted by how often: { all, weekly, monthly, backup } – at one service, or at any when slot is empty. */
   function fillCount(skills, pos, slot) {
-    var out = { all: 0, weekly: 0, monthly: 0, backup: 0 };
+    var out = { all: 0, weekly: 0, monthly: 0, backup: 0, resting: 0 };
     (skills || []).forEach(function (k) {
       if (!pos || k.positionId !== pos.id || (slot && !servesAt(k, pos, slot))) return;
       out.all++; out[freqKind(k.frequency)]++;

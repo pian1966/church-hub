@@ -387,9 +387,9 @@
             || !Array.isArray(a.deliveredBy) || !a.deliveredBy.every(function (x) { return isMe(c, x); })
             || !Array.isArray(a.readBy) || !a.readBy.every(function (x) { return isMe(c, x); })) return false;
         if (a.kind === 'office') return attendeeMay(c, 'write') || a.about === 'partnerApp';   // a partnership application: told to the office
-        if (a.kind === 'roster') {   // ask / remind / off: roster coordinators; declined: to the roster team only (settings.rosterTeam)
+        if (a.kind === 'roster') {   // ask / remind / off / cancelled / back: roster coordinators; declined: to the roster team only (settings.rosterTeam)
           if (!Array.isArray(a.turns) || !a.turns.length) return false;
-          if (a.roster === 'ask' || a.roster === 'remind' || a.roster === 'off' || a.roster === 'awayask') return rosterer(c);
+          if (a.roster === 'ask' || a.roster === 'remind' || a.roster === 'off' || a.roster === 'awayask' || a.roster === 'cancelled' || a.roster === 'back') return rosterer(c);
           if (a.roster === 'cover') { var sw = docs['serveSwaps/' + a.turns[0]]; return !!sw && a.to.length === 1 && ((isMe(c, sw.fromId) && a.to[0] === sw.toId) || (isMe(c, sw.toId) && a.to[0] === sw.fromId)); }
           var team = (docs['settings/church'] || {}).rosterTeam || [];
           return (a.roster === 'declined' || a.roster === 'covered') && a.to.every(function (x) { return team.indexOf(x) >= 0; });

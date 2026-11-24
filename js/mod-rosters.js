@@ -148,7 +148,7 @@
   var crewTimer = null;
   function syncCrews() {
     if (!manager() || (S.preview && S.preview()) || !H.user()) return;
-    var t = H.today(), svcs = S.list('services').filter(function (x) { return x.date >= t; }), ids = svcs.map(function (x) { return x.id; });
+    var t = H.today(), svcs = S.list('services').filter(function (x) { return x.date >= t; }), ids = svcs.filter(function (x) { return !R.isCancelled(x); }).map(function (x) { return x.id; });
     var want = crewOn() ? R.crews({ people: S.list('people'), assignments: S.list('assignments') }, ids, shortName) : {};
     svcs.forEach(function (x) {
       var have = S.get('crews', x.id), w = want[x.id];
@@ -241,10 +241,12 @@
     });
     return out;
   }
+  /** The roster as the planning sees it: a cancelled service isn't on it (nobody is asked for it, it has no gaps), and its people are kept out of sight. */
   function engineData(extra) {
-    var st = S.settings(), svcs = S.list('services');
+    var st = S.settings(), all = S.list('services'), svcs = all.filter(function (s) { return !R.isCancelled(s); }), off = {};
+    all.forEach(function (s) { if (R.isCancelled(s)) off[s.id] = true; });
     return { people: S.list('people'), positions: orderedPositions().map(function (p) { return Object.assign({}, p, { communion: Serving.isCommunion(p) }); }), skills: S.list('skills'), services: svcs,
-      assignments: S.list('assignments').concat(extra || []), groups: S.list('groups'), away: awayList(), specialSlots: specialIds(),
+      assignments: S.list('assignments').filter(function (a) { return !off[a.serviceId]; }).concat(extra || []), groups: S.list('groups'), away: awayList(), specialSlots: specialIds(),
       noCommunion: svcs.filter(function (s) { return !Serving.hasCommunion(s, st); }).map(function (s) { return s.id; }) };
   }
   function orderedPositions() {
@@ -274,7 +276,7 @@
   function hiddenName(v) { var s = S.find('services', function (x) { return Serving.slotOf(x) === v; })[0]; return s ? s.name : slotName(v); }
   function slotName(id) { return Serving.slotLabel(id, S.settings()); }
   function narrow() { return window.innerWidth < 700; }
-  function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t; }).sort(Serving.byWhen); }
+  function upcoming() { var t = H.today(); return S.list('services').filter(function (s) { return s.date >= t && !R.isCancelled(s); }).sort(Serving.byWhen); }
   function inView() {
     var all = S.list('services').slice().sort(Serving.byWhen).filter(function (s) { return state.hidden.indexOf(Serving.slotOf(s)) < 0; });
     var first = all.findIndex(function (s) { return s.date >= H.today(); }); if (first < 0) first = Math.max(0, all.length - 4);
@@ -359,6 +361,68 @@
     H.closeModal(); H.render(); H.toast(T('Saved'));
   }
 
+  /* ---------- cancelling a service (the ⋯ under a service's date on the roster) ---------- */
+  /** Who is on a service and still coming (said yes or not replied yet), by person: { personId: [assignment ids] }. */
+  function crewByPerson(s) {
+    var by = {};
+    S.find('assignments', function (a) { return a.serviceId === s.id && a.status !== 'declined' && person(a.personId); }).forEach(function (a) { (by[a.personId] = by[a.personId] || []).push(a.id); });
+    return by;
+  }
+  /** The warm message to someone on a service that was cancelled (note 'cancelled') or put back (note 'back'): { title, body }, in this device's language. */
+  function cancelWords(s, note, who) {
+    var d = H.fmt(s.date, true), name = who ? (who.preferredName || who.firstName || '') : '';
+    if (note === 'back') return { title: T('Good news: the {service} on {date} is back on', { service: s.name, date: d }),
+      body: T('Hi {name}, good news – the {service} on {date} is back on! You’re on the roster again for what you were asked to do. Thank you for serving! 🙏', { name: name, service: s.name, date: d }) };
+    return { title: T('Your {service} on {date} is cancelled', { service: s.name, date: d }),
+      body: T('Hi {name}, just a friendly note that the {service} on {date} won’t be taking place{why}. You’re off the hook that day, and we’re so grateful for the way you serve. If it’s put back on, we’ll let you know. See you soon! 🙏',
+        { name: name, service: s.name, date: d, why: s.cancelReason ? ' (' + s.cancelReason + ')' : '' }) };
+  }
+  /** What a 'cancelled' or 'back' message says, from the service it is about, for the person reading it (Messages); null when that service is gone. */
+  function cancelNote(m, who) {
+    var a = S.get('assignments', (m.turns || [])[0]), s = a && S.get('services', a.serviceId);
+    return s ? cancelWords(s, m.roster, (who && S.get('people', who.id)) || who) : null;
+  }
+  /** Tell everyone on a service that it is cancelled (or back on). Returns { sent, missed } – missed: people who can't open Church & Trellis yet. */
+  function tellService(s, note) {
+    var me = H.user(), out = { sent: 0, missed: 0 }; if (!me || !H.isOn('messages')) return out;
+    var by = crewByPerson(s);
+    Object.keys(by).forEach(function (pid) {
+      if (pid === me.id) return;
+      if (!signsIn(pid)) { out.missed++; return; }
+      var w = cancelWords(s, note, person(pid)), m = Msg.rosterNote(note, [pid], by[pid], me, w.title, w.body);
+      if (m.error) return;
+      S.put('messages', m, note === 'back' ? 'Told someone their service is back on' : 'Told someone their service is cancelled'); out.sent++;
+    });
+    return out;
+  }
+  function cancelDialog(id) {
+    var s = S.get('services', id); if (!s || !manager()) return;
+    var back = R.isCancelled(s), mates = R.cancelTargets(S.list('services'), id, true, back).length - 1, by = crewByPerson(s), n = Object.keys(by).length, canTell = n && H.isOn('messages');
+    H.modal(H.dialogHead(back ? T('Put this service back') : T('Cancel this service'), H.fmt(s.date, true) + ' · ' + s.time + ' · ' + s.name) + '<div class="dlg-body">' +
+      (back ? '<p>' + T('The service goes back on the roster, and so does everyone who was on it.') + '</p>'
+        : '<label class="field">' + T('Why? It is shown on the roster') + '<input id="cx-why" maxlength="40" placeholder="' + esc(T('e.g. Public holiday')) + '"></label>' +
+          '<p class="hint">' + T('Everyone on the roster stays on it, out of sight, so you can put the service back at any time.') + '</p>') +
+      (mates ? '<div class="field" role="radiogroup" aria-label="' + esc(T('Which services')) + '">' +
+        '<label class="check"><input type="radio" name="cx-scope" value="one" checked><span>' + esc(T('Only the {service}', { service: s.name })) + '</span></label>' +
+        '<label class="check"><input type="radio" name="cx-scope" value="day"><span>' + esc(T('All {n} services on {date}', { n: mates + 1, date: H.fmt(s.date) })) + '</span></label></div>' : '') +
+      (canTell ? '<label class="check"><input type="checkbox" id="cx-tell"><span><b>' + T('Let the people serving know') + '</b><small class="muted" style="display:block;font-weight:400">' +
+        esc(TN('{n} person is on the roster. They get a friendly message in Church & Trellis.', '{n} people are on the roster. They get a friendly message in Church & Trellis.', n)) + '</small></span></label>' : '') +
+      '</div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Not now') + '</button><button class="btn primary" data-act="rosters:cancelsave" data-s="' + esc(s.id) + '" data-back="' + (back ? 1 : 0) + '">' + (back ? T('Put it back') : T('Yes, cancel it')) + '</button></div>',
+      back ? T('Put this service back') : T('Cancel this service'));
+  }
+  function cancelSave(el) {
+    var s = S.get('services', el.dataset.s); if (!s || !manager()) return;
+    var back = el.dataset.back === '1', why = (document.getElementById('cx-why') || {}).value || '', day = document.querySelector('input[name=cx-scope]:checked'), tellOn = document.getElementById('cx-tell');
+    var targets = R.cancelTargets(S.list('services'), s.id, !!day && day.value === 'day', back), tellIt = !!tellOn && tellOn.checked, told = { sent: 0, missed: 0 };
+    targets.forEach(function (t) {
+      var x = S.put('services', R.setCancelled(t, !back, why), (back ? 'Put the ' : 'Cancelled the ') + t.name + ' service on ' + t.date + (back ? ' back' : why ? ': ' + why : ''));
+      if (tellIt) { var r = tellService(x || R.setCancelled(t, !back, why), back ? 'back' : 'cancelled'); told.sent += r.sent; told.missed += r.missed; }
+    });
+    state.preview = null; H.closeModal(); H.render();
+    H.toast((back ? TN('Service put back', '{n} services put back', targets.length) : TN('Service cancelled', '{n} services cancelled', targets.length)) +
+      (told.sent ? ' · ' + TN('{n} person told', '{n} people told', told.sent) : '') + (told.missed ? ' · ' + TN('{n} can’t open Church & Trellis yet – tell them yourself', '{n} can’t open Church & Trellis yet – tell them yourself', told.missed) : ''));
+  }
+
   /* ---------- matrix ---------- */
   function renderMatrix() {
     var svcs = inView(), ids = svcs.map(function (s) { return s.id; });
@@ -394,15 +458,34 @@
         chip('fit', fit ? '✓ ' + T('Fits your screen') : T('Fit my screen'), fit) + chip('month', T('1 month'), state.view === 'month') + chip('quarter', T('1 quarter'), state.view === 'quarter') + '</div>';
     }
     if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label></div>';
-    html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"' + (narrow() ? '' : ' style="min-width:' + (180 + 180 * svcs.length) + 'px"') + '><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) { return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>' + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + '</th>'; }).join('') + '</tr></thead><tbody>';
+    var anyCx = svcs.some(function (s) { return R.isCancelled(s); });
+    html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"' + (narrow() ? '' : ' style="min-width:' + (180 + 180 * svcs.filter(function (s) { return !R.isCancelled(s); }).length + 76 * svcs.filter(function (s) { return R.isCancelled(s); }).length) + 'px"') + '><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) {
+      var eye = '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>';
+      var more = manager() ? H.menu('⋯', ['<button data-act="rosters:cancelsvc" data-s="' + esc(s.id) + '">' + (R.isCancelled(s) ? T('Put this service back…') : T('Cancel this service…')) + '</button>'], 'row-menu', T('More for the {service} on {date}', { service: s.name, date: H.fmt(s.date) })) : '';
+      if (R.isCancelled(s)) return '<th scope="col" class="svc-col cx" style="' + svcStyle(s) + '" title="' + esc(s.time + ' · ' + s.name) + '">' + eye + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time) + '</span><span class="tag grey">' + T('Cancelled') + '</span>' + more + '</th>';
+      return '<th scope="col" class="svc-col" style="' + svcStyle(s) + '">' + eye + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time + ' · ' + s.name) + '</span>' + communionChip(s, st) + more + '</th>';
+    }).join('') + '</tr></thead><tbody>';
     var lastTeam = '';
     // A department or position that isn't at any of these services (e.g. Creche at 8:00, communion roles without communion)
     // is left out, so the roster shows only what is needed. Someone already rostered there keeps the row.
-    orderedPositions().filter(function (p) {
+    var plist = orderedPositions().filter(function (p) {
       return svcs.some(function (s) { return runsAt(p, s); }) || all.some(function (a) { return a.positionId === p.id && ids.indexOf(a.serviceId) >= 0; });
-    }).forEach(function (p) {
-      if (p.teamId !== lastTeam) { lastTeam = p.teamId; html += '<tr class="team-row"><th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th></tr>'; }
+    }), rowsN = 0, firstRow = true;
+    plist.forEach(function (p, i) { rowsN += 1 + (!i || p.teamId !== plist[i - 1].teamId ? 1 : 0); });
+    // A cancelled service is one narrow hatched column all the way down, with its note written up the side
+    var cxCell = function (s) {
+      if (!firstRow) return '';
+      return '<td class="cx" rowspan="' + rowsN + '"><div class="vt">' + esc(R.offText({ cancelled: true, reason: s.cancelReason }).note) + '</div></td>';
+    };
+    plist.forEach(function (p) {
+      if (p.teamId !== lastTeam) {
+        lastTeam = p.teamId;
+        html += '<tr class="team-row">' + (anyCx ? '<th scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th>' + svcs.map(function (s) { return R.isCancelled(s) ? cxCell(s) : '<td class="tm"></td>'; }).join('')
+          : '<th colspan="' + (svcs.length + 1) + '" scope="rowgroup">' + esc((team(p.teamId) || {}).name) + '</th>') + '</tr>';
+        firstRow = false;
+      }
       html += '<tr><th scope="row">' + esc(p.name) + (p.tooltip ? ' ' + H.tip(p.tooltip) : '') + '<small>' + T('{n} needed', { n: p.needed }) + '</small></th>' + svcs.map(function (s) {
+        if (R.isCancelled(s)) return cxCell(s);
         var here = all.filter(function (a) { return a.serviceId === s.id && a.positionId === p.id; });
         var live = here.filter(function (a) { return a.status !== 'declined'; }).length;
         var cells = here.map(function (a) {
@@ -431,7 +514,7 @@
   /** Everyone who opens Rosters: the whole roster for those who plan it, and the names Church Partners may see for volunteers. */
   function canPrint() { return true; }
   var PRINTER = 'M6 9V3h12v6M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2M6 14h12v7H6z';
-  function printData() { return Object.assign(engineData(), { teams: S.list('teams') }); }
+  function printData() { return Object.assign(engineData(), { teams: S.list('teams'), services: S.list('services'), assignments: S.list('assignments') }); }   // every service, cancelled ones too: they stay as a narrow column
   function sheetName(key) { return key === 'special' ? T('Special services') : slotName(key); }
   /** How long a stretch to print: the choices, in weeks. */
   var RANGE_NAME = { 4: '1 month', 6: '6 weeks', 8: '2 months', 13: 'A quarter', 26: '6 months', 52: 'A year' };
@@ -484,7 +567,7 @@
     var pr = state.print, st = S.settings() || {}, land = pr.orientation !== 'portrait', o = printOpts(), out = [];
     var period = H.fmt(o.from, true) + ' – ' + H.fmt(o.to, true);
     R.printSheets(printData(), o).forEach(function (sh) {
-      var firstHeld = sh.columns.filter(function (c) { return c.held; })[0], th = Serving.themeOfService(firstHeld.service, st), parts = R.pages(sh.columns.length, R.perPage(pr.orientation));
+      var firstHeld = sh.columns.filter(function (c) { return c.service; })[0], th = Serving.themeOfService(firstHeld.service, st), parts = R.pages(sh.columns.length, R.perPage(pr.orientation));
       parts.forEach(function (pg, pi) {
         var cols = sh.columns.slice(pg[0], pg[1]);
         var m = { landscape: land, key: sh.key, ink: th.ink, line: th.line, soft: th.soft, church: st.churchName || '',
@@ -492,7 +575,7 @@
           sub: period + (parts.length > 1 ? ' · ' + T('page {n} of {total}', { n: pi + 1, total: parts.length }) : ''),
           footR: T('Printed {date}', { date: H.fmt(H.today(), true) }) + ' · Church & Trellis', cols: [], rows: [] };
         cols.forEach(function (c) {
-          if (!c.held) { m.cols.push({ l1: H.fmt(c.date), l2: T('No service'), off: true, note: T('The service is not taking place this Sunday') }); return; }
+          if (!c.held) { var ot = R.offText(c); m.cols.push({ l1: H.fmt(c.date), l2: T('No service'), off: true, note: ot.note, short: ot.short }); return; }
           var cth = Serving.themeOfService(c.service, st), l2 = Serving.hasCommunion(c.service, st) ? T('Communion') : (sh.key === 'special' ? c.service.name : c.service.time !== firstHeld.service.time ? c.service.time : '');
           m.cols.push({ l1: H.fmt(c.date), l2: l2, ink: cth.ink, line: cth.line, soft: cth.soft });
         });
@@ -507,14 +590,16 @@
     });
     return out;
   }
-  /** A page as a table to print. A column with no service is one grey block down the page, with its note. */
+  /** A page as a table to print. A column with no service is one narrow grey block down the page, with its note written up the side. */
   function pageHtml(m) {
-    var off = m.cols.map(function (c) { return c.off; }), n = m.rows.length, at = '--svc-ink:' + m.ink + ';--svc-line:' + m.line + ';--svc-soft:' + m.soft;
+    var off = m.cols.map(function (c) { return c.off; }), n = m.rows.length,
+      teamsN = m.rows.filter(function (r) { return r.team; }).length, lowMm = (n - teamsN) * 6.3 + teamsN * 5.3,   // about how tall the rows are together (millimetres): the note must fit along that
+ at = '--svc-ink:' + m.ink + ';--svc-line:' + m.line + ';--svc-soft:' + m.soft;
     var head = m.cols.map(function (c) {
       return '<th scope="col"' + (c.off ? ' class="off"' : ' style="background:' + c.soft + ';color:' + c.ink + ';border-bottom:2pt solid ' + c.line + '"') + '>' + esc(c.l1) + (c.l2 ? '<small>' + esc(c.l2) + '</small>' : '') + '</th>';
     }).join('');
     var body = m.rows.map(function (r, i) {
-      var block = function (j) { return off[j] ? (i === 0 ? '<td class="off" rowspan="' + n + '">' + esc(m.cols[j].note) + '</td>' : '') : null; };
+      var block = function (j) { return off[j] ? (i === 0 ? '<td class="off" rowspan="' + n + '"><div class="vt" style="height:' + Math.round(lowMm) + 'mm">' + esc(R.fitNote({ note: m.cols[j].note, short: m.cols[j].short || m.cols[j].note }, lowMm, 2, 7)) + '</div></td>' : '') : null; };
       if (r.team) return '<tr class="ro-team"><th scope="rowgroup">' + esc(r.team) + '</th>' + m.cols.map(function (c, j) { var b = block(j); return b !== null ? b : '<td></td>'; }).join('') + '</tr>';
       return '<tr><th scope="row">' + esc(r.label) + '</th>' + r.cells.map(function (c, j) {
         var b = block(j); if (b !== null) return b;
@@ -522,7 +607,7 @@
       }).join('') + '</tr>';
     }).join('');
     return '<section class="ro-sheet ' + (m.landscape ? 'landscape' : 'portrait') + '" style="' + at + '"><div class="ro-ph"><div><h1>' + esc(m.heading) + '</h1><p>' + esc(m.sub) + '</p></div><div class="ro-church">' + esc(m.church) + '</div></div>' +
-      '<table><colgroup><col class="ro-pc">' + m.cols.map(function () { return '<col>'; }).join('') + '</colgroup><thead><tr><th scope="col"></th>' + head + '</tr></thead><tbody>' + body + '</tbody></table>' +
+      '<table><colgroup><col class="ro-pc">' + m.cols.map(function (c) { return c.off ? '<col class="ro-off">' : '<col>'; }).join('') + '</colgroup><thead><tr><th scope="col"></th>' + head + '</tr></thead><tbody>' + body + '</tbody></table>' +
       '<div class="ro-pf"><span></span><span>' + esc(m.footR) + '</span></div></section>';
   }
   /** Put the pages into #print-only and print them (the browser's print window can also save a PDF). */
@@ -931,7 +1016,7 @@
     html += mine.length ? '<div class="list">' + mine.map(function (a) {
       var s = S.get('services', a.serviceId), po = pos(a.positionId);
       return '<div class="item svc-tint" style="' + svcStyle(s) + '"><span class="grow"><b>' + esc(po.name + ' · ' + (team(po.teamId) || {}).name) + '</b><small>' + esc(H.fmt(s.date, true) + ', ' + s.time + ' · ' + s.name) + '</small></span>' +
-        (a.status === 'pending' ? '<button class="btn small" data-act="rosters:reply" data-id="' + a.id + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + a.id + '" data-s="accepted">' + T('Accept') + '</button>' :
+        (R.isCancelled(s) ? '<span class="tag grey">' + T('Cancelled') + '</span>' : a.status === 'pending' ? '<button class="btn small" data-act="rosters:reply" data-id="' + a.id + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + a.id + '" data-s="accepted">' + T('Accept') + '</button>' :
           '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + T(a.status === 'accepted' ? 'Accepted' : 'Said no') + '</span>') + '</div>';
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on the roster in the coming weeks.') + '</p>';
     html += '<div class="grid2" style="margin-top:16px"><section class="panel"><h2>' + T('My teams') + '</h2>' + (sk.length ? sk.map(function (k) { var po = pos(k.positionId); if (!po) return ''; return '<p style="margin:6px 0">' + esc(po.name + ' · ' + (team(po.teamId) || {}).name) + ' <span class="svc-chips">' + Serving.skillSlots(k, po, S.settings()).map(svcChip).join('') + '<span class="svc-note">' + esc(T(Serving.freqShort(k.frequency))) + '</span></span></p>'; }).join('') : '<p class="muted">' + T('Not on a team yet – speak to the roster coordinator.') + '</p>') + '</section>' +
@@ -950,11 +1035,11 @@
     offMenu: function () { return !manager() && H.isOn('me'); },   // members (and Pastors who only look) find their serving under Me
     stat: function (u) {
       if (manager()) { var g = nextGaps(); return g ? (g.n ? TN('{n} gap on {date}', '{n} gaps on {date}', g.n, { date: H.fmt(g.s.date) }) : T('All filled for {date}', { date: H.fmt(g.s.date) })) : T('No services planned'); }
-      var p = S.find('assignments', function (a) { return a.personId === u.id && a.status === 'pending'; }).length;
+      var p = S.find('assignments', function (a) { var sv = S.get('services', a.serviceId); return a.personId === u.id && a.status === 'pending' && !R.isCancelled(sv); }).length;
       return p ? TN('{n} turn to reply to', '{n} turns to reply to', p) : T('Your serving');
     },
     todos: function (u) {
-      var out = [], mine = S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === u.id && a.status === 'pending' && s && s.date >= H.today(); });
+      var out = [], mine = S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === u.id && a.status === 'pending' && s && s.date >= H.today() && !R.isCancelled(s); });
       if (mine.length) out.push({ text: TN('Reply to {n} serving request', 'Reply to {n} serving requests', mine.length), href: H.isOn('me') ? '#/me/serve' : '#/rosters/mine' });
       var asks = myAsks(); if (asks.length) out.push({ text: T('Are you away between {dates}? Tell the roster team', { dates: askDates(asks[0]) }), href: H.isOn('me') ? '#/me/serve' : '#/rosters/away' });
       var cover = S.find('serveSwaps', function (x) { var sv = S.get('services', x.serviceId); return x.toId === u.id && x.status === 'asked' && sv && sv.date >= H.today(); });
@@ -1019,13 +1104,13 @@
         S.remove('teams', t.id, 'Deleted the department ' + t.name); H.render();
       },
       autofill: function () {
-        var ids = inView().filter(function (s) { return s.date >= H.today(); }).map(function (s) { return s.id; });
+        var ids = inView().filter(function (s) { return s.date >= H.today() && !R.isCancelled(s); }).map(function (s) { return s.id; });
         state.preview = R.autoFill(engineData(), ids); state.preview.emergency = false;
         H.render();
         H.toast(state.preview.assignments.length ? TN('{n} suggestion ready – check and keep it', '{n} suggestions ready – check and keep them', state.preview.assignments.length) : T('Nothing more can be filled automatically'));
       },
       emergencyfill: function () {
-        var ids = inView().filter(function (s) { return s.date >= H.today(); }).map(function (s) { return s.id; });
+        var ids = inView().filter(function (s) { return s.date >= H.today() && !R.isCancelled(s); }).map(function (s) { return s.id; });
         state.preview = R.autoFill(engineData(), ids, { emergency: true }); state.preview.emergency = true;
         H.render();
         H.toast(state.preview.assignments.length ? TN('{n} suggestion ready – check and keep it', '{n} suggestions ready – check and keep them', state.preview.assignments.length) : T('Nothing more can be filled automatically'));
@@ -1066,6 +1151,8 @@
       change: function (el) { var a = S.get('assignments', el.dataset.id); if (a) assignDialog(a.serviceId, a.positionId, false, a.id); },
       assign: function (el) { assignDialog(el.dataset.s, el.dataset.p, false); },
       communion: function (el) { communionDialog(el.dataset.s); },
+      cancelsvc: function (el) { cancelDialog(el.dataset.s); },
+      cancelsave: cancelSave,
       communionset: function (el) { setCommunion(el.dataset.s, el.dataset.v); },
       emergencyassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, true, el.dataset.r); },
       regularassign: function (el) { assignDialog(el.dataset.s, el.dataset.p, false, el.dataset.r); },
@@ -1127,7 +1214,7 @@
       awayfree: function (el) { var u = H.user(); if (u) markAsks(u.id, 'free'); H.render(); H.toast(T('Thank you!')); },
       remind: function () {
         var ids = inView().map(function (s) { return s.id; });
-        var people = R.byPerson(S.find('assignments', function (a) { return a.status === 'pending'; }), S.list('services'), { waiting: true, today: H.today(), serviceIds: ids });
+        var people = R.byPerson(S.find('assignments', function (a) { return a.status === 'pending'; }), S.list('services').filter(function (x) { return !R.isCancelled(x); }), { waiting: true, today: H.today(), serviceIds: ids });
         if (!people.length) { H.toast(T('Everyone on these services has replied')); return; }
         state.remind = people;
         var names = people.map(function (x) { var p = person(x.personId); return p ? H.name(p) : T('Someone'); }).sort(function (a, b) { return a.localeCompare(b); });
@@ -1290,5 +1377,5 @@
       unskill: function (el) { S.remove('skills', el.dataset.id, 'Removed from a team'); H.render(); }
     }, serviceActions)
   });
-  window.RosterHelpers = { crewCard: crewCard, syncCrews: syncCrews, swapCard: swapCard, swapLine: swapLine, swapOf: swapOf, askCard: askCard, myAsks: myAsks, awayList: awayList, canPrint: function () { return canPrint() && !manager(); }, svcChip: svcChip };
+  window.RosterHelpers = { crewCard: crewCard, syncCrews: syncCrews, swapCard: swapCard, swapLine: swapLine, swapOf: swapOf, askCard: askCard, myAsks: myAsks, awayList: awayList, canPrint: function () { return canPrint() && !manager(); }, svcChip: svcChip, cancelNote: cancelNote };
 })();

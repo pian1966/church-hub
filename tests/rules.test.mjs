@@ -636,6 +636,10 @@ await t('messages: roster messages – asked to serve, reminders, and someone wh
   await cannot(db.member.doc('messages/rost6').set(m({ roster: 'declined', turns: [], fromId: 'p14', to: ['p05'] })));          // about a turn
   await cannot(db.rosters.doc('messages/rost7').set(m({ roster: 'ask', turns: 'a1', fromId: 'p05', to: ['p14'] })));
   await cannot(db.rosters.doc('messages/rost8').set(m({ kind: 'staff', roster: 'ask', turns: ['a1'], fromId: 'p05', to: ['p01'] })));   // roster fields only on roster messages
+  await can(db.rosters.doc('messages/rost11').set(m({ roster: 'cancelled', turns: ['a1'], fromId: 'p05', to: ['p14'] })));      // the service you were on is cancelled
+  await can(db.rosters.doc('messages/rost12').set(m({ roster: 'back', turns: ['a1'], fromId: 'p05', to: ['p14'] })));           // … and it is back on
+  await cannot(db.member.doc('messages/rost13').set(m({ roster: 'cancelled', turns: ['a1'], fromId: 'p14', to: ['p15'] })));    // a member can't tell people a service is cancelled
+  await cannot(db.rosters.doc('messages/rost14').set(m({ roster: 'cancelled', turns: [], fromId: 'p05', to: ['p14'] })));        // about a turn
   await can(read(db.member, 'messages/rost1')); await cannot(read(db.attendee, 'messages/rost1'));
 });
 await t('messages: people mark what they opened as read, and change nothing else', async () => {

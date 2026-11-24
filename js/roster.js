@@ -283,7 +283,8 @@ var RosterCore = (function () {
    * without communion) and positions nobody is on are left out completely – unless opts.gaps, which keeps the positions
    * that service needs even when they are still empty, to fill in by hand. People who said no are not printed.
    * opts: { from, to, sheets: [keys from printChoices], gaps, name: function (person) }.
-   * Returns [{ key, columns: [{ date, service, held }], teams: [{ teamId, name, rows: [{ position, cells: [{ names: [], na, off }] }] }] }];
+   * A service marked cancelled (isCancelled) is a column too – held: false, cancelled: true, reason – and its people are not printed.
+   * Returns [{ key, columns: [{ date, service, held, cancelled, reason }], teams: [{ teamId, name, rows: [{ position, cells: [{ names: [], na, off }] }] }] }];
    * na = the position isn't needed at that service; off = the service isn't held that day. Sheets with nothing on them are left out.
    */
   function printSheets(data, opts) {
@@ -293,7 +294,9 @@ var RosterCore = (function () {
     var keys = printChoices(data, opts.from, opts.to).map(function (c) { return c.key; }).filter(function (k) { return !want || want.indexOf(k) >= 0; });
     return keys.map(function (key) {
       var ofKey = every.filter(function (s) { return sheetOf(s, data.specialSlots) === key; });
-      var cols = ofKey.filter(function (s) { return s.date >= opts.from && s.date <= opts.to; }).map(function (s) { return { date: s.date, service: s, held: true }; });
+      var cols = ofKey.filter(function (s) { return s.date >= opts.from && s.date <= opts.to; }).map(function (s) {
+        return isCancelled(s) ? { date: s.date, service: s, held: false, cancelled: true, reason: String(s.cancelReason || '').trim() } : { date: s.date, service: s, held: true };
+      });
       if (key !== 'special') {
         var days = {}, day = 0, most = 0, first = ofKey[0].date, last = ofKey[ofKey.length - 1].date;
         ofKey.forEach(function (s) { var w = weekday(s.date); days[w] = (days[w] || 0) + 1; if (days[w] > most) { most = days[w]; day = w; } });   // the day it is usually held (Sunday)
@@ -308,7 +311,10 @@ var RosterCore = (function () {
       (data.positions || []).forEach(function (pos) {
         var any = false, needed = false;
         var cells = cols.map(function (c) {
-          if (!c.held) return { names: [], na: false, off: true };
+          if (!c.held) {   // not held: a Sunday with no service, or a service that was cancelled (its people stay on the roster, so the row stays)
+            if (c.cancelled && (data.assignments || []).some(function (a) { return a.serviceId === c.service.id && a.positionId === pos.id && a.status !== 'declined'; })) any = true;
+            return { names: [], na: false, off: true };
+          }
           var s = c.service;
           var names = (data.assignments || []).filter(function (a) { return a.serviceId === s.id && a.positionId === pos.id && a.status !== 'declined'; })
             .map(function (a) { return people[a.personId] ? nm(people[a.personId]) : ''; }).filter(Boolean);
@@ -322,6 +328,33 @@ var RosterCore = (function () {
       });
       return { key: key, columns: cols, teams: teams };
     }).filter(function (sh) { return sh.teams.length; });
+  }
+  /** Has this service been cancelled? Its people stay on the roster (hidden), so putting the service back brings them back. */
+  function isCancelled(s) { return !!(s && s.cancelled); }
+  /** A copy of a service marked cancelled (with the reason people will see) or put back. Nothing else about it changes. */
+  function setCancelled(svc, on, reason) {
+    var x = Object.assign({}, svc); delete x.cancelled; delete x.cancelReason;
+    if (on) { x.cancelled = true; var why = String(reason || '').trim().slice(0, 40); if (why) x.cancelReason = why; }
+    return x;
+  }
+  /** The services a cancel (or put back) applies to: just this one, or – wholeDay – every service that day that isn't already in that state. */
+  function cancelTargets(services, id, wholeDay, putBack) {
+    var s = (services || []).filter(function (x) { return x.id === id; })[0]; if (!s) return [];
+    if (!wholeDay) return [s];
+    return services.filter(function (x) { return x.date === s.date && (x.id === id || isCancelled(x) === !!putBack); });
+  }
+  /**
+   * What the narrow grey column of a day with no service says (written along the column): { note, short }.
+   * A cancelled service with a reason says why; short is for a table too low to hold the whole sentence.
+   */
+  function offText(col) {
+    var reason = col && col.cancelled ? String(col.reason || '').trim() : '';
+    return { note: reason ? T('Cancelled: {reason}', { reason: reason }) : T('The service is not taking place this Sunday'), short: col && col.cancelled ? T('Cancelled') : T('No service') };
+  }
+  /** The note to write along a column that is `heightMm` tall and has room for `maxLines` lines of `pt`-size bold text: the whole note when it fits, else the short one. */
+  function fitNote(t, heightMm, maxLines, pt) {
+    var charMm = (pt || 7.5) * 0.3528 * 0.56, room = Math.max(1, heightMm - 4);
+    return Math.ceil(t.note.length * charMm / room) <= (maxLines || 2) ? t.note : t.short;
   }
   /** Splits a sheet's columns into pages that fit across the paper: [[first, last+1], …] of about equal size. */
   function pages(n, most) {
@@ -374,7 +407,7 @@ var RosterCore = (function () {
     return out;
   }
 
-  return { crews: crews, coverFor: coverFor, runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
+  return { isCancelled: isCancelled, setCancelled: setCancelled, cancelTargets: cancelTargets, offText: offText, fitNote: fitNote, crews: crews, coverFor: coverFor, runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
     terms: terms, RANGES: RANGES, rangeEnd: rangeEnd, addDays: addDays, printChoices: printChoices, printSheets: printSheets, pages: pages, perPage: perPage };
 })();
 if (typeof module !== 'undefined') module.exports = RosterCore;

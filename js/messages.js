@@ -33,7 +33,7 @@
 var Msg = (function () {
   'use strict';
   var KINDS = ['office', 'care', 'life', 'group', 'leaders', 'staff', 'partners', 'people', 'direct', 'roster', 'event'];
-  var ROSTER_NOTES = ['ask', 'remind', 'declined', 'off', 'awayask', 'cover', 'covered'], MAX_TURNS = 100;
+  var ROSTER_NOTES = ['ask', 'remind', 'declined', 'off', 'awayask', 'cover', 'covered', 'cancelled', 'back'], MAX_TURNS = 100;
   var MAX_BODY = 4000, MAX_TITLE = 120;
   /** What attendees may do (Settings → Attendees): the choices and the default are kept with the rest of "who can see what"
    *  in js/access.js. */
@@ -147,7 +147,8 @@ var Msg = (function () {
 
   /**
    * A message about serving turns (kind 'roster'), ready to save; or { error }. note: 'ask' | 'remind' | 'declined' | 'off' (taken off a turn)
-   * | 'awayask' (are you away? turns = [the awayAsks id]) | 'cover' (can you take my place? and the answer; turns = [the turn]) | 'covered' (to the roster team);
+   * | 'awayask' (are you away? turns = [the awayAsks id]) | 'cover' (can you take my place? and the answer; turns = [the turn]) | 'covered' (to the roster team)
+   * | 'cancelled' (the service you were on is cancelled) | 'back' (it is back on) – turns = the person's turns at that service, the words are made in the reader's language;
    * to: who gets it (the sender is left out); turns: assignment ids; title and body in the sender's language (the inbox
    * shows the turns in the reader's own).
    */

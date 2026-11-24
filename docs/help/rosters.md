@@ -35,6 +35,21 @@ service gets its own page, in its own colours). The positions run down the side 
 **Download PDF** to keep or send it, or **Print**. A Sunday on which a service isn't held stays in the table as a grey
 column that says so, so nobody thinks it was forgotten. Positions nobody is on are left out, unless you tick **Also print
 positions that are still empty**. Volunteers see the names of Church Partners who are serving – no contact details.
+A service that was **cancelled** is marked the same way, as a narrow grey column with the note written up its side (and the
+reason, if you gave one).
+
+## How do I cancel a service?
+For: Roster coordinators, Administrators
+Also asked: Service cancelled. No service this Sunday. Public holiday. Put a service back. Tell volunteers a service is off. Don't delete the service.
+
+Open **Rosters**, tap the **⋯** under the service's date and choose **Cancel this service…**. You can say why (for example
+*Public holiday*), and if more than one service is held that day, cancel just this one or all of them. Tick **Let the people
+serving know** to send each of them a friendly message in Church & Trellis – nothing is sent unless you tick it, and anyone
+who can't open the app yet is counted so you can tell them yourself. The service stays on the roster as a narrow hatched
+column marked **Cancelled** (and on the printed roster and PDF), nobody is asked for it, and it leaves "Please check" and
+"Fill the gaps". Everyone who was on it stays on the roster, out of sight. To undo it, tap **⋯ → Put this service back…**:
+the column is whole again, everyone is back, and you can tell them the good news. Volunteers see **Cancelled** on their
+turn under Me → Serving. Don't delete the service from Settings to cancel it – that takes everyone off it.
 
 ## How many services can I see at once?
 For: Roster coordinators, Administrators

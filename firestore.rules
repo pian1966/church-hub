@@ -481,7 +481,7 @@ service cloud.firestore {
     }
     function mayRosterNote(m) {
       return m.get('turns', []) is list && m.get('turns', []).size() > 0 && m.get('turns', []).size() <= 100
-        && ((m.get('roster', '') in ['ask', 'remind', 'off', 'awayask'] && rosterer())
+        && ((m.get('roster', '') in ['ask', 'remind', 'off', 'awayask', 'cancelled', 'back'] && rosterer())
           || (m.get('roster', '') in ['declined', 'covered'] && m.to.hasOnly(churchSettings().get('rosterTeam', [])))
           || (m.get('roster', '') == 'cover' && m.to.size() == 1 && swapNote(m)));
     }

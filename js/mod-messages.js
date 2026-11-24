@@ -117,6 +117,7 @@
   function rosterTitle(m) {
     if (m.roster === 'awayask') return T('Are you away soon?');
     if (m.roster === 'cover' || m.roster === 'covered') return m.title || T('Serving');
+    if (m.roster === 'cancelled' || m.roster === 'back') { var w = window.RosterHelpers && RosterHelpers.cancelNote(m, me()); return w ? w.title : m.title; }   // in the reader's own language
     return m.roster === 'off' ? T('No longer needed') : m.roster === 'remind' ? T('Reminder: please reply about serving') : m.roster === 'declined' ? T('{name} can’t make it', { name: m.fromName || T('Someone') }) : T('You’re on the roster');
   }
   /** The turns it is about, in the reader's language: the volunteer accepts or says they can't make it right here; the
@@ -127,6 +128,7 @@
     if (m.roster === 'awayask') { var q = RH && S.get('awayAsks', (m.turns || [])[0]); return q ? RH.askCard(q) : ''; }
     if (m.roster === 'cover') { var sw = RH && RH.swapOf((m.turns || [])[0]), v = me(); return sw && v && sw.toId === v.id && m.fromId === sw.fromId ? '<p class="msg-body">' + bodyHtml(m.body) + '</p><div class="list msg-turns">' + RH.swapCard(sw) + '</div>' : ''; }
     if (m.roster === 'covered') return '';
+    if (m.roster === 'cancelled' || m.roster === 'back') { var cw = RH && RH.cancelNote(m, me()); return cw ? '<p class="msg-body">' + esc(cw.body) + '</p>' : ''; }
     var u = me(), t = H.today(), team = m.roster === 'declined';
     var rows = (m.turns || []).map(function (id) {
       var a = S.get('assignments', id), sv = a && S.get('services', a.serviceId), po = a && S.get('positions', a.positionId);

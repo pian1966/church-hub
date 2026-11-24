@@ -4,7 +4,7 @@
  * pages that are printed (js/mod-rosters.js builds them), so what is downloaded is what is printed.
  *
  * A page: { landscape, heading, sub, church, ink, line, soft,              ink/line/soft = the service's colours (#rrggbb)
- *           cols: [{ l1, l2, off, note, ink, line, soft }],                 the dates across the top; off = the service isn't held that day;
+ *           cols: [{ l1, l2, off, note, short, ink, line, soft }],                 the dates across the top; off = the service isn't held that day;
  *                                                                           ink/line/soft = that service's own colours (else the page's)
  *           rows: [{ team: 'Music' } | { label: 'Sound desk', cells: [{ names: [], na, off }] }],
  *           footL, footR }
@@ -63,8 +63,11 @@ var RosterPDF = (function () {
 
   function layout(pg, A) {
     var land = !!pg.landscape, PW = land ? 842 : 595, PH = land ? 595 : 842, M = 28;
-    var labelW = land ? 104 : 92, cols = pg.cols, cw = Math.min(118, (PW - 2 * M - labelW) / Math.max(1, cols.length));
-    var tw = labelW + cw * cols.length, ink = pg.ink || '#333333', line = pg.line || ink, soft = pg.soft || '#F2F2F2';
+    // A day with no service is a narrow grey column (OFFW wide), so the days with a service share the rest of the page
+    var OFFW = 30, labelW = land ? 104 : 92, cols = pg.cols, nOff = cols.filter(function (c) { return c.off; }).length, nOn = cols.length - nOff;
+    var cw = Math.min(118, (PW - 2 * M - labelW - OFFW * nOff) / Math.max(1, nOn)), xs = [], ws = [], acc = M + labelW;
+    cols.forEach(function (c) { xs.push(acc); ws.push(c.off ? OFFW : cw); acc += c.off ? OFFW : cw; });
+    var tw = acc - M, ink = pg.ink || '#333333', line = pg.line || ink, soft = pg.soft || '#F2F2F2';
     var pages = [], cur = null, y = 0;
     var FS = land ? 8 : 8, LH = FS * 1.22, PAD = 3;
 
@@ -76,6 +79,10 @@ var RosterPDF = (function () {
     function text(s, x, baseTop, size, bold, color, align, boxW) {
       var w = width(s, size, bold), tx = align === 'c' ? x + (boxW - w) / 2 : align === 'r' ? x + boxW - w : x;
       out('BT ' + rgb(color || '#000000', true) + ' /' + (bold ? 'F2' : 'F1') + ' ' + n(size) + ' Tf ' + n(tx) + ' ' + n(PH - baseTop) + ' Td ' + lit(s) + ' Tj ET');
+    }
+    // Text turned on its side, reading upwards from (x = where its baseline stands, bottomTop = where it starts, measured down from the page top)
+    function vtext(s, x, bottomTop, size, bold, color) {
+      out('BT ' + rgb(color || '#000000', true) + ' /' + (bold ? 'F2' : 'F1') + ' ' + n(size) + ' Tf 0 1 -1 0 ' + n(x) + ' ' + n(PH - bottomTop) + ' Tm ' + lit(s) + ' Tj ET');
     }
     function hline(x1, x2, top, color, wd) { out(rgb(color) + ' ' + n(wd) + ' w ' + n(x1) + ' ' + n(PH - top) + ' m ' + n(x2) + ' ' + n(PH - top) + ' l S'); }
     function hatch(x, top, w, h, color) {   // diagonal lines inside a box: "not needed here"
@@ -90,14 +97,20 @@ var RosterPDF = (function () {
       if (pg.church) text(pg.church, M, top + 12, 9, false, '#444444', 'r', PW - 2 * M);
       if (pg.sub) text(pg.sub, M, top + 27, 9, false, '#333333');
       hline(M, PW - M, top + 33, line, 1.4);
-      var hh = 30, t = top + 41;
+      var hh = nOff ? 38 : 30, t = top + 41;
       rect(M, t, labelW, hh, soft, '#999999');
       cols.forEach(function (c, i) {
-        var x = M + labelW + i * cw;
-        rect(x, t, cw, hh, c.off ? '#E6E6E6' : c.soft || soft, '#999999');
-        if (!c.off) rect(x, t + hh - 3.5, cw, 3.5, c.line || line);   // a bar in the service's colour
-        text(c.l1, x, t + 11, 8.5, true, c.off ? '#555555' : c.ink || '#000000', 'c', cw);
-        if (c.l2) text(c.l2, x, t + 21, 7, false, c.off ? '#555555' : c.ink || '#333333', 'c', cw);
+        var x = xs[i], w = ws[i];
+        rect(x, t, w, hh, c.off ? '#E6E6E6' : c.soft || soft, '#999999');
+        if (c.off) {   // the date and "No service", small enough for the narrow column (they wrap)
+          var ty = t + 9;
+          wrap(c.l1, 7, w - 4, true).forEach(function (l) { text(l, x, ty, 7, true, '#555555', 'c', w); ty += 8; });
+          if (c.l2) wrap(c.l2, 6, w - 4, false).forEach(function (l) { text(l, x, ty, 6, false, '#555555', 'c', w); ty += 7; });
+          return;
+        }
+        rect(x, t + hh - 3.5, w, 3.5, c.line || line);   // a bar in the service's colour
+        text(c.l1, x, t + 11, 8.5, true, c.ink || '#000000', 'c', w);
+        if (c.l2) text(c.l2, x, t + 21, 7, false, c.ink || '#333333', 'c', w);
       });
       return t + hh;
     }
@@ -115,11 +128,15 @@ var RosterPDF = (function () {
     function offBlocks() {
       cols.forEach(function (c, i) {
         if (!c.off) return;
-        var x = M + labelW + i * cw, h = y - pg._start;
+        var x = xs[i], w = ws[i], h = y - pg._start;
         if (h <= 0) return;
-        rect(x, pg._start, cw, h, '#E6E6E6', '#999999');
-        var lines = wrap(c.note || '', 7.5, cw - 8, true), ty = pg._start + 14;
-        lines.forEach(function (l) { text(l, x, ty, 7.5, true, '#444444', 'c', cw); ty += 9.5; });
+        rect(x, pg._start, w, h, '#E6E6E6', '#999999');
+        // The note runs up the column (it wraps into a second line if it is long); a table too low for it says the short words instead
+        var SZ = 7, GAP = 9.5, most = Math.max(1, Math.floor((w - 3) / GAP)), lines = wrap(c.note || '', SZ, h - 12, true);
+        if (lines.length > most && c.short) lines = [c.short];   // the table is too low for the sentence: the short words, even if they run a little long
+        lines = lines.slice(0, most);
+        var left = x + (w - lines.length * GAP) / 2;
+        lines.forEach(function (l, k) { vtext(l, left + k * GAP + SZ * 0.8, pg._start + (h + width(l, SZ, true)) / 2, SZ, true, '#444444'); });
       });
     }
 
@@ -144,7 +161,7 @@ var RosterPDF = (function () {
       rect(M, y, labelW, h, '#FFFFFF', '#999999');
       labelLines.forEach(function (l, i) { text(l, M + PAD, y + PAD + FS + i * LH - 1, FS, true, '#000000'); });
       row.cells.forEach(function (c, i) {
-        var x = M + labelW + i * cw;
+        var x = xs[i];
         if (c.off) return;
         rect(x, y, cw, h, '#FFFFFF', '#999999');
         if (c.na) hatch(x, y, cw, h, '#D5D5D5');

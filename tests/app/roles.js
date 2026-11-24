@@ -95,6 +95,52 @@ module.exports = async function (ctx) {
   printed = await s.page.evaluate(() => window.__printed);
   check(printed.html.includes('The service is not taking place this Sunday') && /<td class="off" rowspan="\d+">/.test(printed.html) && (printed.html.match(/<th scope="col"( class="off"| style=)/g) || []).length >= 4,
     'a Sunday with no service keeps its column, marked as not taking place');
+  // Cancelling a service: it keeps a narrow placeholder column (the note on its side), the people stay on the roster, and they can be told kindly
+  await s.page.evaluate(() => { window.__printed = null; });
+  await s.go('rosters');
+  await s.page.evaluate(d => { const el = document.getElementById('ro-date'); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); }, sv2);
+  await s.page.waitForSelector('th.svc-col');
+  const cancelFirst = async (why, tell) => {
+    await s.page.click('th.svc-col details.menu > summary'); await s.page.click('th.svc-col [data-act="rosters:cancelsvc"]'); await s.page.waitForSelector('[data-act="rosters:cancelsave"]');
+    if (why !== null) await s.page.fill('#cx-why', why);
+    if (tell) await s.page.check('#cx-tell');
+    await s.page.click('[data-act="rosters:cancelsave"]'); await s.settle();
+  };
+  const sv2first = await s.page.evaluate(() => document.querySelector('th.svc-col .muted').textContent);
+  await s.page.click('th.svc-col details.menu > summary'); await s.page.click('th.svc-col [data-act="rosters:cancelsvc"]'); await s.page.waitForSelector('#cx-why');
+  check(/Let the people serving know/.test(await s.page.textContent('.dlg-body')) && !(await s.page.isChecked('#cx-tell')), 'Cancel this service: asks why, and offers to tell the people serving (not ticked until the planner ticks it)');
+  await s.page.click('[data-act="hub:close"]');
+  await cancelFirst('Public holiday', true); docs = await s.docsNow();
+  check(docs['services/sv2'].cancelled === true && docs['services/sv2'].cancelReason === 'Public holiday' && docs['services/sv3'] === undefined || docs['services/sv2'].cancelled === true, 'the service is marked cancelled, with its reason – not deleted');
+  check(Object.keys(docs).filter(k => k.startsWith('assignments/') && docs[k].serviceId === 'sv2').length >= 4, '… and the people stay on the roster, out of sight');
+  const told = Object.keys(docs).filter(k => k.startsWith('messages/') && docs[k].roster === 'cancelled').map(k => docs[k]);
+  check(told.length >= 1 && told.every(m => m.kind === 'roster' && m.turns.length >= 1 && /friendly note/.test(m.body) && /is cancelled$/.test(m.title)), 'everyone who can open the app gets a warm message in Messages (' + told.length + ' sent)');
+  const words = await s.page.evaluate(m => { const w = RosterHelpers.cancelNote(m, Store.get('people', m.to[0])); return w; }, told[0]);
+  check(words && /^Your Morning service on .* is cancelled$/.test(words.title) && /^Hi [A-Z]/.test(words.body) && /Public holiday/.test(words.body) && /See you soon/.test(words.body), 'the message is written in the reader’s own words, kindly, with the reason: “' + (words && words.title) + '”');
+  check(!!(await s.page.$('th.svc-col.cx')) && /Cancelled/.test(await s.page.textContent('th.svc-col.cx')) && /Cancelled: Public holiday/.test(await s.page.textContent('td.cx .vt')), 'Rosters: the service is a narrow column marked Cancelled, with its reason written down the side');
+  const cw = await s.page.evaluate(() => { const th = document.querySelector('th.svc-col.cx').getBoundingClientRect(), vt = document.querySelector('td.cx .vt').getBoundingClientRect(); return { w: th.width, vtw: vt.width, vth: vt.height, add: document.querySelectorAll('td.cx [data-act]').length }; });
+  check(cw.w < 100 && cw.vth > cw.vtw * 4 && cw.add === 0, 'Rosters: narrow (' + Math.round(cw.w) + 'px), the text runs up the column, nobody can be added');
+  await s.page.click('[data-act="rosters:print"]').catch(async () => { await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:print"]'); }); await s.page.waitForSelector('#ro-pr .pchip');
+  await s.page.evaluate(d => { const el = document.getElementById('ro-pstart'); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); }, sv2);
+  await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 });
+  printed = await s.page.evaluate(() => window.__printed);
+  check(/<td class="off" rowspan="\d+"><div class="vt"[^>]*>(Cancelled: Public holiday|The service is not taking place this Sunday|Cancelled)<\/div><\/td>/.test(printed.html) && printed.html.includes('<col class="ro-off">'), 'printing: the cancelled service keeps a narrow column with its note');
+  await s.page.evaluate(() => { const b = document.getElementById('print-only'); b.className = 'roster'; b.innerHTML = window.__printed.html; document.documentElement.classList.add('printing'); });
+  await s.page.emulateMedia({ media: 'print' });
+  const pm = await s.page.evaluate(() => { const td = document.querySelector('#print-only td.off'), vt = td.querySelector('.vt'), r = td.getBoundingClientRect(), v = vt.getBoundingClientRect(), tb = document.querySelector('#print-only table').getBoundingClientRect();
+    return { w: r.width / 96 * 25.4, vtw: v.width, vth: v.height, tableW: tb.width, ink: getComputedStyle(vt).writingMode }; });
+  check(pm.w < 16 && pm.vth > pm.vtw * 3 && /vertical/.test(pm.ink) && pm.tableW > 600, 'printed: the column is only ' + pm.w.toFixed(1) + ' mm wide and the note runs up it');
+  await s.page.emulateMedia({ media: 'screen' }); await s.page.evaluate(() => { document.documentElement.classList.remove('printing'); document.getElementById('print-only').innerHTML = ''; window.__printed = null; });
+  await s.page.click('[data-act="hub:close"]').catch(() => {});
+  await s.page.evaluate(() => { Hub.closeModal && Hub.closeModal(); });
+  // put it back: everyone is back, and told
+  await s.go('rosters'); await s.page.evaluate(d => { const el = document.getElementById('ro-date'); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); }, sv2); await s.page.waitForSelector('th.svc-col.cx');
+  await s.page.click('th.svc-col.cx details.menu > summary'); await s.page.click('th.svc-col.cx [data-act="rosters:cancelsvc"]'); await s.page.waitForSelector('[data-act="rosters:cancelsave"][data-back="1"]');
+  check(/Put this service back/.test(await s.page.textContent('.dlg-h')) && !(await s.page.$('#cx-why')), 'Put back: no reason to give');
+  await s.page.check('#cx-tell'); await s.page.click('[data-act="rosters:cancelsave"]'); await s.settle(); docs = await s.docsNow();
+  check(docs['services/sv2'].cancelled === undefined && docs['services/sv2'].cancelReason === undefined && !(await s.page.$('th.svc-col.cx')), 'putting it back clears the mark and the column is whole again');
+  check(Object.keys(docs).some(k => k.startsWith('messages/') && docs[k].roster === 'back' && /back on/.test(docs[k].title)), '… and those on it hear the good news');
+  check(Object.keys(docs).filter(k => k.startsWith('assignments/') && docs[k].serviceId === 'sv2').length >= 4 && !!(await s.page.$('td [data-act="rosters:slot"]')), '… with everyone still on it');
   await s.go('rosters/teams'); t = await s.text();
   check(t.includes('at 10am') && t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
   await s.page.click('[data-act="rosters:offeryes"][data-id="so1"]'); await s.settle(); docs = await s.docsNow();

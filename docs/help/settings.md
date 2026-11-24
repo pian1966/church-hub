@@ -15,6 +15,13 @@ For: Administrators
 **Settings → Church**: church name, **Country** (sets provinces/states, postcodes, phone numbers and the privacy law),
 and the church's colour (**Save the church's colour**) – everyone sees it.
 
+## How do I turn the soft pictures at the top of each page off?
+For: Administrators, Senior Pastor
+Also asked: Watercolour pictures. Plain pages. Page pictures. Banners. Header pictures.
+
+Open **Settings → Colours**. Under **Page pictures** choose **Soft watercolour** (a picture at the top of every page, in the colours of
+that part of the app) or **Plain (original)**. Everyone at your church sees the choice the church makes here.
+
 ## How do I use our own church words (e.g. Rector, Parishioner)?
 For: Administrators
 Also asked: Change "Church Partner" to "Member". Rename Pastor. Terminology.
@@ -91,9 +98,18 @@ can trial it and import again at switch-over.
 For: Administrators
 Also asked: Use AI for search. Gemini. The search doesn't understand my question.
 
-Switch on AI in **Settings → Apps → AI for “Ask in your own words”**. It needs a one-time setup of about 15 minutes in the
+Switch on AI in **Settings → Apps → AI for “Ask in your own words”**. The same switch lets **Help** write answers to people's questions
+and lets Church & Trellis read photos of names (visitor cards and sign-up sheets). It needs a one-time setup of about 15 minutes in the
 church's Firebase project first (the setup guide is linked there: docs/AI-SEARCH-SETUP.md), and the Information Officer
-should agree, because questions go to Google's Gemini. No church records are sent – only the question.
+should agree, because questions go to Google's Gemini. No church records are sent – only the question (or the photo, for names, which isn't kept).
+
+## Who is told when someone can't make a roster turn?
+For: Administrators
+Also asked: Church secretary roster messages. Who hears about roster replies. Add someone to roster messages.
+
+When someone is put on the roster they get a message in **Messages**; when they say they can't make it, the roster team gets one.
+Administrators and Roster coordinators always do. To add others, such as the church secretary, open **Settings → Church Services** and under
+**Who hears about roster replies** type part of their name under **Add someone**.
 
 ## Church & Trellis feels slow. What can I do?
 For: Administrators

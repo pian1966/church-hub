@@ -14,8 +14,8 @@ church (not for developers), in plain English, and are meant to be used two ways
 | Page | Covers |
 | --- | --- |
 | [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates, using Help |
-| [me.md](me.md) | The Me page: my details, consent, days away, my serving, offers to serve, becoming a Church Partner |
-| [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, teams, services, communion, reminders, together/apart |
+| [me.md](me.md) | The Me page: my details, consent, days away, my serving, taking someone's place, offers to serve, becoming a Church Partner |
+| [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, asking who's away, teams, services, communion, reminders, together/apart |
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |
 | [care-groups.md](care-groups.md) | Care groups for members, carers and staff |
 | [midweek-groups.md](midweek-groups.md) | Midweek groups (Bible studies, life groups) for members, leaders and staff |
@@ -24,6 +24,10 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [library.md](library.md) | The church Library: finding, borrowing and returning books; for librarians |
 | [messages.md](messages.md) | Reading and sending messages inside Church & Trellis |
 | [people.md](people.md) | For staff: adding and editing people, households, children, duplicates, searching, a death |
+| [events.md](events.md) | Events: signing up, guests, reminders; for organisers: putting up an event, who's coming, the sign-up report, adding people, a photo of a sheet, cancelling |
+| [community-board.md](community-board.md) | The Community board: pinning, renewing and reporting notices; for keepers: checking notices, choosing keepers |
+| [marketplace.md](marketplace.md) | The Marketplace: listing, the rules, contacting a seller, marking sold; for keepers: checking listings |
+| [subscription.md](subscription.md) | For Administrators: the price of a coffee, paying, payment holidays, praying instead, gifts, the prayer circle and prayer card |
 | [privacy.md](privacy.md) | Consent, what others can see, and the Privacy pages for Administrators |
 | [settings.md](settings.md) | For Administrators: settings, apps, services, wording, roles, View as, imports, setting up Church & Trellis at another church |
 | [translations.md](translations.md) | Languages and suggesting better wording |

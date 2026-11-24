@@ -141,10 +141,18 @@ Also asked: Married couple on the same Sunday. Parents shouldn't serve at the sa
 
 Open **Rosters → Serving together**.
 - **Serve together**: choose at least two people and how important it is – **Always together** (rostered together or not
-  at all, e.g. a family sharing a car) or **Together when possible**.
+  at all, e.g. a family sharing a car) or **Together when possible**. "Together" means the same service, not always the same job.
 - **Keep apart**: they will never be rostered at the same service – e.g. parents taking turns with a baby.
 
 Members can tap **Ask to serve with someone** there, or use **Serve with family or friends** on the Me page.
+
+## Can volunteers see who else is serving at their service?
+For: Administrators, Roster coordinators
+Also asked: Who's serving with you. Show or hide the crew. Turn off names on Me → Serving.
+
+Yes. Under each of a volunteer's turns on **Me → Serving**, **Who's serving with you** shows the other people serving at that
+service, with their short names and jobs (no contact details), only to people serving there. To switch it off, open
+**Settings → Church Services** and untick **Volunteers see who else is serving at their services**.
 
 ## How do I see who is away?
 For: Roster coordinators, Administrators

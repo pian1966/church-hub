@@ -56,6 +56,15 @@ On **Me → Serving**, find the turn and tap **Can't make it**. You can then ask
 to take your place. They are asked in **Messages** and answer with one tap; the roster team is told either way, and if
 nobody can, the roster coordinator can find someone else.
 
+## Can I see who else is serving at my service?
+For: Everyone
+Also asked: Who is on with me? Who's serving with you. Who else is on Sunday? My crew.
+
+Yes. On **Me → Serving**, under each of your turns, **Who's serving with you** lists the others serving at that service,
+with their short names and jobs – your own team first. It shows names and jobs only, like the printed roster, never contact
+details, and only people serving at that service can see it. If your church has switched it off, you won't see it (the
+Administrator can change this under **Settings → Church Services**).
+
 ## The church asked whether I'll be away. What do I do?
 For: Everyone
 Also asked: Ask who's away. I'm free. Days away before the new term. Term roster.

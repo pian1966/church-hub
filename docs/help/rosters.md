@@ -24,6 +24,18 @@ for a reply**, and suggestions (dashed border). The top row (date, time, communi
 Departments and positions that aren't needed at any of the services you're looking at (e.g. Creche at 8am, or communion
 roles when there's no communion) are left out. Members see their own turns under **My serving**.
 
+## How do I print or download the roster?
+For: Everyone
+Also asked: Print the roster. Roster as a PDF. Roster for the notice board. Save the roster. Portrait or landscape.
+
+Roster coordinators: **Rosters → More → Print or download the roster**. Everyone else: **Rosters → My serving → Print or
+download the roster**. Choose **how long** (1 month, 6 weeks, 2 months, a quarter, 6 months or a year, starting on the date
+you pick – the next Sunday to begin with), the **page shape** (portrait or landscape) and **which services** (each regular
+service gets its own page, in its own colours). The positions run down the side and every Sunday across the top. Tap
+**Download PDF** to keep or send it, or **Print**. A Sunday on which a service isn't held stays in the table as a grey
+column that says so, so nobody thinks it was forgotten. Positions nobody is on are left out, unless you tick **Also print
+positions that are still empty**. Volunteers see the names of Church Partners who are serving – no contact details.
+
 ## How many services can I see at once?
 For: Roster coordinators, Administrators
 Also asked: Show more Sundays. The roster is too wide. Hide the evening service.

@@ -21,7 +21,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Inviting people to Church & Trellis (email, WhatsApp, sign-in codes), People → Invitations, the first sign-in (`appFirstSeen`); the welcome on the sign-in screen (`#/start`) and Home's Android app prompt are in `js/app.js` | `js/people/welcome.js` | `js/i18n/people.js` | `tests/app/welcome.js` |
 | Households, couples, late spouses, duplicates | `js/people/households.js`, `js/households.js`, `js/duplicates.js` | `js/i18n/households.js` | `tests/households.test.js`, `duplicates.test.js` |
 | Advanced search, Change selected… | `js/people/search.js`, `js/people-search.js` | `js/i18n/search.js` | `tests/people-search.test.js`, `tests/app/people.js` |
-| Rosters, services | `js/mod-rosters.js`, `js/roster.js`, `js/serving.js` | `js/i18n/rosters.js` | `tests/roster.test.js`, `serving.test.js`, `tests/app/roles.js` |
+| Rosters, services (incl. Print or download the roster: Sundays across, positions down, PDF writer) | `js/mod-rosters.js`, `js/roster.js`, `js/roster-pdf.js`, `js/serving.js` | `js/i18n/rosters.js` | `tests/roster.test.js`, `roster-pdf.test.js`, `serving.test.js`, `tests/app/roles.js` |
 | Leave (Leave Manager built in) | `js/mod-leave.js`, `js/leave-core.js`, `js/leave-import.js` | `js/i18n/leave.js` | `tests/leave-import.test.js`, `tests/app/admin.js` |
 | Me (members' own page) | `js/mod-me.js` | `js/i18n/me.js` | `tests/app/roles.js` |
 | Groups: one menu entry with tabs for Care Groups, Midweek Groups and Leadership (`inGroups: true`), "My groups" | `js/mod-groups.js`, `js/app.js` (`listed`, `groupMods`) | `js/i18n/common.js` | `tests/app/life.js` |
@@ -72,7 +72,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   (`js/people/*.js` share helpers through `PeopleParts`; add a new file to `index.html` before `js/mod-people.js`).
   Data goes through `Store` only, never localStorage directly.
 - Rules files (`roster`, `leave-import`, `elvanto-import`, `elvanto-sync`, `households`, `people-search`, `duplicates`, `countries`,
-  `privacy-law`, `wording`, `serving`, `care`, `messages`, `access`, `badges`, `leaders`, `archive`, `library`, `community`, `studies`, `events`, `name-list`, `sesotho`, `tips`, `coffee`, `church`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
+  `privacy-law`, `wording`, `serving`, `roster-pdf`, `care`, `messages`, `access`, `badges`, `leaders`, `archive`, `library`, `community`, `studies`, `events`, `name-list`, `sesotho`, `tips`, `coffee`, `church`, and `site/setup-kit.js`) stay pure and tested: run their `node tests/<name>.test.js` before committing.
   Test data is made up (`tests/fixtures`); never add a real export to the repository.
 - Advanced search only offers fields a role may see – never medical/pastoral notes or collection restrictions.
 - Member-facing text goes through `T('…')` with a line `[English, Afrikaans, isiZulu, isiXhosa]` in the `js/i18n/<area>.js` of the part

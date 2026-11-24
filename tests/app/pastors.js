@@ -11,7 +11,7 @@ module.exports = async function (ctx) {
   check(/#\/me\/serve$/.test(s.page.url()) && !(await s.page.$('nav a[href="#/rosters"]')), 'a Pastor’s own serving is on Me → Serving (the old address opens it), with no separate Rosters entry');
   await s.page.evaluate(() => { window.print = () => { window.__printed = document.getElementById('print-only').innerHTML; }; });
   await s.page.click('.page-head [data-act="rosters:print"]'); await s.page.waitForSelector('[data-act="rosters:printgo"]');
-  await s.page.evaluate(() => { const d = Store.get('services', 'sv2').date; for (const id of ['ro-pfrom', 'ro-pto']) { const el = document.getElementById(id); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); } });
+  await s.page.evaluate(() => { const d = Store.get('services', 'sv2').date; const el = document.getElementById('ro-pstart'); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); });
   await s.page.click('[data-act="rosters:printgo"]');
   await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 }).catch(() => {});
   check(/ro-sheet/.test(await s.page.evaluate(() => window.__printed || '')), 'a Pastor prints the whole roster from Me → Serving');

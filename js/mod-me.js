@@ -147,7 +147,7 @@
   function slotOfTurn(s) { var id = Serving.slotOf(s); return Serving.savedSlots(S.settings()).filter(function (x) { return x.id === id; })[0] || { id: id, label: s.time || id, time: s.time }; }
   function renderServe() {
     var turns = upcomingTurns(), sk = mySkills(), skillPos = sk.map(function (k) { return k.positionId; }), st = S.settings();
-    var print = window.RosterHelpers && RosterHelpers.canPrint() ? '<button class="btn" data-act="rosters:print">' + T('Print the roster') + '</button>' : '';
+    var print = window.RosterHelpers && RosterHelpers.canPrint() ? '<button class="btn" data-act="rosters:print">' + T('Print or download the roster') + '</button>' : '';
     var html = head(T('Serving'), T('Your turns, the positions you fill, and when you can serve.'), print, 'serve');
     // 1 Coming up: each turn says the day, the service and the position, with Yes / Can't make it
     var waiting = turns.filter(function (a) { return a.status === 'pending'; }).length;

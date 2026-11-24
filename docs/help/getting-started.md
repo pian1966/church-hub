@@ -11,6 +11,26 @@ also tap a topic under **Browse by topic** to read its questions.
 
 If Help can't find your answer, **write to the Office** (**Messages**) and someone at church will help.
 
+## Is what I ask Help kept or private?
+For: Everyone
+Also asked: Does Help save my questions? Who sees what I type? Is Help safe? Does the AI know my details?
+
+Nothing you type or say into Help is saved, logged or shared – the question and the answer stay on your screen only. If your
+church has switched on AI, your question (up to 300 characters) goes to Google's Gemini with the help pages that match it, the
+kind of access you have and your language – never your records, your contact details or the church's lists. Because the
+question goes as you wrote it, **please don't type private matters or other people's names** into Help. For anything personal,
+use **Messages** to write to the Office or a pastor.
+
+## Help gave me a wrong answer, or couldn't find one. What now?
+For: Everyone
+Also asked: Help doesn't understand me. The answer is out of date. It says I can't do something I can. No answer. Try again.
+
+1. Ask again in other words – shorter is better: **How do I print the roster?** works better than a long story. You can also tap the microphone and say it.
+2. Under the answer, open the help pages it used (they are listed) – the whole page often has the step you need.
+3. Tap a topic under **Browse by topic** and read its questions.
+4. Check the screen itself: the buttons are named in **bold** in the answers, exactly as they appear. If a button has a different name, your church may be using its own words, or Church & Trellis was updated – see **How do I update the app?**
+5. Still stuck? **Write to the Office** (**Messages**). If an answer was wrong, tell them so it can be put right.
+
 ## How do I sign in?
 For: Everyone
 Also asked: How do I log in? What's my password? How do I get into Church & Trellis?
@@ -122,10 +142,56 @@ in again next time. Signing out also removes the copy kept on that device – do
 
 ## What's on the Home page?
 For: Everyone
-Also asked: What is the to-do list?
+Also asked: What is the to-do list? What's new? Did you know? Coming up. Why does Home look different from someone else's?
 
-Home shows the apps you can use as cards, and your **To do** list – things that need you, such as roster turns to reply
-to, unread messages, or (for staff) requests waiting for an answer. **Nothing needs you right now.** means you're up to date.
+Home is the first page you see, and it is different for each person, because it shows what concerns you:
+- **To do** – things that need you, such as roster turns to reply to, unread messages, or (for staff) requests waiting for an
+  answer. **Nothing needs you right now.** means you're up to date.
+- **Coming up** – events at church you can sign up for (**Events**).
+- **What's new** – a short line for each change in Church & Trellis that you would notice. You only see the ones that concern
+  you, so an Administrator and a member see different lists.
+- **Did you know?** – a tip about something useful you may not have found yet, chosen for what you can do. It changes each time you sign in.
+- Your **apps** as cards (for example **Rosters**, **Messages**, **Library**), and – if your church has it – the **prayer card** of
+  another church to pray for this week and the latest notices from the **Community board**.
+
+If something you expect isn't on Home, the part of Church & Trellis may be switched off, or your access doesn't include it –
+see **Why can't I see a page or button that someone else can?** below.
+
+## Why can't I see a page or button that someone else can?
+For: Everyone
+Also asked: A menu item is missing. I can't find Rosters. Why is it greyed out? Where did the Library go? No access. Not allowed.
+
+Church & Trellis shows each person only what their kind of access allows, so two people can see different menus. The usual reasons:
+1. **Your kind of access doesn't include it.** For example, only Administrators see **Settings** and **Import**, and only Pastors see
+   pastoral notes. Ask the church office if you think you should have it – an Administrator can change it under
+   **Settings → Access and roles**.
+2. **You haven't been given a job in that part yet.** Some things belong to a job: carers, Midweek Group leaders, **keepers**
+   (who check Community board notices and Marketplace listings), event organisers and librarians.
+3. **You aren't a Church Partner yet.** People who come to church but haven't become Church Partners see less, and the church
+   decides how much. You can apply under **Become a Church Partner** on your **Me** page.
+4. **The part is switched off.** An Administrator can switch parts on or off under **Settings → Apps**.
+5. **On a phone**, only the main parts are in the tabs at the bottom – tap **More** for the rest.
+
+If none of these explains it, **write to the Office** (**Messages**).
+
+## What do the words mean? (Church Partner, attendee, keeper…)
+For: Everyone
+Also asked: Glossary. What is a Church Partner? What is an attendee? What is a keeper? What is a Roster coordinator? What is Basic access? What is a carer?
+
+- **Administrator** – looks after Church & Trellis for the church: settings, access, privacy and imports.
+- **Pastor** – sees people, households and pastoral notes. The **Senior Pastor** (the Rector, if your church uses that word) can also
+  choose what the other pastors may do.
+- **Roster coordinator** – makes the rosters and looks after the teams.
+- **Children's ministry** – sees children, their guardians and medical notes.
+- **Basic access** – everyone else who signs in: you see your own details, serving and leave.
+- **Church Partner** – an adult who has agreed to be in the church directory. Church Partners see the church directory and can use more of Church & Trellis.
+- **Attendee** – someone who comes to church but isn't a Church Partner yet. The church decides what attendees may do (**Settings → Attendees**).
+- **Keeper** – a person who checks every notice on the **Community board** and every listing on the **Marketplace** before it shows.
+- **Carer** – looks after a **Care Group**. **Midweek Group leader** – leads a Bible study or life group.
+- **Event organiser** – may put up events and see who signed up.
+
+Your church may use its own words (for example **Parishioner** for Church Partner, or **Rector** for Pastor) – Help uses
+the words your church chose when it answers you.
 
 ## Can I try Church & Trellis without real data?
 For: Everyone

@@ -13,7 +13,7 @@ church (not for developers), in plain English, and are meant to be used two ways
 ## Pages
 | Page | Covers |
 | --- | --- |
-| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates, using Help |
+| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates, using Help (and its privacy), the Home page, why something isn't visible, what the words mean |
 | [me.md](me.md) | The Me page: my details, consent, days away, my serving, taking someone's place, offers to serve, becoming a Church Partner |
 | [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, asking who's away, teams, services, communion, reminders, together/apart |
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |

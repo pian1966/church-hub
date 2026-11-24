@@ -156,6 +156,21 @@ At the top of **Rosters → Teams** under **Offers to serve** (also on your Home
 the team (or change how they serve), or **Not now** with a short reply they will see (e.g. *The team is full for now –
 we'll ask you in the new year*).
 
+## How does Church & Trellis choose who goes on the roster? Why wasn't I picked?
+For: Everyone
+Also asked: Why was I picked? Why am I always on? Why am I never asked? Fair turns. Is the roster random? Why is this person suggested?
+
+Nothing is random. When **Fill the gaps for me** suggests people, it:
+- only looks at people in that position's **team**;
+- skips anyone who is away or on leave that day (their **days away** on **Me**, and approved **Leave** for staff);
+- keeps together the people who asked to serve together (family, a friend, a couple sharing a car), and apart those who should not serve together – see **Serving together**;
+- shares turns fairly: people who haven't served for the longest go first, and how often each person said they'd like to serve is respected;
+- asks for the **Communion positions** only on services that have **Holy Communion**.
+
+Every suggestion has a reason – tap or hover over it to read it. A coordinator can always change a suggestion by hand.
+If you are never asked, you may not be in a team yet: on **Me → Serving** you can offer to serve, or tell a roster coordinator.
+If you are asked too often, you can serve less often on **Me → Serving** (see **How do I serve more or less often?**).
+
 ## How do I keep people together, or apart?
 For: Roster coordinators, Administrators (members can ask to serve with someone)
 Also asked: Married couple on the same Sunday. Parents shouldn't serve at the same time.

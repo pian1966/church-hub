@@ -219,6 +219,7 @@ var Access = (function () {
       if (mods.events === true) can.push(line(TX('See who’s coming to events, and add people who put their name down on a sheet')));
     } else if (kind === 'partner') {
       see.push(line(TX('Their own details, serving and messages')), contacts(st, 'member', share));
+      if (st.crewView !== false && mods.rosters !== false) see.push(line(TX('Who else is serving at their services (names and jobs)')));
       see.push(line(st.seeCareOwn !== false ? TX('Everyone in their own Care Group') : TX('The carers of their own Care Group')));
       careSee('member');
       can.push(line(TX('Reply to messages, and write to the Office, the ministers and their group leaders')));

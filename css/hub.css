@@ -276,6 +276,21 @@ button.item { width: 100%; border: 0; background: transparent; text-align: left;
 .team-h { display: flex; align-items: center; gap: 4px; }
 .team-tools { display: inline-flex; align-items: center; gap: 2px; font-size: 16px; }
 .team-tools .icon-btn[disabled] { opacity: .3; cursor: default; }
+.team-filter { gap: 8px; margin-bottom: 16px; }
+.team-filter .menu > summary { border-radius: 999px; }
+.ro-chip.svc { color: var(--svc-ink); }
+.ro-chip.svc.on { background: var(--svc-soft); border-color: var(--svc-line); color: var(--svc-ink); }
+/* A service named as a chip in its own colours (Teams, Me → Serving): it is always clear which service is meant */
+.svc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0 2px; }
+.svc-chip { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: var(--svc-soft); color: var(--svc-ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--svc-line) 45%, transparent); white-space: nowrap; }
+.svc-note { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--muted); margin-left: 4px; }
+.pos-row { padding: 12px 0; border-top: 1px solid var(--line); }
+.team-panel > h2 + .pos-row { border-top: 0; padding-top: 4px; }
+.pos-row .need-line { display: inline-flex; align-items: center; margin-top: 2px; }
+.item.turn .grow { display: flex; flex-direction: column; gap: 1px; }
+.item.turn .me-cal { background: var(--svc-soft); color: var(--svc-ink); }
+.my-pos .grow b { font-size: 15px; }
+html[data-mode=dark] .svc-chip, html[data-mode=dark] .ro-chip.svc.on, html[data-mode=dark] .item.turn .me-cal { background: color-mix(in srgb, var(--svc-line) 22%, var(--surface)); color: color-mix(in srgb, var(--svc-line) 50%, #fff); }
 .matrix .team-row th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 8px 14px; }
 .slot { display: flex; flex-direction: column; gap: 4px; }
 .chip { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; border-radius: 10px; padding: 7px 9px; border: 1px solid transparent; font-size: 13.5px; font-weight: 600; cursor: pointer; min-height: 38px; background: var(--ok-soft); color: #173F27; }
@@ -1591,6 +1606,15 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
   .ar-cals .ar-go { display: none; }
   .ar-item .rec-acts { flex-basis: 100%; justify-content: flex-start; margin-left: 58px; }
 }
+/* Me → Serving: asking someone to take your place, and "Are you away?" before the roster is made */
+.item.turn { flex-wrap: wrap; }
+.item .turn-more { flex-basis: 100%; padding-left: 56px; margin-top: -4px; }
+.item .turn-more .link { font-size: 13px; }
+.away-ask { margin-bottom: 14px; }
+.away-ask .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.swap-card { flex-wrap: wrap; }
+.item.passed { opacity: .8; }
+.away-panel .row { align-items: center; gap: 10px; }
 
 
 /* ---------- Page pictures: soft watercolour headings (js/banners.js; Settings → Colours → Page pictures; "Plain" turns them off) ---------- */
@@ -1634,3 +1658,15 @@ html[data-mode=dark] .hero-art .w { fill: #fff; fill-opacity: .22; stroke: rgba(
 .look-prev i + u { position: absolute; left: 12px; top: 40px; width: 55%; height: 6px; border-radius: 3px; background: var(--line); }
 .look-prev i + u + u { top: 54px; width: 40%; }
 @media print { .hero-bg { display: none; } .page-head.hero { background: none; min-height: 0; padding: 0; } .page-head.hero > div:not(.hero-bg) { max-width: none; } }
+/* Who's serving with you (under a turn on Me → Serving) */
+.item .crew { flex-basis: 100%; padding-left: 56px; margin-top: -2px; }
+.crew > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; list-style: none; display: inline-flex; gap: 6px; }
+.crew > summary::-webkit-details-marker { display: none; }
+.crew > summary::before { content: '›'; display: inline-block; transition: transform .15s; }
+.crew[open] > summary::before { transform: rotate(90deg); }
+.crew-team { margin: 8px 0 4px; }
+.crew-h { margin: 0 0 4px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--svc-ink, var(--muted)); }
+.crew-p { display: flex; gap: 8px; align-items: baseline; padding: 2px 0; }
+.crew-n { font-weight: 600; font-size: 14px; }
+.crew-p small { color: var(--muted); }
+@media (max-width: 700px) { .item .turn-more, .item .crew { padding-left: 0; } }

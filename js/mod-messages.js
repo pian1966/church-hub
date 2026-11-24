@@ -25,7 +25,7 @@
     if (m.kind === 'event') { var w = me(); return w && (m.to || []).indexOf(w.id) >= 0 ? T('you') : esc(TN('Everyone coming ({n})', 'Everyone coming ({n})', n)); }
     if (m.kind === 'roster') {
       var v = me(); if (v && (m.to || []).indexOf(v.id) >= 0) return T('you');
-      if (m.roster === 'declined') return T('the roster team');
+      if (m.roster === 'declined' || m.roster === 'covered') return T('the roster team');
       var p = S.get('people', (m.to || [])[0]); return p ? esc(H.name(p)) : esc(TN('{n} person', '{n} people', n));
     }
     var base = m.kind === 'care' ? T('Care Group') + ' · ' + esc(m.audience) : m.kind === 'life' ? T('Midweek Group') + ' · ' + esc(m.audience) : m.kind === 'leaders' ? T('Leadership') + ' · ' + esc(m.audience) : m.kind === 'group' ? esc(m.audience) : esc(audName(m.kind));
@@ -115,12 +115,18 @@
   /* ---------- Roster messages (sent by Rosters: js/mod-rosters.js) ---------- */
   /** The heading, in the reader's language. */
   function rosterTitle(m) {
+    if (m.roster === 'awayask') return T('Are you away soon?');
+    if (m.roster === 'cover' || m.roster === 'covered') return m.title || T('Serving');
     return m.roster === 'off' ? T('No longer needed') : m.roster === 'remind' ? T('Reminder: please reply about serving') : m.roster === 'declined' ? T('{name} can’t make it', { name: m.fromName || T('Someone') }) : T('You’re on the roster');
   }
   /** The turns it is about, in the reader's language: the volunteer accepts or says they can't make it right here; the
    *  roster team opens the roster. '' when none of the turns can be shown any more (the message's own words are shown). */
   function rosterPart(m) {
     if (m.roster === 'off') return '';   // no longer needed: the message's own words say for what
+    var RH = window.RosterHelpers;
+    if (m.roster === 'awayask') { var q = RH && S.get('awayAsks', (m.turns || [])[0]); return q ? RH.askCard(q) : ''; }
+    if (m.roster === 'cover') { var sw = RH && RH.swapOf((m.turns || [])[0]), v = me(); return sw && v && sw.toId === v.id && m.fromId === sw.fromId ? '<p class="msg-body">' + bodyHtml(m.body) + '</p><div class="list msg-turns">' + RH.swapCard(sw) + '</div>' : ''; }
+    if (m.roster === 'covered') return '';
     var u = me(), t = H.today(), team = m.roster === 'declined';
     var rows = (m.turns || []).map(function (id) {
       var a = S.get('assignments', id), sv = a && S.get('services', a.serviceId), po = a && S.get('positions', a.positionId);

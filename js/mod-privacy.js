@@ -88,6 +88,11 @@
     S.find('skills', function (k) { return k.personId === p.id; }).forEach(function (k) { S.remove('skills', k.id); });
     S.find('blockouts', function (b) { return b.personId === p.id; }).forEach(function (b) { S.remove('blockouts', b.id); });
     S.find('serveOffers', function (o) { return o.personId === p.id; }).forEach(function (o) { S.remove('serveOffers', o.id); });
+    // Taking someone's place and "Are you away?": the asks they made or were sent, and their answers (0.108.0)
+    S.find('serveSwaps', function (x) { return x.fromId === p.id || x.toId === p.id; }).forEach(function (x) { S.remove('serveSwaps', x.id); });
+    S.find('awayAsks', function (q) { return ['people', 'free', 'away'].some(function (k) { return (q[k] || []).indexOf(p.id) >= 0; }); }).forEach(function (q) {
+      q = JSON.parse(JSON.stringify(q)); ['people', 'free', 'away'].forEach(function (k) { q[k] = (q[k] || []).filter(function (m) { return m !== p.id; }); }); S.put('awayAsks', q);
+    });
     S.find('detailChanges', function (c) { return c.personId === p.id; }).forEach(function (c) { S.remove('detailChanges', c.id); });   // changes they asked for
     S.find('wordIdeas', function (w) { return w.personId === p.id; }).forEach(function (w) { S.remove('wordIdeas', w.id); });   // translation suggestions
     S.find('partnerApps', function (a) { return a.personId === p.id; }).forEach(function (a) { S.remove('partnerApps', a.id); });   // partnership applications

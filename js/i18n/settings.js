@@ -2,6 +2,10 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Page pictures", "Bladsyprentjies", "Izithombe zamakhasi", "Imifanekiso yamaphepha"],
+    ["A soft watercolour picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.", "’n Sagte waterverf-prent bo-aan elke bladsy, in die kleure van daardie deel van die toep. Almal sien die keuse wat die kerk hier maak.", "Isithombe se-watercolour esithambile phezulu kwelinye nelinye ikhasi, ngemibala yaleyo ngxenye ye-app. Wonke umuntu ubona okukhethwe yisonto lapha.", "Umfanekiso othambileyo we-watercolour phezulu kwiphepha ngalinye, ngemibala yaloo nxalenye ye-app. Wonke umntu ubona oko likhethe ibandla apha."],
+    ["Soft watercolour", "Sagte waterverf", "I-watercolour ethambile", "I-watercolour ethambileyo"],
+    ["Plain (original)", "Gewoon (oorspronklik)", "Okuvamile (kwasekuqaleni)", "Okuqhelekileyo (kwasekuqaleni)"],
     ["Church Services and venues", "Kerkdienste en plekke", "Izinkonzo Zesonto nezindawo", "Iinkonzo zeCawe neendawo"],
     ["The church’s library and Archives – books and church records in one place", "Die kerk se biblioteek en Argiewe – boeke en kerkrekords op een plek", "Umtapo wezincwadi nezingobo zomlando zesonto – izincwadi namarekhodi esonto endaweni eyodwa", "Ithala leencwadi noVimba weerekhodi zecawa – iincwadi neerekhodi zecawa kwindawo enye"],
     ["Removes the upcoming ones (and their rosters) from a date. To stop adding it at all, remove it under “Church Services and venues”.", "Verwyder die komendes (en hul roosters) vanaf ’n datum. Om dit glad nie meer by te voeg nie, verwyder dit onder “Kerkdienste en plekke”.", "Isusa ezizayo (nezinhlelo zazo) kusukela osukwini oluthile. Ukuze ungabe usayengeza, yisuse ngaphansi kokuthi “Izinkonzo Zesonto nezindawo”.", "Isusa ezizayo (kunye noludwe lwazo) ukususela kumhla othile. Ukuze ungaphinde uyongeze, yisuse phantsi kwe “Iinkonzo zeCawe neendawo”."],

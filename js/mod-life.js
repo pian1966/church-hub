@@ -153,7 +153,7 @@
         (next.open ? ' <span class="tag">' + T('Open to everyone') + '</span>' : '') + (next.showFrom && next.showFrom > now ? ' <span class="tag grey">' + esc(T('Goes out {when}', { when: H.fmt(LeaveCore.iso(new Date(next.showFrom))) + ' ' + new Date(next.showFrom).toTimeString().slice(0, 5) })) + '</span>' : '') +
         studyLinks(next, now) + (may ? '<div class="btns"><button class="btn small ghost" data-act="life:post" data-g="' + esc(g.id) + '" data-id="' + esc(next.id) + '">' + H.icon(PEN, 14) + T('Change') + '</button></div>' : '') + '</div>'
       : may ? '<p class="muted small" style="margin:0 0 8px">' + T('Post the meeting link and the notes, and the group gets them in Messages.') + '</p>' : '';
-    var btn = may ? '<div class="btns"><button class="btn' + (next ? ' ghost' : ' primary') + ' small" data-act="life:post" data-g="' + esc(g.id) + '">' + H.icon(VIDEO, 16) + T(next ? 'Post another week' : 'Post this week’s links') + '</button></div>' : '';
+    var btn = may ? '<div class="btns"><button class="btn primary small" data-act="life:post" data-g="' + esc(g.id) + '">' + H.icon(VIDEO, 16) + T(next ? 'Post another week' : 'Post this week’s links') + '</button></div>' : '';
     var old = past.length ? '<details class="st-past"><summary>' + esc(T('Past studies ({n})', { n: past.length })) + '</summary><div class="list">' + past.slice(0, 26).map(function (st) {
       return '<div class="item"><span class="grow"><b>' + esc(H.fmt(st.date, true)) + '</b><small>' + esc(st.topic || '') + '</small></span>' + (st.notes ? linkBtn(st.notes, T('Notes'), NOTES, false) : '') +
         (may ? '<button class="icon-btn ghost" data-act="life:delstudy" data-id="' + esc(st.id) + '" aria-label="' + esc(T('Delete')) + '" title="' + esc(T('Delete')) + '">' + H.icon(H.ICON.trash, 14) + '</button>' : '') + '</div>';
@@ -238,7 +238,7 @@
   /** On the Me page: their life groups, if they are in any (and life groups are switched on). */
   function mePanel() {
     var u = me(); if (!u || !on() || S.previewCare()) return '';
-    var html = minePanels(u); return html ? '<h2 style="margin:22px 0 10px">' + T('My Midweek Groups') + '</h2><div id="my-life">' + html + '</div>' : '';
+    var html = minePanels(u); return html ? '<h2 class="sect-h">' + T('My Midweek Groups') + '</h2><div id="my-life" class="grid2">' + html + '</div>' : '';
   }
   /** The tags on a person: Life group or Group leader, with each group's name – for Administrators and Pastors, and on your own page. */
   function tag(p) {
@@ -268,7 +268,7 @@
   function memberPage() {
     var u = me(), html = u ? minePanels(u) : '';
     return '<div class="page-head"><div><h1>' + T('Midweek Groups') + '</h1></div></div>' + openPanel(u) +
-      (html ? '<div id="my-life">' + html + '</div>' : '<p class="empty">' + T('You’re not in a Midweek Group yet. Ask the church office or a group leader to add you.') + '</p>');
+      (html ? '<div id="my-life" class="grid2">' + html + '</div>' : '<p class="empty">' + T('You’re not in a Midweek Group yet. Ask the church office or a group leader to add you.') + '</p>');
   }
   function leaderOf(gid) { var u = me(), g = S.get('lifeGroups', gid); return g && u && Care.isLeader(g, u.id) ? g : null; }
 

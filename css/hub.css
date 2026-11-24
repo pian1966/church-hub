@@ -56,7 +56,10 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 .lead { margin: 6px 0 0; color: var(--muted); font-size: 15px; max-width: 70ch; }
 .crumb { display: inline-flex; align-items: center; gap: 4px; font-size: 13.5px; font-weight: 600; text-decoration: none; margin-bottom: 8px; }
 .block { margin-bottom: 26px; }
-.block > h2, .panel > h2 { font-size: 16px; margin: 0 0 10px; }
+.block > h2, .panel > h2 { font-size: 18px; margin: 0 0 10px; }
+/* A group's name inside its card, and a heading above a run of cards: same family of sizes as the card headings (they used to fall back to the browser's 24px) */
+.cg-head h2, .my-care > .row > h2 { font-size: 18px; }
+h2.sect-h { font-size: 20px; margin: 22px 0 10px; }
 .panel { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; box-shadow: var(--shadow); }
 .panel + .panel { margin-top: 16px; }
 /* A person who has died (js/people/profile.js): their information blocks are grey. Setting --surface on the block greys
@@ -76,8 +79,9 @@ main { width: 100%; max-width: 1180px; margin: 0 auto; padding: 28px 32px 96px; 
 /* ---------- controls ---------- */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 44px; padding: 0 16px; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--surface); color: var(--ink); font-weight: 600; font-size: 14.5px; cursor: pointer; text-decoration: none; white-space: nowrap; }
 .btn:hover { border-color: #B9AEA3; }
-.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-on, #fff); }
-.btn.primary:hover { background: var(--accent-ink); border-color: var(--accent-ink); }
+/* The main button is pale orange (like .btn.save), so the headings stay the first thing you see; solid orange only for danger */
+.btn.primary { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, var(--surface)); color: var(--accent-ink); }
+.btn.primary:hover, .btn.primary:focus-visible { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 60%, var(--surface)); }
 .btn.danger, .btn.primary.danger { background: var(--bad); border-color: var(--bad); color: #fff; }
 .btn.small { min-height: 36px; padding: 0 12px; font-size: 13.5px; border-radius: 10px; }
 .btn.ok { background: var(--ok); border-color: var(--ok); color: #fff; }
@@ -1606,3 +1610,46 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 .swap-card { flex-wrap: wrap; }
 .item.passed { opacity: .8; }
 .away-panel .row { align-items: center; gap: 10px; }
+
+
+/* ---------- Page pictures: soft watercolour headings (js/banners.js; Settings → Colours → Page pictures; "Plain" turns them off) ---------- */
+.page-head.hero { --soft: color-mix(in srgb, var(--tint) 9%, #fff); --ttl: color-mix(in srgb, var(--tint) 62%, #000); position: relative; isolation: isolate; z-index: 2; border-radius: 22px; padding: 26px 30px; min-height: 172px; flex-direction: column; align-items: flex-start; justify-content: center; flex-wrap: nowrap; gap: 14px; background: var(--soft); margin-bottom: 22px; }
+.page-head.hero > div:not(.hero-bg), .page-head.hero > .btns, .page-head.hero > .top-r { position: relative; z-index: 1; }
+.page-head.hero > div:not(.hero-bg) { max-width: 52%; }
+.page-head.hero h1 { font-size: 32px; letter-spacing: -.015em; color: var(--ttl); }
+.page-head.hero .lead { color: var(--ink); opacity: .8; max-width: 44ch; }
+.page-head.hero .btns { display: flex; flex-wrap: wrap; gap: 8px; }
+.hero-bg { position: absolute; inset: 0; z-index: 0; border-radius: inherit; overflow: hidden; pointer-events: none;
+  background: radial-gradient(420px 260px at 88% 8%, color-mix(in srgb, var(--tint) 30%, transparent), transparent 70%), radial-gradient(300px 220px at 62% 110%, color-mix(in srgb, var(--tint) 20%, transparent), transparent 70%), radial-gradient(260px 200px at 0% 0%, rgba(255,255,255,.8), transparent 70%); }
+.hero-art { position: absolute; right: 0; top: 0; height: 100%; width: 62%; }
+.hero-art * { stroke-linecap: round; stroke-linejoin: round; }
+.hero-art .a { fill: color-mix(in srgb, var(--tint) 45%, transparent); stroke: none; }
+.hero-art .b { fill: color-mix(in srgb, var(--tint) 25%, transparent); stroke: none; }
+.hero-art .c { fill: #E8590C; fill-opacity: .55; stroke: none; }
+.hero-art .w { fill: #fff; fill-opacity: .85; stroke: color-mix(in srgb, var(--tint) 55%, transparent); stroke-width: 2.2; }
+.hero-art path.w:not([d$="z"]) { fill: none; }
+html[data-mode=dark] .page-head.hero { --soft: color-mix(in srgb, var(--tint) 22%, #1D1B19); --ttl: color-mix(in srgb, var(--tint) 35%, #fff); }
+html[data-mode=dark] .hero-bg { background: radial-gradient(420px 260px at 88% 8%, color-mix(in srgb, var(--tint) 45%, transparent), transparent 70%), radial-gradient(300px 220px at 62% 110%, color-mix(in srgb, var(--tint) 30%, transparent), transparent 70%); }
+html[data-mode=dark] .hero-art .a { fill: color-mix(in srgb, var(--tint) 55%, #fff 10%); fill-opacity: .55; }
+html[data-mode=dark] .hero-art .b { fill: color-mix(in srgb, var(--tint) 40%, #fff 8%); fill-opacity: .4; }
+html[data-mode=dark] .hero-art .w { fill: #fff; fill-opacity: .22; stroke: rgba(255,255,255,.35); }
+@media (max-width: 700px) {
+  .page-head.hero { padding: 112px 18px 20px; min-height: 0; justify-content: flex-end; }
+  .page-head.hero > div:not(.hero-bg) { max-width: 100%; }
+  .page-head.hero h1 { font-size: 25px; }
+  .hero-art { width: 100%; height: 104px; top: 8px; }
+}
+/* Settings → Colours → Page pictures: two choices, each with a small preview */
+.look-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin: 12px 0 0; }
+.look-opt { display: flex; flex-direction: column; gap: 8px; text-align: left; padding: 10px; border: 2px solid var(--line); border-radius: 16px; background: var(--surface); cursor: pointer; }
+.look-opt[aria-checked=true] { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.look-opt b { font-size: 14.5px; }
+.look-prev { position: relative; height: 84px; border-radius: 12px; overflow: hidden; background: var(--surface-2); border: 1px solid var(--line-2); }
+.look-prev.wash { --tint: #2F7A78; background: color-mix(in srgb, var(--tint) 9%, #fff); }
+.look-prev.wash .hero-bg { position: absolute; inset: 0; }
+.look-prev.wash .hero-art { width: 80%; }
+.look-prev.wash u { display: none; }
+.look-prev i { position: absolute; left: 12px; top: 14px; font-style: normal; font-weight: 700; font-size: 15px; }
+.look-prev i + u { position: absolute; left: 12px; top: 40px; width: 55%; height: 6px; border-radius: 3px; background: var(--line); }
+.look-prev i + u + u { top: 54px; width: 40%; }
+@media print { .hero-bg { display: none; } .page-head.hero { background: none; min-height: 0; padding: 0; } .page-head.hero > div:not(.hero-bg) { max-width: none; } }

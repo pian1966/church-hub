@@ -258,7 +258,7 @@
     var body;
     if (a === 'terminology') body = renderTerminology(st);
     else if (a === 'emails') body = renderEmailTemplates(st);
-    else if (a === 'colours') body = renderTheme(st);
+    else if (a === 'colours') body = renderTheme(st) + renderLook(st);
     else if (a === 'apps') body = renderApps(st);
     else if (a === 'application') body = window.PeopleParts && PeopleParts.formSettings ? PeopleParts.formSettings() : '';
     else if (a === 'access') body = renderAccessPage(st, parts && MERGED[parts[0]]); else if (a === 'services') {
@@ -280,6 +280,17 @@
     '#007EA9', '#00A8D8', '#2ABACC', '#71C5E8', '#9ECDC9', '#598D7F', '#2E7D4F', '#606951', '#1E1F23'];
   var CROSS_SVG = '<svg viewBox="0 0 48 48" aria-hidden="true"><rect x="22.6" y="3" width="2.8" height="42" rx="1.4"/><rect x="11" y="15.6" width="26" height="2.8" rx="1.4"/></svg>';
   function themeVars(t) { return '--a:' + t.accent + ';--ao:' + (t.on || '#FFFFFF') + ';--ai:' + t.ink + ';--as:' + t.soft + ';--s:' + t.side + ';--s2:' + t.side2; }
+  /** Page pictures: the soft watercolour picture behind every page's heading, or Plain (settings.look = 'plain'). */
+  function renderLook(st) {
+    var plain = window.Banners && Banners.plain(st), prev = window.Banners ? '<span class="hero-bg">' + Banners.svg('library') + '</span>' : '';
+    function opt(v, title, inner) { var on = (v === 'plain') === !!plain; return '<button type="button" class="look-opt" role="radio" aria-checked="' + on + '" data-act="settings:look" data-v="' + v + '">' + inner + '<b>' + title + '</b></button>'; }
+    return '<section class="panel" id="st-look"><h2>' + T('Page pictures') + '</h2>' +
+      '<p class="hint" style="margin-top:0">' + T('A soft watercolour picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.') + '</p>' +
+      '<div class="look-pick" role="radiogroup" aria-label="' + esc(T('Page pictures')) + '">' +
+        opt('watercolour', T('Soft watercolour'), '<span class="look-prev wash">' + prev + '<i>' + T('Library') + '</i><u></u><u></u></span>') +
+        opt('plain', T('Plain (original)'), '<span class="look-prev"><i>' + T('Library') + '</i><u></u><u></u></span>') +
+      '</div></section>';
+  }
   function renderTheme(st) {
     var t = H.themeOf(st), hex = ((st.theme || {}).id === 'custom' ? st.theme.color : t.accent).toUpperCase(), shown = H.themeFrom(hex), hsv = toHsv(hex);
     pick = { h: hsv.h, s: hsv.s, v: hsv.v };
@@ -770,6 +781,12 @@
         S.setSettings({ seeOthers: see, seeCare: care, seeCareOwn: own, careOnPeople: ppl }, 'Who can see what (contact details): ' + say + '. Care groups: ' + (care.join(', ') || 'Administrators and Pastors only') +
           '; members see ' + (own ? 'everyone in their own group' : 'only the carers of their own group') + '; members ' + (ppl ? 'see' : 'don’t see') + ' a person’s care group on their page');
         S.resyncDirectory();   // everyone's shared contact details, as now allowed
+        H.render(); H.toast(T('Saved'));
+      },
+      look: function (el) {
+        var v = el && el.dataset && el.dataset.v === 'plain' ? 'plain' : 'watercolour';
+        if (((S.settings().look === 'plain') ? 'plain' : 'watercolour') === v) { H.toast(T('Saved')); return; }
+        S.setSettings({ look: v }, 'Page pictures: ' + (v === 'plain' ? 'plain (the original look)' : 'soft watercolour'));
         H.render(); H.toast(T('Saved'));
       },
       theme: function () {

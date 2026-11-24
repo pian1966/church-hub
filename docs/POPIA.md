@@ -477,3 +477,11 @@ Prayer points are checked as they're typed for phone numbers, email addresses, l
 for things rather than people by name. Churches in countries where Christians face danger start hidden (no name, town,
 country or photo). Kept in `settings.prayerCard` (readable by everyone signed in to the church, as all settings are);
 changes are written to the audit log. Shared with other churches only once Church & Trellis's office exists.
+
+## Who is serving where (the printed or downloaded roster)
+Purpose: so volunteers know who they serve with and can keep the roster. Basis: serving is the activity the person agreed to, and the roster is the
+kind of list a church normally puts on a notice board. Who sees it: staff all of it; a Church Partner, and an attendee while Settings → Attendees lets
+attendees see names, can read which person is on which position at which service (name, position, date – the printed roster shows nothing more). No
+contact details, away dates, reasons or leave are in it: those stay with the person and the roster team. Someone who said no is not printed. Printing or
+downloading is written to the audit log (dates only).
+

@@ -17,7 +17,7 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.107';
+  var NEWS_FOR = '0.108';
   var NEWS = [
     { date: '2026-11-24', who: ['everyone'], text: TX('Every page now has a soft watercolour picture at the top. Administrators and the Rector can switch back to plain under Settings → Colours → Page pictures.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Easier to read: on your own page your details now come first and your groups last, headings are a little bigger, and the main buttons are a softer orange on every page.') },
@@ -25,6 +25,7 @@
     { date: '2026-11-23', who: ['everyone'], text: TX('In Did you know? and What’s new, the names of buttons and menu items now look like little buttons, so it is easy to see what to tap.') },
     { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'Teams'], text: TX('Rosters → Teams: the Administrator, the Rector and the assistant ministers can now write a position’s tooltip, and a new position is added in one box. On a phone, tap the small i beside a position to read its tooltip.') },
     { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'Teams'], text: TX('Rosters → Teams: a position that was added by mistake, or isn’t used any more, can now be deleted (⋯ beside it). Each position’s names fold away until you tap them, and its tooltip is set from the same ⋯ menu.') },
+    { date: '2026-11-24', who: ['everyone'], app: 'rosters', btn: ['Rosters', 'My serving', 'Print or download the roster'], text: TX("Rosters: anyone can now print or download the whole roster as a PDF – portrait or landscape, for a month up to a year, with the positions down the side and every Sunday across the top. A Sunday with no service stays as a column and says so. Rosters → My serving → Print or download the roster (planners: More).") },
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', btn: ['Choose a photo'], text: TX('Adding names from a sheet to an event: each person now has their own guests counter (filled in from “+2” on the sheet). Choose a photo also opens Google Photos on Android.') },
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], btn: ['People'], text: TX('Say a name instead of typing it: tap the microphone in People’s search, or in any box where you look for someone. Names that sound like what you said come up too – tap the right one.') },
     { date: '2026-11-20', who: ['admin', 'pastor', 'rosters', 'kids'], app: 'events', btn: ['From a sheet'], text: TX('Events: a whole paper sign-up sheet at once – open the event, tap From a sheet and take a photo. Church & Trellis reads the names and finds them in People; you check each one. Pastors and Administrators can register someone who isn’t in People yet.') },

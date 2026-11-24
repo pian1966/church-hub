@@ -289,9 +289,13 @@ await t('teams and services: everyone reads; only Admin and Roster coordinators 
   for (const r of roles) await can(read(db[r], 'teams/t1'));
   await can(db.rosters.doc('teams/t2').set({ name: 'Prayer' })); await cannot(db.member.doc('teams/t3').set({ name: 'x' })); await cannot(db.pastor.doc('teams/t3').set({ name: 'x' }));
 });
-await t('members see only their own turns, and may only accept or decline them', async () => {
-  await can(list(db.member.collection('assignments').where('personId', '==', 'p14'))); await cannot(list(db.member.collection('assignments')));
-  await cannot(read(db.member, 'assignments/a15'));
+await t('members read who is serving where (to print the roster), and may only accept or decline their own turns', async () => {
+  await can(list(db.member.collection('assignments').where('personId', '==', 'p14'))); await can(list(db.member.collection('assignments')));
+  await can(read(db.member, 'assignments/a15'));
+  await can(list(db.attendee.collection('assignments')));   // an attendee, while Settings → Attendees lets them see names (the usual)
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: ['write'] }));
+  await cannot(list(db.attendee.collection('assignments'))); await can(read(db.member, 'assignments/a15'));
+  await env.withSecurityRulesDisabled(c => c.firestore().doc('settings/church').update({ attendeeCan: firebase.firestore.FieldValue.delete() }));
   await can(db.member.doc('assignments/a14').update({ status: 'accepted' }));
   await cannot(db.member.doc('assignments/a14').update({ positionId: 'keys' }));
   await cannot(db.member.doc('assignments/a14').update({ status: 'pending' }));

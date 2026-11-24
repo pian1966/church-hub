@@ -323,8 +323,10 @@ service cloud.firestore {
       allow write: if rosterer();
     }
     // Members can accept or decline their own turns, nothing else.
+    // Everyone who may see Church Partners' names may read who is serving where (so a volunteer can print the whole
+    // roster); the names themselves come from names/. No contact details are in an assignment.
     match /assignments/{id} {
-      allow read: if staff() || mine(resource.data.personId);
+      allow read: if staff() || mine(resource.data.personId) || attendeeMay('names') || attendeeMay('directory');
       allow create, delete: if rosterer();
       allow update: if rosterer()
         || (mine(resource.data.personId) && onlyChanges(['status', 'updatedAt'])

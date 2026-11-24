@@ -171,13 +171,10 @@ console.log('Holy Communion: communion positions only where there is communion')
   ok(!R.runsAt(pos[1], services[1], [], ['s1']) && R.runsAt(pos[1], services[0], [], ['s1']) && R.runsAt(pos[0], services[1], [], ['s1']), 'runsAt knows about communion');
 }
 
-console.log('Printing the roster: a term at a time, only what each service needs');
+console.log('Printing the roster: every Sunday is a column, only what each service needs');
 {
-  const t = R.terms('2026-11-20');
-  ok(t[0].n === 4 && t[0].from === '2026-10-01' && t[0].to === '2026-12-31', 'this term: October to December');
-  ok(t[1].n === 1 && t[1].year === 2027 && t[1].from === '2027-01-01' && t[1].to === '2027-03-31', 'next term rolls into the new year');
-  ok(R.terms('2027-05-02')[0].to === '2027-06-30', 'the second term ends on 30 June');
-
+  ok(R.rangeEnd('2026-11-29', 4) === '2026-12-26' && R.rangeEnd('2026-12-27', 13) === '2027-03-27' && R.RANGES.join() === '4,6,8,13,26,52', 'a month is 4 weeks, a quarter 13: the last day of the stretch');
+  ok(R.perPage('portrait') === 7 && R.perPage('landscape') === 13, 'fewer Sundays fit across a portrait page');
   const pos = [
     { id: 'preach', teamId: 'lead', name: 'Preaching', needed: 1 },
     { id: 'creche', teamId: 'kids', name: 'Creche', needed: 1, times: ['08:00'] },
@@ -200,10 +197,10 @@ console.log('Printing the roster: a term at a time, only what each service needs
   ok(choices.map(c => c.key).join() === '08:00,17:00,special' && choices[0].services === 2 && choices[0].name === 'Family', 'one choice per service, special services last');
 
   const eight = R.printSheets(d, { from: '2027-01-01', to: '2027-03-31', sheets: ['08:00'] });
-  ok(eight.length === 1 && eight[0].services.map(s => s.id).join() === 'a8,b8', 'the 8 o’clock sheet has only the 8 o’clock services of the term');
+  ok(eight.length === 1 && eight[0].columns.filter(c => c.held).map(c => c.service.id).join() === 'a8,b8', 'the 8 o’clock sheet has only the 8 o’clock services of the term');
   const rows8 = eight[0].teams.flatMap(t => t.rows.map(r => r.position.id));
   ok(rows8.join() === 'preach,creche,comm', 'positions nobody is on, and the 5pm band, are left out completely');
-  ok(eight[0].teams[0].name === 'Service Leading' && eight[0].teams[0].rows[0].cells.map(c => c.names.join()).join('|') === 'Jason Naidoo|Sam Peters', 'names under each date, waiting replies included');
+  ok(eight[0].teams[0].name === 'Service Leading' && eight[0].teams[0].rows[0].cells.filter(c => !c.off).map(c => c.names.join()).join('|') === 'Jason Naidoo|Sam Peters', 'names under each date, waiting replies included');
   const comm = eight[0].teams.find(t => t.teamId === 'comm').rows[0].cells;
   ok(comm[0].na && !comm[1].na && comm[1].names[0] === 'Thabo Nkosi', 'a communion role shows as not needed on a Sunday without communion');
 
@@ -218,7 +215,19 @@ console.log('Printing the roster: a term at a time, only what each service needs
   ok(all.map(s => s.key).join() === '08:00,17:00,special' && all[2].teams[0].rows[0].cells[0].names[0] === 'Ruth', 'every service when none are chosen, names as the app shows them');
   ok(R.printSheets(d, { from: '2027-02-01', to: '2027-02-28' }).length === 0, 'nothing to print in a month without services');
 
+  // A Sunday on which the service is not held stays as a column, with a note – it is not skipped
+  const gap = Object.assign({}, d, { services: d.services.filter(s => s.id !== 'apr').concat([{ id: 'd8', date: '2027-01-24', time: '08:00', name: 'Family' }]),
+    assignments: d.assignments.filter(a => a.serviceId !== 'apr').concat([as('9', 'd8', 'preach', 'p3')]) });
+  const gapped = R.printSheets(gap, { from: '2027-01-01', to: '2027-03-31', sheets: ['08:00'] })[0];
+  ok(gapped.columns.map(c => c.date + (c.held ? '' : '*')).join() === '2027-01-03,2027-01-10,2027-01-17*,2027-01-24', 'the 17th has no 8 o’clock service: its column stays, marked as not held');
+  const pr = gapped.teams[0].rows[0].cells;
+  ok(pr[2].off && pr[2].names.length === 0 && !pr[3].off && pr[3].names[0] === 'Aisha Naidoo', 'every row shows that Sunday as off; the next Sunday carries on');
+  ok(gapped.columns[2].service === null, 'a column with no service has no service behind it');
+  ok(R.printSheets(gap, { from: '2027-01-11', to: '2027-01-31', sheets: ['08:00'] })[0].columns.map(c => c.date).join() === '2027-01-17,2027-01-24', 'the range can start in the middle');
+  ok(R.printSheets(d, { from: '2027-01-01', to: '2027-12-31', sheets: ['08:00'] })[0].columns.pop().date === '2027-04-04', 'Sundays after the last planned service are not planned yet – they are not shown as cancelled');
+
   ok(JSON.stringify(R.pages(13)) === '[[0,13]]' && JSON.stringify(R.pages(14)) === '[[0,7],[7,14]]' && R.pages(27).length === 3, 'more Sundays than fit across a page are split evenly');
+  ok(JSON.stringify(R.pages(8, 7)) === '[[0,4],[4,8]]', 'and fewer fit across a portrait page');
 }
 
 console.log(fails ? `\n${fails} FAILED` : '\nAll roster tests passed');

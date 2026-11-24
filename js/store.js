@@ -1001,7 +1001,10 @@ var Store = (function () {
       if (role() === 'member' && me && mine && raw.settings) {
         var partner = window.Msg ? Msg.partnerLevel(mine) : true, ac = window.Msg ? Msg.attendeeCan(st) : [];
         if (partner || ac.indexOf('directory') >= 0) want.directory = c('directory');
-        if (partner || ac.indexOf('names') >= 0 || ac.indexOf('directory') >= 0) want.names = c('names');
+        if (partner || ac.indexOf('names') >= 0 || ac.indexOf('directory') >= 0) {
+          want.names = c('names');
+          want['assignments:all'] = c('assignments');   // who is serving where, so any volunteer can print the whole roster (names come from names)
+        }
       }
       // A Midweek Group's leader (not an Administrator or Pastor): every adult's name, to add people to their group
       var cgRaw = raw.careGroups || {};
@@ -1238,9 +1241,11 @@ var Store = (function () {
       var bro = role() === 'admin' ? raw.brochure : raw['brochure:rector'];   // the Rector's copy is asked for in extras()
       db.brochures = bro && bro.church ? copy(bro.church) : {};
       if (db.settings) delete db.settings.brochures;
-      ['families', 'teams', 'positions', 'services', 'skills', 'assignments', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books', 'applicationDocuments'].forEach(function (c) { db[c] = arr(c); });
+      ['families', 'teams', 'positions', 'services', 'skills', 'groups', 'blockouts', 'dsr', 'breaches', 'elvantoSync', 'robotStatus', 'elvantoFound', 'guardians', 'noCollect', 'serveOffers', 'detailChanges', 'emailPrompts', 'msgGroups', 'partnerApps', 'books', 'applicationDocuments'].forEach(function (c) { db[c] = arr(c); });
       var ignoredDuplicates = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('libraryDuplicateIgnores') === 0; }));
       db.libraryDuplicateIgnores = Object.keys(ignoredDuplicates).map(function (id) { var o = copy(ignoredDuplicates[id]); o.id = id; return o; });
+      var asg = merged('assignments', 'assignments:all');   // staff: all of them; members: their own, and everyone's when they may see names
+      db.assignments = Object.keys(asg).map(function (id) { var o = copy(asg[id]); o.id = id; return o; });
       var picks = merged('pickNames', 'pickNames:lead');   // every adult's name (Administrators, Pastors, Midweek Group leaders)
       db.pickNames = Object.keys(picks).map(function (id) { var o = copy(picks[id]); o.id = id; return o; });
       var custom = merged.apply(null, Object.keys(raw).filter(function (k) { return k.indexOf('customGroups') === 0; }));

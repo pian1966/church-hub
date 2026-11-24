@@ -64,7 +64,7 @@ jobs:
             grep -Eq "parts: '([^']*,)?$n(,[^']*)?'" .github/workflows/tests.yml || { echo "::error title=Browser test part missing::tests/app/$n.js is not in any list in .github/workflows/tests.yml, so GitHub would never run it. Add it to one of the four Browser lists (and to the default list in tests/app.test.js)."; exit 1; }
           done
       - name: Rostering rules
-        run: node tests/roster.test.js
+        run: node tests/roster.test.js && node tests/roster-pdf.test.js
       - name: Leave Manager import
         run: node tests/leave-import.test.js
       - name: Elvanto import

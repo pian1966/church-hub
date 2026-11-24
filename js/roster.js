@@ -240,73 +240,86 @@ var RosterCore = (function () {
     return out;
   }
 
-  /* ---------- printing the roster (A4 landscape, a term at a time) ---------- */
+  /* ---------- printing or downloading the roster: positions down the side, every Sunday across the top ---------- */
   function iso(y, m, d) { var x = new Date(y, m, d, 12); return x.getFullYear() + '-' + ('0' + (x.getMonth() + 1)).slice(-2) + '-' + ('0' + x.getDate()).slice(-2); }
-  /**
-   * The terms offered when printing: [{ n, year, from, to }] – this term and the next, as the four quarters of the year
-   * (Jan–Mar, Apr–Jun, Jul–Sep, Oct–Dec, close to the school terms); the dates can be changed before printing.
-   */
-  function terms(today) {
-    var y = +today.slice(0, 4), q = Math.floor((+today.slice(5, 7) - 1) / 3), out = [];
-    for (var k = 0; k < 2; k++) {
-      var qq = q + k, yy = y + Math.floor(qq / 4); qq = qq % 4;
-      out.push({ n: qq + 1, year: yy, from: iso(yy, qq * 3, 1), to: iso(yy, qq * 3 + 3, 0) });
-    }
-    return out;
-  }
+  function addDays(date, n) { var d = parse(date); return iso(d.getFullYear(), d.getMonth(), d.getDate() + n); }
+  function weekday(date) { return parse(date).getDay(); }
+  /** How long a stretch to print, in weeks: 1 month, 6 weeks, 2 months, a quarter, 6 months, a year. */
+  var RANGES = [4, 6, 8, 13, 26, 52];
+  /** The last day of a stretch of `weeks` weeks that starts on `from`. */
+  function rangeEnd(from, weeks) { return addDays(from, weeks * 7 - 1); }
   /** Which sheet a service is printed on: its regular service (8:00, 10:00…), or 'special' for all special services together. */
   function sheetOf(svc, special) { var k = slotOf(svc); return special && special.indexOf(k) >= 0 ? 'special' : k; }
+  function byWhen(a, b) { var x = a.date + a.time, y = b.date + b.time; return x < y ? -1 : x > y ? 1 : 0; }
   /** The sheets that can be printed between two dates: [{ key, services: n }], in the order of their first service. */
   function printChoices(data, from, to) {
     var out = [], at = {};
     (data.services || []).filter(function (s) { return s.date >= from && s.date <= to; })
-      .sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; })
+      .sort(byWhen)
       .forEach(function (s) { var k = sheetOf(s, data.specialSlots); if (!at[k]) { at[k] = { key: k, services: 0, first: s }; out.push(at[k]); } at[k].services++; });
     return out.sort(function (a, b) { return a.key === 'special' ? 1 : b.key === 'special' ? -1 : (a.first.time < b.first.time ? -1 : a.first.time > b.first.time ? 1 : 0); })
       .map(function (x) { return { key: x.key, services: x.services, name: x.key === 'special' ? '' : x.first.name }; });
   }
   /**
-   * The roster as sheets to print: one per regular service (all the 8 o'clock services of the term on one sheet…).
+   * The roster as sheets to print or download: one per regular service (all the 8 o'clock services on one sheet…).
+   * Every Sunday of that service between its first and last planned one is a column – a Sunday on which the service is not
+   * held stays as a column (held: false, service: null) so the page says so, rather than the date quietly disappearing.
+   * (Sundays after the last planned service are not columns: they are not planned yet, not cancelled.)
    * A position is printed only where someone is on it: positions that service doesn't have (Creche at 5pm, communion roles
    * without communion) and positions nobody is on are left out completely – unless opts.gaps, which keeps the positions
    * that service needs even when they are still empty, to fill in by hand. People who said no are not printed.
    * opts: { from, to, sheets: [keys from printChoices], gaps, name: function (person) }.
-   * Returns [{ key, services: [svc], teams: [{ teamId, name, rows: [{ position, cells: [{ names: [], na }] }] }] }];
-   * na = the position isn't needed at that service. Sheets with nothing on them are left out.
+   * Returns [{ key, columns: [{ date, service, held }], teams: [{ teamId, name, rows: [{ position, cells: [{ names: [], na, off }] }] }] }];
+   * na = the position isn't needed at that service; off = the service isn't held that day. Sheets with nothing on them are left out.
    */
   function printSheets(data, opts) {
     opts = opts || {};
     var people = byId(data.people), teamsById = byId(data.teams), nm = opts.name || fullName, want = opts.sheets;
-    var svcs = (data.services || []).filter(function (s) { return s.date >= opts.from && s.date <= opts.to; })
-      .sort(function (a, b) { return (a.date + a.time) < (b.date + b.time) ? -1 : 1; });
+    var every = (data.services || []).slice().sort(byWhen);
     var keys = printChoices(data, opts.from, opts.to).map(function (c) { return c.key; }).filter(function (k) { return !want || want.indexOf(k) >= 0; });
     return keys.map(function (key) {
-      var here = svcs.filter(function (s) { return sheetOf(s, data.specialSlots) === key; }), teams = [], byTeam = {};
+      var ofKey = every.filter(function (s) { return sheetOf(s, data.specialSlots) === key; });
+      var cols = ofKey.filter(function (s) { return s.date >= opts.from && s.date <= opts.to; }).map(function (s) { return { date: s.date, service: s, held: true }; });
+      if (key !== 'special') {
+        var days = {}, day = 0, most = 0, first = ofKey[0].date, last = ofKey[ofKey.length - 1].date;
+        ofKey.forEach(function (s) { var w = weekday(s.date); days[w] = (days[w] || 0) + 1; if (days[w] > most) { most = days[w]; day = w; } });   // the day it is usually held (Sunday)
+        var d = opts.from; while (weekday(d) !== day) d = addDays(d, 1);
+        for (; d <= opts.to; d = addDays(d, 7)) {
+          if (d < first || d > last || cols.some(function (c) { return c.date === d; })) continue;
+          cols.push({ date: d, service: null, held: false });
+        }
+        cols.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+      }
+      var teams = [], byTeam = {};
       (data.positions || []).forEach(function (pos) {
         var any = false, needed = false;
-        var cells = here.map(function (s) {
+        var cells = cols.map(function (c) {
+          if (!c.held) return { names: [], na: false, off: true };
+          var s = c.service;
           var names = (data.assignments || []).filter(function (a) { return a.serviceId === s.id && a.positionId === pos.id && a.status !== 'declined'; })
             .map(function (a) { return people[a.personId] ? nm(people[a.personId]) : ''; }).filter(Boolean);
           var runs = runsAt(pos, s, data.specialSlots, data.noCommunion);
           if (names.length) any = true; if (runs) needed = true;
-          return { names: names, na: !runs && !names.length };
+          return { names: names, na: !runs && !names.length, off: false };
         });
         if (!any && !(opts.gaps && needed)) return;
         if (!byTeam[pos.teamId]) { byTeam[pos.teamId] = { teamId: pos.teamId, name: (teamsById[pos.teamId] || {}).name || '', rows: [] }; teams.push(byTeam[pos.teamId]); }
         byTeam[pos.teamId].rows.push({ position: pos, cells: cells });
       });
-      return { key: key, services: here, teams: teams };
+      return { key: key, columns: cols, teams: teams };
     }).filter(function (sh) { return sh.teams.length; });
   }
-  /** Splits a sheet's services into pages that fit across A4 landscape: [[first, last+1], …] of about equal size. */
+  /** Splits a sheet's columns into pages that fit across the paper: [[first, last+1], …] of about equal size. */
   function pages(n, most) {
     most = most || 13; if (n <= most) return [[0, n]];
     var k = Math.ceil(n / most), size = Math.ceil(n / k), out = [];
     for (var i = 0; i < n; i += size) out.push([i, Math.min(n, i + size)]);
     return out;
   }
+  /** How many Sundays fit across one page: landscape 13, portrait 7. */
+  function perPage(orientation) { return orientation === 'portrait' ? 7 : 13; }
 
   return { runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
-    terms: terms, printChoices: printChoices, printSheets: printSheets, pages: pages };
+    RANGES: RANGES, rangeEnd: rangeEnd, addDays: addDays, printChoices: printChoices, printSheets: printSheets, pages: pages, perPage: perPage };
 })();
 if (typeof module !== 'undefined') module.exports = RosterCore;

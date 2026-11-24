@@ -267,7 +267,7 @@
       } },
     teams: 'catalogue', positions: 'catalogue', services: 'catalogue',
     skills: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); }, write: function (c) { return rosterer(c); } },
-    assignments: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)); },
+    assignments: { read: function (c, id, d) { return is(c, STAFF) || (!!d && mine(c, d.personId)) || attendeeMay(c, 'names') || attendeeMay(c, 'directory'); },
       write: function (c, op, id, b, a) {
         if (rosterer(c)) return true;
         return op === 'update' && mine(c, b.personId) && onlyChanges(b, a, ['status', 'updatedAt']) && ['accepted', 'declined'].indexOf(a.status) >= 0;

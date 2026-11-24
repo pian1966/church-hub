@@ -59,24 +59,42 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="rosters:svcpos"][data-p="door"]'); await s.settle(); docs = await s.docsNow();
   check(JSON.stringify(docs['positions/door'].times) === '["08:00","10:00"]', '… and switches positions on or off at a service');
   await s.page.click('[data-act="rosters:svcpos"][data-p="door"]'); await s.settle();
-  // Print the roster: a term at a time, only the positions with names on them
+  // Print or download the roster: how long, portrait or landscape, every Sunday across the top, only the positions with names on them
   await s.go('rosters');
-  await s.page.evaluate(() => { window.print = () => { window.__printed = { html: document.getElementById('print-only').innerHTML, cls: document.getElementById('print-only').className, on: document.documentElement.classList.contains('printing') }; }; });
-  await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pr .pchip');
-  check((await s.page.$$('[data-act="rosters:printterm"]')).length === 2 && !!(await s.page.$('[data-act="rosters:printterm"].on')) && !!(await s.page.$('[data-act="rosters:printsheet"].on')), 'Print the roster: this term and the next, every service chosen');
+  await s.page.evaluate(() => {
+    window.print = () => { window.__printed = { html: document.getElementById('print-only').innerHTML, cls: document.getElementById('print-only').className, on: document.documentElement.classList.contains('printing') }; };
+    Hub.download = (name, text, type) => { window.__downloaded = { name, text, type }; };
+  });
+  const openPrint = async () => { await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pr .pchip'); };
+  await openPrint();
+  check((await s.page.$$('[data-act="rosters:printweeks"]')).length === 6 && !!(await s.page.$('[data-act="rosters:printweeks"][data-w="6"].on')) && !!(await s.page.$('[data-act="rosters:printshape"][data-v="landscape"].on')) && !!(await s.page.$('[data-act="rosters:printsheet"].on')),
+    'Print or download the roster: 1 month to a year (6 weeks to begin with), portrait or landscape (landscape to begin with), every service chosen');
   const sv2 = await s.page.evaluate(() => Store.get('services', 'sv2').date);
-  await s.page.evaluate(d => { for (const id of ['ro-pfrom', 'ro-pto']) { const el = document.getElementById(id); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); } }, sv2);
-  check(/1 page/.test(await s.page.textContent('#ro-pn')) && !(await s.page.$('[data-act="rosters:printterm"].on')), '… any dates, with how many pages it makes');
+  await s.page.evaluate(d => { const el = document.getElementById('ro-pstart'); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); }, sv2);
+  await s.page.click('[data-act="rosters:printweeks"][data-w="4"]');
+  check(/\d+ page/.test(await s.page.textContent('#ro-pn')) && !!(await s.page.$('[data-act="rosters:printweeks"][data-w="4"].on')), '… from any date, with how many pages it makes');
   await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 });
   let printed = await s.page.evaluate(() => window.__printed);
-  check(printed.cls === 'roster' && printed.on && (printed.html.match(/class="ro-sheet"/g) || []).length === 1, '… one A4 page per service, made ready for the printer (or a PDF)');
-  check(['Keys', 'Guitar', 'Vocals', 'Sound desk', 'Sunday School'].every(x => printed.html.includes('>' + x + '<')) && !['>Door<', '>Greeter<', '>Projection<', '>Tea &amp; coffee<'].some(x => printed.html.includes(x)),
+  check(printed.cls === 'roster' && printed.on && /class="ro-sheet landscape"/.test(printed.html), '… A4 landscape pages made ready for the printer (or a PDF)');
+  check(['Keys', 'Guitar', 'Vocals', 'Sound desk', 'Sunday School'].every(x => printed.html.includes('>' + x + '<')) && !printed.html.includes('>Projection<'),
     '… only positions with names on them: empty ones, and someone who said no, are left out completely');
   await s.page.evaluate(() => { window.__printed = null; });
-  await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pgaps');
-  await s.page.check('#ro-pgaps'); await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 });
+  await openPrint(); await s.page.click('[data-act="rosters:printshape"][data-v="portrait"]');
+  await s.page.click('[data-act="rosters:printpdf"]'); await s.page.waitForFunction(() => window.__downloaded, null, { timeout: 5000 });
+  const pdf = await s.page.evaluate(() => window.__downloaded);
+  check(/^Roster \d{4}-\d\d-\d\d to \d{4}-\d\d-\d\d\.pdf$/.test(pdf.name) && pdf.type === 'application/pdf' && pdf.text.startsWith('%PDF-1.4') && pdf.text.includes('/MediaBox [0 0 595 842]') && !pdf.text.includes('/MediaBox [0 0 842 595]') && pdf.text.trim().endsWith('%%EOF'),
+    '… or downloaded as a PDF in the same shape (here portrait)');
+  await openPrint(); await s.page.check('#ro-pgaps'); await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 });
   printed = await s.page.evaluate(() => window.__printed);
-  check(printed.html.includes('>Door<') && printed.html.includes('>Projection<'), '… or with the empty positions too, to fill in by hand');
+  check(/class="ro-sheet portrait"/.test(printed.html) && printed.html.includes('>Door<') && printed.html.includes('>Projection<'), '… portrait pages, with the empty positions too if asked, to fill in by hand');
+  // A Sunday on which the service is not held stays as a column, with a note – it is not skipped
+  await s.page.evaluate(() => { const sv = Store.get('services', 'sv3'); Store.find('assignments', a => a.serviceId === sv.id).forEach(a => Store.remove('assignments', a.id)); Store.remove('services', sv.id); window.__printed = null; });
+  await s.go('rosters'); await openPrint();
+  await s.page.evaluate(d => { const el = document.getElementById('ro-pstart'); el.value = d; el.dispatchEvent(new Event('change', { bubbles: true })); }, sv2);
+  await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 });
+  printed = await s.page.evaluate(() => window.__printed);
+  check(printed.html.includes('The service is not taking place this Sunday') && /<td class="off" rowspan="\d+">/.test(printed.html) && (printed.html.match(/<th scope="col"( class="off"| style=)/g) || []).length >= 4,
+    'a Sunday with no service keeps its column, marked as not taking place');
   await s.go('rosters/teams'); t = await s.text();
   check(t.includes('at 10am') && t.includes('Offers to serve') && t.includes('Clare Jacobs') && t.includes('Tea & coffee') && t.includes('Happy to help after the service'), 'Teams lists offers to serve, with their note');
   await s.page.click('[data-act="rosters:offeryes"][data-id="so1"]'); await s.settle(); docs = await s.docsNow();
@@ -145,6 +163,15 @@ module.exports = async function (ctx) {
   check(myAway.length === 3 && myAway.some(k => docs[k].from === '2027-07-01' && docs[k].to === '2027-07-14'), 'can add several away dates at once (2 service days + a holiday)');
   await s.go('rosters/mine'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.settle();
   docs = await s.docsNow(); check(docs['assignments/kTim'].status === 'accepted', 'can accept a serving turn');
+  // Any volunteer prints or downloads the whole roster (names only), not just their own turns
+  await s.go('rosters/mine');
+  await s.page.evaluate(() => { window.print = () => { window.__printed = { html: document.getElementById('print-only').innerHTML }; }; window.__printed = null; });
+  await s.page.click('.page-head [data-act="rosters:print"]'); await s.page.waitForSelector('#ro-pr .pchip');
+  await s.page.evaluate(() => { const el = document.getElementById('ro-pstart'); el.value = Store.get('services', 'sv2').date; el.dispatchEvent(new Event('change', { bubbles: true })); });
+  await s.page.click('[data-act="rosters:printgo"]'); await s.page.waitForFunction(() => window.__printed, null, { timeout: 5000 }).catch(() => {});
+  const mp = await s.page.evaluate(() => (window.__printed || {}).html || '');
+  check(/ro-sheet/.test(mp) && ['Keys', 'Guitar', 'Sound desk'].every(x => mp.includes('>' + x + '<')) && /<span>[A-Z][a-z]+ [A-Z][a-z]+<\/span>/.test(mp),
+    'a member (volunteer) prints the whole roster from My serving: everyone’s names, positions and dates, nothing else');
   // Me → Consent is its own tab; withdrawing a consent warns what it means, and needs Save pressed twice
   await s.go('me/consent'); t = await s.text();
   check(t.includes('Church directory') && !!(await s.page.$('.me-tabs a[href="#/me/consent"][aria-current]')), 'consent is its own tab on the Me page');

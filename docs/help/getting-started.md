@@ -1,5 +1,16 @@
 # Getting started
 
+## Where do I find help? How do I ask a question?
+For: Everyone
+Also asked: Help page. I'm stuck. Ask Church & Trellis a question. How do I use this? Who can I ask? Can I say my question?
+
+Open **Help** in the menu (on a phone: **More** → **Help**). Type your question – or tap the microphone and say it – and tap
+**Ask**. If your church has switched on AI, you get a short answer written for you, in your language, from these help pages,
+with the pages it came from underneath so you can check. If not, you see the help pages that match your question. You can
+also tap a topic under **Browse by topic** to read its questions.
+
+If Help can't find your answer, **write to the Office** (**Messages**) and someone at church will help.
+
 ## How do I sign in?
 For: Everyone
 Also asked: How do I log in? What's my password? How do I get into Church & Trellis?

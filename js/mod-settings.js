@@ -243,9 +243,10 @@
   function renderAi(st) {
     var ai = st.ai || {}, cfg = window.CHURCH_HUB_FIREBASE || {}, live = S.isLive(), ready = !!cfg.appCheckKey;
     var guide = 'https://github.com/pian1966/church-hub/blob/main/docs/AI-SEARCH-SETUP.md';
-    return '<section class="panel" id="set-ai"><h2>AI for “Ask in your own words” and reading photos of names</h2>' +
+    return '<section class="panel" id="set-ai"><h2>AI for “Ask in your own words”, Help answers and reading photos of names</h2>' +
       '<p class="hint" style="margin-top:0">People → Advanced search understands questions much better with AI: the question (and the list of search fields – never anyone’s records) goes to Google’s Gemini, which turns it into filters. Church & Trellis checks them and runs the search as usual. If the AI can’t be reached, Church & Trellis’s own rules are used.</p>' +
       '<p class="hint">The same switch lets staff take a photo of a paper sign-up sheet (Events → From a sheet) or of visitor cards (People → From a photo): Gemini reads the handwriting, and each name is checked before anyone is added. Without AI, names are typed or said instead.</p>' +
+      '<p class="hint">And it lets Help write an answer to a question about using Church & Trellis, from the church’s help pages: the question, a few help pages and the person’s kind of access go to Gemini – never anyone’s records. Without AI, Help shows the matching help pages.</p>' +
       '<div class="set-rows"><label class="set-row"><span class="set-l"><b>Use AI to understand questions</b><small>' +
         (!live ? 'Only when Church & Trellis is connected to the church’s Firebase project (not in the demo).' : ready ? 'Set up – switch on to use it.' : 'Not set up yet – follow the setup guide first (about 15 minutes).') +
       '</small></span><span class="set-c sw"><input type="checkbox" role="switch" id="st-ai"' + (ai.on ? ' checked' : '') + (live ? '' : ' disabled') + '></span></label>' +

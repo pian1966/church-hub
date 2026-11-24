@@ -1,0 +1,38 @@
+/* Church & Trellis – Help (js/mod-help.js): the question box, the answer, and the topics. Phone width first (390px). */
+.help-ask { padding: 14px; }
+.help-row { display: flex; align-items: center; gap: 8px; }
+.help-row input { flex: 1 1 auto; min-width: 0; height: 46px; padding: 0 14px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); font-size: 16px; }
+.help-row input:focus-visible { outline-offset: 0; }
+.help-row .btn { flex: 0 0 auto; height: 46px; padding: 0 20px; }
+.help-try { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.help-chip { min-height: 36px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--surface-2); color: var(--ink); font-weight: 600; font-size: 14px; cursor: pointer; text-align: left; transition: transform .15s; }
+.help-chip:hover { transform: translateY(-1px); }
+.help-note { margin: 10px 2px 0; font-size: 13px; }
+
+.help-answer { margin-top: 16px; }
+.help-answer h3 { font-size: 15px; margin: 16px 0 6px; color: var(--muted); }
+.help-wait { margin: 0; }
+.help-text { font-size: 16px; line-height: 1.55; }
+.help-text p { margin: 0 0 10px; }
+.help-text ol, .help-text ul, .help-a ol, .help-a ul { margin: 0 0 10px; padding-left: 1.4em; }
+.help-text li, .help-a li { margin-bottom: 6px; }
+
+.help-q { border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); margin: 8px 0; }
+.help-q > summary { cursor: pointer; padding: 12px 14px; font-weight: 600; list-style: none; display: flex; justify-content: space-between; gap: 10px; align-items: center; }
+.help-q > summary::-webkit-details-marker { display: none; }
+.help-q > summary::after { content: '+'; flex: 0 0 auto; font-weight: 400; font-size: 20px; line-height: 1; color: var(--muted); }
+.help-q[open] > summary::after { content: '–'; }
+.help-a { padding: 0 14px 6px; }
+.help-a p { margin: 0 0 10px; }
+.help-from { font-size: 13px; color: var(--muted); }
+
+.help-topics { margin-top: 24px; }
+.help-topics h2 { font-size: 18px; margin: 0 0 10px; }
+.help-tiles { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+.help-topic { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 52px; padding: 10px 14px; border: 1px solid var(--line); border-radius: 14px;
+  background: var(--surface); color: var(--ink); text-decoration: none; box-shadow: var(--shadow); transition: transform .15s; }
+.help-topic:hover { transform: translateY(-1px); }
+.help-topic b { font-size: 15px; }
+.help-topic small { color: var(--muted); font-weight: 600; background: var(--line-2); border-radius: 999px; padding: 1px 9px; }
+.help-back { margin: 0 0 12px; }
+.help-list { padding: 8px 14px; }

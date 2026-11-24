@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.108';
+  var NEWS_FOR = '0.109';
   var NEWS = [
+    { date: '2026-11-24', who: ['everyone'], app: 'help', btn: ['Help'], text: TX('New: Help. Type or say a question about using Church & Trellis and get an answer written for you from the help pages – or browse them by topic.') },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Can’t make it'], text: TX('Can’t make a turn? Tap Can’t make it and you can ask someone on your team who is free that day to take your place – they answer with one tap, and the roster team is told.') },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('Before a new term’s roster is made, you may be asked whether you’ll be away: add your days away, or tap I’m free. And you can now choose to serve once a quarter, or take a break without leaving the team.') },
     { date: '2026-11-24', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'More', 'Ask who’s away…'], text: TX('Before filling a new term: Rosters → More → Ask who’s away… asks every volunteer to add their days away or say they’re free, and the roster shows who has answered, with Remind the others.') },
@@ -114,6 +115,7 @@
 
   var TIPS = [
     // Everyone
+    { id: 'help-ask', btn: ['Help'], who: ['everyone'], app: 'help', href: '#/help', text: TX('Not sure how to do something? Open Help, type or say your question, and get an answer written for you.') },
     { id: 'events-cal', btn: ['Add to my calendar'], who: ['everyone'], app: 'events', href: '#/events', text: TX('Signed up for an event? Open it and tap Add to my calendar – your phone reminds you too.') },
     { id: 'study-past', btn: ['Past studies'], who: ['everyone'], app: 'life', href: '#/life', text: TX('Missed a Midweek Group? Its page keeps Past studies, with the notes for each week.') },
     { id: 'board-help', who: ['everyone'], app: 'board', href: '#/board', text: TX('Tap a note on the Community board to see all of it and write privately to the person who pinned it.') },

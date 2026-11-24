@@ -4,14 +4,16 @@ These pages answer the questions people are likely to ask about using Church & T
 church (not for developers), in plain English, and are meant to be used two ways:
 
 1. **Read as they are** – a searchable help / FAQ page.
-2. **By the planned "Ask a question" helper** – a person types or dictates a question; Church & Trellis finds the
-   matching answers here and an AI writes a reply for that person's question and role, using **only** these pages
-   (see ROADMAP, "Help: ask a question").
+2. **By Help in the app** (js/help.js, js/mod-help.js) – a person types or says a question; Church & Trellis finds the
+   matching answers here and, if the church has switched on AI (Settings → Apps), an AI writes a reply for that person's question,
+   kind of access, language and the church's own words, using **only** these pages, and shows the pages it used. Without AI the
+   matching pages are shown as they are. **Help reads these files straight from the website, so a change here is live as soon as it is
+   merged; every page must be listed in `Help.PAGES` in js/help.js** (`node tests/help.test.js` checks it).
 
 ## Pages
 | Page | Covers |
 | --- | --- |
-| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates |
+| [getting-started.md](getting-started.md) | Signing in, shared email addresses, the phone app, offline, language, light/dark, updates, using Help |
 | [me.md](me.md) | The Me page: my details, consent, days away, my serving, offers to serve, becoming a Church Partner |
 | [rosters.md](rosters.md) | Replying to roster turns; for roster coordinators: the roster view, teams, services, communion, reminders, together/apart |
 | [leave.md](leave.md) | Staff leave: requesting, changing, cancelling; for Administrators: approving, settings, reports |

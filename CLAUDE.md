@@ -34,6 +34,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Messages (inside the app; message groups; replies; what attendees may do – `Msg.attendeeCan`, `Hub.attendee()`) | `js/mod-messages.js`, `js/messages.js` | `js/i18n/messages.js` | `tests/messages.test.js`, `tests/app/messages.js` |
 | Privacy pages, law by country | `js/mod-privacy.js`, `js/privacy-law.js` | `js/i18n/privacy.js` | `tests/privacy-law.test.js` |
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
+| Help: ask a question (typed or said), answered by AI only from `docs/help/`, or the matching pages without AI; browse by topic; the pages are read from the website | `js/mod-help.js`, `js/help.js` (rules), `css/help.css`; the answers are `docs/help/*.md` | `js/i18n/help.js` | `tests/help.test.js`, `tests/app/help.js` |
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
 | Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
 | Settings (incl. Attendees), countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
@@ -130,6 +131,11 @@ A session should say which tier it is running at, and stop and ask if the task's
   both sides' news lines.
   The church can reword the brochures (About → Brochures → Edit): their edits are tied to the original wording, so a line you
   change stops carrying their edit of it (Church & Trellis lists it for them) – change wording only where the feature changed.
+- **Help answers** (`docs/help/*.md`): Help (`js/mod-help.js`) answers people's questions only from these pages, so they must stay true. When a change
+  alters how something works, or what a button, tab or menu is called, change its answer in the same pull request (use the words on the screen,
+  in `**bold**`; `For:` says who it is for; `Also asked:` lists other ways people say it; never describe what the app doesn't do). A new page must
+  be added to `Help.PAGES` in `js/help.js` and to the table in `docs/help/README.md` (`node tests/help.test.js` checks it). Nothing a person types
+  into Help is kept or logged (`docs/POPIA.md`, "Help").
 - Other AI agents (Jules and Antigravity / Gemini) work here too, guided by `AGENTS.md`, which points to this file: keep the rules here.
   GitHub Copilot reads `.github/copilot-instructions.md` (also pointing here, with the rules it has missed): keep it in step.
   Work on your own branch from the latest `main`; on a conflict in `js/version.js`, take the higher version; in `index.html`, keep both sides' lines (see the version rule).

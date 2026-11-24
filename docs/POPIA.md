@@ -441,6 +441,24 @@ nobody connects a Google account, and what is in the meeting or the document sta
   Church & Trellis keeps no recording. What was heard is matched to names **on the phone** (`NameList.rank`); nothing else is sent.
   People who'd rather not can type.
 
+## Help: ask a question (0.109.0; `js/help.js`, `js/mod-help.js`)
+- **Purpose:** so anyone can get a plain answer about using Church & Trellis without phoning the office. For everyone who is signed in.
+- **What is read:** the help pages in `docs/help/` – public text written for the church, no church data (the repository is public).
+- **What goes to the AI (Google's Gemini, through the church's own Firebase project; the same AI switch as Ask in your own
+  words – nothing is sent unless an Administrator switched it on):** the question as typed or said (at most 300 characters), the
+  few help pages that match it, the person's kind of access (e.g. "Church Partner"), the church's own words for roles, and the
+  language they use. **Never** anyone's records, names from the church, households, contact details or the person's own details.
+  The question is written by the person: if they type a name or a private matter into it, that goes to Google too, so the
+  screen says **please don't type private matters**. On the free Gemini tier Google may use what is sent to improve its products;
+  the Information Officer should agree to this and the privacy notice should say it (see `docs/AI-SEARCH-SETUP.md`, step 1).
+- **What is kept:** nothing. The question and the answer stay on the screen only: they are not saved, not logged, and not
+  shared. (The robot's log and the audit log never see them.)
+- **Accuracy:** the AI may only use the pages it is given, and Church & Trellis shows an AI answer only if it names help pages
+  that were really sent; the pages are shown under the answer so the person can check. Wrong or missing answers are put right
+  by changing the help pages (`docs/help/`).
+- **Limits:** at most 12 questions to the AI in ten minutes from one device, so the free allowance lasts; after that, and when
+  the AI can't be reached or is switched off, the matching help pages are shown as they are.
+
 ## Suggestions for better translations
 - When someone suggests better wording (Translations), Church & Trellis keeps the suggestion with their name and person ID, so the
   checker can thank them or ask what they meant. Purpose: improving the app's wording; basis: the person sends it themselves.

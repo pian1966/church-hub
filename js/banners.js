@@ -9,7 +9,7 @@ var Banners = (function () {
   /* Which colour and picture each part of the app gets (by the first part of the address, #/library/... → library) */
   var TINT = { library: '#2F7A78', archives: '#8A5A2B', borrowed: '#6A4C93', messages: '#3563A8', market: '#C2571A', board: '#B7791F',
     care: '#BE4560', midweek: '#3F4B94', groups: '#BE4560', people: '#2E7D6B', rosters: '#2F6F9F', leave: '#C98A1B', events: '#B5483A',
-    settings: '#5B6770', privacy: '#2F6B4F', support: '#A5532B', home: '#E8590C', me: '#BE4560', about: '#5B6770', generic: '#2F7A78' };
+    settings: '#5B6770', privacy: '#2F6B4F', support: '#A5532B', home: '#E8590C', me: '#BE4560', about: '#5B6770', help: '#2B7A9B', generic: '#2F7A78' };
   var ALIAS = { life: 'midweek', care: 'care', groups: 'groups', leaders: 'groups', import: 'settings', words: 'settings', 'church-settings': 'settings' };
 
   /** The picture for an address like "#/library/archives" ('' when this page has none). */
@@ -127,6 +127,13 @@ var Banners = (function () {
     },
     me: function () {
       return figure(320, 182, 2.1, 'a') + heart(430, 70, 1.2, 'c') + heart(210, 100, .8, 'b') + star(160, 50, 8, 'b') + star(500, 150, 8, 'b');
+    },
+    help: function () {
+      return path('M150 44h176a18 18 0 0 1 18 18v54a18 18 0 0 1 -18 18h-98l-34 28v-28h-44a18 18 0 0 1 -18 -18v-54a18 18 0 0 1 18 -18z', 'a') +
+        path('M222 78a21 21 0 1 1 31 18q-11 7 -11 20', 'w') + circ(242, 133, 4, 'w') +
+        circ(436, 66, 32, 'c') + rect(422, 96, 28, 14, 'w', 4) + rect(426, 110, 20, 8, 'a', 3) + path('M436 20v-12M396 36l-9 -9M476 36l9 -9M386 70h-12M498 70h12', 'w') +
+        path('M366 188q36 -16 72 0v-42q-36 -16 -72 0z', 'b') + path('M438 188q36 -16 72 0v-42q-36 -16 -72 0z', 'a') + path('M438 146v42', 'w') +
+        star(130, 70, 8, 'b') + circ(528, 130, 6, 'c') + circ(180, 168, 6, 'a');
     },
     about: function () { return SCENE.generic(); },
     generic: function () {

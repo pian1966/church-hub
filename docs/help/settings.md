@@ -15,6 +15,14 @@ For: Administrators
 **Settings → Church**: church name, **Country** (sets provinces/states, postcodes, phone numbers and the privacy law),
 and the church's colour (**Save the church's colour**) – everyone sees it.
 
+## Can I change or turn off the pictures at the top of each page?
+For: Administrators, the Rector
+Also asked: Plain pages. Page pictures. Remove the header pictures. Line art.
+
+Every page has a picture at the top, in the colours of that part of the app. To change it, open **Settings → Colours →
+Page pictures** and choose **Soft watercolour**, **Warm line art** or **Plain (original)**. Everyone at your church sees the
+choice you make.
+
 ## How do I use our own church words (e.g. Rector, Parishioner)?
 For: Administrators
 Also asked: Change "Church Partner" to "Member". Rename Pastor. Terminology.

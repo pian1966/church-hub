@@ -20,6 +20,8 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [leadership.md](leadership.md) | Leadership groups (the Council, elders, leaders): roles, titles and portfolios |
 | [archive.md](archive.md) | Library → Archives: minutes, plans, contracts and other church records, and who can see them |
 | [library.md](library.md) | The church Library: finding, borrowing and returning books; for librarians |
+| [events.md](events.md) | Events: seeing what's coming up, signing up, reminders; for organisers: putting up an event, the sign-up list, paper sheets from a photo |
+| [community.md](community.md) | The Community board and the Marketplace: notices, listings, and how keepers check them |
 | [messages.md](messages.md) | Reading and sending messages inside Church & Trellis |
 | [people.md](people.md) | For staff: adding and editing people, households, children, duplicates, searching, a death |
 | [privacy.md](privacy.md) | Consent, what others can see, and the Privacy pages for Administrators |

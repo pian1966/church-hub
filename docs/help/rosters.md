@@ -46,6 +46,22 @@ or **1 quarter**. When the roster is wider than the screen, a slider above it (a
 phone you see one service at a time. To leave a service out for now, tap the
 **eye** on its heading; it moves to **Hidden for now**, where one tap brings it back (**Show all** brings them all back).
 
+## How do I ask everyone whether they'll be away before a new term?
+For: Roster coordinators, Administrators, Pastors
+Also asked: Ask who's away. Collect days away. Who has answered? Remind the others.
+
+Before filling a new term, open **Rosters → More → Ask who's away…**. Every volunteer who uses the app is asked in
+**Messages** to add their days away or tap **I'm free**. The roster shows who has answered, and **Remind the others** nudges
+those who haven't. Then **Fill the gaps for me** can avoid the days people said they'd be away.
+
+## Someone says they can't make their turn. What happens?
+For: Roster coordinators, Administrators
+Also asked: Swap. Take my place. Decline. Replacement.
+
+When a volunteer taps **Can't make it** they can ask someone on their team who is free that day to take their place. That
+person is asked in **Messages** and answers with one tap, and the roster team is told. If nobody takes it, the slot shows
+as a gap, and you can fill it as usual.
+
 ## How do I fill in the roster?
 For: Roster coordinators, Administrators
 Also asked: Make the roster. Auto roster. Generate the roster.
@@ -90,8 +106,13 @@ Also asked: Add a department. Add a position. Create a new ministry team.
 
 Open **Rosters → Teams**.
 - First time: **Set up the church's departments** adds the church's departments and positions in one click.
-- **New team** adds a department (e.g. *Prayer*); **Add a position** adds a position to it (e.g. *Camera*). Use **−** and
-  **+** to set how many people it needs per service (e.g. 2 on the sound desk).
+- **New team** adds a department (e.g. *Prayer*); **Add a position** adds a position to it (e.g. *Camera*) in one box. Use
+  **−** and **+** to set how many people it needs per service (e.g. 2 on the sound desk).
+- Each position shows the services it is needed at (8am, 10am, 5pm) and how many people can serve any week, once a month or
+  as a backup. Tap **8am**, **10am** or **5pm** to see only that service's teams. A position's names fold away until you tap them.
+- A position added by mistake, or no longer used, can be removed with **⋯ → Delete position**.
+- A position's **tooltip** (a short note about what the job involves) is written from the same **⋯** menu by the Administrator,
+  the Rector and the assistant ministers. On a phone, tap the small **i** beside a position to read it.
 - New suggested positions (such as Verger, Ushers or Recorded Music) are offered with **Add them**.
 - Move a department up or down with the **↑ ↓** arrows; the roster shows them in that order.
 - Two teams doing the same thing (e.g. Music and Worship)? On one of them, open **⋯ → Join with another team**: its
@@ -120,10 +141,18 @@ Also asked: Married couple on the same Sunday. Parents shouldn't serve at the sa
 
 Open **Rosters → Serving together**.
 - **Serve together**: choose at least two people and how important it is – **Always together** (rostered together or not
-  at all, e.g. a family sharing a car) or **Together when possible**.
+  at all, e.g. a family sharing a car) or **Together when possible**. "Together" means the same service, not always the same job.
 - **Keep apart**: they will never be rostered at the same service – e.g. parents taking turns with a baby.
 
 Members can tap **Ask to serve with someone** there, or use **Serve with family or friends** on the Me page.
+
+## Can volunteers see who else is serving at their service?
+For: Administrators, Roster coordinators
+Also asked: Who's serving with you. Show or hide the crew. Turn off names on Me → Serving.
+
+Yes. Under each of a volunteer's turns on **Me → Serving**, **Who's serving with you** shows the other people serving at that
+service, with their short names and jobs (no contact details), only to people serving there. To switch it off, open
+**Settings → Church Services** and untick **Volunteers see who else is serving at their services**.
 
 ## How do I see who is away?
 For: Roster coordinators, Administrators

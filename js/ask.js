@@ -385,7 +385,8 @@ var Ask = (function () {
       var here = by[s.id] || [], gaps = [];
       (data.positions || []).forEach(function (p) {
         if (data.runsAt && !data.runsAt(p, s)) return;
-        var n = Math.max(0, (p.needed || 1) - here.filter(function (a) { return a.positionId === p.id; }).length);
+        var by = p.neededBy, sk = s.slot || s.time, want = by && typeof by[sk] === 'number' && by[sk] >= 1 ? by[sk] : (p.needed || 1);
+        var n = Math.max(0, want - here.filter(function (a) { return a.positionId === p.id; }).length);
         if (n) gaps.push({ position: p, missing: n });
       });
       return { service: s, gaps: gaps, missing: gaps.reduce(function (t, g) { return t + g.missing; }, 0),

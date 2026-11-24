@@ -12,7 +12,8 @@
  *
  * Data (all plain objects, ISO dates 'yyyy-mm-dd'):
  *   people:       [{ id, firstName, lastName, active }]
- *   positions:    [{ id, teamId, name, needed, times }]           needed = people per service; times = the services it runs at
+ *   positions:    [{ id, teamId, name, needed, neededBy, times }] needed = people per service; neededBy = { '17:00': 1 } a different number at one regular service;
+ *                                                                  times = the services it runs at
  *                                                                  (e.g. ['08:00']; empty or missing = every service)
  *   skills:       [{ personId, positionId, frequency, times }]     new frequency: 'weekly' | 'monthly' | 'quarterly' (12 weeks apart at least)
  *                                                                  | 'emergency' (backup only) | 'break' (taking a break: stays on the team, never asked);
@@ -42,6 +43,11 @@ var RosterCore = (function () {
 
   /** Does this position run at this service? Positions without times run at every service. */
   function slotOf(svc) { return svc.slot || svc.time; }   // which regular service (time and venue) this is
+  /** How many people a position needs at this service: its own number for that regular service (neededBy), else the same for every service. */
+  function neededFor(pos, svc) {
+    var by = pos.neededBy, k = svc && slotOf(svc), n = by && k ? by[k] : null;
+    return typeof n === 'number' && n >= 1 ? n : (pos.needed || 1);
+  }
   function runsAt(pos, svc, special, noCommunion) {
     var k = slotOf(svc), t = pos.times || [];
     if (pos.communion === true && noCommunion && noCommunion.indexOf(svc.id) >= 0) return false;   // a communion role, no communion that day
@@ -138,7 +144,7 @@ var RosterCore = (function () {
         if (servingAt(svc.id, m)) continue;                 // already there: counts as together
         positions.forEach(function (pos) {
           if (!runsAt(pos, svc, data.specialSlots, data.noCommunion)) return;
-          var open = (pos.needed || 1) - filled(svc.id, pos.id) - (taken[pos.id] || 0);
+          var open = neededFor(pos, svc) - filled(svc.id, pos.id) - (taken[pos.id] || 0);
           if (open <= 0 || blocker(svc, m, pos.id)) return;
           var sc = score(svc, m, pos.id);
           if (!best || sc < best.sc) best = { positionId: pos.id, sc: sc };
@@ -161,7 +167,7 @@ var RosterCore = (function () {
       positions.forEach(function (pos) {
         if (!runsAt(pos, svc, data.specialSlots, data.noCommunion)) return;   // e.g. Creche Duty only at the 8:00 service
         var guard = 0;
-        while (filled(svc.id, pos.id) < (pos.needed || 1) && guard++ < 50) {
+        while (filled(svc.id, pos.id) < neededFor(pos, svc) && guard++ < 50) {
           var cands = (data.skills || []).filter(function (k) { return k.positionId === pos.id; })
             .map(function (k) { return k.personId; })
             .filter(function (pid) { return !blocker(svc, pid, pos.id); })
@@ -187,7 +193,7 @@ var RosterCore = (function () {
               var b = blocker(svc, k.personId, pos.id);
               return fullName(people[k.personId]) + ': ' + (b || T('their “must serve together” group can’t all serve'));
             });
-            gaps.push({ serviceId: svc.id, positionId: pos.id, missing: (pos.needed || 1) - filled(svc.id, pos.id), why: why });
+            gaps.push({ serviceId: svc.id, positionId: pos.id, missing: neededFor(pos, svc) - filled(svc.id, pos.id), why: why });
             break;
           }
         }
@@ -407,7 +413,7 @@ var RosterCore = (function () {
     return out;
   }
 
-  return { isCancelled: isCancelled, setCancelled: setCancelled, cancelTargets: cancelTargets, offText: offText, fitNote: fitNote, crews: crews, coverFor: coverFor, runsAt: runsAt, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
+  return { isCancelled: isCancelled, setCancelled: setCancelled, cancelTargets: cancelTargets, offText: offText, fitNote: fitNote, crews: crews, coverFor: coverFor, runsAt: runsAt, neededFor: neededFor, autoFill: autoFill, check: check, awayReason: awayReason, groupsOf: groupsOf, fullName: fullName, byPerson: byPerson, FREQ_DAYS: FREQ_DAYS,
     terms: terms, RANGES: RANGES, rangeEnd: rangeEnd, addDays: addDays, printChoices: printChoices, printSheets: printSheets, pages: pages, perPage: perPage };
 })();
 if (typeof module !== 'undefined') module.exports = RosterCore;

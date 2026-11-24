@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.112';
+  var NEWS_FOR = '0.113';
   var NEWS = [
+    { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Teams'], text: TX('Rosters: a position can now need a different number of people at each service – on Rosters → Teams choose the service (8am, 10am or 5pm) and tap − or +. The roster, the gaps and the printed roster follow it.') },
     { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Cancel this service…'], text: TX("Rosters: a service that is cancelled keeps a narrow column on the roster – on screen, on paper and in the PDF – with the note written up its side. Tap ⋯ under its date → Cancel this service…; everyone on it stays on the roster, can be sent a friendly message, and comes back when you put the service back.") },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX("If a service you were rostered on is cancelled, Me → Serving now says Cancelled (and you may get a friendly message), and the printed roster keeps a narrow column for it.") },
     { date: '2026-11-24', who: ['everyone'], app: 'help', btn: ['Help'], text: TX('New: Help. Type or say a question about using Church & Trellis and get an answer written for you from the help pages – or browse them by topic.') },

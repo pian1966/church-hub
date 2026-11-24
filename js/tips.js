@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.114';
+  var NEWS_FOR = '0.115';
   var NEWS = [
+    { date: '2026-11-24', who: ['everyone'], not: ['attendee'], app: 'me', btn: ['Me', 'My details'], text: TX('Church Partners now see 🎂 or 💍 beside someone’s name in the church directory on their birthday or wedding anniversary (the day only). Don’t want yours shown? Turn it off on Me → My details.') },
+    { date: '2026-11-24', who: ['pastor', 'admin', 'carer', 'lifelead'], text: TX('Pastors, carers and Midweek Group leaders now see Birthdays this week on Home. Pastors also see who may have a hard day, on the anniversary of a husband’s or wife’s death.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Birthdays and wedding anniversaries now get a little celebration: on your own day you see a card on Home and Me, and 🎂 or 💍 appears beside a name wherever the church already shows that date.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Buttons now press down a little when you tap them.') },
     { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Print'], text: TX('Rosters has a tidier top: Print now has its own button, and the arrows and date for moving between Sundays sit just above the roster.') },

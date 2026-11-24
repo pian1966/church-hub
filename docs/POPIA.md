@@ -136,6 +136,20 @@ to confirm they are 18 or older; in South Africa it is read from the ID number t
 copied to their details on Accept. The **declaration of loyalty**, when the church asks for one, is kept in the application
 with the other declaration (the person's own statement, same access).
 
+## Birthdays and wedding anniversaries (0.114–0.115; `js/celebrate.js`, `js/celebrate-ui.js`)
+- **Purpose:** to celebrate people on their day and help pastors and carers remember them.
+- **What others see:** the church directory (`directory/{id}`, everyone signed in who may read the directory) carries the **day and
+  month** of the birthday (`birthDay`) and, for people recorded as married with no late spouse, of the wedding (`weddingDay`) – never a
+  year, so no age can be worked out; `firestore.rules` (`dayOnly`) refuses anything else. **Basis:** the Church directory consent (the
+  Rector's decision, Nov 2026), with an opt-out: Me → My details → "Celebrate my birthday and anniversary" (`noCelebrate` on the
+  person's card, which they may change themselves; `quiet` on their Care / Midweek Group card). Turning it off removes the dates from
+  the directory at once. Children, people who have died or left, and merged records are never in it.
+- **Birthdays this week (Home):** Pastors and Administrators from the records they already read; carers and Midweek Group leaders only
+  from their groups' cards (Care group consent). Names and the day only.
+- **May be a hard day (Pastors only):** a widowed person on the anniversary of their spouse's death or of their wedding, from records
+  Pastors already read; each showing is written in the audit log ("Viewed pastoral reminders"). Never a celebration.
+- **Kept:** nothing new beyond the two day-and-month fields and the opt-out.
+
 ## Invitations to become a Church Partner
 Administrators and Pastors can email an invitation to apply. Kept: the date invited (`partnerInvited`, on the person's details –
 Administrators and Pastors; purpose: not inviting the same person twice; basis: the church's legitimate interest in its own

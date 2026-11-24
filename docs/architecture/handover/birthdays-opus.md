@@ -1,5 +1,7 @@
 # Birthdays and anniversaries – the part for Opus
 
+**Done in 0.115.0 (Opus, 24 Nov 2026)** – all five steps, in one pull request. The Rector chose: the birthday goes with the Church directory consent, with an opt-out. Kept below as the record of what was asked.
+
 **Model: Senior (Opus).** Everything here changes who may see a date, or reads personal information across people, so by
 `docs/architecture/MODELS.md` rule 1 a lighter model must not do it. Sonnet built the first part (below); this is the rest.
 

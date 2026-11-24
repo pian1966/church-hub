@@ -86,6 +86,7 @@
     html += '<section class="panel"><h2>' + T('Kept by the church office') + '</h2>' + (office ? '<dl class="kv">' + office + '</dl>' : '') +
       '<p class="hint">' + T(child ? 'Something wrong or missing here? Please tell the church office and they will change it.' : 'Something wrong or missing, such as your marriage or children? Ask to change it, and the church office will check it.') + '</p>' +
       (window.PeopleParts ? PeopleParts.changesMePanel() : '') + '</section>';
+    html += window.CelebrateUI ? CelebrateUI.optOut(p) : '';   // Celebrate my birthday and anniversary
     html += window.PeopleParts && PeopleParts.applyMePanel ? PeopleParts.applyMePanel() : '';   // apply to become a Church Partner
     if (window.LeaveUI) html += LeaveUI.meCard();   // staff: what they have left this leave year
     if (window.BoardUI) html += BoardUI.card();   // the latest 3 notices on the Community board (js/mod-board.js)
@@ -304,6 +305,12 @@
       return renderDetails();
     },
     actions: {
+      celebrate: function (el) {
+        var u = me(), p = S.get('people', u.id); if (!p) return;
+        var q = JSON.parse(JSON.stringify(p));
+        if (el.checked) delete q.noCelebrate; else q.noCelebrate = true;
+        S.put('people', q, el.checked ? 'Celebrations turned on' : 'Celebrations turned off'); H.render(); H.toast(T('Saved'));
+      },
       mytheme: function () {
         var hex = (document.getElementById('th-hex').textContent || '').trim().toUpperCase(); if (!/^#[0-9A-F]{6}$/.test(hex)) return;
         S.pref('myColor', hex); H.applyTheme(H.themeFor(S.settings())); H.render(); H.toast(T('Saved'));

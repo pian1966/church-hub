@@ -160,16 +160,35 @@ see **Why can't I see a page or button that someone else can?** below.
 
 ## What is the 🎂 or 💍 beside someone's name?
 For: Everyone
-Also asked: Birthday today. Wedding anniversary today. Cake icon. Ring icon. Happy birthday. Anniversary card. Why didn't I get a birthday card?
+Also asked: Birthday today. Wedding anniversary today. Cake icon. Ring icon. Happy birthday. Anniversary card. Why didn't I get a birthday card? Who can see my birthday?
 
-On someone's birthday a small **🎂 Birthday today** shows beside their name, and on a wedding anniversary a **💍 Wedding anniversary today**. You
-only see it where you can already see that person's birthday or anniversary – for example on their page if you are a Pastor or
-Administrator, or in a **Care Group** or **Midweek Group** you belong to when they have agreed to share it. It never shows their
-age or year of birth. On your own birthday and anniversary you get a card on **Home** and **Me**.
+On someone's birthday a small **🎂 Birthday today** shows beside their name, and on a wedding anniversary a **💍 Wedding anniversary today**.
+Church Partners see it in the church directory (**People**) for everyone who agreed to be in the directory; Pastors and
+Administrators see it for everyone; carers and Midweek Group leaders see 🎂 on their group's cards when the person agreed to share
+with their group. Only the day is shared – never the year or anyone's age. On your own birthday and anniversary you get a card on **Home** and **Me**.
 
 Church & Trellis never celebrates a wedding anniversary for someone who is widowed, divorced, separated or single, or whose
 spouse has died, and never for someone who has died or left the church. If you didn't get a card, check **Me → My details**:
 your birthday, marital status and **Wedding anniversary** must be filled in – ask the church office to add them.
+
+## How do I stop my birthday being shown?
+For: Everyone
+Also asked: Hide my birthday. Don't celebrate my birthday. I don't want people to know it's my birthday. Turn off the cake.
+
+Open **Me → My details** and, under **Birthdays and anniversaries**, untick **Celebrate my birthday and anniversary**. Nobody sees
+🎂 or 💍 beside your name any more, your birthday is taken out of the church directory, and you get no card. Tick it again to turn it back on.
+To be taken out of the church directory altogether, change your **Church directory** choice under **Me → Consent**.
+
+## What is "Birthdays this week" on Home?
+For: Pastors, Administrators, Carers, Group leaders
+Also asked: Upcoming birthdays. Who has a birthday soon? Birthday list. Anniversaries this week. May be a hard day.
+
+Home shows the birthdays and wedding anniversaries of the next seven days, soonest first. Pastors and Administrators see everyone;
+carers and Midweek Group leaders see the people in the groups they lead who agreed to share their birthday with the group. On the day,
+Pastors and Administrators can tap **Send a message**. People who turned celebrations off are not listed.
+
+Pastors also see **May be a hard day**: someone whose husband or wife has died, on the anniversary of the death or of their
+wedding – a call or a visit may mean a lot. Only Pastors see it, and each time it is shown it is written in the audit log.
 
 ## Why can't I see a page or button that someone else can?
 For: Everyone

@@ -78,3 +78,12 @@ shows the advice for your country's law: usually tell the regulator and the peop
 the dates you did.
 
 Note: this is how Church & Trellis helps you keep records – it isn't legal advice.
+
+## Who can see my birthday?
+For: Everyone
+Also asked: Is my birthday private? Can people see my age? Birthday in the directory.
+
+The church office, Pastors and Administrators keep your full date of birth. If you agreed to be in the **Church directory**, other
+Church Partners can see **🎂 Birthday today** beside your name on the day – the directory keeps only the day and month, never the year,
+so nobody can work out your age. Your Care Group sees your birthday (day and month) only if you agreed to share with your group.
+To stop it, untick **Celebrate my birthday and anniversary** on **Me → My details**.

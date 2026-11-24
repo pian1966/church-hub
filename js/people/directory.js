@@ -212,6 +212,8 @@
         else if (dead) tags += '<span class="tag grey">' + esc(p.deceasedAt ? T('Died {date}', { date: H.fmt(p.deceasedAt, true) }) : T('Deceased')) + '</span>';
         else tags += catTags(p, true);
         if (canSeeAll() && !hasConsent(p.id, 'Church records')) tags += ' <span class="tag bad">' + T('No consent') + '</span>';
+        var party = window.CelebrateUI && (canSeeAll() || isMe(p) || (p.familyRole !== 'child' && p.inDirectory)) ? CelebrateUI.tag(p) : '';   // 🎂 / 💍 on the day
+        if (party) tags += ' ' + party;
         var inner = H.avatar(p) + '<span class="grow"><b>' + listName(p) + '</b><small>' + esc([canBasic() || isMe(p) ? householdNames(p).join(' + ') : '', (P.seeTier() !== 'member' || isMe(p)) && P.mayShare(p, 'mobile') ? p.mobile : ''].filter(Boolean).join(' · ')) + '</small></span>' + (tags ? '<span class="pp-tags">' + tags + '</span>' : '');
         if (pick) return '<div class="item pp-row pickable' + (pick[p.id] ? ' on' : '') + '"><label class="pp-tick"><input type="checkbox" class="pp-sel" value="' + p.id + '"' + (pick[p.id] ? ' checked' : '') + ' aria-label="' + esc(T('Tick {name}', { name: H.name(p) })) + '"></label><a class="pp-link" href="#/people/p/' + p.id + '">' + inner + '</a></div>';
         return '<a class="item pp-row" href="#/people/p/' + p.id + '">' + inner + '</a>';

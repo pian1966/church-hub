@@ -320,7 +320,7 @@ var Store = (function () {
     var EMAIL_KEY = 'church_hub_signin_email', WHO_KEY = 'church_hub_who:', OWNER_KEY = 'church_hub_offline_owner';
     // Fields that live in people/{id}; everything else (except medical) goes to details/{id}.
     var CARD = ['firstName', 'lastName', 'preferredName', 'familyId', 'householdIds', 'familyRole', 'category', 'email', 'mobile', 'active', 'appRole',
-      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs', 'appFirstSeen'];
+      'source', 'createdAt', 'updatedAt', 'archivedAt', 'deletedAt', 'photo', 'reviewLangs', 'appFirstSeen', 'noCelebrate'];
     var DIRECTORY = 'Church directory';
     var fb = null, auth = null, fs = null, session = null, onState = null, unsubs = [], raw = {}, pending = 0, ready = false, lastWrite = 0;
     /** For About → Speed check (Administrators): how long loading took and how much the database sent and was sent. */
@@ -1168,6 +1168,15 @@ var Store = (function () {
         if (is('admin', 'pastor')) setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
         else syncDirectory(session.personId);
       }
+      // Birthdays in the directory (0.115): filled in once for the entries written before them (Administrators and Pastors)
+      if (!previewRole && !offlineNow() && is('admin', 'pastor') && !careDir && typeof Celebrate !== 'undefined') {
+        var dets = merged('details', 'detailsMe'), cardsNow = raw.people || {};
+        var behind = Object.keys(raw.directory || {}).some(function (id) {
+          var want = Celebrate.forDirectory(Object.assign({}, dets[id] || {}, cardsNow[id] || {}), (dets[id] || {}).lateSpouseId ? { id: 1 } : null), got = raw.directory[id] || {};
+          return (want.birthDay || '') !== (got.birthDay || '') || (want.weddingDay || '') !== (got.weddingDay || '');
+        });
+        if (behind) setTimeout(function () { if (ready && session && !offlineNow()) resyncDirectory(); }, 1500);
+      }
       // Church Partners' names for attendees (names/…): written with each directory entry; filled in once for a church
       // that had a directory before (Administrators and Pastors)
       if (!previewRole && !offlineNow() && is('admin', 'pastor') && !careDir && Object.keys(raw.directory || {}).length && !Object.keys(raw.names || {}).length)
@@ -1230,6 +1239,9 @@ var Store = (function () {
         if (dir[id]) p.inDirectory = true;
         // What they agreed to share (Contact details), for roles that can't read their private details
         ['shareAddress', 'shareSpouse'].forEach(function (k) { var v = (shared[id] || {})[k] || (dir[id] || {})[k]; if (v) p[k] = v; });
+        // The day of a birthday or wedding from the directory, for roles that can't read details (only when nothing better is known)
+        if (dir[id] && dir[id].birthDay && !p.birthDate && !p.birthDay) p.birthDay = dir[id].birthDay;
+        if (dir[id] && dir[id].weddingDay && !(p.keyDates || []).length) p.weddingDay = dir[id].weddingDay;
         p.id = id;
         if (id === session.personId) p.appRole = role() === 'attendee' ? 'member' : role();     // the access list is the source of truth (or the role being viewed as)
         return p;
@@ -1360,6 +1372,9 @@ var Store = (function () {
         // Settings → Who can see what → Care groups: Church Partners see which group everyone in the directory is in
         // … or which group each person is in, on their page in People (settings.careOnPeople)
         if (careForMembers(db.settings)) { var cg = careOf(pid); if (cg.length) want.care = cg; }
+        // Birthday and wedding day (day and month only, never the year), so others can see 🎂 / 💍 on the day –
+        // part of the Church directory consent; not for people who turned celebrations off (js/celebrate.js)
+        if (typeof Celebrate !== 'undefined') Object.assign(want, Celebrate.forDirectory(p, p.lateSpouseId ? { id: p.lateSpouseId } : null));
       }
       if (!same(want, known('directory/' + pid))) { if (want) write('directory/' + pid, want); else del('directory/' + pid); }
       // Names only, for attendees: Church Partners (and staff) in the directory

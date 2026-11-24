@@ -1497,11 +1497,31 @@ html[data-mode=dark] .sp-st-holiday { background: linear-gradient(135deg, var(--
 .sp-photo-btns { margin: 0; gap: 8px; } .sp-photo-btns .btn { gap: 6px; }
 @media (max-width: 860px) { .sp-cups.sp-kinds { grid-auto-columns: 62%; } }
 
-/* Rosters: "Go to a date" beside Earlier / Later (the date box from js/datebox.js: type a date or tap its calendar) */
-.ro-date { display: inline-flex; width: 190px; }
-.ro-date .date-typed { width: 100%; }
-.ro-date .date-typed { gap: 6px; }
-.ro-date .date-text { min-height: 44px; width: 100%; padding: 0 12px; border: 1px solid var(--line-strong); border-radius: 12px; background: var(--surface); color: var(--ink); font: inherit; font-weight: 600; font-size: 14.5px; }
+/* Rosters: one tidy bar under the tabs – ‹ the date › on the left (type a date or tap its calendar, js/datebox.js), how many
+   services side by side on the right – then the colour key. The title above keeps only Fill the gaps, Print and More. */
+.ro-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; margin: 0 0 12px; }
+.ro-nav { display: inline-flex; align-items: center; gap: 2px; padding: 3px; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; box-shadow: var(--shadow); }
+.ro-arrow { display: grid; place-items: center; width: 38px; height: 38px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); cursor: pointer; flex: none; }
+.ro-arrow:hover { background: var(--accent-soft); color: var(--accent-ink); }
+.ro-arrow.next svg { transform: scaleX(-1); }
+.ro-date { display: inline-flex; width: 168px; }
+.ro-date .date-typed { width: 100%; gap: 0; align-items: center; }
+.ro-date .date-text { min-height: 38px; width: 100%; padding: 0 4px 0 10px; border: 0; border-radius: 999px; background: transparent; color: var(--ink); font: inherit; font-weight: 600; font-size: 14.5px; text-align: center; }
+.ro-date .date-text:focus { outline: 2px solid var(--accent-soft); }
+.ro-date .date-typed .date-cal { min-height: 34px; width: 36px; border: 0; border-radius: 999px; background-color: transparent; }
+.ro-date .date-typed .date-cal:hover { background-color: var(--surface-2); }
+.ro-bar .ro-count { gap: 8px; }
+.ro-legend { margin: 0 0 12px; font-size: 12.5px; gap: 6px 14px; }
+@media (max-width: 480px) { .ro-print span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .ro-print { padding-left: 14px; padding-right: 14px; }
+  .page-head .btns:has(.ro-print), .page-head.hero .btns:has(.ro-print) { flex-wrap: nowrap; gap: 6px; } .page-head .btns:has(.ro-print) > .btn, .page-head .btns:has(.ro-print) summary.btn { padding-left: 12px; padding-right: 12px; white-space: nowrap; } }
+@media (max-width: 699px) { .ro-nav { width: 100%; justify-content: space-between; } .ro-date { flex: 1; width: auto; } }
+/* A menu item with a short line under it saying what it does (Rosters → More) */
+.menu-list .mi { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.menu-list .mi b { font-weight: 600; }
+.menu-list .mi small { color: var(--muted); font-size: 12.5px; font-weight: 400; line-height: 1.3; }
+.menu-list > button:has(.mi) { align-items: flex-start; padding: 10px 12px; gap: 12px; }
+.menu-list > button:has(.mi) > svg { margin-top: 2px; flex: none; color: var(--accent-ink); }
+.page-head .btns .menu-list:has(.mi) { min-width: 290px; }
 /* Archives: folders, Year → Month, and the summary before saving */
 .ar-crumbs { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0 0 14px; font-size: 14px; color: var(--muted); }
 .ar-crumbs button { background: none; border: 0; padding: 4px 2px; font: inherit; font-weight: 600; color: var(--accent, var(--ink)); cursor: pointer; border-radius: 6px; }
@@ -1632,7 +1652,7 @@ button.appcard.ar-folder { font: inherit; text-align: left; cursor: pointer; ali
 
 
 /* ---------- Page pictures: soft watercolour headings (js/banners.js; Settings → Colours → Page pictures; "Plain" turns them off) ---------- */
-.page-head.hero { --soft: color-mix(in srgb, var(--tint) 9%, #fff); --ttl: color-mix(in srgb, var(--tint) 62%, #000); position: relative; isolation: isolate; z-index: 2; border-radius: 22px; padding: 26px 30px; min-height: 172px; flex-direction: column; align-items: flex-start; justify-content: center; flex-wrap: nowrap; gap: 14px; background: var(--soft); margin-bottom: 22px; }
+.page-head.hero { --soft: color-mix(in srgb, var(--tint) 9%, #fff); --ttl: color-mix(in srgb, var(--tint) 62%, #000); position: relative; isolation: isolate; z-index: 4; border-radius: 22px; padding: 26px 30px; min-height: 172px; flex-direction: column; align-items: flex-start; justify-content: center; flex-wrap: nowrap; gap: 14px; background: var(--soft); margin-bottom: 22px; }
 .page-head.hero > div:not(.hero-bg), .page-head.hero > .btns, .page-head.hero > .top-r { position: relative; z-index: 1; }
 .page-head.hero > div:not(.hero-bg) { max-width: 52%; }
 .page-head.hero h1 { font-size: 32px; letter-spacing: -.015em; color: var(--ttl); }

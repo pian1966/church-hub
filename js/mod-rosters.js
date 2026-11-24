@@ -10,6 +10,7 @@
   /** Who may write a position's tooltip: Administrators, the Rector and every Pastor (assistant ministers), as well as roster managers */
   function canTooltip() { var u = H.user(); return manager() || !!(u && u.appRole === 'pastor'); }
   var BELL = 'M6 16V11a6 6 0 1 1 12 0v5l2 2H4zM10 20a2 2 0 0 0 4 0';
+  var CAL_OFF = 'M8 3v4M16 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2zM10 13l4 4M14 13l-4 4';   // a calendar with a cross: days away
 
   /* ---------- telling people (Messages, js/messages.js kind 'roster') ---------- */
   /** One turn, as it is written in a message: "Reading · Sun 6 Dec, 10:00 · Morning service". */
@@ -438,11 +439,20 @@
     var extra = state.preview ? state.preview.assignments : [];
     var all = S.list('assignments').concat(extra), away = awayList();
     var ed = engineData(), problems = R.check(ed, ids), st = S.settings();
+    // The title keeps only its actions: Fill the gaps (the main one), Print (everyone may print the roster) and the coordinators' tools
+    // under More, each with a line saying what it does. Moving between Sundays sits with the other view controls, under the tabs.
+    var mi = function (act, icon, title, hint) { return '<button data-act="rosters:' + act + '">' + H.icon(icon, 18) + '<span class="mi"><b>' + title + '</b><small>' + hint + '</small></span></button>'; };
     var html = head(T('Rosters'), T('Who is serving at each service. Families and friends who asked to serve together are kept together.'),
-      '<button class="btn" data-act="rosters:move" data-d="-' + Math.max(1, svcs.length) + '" aria-label="' + T('Earlier services') + '">‹ ' + T('Earlier') + '</button><button class="btn" data-act="rosters:move" data-d="' + Math.max(1, svcs.length) + '" aria-label="' + T('Later services') + '">' + T('Later') + ' ›</button>' +
-      '<label class="ro-date" title="' + esc(T('Go to a date')) + '"><input type="date" id="ro-date" value="' + esc(svcs.length ? svcs[0].date : H.today()) + '" aria-label="' + esc(T('Go to a date')) + '"></label>' +
       (state.preview ? '' : '<button class="btn primary" data-act="rosters:autofill">' + H.icon(H.ICON.sparkle, 18) + T('Fill the gaps for me') + '</button>' +
-        H.menu(T('More'), ['<button data-act="rosters:print">' + H.icon(PRINTER, 16) + T('Print or download the roster') + '</button>', '<button data-act="rosters:emergencyfill">' + T('Emergency fill') + '</button>','<button data-act="rosters:remind">' + H.icon(BELL, 16) + T('Remind those who haven’t replied') + '</button>', '<button data-act="rosters:awayask">' + T('Ask who’s away…') + '</button>']))) + tabs('');
+      '<button class="btn ro-print" data-act="rosters:print" title="' + esc(T('Print or download the roster')) + '">' + H.icon(PRINTER, 18) + '<span>' + T('Print') + '</span></button>' + H.menu(T('More'), [
+        mi('emergencyfill', H.ICON.sparkle, T('Emergency fill'), T('Also asks people who only help in emergencies')),
+        mi('remind', BELL, T('Remind those who haven’t replied'), T('A friendly nudge in Messages')),
+        mi('awayask', CAL_OFF, T('Ask who’s away…'), T('Before you fill the roster'))
+      ]))) + tabs('');
+    var nav = '<div class="ro-nav" role="group" aria-label="' + esc(T('Go to a date')) + '">' +
+      '<button type="button" class="ro-arrow" data-act="rosters:move" data-d="-' + Math.max(1, svcs.length) + '" aria-label="' + esc(T('Earlier services')) + '" title="' + esc(T('Earlier services')) + '">' + H.icon(H.ICON.back, 18) + '</button>' +
+      '<label class="ro-date" title="' + esc(T('Go to a date')) + '"><input type="date" id="ro-date" value="' + esc(svcs.length ? svcs[0].date : H.today()) + '" aria-label="' + esc(T('Go to a date')) + '"></label>' +
+      '<button type="button" class="ro-arrow next" data-act="rosters:move" data-d="' + Math.max(1, svcs.length) + '" aria-label="' + esc(T('Later services')) + '" title="' + esc(T('Later services')) + '">' + H.icon(H.ICON.back, 18) + '</button></div>';
     if (state.preview) {
       var n = state.preview.assignments.length;
       html += '<div class="note info"><b>' + TN('{n} suggestion', '{n} suggestions', n) + '</b> ' + T('shown with a dashed border. Families and friends are kept together, people who are away are skipped, and turns are shared fairly.') +
@@ -456,17 +466,18 @@
       return '<button type="button" class="btn small" data-act="rosters:showslot" data-v="' + esc(v) + '" title="' + esc(T('Show the {service} again', { service: hiddenName(v) })) + '">' + H.icon(EYE_OFF, 16) + esc(hiddenName(v)) + '</button>';
     }).join('') + (state.hidden.length > 1 ? '<button type="button" class="btn small ghost" data-act="rosters:showslot" data-v="">' + T('Show all') + '</button>' : '') + '</div>';
     if (!svcs.length && state.hidden.length) return html + '<p class="empty">' + T('Every service is hidden. Tap one above to show it again.') + '</p>';
-    html += '<div class="legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
+    html += '<div class="ro-bar">' + nav;
     if (!narrow()) {
       var shown = svcs.length, fit = state.view === 'fit';
       var chip = function (v, label, on) { return '<button type="button" class="ro-chip' + (on ? ' on' : '') + '" aria-pressed="' + on + '" data-act="rosters:view" data-v="' + v + '">' + label + '</button>'; };
-      html += '<div class="ro-view"><div class="ro-count" role="group" aria-label="' + esc(T('Services side by side')) + '"><span class="muted small">' + T('Side by side:') + '</span>' +
+      html += '<div class="ro-count" role="group" aria-label="' + esc(T('Services side by side')) + '"><span class="muted small">' + T('Side by side:') + '</span>' +
         '<span class="ro-step"><button type="button" data-act="rosters:step" data-d="-1" aria-label="' + esc(T('Fewer services')) + '"' + (shown <= 1 ? ' disabled' : '') + '>−</button>' +
         '<output id="ro-n" title="' + esc(TN('Show {n} service at a time', 'Show {n} services at a time', shown)) + '">' + TN('<b>{n}</b> service', '<b>{n}</b> services', shown) + '</output>' +
         '<button type="button" data-act="rosters:step" data-d="1" aria-label="' + esc(T('More services')) + '"' + (shown >= 16 && !months() ? ' disabled' : '') + '>+</button></span>' +
         chip('fit', fit ? '✓ ' + T('Fits your screen') : T('Fit my screen'), fit) + chip('month', T('1 month'), state.view === 'month') + chip('quarter', T('1 quarter'), state.view === 'quarter') + '</div>';
     }
-    if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label></div>';
+    html += '</div><div class="legend ro-legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
+    if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label>';
     var anyCx = svcs.some(function (s) { return R.isCancelled(s); });
     html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"' + (narrow() ? '' : ' style="min-width:' + (180 + 180 * svcs.filter(function (s) { return !R.isCancelled(s); }).length + 76 * svcs.filter(function (s) { return R.isCancelled(s); }).length) + 'px"') + '><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) {
       var eye = '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>';

@@ -18,8 +18,9 @@ For: Roster coordinators, Administrators
 Also asked: Who is on duty this Sunday? Show the roster.
 
 Open **Rosters**. The table shows each position down the side, in the order of a service (Welcome, Service Leading,
-Hospitality, Music and so on), and the services across the top in time order, each in its own colour. Use **‹ Earlier**
-and **Later ›** to move between dates, or **Go to a date** to jump straight to a day. Colours show **Accepted**, **Waiting
+Hospitality, Music and so on), and the services across the top in time order, each in its own colour. Just under the tabs, tap
+the arrows **‹** and **›** either side of the date to move to earlier or later services, or tap the date (or its calendar)
+to jump straight to a day. Colours show **Accepted**, **Waiting
 for a reply**, and suggestions (dashed border). The top row (date, time, communion) stays in view as you scroll down.
 Departments and positions that aren't needed at any of the services you're looking at (e.g. Creche at 8am, or communion
 roles when there's no communion) are left out. Members see their own turns under **My serving**.
@@ -28,8 +29,8 @@ roles when there's no communion) are left out. Members see their own turns under
 For: Everyone
 Also asked: Print the roster. Roster as a PDF. Roster for the notice board. Save the roster. Portrait or landscape.
 
-Roster coordinators: **Rosters → More → Print or download the roster**. Everyone else: **Rosters → My serving → Print or
-download the roster**. Choose **how long** (1 month, 6 weeks, 2 months, a quarter, 6 months or a year, starting on the date
+Roster coordinators: **Rosters → Print** (at the top, beside **Fill the gaps for me**). Everyone else: **Me → Serving →
+Print or download the roster**. Choose **how long** (1 month, 6 weeks, 2 months, a quarter, 6 months or a year, starting on the date
 you pick – the next Sunday to begin with), the **page shape** (portrait or landscape) and **which services** (each regular
 service gets its own page, in its own colours). The positions run down the side and every Sunday across the top. Tap
 **Download PDF** to keep or send it, or **Print**. A Sunday on which a service isn't held stays in the table as a grey

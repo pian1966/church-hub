@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.113';
   var NEWS = [
+    { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Print'], text: TX('Rosters has a tidier top: Print now has its own button, and the arrows and date for moving between Sundays sit just above the roster.') },
     { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Teams'], text: TX('Rosters: a position can now need a different number of people at each service – on Rosters → Teams choose the service (8am, 10am or 5pm) and tap − or +. The roster, the gaps and the printed roster follow it.') },
     { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Cancel this service…'], text: TX("Rosters: a service that is cancelled keeps a narrow column on the roster – on screen, on paper and in the PDF – with the note written up its side. Tap ⋯ under its date → Cancel this service…; everyone on it stays on the roster, can be sent a friendly message, and comes back when you put the service back.") },
     { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX("If a service you were rostered on is cancelled, Me → Serving now says Cancelled (and you may get a friendly message), and the printed roster keeps a narrow column for it.") },

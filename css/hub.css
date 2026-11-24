@@ -88,6 +88,19 @@ h2.sect-h { font-size: 20px; margin: 22px 0 10px; }
 .btn:disabled { opacity: .5; cursor: not-allowed; }
 .btn.big-btn, #si-form .btn { width: 100%; }
 .btns { display: flex; flex-wrap: wrap; gap: 10px; }
+/* Pressable buttons: a button sits a hair above the page (a soft shadow and a lighter top edge), and when it is pressed it sinks,
+ * the shadow tightens, and it lets go again – so it feels like something you push. Flat inside menus; still when it is disabled
+ * or when the person has asked their device for less motion. Drawn with CSS only: no pictures, no data. */
+.btn { box-shadow: 0 1px 0 rgba(29,27,25,.06), 0 2px 5px rgba(29,27,25,.07), inset 0 1px 0 rgba(255,255,255,.55); transition: transform .08s ease, box-shadow .08s ease, background-color .15s ease, border-color .15s ease; }
+.btn:hover:not(:disabled) { box-shadow: 0 1px 0 rgba(29,27,25,.07), 0 3px 8px rgba(29,27,25,.10), inset 0 1px 0 rgba(255,255,255,.6); }
+.btn:active:not(:disabled) { transform: translateY(1.5px) scale(.985); box-shadow: 0 0 0 rgba(29,27,25,0), inset 0 2px 4px rgba(29,27,25,.14); }
+.btn:disabled, .menu-list .btn, .menu-list > button, .menu-list > a { box-shadow: none; }
+.menu-list .btn:active, .menu-list > button:active, .menu-list > a:active { transform: none; }
+html[data-mode=dark] .btn { box-shadow: 0 1px 0 rgba(0,0,0,.35), 0 2px 5px rgba(0,0,0,.30), inset 0 1px 0 rgba(255,255,255,.07); }
+html[data-mode=dark] .btn:hover:not(:disabled) { box-shadow: 0 1px 0 rgba(0,0,0,.4), 0 3px 8px rgba(0,0,0,.38), inset 0 1px 0 rgba(255,255,255,.09); }
+html[data-mode=dark] .btn:active:not(:disabled) { box-shadow: 0 0 0 rgba(0,0,0,0), inset 0 2px 4px rgba(0,0,0,.45); }
+html[data-mode=dark] .btn:disabled, html[data-mode=dark] .menu-list .btn { box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:active:not(:disabled) { transform: none; } }
 .icon-btn { width: 44px; height: 44px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); display: grid; place-items: center; cursor: pointer; color: var(--ink); flex: 0 0 auto; }
 .icon-btn.ghost { background: transparent; border-color: transparent; color: inherit; }
 .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px; font-weight: 600; font-size: 14px; }

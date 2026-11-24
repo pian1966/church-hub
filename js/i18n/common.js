@@ -601,4 +601,10 @@ I18n.rows([
     ["Allow the microphone for Church & Trellis in your browser’s settings to say names.", "Laat die mikrofoon vir Church & Trellis in jou blaaier se instellings toe om name te sê.", "Vumela imakrofoni ye-Church & Trellis kuzilungiselelo zesiphequluli sakho ukuze usho amagama.", "Vumela imayikrofoni ye-Church & Trellis kwiisetingi zebhrawuza yakho ukuze uthethe amagama."],
     ["Saying names needs the internet.", "Om name te sê, is die internet nodig.", "Ukusho amagama kudinga i-inthanethi.", "Ukuthetha amagama kufuna intanethi."],
     ["Themes", "Temas", "Izindikimba", "Imixholo"],
+    ["Happy birthday, {name}!", "Gelukkige verjaarsdag, {name}!", "Usuku lokuzalwa oluhle, {name}!", "Usuku lokuzalwa olumnandi, {name}!"],
+    ["The church is thankful for you. May God bless you richly in the year ahead.", "Die kerk is dankbaar vir jou. Mag God jou ryklik seën in die jaar wat voorlê.", "Ibandla liyabonga ngawe. UNkulunkulu akubusise kakhulu ngonyaka ozayo.", "Icawe iyabulela ngawe. UThixo makakusikelele kakhulu kunyaka ozayo."],
+    ["Happy wedding anniversary!", "Gelukkige huweliksherdenking!", "Usuku lomshado oluhle!", "Usuku lomtshato olumnandi!"],
+    ["Celebrating your marriage today. May God keep blessing it.", "Ons vier jou huwelik vandag. Mag God dit bly seën.", "Siyathokozela umshado wakho namuhla. UNkulunkulu akaqhubeke ewubusisa.", "Sivuyela umtshato wakho namhlanje. UThixo makaqhubeke ewusikelela."],
+    ["Birthday today", "Verjaarsdag vandag", "Usuku lokuzalwa namuhla", "Usuku lokuzalwa namhlanje"],
+    ["Wedding anniversary today", "Huweliksherdenking vandag", "Usuku lomshado namuhla", "Usuku lomtshato namhlanje"],
 ]);

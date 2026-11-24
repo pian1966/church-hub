@@ -1,0 +1,15 @@
+/* Church & Trellis – birthday and anniversary celebrations (js/celebrate-ui.js). Drawn with CSS only: a few petals fall once. */
+.cel-card { position: relative; overflow: hidden; margin-bottom: 16px; background: linear-gradient(135deg, var(--accent-soft), var(--surface) 70%); border-color: color-mix(in srgb, var(--accent) 30%, var(--surface)); }
+.cel-item { display: flex; align-items: center; gap: 14px; position: relative; z-index: 1; }
+.cel-item + .cel-item { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line-2); }
+.cel-item h2 { margin: 0 0 2px; }
+.cel-item p { margin: 0; color: var(--muted); }
+.cel-ic { font-size: 34px; line-height: 1; flex: 0 0 auto; animation: cel-pop .7s cubic-bezier(.2, 1.4, .4, 1) both; }
+.cel-tag { background: var(--accent-soft); color: var(--accent-ink); }
+.cel-cake { font-size: 15px; }
+.cel-petals { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
+.cel-petals i { position: absolute; top: -14px; left: calc(var(--i) * 7.2%); width: 8px; height: 12px; border-radius: 60% 40% 60% 40%; opacity: 0;
+  background: hsl(calc(var(--i) * 26) 80% 62%); animation: cel-fall 3.6s ease-in calc(var(--i) * .18s) 1 both; }
+@keyframes cel-fall { 0% { transform: translateY(0) rotate(0); opacity: 0; } 10% { opacity: .9; } 100% { transform: translateY(190px) translateX(24px) rotate(300deg); opacity: 0; } }
+@keyframes cel-pop { 0% { transform: scale(.4); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .cel-petals { display: none; } .cel-ic { animation: none; } }

@@ -218,12 +218,14 @@ h2.sect-h { font-size: 20px; margin: 22px 0 10px; }
 .btn.save:hover, .btn.save:focus-visible { background: color-mix(in srgb, var(--accent) 22%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 60%, var(--surface)); }
 .pf-top { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; margin: -4px 0 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line-2); }
 .pf-top .btn { gap: 6px; }
-.pp-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 6px; flex: 0 1 auto; }
+.pp-tags { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 6px; flex: 0 1 auto; max-width: 70%; }
+.pp-row .grow, .pp-link .grow { min-width: 120px; }   /* the name keeps its room when a leadership badge makes the tags wide */
+.pp-tags .leader-profile-term { display: flex; flex-direction: column; align-items: flex-start; }
 /* People list on a phone: the tags go under the name, so long names and households keep the full width */
 @media (max-width: 600px) {
   .pp-row { flex-wrap: wrap; row-gap: 6px; }
   .pp-row .grow { flex: 1 1 0; }
-  .pp-row .pp-tags { flex: 1 0 100%; justify-content: flex-start; padding-left: 48px; }   /* in line with the name (36px picture + 12px gap) */
+  .pp-row .pp-tags { flex: 1 0 100%; max-width: none; justify-content: flex-start; padding-left: 48px; }   /* in line with the name (36px picture + 12px gap) */
 }
 a.item:hover, button.item:hover { background: var(--surface-2); }
 button.item { width: 100%; border: 0; background: transparent; text-align: left; cursor: pointer; }
@@ -1046,7 +1048,7 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
 .pp-row.pickable.on { background: var(--accent-soft); }
 @media (max-width: 600px) {
   .pp-link { flex-wrap: wrap; row-gap: 6px; } .pp-link .grow { flex: 1 1 0; }
-  .pp-link .pp-tags { flex: 1 0 100%; justify-content: flex-start; padding-left: 48px; }
+  .pp-link .pp-tags { flex: 1 0 100%; max-width: none; justify-content: flex-start; padding-left: 48px; }
 }
 /* Archive and Library: a record or a book – its buttons drop below the words when there isn't room beside them (phones) */
 .rec-item { align-items: flex-start; flex-wrap: wrap; }

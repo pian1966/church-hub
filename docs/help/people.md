@@ -151,6 +151,24 @@ words it didn't – you can then change the filters by hand. It only searches wh
 If the church has switched on AI (Settings → Apps), the question is understood by Google's Gemini AI and it says
 **Understood by AI as**; only your question is sent, never the church's records. Don't type private matters into it.
 
+## Can I add visitors from a photo of their cards or a welcome sheet?
+For: Administrators, Pastors
+Also asked: From a photo. Visitor cards. Scan a connect card. Read handwriting. Add new people from a sheet.
+
+Yes. On **People**, tap **From a photo** (**Add people from a photo**) and take a photo of the visitor cards or a welcome sheet (or choose one
+from your gallery or Google Photos). Church & Trellis reads the names – and any phone numbers and email addresses – and shows each one for
+you to check; **nobody is added until you've checked them**. New people are added to People as an Attender, in a household of their own;
+add more details later. Reading photos needs AI: an Administrator switches it on in **Settings → Apps**; the photo goes to Google's
+Gemini AI to read the handwriting, and Church & Trellis doesn't keep it. Without AI you can type the names instead.
+
+## Can I say a name instead of typing it?
+For: Administrators, Pastors, Roster coordinators, Children's ministry
+Also asked: Microphone. Voice search. Dictate a name. Sounds like. A name I can't spell.
+
+Yes. In **People**'s search, and in any box where you look for someone, tap the **microphone** and say the name; tap it again for the next
+one. Names that sound like what you said come up too, under **Sounds like** – tap the right one. If nothing happens, allow the microphone for
+Church & Trellis in your browser's settings.
+
 ## How do I change many people at once?
 For: Administrators
 Also asked: Bulk update. Change category for everyone.

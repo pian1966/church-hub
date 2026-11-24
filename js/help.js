@@ -25,7 +25,8 @@ var Help = (function () {
   /** The help pages (docs/help/<file>.md) and the short name each is shown under. */
   var PAGES = [['getting-started', TX('Getting started')], ['me', TX('Me')], ['rosters', TX('Rosters')], ['leave', TX('Leave')], ['care-groups', TX('Care Groups')],
     ['midweek-groups', TX('Midweek Groups')], ['leadership', TX('Leadership')], ['archive', TX('Archives')], ['library', TX('Library')], ['messages', TX('Messages')],
-    ['people', TX('People')], ['privacy', TX('Privacy')], ['settings', TX('Settings')], ['translations', TX('Translations')]];
+    ['people', TX('People')], ['events', TX('Events')], ['community-board', TX('Community board')], ['marketplace', TX('Marketplace')],
+    ['subscription', TX('Subscription')], ['privacy', TX('Privacy')], ['settings', TX('Settings')], ['translations', TX('Translations')]];
 
   /** At most this many questions to the AI in WINDOW_MS from one device: the free allowance is shared by the whole church. */
   var MAX_ASKS = 12, WINDOW_MS = 10 * 60 * 1000;

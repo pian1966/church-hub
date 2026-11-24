@@ -256,8 +256,9 @@
   }
   /** The departments in the church's order (Teams → ↑ ↓). */
   function teams() { return Serving.orderTeams(S.list('teams')); }
-  /** How many services the roster shows side by side (one on a phone; as many as fit the screen until someone chooses). */
-  function cols() { return narrow() ? 1 : state.view === 'fit' ? fitCols() : state.cols; }
+  /** How many services the roster shows side by side (three on a phone, two on a small one – swipe sideways for more; as many as fit the screen until someone chooses). */
+  function cols() { return narrow() ? phoneCols() : state.view === 'fit' ? fitCols() : state.cols; }
+  function phoneCols() { return window.innerWidth < 380 ? 2 : 3; }
   /** As many services as fit comfortably beside the Position column (about 200px each). */
   function fitCols() {
     var m = document.querySelector('main'), w = (m ? m.clientWidth : Math.min(window.innerWidth - 248, 1180)) - 64;
@@ -324,7 +325,7 @@
     var fitWas = 0;
     window.addEventListener('resize', function () {
       if (state.view !== 'fit' || !document.getElementById('ro-wrap')) return;
-      var n = narrow() ? 1 : fitCols(); if (n !== fitWas) { fitWas = n; H.render(); }
+      var n = narrow() ? phoneCols() : fitCols(); if (n !== fitWas) { fitWas = n; H.render(); }
     });
   }
   /** The slider only shows when there is more roster than fits on the screen. */
@@ -478,8 +479,9 @@
     }
     html += '</div><div class="legend ro-legend"><span><i style="background:var(--ok-soft)"></i>' + T('Accepted') + '</span><span><i style="background:var(--warn-soft)"></i>' + T('Waiting for a reply') + '</span><span><i style="background:#E6EEF7;border:1px dashed #7FA3CF"></i>' + T('Suggestion') + '</span><span><i style="border:1px dashed #D9A39A;background:#fff"></i>' + T('Gap') + '</span><span><i style="background:#F2EEEA"></i>' + T('Said no') + '</span></div>';
     if (!narrow()) html += '<label class="ro-slide"><span class="sr">' + T('Slide across to see more services') + '</span><input type="range" id="ro-slide" min="0" max="100" value="0" data-plain aria-label="' + esc(T('Slide across to see more services')) + '"></label>';
+    var posW = narrow() ? 110 : 180, colW = narrow() ? 140 : 180;   // the Position column and each service (a phone shows 2–3 and swipes sideways for the rest)
     var anyCx = svcs.some(function (s) { return R.isCancelled(s); });
-    html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"' + (narrow() ? '' : ' style="min-width:' + (180 + 180 * svcs.filter(function (s) { return !R.isCancelled(s); }).length + 76 * svcs.filter(function (s) { return R.isCancelled(s); }).length) + 'px"') + '><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) {
+    html += '<div class="matrix-wrap" id="ro-wrap"><table class="matrix"' + ' style="min-width:' + (posW + colW * svcs.filter(function (s) { return !R.isCancelled(s); }).length + 76 * svcs.filter(function (s) { return R.isCancelled(s); }).length) + 'px"' + '><thead><tr><th scope="col">' + T('Position') + '</th>' + svcs.map(function (s) {
       var eye = '<button type="button" class="icon-btn ghost svc-eye" data-act="rosters:hideslot" data-v="' + esc(Serving.slotOf(s)) + '" aria-label="' + esc(T('Hide the {service} for now', { service: s.name })) + '" title="' + esc(T('Hide the {service} for now', { service: s.name })) + '">' + H.icon(H.ICON.eye, 16) + '</button>';
       var more = manager() ? H.menu('⋯', ['<button data-act="rosters:cancelsvc" data-s="' + esc(s.id) + '">' + (R.isCancelled(s) ? T('Put this service back…') : T('Cancel this service…')) + '</button>'], 'row-menu', T('More for the {service} on {date}', { service: s.name, date: H.fmt(s.date) })) : '';
       if (R.isCancelled(s)) return '<th scope="col" class="svc-col cx" style="' + svcStyle(s) + '" title="' + esc(s.time + ' · ' + s.name) + '">' + eye + esc(H.fmt(s.date)) + '<br><span class="muted small">' + esc(s.time) + '</span><span class="tag grey">' + T('Cancelled') + '</span>' + more + '</th>';

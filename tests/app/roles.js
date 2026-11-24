@@ -95,6 +95,11 @@ module.exports = async function (ctx) {
   printed = await s.page.evaluate(() => window.__printed);
   check(printed.html.includes('The service is not taking place this Sunday') && /<td class="off" rowspan="\d+">/.test(printed.html) && (printed.html.match(/<th scope="col"( class="off"| style=)/g) || []).length >= 4,
     'a Sunday with no service keeps its column, marked as not taking place');
+  // On a phone the roster shows several services side by side (swipe sideways), not just one
+  await s.page.setViewportSize({ width: 390, height: 800 }); await s.go('rosters'); await s.page.waitForTimeout(300);
+  const ph = await s.page.evaluate(() => { const w = document.getElementById('ro-wrap'); return { cols: document.querySelectorAll('.matrix thead th.svc-col').length, scroll: w.scrollWidth > w.clientWidth + 20, slider: !!document.getElementById('ro-slide') }; });
+  check(ph.cols >= 2 && ph.scroll && !ph.slider, 'Rosters on a phone: ' + ph.cols + ' services side by side, swipes sideways');
+  await s.page.setViewportSize({ width: 1280, height: 900 });
   // Cancelling a service: it keeps a narrow placeholder column (the note on its side), the people stay on the roster, and they can be told kindly
   await s.page.evaluate(() => { window.__printed = null; });
   await s.go('rosters');

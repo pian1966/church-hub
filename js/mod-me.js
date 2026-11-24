@@ -62,7 +62,8 @@
     var chips = (window.PeopleParts ? PeopleParts.catTags(p) : '') +
       (window.LibraryUI ? LibraryUI.chip() + LibraryUI.roleChip() : '');
     var html = '<div class="me-who">' + H.avatar(p, 56) + '<div><h1>' + esc(H.name(p)) + '</h1>' + (chips ? '<div class="row me-chips">' + chips + '</div>' : '') +
-      '<p class="lead">' + T('Keep your details up to date, so the church can reach you.') + '</p></div></div>' + tabs('');
+      '<p class="lead">' + T('Keep your details up to date, so the church can reach you.') + '</p></div></div>' + tabs('') +
+      (window.CelebrateUI ? CelebrateUI.card(p) : '');
     html += '<div class="grid2">';
     // Contact details: the person can change these themselves (security rules allow name, email and mobile)
     html += '<section class="panel"><h2>' + T('Contact details') + '</h2><dl class="kv">' +

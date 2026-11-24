@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.113';
+  var NEWS_FOR = '0.114';
   var NEWS = [
+    { date: '2026-11-24', who: ['everyone'], text: TX('Birthdays and wedding anniversaries now get a little celebration: on your own day you see a card on Home and Me, and 🎂 or 💍 appears beside a name wherever the church already shows that date.') },
+    { date: '2026-11-24', who: ['everyone'], text: TX('Buttons now press down a little when you tap them.') },
     { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Print'], text: TX('Rosters has a tidier top: Print now has its own button, and the arrows and date for moving between Sundays sit just above the roster.') },
     { date: '2026-11-24', who: ['everyone'], app: 'rosters', btn: ['Rosters'], text: TX('Rosters on a phone: the roster now shows two or three services side by side instead of just one – swipe sideways to see more, or use the arrows either side of the date.') },
     { date: '2026-11-24', who: ['admin', 'rosters'], app: 'rosters', btn: ['Rosters', 'Teams'], text: TX('Rosters: a position can now need a different number of people at each service – on Rosters → Teams choose the service (8am, 10am or 5pm) and tap − or +. The roster, the gaps and the printed roster follow it.') },

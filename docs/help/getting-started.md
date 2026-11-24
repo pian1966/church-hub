@@ -147,6 +147,7 @@ Also asked: What is the to-do list? What's new? Did you know? Coming up. Why doe
 Home is the first page you see, and it is different for each person, because it shows what concerns you:
 - **To do** – things that need you, such as roster turns to reply to, unread messages, or (for staff) requests waiting for an
   answer. **Nothing needs you right now.** means you're up to date.
+- **A birthday or anniversary card** – on your own birthday, or wedding anniversary, a warm card with a few falling petals greets you here and on your **Me** page.
 - **Coming up** – events at church you can sign up for (**Events**).
 - **What's new** – a short line for each change in Church & Trellis that you would notice. You only see the ones that concern
   you, so an Administrator and a member see different lists.
@@ -156,6 +157,19 @@ Home is the first page you see, and it is different for each person, because it 
 
 If something you expect isn't on Home, the part of Church & Trellis may be switched off, or your access doesn't include it –
 see **Why can't I see a page or button that someone else can?** below.
+
+## What is the 🎂 or 💍 beside someone's name?
+For: Everyone
+Also asked: Birthday today. Wedding anniversary today. Cake icon. Ring icon. Happy birthday. Anniversary card. Why didn't I get a birthday card?
+
+On someone's birthday a small **🎂 Birthday today** shows beside their name, and on a wedding anniversary a **💍 Wedding anniversary today**. You
+only see it where you can already see that person's birthday or anniversary – for example on their page if you are a Pastor or
+Administrator, or in a **Care Group** or **Midweek Group** you belong to when they have agreed to share it. It never shows their
+age or year of birth. On your own birthday and anniversary you get a card on **Home** and **Me**.
+
+Church & Trellis never celebrates a wedding anniversary for someone who is widowed, divorced, separated or single, or whose
+spouse has died, and never for someone who has died or left the church. If you didn't get a card, check **Me → My details**:
+your birthday, marital status and **Wedding anniversary** must be filled in – ask the church office to add them.
 
 ## Why can't I see a page or button that someone else can?
 For: Everyone

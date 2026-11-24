@@ -391,5 +391,9 @@ I18n.rows([
     ["Keepers of the Community board", "Bewaarders van die Gemeenskapsbord", "Abagcini beBhodi Lomphakathi", "Abagcini beBhodi yoLuntu"],
     ["Keepers of the Marketplace", "Bewaarders van die Mark", "Abagcini beMakethe", "Abagcini beMarike"],
     ["Community board → More → Keepers", "Gemeenskapsbord → Meer → Bewaarders", "IBhodi Lomphakathi → Okunye → Abagcini", "IBhodi yoLuntu → Ezingakumbi → Abagcini"],
-    ["Marketplace → More → Keepers", "Mark → Meer → Bewaarders", "IMakethe → Okunye → Abagcini", "IMarike → Ezingakumbi → Abagcini"]
+    ["Marketplace → More → Keepers", "Mark → Meer → Bewaarders", "IMakethe → Okunye → Abagcini", "IMarike → Ezingakumbi → Abagcini"],
+    ["The church’s colour and page pictures", "Die kerk se kleur en bladsyprente", "Umbala webandla nezithombe zamakhasi", "Umbala webandla neziqinisekiso zamaphepha"],
+    ["Save my colour", "Stoor my kleur", "Gcina umbala wami", "Gcina umbala wam"],
+    ["Your own colour for buttons, links, the turning cross and the menu. Only you see it, on this device.", "Jou eie kleur vir knoppies, skakels, die draaiende kruis en die kieslys. Net jy sien dit, op hierdie toestel.", "Umbala wakho wezinkinobho, izixhumanisi, isiphambano esijikelezayo nemenyu. Nguwe kuphela ongawubona, kule divayisi.", "Umbala wakho wamaqhosha, amakhonkco, umnqamlezo ojikelezayo nemenyu. Nguwe kuphela ownabonayo, kule ndlela."],
+    ["A picture at the top of every page, in the colours of that part of the app. This is your own choice, on this device.", "’n Prent bo-aan elke bladsy, in die kleure van daardie deel van die toep. Dit is jou eie keuse, op hierdie toestel.", "Isithombe phezulu kwelinye nelinye ikhasi, ngemibala yaleyo ngxenye ye-app. Lokhu ukukhetha kwakho, kule divayisi.", "Umfanekiso phezulu kwiphepha ngalinye, ngemibala yaloo nxalenye ye-app. Oku kukhetho lwakho, kule ndlela."],
 ]);

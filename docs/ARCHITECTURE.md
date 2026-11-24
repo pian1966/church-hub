@@ -891,7 +891,7 @@ The wedding anniversary sits right under marital status.
 ## Brochures and the brochure editor (About → Brochures; `brochure.html`, `js/brochure-kit.js`, `js/mod-about.js`)
 - About links to `#/about/brochure/members|churches` (Administrators). The page shows `brochure.html?for=…&embed=1` in a frame
   (same site), with Church & Trellis's own buttons: **Edit the wording / Done editing**, **Print or save as PDF** (the frame prints),
-  a language picker, colour (Church & Trellis orange, the church's colour from Settings → Colours, or any colour) and font (a short
+  a language picker, colour (Church & Trellis orange, the church's colour from Settings → Themes, or any colour) and font (a short
   list of Google Fonts).
 - The church's changes are stored separately in `brochures/church`, not in the settings document. `Store.plan()` loads it only
   for an Administrator, `Store.isAdmin()` excludes "View as", and `Store.setBrochures()` checks the role before saving. The Rector

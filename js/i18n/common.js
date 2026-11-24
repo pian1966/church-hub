@@ -599,5 +599,6 @@ I18n.rows([
     ["Say the name", "Sê die naam", "Yisho igama", "Thetha igama"],
     ["Nothing was heard. Tap the microphone and say the name.", "Niks is gehoor nie. Tik die mikrofoon en sê die naam.", "Akukho okuzwakele. Thepha imakrofoni bese usho igama.", "Akukho nto ivakeleyo. Cofa imayikrofoni uze uthethe igama."],
     ["Allow the microphone for Church & Trellis in your browser’s settings to say names.", "Laat die mikrofoon vir Church & Trellis in jou blaaier se instellings toe om name te sê.", "Vumela imakrofoni ye-Church & Trellis kuzilungiselelo zesiphequluli sakho ukuze usho amagama.", "Vumela imayikrofoni ye-Church & Trellis kwiisetingi zebhrawuza yakho ukuze uthethe amagama."],
-    ["Saying names needs the internet.", "Om name te sê, is die internet nodig.", "Ukusho amagama kudinga i-inthanethi.", "Ukuthetha amagama kufuna intanethi."]
+    ["Saying names needs the internet.", "Om name te sê, is die internet nodig.", "Ukusho amagama kudinga i-inthanethi.", "Ukuthetha amagama kufuna intanethi."],
+    ["Themes", "Temas", "Izindikimba", "Imixholo"],
 ]);

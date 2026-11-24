@@ -974,6 +974,7 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   /* The roster on paper (Rosters → More → Print the roster): A4 landscape, one service per sheet, only the positions in use */
   #print-only.roster { font-family: Inter, Arial, sans-serif; color: #000; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   #print-only.roster .ro-sheet { page: rosterA4; break-after: page; page-break-after: always; }
+  #print-only.roster .ro-sheet.portrait { page: rosterPortrait; }
   #print-only.roster .ro-sheet:last-child { break-after: auto; page-break-after: auto; }
   #print-only.roster .ro-ph { display: flex; justify-content: space-between; align-items: flex-end; gap: 6mm; border-bottom: 1.4pt solid var(--svc-ink, #333); padding-bottom: 2mm; margin-bottom: 3mm; }
   #print-only.roster .ro-ph h1 { font-size: 16pt; margin: 0; line-height: 1.15; } #print-only.roster .ro-ph p { margin: 1mm 0 0; font-size: 10pt; }
@@ -987,10 +988,14 @@ html[data-mode=dark] .set-link:hover { background: var(--side-2); }
   #print-only.roster tbody th { font-weight: 600; }
   #print-only.roster tr.ro-team th { background: #eee; font-size: 8pt; text-transform: uppercase; letter-spacing: .04em; padding-top: .8mm; padding-bottom: .8mm; }
   #print-only.roster td span { display: block; } #print-only.roster td.na { background: repeating-linear-gradient(135deg, #f3f3f3 0 2mm, #fff 2mm 4mm); }
+  #print-only.roster thead { display: table-header-group; }
+  #print-only.roster thead th.off, #print-only.roster td.off { background: #E6E6E6; color: #444; font-weight: 700; font-size: 7.5pt; text-align: center; vertical-align: top; }
+  #print-only.roster td.off { padding-top: 3mm; }
   #print-only.roster tr { break-inside: avoid; page-break-inside: avoid; }
   #print-only.roster .ro-pf { display: flex; justify-content: space-between; font-size: 7.5pt; color: #555; margin-top: 2mm; }
 }
 @page rosterA4 { size: A4 landscape; margin: 9mm; }
+@page rosterPortrait { size: A4 portrait; margin: 9mm; }
 @page badges { size: A4 portrait; margin: 0; }   /* only the badge sheets: the margins are in the layout itself */
 @page badgesLetter { size: letter portrait; margin: 0; }
 /* A badge, printed or in the layout preview (People → Name badges → Badge layout) */
@@ -1653,3 +1658,44 @@ html[data-mode=dark] .hero-art .w { fill: #fff; fill-opacity: .22; stroke: rgba(
 .look-prev i + u { position: absolute; left: 12px; top: 40px; width: 55%; height: 6px; border-radius: 3px; background: var(--line); }
 .look-prev i + u + u { top: 54px; width: 40%; }
 @media print { .hero-bg { display: none; } .page-head.hero { background: none; min-height: 0; padding: 0; } .page-head.hero > div:not(.hero-bg) { max-width: none; } }
+
+.hero-art .t { fill: color-mix(in srgb, var(--tint) 70%, #000); fill-opacity: .8; font-family: Inter, system-ui, sans-serif; }
+.hero-art .t2 { fill: #fff; fill-opacity: .95; font-family: Inter, system-ui, sans-serif; }
+html[data-mode=dark] .hero-art .t { fill: #fff; fill-opacity: .85; }
+.me-who.hero { flex-direction: row; align-items: center; gap: 18px; margin-bottom: 22px; }
+.me-who.hero > :not(.hero-bg) { position: relative; z-index: 1; }
+.me-who.hero > div:not(.hero-bg) { max-width: 44%; }
+@media (max-width: 700px) { .me-who.hero { flex-direction: column; align-items: flex-start; padding-top: 112px; } .me-who.hero > div:not(.hero-bg) { max-width: 100%; } }
+
+/* Page pictures, "Warm line art": a cream page with a faint trellis pattern and outline drawings (settings.look = 'line') */
+.hero.line { --lk: #4A3A2E; --lk2: #FFFDF9; --lkc: #FFE0C8; }
+.page-head.hero.line { background: #FFF9F2; border: 1px solid #EFE2D2; --ttl: #2A211B; }
+.page-head.hero.line .lead { color: #5E5148; opacity: 1; }
+.hero.line .hero-bg { background: none; }
+.hero.line .hero-bg::before { content: ''; position: absolute; inset: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='44' height='44'%3E%3Cpath d='M0 22L22 0L44 22L22 44Z' fill='none' stroke='%23E8590C' stroke-opacity='.14' stroke-width='1.4'/%3E%3C/svg%3E"); -webkit-mask-image: linear-gradient(90deg, transparent 28%, #000 100%); mask-image: linear-gradient(90deg, transparent 28%, #000 100%); }
+.hero.line .hero-art .a, .hero.line .hero-art .b { fill: none; stroke: var(--lk); stroke-width: 2.4; }
+.hero.line .hero-art .b { stroke-opacity: .55; }
+.hero.line .hero-art .w { fill: var(--lk2); fill-opacity: 1; stroke: var(--lk); stroke-width: 2.4; }
+.hero.line .hero-art .c { fill: var(--lkc); fill-opacity: 1; stroke: #E8590C; stroke-width: 2.4; }
+.hero.line .hero-art .t, .hero.line .hero-art .t2 { fill: var(--lk); fill-opacity: 1; stroke: none; }
+html[data-mode=dark] .hero.line { --lk: #E9D9C6; --lk2: #342C26; --lkc: #5A3A27; }
+html[data-mode=dark] .page-head.hero.line { background: #2A2420; border-color: #3D342D; --ttl: #F3E7DA; }
+html[data-mode=dark] .page-head.hero.line .lead { color: #D8CABB; }
+html[data-mode=dark] .hero.line .hero-art .a, html[data-mode=dark] .hero.line .hero-art .b { fill: none; }
+html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk); }
+.look-prev.line { --tint: #2F7A78; background: #FFF9F2; }
+.look-prev.line u { display: none; }
+.look-prev.line .hero-bg { position: absolute; inset: 0; }
+.look-prev.line .hero-art { width: 80%; }
+/* Who's serving with you (under a turn on Me → Serving) */
+.item .crew { flex-basis: 100%; padding-left: 56px; margin-top: -2px; }
+.crew > summary { cursor: pointer; color: var(--muted); font-size: 13px; font-weight: 600; list-style: none; display: inline-flex; gap: 6px; }
+.crew > summary::-webkit-details-marker { display: none; }
+.crew > summary::before { content: '›'; display: inline-block; transition: transform .15s; }
+.crew[open] > summary::before { transform: rotate(90deg); }
+.crew-team { margin: 8px 0 4px; }
+.crew-h { margin: 0 0 4px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--svc-ink, var(--muted)); }
+.crew-p { display: flex; gap: 8px; align-items: baseline; padding: 2px 0; }
+.crew-n { font-weight: 600; font-size: 14px; }
+.crew-p small { color: var(--muted); }
+@media (max-width: 700px) { .item .turn-more, .item .crew { padding-left: 0; } }

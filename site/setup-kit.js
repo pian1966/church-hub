@@ -426,7 +426,7 @@ var SetupKit = (function () {
       what: 'Departments and positions – one click sets up a starter set you can change.',
       how: function (c) { return ol([open(c.app('rosters/teams'), 'Open Rosters → Teams') + ' and choose the starter teams, or add your own.', 'Put the departments in the order of your service: ' + ui('More') + ' → ' + ui('Rearrange teams') + ', then the ↑ ↓ arrows beside each name (the roster follows that order).']); } },
     { id: 'rosters', group: 'serving', title: 'Make the first roster', mods: ['rosters'], since: '0.1',
-      what: 'Church & Trellis fills the roster fairly, keeps families together and asks volunteers in Messages – and someone who can’t make it can ask a free team-mate to take their place.',
+      what: 'Church & Trellis fills the roster fairly, keeps families together and asks volunteers in Messages – and someone who can’t make it can ask a free team-mate to take their place. Volunteers see who else is serving with them (Settings → Church Services can switch that off).',
       how: function (c) { return ol([open(c.app('rosters'), 'Open Rosters') + '. Before filling a new term, ' + ui('More') + ' → ' + ui('Ask who’s away…') + ' asks every volunteer to add their days away or say they’re free.', 'Choose a service and fill it.', 'To put it up on the noticeboard: ' + ui('More') + ' → ' + ui('Print the roster') + '. Choose the term and the services – each service gets its own A4 page with only the positions it uses. Choose “Save as PDF” as the printer to make a PDF.']); } },
     { id: 'msggroups', group: 'talk', title: 'Message groups', mods: ['messages'], since: '0.1',
       what: 'Write to a care group, the staff or any list of people inside Church & Trellis – no data costs for SMS.',

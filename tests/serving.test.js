@@ -81,5 +81,15 @@ const mg = S.mergeTeam('m2', 'm1', MP, MK, [{ id: 'x', positionId: 'b', personId
 ok(mg.removePositions.join() === 'b' && mg.positions.map(p => p.id + p.teamId + p.needed).join() === 'am13,cm11', 'merging: the same position joins the one already there (keeping the larger number needed), a new one moves across');
 ok(mg.removeSkills.join() === 'k2' && mg.skills.map(k => k.id + k.positionId).join() === 'k3a' && mg.assignments.map(a => a.positionId).join() === 'a', 'its people and their turns go with it, nobody twice');
 
+console.log('Volunteering in plain words');
+ok(S.freqShort('weekly') === 'Any week' && S.freqShort('emergency') === 'Backup only' && S.freqShort('monthly') === 'Once a month' && S.freqShort('fortnightly') === 'Every 2 weeks' && S.freqShort('occasional') === 'Now and then', 'how often, in a few words (never a code such as “emergency”)');
+const door = { id: 'door', name: 'Door', times: [] }, kids = { id: 'kids', name: 'Creche', times: ['08:00'] }, off = { id: 'off', name: 'Old', times: ['none'] };
+ok(S.positionSlots(door, {}).map(x => x.id).join() === '08:00,10:00,17:00' && S.positionSlots(kids, {}).map(x => x.id).join() === '08:00' && !S.positionSlots(off, {}).length, 'a position’s services are always spelt out (no services ticked = every Sunday service)');
+ok(S.skillSlots({ times: ['10:00'] }, door, {}).map(x => x.id).join() === '10:00' && S.skillSlots({ times: [] }, door, {}).length === 3 && S.skillSlots({ times: ['10:00'] }, kids, {}).length === 0, 'a volunteer’s services: the ones they chose, where the position runs');
+const sk = [{ positionId: 'door', frequency: 'weekly', times: ['10:00'] }, { positionId: 'door', frequency: 'emergency' }, { positionId: 'door', frequency: 'monthly', times: ['08:00'] }, { positionId: 'door', frequency: 'fortnightly' }, { positionId: 'kids', frequency: 'weekly' }];
+const c = S.fillCount(sk, door), c10 = S.fillCount(sk, door, S.allSlots({})[1]);
+ok(c.all === 4 && c.weekly === 2 && c.monthly === 1 && c.backup === 1, 'who can fill a position, counted by how often (any week, monthly, backup)');
+ok(c10.all === 3 && c10.weekly === 2 && c10.backup === 1 && c10.monthly === 0, '… and at one service only');
+
 if (fails) { console.log('\n' + fails + ' serving test(s) FAILED'); process.exit(1); }
 console.log('\nAll serving tests passed');

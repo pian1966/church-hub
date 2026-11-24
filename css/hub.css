@@ -272,6 +272,21 @@ button.item { width: 100%; border: 0; background: transparent; text-align: left;
 .team-h { display: flex; align-items: center; gap: 4px; }
 .team-tools { display: inline-flex; align-items: center; gap: 2px; font-size: 16px; }
 .team-tools .icon-btn[disabled] { opacity: .3; cursor: default; }
+.team-filter { gap: 8px; margin-bottom: 16px; }
+.team-filter .menu > summary { border-radius: 999px; }
+.ro-chip.svc { color: var(--svc-ink); }
+.ro-chip.svc.on { background: var(--svc-soft); border-color: var(--svc-line); color: var(--svc-ink); }
+/* A service named as a chip in its own colours (Teams, Me → Serving): it is always clear which service is meant */
+.svc-chips { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0 2px; }
+.svc-chip { font-size: 12px; font-weight: 700; padding: 2px 9px; border-radius: 999px; background: var(--svc-soft); color: var(--svc-ink); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--svc-line) 45%, transparent); white-space: nowrap; }
+.svc-note { display: inline-flex; align-items: center; gap: 4px; font-size: 12.5px; color: var(--muted); margin-left: 4px; }
+.pos-row { padding: 12px 0; border-top: 1px solid var(--line); }
+.team-panel > h2 + .pos-row { border-top: 0; padding-top: 4px; }
+.pos-row .need-line { display: inline-flex; align-items: center; margin-top: 2px; }
+.item.turn .grow { display: flex; flex-direction: column; gap: 1px; }
+.item.turn .me-cal { background: var(--svc-soft); color: var(--svc-ink); }
+.my-pos .grow b { font-size: 15px; }
+html[data-mode=dark] .svc-chip, html[data-mode=dark] .ro-chip.svc.on, html[data-mode=dark] .item.turn .me-cal { background: color-mix(in srgb, var(--svc-line) 22%, var(--surface)); color: color-mix(in srgb, var(--svc-line) 50%, #fff); }
 .matrix .team-row th { background: var(--surface-2); font-size: 12px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); padding: 8px 14px; }
 .slot { display: flex; flex-direction: column; gap: 4px; }
 .chip { display: flex; align-items: center; gap: 6px; width: 100%; text-align: left; border-radius: 10px; padding: 7px 9px; border: 1px solid transparent; font-size: 13.5px; font-weight: 600; cursor: pointer; min-height: 38px; background: var(--ok-soft); color: #173F27; }

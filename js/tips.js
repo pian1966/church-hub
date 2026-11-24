@@ -19,6 +19,8 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.107';
   var NEWS = [
+    { date: '2026-11-24', who: ['everyone'], app: 'me', btn: ['Me', 'Serving'], text: TX('All your serving is now in one place: Me → Serving. It shows your turns to answer, each position you serve in with its services (8am, 10am, 5pm), your days away and who you serve with.') },
+    { date: '2026-11-24', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'Teams'], text: TX('Rosters → Teams now shows the services each position is needed at, and how many can serve any week, once a month or as a backup. Tap 8am, 10am or 5pm to see only that service’s teams.') },
     { date: '2026-11-24', who: ['admin', 'archivist'], app: 'library', text: TX('Archives look much friendlier: each folder is a coloured tile, documents show what kind of file they are with Preview and Download beside them, you always see where you are, and the newest documents are on the first page.') },
     { date: '2026-11-23', who: ['everyone'], text: TX('In Did you know? and What’s new, the names of buttons and menu items now look like little buttons, so it is easy to see what to tap.') },
     { date: '2026-11-23', who: ['admin', 'pastor', 'rosters'], btn: ['Rosters', 'Teams'], text: TX('Rosters → Teams: the Administrator, the Rector and the assistant ministers can now write a position’s tooltip, and a new position is added in one box. On a phone, tap the small i beside a position to read its tooltip.') },

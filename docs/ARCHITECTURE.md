@@ -157,7 +157,7 @@ Administrator's own sign-in.
 ## Me (members' own page) and the Android app
 `js/mod-me.js` – **Me**, for everyone: *My details* (contact details they may change, what the office keeps, consent,
 language, sign out), *Days away* (their blockouts and approved leave; warns about roster turns on those days) and
-*Serving* (turns to accept, where they serve, offers to serve). It reuses the People and Rosters actions (`people:edit`,
+*Serving* – the one place for a person's own serving (0.107.12): Coming up (turns to accept), Where I serve (each position with its service chips, `Serving.skillSlots`, and how often, `Serving.freqShort`), When I can serve (days away, serving together) and Where would you like to help? (offers). Rosters → My serving was removed: `#/rosters/mine` opens Me → Serving, and for members Rosters has no menu entry (`offMenu` in the module, read by `listed()` in `js/app.js`). It reuses the People and Rosters actions (`people:edit`,
 `people:consent`, `rosters:addaway`, `rosters:delaway`, `rosters:reply`), so the rules stay in one place. On phones the
 tab bar shows Me first for members (staff get their working areas first).
 **Offers to serve** go to `serveOffers` (see Collections); roster coordinators answer them at the top of Rosters → Teams,

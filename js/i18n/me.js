@@ -2,6 +2,17 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Your turns, the positions you fill, and when you can serve.", "Jou beurte, die posisies wat jy vul, en wanneer jy kan dien.", "Amathuba akho, izikhundla ozigcwalisayo, nokuthi ungakhonza nini.", "Amathuba akho, izikhundla ozizalisayo, nokuba ungakhonza nini."],
+    ["You’re a backup, so you’ll only be asked when someone is needed.", "Jy is ’n rugsteun, so jy sal net gevra word wanneer iemand nodig is.", "Ungumsekeli, ngakho uzocelwa kuphela uma kudingeka umuntu.", "Ungumxhasi, ngoko uya kucelwa kuphela xa kufuneka umntu."],
+    ["{n} to answer", "{n} om te beantwoord", "{n} okufanele uziphendule", "{n} ekufuneka uziphendule"],
+    ["Please reply so the roster can be planned.", "Antwoord asseblief sodat die rooster beplan kan word.", "Sicela uphendule ukuze uhlelo luhlelwe.", "Nceda uphendule ukuze uludwe lucwangciswe."],
+    ["Yes, I’ll be there", "Ja, ek sal daar wees", "Yebo, ngizobe ngikhona", "Ewe, ndiza kubakhona"],
+    ["Not at any service at the moment", "Tans by geen diens nie", "Akukho nkonzweni okwamanje", "Akukho kwinkonzo okwangoku"],
+    ["“Any week” means you could be asked any Sunday; “Backup only” means only when someone is needed.", "“Enige week” beteken jy kan enige Sondag gevra word; “Slegs rugsteun” beteken net wanneer iemand nodig is.", "“Noma yiliphi isonto” kusho ukuthi ungacelwa noma yiliphi iSonto; “Umsekeli kuphela” kusho kuphela uma kudingeka umuntu.", "“Nayiphi na iveki” kuthetha ukuba ungacelwa nayiphi na iCawa; “Umxhasi kuphela” kuthetha kuphela xa kufuneka umntu."],
+    ["When I can serve", "Wanneer ek kan dien", "Lapho ngingakhonza khona", "Xa ndingakhonza"],
+    ["and {n} more", "en nog {n}", "nokunye okungu-{n}", "nezinye ezi-{n}"],
+    ["None – you can be asked on any Sunday you serve.", "Geen – jy kan gevra word op enige Sondag wat jy dien.", "Azikho – ungacelwa noma yiliphi iSonto okhonza ngalo.", "Azikho – ungacelwa nayiphi na iCawa okhonza ngayo."],
+    ["See all", "Sien alles", "Bona konke", "Bona zonke"],
     ['Away', 'Weg', 'Akekho', 'Akakho'],
     ['On leave', 'Met verlof', 'Usekhefini', 'Usekhefini'],
     ['Me', 'Ek', 'Mina', 'Mna'],

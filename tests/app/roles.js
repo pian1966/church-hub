@@ -86,6 +86,17 @@ module.exports = async function (ctx) {
   check(docs['skills/kp14sound'].frequency === 'weekly', 'Yes to “serve more often” changes how often');
   await s.page.click('[data-act="rosters:offerno"][data-id="soTim1"]'); await s.page.fill('#of-reply', 'The door team is full until January'); await s.page.click('[data-act="rosters:offernosend"]'); await s.settle(); docs = await s.docsNow();
   check(docs['serveOffers/soTim1'].status === 'declined' && docs['serveOffers/soTim1'].reply === 'The door team is full until January' && !Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p14' && docs[k].positionId === 'door'), 'Not now sends a short reply and leaves the team as it was');
+  // Teams: always clear which service each position is for
+  await s.go('rosters/teams');
+  check(await s.page.$$eval('.pos-row', rs => rs.length > 5 && rs.every(r => !!r.querySelector('.svc-chip') || r.textContent.includes('Not used at any service'))), 'Teams: every position names the services it is needed at (a chip per service)');
+  check(!(await s.page.$('[data-act="rosters:teammove"]')) && !(await s.text()).match(/\((weekly|emergency|fortnightly)\)/), '… the move arrows wait under More → Rearrange teams, and no codes such as “(emergency)” show');
+  await s.page.click('.team-filter [data-act="rosters:teamslot"][data-s="08:00"]');
+  check(await s.page.$$eval('.pos-row', rs => rs.length > 0 && rs.every(r => [...r.querySelectorAll('.svc-chip')].some(c => c.textContent === '8am'))), 'Show the teams for 8am: only the positions needed at 8am');
+  await s.page.click('.team-filter [data-act="rosters:teamslot"][data-s=""]');
+  await s.page.click('.page-head details.menu > summary'); await s.page.click('[data-act="rosters:arrange"]');
+  check((await s.page.$$('[data-act="rosters:teammove"]')).length > 2, 'Rearrange teams shows the arrows');
+  await s.page.click('.note [data-act="rosters:arrange"]');
+  check(!(await s.page.$('nav.seg a[href="#/rosters/mine"]')), 'Rosters has no “My serving” tab: everyone’s own serving is on Me → Serving');
   // Teams: names fold away, the tooltip is set from the ⋯ menu, and a position can be deleted
   await s.page.evaluate(() => { Store.put('positions', { id: 'zzold', teamId: Store.list('teams')[0].id, name: 'Zzold position', needed: 1 }); Store.put('skills', { id: 'zzsk', personId: 'p15', positionId: 'zzold', frequency: 'weekly' }); });
   await s.go('rosters'); await s.go('rosters/teams');
@@ -143,7 +154,7 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="rosters:saveaway"]'); await s.settle();
   docs = await s.docsNow(); const myAway = Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14');
   check(myAway.length === 3 && myAway.some(k => docs[k].from === '2027-07-01' && docs[k].to === '2027-07-14'), 'can add several away dates at once (2 service days + a holiday)');
-  await s.go('rosters/mine'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.settle();
+  await s.go('me/serve'); await s.page.click('[data-act="rosters:reply"][data-s="accepted"]'); await s.settle();
   docs = await s.docsNow(); check(docs['assignments/kTim'].status === 'accepted', 'can accept a serving turn');
   // Me → Consent is its own tab; withdrawing a consent warns what it means, and needs Save pressed twice
   await s.go('me/consent'); t = await s.text();
@@ -179,6 +190,8 @@ module.exports = async function (ctx) {
   check(Object.keys(docs).filter(k => k.startsWith('blockouts/') && docs[k].personId === 'p14').length === 2, 'they can remove a day away');
   await s.go('me/serve'); t = await s.text();
   check(t.includes('Sound desk') && t.includes('Every 2 weeks') && t.includes('Where would you like to help?') && t.includes('Tea & coffee'), 'Serving shows where they serve and where they could help');
+  check(await s.page.$$eval('.my-pos', rs => rs.length > 0 && rs.every(r => !!r.querySelector('.svc-chip'))) && t.includes('When I can serve') && t.includes('Days away') && t.includes('Serve with family or friends'), 'Serving: each position names its services, with days away and serving together on the same page');
+  check(!(await s.page.$('nav a[href="#/rosters"]')), 'a member has no separate Rosters entry: their serving is all on Me');
   await s.page.click('[data-act="me:offer"][data-p="tea"]');
   check(await s.page.$$eval('input[name="mo-f"]', xs => xs.map(x => x.value).join() === 'weekly,monthly,emergency') &&
     (await s.page.locator('#modal').textContent()).includes('Whenever necessary (could be every week)') &&

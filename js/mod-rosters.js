@@ -184,7 +184,9 @@
   }
 
   function tabs(active) {
-    var t = manager() ? [['', T('Roster')], ['teams', T('Teams')], ['services', T('Services')], ['together', T('Serving together')], ['away', T('Away dates')], ['mine', T('My serving')]] : [['mine', T('My serving')], ['together', T('Serving together')], ['away', T('Away dates')]];
+    // Rosters is the planners' workroom; everyone's own serving (their turns, positions, days away) is on Me → Serving
+    if (!manager()) return '<p style="margin:0 0 14px"><a href="#/me/serve">‹ ' + T('My serving') + '</a></p>';
+    var t = [['', T('Roster')], ['teams', T('Teams')], ['services', T('Services')], ['together', T('Serving together')], ['away', T('Away dates')]];
     return '<nav class="seg" aria-label="' + T('Rosters') + '" style="margin-bottom:18px">' + t.map(function (x) { return '<a href="#/rosters' + (x[0] ? '/' + x[0] : '') + '" class="' + (x[0] === active ? 'on' : '') + '"' + (x[0] === active ? ' aria-current="page"' : '') + '>' + x[1] + '</a>'; }).join('') + '</nav>';
   }
   function head(title, lead, btns) { return '<div class="page-head"><div><h1>' + esc(title) + '</h1><p class="lead">' + lead + '</p></div>' + (btns ? '<div class="btns">' + btns + '</div>' : '') + '</div>'; }
@@ -412,7 +414,7 @@
       (emergency ? '<p class="hint">' + T('Emergency-only volunteers are included. Use this only to cover an emergency.') + '</p>' : '') +
       (cands.length ? '<div class="list">' + cands.map(function (c) {
         return '<button class="item" data-act="rosters:pick" data-s="' + serviceId + '" data-p="' + positionId + '" data-person="' + c.p.id + '"' + rAttr + (emergency && c.emergency ? ' data-emergency="1"' : '') + (c.why ? ' disabled style="opacity:.55;cursor:not-allowed"' : '') + '>' + H.avatar(c.p, 32) +
-          '<span class="grow"><b>' + esc(H.name(c.p)) + '</b><small>' + esc(c.why || (c.emergency ? T('Emergency-only volunteer') : c.tg ? T(c.tg.strength === 'must' ? 'Serves together with {names} (always) – they’ll be asked too' : 'Serves together with {names} (when possible)', { names: c.tg.memberIds.filter(function (m) { return m !== c.p.id; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Available'))) + '</small></span>' +
+          '<span class="grow"><b>' + esc(H.name(c.p)) + '</b><small>' + esc(c.why || (c.emergency ? T('Backup only') : c.tg ? T(c.tg.strength === 'must' ? 'Serves together with {names} (always) – they’ll be asked too' : 'Serves together with {names} (when possible)', { names: c.tg.memberIds.filter(function (m) { return m !== c.p.id; }).map(function (m) { return H.name(person(m)); }).join(', ') }) : T('Available'))) + '</small></span>' +
           (c.why ? '<span class="tag grey">' + T('Not available') + '</span>' : '<span class="tag ok">' + T('Available') + '</span>') + '</button>';
       }).join('') + '</div>' : '<p class="empty">' + T('No one is on this team yet. Add people under Teams.') + '</p>') + '</div>' +
       '<div class="dlg-foot"><a class="btn" href="#/rosters/teams" data-act="hub:close">' + T('Manage teams') + '</a>' +
@@ -593,8 +595,29 @@
     if (manager()) items.push('<button class="menu-danger" data-act="rosters:posdel" data-p="' + esc(p.id) + '">' + T('Delete this position…') + '</button>');
     return items.length ? H.menu('⋯', items, 'row-menu', T('More for {position}', { position: p.name })) : '';
   }
+  /** A service as a small chip in its own colours ("8am", "10am", "5pm"). */
+  function svcChip(x) { return '<span class="svc-chip" style="' + themeStyle(Serving.themeOf(x)) + '">' + esc(slotName(x.id)) + '</span>'; }
+  /** Where a position is needed, spelt out every time: a chip per service (never a blank that secretly means "all"). */
+  function neededAt(p) {
+    var on = Serving.positionSlots(p, S.settings());
+    if (!on.length) return '<span class="svc-chips"><span class="tag grey">' + T('Not used at any service') + '</span></span>';
+    return '<span class="svc-chips" aria-label="' + esc(T('Needed at: {services}', { services: on.map(function (x) { return slotName(x.id); }).join(', ') })) + '">' + on.map(svcChip).join('') +
+      (Serving.isCommunion(p) ? '<span class="svc-note">' + H.icon(CHALICE, 13) + T('Communion services only') + '</span>' : '') + '</span>';
+  }
+  /** "8 people · 3 any week · 1 once a month · 4 backup" – who can fill it, counted by how often. */
+  function fillLine(c) {
+    var bits = [];
+    if (c.weekly) bits.push(T('{n} any week', { n: c.weekly }));
+    if (c.monthly) bits.push(T('{n} once a month', { n: c.monthly }));
+    if (c.backup) bits.push(T('{n} backup', { n: c.backup }));
+    return TN('{n} person', '{n} people', c.all) + (bits.length > 1 || c.backup ? ' · ' + bits.join(' · ') : '');
+  }
   function renderTeams() {
-    var html = head(T('Teams'), T('Who can serve in each position, and how often they’d like to.'), '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + T('New team') + '</button>') + tabs('teams');
+    var st = S.settings(), all = Serving.allSlots(st), slot = all.filter(function (x) { return x.id === state.teamSlot; })[0] || null;
+    if (!slot) state.teamSlot = '';
+    var html = head(T('Teams'), T('Each position, the services it’s needed at, and who can fill it.'),
+      '<button class="btn" data-act="rosters:newteam">' + H.icon(H.ICON.plus, 18) + T('New team') + '</button>' +
+      H.menu(T('More'), ['<button data-act="rosters:arrange">' + (state.arrange ? T('Finish rearranging') : T('Rearrange teams')) + '</button>'])) + tabs('teams');
     html += renderOffers();
     var add = window.Serving ? Serving.missing(S.list('teams'), S.list('positions')) : { teams: [], positions: [] };
     var ren = add.renames || [];
@@ -604,21 +627,41 @@
       ren.map(function (r) { return T('{old} becomes {new}; its people and turns stay.', { old: esc(r.from), new: esc(r.to) }) + ' '; }).join('') +
       (ren.length ? T('Nothing is removed.') : T('Nothing here is changed or removed.')) + ' ' +
       '<button class="btn small primary" data-act="rosters:setupdepts">' + T('Add them') + '</button></div>';
-    var tl = teams();
-    html += '<div class="grid2">' + tl.map(function (t, ti) {
-      var ps = S.find('positions', function (p) { return p.teamId === t.id; });
-      var tools = manager() ? '<span class="team-tools"><button type="button" class="icon-btn ghost" data-act="rosters:teammove" data-id="' + esc(t.id) + '" data-d="-1"' + (ti ? '' : ' disabled') + ' aria-label="' + esc(T('Move {team} up', { team: t.name })) + '" title="' + esc(T('Move up')) + '">↑</button>' +
-        '<button type="button" class="icon-btn ghost" data-act="rosters:teammove" data-id="' + esc(t.id) + '" data-d="1"' + (ti < tl.length - 1 ? '' : ' disabled') + ' aria-label="' + esc(T('Move {team} down', { team: t.name })) + '" title="' + esc(T('Move down')) + '">↓</button>' +
+    // Which service? All of them, or one at a time – so it is always clear which service a team is for
+    var used = all.filter(function (x) { return S.list('positions').some(function (p) { return Serving.runsAtSlot(p, x); }); });
+    var regular = used.filter(function (x) { return !x.special; }), specials = used.filter(function (x) { return x.special; });
+    var chip = function (x) {
+      var on = !!slot && slot.id === x.id;
+      return '<button type="button" class="ro-chip svc' + (on ? ' on' : '') + '" style="' + themeStyle(Serving.themeOf(x)) + '" aria-pressed="' + on + '" data-act="rosters:teamslot" data-s="' + esc(x.id) + '">' + esc(slotName(x.id)) + '</button>';
+    };
+    if (used.length > 1) html += '<div class="ro-view team-filter" role="group" aria-label="' + esc(T('Show the teams for')) + '"><span class="muted small">' + T('Show the teams for') + '</span>' +
+      '<button type="button" class="ro-chip' + (slot ? '' : ' on') + '" aria-pressed="' + !slot + '" data-act="rosters:teamslot" data-s="">' + T('Every service') + '</button>' +
+      regular.map(chip).join('') + (slot && slot.special ? chip(slot) : '') +
+      (specials.length ? H.menu(T('Special services'), specials.map(function (x) { return '<button data-act="rosters:teamslot" data-s="' + esc(x.id) + '">' + esc(slotName(x.id)) + '</button>'; }), 'team-specials') : '') + '</div>';
+    if (state.arrange) html += '<div class="note info" style="margin-bottom:14px">' + T('Use the arrows to put the teams in the order you’d like. It is the order on the roster too.') + ' <button class="btn small" data-act="rosters:arrange">' + T('Done') + '</button></div>';
+    var tl = teams(), skills = S.list('skills');
+    var shown = tl.map(function (t) { return { t: t, ps: S.find('positions', function (p) { return p.teamId === t.id && (!slot || Serving.runsAtSlot(p, slot)); }) }; }).filter(function (x) { return !slot || x.ps.length; });
+    if (slot && !shown.length) html += '<p class="empty">' + T('No positions are needed at the {service} service yet. Choose them under Services.', { service: slot.label }) + '</p>';
+    html += '<div class="grid2">' + shown.map(function (x) {
+      var t = x.t, ps = x.ps, ti = tl.indexOf(t);
+      var tools = manager() ? '<span class="team-tools">' + (state.arrange ? '<button type="button" class="icon-btn ghost" data-act="rosters:teammove" data-id="' + esc(t.id) + '" data-d="-1"' + (ti ? '' : ' disabled') + ' aria-label="' + esc(T('Move {team} up', { team: t.name })) + '" title="' + esc(T('Move up')) + '">↑</button>' +
+        '<button type="button" class="icon-btn ghost" data-act="rosters:teammove" data-id="' + esc(t.id) + '" data-d="1"' + (ti < tl.length - 1 ? '' : ' disabled') + ' aria-label="' + esc(T('Move {team} down', { team: t.name })) + '" title="' + esc(T('Move down')) + '">↓</button>' : '') +
         H.menu('⋯', [tl.length > 1 ? '<button data-act="rosters:teammerge" data-id="' + esc(t.id) + '">' + T('Join with another team…') + '</button>' : '',
-          ps.length ? '' : '<button class="menu-danger" data-act="rosters:teamdel" data-id="' + esc(t.id) + '">' + T('Delete team') + '</button>'], 'row-menu', T('More for {team}', { team: t.name })) + '</span>' : '';
-      return '<section class="panel"><h2 class="team-h"><span class="grow">' + esc(t.name) + '</span>' + tools + '</h2>' + ps.map(function (p) {
-        var ks = S.find('skills', function (k) { return k.positionId === p.id; }).sort(function (a, b) { return byName(person(a.personId), person(b.personId)); });
-        return '<div style="margin:12px 0"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + '</b>' + (p.tooltip ? ' ' + H.tip(p.tooltip) : '') + '<span class="muted small">' + (manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '') + T('{n} per service', { n: p.needed }) + (p.times && p.times.indexOf('none') >= 0 ? ' · ' + esc(T('Not at any service')) : p.times && p.times.length && p.times.length < Serving.allSlots(S.settings()).length ? ' · ' + esc(T('{times} only', { times: p.times.map(slotName).join(', ') })) : '') + '</span></span><button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button>' + posMenu(p) + '</div>' +
-          (ks.length ? '<details class="pos-names" data-p="' + esc(p.id) + '"' + (openPos[p.id] ? ' open' : '') + '><summary>' + esc(TN('{n} person', '{n} people', ks.length)) + '</summary><div class="list" style="margin-top:8px">' + ks.map(function (k) {
-            var pp = person(k.personId);
-            return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow">' + nameLink(pp) + '<small>' + esc(freqText(k.frequency)) + '</small></span><button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
-          }).join('') + '</div></details>' : '<p class="hint">' + T('No one yet.') + '</p>') + '</div>';
-      }).join('') + '<button class="btn small" data-act="rosters:newpos" data-t="' + t.id + '">' + H.icon(H.ICON.plus, 16) + T('Add a position') + '</button></section>';
+          ps.length ? '' : '<button class="menu-danger" data-act="rosters:teamdel" data-id="' + esc(t.id) + '">' + T('Delete team') + '</button>'].filter(Boolean).concat(state.arrange ? [] : ['<button data-act="rosters:arrange">' + T('Rearrange teams') + '</button>']), 'row-menu', T('More for {team}', { team: t.name })) + '</span>' : '';
+      return '<section class="panel team-panel"><h2 class="team-h"><span class="grow">' + esc(t.name) + '</span>' + tools + '</h2>' + ps.map(function (p) {
+        var ks = skills.filter(function (k) { return k.positionId === p.id && (!slot || Serving.servesAt(k, p, slot)); }).sort(function (a, b) { return byName(person(a.personId), person(b.personId)); });
+        var where = Serving.positionSlots(p, st).map(function (y) { return y.id; }).join();
+        var step = manager() ? '<span class="need-step"><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="-1"' + (p.needed > 1 ? '' : ' disabled') + ' aria-label="' + esc(T('One fewer for {position}', { position: p.name })) + '">−</button><button type="button" data-act="rosters:needed" data-p="' + p.id + '" data-d="1"' + (p.needed < 20 ? '' : ' disabled') + ' aria-label="' + esc(T('One more for {position}', { position: p.name })) + '">+</button></span>' : '';
+        return '<div class="pos-row"><div class="row pos-head"><span class="grow"><b>' + esc(p.name) + (p.tooltip ? ' ' + H.tip(p.tooltip) : '') + '</b>' + neededAt(p) +
+          '<span class="muted small need-line">' + step + T('{n} needed at each service', { n: p.needed }) + '</span></span>' +
+          '<button class="btn small" data-act="rosters:addmember" data-p="' + p.id + '">' + H.icon(H.ICON.plus, 16) + T('Add') + '</button>' + posMenu(p) + '</div>' +
+          (ks.length ? '<details class="pos-names" data-p="' + esc(p.id) + '"' + (openPos[p.id] ? ' open' : '') + '><summary>' + esc(fillLine(Serving.fillCount(ks, p))) + '</summary><div class="list" style="margin-top:8px">' + ks.map(function (k) {
+            var pp = person(k.personId), mine = Serving.skillSlots(k, p, st);
+            var narrower = mine.map(function (y) { return y.id; }).join() !== where;
+            return '<div class="item">' + H.avatar(pp, 30) + '<span class="grow">' + nameLink(pp) + '<small>' + esc(T(Serving.freqShort(k.frequency))) + (narrower ? ' · ' + esc(mine.length ? mine.map(function (y) { return slotName(y.id); }).join(', ') : T('Not at these services')) : '') + '</small></span>' +
+              '<button class="icon-btn ghost" data-act="rosters:unskill" data-id="' + k.id + '" aria-label="' + esc(T('Remove {name} from {position}', { name: H.name(pp), position: p.name })) + '">' + H.icon(H.ICON.x, 18) + '</button></div>';
+          }).join('') + '</div></details>' : '<p class="hint">' + (slot ? T('No one at this service yet.') : T('No one yet.')) + '</p>') + '</div>';
+      }).join('') + (slot ? '' : '<button class="btn small" data-act="rosters:newpos" data-t="' + t.id + '">' + H.icon(H.ICON.plus, 16) + T('Add a position') + '</button>') + '</section>';
     }).join('') + '</div>';
     return html;
   }
@@ -721,7 +764,7 @@
         (a.status === 'pending' ? '<button class="btn small" data-act="rosters:reply" data-id="' + a.id + '" data-s="declined">' + T('Can’t make it') + '</button><button class="btn small ok" data-act="rosters:reply" data-id="' + a.id + '" data-s="accepted">' + T('Accept') + '</button>' :
           '<span class="tag ' + (a.status === 'accepted' ? 'ok' : 'grey') + '">' + T(a.status === 'accepted' ? 'Accepted' : 'Said no') + '</span>') + '</div>';
     }).join('') + '</div>' : '<p class="empty">' + T('You’re not on the roster in the coming weeks.') + '</p>';
-    html += '<div class="grid2" style="margin-top:16px"><section class="panel"><h2>' + T('My teams') + '</h2>' + (sk.length ? sk.map(function (k) { var po = pos(k.positionId); return '<p style="margin:6px 0">' + esc(po.name + ' · ' + (team(po.teamId) || {}).name) + ' <span class="muted small">(' + esc(T(k.frequency)) + ')</span></p>'; }).join('') : '<p class="muted">' + T('Not on a team yet – speak to the roster coordinator.') + '</p>') + '</section>' +
+    html += '<div class="grid2" style="margin-top:16px"><section class="panel"><h2>' + T('My teams') + '</h2>' + (sk.length ? sk.map(function (k) { var po = pos(k.positionId); if (!po) return ''; return '<p style="margin:6px 0">' + esc(po.name + ' · ' + (team(po.teamId) || {}).name) + ' <span class="svc-chips">' + Serving.skillSlots(k, po, S.settings()).map(svcChip).join('') + '<span class="svc-note">' + esc(T(Serving.freqShort(k.frequency))) + '</span></span></p>'; }).join('') : '<p class="muted">' + T('Not on a team yet – speak to the roster coordinator.') + '</p>') + '</section>' +
       '<section class="panel"><h2>' + T('Serve with family or friends') + '</h2><p class="muted" style="margin-top:0">' + T('Tell us who you’d like to serve with, and the roster will keep you together.') + '</p><a class="btn" href="#/rosters/together">' + T('Serving together') + '</a> <a class="btn" href="#/rosters/away">' + T('My away dates') + '</a></section></div>';
     return html;
   }
@@ -734,6 +777,7 @@
   }
   var MOD; H.register(MOD = {
     id: 'rosters', name: 'Rosters', desc: 'Who serves when – families kept together', icon: H.ICON.rosters, tint: '#2F6FB3',
+    offMenu: function () { return !manager() && H.isOn('me'); },   // members (and Pastors who only look) find their serving under Me
     stat: function (u) {
       if (manager()) { var g = nextGaps(); return g ? (g.n ? TN('{n} gap on {date}', '{n} gaps on {date}', g.n, { date: H.fmt(g.s.date) }) : T('All filled for {date}', { date: H.fmt(g.s.date) })) : T('No services planned'); }
       var p = S.find('assignments', function (a) { return a.personId === u.id && a.status === 'pending'; }).length;
@@ -741,7 +785,7 @@
     },
     todos: function (u) {
       var out = [], mine = S.find('assignments', function (a) { var s = S.get('services', a.serviceId); return a.personId === u.id && a.status === 'pending' && s && s.date >= H.today(); });
-      if (mine.length) out.push({ text: TN('Reply to {n} serving request', 'Reply to {n} serving requests', mine.length), href: '#/rosters/mine' });
+      if (mine.length) out.push({ text: TN('Reply to {n} serving request', 'Reply to {n} serving requests', mine.length), href: H.isOn('me') ? '#/me/serve' : '#/rosters/mine' });
       if (manager()) { var w = waitingOffers().length; if (w) out.push({ text: TN('{n} person has offered to serve – answer them', '{n} people have offered to serve – answer them', w), href: '#/rosters/teams' }); }
       if (manager()) { var g = nextGaps(); if (g && g.n) out.push({ text: TN('Fill {n} gap on the roster for {date}', 'Fill {n} gaps on the roster for {date}', g.n, { date: H.fmt(g.s.date) }), href: '#/rosters' }); }
       return out;
@@ -751,7 +795,10 @@
       if (v === 'teams' && manager()) return renderTeams();
       if (v === 'services' && manager()) return p[1] ? renderService(decodeURIComponent(p[1])) : renderServices();
       if (v === 'together') return renderTogether();
-      if (v === 'away') return renderAway();
+      // Everyone's own serving lives on Me → Serving (one place): the old addresses open it
+      var meOn = H.isOn('me');
+      if (v === 'away') { if (!manager() && meOn) { H.go('me/away'); return ''; } return renderAway(); }
+      if ((v === 'mine' || !manager()) && meOn) { H.go('me/serve'); return ''; }
       if (v === 'mine' || !manager()) return renderMine();
       return renderMatrix();
     },
@@ -771,6 +818,8 @@
       view: function (el) { state.view = el.dataset.v; state.preview = null; H.render(); },
       hideslot: function (el) { if (state.hidden.indexOf(el.dataset.v) < 0) state.hidden.push(el.dataset.v); H.render(); },
       showslot: function (el) { var v = el.dataset.v; state.hidden = v ? state.hidden.filter(function (x) { return x !== v; }) : []; H.render(); },
+      teamslot: function (el) { state.teamSlot = el.dataset.s || ''; H.render(); },
+      arrange: function () { state.arrange = !state.arrange; H.render(); },
       teammove: function (el) {
         var ch = Serving.moveTeam(S.list('teams'), el.dataset.id, +el.dataset.d), t = team(el.dataset.id);
         ch.forEach(function (c) { var x = team(c.id); if (x && x.order !== c.order) S.put('teams', Object.assign({}, x, { order: c.order })); });
@@ -1031,5 +1080,5 @@
       unskill: function (el) { S.remove('skills', el.dataset.id, 'Removed from a team'); H.render(); }
     }, serviceActions)
   });
-  window.RosterHelpers = { awayList: awayList };
+  window.RosterHelpers = { awayList: awayList, canPrint: function () { return canPrint() && !manager(); }, svcChip: svcChip };
 })();

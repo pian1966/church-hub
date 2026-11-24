@@ -363,7 +363,7 @@ var Hub = (function () {
   function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
-  function listed() { return enabled().filter(function (m) { return !m.inGroups && !m.inLibrary; }); }
+  function listed() { return enabled().filter(function (m) { return !m.inGroups && !m.inLibrary && !(m.offMenu && m.offMenu()); }); }   // offMenu: opens, but has no menu entry of its own (e.g. Rosters for members: theirs is on Me)
   /** The kinds of group this person may open (Groups → its tabs), in menu order. */
   function groupMods() {
     var priority = { care: 0, life: 1, staffgroup: 2, leaders: 3 };
@@ -520,7 +520,7 @@ var Hub = (function () {
     var active = mod ? (mod.inGroups ? 'groups' : mod.id) : 'home', s = Store.settings();
     // Phone tab bar: members get "Me" (their details, days away, serving) first; staff get their working areas first.
     var order = can('people.basic') || can('people.view') || can('*') ? ['people', 'messages', 'rosters', 'leave', 'me'] : ['me', 'messages', 'people', 'rosters', 'leave'];
-    var on = enabled().map(function (m) { return m.id; });
+    var on = listed().map(function (m) { return m.id; });
     var tabs = ['home'].concat(order.filter(function (id) { return on.indexOf(id) >= 0; })).slice(0, 4);
     return '<div class="app">' +
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>Church <span class="amp">&amp;</span> Trellis</b><small>' + esc(s.churchName) + '</small></span></div>' +

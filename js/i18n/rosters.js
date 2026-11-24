@@ -2,6 +2,22 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Not used at any service", "By geen diens gebruik nie", "Akusetshenziswa kunoma iyiphi inkonzo", "Akusetyenziswa kuyo nayiphi na inkonzo"],
+    ["Needed at: {services}", "Nodig by: {services}", "Kuyadingeka ku: {services}", "Kuyafuneka ku: {services}"],
+    ["Communion services only", "Slegs nagmaaldienste", "Ezinkonzweni zeSidlo SeNkosi kuphela", "Kwiinkonzo zoMthendeleko kuphela"],
+    ["{n} any week", "{n} enige week", "{n} noma yiliphi isonto", "{n} nayiphi na iveki"],
+    ["{n} once a month", "{n} een keer ’n maand", "{n} kanye ngenyanga", "{n} kanye ngenyanga"],
+    ["{n} backup", "{n} rugsteun", "{n} abasekeli", "{n} abaxhasi"],
+    ["Each position, the services it’s needed at, and who can fill it.", "Elke posisie, die dienste waar dit nodig is, en wie dit kan vul.", "Isikhundla ngasinye, izinkonzo esidingeka kuzo, nokuthi ubani ongasigcwalisa.", "Isikhundla ngasinye, iinkonzo esifuneka kuzo, nokuba ngubani onokusizalisa."],
+    ["Finish rearranging", "Klaar herrangskik", "Qeda ukuhlela kabusha", "Gqiba ukulungelelanisa kwakhona"],
+    ["Rearrange teams", "Herrangskik spanne", "Hlela kabusha amathimba", "Lungelelanisa kwakhona amaqela omsebenzi"],
+    ["Show the teams for", "Wys die spanne vir", "Bonisa amathimba e-", "Bonisa amaqela omsebenzi e-"],
+    ["Every service", "Elke diens", "Zonke izinkonzo", "Zonke iinkonzo"],
+    ["Use the arrows to put the teams in the order you’d like. It is the order on the roster too.", "Gebruik die pyltjies om die spanne in die volgorde te sit wat jy wil hê. Dit is ook die volgorde op die rooster.", "Sebenzisa imicibisholo ukuze ubeke amathimba ngendlela oyifunayo. Kuwuhlelo nasohlelweni.", "Sebenzisa iintolo ukubeka amaqela omsebenzi ngendlela ofuna ngayo. Lulungelelwano nakuludwe."],
+    ["No positions are needed at the {service} service yet. Choose them under Services.", "Nog geen posisies is by die {service}-diens nodig nie. Kies hulle onder Dienste.", "Azikho izikhundla ezidingekayo enkonzweni ye-{service} okwamanje. Zikhethe ngaphansi kwe-Izinkonzo.", "Akukho zikhundla zifunekayo kwinkonzo ye-{service} okwangoku. Zikhethe phantsi kwe-Iinkonzo."],
+    ["{n} needed at each service", "{n} nodig by elke diens", "{n} kudingeka enkonzweni ngayinye", "{n} kufuneka kwinkonzo nganye"],
+    ["Not at these services", "Nie by hierdie dienste nie", "Hhayi kulezi zinkonzo", "Akukho kwezi nkonzo"],
+    ["No one at this service yet.", "Nog niemand by hierdie diens nie.", "Akekho kule nkonzo okwamanje.", "Akukabikho mntu kule nkonzo."],
     ["Services side by side", "Dienste langs mekaar", "Izinkonzo eceleni kwazo", "Iinkonzo ecaleni kwazo"],
     ["Side by side:", "Langs mekaar:", "Eceleni kwazo:", "Ecaleni kwazo:"],
     ["Show {n} service at a time", "Wys {n} diens op ’n slag", "Bonisa inkonzo engu-{n} ngesikhathi", "Bonisa inkonzo e-{n} ngexesha"],

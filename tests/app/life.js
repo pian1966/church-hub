@@ -50,7 +50,9 @@ module.exports = async function (ctx) {
   check(docs[key].venue.atHost === true && docs[key].roles.p16 === 'coleader' && /At Clare Jacobs’s home/.test(t), 'at the host’s home instead; a co-leader too');
   // From a person's page: the groups they are in, ticked on one list
   await s.go('people/p/p19'); await s.page.click('[data-act="people:groups"]'); await s.page.waitForSelector('.pg-in');
-  await s.page.check('.pg-in[data-k="life"][value="' + gid + '"]'); await s.page.click('[data-act="people:groupssave"]'); await s.settle(); docs = await s.docsNow();
+  await s.page.check('.pg-in[data-k="life"][value="' + gid + '"]'); await s.settle(); docs = await s.docsNow();
+  check((docs[key].memberIds || []).includes('p19'), 'a person’s Groups window saves as you go: the tick is kept before anyone presses Done');
+  await s.page.click('[data-act="people:groupssave"]'); await s.settle(); docs = await s.docsNow();
   check(docs[key].memberIds.includes('p19'), 'a person’s page: Groups puts them in a Midweek Group');
   await s.page.click('[data-act="people:groups"]'); await s.page.waitForSelector('.pg-in');
   check(await s.page.isChecked('.pg-in[data-k="life"][value="' + gid + '"]'), '… and shows the groups they are in');

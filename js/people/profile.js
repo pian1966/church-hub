@@ -93,14 +93,28 @@
   /** Which groups someone is in, all kinds together, ticked on one list – the same as adding them from a group's page. */
   function groupsDialog(p) {
     var kinds = groupKinds(p); if (!kinds.length) return;
-    H.modal(H.dialogHead(T('Groups'), H.name(p)) + '<div class="dlg-body">' + kinds.map(function (kd) {
+    // Saved as you go (data-autoscope + the hidden data-autosave button, like Edit details); Done closes
+    H.modal(H.dialogHead(T('Groups'), H.name(p) + ' · ' + T('Changes are saved as you go.')) + '<div class="dlg-body" data-autoscope><button type="button" data-autosave data-act="people:autogroups" data-id="' + p.id + '" tabindex="-1">' + T('Save') + '</button>' + kinds.map(function (kd) {
       var gs = S.list(kd.coll).slice().sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
       return '<h3 style="margin:10px 0 6px">' + esc(kd.title) + '</h3>' + (gs.length ? '<div class="list">' + gs.map(function (g) {
         var inIt = (g.memberIds || []).indexOf(p.id) >= 0, isL = (g.leaderIds || []).indexOf(p.id) >= 0;
         return '<div class="item" style="gap:12px;flex-wrap:wrap"><label class="check grow" style="margin:0"><input type="checkbox" class="pg-in" data-k="' + kd.k + '" value="' + esc(g.id) + '"' + (inIt ? ' checked' : '') + '><span data-own-words>' + esc(g.name) + '</span></label>' +
           '<label class="check" style="margin:0"><input type="checkbox" class="pg-lead" data-k="' + kd.k + '" data-g="' + esc(g.id) + '"' + (isL ? ' checked' : '') + '><span class="small">' + esc(kd.lead) + '</span></label></div>';
       }).join('') + '</div>' : '<p class="muted small">' + T('None yet.') + ' <a href="#/' + kd.k + '">' + esc(kd.title) + '</a></p>');
-    }).join('') + '</div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:groupssave" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Groups'));
+    }).join('') + '</div><div class="dlg-foot"><button class="btn primary save" data-act="people:groupssave" data-id="' + p.id + '">' + T('Done') + '</button></div>', T('Groups'));
+  }
+  /** Which groups someone is in (the Groups window). quiet = saving as you go: the window stays open. */
+  function saveGroups(el, quiet) {
+    var p = S.get('people', el.dataset.id); if (!p || !groupKinds(p).length) return;
+    var want = { care: {}, life: {} };
+    Array.prototype.forEach.call(document.querySelectorAll('.pg-lead:checked'), function (c) { var b = document.querySelector('.pg-in[data-k="' + c.dataset.k + '"][value="' + c.dataset.g + '"]'); if (b) b.checked = true; });   // a leader is in the group
+    Array.prototype.forEach.call(document.querySelectorAll('.pg-in:checked'), function (c) { var l = document.querySelector('.pg-lead[data-k="' + c.dataset.k + '"][data-g="' + c.value + '"]'); want[c.dataset.k][c.value] = !!(l && l.checked); });
+    groupKinds(p).forEach(function (kd) {
+      if (kd.k === 'care') CareUI.setFrom(p, { want: want.care });
+      else LifeUI.setGroups(p, want.life, 'From their page: ');
+    });
+    if (quiet) { H.render(); H.toast(T('Saved')); return; }   // saving as you go: the window stays open
+    H.closeModal(); H.render(); H.toast(T('Saved'));
   }
   function canPhoto(p) {
     if (!p || p.mergedInto) return false;
@@ -473,17 +487,8 @@
   }
   Object.assign(P.actions, {
     groups: function (el) { groupsDialog(S.get('people', el.dataset.id)); },
-    groupssave: function (el) {
-      var p = S.get('people', el.dataset.id); if (!p || !groupKinds(p).length) return;
-      var want = { care: {}, life: {} };
-      Array.prototype.forEach.call(document.querySelectorAll('.pg-lead:checked'), function (c) { var b = document.querySelector('.pg-in[data-k="' + c.dataset.k + '"][value="' + c.dataset.g + '"]'); if (b) b.checked = true; });   // a leader is in the group
-      Array.prototype.forEach.call(document.querySelectorAll('.pg-in:checked'), function (c) { var l = document.querySelector('.pg-lead[data-k="' + c.dataset.k + '"][data-g="' + c.value + '"]'); want[c.dataset.k][c.value] = !!(l && l.checked); });
-      groupKinds(p).forEach(function (kd) {
-        if (kd.k === 'care') CareUI.setFrom(p, { want: want.care });
-        else LifeUI.setGroups(p, want.life, 'From their page: ');
-      });
-      H.closeModal(); H.render(); H.toast(T('Saved'));
-    },
+    groupssave: function (el) { saveGroups(el, false); },
+    autogroups: function (el) { saveGroups(el, true); },
     copyaddress: function (el) {
       var p = S.get('people', el.dataset.id), o = S.get('people', el.dataset.from);
       if (!p || !o || !o.address || !(H.can('*') || H.can('people.edit'))) return;

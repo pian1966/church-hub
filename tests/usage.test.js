@@ -78,4 +78,28 @@ console.log('The whole summary and the demo');
   ok(s.stickiness >= 0 && s.stickiness <= 100 && s.daily.length === 14 && s.growth.length === 12 && s.weekdays.length === 7, 'the pieces have the right shape');
   ok(Usage.summary({ people: [], records: [], today, now, latest: '1.0.0' }).stickiness === 0, 'an empty church gives zeros, not errors');
 }
+console.log('How much each person uses it');
+{
+  const mk = (n, parts, extra) => R('u', Object.assign({ firstSeen: '2026-01-01', lastSeen: '2026-11-25T08:00:00Z', days: Object.fromEntries(Array.from({ length: n }, (_, i) => {
+    const d = new Date(Date.parse(today + 'T00:00:00Z') - i * 864e5).toISOString().slice(0, 10); return [d, { n: 1, v: Object.fromEntries(parts.map(x => [x, 1])) }]; })) }, extra));
+  const many = ['people', 'rosters', 'messages', 'events'], p = P('u');
+  const L = (rec, person) => Usage.level(person || p, rec, today, true);
+  ok(Usage.level(P('x'), undefined, today, true).n === 0 && Usage.level(P('x'), undefined, today, true).id === 'none', 'not on the app: level 0');
+  ok(Usage.level(P('x', { appFirstSeen: '2026-11-02' }), undefined, today, false).n === null, 'no usage recorded at all: only "on the app", no rating');
+  ok(L(mk(1, many)).n === 1 && L(mk(3, many)).n === 2 && L(mk(5, many)).n === 3 && L(mk(12, many)).n === 4 && L(mk(20, many)).n === 5, 'days opened in 4 weeks: 0–1 → 1, 2–3 → 2, 4–7 → 3, 8–15 → 4, 16+ → 5');
+  ok(L(mk(20, ['people'])).n === 3, 'one part only caps it at Regular');
+  ok(L(mk(20, ['people', 'rosters', 'messages'])).n === 4, 'fewer than 4 parts: not a Power user');
+  ok(L(mk(20, many.concat(['home']))).parts === 4, 'Home does not count as a part');
+  ok(L(mk(20, many, { firstSeen: '2026-11-20' }), P('u', { appFirstSeen: '2026-11-20' })).n === 1, 'first opened in the last 14 days: Just started');
+  ok(Usage.LEVELS[5][0] === 'power' && Usage.LEVELS.length === 6, 'six steps: not on the app, then five');
+  const slip = L(mk(0, [], { lastSeen: '2026-10-20T08:00:00Z' }));
+  ok(slip.slipping && slip.n === 1, 'was on the app, not opened for 3 weeks: Just started and slipping away');
+  ok(!L(mk(20, many)).slipping && !L(mk(0, [], { lastSeen: '2026-11-10T08:00:00Z' })).slipping, 'used lately, or only a fortnight away: not slipping');
+  ok(L(mk(0, [], { firstSeen: '2026-11-20', lastSeen: '2026-11-20T08:00:00Z' }), P('u', { appFirstSeen: '2026-11-20' })).slipping === false, 'someone new is never "slipping"');
+  const lv = Usage.levels([P('a'), P('b'), P('kid', { familyRole: 'child' }), P('c', { appFirstSeen: '2026-10-01' })], [mk(20, many, { id: 'a' })], today);
+  ok(Object.keys(lv).join() === 'a,b,c' && lv.a.n === 5 && lv.b.n === 0 && lv.c.n === 1 && lv.c.slipping, 'levels for each adult (not the child); on the app with no recent use is Just started, slipping');
+  const sp = Usage.spread(lv); ok(sp.counts.join() === '1,1,0,0,0,1' && sp.slipping === 1, 'the spread counts adults at each level');
+  ok(Usage.summary({ people: [P('a')], records: [], today, now, latest: '1' }).levels.a.n === 0, 'the summary carries the levels');
+}
+
 if (fails) { console.log('\n' + fails + ' failed'); process.exit(1); } else console.log('\nAll passed');

@@ -135,16 +135,57 @@ var Usage = (function () {
     return Object.keys(tot).map(function (k) { return tot[k]; }).sort(function (a, b) { return (b.views - a.views) || (b.people - a.people) || (a.id < b.id ? -1 : 1); });
   }
 
+
+  /* ---------- how much each person uses it: Not on the app yet … Power user ---------- */
+  // [id, English label]. 0 = not on the app; 1–5 are shown as a five-dot meter with the word. The words are translated where they are shown.
+  var TX = function (x) { return x; };
+  var LEVELS = [['none', TX('Not on the app yet')], ['started', TX('Just started')], ['going', TX('Getting going')], ['regular', TX('Regular')], ['keen', TX('Keen')], ['power', TX('Power user')]];
+  var WINDOW = 28;   // days looked at
+  /** { n: 0–5 (null when no usage has been recorded at all, so we only know they are on the app), id, on, days, parts, slipping }.
+   *  From how many of the last 28 days the person opened the app, and how many different parts they use:
+   *    opened on 0–1 days → 1 · 2–3 → 2 · 4–7 (about weekly) → 3 · 8–15 → 4 · 16 or more → 5
+   *    fewer than 2 parts caps it at 3, fewer than 4 parts caps a 5 at 4, and someone who first opened the app in the last 14 days is "Just started".
+   *  `slipping`: was using it, but has not opened it for 3 weeks or more. `tracking` says whether the church has any usage records yet. */
+  function level(p, rec, today, tracking, skip) {
+    var from = back(today, WINDOW - 1), d = days(rec), on = !!rec || !!(p && p.appFirstSeen);
+    if (!on) return { n: 0, id: 'none', on: false, days: 0, parts: 0, slipping: false };
+    if (!tracking) return { n: null, id: 'on', on: true, days: 0, parts: 0, slipping: false };
+    var act = 0, seen = {}, n;
+    Object.keys(d).forEach(function (k) {
+      if (k < from || k > today || !(d[k].n > 0)) return;
+      act++; Object.keys(d[k].v || {}).forEach(function (id) { if ((skip || ['home']).indexOf(id) < 0 && d[k].v[id] > 0) seen[id] = 1; });
+    });
+    var parts = Object.keys(seen).length, start = startedOn(p, rec), tenure = start ? Math.round((dayMs(today) - dayMs(start)) / DAY) : 999;
+    n = act <= 1 ? 1 : act <= 3 ? 2 : act <= 7 ? 3 : act <= 15 ? 4 : 5;
+    if (parts < 2 && n > 3) n = 3;
+    if (parts < 4 && n === 5) n = 4;
+    if (tenure <= 14) n = 1;
+    var last = rec && rec.lastSeen ? rec.lastSeen.slice(0, 10) : '';
+    return { n: n, id: LEVELS[n][0], on: true, days: act, parts: parts, slipping: tenure > WINDOW && (!last || last < back(today, 21)) };
+  }
+  /** { personId: level } for every adult still at the church. */
+  function levels(people, records, today) {
+    var by = index(records), out = {}, tracking = (records || []).length > 0;
+    (people || []).forEach(function (p) { if (eligible(p)) out[p.id] = level(p, by[p.id], today, tracking); });
+    return out;
+  }
+  /** How many adults are at each level 0–5 (and `on` for those on the app when no usage is recorded yet). */
+  function spread(lv) {
+    var c = [0, 0, 0, 0, 0, 0], on = 0, slipping = 0;
+    Object.keys(lv).forEach(function (id) { var l = lv[id]; if (l.n === null) on++; else c[l.n]++; if (l.slipping) slipping++; });
+    return { counts: c, on: on, slipping: slipping };
+  }
+
   /* ---------- everything the page needs ---------- */
   function summary(d) {
-    var rec = d.records || [], today = d.today, a = adoption(d.people, rec), act7 = active(rec, today, 7), act30 = active(rec, today, 30);
+    var rec = d.records || [], today = d.today, lv = levels(d.people, rec, d.today), a = adoption(d.people, rec), act7 = active(rec, today, 7), act30 = active(rec, today, 30);
     return {
       adoption: a, notOn: notOn(d.people, rec), onNow: onNow(rec, d.now),
       activeToday: active(rec, today, 1), active7: act7, active30: act30,
       stickiness: act30 ? Math.round(100 * act7 / act30) : 0,           // of those who used it this month, how many also this week
       daily: daily(rec, today, 14), weekdays: weekdays(rec, today, 28), growth: growth(d.people, rec, today, 12),
       versions: versions(rec, d.latest), platforms: platforms(rec), sections: sections(rec, today, 30, d.skip || ['home']),
-      recorded: rec.length
+      levels: lv, spread: spread(lv), recorded: rec.length
     };
   }
 
@@ -174,7 +215,7 @@ var Usage = (function () {
     return out;
   }
 
-  return { eligible: eligible, adoption: adoption, notOn: notOn, onNow: onNow, active: active, daily: daily, weekdays: weekdays, growth: growth,
+  return { LEVELS: LEVELS, WINDOW: WINDOW, level: level, levels: levels, spread: spread, eligible: eligible, adoption: adoption, notOn: notOn, onNow: onNow, active: active, daily: daily, weekdays: weekdays, growth: growth,
     compare: compare, versions: versions, platforms: platforms, sections: sections, summary: summary, demo: demo, ONLINE_MS: ONLINE_MS, KEEP: KEEP };
 })();
 if (typeof module !== 'undefined') module.exports = Usage;

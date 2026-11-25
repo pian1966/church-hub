@@ -14,6 +14,16 @@ Rector (below): ask him before building the parts that depend on them.**
   `people.appFirstSeen`, which already exists) and says "Nothing recorded yet" on the other cards. **Nothing writes `appUse` yet.**
   No rule, `js/access.js`, `firestore.rules` or `js/store.js` was changed.
 
+## Uptake level per person (added 25 Nov 2026, Sonnet)
+The Rector asked for a rating per person, from "hasn't taken up the app" to "power user", seen only by Administrators and Pastors. Built as a
+**five-dot meter with a word** (Not on the app yet · Just started · Getting going · Regular · Keen · Power user) rather than stars – stars read like a
+mark out of five, the word says what it means. `Usage.level()` in `js/usage.js` works it out from the same `appUse` record (days opened in the last 28
+days, number of different parts, first opened, last seen; rules in its comment, tested). It is shown on the Usage page ("How much people use it":
+the spread, "Might need a nudge" for people slipping away, and a list of everyone) and on a person's page beside "Using Church & Trellis since"
+(`UsageUI.meter`, gated by `H.can('*') || H.can('people.view')`). Not shown to the person, never used to message anyone automatically. Until
+`appUse` has records it shows only "On the app". Because a rating is a conclusion about a person, Opus must treat it as personal information in
+the POPIA section (purpose: pastoral care and inviting; only Administrators and Pastors; derived, not stored – it is worked out on the device).
+
 ## The record the page expects: `appUse/{personId}`
 ```
 { id: <personId>, firstSeen: 'YYYY-MM-DD', lastSeen: 'YYYY-MM-DDTHH:MM:SSZ', version: '0.118.0',
@@ -61,6 +71,10 @@ One document per person (not per device); counts only, no pages, searches, names
    People). The part counts never show who. Say if names should be Administrators only, or if "who is on right now" should be counts only.
 2. **May a person choose not to be counted?** A switch on Me (like the birthday one, `noCelebrate`) that stops their opens being recorded, so they
    count only as "on the app" by `appFirstSeen`. Recommended: yes, default on.
+
+3. **The uptake level (above): is it right to show a level per person?** Built because the Rector asked. Decide with him: keep the word "Power user"
+   and the scale as they are, whether a person's own opt-out (decision 2) should also hide their level, and whether the level may ever be used
+   for anything other than looking (it is not used for anything now).
 
 ## What not to do
 - Do not record what people type, search for, open inside a part, or who they message. Do not record location or device identifiers.

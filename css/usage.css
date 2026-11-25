@@ -42,3 +42,8 @@
 .u-nums thead th { color: var(--muted); font-weight: 600; } .u-nums td:not(:first-child), .u-nums thead th:not(:first-child) { text-align: right; }
 .u-notOn { margin-bottom: 12px; }
 @media (prefers-reduced-motion: no-preference) { .u-track i, .u-col i, .u-stack i { transition: width .4s ease, height .4s ease; } }
+
+.u-lv { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink); white-space: nowrap; }
+.u-meter { display: inline-flex; gap: 3px; } .u-meter i { width: 8px; height: 8px; border-radius: 50%; background: var(--u-off, #D9D3CC); } .u-meter i.f { background: var(--u-on, #0F766E); }
+.u-lv.l5 .u-lbl { font-weight: 700; color: var(--u-on, #0F766E); } .u-lv.l0 .u-lbl, .u-lv.lx .u-lbl { color: var(--muted); }
+.badge-line .u-lv { margin-left: 6px; }

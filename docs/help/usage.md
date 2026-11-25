@@ -14,6 +14,11 @@ Also asked: How many people are on the app. Who is using the app. Who hasn't sig
 - **Growth** – how many people have started using the app, week by week, for 12 weeks.
 - **Most used parts** – how often each part was opened in the last 30 days and by how many different people.
 - **Which version people have**, **Busiest days** and **How people open it** (the Android app, added to the home screen, or a web browser).
+- **How much people use it** – each adult at the church is placed on a five-step scale: **Not on the app yet**, **Just started**,
+  **Getting going**, **Regular**, **Keen** and **Power user**, shown as five dots and a word. It comes from how many of the last 28 days
+  the person opened the app and how many different parts they use (a part used by only one person doesn't make a Power user). Someone who was
+  using the app but hasn't opened it for 3 weeks or more is marked **Slipping away** and listed under **Might need a nudge**. The same
+  dots appear on a person's page, beside **Using Church & Trellis since**. Until Church & Trellis has recorded some usage, it shows only **On the app**.
 - **Church Partners not on the app yet** – with an **Invite them** button that opens **People → Invitations**.
 
 Every chart has **See the numbers** under it, which shows the same figures as a table.
@@ -21,7 +26,7 @@ Every chart has **See the numbers** under it, which shows the same figures as a 
 ## Who can see people's names on the Usage page?
 For: Administrators, Pastors
 
-Names appear only under **On right now** and **Church Partners not on the app yet**. The counts for each part never say who used what.
+Names appear only under **On right now**, **How much people use it** and **Church Partners not on the app yet**; the level on a person's page is shown only to Administrators and Pastors, never to the person themself. The counts for each part never say who used what.
 Members, Roster coordinators and Children's ministry cannot open Usage.
 
 ## Why does Usage say "Nothing recorded yet"?

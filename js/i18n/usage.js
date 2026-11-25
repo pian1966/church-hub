@@ -60,5 +60,18 @@ I18n.rows([
     ['This is made-up usage, to show what the page looks like. A real church sees its own numbers.', 'Dit is versonne gebruik, om te wys hoe die bladsy lyk. ’n Egte kerk sien sy eie syfers.', 'Lokhu ukusetshenziswa okwenziwe, ukukhombisa ukuthi leli khasi libukeka kanjani. Ibandla langempela libona izinombolo zalo.', 'Oku kukusetyenziswa okwenziweyo, ukubonisa ukuba eli phepha libonakala njani. Icawa yokwenene ibona amanani ayo.'],
     ['Only counts are kept for each part. Names appear only here, for Administrators and Pastors, to help the church care for people and invite them.', 'Net tellings word vir elke deel gehou. Name verskyn net hier, vir Administrateurs en Pastore, om die kerk te help om vir mense te sorg en hulle te nooi.', 'Kugcinwa izibalo kuphela ngengxenye ngayinye. Amagama avela lapha kuphela, kubaphathi nabafundisi, ukusiza ibandla ukunakekela abantu nokubamemela.', 'Kugcinwa amanani kuphela kwinxalenye nganye. Amagama avela apha kuphela, kubalawuli nabefundisi, ukunceda icawa ukhathalela abantu nokubamema.'],
     ['{n}% of Church Partners are on the app', '{n}% van Kerkvennote is op die toep', '{n}% yamalungu ebandla isebenzisa i-app', '{n}% yamalungu ecawe isebenzisa i-app'],
-    ['Who uses Church & Trellis, how often and what for', 'Wie Church & Trellis gebruik, hoe gereeld en waarvoor', 'Ubani osebenzisa i-Church & Trellis, kangakanani nokuthi ngani', 'Ngubani osebenzisa i-Church & Trellis, kangakanani nokuba ngenxa yantoni']
+    ['Who uses Church & Trellis, how often and what for', 'Wie Church & Trellis gebruik, hoe gereeld en waarvoor', 'Ubani osebenzisa i-Church & Trellis, kangakanani nokuthi ngani', 'Ngubani osebenzisa i-Church & Trellis, kangakanani nokuba ngenxa yantoni'],
+    ['Not on the app yet', 'Nog nie op die toep nie', 'Akasasebenzisi i-app', 'Akayisebenzisi i-app okwangoku'],
+    ['Just started', 'Pas begin', 'Isanda kuqala', 'Usanda kuqala'],
+    ['Getting going', 'Besig om aan die gang te kom', 'Uyajwayela', 'Uyaqhelana'],
+    ['Regular', 'Gereeld', 'Njalo', 'Rhoqo'],
+    ['Keen', 'Ywerig', 'Unesifiso', 'Unomdla'],
+    ['Power user', 'Kraggebruiker', 'Umsebenzisi onamandla', 'Umsebenzisi onamandla'],
+    ['Slipping away', 'Raak weg', 'Uyanyamalala', 'Uyanyamalala'],
+    ['Opened on {d} of the last 28 days', 'Oopgemaak op {d} van die laaste 28 dae', 'Uvule ezinsukwini ezingu-{d} kwezingu-28 ezedlule', 'Uvule kwiintsuku ezi-{d} kwezingama-28 ezidlulileyo'],
+    ['How much people use it', 'Hoeveel mense dit gebruik', 'Ukuthi abantu bayisebenzisa kangakanani', 'Ukuba abantu bayisebenzisa kangakanani'],
+    ['From how many days in the last 4 weeks each person opened the app, and how many parts they use. Only Administrators and Pastors see this.', 'Volgens op hoeveel dae in die laaste 4 weke elke persoon die toep oopgemaak het, en hoeveel dele hulle gebruik. Net Administrateurs en Pastore sien dit.', 'Kusukela ezinsukwini ezingakanani emasontweni ama-4 edlule umuntu ngamunye avule ngazo i-app, nokuthi basebenzisa izingxenye ezingaki. Abaphathi nabafundisi kuphela abakubonayo lokhu.', 'Ngokweentsuku ezingakanani kwiiveki ezi-4 ezidlulileyo umntu ngamnye ayivule ngazo i-app, nangeenxalenye ezingaphi azisebenzisayo. Abalawuli nabefundisi kuphela abakubonayo oku.'],
+    ['Might need a nudge', 'Dalk ’n bietjie aanmoediging nodig', 'Kungase badinge ukukhunjuzwa', 'Banokufuna ukukhunjuzwa'],
+    ['Were using it, but haven’t opened it for 3 weeks or more.', 'Het dit gebruik, maar het dit vir 3 weke of langer nie oopgemaak nie.', 'Bebesisebenzisa, kodwa abayivulanga amasonto angu-3 noma ngaphezulu.', 'Babeyisebenzisa, kodwa abayivulanga iiveki ezi-3 okanye ngaphezulu.'],
+    ['See everyone', 'Sien almal', 'Buka wonke umuntu', 'Jonga wonke umntu']
 ]);

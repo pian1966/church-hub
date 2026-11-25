@@ -140,15 +140,46 @@
       '<p><a class="btn primary" href="#/people/welcome">' + T('Invite them') + '</a></p>');
   }
 
+  /* ---------- how much each person uses it (Administrators and Pastors only) ---------- */
+  function allowed() { return !!(H.can('*') || H.can('people.view')); }
+  /** Five dots and the word: "●●●○○ Regular". The dots are decoration – the word and the sentence carry the meaning. */
+  function meter(l) {
+    if (!l) return '';
+    var label = l.n === null ? T('On the app') : T(Usage.LEVELS[l.n][1]), tip = l.n ? T('Opened on {d} of the last 28 days', { d: l.days }) : label, dots = '';
+    for (var i = 1; i <= 5; i++) dots += '<i' + (l.n !== null && i <= l.n ? ' class="f"' : '') + '></i>';
+    return '<span class="u-lv l' + (l.n === null ? 'x' : l.n) + '" title="' + esc(tip) + '">' + (l.n === null ? '' : '<span class="u-meter" aria-hidden="true">' + dots + '</span>') + '<span class="u-lbl">' + (l.n === 5 ? '★ ' : '') + esc(label) + '</span>' +
+      (l.slipping ? ' <span class="tag warn">' + esc(T('Slipping away')) + '</span>' : '') + '</span>';
+  }
+  /** For a person's own page: their level, only for Administrators and Pastors, only for adults at the church. */
+  function personMeter(p) {
+    if (!allowed() || !p || !Usage.eligible(p)) return '';
+    var l = data().sum.levels[p.id]; return l && l.on ? meter(l) : '';
+  }
+  function peopleById() { var by = {}; S.list('people').forEach(function (p) { by[p.id] = p; }); return by; }
+  function nameSort(by) { return function (a, b) { return H.name(by[a]).localeCompare(H.name(by[b])); }; }
+  function levelsCard(s) {
+    if (!s.recorded) return card(T('How much people use it'), '', waiting());
+    var sp = s.spread, by = peopleById(), ids = Object.keys(s.levels).filter(function (id) { return by[id]; });
+    var rows = Usage.LEVELS.map(function (l, i) { return { label: T(l[1]), n: sp.counts[i], cls: i === 0 ? 'old' : '' }; });
+    var slip = ids.filter(function (id) { return s.levels[id].slipping; }).sort(nameSort(by));
+    var all = ids.filter(function (id) { return s.levels[id].on; }).sort(function (a, b) { return (s.levels[b].n - s.levels[a].n) || nameSort(by)(a, b); });
+    function li(id) { return '<li><a href="#/people/p/' + esc(id) + '"><span class="grow">' + esc(H.name(by[id])) + '</span>' + meter(s.levels[id]) + '</a></li>'; }
+    return card(T('How much people use it'), T('From how many days in the last 4 weeks each person opened the app, and how many parts they use. Only Administrators and Pastors see this.'),
+      bars(rows) + (slip.length ? '<h3 class="u-sub">' + esc(T('Might need a nudge')) + '</h3><p class="hint">' + esc(T('Were using it, but haven’t opened it for 3 weeks or more.')) + '</p><ul class="todo u-notOn">' + slip.slice(0, 12).map(li).join('') + '</ul>' +
+        (slip.length > 12 ? '<p class="hint">' + esc(T('and {n} more', { n: slip.length - 12 })) + '</p>' : '') : '') +
+      (all.length ? '<details class="u-nums"><summary>' + T('See everyone') + '</summary><ul class="todo u-notOn" style="margin-top:8px">' + all.slice(0, 200).map(li).join('') + '</ul></details>' : ''));
+  }
+
   function render() {
     var d = data(), s = d.sum;
     return '<div class="page-head"><div><h1>' + T('Usage') + '</h1><p class="lead">' + T('How many people use Church & Trellis, who is on right now, and what they use most.') + '</p></div>' +
       '<div class="btns"><button class="btn" data-act="usage:refresh">' + T('Refresh') + '</button></div></div>' +
       (S.isLive() ? '' : '<p class="note info">' + T('This is made-up usage, to show what the page looks like. A real church sees its own numbers.') + '</p>') +
-      '<div class="u-grid">' + adoptionCard(s.adoption) + nowCard(s) + activeCard(s) + growthCard(s) + partsCard(s) + versionsCard(s) + daysCard(s) + platformCard(s) + notOnCard(s) + '</div>' +
+      '<div class="u-grid">' + adoptionCard(s.adoption) + nowCard(s) + activeCard(s) + levelsCard(s) + growthCard(s) + partsCard(s) + versionsCard(s) + daysCard(s) + platformCard(s) + notOnCard(s) + '</div>' +
       '<p class="hint">' + T('Only counts are kept for each part. Names appear only here, for Administrators and Pastors, to help the church care for people and invite them.') + '</p>';
   }
 
+  window.UsageUI = { meter: personMeter };
   H.register({
     id: 'usage', name: 'Usage', desc: 'Who uses Church & Trellis, how often and what for', icon: ICON, tint: '#0F766E', roles: ['admin', 'pastor'],
     stat: function () { var a = data().sum.adoption.partners; return a.total ? T('{n}% of Church Partners are on the app', { n: a.pct }) : T(this.desc); },

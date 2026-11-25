@@ -284,6 +284,15 @@
   /** Spouse or partner, chosen by hand (Administrators and Pastors): for a couple who live apart, or to settle it when the
    *  household leaves Church & Trellis guessing. Saved as spouseId on both people (details/, like the rest of the couple's details);
    *  "Going by their household" leaves it to Church & Trellis (Households.couples). */
+  /** Under the Spouse or partner box, when none is chosen: the people in the same household (or with the same surname) as buttons – one tap chooses them. */
+  function spouseSuggest(p, cur) {
+    if (cur) return '';
+    var list = HS.spouseSuggestions(p, S.list('people')).map(function (s) { return { x: S.get('people', s.id), why: s.why }; }).filter(function (s) { return s.x; });
+    if (!list.length) return '';
+    return '<span class="spouse-sug" style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:6px"><small>' + T('Suggested:') + '</small>' + list.map(function (s) {
+      return '<button type="button" class="btn small" data-act="people:usespouse" data-id="' + s.x.id + '" title="' + esc(s.why === 'household' ? T('In the same household') : T('Same surname')) + '">' + esc(H.name(s.x)) + '</button>';
+    }).join('') + '</span>';
+  }
   function spouseField(p) {
     var cur = p.spouseId ? S.get('people', p.spouseId) : null;
     var adults = S.find('people', function (x) { return x.id !== p.id && x.familyRole !== 'child' && x.active !== false && !x.mergedInto && !x.binnedAt && !deceased(x) && x.category !== 'Deceased'; })
@@ -292,7 +301,7 @@
     return '<div class="two" id="pf-spouse-f"' + (p.familyRole === 'child' ? ' hidden' : '') + '><label class="field">' + F('Spouse or partner') + '<select class="findable" id="pf-spouse" data-was="' + esc(p.spouseId || '') + '">' +
       '<option value="">' + T('Going by their household') + '</option>' +
       adults.map(function (x) { return '<option value="' + x.id + '"' + (cur && cur.id === x.id ? ' selected' : '') + '>' + esc((x.lastName || '') + ', ' + (x.preferredName || x.firstName || '')) + '</option>'; }).join('') +
-      '</select><small>' + T('Choose them if they live apart, or to be sure. Otherwise Church & Trellis works it out from the household.') + '</small></label></div>';
+      '</select><small>' + T('Choose them if they live apart, or to be sure. Otherwise Church & Trellis works it out from the household.') + '</small>' + spouseSuggest(p, cur) + '</label></div>';
   }
   /** Administrators: who a widow or widower was married to – someone in Church & Trellis who has died, or a name. */
   function lateSpouseField(p) {
@@ -378,6 +387,11 @@
           var made = r.fresh.map(function (f) { return NameScan.addPerson(Object.assign({ firstVisit: true }, f), 'a photo of visitor cards'); });
           return { message: made.length ? TN('{n} person added to People.', '{n} people added to People.', made.length) : T('Nobody new to add.') };
         } });
+    },
+    usespouse: function (el) {   // a suggested spouse or partner: choose them in the box
+      var sel = document.getElementById('pf-spouse'); if (!sel) return;
+      sel.value = el.dataset.id; sel.dispatchEvent(new Event('change', { bubbles: true }));
+      var row = el.closest('.spouse-sug'); if (row) row.hidden = true;
     },
     unknown: function (el) { nkShow(el.dataset['for'], true); },   // “Not known” beside Email / Mobile (or in the error card)
     known: function (el) { nkShow(el.dataset['for'], false); },    // “Add it”

@@ -201,5 +201,22 @@ console.log('Spouses who should share an address');
   ok(!so('c2'), 'nobody to offer to when the person has no address themselves');
 }
 
+console.log('Suggested spouse or partner');
+{
+  const P = [
+    { id: 'd', firstName: 'David', lastName: 'Wharton', familyRole: 'adult', familyId: 'h1' },
+    { id: 'r', firstName: 'Rosemary', lastName: 'Wharton', familyRole: 'adult', familyId: 'h1' },
+    { id: 'k', firstName: 'Kim', lastName: 'Other', familyRole: 'adult', familyId: 'h1' },
+    { id: 'r2', firstName: 'Ruth', lastName: 'Wharton', familyRole: 'adult', familyId: 'h2' },
+    { id: 'kid', familyRole: 'child', familyId: 'h1' },
+    { id: 'gone', lastName: 'Wharton', familyRole: 'adult', familyId: 'h1', active: false },
+    { id: 'taken', lastName: 'Wharton', familyRole: 'adult', familyId: 'h3', spouseId: 'zz' }
+  ];
+  const ss = id => HS.spouseSuggestions(P.find(x => x.id === id), P);
+  ok(ss('d').map(s => s.id + ':' + s.why).join() === 'r:household,k:household,r2:surname', 'the household first, then the same surname elsewhere');
+  ok(!ss('d').some(s => ['kid', 'gone', 'taken', 'd'].includes(s.id)), 'not a child, someone who has left, someone linked to another person, or themselves');
+  ok(ss('kid').length === 0, 'none for a child');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');
 process.exit(fails ? 1 : 0);

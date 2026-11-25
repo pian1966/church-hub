@@ -1,5 +1,29 @@
 # 069 – Email and mobile "Not known": one clear control inside the box
 
+## How to run this task (two sessions, in order)
+
+**Step 1 – Architect review (Fable).** Start a Fable session on this repository and paste:
+
+> You are the Architect (Fable) for Church & Trellis. Read `CLAUDE.md`, then `docs/architecture/tasks/069-not-known-contacts.md`.
+> Review its design against the real code before a Middle-tier (Sonnet) session builds it. Check the code it names
+> (`js/people/edit.js`: `typedPerson`, `editDialog`, the `unknown` action, `savePerson`; `js/people/profile.js`;
+> `js/people/search.js` Change selected…; `js/mod-me.js`; `js/name-scan.js`; `js/health.js`; `js/elvanto-import.js`;
+> the tests and `docs/help/people.md`) and look for: anything the design gets wrong or misses; edge cases (saving as you go,
+> the duplicate check, children, someone who has died, imported records holding the word "unknown", Change selected…,
+> dark mode, 390px phones, screen readers); whether a hidden input is the best way to hold the state; whether the
+> wording is the clearest for non-technical church staff (the church wants it elegant, Apple-like, never clumsy); and
+> anything Sonnet would have to guess. Then **edit the task file itself** so Sonnet can follow it without guessing:
+> fix the design, add what's missing, correct line numbers, and add a line under the title
+> `**Reviewed by:** Architect (Fable), <date> – <one-sentence verdict>`. Don't write any app code. Work on the branch
+> `unknown-contacts-task` from the latest `main`, commit, push, and tell me in plain English (a few lines) what you changed and why.
+
+**Step 2 – Build (Sonnet).** Once the review line is in, start a Sonnet session on this repository and paste:
+
+> Do task 069 in `docs/architecture/tasks/069-not-known-contacts.md`. Read `CLAUDE.md` first. Follow the task exactly as
+> reviewed – if anything in it is unclear or seems wrong, stop and ask rather than guess. Work on your own branch from the
+> latest `main`, run the full browser test before pushing (this changes how the form works), check against the latest
+> `main` again before pushing, open a pull request, and tell me in plain English what changed on screen.
+
 **Model:** Middle (Sonnet). Screens only – no change to who sees what, `firestore.rules` or `js/store.js`.
 **Needs first:** nothing. **Touches:** `js/people/edit.js`, `css/hub.css`, `js/people/profile.js`, `js/people/search.js`,
 `js/mod-me.js` (wording only), i18n (`js/i18n/edit.js`, `profile.js`, `search.js`, `js/lang/st.js`), tests, `docs/help/people.md`.

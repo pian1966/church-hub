@@ -16,7 +16,7 @@ For: Administrators, Pastors
 Also asked: New member. Add a newcomer. Add a child.
 
 Tap **Add person**. Fill in the shaded boxes (first and last name, category, marital status – or **Not known** – and their
-household, or **+ New household…** if they live on their own). Choose whether they're an adult or a **Child (under 18)** in
+household, or **They live on their own (new household)** if they live on their own). Choose whether they're an adult or a **Child (under 18)** in
 the household. Only add what the church needs, and ask for their consent when you add them. Church & Trellis warns you as you
 type if a similar person is already there.
 

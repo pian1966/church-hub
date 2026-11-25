@@ -52,7 +52,7 @@ hidden value and dispatches one `change` event (so saving as you go saves once, 
 hidden inputs for `emailUnknown` / `mobileUnknown`; the required check becomes "real value **or** hidden = 1".
 
 **Old habits and imported data.** If someone still types `unknown` / `not known` (any case, or the translated word) and
-leaves the box (`blur`, not `input`), turn it into the Not known state and empty the box. Put the one matching rule in a
+leaves the box (the input's `change` event – see trap 3), turn it into the Not known state and empty the box. Put the one matching rule in a
 single helper (e.g. `P.isUnknownWord(v)` in `js/people/core.js`) and use it in `typedPerson`, `savePerson` and the blur
 handler – delete the other two copies. `typedPerson` (duplicate check) then needs no special case: the box is empty.
 
@@ -64,6 +64,37 @@ Works at 390px and in dark mode (use `--surface-2`, `--line`, `--muted`; no hard
 Change selected… (`search.js` 417, 419): option `TX('Not known')` instead of `TX('Unknown')` (it already exists in
 `js/i18n/common.js`; remove `'Unknown'` rows only if nothing else uses them – grep first).
 
+## Traps found in review (Fable, 25 Nov 2026) – read before coding
+
+1. **A button inside a `<label>` hijacks taps.** Today each box is `<label class="field" id="pf-email-f">…<input>…</label>`
+   (`edit.js` 124–125). A `<button>` placed before the input inside that label becomes the label's target: tapping the
+   word "Email" would press **Not known**. Change these two fields to `<div class="field …" id="pf-email-f">` with
+   `<label for="pf-email">` around the label text only, and the button as a sibling on that line. Keep the ids
+   `pf-email-f` / `pf-mobile-f` and the `req` class on the wrapper: line ~189 toggles `req` by id when Adult/Child changes,
+   `fail()` finds the box with `el.closest('.field')`, and tests look for `#pf-email-f.req`. Check `.field` CSS in
+   `css/hub.css` still lays a `div.field` out like a `label.field` (column, gap, the `small` hints).
+2. **Saving as you go** (`js/app.js` 997–1060): a `change` anywhere in the `data-autoscope` form saves at once; `input`
+   saves 900 ms after typing stops; afterwards `autoFire` puts the cursor back where it was (`focusKey` / `refocus`).
+   So: when switching state, **move focus first** (to **Add it**, or to the input), **then** dispatch a single bubbling
+   `change` on the hidden input – never `input`, and never two events. Don't dispatch anything when the window first opens.
+3. **The typed word must never reach validation as an address.** Someone typing "unknown" pauses, and 900 ms later
+   `savePerson(true)` runs with that text still in the box. `savePerson` must treat `P.isUnknownWord(value)` exactly like
+   the hidden flag (as it does today), so no "That email address doesn't look right" appears; the box is swapped for the
+   panel on the input's own `change` (which fires when they leave it), not on `blur` and not while typing.
+   Keep the `['unknown', …]` row in `js/i18n/edit.js` – the helper needs the translated word.
+4. **Not known + a real value can't both be true.** If the hidden flag is 1 the visible input is empty and `hidden`; on
+   **Add it** clear the flag before showing the input. `savePerson`: a real value wins and deletes the flag.
+5. **`data-was` and the duplicate hints** (`contactHint`, lines ~77–91) read the visible input: leave `data-was` and the
+   `…-dup` hint where they are, and hide the hint while the panel is showing.
+6. **Members edit their own details through this same window** (`me`): for them the errors read
+   **Add your email address, or choose Not known.** / **Add your mobile number, or choose Not known.** (two more lines to translate).
+7. **`js/health.js` does not read the flags** (it tests the text of email/mobile only) – no change there, and don't "fix" it
+   in this task; someone marked not known still counts as hard to reach, which is right.
+8. **After choosing Not known for one box, saving as you go may say the other is still missing.** That is existing
+   behaviour (the note at the bottom); leave it, but make sure that note never appears merely because the window was opened.
+9. Other writers of the flags – `js/name-scan.js` 222–223 and Change selected… – need no change beyond the wording; a
+   person they marked simply opens in the Not known state.
+
 ## Remove
 
 - `.chip-unknown` buttons and their CSS (end of `css/hub.css`), the `sync` wiring (`edit.js` ~180–184), the `unknown`
@@ -74,7 +105,8 @@ Change selected… (`search.js` 417, 419): option `TX('Not known')` instead of `
 ## New words (English; add Afrikaans, isiZulu, isiXhosa in `js/i18n/edit.js` and Sesotho in `js/lang/st.js`)
 
 `Add it` · `Email not known` · `Mobile not known` · `Add their email address, or choose Not known.` ·
-`Add their mobile number, or choose Not known.` (plus the two example placeholders if you translate them – addresses
+`Add their mobile number, or choose Not known.` · `Add your email address, or choose Not known.` ·
+`Add your mobile number, or choose Not known.` (plus the two example placeholders if you translate them – addresses
 and numbers stay as they are). Don't add lines to the other 21 language files.
 
 ## Tests (update, then add)
@@ -86,7 +118,7 @@ Update: `tests/app/admin.js` 290–296 (placeholder check → the label-line but
 Add (in `tests/app/people-details.js`): button hides while a real email is typed and comes back when cleared; choosing
 Not known shows the panel and saves `emailUnknown: true` with `email: ''` in one save; **Add it** clears the flag and
 focuses the box; typing `Unknown` and leaving the box turns into the Not known state; an existing not-known person opens
-in that state; at 390px width the panel and button fit on one line.
+in that state; at 390px width the panel and button fit on one line; tapping the word “Email” puts the cursor in the box and does **not** press Not known (trap 1); opening and closing the window without touching anything saves nothing and shows no note.
 
 Run the quick tests and `node tests/app.test.js` (this changes behaviour, so the full browser test before pushing).
 
@@ -96,5 +128,4 @@ Run the quick tests and `node tests/app.test.js` (this changes behaviour, so the
   and **Add it** later.
 - Version: last number up (fix). What's new: one line for Administrators and Pastors (`app: 'people'`): "Not known for an
   email or mobile is now a button beside the box – no more typing “unknown”."
-- Check `js/health.js` line 23 (`UNKNOWN` pattern) still behaves: it should count flagged people as answered, as now.
 - Branch from the latest `main`; check it again before pushing.

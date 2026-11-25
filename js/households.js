@@ -243,6 +243,8 @@ var Households = (function () {
       return { familyId: c.familyId, a: c.a, b: c.b, confirmed: c.confirmed, why: 'missing', from: ha ? c.a : c.b, to: ha ? c.b : c.a };
     }).filter(Boolean);
   }
+  /** Both of them have a home address and the two are different (including a couple an Administrator chose to keep apart). */
+  function differentAddress(a, b) { return !!(a && b && hasAddress(a) && hasAddress(b) && addressKey(a.address) !== addressKey(b.address)); }
   /**
    * Someone's address was just changed: the spouse who should be offered the same one, or null.
    * Their spouse or partner, if living, not marked to keep two addresses, and whose address isn't already the same.
@@ -283,7 +285,7 @@ var Households = (function () {
     return out.slice(0, 3);
   }
 
-  return { spouseSuggestions: spouseSuggestions, addressSuggestions: addressSuggestions, addressMismatches: addressMismatches, spouseToOffer: spouseToOffer, addressKey: addressKey, hasAddress: hasAddress, liveApart: liveApart, RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
+  return { spouseSuggestions: spouseSuggestions, addressSuggestions: addressSuggestions, addressMismatches: addressMismatches, differentAddress: differentAddress, spouseToOffer: spouseToOffer, addressKey: addressKey, hasAddress: hasAddress, liveApart: liveApart, RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
     consentAdults: consentAdults, childrenOf: childrenOf, defaultsFor: defaultsFor, suggestedLinks: suggestedLinks, needs: needs,
     couples: couples, couplesToCheck: couplesToCheck, pairKey: pairKey, weddingOf: weddingOf, lateSpouseSuggestions: lateSpouseSuggestions };
 })();

@@ -25,7 +25,7 @@ For: Administrators, Pastors
 
 Open the person and tap **Edit details**. Save when you're done. Boxes that don't apply are greyed out with the reason –
 for example **Wedding anniversary** when the marital status is Single, Engaged, Partner or Divorced. Whatever was saved in a
-greyed-out box is kept. **Edit details** is the big button at the top right of the person's page.
+greyed-out box is kept. **Edit details** is the first button in the row under the person's name.
 
 ## How do I add a Google Maps Plus Code to someone's address?
 For: Administrators, Pastors

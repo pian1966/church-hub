@@ -6,7 +6,7 @@ module.exports = async function (ctx) {
   let docs, s, t;
   console.log('Edit details at the top, and a Plus Code on the address:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p15');
-  check(await s.page.$eval('.name-row [data-act="people:edit"]', b => b.classList.contains('primary')) && await s.page.$$eval('[data-act="people:edit"].btn', l => l.length) === 1, 'a person’s page has Edit details once, beside the name as the main button');
+  check(await s.page.$eval('.profile-btns > [data-act="people:edit"]:first-child', b => !b.classList.contains('primary')) && await s.page.$$eval('[data-act="people:edit"].btn', l => l.length) === 1, 'a person’s page has Edit details once, as the first button');
   await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-pluscode', 'nonsense'); await s.page.click('[data-act="people:save"]'); await s.settle();
   check(/Plus Code doesn’t look right/.test(await s.page.textContent('#pf-err')), 'a Plus Code that is not one is refused');
   await s.page.fill('#pf-pluscode', 'g7j3+q4q Howick'); await s.page.click('[data-act="people:save"]'); await s.settle();

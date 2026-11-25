@@ -1759,9 +1759,14 @@ html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk
 .plus-code { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; text-decoration: none; }
 .plus-code:hover { text-decoration: underline; }
 
-/* A person's page: Edit details sits just right of the name */
+/* A person's page: Edit details is the first button in the row, the same fill as the others but a little bigger and bolder */
 .name-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
-.name-row .btn.sm { padding: 6px 14px; font-size: 14px; }
+.btn.edit-main { min-height: 48px; padding: 0 20px; color: var(--accent-ink); border-color: color-mix(in srgb, var(--accent) 55%, var(--surface)); }
+.btn.edit-main:hover:not(:disabled) { border-color: var(--accent); }
+.btn svg { flex: none; opacity: .75; }
+/* One button type size on a person's page and in Edit details (the small buttons and the "Not known" chips matched nothing before) */
+.profile-btns .btn, .badge-line .btn, #pf .btn, #pf .chip-unknown { font-family: inherit; font-size: 14.5px; font-weight: 600; }
+.btn.edit-main svg { opacity: 1; }
 
 
 /* Care Groups: find-as-you-type box above the groups */

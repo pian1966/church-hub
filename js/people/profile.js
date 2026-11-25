@@ -6,6 +6,13 @@
   var F = P.F, HS = P.HS, PURPOSES = P.PURPOSES, RECEIVE_P = P.RECEIVE_P, WEDDING = P.WEDDING, state = P.state;
   // From the other People files (each looked up when called)
   function addressLines() { return P.addressLines.apply(this, arguments); }
+  /** Small line icons for the buttons on a person's page (the same style as H.ICON). */
+  var IC = {
+    edit: 'M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z',
+    camera: 'M4 8h3l2-3h6l2 3h3v11H4zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z',
+    calendar: 'M8 3v4M16 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
+    candle: 'M12 2c1.4 1.8 1.6 2.8 0 4-1.6-1.2-1.4-2.2 0-4zM9 10h6v11H9z'
+  };
   /** The Google Maps Plus Code kept with the home address (e.g. "G7J3+Q4Q Howick"), or ''. */
   function plusCode(p) { return p && p.address && p.address.plusCode ? String(p.address.plusCode).trim() : ''; }
   /** A tappable Plus Code that opens that exact spot in Google Maps (a new tab; Google is only contacted when it is tapped). */
@@ -104,8 +111,8 @@
   function leaveButton(p) {
     var leaveOn = ((S.settings() || {}).modules || {}).leave !== false;
     if (!H.can('leave.manage') || !leaveOn || deceased(p) || p.active === false) return '';
-    if (p.staff) return '<a class="btn" href="#/leave/staff/' + p.id + '">' + T('Leave') + '</a>';
-    if (p.category === 'Staff') return '<button class="btn" data-act="people:edit" data-id="' + p.id + '" data-focus="pf-staff">' + T('Set up leave') + '</button>';
+    if (p.staff) return '<a class="btn" href="#/leave/staff/' + p.id + '">' + H.icon(IC.calendar, 18) + T('Leave') + '</a>';
+    if (p.category === 'Staff') return '<button class="btn" data-act="people:edit" data-id="' + p.id + '" data-focus="pf-staff">' + H.icon(IC.calendar, 18) + T('Set up leave') + '</button>';
     return '';
   }
 
@@ -129,17 +136,17 @@
         !child && p.inDirectory ? CelebrateUI.tag(p) : '') : '');   // the directory carries the day only for those who agreed
     var html = '<div class="crumb-bar"><a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
       '</div>' +
-      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><div class="name-row"><h1>' + esc(H.name(p)) + '</h1>' + (full || H.can('people.edit') ? '<button class="btn primary sm" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') + '</div><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + (P.welcomeLine ? P.welcomeLine(p) : '') + '</div></div>' +
-      '<div class="btns">' + (groupKinds(p).length ? '<button class="btn" data-act="people:groups" data-id="' + p.id + '">' + T('Groups') + '</button>' : '') +
-      (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
-        (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +
+      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><div class="name-row"><h1>' + esc(H.name(p)) + '</h1></div><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + (P.welcomeLine ? P.welcomeLine(p) : '') + '</div></div>' +
+      '<div class="btns profile-btns">' + (full || H.can('people.edit') ? '<button class="btn edit-main" data-act="people:edit" data-id="' + p.id + '">' + H.icon(IC.edit, 18) + T('Edit details') + '</button>' : '') + (groupKinds(p).length ? '<button class="btn" data-act="people:groups" data-id="' + p.id + '">' + H.icon(H.ICON.people, 18) + T('Groups') + '</button>' : '') +
+      (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(IC.camera, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
+        (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + H.icon(H.ICON.trash, 18) + T('Remove photo') + '</button>' : '') +
         '<input type="file" id="pp-photo" data-id="' + p.id + '" accept="image/*" hidden>' : '') +
       leaveButton(p) +
       // Messages: Administrators and Pastors write to this one person (adults still in the church)
       (window.Msg && (H.can('*') || H.can('people.edit')) && p.familyRole !== 'child' && p.active !== false && p.category !== 'Deceased' && p.id !== (H.user() || {}).id ?
         '<a class="btn" href="#/messages/send/people/' + esc(p.id) + '">' + H.icon('M4 5h16v11H9l-5 4z', 18) + T('Send a message') + '</a>' : '') +
       (H.can('privacy.manage') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + T('Export their data') + '</button>' : '') +
-      (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">' + T('Record a death') + '</button>' : '') + '</div></div>';
+      (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">' + H.icon(IC.candle, 18) + T('Record a death') + '</button>' : '') + '</div></div>';
     if (p.mergedInto && S.get('people', p.mergedInto)) html += '<div class="note info" style="margin-bottom:16px">' + T('This was a duplicate record. It was merged into {link} and is kept only for the church’s records.', { link: '<a href="#/people/p/' + p.mergedInto + '">' + esc(H.name(S.get('people', p.mergedInto))) + '</a>' }) + '</div>';
     if (deceased(p) && canRecordDeath()) {
       html += '<div class="note info" style="margin-bottom:16px"><b>' + esc(T('{name} died on {date}.', { name: p.firstName, date: H.fmt(p.deceasedAt, true) })) + '</b> ' + T(!needsTidy(p) ? 'They are no longer on rosters or teams, in the directory or able to sign in, and won’t receive messages.' : 'They are out of the directory and won’t receive messages.') +
@@ -156,7 +163,7 @@
       (p.preferredName ? '<dt>' + F('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + F('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
       (full && p.maidenName ? '<dt>' + F('Maiden name') + '</dt><dd>' + esc(p.maidenName) + '</dd>' : '') +
-      (full && (addressLines(p).length || plusCode(p)) ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + (addressLines(p).length ? ' ' + H.mapLink(plusCode(p) || addressLines(p).join(', ')) : '') + plusCodeLink(p, addressLines(p).length) + '</dd>' :
+      (full && (addressLines(p).length || plusCode(p)) ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + (addressLines(p).length && !plusCode(p) ? ' ' + H.mapLink(addressLines(p).join(', ')) : '') + plusCodeLink(p, addressLines(p).length) + '</dd>' :
         !full && P.contactHtml(p, 'address') ? '<dt>' + F('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
       (!child && (canSeeAll() || me) ? '<dt>' + F('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
         '<dt>' + F('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +

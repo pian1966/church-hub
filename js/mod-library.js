@@ -203,7 +203,7 @@
     return pageHead() +
       sectionTabs('borrowed') + '<section class="panel" id="lib-mine"><div class="list">' + mine.map(function (l) {
       var n = L.daysOut(l, H.today()), bk = S.list('books').filter(function (x) { return x.id === l.bookId; })[0] || { id: l.bookId };
-      return '<div class="item lib-book">' + cover(bk) + '<span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (L.isPending(l) ? ' <span class="tag warn">' + T('Waiting for approval') + '</span>' : '') + '<small>' + due(l) + ' · <span class="muted">' + esc(held(l)) + '</span></small>' +
+      return '<div class="item lib-mine-item">' + cover(bk) + '<span class="grow"><b data-own-words>' + esc(l.title) + '</b>' + (L.isPending(l) ? ' <span class="tag warn">' + T('Waiting for approval') + '</span>' : '') + '<small>' + due(l) + ' · <span class="muted">' + esc(held(l)) + '</span></small>' +
         (n >= L.REMIND_DAYS ? '<small class="note" style="margin-top:6px">' + esc(T('Friendly reminder: you have had this for {n} days. Please bring it back when you have finished with it.', { n: n })) + '</small>' : '') + '</span></div>'; }).join('') + '</div></section>';
   }
   function page(parts) {

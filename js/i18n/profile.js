@@ -8,6 +8,8 @@ I18n.rows([
     ["Address copied", "Adres gekopieer", "Ikheli likopishiwe", "Idilesi ikhutshelwe"],
     ['Only you and the church Administrators can see it.', 'Net jy en die kerk se administrateurs kan dit sien.', 'Nguwe kuphela nabaphathi besonto abangakubona.', 'Nguwe kuphela nabalawuli becawa abanokuyibona.'],
     ['Spouse', 'Eggenoot', 'Owashada naye', 'Iqabane'],
+    ['Different address from their spouse', 'Ander adres as sy eggenoot', 'Ikheli elihlukile kunelomshade naye', 'Idilesi eyahlukileyo kweyeqabane lomtshato'],
+    ['Different address from their partner', 'Ander adres as sy lewensmaat', 'Ikheli elihlukile kunelomlingani', 'Idilesi eyahlukileyo kweyeqabane'],
     ['Was married to {name}', 'Was getroud met {name}', 'Ubeshade no-{name}', 'Wayetshate no-{name}'],
     ['Add photo', 'Voeg foto by', 'Engeza isithombe', 'Yongeza ifoto'],
     ['Change photo', 'Verander foto', 'Shintsha isithombe', 'Tshintsha ifoto'],

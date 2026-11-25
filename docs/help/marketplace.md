@@ -2,7 +2,7 @@
 
 The Marketplace is for buying, selling and giving away within the church. A keeper checks every listing before anyone sees it.
 The church switches it on in **Settings → Apps** (it's off until then). Church Partners, staff and leaders can see and use it;
-Attenders (people who only come along) don't. The church is not part of any sale.
+Attenders (people who only come along) don't. The church is not part of any sale. It is written to go easy on data (photos are made small), and like the rest of Church & Trellis you can still look at listings with no signal – changes wait until you're back online.
 
 ## How do I list something to sell or give away?
 For: Everyone

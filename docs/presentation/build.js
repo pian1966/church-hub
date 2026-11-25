@@ -239,7 +239,7 @@ async function icon(Comp, color, px = 256) {
       T(s, mods[i][2], { x: x + 0.3, y: y + 1.6, w: w - 0.5, h: 0.7, fontSize: 14, color: HEX.muted });
     }
   }
-  s.addNotes('These are the essential parts. People with households and consent. Rosters. Messages inside the app. Groups. Staff leave. A library, and protected archives for minutes and contracts – meeting papers file themselves into the right year and month, and Church & Trellis asks before saving anything under a date that looks wrong. Me – where members look after their own details. And privacy, built into everything.');
+  s.addNotes('These are the essential parts. People with households and consent. Rosters. Messages inside the app. Groups. Staff leave. A library, and protected archives for minutes and contracts – meeting papers file themselves into the right year and month, and Church & Trellis asks before saving anything under a date that looks wrong. Me – where members look after their own details. And privacy, built into everything. Church & Trellis also works with no signal – you can still look things up, and changes wait until you are back online – and it is written with the cost of data in mind: updates download only what changed, and photos on the Marketplace are made small.');
 
   // ========== 9. People ==========
   s = content('What it does', 'Know and care for your people', true);
@@ -254,7 +254,7 @@ async function icon(Comp, color, px = 256) {
     { text: 'Duplicates spotted as you type', options: { bold: true, breakLine: true } },
     { text: 'And name badges printed on your own labels', options: { color: HEX.muted } }
   ], { x: 0.6, y: 1.6, w: 4.2, h: 4.6, fontSize: 18 });
-  s.addNotes('People: households kept together, consent recorded for each person, duplicates spotted as you type, and name badges printed on your own labels. Looking for someone? Tap the microphone and say their name – names that sound like it come up too. And a paper sign-up sheet or a pile of visitor cards? Take a photo: Church & Trellis reads the names, finds them, and you check each one before anyone is added. Pastoral notes stay with the pastors, children’s medical notes with the children’s ministry.');
+  s.addNotes('People: households kept together, consent recorded for each person, duplicates spotted as you type, and name badges printed on your own labels. Looking for someone? Tap the microphone and say their name – names that sound like it come up too. And a paper sign-up sheet or a pile of visitor cards? Take a photo: Church & Trellis reads the names, finds them, and you check each one before anyone is added. Pastoral notes stay with the pastors, children’s medical notes with the children’s ministry. To get everyone started, invite people by email or WhatsApp – one person, or a whole Care Group or serving team – and see who hasn’t begun yet. And a small celebration: on someone’s birthday or wedding anniversary a little cake or ring symbol shows beside their name, the day only – never the year or age – and only for people who agreed, and each person can switch it off.');
 
   // ========== 10. Ask in your own words (clip) ==========
   s = content('What it does', 'Ask in your own words');
@@ -302,7 +302,7 @@ async function icon(Comp, color, px = 256) {
       T(s, labels[i][1], { x: x - 0.4, y: 1.5 + h + 0.25, w: h * 390 / 844 + 0.8, h: 0.45, fontSize: 17, bold: true, align: 'center' });
     }
   }
-  s.addNotes('Members look after their own details, privacy choices, days away and serving – here in isiZulu, and in dark mode in the evening. There is also a Help page: they type or say a question about using Church & Trellis and get an answer written for them, in their own language, from the church’s help pages. Fewer requests for the church office, and records that stay up to date.');
+  s.addNotes('Members look after their own details, privacy choices, days away and serving – here in isiZulu, and in dark mode in the evening. There is also a Help page: they type or say a question about using Church & Trellis and get an answer written for them, in their own language, from the church’s help pages. Fewer requests for the church office, and records that stay up to date. Each person can also choose their own colour and page pictures, and on their own birthday or anniversary Home greets them with a warm card – or they can turn that off.');
 
   // ========== 14. Privacy ==========
   pres.addSection({ title: 'Trust' });

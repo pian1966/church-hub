@@ -12,8 +12,8 @@ Also asked: Turn on midweek groups / Bible studies. Hide Leave. Switch off care 
 ## How do I change the church's name, country or colour?
 For: Administrators
 
-**Settings → Church**: church name, **Country** (sets provinces/states, postcodes, phone numbers and the privacy law),
-and the church's colour (**Save the church's colour**) – everyone sees it.
+**Settings → Church**: church name and **Country** (sets provinces/states, postcodes, phone numbers and the privacy law).
+The church's colour and page pictures are under **Settings → Themes** (**Save the church's colour**) – everyone sees them until they choose their own under **Me → Themes**.
 
 ## Can I change or turn off the pictures at the top of each page?
 For: Everyone

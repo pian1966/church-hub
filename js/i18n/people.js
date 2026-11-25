@@ -149,7 +149,7 @@ I18n.rows([
     ['Consent ({law})', 'Toestemming ({law})', 'Imvume ({law})', 'Imvume ({law})'],
     ['Share of people who agreed. Email, SMS and directory: adults only.', 'Persentasie mense wat ingestem het. E-pos, SMS en gids: slegs volwassenes.', 'Ingxenye yabantu abavumile. I-imeyili, i-SMS nohlu lwamalungu: abantu abadala kuphela.', 'Inxalenye yabantu abavumileyo. I-imeyile, i-SMS noluhlu lwamalungu: abantu abadala kuphela.'],
     ['Active people only. Counts update as records change.', 'Slegs aktiewe mense. Getalle word bygewerk soos rekords verander.', 'Abantu abasebenzayo kuphela. Izibalo zibuyekezwa uma amarekhodi eshintsha.', 'Abantu abasebenzayo kuphela. Amanani ahlaziywa xa iirekhodi zitshintsha.'],
-    ['Everyone connected to the church: partners, attenders, visiting ministers, staff and children.', 'Almal wat aan die kerk verbonde is: vennote, bywoners, besoekende leraars, personeel en kinders.', 'Wonke umuntu oxhumene nebandla: amalungu, abahambeli, abefundisi abavakashile, abasebenzi nezingane.', 'Wonke umntu onxulumene necawe: amalungu, abazimasi, abafundisi abandwendwelayo, abasebenzi nabantwana.'],
+    ['Everyone connected to the church: partners, attenders, staff and children.', 'Almal wat aan die kerk verbonde is: vennote, bywoners, personeel en kinders.', 'Wonke umuntu oxhumene nebandla: amalungu, abahambeli, abasebenzi nezingane.', 'Wonke umntu onxulumene necawe: amalungu, abazimasi, abasebenzi nabantwana.'],
     ['Find duplicates', 'Soek duplikate', 'Thola abaphindiwe', 'Fumana abaphindiweyo'],
     ['Late spouses', 'Oorlede eggenote', 'Abashade nabo abashonile', 'Amaqabane asweleke'],
     ['Add person', 'Voeg persoon by', 'Engeza umuntu', 'Yongeza umntu'],

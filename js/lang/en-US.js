@@ -968,7 +968,7 @@ I18n.add('en-US', {
     "Consent ({law})": "Consent ({law})",
     "Share of people who agreed. Email, SMS and directory: adults only.": "Share of people who agreed. Email, SMS and directory: adults only.",
     "Active people only. Counts update as records change.": "Active people only. Counts update as records change.",
-    "Everyone connected to the church: partners, attenders, visiting ministers, staff and children.": "Everyone connected to the church: partners, attenders, visiting ministers, staff and children.",
+    "Everyone connected to the church: partners, attenders, staff and children.": "Everyone connected to the church: partners, attenders, staff and children.",
     "Find duplicates": "Find duplicates",
     "Late spouses": "Late spouses",
     "Add person": "Add person",

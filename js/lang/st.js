@@ -2635,7 +2635,7 @@ I18n.add('st', {
     "{n} of {total}": "{n} ho {total}",
     "Share of people who agreed. Email, SMS and directory: adults only.": "Karolo ya batho ba dumetseng. Imeile, SMS le bukana ya mabitso: batho ba baholo feela.",
     "Active people only. Counts update as records change.": "Batho ba ntseng ba tla feela. Dipalo di fetoha ha direkoto di fetoha.",
-    "Everyone connected to the church: partners, attenders, visiting ministers, staff and children.": "Bohle ba amanang le kereke: balekane, batho ba tlang kerekeng, basebeletsi ba baeti, basebetsi le bana.",
+    "Everyone connected to the church: partners, attenders, staff and children.": "Bohle ba amanang le kereke: balekane, batho ba tlang kerekeng, basebetsi le bana.",
     "Households": "Malapa",
     "Find duplicates": "Fumana ba ngodisitsweng habedi",
     "Late spouses": "Balekane ba hlokahetseng",

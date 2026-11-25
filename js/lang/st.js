@@ -1440,6 +1440,7 @@ I18n.add('st', {
     "Address line 2": "Mola wa bobedi wa aterese",
     "Google Maps Plus Code": "Plus Code ea Google Maps",
     "In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.": "Ho Google Maps, tobetsa 'me u tšoare sebaka ebe u kopitsa khoutu e bontšitsoeng, mohlala G7J3+Q4Q Howick. Mang kapa mang a ka e tobetsa ho ea moo ka kotloloho.",
+    "e.g. G7J3+Q4Q Howick": "mohlala G7J3+Q4Q Howick",
     "That Plus Code doesn’t look right. It looks like G7J3+Q4Q Howick.": "Plus Code eo ha e bonahale e nepahetse. E shebahala ka tsela ena: G7J3+Q4Q Howick.",
     "Town or city": "Toropo kapa motse",
     "Postcode": "Khoutu ya poso",

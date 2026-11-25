@@ -12,6 +12,7 @@ I18n.rows([
     ['Street address', 'Straatadres', 'Ikheli lomgwaqo', 'Idilesi yesitrato'],
     ['Address line 2', 'Adreslyn 2', 'Umugqa wekheli 2', 'Umgca wedilesi 2'],
     ['Google Maps Plus Code', 'Google Maps Plus Code', 'I-Plus Code ye-Google Maps', 'I-Plus Code ye-Google Maps'],
+    ['e.g. G7J3+Q4Q Howick', 'bv. G7J3+Q4Q Howick', 'isb. G7J3+Q4Q Howick', 'umz. G7J3+Q4Q Howick'],
     ['In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.', 'Druk en hou die plek in Google Maps, en kopieer die kode wat verskyn, bv. G7J3+Q4Q Howick. Almal kan dit dan aanraak om reguit soontoe te gaan.', 'ILokishini le-Google Maps, cindezela ubambe indawo bese ukopisha ikhodi ebonakalayo, isb. G7J3+Q4Q Howick. Wonke umuntu angayithinta aye ngqo lapho.', 'KuGoogle Maps, cinezela uphinde ubambe indawo uze ukopishe ikhowudi ebonisiweyo, umz. G7J3+Q4Q Howick. Wonke umntu unokuyichukumisa aye ngqo apho.'],
     ['That Plus Code doesn’t look right. It looks like G7J3+Q4Q Howick.', 'Daardie Plus Code lyk nie reg nie. Dit lyk soos G7J3+Q4Q Howick.', 'Leyo Plus Code ayibukeki ilungile. Ibukeka kanje: G7J3+Q4Q Howick.', 'Loo Plus Code ayibonakali ichanekile. Ibonakala ngolu hlobo: G7J3+Q4Q Howick.'],
     ['Please enter a first and last name.', 'Vul asseblief ’n voornaam en van in.', 'Sicela ufake igama nesibongo.', 'Nceda ufake igama nefani.'],

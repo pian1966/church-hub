@@ -306,10 +306,43 @@
         }).join('') +
         '<label class="field" style="margin-top:8px">' + T('How often (for new positions)') + '<select id="vol-freq"><option value="weekly">' + T('weekly') + '</option><option value="fortnightly" selected>' + T('fortnightly') + '</option><option value="monthly">' + T('monthly') + '</option><option value="occasional">' + T('occasional') + '</option></select></label></div>' +
       '<p id="vol-err" class="note bad" hidden></p>';
-    H.modal(H.dialogHead(T('Volunteering: {name}', { name: H.name(p) }), T('Which services they serve at, and in which departments and positions. Rostering uses this.')) + '<div class="dlg-body">' + body + '</div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' + (teams.length ? '<button class="btn save" data-act="people:savevolunteer" data-id="' + p.id + '">' + T('Save') + '</button>' : '') + '</div>', T('Volunteering'));
+    // Saved as you go (data-autoscope + the hidden data-autosave button, like Edit details); Done saves what is waiting and closes
+    H.modal(H.dialogHead(T('Volunteering: {name}', { name: H.name(p) }), T('Which services they serve at, and in which departments and positions. Rostering uses this.') + (teams.length ? ' ' + T('Changes are saved as you go.') : '')) +
+      '<div class="dlg-body"' + (teams.length ? ' data-autoscope' : '') + '>' + (teams.length ? '<button type="button" data-autosave data-act="people:autovolunteer" data-id="' + p.id + '" tabindex="-1">' + T('Save') + '</button>' : '') + body + '</div>' +
+      '<div class="dlg-foot">' + (teams.length ? '<button class="btn primary save" data-act="people:savevolunteer" data-id="' + p.id + '">' + T('Done') + '</button>' : '<button class="btn" data-act="hub:close">' + T('Close') + '</button>') + '</div>', T('Volunteering'));
     document.querySelectorAll('input[name="vol"]').forEach(function (r) { r.addEventListener('change', function () { document.getElementById('vol-f').hidden = r.value !== 'yes' || !r.checked; }); });
     document.querySelectorAll('.vol-d').forEach(function (d) { d.addEventListener('change', function () { document.querySelector('.vol-ps[data-t="' + d.dataset.t + '"]').hidden = !d.checked; }); });
+  }
+
+  /** Volunteering window. quiet = saving as you go: the window stays open; a half-finished choice (a service but no position yet)
+   *  waits quietly, with a note, until it is complete. Done (not quiet) asks for it to be complete, saves and closes. */
+  function saveVolunteer(el, quiet) {
+    var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err'); if (!p || !err) return;
+    var yes = (document.querySelector('input[name="vol"]:checked') || {}).value === 'yes';
+    var times = [].map.call(document.querySelectorAll('.vol-t:checked'), function (x) { return x.value; });
+    var want = [].filter.call(document.querySelectorAll('.vol-p:checked'), function (x) { return !x.closest('.vol-ps').hidden; }).map(function (x) { return x.value; });
+    var missing = yes && !times.length ? T('Tick at least one service they serve at.') : yes && !want.length ? T('Tick at least one department and position.') : '';
+    if (missing) { err.textContent = missing; err.className = 'note ' + (quiet ? 'warn' : 'bad'); err.hidden = false; return; }
+    err.hidden = true;
+    if (!yes) want = [];
+    var sk = S.find('skills', function (k) { return k.personId === p.id; }), freq = document.getElementById('vol-freq') ? document.getElementById('vol-freq').value : 'fortnightly';
+    var allTimes = times.length === slotIds().length ? [] : times;   // every service: no restriction
+    var sig = function (a) { return a.map(function (k) { return k.positionId + ':' + (k.times || []).join('+'); }).sort().join('|'); };
+    var before = sig(sk);
+    sk.forEach(function (k) { if (want.indexOf(k.positionId) < 0) S.remove('skills', k.id); });
+    var after = [];
+    want.forEach(function (pid) {
+      var k = sk.filter(function (x) { return x.positionId === pid; })[0];
+      k = k ? JSON.parse(JSON.stringify(k)) : { personId: p.id, positionId: pid, frequency: freq };
+      k.times = allTimes; after.push(k);
+      if (!sk.some(function (x) { return x.positionId === pid && sig([x]) === sig([k]); })) S.put('skills', k);
+    });
+    if (before !== sig(after)) {   // only a real change goes in the audit log, so saving as you go doesn't fill it
+      var names = want.map(function (id) { return (S.get('positions', id) || {}).name; });
+      S.audit(yes ? 'Volunteering for ' + H.name(p) + ': ' + times.map(slotName).join(', ') + ' – ' + names.join(', ') : 'Not volunteering: ' + H.name(p), 'people/' + p.id);
+    }
+    if (quiet) { H.render(); H.toast(T('Saved')); return; }   // the page behind shows the change; the window stays open
+    H.closeModal(); H.render(); H.toast(T('Saved'));
   }
 
   /* ---------- parents, guardians and collection (children) ---------- */
@@ -626,26 +659,8 @@
         H.render(); H.toast(T('Note saved'));
       },
     volunteer: function (el) { volunteerDialog(S.get('people', el.dataset.id)); },
-    savevolunteer: function (el) {
-        var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err');
-        var yes = (document.querySelector('input[name="vol"]:checked') || {}).value === 'yes';
-        var times = [].map.call(document.querySelectorAll('.vol-t:checked'), function (x) { return x.value; });
-        var want = [].filter.call(document.querySelectorAll('.vol-p:checked'), function (x) { return !x.closest('.vol-ps').hidden; }).map(function (x) { return x.value; });
-        if (yes && !times.length) { err.textContent = T('Tick at least one service they serve at.'); err.hidden = false; return; }
-        if (yes && !want.length) { err.textContent = T('Tick at least one department and position.'); err.hidden = false; return; }
-        if (!yes) want = [];
-        var sk = S.find('skills', function (k) { return k.personId === p.id; }), freq = document.getElementById('vol-freq') ? document.getElementById('vol-freq').value : 'fortnightly';
-        var allTimes = times.length === slotIds().length ? [] : times;   // every service: no restriction
-        sk.forEach(function (k) { if (want.indexOf(k.positionId) < 0) S.remove('skills', k.id); });
-        want.forEach(function (pid) {
-          var k = sk.filter(function (x) { return x.positionId === pid; })[0];
-          k = k ? JSON.parse(JSON.stringify(k)) : { personId: p.id, positionId: pid, frequency: freq };
-          k.times = allTimes; S.put('skills', k);
-        });
-        var names = want.map(function (id) { return (S.get('positions', id) || {}).name; });
-        S.audit(yes ? 'Volunteering for ' + H.name(p) + ': ' + times.map(slotName).join(', ') + ' – ' + names.join(', ') : 'Not volunteering: ' + H.name(p), 'people/' + p.id);
-        H.closeModal(); H.render(); H.toast(T('Saved'));
-      }
+    savevolunteer: function (el) { saveVolunteer(el, false); },
+    autovolunteer: function (el) { saveVolunteer(el, true); }
   });
 
   Object.assign(P, { adultOptions: adultOptions, canPhoto: canPhoto, coupleLine: coupleLine, coupleTodo: coupleTodo, coupleWord: coupleWord, exportPerson: exportPerson, guardiansPanel: guardiansPanel, homeDialog: homeDialog, leaveButton: leaveButton, linkDialog: linkDialog, ncDialog: ncDialog, needsTidy: needsTidy, codeable: codeable, renderPerson: renderPerson, tidyDeath: tidyDeath, volunteerDialog: volunteerDialog, volunteerPanel: volunteerPanel, wedOf: wedOf });

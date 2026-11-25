@@ -129,6 +129,7 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 
 ## Phase 6 – Member app and extras
 Church Center-style member app (first part done: Me + Android app, Oct 2026), direct imports from other church management systems (groups, departments), NFC tags, AI help, leadership insights.
+- 🟡 **Usage dashboard** – the page is built (0.118.0, `docs/CHANGELOG.md`); to do (Opus, `docs/architecture/handover/usage-opus.md`): record usage in `appUse` (rules, `js/store.js`, the writer, POPIA section), after two decisions from the Rector (who sees names; may a person opt out)
 - 🟡 Church: set up AI for Ask in your own words (`docs/AI-SEARCH-SETUP.md`) – App Check key added (0.45.1); still to do: privacy notice, App Check enforced for AI Logic, switch it on in Settings → Apps and try a question
 - 🟡 **Help: ask a question** – built in 0.111.0 (`docs/CHANGELOG.md`); church to do: switch on AI (`docs/AI-SEARCH-SETUP.md`) for written answers (without it, Help shows the matching help pages), add the AI sentence to the privacy notice, and try some real questions. Follow-ups:
   - ⬜ A monthly limit per church (today: 12 questions to the AI per ten minutes from one device; the free Gemini allowance does the rest)

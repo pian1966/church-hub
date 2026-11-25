@@ -106,7 +106,7 @@ jobs:
       - name: Home tips and what's new
         run: node tests/tips.test.js
       - name: Subscription (coffee prices, payment holidays, the prayer circle)
-        run: node tests/celebrate.test.js && node tests/health.test.js && node tests/coffee.test.js && node tests/community.test.js && node tests/studies.test.js
+        run: node tests/celebrate.test.js && node tests/health.test.js && node tests/usage.test.js && node tests/coffee.test.js && node tests/community.test.js && node tests/studies.test.js
       - name: Events (signing up, reminders 3 days and 1 day before), the email robot, and names from a photo of a sheet
         run: node tests/events.test.js && node tests/event-mail.test.js && node tests/name-list.test.js
       - name: Keep the database emulator between runs
@@ -129,7 +129,7 @@ jobs:
       fail-fast: false          # let every part finish, so one failure doesn't hide another
       matrix:
         include:
-          - { name: A, parts: 'records,names,welcome,household,offline,help,celebrate,health' }
+          - { name: A, parts: 'records,names,welcome,household,offline,help,celebrate,health,usage' }
           - { name: B, parts: 'people,admin,elvanto-leave,community,leave-more,ask' }
           - { name: C, parts: 'care,roles,messages,imports,pastors' }
           - { name: D, parts: 'partners,people-details,signin,life,support,events,languages' }

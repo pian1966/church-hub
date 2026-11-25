@@ -3,7 +3,7 @@
  * Keep every {…} part as it is. Sesotho is in js/lang/st.js. Test: node tests/i18n.test.js */
 I18n.rows([
     ["Help", "Hulp", "Usizo", "Uncedo"],
-    ["Getting started", "Aan die gang kom", "Ukuqala", "Ukuqala"],
+    ["Finding your way around", "Jou weg vind", "Ukuthola indlela yakho", "Ukufumana indlela yakho"],
     ["Ask a question about using Church & Trellis", "Vra ’n vraag oor hoe om Church & Trellis te gebruik", "Buza umbuzo ngokusebenzisa i-Church & Trellis", "Buza umbuzo ngokusebenzisa i-Church & Trellis"],
     ["Ask a question about using Church & Trellis, or look through the help pages.", "Vra ’n vraag oor hoe om Church & Trellis te gebruik, of blaai deur die hulpbladsye.", "Buza umbuzo ngokusebenzisa i-Church & Trellis, noma ubheke emakhasini osizo.", "Buza umbuzo ngokusebenzisa i-Church & Trellis, okanye ujonge kumaphepha oncedo."],
     ["Questions and answers about this part of Church & Trellis.", "Vrae en antwoorde oor hierdie deel van Church & Trellis.", "Imibuzo nezimpendulo mayelana nalesi sigaba se-Church & Trellis.", "Imibuzo neempendulo malunga neli candelo le-Church & Trellis."],

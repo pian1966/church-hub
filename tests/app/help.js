@@ -16,7 +16,7 @@ module.exports = async function (ctx) {
   check(await s.page.isVisible('#help-q') && (await s.page.$$('.help-chip')).length === 3, 'Help has a box for a question, with three questions to tap');
   check(!/sent to Google’s Gemini AI/.test(await s.text()), 'AI not switched on: nothing about Gemini');
   let t = await tiles(s);
-  check(t.includes('Me') && t.includes('Library') && t.includes('Getting started') && !t.includes('Leave'), 'a member sees the topics that have something for members, not Leave: ' + t.join(', '));
+  check(t.includes('Me') && t.includes('Library') && t.includes('Finding your way around') && !t.includes('Leave'), 'a member sees the topics that have something for members, not Leave: ' + t.join(', '));
   await ask(s, 'how do I change my phone number');
   check(/How do I change my phone number/.test(await s.page.textContent('.help-answer')) && await s.page.$eval('.help-answer details.help-q', d => d.open), 'without AI the matching help page is shown, open');
   check(/Change my details/.test(await s.page.textContent('.help-answer .help-a')) && !!(await s.page.$('.help-answer .help-a .ui-name')), '… with the button names shown as little buttons');

@@ -375,10 +375,11 @@
     document.getElementById('bl-count').textContent = pb.length ? '' : layoutCount(L);
   }
   /** On a person's page (Administrators and Pastors): their name badge. */
+  var BADGE_IC = 'M3 5h18v14H3zM8 11a2 2 0 1 0 0-.01M5.5 16c.6-1.5 1.7-2 2.5-2s1.9.5 2.5 2M14 10h4M14 14h4', MAIL_IC = 'M3 6h18v12H3zM3 7l9 7 9-7';
   function badgeLine(p) {
     if (!canReview() || !p || p.active === false || P.deceased(p)) return '';
     var s = p.badgeWanted && !p.badgePrinted ? '<span class="tag warn">' + T('Name badge waiting to be printed') + '</span>' : p.badgePrinted ? '<span class="muted small">' + T('Name badge printed on {date}', { date: esc(H.fmt(p.badgePrinted)) }) + '</span>' : '';
-    return '<p class="badge-line">' + s + ' ' + (p.badgeWanted && !p.badgePrinted ? '<a class="btn small" href="#/people/badges">' + T('Name badges') + '</a>' : '<button class="btn small" data-act="people:badgeon" data-id="' + p.id + '">' + T('Make a name badge') + '</button>') + '</p>';
+    return '<p class="badge-line">' + s + ' ' + (p.badgeWanted && !p.badgePrinted ? '<a class="btn small" href="#/people/badges">' + H.icon(BADGE_IC, 16) + T('Name badges') + '</a>' : '<button class="btn small" data-act="people:badgeon" data-id="' + p.id + '">' + H.icon(BADGE_IC, 16) + T('Make a name badge') + '</button>') + '</p>';
   }
   /** Put these people on the list of name badges to print (People → Name badges), from a search or the People list. How many were added. */
   function addBadges(list, from) {
@@ -440,7 +441,7 @@
     var a = S.find('partnerApps', function (x) { return x.personId === p.id; })[0];
     if (a && a.status === 'waiting') return '';
     return '<p class="badge-line">' + (p.partnerInvited ? '<span class="muted small">' + T('Invited to become a Church Partner on {date}', { date: esc(H.fmt(p.partnerInvited, true)) }) + '</span> ' : '') +
-      '<button class="btn small" data-act="people:invite" data-id="' + p.id + '">' + T(p.partnerInvited ? 'Invite again' : 'Invite to become a Church Partner') + '</button></p>';
+      '<button class="btn small" data-act="people:invite" data-id="' + p.id + '">' + H.icon(MAIL_IC, 16) + T(p.partnerInvited ? 'Invite again' : 'Invite to become a Church Partner') + '</button></p>';
   }
   /** A4 poster for the welcome desk, and a paper form (the same questions as Church & Trellis's, with lines to write on). */
   function posterHtml() {

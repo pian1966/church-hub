@@ -357,19 +357,38 @@
           err = { set textContent(v) { box.textContent = v; H.toast(v, true); }, get textContent() { return box.textContent; }, set hidden(v) { box.hidden = v; } };
         }
         var p = id ? JSON.parse(JSON.stringify(S.get('people', id))) : { active: true, appRole: Store.defaultRole(), keyDates: [], source: 'manual' };
-        if (!g('pf-first') || !g('pf-last')) { err.textContent = T('Please enter a first and last name.'); err.hidden = false; return; }
+        // A box that needs attention: say so right under it and put the cursor in it, so it can be fixed at once.
+        // (Saving as you go never moves the cursor – someone may be typing elsewhere – so there it stays a note and a toast.)
+        document.querySelectorAll('#pf .field-err').forEach(function (n) { n.remove(); });
+        document.querySelectorAll('#pf [aria-invalid]').forEach(function (n) { n.removeAttribute('aria-invalid'); });
+        var fail = function (fieldId, msg) {
+          err.textContent = msg;
+          var el = document.getElementById(fieldId), lab = el && el.closest('.field');
+          if (quiet || !el || !lab) { err.hidden = false; return true; }
+          err.hidden = true;
+          for (var d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;   // a folded-away section opens
+          var note = document.createElement('small'); note.className = 'field-err'; note.setAttribute('role', 'alert'); note.textContent = msg; lab.appendChild(note);
+          var box = lab.querySelector('.find-in') || el;   // a dropdown is shown as a find box: the cursor goes in that
+          el.setAttribute('aria-invalid', 'true'); box.setAttribute('aria-invalid', 'true');
+          var clear = function () { note.remove(); el.removeAttribute('aria-invalid'); box.removeAttribute('aria-invalid'); };
+          el.addEventListener('input', clear, { once: true }); el.addEventListener('change', clear, { once: true });
+          if (box !== el) { box.addEventListener('input', clear, { once: true }); box.addEventListener('change', clear, { once: true }); }
+          box.scrollIntoView({ block: 'center', behavior: 'smooth' }); box.focus({ preventScroll: true });
+          return true;
+        };
+        if (!g('pf-first') || !g('pf-last')) { fail(g('pf-first') ? 'pf-last' : 'pf-first', T('Please enter a first and last name.')); return; }
         var dead = !!id && (deceased(p) || p.category === 'Deceased');   // someone who has died: only their name is needed
-        var need = function (v, msg) { if (v === '' && !dead) { err.textContent = msg; err.hidden = false; return true; } return false; };
-        if (need(g('pf-cat'), T('Please choose a category.')) || need(g('pf-fam'), T('Please choose their household – or “+ New household…” if they live on their own.')) ||
-          need(g('pf-frole'), T('Please choose whether they are an adult or a child in the household.'))) return;
+        var need = function (fieldId, msg) { if (g(fieldId) === '' && !dead) return fail(fieldId, msg); return false; };
+        if (need('pf-cat', T('Please choose a category.')) || need('pf-fam', T('Please choose their household – or “+ New household…” if they live on their own.')) ||
+          need('pf-frole', T('Please choose whether they are an adult or a child in the household.'))) return;
         // Email and mobile must be filled in for adults: the real one, or "unknown" (saved as not known, never as the word)
         var isChild = (g('pf-frole') !== null ? g('pf-frole') : p.familyRole) === 'child';
         var unknown = function (v) { v = (v || '').trim().toLowerCase(); return v === 'unknown' || v === T('unknown').toLowerCase() || v === 'not known'; };
         var em = g('pf-email'), mo = g('pf-mobile');
-        if (!isChild && !em && !dead) { err.textContent = T('Please fill in the email address, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
-        if (!isChild && !mo && !dead) { err.textContent = T('Please fill in the mobile number, or type “{word}”.', { word: T('unknown') }); err.hidden = false; return; }
-        if (em && !unknown(em) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { err.textContent = T('That email address doesn’t look right.'); err.hidden = false; return; }
-        if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { err.textContent = T('That mobile number doesn’t look right.'); err.hidden = false; return; }
+        if (!isChild && !em && !dead) { fail('pf-email', T('Please fill in the email address, or type “{word}”.', { word: T('unknown') })); return; }
+        if (!isChild && !mo && !dead) { fail('pf-mobile', T('Please fill in the mobile number, or type “{word}”.', { word: T('unknown') })); return; }
+        if (em && !unknown(em) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { fail('pf-email', T('That email address doesn’t look right.')); return; }
+        if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { fail('pf-mobile', T('That mobile number doesn’t look right.')); return; }
         // Duplicates: very likely matches can't be saved, unless an Administrator has checked it's a different person
         var dups = dupMatches().filter(function (m) { return m.score >= 70; }), dupOk = document.getElementById('pf-dup-ok');
         if (dups.length && !(canDup() && dupOk && dupOk.checked)) {
@@ -382,7 +401,7 @@
         if (unknown(mo)) p.mobileUnknown = true; else delete p.mobileUnknown;
         if (g('pf-birth') !== null) p.birthDate = g('pf-birth');
         if (g('pf-wed') !== null && !document.getElementById('pf-wed').disabled) {   // greyed out (e.g. Single): left as it was
-          if (g('pf-wed') > H.today()) { err.textContent = T('The wedding anniversary can’t be in the future.'); err.hidden = false; return; }
+          if (g('pf-wed') > H.today()) { fail('pf-wed', T('The wedding anniversary can’t be in the future.')); return; }
           p.keyDates = (p.keyDates || []).filter(function (k) { return !WEDDING.test(k.label || ''); });
           if (g('pf-wed') && g('pf-frole') !== 'child') p.keyDates.push({ label: 'Wedding anniversary', date: g('pf-wed') });
         }
@@ -390,7 +409,7 @@
         if (g('pf-cat') !== null) p.category = g('pf-cat');
         if (g('pf-died') !== null) {   // correcting the date someone died (and the funeral)
           var dd = g('pf-died'), fu = g('pf-funeral');
-          if (!dd || dd > H.today()) { err.textContent = T('Please choose the date they died.'); err.hidden = false; return; }
+          if (!dd || dd > H.today()) { fail('pf-died', T('Please choose the date they died.')); return; }
           p.deceasedAt = dd;
           p.keyDates = (p.keyDates || []).filter(function (k) { return k.label !== 'Died' && k.label !== 'Funeral'; }).concat([{ label: 'Died', date: dd }]).concat(fu ? [{ label: 'Funeral', date: fu }] : []);
         }
@@ -406,7 +425,7 @@
         }
         if (g('pf-psince') !== null) {
           var ps = g('pf-psince'), pu = g('pf-pupd');
-          if (ps && pu && pu < ps) { err.textContent = T('The partnership can’t be updated before the date they were accepted.'); err.hidden = false; return; }
+          if (ps && pu && pu < ps) { fail('pf-pupd', T('The partnership can’t be updated before the date they were accepted.')); return; }
           if (ps) p.partnerSince = ps; else delete p.partnerSince;
           if (pu) p.partnerUpdated = pu; else if (!/^\d{4}$/.test(p.partnerUpdated || '')) delete p.partnerUpdated;   // keep a year from Elvanto
         }
@@ -414,14 +433,14 @@
         if (g('pf-frole') !== null) p.familyRole = g('pf-frole');
         if (g('pf-marital') !== null) {
           if (p.familyRole === 'child') delete p.maritalStatus;
-          else if (!g('pf-marital') && !dead) { err.textContent = T('Please choose a marital status (or “Not known”).'); err.hidden = false; return; }
+          else if (!g('pf-marital') && !dead) { fail('pf-marital', T('Please choose a marital status (or “Not known”).')); return; }
           else if (!g('pf-marital')) delete p.maritalStatus;
           else p.maritalStatus = g('pf-marital');
         }
         if (g('pf-late') !== null) {
           var was = lateSpouse(S.get('people', p.id) || p), wasName = p.lateSpouseName || '';
           var lv = g('pf-late'), ln = g('pf-late-n') || '';
-          if (lv === '__out' && !ln) { err.textContent = T('Type the name of their late spouse, or choose “Nobody recorded”.'); err.hidden = false; return; }
+          if (lv === '__out' && !ln) { fail('pf-late-n', T('Type the name of their late spouse, or choose “Nobody recorded”.')); return; }
           if (lv && lv !== '__out') { p.lateSpouseId = lv; delete p.lateSpouseName; delete p.lateSpouseSet; }
           else { delete p.lateSpouseId; if (lv === '__out') p.lateSpouseName = ln; else delete p.lateSpouseName; if (lv || was || wasName || p.maritalStatus === 'Widowed') p.lateSpouseSet = true; }
         }
@@ -429,7 +448,7 @@
         var sbox = document.getElementById('pf-staff');
         if (sbox) {
           if (sbox.checked) {
-            if (!g('pf-scat') || !g('pf-sstart')) { err.textContent = T('For staff, choose their staff category and the date they started working at the church.'); err.hidden = false; return; }
+            if (!g('pf-scat') || !g('pf-sstart')) { fail(g('pf-scat') ? 'pf-sstart' : 'pf-scat', T('For staff, choose their staff category and the date they started working at the church.')); return; }
             var same = document.getElementById('pf-sw-same').checked, days = [];
             document.querySelectorAll('.pf-sw:checked').forEach(function (b) { days.push(b.value); });
             if (!same && !days.length) { err.textContent = T('Tick the days they work, or “Same as their category”.'); err.hidden = false; return; }
@@ -454,7 +473,7 @@
           if (fs) { var o = document.createElement('option'); o.value = f.id; o.textContent = H.familyName(f); fs.appendChild(o); fs.value = f.id; }
         }
         if (fam !== null) p.familyId = fam;
-        if (p.familyRole === 'child' && !p.familyId && !dead) { err.textContent = T('Children must be in a household, so the church knows who they live with.'); err.hidden = false; return; }
+        if (p.familyRole === 'child' && !p.familyId && !dead) { fail('pf-fam', T('Children must be in a household, so the church knows who they live with.')); return; }
         var care = window.CareUI ? CareUI.read() : null;
         if (care && care.error && !dead) { err.textContent = care.error; err.hidden = false; return; }
         // Spouse or partner chosen by hand (left as it was when the box is greyed out or not shown)

@@ -21,7 +21,7 @@ module.exports = async function (ctx) {
   let docs = await s.docsNow();
   check(docs['roles/sam.peters@example.com'] && docs['roles/sam.peters@example.com'].role === 'rosters' && docs['roles/sam.peters@example.com'].personId === 'p19', 'giving Sam “Roster coordinator” access writes the access list');
   await s.go('people/p/p27'); await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]');
-  check(await s.page.isVisible('#pf-err') && (await s.page.textContent('#pf-err')).includes('marital'), 'marital status must be chosen for adults');
+  check((await s.page.textContent('#pf-err')).includes('marital') && await s.page.isVisible('#pf-marital-f .field-err') && await s.page.evaluate(() => { var a = document.activeElement; return !!a && !!a.closest('#pf-marital-f'); }), 'marital status must be chosen for adults: the message sits under the box and the cursor is in it');
   await s.page.selectOption('#pf-marital', 'Not known'); await s.page.click('[data-act="people:save"]'); await s.settle();
   docs = await s.docsNow(); check(!docs['roles/ruth.daniels@example.com'], 'choosing “No access” removes their sign-in');
   check(docs['details/p27'].maritalStatus === 'Not known' && !docs['people/p27'].maritalStatus, 'marital status is kept with the private details (not the contact card)');

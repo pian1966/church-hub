@@ -676,6 +676,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 /* Duplicate check while typing: who else already has this email or mobile */
 .dup-hint { display: block; margin-top: 6px; padding: 6px 10px; border-radius: 8px; background: var(--warn-soft); color: var(--warn) !important; font-size: 13px; }
 .dup-hint a { color: inherit; font-weight: 600; }
+/* A box that needs attention: the message sits right under it */
+.field-err { display: block; margin-top: 6px; color: var(--bad, #b3261e) !important; font-size: 13px; font-weight: 600; }
+.field [aria-invalid="true"] { border-color: var(--bad, #b3261e) !important; box-shadow: 0 0 0 3px rgba(179,38,30,.15); }
 /* Messages: a count on a menu entry or phone tab (e.g. unread messages), and the message list */
 .badge { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--accent-ink); color: #fff; font-size: 11.5px; font-weight: 700; line-height: 1; }
 .tab-ic { position: relative; display: inline-flex; }

@@ -566,6 +566,7 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('.lib-section [data-section="library"].on')) && !(await s.page.$('#lib-mine')) && (await s.page.url()).endsWith('#/library/all'), 'the Library tab opens the catalogue');
   await s.go('library/borrowed'); t = await s.text();
   check(/Items I have borrowed \(1\)[\s\S]*Library[\s\S]*Knowing God[\s\S]*Due/.test(t) && !!(await s.page.$('.lib-section [data-section="borrowed"].on')), '“Items I have borrowed” is a tab of its own, first, with the due date');
+  check(!!(await s.page.$('#lib-mine .lib-book .lib-cover')), 'each borrowed item shows its cover (or the book icon) beside its title');
   await s.go('library/all'); t = await s.text();
   check(!(await s.page.$('#lib-mine')) && !(await s.page.$('[data-act="library:add"]')) && !(await s.page.$('#lib-out')) && /Knowing God\s*On loan/.test(t), 'the Library tab shows the catalogue – not the borrowed items or the librarian’s tools');
   check(!(await s.page.$('#lib-covers-selected')) && !(await s.page.$('[data-act="library:coversall"]')) && !(await s.page.$('[data-lib-select]')), 'regular members cannot run book cover searches or save covers');

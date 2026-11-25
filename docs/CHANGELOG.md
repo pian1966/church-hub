@@ -594,3 +594,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 25 Nov 2026 (0.117.0): **Church health card** on Administrators' Home (`js/health.js` rules, `js/health-ui.js` card) – what is worth a look, marked Weekly / Every 2 weeks / Monthly: roster turns held by people who have left, couples with different addresses, marriage records that disagree, adults with no way to be reached, groups with no leader, people due for review under Privacy; counts only, kept until anything changes
 - ✅ 25 Nov 2026 (0.117.3): the Church health card is now called **Church health tests**
 - ✅ 25 Nov 2026 (0.117.10): **Items I have borrowed shows each book's cover** beside its title and due date (same pictures and loading as the Library tab; the book icon where there is none)
+- ✅ 25 Nov 2026 (0.117.11): fix – items on Items I have borrowed were hidden by the Library's own search filter; they show again, with their covers

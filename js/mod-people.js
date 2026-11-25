@@ -45,6 +45,8 @@
     // Attendees: only if Settings → Attendees lets them see names or the directory (the application form always opens)
     show: function () { return !H.attendee() || H.attendeeCan('names') || H.attendeeCan('directory') || (typeof location !== 'undefined' && /^#\/people\/apply/.test(location.hash)); },
     stat: function () { return canBasic() ? TN('{n} person', '{n} people', S.find('people', function (p) { return p.active !== false; }).length) + ' · ' + TN('{n} household', '{n} households', S.list('families').length) : T('Church directory'); },
+    /** Administrators' Home: the Church health card (js/health-ui.js). */
+    homeCard: function () { return window.HealthUI ? HealthUI.card() : ''; },
     todos: function (u) {
       if (!H.can('*') && !H.can('people.view') && !canChildren()) return [];
       var all = H.can('*') || H.can('people.view');

@@ -75,6 +75,7 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Test'); await s.page.fill('#pf-last', 'Person');
   check((await s.page.$eval('#pf-cat', e => e.value)) === '' && (await s.page.$eval('#pf-frole', e => e.value)) === '', 'a new person starts with Category and “in the household as” on Choose…');
   await s.page.click('[data-act="people:save"]'); check((await s.page.textContent('#pf-err')).includes('choose a category'), 'category must be chosen');
+  check(await s.page.evaluate(() => { var n = document.querySelector('#pf-cat').closest('label.field').querySelector('.field-err'); return !!n && n.offsetHeight > 0; }) && await s.page.evaluate(() => { var a = document.activeElement; return !!a && !!a.closest('label.field') && !!a.closest('label.field').querySelector('#pf-cat'); }), 'a missing box shows its message right under it and the cursor goes there');
   await s.page.selectOption('#pf-cat', 'Attender'); await s.page.selectOption('#pf-fam', '__new'); await s.page.click('[data-act="people:save"]');
   check((await s.page.textContent('#pf-err')).includes('adult or a child'), '“in the household as” must be chosen');
   await finish(s);

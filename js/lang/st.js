@@ -1141,6 +1141,7 @@ I18n.add('st', {
     "Wedding anniversary today": "Sehopotso sa lenyalo kajeno",
     "When you change someone’s home address, Church & Trellis now offers the same address to their husband or wife. People also lists married couples whose addresses don’t match, so they can be put right.": "Ha o fetola aterese ya hae ya motho, Church & Trellis jwale e fana ka aterese e tshwanang ho monna kapa mosadi wa hae. Batho le bona ba bontsha banyalani ba nyetsaneng bao diaterese tsa bona di sa tshwaneng, e le hore di lokiswe.",
     "Birthdays and wedding anniversaries now get a little celebration: on your own day you see a card on Home and Me, and 🎂 or 💍 appears beside a name wherever the church already shows that date.": "Matsatsi a tswalo le dihopotso tsa lenyalo jwale a ketekwa hanyane: ka letsatsi la hao o bona karete ho Hae le ho Nna, mme 🎂 kapa 💍 e hlaha haufi le lebitso moo kereke e se e bontsha letsatsi leo.",
+    "When something is missing on a person’s details, Church & Trellis now takes you straight to that box, with the problem shown right under it.": "Ha ho na ntho e haellang ho dintlha tsa motho, Church & Trellis jwale e o isa ka kotloloho lebokosing leo, bothata bo bontshitswe ka tlasa lona.",
     "Buttons now press down a little when you tap them.": "Dikonopo jwale di hatellwa hanyane ha o di ama.",
     "Orange": "Lamunu",
     "Blue": "Botala ba lehodimo",

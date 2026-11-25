@@ -6,6 +6,14 @@
   var F = P.F, HS = P.HS, PURPOSES = P.PURPOSES, RECEIVE_P = P.RECEIVE_P, WEDDING = P.WEDDING, state = P.state;
   // From the other People files (each looked up when called)
   function addressLines() { return P.addressLines.apply(this, arguments); }
+  /** The Google Maps Plus Code kept with the home address (e.g. "G7J3+Q4Q Howick"), or ''. */
+  function plusCode(p) { return p && p.address && p.address.plusCode ? String(p.address.plusCode).trim() : ''; }
+  /** A tappable Plus Code that opens that exact spot in Google Maps (a new tab; Google is only contacted when it is tapped). */
+  function plusCodeLink(p, afterLines) {
+    var c = plusCode(p); if (!c) return '';
+    return (afterLines ? '<br>' : '') + '<a class="plus-code" href="https://www.google.com/maps/search/?api=1&amp;query=' + esc(encodeURIComponent(c)) + '" target="_blank" rel="noopener noreferrer" title="' + esc(T('Open in Google Maps')) + '">' +
+      H.icon('M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z', 14) + ' ' + esc(c) + '</a>';
+  }
   function age() { return P.age.apply(this, arguments); }
   function canBasic() { return P.canBasic.apply(this, arguments); }
   function canChildren() { return P.canChildren.apply(this, arguments); }
@@ -119,10 +127,10 @@
       // 🎂 / 💍 only where this page already shows the birthday or the anniversary (see the rows below)
       (window.CelebrateUI ? ' ' + (full ? CelebrateUI.tag(p, { birthday: !!(p.birthDate || p.birthDay), anniversary: !child }) : child && canChildren() && p.birthDate ? CelebrateUI.tag(p, { anniversary: false }) :
         !child && p.inDirectory ? CelebrateUI.tag(p) : '') : '');   // the directory carries the day only for those who agreed
-    var html = '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
+    var html = '<div class="crumb-bar"><a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
+      (full || H.can('people.edit') ? '<button class="btn primary" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') + '</div>' +
       '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + (P.welcomeLine ? P.welcomeLine(p) : '') + '</div></div>' +
-      '<div class="btns">' + (full || H.can('people.edit') ? '<button class="btn" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') +
-      (groupKinds(p).length ? '<button class="btn" data-act="people:groups" data-id="' + p.id + '">' + T('Groups') + '</button>' : '') +
+      '<div class="btns">' + (groupKinds(p).length ? '<button class="btn" data-act="people:groups" data-id="' + p.id + '">' + T('Groups') + '</button>' : '') +
       (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
         (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +
         '<input type="file" id="pp-photo" data-id="' + p.id + '" accept="image/*" hidden>' : '') +
@@ -148,7 +156,7 @@
       (p.preferredName ? '<dt>' + F('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + F('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
       (full && p.maidenName ? '<dt>' + F('Maiden name') + '</dt><dd>' + esc(p.maidenName) + '</dd>' : '') +
-      (full && addressLines(p).length ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + ' ' + H.mapLink(addressLines(p).join(', ')) + '</dd>' :
+      (full && (addressLines(p).length || plusCode(p)) ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + (addressLines(p).length ? ' ' + H.mapLink(plusCode(p) || addressLines(p).join(', ')) : '') + plusCodeLink(p, addressLines(p).length) + '</dd>' :
         !full && P.contactHtml(p, 'address') ? '<dt>' + F('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
       (!child && (canSeeAll() || me) ? '<dt>' + F('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
         '<dt>' + F('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +

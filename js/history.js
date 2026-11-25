@@ -12,12 +12,12 @@
  *     before: <the record as it was, or null for 'add'>, after: <the record as it became, or null for 'remove'>,
  *     fields: ['firstName', 'details.email'] }       // what changed, so the list can say it without opening both records
  *
- * Privacy: the snapshot never carries what the record keeps private (SKIP below: medical notes, ID, photo). Who may read versions is the
- * same short list that may see the record (the data layer decides; Administrators and Pastors for people).
+ * Privacy: the snapshot never carries what the record keeps private (SKIP below: medical notes, ID, photo). Administrators and Pastors
+ * read versions; whoever makes a change writes its version (firestore.rules, history). Kept 90 days (POPIA "Version history").
  */
 var History = (function () {
   'use strict';
-  var KEEP_DAYS = 90, KEEP_LAST = 20, MERGE_MIN = 10, UNDO_MAX = 20, UNDO_MIN = 30;
+  var KEEP_DAYS = 90, KEEP_LAST = 50, MERGE_MIN = 10, UNDO_MAX = 20, UNDO_MIN = 30;
 
   /** The collections whose records have a history, and the plain word for one of them. */
   var COVER = {
@@ -26,13 +26,18 @@ var History = (function () {
   };
   /** Never copied into a version. */
   var SKIP = ['updatedAt', 'createdAt', 'medical', 'photo', 'idNumber', 'pin', 'pinHash'];
+  /** Worked out on the phone from other records (the directory, the access list), not changed by anyone: never copied or compared. */
+  var NOISE = ['inDirectory', 'nameOnly', 'appRole', 'shareAddress', 'shareSpouse', 'birthDay', 'weddingDay'];
 
   function covered(c) { return Object.prototype.hasOwnProperty.call(COVER, c); }
   function copy(x) { return x === undefined ? undefined : JSON.parse(JSON.stringify(x)); }
+  /** Nothing, '', [] and {} all mean "not filled in" (a record saved on one phone and read back on another may carry either). */
+  function empty(v) { return v === undefined || v === null || v === '' || (Array.isArray(v) && !v.length) || (typeof v === 'object' && !Array.isArray(v) && !Object.keys(v).some(function (k) { return !empty(v[k]); })); }
   function canon(x) {
-    if (x === null || typeof x !== 'object') return JSON.stringify(x === undefined ? null : x);
+    if (empty(x)) return 'null';
+    if (typeof x !== 'object') return JSON.stringify(x);
     if (Array.isArray(x)) return '[' + x.map(canon).join(',') + ']';
-    return '{' + Object.keys(x).sort().map(function (k) { return JSON.stringify(k) + ':' + canon(x[k]); }).join(',') + '}';
+    return '{' + Object.keys(x).sort().filter(function (k) { return !empty(x[k]); }).map(function (k) { return JSON.stringify(k) + ':' + canon(x[k]); }).join(',') + '}';
   }
   function same(a, b) { return canon(a) === canon(b); }
   function minutes(at) { return Date.parse(String(at).replace(' ', 'T') + 'Z') / 60000; }
@@ -41,7 +46,7 @@ var History = (function () {
   function strip(rec) {
     if (!rec) return null;
     var out = copy(rec);
-    SKIP.forEach(function (k) { delete out[k]; });
+    SKIP.concat(NOISE).forEach(function (k) { delete out[k]; });
     return out;
   }
 
@@ -84,13 +89,15 @@ var History = (function () {
       .sort(function (a, b) { return a.at < b.at ? 1 : a.at > b.at ? -1 : a.id < b.id ? 1 : -1; });
   }
 
-  /** What to throw away: a version goes when it is older than 90 days AND the record has 20 newer ones (so a record that is rarely
-   *  changed keeps its latest 20 however old, and a busy one doesn't fill the church's database). Returns the ids to delete. */
+  /** The oldest moment still kept: 90 days before `nowAt`, written the same way ('YYYY-MM-DD HH:MM'), so the database can be asked for older ones. */
+  function cutoff(nowAt) { return new Date((minutes(nowAt) - KEEP_DAYS * 1440) * 60000).toISOString().slice(0, 16).replace('T', ' '); }
+  /** What to throw away: every version older than 90 days, and a busy record's versions beyond its newest 50 (so one record can't fill
+   *  the church's database). Returns the ids to delete. */
   function prune(entries, nowAt) {
-    var cutoff = minutes(nowAt) - KEEP_DAYS * 1440, rank = {}, out = [];
+    var cut = cutoff(nowAt), rank = {}, out = [];
     (entries || []).slice().sort(function (a, b) { return a.at < b.at ? 1 : -1; }).forEach(function (e) {
       var k = e.c + '/' + e.rid; rank[k] = (rank[k] || 0) + 1;
-      if (rank[k] > KEEP_LAST && minutes(e.at) < cutoff) out.push(e.id);
+      if (e.at < cut || rank[k] > KEEP_LAST) out.push(e.id);
     });
     return out;
   }
@@ -119,7 +126,7 @@ var History = (function () {
       });
     } else {
       rec = copy(e.before);
-      if (current) SKIP.forEach(function (k) { if (k in current) rec[k] = copy(current[k]); });   // private parts are never rolled back (they aren't in the version)
+      if (current) SKIP.concat(NOISE).forEach(function (k) { if (k in current) rec[k] = copy(current[k]); });   // private and worked-out parts stay as they are now (they aren't in the version)
     }
     rec.id = e.rid;
     return { action: 'put', record: rec, newer: newer };
@@ -129,6 +136,8 @@ var History = (function () {
   var stack = [];
   function undoPush(e, nowMs) {
     if (!e) return;
+    var top = stack[stack.length - 1];
+    if (top && top.e.id === e.id) stack.pop();   // saving as you type: the version grew – Undo takes back the whole of it at once
     stack.push({ e: e, ms: nowMs === undefined ? Date.now() : nowMs });
     if (stack.length > UNDO_MAX) stack.shift();
   }
@@ -154,7 +163,7 @@ var History = (function () {
     return l.slice(0, max).join(', ') + ' and ' + (l.length - max) + ' more';
   }
 
-  return { COVER: COVER, SKIP: SKIP, KEEP_DAYS: KEEP_DAYS, KEEP_LAST: KEEP_LAST, MERGE_MIN: MERGE_MIN, UNDO_MIN: UNDO_MIN, covered: covered, strip: strip, changed: changed,
+  return { COVER: COVER, SKIP: SKIP, NOISE: NOISE, cutoff: cutoff, KEEP_DAYS: KEEP_DAYS, KEEP_LAST: KEEP_LAST, MERGE_MIN: MERGE_MIN, UNDO_MIN: UNDO_MIN, covered: covered, strip: strip, changed: changed,
     entry: entry, merge: merge, forRecord: forRecord, prune: prune, moved: moved, restore: restore,
     undoPush: undoPush, undoPeek: undoPeek, undoPop: undoPop, undoClear: undoClear, undoSize: undoSize, fieldLabel: fieldLabel, listFields: listFields };
 })();

@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.118';
+  var NEWS_FOR = '0.119';
   var NEWS = [
+    { date: '2026-11-26', who: ['admin', 'pastor'], app: 'people', btn: ['Undo', 'Version history'], text: TX('Made a mistake? Tap Undo straight after a change – and on a person’s page, Version history shows earlier versions and puts one back.') },
+    { date: '2026-11-26', who: ['rosters'], app: 'rosters', btn: ['Undo'], text: TX('Made a mistake? Tap Undo straight after changing a service, position or team.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('A married or partnered person’s page now says when their address is different from their spouse’s or partner’s.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('Edit details now suggests a spouse or partner from the person’s household (or the same surname) – tap their name to choose them.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], app: 'usage', btn: ['Usage'], text: TX('Administrators and Pastors now have a Usage page: how many people use Church & Trellis, who is on right now, how much each person uses it, and which parts are used most.') },
@@ -182,6 +184,7 @@
     { id: 'admin-viewas', btn: ['View as…'], who: ['admin'], text: TX('Use View as… in the menu to see exactly what a Pastor, a Roster coordinator or a member sees.') },
     { id: 'admin-apps', btn: ['Settings', 'Apps'], who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Apps switches parts of Church & Trellis on and off, such as the Library or Midweek Groups.') },
     { id: 'admin-change', btn: ['Advanced search'], who: ['admin'], app: 'people', href: '#/people', text: TX('In Advanced search you can tick people in the results and change one thing for all of them at once.') },
+    { id: 'admin-history', btn: ['Version history'], who: ['admin', 'pastor'], app: 'people', href: '#/people', text: TX('Changed something by mistake? Open the person’s page, tap Version history and put back an earlier version – or just the one detail.') },
     { id: 'admin-dupes', btn: ['Find duplicates'], who: ['admin', 'pastor'], app: 'people', href: '#/people', text: TX('Find duplicates (on People) helps you join two records of the same person into one.') },
     { id: 'admin-see', btn: ['Settings', 'Who can see what'], who: ['admin'], app: 'settings', href: '#/settings', text: TX('Settings → Who can see what decides which contact details each role may see.') }
   ];

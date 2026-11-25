@@ -13,6 +13,7 @@ console.log('What changed');
   ok(History.changed(P(), P({ medical: 'x' })).length === 0, 'private fields are never compared');
   ok(History.changed(P({ tags: ['a', 'b'] }), P({ tags: ['a', 'b'] })).length === 0, 'equal arrays are equal');
   ok(History.changed(P(), P({ details: { cell: '000', email: 'ann@example.test' } })).length === 0, 'key order does not matter');
+  ok(History.changed(P(), P({ keyDates: [], nickname: '', inDirectory: true, appRole: 'member' })).length === 0, 'empty values and worked-out fields are not changes');
 }
 
 console.log('Making a version');
@@ -50,11 +51,11 @@ console.log('Listing and clearing out');
     { id: 'a', c: 'people', rid: 'p1', at: '2026-11-20 09:00' }, { id: 'b', c: 'people', rid: 'p1', at: '2026-11-25 09:00' },
     { id: 'c', c: 'families', rid: 'p1', at: '2026-11-26 09:00' }, { id: 'd', c: 'people', rid: 'p2', at: '2026-11-27 09:00' }];
   ok(History.forRecord(es, 'people', 'p1').map(e => e.id).join() === 'b,a', 'one record, newest first, not another collection or record');
-  const old = []; for (let i = 0; i < 25; i++) old.push({ id: 'o' + i, c: 'people', rid: 'busy', at: '2026-01-' + String(i + 1).padStart(2, '0') + ' 09:00' });
-  ok(History.prune(old, '2026-11-25 10:00').length === 5, 'a busy record keeps its latest 20 and loses the old rest');
-  ok(History.prune(old.slice(0, 3), '2026-11-25 10:00').length === 0, 'a rarely changed record keeps even old versions');
-  const young = old.map((e, i) => Object.assign({}, e, { at: '2026-11-' + String(i + 1).padStart(2, '0') + ' 09:00' }));
-  ok(History.prune(young, '2026-11-25 10:00').length === 0, 'nothing newer than 90 days goes');
+  ok(History.cutoff('2026-11-25 10:00') === '2026-08-27 10:00', '90 days back, written the same way');
+  const mixed = [{ id: 'old', c: 'people', rid: 'p1', at: '2026-08-27 09:59' }, { id: 'edge', c: 'people', rid: 'p1', at: '2026-08-27 10:00' }, { id: 'new', c: 'people', rid: 'p1', at: '2026-11-20 09:00' }];
+  ok(History.prune(mixed, '2026-11-25 10:00').join() === 'old', 'older than 90 days goes; the rest stays');
+  const busy = []; for (let i = 0; i < 55; i++) busy.push({ id: 'b' + i, c: 'people', rid: 'busy', at: '2026-11-20 ' + String(Math.floor(i / 60)).padStart(2, '0') + ':' + String(i % 60).padStart(2, '0') });
+  ok(History.prune(busy, '2026-11-25 10:00').sort().join() === 'b0,b1,b2,b3,b4', 'a busy record keeps its newest 50');
 }
 
 console.log('Putting a version back');
@@ -86,7 +87,9 @@ console.log('Undo on this device');
   ok(History.undoPeek(3000) === e2 && History.undoSize() === 2, 'the latest change is offered');
   ok(History.undoPop() === e2 && History.undoPeek(3000) === e1, 'then the one before');
   ok(History.undoPeek(1000 + 31 * 60000) === null, 'after 30 minutes it is no longer offered');
-  History.undoClear(); for (let i = 0; i < 30; i++) History.undoPush(e1, 1);
+  History.undoClear(); History.undoPush(e1, 1); History.undoPush(Object.assign({}, e1, { at: 'later' }), 2);
+  ok(History.undoSize() === 1 && History.undoPeek(3).at === 'later', 'a version that grew replaces itself, so one Undo takes back all of it');
+  History.undoClear(); for (let i = 0; i < 30; i++) History.undoPush(Object.assign({}, e1, { id: 'u' + i }), 1);
   ok(History.undoSize() === 20, 'only the last 20 are kept');
   History.undoClear();
 }

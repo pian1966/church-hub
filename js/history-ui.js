@@ -3,8 +3,8 @@
  *     made on this device (up to 20, within 30 minutes), one at a time.
  *   - Version history: HistoryUI.open('people', id) opens a window listing every earlier version of that record (90 days), who changed
  *     it, what changed, and a button to put it back – the whole record, or just one field.
- * Both wait for the data layer (docs/architecture/handover/history-opus.md): they need Store.onVersion (called with each saved change)
- * and Store.versions / Store.history. Until Store has them nothing shows and nothing breaks (HistoryUI.ready() is false). */
+ * The data layer (js/store.js) passes each saved change to Store.onVersion and keeps the versions (history/{id}, firestore.rules okHist);
+ * Store.versions reads them (Administrators and Pastors), Store.asRestore marks a put-back as "Put back". */
 (function () {
   'use strict';
   var H = Hub, S = Store, esc = H.esc, T = I18n.t, D = History;
@@ -42,8 +42,10 @@
     if (r.newer && !warned) { warned = true; say(T('Someone has changed this since. Undo anyway?'), 10000, true); return; }
     undoing = true;
     try {
-      if (r.action === 'put') S.put(e.c, r.record, 'Undid a change (' + e.c + ')');
-      else if (r.action === 'remove') S.remove(e.c, e.rid, 'Undid an addition (' + e.c + ')');
+      S.asRestore(function () {
+        if (r.action === 'put') S.put(e.c, r.record, 'Undid a change (' + e.c + '/' + e.rid + ')');
+        else if (r.action === 'remove') S.remove(e.c, e.rid, 'Undid an addition (' + e.c + '/' + e.rid + ')');
+      });
       D.undoPop();
     } finally { undoing = false; }
     warned = false; clearTimeout(pending);
@@ -53,7 +55,12 @@
   }
 
   /* ---------- Version history ---------- */
-  function when(at) { return H.fmt(String(at).slice(0, 10), true) + ' · ' + String(at).slice(11, 16); }
+  /** Versions are written in UTC ('YYYY-MM-DD HH:MM'); shown in this phone's own time. */
+  function when(at) {
+    var d = new Date(String(at).replace(' ', 'T') + ':00Z'); if (isNaN(d)) return String(at);
+    var p = function (n) { return (n < 10 ? '0' : '') + n; }, day = d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate());
+    return H.fmt(day, true) + ' · ' + p(d.getHours()) + ':' + p(d.getMinutes());
+  }
   function show(v) {
     if (v === undefined || v === null || v === '') return '—';
     var s = typeof v === 'object' ? JSON.stringify(v) : String(v);
@@ -98,8 +105,10 @@
     if (r.action === 'none') { H.toast(T('Nothing to put back.')); return; }
     undoing = true;
     try {
-      if (r.action === 'put') S.put(e.c, r.record, 'Put a ' + e.c + ' record back to an earlier version');
-      else S.remove(e.c, e.rid, 'Took out a ' + e.c + ' record (put back to an earlier version)');
+      S.asRestore(function () {
+        if (r.action === 'put') S.put(e.c, r.record, 'Put ' + e.c + '/' + e.rid + ' back to an earlier version' + (fields ? ' (' + fields.join(', ') + ')' : ''));
+        else S.remove(e.c, e.rid, 'Took out ' + e.c + '/' + e.rid + ' (put back to before it was added)');
+      });
     } finally { undoing = false; }
     H.closeModal(); H.toast(T('Put back.')); H.render();
   }
@@ -113,11 +122,15 @@
     else if (t.hasAttribute('data-hist-field')) { ev.preventDefault(); putBack(+t.getAttribute('data-hist-field'), [t.getAttribute('data-f')]); }
     else if (t.hasAttribute('data-history')) { ev.preventDefault(); open(t.getAttribute('data-history'), t.getAttribute('data-id'), t.getAttribute('data-title') || ''); }
   });
-  if (ready()) S.onVersion(seen);
+  if (ready()) {
+    S.onVersion(seen);
+    // Versions older than 90 days are cleared out once a day by an Administrator's app (Store.historyTidy decides; quiet)
+    setInterval(function () { S.historyTidy(); }, 3600000); setTimeout(function () { S.historyTidy(); }, 60000);
+  }
 
   /** A button for a record's page: HistoryUI.button('people', id, name) – '' when history isn't available. */
   function button(c, rid, title) {
-    return ready() && D.covered(c) ? '<button class="btn" data-history="' + esc(c) + '" data-id="' + esc(rid) + '" data-title="' + esc(title || '') + '">' + H.icon('M12 8v5l3 2M3 12a9 9 0 1 0 3-6.7M3 4v5h5', 18) + T('Version history') + '</button>' : '';
+    return ready() && D.covered(c) && S.historyCan() ? '<button class="btn" data-history="' + esc(c) + '" data-id="' + esc(rid) + '" data-title="' + esc(title || '') + '">' + H.icon('M12 8v5l3 2M3 12a9 9 0 1 0 3-6.7M3 4v5h5', 18) + T('Version history') + '</button>' : '';
   }
   window.HistoryUI = { ready: ready, open: open, button: button, seen: seen, undo: undo };
 })();

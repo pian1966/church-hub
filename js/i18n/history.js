@@ -1,6 +1,7 @@
 /* Church & Trellis – words for Undo and Version history (js/history-ui.js).
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part as it is. Test: node tests/i18n.test.js */
 I18n.rows([
+    ['Undo and Version history', 'Ontdoen en weergawegeskiedenis', 'Hlehlisa noMlando wezinguqulo', 'Buyisela neMbali yeenguqulelo'],
     ['Deleted: {what}.', 'Uitgevee: {what}.', 'Kususiwe: {what}.', 'Kususiwe: {what}.'],
     ['Added: {what}.', 'Bygevoeg: {what}.', 'Kwengeziwe: {what}.', 'Kongeziwe: {what}.'],
     ['Changes saved.', 'Veranderinge gestoor.', 'Izinguquko zigciniwe.', 'Utshintsho lugcinwe.'],

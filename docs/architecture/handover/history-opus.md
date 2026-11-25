@@ -1,5 +1,12 @@
 # Undo and Version history – the part for Opus
 
+**Done in 0.119.0 (Opus, 26 Nov 2026).** Built as planned below, with these choices: versions are **read by Administrators and Pastors only**
+(members don't read even their own); written by whoever made the change for records they may change (Administrators and Pastors: all;
+roster coordinators: services, positions, teams; anyone: their own person record) – quietly, so a version that can't be kept never
+stops the change. "Before" is what the database holds (`Live.saved`) or, in the demo, the record as last saved – screens often change a
+record in place. Kept **90 days and at most 50 per record** (`History.prune`; the daily tidy by an Administrator's app deletes by age).
+Undo of a version that grew while typing takes back all of it at once. Kept below as the record of what was asked.
+
 **Model: Senior (Opus).** Sonnet built the rules and the screens (below, 25 Nov 2026). Keeping versions means a new collection, `firestore.rules`
 and `js/store.js`, so by `docs/architecture/MODELS.md` rule 1 a lighter model must not do the rest. **Nothing shows or changes in the app until
 this is done** (`HistoryUI.ready()` is false until `Store.onVersion` and `Store.versions` exist).

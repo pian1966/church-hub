@@ -1052,6 +1052,43 @@ service cloud.firestore {
       allow delete: if admin();
     }
 
+    // ---------- Version history and Undo (js/history.js, js/history-ui.js; POPIA "Version history") ----------
+    // history/{id}: an earlier version of a record (a person, a household, a service...), kept 90 days so a mistake can be put
+    // right. It holds the record as it was and as it became - never medical notes, the photo, the ID number or a PIN.
+    // Written by the person who made the change, only for records they may change themselves; Administrators and Pastors read
+    // them; Administrators delete them (clearing out old ones, and with the person when someone asks to be deleted).
+    // The writer may widen their own version (several small saves within a few minutes become one); nobody else changes it.
+    function histKinds() { return ['edit', 'add', 'remove', 'restore']; }
+    function histRosters() { return ['services', 'positions', 'teams']; }
+    function histStaff() { return ['people', 'families', 'careGroups', 'groups', 'customGroups', 'leaderBodies', 'events', 'books', 'studies']; }
+    function histPrivate() { return ['medical', 'photo', 'idNumber', 'pin', 'pinHash']; }
+    function histClean(v) { return v == null || (v is map && !v.keys().hasAny(histPrivate())); }
+    function histMayWrite(d) {
+      return isRole(['admin', 'pastor'])
+        || (d.c in histRosters() && rosterer())
+        || (d.c == 'people' && mine(d.rid));
+    }
+    function okHist(id, d) {
+      return d.keys().hasOnly(['id', 'c', 'rid', 'at', 'by', 'byName', 'kind', 'before', 'after', 'fields'])
+        && d.keys().hasAll(['id', 'c', 'rid', 'at', 'by', 'kind', 'fields'])
+        && d.id == id
+        && (d.c in histStaff() || d.c in histRosters())
+        && d.rid is string && d.rid.size() > 0 && d.rid.size() <= 100
+        && d.at is string && d.at.matches('^20[0-9][0-9]-[0-1][0-9]-[0-3][0-9] [0-2][0-9]:[0-5][0-9]$')
+        && d.kind in histKinds()
+        && d.fields is list && d.fields.size() <= 200
+        && d.get('byName', '') is string && d.get('byName', '').size() <= 120
+        && histClean(d.get('before', null)) && histClean(d.get('after', null))
+        && isMe(d.by);
+    }
+    match /history/{id} {
+      allow read: if isRole(['admin', 'pastor']);
+      allow create: if anyone() && okHist(id, request.resource.data) && histMayWrite(request.resource.data);
+      allow update: if anyone() && okHist(id, request.resource.data) && histMayWrite(request.resource.data)
+        && resource.data.by == request.resource.data.by && resource.data.c == request.resource.data.c && resource.data.rid == request.resource.data.rid;
+      allow delete: if admin();
+    }
+
     // ---------- POPIA registers (Administrators, and Pastors with "privacy") ----------
     match /dsr/{id} { allow read, write: if may('privacy'); }
     match /breaches/{id} { allow read, write: if may('privacy'); }

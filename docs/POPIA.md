@@ -478,6 +478,21 @@ nobody connects a Google account, and what is in the meeting or the document sta
   offline, in the demo, or while an Administrator is viewing as someone else. The Usage page fetches the records only when it is opened.
 - **Not used for anything else:** nothing is sent to anyone automatically because of these numbers, and nothing goes to a third party.
 
+## Version history and Undo (0.119.0; `js/history.js`, `js/history-ui.js`, `js/store.js`)
+- **What is kept (`history/{id}`):** each time someone changes, adds or deletes a person, household, group, service, position, team,
+  Leadership group, event, library book or Midweek study, an earlier version of that record: the record as it was and as it
+  became, which fields changed, when, and who made the change. **Never** medical notes, the photo, the ID number or a PIN; pastoral
+  and office notes are separate records and are not versioned.
+- **Purpose and basis:** putting right mistakes (POPIA s16, quality of information) – the church's legitimate interest in keeping
+  its records accurate.
+- **Who sees it:** Administrators and Pastors only (Version history on a person's page). A version is written by the person who made
+  the change, and only for records the rules let them change (roster coordinators: services, positions and teams; a member: their own
+  record). Nobody else can read it.
+- **How long:** 90 days, and at most the newest 50 versions of one record; an Administrator's app clears out older ones once a day.
+  When someone asks to be deleted (purge), their versions are deleted too.
+- **Undo** works only on the device that made the change (the last 20 changes, for 30 minutes) and keeps nothing extra. Putting a
+  version back, and every Undo, is written in the audit log.
+
 ## Help: ask a question (0.111.0; `js/help.js`, `js/mod-help.js`)
 - **Purpose:** so anyone can get a plain answer about using Church & Trellis without phoning the office. For everyone who is signed in.
 - **What is read:** the help pages in `docs/help/` – public text written for the church, no church data (the repository is public).

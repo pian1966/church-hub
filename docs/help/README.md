@@ -28,6 +28,7 @@ church (not for developers), in plain English, and are meant to be used two ways
 | [community-board.md](community-board.md) | The Community board: pinning, renewing and reporting notices; for keepers: checking notices, choosing keepers |
 | [marketplace.md](marketplace.md) | The Marketplace: listing, the rules, contacting a seller, marking sold; for keepers: checking listings |
 | [usage.md](usage.md) | For Administrators and Pastors: the Usage page – who is on the app, who is on right now, versions, the most used parts |
+| [undo.md](undo.md) | Undo straight after a change, and Version history on a person's page (Administrators and Pastors) |
 | [subscription.md](subscription.md) | For Administrators: the price of a coffee, paying, payment holidays, praying instead, gifts, the prayer circle and prayer card |
 | [privacy.md](privacy.md) | Consent, what others can see, and the Privacy pages for Administrators |
 | [settings.md](settings.md) | For Administrators: settings, apps, services, wording, roles, View as, imports, setting up Church & Trellis at another church |

@@ -88,7 +88,6 @@ I18n.rows([
     ["For a test person or someone added by mistake. They can be restored for 30 days.", "Vir ’n toetspersoon of iemand wat per ongeluk bygevoeg is. Kan 30 dae lank herstel word.", "Kumuntu wokuhlola noma ofakwe ngephutha. Angabuyiswa izinsuku ezingu-30.", "Kumntu wovavanyo okanye ofakwe ngempazamo. Unokubuyiselwa iintsuku ezingama-30."],
     ["Move to Bin", "Skuif na Asblik", "Faka eMgqonyeni", "Faka eMgqomeni"],
     ['Church directory', 'Kerkgids', 'Uhlu lwamalungu ebandla', 'Uluhlu lwamalungu ecawe'],
-    ['Unknown', 'Onbekend', 'Akwaziwa', 'Akwaziwa'],
     ['People who agreed to be in the church directory.', 'Mense wat ingestem het om in die kerkgids te wees.', 'Abantu abavumile ukuba sohlwini lwamalungu ebandla.', 'Abantu abavumileyo ukuba kuluhlu lwamalungu ecawe.'],
     ['Search people', 'Soek mense', 'Sesha abantu', 'Khangela abantu'],
     ['Search by name, household, email or phone', 'Soek volgens naam, huishouding, e-pos of foon', 'Sesha ngegama, ikhaya, i-imeyili noma ucingo', 'Khangela ngegama, ikhaya, i-imeyile okanye ifowuni'],

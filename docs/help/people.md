@@ -19,6 +19,7 @@ Tap **Add person**. Fill in the shaded boxes (first and last name, category, mar
 household, or **They live on their own (new household)** if they live on their own). Choose whether they're an adult or a **Child (under 18)** in
 the household. Only add what the church needs, and ask for their consent when you add them. Church & Trellis warns you as you
 type if a similar person is already there.
+If an adult's email address or mobile number isn't known, tap **Not known** beside the box (on the same line as its name); tap **Add it** later to type it in.
 
 ## How do I change someone's details?
 For: Administrators, Pastors

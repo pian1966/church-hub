@@ -158,8 +158,8 @@
       (full && p.maidenName ? '<dt>' + F('Maiden name') + '</dt><dd>' + esc(p.maidenName) + '</dd>' : '') +
       (full && (addressLines(p).length || plusCode(p)) ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + (addressLines(p).length ? ' ' + H.mapLink(plusCode(p) || addressLines(p).join(', ')) : '') + plusCodeLink(p, addressLines(p).length) + '</dd>' :
         !full && P.contactHtml(p, 'address') ? '<dt>' + F('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
-      (!child && (canSeeAll() || me) ? '<dt>' + F('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' +
-        '<dt>' + F('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Unknown') : '—') + '</span>') + '</dd>' : '') +
+      (!child && (canSeeAll() || me) ? '<dt>' + F('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
+        '<dt>' + F('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +
       // Everyone else: only what Settings shares with their role, of people who agreed (Contact details)
       (!child && !canSeeAll() && !me ? ['email', 'mobile', 'spouse'].map(function (f) { var v = P.contactHtml(p, f); return v ? '<dt>' + T(f === 'email' ? 'Email' : f === 'mobile' ? 'Mobile' : 'Spouse or partner') + '</dt><dd>' + v + '</dd>' : ''; }).join('') : '') +
       ((full || (child && canChildren())) && p.birthDate ? '<dt>' + F('Birthday') + '</dt><dd>' + esc(H.fmt(p.birthDate, true)) + (age(p) !== '' && !deceased(p) ? '<span class="kv-sub">' + esc(T('Age {n}', { n: age(p) })) + '</span>' : '') + '</dd>' : '') +

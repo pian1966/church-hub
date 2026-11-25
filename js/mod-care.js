@@ -138,7 +138,7 @@
     var gs = groups(), mine = p.id ? Care.groupsOf(gs, p.id) : [], on = mine.length > 0, inIt = {};
     mine.forEach(function (g) { inIt[g.id] = Care.isLeader(g, p.id); });
     return '<fieldset class="panel" style="padding:12px 14px;margin:6px 0 14px"><label class="check" style="margin:0"><input type="checkbox" id="pf-care"' + (on ? ' checked' : '') + '><span><b>' + T('Care Group member') + '</b><br><span class="muted small">' + T('In one or more of the church’s Care Groups (tick which).') + '</span></span></label>' +
-      '<div id="pf-care-f"' + (on ? '' : ' hidden') + ' style="margin-top:10px">' + (gs.length ? '<div class="field req" style="margin:0"><span>' + T('Which Care Groups') + '</span><div class="list" id="pf-care-gs">' + gs.map(function (x) {
+      '<div id="pf-care-f"' + (on ? '' : ' hidden') + ' style="margin-top:10px">' + (gs.length ? '<div class="field req" style="margin:0"><span>' + T('Which Care Groups') + '</span>' + (gs.length > 4 ? '<input type="search" id="pf-care-q" class="cg-search" placeholder="' + esc(T('Find a Care Group…')) + '" autocomplete="off" aria-controls="pf-care-gs"><p class="hint cg-none" id="pf-care-none" hidden>' + T('No Care Group matches that.') + '</p>' : '') + '<div class="list cg-list" id="pf-care-gs">' + gs.map(function (x) {
         var has = Object.prototype.hasOwnProperty.call(inIt, x.id);
         // The group on its own line; "leads it" under it, shown only once the group is ticked (no greyed-out boxes on a phone)
         return '<div class="item pf-cg-item"><label class="check" style="margin:0"><input type="checkbox" class="pf-cg" value="' + esc(x.id) + '"' + (has ? ' checked' : '') + '><span>' + esc(x.name) + '</span></label>' +
@@ -148,6 +148,15 @@
   function wireFields() {
     var b = document.getElementById('pf-care'), f = document.getElementById('pf-care-f');
     if (b && f) b.addEventListener('change', function () { f.hidden = !b.checked; });
+    var q = document.getElementById('pf-care-q');   // a search box above the groups: they narrow as you type (the list is read from the church's groups each time the window opens, so new groups appear by themselves)
+    if (q) q.addEventListener('input', function () {
+      var t = q.value.trim().toLowerCase(), shown = 0;
+      Array.prototype.forEach.call(document.querySelectorAll('.pf-cg-item'), function (row) {
+        var name = (row.querySelector('.pf-cg + span') || row).textContent.toLowerCase(), on = !t || name.indexOf(t) > -1;
+        row.hidden = !on; if (on) shown++;
+      });
+      var none = document.getElementById('pf-care-none'); if (none) none.hidden = shown > 0;
+    });
     Array.prototype.forEach.call(document.querySelectorAll('.pf-cg'), function (c) {
       c.addEventListener('change', function () { var l = document.querySelector('.pf-cgl[data-g="' + c.value + '"]'); if (l) { l.closest('.pf-cgl-row').hidden = !c.checked; if (!c.checked) l.checked = false; } });
     });

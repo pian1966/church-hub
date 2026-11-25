@@ -121,8 +121,8 @@
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
       '<div class="two"><label class="field">' + F('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
       (!me || admin ? '<label class="field">' + F('Middle name') + '<input id="pf-middle" value="' + esc(p.middleName || '') + '" autocomplete="additional-name"></label>' : '') + '</div>' +
-      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + F('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.email || '') + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-email-dup" class="dup-hint" role="status" aria-live="polite" hidden></small></label>' +
-      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + F('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.mobile || '') + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-mobile-dup" class="dup-hint" role="status" aria-live="polite" hidden></small></label></div>' +
+      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + F('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.email || '') + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-email-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-email">' + T('Not known') + '</button></label>' +
+      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + F('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.mobile || '') + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-mobile-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-mobile">' + T('Not known') + '</button></label></div>' +
       (!me || admin ? '<div class="two"><label class="field">' + F('Birthday') + '<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field req">' + F('Category') + '<select id="pf-cat">' + (p.category ? '' : '<option value="" selected>' + T('Choose…') + '</option>') + CATS.map(function (c) { return '<option value="' + esc(c) + '"' + (p.category === c ? ' selected' : '') + '>' + esc(T(c)) + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two" id="pf-partner-f"' + (p.category === 'Church Partner' ? '' : ' hidden') + '><label class="field">' + F('Date accepted as Church Partner') + '<input id="pf-psince" type="date" max="' + H.today() + '" value="' + esc(p.partnerSince || '') + '"></label>' +
@@ -177,6 +177,11 @@
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
+    ['pf-email', 'pf-mobile'].forEach(function (id) {   // the “Not known” button shows ticked while the box says unknown
+      var i = document.getElementById(id), b = document.querySelector('.chip-unknown[data-for="' + id + '"]'); if (!i || !b) return;
+      var sync = function () { var on = /^(unknown|not known)$/i.test(i.value.trim()) || i.value.trim().toLowerCase() === T('unknown').toLowerCase(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+      i.addEventListener('input', sync); sync();
+    });
     wireCountry(); if (window.CareUI) CareUI.wireFields();
     var pc = document.getElementById('pf-cat'), pcf = document.getElementById('pf-partner-f');
     if (pc && pcf) pc.addEventListener('change', function () { pcf.hidden = pc.value !== 'Church Partner'; });
@@ -341,6 +346,12 @@
           return { message: made.length ? TN('{n} person added to People.', '{n} people added to People.', made.length) : T('Nobody new to add.') };
         } });
     },
+    unknown: function (el) {   // “Not known” beside Email / Mobile: one tap instead of typing the word; tap again to type it after all
+      var i = document.getElementById(el.dataset['for']); if (!i) return;
+      var u = T('unknown'), was = i.value.trim().toLowerCase() === u.toLowerCase();
+      i.value = was ? '' : u; if (was) i.focus();
+      i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true }));
+    },
     edit: function (el) { editDialog(S.get('people', el.dataset.id)); var f = el.dataset.focus && document.getElementById(el.dataset.focus); if (f) { f.focus(); f.scrollIntoView({ block: 'center' }); } },
     consent: function (el) { consentDialog(S.get('people', el.dataset.id)); },
     save: function () { H.autoForget(); savePerson(false); },   // Add person, or Done: everything checked, then the window closes
@@ -368,6 +379,10 @@
           err.hidden = true;
           for (var d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;   // a folded-away section opens
           var note = document.createElement('small'); note.className = 'field-err'; note.setAttribute('role', 'alert'); note.textContent = msg; lab.appendChild(note);
+          if (fieldId === 'pf-email' || fieldId === 'pf-mobile') {   // missing: offer “Not known” right there
+            var nk = document.createElement('button'); nk.type = 'button'; nk.className = 'fe-act'; nk.textContent = T('Not known'); nk.setAttribute('data-act', 'people:unknown'); nk.setAttribute('data-for', fieldId);
+            if (!g(fieldId)) note.appendChild(nk);
+          }
           var box = lab.querySelector('.find-in') || el;   // a dropdown is shown as a find box: the cursor goes in that
           el.setAttribute('aria-invalid', 'true'); box.setAttribute('aria-invalid', 'true');
           var clear = function () { note.remove(); el.removeAttribute('aria-invalid'); box.removeAttribute('aria-invalid'); };

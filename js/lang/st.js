@@ -1435,6 +1435,7 @@ I18n.add('st', {
     "Her surname before she married.": "Fane ya hae pele a nyalwa.",
     "Home address": "Aterese ya lapeng",
     "Street address": "Aterese ya seterata",
+    "Library: Items I have borrowed now shows each book’s cover picture beside its title.": "Laeborari: Dintho tseo ke di adimileng jwale di bontsha setshwantsho sa bokantle sa buka ka nngwe haufi le sehlooho sa yona.",
     "Edit details is now the big button at the top of a person’s page, and a home address can carry a Google Maps Plus Code that anyone can tap to go straight to the spot.": "Ho Hlophisa lintlha hona joale ke konopo e kholo kaholimo ho leqephe la motho, 'me aterese ea lehae e ka ba le Plus Code ea Google Maps eo mang kapa mang a ka e tobetsang ho ea moo ka kotloloho.",
     "Address line 2": "Mola wa bobedi wa aterese",
     "Google Maps Plus Code": "Plus Code ea Google Maps",

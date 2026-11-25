@@ -4,6 +4,16 @@
 module.exports = async function (ctx) {
   const { check, fillHome, finish, seedDocs, session } = ctx;
   let docs, s, t;
+  console.log('Edit details at the top, and a Plus Code on the address:');
+  s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p15');
+  check(await s.page.$eval('.crumb-bar [data-act="people:edit"]', b => b.classList.contains('primary')) && await s.page.$$eval('[data-act="people:edit"].btn', l => l.length) === 1, 'a person’s page has Edit details once, as the main button at the top');
+  await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-pluscode', 'nonsense'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  check(/Plus Code doesn’t look right/.test(await s.page.textContent('#pf-err')), 'a Plus Code that is not one is refused');
+  await s.page.fill('#pf-pluscode', 'g7j3+q4q Howick'); await s.page.click('[data-act="people:save"]'); await s.settle();
+  const pcHref = await s.page.$eval('a.plus-code', a => a.href + '|' + a.textContent.trim());
+  check(pcHref.includes('google.com/maps/search') && pcHref.includes(encodeURIComponent('G7J3+Q4Q Howick')) && pcHref.endsWith('G7J3+Q4Q Howick'), 'the Plus Code shows on the address and opens Google Maps');
+  await finish(s);
+
   console.log('Wedding anniversary on the profile:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p15');
   await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.selectOption('#pf-marital', 'Married'); await s.page.fill('#pf-wed', ''); await s.page.click('[data-act="people:save"]'); await s.settle();

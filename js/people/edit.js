@@ -150,7 +150,8 @@
             var c = a.country ? Countries.find(a.country) : Countries.church(S.settings());
             return '<label class="field"><span id="pf-postcode-l">' + T(c ? c.postcodeLabel : 'Postal code') + '</span><input id="pf-postcode" value="' + esc(a.postcode || '') + '" autocomplete="postal-code"></label></div>' +
               '<div class="two"><label class="field"><span id="pf-region-l">' + T(c ? c.regionLabel : 'Province, state or region') + '</span><span id="pf-region-w">' + regionControl(c, a.province || '') + '</span></label>' +
-              '<label class="field">' + F('Country') + countrySelect(a.country || '') + '</label></div></fieldset>';
+              '<label class="field">' + F('Country') + countrySelect(a.country || '') + '</label></div>' +
+              '<label class="field">' + F('Google Maps Plus Code') + '<input id="pf-pluscode" value="' + esc(a.plusCode || '') + '" placeholder="G7J3+Q4Q Howick" autocapitalize="characters" autocomplete="off"><small>' + T('In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.') + '</small></label></fieldset>';
           })(p.address || {}) +
         '' : '') +
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
@@ -398,7 +399,10 @@
         if (g('pf-maiden') !== null) { if (g('pf-maiden')) p.maidenName = g('pf-maiden'); else delete p.maidenName; }
         if (g('pf-street') !== null) {
           var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') === '__other' ? g('pf-country-o') : g('pf-country') };
-          if (ad.street || ad.street2 || ad.city || ad.postcode) p.address = ad; else delete p.address;
+          var pc = (g('pf-pluscode') || '').replace(/\s+/g, ' ').trim();
+          if (pc && !/^[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,3}(\s.+)?$/i.test(pc)) { err.textContent = T('That Plus Code doesn’t look right. It looks like G7J3+Q4Q Howick.'); err.hidden = false; return; }
+          if (pc) ad.plusCode = pc.replace(/^\S+/, function (m) { return m.toUpperCase(); });
+          if (ad.street || ad.street2 || ad.city || ad.postcode || ad.plusCode) p.address = ad; else delete p.address;
         }
         if (g('pf-psince') !== null) {
           var ps = g('pf-psince'), pu = g('pf-pupd');

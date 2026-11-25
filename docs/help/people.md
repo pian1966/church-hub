@@ -25,7 +25,15 @@ For: Administrators, Pastors
 
 Open the person and tap **Edit details**. Save when you're done. Boxes that don't apply are greyed out with the reason –
 for example **Wedding anniversary** when the marital status is Single, Engaged, Partner or Divorced. Whatever was saved in a
-greyed-out box is kept.
+greyed-out box is kept. **Edit details** is the big button at the top right of the person's page.
+
+## How do I add a Google Maps Plus Code to someone's address?
+For: Administrators, Pastors
+Also asked: Plus Code. Map code. Google Maps code. Link to the address on the map. Go straight to someone's home.
+
+Open the person, tap **Edit details**, and type or paste the code into **Google Maps Plus Code** under **Home address** (for example
+G7J3+Q4Q Howick). To find it, press and hold the spot in Google Maps and copy the code shown. Save. On the person's page the code
+shows under their address, and anyone who can see the address can tap it to open that exact spot in Google Maps.
 
 ## What if a husband and wife have different addresses?
 For: Administrators, Pastors

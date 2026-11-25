@@ -67,7 +67,10 @@ module.exports = async function (ctx) {
   await s.go('people/families'); await s.page.fill('#fm-q', 'Liam'); await s.page.waitForTimeout(500); t = await s.text();
   check(t.includes('Tim & Clare Jacobs') && !t.includes('Naidoo'), 'Households page: search by household or anyone in it');
   await s.go('people'); t = await s.text();
-  check(t.includes('Church Partners') && t.includes('Visiting ministers') && !/\bMembers\b/.test(t), 'categories are called Church Partner, Attender, Visiting Minister');
+  check(t.includes('Church Partners') && t.includes('Roster Volunteers') && !t.includes('Visiting ministers') && !/\bMembers\b/.test(t), 'People tabs: Church Partners, Attenders, Roster Volunteers');
+  await s.page.click('button[data-f="roster"]'); await s.page.waitForTimeout(300); t = await s.text();
+  check(t.includes('Volunteers') && /\d+ (person|people)/.test(t), 'the Roster Volunteers tab lists the people on the serving teams');
+  await s.page.click('button[data-f="all"]'); await s.page.waitForTimeout(300);
   await finish(s);
 
   console.log('Roster coordinator and member – no access to children’s responsible adults:');

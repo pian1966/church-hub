@@ -130,6 +130,7 @@ I18n.rows([
     ['Female', 'Vroulik', 'Owesifazane', 'Ibhinqa'],
     ['Male', 'Manlik', 'Owesilisa', 'Indoda'],
     ['Volunteer', 'Vrywilliger', 'Ivolontiya', 'Ivolontiya'],
+    ['Roster Volunteers', 'Rooster-vrywilligers', 'Amavolontiya ohlelo', 'Amavolontiya oludwe'],
     ['Care group', 'Selgroep', 'Iqembu lokunakekelana', 'Iqela lokukhathalelana'],
     ['Care Group', 'Selgroep', 'Iqembu lokunakekelana', 'Iqela lokukhathalelana'],
     ['Church at a glance', 'Die kerk in ’n oogopslag', 'Ibandla ngokubuka kanye', 'Icawe ngokujonga kanye'],

@@ -184,7 +184,7 @@
     }).join('') + '</div>';
   }
   function renderList() {
-    var filters = [['all', 'Everyone'], ['Church Partner', 'Church Partners'], ['Attender', 'Attenders'], ['Visiting Minister', 'Visiting ministers'], ['Staff', 'Staff'], ['child', 'Children']];
+    var filters = [['all', 'Everyone'], ['Church Partner', 'Church Partners'], ['Attender', 'Attenders'], ['roster', 'Roster Volunteers'], ['Staff', 'Staff'], ['child', 'Children']];
     if (canSeeAll()) filters.push(['deceased', 'Deceased']);   // people who have died are kept for the records, out of the other lists
     if (!canBasic()) filters = [['all', T('Directory')]];
     var bare = P.namesOnly();   // an attendee: Church Partners' names only (Settings → Attendees)
@@ -192,8 +192,9 @@
     if (!canPick()) state.pick = null; else if (!state.pick) state.pick = {};   // Administrators and the Senior Pastor: tick boxes on the list
     var dead = state.f === 'deceased', q = state.q.trim().toLowerCase(), pick = dead ? null : state.pick;
     var list = dead ? S.find('people', function (p) { return (deceased(p) || p.category === 'Deceased') && !p.mergedInto && !p.binnedAt; }) : visiblePeople();
+    var onRoster = {}; if (state.f === 'roster') S.list('skills').forEach(function (k) { onRoster[k.personId] = 1; });   // Roster Volunteers: the people on the serving teams, who appear on the rosters
     var shown = list.filter(function (p) {
-      if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
+      if (!dead && (state.f === 'child' ? p.familyRole !== 'child' : state.f === 'roster' ? !onRoster[p.id] : state.f === 'Staff' ? !(p.staff || p.category === 'Staff') : (state.f !== 'all' && p.category !== state.f))) return false;
       return matchesPerson(p, q);
     }).sort(SORTS[sortKey()].cmp);
     return '<div class="page-head"><div><h1>' + T('People') + '</h1><p class="lead">' + (canBasic() ? T('Everyone connected to the church: partners, attenders, visiting ministers, staff and children.') : bare ? T('The names of the church’s Church Partners.') : T('People who agreed to be in the church directory.')) + '</p></div>' +

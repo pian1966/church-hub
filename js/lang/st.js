@@ -1465,6 +1465,7 @@ I18n.add('st', {
     "Partnership last updated {date}": "Kopanelo e ntjhafaditswe ka {date}",
     "Volunteering": "Boithaopo",
     "Volunteer": "Moithaopi",
+    "Roster Volunteers": "Baithaopi ba lenane",
     "Services": "Ditshebeletso",
     "Not on any team yet.": "Ha a eso be sehlopheng.",
     "Serves together with {names}": "O sebeletsa mmoho le {names}",

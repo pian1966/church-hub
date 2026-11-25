@@ -2784,7 +2784,7 @@ I18n.add('st', {
     "No, leave it": "Tjhe, e tlohele",
     "Yes, change {name}’s address": "E, fetola aterese ya {name}",
     "Same address for both?": "Aterese e le nngwe bakeng sa bobedi?",
-    "Church health": "Bophelo ba kereke",
+    "Church health tests": "Diteko tsa bophelo ba kereke",
     "Weekly": "Beke le beke",
     "Monthly": "Kgwedi le kgwedi",
     "{n} upcoming roster turn is held by someone who is no longer at the church": "Nako e le {n} e tlang ya lenane e tshwerwe ke motho ya seng a le kerekeng",

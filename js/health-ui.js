@@ -34,7 +34,7 @@
   function card() {
     if (!H.can('*') || typeof Health === 'undefined') return '';
     var list = results(), look = list.filter(function (c) { return c.count > 0; }), clear = list.length - look.length;
-    return '<section class="panel health-card" id="health-card"><h2>' + T('Church health') + '</h2>' +
+    return '<section class="panel health-card" id="health-card"><h2>' + T('Church health tests') + '</h2>' +
       (look.length ? '<ul class="todo">' + look.map(function (c) {
         return '<li><a href="' + esc(link(c)) + '"><span class="dot" style="--c:' + TINT + '"></span><span class="grow">' + esc(line(c)) + '</span><span class="tag" style="--c:' + TINT + '">' + esc(T(CADENCE[c.cadence])) + '</span></a></li>';
       }).join('') + '</ul>' + (clear ? '<p class="hint" style="margin:8px 0 0">' + esc(TN('{n} other check is all clear.', '{n} other checks are all clear.', clear)) + '</p>' : '')

@@ -11,7 +11,7 @@ module.exports = async function (ctx) {
   if (gid) seed[gid].leaderIds = [];
   let s = await session('linda.pillay@example.com', seed); await s.go('home'); await s.page.waitForSelector('#health-card');
   let card = await s.page.textContent('#health-card');
-  check(card.includes('Church health') && card.includes('adult has no email address or mobile number') && card.includes('Every 2 weeks'), 'an Administrator’s Home has a Church health card showing what needs a look, and how often');
+  check(card.includes('Church health tests') && card.includes('adult has no email address or mobile number') && card.includes('Every 2 weeks'), 'an Administrator’s Home has a Church health card showing what needs a look, and how often');
   check(!gid || card.includes('has no leader'), '… including a group with no leader');
   check(card.includes('other check') || card.includes('All clear'), '… and says how many other checks are all clear');
   check(await s.page.getAttribute('#health-card a[href="#/people/p/p23"]', 'href') === '#/people/p/p23', 'the line opens the person to put it right');

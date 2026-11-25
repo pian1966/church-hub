@@ -199,6 +199,24 @@ var Households = (function () {
     return out;
   }
 
+  /**
+   * Who is probably this adult's spouse or partner, to suggest in Edit details → Spouse or partner:
+   *  - the other living adults in their household(s) (why 'household'), then
+   *  - living adults with the same surname in other households (why 'surname') – a couple recorded in two households, e.g. living apart.
+   * Not someone who is already linked to somebody else, nor a child, nor anyone who has died or left. At most 3, household first.
+   * Returns [{ id, why }].
+   */
+  function spouseSuggestions(p, people) {
+    if (!p || p.familyRole === 'child') return [];
+    var norm = function (s) { return String(s || '').trim().toLowerCase(); };
+    var ok = function (x) { return x && x.id !== p.id && x.familyRole !== 'child' && x.active !== false && !x.deceasedAt && x.category !== 'Deceased' && !x.mergedInto && !x.binnedAt && (!x.spouseId || x.spouseId === p.id); };
+    var mine = householdsOf(p), out = [], seen = {};
+    var add = function (x, why) { if (!seen[x.id]) { seen[x.id] = 1; out.push({ id: x.id, why: why }); } };
+    (people || []).filter(function (x) { return ok(x) && mine.some(function (h) { return inHousehold(x, h); }); }).forEach(function (x) { add(x, 'household'); });
+    if (norm(p.lastName)) (people || []).filter(function (x) { return ok(x) && norm(x.lastName) === norm(p.lastName); }).forEach(function (x) { add(x, 'surname'); });
+    return out.slice(0, 3);
+  }
+
   function couplesToCheck(people, families) {
     return couples(people, families).filter(function (c) { return !c.confirmed || c.copy || c.differ || c.mark; });
   }
@@ -265,7 +283,7 @@ var Households = (function () {
     return out.slice(0, 3);
   }
 
-  return { addressSuggestions: addressSuggestions, addressMismatches: addressMismatches, spouseToOffer: spouseToOffer, addressKey: addressKey, hasAddress: hasAddress, liveApart: liveApart, RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
+  return { spouseSuggestions: spouseSuggestions, addressSuggestions: addressSuggestions, addressMismatches: addressMismatches, spouseToOffer: spouseToOffer, addressKey: addressKey, hasAddress: hasAddress, liveApart: liveApart, RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
     consentAdults: consentAdults, childrenOf: childrenOf, defaultsFor: defaultsFor, suggestedLinks: suggestedLinks, needs: needs,
     couples: couples, couplesToCheck: couplesToCheck, pairKey: pairKey, weddingOf: weddingOf, lateSpouseSuggestions: lateSpouseSuggestions };
 })();

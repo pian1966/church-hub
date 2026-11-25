@@ -2,6 +2,8 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Suggested:", "Voorgestel:", "Okuphakanyisiwe:", "Okucetyiswayo:"],
+    ["In the same household", "In dieselfde huishouding", "Emndenini ofanayo", "Kwikhaya elinye"],
     ["Not needed – marital status is {status}.", "Nie nodig nie – huwelikstatus is {status}.", "Akudingeki – isimo somshado ngu-{status}.", "Akufuneki – imeko yomtshato ngu-{status}."],
     ["They’ve left the church: hidden from lists, history kept", "Hulle het die kerk verlaat: uit lyste versteek, geskiedenis bewaar", "Bashiye ibandla: bafihliwe ohlwini, umlando ugciniwe", "Bayishiyile icawa: bafihliwe kuluhlu, imbali igciniwe"],
     ['unknown', 'onbekend', 'akwaziwa', 'akwaziwa'],

@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.118';
   var NEWS = [
+    { date: '2026-11-25', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('Volunteering, Groups, a leader’s seat, Staff group settings and a Midweek Group’s When and where now save as you go – press Done when you’re finished.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], app: 'usage', btn: ['Usage'], text: TX('Administrators and Pastors now have a Usage page: how many people use Church & Trellis, who is on right now, how much each person uses it, and which parts are used most.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('Not known for an email or mobile is now a button beside the box – no more typing “unknown”.') },
     { date: '2026-11-25', who: ['everyone'], app: 'library', text: TX('Library: Items I have borrowed now shows each book’s cover picture beside its title.') },

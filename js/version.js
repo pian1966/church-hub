@@ -6,8 +6,8 @@
  * node tools/stamp-files.js (the time it runs) – don't type them by hand. About shows them as SAST for everyone. */
 var ChurchHubVersion = {
   version: '0.118.5',
-  date: '2026-11-25',
-  time: '23:54',
+  date: '2026-11-26',
+  time: '00:00',
   developer: 'pian1966',
   repo: 'pian1966/church-hub'
 };

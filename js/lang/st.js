@@ -1113,6 +1113,8 @@ I18n.add('st', {
     "Automatic": "Ka boiketsetso",
     "Same as this device": "Ho tshwana le sesebediswa sena",
     "Or pick any colour": "Kapa kgetha mmala ofe kapa ofe",
+    "This is what it will look like": "Ke kamoo e tla shebahala kateng",
+    "Sample": "Mohlala",
     "Save the church’s colour": "Boloka mmala wa kereke",
     "Page pictures": "Litšoantšo tsa maqephe",
     "A picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.": "Setšoantšo hodima leqephe le leng le le leng, ka mebala ea karolo eo ea app. Mang kapa mang o bona se khethiloeng ke kereke mona.",

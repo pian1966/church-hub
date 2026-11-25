@@ -305,11 +305,11 @@
     pick = { h: hsv.h, s: hsv.s, v: hsv.v };
     return '<section class="panel" id="st-theme" data-noauto><h2>' + T('Colours') + '</h2>' +
       '<p class="hint" style="margin-top:0">' + (mine ? T('Your own colour for buttons, links, the turning cross and the menu. Only you see it, on this device.') : T('The church’s colour for buttons, links, the turning cross and the menu – everyone sees it.')) + '</p>' +
-      // The live sample: the menu with the logo, a button, a Save button, a link and the turning cross
+      // The live sample: the menu with the logo, a button, a sample button (not a real Save), a link and the turning cross
       '<div class="th-prev" id="th-prev" style="' + themeVars(shown) + '">' +
         '<div class="th-pside"><span class="th-pmark">' + H.icon('M12 3v18M6 9h12', 18) + '</span><span class="th-pnav"></span><span class="th-pnav on"></span><span class="th-pnav"></span></div>' +
-        '<div class="th-pmain"><span class="th-pbtn">' + H.icon(H.ICON.plus, 16) + T('Add') + '</span><span class="th-psave">' + T('Save') + '</span>' +
-        '<span class="th-plink">Church & Trellis</span><span class="th-pcross">' + CROSS_SVG + '</span></div></div>' +
+        '<div class="th-pmain"><p class="th-phead">' + T('This is what it will look like') + '</p><div class="th-prow"><span class="th-pbtn">' + H.icon(H.ICON.plus, 16) + T('Add') + '</span><span class="th-psave">' + T('Sample') + '</span>' +
+        '<span class="th-plink">Church & Trellis</span><span class="th-pcross">' + CROSS_SVG + '</span></div></div></div>' +
       '<div class="th-sws" role="radiogroup" aria-label="' + esc(T('Colours')) + '">' + SWATCHES.map(function (c) {
         return '<button type="button" class="th-sw' + (c === hex ? ' on' : '') + '" data-c="' + c + '" style="--c:' + c + '" role="radio" aria-checked="' + (c === hex) + '" aria-label="' + c + '"></button>';
       }).join('') + '</div>' +

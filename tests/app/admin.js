@@ -285,7 +285,7 @@ module.exports = async function (ctx) {
     await s.go('people/p/p25'); await s.page.click('[data-act="people:edit"]');
     check(!!(await s.page.$('label.req #pf-cat')) && !!(await s.page.$('label.req #pf-fam')) && !!(await s.page.$('label.req #pf-frole')), 'category, household and “in the household as” are shaded as must-fill');
     await s.page.click('[data-act="people:save"]');
-    check((await s.page.textContent('#pf-err')).includes('choose their household'), 'someone can’t be saved without a household');
+    check((await s.page.textContent('#pf-err')).includes('which household they are in'), 'someone can’t be saved without a household');
     await fillHome(s);
     check((await s.page.getAttribute('#pf-email', 'placeholder')).includes('unknown') && !!(await s.page.$('#pf-email-f.req')) && !!(await s.page.$('#pf-mobile-f.req')), 'email and mobile are shaded as must-fill, with a grey hint to type “unknown”');
     await s.page.fill('#pf-email', ''); await s.page.click('[data-act="people:save"]');

@@ -38,6 +38,9 @@ church (not for developers), in plain English, and are meant to be used two ways
 For: Members              ← who it applies to (Everyone, Members, Staff, Carers, Group leaders,
                             Roster coordinators, Children's ministry, Pastors, Administrators)
 Also asked: …             ← other ways people say the same thing (helps search and dictation)
+Go: me                    ← (optional) the screen its "Open …" button takes people to: the id of a part of the app
+                            (me, people, settings, about, import, home…). Without it, the button opens the screen the page is about
+                            (set in Help.PAGES); the button shows only to people who may open that screen.
 
 The answer: short steps using the exact words on the screen, in **bold**.
 ```

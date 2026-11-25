@@ -97,6 +97,7 @@ Also asked: Can I install Church & Trellis? Is it on the Play Store / App Store?
 ## How do I update the app?
 For: Everyone
 Also asked: Am I on the latest version? Something looks old.
+Go: about
 
 Open **About** and tap **Check for updates**. If there's a newer version, tap **Update now**. In the Android app it also
 tells you when a newer app is available – tap **Download the new app**. Church & Trellis also checks once each time About opens.
@@ -128,6 +129,7 @@ Use the **Appearance** drop-down (the half-shaded circle) next to the language: 
 ## How do I add or change my photo?
 For: Everyone
 Also asked: Change my profile picture.
+Go: me
 
 In the Android app or a home-screen icon, Church & Trellis suggests **Add a photo of yourself** if you don't have one – tap
 **Take or choose a photo** (or **Not now** to be asked again in 30 days). On your own page you can also use **Add photo** /
@@ -143,6 +145,7 @@ in again next time. Signing out also removes the copy kept on that device – do
 ## What's on the Home page?
 For: Everyone
 Also asked: What is the to-do list? What's new? Did you know? Coming up. Why does Home look different from someone else's?
+Go: home
 
 Home is the first page you see, and it is different for each person, because it shows what concerns you:
 - **To do** – things that need you, such as roster turns to reply to, unread messages, or (for staff) requests waiting for an
@@ -174,6 +177,7 @@ your birthday, marital status and **Wedding anniversary** must be filled in – 
 ## How do I stop my birthday being shown?
 For: Everyone
 Also asked: Hide my birthday. Don't celebrate my birthday. I don't want people to know it's my birthday. Turn off the cake.
+Go: me
 
 Open **Me → My details** and, under **Birthdays and anniversaries**, untick **Celebrate my birthday and anniversary**. Nobody sees
 🎂 or 💍 beside your name any more, your birthday is taken out of the church directory, and you get no card. Tick it again to turn it back on.

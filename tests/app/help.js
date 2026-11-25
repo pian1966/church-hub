@@ -34,6 +34,15 @@ module.exports = async function (ctx) {
   check(/#\/help\/me$/.test(s.page.url()) && n >= 5 && (await s.page.textContent('h1')).trim() === 'Me', 'a topic lists its questions (' + n + ')');
   await s.page.click('.help-list details.help-q >> nth=0 >> summary');
   check(await s.page.$eval('.help-list details.help-q', d => d.open), 'tapping a question opens its answer');
+  // each answer ends with a button that does what it says: the screen its page is about (only if this person may open it)
+  await s.go('help/me'); await s.page.waitForSelector('.help-list details.help-q');
+  check(await s.page.$eval('.help-list details.help-q .help-from a.help-go', a => a.getAttribute('href') === '#/me' && /^Do this now/.test(a.textContent)), 'an answer ends with a small "Do this now" link, not the name of its topic');
+  check((await s.page.$$('.help-list details.help-q a.ui-go')).length >= 1, 'a screen named in an answer (Me, Library…) can be tapped to go there');
+  await s.page.$eval('.help-list details.help-q', d => { d.open = true; }); await s.page.click('.help-list details.help-q >> nth=0 >> .help-go');
+  await s.page.waitForFunction(() => location.hash === '#/me');
+  check(await s.page.isVisible('h1'), 'tapping it opens that screen');
+  await s.go('help/getting-started'); await s.page.waitForSelector('.help-list details.help-q');
+  check((await s.page.$$('.help-list .help-from a.help-go')).length >= 2 && (await s.page.$$('.help-list .help-from a:not(.help-go)')).length >= 5, 'where there is no screen to open, the topic link stays');
   await s.go('help/leave'); await s.page.waitForSelector('.help-back');
   check(/Nothing on this topic is for your kind of access/.test(await s.text()), 'a topic only for Administrators says so to a member');
   await finish(s);

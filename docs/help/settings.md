@@ -92,6 +92,7 @@ edit the email templates. Church & Trellis opens each email ready to send – yo
 ## How do I bring people across from Elvanto?
 For: Administrators
 Also asked: Import from Elvanto. Migrate our data.
+Go: import
 
 **Import → From Elvanto**: export People from Elvanto as a CSV (include Member ID – it stops people being doubled), choose
 the file, match the columns and categories, check the preview, and import. Importing again updates people rather than
@@ -99,6 +100,7 @@ doubling them. If it went wrong, remove everyone brought in from Elvanto and imp
 
 ## How do I bring staff leave across from Leave Manager?
 For: Administrators
+Go: import
 
 **Import → From Leave Manager**: in the Google Sheet use **File → Download → Microsoft Excel (.xlsx)**, then choose that file.
 Match staff to people, check the balances in the preview, and import. Running it again updates rather than doubles, so you
@@ -132,6 +134,7 @@ looks after Church & Trellis. Closing other Church & Trellis tabs and using **Up
 ## How do I change the brochures?
 For: Administrators
 Also asked: Edit the brochure. Change the brochure colour. Put our phone number on the brochure. Print the brochure.
+Go: about
 
 Open **About → Brochures** and choose **For our members** or **For other churches**.
 - **Edit the wording**: click any heading or text on the brochure and type – for example your office's phone and email in
@@ -166,6 +169,7 @@ church's copy. The list is kept on the computer you used; **More → Save progre
 
 ## How do I check which version we're on?
 For: Everyone
+Go: about
 
 **About** shows the version and date, **What's new**, and **Check for updates**. Administrators also find the printable
 **Brochures** there (for members and for other churches).

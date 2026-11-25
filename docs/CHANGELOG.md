@@ -3,6 +3,9 @@
 Finished work, moved here from `docs/ROADMAP.md` so the roadmap stays short. Nobody needs to read this to work on
 Church Hub; it is the history. Newest entries at the bottom of each section; add a line here when you tick something off.
 
+## 0.115.2 – Help answers end with an "Open …" button
+- Instead of the topic name, each Help answer now ends with a small **Do this now** link that opens the screen it is about, shown only when that person may open it; otherwise the topic link stays. Screen names in an answer (**Me → My details**, **Library**) can be tapped to go there. An answer can name another screen with a `Go:` line (`docs/help/README.md`). New: `Help.goOf`, `Hub.openName`, `Hub.openIdByName`.
+
 ## Phase 1 – Foundation
 - ✅ Architecture, data model, POPIA design (`ARCHITECTURE.md`, `POPIA.md`)
 - ✅ Rostering engine: together (must/prefer), keep apart, away dates and leave, fair turns, reasons (`js/roster.js`, tested)

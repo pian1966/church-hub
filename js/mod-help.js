@@ -42,7 +42,10 @@
   function inline(s) {
     s = String(s).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
     return s.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/).map(function (p) {
-      if (/^\*\*.+\*\*$/.test(p)) return '<span class="ui-name">' + esc(T(p.slice(2, -2))) + '</span>';
+      if (/^\*\*.+\*\*$/.test(p)) {
+        var raw = p.slice(2, -2), id = H.openIdByName ? H.openIdByName(raw.split(/\s*→\s*/)[0]) : '';   // "Library" or "Me → My details": tap it to go there
+        return id ? '<a class="ui-name ui-go" href="#/' + esc(id) + '" title="' + esc(T('Open {name}', { name: T(raw.split(/\s*→\s*/)[0]) })) + '">' + esc(T(raw)) + '</a>' : '<span class="ui-name">' + esc(T(raw)) + '</span>';
+      }
       if (/^\*[^*].*\*$/.test(p)) return '<em>' + esc(p.slice(1, -1)) + '</em>';
       return esc(p);
     }).join('');
@@ -65,8 +68,12 @@
   }
   /** One question and its answer from the help pages, opened by tapping the question. */
   function item(e, open) {
+    var id = Help.goOf(e), name = id && H.openName ? H.openName(id) : '';
+    // A button that does what the answer says (opens that screen); the topic link only when there is no screen this person can open.
+    var foot = name ? '<a class="help-go" href="#/' + esc(id) + '" title="' + esc(T('Open {name}', { name: name })) + '">' + esc(T('Do this now')) + ' ›</a>'
+      : '<a href="#/help/' + esc(e.page) + '">' + esc(pageName(e.page)) + '</a>';
     return '<details class="help-q"' + (open ? ' open' : '') + '><summary>' + esc(e.q) + '</summary><div class="help-a">' + fmt(e.body) +
-      '<p class="help-from"><a href="#/help/' + esc(e.page) + '">' + esc(pageName(e.page)) + '</a></p></div></details>';
+      '<p class="help-from">' + foot + '</p></div></details>';
   }
 
   /* ---------- the page ---------- */

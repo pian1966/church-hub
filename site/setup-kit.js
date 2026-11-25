@@ -352,7 +352,7 @@ var SetupKit = (function () {
       body: function (c) {
         return ol([
           open(c.app('settings/general'), 'Name and country') + ' – check the church’s name and country.',
-          open(c.app('settings/colours'), 'Colours') + ' – choose the church’s colour.',
+          open(c.app('settings/colours'), 'Themes') + ' – choose the church’s colour and page pictures (each person can then choose their own under ' + ui('Me → Themes') + ').',
           open(c.app('settings/terminology'), 'Church words') + ' – choose your kind of church, then change any word.'
         ]);
       } },
@@ -477,6 +477,10 @@ var SetupKit = (function () {
     { id: 'invite', group: 'people', title: 'Invite people to start using Church & Trellis', mods: ['people'], since: '0.102',
       what: 'Send people their invitation by email or WhatsApp – one person, a Care Group, a Midweek Group, a serving team or everyone. It gives them access, and its link shows them how to get the app on their phone. People → Invitations shows who hasn’t started yet, with Remind.',
       how: function (c) { return ol([open(c.app('people/search'), 'Open Advanced search') + ', find the people (for example Care Group is …) and choose ' + ui('Invite everyone found to Church & Trellis') + '. For one person, open their page → ' + ui('Invite to Church & Trellis') + '.', 'Send the email, or tap ' + ui('WhatsApp') + ' for each person. People with no email address get a sign-in code instead.', 'A week later, ' + open(c.app('people/welcome'), 'open Invitations') + ' and remind anyone who hasn’t started.']); } },
+    { id: 'celebrate', group: 'people', title: 'Birthdays and wedding anniversaries', mods: ['people'], since: '0.114',
+      what: 'A little celebration on the day: a card on the person’s own Home and Me page, and 🎂 or 💍 beside their name where the church already shows that date. Pastors, carers and Midweek Group leaders see Birthdays this week on Home. Only the day is shared, never the year or age, and only for people who agreed to the church directory. Anyone can switch it off under Me → My details.',
+      how: function (c) { return ol(['Nothing to switch on. It works once people’s birthdays, marital status and wedding anniversaries are filled in – ' + open(c.app('people'), 'open People') + ' and add what is missing (Church & Trellis never celebrates an anniversary for someone who is widowed, divorced or separated).',
+        'Ask people to check their ' + ui('Church directory') + ' choice under ' + ui('Me → Consent') + ': only those who agreed appear in the church directory.']); } },
     { id: 'help', group: 'extras', title: 'Help: questions and answers for everyone', mods: ['help'], since: '0.111',
       what: 'Anyone can type or say a question about using Church & Trellis and get an answer written for them, in their own language, from the help pages. Without AI they see the help pages that match.',
       how: function (c) { return ol([open(c.app('help'), 'Open Help') + ' and try a question, like “How do I change my phone number?”.',

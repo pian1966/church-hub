@@ -287,7 +287,7 @@ module.exports = async function (ctx) {
     await s.page.click('[data-act="people:save"]');
     check((await s.page.textContent('#pf-err')).includes('which household they are in'), 'someone can’t be saved without a household');
     await fillHome(s);
-    check((await s.page.getAttribute('#pf-email', 'placeholder')).includes('unknown') && !!(await s.page.$('#pf-email-f.req')) && !!(await s.page.$('#pf-mobile-f.req')), 'email and mobile are shaded as must-fill, with a grey hint to type “unknown”');
+    check((await s.page.getAttribute('#pf-email', 'placeholder')).includes('Not known') && !!(await s.page.$('#pf-email-f.req')) && !!(await s.page.$('#pf-mobile-f.req')), 'email and mobile are shaded as must-fill, with a grey hint to choose “Not known”');
     await s.page.fill('#pf-email', ''); await s.page.click('[data-act="people:save"]');
     check((await s.page.textContent('#pf-err')).includes('email address, or choose'), 'an adult can’t be saved without an email (or “unknown”)');
     await s.page.fill('#pf-email', 'Unknown'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]'); await s.settle();

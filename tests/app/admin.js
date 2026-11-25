@@ -287,13 +287,14 @@ module.exports = async function (ctx) {
     await s.page.click('[data-act="people:save"]');
     check((await s.page.textContent('#pf-err')).includes('which household they are in'), 'someone can’t be saved without a household');
     await fillHome(s);
-    check((await s.page.getAttribute('#pf-email', 'placeholder')).includes('Not known') && !!(await s.page.$('#pf-email-f.req')) && !!(await s.page.$('#pf-mobile-f.req')), 'email and mobile are shaded as must-fill, with a grey hint to choose “Not known”');
-    await s.page.fill('#pf-email', ''); await s.page.click('[data-act="people:save"]');
-    check((await s.page.textContent('#pf-err')).includes('email address, or choose'), 'an adult can’t be saved without an email (or “unknown”)');
-    await s.page.fill('#pf-email', 'Unknown'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]'); await s.settle();
+    await s.page.fill('#pf-email', '');
+    check((await s.page.getAttribute('#pf-email', 'placeholder')) === 'name@example.com' && await s.page.isVisible('.nk-btn[data-for="pf-email"]') && !!(await s.page.$('#pf-email-f.req')) && !!(await s.page.$('#pf-mobile-f.req')), 'email and mobile are shaded as must-fill, with an example and a Not known button on the label line');
+    await s.page.click('[data-act="people:save"]');
+    check((await s.page.textContent('#pf-err')).includes('Add their email address'), 'an adult can’t be saved without an email (or Not known)');
+    await s.page.click('.nk-btn[data-for="pf-email"]'); await s.page.selectOption('#pf-role', 'none'); await s.page.click('[data-act="people:save"]'); await s.settle();
     const d25 = await s.docsNow();
-    check(d25['people/p25'].email === '' && (d25['details/p25'] || {}).emailUnknown === true, '“unknown” is saved as not known, never as the word');
-    check((await s.text()).includes('Unknown'), 'the profile shows “Unknown”');
+    check(d25['people/p25'].email === '' && (d25['details/p25'] || {}).emailUnknown === true, 'Not known is saved as a flag, never as a word');
+    check((await s.text()).includes('Not known'), 'the profile shows “Not known”');
   }
   {
     const y = new Date().getFullYear() - 12, wed = y + '-01-01';

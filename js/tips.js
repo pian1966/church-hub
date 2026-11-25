@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.117';
   var NEWS = [
+    { date: '2026-11-25', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('Not known for an email or mobile is now a button beside the box – no more typing “unknown”.') },
     { date: '2026-11-25', who: ['everyone'], app: 'library', text: TX('Library: Items I have borrowed now shows each book’s cover picture beside its title.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('When you add or edit someone, a Not known button saves typing when an email or cell number isn’t known, Care Groups can be found by typing, and anything that needs fixing now pops up in a friendly card.') },
     { date: '2026-11-25', who: ['admin'], text: TX('Administrators now have a Church health card on Home: a short list of things worth a look in the church’s records, such as people who can’t be reached, groups without a leader or roster turns held by people who have left.') },

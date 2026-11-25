@@ -193,12 +193,33 @@ console.log('Spouses who should share an address');
   ok(!by('f1'), 'a spouse who has died is not flagged');
   ok(!by('g1'), 'two spouses with no address at all: nothing to compare');
   ok(mm.length === 3, 'only the three that need attention');
+  const byId = id => ppl.find(x => x.id === id);
+  ok(HS.differentAddress(byId('b1'), byId('b2')) && HS.differentAddress(byId('e1'), byId('e2')), 'different addresses: the note shows for married couples and partners');
+  ok(HS.differentAddress(byId('d1'), byId('d2')), 'also for a couple an Administrator chose to keep apart');
+  ok(!HS.differentAddress(byId('a1'), byId('a2')) && !HS.differentAddress(byId('c1'), byId('c2')) && !HS.differentAddress(byId('g1'), byId('g2')), 'no note when the address is the same or one is missing');
   const so = id => HS.spouseToOffer(ppl.find(x => x.id === id), ppl, fams);
   ok(so('b1') && so('b1').id === 'b2', 'after b1 changes address: offer it to b2');
   ok(so('c1') && so('c1').id === 'c2', 'also when the spouse has no address yet');
   ok(so('e1') && so('e1').id === 'e2', 'partners are offered it too');
   ok(!so('a1') && !so('d1') && !so('f1'), 'nothing to offer when it is the same, they were set to keep two addresses, or the spouse has died');
   ok(!so('c2'), 'nobody to offer to when the person has no address themselves');
+}
+
+console.log('Suggested spouse or partner');
+{
+  const P = [
+    { id: 'd', firstName: 'David', lastName: 'Wharton', familyRole: 'adult', familyId: 'h1' },
+    { id: 'r', firstName: 'Rosemary', lastName: 'Wharton', familyRole: 'adult', familyId: 'h1' },
+    { id: 'k', firstName: 'Kim', lastName: 'Other', familyRole: 'adult', familyId: 'h1' },
+    { id: 'r2', firstName: 'Ruth', lastName: 'Wharton', familyRole: 'adult', familyId: 'h2' },
+    { id: 'kid', familyRole: 'child', familyId: 'h1' },
+    { id: 'gone', lastName: 'Wharton', familyRole: 'adult', familyId: 'h1', active: false },
+    { id: 'taken', lastName: 'Wharton', familyRole: 'adult', familyId: 'h3', spouseId: 'zz' }
+  ];
+  const ss = id => HS.spouseSuggestions(P.find(x => x.id === id), P);
+  ok(ss('d').map(s => s.id + ':' + s.why).join() === 'r:household,k:household,r2:surname', 'the household first, then the same surname elsewhere');
+  ok(!ss('d').some(s => ['kid', 'gone', 'taken', 'd'].includes(s.id)), 'not a child, someone who has left, someone linked to another person, or themselves');
+  ok(ss('kid').length === 0, 'none for a child');
 }
 
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');

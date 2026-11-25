@@ -67,8 +67,9 @@
     var c = coupleOf(p.id); if (!c) return '';
     var o = S.get('people', c.a === p.id ? c.b : c.a), t = coupleTodo(c), mine = (c.copy && c.copy.to === p.id) || (c.mark && c.mark.id === p.id) || c.differ;
     if (!mine) t.lines = [];
+    var apart = HS.differentAddress(p, o) ? '<span class="kv-sub">' + T(c.kind === 'spouse' ? 'Different address from their spouse' : 'Different address from their partner') + '</span>' : '';
     return '<dt>' + F(c.kind === 'spouse' ? 'Spouse' : 'Partner') + '</dt><dd><a href="#/people/p/' + o.id + '">' + esc(H.name(o)) + '</a>' +
-      (c.confirmed ? '' : '<span class="kv-sub">' + T(c.sure ? 'Going by their household – not confirmed yet' : 'Probably – going by their household') + '</span>') +
+      apart + (c.confirmed ? '' : '<span class="kv-sub">' + T(c.sure ? 'Going by their household – not confirmed yet' : 'Probably – going by their household') + '</span>') +
       (mine || !c.confirmed ? '<span class="kv-sub">' + t.lines.join(' ') + '</span>' + (t.fix ? '<span style="display:block;margin-top:6px">' + t.fix + '</span>' : '') : '') + '</dd>';
   }
 

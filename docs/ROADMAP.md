@@ -267,3 +267,4 @@ and the brief to paste into a Fable session are in `docs/architecture/COHESION-P
 ## Working method
 One phase per fresh chat in the Claude Project "Church & Trellis", with the repository attached (Jules and Antigravity work here too – see AGENTS.md).
 Update this file at the end of each session: finished work moves to `docs/CHANGELOG.md`.
+- **Undo and Version history** (asked 25 Nov 2026): rules and screens built (`js/history.js`, `js/history-ui.js`); waiting for Opus to add the data layer, rules and release steps – `docs/architecture/handover/history-opus.md`.

@@ -146,6 +146,7 @@
       // Messages: Administrators and Pastors write to this one person (adults still in the church)
       (window.Msg && (H.can('*') || H.can('people.edit')) && p.familyRole !== 'child' && p.active !== false && p.category !== 'Deceased' && p.id !== (H.user() || {}).id ?
         '<a class="btn" href="#/messages/send/people/' + esc(p.id) + '">' + H.icon('M4 5h16v11H9l-5 4z', 18) + T('Send a message') + '</a>' : '') +
+      (window.HistoryUI && (full || H.can('people.edit')) ? HistoryUI.button('people', p.id, H.name(p)) : '') +
       (H.can('privacy.manage') ? '<button class="btn" data-act="people:export" data-id="' + p.id + '">' + H.icon(H.ICON.download, 18) + T('Export their data') + '</button>' : '') +
       (canRecordDeath() && !deceased(p) && !me ? '<button class="btn" data-act="people:death" data-id="' + p.id + '">' + H.icon(IC.candle, 18) + T('Record a death') + '</button>' : '') + '</div></div>';
     if (p.mergedInto && S.get('people', p.mergedInto)) html += '<div class="note info" style="margin-bottom:16px">' + T('This was a duplicate record. It was merged into {link} and is kept only for the church’s records.', { link: '<a href="#/people/p/' + p.mergedInto + '">' + esc(H.name(S.get('people', p.mergedInto))) + '</a>' }) + '</div>';

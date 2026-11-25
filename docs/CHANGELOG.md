@@ -593,3 +593,6 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 25 Nov 2026 (0.116.1): couples who aren't married (partners) get the same address check and prompt as spouses; "They live apart" became "Keep both addresses" – always available, so an Administrator can keep two addresses for any couple
 - ✅ 25 Nov 2026 (0.117.0): **Church health card** on Administrators' Home (`js/health.js` rules, `js/health-ui.js` card) – what is worth a look, marked Weekly / Every 2 weeks / Monthly: roster turns held by people who have left, couples with different addresses, marriage records that disagree, adults with no way to be reached, groups with no leader, people due for review under Privacy; counts only, kept until anything changes
 - ✅ 25 Nov 2026 (0.117.3): the Church health card is now called **Church health tests**
+- ✅ 25 Nov 2026 (0.117.10): **Items I have borrowed shows each book's cover** beside its title and due date (same pictures and loading as the Library tab; the book icon where there is none)
+- ✅ 25 Nov 2026 (0.117.11): fix – items on Items I have borrowed were hidden by the Library's own search filter; they show again, with their covers
+- ✅ 25 Nov 2026 (0.117.12): the Google Maps Plus Code box on Add / Edit details now shows its grey example as **e.g. G7J3+Q4Q Howick** (with the words in all five languages)

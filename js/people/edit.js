@@ -184,7 +184,7 @@
             return '<label class="field"><span id="pf-postcode-l">' + T(c ? c.postcodeLabel : 'Postal code') + '</span><input id="pf-postcode" value="' + esc(a.postcode || '') + '" autocomplete="postal-code"></label></div>' +
               '<div class="two"><label class="field"><span id="pf-region-l">' + T(c ? c.regionLabel : 'Province, state or region') + '</span><span id="pf-region-w">' + regionControl(c, a.province || '') + '</span></label>' +
               '<label class="field">' + F('Country') + countrySelect(a.country || '') + '</label></div>' +
-              '<label class="field">' + F('Google Maps Plus Code') + '<input id="pf-pluscode" value="' + esc(a.plusCode || '') + '" placeholder="G7J3+Q4Q Howick" autocapitalize="characters" autocomplete="off"><small>' + T('In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.') + '</small></label></fieldset>';
+              '<label class="field">' + F('Google Maps Plus Code') + '<input id="pf-pluscode" value="' + esc(a.plusCode || '') + '" placeholder="' + T('e.g. G7J3+Q4Q Howick') + '" autocapitalize="characters" autocomplete="off"><small>' + T('In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.') + '</small></label></fieldset>';
           })(p.address || {}) +
         '' : '') +
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +

@@ -145,6 +145,8 @@ module.exports = async function (ctx) {
   await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-middle', 'Anne'); await s.page.fill('#pf-street', '12 Main Road'); await s.page.fill('#pf-city', 'Howick'); await s.page.fill('#pf-postcode', '3290'); check(JSON.stringify(await s.page.$$eval('#pf-province option', o => o.slice(1).map(x => x.value))) === JSON.stringify(['Eastern Cape', 'Free State', 'Gauteng', 'KwaZulu-Natal', 'Limpopo', 'Mpumalanga', 'North West', 'Northern Cape', 'Western Cape']), 'Province is a dropdown of South Africa’s nine provinces'); await s.page.selectOption('#pf-province', 'KwaZulu-Natal');
   await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   check(docs['details/p15'].middleName === 'Anne' && docs['details/p15'].address.city === 'Howick' && tt.includes('12 Main Road') && tt.includes('Howick 3290') && !tt.includes('South Africa') && !JSON.stringify(docs['people/p15']).includes('Main Road'), 'middle name and home address saved with the private details and shown');
+  { const offer = await s.page.textContent('#modal');   // p15 has a wife: she is offered the same address, and we say no
+    check(offer.includes('address too?') && offer.includes('12 Main Road'), 'a married person’s new address is offered to their spouse'); await s.page.click('#modal [data-act="hub:close"]:not(.x)'); await s.settle(); }
   await s.page.click('[data-act="people:edit"]');
   check(await s.page.inputValue('#pf-country') === 'South Africa' && (await s.page.textContent('#pf-region-l')) === 'Province', 'the address is in South Africa, with its provinces');
   await s.page.selectOption('#pf-country', 'United States');

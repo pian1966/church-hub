@@ -11,6 +11,7 @@
   function coupleTodo() { return P.coupleTodo.apply(this, arguments); }
   function coupleWord() { return P.coupleWord.apply(this, arguments); }
   function couplesToCheck() { return P.couplesToCheck.apply(this, arguments); }
+  function addressMismatches() { return P.addressMismatches.apply(this, arguments); }
   function dupPeople() { return P.dupPeople.apply(this, arguments); }
   function hasAccess() { return P.hasAccess.apply(this, arguments); }
   function householdNames() { return P.householdNames.apply(this, arguments); }
@@ -29,7 +30,7 @@
     return '<a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a><div class="page-head"><div><h1>' + T('Households') + '</h1><p class="lead">' + T('A household is the people who live together – what Elvanto calls a “family”. Each is named after its adults (e.g. “Tim & Clare Jacobs”). A child of separated parents can be in two households. Parents, guardians and who may collect a child are recorded on the child’s profile.') + '</p></div>' +
       '<button class="btn primary" data-act="people:newfam">' + H.icon(H.ICON.plus, 18) + T('New household') + '</button></div>' +
       '<label class="search" style="margin-bottom:14px">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search households') + '</span><input id="fm-q" type="search" placeholder="' + esc(T('Search by household or anyone in it')) + '" value="' + esc(state.fq) + '"></label>' +
-      couplesPanel(fq ? fams.map(function (f) { return f.id; }) : null) +
+      couplesPanel(fq ? fams.map(function (f) { return f.id; }) : null) + addressPanel(fq ? fams.map(function (f) { return f.id; }) : null) +
       '<p class="muted small">' + TN('{n} household', '{n} households', fams.length) + '</p>' +
       (fams.length ? '' : '<p class="empty">' + T('No household matches. Try another name.') + '</p>') +
       '<div class="grid2">' + fams.map(function (f) {
@@ -211,6 +212,23 @@
   }
 
 
+  /** One address as short text for the screen. */
+  function addrText(p) { var l = P.addressLines(p); return l.length ? l.join(', ') : T('No address'); }
+  /** Households page: married couples whose home addresses differ, or where only one has an address. Nothing changes until you choose. */
+  function addressPanel(only) {
+    var list = addressMismatches().filter(function (c) { return !only || only.indexOf(c.familyId) >= 0; }); if (!list.length) return '';
+    return '<section class="panel" id="spouse-addresses" style="margin-bottom:16px"><h2 style="margin:0 0 4px">' + T('Spouses with different addresses') + '</h2>' +
+      '<p class="hint" style="margin:0 0 10px">' + T('Married couples normally share one home address. Choose which address is right, or say they live apart (for example one is in a care home). Nothing changes until you choose.') + '</p>' +
+      '<div class="list">' + list.map(function (c) {
+        var a = S.get('people', c.a), b = S.get('people', c.b);
+        var btn = function (from, to) { return '<button class="btn small" data-act="people:addrcopy" data-from="' + from.id + '" data-to="' + to.id + '">' + esc(T('Use {name}’s address for both', { name: H.name(from) })) + '</button>'; };
+        return '<div class="item" style="align-items:flex-start;flex-wrap:wrap;gap:8px"><span class="grow" style="min-width:220px"><b><a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a> & <a href="#/people/p/' + b.id + '">' + esc(H.name(b)) + '</a></b>' +
+          '<small>' + esc(H.name(a)) + ': ' + esc(addrText(a)) + '<br>' + esc(H.name(b)) + ': ' + esc(addrText(b)) + '</small></span>' +
+          '<span class="btns">' + (c.from ? btn(S.get('people', c.from), S.get('people', c.to)) : btn(a, b) + btn(b, a)) +
+          '<button class="btn small" data-act="people:addrapart" data-a="' + c.a + '" data-b="' + c.b + '">' + T('They live apart') + '</button></span></div>';
+      }).join('') + '</div></section>';
+  }
+
   Object.assign(P.actions, {
     newfam: function () {
         H.modal(H.dialogHead(T('New household'), T('Then add people to it (Edit details → Household).')) + '<div class="dlg-body"><label class="field req">' + T('Surname') + '<input id="nf-name" placeholder="' + esc(T('e.g. Naidoo')) + '"><small>' + T('Once adults are added, the household is named after them automatically (e.g. “Jason & Priya Naidoo”).') + '</small></label></div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:savefam">' + T('Create') + '</button></div>', T('New household'));
@@ -254,6 +272,21 @@
         });
         H.render(); H.toast(T(c.kind === 'spouse' ? 'Confirmed as married' : 'Confirmed as partners'));
       },
+    addrcopy: function (el) {   // give the other spouse the same home address (from the Households list, or after Edit details)
+        if (!canCouples()) return;
+        var from = S.get('people', el.dataset.from), to = S.get('people', el.dataset.to);
+        if (!from || !to || !HS.hasAddress(from) || !(from.spouseId === to.id || to.spouseId === from.id || HS.addressMismatches(S.list('people'), S.list('families')).some(function (m) { return HS.pairKey(m.a, m.b) === HS.pairKey(from.id, to.id); }))) return;
+        var q = JSON.parse(JSON.stringify(to)); q.address = JSON.parse(JSON.stringify(from.address));
+        S.put('people', q, 'Address: ' + H.name(q) + ' now has the same home address as ' + H.name(from));
+        H.closeModal(); H.render(); H.toast(T('Saved: {a} and {b} now share one address', { a: H.name(from), b: H.name(q) }));
+      },
+    addrapart: function (el) {   // they live apart: stop asking about their address
+        if (!canCouples()) return;
+        var a = S.get('people', el.dataset.a), b = S.get('people', el.dataset.b); if (!a || !b) return;
+        var q = JSON.parse(JSON.stringify(a)); q.liveApart = (q.liveApart || []).filter(function (x) { return x !== b.id; }).concat([b.id]);
+        S.put('people', q, 'Address: ' + H.name(a) + ' and ' + H.name(b) + ' live apart (not asked about their address)');
+        H.closeModal(); H.render(); H.toast(T('Got it – their addresses won’t be compared'));
+      },
     notcouple: function (el) {
         if (!canCouples()) return;
         // A couple chosen by hand (Edit details → Spouse or partner): undo the choice on both people
@@ -285,5 +318,5 @@
       }
   });
 
-  Object.assign(P, { DUPWORD: DUPWORD, FIELD_NAMES: FIELD_NAMES, adminOnly: adminOnly, chooseKeep: chooseKeep, couplesPanel: couplesPanel, doFix: doFix, dupCard: dupCard, fieldName: fieldName, fixDialog: fixDialog, lateSuggestions: lateSuggestions, markNotSame: markNotSame, refsOf: refsOf, renderDuplicates: renderDuplicates, renderFamilies: renderFamilies, renderLate: renderLate });
+  Object.assign(P, { DUPWORD: DUPWORD, FIELD_NAMES: FIELD_NAMES, adminOnly: adminOnly, chooseKeep: chooseKeep, addressPanel: addressPanel, addrText: addrText, couplesPanel: couplesPanel, doFix: doFix, dupCard: dupCard, fieldName: fieldName, fixDialog: fixDialog, lateSuggestions: lateSuggestions, markNotSame: markNotSame, refsOf: refsOf, renderDuplicates: renderDuplicates, renderFamilies: renderFamilies, renderLate: renderLate });
 })(PeopleParts);

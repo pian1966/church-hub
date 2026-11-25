@@ -170,5 +170,35 @@ console.log('A home address from the family');
   const copy = sug('ann')[0].address; copy.street = 'changed'; ok(ppl[0].address.street === '4 Cormorant Close', 'the suggestion is a copy (changing it leaves the original alone)');
 }
 
+console.log('Spouses who should share an address');
+{
+  const ad = (street, city) => ({ street, city: city || 'Howick', postcode: '3290' });
+  const m = (id, extra) => Object.assign({ id, familyRole: 'adult', familyId: 'h', maritalStatus: 'Married' }, extra);
+  const fams = [{ id: 'h' }];
+  const ppl = [
+    m('a1', { address: ad('1 Main Rd'), spouseId: 'a2' }), m('a2', { address: ad('1 MAIN rd.') }),                      // same address, written differently
+    m('b1', { address: ad('2 Oak St'), spouseId: 'b2', familyId: 'h2' }), m('b2', { address: ad('9 Elm St'), familyId: 'h2' }),   // different
+    m('c1', { address: ad('3 Pine Ave'), spouseId: 'c2', familyId: 'h3' }), m('c2', { familyId: 'h3' }),                  // one has none
+    m('d1', { address: ad('4 Fir Ln'), spouseId: 'd2', familyId: 'h4', liveApart: ['d2'] }), m('d2', { address: ad('5 Fir Ln'), familyId: 'h4' }),   // live apart
+    m('e1', { address: ad('6 Ash Rd'), spouseId: 'e2', familyId: 'h5', maritalStatus: 'Partner' }), m('e2', { address: ad('7 Ash Rd'), familyId: 'h5', maritalStatus: 'Partner' }),   // partners
+    m('f1', { address: ad('8 Yew Rd'), spouseId: 'f2', familyId: 'h6' }), m('f2', { address: ad('9 Yew Rd'), familyId: 'h6', deceasedAt: '2024-01-01' }),   // one has died
+    m('g1', { spouseId: 'g2', familyId: 'h7' }), m('g2', { familyId: 'h7' })                                             // neither has one
+  ];
+  const mm = HS.addressMismatches(ppl, fams), by = a => mm.find(x => x.a === a || x.b === a);
+  ok(!by('a1'), 'the same address written differently (capitals, full stops) is the same address');
+  ok(by('b1') && by('b1').why === 'differ' && by('b1').from === null, 'two different addresses are flagged');
+  ok(by('c1') && by('c1').why === 'missing' && by('c1').from === 'c1' && by('c1').to === 'c2', 'one spouse with no address: flagged, copying from the one who has it');
+  ok(!by('d1'), 'spouses who live apart are not flagged');
+  ok(!by('e1'), 'partners are not flagged (they may live apart)');
+  ok(!by('f1'), 'a spouse who has died is not flagged');
+  ok(!by('g1'), 'two spouses with no address at all: nothing to compare');
+  ok(mm.length === 2, 'only the two that need attention');
+  const so = id => HS.spouseToOffer(ppl.find(x => x.id === id), ppl, fams);
+  ok(so('b1') && so('b1').id === 'b2', 'after b1 changes address: offer it to b2');
+  ok(so('c1') && so('c1').id === 'c2', 'also when the spouse has no address yet');
+  ok(!so('a1') && !so('d1') && !so('e1') && !so('f1'), 'nothing to offer when it is the same, they live apart, partners, or the spouse has died');
+  ok(!so('c2'), 'nobody to offer to when the person has no address themselves');
+}
+
 console.log(fails ? '\n' + fails + ' FAILED' : '\nAll household tests passed');
 process.exit(fails ? 1 : 0);

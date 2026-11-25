@@ -108,7 +108,7 @@
     var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: '', familyId: '', familyRole: '', appRole: Store.defaultRole() };
     var admin = H.can('*'), me = isMe(p);
     var fams = S.list('families');
-    editSession = { id: p.id || '', audited: false };
+    editSession = { id: p.id || '', audited: false, addr: HS.hasAddress(p) ? HS.addressKey(p.address) : '' };
     var html = H.dialogHead(isNew ? T('Add a person') : T('Edit {name}', { name: H.name(p) }), isNew ? T('Only add what the church needs. Ask for consent when you add someone.') : T('Changes are saved as you go.')) +
       // Someone already on the records: saved as you go (data-autoscope + the hidden data-autosave button). A new person waits for "Add person".
       '<form id="pf" class="dlg-body" novalidate' + (isNew ? '' : ' data-autoscope') + '><input type="hidden" id="pf-id" value="' + esc(p.id || '') + '">' +
@@ -345,7 +345,7 @@
     save: function () { H.autoForget(); savePerson(false); },   // Add person, or Done: everything checked, then the window closes
     autosave: function () { savePerson(true); }
   });
-  var editSession = { id: '', audited: false };   // one "Updated details" line in the audit log per time the window is open
+  var editSession = { id: '', audited: false, addr: '' };   // one "Updated details" line in the audit log per time the window is open
   /** Edit details / Add a person. quiet = saving as you go: the window stays open, problems show in a small note. */
   function savePerson(quiet) {
         var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : null; };
@@ -464,7 +464,7 @@
         if (changed) {
           var say = !id || editSession.id !== id || !editSession.audited;   // saving as you go: one line in the audit log, not one per pause
           S.put('people', p, say ? (id ? 'Updated details of ' : 'Added ') + p.firstName + ' ' + p.lastName + (p.badgeWanted && !id ? ' (name badge to print)' : '') : null);
-          if (id) editSession = { id: id, audited: true };
+          if (id) editSession = { id: id, audited: true, addr: editSession.id === id ? editSession.addr : '' };
         }
         if (spNew !== null && spNew !== spOld) linkSpouse(p, spOld, spNew);
         P.partnerAgrees(p, wasCat);   // becoming a Church Partner: Contact details agreed
@@ -475,6 +475,17 @@
         H.closeModal();
         if (!id) { H.go('people/p/' + p.id); setTimeout(function () { consentDialog(p); }, 50); } else H.render();
         H.toast(T(id ? 'Saved' : 'Added – now record their consent'));
+        if (id && P.canCouples() && !dead) spouseAddressOffer(S.get('people', id), editSession.addr);
+  }
+  /** Their home address was changed: offer the same one to their spouse (only if it is different there; nothing changes until Yes). */
+  function spouseAddressOffer(p, before) {
+    if (!p || !HS.hasAddress(p) || HS.addressKey(p.address) === before) return;
+    var sp = HS.spouseToOffer(p, S.list('people'), S.list('families')); if (!sp) return;
+    H.modal(H.dialogHead(T('Change {name}’s address too?', { name: H.name(sp) }), T('Married couples normally share one home address.')) +
+      '<div class="dlg-body"><p><b>' + esc(H.name(p)) + ':</b> ' + esc(P.addrText(p)) + '</p><p><b>' + esc(H.name(sp)) + ':</b> ' + esc(P.addrText(sp)) + '</p></div>' +
+      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('No, leave it') + '</button>' +
+      '<button class="btn" data-act="people:addrapart" data-a="' + p.id + '" data-b="' + sp.id + '">' + T('They live apart') + '</button>' +
+      '<button class="btn primary" data-act="people:addrcopy" data-from="' + p.id + '" data-to="' + sp.id + '">' + esc(T('Yes, change {name}’s address', { name: H.name(sp) })) + '</button></div>', T('Same address for both?'));
   }
   Object.assign(P.actions, {
     saveconsent: function (el) {

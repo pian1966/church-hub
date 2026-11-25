@@ -27,6 +27,17 @@ Open the person and tap **Edit details**. Save when you're done. Boxes that don'
 for example **Wedding anniversary** when the marital status is Single, Engaged, Partner or Divorced. Whatever was saved in a
 greyed-out box is kept.
 
+## What if a husband and wife have different addresses?
+For: Administrators, Pastors
+Also asked: Spouses at different addresses. Change my wife's address too. Move a married couple. Couple lives apart.
+
+Married couples normally share one home address. When you change someone's address in **Edit details** and **Save**, and
+they have a spouse whose address is different (or missing), Church & Trellis asks **Change … address too?** Tap **Yes, change …
+address** to give them the same address, **No, leave it** to keep them different, or **They live apart** (for example one is in
+a care home) so it never asks about that couple again. Nothing changes unless you say yes. Under **People** → **Households**,
+**Spouses with different addresses** lists every married couple whose addresses don't match, and your to-do list on People
+counts them. Partners (not married) aren't checked.
+
 ## Where do I record a married woman's maiden name?
 For: Administrators, Pastors
 Also asked: Née. Surname before marriage. Previous surname. Find someone by her old surname.

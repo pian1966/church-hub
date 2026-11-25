@@ -23,6 +23,7 @@ I18n.rows([
     ["I couldn’t find an exact answer, but these help pages may help:", "Ek kon nie ’n presiese antwoord kry nie, maar hierdie hulpbladsye kan help:", "Angitholanga impendulo eqondile, kodwa lawa makhasi osizo angase asize:", "Andiyifumananga impendulo echanekileyo, kodwa la maphepha oncedo angancedisa:"],
     ["These help pages may help:", "Hierdie hulpbladsye kan help:", "Lawa makhasi osizo angase asize:", "La maphepha oncedo angancedisa:"],
     ["Browse by topic", "Blaai volgens onderwerp", "Phequlula ngesihloko", "Khangela ngesihloko"],
+    ["Do this now", "Doen dit nou", "Yenza lokhu manje", "Yenza oku ngoku"],
     ["Back to Help", "Terug na Hulp", "Buyela Osizweni", "Buyela koNcedo"],
     ["Nothing on this topic is for your kind of access.", "Niks oor hierdie onderwerp is vir jou soort toegang nie.", "Akukho okuyisihloko lesi okwenzelwe uhlobo lwakho lokufinyelela.", "Akukho nto ngesi sihloko eyenzelwe uhlobo lwakho lofikelelo."],
     ["The help pages couldn’t be loaded. Check your internet connection and try again.", "Die hulpbladsye kon nie gelaai word nie. Kontroleer jou internetverbinding en probeer weer.", "Amakhasi osizo awakwazanga ukulayishwa. Hlola uxhumo lwakho lwe-inthanethi bese uzama futhi.", "Amaphepha oncedo awakwazanga ukulayishwa. Khangela unxibelelwano lwakho lwe-intanethi uze uzame kwakhona."]

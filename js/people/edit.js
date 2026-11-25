@@ -121,8 +121,8 @@
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
       '<div class="two"><label class="field">' + F('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
       (!me || admin ? '<label class="field">' + F('Middle name') + '<input id="pf-middle" value="' + esc(p.middleName || '') + '" autocomplete="additional-name"></label>' : '') + '</div>' +
-      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + F('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.email || '') + '" autocomplete="email" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-email-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-email">' + T('Not known') + '</button></label>' +
-      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + F('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.mobile || '') + '" autocomplete="tel" placeholder="' + esc(T('Type “{word}” if not known', { word: T('unknown') })) + '"><small id="pf-mobile-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-mobile">' + T('Not known') + '</button></label></div>' +
+      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + F('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.email || '') + '" autocomplete="email" placeholder="' + esc(T('Not known? Choose “{word}” below', { word: T('Not known') })) + '"><small id="pf-email-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-email">' + T('Not known') + '</button></label>' +
+      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + F('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.mobile || '') + '" autocomplete="tel" placeholder="' + esc(T('Not known? Choose “{word}” below', { word: T('Not known') })) + '"><small id="pf-mobile-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-mobile">' + T('Not known') + '</button></label></div>' +
       (!me || admin ? '<div class="two"><label class="field">' + F('Birthday') + '<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field req">' + F('Category') + '<select id="pf-cat">' + (p.category ? '' : '<option value="" selected>' + T('Choose…') + '</option>') + CATS.map(function (c) { return '<option value="' + esc(c) + '"' + (p.category === c ? ' selected' : '') + '>' + esc(T(c)) + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two" id="pf-partner-f"' + (p.category === 'Church Partner' ? '' : ' hidden') + '><label class="field">' + F('Date accepted as Church Partner') + '<input id="pf-psince" type="date" max="' + H.today() + '" value="' + esc(p.partnerSince || '') + '"></label>' +
@@ -179,7 +179,7 @@
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
     ['pf-email', 'pf-mobile'].forEach(function (id) {   // the “Not known” button shows ticked while the box says unknown
       var i = document.getElementById(id), b = document.querySelector('.chip-unknown[data-for="' + id + '"]'); if (!i || !b) return;
-      var sync = function () { var on = /^(unknown|not known)$/i.test(i.value.trim()) || i.value.trim().toLowerCase() === T('unknown').toLowerCase(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); };
+      var sync = function () { var v = i.value.trim(), on = /^(unknown|not known)$/i.test(v) || v.toLowerCase() === T('unknown').toLowerCase(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.hidden = !!v && !on; };   // gone once a real address or number is typed
       i.addEventListener('input', sync); sync();
     });
     wireCountry(); if (window.CareUI) CareUI.wireFields();
@@ -378,7 +378,7 @@
           if (quiet || !el || !lab) { err.hidden = false; return true; }
           err.hidden = true;
           for (var d = el.closest('details'); d; d = d.parentElement && d.parentElement.closest('details')) d.open = true;   // a folded-away section opens
-          var note = document.createElement('small'); note.className = 'field-err'; note.setAttribute('role', 'alert'); note.textContent = msg; lab.appendChild(note);
+          var note = document.createElement('small'); note.className = 'field-err'; note.setAttribute('role', 'alert'); var nt = document.createElement('span'); nt.className = 'fe-t'; nt.textContent = msg; note.appendChild(nt); lab.appendChild(note);
           if (fieldId === 'pf-email' || fieldId === 'pf-mobile') {   // missing: offer “Not known” right there
             var nk = document.createElement('button'); nk.type = 'button'; nk.className = 'fe-act'; nk.textContent = T('Not known'); nk.setAttribute('data-act', 'people:unknown'); nk.setAttribute('data-for', fieldId);
             if (!g(fieldId)) note.appendChild(nk);
@@ -400,8 +400,8 @@
         var isChild = (g('pf-frole') !== null ? g('pf-frole') : p.familyRole) === 'child';
         var unknown = function (v) { v = (v || '').trim().toLowerCase(); return v === 'unknown' || v === T('unknown').toLowerCase() || v === 'not known'; };
         var em = g('pf-email'), mo = g('pf-mobile');
-        if (!isChild && !em && !dead) { fail('pf-email', T('Please fill in the email address, or type “{word}”.', { word: T('unknown') })); return; }
-        if (!isChild && !mo && !dead) { fail('pf-mobile', T('Please fill in the mobile number, or type “{word}”.', { word: T('unknown') })); return; }
+        if (!isChild && !em && !dead) { fail('pf-email', T('Please fill in the email address, or choose “{word}”.', { word: T('Not known') })); return; }
+        if (!isChild && !mo && !dead) { fail('pf-mobile', T('Please fill in the mobile number, or choose “{word}”.', { word: T('Not known') })); return; }
         if (em && !unknown(em) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { fail('pf-email', T('That email address doesn’t look right.')); return; }
         if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { fail('pf-mobile', T('That mobile number doesn’t look right.')); return; }
         // Duplicates: very likely matches can't be saved, unless an Administrator has checked it's a different person

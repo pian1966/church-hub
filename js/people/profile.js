@@ -128,8 +128,8 @@
       (window.CelebrateUI ? ' ' + (full ? CelebrateUI.tag(p, { birthday: !!(p.birthDate || p.birthDay), anniversary: !child }) : child && canChildren() && p.birthDate ? CelebrateUI.tag(p, { anniversary: false }) :
         !child && p.inDirectory ? CelebrateUI.tag(p) : '') : '');   // the directory carries the day only for those who agreed
     var html = '<div class="crumb-bar"><a class="crumb" href="#/people">' + H.icon(H.ICON.back, 16) + T('People') + '</a>' +
-      (full || H.can('people.edit') ? '<button class="btn primary" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') + '</div>' +
-      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><h1>' + esc(H.name(p)) + '</h1><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + (P.welcomeLine ? P.welcomeLine(p) : '') + '</div></div>' +
+      '</div>' +
+      '<div class="page-head"><div class="row">' + H.avatar(p, p.photo ? 96 : 64) + '<div><div class="name-row"><h1>' + esc(H.name(p)) + '</h1>' + (full || H.can('people.edit') ? '<button class="btn primary sm" data-act="people:edit" data-id="' + p.id + '">' + T('Edit details') + '</button>' : '') + '</div><div class="row" style="margin-top:6px">' + tags + '</div>' + (P.badgeLine ? P.badgeLine(p) : '') + (P.inviteLine ? P.inviteLine(p) : '') + (P.welcomeLine ? P.welcomeLine(p) : '') + '</div></div>' +
       '<div class="btns">' + (groupKinds(p).length ? '<button class="btn" data-act="people:groups" data-id="' + p.id + '">' + T('Groups') + '</button>' : '') +
       (canPhoto(p) ? '<button class="btn" data-act="people:photo" data-id="' + p.id + '">' + H.icon(H.ICON.plus, 18) + T(p.photo ? 'Change photo' : 'Add photo') + '</button>' +
         (p.photo ? '<button class="btn" data-act="people:nophoto" data-id="' + p.id + '">' + T('Remove photo') + '</button>' : '') +

@@ -28,6 +28,8 @@ I18n.rows([
     ['No one matches', 'Niemand pas nie', 'Akekho ofanayo', 'Akukho mntu ufanayo'],
     ['Type part of their name', 'Tik deel van hul naam', 'Bhala ingxenye yegama labo', 'Bhala inxalenye yegama labo'],
     ['Care Group member', 'Selgroeplid', 'Ilungu leqembu lokunakekelana', 'Ilungu leqela lokukhathalelana'],
+    ['Find a Care Group…', 'Soek ’n selgroep…', 'Funda iqembu lokunakekelana…', 'Khangela iqela lokukhathalelana…'],
+    ['No Care Group matches that.', 'Geen selgroep stem hiermee ooreen nie.', 'Alikho iqembu lokunakekelana elifanayo.', 'Akukho qela lokukhathalelana lifanayo.'],
     ['In one or more of the church’s Care Groups (tick which).', 'In een of meer van die kerk se selgroepe (merk watter).', 'Emaqenjini amabili noma ngaphezulu okunakekelana ebandla (khetha awuphi).', 'Kwiqela elinye okanye ngaphezulu lokukhathalelana lecawe (phawula eliphi).'],
     ['Which Care Groups', 'Watter selgroepe', 'Amaqembu okunakekelana aliphi', 'Ngawaphi amaqela okukhathalelana'],
     ['Carer (leads it)', 'Leier (lei dit)', 'Umnakekeli (uyaliphatha)', 'Umkhathaleli (uyalikhokela)'],

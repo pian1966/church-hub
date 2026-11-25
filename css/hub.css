@@ -344,7 +344,7 @@ a.stat { color: var(--ink); text-decoration: none; } a.stat:hover { border-color
 .overlay { position: fixed; inset: 0; background: rgba(29, 27, 25, .45); display: grid; place-items: center; padding: 16px; z-index: 50; overflow-y: auto; }
 .dialog { background: var(--surface); border-radius: 18px; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow: auto; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
 .dialog.wide { width: min(820px, 100%); }
-.dlg-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 6px; }
+.dlg-h { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; padding: 18px 20px 6px; position: sticky; top: 0; z-index: 3; background: var(--surface); border-radius: 18px 18px 0 0; }   /* the X stays in view while the window scrolls */
 .dlg-h h2 { margin: 0; font-size: 19px; } .dlg-h p { margin: 4px 0 0; color: var(--muted); font-size: 14px; }
 .dlg-body { padding: 10px 20px; }
 .dlg-foot { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 10px; padding: 12px 20px 18px; border-top: 1px solid var(--line-2); margin-top: 6px; }
@@ -1756,3 +1756,27 @@ html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk
 .crumb-bar .crumb { margin-bottom: 0; }
 .plus-code { display: inline-flex; align-items: center; gap: 4px; font-weight: 600; text-decoration: none; }
 .plus-code:hover { text-decoration: underline; }
+
+/* A person's page: Edit details sits just right of the name */
+.name-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; }
+.name-row .btn.sm { padding: 6px 14px; font-size: 14px; }
+
+/* "Not known" beside Email / Mobile */
+.chip-unknown { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 4px 12px; border-radius: 999px; border: 1px dashed var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.chip-unknown:hover { border-color: var(--accent); color: var(--ink); }
+.chip-unknown.on { border-style: solid; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--ink); }
+.chip-unknown.on::before { content: "✓"; }
+
+/* Care Groups: find-as-you-type box above the groups */
+.cg-search { width: 100%; margin: 6px 0 8px; }
+.cg-list { max-height: 260px; overflow-y: auto; }
+.pf-cg-item[hidden] { display: none; }
+
+/* A box that needs attention, and "can't save" notes: a friendly card that pops in, not plain red text */
+@keyframes fe-pop { 0% { opacity: 0; transform: translateY(-6px) scale(.96); } 60% { opacity: 1; transform: translateY(0) scale(1.015); } 100% { transform: none; } }
+.field-err, .note.bad { position: relative; display: flex !important; align-items: center; flex-wrap: wrap; gap: 8px 10px; margin-top: 8px; padding: 10px 14px 10px 12px; border-radius: 14px; border: 1px solid color-mix(in srgb, var(--bad, #b3261e) 28%, #fff); border-left: 4px solid var(--bad, #b3261e); background: color-mix(in srgb, var(--bad, #b3261e) 7%, #fff); color: var(--ink) !important; font-size: 14px; font-weight: 600; line-height: 1.35; box-shadow: 0 6px 18px rgba(179, 38, 30, .12); animation: fe-pop .32s var(--ease-spring, ease-out) both; }
+.field-err::before, .note.bad::before { content: "!"; flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--bad, #b3261e); color: #fff; font-size: 14px; font-weight: 800; }
+.field-err::after { content: ""; position: absolute; top: -6px; left: 22px; width: 10px; height: 10px; background: color-mix(in srgb, var(--bad, #b3261e) 7%, #fff); border-left: 1px solid color-mix(in srgb, var(--bad, #b3261e) 28%, #fff); border-top: 1px solid color-mix(in srgb, var(--bad, #b3261e) 28%, #fff); transform: rotate(45deg); }   /* points up at the box */
+.note.bad[hidden], .field-err[hidden] { display: none !important; }
+.fe-act { margin-left: auto; padding: 5px 14px; border-radius: 999px; border: 0; background: var(--bad, #b3261e); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+@media (prefers-reduced-motion: reduce) { .field-err, .note.bad { animation: none; } }

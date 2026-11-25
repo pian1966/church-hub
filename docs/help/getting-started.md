@@ -148,7 +148,7 @@ Home is the first page you see, and it is different for each person, because it 
 - **To do** – things that need you, such as roster turns to reply to, unread messages, or (for staff) requests waiting for an
   answer. **Nothing needs you right now.** means you're up to date.
 - **A birthday or anniversary card** – on your own birthday, or wedding anniversary, a warm card with a few falling petals greets you here and on your **Me** page.
-- **Church health** – for Administrators only: a short list of things in the church's records worth a look, each marked **Weekly**,
+- **Church health tests** – for Administrators only: a short list of things in the church's records worth a look, each marked **Weekly**,
   **Every 2 weeks** or **Monthly** for how often it is worth looking. Tap a line to go and put it right. It shows counts, not
   names. **All clear** means nothing needs a look.
 - **Coming up** – events at church you can sign up for (**Events**).

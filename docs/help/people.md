@@ -33,7 +33,7 @@ Also asked: Née. Surname before marriage. Previous surname. Find someone by her
 
 **Edit details** → **Maiden name**. The box appears once Gender is Female (or not recorded) and Marital status is Married,
 Separated, Divorced or Widowed. It shows on her page under **Contact and details**, People's search box finds her by it, and
-Advanced search has it under Personal. Brought across from Elvanto's **Maiden Name** column too. Like the middle name, only
+Advanced search has it under Personal. Brought across from your old system's maiden name column too. Like the middle name, only
 Administrators, Pastors and she herself see it.
 
 ## How do I add a note about someone for the church office?
@@ -42,7 +42,7 @@ Also asked: Admin note. Office note. Note on a person's record.
 
 On the person's page, **Church office notes** is near the top, beside their details: type in **Add a note** and tap
 **Save note**. Each note shows who wrote it and when, and can be deleted. Administrators and Pastors see these notes (notes
-brought across from Elvanto land here too); pastoral matters go in **Pastoral notes**, which only Pastors see.
+brought across from your old system land here too); pastoral matters go in **Pastoral notes**, which only Pastors see.
 
 ## How do I link a spouse or partner?
 For: Administrators, Pastors

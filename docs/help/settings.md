@@ -89,13 +89,13 @@ email (a married couple gets one anniversary email together). Under **Send email
 church's Gmail (opens in the browser – be signed in there with the church's Gmail account), set the **Signed by** name, and
 edit the email templates. Church & Trellis opens each email ready to send – you press send.
 
-## How do I bring people across from Elvanto?
+## How do I bring people across from my old church management system?
 For: Administrators
-Also asked: Import from Elvanto. Migrate our data.
+Also asked: Import from another system. Migrate our data. Switch systems.
 
-**Import → From Elvanto**: export People from Elvanto as a CSV (include Member ID – it stops people being doubled), choose
+**Import**: export People from your old system as a CSV (include a member ID if it has one – it stops people being doubled), choose
 the file, match the columns and categories, check the preview, and import. Importing again updates people rather than
-doubling them. If it went wrong, remove everyone brought in from Elvanto and import again. Nothing is changed in Elvanto.
+doubling them. If it went wrong, remove everyone brought in and import again. Nothing is changed in your old system. We suggest running both systems side by side for a while, and we can help you transfer your data (there may be a cost, depending on the size and means of your church).
 
 ## How do I bring staff leave across from Leave Manager?
 For: Administrators

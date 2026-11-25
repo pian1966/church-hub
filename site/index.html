@@ -200,11 +200,12 @@ section { padding: 96px 0; }
 .promise p { color: var(--ink-2); margin-top: 10px; }
 @media (max-width: 860px) { .promises { grid-template-columns: 1fr; gap: 36px; } }
 
-/* Moving from Elvanto: a real sequence, so it is numbered */
+/* Moving from another system: a real sequence, so it is numbered */
 .steps { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: s; }
 .steps li { counter-increment: s; background: var(--paper); border-radius: 20px; padding: 28px; border: 1px solid var(--line); }
 .steps li::before { content: counter(s); display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; background: var(--ink); color: #fff; font: 800 1.1rem var(--display); margin-bottom: 18px; }
 .steps p { color: var(--ink-2); margin-top: 8px; }
+.steps + .note { margin: 24px auto 0; max-width: 46rem; text-align: center; color: var(--ink-2); font-size: .95rem; }
 @media (max-width: 860px) { .steps { grid-template-columns: 1fr; } }
 
 /* Pricing */
@@ -570,14 +571,15 @@ footer a { color: var(--ink-2); }
 <section class="stone" aria-labelledby="e-title">
   <div class="wrap">
     <div class="intro">
-      <h2 id="e-title">Moving from Elvanto? Switch without the stress.</h2>
-      <p class="lead">You don't have to change everything on one Sunday. Run both side by side until everyone has settled in.</p>
+      <h2 id="e-title">Moving from another church management system? Switch without the stress.</h2>
+      <p class="lead">You don't have to change everything on one Sunday. We'll help you transfer your data and bring your people across, so you're not starting from scratch.</p>
     </div>
     <ol class="steps">
-      <li><h3>Bring your people across</h3><p>Import your members, households and staff leave from Elvanto and Leave Manager.</p></li>
-      <li><h3>Run both for a while</h3><p>Church & Trellis keeps up with the changes made in Elvanto while your congregation gets used to it.</p></li>
-      <li><h3>Keep rosters right</h3><p>Approved staff leave can be sent to Elvanto automatically, so nobody is rostered while they're away.</p></li>
+      <li><h3>We help you transfer your data</h3><p>Your members, households, groups and staff leave can come across from your current system, and we'll walk you through it.</p></li>
+      <li><h3>Run both for a while</h3><p>We suggest running both systems side by side while your congregation, staff and volunteers get used to Church & Trellis. Switch off the old one when everyone is settled.</p></li>
+      <li><h3>Keep rosters right</h3><p>Check that rosters and approved leave match across both systems, so nobody is rostered while they're away.</p></li>
     </ol>
+    <p class="note">A note on cost: helping to transfer your data may carry a fee, depending on the size of your church and what your church can afford. We'll talk it through with you first, and we want every church to be able to make the move.</p>
   </div>
 </section>
 

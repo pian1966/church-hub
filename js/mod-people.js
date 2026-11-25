@@ -70,7 +70,7 @@
       var cpl = couplesToCheck();
       if (cpl.length) out.push({ text: TN('{n} couple to confirm (spouses or partners)', '{n} couples to confirm (spouses or partners)', cpl.length), href: '#/people/families' });
       var adr = P.addressMismatches();
-      if (adr.length) out.push({ text: TN('{n} married couple with different home addresses', '{n} married couples with different home addresses', adr.length), href: '#/people/families' });
+      if (adr.length) out.push({ text: TN('{n} couple with different home addresses', '{n} couples with different home addresses', adr.length), href: '#/people/families' });
       if (noMarital.length) out.push({ text: TN('{n} adult has no marital status', '{n} adults have no marital status', noMarital.length), href: '#/people/p/' + noMarital[0].id });
       var since = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), -7 * CARE_WEEKS));
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {

@@ -207,18 +207,18 @@ var Households = (function () {
   function hasAddress(x) { var a = x && x.address; return !!(a && (String(a.street || '').trim() || String(a.street2 || '').trim() || String(a.city || '').trim())); }
   /** An address as one comparable text: capitals, spaces and punctuation don't count ("1 Main Rd." = "1 main rd"). */
   function addressKey(a) { a = a || {}; return ['street', 'street2', 'city', 'postcode'].map(function (k) { return String(a[k] || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }).join('|'); }
-  /** Two spouses who say they live apart (liveApart: [otherId] on either of them): not asked about their address again. */
+  /** A couple an Administrator chose to keep with two addresses (liveApart: [otherId] on either of them): not asked about their address again. */
   function liveApart(a, b) { return (a.liveApart || []).indexOf(b.id) >= 0 || (b.liveApart || []).indexOf(a.id) >= 0; }
   /**
-   * Spouses (marital status Married, from couples()) who should share a home address but don't:
+   * Couples (married or partners, from couples()) who would normally share a home address but don't:
    *   why 'differ' - both have an address, and they are different;
    *   why 'missing' - only one has an address.
-   * Partners aren't listed (they may live apart), nor spouses who were told "they live apart", nor anyone who has died or left.
+   * Not listed: couples an Administrator chose to keep with two addresses (liveApart), nor anyone who has died or left.
    * Returns [{ familyId, a, b, confirmed, why, from, to }]: from is the one to copy from when it's clear (missing), otherwise null.
    */
   function addressMismatches(people, families) {
     var byId = {}; (people || []).forEach(function (p) { byId[p.id] = p; });
-    return couples(people, families).filter(function (c) { return c.kind === 'spouse'; }).map(function (c) {
+    return couples(people, families).map(function (c) {
       var a = byId[c.a], b = byId[c.b], ha = hasAddress(a), hb = hasAddress(b);
       if (liveApart(a, b) || (!ha && !hb)) return null;
       if (ha && hb) return addressKey(a.address) === addressKey(b.address) ? null : { familyId: c.familyId, a: c.a, b: c.b, confirmed: c.confirmed, why: 'differ', from: null, to: null };
@@ -227,10 +227,10 @@ var Households = (function () {
   }
   /**
    * Someone's address was just changed: the spouse who should be offered the same one, or null.
-   * Only a spouse (not a partner), living, not "living apart", whose address isn't already the same.
+   * Their spouse or partner, if living, not marked to keep two addresses, and whose address isn't already the same.
    */
   function spouseToOffer(person, people, families) {
-    var c = couples(people, families).filter(function (x) { return x.kind === 'spouse' && (x.a === person.id || x.b === person.id); })[0];
+    var c = couples(people, families).filter(function (x) { return x.a === person.id || x.b === person.id; })[0];
     if (!c || !hasAddress(person)) return null;
     var other = (people || []).filter(function (x) { return x.id === (c.a === person.id ? c.b : c.a); })[0];
     if (!other || liveApart(person, other) || (hasAddress(other) && addressKey(other.address) === addressKey(person.address))) return null;

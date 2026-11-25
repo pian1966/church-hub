@@ -53,7 +53,7 @@ module.exports = async function (ctx) {
   check((await s.page.textContent('#pf-err')).includes('Only an Administrator can give access on an email address shared with a Pastor'), 'a Pastor with “access” is told only an Administrator can share a Pastor’s sign-in');
   check((await s.docsNow())['roles/pieter.vanwyk@example.com'].personId === 'p03', '…and Pieter’s sign-in is untouched');
   await finish(s);
-  // Married couples share one home address: changing one offers the same to the other; Households lists the ones that differ
+  // Married couples and partners share one home address: changing one offers the same to the other; Households lists the ones that differ
   console.log('Spouses and their home address:');
   const addrOf = docs2 => id => Object.assign({}, (docs2['people/' + id] || {}).address, (docs2['details/' + id] || {}).address);
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p19');
@@ -70,16 +70,16 @@ module.exports = async function (ctx) {
   await s.page.click('#modal [data-act="hub:close"]:not(.x)'); await s.settle(); docs = await s.docsNow();
   check(addrOf(docs)('p27').street === '1 Main Road', 'No, leave it: her address is not touched');
   await s.go('people/families'); let tt = await s.text();
-  check(tt.includes('Spouses with different addresses') && tt.includes('2 Oak Street') && tt.includes('1 Main Road'), 'Households lists the couple whose addresses differ');
+  check(tt.includes('Couples with different addresses') && tt.includes('2 Oak Street') && tt.includes('1 Main Road'), 'Households lists the couple whose addresses differ');
   await s.page.click('[data-act="people:addrcopy"][data-from="p19"]'); await s.settle(); docs = await s.docsNow();
   check(addrOf(docs)('p27').street === '2 Oak Street' && addrOf(docs)('p19').street === '2 Oak Street', 'one tap makes the couple share one address'); tt = await s.text();
-  check(!tt.includes('Spouses with different addresses'), '… and they leave the list');
+  check(!tt.includes('Couples with different addresses'), '… and they leave the list');
   await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-street', '3 Elm Lane');
   await s.page.click('[data-act="people:save"]'); await s.settle(); await s.page.waitForTimeout(200);
   await s.page.click('#modal [data-act="people:addrapart"]'); await s.settle();
   await s.go('people/p/p19'); await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-street', '4 Fir Road');
   await s.page.click('[data-act="people:save"]'); await s.settle(); await s.page.waitForTimeout(200);
-  check(!(await s.page.isVisible('#modal')) || !(await s.page.textContent('#modal')).includes('address too?'), 'They live apart: never asked about that couple again');
-  await s.go('people/families'); check(!(await s.text()).includes('Spouses with different addresses'), '… and not listed either');
+  check(!(await s.page.isVisible('#modal')) || !(await s.page.textContent('#modal')).includes('address too?'), 'Keep both addresses: never asked about that couple again');
+  await s.go('people/families'); check(!(await s.text()).includes('Couples with different addresses'), '… and not listed either');
   await finish(s);
 };

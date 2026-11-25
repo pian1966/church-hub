@@ -188,15 +188,16 @@ console.log('Spouses who should share an address');
   ok(!by('a1'), 'the same address written differently (capitals, full stops) is the same address');
   ok(by('b1') && by('b1').why === 'differ' && by('b1').from === null, 'two different addresses are flagged');
   ok(by('c1') && by('c1').why === 'missing' && by('c1').from === 'c1' && by('c1').to === 'c2', 'one spouse with no address: flagged, copying from the one who has it');
-  ok(!by('d1'), 'spouses who live apart are not flagged');
-  ok(!by('e1'), 'partners are not flagged (they may live apart)');
+  ok(!by('d1'), 'couples set to keep two addresses are not flagged');
+  ok(by('e1') && by('e1').why === 'differ', 'partners are checked too');
   ok(!by('f1'), 'a spouse who has died is not flagged');
   ok(!by('g1'), 'two spouses with no address at all: nothing to compare');
-  ok(mm.length === 2, 'only the two that need attention');
+  ok(mm.length === 3, 'only the three that need attention');
   const so = id => HS.spouseToOffer(ppl.find(x => x.id === id), ppl, fams);
   ok(so('b1') && so('b1').id === 'b2', 'after b1 changes address: offer it to b2');
   ok(so('c1') && so('c1').id === 'c2', 'also when the spouse has no address yet');
-  ok(!so('a1') && !so('d1') && !so('e1') && !so('f1'), 'nothing to offer when it is the same, they live apart, partners, or the spouse has died');
+  ok(so('e1') && so('e1').id === 'e2', 'partners are offered it too');
+  ok(!so('a1') && !so('d1') && !so('f1'), 'nothing to offer when it is the same, they were set to keep two addresses, or the spouse has died');
   ok(!so('c2'), 'nobody to offer to when the person has no address themselves');
 }
 

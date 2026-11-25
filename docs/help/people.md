@@ -35,16 +35,16 @@ Open the person, tap **Edit details**, and type or paste the code into **Google 
 G7J3+Q4Q Howick). To find it, press and hold the spot in Google Maps and copy the code shown. Save. On the person's page the code
 shows under their address, and anyone who can see the address can tap it to open that exact spot in Google Maps.
 
-## What if a husband and wife have different addresses?
+## What if a husband and wife (or partners) have different addresses?
 For: Administrators, Pastors
-Also asked: Spouses at different addresses. Change my wife's address too. Move a married couple. Couple lives apart.
+Also asked: Spouses at different addresses. Change my wife's address too. Partners at different addresses. Keep two addresses. Couple lives apart.
 
-Married couples normally share one home address. When you change someone's address in **Edit details** and **Save**, and
-they have a spouse whose address is different (or missing), Church & Trellis asks **Change … address too?** Tap **Yes, change …
-address** to give them the same address, **No, leave it** to keep them different, or **They live apart** (for example one is in
-a care home) so it never asks about that couple again. Nothing changes unless you say yes. Under **People** → **Households**,
-**Spouses with different addresses** lists every married couple whose addresses don't match, and your to-do list on People
-counts them. Partners (not married) aren't checked.
+Married couples and partners normally share one home address. When you change someone's address in **Edit details** and
+**Save**, and their spouse or partner has a different address (or none), Church & Trellis asks **Change … address too?**
+Tap **Yes, change … address** to give them the same address, or **No, leave it** to keep them different this time. Tap
+**Keep both addresses** when the two should always have their own (for example one is in a care home): Church & Trellis
+never asks about that couple again. Nothing changes unless you say yes. Under **People** → **Households**, **Couples with
+different addresses** lists every couple whose addresses don't match, and your to-do list on People counts them.
 
 ## Where do I record a married woman's maiden name?
 For: Administrators, Pastors

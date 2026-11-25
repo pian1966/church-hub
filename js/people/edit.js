@@ -504,10 +504,10 @@
   function spouseAddressOffer(p, before) {
     if (!p || !HS.hasAddress(p) || HS.addressKey(p.address) === before) return;
     var sp = HS.spouseToOffer(p, S.list('people'), S.list('families')); if (!sp) return;
-    H.modal(H.dialogHead(T('Change {name}’s address too?', { name: H.name(sp) }), T('Married couples normally share one home address.')) +
+    H.modal(H.dialogHead(T('Change {name}’s address too?', { name: H.name(sp) }), T('Married couples and partners normally share one home address.')) +
       '<div class="dlg-body"><p><b>' + esc(H.name(p)) + ':</b> ' + esc(P.addrText(p)) + '</p><p><b>' + esc(H.name(sp)) + ':</b> ' + esc(P.addrText(sp)) + '</p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('No, leave it') + '</button>' +
-      '<button class="btn" data-act="people:addrapart" data-a="' + p.id + '" data-b="' + sp.id + '">' + T('They live apart') + '</button>' +
+      '<button class="btn" data-act="people:addrapart" data-a="' + p.id + '" data-b="' + sp.id + '">' + T('Keep both addresses') + '</button>' +
       '<button class="btn primary" data-act="people:addrcopy" data-from="' + p.id + '" data-to="' + sp.id + '">' + esc(T('Yes, change {name}’s address', { name: H.name(sp) })) + '</button></div>', T('Same address for both?'));
   }
   Object.assign(P.actions, {

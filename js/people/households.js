@@ -214,18 +214,18 @@
 
   /** One address as short text for the screen. */
   function addrText(p) { var l = P.addressLines(p); return l.length ? l.join(', ') : T('No address'); }
-  /** Households page: married couples whose home addresses differ, or where only one has an address. Nothing changes until you choose. */
+  /** Households page: couples (married or partners) whose home addresses differ, or where only one has an address. Nothing changes until you choose. */
   function addressPanel(only) {
     var list = addressMismatches().filter(function (c) { return !only || only.indexOf(c.familyId) >= 0; }); if (!list.length) return '';
-    return '<section class="panel" id="spouse-addresses" style="margin-bottom:16px"><h2 style="margin:0 0 4px">' + T('Spouses with different addresses') + '</h2>' +
-      '<p class="hint" style="margin:0 0 10px">' + T('Married couples normally share one home address. Choose which address is right, or say they live apart (for example one is in a care home). Nothing changes until you choose.') + '</p>' +
+    return '<section class="panel" id="spouse-addresses" style="margin-bottom:16px"><h2 style="margin:0 0 4px">' + T('Couples with different addresses') + '</h2>' +
+      '<p class="hint" style="margin:0 0 10px">' + T('Married couples and partners normally share one home address. Choose which address is right, or choose “Keep both addresses” if they should be different (for example, one is in a care home). Nothing changes until you choose.') + '</p>' +
       '<div class="list">' + list.map(function (c) {
         var a = S.get('people', c.a), b = S.get('people', c.b);
         var btn = function (from, to) { return '<button class="btn small" data-act="people:addrcopy" data-from="' + from.id + '" data-to="' + to.id + '">' + esc(T('Use {name}’s address for both', { name: H.name(from) })) + '</button>'; };
         return '<div class="item" style="align-items:flex-start;flex-wrap:wrap;gap:8px"><span class="grow" style="min-width:220px"><b><a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a> & <a href="#/people/p/' + b.id + '">' + esc(H.name(b)) + '</a></b>' +
           '<small>' + esc(H.name(a)) + ': ' + esc(addrText(a)) + '<br>' + esc(H.name(b)) + ': ' + esc(addrText(b)) + '</small></span>' +
           '<span class="btns">' + (c.from ? btn(S.get('people', c.from), S.get('people', c.to)) : btn(a, b) + btn(b, a)) +
-          '<button class="btn small" data-act="people:addrapart" data-a="' + c.a + '" data-b="' + c.b + '">' + T('They live apart') + '</button></span></div>';
+          '<button class="btn small" data-act="people:addrapart" data-a="' + c.a + '" data-b="' + c.b + '">' + T('Keep both addresses') + '</button></span></div>';
       }).join('') + '</div></section>';
   }
 
@@ -280,11 +280,11 @@
         S.put('people', q, 'Address: ' + H.name(q) + ' now has the same home address as ' + H.name(from));
         H.closeModal(); H.render(); H.toast(T('Saved: {a} and {b} now share one address', { a: H.name(from), b: H.name(q) }));
       },
-    addrapart: function (el) {   // they live apart: stop asking about their address
+    addrapart: function (el) {   // keep both addresses: stop asking about this couple's address
         if (!canCouples()) return;
         var a = S.get('people', el.dataset.a), b = S.get('people', el.dataset.b); if (!a || !b) return;
         var q = JSON.parse(JSON.stringify(a)); q.liveApart = (q.liveApart || []).filter(function (x) { return x !== b.id; }).concat([b.id]);
-        S.put('people', q, 'Address: ' + H.name(a) + ' and ' + H.name(b) + ' live apart (not asked about their address)');
+        S.put('people', q, 'Address: ' + H.name(a) + ' and ' + H.name(b) + ' keep two addresses (not asked about their address)');
         H.closeModal(); H.render(); H.toast(T('Got it – their addresses won’t be compared'));
       },
     notcouple: function (el) {

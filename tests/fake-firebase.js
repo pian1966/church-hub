@@ -222,6 +222,16 @@
         return c.robot && onlyChanges(b, a, ['status', 'note', 'have', 'haveNote', 'doneAt']);
       } },
     robotStatus: { read: function (c) { return may(c, 'import'); }, write: function (c) { return c.robot; } },
+    // How Church & Trellis is used (firestore.rules okUse): your own record; Administrators and Pastors read everyone's
+    appUse: { read: function (c, id) { return is(c, ['admin', 'pastor']) || (is(c, ANY) && isMe(c, id)); },
+      write: function (c, op, id, b, a) {
+        if (op === 'delete') return is(c, ['admin']);
+        var keys = ['id', 'firstSeen', 'lastSeen', 'version', 'platform', 'days'], d = a || {};
+        return is(c, ANY) && isMe(c, id) && onlyKeys(d, keys) && keys.every(function (k) { return k in d; }) && d.id === id
+          && /^20\d\d-[01]\d-[0-3]\dT[0-9:.]{5,12}Z$/.test(d.lastSeen) && /^20\d\d-[01]\d-[0-3]\d$/.test(d.firstSeen)
+          && /^\d{1,4}\.\d{1,4}\.\d{1,4}$/.test(d.version) && ['android', 'app', 'browser'].indexOf(d.platform) >= 0
+          && !!d.days && typeof d.days === 'object' && !Array.isArray(d.days) && Object.keys(d.days).length <= 35;
+      } },
     elvantoFound: { read: function (c) { return may(c, 'import'); }, write: function (c, op) { return op === 'delete' ? may(c, 'import') : c.robot; } },
     guardians: { read: function (c, id, d) { return is(c, ['admin', 'pastor', 'kids']) || (!!d && mine(c, d.adultId)); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },
     noCollect: { read: function (c) { return is(c, ['admin', 'pastor', 'kids']); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },

@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'serveSwaps', 'awayAsks', 'crews', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos', 'studies', 'events', 'eventSignups'];
+    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'serveSwaps', 'awayAsks', 'crews', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos', 'studies', 'events', 'eventSignups', 'appUse'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church & Trellis as another role would see it. Nothing is saved while it is on. */
@@ -1580,7 +1580,22 @@ var Store = (function () {
       return doc(path).update({ deliveredBy: fb.firestore.FieldValue.arrayUnion(session.personId) }).catch(function (e) { console.error('markDelivered', e); });
     }
     function unshare(gid, pid) { return del('careGroups/' + gid + '/share/' + pid); }
-    function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
+    function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers', 'appUse'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
+    /** How Church & Trellis is used (appUse/{personId}; js/usage.js, js/usage-record.js; POPIA "Usage").
+     *  useAll: everyone's records, for the Usage page – Administrators and Pastors only, fetched when the page asks (never kept
+     *  listening, so a busy Sunday doesn't redraw their screens, and nobody else downloads them).
+     *  useSave: the person's own record, read and written in one step (two devices of the same person don't lose each other's
+     *  counts). build(stored or null) gives the record to write. Quiet: a refusal or no signal is not shown to anyone. */
+    function useAll() {
+      return fs.collection('appUse').get().then(function (snap) { return snap.docs.map(function (d) { var o = d.data() || {}; o.id = d.id; return o; }); });
+    }
+    function useSave(pid, build) {
+      if (!session || !pid || previewRole) return Promise.resolve(false);
+      var ref = doc('appUse/' + pid);
+      return fs.runTransaction(function (tx) {
+        return tx.get(ref).then(function (snap) { tx.set(ref, build(snap.exists ? snap.data() : null)); });
+      }).then(function () { return true; }, function (e) { console.warn('usage', e && (e.code || e.message)); return false; });
+    }
     /** ID numbers: Administrators (and the person themself) only, fetched one at a time when someone asks to see one. */
     function idGet(pid) { return doc('idNumbers/' + pid).get().then(function (s) { return s.exists ? (s.data().value || '') : ''; }); }
     /** Every ID number at once, { personId: value } – only for an Administrator's advanced search on ID number (logged there). */
@@ -1700,7 +1715,7 @@ var Store = (function () {
       choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, picsGet: picsGet, picsSet: picsSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, useAll: useAll, useSave: useSave, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, picsGet: picsGet, picsSet: picsSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -1730,6 +1745,10 @@ var Store = (function () {
   return { careOnPeople: function () { return careOnPeople(settings()); }, aiReady: aiReady, ai: ai, stats: stats, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, load: load, reset: reset, list: list, get: get, find: find, put: put, remove: remove, purge: purge, audit: audit, uid: uid, now: now,
     settings: settings, setSettings: setSettings, setAttendeeCan: setAttendeeCan, ministers: ministers, rosterTeam: rosterTeam, setRosterExtra: setRosterExtra, brochures: brochures, setBrochures: setBrochures, isAdmin: isAdmin, isRector: isRector, setLibrarians: setLibrarians, requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan, leave: leave, saveLeave: saveLeave, setUser: setUser, onChange: onChange, exportAll: exportAll,
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
+    /** Usage (js/usage-record.js, js/mod-usage.js): everyone's records (live: Administrators and Pastors only; demo: none) and
+     *  the signed-in person's own record. Both resolve quietly – null / false when they can't. */
+    usageAll: function () { return LIVE && !offline() ? Live.useAll().catch(function () { return null; }) : Promise.resolve(null); },
+    usageSave: function (pid, build) { return LIVE && !offline() ? Live.useSave(pid, build) : Promise.resolve(false); },
     /** No internet (live mode only): Church & Trellis is view-only, showing the copy kept on this device. */
     offline: offline, OFFLINE_MSG: OFFLINE_MSG,
     /** The languages the signed-in person checks translations for (their access-list entry; none while viewing as someone else). */

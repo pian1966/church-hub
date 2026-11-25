@@ -102,4 +102,24 @@ console.log('How much each person uses it');
   ok(Usage.summary({ people: [P('a')], records: [], today, now, latest: '1' }).levels.a.n === 0, 'the summary carries the levels');
 }
 
+console.log('The record each app keeps');
+{
+  ok(Usage.partOf('#/rosters/2026-11') === 'rosters' && Usage.partOf('') === 'home' && Usage.partOf('#/') === 'home' && Usage.partOf('#/people/p/p12') === 'people', 'the part is the first word of the address');
+  ok(Usage.partOf('#/start') === '' && Usage.partOf('#/<script>') === '', 'anything that isn’t a part of the app is not counted');
+  ok(Usage.platformOf({ android: true, standalone: true }) === 'android' && Usage.platformOf({ standalone: true }) === 'app' && Usage.platformOf({}) === 'browser', 'Android app, home screen, browser');
+  const c = { id: 'p1', today, now: '2026-11-25T10:00:00.000Z', version: '0.118.0', platform: 'app' };
+  const r = Usage.merge(null, { [today]: { n: 1, v: { rosters: 2, evil: 5 } } }, c);
+  ok(r.id === 'p1' && r.firstSeen === today && r.lastSeen === c.now && r.version === '0.118.0' && r.platform === 'app', 'a first record');
+  ok(r.days[today].n === 1 && r.days[today].v.rosters === 2 && !('evil' in r.days[today].v), 'counts the parts, not anything else');
+  ok(Object.keys(r).sort().join() === 'days,firstSeen,id,lastSeen,platform,version', 'only the fields the rules allow');
+  const prev = { id: 'p1', firstSeen: '2026-09-01', days: { [today]: { n: 2, v: { rosters: 1, people: 1 } }, '2026-10-21': { n: 1, v: {} }, '2026-10-22': { n: 1, v: {} }, 'junk': { n: 4 } }, secret: 'x' };
+  const m = Usage.merge(prev, { [today]: { n: 0, v: { rosters: 3 } }, '2026-11-24': { n: 1, v: { me: 1 } } }, c);
+  ok(m.firstSeen === '2026-09-01' && m.days[today].n === 2 && m.days[today].v.rosters === 4 && m.days[today].v.people === 1 && m.days['2026-11-24'].v.me === 1, 'adds to what is stored');
+  ok(!m.days['2026-10-21'] && !!m.days['2026-10-22'] && !m.days.junk && !('secret' in m), 'keeps only the last 35 days, real dates, and nothing else');
+  ok(Usage.merge({ days: { [today]: { n: -5, v: { me: 1e9 } } } }, {}, c).days[today].n === 0 && Usage.merge({ days: { [today]: { n: 1, v: { me: 1e9 } } } }, {}, c).days[today].v.me === 9999, 'counts are whole numbers within limits');
+  const big = {}; for (let i = 0; i < 60; i++) big[new Date(Date.parse(today) - i * 864e5).toISOString().slice(0, 10)] = { n: 1, v: {} };
+  ok(Object.keys(Usage.merge({ days: big }, {}, c).days).length === 35, 'never more than 35 days (the rules allow no more)');
+  ok(Usage.merge({ firstSeen: '2027-01-01' }, {}, c).firstSeen === today, 'a first day in the future is put right');
+}
+
 if (fails) { console.log('\n' + fails + ' failed'); process.exit(1); } else console.log('\nAll passed');

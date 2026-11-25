@@ -1,5 +1,12 @@
 # Usage dashboard – the part for Opus
 
+**Done in 0.118.0 (Opus, 25 Nov 2026)**, in the same pull request as the page (#341). The Rector chose: Administrators and Pastors
+see names; **no** opt-out switch; the level per person stays as built. Built: `appUse` rules (`firestore.rules` okUse), `js/store.js`
+(`usageAll` fetched only when the Usage page or a person's page asks – not kept listening; `usageSave` in a transaction; purge),
+the writer `js/usage-record.js`, `Usage.merge`/`partOf`/`platformOf` (tested), the POPIA section "How Church & Trellis is used", the help
+answer for everyone, rule tests and the browser test. One change from the plan below: a person may read back **their own** record (so two
+devices add to it instead of overwriting each other). Kept below as the record of what was asked.
+
 **Model: Senior (Opus).** Sonnet built the page (0.118.0). Recording usage means a new collection, `firestore.rules`, `js/store.js`
 and who may read it, so by `docs/architecture/MODELS.md` rule 1 a lighter model must not do it. **Two decisions are waiting for the
 Rector (below): ask him before building the parts that depend on them.**

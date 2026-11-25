@@ -4,8 +4,8 @@
  * What it reads – one record per person who has opened the app, in the collection `appUse` (the record's id is the person's id):
  *   { id, firstSeen: 'YYYY-MM-DD', lastSeen: 'YYYY-MM-DDTHH:MM:SSZ', version: '0.117.13', platform: 'android' | 'app' | 'browser',
  *     days: { 'YYYY-MM-DD': { n: sessions that day, v: { <part id>: times it was opened } } } }      (the writer keeps the last 35 days)
- * plus the people records (category, active, appFirstSeen, details.appInvited). Who writes the records, and who may read them,
- * is for the senior model: docs/architecture/handover/usage-opus.md.
+ * plus the people records (category, active, appFirstSeen, details.appInvited). Each person's own app writes their record
+ * (js/usage-record.js, through merge() below); only Administrators and Pastors may read everyone's (firestore.rules, appUse).
  *
  * Privacy: every number except `onNow` and `notOn` is a count. The part counts never say who used what.
  * `onNow` and `notOn` carry person ids – the page shows them to Administrators and Pastors only.
@@ -176,6 +176,40 @@ var Usage = (function () {
     return { counts: c, on: on, slipping: slipping };
   }
 
+
+  /* ---------- the record each person's own app keeps (written by js/usage-record.js) ---------- */
+  /** The parts that are counted: the first part of the address (#/rosters/... → rosters). Anything else (a typo, an old link) is not. */
+  var PART_IDS = ['home', 'me', 'people', 'rosters', 'leave', 'groups', 'care', 'life', 'leaders', 'messages', 'events', 'board', 'market',
+    'library', 'archive', 'help', 'about', 'settings', 'privacy', 'import', 'words', 'support', 'usage'];
+  var MAX_COUNT = 9999;
+  /** The part an address opens: 'rosters' for '#/rosters/2026-11', 'home' for '' or '#/', '' if it isn't one that is counted. */
+  function partOf(hash) {
+    var id = String(hash || '').replace(/^#\/?/, '').split(/[/?]/)[0] || 'home';
+    return PART_IDS.indexOf(id) >= 0 ? id : '';
+  }
+  /** How it was opened: the Android app, the web app on the home screen, or a browser tab. */
+  function platformOf(o) { return o && o.android ? 'android' : o && o.standalone ? 'app' : 'browser'; }
+  /** A whole number between 0 and MAX_COUNT. */
+  function count(x) { x = Math.floor(Number(x) || 0); return x < 0 ? 0 : x > MAX_COUNT ? MAX_COUNT : x; }
+  /** The record after adding what this device gathered since its last write.
+   *  prev: the record as stored (or null); add: { 'YYYY-MM-DD': { n: sessions, v: { part: times } } };
+   *  c: { id, today, now (ISO time), version, platform }. Only counted parts, whole numbers and the last KEEP days are kept –
+   *  the same shape the database rules check (firestore.rules okUse). */
+  function merge(prev, add, c) {
+    var from = back(c.today, KEEP - 1), out = { id: c.id, firstSeen: (prev && /^\d{4}-\d{2}-\d{2}$/.test(prev.firstSeen || '') && prev.firstSeen <= c.today) ? prev.firstSeen : c.today,
+      lastSeen: c.now, version: String(c.version || '0.0.0'), platform: platformOf({ android: c.platform === 'android', standalone: c.platform === 'app' }), days: {} };
+    function put(src) {
+      Object.keys(src || {}).forEach(function (d) {
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(d) || d < from || d > c.today) return;
+        var x = src[d] || {}, o = out.days[d] || (out.days[d] = { n: 0, v: {} });
+        o.n = count(o.n + count(x.n));
+        Object.keys(x.v || {}).forEach(function (id) { if (PART_IDS.indexOf(id) >= 0) o.v[id] = count((o.v[id] || 0) + count(x.v[id])); });
+      });
+    }
+    put(prev && prev.days); put(add);
+    return out;
+  }
+
   /* ---------- everything the page needs ---------- */
   function summary(d) {
     var rec = d.records || [], today = d.today, lv = levels(d.people, rec, d.today), a = adoption(d.people, rec), act7 = active(rec, today, 7), act30 = active(rec, today, 30);
@@ -215,7 +249,7 @@ var Usage = (function () {
     return out;
   }
 
-  return { LEVELS: LEVELS, WINDOW: WINDOW, level: level, levels: levels, spread: spread, eligible: eligible, adoption: adoption, notOn: notOn, onNow: onNow, active: active, daily: daily, weekdays: weekdays, growth: growth,
+  return { PART_IDS: PART_IDS, partOf: partOf, platformOf: platformOf, merge: merge, LEVELS: LEVELS, WINDOW: WINDOW, level: level, levels: levels, spread: spread, eligible: eligible, adoption: adoption, notOn: notOn, onNow: onNow, active: active, daily: daily, weekdays: weekdays, growth: growth,
     compare: compare, versions: versions, platforms: platforms, sections: sections, summary: summary, demo: demo, ONLINE_MS: ONLINE_MS, KEEP: KEEP };
 })();
 if (typeof module !== 'undefined') module.exports = Usage;

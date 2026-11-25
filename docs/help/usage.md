@@ -34,3 +34,14 @@ For: Administrators, Pastors
 
 Who is on the app comes from the church's records, so it shows straight away. The rest (who is on now, the days, the versions and the
 parts) builds up as people open Church & Trellis. In the demo, made-up usage is shown so you can see what the page looks like.
+**Refresh** fetches the latest numbers.
+
+## Does Church & Trellis keep track of when I use it?
+For: Everyone
+Also asked: Is the app watching me. Who can see when I was on. Privacy of my usage. Can the pastor see if I use the app.
+
+Yes, a little, so the church can help people who haven't started and see which parts are worth improving. Church & Trellis notes
+when you last opened it, which version you have, how you opened it (the Android app, from your home screen or in a web browser), and
+for the last 35 days how many times you opened it and which parts – for example **Rosters** or **Messages**. It does **not** keep
+what you type, search for or read, or who you message. Only Administrators and Pastors can see it, and older days are dropped after
+35 days. It is deleted with the rest of your information if you ask the church to delete it.

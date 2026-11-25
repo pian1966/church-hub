@@ -14,17 +14,28 @@
     me: T('Me'), help: T('Help'), support: T('Subscription'), settings: T('Settings'), words: T('Translations'), privacy: T('Privacy'), import: T('Import'), about: T('About')
   };
   var memo = { v: null, out: null };
+  var live = { list: null, at: 0, asking: false, failed: false };   // everyone's records (Administrators and Pastors), fetched when needed
 
   function partName(id) { return NAMES[id] || id.charAt(0).toUpperCase() + id.slice(1); }
-  function records() {
-    if (!S.isLive()) return Usage.demo(S.list('people'), H.today(), Date.now(), ChurchHubVersion.version);
-    try { return S.list('appUse') || []; } catch (e) { return []; }
+  /** Fetches everyone's records when the page (or a person's page) needs them: at most once a minute, then redraws. */
+  function fetch(force) {
+    if (live.asking || (!force && live.list && Date.now() - live.at < 60000)) return;
+    live.asking = true;
+    S.usageAll().then(function (list) {
+      live.asking = false; live.at = Date.now(); live.failed = !list; if (list) live.list = list;
+      memo = { v: null, out: null };
+      if (/^#\/(usage|people\/p\/)/.test(location.hash)) H.render();   // only the pages that show it
+    });
   }
-  function data() {
+  function records(ask) {
+    if (!S.isLive()) return Usage.demo(S.list('people'), H.today(), Date.now(), ChurchHubVersion.version);
+    if (ask) fetch(false); return live.list || [];
+  }
+  function data(ask) {
     var v = S.version ? S.version() : '';
-    if (memo.out && memo.v === v && Date.now() - memo.at < 60000) return memo.out;
-    var rec = records(), out = { rec: rec, sum: Usage.summary({ people: S.list('people'), records: rec, today: H.today(), now: Date.now(), latest: ChurchHubVersion.version }) };
-    memo = { v: v, at: Date.now(), out: out }; return out;
+    if (memo.out && memo.v === v && Date.now() - memo.at < 60000 && (!S.isLive() || memo.list === live.list)) return memo.out;
+    var rec = records(ask), out = { rec: rec, sum: Usage.summary({ people: S.list('people'), records: rec, today: H.today(), now: Date.now(), latest: ChurchHubVersion.version }) };
+    memo = { v: v, at: Date.now(), out: out, list: live.list }; return out;
   }
 
   /* ---------- small pieces ---------- */
@@ -36,7 +47,7 @@
     return '<section class="panel u-card"><h2>' + esc(title) + '</h2>' + (lead ? '<p class="hint u-lead">' + esc(lead) + '</p>' : '') + body + '</section>';
   }
   function none(text) { return '<p class="empty">' + esc(text) + '</p>'; }
-  function waiting() { return none(T('Nothing recorded yet. This fills in as people open Church & Trellis.')); }
+  function waiting() { return none(S.isLive() && !live.list && !live.failed ? T('Loading…') : T('Nothing recorded yet. This fills in as people open Church & Trellis.')); }
   function stat(label, value, hint) { return '<div class="stat"><span>' + esc(label) + '</span><b>' + esc(value) + '</b>' + (hint ? '<small class="muted">' + esc(hint) + '</small>' : '') + '</div>'; }
 
   /** A horizontal bar for each item: [{ label, n, cls, note }]. The widest bar fills the track. */
@@ -153,7 +164,7 @@
   /** For a person's own page: their level, only for Administrators and Pastors, only for adults at the church. */
   function personMeter(p) {
     if (!allowed() || !p || !Usage.eligible(p)) return '';
-    var l = data().sum.levels[p.id]; return l && l.on ? meter(l) : '';
+    var l = data(true).sum.levels[p.id]; return l && l.on ? meter(l) : '';
   }
   function peopleById() { var by = {}; S.list('people').forEach(function (p) { by[p.id] = p; }); return by; }
   function nameSort(by) { return function (a, b) { return H.name(by[a]).localeCompare(H.name(by[b])); }; }
@@ -171,7 +182,7 @@
   }
 
   function render() {
-    var d = data(), s = d.sum;
+    var d = data(true), s = d.sum;
     return '<div class="page-head"><div><h1>' + T('Usage') + '</h1><p class="lead">' + T('How many people use Church & Trellis, who is on right now, and what they use most.') + '</p></div>' +
       '<div class="btns"><button class="btn" data-act="usage:refresh">' + T('Refresh') + '</button></div></div>' +
       (S.isLive() ? '' : '<p class="note info">' + T('This is made-up usage, to show what the page looks like. A real church sees its own numbers.') + '</p>') +
@@ -184,6 +195,8 @@
     id: 'usage', name: 'Usage', desc: 'Who uses Church & Trellis, how often and what for', icon: ICON, tint: '#0F766E', roles: ['admin', 'pastor'],
     stat: function () { var a = data().sum.adoption.partners; return a.total ? T('{n}% of Church Partners are on the app', { n: a.pct }) : T(this.desc); },
     render: render,
-    actions: { refresh: function () { memo = { v: null, out: null }; H.render(); } }
+    // Each person's own app notes which parts they open (js/usage-record.js) – everyone, not only those who may see this page
+    signedIn: function (u) { if (window.UsageRecord) UsageRecord.start(u); },
+    actions: { refresh: function () { memo = { v: null, out: null }; if (S.isLive()) fetch(true); else H.render(); } }
   });
 })();

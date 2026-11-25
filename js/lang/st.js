@@ -4404,7 +4404,7 @@ I18n.add('st', {
     "New position": "Boemo bo bocha",
     "optional": "ka boikhethelo",
     "Help": "Thuso",
-    "Getting started": "Ho qala",
+    "Finding your way around": "Ho fumana tsela ya hao",
     "Ask a question about using Church & Trellis": "Botsa potso mabapi le ho sebedisa Church & Trellis",
     "Ask a question about using Church & Trellis, or look through the help pages.": "Botsa potso mabapi le ho sebedisa Church & Trellis, kapa o shebe maqephe a thuso.",
     "Questions and answers about this part of Church & Trellis.": "Dipotso le dikarabo mabapi le karolo ena ya Church & Trellis.",

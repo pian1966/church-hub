@@ -23,7 +23,7 @@ var Help = (function () {
   'use strict';
   var TX = function (x) { return x; };   // marks a text that is translated where it is shown (tests/i18n.test.js looks for these)
   /** The help pages (docs/help/<file>.md) and the short name each is shown under. */
-  var PAGES = [['getting-started', TX('Getting started')], ['me', TX('Me')], ['rosters', TX('Rosters')], ['leave', TX('Leave')], ['care-groups', TX('Care Groups')],
+  var PAGES = [['getting-started', TX('Finding your way around')], ['me', TX('Me')], ['rosters', TX('Rosters')], ['leave', TX('Leave')], ['care-groups', TX('Care Groups')],
     ['midweek-groups', TX('Midweek Groups')], ['leadership', TX('Leadership')], ['archive', TX('Archives')], ['library', TX('Library')], ['messages', TX('Messages')],
     ['people', TX('People')], ['events', TX('Events')], ['community-board', TX('Community board')], ['marketplace', TX('Marketplace')],
     ['subscription', TX('Subscription')], ['privacy', TX('Privacy')], ['settings', TX('Settings')], ['translations', TX('Translations')]];

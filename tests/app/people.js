@@ -40,7 +40,7 @@ module.exports = async function (ctx) {
   docs = await s.docsNow(); check(JSON.stringify(docs['people/p16'].householdIds) === '["f3"]', 'a child can be added to another household');
   await s.go('people'); await s.page.fill('#pp-q', 'jacobs'); await s.page.waitForTimeout(500); t = await s.text();
   check(t.includes('Jacobs, Tim') && t.includes('Jacobs, Clare') && t.includes('Jacobs, Liam'), 'People search finds everyone in a family by the family’s name');
-  await s.page.evaluate(() => { Store.get('people', 'p14').preferredName = 'TJ'; });   // Tim Jacobs, known as TJ
+  await s.page.evaluate(() => { const p = JSON.parse(JSON.stringify(Store.get('people', 'p14'))); p.preferredName = 'TJ'; Store.put('people', p); }); await s.settle();   // Tim Jacobs, known as TJ – saved properly, so a late refresh of the list can't undo it
   await s.go('people'); await s.page.fill('#pp-q', 'tim jacobs'); await s.page.waitForTimeout(500); const t1 = await s.text();
   await s.page.fill('#pp-q', 'tj'); await s.page.waitForTimeout(500); const t2 = await s.text();
   check(t1.includes('Jacobs, TJ (Tim)') && t2.includes('Jacobs, TJ (Tim)'), 'People search finds someone by first name and by what they are known as');

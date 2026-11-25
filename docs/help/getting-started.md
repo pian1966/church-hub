@@ -1,4 +1,4 @@
-# Getting started
+# Finding your way around
 
 ## Where do I find help? How do I ask a question?
 For: Everyone

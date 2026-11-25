@@ -63,7 +63,7 @@ module.exports = async function (ctx) {
   }));
   await s.go('home'); await s.page.waitForSelector('main h1');
   const week = (await s.page.textContent('.cel-week-card').catch(() => '')) || '';
-  check(/Birthdays this week/.test(week) && /Clare Jacobs/.test(week), 'a Pastor sees Birthdays this week on Home');
+  check(/Birthdays and anniversaries this week/.test(week) && /Clare Jacobs/.test(week), 'a Pastor sees Birthdays and anniversaries this week on Home');
   check(/May be a hard day/.test(week), '…and, as a Pastor, someone whose husband or wife died on this day');
   check(!/Happy/.test(week), '…which is never a celebration');
   await s.settle();

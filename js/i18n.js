@@ -32,7 +32,7 @@ var I18n = (function () {
     ['st-LS', 'Sesotho (Lesotho)', 'Sesotho (Lesotho)', ['Africa'], 'st']
   ];
   /** The word files, one per part of the app (js/i18n/<area>.js); index.html loads each after this file. */
-  var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'life', 'leaders', 'archive', 'library', 'messages', 'privacy', 'import', 'settings', 'board', 'market', 'support', 'tips', 'events', 'help', 'health'];
+  var AREAS = ['common', 'people', 'profile', 'edit', 'households', 'search', 'rosters', 'leave', 'me', 'care', 'life', 'leaders', 'archive', 'library', 'messages', 'privacy', 'import', 'settings', 'board', 'market', 'support', 'tips', 'events', 'help', 'health', 'usage'];
   // A language file is fetched again only when its contents change: its fingerprint (js/file-versions.js, made by
   // tools/stamp-files.js) is in its address. Without one (an old page), the version number, as before.
   var PACK_VERSION = 9, loading = {}, onLoad = [];

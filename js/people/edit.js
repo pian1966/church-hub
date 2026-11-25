@@ -55,7 +55,7 @@
   }
   /** Live warning in the Add / Edit window: who this may already be. Blocks saving for very likely duplicates. */
   function typedPerson() {
-    var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, un = function (v) { return /^(unknown|not known)$/i.test(v) || v.toLowerCase() === T('unknown').toLowerCase() ? '' : v; };
+    var g = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, un = function (v) { return P.isUnknownWord(v) ? '' : v; };
     var fr = document.getElementById('pf-frole'), fam = g('pf-fam');
     return { id: g('pf-id'), firstName: g('pf-first'), lastName: g('pf-last'), preferredName: g('pf-pref'), email: un(g('pf-email')), mobile: un(g('pf-mobile')),
       birthDate: g('pf-birth'), familyRole: fr ? fr.value : '', familyId: fam === '__new' ? '' : fam, address: { street: g('pf-street') } };
@@ -104,6 +104,39 @@
   }
 
   var LEFT = 'M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3M10 17l-5-5 5-5M5 12h11';   // a door with an arrow going out
+  /** An example number for the box's grey hint: South African style at a South African church, otherwise the country's dialling code. */
+  function mobileExample() {
+    var c = Countries.church(S.settings());
+    return !c || c.code === 'ZA' ? '082 123 4567' : '+' + String(c.dial).replace(/^\+/, '') + ' …';
+  }
+  /** Email or Mobile in Edit details: the label with a small “Not known” button on its line; when it is not known, the box is
+   *  swapped for a calm panel (with “Add it”) and a hidden box holds the answer. The visible box never holds a fake word. */
+  function contactField(id, label, type, autocomplete, p, panelWords, example) {
+    var flag = id === 'pf-email' ? 'emailUnknown' : 'mobileUnknown', key = id === 'pf-email' ? 'email' : 'mobile';
+    var word = P.isUnknownWord(p[key]), unknownNow = !!p[flag] || word, real = word ? '' : (p[key] || '');
+    return '<div class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="' + id + '-f">' +
+      '<div class="field-head"><label for="' + id + '">' + F(label) + '</label>' +
+      '<button type="button" class="nk-btn" data-act="people:unknown" data-for="' + id + '" aria-controls="' + id + '" aria-pressed="false"' + (unknownNow || real ? ' hidden' : '') + '>' + T('Not known') + '</button></div>' +
+      '<input id="' + id + '" type="' + type + '" value="' + esc(real) + '" data-was="' + esc(real) + '" autocomplete="' + autocomplete + '" placeholder="' + esc(example) + '"' + (unknownNow ? ' hidden' : '') + '>' +
+      '<div class="nk-panel" id="' + id + '-nk" role="status"' + (unknownNow ? '' : ' hidden') + '><span class="nk-q" aria-hidden="true">?</span><span class="nk-t">' + T(panelWords) + '</span>' +
+      '<button type="button" class="link nk-add" data-act="people:known" data-for="' + id + '">' + T('Add it') + '</button></div>' +
+      '<input type="hidden" id="' + id + '-unknown" value="' + (unknownNow ? '1' : '') + '">' +
+      '<small id="' + id + '-dup" class="dup-hint" role="status" aria-live="polite" hidden></small></div>';
+  }
+  /** Show or hide the “not known” panel for 'pf-email' / 'pf-mobile'. quietly = while the window opens: no focus move, no event. */
+  function nkShow(id, on, quietly) {
+    var inp = document.getElementById(id), nk = document.getElementById(id + '-nk'), flag = document.getElementById(id + '-unknown'), btn = document.querySelector('.nk-btn[data-for="' + id + '"]');
+    if (!inp || !nk || !flag) return;
+    if (on) inp.value = '';
+    flag.value = on ? '1' : ''; inp.hidden = on; nk.hidden = !on;
+    if (btn) btn.hidden = on || !!inp.value.trim();
+    var hint = document.getElementById(id + '-dup'); if (hint && on) { hint.hidden = true; hint.innerHTML = ''; }
+    var f = document.getElementById(id + '-f');
+    if (f) { f.querySelectorAll('.field-err').forEach(function (n) { n.remove(); }); inp.removeAttribute('aria-invalid'); }
+    if (quietly) return;
+    var t = on ? nk.querySelector('.nk-add') : inp; if (t) t.focus({ preventScroll: true });   // focus first, then one change (saving as you go puts the cursor back where it was)
+    flag.dispatchEvent(new Event('change', { bubbles: true }));
+  }
   function editDialog(p) {
     var isNew = !p; p = p || { firstName: '', lastName: '', preferredName: '', email: '', mobile: '', birthDate: '', category: '', familyId: '', familyRole: '', appRole: Store.defaultRole() };
     var admin = H.can('*'), me = isMe(p);
@@ -121,8 +154,8 @@
       '<div id="pf-dup" class="note warn" role="status" aria-live="polite" hidden style="margin:0 0 12px"></div>' +
       '<div class="two"><label class="field">' + F('Known as') + '<input id="pf-pref" value="' + esc(p.preferredName || '') + '"></label>' +
       (!me || admin ? '<label class="field">' + F('Middle name') + '<input id="pf-middle" value="' + esc(p.middleName || '') + '" autocomplete="additional-name"></label>' : '') + '</div>' +
-      '<div class="two"><label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-email-f">' + F('Email') + '<input id="pf-email" type="email" value="' + esc(p.email || (p.emailUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.email || '') + '" autocomplete="email" placeholder="' + esc(T('Not known? Choose “{word}” below', { word: T('Not known') })) + '"><small id="pf-email-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-email">' + T('Not known') + '</button></label>' +
-      '<label class="field' + (p.familyRole === 'child' ? '' : ' req') + '" id="pf-mobile-f">' + F('Mobile') + '<input id="pf-mobile" type="tel" value="' + esc(p.mobile || (p.mobileUnknown ? T('unknown') : '')) + '" data-was="' + esc(p.mobile || '') + '" autocomplete="tel" placeholder="' + esc(T('Not known? Choose “{word}” below', { word: T('Not known') })) + '"><small id="pf-mobile-dup" class="dup-hint" role="status" aria-live="polite" hidden></small><button type="button" class="chip-unknown" data-act="people:unknown" data-for="pf-mobile">' + T('Not known') + '</button></label></div>' +
+      '<div class="two">' + contactField('pf-email', 'Email', 'email', 'email', p, 'Email not known', 'name@example.com') +
+      contactField('pf-mobile', 'Mobile', 'tel', 'tel', p, 'Mobile not known', mobileExample()) + '</div>' +
       (!me || admin ? '<div class="two"><label class="field">' + F('Birthday') + '<input id="pf-birth" type="date" max="' + H.today() + '" value="' + esc(p.birthDate || '') + '"><small id="pf-birth-n" class="live-n" aria-live="polite"></small></label>' +
         '<label class="field req">' + F('Category') + '<select id="pf-cat">' + (p.category ? '' : '<option value="" selected>' + T('Choose…') + '</option>') + CATS.map(function (c) { return '<option value="' + esc(c) + '"' + (p.category === c ? ' selected' : '') + '>' + esc(T(c)) + '</option>'; }).join('') + '</select></label></div>' +
         '<div class="two" id="pf-partner-f"' + (p.category === 'Church Partner' ? '' : ' hidden') + '><label class="field">' + F('Date accepted as Church Partner') + '<input id="pf-psince" type="date" max="' + H.today() + '" value="' + esc(p.partnerSince || '') + '"></label>' +
@@ -151,7 +184,7 @@
             return '<label class="field"><span id="pf-postcode-l">' + T(c ? c.postcodeLabel : 'Postal code') + '</span><input id="pf-postcode" value="' + esc(a.postcode || '') + '" autocomplete="postal-code"></label></div>' +
               '<div class="two"><label class="field"><span id="pf-region-l">' + T(c ? c.regionLabel : 'Province, state or region') + '</span><span id="pf-region-w">' + regionControl(c, a.province || '') + '</span></label>' +
               '<label class="field">' + F('Country') + countrySelect(a.country || '') + '</label></div>' +
-              '<label class="field">' + F('Google Maps Plus Code') + '<input id="pf-pluscode" value="' + esc(a.plusCode || '') + '" placeholder="G7J3+Q4Q Howick" autocapitalize="characters" autocomplete="off"><small>' + T('In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.') + '</small></label></fieldset>';
+              '<label class="field">' + F('Google Maps Plus Code') + '<input id="pf-pluscode" value="' + esc(a.plusCode || '') + '" placeholder="' + T('e.g. G7J3+Q4Q Howick') + '" autocapitalize="characters" autocomplete="off"><small>' + T('In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.') + '</small></label></fieldset>';
           })(p.address || {}) +
         '' : '') +
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
@@ -177,10 +210,10 @@
     if (sb && sf) sb.addEventListener('change', function () { sf.hidden = !sb.checked; });
     var sameBox = document.getElementById('pf-sw-same');
     if (sameBox) sameBox.addEventListener('change', function () { document.getElementById('pf-sw-days').hidden = sameBox.checked; });
-    ['pf-email', 'pf-mobile'].forEach(function (id) {   // the “Not known” button shows ticked while the box says unknown
-      var i = document.getElementById(id), b = document.querySelector('.chip-unknown[data-for="' + id + '"]'); if (!i || !b) return;
-      var sync = function () { var v = i.value.trim(), on = /^(unknown|not known)$/i.test(v) || v.toLowerCase() === T('unknown').toLowerCase(); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on ? 'true' : 'false'); b.hidden = !!v && !on; };   // gone once a real address or number is typed
-      i.addEventListener('input', sync); sync();
+    ['pf-email', 'pf-mobile'].forEach(function (id) {   // “Not known” shows only while the box is empty; a typed word like “unknown” becomes the panel when they leave the box
+      var i = document.getElementById(id), b = document.querySelector('.nk-btn[data-for="' + id + '"]'); if (!i || !b) return;
+      i.addEventListener('input', function () { b.hidden = !!i.value.trim(); });
+      i.addEventListener('change', function () { if (P.isUnknownWord(i.value)) nkShow(id, true); });
     });
     wireCountry(); if (window.CareUI) CareUI.wireFields();
     var pc = document.getElementById('pf-cat'), pcf = document.getElementById('pf-partner-f');
@@ -346,12 +379,8 @@
           return { message: made.length ? TN('{n} person added to People.', '{n} people added to People.', made.length) : T('Nobody new to add.') };
         } });
     },
-    unknown: function (el) {   // “Not known” beside Email / Mobile: one tap instead of typing the word; tap again to type it after all
-      var i = document.getElementById(el.dataset['for']); if (!i) return;
-      var u = T('unknown'), was = i.value.trim().toLowerCase() === u.toLowerCase();
-      i.value = was ? '' : u; if (was) i.focus();
-      i.dispatchEvent(new Event('input', { bubbles: true })); i.dispatchEvent(new Event('change', { bubbles: true }));
-    },
+    unknown: function (el) { nkShow(el.dataset['for'], true); },   // “Not known” beside Email / Mobile (or in the error card)
+    known: function (el) { nkShow(el.dataset['for'], false); },    // “Add it”
     edit: function (el) { editDialog(S.get('people', el.dataset.id)); var f = el.dataset.focus && document.getElementById(el.dataset.focus); if (f) { f.focus(); f.scrollIntoView({ block: 'center' }); } },
     consent: function (el) { consentDialog(S.get('people', el.dataset.id)); },
     save: function () { H.autoForget(); savePerson(false); },   // Add person, or Done: everything checked, then the window closes
@@ -396,14 +425,17 @@
         var need = function (fieldId, msg) { if (g(fieldId) === '' && !dead) return fail(fieldId, msg); return false; };
         if (need('pf-cat', T('Please choose a category.')) || need('pf-fam', T('Tell us which household they are in, or choose “They live on their own”.')) ||
           need('pf-frole', T('Please choose whether they are an adult or a child in the household.'))) return;
-        // Email and mobile must be filled in for adults: the real one, or "unknown" (saved as not known, never as the word)
-        var isChild = (g('pf-frole') !== null ? g('pf-frole') : p.familyRole) === 'child';
-        var unknown = function (v) { v = (v || '').trim().toLowerCase(); return v === 'unknown' || v === T('unknown').toLowerCase() || v === 'not known'; };
-        var em = g('pf-email'), mo = g('pf-mobile');
-        if (!isChild && !em && !dead) { fail('pf-email', T('Please fill in the email address, or choose “{word}”.', { word: T('Not known') })); return; }
-        if (!isChild && !mo && !dead) { fail('pf-mobile', T('Please fill in the mobile number, or choose “{word}”.', { word: T('Not known') })); return; }
-        if (em && !unknown(em) && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { fail('pf-email', T('That email address doesn’t look right.')); return; }
-        if (mo && !unknown(mo) && !/\d{3}/.test(mo)) { fail('pf-mobile', T('That mobile number doesn’t look right.')); return; }
+        // Email and mobile must be filled in for adults: the real one, or “Not known” (saved as a flag, never as a word). A typed word counts as Not known; a real value wins over the flag.
+        var isChild = (g('pf-frole') !== null ? g('pf-frole') : p.familyRole) === 'child', mine = !!id && isMe(p);
+        var em = g('pf-email'), mo = g('pf-mobile'), emWord = P.isUnknownWord(em), moWord = P.isUnknownWord(mo);
+        if (emWord) em = ''; if (moWord) mo = '';
+        var emU = emWord || (g('pf-email-unknown') === '1' && !em), moU = moWord || (g('pf-mobile-unknown') === '1' && !mo);
+        if (!quiet) {   // while saving as you go, a box still waiting for an answer doesn't stop the rest from being saved; Done and closing the window do ask
+          if (!isChild && !em && !emU && !dead) { fail('pf-email', T(mine ? 'Add your email address, or choose Not known.' : 'Add their email address, or choose Not known.')); return; }
+          if (!isChild && !mo && !moU && !dead) { fail('pf-mobile', T(mine ? 'Add your mobile number, or choose Not known.' : 'Add their mobile number, or choose Not known.')); return; }
+        }
+        if (em && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)) { fail('pf-email', T('That email address doesn’t look right.')); return; }
+        if (mo && !/\d{3}/.test(mo)) { fail('pf-mobile', T('That mobile number doesn’t look right.')); return; }
         // Duplicates: very likely matches can't be saved, unless an Administrator has checked it's a different person
         var dups = dupMatches().filter(function (m) { return m.score >= 70; }), dupOk = document.getElementById('pf-dup-ok');
         if (dups.length && !(canDup() && dupOk && dupOk.checked)) {
@@ -411,9 +443,9 @@
           err.hidden = false; return;
         }
         p.firstName = g('pf-first'); p.lastName = g('pf-last'); p.preferredName = g('pf-pref');
-        p.email = unknown(em) ? '' : em; p.mobile = unknown(mo) ? '' : mo;
-        if (unknown(em)) p.emailUnknown = true; else delete p.emailUnknown;
-        if (unknown(mo)) p.mobileUnknown = true; else delete p.mobileUnknown;
+        p.email = em; p.mobile = mo;
+        if (emU) p.emailUnknown = true; else delete p.emailUnknown;
+        if (moU) p.mobileUnknown = true; else delete p.mobileUnknown;
         if (g('pf-birth') !== null) p.birthDate = g('pf-birth');
         if (g('pf-wed') !== null && !document.getElementById('pf-wed').disabled) {   // greyed out (e.g. Single): left as it was
           if (g('pf-wed') > H.today()) { fail('pf-wed', T('The wedding anniversary can’t be in the future.')); return; }

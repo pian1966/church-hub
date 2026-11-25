@@ -1,0 +1,49 @@
+/* Church & Trellis – the Usage page (js/mod-usage.js). One hue (teal) from dark to light for "more" to "less", grey for "none yet"; every chart
+ * has its numbers written beside it and a "See the numbers" table, so nothing relies on colour alone. */
+.u-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 340px), 1fr)); gap: 16px; align-items: start; margin-bottom: 14px; --u-on: #0F766E; --u-mid: #6DB7AF; --u-off: #D9D3CC; --u-old: #9FB5B2; }
+.u-card h2 { margin: 0; font-size: 17px; }
+.u-lead { margin: 4px 0 12px; }
+.u-sub { margin: 14px 0 6px; font-size: 13px; font-weight: 600; color: var(--muted); letter-spacing: .02em; }
+.u-hero { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.u-hero b { font-size: 38px; line-height: 1; color: var(--u-on); }
+.u-hero span { color: var(--muted); font-size: 14px; }
+.u-stack { display: flex; height: 14px; border-radius: 7px; overflow: hidden; gap: 2px; margin: 10px 0 8px; background: var(--surface); }
+.u-stack i { display: block; min-width: 0; }
+.u-stack .on, .u-legend .on::before { background: var(--u-on); }
+.u-stack .invited, .u-legend .invited::before { background: var(--u-mid); }
+.u-stack .none, .u-legend .none::before { background: var(--u-off); }
+.u-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 0; font-size: 13px; color: var(--muted); }
+.u-legend span::before { content: ''; display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+.u-legend b { color: var(--ink); margin-left: 2px; }
+.u-big { margin: 0 0 10px; font-size: 15px; } .u-big b { font-size: 34px; color: var(--u-on); margin-right: 4px; }
+.u-people { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+.u-people a { display: inline-flex; align-items: center; gap: 8px; padding: 4px 12px 4px 4px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); text-decoration: none; font-size: 14px; min-height: 40px; }
+.u-people a:hover { border-color: var(--u-on); }
+.u-stats { margin-bottom: 14px; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; } .u-stats .stat { padding: 10px 12px; } .u-stats .stat b { font-size: 24px; } .u-stats small { display: block; font-size: 11.5px; margin-top: 2px; } .u-stats .stat b { color: var(--u-on); }
+.u-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 10px; }
+.u-bars li { display: grid; grid-template-columns: minmax(84px, 36%) 1fr auto; align-items: center; gap: 4px 10px; font-size: 14px; }
+.u-bars .u-name { overflow-wrap: anywhere; }
+.u-track { height: 10px; background: var(--surface-2); border-radius: 5px; overflow: hidden; }
+.u-track i { display: block; height: 100%; background: var(--u-on); border-radius: 0 5px 5px 0; }
+.u-track i.old { background: var(--u-old); }
+.u-bars b { min-width: 2ch; text-align: right; }
+.u-bars small { grid-column: 2 / 4; color: var(--muted); font-size: 12.5px; margin-top: -4px; }
+.u-cols { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding-top: 6px; }
+.u-col { flex: 1; min-width: 0; height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 3px; }
+.u-col i { display: block; width: 100%; max-width: 22px; min-height: 2px; background: var(--u-mid); border-radius: 4px 4px 0 0; }
+.u-col.hi i { background: var(--u-on); }
+.u-col small { font-size: 11px; color: var(--muted); } .u-val { font-size: 12px; font-weight: 600; min-height: 16px; }
+.u-col:hover i, .u-col:focus-within i { background: var(--accent); }
+.u-line { width: 100%; height: auto; display: block; }
+.u-axis { stroke: var(--line-strong); stroke-width: 1; } .u-ln { fill: none; stroke: var(--u-on); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.u-dot { fill: var(--surface); stroke: var(--u-on); stroke-width: 2; } .u-end { font-size: 12px; font-weight: 700; fill: var(--ink); }
+.u-nums { margin-top: 12px; font-size: 13px; } .u-nums summary { cursor: pointer; color: var(--accent-ink); font-weight: 600; min-height: 32px; display: flex; align-items: center; }
+.u-nums table { width: 100%; border-collapse: collapse; margin-top: 6px; } .u-nums th, .u-nums td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line-2); font-weight: 400; }
+.u-nums thead th { color: var(--muted); font-weight: 600; } .u-nums td:not(:first-child), .u-nums thead th:not(:first-child) { text-align: right; }
+.u-notOn { margin-bottom: 12px; }
+@media (prefers-reduced-motion: no-preference) { .u-track i, .u-col i, .u-stack i { transition: width .4s ease, height .4s ease; } }
+
+.u-lv { display: inline-flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink); white-space: nowrap; }
+.u-meter { display: inline-flex; gap: 3px; } .u-meter i { width: 8px; height: 8px; border-radius: 50%; background: var(--u-off, #D9D3CC); } .u-meter i.f { background: var(--u-on, #0F766E); }
+.u-lv.l5 .u-lbl { font-weight: 700; color: var(--u-on, #0F766E); } .u-lv.l0 .u-lbl, .u-lv.lx .u-lbl { color: var(--muted); }
+.badge-line .u-lv { margin-left: 6px; }

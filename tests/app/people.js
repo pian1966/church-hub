@@ -209,9 +209,9 @@ module.exports = async function (ctx) {
     const q = JSON.parse(JSON.stringify(Store.get('people', 'p19'))); q.familyId = ''; q.householdIds = []; Store.put('people', q); }); await s.settle();
   await s.go('people'); await s.go('people/search'); await s.page.click('[data-act="people:advreset"]');
   await s.page.fill('input.adv-v[data-i="0"]', 'Jacobs'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
-  await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'email'); await s.page.selectOption('#bk-v-0', 'Unknown');
+  await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'email'); await s.page.selectOption('#bk-v-0', 'Not known');
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
-  check((docs['details/p15'] || {}).emailUnknown === true && !(docs['details/p14'] || {}).emailUnknown && docs['people/p14'].email && tt.includes('already have an email address'), 'missing email → “Unknown” for those without one (shown as Unknown); anyone with an email is left alone');
+  check((docs['details/p15'] || {}).emailUnknown === true && !(docs['details/p14'] || {}).emailUnknown && docs['people/p14'].email && tt.includes('already have an email address'), 'missing email → “Not known” for those without one (shown as Not known); anyone with an email is left alone');
   await s.page.fill('input.adv-v[data-i="0"]', 'Peters'); await s.page.click('[data-act="people:advrun"]'); await s.page.check('#adv-selall');
   await s.page.click('#adv-bulk'); await s.page.selectOption('.bk-f[data-i="0"]', 'household'); await s.page.selectOption('#bk-v-0', { index: 1 });
   await s.page.click('[data-act="people:bulksave"]'); await s.page.click('[data-act="people:bulksave"]'); await s.settle(); docs = await s.docsNow();

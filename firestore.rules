@@ -1031,6 +1031,27 @@ service cloud.firestore {
     // Church & Trellis office only. Today the Subscription page keeps its choices in settings/church.
     match /subscription/{doc} { allow read, write: if false; }
 
+    // ---------- How Church & Trellis is used (js/usage.js, js/usage-record.js, js/mod-usage.js; POPIA "Usage") ----------
+    // appUse/{personId}: when a person last opened Church & Trellis, which version, how (the Android app, the home screen or a
+    // browser) and, for each of the last 35 days, how many times and which parts - counts only. Each person's own app writes only
+    // their own record and may read it back (to add to it); only Administrators and Pastors read everyone's. Administrators delete
+    // it with the person (purge). The day-by-day counts can't be checked one by one here: js/usage.js keeps them tidy.
+    function okUse(pid, d) {
+      return d.keys().hasOnly(['id', 'firstSeen', 'lastSeen', 'version', 'platform', 'days'])
+        && d.keys().hasAll(['id', 'firstSeen', 'lastSeen', 'version', 'platform', 'days'])
+        && d.id == pid
+        && d.firstSeen is string && d.firstSeen.matches('^20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]$')
+        && d.lastSeen is string && d.lastSeen.matches('^20[0-9][0-9]-[0-1][0-9]-[0-3][0-9]T[0-9:.]{5,12}Z$')
+        && d.version is string && d.version.matches('^[0-9]{1,4}[.][0-9]{1,4}[.][0-9]{1,4}$')
+        && d.platform in ['android', 'app', 'browser']
+        && d.days is map && d.days.size() <= 35;
+    }
+    match /appUse/{pid} {
+      allow read: if mine(pid) || isRole(['admin', 'pastor']);
+      allow create, update: if mine(pid) && okUse(pid, request.resource.data);
+      allow delete: if admin();
+    }
+
     // ---------- POPIA registers (Administrators, and Pastors with "privacy") ----------
     match /dsr/{id} { allow read, write: if may('privacy'); }
     match /breaches/{id} { allow read, write: if may('privacy'); }

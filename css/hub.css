@@ -1768,11 +1768,6 @@ html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk
 .profile-btns .btn, .badge-line .btn, #pf .btn, #pf .chip-unknown { font-family: inherit; font-size: 14.5px; font-weight: 600; }
 .btn.edit-main svg { opacity: 1; }
 
-/* "Not known" beside Email / Mobile */
-.chip-unknown { align-self: flex-start; width: fit-content; max-width: 100%; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 4px 12px; border-radius: 999px; border: 1px dashed var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-.chip-unknown:hover { border-color: var(--accent); color: var(--ink); }
-.chip-unknown.on { border-style: solid; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--ink); }
-.chip-unknown.on::before { content: "✓"; }
 
 /* Care Groups: find-as-you-type box above the groups */
 .cg-search { width: 100%; margin: 6px 0 8px; }
@@ -1788,7 +1783,6 @@ html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk
 .fe-act { margin-left: auto; padding: 5px 14px; border-radius: 999px; border: 0; background: var(--alert, #0B7BC4); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .field-err, .note.bad { animation: none; } }
 
-.chip-unknown[hidden] { display: none; }
 .fe-t { flex: 1 1 0; min-width: 0; }
 
 /* "Can't save" while saving as you go: the same friendly card as a box that needs attention, in the colour that clashes with the church's */
@@ -1796,3 +1790,14 @@ html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk
   background: var(--alert-soft, #E3F4FD); color: var(--alert-ink, #0A4F82); border: 1px solid color-mix(in srgb, var(--alert, #1086C6) 40%, var(--surface, #fff)); border-left: 4px solid var(--alert, #1086C6);
   box-shadow: 0 10px 28px color-mix(in srgb, var(--alert, #1086C6) 28%, transparent); }
 #autosaved.bad .as-ic { background: var(--alert, #1086C6); color: #fff; width: 24px; height: 24px; font-size: 15px; margin-top: 1px; }
+
+/* Edit details: “Not known” for an email or mobile – a button on the label's line, and a calm panel in place of the box */
+.field-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.field-head label { display: block; }
+.nk-btn { background: none; border: 0; padding: 0 2px; margin: -10px -2px; min-height: 44px; font: inherit; font-size: 14px; font-weight: 600; color: var(--accent-ink); cursor: pointer; border-radius: 8px; }
+.nk-btn:hover, .nk-btn:focus-visible { text-decoration: underline; }
+.nk-btn[hidden], .nk-panel[hidden], .field input[hidden] { display: none; }
+.nk-panel { box-sizing: border-box; display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 4px 0 12px; border: 1px dashed var(--line-strong); border-radius: 10px; background: var(--surface-2); color: var(--muted); font-weight: 400; font-size: 15px; }
+.nk-q { flex: none; display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--line-2); color: var(--muted); font-size: 13px; font-weight: 700; }
+.nk-t { flex: 1; min-width: 0; }
+.nk-add { margin-left: auto; flex: none; align-self: stretch; font-weight: 600; min-height: 0; padding: 0 10px; }

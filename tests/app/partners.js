@@ -83,7 +83,7 @@ module.exports = async function (ctx) {
   console.log('Name badges:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people');
   await s.page.click('[data-act="people:add"]'); await s.page.fill('#pf-first', 'Grace'); await s.page.fill('#pf-last', 'Newcombe');
-  await s.page.fill('#pf-email', 'unknown'); await s.page.fill('#pf-mobile', 'unknown'); await s.page.selectOption('#pf-cat', 'Attender');
+  await s.page.click('.nk-btn[data-for="pf-email"]'); await s.page.click('.nk-btn[data-for="pf-mobile"]'); await s.page.selectOption('#pf-cat', 'Attender');
   await fillHome(s); await s.page.selectOption('#pf-frole', 'adult'); await s.page.selectOption('#pf-marital', 'Single');
   check(await s.page.isVisible('#pf-badge'), 'Add a person: a box to tick for a name badge');
   await s.page.check('#pf-badge'); await s.page.check('#pf-dup-ok').catch(() => {}); await s.page.click('[data-act="people:save"]'); await s.settle(); docs = await s.docsNow();

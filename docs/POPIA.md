@@ -159,7 +159,7 @@ and those who have died are never invited. The QR code, poster and paper form ca
 
 ## Invitations to Church & Trellis
 - **What:** the date someone was invited to start using Church & Trellis (`appInvited`, kept with their details) and the day
-  they first signed in (`appFirstSeen`, on their record). Nothing about how often or when they use it afterwards.
+  they first signed in (`appFirstSeen`, on their record). How often they use it afterwards is under "How Church & Trellis is used" below.
 - **Purpose and basis:** helping everyone at the church get access to their rosters, groups and messages – the church's
   legitimate interest in running its ministry, as for the rest of the church record.
 - **Who sees it:** Administrators and Pastors (People → Invitations, the person's page, Advanced search). The person writes
@@ -458,6 +458,26 @@ nobody connects a Google account, and what is in the meeting or the document sta
   Church & Trellis keeps no recording. What was heard is matched to names **on the phone** (`NameList.rank`); nothing else is sent.
   People who'd rather not can type.
 
+## How Church & Trellis is used (the Usage page, 0.118.0; `js/usage.js`, `js/usage-record.js`, `js/mod-usage.js`)
+- **What is kept, per person (`appUse/{personId}`):** when they last opened Church & Trellis, the day they first did, which version
+  their phone or computer has, how they opened it (the Android app, the home screen or a browser), and for each of the **last 35 days**
+  how many times they opened it and which parts (People, Rosters, Messages…) – counts only. **Never** what they typed, searched for,
+  read or opened inside a part, who they messaged, where they were, or anything about their device beyond those three words.
+- **Purpose and basis:** so the church can see who hasn't started using Church & Trellis and help or invite them, notice people
+  who were using it and stopped (a possible pastoral need), know which parts are worth improving, and tell whether people need to
+  update. The church's legitimate interest in running its ministry and looking after its people, as for the rest of the church
+  record. The Rector decided (25 Nov 2026) that there is no switch to opt out; it is explained in Help and should be in the privacy notice.
+- **Who sees it:** Administrators and Pastors only, on the Usage page and – as a level from **Not on the app yet** to **Power user** –
+  on a person's page. That level is worked out on their own device from the counts; it is not stored. Roster coordinators, Children's
+  ministry and members cannot read anyone's record (the database rules); each person's own app may read and add to their own record only.
+  The page shows names only in **On right now**, **How much people use it** and **Church Partners not on the app yet**; the counts for
+  each part never say who.
+- **How long:** each record holds 35 days of counts; older days are dropped every time it is written. The record is deleted with the
+  person (delete on request, or Privacy → Retention after they leave).
+- **Gentle on data:** at most one small write every 4 minutes while the app is open and on screen, and none while it is put away,
+  offline, in the demo, or while an Administrator is viewing as someone else. The Usage page fetches the records only when it is opened.
+- **Not used for anything else:** nothing is sent to anyone automatically because of these numbers, and nothing goes to a third party.
+
 ## Help: ask a question (0.111.0; `js/help.js`, `js/mod-help.js`)
 - **Purpose:** so anyone can get a plain answer about using Church & Trellis without phoning the office. For everyone who is signed in.
 - **What is read:** the help pages in `docs/help/` – public text written for the church, no church data (the repository is public).
@@ -512,6 +532,7 @@ This document describes POPIA; churches elsewhere should check the same points a
 4. Train people with Pastor / Children's ministry access.
 5. Sign an operator agreement with the hosting provider (s21): accept Google's data processing terms for the Firebase project (see `FIREBASE-SETUP.md`).
 6. Decide who gets which access, and review the access list (People → App access) every few months.
+- Add a sentence to the privacy notice (Privacy → Privacy notice) saying that Church & Trellis notes when each person opens it and which parts, for Administrators and Pastors only, kept for 35 days (see "How Church & Trellis is used").
 
 ## Shared sign-in (one email address for a couple)
 - Several people with one email address share one sign-in and choose who they are after signing in. Whoever reads that inbox

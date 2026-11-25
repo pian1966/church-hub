@@ -17,8 +17,9 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.115';
+  var NEWS_FOR = '0.116';
   var NEWS = [
+    { date: '2026-11-25', who: ['admin', 'pastor'], text: TX('When you change someone’s home address, Church & Trellis now offers the same address to their husband or wife. People also lists married couples whose addresses don’t match, so they can be put right.') },
     { date: '2026-11-24', who: ['everyone'], not: ['attendee'], app: 'me', btn: ['Me', 'My details'], text: TX('Church Partners now see 🎂 or 💍 beside someone’s name in the church directory on their birthday or wedding anniversary (the day only). Don’t want yours shown? Turn it off on Me → My details.') },
     { date: '2026-11-24', who: ['pastor', 'admin', 'carer', 'lifelead'], text: TX('Pastors, carers and Midweek Group leaders now see Birthdays this week on Home. Pastors also see who may have a hard day, on the anniversary of a husband’s or wife’s death.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Birthdays and wedding anniversaries now get a little celebration: on your own day you see a card on Home and Me, and 🎂 or 💍 appears beside a name wherever the church already shows that date.') },

@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.116';
   var NEWS = [
+    { date: '2026-11-25', who: ['admin', 'pastor'], text: TX('Couples who aren’t married (partners) are now checked too, and you can always choose Keep both addresses when two people should have different ones.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('When something is missing on a person’s details, Church & Trellis now takes you straight to that box, with the problem shown right under it.') },
     { date: '2026-11-25', who: ['staffwork'], app: 'people', btn: ['People'], text: TX('Edit details is now the big button at the top of a person’s page, and a home address can carry a Google Maps Plus Code that anyone can tap to go straight to the spot.') },
     { date: '2026-11-25', who: ['admin', 'pastor'], text: TX('When you change someone’s home address, Church & Trellis now offers the same address to their husband or wife. People also lists married couples whose addresses don’t match, so they can be put right.') },

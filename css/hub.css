@@ -1764,7 +1764,7 @@ html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk
 .name-row .btn.sm { padding: 6px 14px; font-size: 14px; }
 
 /* "Not known" beside Email / Mobile */
-.chip-unknown { display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 4px 12px; border-radius: 999px; border: 1px dashed var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+.chip-unknown { align-self: flex-start; width: fit-content; max-width: 100%; display: inline-flex; align-items: center; gap: 6px; margin-top: 6px; padding: 4px 12px; border-radius: 999px; border: 1px dashed var(--line); background: var(--surface); color: var(--muted); font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
 .chip-unknown:hover { border-color: var(--accent); color: var(--ink); }
 .chip-unknown.on { border-style: solid; border-color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); color: var(--ink); }
 .chip-unknown.on::before { content: "✓"; }
@@ -1782,3 +1782,12 @@ html[data-mode=dark] .hero.line .hero-art .w { fill-opacity: 1; stroke: var(--lk
 .note.bad[hidden], .field-err[hidden] { display: none !important; }
 .fe-act { margin-left: auto; padding: 5px 14px; border-radius: 999px; border: 0; background: var(--alert, #0B7BC4); color: #fff; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .field-err, .note.bad { animation: none; } }
+
+.chip-unknown[hidden] { display: none; }
+.fe-t { flex: 1 1 0; min-width: 0; }
+
+/* "Can't save" while saving as you go: the same friendly card as a box that needs attention, in the colour that clashes with the church's */
+#autosaved.bad { width: max-content; max-width: min(calc(100% - 32px), 420px); border-radius: 16px; align-items: flex-start; padding: 12px 18px 12px 12px; font-size: 15px; line-height: 1.4; text-align: left;
+  background: var(--alert-soft, #E3F4FD); color: var(--alert-ink, #0A4F82); border: 1px solid color-mix(in srgb, var(--alert, #1086C6) 40%, var(--surface, #fff)); border-left: 4px solid var(--alert, #1086C6);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--alert, #1086C6) 28%, transparent); }
+#autosaved.bad .as-ic { background: var(--alert, #1086C6); color: #fff; width: 24px; height: 24px; font-size: 15px; margin-top: 1px; }

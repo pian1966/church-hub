@@ -44,7 +44,7 @@
   function dates(a) { return H.fmt(a.from, a.to === a.from) + (a.to !== a.from ? ' – ' + H.fmt(a.to, true) : ''); }
 
   function tabs(active) {
-    var t = [['', T('My details')], ['consent', T('Consent')], ['away', T('Days away')], ['serve', T('Serving')], ['themes', T('Themes')]];
+    var t = [['', T('My details')], ['consent', T('Consent')], ['away', T('Days away')], ['serve', T('Serving')], ['themes', T('Appearance')]];
     return '<nav class="seg me-tabs" aria-label="' + T('Me') + '">' + t.map(function (x) {
       var on = x[0] === active;
       return '<a href="#/me' + (x[0] ? '/' + x[0] : '') + '" class="' + (on ? 'on' : '') + '"' + (on ? ' aria-current="page"' : '') + '>' + esc(x[1]) + '</a>';
@@ -277,10 +277,10 @@
   }
 
   /* ---------- module ---------- */
-  /** Themes: each person's own colour and page pictures, kept on this device (like Light / Dark). Until they choose, they see the church's. */
+  /** Appearance: each person's own colour and page pictures, kept on this device (like Light / Dark). Until they choose, they see the church's. */
   function renderThemes() {
     var st = S.settings() || {}, TP = window.ThemePicker, own = H.myColor() || H.myLook();
-    return head(T('Themes'), T('Choose your own colour and page pictures. Only you see them, on this device.'), '', 'themes') +
+    return head(T('Appearance'), T('Choose your own colour and page pictures. Only you see them, on this device.'), '', 'themes') +
       (TP ? TP.theme(st, true) + TP.look(st, true) : '') +
       '<section class="panel"><p class="hint" style="margin-top:0">' + (own ? T('You are using your own theme.') : T('You are using the church’s theme.')) + '</p>' +
       '<button class="btn" data-act="me:mytheme-reset"' + (own ? '' : ' disabled') + '>' + T('Use the church’s theme') + '</button></section>';

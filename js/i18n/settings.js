@@ -10,6 +10,8 @@ I18n.rows([
     ["A picture at the top of every page, in the colours of that part of the app. Everyone sees the choice the church makes here.", "’n Prent bo-aan elke bladsy, in die kleure van daardie deel van die toep. Almal sien die keuse wat die kerk hier maak.", "Isithombe phezulu kwelinye nelinye ikhasi, ngemibala yaleyo ngxenye ye-app. Wonke umuntu ubona okukhethwe yisonto lapha.", "Umfanekiso phezulu kwiphepha ngalinye, ngemibala yaloo nxalenye ye-app. Wonke umntu ubona oko likhethe ibandla apha."],
     ["Warm line art", "Warm lynkuns", "Imidwebo yemigqa efudumele", "Imizobo yemigca efudumeleyo"],
     ["Soft watercolour", "Sagte waterverf", "I-watercolour ethambile", "I-watercolour ethambileyo"],
+    ["This is what it will look like", "Dit is hoe dit sal lyk", "Nanku uzobukeka kanjani", "Nanku ukuba uya kubonakala njani"],
+    ["Sample", "Voorbeeld", "Isampula", "Isampulu"],
     ["Plain (original)", "Gewoon (oorspronklik)", "Okuvamile (kwasekuqaleni)", "Okuqhelekileyo (kwasekuqaleni)"],
     ["Church Services and venues", "Kerkdienste en plekke", "Izinkonzo Zesonto nezindawo", "Iinkonzo zeCawe neendawo"],
     ["The church’s library and Archives – books and church records in one place", "Die kerk se biblioteek en Argiewe – boeke en kerkrekords op een plek", "Umtapo wezincwadi nezingobo zomlando zesonto – izincwadi namarekhodi esonto endaweni eyodwa", "Ithala leencwadi noVimba weerekhodi zecawa – iincwadi neerekhodi zecawa kwindawo enye"],

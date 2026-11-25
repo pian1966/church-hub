@@ -378,7 +378,7 @@ var Hub = (function () {
   function go(path) { location.hash = '#/' + path; }
 
   /* ---------- rendering ---------- */
-  /* ---------- the church's colours (Settings → Themes) ----------
+  /* ---------- the church's colours (Settings → Appearance) ----------
    * Each theme: the accent (buttons, links, the turning cross, the logo), a darker shade for writing on light backgrounds,
    * a pale shade, and the menu's own dark colour. "Your own colour" works out the shades, darkened if needed so white
    * writing on buttons stays readable. Remembered on each device (Store.pref) so the sign-in screen has it too. */
@@ -410,7 +410,7 @@ var Hub = (function () {
     if (t.id === 'custom' && hexRgb(t.color)) return themeFrom(t.color);
     return THEMES.filter(function (x) { return x.id === t.id; })[0] || THEMES[0];
   }
-  /** Each person's own theme on this device (Me → Themes): their colour and their page pictures. Empty = the church's choice. */
+  /** Each person's own theme on this device (Me → Appearance): their colour and their page pictures. Empty = the church's choice. */
   function myColor() { var c = Store.pref('myColor'); return hexRgb(c) ? c.toUpperCase() : ''; }
   function myLook() { var l = Store.pref('myLook'); return l === 'plain' || l === 'line' || l === 'watercolour' ? l : ''; }
   /** The theme in use: the person's own colour if they chose one, otherwise the church's. */
@@ -499,7 +499,7 @@ var Hub = (function () {
     var gt = root.querySelector('main .groups-tabs'), ph = root.querySelector('main .page-head');
     if (gt && ph && (gt.compareDocumentPosition(ph) & 4)) ph.parentNode.insertBefore(gt, ph.nextSibling);
     if (samePage && wasOpen.length) root.querySelectorAll('details').forEach(function (d) { if (wasOpen.indexOf(keyOf(d)) >= 0) d.open = true; });   // a refresh keeps unfolded sections open
-    if (window.Banners) Banners.decorate(root, location.hash, lookSettings(Store.settings && Store.settings()));   // the picture behind the page's heading (Me → Themes, or the church's choice in Settings → Themes)
+    if (window.Banners) Banners.decorate(root, location.hash, lookSettings(Store.settings && Store.settings()));   // the picture behind the page's heading (Me → Appearance, or the church's choice in Settings → Appearance)
     ourWords(root);
     wirePrompts();
     if (mod && mod.after) mod.after(p.slice(1));

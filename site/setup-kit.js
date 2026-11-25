@@ -352,7 +352,7 @@ var SetupKit = (function () {
       body: function (c) {
         return ol([
           open(c.app('settings/general'), 'Name and country') + ' – check the church’s name and country.',
-          open(c.app('settings/colours'), 'Themes') + ' – choose the church’s colour and page pictures (each person can then choose their own under ' + ui('Me → Themes') + ').',
+          open(c.app('settings/colours'), 'Appearance') + ' – choose the church’s colour and page pictures (each person can then choose their own under ' + ui('Me → Appearance') + ').',
           open(c.app('settings/terminology'), 'Church words') + ' – choose your kind of church, then change any word.'
         ]);
       } },

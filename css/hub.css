@@ -765,7 +765,9 @@ main { flex: 1 0 auto; display: flex; flex-direction: column; }   /* so the line
 .th-pside { width: 64px; background: var(--s); display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 12px 0; }
 .th-pmark { width: 34px; height: 34px; border-radius: 10px; background: var(--a); color: var(--ao, #fff); display: grid; place-items: center; margin-bottom: 4px; }
 .th-pnav { width: 36px; height: 7px; border-radius: 4px; background: var(--s2); } .th-pnav.on { box-shadow: inset 3px 0 0 var(--a); background: color-mix(in srgb, var(--s2) 70%, #fff 10%); }
-.th-pmain { flex: 1; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 16px 18px; background: var(--surface-2); }
+.th-pmain { flex: 1; display: flex; flex-direction: column; gap: 12px; padding: 16px 18px; background: var(--surface-2); }
+.th-phead { margin: 0; font-size: 13px; font-weight: 700; color: var(--muted, #6b6b6b); }
+.th-prow { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; }
 .th-pbtn { display: inline-flex; align-items: center; gap: 6px; background: var(--a); color: var(--ao, #fff); font-weight: 700; font-size: 14px; padding: 9px 16px; border-radius: 10px; }
 .th-psave { background: var(--as); color: var(--ai); border: 1px solid color-mix(in srgb, var(--a) 35%, var(--surface)); font-weight: 700; font-size: 14px; padding: 8px 15px; border-radius: 10px; }
 .th-plink { color: var(--ai); font-weight: 600; text-decoration: underline; font-size: 14px; }

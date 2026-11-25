@@ -41,6 +41,17 @@ module.exports = async function (ctx) {
   await s.page.$eval('.help-list details.help-q', d => { d.open = true; }); await s.page.click('.help-list details.help-q >> nth=0 >> .help-go');
   await s.page.waitForFunction(() => location.hash === '#/me');
   check(await s.page.isVisible('h1'), 'tapping it opens that screen');
+  // Show me: opens the screen and points at each button the answer names, one after another
+  await s.go('help/me'); await s.page.waitForSelector('.help-list details.help-q');
+  await s.page.$eval('.help-list details.help-q', d => { d.open = true; });
+  await s.page.click('.help-list details.help-q >> nth=0 >> .help-show');
+  await s.page.waitForSelector('.tour-card', { timeout: 4000 });
+  check(await s.page.evaluate(() => location.hash === '#/me') && /Step 1 of/.test(await s.page.textContent('.tour-card')), 'Show me opens the screen and starts a tour with its first step');
+  await s.page.click('.tour-card [data-t=play]');   // pause, so the test is steady
+  await s.page.click('.tour-card [data-t=next]');
+  check(/Step 2 of/.test(await s.page.textContent('.tour-card')), 'Next goes to the next step');
+  await s.page.click('.tour-card [data-t=close]');
+  check(!(await s.page.$('.tour-card')) && !(await s.page.$('.tour-ring')), 'Close ends the tour');
   await s.go('help/getting-started'); await s.page.waitForSelector('.help-list details.help-q');
   check((await s.page.$$('.help-list .help-from a.help-go')).length >= 2 && (await s.page.$$('.help-list .help-from a:not(.help-go)')).length >= 5, 'where there is no screen to open, the topic link stays');
   await s.go('help/leave'); await s.page.waitForSelector('.help-back');

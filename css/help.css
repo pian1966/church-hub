@@ -40,3 +40,17 @@
 .help-topic small { color: var(--muted); font-weight: 600; background: var(--line-2); border-radius: 999px; padding: 1px 9px; }
 .help-back { margin: 0 0 12px; }
 .help-list { padding: 8px 14px; }
+
+/* Show me: the guided tour on the real screen (js/help-tour.js) */
+.help-from .help-show { margin-right: 6px; cursor: pointer; background: transparent; font-family: inherit; }
+.tour-ring { position: fixed; z-index: 2000; border: 3px solid var(--accent); border-radius: 12px; box-shadow: 0 0 0 4px color-mix(in srgb, var(--accent) 25%, transparent); pointer-events: none; animation: tour-pulse 1.4s ease-in-out infinite; }
+@keyframes tour-pulse { 50% { box-shadow: 0 0 0 9px color-mix(in srgb, var(--accent) 10%, transparent); } }
+.tour-card { position: fixed; z-index: 2001; left: 50%; transform: translateX(-50%); bottom: 84px; width: min(440px, calc(100% - 24px)); box-sizing: border-box; padding: 12px 14px; border-radius: 16px; background: var(--surface); border: 1px solid var(--line-strong); box-shadow: 0 8px 28px rgba(29,27,25,.25); }
+@media (min-width: 900px) { .tour-card { bottom: 24px; } }
+.tour-top { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+.tour-top span { color: var(--muted); flex: 1; }
+.tour-x { border: 0; background: transparent; color: var(--muted); font-size: 16px; cursor: pointer; padding: 4px 8px; }
+.tour-say { margin: 8px 0; font-size: 15px; line-height: 1.4; }
+.tour-look { margin: 0 0 8px; font-size: 13px; color: var(--muted); }
+.tour-btns { display: flex; gap: 8px; justify-content: flex-end; }
+@media (prefers-reduced-motion: reduce) { .tour-ring { animation: none; } }

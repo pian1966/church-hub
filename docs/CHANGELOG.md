@@ -5,6 +5,7 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 
 ## 0.115.2 – Help answers end with an "Open …" button
 - Instead of the topic name, each Help answer now ends with a small **Do this now** link that opens the screen it is about, shown only when that person may open it; otherwise the topic link stays. Screen names in an answer (**Me → My details**, **Library**) can be tapped to go there. An answer can name another screen with a `Go:` line (`docs/help/README.md`). New: `Help.goOf`, `Hub.openName`, `Hub.openIdByName`.
+- **Show me** on an answer opens the real screen and walks through each button the answer names (pointer ring, the sentence, Next / Back / Pause), always matching the current screen and language: `js/help-tour.js`, `Help.steps`.
 
 ## Phase 1 – Foundation
 - ✅ Architecture, data model, POPIA design (`ARCHITECTURE.md`, `POPIA.md`)

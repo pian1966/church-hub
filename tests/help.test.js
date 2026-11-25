@@ -24,6 +24,10 @@ ok(all.every(e => e.tags.length) || all.filter(e => !e.tags.length).length <= 2,
 const screens = new Set(['home', 'about', 'import', 'me', 'settings', 'privacy', 'people', 'messages', 'events', 'library', 'archive', 'leave', 'rosters', 'care', 'life', 'leaders', 'board', 'market', 'support', 'words']);
 ok(Help.PAGES.every(p => !p[2] || screens.has(p[2])) && all.every(e => !e.go || screens.has(e.go)), 'every "Go:" line and page names a screen the app has');
 ok(all.some(e => e.go) && all.filter(e => e.go).every(e => Help.goOf(e) === e.go) && Help.goOf({ page: 'library' }) === 'library' && Help.goOf({ page: 'getting-started' }) === '', 'an answer goes to its own Go: screen, else the one its page is about');
+const st = Help.steps('Open **Me → My details** and tap **Change my details**. Change what is wrong.\n- Then **Save**; **Me → My details** again.');
+ok(st.length === 3 && st[0].name === 'Me → My details' && st[0].target === 'My details' && st[0].screen === 'Me' && st[1].target === 'Change my details' && st[2].name === 'Save', '"Show me" steps: each bold name once, in order');
+ok(st[0].say === 'Open Me → My details and tap Change my details.' && st[2].say.indexOf('**') < 0, '… each with the sentence it is in, no ** left');
+ok(Help.steps('No buttons here.').length === 0, 'an answer with no bold names has no steps');
 ok(all.every(e => !/^Go:/m.test(e.body)), 'the "Go:" line is not part of an answer');
 ok(all.every(e => !/^(For|Also asked):/m.test(e.body)), 'the "For:" and "Also asked:" lines are not part of an answer');
 

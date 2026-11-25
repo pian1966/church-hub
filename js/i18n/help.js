@@ -24,6 +24,11 @@ I18n.rows([
     ["These help pages may help:", "Hierdie hulpbladsye kan help:", "Lawa makhasi osizo angase asize:", "La maphepha oncedo angancedisa:"],
     ["Browse by topic", "Blaai volgens onderwerp", "Phequlula ngesihloko", "Khangela ngesihloko"],
     ["Do this now", "Doen dit nou", "Yenza lokhu manje", "Yenza oku ngoku"],
+    ["Next", "Volgende", "Okulandelayo", "Okulandelayo"],
+    ["Pause", "Wag", "Misa", "Misa"],
+    ["Play", "Speel", "Dlala", "Dlala"],
+    ["Step {n} of {total}", "Stap {n} van {total}", "Isinyathelo {n} kwezingu-{total}", "Inyathelo {n} kwangama-{total}"],
+    ["Look for {name}", "Soek {name}", "Funa i-{name}", "Khangela i-{name}"],
     ["Back to Help", "Terug na Hulp", "Buyela Osizweni", "Buyela koNcedo"],
     ["Nothing on this topic is for your kind of access.", "Niks oor hierdie onderwerp is vir jou soort toegang nie.", "Akukho okuyisihloko lesi okwenzelwe uhlobo lwakho lokufinyelela.", "Akukho nto ngesi sihloko eyenzelwe uhlobo lwakho lofikelelo."],
     ["The help pages couldn’t be loaded. Check your internet connection and try again.", "Die hulpbladsye kon nie gelaai word nie. Kontroleer jou internetverbinding en probeer weer.", "Amakhasi osizo awakwazanga ukulayishwa. Hlola uxhumo lwakho lwe-inthanethi bese uzama futhi.", "Amaphepha oncedo awakwazanga ukulayishwa. Khangela unxibelelwano lwakho lwe-intanethi uze uzame kwakhona."]

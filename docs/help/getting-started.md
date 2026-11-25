@@ -7,7 +7,8 @@ Also asked: Help page. I'm stuck. Ask Church & Trellis a question. How do I use 
 Open **Help** in the menu (on a phone: **More** → **Help**). Type your question – or tap the microphone and say it – and tap
 **Ask**. If your church has switched on AI, you get a short answer written for you, in your language, from these help pages,
 with the pages it came from underneath so you can check. If not, you see the help pages that match your question. You can
-also tap a topic under **Browse by topic** to read its questions.
+also tap a topic under **Browse by topic** to read its questions. Under many answers, **Show me** opens the real screen and points to each button in turn, one step at
+a time (**Next**, **Back**, **Pause**); **Do this now** just opens the screen. Names such as **Me → My details** in an answer can be tapped to go there.
 
 If Help can't find your answer, **write to the Office** (**Messages**) and someone at church will help.
 

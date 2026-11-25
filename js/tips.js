@@ -19,7 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.115';
   var NEWS = [
-    { date: '2026-11-25', who: ['everyone'], text: TX('Each Help answer now ends with a small Do this now link that opens the screen it is about, and screen names inside an answer can be tapped.') },
+    { date: '2026-11-25', who: ['everyone'], text: TX('Help answers now have Show me, which opens the screen and points to each button in turn, and a small Do this now link; screen names inside an answer can be tapped too.') },
     { date: '2026-11-24', who: ['everyone'], not: ['attendee'], app: 'me', btn: ['Me', 'My details'], text: TX('Church Partners now see 🎂 or 💍 beside someone’s name in the church directory on their birthday or wedding anniversary (the day only). Don’t want yours shown? Turn it off on Me → My details.') },
     { date: '2026-11-24', who: ['pastor', 'admin', 'carer', 'lifelead'], text: TX('Pastors, carers and Midweek Group leaders now see Birthdays this week on Home. Pastors also see who may have a hard day, on the anniversary of a husband’s or wife’s death.') },
     { date: '2026-11-24', who: ['everyone'], text: TX('Birthdays and wedding anniversaries now get a little celebration: on your own day you see a card on Home and Me, and 🎂 or 💍 appears beside a name wherever the church already shows that date.') },

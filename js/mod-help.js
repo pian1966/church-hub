@@ -72,8 +72,11 @@
     // A button that does what the answer says (opens that screen); the topic link only when there is no screen this person can open.
     var foot = name ? '<a class="help-go" href="#/' + esc(id) + '" title="' + esc(T('Open {name}', { name: name })) + '">' + esc(T('Do this now')) + ' ›</a>'
       : '<a href="#/help/' + esc(e.page) + '">' + esc(pageName(e.page)) + '</a>';
+    // "Show me": the same screen, with each button the answer names pointed out in turn (js/help-tour.js)
+    var many = name ? Help.steps(e.body).filter(function (x) { return !(x.name === id || T(x.name) === name || (x.screen && T(x.screen) === name && x.target === x.name)); }).length : 0;
+    var show = many && window.HelpTour ? '<button type="button" class="help-go help-show" data-act="help:show" data-eid="' + esc(e.id) + '" data-go="' + esc(id) + '">▶ ' + esc(T('Show me')) + '</button> ' : '';
     return '<details class="help-q"' + (open ? ' open' : '') + '><summary>' + esc(e.q) + '</summary><div class="help-a">' + fmt(e.body) +
-      '<p class="help-from">' + foot + '</p></div></details>';
+      '<p class="help-from">' + show + foot + '</p></div></details>';
   }
 
   /* ---------- the page ---------- */
@@ -167,6 +170,13 @@
     actions: {
       ask: function () { ask(); },
       'try': function (el) { st.q = el.getAttribute('data-q') || ''; var box = document.getElementById('help-q'); if (box) box.value = st.q; st.res = null; ask(); },
+      show: function (el) {
+        var e = (st.entries || []).filter(function (x) { return x.id === el.getAttribute('data-eid'); })[0], id = el.getAttribute('data-go');
+        if (!e || !id || !window.HelpTour) return;
+        var name = H.openName(id), list = Help.steps(e.body).filter(function (x) { return T(x.name) !== name; });
+        location.hash = '#/' + id;
+        setTimeout(function () { HelpTour.start(list); }, 500);   // when the screen has been drawn
+      },
       retry: function () { st.ready = false; st.failed = false; load(); again(); }
     }
   });

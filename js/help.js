@@ -66,6 +66,34 @@ var Help = (function () {
     }).filter(function (e) { return e.q && e.body; });
   }
 
+  /** The things an answer tells a person to find or tap, in order, for "Show me": each **bold** name with the sentence it is in.
+   *  [{ name: 'Me → My details', target: 'My details', say: 'Open Me → My details and tap Change my details.' }] – a name that has an arrow
+   *  points at its last part (the first part is the screen). Names used twice are kept once. */
+  function steps(body) {
+    var out = [], seen = {}, para = [];
+    function sentences(text) {
+      text.replace(/([.!?])\s+(?=[A-Z*])/g, '$1\u0001').split('\u0001').forEach(function (sent) {
+        var say = sent.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim();
+        sent.replace(/\*\*([^*]+)\*\*/g, function (m, name) {
+          if (seen[name]) return m;
+          seen[name] = 1; var parts = name.split(/\s*→\s*/);
+          out.push({ name: name, target: parts[parts.length - 1], screen: parts.length > 1 ? parts[0] : '', say: say });
+          return m;
+        });
+      });
+    }
+    function flush() { if (para.length) { sentences(para.join(' ')); para = []; } }
+    String(body || '').replace(/\r/g, '').split('\n').forEach(function (ln) {
+      var item = /^\s*(?:\d+[.)]|[-*•])\s+(.*)$/.exec(ln);
+      if (item) { flush(); para.push(item[1]); }
+      else if (!ln.trim()) flush();
+      else if (/^\s{2,}\S/.test(ln) && para.length) para.push(ln.trim());
+      else { if (!/^\s/.test(ln) || !para.length) flush(); para.push(ln.trim()); }
+    });
+    flush();
+    return out;
+  }
+
   /* ---------- finding the right answers ---------- */
   var STOP = {};
   ('a an the and or of to in on at for with from by is are was be been am do does did can could should would will my me i we you your our it its this that these those ' +
@@ -214,7 +242,7 @@ var Help = (function () {
     keep.push(now); return keep;
   }
 
-  return { PAGES: PAGES, goOf: goOf, MAX_ASKS: MAX_ASKS, FEW_CHARS: FEW_CHARS, MANY_CHARS: MANY_CHARS, parse: parse, tagsOf: tagsOf, fits: fits, search: search, pick: pick, everything: everything, clear: clear,
+  return { PAGES: PAGES, goOf: goOf, steps: steps, MAX_ASKS: MAX_ASKS, FEW_CHARS: FEW_CHARS, MANY_CHARS: MANY_CHARS, parse: parse, tagsOf: tagsOf, fits: fits, search: search, pick: pick, everything: everything, clear: clear,
     request: request, read: read, check: check, allow: allow, words: words };
 })();
 if (typeof module !== 'undefined') module.exports = Help;

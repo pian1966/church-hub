@@ -182,7 +182,7 @@ Open **Me → My details** and, under **Birthdays and anniversaries**, untick **
 🎂 or 💍 beside your name any more, your birthday is taken out of the church directory, and you get no card. Tick it again to turn it back on.
 To be taken out of the church directory altogether, change your **Church directory** choice under **Me → Consent**.
 
-## What is "Birthdays this week" on Home?
+## What is "Birthdays and anniversaries this week" on Home?
 For: Pastors, Administrators, Carers, Group leaders
 Also asked: Upcoming birthdays. Who has a birthday soon? Birthday list. Anniversaries this week. May be a hard day.
 

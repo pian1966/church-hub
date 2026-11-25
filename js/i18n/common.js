@@ -608,7 +608,7 @@ I18n.rows([
     ["Birthday today", "Verjaarsdag vandag", "Usuku lokuzalwa namuhla", "Usuku lokuzalwa namhlanje"],
     ["Wedding anniversary today", "Huweliksherdenking vandag", "Usuku lomshado namuhla", "Usuku lomtshato namhlanje"],
     ["Tomorrow", "Môre", "Kusasa", "Ngomso"],
-    ["Birthdays this week", "Verjaarsdae hierdie week", "Izinsuku zokuzalwa kuleli sonto", "Imihla yokuzalwa kule veki"],
+    ["Birthdays and anniversaries this week", "Verjaarsdae en huweliksherdenkings hierdie week", "Izinsuku zokuzalwa nezikhumbuzo zomshado kuleli sonto", "Imihla yokuzalwa nezikhumbuzo zomtshato kule veki"],
     ["May be a hard day", "Kan ’n moeilike dag wees", "Kungaba wusuku olunzima", "Unokuba ngumhla onzima"],
     ["Only Pastors see this. A call or a visit may mean a lot.", "Net Pastore sien dit. ’n Oproep of ’n besoek kan baie beteken.", "AbeFundisi kuphela ababona lokhu. Ucingo noma ukuvakasha kungasho okuningi.", "NguMfundisi kuphela obona oku. Umnxeba okanye utyelelo lunokuthetha lukhulu."],
     ["The anniversary of {name}’s death", "Die herdenking van {name} se dood", "Usuku lokukhumbula ukufa kuka-{name}", "Umhla wokukhumbula ukufa kuka-{name}"],

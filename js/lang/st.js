@@ -1127,7 +1127,7 @@ I18n.add('st', {
     "Celebrating your marriage today. May God keep blessing it.": "Re keteka lenyalo la hao kajeno. Modimo a tswelepele ho le hlohonolofatsa.",
     "Birthday today": "Letsatsi la tswalo kajeno",
     "Tomorrow": "Hosane",
-    "Birthdays this week": "Matsatsi a tswalo bekeng ena",
+    "Birthdays and anniversaries this week": "Matsatsi a tswalo le dihopotso tsa lenyalo bekeng ena",
     "May be a hard day": "E ka ba letsatsi le thata",
     "Only Pastors see this. A call or a visit may mean a lot.": "Ke Baruti feela ba bonang sena. Mohala kapa ketelo e ka bolela haholo.",
     "The anniversary of {name}’s death": "Sehopotso sa lefu la {name}",

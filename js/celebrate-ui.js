@@ -108,7 +108,7 @@ var CelebrateUI = (function () {
       }
     }
     if (!rows && !hard) return '';
-    return '<section class="panel cel-week-card"><h2>' + T('Birthdays this week') + '</h2>' + (rows ? '<ul class="cel-week">' + rows + '</ul>' : '') + hard + '</section>';
+    return '<section class="panel cel-week-card"><h2>' + T('Birthdays and anniversaries this week') + '</h2>' + (rows ? '<ul class="cel-week">' + rows + '</ul>' : '') + hard + '</section>';
   }
 
   /* ---------- Me → My details: turning celebrations off ---------- */

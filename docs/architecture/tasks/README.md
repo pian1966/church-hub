@@ -27,7 +27,7 @@ On a conflict in `js/version.js`, take the higher version; in `index.html` / `js
 | 022 | "Update the database rules" | 020, 012 | `js/mod-about.js` or settings, i18n | 023 |
 | 023 | AI setup | 020, 002 | `js/provision.js`, `js/mod-settings.js` | 022 |
 | 068 | Partner and Librarian access levels (owner answers 4 questions first) | owner's answers | `firestore.rules`, `js/store.js`, settings | nothing that touches the same files |
-| 069 | Email and mobile "Not known": one clear control inside the box (Sonnet) | – | `js/people/edit.js`, `css/hub.css`, `profile.js`, `search.js`, i18n, tests | anything not touching `js/people/edit.js` |
+| 069 | Email and mobile "Not known": one clear control inside the box (Sonnet; reviewed by Opus) | – | `js/people/edit.js`, `css/hub.css`, `profile.js`, `search.js`, i18n, tests | anything not touching `js/people/edit.js` |
 | 059 | Billing decisions (people) | – | docs | everything |
 | 060 | Office project and rules | 001 | `office/` (new), tests | everything |
 | 065 | Price table | – | `js/bigmac.js` (new) | everything |

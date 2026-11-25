@@ -104,7 +104,9 @@
   function taken(name, but) { return S.list('leaderBodies').some(function (x) { return x.id !== but && String(x.name).toLowerCase() === name.toLowerCase(); }); }
   function seatDialog(b, p, s, isNew) {
     var name = H.name(p) || (b.names || {})[p.id] || '', rest = isNew ? L.resting(b, p.id, H.today()) : '', r = L.terms(b);
-    H.modal(H.dialogHead(name, b.name) + '<div class="dlg-body">' +
+    // Someone already on the group: saved as you go (data-autoscope + the hidden data-autosave button); Done closes. Adding someone waits for Save.
+    H.modal(H.dialogHead(name, b.name + (isNew ? '' : ' · ' + T('Changes are saved as you go.'))) + '<div class="dlg-body"' + (isNew ? '' : ' data-autoscope') + '>' +
+      (isNew ? '' : '<button type="button" data-autosave data-act="leaders:autoseat" data-g="' + esc(b.id) + '" data-id="' + esc(p.id) + '" tabindex="-1">' + T('Save') + '</button>') +
       (rest ? '<p class="note warn">' + esc(T('{name} served the most terms in a row allowed. Their break ends {date}.', { name: name, date: H.fmt(rest, true) })) + '</p>' : '') +
       '<label class="field">' + T('Roles') + '<input id="lb-role" maxlength="200" value="' + esc((s.roles || []).map(roleName).join(', ')) + '"><small>' + T('More than one? Separate with commas.') + '</small></label>' +
       '<div class="btns lb-roles" style="margin:-4px 0 12px">' + L.ROLES.map(function (x) { return '<button type="button" class="btn small ghost" data-act="leaders:addrole" data-r="' + esc(T(x)) + '">+ ' + esc(T(x)) + '</button>'; }).join('') + '</div>' +
@@ -116,12 +118,27 @@
         (r.termYears ? '<small>' + T('Leave empty to end after {n} years.', { n: r.termYears }) + '</small>' : '') + '</label></div>' +
       '<div class="two"><label class="field">' + T('Which term of office') + '<input type="number" id="lb-term" min="1" max="20" value="' + esc(s.term || 1) + '"></label>' +
         '<label class="field">' + T('This term started') + '<input type="date" id="lb-termfrom" value="' + esc(s.termFrom || '') + '"><small>' + T('For a second or later term. Empty: the From date.') + '</small></label></div></div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="leaders:saveseat" data-g="' + esc(b.id) + '" data-id="' + esc(p.id) + '"' + (isNew ? ' data-new="1"' : '') + '>' + T('Save') + '</button></div>', name);
+      '<div class="dlg-foot">' + (isNew ? '<button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' : '') + '<button class="btn ' + (isNew ? '' : 'primary ') + 'save" data-act="leaders:saveseat" data-g="' + esc(b.id) + '" data-id="' + esc(p.id) + '"' + (isNew ? ' data-new="1"' : '') + '>' + T(isNew ? 'Save' : 'Done') + '</button></div>', name);
     var kind = document.getElementById('lb-kind'), kindOther = document.getElementById('lb-kind-other'), kindOtherWrap = document.getElementById('lb-kind-other-wrap');
     kind.addEventListener('change', function () {
       kindOtherWrap.hidden = kind.value !== 'other';
       kindOther.required = kind.value === 'other';
     });
+  }
+  /** Someone's seat on a leadership group. quiet = saving as you go: the window stays open (a seat just added still closes on Save). */
+  function saveSeat(el, quiet) {
+    var b = S.get('leaderBodies', el.dataset.g), pid = el.dataset.id; if (!b || !manager()) return;
+    var p = S.get('people', pid) || { id: pid, firstName: (b.names || {})[pid] || '', lastName: '' };
+    var info = { roles: typedRoles(val('lb-role')), kind: val('lb-kind'), kindOther: val('lb-kind-other'), title: val('lb-title'), portfolios: val('lb-port'), from: val('lb-from'), to: val('lb-to'), term: val('lb-term'), termFrom: val('lb-termfrom') };
+    if (info.kind === 'other' && !info.kindOther) { H.toast(T('Describe the membership type'), true); return; }
+    if (info.from && info.to && info.to < info.from) { H.toast(T('The end date is before the start date'), true); return; }
+    var x = L.place(b, p, info), s = x.seats[pid];
+    S.put('leaderBodies', x, (el.dataset.new ? 'Added ' + H.name(p) + ' to the leadership group ' : 'Changed ' + H.name(p) + ' on the leadership group ') + b.name + (s.roles.length ? ' (' + s.roles.join(', ') + ')' : ''));
+    if (el.dataset.new && window.CareUI && CareUI.openFold) { CareUI.openFold('lb-' + b.id + ':m'); if (s.roles.length) CareUI.openFold('lb-' + b.id + ':c'); }   // the Add someone box is in the members' fold
+    if (quiet) { H.render(); H.toast(T('Saved')); return; }   // saving as you go: the window stays open
+    H.closeModal(); H.render(); H.toast(T('Saved'));
+    if (el.dataset.new && window.CareUI && CareUI.again) CareUI.again();   // back to the list typed before, for the next person
+
   }
   /** Roles typed in the chosen language go back to their English names when they are one of the suggested ones. */
   function typedRoles(v) { return L.roles(v).map(function (x) { var hit = L.ROLES.filter(function (r) { return T(r).toLowerCase() === x.toLowerCase() || r.toLowerCase() === x.toLowerCase(); })[0]; return hit || x; }); }
@@ -175,18 +192,8 @@
         var b = S.get('leaderBodies', el.dataset.g), pid = el.dataset.id; if (!b || !manager()) return;
         seatDialog(b, S.get('people', pid) || { id: pid, firstName: (b.names || {})[pid] || '', lastName: '' }, L.seat((b.seats || {})[pid]), false);
       },
-      saveseat: function (el) {
-        var b = S.get('leaderBodies', el.dataset.g), pid = el.dataset.id; if (!b || !manager()) return;
-        var p = S.get('people', pid) || { id: pid, firstName: (b.names || {})[pid] || '', lastName: '' };
-        var info = { roles: typedRoles(val('lb-role')), kind: val('lb-kind'), kindOther: val('lb-kind-other'), title: val('lb-title'), portfolios: val('lb-port'), from: val('lb-from'), to: val('lb-to'), term: val('lb-term'), termFrom: val('lb-termfrom') };
-        if (info.kind === 'other' && !info.kindOther) { H.toast(T('Describe the membership type'), true); return; }
-        if (info.from && info.to && info.to < info.from) { H.toast(T('The end date is before the start date'), true); return; }
-        var x = L.place(b, p, info), s = x.seats[pid];
-        S.put('leaderBodies', x, (el.dataset.new ? 'Added ' + H.name(p) + ' to the leadership group ' : 'Changed ' + H.name(p) + ' on the leadership group ') + b.name + (s.roles.length ? ' (' + s.roles.join(', ') + ')' : ''));
-        if (el.dataset.new && window.CareUI && CareUI.openFold) { CareUI.openFold('lb-' + b.id + ':m'); if (s.roles.length) CareUI.openFold('lb-' + b.id + ':c'); }   // the Add someone box is in the members' fold
-        H.closeModal(); H.render(); H.toast(T('Saved'));
-        if (el.dataset.new && window.CareUI && CareUI.again) CareUI.again();   // back to the list typed before, for the next person
-      },
+      saveseat: function (el) { saveSeat(el, false); },
+      autoseat: function (el) { saveSeat(el, true); },
       ending: function (el) {
         var b = S.get('leaderBodies', el.dataset.g), pid = el.dataset.id; if (!b || !manager()) return;
         var name = (b.names || {})[pid] || '';
@@ -204,7 +211,7 @@
       addrole: function (el) {
         var i = document.getElementById('lb-role'); if (!i) return;
         var now = L.roles(i.value); if (now.map(function (x) { return x.toLowerCase(); }).indexOf(el.dataset.r.toLowerCase()) < 0) now.push(el.dataset.r);
-        i.value = now.join(', ');
+        i.value = now.join(', '); i.dispatchEvent(new Event('change', { bubbles: true }));   // saved as you go
       },
       renew: function (el) {
         var b = S.get('leaderBodies', el.dataset.g), pid = el.dataset.id; if (!b || !manager()) return;

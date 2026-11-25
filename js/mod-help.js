@@ -65,8 +65,12 @@
   }
   /** One question and its answer from the help pages, opened by tapping the question. */
   function item(e, open) {
+    var id = Help.goOf(e), name = id && H.openName ? H.openName(id) : '';
+    // A button that does what the answer says (opens that screen); the topic link only when there is no screen this person can open.
+    var foot = name ? '<a class="btn help-go" href="#/' + esc(id) + '">' + esc(T('Open {name}', { name: name })) + ' ›</a>'
+      : '<a href="#/help/' + esc(e.page) + '">' + esc(pageName(e.page)) + '</a>';
     return '<details class="help-q"' + (open ? ' open' : '') + '><summary>' + esc(e.q) + '</summary><div class="help-a">' + fmt(e.body) +
-      '<p class="help-from"><a href="#/help/' + esc(e.page) + '">' + esc(pageName(e.page)) + '</a></p></div></details>';
+      '<p class="help-from">' + foot + '</p></div></details>';
   }
 
   /* ---------- the page ---------- */

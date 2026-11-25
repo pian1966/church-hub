@@ -1140,6 +1140,7 @@ I18n.add('st', {
     "Pastors, carers and Midweek Group leaders now see Birthdays this week on Home. Pastors also see who may have a hard day, on the anniversary of a husband’s or wife’s death.": "Baruti, bahlokomedi le baetapele ba Dihlopha tsa Bohareng ba Beke jwale ba bona Matsatsi a tswalo bekeng ena ho Hae. Baruti ba bona hape ba ka bang le letsatsi le thata, ka sehopotso sa lefu la monna kapa mosadi.",
     "Wedding anniversary today": "Sehopotso sa lenyalo kajeno",
     "Birthdays and wedding anniversaries now get a little celebration: on your own day you see a card on Home and Me, and 🎂 or 💍 appears beside a name wherever the church already shows that date.": "Matsatsi a tswalo le dihopotso tsa lenyalo jwale a ketekwa hanyane: ka letsatsi la hao o bona karete ho Hae le ho Nna, mme 🎂 kapa 💍 e hlaha haufi le lebitso moo kereke e se e bontsha letsatsi leo.",
+    "Each Help answer now ends with a button that opens the screen it is about, such as Open Me or Open Library.": "Karabo e nngwe le e nngwe ya Thuso jwale e fela ka konopo e bulang skrine eo e mabapi le yona, jwaloka Bula Nna kapa Bula Laeborari.",
     "Buttons now press down a little when you tap them.": "Dikonopo jwale di hatellwa hanyane ha o di ama.",
     "Orange": "Lamunu",
     "Blue": "Botala ba lehodimo",

@@ -21,6 +21,10 @@ Help.PAGES.forEach(p => {
 ok(new Set(all.map(e => e.id)).size === all.length, 'every question has its own id (no two questions worded the same on one page)');
 ok(all.every(e => e.who), 'every answer says who it is for (a "For:" line)');
 ok(all.every(e => e.tags.length) || all.filter(e => !e.tags.length).length <= 2, 'almost every "For:" is one the app understands (' + all.filter(e => !e.tags.length).map(e => e.who).join('; ') + ')');
+const screens = new Set(['home', 'about', 'import', 'me', 'settings', 'privacy', 'people', 'messages', 'events', 'library', 'archive', 'leave', 'rosters', 'care', 'life', 'leaders', 'board', 'market', 'support', 'words']);
+ok(Help.PAGES.every(p => !p[2] || screens.has(p[2])) && all.every(e => !e.go || screens.has(e.go)), 'every "Go:" line and page names a screen the app has');
+ok(all.some(e => e.go) && all.filter(e => e.go).every(e => Help.goOf(e) === e.go) && Help.goOf({ page: 'library' }) === 'library' && Help.goOf({ page: 'getting-started' }) === '', 'an answer goes to its own Go: screen, else the one its page is about');
+ok(all.every(e => !/^Go:/m.test(e.body)), 'the "Go:" line is not part of an answer');
 ok(all.every(e => !/^(For|Also asked):/m.test(e.body)), 'the "For:" and "Also asked:" lines are not part of an answer');
 
 console.log('Reading one page');

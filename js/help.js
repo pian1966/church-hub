@@ -23,10 +23,12 @@ var Help = (function () {
   'use strict';
   var TX = function (x) { return x; };   // marks a text that is translated where it is shown (tests/i18n.test.js looks for these)
   /** The help pages (docs/help/<file>.md) and the short name each is shown under. */
-  var PAGES = [['getting-started', TX('Getting started')], ['me', TX('Me')], ['rosters', TX('Rosters')], ['leave', TX('Leave')], ['care-groups', TX('Care Groups')],
-    ['midweek-groups', TX('Midweek Groups')], ['leadership', TX('Leadership')], ['archive', TX('Archives')], ['library', TX('Library')], ['messages', TX('Messages')],
-    ['people', TX('People')], ['events', TX('Events')], ['community-board', TX('Community board')], ['marketplace', TX('Marketplace')],
-    ['subscription', TX('Subscription')], ['privacy', TX('Privacy')], ['settings', TX('Settings')], ['translations', TX('Translations')]];
+  var PAGES = [['getting-started', TX('Getting started'), ''], ['me', TX('Me'), 'me'], ['rosters', TX('Rosters'), 'rosters'], ['leave', TX('Leave'), 'leave'], ['care-groups', TX('Care Groups'), 'care'],
+    ['midweek-groups', TX('Midweek Groups'), 'life'], ['leadership', TX('Leadership'), 'leaders'], ['archive', TX('Archives'), 'archive'], ['library', TX('Library'), 'library'], ['messages', TX('Messages'), 'messages'],
+    ['people', TX('People'), 'people'], ['events', TX('Events'), 'events'], ['community-board', TX('Community board'), 'board'], ['marketplace', TX('Marketplace'), 'market'],
+    ['subscription', TX('Subscription'), 'support'], ['privacy', TX('Privacy'), 'privacy'], ['settings', TX('Settings'), 'settings'], ['translations', TX('Translations'), 'words']];
+  /** The screen an answer takes a person to (the id of a part of the app): the answer's own "Go:" line, else the one its page is about. */
+  function goOf(e) { var p = PAGES.filter(function (x) { return x[0] === e.page; })[0]; return e.go || (p && p[2]) || ''; }
 
   /** At most this many questions to the AI in WINDOW_MS from one device: the free allowance is shared by the whole church. */
   var MAX_ASKS = 12, WINDOW_MS = 10 * 60 * 1000;
@@ -50,16 +52,17 @@ var Help = (function () {
     var out = [], cur = null;
     String(md || '').replace(/\r/g, '').split('\n').forEach(function (line) {
       var h = /^##\s+(.+?)\s*$/.exec(line);
-      if (h) { cur = { id: page + '/' + slug(h[1]), page: page, q: h[1], who: '', also: '', lines: [] }; out.push(cur); return; }
+      if (h) { cur = { id: page + '/' + slug(h[1]), page: page, q: h[1], who: '', also: '', go: '', lines: [] }; out.push(cur); return; }
       if (!cur) return;
-      var f = /^For:\s*(.*)$/.exec(line), a = /^Also asked:\s*(.*)$/.exec(line);
+      var f = /^For:\s*(.*)$/.exec(line), a = /^Also asked:\s*(.*)$/.exec(line), g = /^Go:\s*([a-z]+)\s*$/.exec(line);
       if (f && !cur.who) cur.who = f[1].replace(/\s{2,}←.*$/, '').trim();
       else if (a && !cur.also) cur.also = a[1].trim();
+      else if (g && !cur.go) cur.go = g[1];
       else cur.lines.push(line);
     });
     return out.map(function (e) {
       var body = e.lines.join('\n').replace(/^\s+|\s+$/g, '');
-      return { id: e.id, page: e.page, q: e.q, who: e.who, tags: tagsOf(e.who), also: e.also, body: body };
+      return { id: e.id, page: e.page, q: e.q, who: e.who, tags: tagsOf(e.who), also: e.also, go: e.go, body: body };
     }).filter(function (e) { return e.q && e.body; });
   }
 
@@ -211,7 +214,7 @@ var Help = (function () {
     keep.push(now); return keep;
   }
 
-  return { PAGES: PAGES, MAX_ASKS: MAX_ASKS, FEW_CHARS: FEW_CHARS, MANY_CHARS: MANY_CHARS, parse: parse, tagsOf: tagsOf, fits: fits, search: search, pick: pick, everything: everything, clear: clear,
+  return { PAGES: PAGES, goOf: goOf, MAX_ASKS: MAX_ASKS, FEW_CHARS: FEW_CHARS, MANY_CHARS: MANY_CHARS, parse: parse, tagsOf: tagsOf, fits: fits, search: search, pick: pick, everything: everything, clear: clear,
     request: request, read: read, check: check, allow: allow, words: words };
 })();
 if (typeof module !== 'undefined') module.exports = Help;

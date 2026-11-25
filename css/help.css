@@ -25,6 +25,7 @@
 .help-a { padding: 0 14px 6px; }
 .help-a p { margin: 0 0 10px; }
 .help-from { font-size: 13px; color: var(--muted); }
+.help-from .help-go { font-size: 14px; color: var(--ink); }
 
 .help-topics { margin-top: 24px; }
 .help-topics h2 { font-size: 18px; margin: 0 0 10px; }

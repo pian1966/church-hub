@@ -93,7 +93,7 @@
   function welcomeLine(p) {
     if (!canInvite() || !invitable(p)) return '';
     var u = H.user(); if (u && u.id === p.id) return '';
-    if (started(p)) return '<p class="badge-line"><span class="muted small">' + T('Using Church & Trellis since {date}', { date: esc(H.fmt(p.appFirstSeen, true)) }) + '</span></p>';
+    if (started(p)) return '<p class="badge-line"><span class="muted small">' + T('Using Church & Trellis since {date}', { date: esc(H.fmt(p.appFirstSeen, true)) }) + '</span>' + (window.UsageUI ? ' ' + UsageUI.meter(p) : '') + '</p>';
     return '<p class="badge-line">' + (p.appInvited ? '<span class="muted small">' + T('Invited to Church & Trellis on {date} – not signed in yet', { date: esc(H.fmt(p.appInvited, true)) }) + '</span> ' : '') +
       '<button class="btn small" data-act="people:welinvite" data-id="' + p.id + '">' + T(p.appInvited ? 'Remind them' : 'Invite to Church & Trellis') + '</button></p>';
   }

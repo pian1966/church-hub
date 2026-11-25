@@ -513,6 +513,7 @@ var SetupKit = (function () {
   ];
   /** App parts with nothing for an Administrator to set up (and why) – the test accepts these. */
   var NOT_SETUP = {
+    usage: 'Nothing to set up – the Usage page fills in by itself as people open the app (Administrators and Pastors).',
     me: 'Each member’s own page – covered by Church Partners.',
     import: 'Covered by Bring people across from your old system.'
   };

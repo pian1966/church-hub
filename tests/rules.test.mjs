@@ -1386,6 +1386,32 @@ await t('Events: organisers put them up; people sign up themselves; reminders to
   await cannot(db.member.doc('events/e1').delete()); await can(db.pastor.doc('events/e1').delete());
 });
 
+await t('how the app is used (appUse): your own record only; Administrators and Pastors read everyone\'s', async () => {
+  const use = (pid, extra) => Object.assign({ id: pid, firstSeen: '2026-11-01', lastSeen: '2026-11-25T10:00:00.000Z', version: '0.118.0', platform: 'android',
+    days: { '2026-11-25': { n: 1, v: { rosters: 2 } } } }, extra);
+  await can(db.member.doc('appUse/p14').set(use('p14')));                                          // your own
+  await can(db.member.doc('appUse/p14').set(use('p14', { lastSeen: '2026-11-25T10:04:00.000Z' })));
+  await can(read(db.member, 'appUse/p14'));                                                         // and read it back to add to it
+  await cannot(db.member.doc('appUse/p15').set(use('p15')));                                       // nobody else's
+  await cannot(read(db.member, 'appUse/p15')); await cannot(list(db.member.collection('appUse')));
+  await can(db.rosters.doc('appUse/p05').set(use('p05'))); await cannot(list(db.rosters.collection('appUse'))); await cannot(list(db.kids.collection('appUse')));
+  await can(db.attendee.doc('appUse/p16').set(use('p16', { platform: 'browser' })));
+  // Only the fields Church & Trellis writes, in its shapes
+  await cannot(db.member.doc('appUse/p14').set(use('p14', { name: 'Tim' })));
+  await cannot(db.member.doc('appUse/p14').set(use('p14', { id: 'p15' })));
+  await cannot(db.member.doc('appUse/p14').set(use('p14', { platform: 'iphone' })));
+  await cannot(db.member.doc('appUse/p14').set(use('p14', { version: 'latest' })));
+  await cannot(db.member.doc('appUse/p14').set(use('p14', { lastSeen: 'yesterday' })));
+  await cannot(db.member.doc('appUse/p14').set({ id: 'p14', lastSeen: '2026-11-25T10:00:00.000Z' }));   // every field
+  const many = {}; for (let i = 1; i <= 36; i++) many['2026-10-' + String(i).padStart(2, '0')] = { n: 1, v: {} };
+  await cannot(db.member.doc('appUse/p14').set(use('p14', { days: many })));                     // never more than 35 days
+  // Reading everyone's: Administrators and Pastors
+  await can(list(db.admin.collection('appUse'))); await can(list(db.pastor.collection('appUse')));
+  await cannot(db.admin.doc('appUse/p14').set(use('p14')));                                        // nobody writes for someone else
+  await cannot(db.member.doc('appUse/p14').delete()); await can(db.admin.doc('appUse/p14').delete());
+  await cannot(read(stranger, 'appUse/p14')); await cannot(read(nobody, 'appUse/p05'));
+});
+
 await t('the parts not built yet (Subscription records) are closed to everyone', async () => {
   for (const c of ['subscription/church']) {
     await cannot(db.admin.doc(c).set({ a: 1 })); await cannot(read(db.admin, c)); await cannot(read(db.member, c));

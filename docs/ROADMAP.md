@@ -128,7 +128,7 @@ Messages inside the app done (0.21.0, Messages page). Next for messages:
 - ⬜ Event reminders as phone notifications (with push notifications), so they arrive even when the app isn't opened
 
 ## Phase 6 – Member app and extras
-Church Center-style member app (first part done: Me + Android app, Oct 2026), Elvanto API import (groups, departments), NFC tags, AI help, leadership insights.
+Church Center-style member app (first part done: Me + Android app, Oct 2026), direct imports from other church management systems (groups, departments), NFC tags, AI help, leadership insights.
 - 🟡 Church: set up AI for Ask in your own words (`docs/AI-SEARCH-SETUP.md`) – App Check key added (0.45.1); still to do: privacy notice, App Check enforced for AI Logic, switch it on in Settings → Apps and try a question
 - 🟡 **Help: ask a question** – built in 0.111.0 (`docs/CHANGELOG.md`); church to do: switch on AI (`docs/AI-SEARCH-SETUP.md`) for written answers (without it, Help shows the matching help pages), add the AI sentence to the privacy notice, and try some real questions. Follow-ups:
   - ⬜ A monthly limit per church (today: 12 questions to the AI per ten minutes from one device; the free Gemini allowance does the rest)
@@ -187,7 +187,7 @@ side by side: `tasks/README.md`). Christ Church Howick keeps its own project (`c
 1. Goes to **churchandtrellis.com** → "Set up Church & Trellis for my church" → church name and country.
 2. Signs in with the church's own Google account and clicks **Allow**; a short list ticks itself off (about a minute).
 3. Lands on the existing setup screen as the first Administrator (services, leave rules, terminology, language).
-4. Brings people in (Elvanto export, a spreadsheet, or by hand) and shares the church's own link or QR code with members;
+4. Brings people in (an export from the old church management system, a spreadsheet, or by hand) and shares the church's own link or QR code with members;
    members without email get a sign-in code, then use their cellphone number and PIN.
 5. Pays a coffee a month (or ten a year) – or takes a payment holiday, or prays for another church instead.
 

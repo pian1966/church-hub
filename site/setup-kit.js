@@ -398,8 +398,8 @@ var SetupKit = (function () {
     { id: 'extras', title: 'Extras' }, { id: 'care', title: 'Keep it up to date' }
   ];
   var GROW = [
-    { id: 'elvanto', group: 'people', title: 'Bring people across from Elvanto', mods: ['import'], since: '0.1',
-      what: 'Moving from Elvanto? Bring everyone across, with households, groups and serving, in one go.',
+    { id: 'elvanto', group: 'people', title: 'Bring people across from your old system', mods: ['import'], since: '0.1',
+      what: 'Moving from another church management system? Bring everyone across, with households, groups and serving, in one go.',
       how: function (c) { return ol([open(c.app('import'), 'Open Import') + ' and follow the steps on the screen.']); } },
     { id: 'people', group: 'people', title: 'Add the church’s people and households', mods: ['people'], since: '0.1',
       what: 'Everyone in one place: households, children with their guardians, birthdays and anniversaries.',
@@ -514,7 +514,7 @@ var SetupKit = (function () {
   /** App parts with nothing for an Administrator to set up (and why) – the test accepts these. */
   var NOT_SETUP = {
     me: 'Each member’s own page – covered by Church Partners.',
-    import: 'Covered by Bring people across from Elvanto.'
+    import: 'Covered by Bring people across from your old system.'
   };
   /** Not in Church & Trellis yet – shown so the church knows what is coming. Move an item to GROW when it is built. */
   var COMING = [

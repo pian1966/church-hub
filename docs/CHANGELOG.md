@@ -595,3 +595,4 @@ Church Hub; it is the history. Newest entries at the bottom of each section; add
 - ✅ 25 Nov 2026 (0.117.3): the Church health card is now called **Church health tests**
 - ✅ 25 Nov 2026 (0.117.10): **Items I have borrowed shows each book's cover** beside its title and due date (same pictures and loading as the Library tab; the book icon where there is none)
 - ✅ 25 Nov 2026 (0.117.11): fix – items on Items I have borrowed were hidden by the Library's own search filter; they show again, with their covers
+- ✅ 25 Nov 2026 (0.117.12): the Google Maps Plus Code box on Add / Edit details now shows its grey example as **e.g. G7J3+Q4Q Howick** (with the words in all five languages)

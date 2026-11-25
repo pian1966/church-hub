@@ -1,7 +1,7 @@
 /* Church & Trellis – words for the Church health card on Home (js/health-ui.js).
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part as it is. Test: node tests/i18n.test.js */
 I18n.rows([
-    ['Church health', 'Kerkgesondheid', 'Impilo yebandla', 'Impilo yebandla'],
+    ['Church health tests', 'Kerkgesondheidstoetse', 'Ukuhlolwa kwempilo yebandla', 'Uvavanyo lwempilo yebandla'],
     ['Weekly', 'Weekliks', 'Njalo ngesonto', 'Rhoqo ngeveki'],
     ['Monthly', 'Maandeliks', 'Njalo ngenyanga', 'Rhoqo ngenyanga'],
     ['{n} upcoming roster turn is held by someone who is no longer at the church', '{n} komende rosterbeurt word deur iemand gehou wat nie meer by die kerk is nie', 'Ithuba elingu-{n} elizayo lohlelo lubanjwe umuntu ongasekho ebandleni', 'Ithuba eli-{n} elizayo kuluhlu lubanjwe ngumntu ongasekho ebandleni'],

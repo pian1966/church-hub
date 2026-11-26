@@ -889,7 +889,7 @@ Single, Engaged, Partner and Divorced; the late spouse for Single and Engaged. A
 The wedding anniversary sits right under marital status.
 
 ## Brochures and the brochure editor (About → Brochures; `brochure.html`, `js/brochure-kit.js`, `js/mod-about.js`)
-- About links to `#/about/brochure/members|churches` (Administrators). The page shows `brochure.html?for=…&embed=1` in a frame
+- About links to `#/about/brochure/members|churches|tech` (Administrators; the third, "For administrators", is for administrators and the technically curious – how it is built and what it takes to run; its editor keys start with `t`). The page shows `brochure.html?for=…&embed=1` in a frame
   (same site), with Church & Trellis's own buttons: **Edit the wording / Done editing**, **Print or save as PDF** (the frame prints),
   a language picker, colour (Church & Trellis orange, the church's colour from Settings → Appearance, or any colour) and font (a short
   list of Google Fonts).

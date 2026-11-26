@@ -63,7 +63,7 @@ var BrochureKit = (function () {
   /** The saved settings, tidied: only what the editor makes. */
   function tidy(b) {
     b = b || {}; var out = { design: { accent: hex((b.design || {}).accent) || DEFAULT.accent, font: font((b.design || {}).font) } };
-    ['members', 'churches'].forEach(function (w) {
+    ['members', 'churches', 'tech'].forEach(function (w) {
       var x = b[w] || {}, t = {}, hd = {}, translations = {};
       function takeWords(src, target) {
         Object.keys(src || {}).forEach(function (k) { var v = src[k]; if (v && typeof v.h === 'string' && typeof v.o === 'string') target[k] = { o: norm(v.o), h: clean(v.h) }; });
@@ -88,7 +88,7 @@ var BrochureKit = (function () {
       return !!(Object.keys(b.texts || {}).length || Object.keys(b.hidden || {}).length);
     }
     b = tidy(b);
-    if (!who) return b.design.accent !== DEFAULT.accent || b.design.font !== DEFAULT.font || changed(b, 'members') || changed(b, 'churches');
+    if (!who) return b.design.accent !== DEFAULT.accent || b.design.font !== DEFAULT.font || changed(b, 'members') || changed(b, 'churches') || changed(b, 'tech');
     return !!(Object.keys(b[who].texts).length || Object.keys(b[who].hidden).length ||
       Object.keys(b[who].translations).some(function (code) {
         return Object.keys(b[who].translations[code].texts).length || Object.keys(b[who].translations[code].hidden).length;

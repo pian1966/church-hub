@@ -181,10 +181,11 @@ async function icon(Comp, color, px = 256) {
     }
     T(s, [
       { text: 'Anglican, Catholic, Methodist, Presbyterian, Baptist, Pentecostal, Lutheran', options: { bold: true, breakLine: true } },
-      { text: 'Church & Trellis speaks your tradition: Rector or Senior Pastor, Parishioner or Member, Home group or Cell group – and you can rename any word.' }
-    ], { x: 0.6, y: 5.0, w: 12.1, h: 1.4, fontSize: 17, color: HEX.ink, paraSpaceAfter: 6 });
+      { text: 'Church & Trellis speaks your tradition: Rector or Senior Pastor, Parishioner or Member, Home group or Cell group – and you can rename any word.', options: { breakLine: true } },
+      { text: 'Using it also helps put great software into the hands of pastors and missionaries in churches with few resources, and links churches across the world in prayer.', options: { italic: true, color: HEX.orangeDk } }
+    ], { x: 0.6, y: 4.85, w: 12.1, h: 1.95, fontSize: 17, color: HEX.ink, paraSpaceAfter: 6 });
   }
-  s.addNotes('Who is it for? Every church. The same Church & Trellis runs a congregation of forty in a rural village and suburban and city churches with several services and teams of volunteers. More than twenty languages, and each person picks their own. It works with a weak signal, and it uses very little data. And it speaks your tradition’s words.');
+  s.addNotes('Who is it for? Every church. The same Church & Trellis runs a congregation of forty in a rural village and suburban and city churches with several services and teams of volunteers. More than twenty languages, and each person picks their own. It works with a weak signal, and it uses very little data. And it speaks your tradition’s words. And there is a bigger reason to choose it: every church that uses Church & Trellis helps provide excellent software to churches that could never afford anything like it on their own – a practical tool for a pastor or missionary working with few resources, to do the work more effectively. And it is more than a church management system: it links churches around the world, so yours is prayed for and you pray for others.');
 
   // ========== 6. Everything in one place ==========
   pres.addSection({ title: 'What it does' });
@@ -325,7 +326,7 @@ async function icon(Comp, color, px = 256) {
   T(s, 'The price of one cup of coffee a month', { x: 0.8, y: 2.0, w: 7.4, h: 1.6, fontSize: 40, bold: true, color: HEX.white });
   T(s, 'For your whole church – not per person. A suggested price, in your own money: whatever a cup costs where you live.', { x: 0.8, y: 3.7, w: 7.2, h: 1.2, fontSize: 18, color: HEX.nightInk });
   {
-    const cards = [['Every feature, for everyone', 'No paid tiers. No charge per member, group or language.'], ['A hard month?', 'Take a payment holiday. Nothing is ever locked or deleted.'], ['Can’t pay at all?', 'Pray for another church instead. Every week, Home shows one to pray for.']];
+    const cards = [['Every feature, for everyone', 'No paid tiers or add-ons. No charge per member, group or language.'], ['A hard month?', 'Take a payment holiday. Nothing is ever locked or deleted.'], ['Can’t pay at all?', 'Pray for another church instead. Every week, Home shows one to pray for.']];
     for (let i = 0; i < 3; i++) {
       const y = 1.0 + i * 1.95;
       s.addShape(pres.shapes.ROUNDED_RECTANGLE, { x: 8.75, y, w: 3.95, h: 1.7, rectRadius: 0.14, fill: { color: HEX.night2 }, line: { color: HEX.night2 } });
@@ -333,8 +334,8 @@ async function icon(Comp, color, px = 256) {
       T(s, cards[i][1], { x: 9.05, y: y + 0.72, w: 3.4, h: 0.85, fontSize: 14, color: HEX.nightInk });
     }
   }
-  T(s, 'A low price doesn’t mean less: every church gets all of Church & Trellis.', { x: 0.8, y: 5.6, w: 7.2, h: 0.8, fontSize: 16, italic: true, color: HEX.orange });
-  s.addNotes('And the price: one cup of coffee a month, for your whole church – not per person – at whatever a cup costs where you live. It is a suggested price; choose what is honest for your church. Every church gets every feature. A hard month? A church that gives monthly can take a payment holiday – a free month, no questions asked – whenever it needs one. Paying is through PayFast: card, Instant EFT or SnapScan. A church that can’t pay at all can pledge to pray for another church each month instead. No church is turned away. And every church is in the prayer circle: each church shares a prayer card – a photo and two things to pray for – and looks at it once a month, and every week Home shows everyone another church to pray for. So Church & Trellis doesn’t only run your church: it makes sure your church is prayed for.');
+  T(s, 'Not free to build, but cheap for you: every church gets all of Church & Trellis. Pay or pray.', { x: 0.8, y: 5.6, w: 7.2, h: 0.8, fontSize: 16, italic: true, color: HEX.orange });
+  s.addNotes('And the price: one cup of coffee a month, for your whole church – not per person – at whatever a cup costs where you live. It is a suggested price; choose what is honest for your church. Every church gets every feature. A hard month? A church that gives monthly can take a payment holiday – a free month, no questions asked – whenever it needs one. Paying is through PayFast: card, Instant EFT or SnapScan. A church that can’t pay at all can pledge to pray for another church each month instead. No church is turned away. And every church is in the prayer circle: each church shares a prayer card – a photo and two things to pray for – and looks at it once a month, and every week Home shows everyone another church to pray for. So Church & Trellis doesn’t only run your church: it makes sure your church is prayed for. If someone asks why it isn’t free: it isn’t free to build or to run. There is hardware, the AI tools used to build it, website and database hosting, and the Apple and Google app stores, which all charge the developer every month. So it is not cheap for us, but it is cheap for you – and it is the whole of Church & Trellis, with no add-ons. The one exception would be a future feature that carries someone else’s licence fee, such as royalties for music; if that ever happens, we will say so and it will be your choice. Paying even a small amount is a partnership rather than charity: it keeps us independent of advertisers, it keeps Church & Trellis going, and it helps keep it open to churches that cannot pay. Pay or pray.');
 
   // ========== 16. Moving from another system ==========
   s = content('Trust', 'Moving from another system?', true);
@@ -351,7 +352,7 @@ async function icon(Comp, color, px = 256) {
     }
     T(s, 'A step-by-step setup guide takes a church from nothing to its first sign-in – about an hour, no technical knowledge needed.', { x: 0.6, y: 5.85, w: 12.1, h: 0.8, fontSize: 16, color: HEX.ink });
   }
-  s.addNotes('Moving from another church management system? Import your people, households and staff leave, run both systems side by side while everyone settles in, then switch over. The setup guide takes a church office volunteer from nothing to the first sign-in in about an hour.');
+  s.addNotes('Moving from another church management system? Import your people, households and staff leave, run both systems side by side while everyone settles in, then switch over. The setup guide takes a church office volunteer from nothing to the first sign-in in about an hour. If someone asks why they would switch from what they use now: they do not have to if they are happy. But by choosing Church & Trellis a church helps provide excellent software to churches that could never afford it, puts a practical tool in the hands of pastors and missionaries in hard places, and joins a worldwide church family in prayer. For the technically curious there is a third brochure, For administrators, under About: plain HTML, CSS and JavaScript with no build step, Google Firebase owned by the church, tested on every change.');
 
   // ========== 17. Try it ==========
   pres.addSection({ title: 'Close' });

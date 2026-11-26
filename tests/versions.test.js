@@ -32,7 +32,7 @@ ok(fv === stamp.fileVersions(), 'js/file-versions.js has every language file\'s 
 // The brochures (brochure.html, opened from About) are read again whenever a feature is added (the middle number goes up).
 const bro = fs.readFileSync(path.join(root, 'brochure.html'), 'utf8'), rv = (/name="reviewed-for" content="(\d+\.\d+)"/.exec(bro) || [])[1];
 ok(rv === (v || '').split('.').slice(0, 2).join('.'), 'brochure.html was checked for version ' + (v || '').split('.').slice(0, 2).join('.') +
-  (rv === (v || '').split('.').slice(0, 2).join('.') ? '' : ' – it says ' + rv + '. Read both brochures, add what this version brings that members or other churches would notice, then change reviewed-for'));
+  (rv === (v || '').split('.').slice(0, 2).join('.') ? '' : ' – it says ' + rv + '. Read all three brochures, add what this version brings that members, other churches or administrators would notice, then change reviewed-for'));
 // The setup tool (site/setup.html, with its list of everything a church can switch on in site/setup-kit.js) is read again the same way.
 const su = fs.readFileSync(path.join(root, 'site/setup.html'), 'utf8'), sv = (/name="reviewed-for" content="(\d+\.\d+)"/.exec(su) || [])[1];
 ok(sv === (v || '').split('.').slice(0, 2).join('.'), 'the setup tool was checked for version ' + (v || '').split('.').slice(0, 2).join('.') +

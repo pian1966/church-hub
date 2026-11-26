@@ -448,6 +448,8 @@ I18n.rows([
     ['For other churches', 'Vir ander kerke', 'Amanye amabandla', 'Kwezinye iicawa'],
     ['Every church, however small, deserves great church software.', 'Elke kerk, hoe klein ook al, verdien uitstekende kerksagteware.', 'Wonke amabandla, noma lingaba lincane kangakanani, lifanelwe yisofthiwe yebandla enhle kakhulu.', 'Yonke icawa, nokuba incinci kangakanani na, ifanelwe yisoftwe yecawa ebalaseleyo.'],
     ['What Church & Trellis offers, and the demo', 'Wat Church & Trellis bied, en die demo', 'Lokho i-Church & Trellis ekunikezayo, nedemo', 'Into ebonelelwa yi-Church & Trellis, kunye nedemo'],
+    ['For administrators', 'Vir administrateurs', 'Kubaphathi', 'Kubalawuli'],
+    ['How it is built, and what it takes to run it', 'Hoe dit gebou is, en wat dit verg om dit te laat loop', 'Indlela eyakhiwe ngayo, nokudingeka ukuze isebenze', 'Indlela eyakhiwe ngayo, nokufunekayo ukuze isebenze'],
     ['Version', 'Weergawe', 'Inguqulo', 'Uguqulelo'],
     ['Released', 'Vrygestel', 'Ikhishwe', 'Ikhutshiwe'],
     ['Android app', 'Android-toep', 'I-app ye-Android', 'I-app ye-Android'],

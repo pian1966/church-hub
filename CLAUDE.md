@@ -36,7 +36,7 @@ section of `docs/POPIA.md`. `docs/ROADMAP.md` lists only work still to do; finis
 | Import (Elvanto, Leave Manager), Elvanto updates, robot | `js/mod-import.js`, `js/elvanto-import.js`, `js/elvanto-sync.js`, `robot/robot.js` | `js/i18n/import.js` | `tests/elvanto-*.test.js`, `robot.test.js`, `tests/app/imports.js`, `elvanto-leave.js` |
 | Help: ask a question (typed or said), answered by AI only from `docs/help/`, or the matching pages without AI; browse by topic; the pages are read from the website | `js/mod-help.js`, `js/help.js` (rules), `css/help.css`; the answers are `docs/help/*.md` | `js/i18n/help.js` | `tests/help.test.js`, `tests/app/help.js` |
 | About (version, check for updates, developer) | `js/mod-about.js`, `js/version.js` | `js/i18n/common.js` | `tests/app/roles.js` |
-| Brochures (printable, for members and for other churches; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
+| Brochures (printable, three: for members, for other churches and for administrators; admins open them from About) | `brochure.html` | – (English) | `tests/versions.test.js`, `tests/app/roles.js` |
 | Settings (incl. Attendees), countries, terminology, Translations | `js/mod-settings.js`, `js/countries.js`, `js/wording.js`, `js/mod-words.js` | `js/i18n/settings.js` | `tests/countries.test.js`, `wording.test.js`, `tests/app/languages.js` |
 | Language engine, 22 more languages (Sesotho kept up to date; the other 21 before a release); Sesotho as written in Lesotho, made from `st.js` | `js/i18n.js`, `js/lang/<code>.js`, `js/sesotho.js` | – | `tests/i18n.test.js`, `sesotho.test.js` |
 | Who can see what, in one place: roles, What Pastors can do, Attendees, Settings → Apps, each part's permissions and jobs (keepers) | `js/access.js` | (words of the parts that use it) | `tests/access.test.js` |
@@ -114,7 +114,7 @@ A session should say which tier it is running at, and stop and ask if the task's
   checks it. Don't type `?v=` numbers by hand. On a merge conflict in `js/file-versions.js`, take either side and run it again. On a conflict in `index.html`, **keep the lines
   from both sides** – never drop a `<script>` or `<link>` line, or that side's feature quietly vanishes from the app – then run it again
   (it fixes every `?v=`); `node tests/versions.test.js` fails if a file in `js/` or `css/` isn't loaded.
-- Brochures: when a release adds a feature (middle number up), read `brochure.html` and add or change what members or other churches
+- Brochures: when a release adds a feature (middle number up), read `brochure.html` (three brochures: members, other churches, administrators) and add or change what members, other churches or administrators
   would notice – keep each panel within its A4 third – then set its `reviewed-for` to the new version (`node tests/versions.test.js` checks it).
   Never claim anything the app doesn't do, and no prices.
 - Presentation: keep it up to date. When a change alters anything the slides or their speaker notes say (or adds a feature

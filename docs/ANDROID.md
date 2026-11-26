@@ -92,7 +92,7 @@ The serving offers need the newest rules, so repeat **[FIREBASE-SETUP.md](FIREBA
 4. Send members the download link (WhatsApp or email works well). They need access first: People → their profile →
    **Edit details → App access: Member**, with their email address filled in.
 
-**iPhones:** the iPhone version is the home-screen app (no App Store needed). Open **https://pian1966.github.io/church-hub/**
+**iPhones:** the iPhone version is the home-screen app (no App Store needed). Open **https://app.churchandtrellis.com/**
 in **Safari** → **Share** (the square with an arrow) → **Add to Home Screen** → **Add**. It opens full screen like an app, with
 its own icon, starts on **Me**, and works the same as the Android app: to sign in with the email link, press and hold the link
 in the email, **Copy**, then paste it into Church & Trellis (iPhones keep the home-screen app's sign-in apart from Safari's).

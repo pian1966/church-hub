@@ -150,7 +150,7 @@ the editor; its saved wording is kept separately from general church settings.
 For: Administrators
 Also asked: Install Church & Trellis for a new church. Start using Church & Trellis. A friend's church wants it. Setup guide.
 
-Open the setup tool: **https://pian1966.github.io/church-hub/site/setup.html** (also linked from the website as **Set up Church
+Open the setup tool: **https://app.churchandtrellis.com/site/setup.html** (also linked from the website as **Set up Church
 Hub for your church**). Use a computer. It goes one step at a time – the church's own Google account, its copy of the website,
 its database, the first sign-in, then privacy, wording, services and staff – filling in each instruction with that church's
 own names, with copy buttons and links to the right pages. It remembers where you stopped. Never type passwords into it.

@@ -17,7 +17,7 @@ android {
         versionCode buildNo
         versionName "1.0." + buildNo
         // The web address the app opens. Change it here if the site ever moves.
-        buildConfigField 'String', 'APP_URL', '"https://pian1966.github.io/church-hub/"'
+        buildConfigField 'String', 'APP_URL', '"https://app.churchandtrellis.com/"'
     }
 
     buildFeatures { buildConfig true }

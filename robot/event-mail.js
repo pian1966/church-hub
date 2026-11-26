@@ -21,7 +21,7 @@ const { fromValue, toValue } = require('./robot.js');
 const Events = require('../js/events.js');
 const log = (...a) => console.log(...a);
 
-const SITE = process.env.SITE_URL || 'https://pian1966.github.io/church-hub/';
+const SITE = process.env.SITE_URL || 'https://app.churchandtrellis.com/';
 const AUTH_URL = process.env.AUTH_URL || 'https://identitytoolkit.googleapis.com/v1';
 const FS_URL = process.env.FS_URL || 'https://firestore.googleapis.com/v1';
 let TOKEN = '', CFG = null;

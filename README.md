@@ -8,12 +8,12 @@ update their details, serving and days away, and choose their own colours and pa
 and records – set up with the setup tool below. It is built in parts (modules): a church switches on only what it needs
 in Settings → Apps, and each part is its own `js/mod-*.js` registered with `Hub.register`.
 
-- **Try the demo:** https://pian1966.github.io/church-hub/?demo (made-up people; changes stay in your browser)
+- **Try the demo:** https://app.churchandtrellis.com/?demo (made-up people; changes stay in your browser)
 - **Read first:** [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) · [docs/POPIA.md](docs/POPIA.md) · [docs/ROADMAP.md](docs/ROADMAP.md) (to do) · [docs/CHANGELOG.md](docs/CHANGELOG.md) (done)
-- **Set up Church & Trellis at a church:** the setup tool, https://pian1966.github.io/church-hub/site/setup.html – one friendly step at a time,
+- **Set up Church & Trellis at a church:** the setup tool, https://app.churchandtrellis.com/site/setup.html – one friendly step at a time,
   from the church's Google account to the first sign-in, then a list of everything else the church can switch on
   (`site/setup.html`, `site/setup-kit.js`). The same steps written out in full: [docs/FIREBASE-SETUP.md](docs/FIREBASE-SETUP.md)
-- **Public website:** https://pian1966.github.io/church-hub/site/ – what Church & Trellis does, the price, questions churches ask (`site/index.html`)
+- **Public website:** https://app.churchandtrellis.com/site/ – what Church & Trellis does, the price, questions churches ask (`site/index.html`)
 - **Android app:** [docs/ANDROID.md](docs/ANDROID.md) – members' own details, days away and serving on their phone · download: https://github.com/pian1966/church-hub/releases/download/android/ChurchHub.apk
 - **Leave → Elvanto:** [docs/ELVANTO-ROBOT.md](docs/ELVANTO-ROBOT.md) – approved leave as Elvanto unavailability (robot)
 - **Conference presentation:** [docs/presentation/](docs/presentation/README.md) – the slides that introduce Church & Trellis, their screenshots and clips, and how to make them again

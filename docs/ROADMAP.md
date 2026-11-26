@@ -204,7 +204,7 @@ the setup tool for doing it by hand (`site/setup.html`); the domain **churchandt
   030 (measure reads per start) can run any time.
 - ⬜ **014** landing screen; **020/021** the setup helper (engine, then screen with Google sign-in); **022** "Update the database
   rules" button; **023** AI setup.
-- ⬜ **040** move the app to **app.churchandtrellis.com** (chosen 26 Nov 2026; the guide for the owner's clicks is `docs/NEW-ADDRESS.md`; after it works: the robot, the Android app and the brochure/guide addresses; invitation links follow the address by themselves);
+- ⬜ **040** the app now lives at **app.churchandtrellis.com** (26 Nov 2026); still to do: a new Android build (its address changed), the presentation's QR codes and the website's own address once the root domain opens the public page; `docs/NEW-ADDRESS.md`
   **041** the Android app for any church.
 - ⬜ **The office** (060 office project, 062 register a church, 063 office robot, 064 the owner's office page, 067 payments in the robot):
   the short customer list – each church's name, country and the Google account that set it up, nothing about its people.

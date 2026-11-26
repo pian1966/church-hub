@@ -74,7 +74,7 @@ srv.listen(0, '127.0.0.1', async () => {
     ok(r.mails.length === 1 && /môre/.test(r.mails[0].text) && JSON.stringify(DB['eventSignups/ev1_p1'].data.mailed) === '["3","1"]', 'the day before: the 1-day email');
     ok(DB['robotStatus/eventMail'] && DB['robotStatus/eventMail'].data.sent === 1, 'records the run');
     ok(!/Anna|Ben|Cara|example\.org|breakfast|2026-11/.test(r.stdout), 'the public log has no names, addresses or events');
-    ok(calls.every(c => c.referer === 'https://pian1966.github.io/church-hub/'), 'says it comes from the church’s website');
+    ok(calls.every(c => c.referer === 'https://app.churchandtrellis.com/'), 'says it comes from the church’s website');
 
     console.log('Missed a day, cancelled, switched off');
     reset(true); r = await run(at(2026, 11, 27, 7));

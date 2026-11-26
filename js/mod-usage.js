@@ -190,7 +190,18 @@
       '<p class="hint">' + T('Only counts are kept for each part. Names appear only here, for Administrators and Pastors, to help the church care for people and invite them.') + '</p>';
   }
 
-  window.UsageUI = { meter: personMeter };
+  /** For Advanced search (Usage fields): everyone's level and the day each last opened the app, read fresh. Administrators and Pastors only. */
+  function forSearch() {
+    var done = function (list) {
+      var people = S.list('people'), last = {};
+      (list || []).forEach(function (r) { if (r && r.id && r.lastSeen) last[r.id] = String(r.lastSeen).slice(0, 10); });
+      return { levels: Usage.levels(people, list || [], H.today()), last: last };
+    };
+    if (!allowed()) return Promise.reject(new Error('not allowed'));
+    if (!S.isLive()) return Promise.resolve(done(records(false)));
+    return S.usageAll().then(function (list) { if (!list) throw new Error('no usage'); live.list = list; live.at = Date.now(); memo = { v: null, out: null }; return done(list); });
+  }
+  window.UsageUI = { meter: personMeter, forSearch: forSearch };
   H.register({
     id: 'usage', name: 'Usage', desc: 'Who uses Church & Trellis, how often and what for', icon: ICON, tint: '#0F766E', roles: ['admin', 'pastor'],
     stat: function () { var a = data().sum.adoption.partners; return a.total ? T('{n}% of Church Partners are on the app', { n: a.pct }) : T(this.desc); },

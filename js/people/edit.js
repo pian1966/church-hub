@@ -184,7 +184,7 @@
             return '<label class="field"><span id="pf-postcode-l">' + T(c ? c.postcodeLabel : 'Postal code') + '</span><input id="pf-postcode" value="' + esc(a.postcode || '') + '" autocomplete="postal-code"></label></div>' +
               '<div class="two"><label class="field"><span id="pf-region-l">' + T(c ? c.regionLabel : 'Province, state or region') + '</span><span id="pf-region-w">' + regionControl(c, a.province || '') + '</span></label>' +
               '<label class="field">' + F('Country') + countrySelect(a.country || '') + '</label></div>' +
-              '<label class="field">' + F('Google Maps Plus Code') + ' ' + H.tip(T('A Plus Code is a short Google Maps code, like G7J3+Q4Q Howick, that marks an exact spot. It is ideal where there is no street name or house number – in townships, informal settlements and rural or farming areas – because it takes a visitor, a carer or a driver straight to the door or gate. To find it: open Google Maps, press and hold on the house (or gate), open the pin’s details and copy the “Plus code”. If you are standing there, tap the blue dot.')) + '<input id="pf-pluscode" value="' + esc(a.plusCode || '') + '" placeholder="' + T('e.g. G7J3+Q4Q Howick') + '" autocapitalize="characters" autocomplete="off"><small>' + T('In Google Maps, press and hold the spot and copy the code shown, e.g. G7J3+Q4Q Howick. Anyone can then tap it to go straight there.') + '</small></label></fieldset>';
+              '<label class="field">' + F('Latitude and longitude') + ' ' + H.tip(T('Latitude and longitude are two numbers that mark an exact spot on the map, like -29.4833, 30.2333. They work in Google Maps and in Apple Maps. They are ideal where there is no street name or house number – in townships, informal settlements and rural or farming areas – because they take a visitor, a carer or a driver straight to the door or gate. In Google Maps, press and hold on the house (or gate) and tap the numbers at the top to copy them. In Apple Maps, press and hold to drop a pin, swipe up and tap Copy Coordinates. If you are standing there, tap the blue dot first. South of the equator the first number has a minus sign, and west of Greenwich the second one does: in South Africa, for example, the first number starts with a minus and the second does not.')) + '<input id="pf-gps" value="' + esc(a.lat != null && a.lng != null ? Countries.gpsText(a.lat, a.lng) : '') + '" placeholder="' + T('e.g. -29.4833, 30.2333') + '" inputmode="text" autocapitalize="off" autocomplete="off" spellcheck="false"><small>' + T('Copy the two numbers from Google Maps or Apple Maps, e.g. -29.4833, 30.2333. Anyone can then tap them to go straight there.') + '</small></label></fieldset>';
           })(p.address || {}) +
         '' : '') +
       (admin || H.can('leave.manage') ? staffFields(p) : '') + (window.CareUI ? CareUI.fields(p) : '') +
@@ -479,10 +479,23 @@
         if (g('pf-maiden') !== null) { if (g('pf-maiden')) p.maidenName = g('pf-maiden'); else delete p.maidenName; }
         if (g('pf-street') !== null) {
           var ad = { street: g('pf-street'), street2: g('pf-street2'), city: g('pf-city'), postcode: g('pf-postcode'), province: g('pf-province'), country: g('pf-country') === '__other' ? g('pf-country-o') : g('pf-country') };
-          var pc = (g('pf-pluscode') || '').replace(/\s+/g, ' ').trim();
-          if (pc && !/^[23456789CFGHJMPQRVWX]{2,8}\+[23456789CFGHJMPQRVWX]{0,3}(\s.+)?$/i.test(pc)) { err.textContent = T('That Plus Code doesn’t look right. It looks like G7J3+Q4Q Howick.'); err.hidden = false; return; }
-          if (pc) ad.plusCode = pc.replace(/^\S+/, function (m) { return m.toUpperCase(); });
-          if (ad.street || ad.street2 || ad.city || ad.postcode || ad.plusCode) p.address = ad; else delete p.address;
+          var gpsIn = document.getElementById('pf-gps'), gt = (g('pf-gps') || '').replace(/\s+/g, ' ').trim();
+          if (gt) {
+            var gp = Countries.parseGps(gt), gc = ad.country ? Countries.find(ad.country) : Countries.church(S.settings()), warn = '';
+            if (gp.error) {
+              err.textContent = T(gp.error === 'minutes' ? 'Please use decimal numbers, like -29.4833, 30.2333 – not degrees and minutes. In Google Maps, press and hold the spot and tap the numbers to copy them.' :
+                gp.error === 'range' ? 'Latitude (the first number) can only be between -90 and 90, and longitude (the second) between -180 and 180.' :
+                gp.error === 'swapped' ? 'The two numbers look the wrong way round: latitude (north or south) comes first, then longitude (east or west).' :
+                'Please type the latitude and longitude as two numbers, like -29.4833, 30.2333.'); err.hidden = false; return;
+            }
+            var chk = gc ? Countries.gpsCheck(gp.lat, gp.lng, gc.code) : null;
+            if (chk && chk.kind === 'flip') warn = T('That spot isn’t in {country}. Did you mean {fix}? South of the equator and west of Greenwich the number has a minus sign. Tap Save again to keep it as typed.', { country: gc.name, fix: Countries.gpsText(chk.lat, chk.lng) });
+            else if (chk) warn = T('That spot isn’t in {country}. Please check the numbers and their minus signs (south and west are negative). Tap Save again to keep it as typed.', { country: gc.name });
+            else if (gp.decimals < 3) warn = T('Those numbers only point to somewhere within several kilometres. For an exact spot, copy every digit from the map. Tap Save again to keep it as typed.');
+            if (warn && !(gpsIn && gpsIn.getAttribute('data-checked') === gt)) { if (gpsIn) gpsIn.setAttribute('data-checked', gt); err.textContent = warn; err.hidden = false; return; }
+            ad.lat = gp.lat; ad.lng = gp.lng;
+          }
+          if (ad.street || ad.street2 || ad.city || ad.postcode || ad.lat != null) p.address = ad; else delete p.address;
         }
         if (g('pf-psince') !== null) {
           var ps = g('pf-psince'), pu = g('pf-pupd');

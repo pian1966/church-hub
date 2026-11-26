@@ -216,12 +216,12 @@
 
 
   /** One address as short text for the screen. */
-  function addrText(p) { var l = P.addressLines(p), pc = p && p.address && p.address.plusCode ? String(p.address.plusCode).trim() : ''; if (pc) l = l.concat([pc]); return l.length ? l.join(', ') : T('No address'); }
+  function addrText(p) { var l = P.addressLines(p), pc = p && p.address && typeof p.address.lat === 'number' && typeof p.address.lng === 'number' ? Countries.gpsText(p.address.lat, p.address.lng) : ''; if (pc) l = l.concat([pc]); return l.length ? l.join(', ') : T('No address'); }
   /** The pieces of a home address, in the order shown, as [{ text, key, join }]: "Howick" and "3290" are separate pieces, so a different town or postcode alone is picked out. */
   function addrBits(p) {
     var a = (p && p.address) || {}, c = a.country && Countries.find(a.country), home = Countries.church(S.settings());
     var bit = function (v, join) { v = String(v == null ? '' : v).trim(); return v ? { text: v, key: v.toLowerCase().replace(/[^a-z0-9]+/g, ''), join: join } : null; };
-    return [bit(a.street, ', '), bit(a.street2, ', '), bit(a.city, ' '), bit(a.postcode, ', '), bit(a.province, ', '), bit(a.country && !(c && c.code === home.code) ? a.country : '', ', '), (function (b) { if (b) b.key = String(a.plusCode).trim().split(/\s+/)[0].toUpperCase(); return b; })(bit(a.plusCode, ', '))].filter(Boolean);
+    return [bit(a.street, ', '), bit(a.street2, ', '), bit(a.city, ' '), bit(a.postcode, ', '), bit(a.province, ', '), bit(a.country && !(c && c.code === home.code) ? a.country : '', ', '), (function (b) { if (b) b.key = a.lat.toFixed(4) + ',' + a.lng.toFixed(4); return b; })(typeof a.lat === 'number' && typeof a.lng === 'number' ? bit(Countries.gpsText(a.lat, a.lng), ', ') : null)].filter(Boolean);
   }
   /** Two couples' addresses as safe HTML with only the parts that differ in bold (not the whole address). Matching ignores capitals, spaces and punctuation, like the check itself. */
   function addrDiff(a, b) {

@@ -115,8 +115,64 @@ var Countries = (function () {
     if (isNaN(dt) || dt.toISOString().slice(0, 10) !== iso || iso > today) return '';
     return iso;
   }
+  // Where each country is: [south, north, west, east] in degrees, drawn generously (islands and territories included), only to catch a mistyped
+  // minus sign or swapped numbers on a home address's latitude and longitude – never to refuse anyone.
+  var BOX = {
+    ZA: [-35.2, -22, 16.3, 33.1], NA: [-29, -16.9, 11.5, 25.4], BW: [-27, -17.7, 19.9, 29.4], ZW: [-22.5, -15.5, 25.2, 33.1], ZM: [-18.1, -8.2, 21.9, 33.7],
+    MZ: [-27, -10.4, 30.2, 41], LS: [-30.7, -28.5, 27, 29.5], SZ: [-27.4, -25.7, 30.7, 32.2], MW: [-17.2, -9.3, 32.6, 36], AO: [-18.1, -4.3, 11.6, 24.1],
+    KE: [-4.8, 5.1, 33.8, 42], UG: [-1.5, 4.3, 29.5, 35.1], TZ: [-11.8, -0.9, 29.3, 40.5], RW: [-2.9, -1, 28.8, 30.9], ET: [3.3, 15, 32.9, 48.1],
+    NG: [4.2, 13.9, 2.6, 14.8], GH: [4.6, 11.2, -3.3, 1.3], CM: [1.6, 13.1, 8.4, 16.3], CD: [-13.5, 5.5, 12.1, 31.4],
+    GB: [49.8, 60.9, -8.7, 1.9], IE: [51.3, 55.5, -10.8, -5.9], DE: [47.2, 55.1, 5.8, 15.1], AT: [46.3, 49.1, 9.5, 17.2], CH: [45.7, 47.9, 5.9, 10.6],
+    FR: [41.2, 51.2, -5.2, 9.7], ES: [27.5, 43.9, -18.3, 4.4], PT: [32.3, 42.2, -31.4, -6.1], IT: [35.4, 47.2, 6.5, 18.6], NL: [50.7, 53.6, 3.3, 7.3],
+    BE: [49.4, 51.6, 2.5, 6.5], DK: [54.5, 57.8, 8, 15.3], NO: [57.9, 71.3, 4.4, 31.2], SE: [55.2, 69.1, 10.9, 24.2], FI: [59.7, 70.2, 19.4, 31.7], PL: [48.9, 54.9, 14, 24.2],
+    CA: [41.6, 83.2, -141.1, -52.5], US: [18.8, 71.5, -179.2, -66.8], MX: [14.4, 32.8, -118.5, -86.6], BR: [-33.8, 5.3, -74.1, -34.7], AR: [-55.1, -21.7, -73.7, -53.5],
+    CL: [-56, -17.4, -110, -66.4], CO: [-4.3, 13.5, -79.1, -66.8], PE: [-18.4, 0, -81.4, -68.6], JM: [17.7, 18.6, -78.4, -76.1],
+    IN: [6.7, 35.7, 68, 97.5], KH: [10.3, 14.7, 102.3, 107.7], AU: [-43.8, -9, 112.8, 154], NZ: [-47.4, -34.3, 165.8, 179]
+  };
+  function inBox(code, lat, lng) { var b = BOX[code]; return !b || (lat >= b[0] && lat <= b[1] && lng >= b[2] && lng <= b[3]); }
+  /**
+   * Latitude and longitude as people write them – "-29.4833, 30.2333", "-29.4833 30.2333", "29.4833° S, 30.2333° E", "S29.4833 E30.2333",
+   * a comma for the decimal point ("-29,4833; 30,2333") – as { lat, lng, decimals } (decimals: the fewest places after the point), or
+   * { error } where error is 'empty-pair' (not two numbers), 'zero' (0, 0 is a spot in the sea), 'range' (beyond 90 / 180) or 'swapped'
+   * (longitude first: the first number is beyond 90 but the second isn't). Degrees-minutes-seconds are not read: they give 'empty-pair' or 'minutes'.
+   */
+  function parseGps(text) {
+    var s = String(text == null ? '' : text).replace(/[−–—]/g, '-').replace(/[′’']/g, "'").replace(/[″”"]/g, '"').trim();
+    if (!s) return { error: 'empty' };
+    if (/\d\s*(°|º)?\s*\d+\s*['"]/.test(s) || /\d\s*'\s*\d/.test(s)) return { error: 'minutes' };
+    var re = /([NSEW])?\s*(-?\d+(?:[.,]\d+)?)\s*[°º]?\s*([NSEW])?/gi, m, got = [];
+    while ((m = re.exec(s))) got.push({ v: m[2], l: String(m[1] || m[3] || '').toUpperCase() });
+    if (got.length !== 2) return { error: 'empty-pair' };
+    var vals = got.map(function (g) { var n = parseFloat(g.v.replace(',', '.')); if (g.l === 'S' || g.l === 'W') n = -Math.abs(n); return n; });
+    var dec = got.map(function (g) { var d = g.v.split(/[.,]/)[1]; return d ? d.length : 0; });
+    var lat = vals[0], lng = vals[1], dl = dec[0], dg = dec[1];
+    if (/^[EW]$/.test(got[0].l) || /^[NS]$/.test(got[1].l)) { lat = vals[1]; lng = vals[0]; dl = dec[1]; dg = dec[0]; }   // "30.2E 29.4S": longitude first
+    if (isNaN(lat) || isNaN(lng)) return { error: 'empty-pair' };
+    if (Math.abs(lat) > 90 && Math.abs(lng) <= 90 && !got[0].l) return { error: 'swapped' };
+    if (Math.abs(lat) > 90 || Math.abs(lng) > 180) return { error: 'range' };
+    if (lat === 0 && lng === 0) return { error: 'zero' };
+    return { lat: Math.round(lat * 1e6) / 1e6, lng: Math.round(lng * 1e6) / 1e6, decimals: Math.min(dl, dg) };
+  }
+  /** How it is shown and kept as text: "-29.4833, 30.2333". */
+  function gpsText(lat, lng) { return lat + ', ' + lng; }
+  /**
+   * Does the spot fit the country? null when it does (or the country isn't known here); otherwise
+   * { kind: 'flip', lat, lng } – it would fit with a sign changed or the two numbers the other way round (the likely mistake) – or { kind: 'outside' }.
+   */
+  function gpsCheck(lat, lng, code) {
+    if (!BOX[code] || inBox(code, lat, lng)) return null;
+    var tries = [[-lat, lng], [lat, -lng], [lng, lat], [-lat, -lng]];
+    for (var i = 0; i < tries.length; i++) if (Math.abs(tries[i][0]) <= 90 && inBox(code, tries[i][0], tries[i][1])) return { kind: 'flip', lat: tries[i][0], lng: tries[i][1] };
+    return { kind: 'outside' };
+  }
+  /** Metres between two spots (a straight line over the ground). */
+  function metres(a, b) {
+    var R = 6371000, rad = Math.PI / 180, dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
   function phoneKey(s) { var d = String(s || '').replace(/\D/g, ''); return d.length >= 9 ? d.slice(-9) : ''; }
 
-  return { DEFAULT: DEFAULT, CONTINENTS: CONTINENTS, find: find, church: church, ofAddress: ofAddress, all: all, grouped: grouped, region: region, phoneKey: phoneKey, birthFromId: birthFromId };
+  return { DEFAULT: DEFAULT, CONTINENTS: CONTINENTS, find: find, church: church, ofAddress: ofAddress, all: all, grouped: grouped, region: region, phoneKey: phoneKey, birthFromId: birthFromId, parseGps: parseGps, gpsText: gpsText, gpsCheck: gpsCheck, metres: metres };
 })();
 if (typeof module !== 'undefined') module.exports = Countries;

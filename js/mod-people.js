@@ -70,9 +70,9 @@
         if (dupN) out.push({ text: TN('{n} person looks entered twice', '{n} people look entered twice', dupN), href: '#/people/duplicates' });
       }
       var cpl = couplesToCheck();
-      if (cpl.length) out.push({ text: TN('{n} couple to confirm (spouses or partners)', '{n} couples to confirm (spouses or partners)', cpl.length), href: '#/people/families' });
+      if (cpl.length) out.push({ text: TN('{n} couple to confirm (spouses or partners)', '{n} couples to confirm (spouses or partners)', cpl.length), href: '#/people/families/couples' });
       var adr = P.addressMismatches();
-      if (adr.length) out.push({ text: TN('{n} couple with different home addresses', '{n} couples with different home addresses', adr.length), href: '#/people/families' });
+      if (adr.length) out.push({ text: TN('{n} couple with different home addresses', '{n} couples with different home addresses', adr.length), href: '#/people/families/spouse-addresses' });
       if (noMarital.length) out.push({ text: TN('{n} adult has no marital status', '{n} adults have no marital status', noMarital.length), href: '#/people/p/' + noMarital[0].id });
       var since = LeaveCore.iso(LeaveCore.addDays(LeaveCore.parse(H.today()), -7 * CARE_WEEKS));
       if (H.can('notes')) S.find('people', function (p) { return deceased(p) && p.deceasedAt >= since; }).forEach(function (p) {
@@ -112,7 +112,7 @@
     },
     render: function (p) {
       if (p[0] === 'p') return renderPerson(p[1]);
-      if (p[0] === 'families') return renderFamilies();
+      if (p[0] === 'families') return renderFamilies(p[1]);
       if (p[0] === 'search') return renderSearch();
       if (p[0] === 'duplicates') return renderDuplicates();
       if (p[0] === 'late') return renderLate();

@@ -4052,7 +4052,7 @@ I18n.add('st', {
     "Signed in": "O kene",
     "Invited, not signed in yet": "O memilwe, ha a eso kene",
     "Not invited yet": "Ha a eso memelwe",
-    "Invited to Church & Trellis": "O memetswe ho Church & Trellis",
+    "Date invited": "Letsatsi la memo",
     "First signed in": "O kene la pele",
     "Advanced search now has a Usage group: find people who have been invited, who have signed in, and how much they use Church & Trellis.": "Patlisiso e tsoetseng pele e na le sehlopha sa Tshebeliso: fumana batho ba memetsweng, ba kentseng, le hore ba sebelisa Church & Trellis hakae.",
     "Has been invited": "O memetswe",

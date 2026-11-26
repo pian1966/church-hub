@@ -51,6 +51,8 @@ I18n.rows([
     ['In a web browser', 'In ’n webleser', 'Kusiphequluli sewebhu', 'Kwisikhangeli sewebhu'],
     ['How people open it', 'Hoe mense dit oopmaak', 'Indlela abantu abayivula ngayo', 'Indlela abantu abayivula ngayo'],
     ['How', 'Hoe', 'Kanjani', 'Kanjani'],
+    ['Search these names', 'Soek hierdie name', 'Sesha la magama', 'Khangela la magama'],
+    ['Type a name above to find them.', 'Tik ’n naam hierbo om hulle te vind.', 'Thayipha igama ngenhla ukubathola.', 'Chaza igama ngasentla ukubafumana.'],
     ['Church Partners not on the app yet', 'Kerkvennote wat nog nie op die toep is nie', 'Amalungu ebandla angakasebenzisi i-app okwamanje', 'Amalungu ecawe angekayisebenzisi i-app okwangoku'],
     ['Only Administrators and Pastors see these names.', 'Net Administrateurs en Pastore sien hierdie name.', 'Abaphathi nabafundisi kuphela abalibona la magama.', 'Abalawuli nabefundisi kuphela abawabonayo la magama.'],
     ['Invite them', 'Nooi hulle', 'Bamemeze', 'Bameni'],

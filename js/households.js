@@ -224,7 +224,14 @@ var Households = (function () {
   /** A home address is there when the street, line 2 or the town is filled in. */
   function hasAddress(x) { var a = x && x.address; return !!(a && (String(a.street || '').trim() || String(a.street2 || '').trim() || String(a.city || '').trim())); }
   /** An address as one comparable text: capitals, spaces and punctuation don't count ("1 Main Rd." = "1 main rd"). */
-  function addressKey(a) { a = a || {}; return ['street', 'street2', 'city', 'postcode'].map(function (k) { return String(a[k] || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }).join('|'); }
+  function streetKey(a) { a = a || {}; return ['street', 'street2', 'city', 'postcode'].map(function (k) { return String(a[k] || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }).join('|'); }
+  /** The Google Maps Plus Code of an address as comparable text: only the code itself, in capitals ("g7j3+q4q Howick" = "G7J3+Q4Q"), or ''. */
+  function plusKey(a) { return String((a && a.plusCode) || '').trim().split(/\s+/)[0].toUpperCase(); }
+  /** Street, town, postcode and Plus Code together: changes when any of them changes (used to notice that an address was edited). */
+  function addressKey(a) { return streetKey(a) + '|' + plusKey(a); }
+  /** Two addresses are the same home when the street, town and postcode match and, if both have a Plus Code, those are identical too.
+   *  A Plus Code kept on only one of them is not a difference (the other just hasn't got one yet). */
+  function sameAddress(a, b) { var pa = plusKey(a), pb = plusKey(b); return streetKey(a) === streetKey(b) && (!pa || !pb || pa === pb); }
   /** A couple an Administrator chose to keep with two addresses (liveApart: [otherId] on either of them): not asked about their address again. */
   function liveApart(a, b) { return (a.liveApart || []).indexOf(b.id) >= 0 || (b.liveApart || []).indexOf(a.id) >= 0; }
   /**
@@ -239,12 +246,12 @@ var Households = (function () {
     return couples(people, families).map(function (c) {
       var a = byId[c.a], b = byId[c.b], ha = hasAddress(a), hb = hasAddress(b);
       if (liveApart(a, b) || (!ha && !hb)) return null;
-      if (ha && hb) return addressKey(a.address) === addressKey(b.address) ? null : { familyId: c.familyId, a: c.a, b: c.b, confirmed: c.confirmed, why: 'differ', from: null, to: null };
+      if (ha && hb) return sameAddress(a.address, b.address) ? null : { familyId: c.familyId, a: c.a, b: c.b, confirmed: c.confirmed, why: 'differ', from: null, to: null };
       return { familyId: c.familyId, a: c.a, b: c.b, confirmed: c.confirmed, why: 'missing', from: ha ? c.a : c.b, to: ha ? c.b : c.a };
     }).filter(Boolean);
   }
   /** Both of them have a home address and the two are different (including a couple an Administrator chose to keep apart). */
-  function differentAddress(a, b) { return !!(a && b && hasAddress(a) && hasAddress(b) && addressKey(a.address) !== addressKey(b.address)); }
+  function differentAddress(a, b) { return !!(a && b && hasAddress(a) && hasAddress(b) && !sameAddress(a.address, b.address)); }
   /**
    * Someone's address was just changed: the spouse who should be offered the same one, or null.
    * Their spouse or partner, if living, not marked to keep two addresses, and whose address isn't already the same.
@@ -253,7 +260,7 @@ var Households = (function () {
     var c = couples(people, families).filter(function (x) { return x.a === person.id || x.b === person.id; })[0];
     if (!c || !hasAddress(person)) return null;
     var other = (people || []).filter(function (x) { return x.id === (c.a === person.id ? c.b : c.a); })[0];
-    if (!other || liveApart(person, other) || (hasAddress(other) && addressKey(other.address) === addressKey(person.address))) return null;
+    if (!other || liveApart(person, other) || (hasAddress(other) && sameAddress(person.address, other.address) && !(plusKey(person.address) && !plusKey(other.address)))) return null;   // a Plus Code only the changed person has is still offered
     return other;
   }
 
@@ -285,7 +292,7 @@ var Households = (function () {
     return out.slice(0, 3);
   }
 
-  return { spouseSuggestions: spouseSuggestions, addressSuggestions: addressSuggestions, addressMismatches: addressMismatches, differentAddress: differentAddress, spouseToOffer: spouseToOffer, addressKey: addressKey, hasAddress: hasAddress, liveApart: liveApart, RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
+  return { spouseSuggestions: spouseSuggestions, addressSuggestions: addressSuggestions, addressMismatches: addressMismatches, differentAddress: differentAddress, spouseToOffer: spouseToOffer, addressKey: addressKey, sameAddress: sameAddress, hasAddress: hasAddress, liveApart: liveApart, RELATIONSHIPS: RELATIONSHIPS, CONSENTING: CONSENTING, householdsOf: householdsOf, inHousehold: inHousehold, linksOf: linksOf,
     consentAdults: consentAdults, childrenOf: childrenOf, defaultsFor: defaultsFor, suggestedLinks: suggestedLinks, needs: needs,
     couples: couples, couplesToCheck: couplesToCheck, pairKey: pairKey, weddingOf: weddingOf, lateSpouseSuggestions: lateSpouseSuggestions };
 })();

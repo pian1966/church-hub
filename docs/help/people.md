@@ -30,10 +30,10 @@ greyed-out box is kept. **Edit details** is the first button in the row under th
 
 ## How do I add a Google Maps Plus Code to someone's address?
 For: Administrators, Pastors
-Also asked: Plus Code. Map code. Google Maps code. Link to the address on the map. Go straight to someone's home.
+Also asked: Plus Code. What is a Plus Code. No street address. Township, informal settlement, farm or rural address. Map code. Google Maps code. Link to the address on the map. Go straight to someone's home.
 
 Open the person, tap **Edit details**, and type or paste the code into **Google Maps Plus Code** under **Home address** (for example
-G7J3+Q4Q Howick). To find it, press and hold the spot in Google Maps and copy the code shown. Save. On the person's page the code
+G7J3+Q4Q Howick). To find it, press and hold the spot in Google Maps and copy the code shown. Tap the little **i** beside **Google Maps Plus Code** for a short explanation. A Plus Code is especially useful in townships, informal settlements and rural or farming areas, where there may be no street name or house number: it takes a visitor, a carer or a driver straight to the door or gate. Save. On the person's page the code
 shows under their address, and anyone who can see the address can tap it to open that exact spot in Google Maps.
 
 ## What if a husband and wife (or partners) have different addresses?
@@ -44,7 +44,8 @@ Married couples and partners normally share one home address. When you change so
 **Save**, and their spouse or partner has a different address (or none), Church & Trellis asks **Change … address too?**
 Tap **Yes, change … address** to give them the same address, or **No, leave it** to keep them different this time. Tap
 **Keep both addresses** when the two should always have their own (for example one is in a care home): Church & Trellis
-never asks about that couple again. Nothing changes unless you say yes. Under **People** → **Households**, **Couples with
+never asks about that couple again. The **Google Maps Plus Code** goes across with the address. If both of them have a Plus Code and the two
+don't match, the couple is listed too. Nothing changes unless you say yes. Under **People** → **Households**, **Couples with
 different addresses** lists every couple whose addresses don't match, and your to-do list on People counts them.
 
 ## Where do I record a married woman's maiden name?

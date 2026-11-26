@@ -20,6 +20,8 @@
   var NEWS_FOR = '0.120';
   var NEWS = [
     { date: '2026-11-26', who: ['admin', 'senior'], app: 'about', btn: ['About'], text: TX('There is a new brochure under About, for administrators and the technically curious, and the other two now tell more of the story.') },
+    { date: '2026-11-26', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('Next to Google Maps Plus Code on someone’s address there is now a small “i” explaining what a Plus Code is and how to find one – handy for townships, informal settlements and rural or farming areas with no street address.') },
+    { date: '2026-11-26', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('When a couple share a home, their Google Maps Plus Code now goes across with the address, and Church & Trellis flags a couple whose two Plus Codes don’t match.') },
     { date: '2026-11-26', who: ['everyone'], app: 'home', btn: ['Home'], text: TX('The apps on Home now sit in a sensible order under little headings – yours first, then church life, caring for people, running the church and help – and the menu follows the same order.') },
     { date: '2026-11-26', who: ['admin', 'pastor'], app: 'usage', btn: ['Usage'], text: TX('On Usage, you can now search the Church Partners who are not on the app yet – just start typing part of a name.') },
     { date: '2026-11-26', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('Advanced search now has a Usage group: find people who have been invited, who have signed in, and how much they use Church & Trellis.') },

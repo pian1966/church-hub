@@ -205,6 +205,29 @@ console.log('Spouses who should share an address');
   ok(!so('c2'), 'nobody to offer to when the person has no address themselves');
 }
 
+console.log('Spouses and the Plus Code');
+{
+  const ad = pc => ({ street: '1 Main Rd', city: 'Howick', postcode: '3290', plusCode: pc });
+  const m = (id, extra) => Object.assign({ id, familyRole: 'adult', familyId: 'h', maritalStatus: 'Married' }, extra);
+  const ppl = [
+    m('p1', { address: ad('G7J3+Q4Q Howick'), spouseId: 'p2' }), m('p2', { address: ad('g7j3+q4q') }),            // same code, written differently
+    m('q1', { address: ad('G7J3+Q4Q'), spouseId: 'q2', familyId: 'h2' }), m('q2', { address: ad('G7J3+Q4R'), familyId: 'h2' }),   // different codes
+    m('r1', { address: ad('G7J3+Q4Q'), spouseId: 'r2', familyId: 'h3' }), m('r2', { address: ad(''), familyId: 'h3' }),          // only one has a code
+    m('s1', { address: ad(''), spouseId: 's2', familyId: 'h4' }), m('s2', { address: ad('G7J3+Q4Q'), familyId: 'h4' })           // only the other has a code
+  ];
+  const fams = [{ id: 'h' }, { id: 'h2' }, { id: 'h3' }, { id: 'h4' }];
+  const mm = HS.addressMismatches(ppl, fams), by = a => mm.find(x => x.a === a || x.b === a);
+  ok(!by('p1'), 'identical Plus Codes (capitals and the town name don\u2019t count): the same address');
+  ok(by('q1') && by('q1').why === 'differ', 'both have a Plus Code and they are different: flagged');
+  ok(!by('r1') && !by('s1'), 'a Plus Code on only one of them is not flagged as a difference');
+  const byId = id => ppl.find(x => x.id === id), so = id => HS.spouseToOffer(byId(id), ppl, fams);
+  ok(HS.differentAddress(byId('q1'), byId('q2')) && !HS.differentAddress(byId('p1'), byId('p2')), 'the \u201cdifferent address\u201d note follows the same rule');
+  ok(so('q1') && so('q1').id === 'q2', 'a changed Plus Code is offered to the spouse');
+  ok(so('r1') && so('r1').id === 'r2', 'a Plus Code only the changed person has is offered to the spouse');
+  ok(!so('s1') && !so('p1'), 'nothing offered when it would wipe out the spouse\u2019s Plus Code, or when they match');
+  ok(HS.addressKey(byId('p1').address) !== HS.addressKey(ad('')), 'adding a Plus Code counts as changing the address');
+}
+
 console.log('Suggested spouse or partner');
 {
   const P = [

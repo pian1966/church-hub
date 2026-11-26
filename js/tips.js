@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.119';
   var NEWS = [
+    { date: '2026-11-26', who: ['everyone'], app: 'home', btn: ['Home'], text: TX('The apps on Home now sit in a sensible order under little headings – yours first, then church life, caring for people, running the church and help – and the menu follows the same order.') },
     { date: '2026-11-26', who: ['admin', 'pastor'], app: 'usage', btn: ['Usage'], text: TX('On Usage, you can now search the Church Partners who are not on the app yet – just start typing part of a name.') },
     { date: '2026-11-26', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('Advanced search now has a Usage group: find people who have been invited, who have signed in, and how much they use Church & Trellis.') },
     { date: '2026-11-26', who: ['admin'], app: 'people', btn: ['People'], text: TX('On Households, a couple with different addresses now shows only the part that differs (the street, town or postcode) in bold, so you can see at a glance what to fix.') },

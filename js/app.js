@@ -363,7 +363,25 @@ var Hub = (function () {
   function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
-  function listed() { return enabled().filter(function (m) { return !m.inGroups && !m.inLibrary && !(m.offMenu && m.offMenu()); }); }   // offMenu: opens, but has no menu entry of its own (e.g. Rosters for members: theirs is on Me)
+  /** The order apps are shown in – on Home (under these headings), in the menu and in All apps: what is yours, then church life,
+   * then caring for people, then running the church, then help. Within a band, the order below. An app not named here
+   * (a new one) goes at the end of Church life until it is given a place. */
+  var APP_BANDS = [
+    { id: 'yours', name: TX('Yours'), apps: ['me', 'messages'] },
+    { id: 'life', name: TX('Church life'), apps: ['events', 'groups', 'rosters', 'board', 'market', 'library'] },
+    { id: 'care', name: TX('Caring for people'), apps: ['people', 'leave'] },
+    { id: 'run', name: TX('Running the church'), apps: ['usage', 'privacy', 'support', 'import', 'settings'] },
+    { id: 'help', name: TX('Help and about'), apps: ['words', 'help', 'about'] }
+  ];
+  /** [band, place in band] for an app; unnamed apps sit at the end of Church life. */
+  function bandOf(id) {
+    for (var b = 0; b < APP_BANDS.length; b++) { var at = APP_BANDS[b].apps.indexOf(id); if (at >= 0) return [b, at]; }
+    return [1, 1000];
+  }
+  function listed() {
+    return enabled().filter(function (m) { return !m.inGroups && !m.inLibrary && !(m.offMenu && m.offMenu()); }).map(function (m, i) { return { m: m, i: i, k: bandOf(m.id) }; })
+      .sort(function (a, b) { return a.k[0] - b.k[0] || a.k[1] - b.k[1] || a.i - b.i; }).map(function (x) { return x.m; });
+  }   // offMenu: opens, but has no menu entry of its own (e.g. Rosters for members: theirs is on Me)
   /** The kinds of group this person may open (Groups → its tabs), in menu order. */
   function groupMods() {
     var priority = { care: 0, life: 1, staffgroup: 2, leaders: 3 };
@@ -609,6 +627,15 @@ var Hub = (function () {
   /** A card on your own birthday or wedding anniversary (js/celebrate-ui.js). */
   function celebrateCard() { try { return window.CelebrateUI ? CelebrateUI.card(Store.get('people', user.id) || user) : ''; } catch (e) { console.error('celebrate', e); return ''; } }
   function celebrateWeek() { try { return window.CelebrateUI ? CelebrateUI.weekCard() : ''; } catch (e) { console.error('celebrate week', e); return ''; } }
+  /** Home's apps under soft headings (APP_BANDS); a band nobody here can open is left out, and with only one band there is no heading. */
+  function homeBands() {
+    var apps = listed(), bands = APP_BANDS.map(function (b, n) { return { name: b.name, mods: apps.filter(function (m) { return bandOf(m.id)[0] === n; }) }; }).filter(function (b) { return b.mods.length; });
+    return bands.map(function (b) {
+      return '<div class="band">' + (bands.length > 1 ? '<h3 class="band-head">' + T(b.name) + '</h3>' : '') + '<div class="cards">' + b.mods.map(function (m) {
+        return '<a class="appcard" href="#/' + m.id + '"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(m.stat ? m.stat(user) : T(m.desc)) + '</span></a>';
+      }).join('') + '</div></div>';
+    }).join('');
+  }
   function renderHome() {
     var todos = [];
     enabled().forEach(function (m) { if (m.todos) (m.todos(user) || []).forEach(function (t) { t.mod = m; todos.push(t); }); });
@@ -618,9 +645,7 @@ var Hub = (function () {
       '<section class="block"><h2>' + T('To do') + '</h2>' + (todos.length ? '<ul class="todo">' + todos.slice(0, 8).map(function (t) {
         return '<li><a href="' + esc(t.href) + '"><span class="dot" style="--c:' + t.mod.tint + '"></span><span class="grow">' + esc(t.text) + '</span><span class="tag" style="--c:' + t.mod.tint + '">' + esc(T(t.tag || t.mod.name)) + '</span></a></li>';
       }).join('') + '</ul>' : '<p class="empty">' + T('Nothing needs you right now.') + '</p>') + '</section>' +
-      '<section class="block"><h2>' + T('Apps') + '</h2><div class="cards">' + listed().map(function (m) {
-        return '<a class="appcard" href="#/' + m.id + '"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(m.stat ? m.stat(user) : T(m.desc)) + '</span></a>';
-      }).join('') + '</div></section>';
+      '<section class="block"><h2>' + T('Apps') + '</h2>' + homeBands() + '</section>';
   }
 
   /* ---------- live sign-in (Firebase) ---------- */

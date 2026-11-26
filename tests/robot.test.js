@@ -77,7 +77,7 @@ srv.listen(0, '127.0.0.1', async () => {
     reset(true);
     let r = await runRobot('check');
     ok(/jobs=2/.test(r.out), 'finds the 2 waiting entries (not the one already done)');
-    ok(calls.every(c => c.referer === 'https://pian1966.github.io/church-hub/'), 'says it comes from the church’s website (the key only works from there)');
+    ok(calls.every(c => c.referer === 'https://app.churchandtrellis.com/'), 'says it comes from the church’s website (the key only works from there)');
     ok(DB['robotStatus/elvanto'] && DB['robotStatus/elvanto'].data.lastCheck, 'records that it is alive');
     reset(false); r = await runRobot('check');
     ok(/jobs=0/.test(r.out), 'nothing to do while switched off in Church & Trellis');

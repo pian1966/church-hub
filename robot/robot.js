@@ -17,7 +17,7 @@
  *                   in Elvanto. Only when "Read Elvanto's unavailable dates" is ticked under Leave → Elvanto.
  *
  * Env: ROBOT_EMAIL, ROBOT_PASSWORD (its Church & Trellis sign-in), ELVANTO_USERNAME, ELVANTO_PASSWORD;
- *      optional ELV_LIST_PATH, SITE_URL (default https://pian1966.github.io/church-hub/).
+ *      optional ELV_LIST_PATH, SITE_URL (default https://app.churchandtrellis.com/).
  *      For tests: AUTH_URL, FS_URL (stand-in servers), FIREBASE_CONFIG_FILE, FAKE_ELVANTO=1 (no browser; pretends each job worked),
  *      FAKE_ROWS (JSON: the table rows the list would show, for MODE=read), TODAY (yyyy-mm-dd).
  */
@@ -35,7 +35,7 @@ function firebaseConfig() {
   const get = (k) => { const m = cfg.match(new RegExp(k + ":\\s*'([^']*)'")); return m ? m[1] : ''; };
   return { apiKey: get('apiKey'), projectId: get('projectId') };
 }
-const SITE = process.env.SITE_URL || 'https://pian1966.github.io/church-hub/';
+const SITE = process.env.SITE_URL || 'https://app.churchandtrellis.com/';
 const AUTH_URL = process.env.AUTH_URL || 'https://identitytoolkit.googleapis.com/v1';
 const FS_URL = process.env.FS_URL || 'https://firestore.googleapis.com/v1';
 let TOKEN = '', CFG = null;

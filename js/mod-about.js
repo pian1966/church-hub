@@ -122,6 +122,7 @@
     return '<section class="panel" id="about-brochures"><h2>' + T('Brochures') + '</h2><p class="hint">' + T('Fold-out A4 brochures about Church & Trellis to print or save as PDF. They are kept up to date as new features are added.') + '</p><div class="list">' +
       a('members', T('For our members'), T('How to start, and what members can do')) +
       a('churches', T('For other churches'), T('What Church & Trellis offers, and the demo')) +
+      a('tech', T('For administrators'), T('How it is built, and what it takes to run it')) +
       '</div><p class="hint" style="margin-bottom:0">' + (Store.isAdmin() ? 'Open one to print it, or to change its wording, colour and font (Edit).' : 'Open one to print it or save it as a PDF. Administrators can change its wording, colour and font.') +
       (window.BrochureKit && BrochureKit.changed(Store.brochures()) ? ' <b>Your church has changed them.</b>' : '') + '</p></section>';
   }
@@ -146,22 +147,30 @@
    * by themselves. The page isn't redrawn while it is open (data-keep), so typing isn't lost. */
   var bro = { edit: false };
   function broSaved() { return BrochureKit.tidy(Store.brochures()); }
+  /** Which brochure: members (our congregation), churches (other churches) or tech (administrators and the technically curious). */
+  function broWho(x) { return x === 'churches' || x === 'tech' ? x : 'members'; }
+  function broTitle(who) { return who === 'churches' ? T('For other churches') : who === 'tech' ? T('For administrators') : T('For our members'); }
+  function broNav(who) {
+    return '<nav class="seg" style="margin-bottom:14px">' + ['members', 'churches', 'tech'].map(function (w) {
+      return '<a href="#/about/brochure/' + w + '" class="' + (who === w ? 'on' : '') + '">' + broTitle(w) + '</a>';
+    }).join('') + '</nav>';
+  }
   function broSrc(who) {
     var st = Store.settings() || {}, link = location.origin + location.pathname.replace(/index\.html$/, '');
     return 'brochure.html?for=' + who + '&embed=1&v=' + encodeURIComponent(V.version) + (st.churchName ? '&church=' + encodeURIComponent(st.churchName) : '') + '&link=' + encodeURIComponent(link);
   }
   function renderBrochure(who) {
-    who = who === 'churches' ? 'churches' : 'members';
+    who = broWho(who);
     var admin = Store.isAdmin(), b = broSaved(), d = b.design, st = Store.settings() || {}, lang = I18n.get(), own = st.theme && st.theme.id === 'custom' && st.theme.color ? String(st.theme.color).toUpperCase() : '';
     var sw = function (c, label) { return '<button type="button" class="bro-sw' + (d.accent === c ? ' on' : '') + '" data-act="about:brocolour" data-c="' + c + '" style="--c:' + c + '" title="' + esc(label) + '" aria-label="' + esc(label) + '"></button>'; };
     if (!admin) bro.edit = false;
-    var nav = '<nav class="seg" style="margin-bottom:14px"><a href="#/about/brochure/members" class="' + (who === 'members' ? 'on' : '') + '">' + T('For our members') + '</a><a href="#/about/brochure/churches" class="' + (who === 'churches' ? 'on' : '') + '">' + T('For other churches') + '</a></nav>';
-    var frame = '<div class="bro-wrap" data-keep><iframe id="bro-frame" title="' + esc(who === 'members' ? T('For our members') : T('For other churches')) + '" src="' + esc(broSrc(who)) + '"></iframe></div>';
+    var nav = broNav(who);
+    var frame = '<div class="bro-wrap" data-keep><iframe id="bro-frame" title="' + esc(broTitle(who)) + '" src="' + esc(broSrc(who)) + '"></iframe></div>';
     if (!admin) return '<div class="page-head"><div><h1>' + T('Brochures') + '</h1><p class="lead">Fold-out A4 brochures to print or save as PDF.</p></div>' +   // the Rector: open and print
       '<div class="btns"><a class="btn" href="#/about">' + H.icon(H.ICON.back, 18) + T('About') + '</a><button class="btn primary" data-act="about:broprint">Print or save as PDF</button></div></div>' + nav + frame;
     return '<div class="page-head"><div><h1>' + T('Brochures') + '</h1><p class="lead">Fold-out A4 brochures to print or save as PDF. Change the wording, colour and font to suit your church.</p></div>' +
       '<div class="btns"><a class="btn" href="#/about">' + H.icon(H.ICON.back, 18) + T('About') + '</a></div></div>' +
-      '<nav class="seg" style="margin-bottom:14px"><a href="#/about/brochure/members" class="' + (who === 'members' ? 'on' : '') + '">' + T('For our members') + '</a><a href="#/about/brochure/churches" class="' + (who === 'churches' ? 'on' : '') + '">' + T('For other churches') + '</a></nav>' +
+      broNav(who) +
       '<section class="panel bro-tools" data-noauto>' +
         '<div class="btns" style="margin:0"><button class="btn' + (bro.edit ? '' : ' primary') + '" data-act="about:broedit">' + (bro.edit ? H.icon(H.ICON.check, 18) + 'Done editing' : 'Edit the wording') + '</button>' +
         '<button class="btn' + (bro.edit ? '' : ' primary') + '" data-act="about:broprint">Print or save as PDF</button></div>' +
@@ -174,7 +183,7 @@
           ((lang === 'en' ? BrochureKit.changed(b, who) : BrochureKit.changed(b[who].translations[lang], who)) ? '<button class="btn small" data-act="about:broreset" data-w="' + who + '">Back to the original wording</button>' : '') +
           (d.accent !== BrochureKit.DEFAULT.accent || d.font !== BrochureKit.DEFAULT.font ? '<button class="btn small" data-act="about:brodesign">Back to Church & Trellis’s colour and font</button>' : '') + '</div>' +
       '</section>' +
-      '<div class="bro-wrap" data-keep><iframe id="bro-frame" title="' + esc(who === 'members' ? T('For our members') : T('For other churches')) + '" src="' + esc(broSrc(who)) + '"></iframe></div>';
+      '<div class="bro-wrap" data-keep><iframe id="bro-frame" title="' + esc(broTitle(who)) + '" src="' + esc(broSrc(who)) + '"></iframe></div>';
   }
 
   /** The brochure in the frame: remember Church & Trellis's own wording, lay the church's over it, and (editing) make it editable. */
@@ -287,7 +296,7 @@
     render: function (parts) { return parts && parts[0] === 'brochure' && mayOpenBrochures() && window.BrochureKit ? renderBrochure(parts[1]) : render(); },
     after: function (parts) {
       if (parts && parts[0] === 'brochure') {
-        var fr = document.getElementById('bro-frame'), who = parts[1] === 'churches' ? 'churches' : 'members';
+        var fr = document.getElementById('bro-frame'), who = broWho(parts[1]);
         if (fr) fr.addEventListener('load', function () { broLoad(who); });
         return;
       }
@@ -312,7 +321,7 @@
       },
       brostale: function () {
         if (!Store.isAdmin()) return;
-        var fr = document.getElementById('bro-frame'), doc = fr && fr.contentDocument, who = /churches/.test(location.hash) ? 'churches' : 'members', b = broSaved(), mine = b[who];
+        var fr = document.getElementById('bro-frame'), doc = fr && fr.contentDocument, who = broWho((/brochure\/(\w+)/.exec(location.hash) || [])[1]), b = broSaved(), mine = b[who];
         if (!doc) return;
         var lang = I18n.get(), target = lang === 'en' ? mine : (mine.translations[lang] || { texts: {}, hidden: {} });
         Object.keys(target.texts).forEach(function (k) { var e = doc.querySelector('[data-bk="' + k + '"]'); if (!e || e.getAttribute('data-bo') !== target.texts[k].o) delete target.texts[k]; });

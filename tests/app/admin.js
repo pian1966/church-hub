@@ -319,7 +319,7 @@ module.exports = async function (ctx) {
   await s.go('privacy/audit'); check((await s.text()).includes('Signed in'), 'audit log shows sign-ins');
   await s.go('about'); await s.page.waitForSelector('#about-brochures');
   const bro = await s.page.$$eval('#about-brochures a', as => as.map(a => a.getAttribute('href')));
-  check(bro.length === 2 && bro[0] === '#/about/brochure/members' && bro[1] === '#/about/brochure/churches', 'About offers an Administrator both brochures, opened inside Church & Trellis');
+  check(bro.length === 3 && bro[0] === '#/about/brochure/members' && bro[1] === '#/about/brochure/churches' && bro[2] === '#/about/brochure/tech', 'About offers an Administrator all three brochures, opened inside Church & Trellis');
   // The brochure on its own (as the frame shows it), with this Church & Trellis's address: it fits
   const link = encodeURIComponent(new URL('.', s.page.url()).href), bp = await s.page.context().newPage();
   await bp.route(u => !u.href.startsWith('http://127.0.0.1'), r => r.abort());
@@ -332,6 +332,9 @@ module.exports = async function (ctx) {
   await bp.goto(new URL('brochure.html?for=churches&link=' + link, s.page.url()).href);
   await bp.evaluate(() => window.fitPanels && window.fitPanels());   // shrink long pages now: the fit runs a moment after load, and this check must not run first
   check(await bp.evaluate(() => [...document.querySelectorAll('.pn')].every(p => p.closest('.sheet').hidden || p.scrollHeight <= p.clientHeight + 1) && /Switch without the stress/.test(document.body.innerText) && !/Christ Church Howick/i.test(document.body.innerText)), 'the brochure for other churches opens, fits and has no local church branding');
+  await bp.goto(new URL('brochure.html?for=tech&link=' + link, s.page.url()).href);
+  await bp.evaluate(() => window.fitPanels && window.fitPanels());
+  check(await bp.evaluate(() => [...document.querySelectorAll('.pn')].every(p => p.closest('.sheet').hidden || p.scrollHeight <= p.clientHeight + 1) && /Under the hood/.test(document.body.innerText) && /where the data lives/i.test(document.body.innerText) && !/Switch without the stress|Three easy steps/.test(document.body.innerText) && !/Christ Church Howick/i.test(document.body.innerText)), 'the brochure for administrators opens, fits and has no local church branding');
   await bp.close();
   // The brochure editor (About → Brochures): change a heading and a contact box, hide a block, choose a colour and font
   await s.go('about/brochure/members');

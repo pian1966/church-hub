@@ -3,14 +3,14 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<!-- Church & Trellis brochures: ?for=members (our congregation) or ?for=churches (other churches). Opened from About (admins).
-     KEEP UP TO DATE: when a release adds a feature (the middle number in js/version.js goes up), read both brochures, add or
-     change what members or other churches would notice, then set reviewed-for below to that version's first two numbers.
+<!-- Church & Trellis brochures: ?for=members (our congregation), ?for=churches (other churches) or ?for=tech (administrators and the technically curious). Opened from About (admins).
+     KEEP UP TO DATE: when a release adds a feature (the middle number in js/version.js goes up), read all three brochures, add or
+     change what members, other churches or administrators would notice, then set reviewed-for below to that version's first two numbers.
      node tests/versions.test.js fails until you do. Keep each panel to what fits on its A4 third (check Print preview).
      The church can change the wording, hide blocks, and choose the colour and font in Church & Trellis (About → Brochures → Edit;
      js/brochure-kit.js, js/mod-about.js). Their edits are matched by place AND the original wording, so changing a line here makes
      their edit of that line stop applying (Church & Trellis then lists it for them). Shown inside Church & Trellis with ?embed=1. -->
-<meta name="reviewed-for" content="0.119">
+<meta name="reviewed-for" content="0.120">
 <title>Church & Trellis brochure</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;800;900&amp;display=swap" rel="stylesheet">
@@ -89,6 +89,7 @@
   <b>Church & Trellis brochure</b>
   <a href="?for=members" data-for="members">For our members</a>
   <a href="?for=churches" data-for="churches">For other churches</a>
+  <a href="?for=tech" data-for="tech">For administrators</a>
   <button class="go" type="button" onclick="window.print()">Print or save as PDF</button>
   <small>Click the dashed text to type your own contact details first. Print on A4, landscape, both sides, flipping on the short edge, then fold in three.</small>
 </div>
@@ -151,6 +152,7 @@
     <div class="item"><span class="ic"><svg><use href="#i-users"/></svg></span><div><h3>Your groups and events</h3><p>Your Care Group, Midweek Groups and leadership roles, Join the meeting on study night – and church events in one tap, with reminders.</p></div></div>
     <div class="item"><span class="ic"><svg><use href="#i-book"/></svg></span><div><h3>Directory, library and community board</h3><p>Find other members, borrow books from the church library, and ask for or offer help on the Community board or Marketplace.</p></div></div>
     <div class="item"><span class="ic"><svg><use href="#i-msg"/></svg></span><div><h3>Messages</h3><p>News from the church and your groups, with replies and a way to message the Office or a minister, right inside the app, with ticks that show when your message has arrived and been read.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-globe"/></svg></span><div><h3>Praying with the world church</h3><p>Each week your Home page shows a prayer card from another church, and other churches are praying for ours.</p></div></div>
   </div>
   <div class="pn">
     <p class="eyebrow">Safe and private</p>
@@ -178,7 +180,7 @@
     <p>A full church of made-up people: nothing to install, nothing kept.</p>
     <div class="demo"><p class="eyebrow">Demo</p><p class="url" style="color:var(--text)"><span data-fill="link">app.churchandtrellis.com</span><span class="keep">/?demo</span></p></div>
     <div><h3>Your data stays yours</h3><p>Each church keeps its records in its own Google account, set up with a friendly step-by-step guide.</p></div>
-    <div><h3>For every church</h3><p>No church is turned away: a church that can't pay prays for another church each month instead.</p></div>
+    <div><h3>Everything included, for every church</h3><p>Every church gets the whole of Church & Trellis, with no add-ons or extra charges for more features, apart from any licence fee a future feature (such as music) might owe someone else. A church that can't pay prays for another church each month instead.</p></div>
     <div class="box"><h3>Let's talk</h3><p contenteditable="true" spellcheck="false">[your name] · [phone] · [email]</p></div>
   </div>
   <div class="pn cover">
@@ -208,10 +210,61 @@
   <div class="pn">
     <p class="eyebrow">Made to fit</p>
     <h2>Your church, your way</h2>
-    <div class="item"><span class="ic"><svg><use href="#i-house"/></svg></span><div><h3>Your colours and words</h3><p>Your church's colour and roles – and only the parts you need. Each person can choose their own colour and page pictures too.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-house"/></svg></span><div><h3>Your colours and words</h3><p>Your church's colour, roles and parts – and each person's own colour and page pictures.</p></div></div>
     <div class="item"><span class="ic"><svg><use href="#i-globe"/></svg></span><div><h3>Every church, in every nation, in (nearly) every language</h3><p>More than 20 languages, and each person picks their own.</p></div></div>
-    <div class="item"><span class="ic"><svg><use href="#i-shield"/></svg></span><div><h3>Privacy built in</h3><p>Access by role, consent for each person, and privacy pages for your country's law, from POPIA to GDPR.</p></div></div>
-    <div class="card"><h3>Offline, light on data</h3><p>No signal in the hall? It still opens, and updates download only what changed – photos are made small to save data.</p></div>
+    <div class="item"><span class="ic"><svg><use href="#i-shield"/></svg></span><div><h3>Privacy built in</h3><p>Access by role, consent for each person, and privacy pages for your country's law.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-heart"/></svg></span><div><h3>A church family worldwide</h3><p>Each week your people pray for another church and are prayed for, and you help churches with few resources.</p></div></div>
+    <div class="card"><h3>Offline, light on data</h3><p>No signal in the hall? It still opens, and updates download only what changed.</p></div>
+  </div>
+</section>
+
+<!-- ================= For administrators and the technically curious ================= -->
+<section class="sheet" data-show="tech" aria-label="Outside">
+  <span class="updated" data-file="brochure.html"></span>
+  <div class="pn fold">
+    <p class="eyebrow">How it's built</p>
+    <h2>Plain, small and tested</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-search"/></svg></span><div><h3>Plain web technology</h3><p>HTML, CSS and JavaScript, with no build step. One web app for phones and computers, with nothing to install.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-house"/></svg></span><div><h3>Built in parts</h3><p>People, Rosters, Groups, Messages, Leave, Library and the rest are separate modules. Switch each on or off in Settings; what is off leaves the menus.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-shield"/></svg></span><div><h3>Tested before it ships</h3><p>The rules have unit tests, the security rules are tested on Google's own database emulator, and a browser test signs in as every role. GitHub runs all of it on every code change before it reaches the main code.</p></div></div>
+  </div>
+  <div class="pn fold">
+    <p class="eyebrow">Where the data lives</p>
+    <h2>Your church owns its records</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-lock"/></svg></span><div><h3>Your own Google project</h3><p>Records live in Google Firebase (Firestore and sign-in) in a project owned by the church's own Google account, not ours. The data location follows your country; South African churches use Johannesburg.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-shield"/></svg></span><div><h3>Rules decide who sees what</h3><p>Database security rules, written by role, are checked on every change and can be published automatically from GitHub. The account that does it can only publish rules; it cannot read church information.</p></div></div>
+    <div class="box"><h3>Read the code</h3><p>The code is public: <span class="keep"><span class="url">github.com/pian1966/church-hub</span></span>. It holds no real church data or passwords. Demo: <span class="keep"><span class="url" data-fill="link">app.churchandtrellis.com</span><span class="url">/?demo</span></span></p></div>
+  </div>
+  <div class="pn cover">
+    <span class="o1"></span><span class="o2"></span>
+    <div class="logo"><svg width="48" height="48" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></div>
+    <div><h1>Church <span class="amp">&amp;</span> Trellis</h1><p class="tag">Under the hood.</p></div>
+    <div class="strip"><p>HTML, CSS and JavaScript · Google Firebase · GitHub Pages and Actions · no build step</p></div>
+    <p class="who">For administrators and the technically curious</p>
+  </div>
+</section>
+
+<section class="sheet" data-show="tech" aria-label="Inside">
+  <div class="pn fold">
+    <p class="eyebrow">People and access</p>
+    <h2>Everyone can get in, and only where they should</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-user"/></svg></span><div><h3>Three ways to sign in</h3><p>Google, or an emailed link. Members with no email get a one-time code from the office, then sign in with their cellphone number and a PIN.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-users"/></svg></span><div><h3>Access in one place</h3><p>Roles, what Pastors can do and what attendees may do are set on one page, Settings → Access and roles.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-book"/></svg></span><div><h3>A record of changes</h3><p>Sensitive views are logged. Undo takes back a mistake at once; Version history on a person's page keeps earlier versions for 90 days, but never medical notes, photos, ID numbers or PINs.</p></div></div>
+  </div>
+  <div class="pn fold">
+    <p class="eyebrow">On every device</p>
+    <h2>Works where your people are</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-phone"/></svg></span><div><h3>Browser, Android, home screen</h3><p>Any modern browser, an Android app that shows the same site with Google sign-in built in, and an icon on the home screen of an iPhone or iPad.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-globe"/></svg></span><div><h3>Opens with no signal</h3><p>The app's files and a copy of your data are kept on the device, so you can look things up offline. Offline is view-only: saving needs a connection.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-search"/></svg></span><div><h3>Small updates</h3><p>Each file is fingerprinted, so a new version downloads only the files that changed. About → Check for updates shows what you have.</p></div></div>
+  </div>
+  <div class="pn">
+    <p class="eyebrow">Setting up, keeping up</p>
+    <h2>Ready in about an hour</h2>
+    <div class="item"><span class="ic"><svg><use href="#i-cal"/></svg></span><div><h3>A guided setup</h3><p>A step-by-step page takes a church from nothing: its Google account, its own copy on GitHub, Firebase and the first sign-in. It never asks for a password and sends nothing anywhere. Afterwards it keeps a list of what else you can switch on.</p></div></div>
+    <div class="item"><span class="ic"><svg><use href="#i-heart"/></svg></span><div><h3>Optional: ask in your own words</h3><p>Off until an Administrator switches it on. It uses Google's Gemini through Firebase, sending your question and the names of fields, never people or records.</p></div></div>
+    <div class="card"><h3>Everything included</h3><p>Every church gets every part, with no add-ons. Only a feature that carries someone else's licence fee, such as music, would be your choice.</p></div>
   </div>
 </section>
 </main>
@@ -238,7 +291,7 @@
 <script>
   // ?for=members|churches, &church=<name> (from Settings), &link=<the church's Church & Trellis address>. Only text is filled in.
   (function () {
-    var q = new URLSearchParams(location.search), who = q.get('for') === 'churches' ? 'churches' : 'members';
+    var q = new URLSearchParams(location.search), who = q.get('for') === 'churches' ? 'churches' : q.get('for') === 'tech' ? 'tech' : 'members';
     if (q.get('embed')) { document.body.classList.add('embed'); document.querySelectorAll('[contenteditable]').forEach(function (e) { e.removeAttribute('contenteditable'); }); }
     document.querySelectorAll('[data-show]').forEach(function (s) { s.hidden = s.getAttribute('data-show') !== who; });
     document.querySelectorAll('.bar a[data-for]').forEach(function (a) {
@@ -276,7 +329,7 @@
     new MutationObserver(later).observe(document.body, { subtree: true, childList: true, characterData: true, attributeFilter: ['class', 'hidden'] });
     new MutationObserver(later).observe(document.documentElement, { attributeFilter: ['style'] });   // the church's font and colour
     later();
-    document.title = who === 'churches' ? 'Church & Trellis – brochure for other churches' : 'Church & Trellis – brochure for our members';
+    document.title = who === 'churches' ? 'Church & Trellis – brochure for other churches' : who === 'tech' ? 'Church & Trellis – under the hood' : 'Church & Trellis – brochure for our members';
   })();
 </script>
 </body>

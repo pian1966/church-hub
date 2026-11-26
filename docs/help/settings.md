@@ -133,7 +133,7 @@ looks after Church & Trellis. Closing other Church & Trellis tabs and using **Up
 For: Administrators
 Also asked: Edit the brochure. Change the brochure colour. Put our phone number on the brochure. Print the brochure.
 
-Open **About → Brochures** and choose **For our members** or **For other churches**.
+Open **About → Brochures** and choose **For our members**, **For other churches** or **For administrators** (how Church & Trellis is built and what it takes to run it).
 - **Edit the wording**: click any heading or text on the brochure and type – for example your office's phone and email in
   **Need a hand?**. **Hide** takes away a block you don't want; **Show** brings it back. Changes save by themselves; tap
   **Done editing** when you've finished.

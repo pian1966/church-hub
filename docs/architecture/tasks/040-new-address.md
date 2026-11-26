@@ -2,6 +2,8 @@
 
 **Model:** A person for the clicks; a light model for the guide and the three small file changes.
 
+**Decided 26 Nov 2026:** the app goes to `app.churchandtrellis.com` (a Cloudflare CNAME to `pian1966.github.io`, DNS only), the public website stays at the root. Owner's guide: `docs/NEW-ADDRESS.md`. Invitation links (`js/people/welcome.js`, `startLink`) use the address the app is opened on, so they follow by themselves; the `CNAME` file is added by GitHub, not by hand, and only after steps 1–4 are done.
+
 **Goal:** Church & Trellis lives at its own address; the old one forwards; nobody at Christ Church Howick is locked out.
 
 **Needs:** the address bought by the owner; 021 tried end to end.

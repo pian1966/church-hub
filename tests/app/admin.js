@@ -260,6 +260,8 @@ module.exports = async function (ctx) {
   await s.go('people/p/p15'); await s.page.click('[data-act="people:volunteer"]');
   await s.page.check('input[name="vol"][value="yes"]'); await s.page.check('.vol-t[value="08:00"]'); await s.page.check('.vol-t[value="10:00"]'); await s.page.uncheck('.vol-t[value="17:00"]');
   await s.page.check('.vol-d[data-t="dept-music"]'); await s.page.check('.vol-p[value="pos-sound"]'); await s.page.check('.vol-p[value="pos-drums"]');
+  await s.settle(); docs = await s.docsNow();
+  check(Object.keys(docs).some(k => k.startsWith('skills/') && docs[k].personId === 'p15' && docs[k].positionId === 'pos-drums'), 'volunteering saves as you go: the ticks are kept before anyone presses Done');
   await s.page.click('[data-act="people:savevolunteer"]'); await s.settle(); docs = await s.docsNow(); tt = await s.text();
   const vsk = Object.keys(docs).filter(k => k.startsWith('skills/') && docs[k].personId === 'p15').map(k => docs[k]);
   check(vsk.some(k => k.positionId === 'pos-sound' && JSON.stringify(k.times) === '["08:00","10:00"]') && vsk.some(k => k.positionId === 'pos-drums') && tt.includes('8am, 10am') && tt.includes('Sound Desk'),

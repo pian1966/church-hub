@@ -69,12 +69,23 @@
       '<p id="cg-error" class="note bad" role="alert" hidden></p></div>' +
       '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="customgroups:save" data-id="' + esc(draft.id) + '">' + T('Save') + '</button></div>', T('Group settings'));
   }
+  /** Staff group name and description. quiet = saving as you go: the window stays open. */
+  function saveStaff(quiet) {
+    if (!admin()) return;
+    var name = document.getElementById('cg-staff-name').value.trim().slice(0, 80), description = document.getElementById('cg-staff-description').value.trim().slice(0, 500);
+    if (!name) { H.toast(T('Give the group a name'), true); return; }
+    S.setSettings({ staffGroup: { name: name, description: description } }, 'Changed the built-in Staff group settings');
+    if (quiet) { H.render(); H.toast(T('Saved')); return; }   // saving as you go: the window stays open
+    H.closeModal(); H.render(); H.toast(T('Saved'));
+  
+  }
   function settingDialog() {
     var st = staffSettings();
-    H.modal(H.dialogHead(T('Staff group settings')) + '<div class="dlg-body"><p class="hint">' + T('Membership stays in sync with people marked as staff in People.') + '</p>' +
+    // Saved as you go (data-autoscope + the hidden data-autosave button); Done closes
+    H.modal(H.dialogHead(T('Staff group settings'), T('Changes are saved as you go.')) + '<div class="dlg-body" data-autoscope><button type="button" data-autosave data-act="customgroups:autostaff" tabindex="-1">' + T('Save') + '</button><p class="hint">' + T('Membership stays in sync with people marked as staff in People.') + '</p>' +
       '<label class="field req">' + T('Name') + '<input id="cg-staff-name" maxlength="80" value="' + esc(st.name) + '"></label>' +
       '<label class="field">' + T('Description') + '<textarea id="cg-staff-description" rows="2" maxlength="500">' + esc(st.description) + '</textarea></label></div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn save" data-act="customgroups:savestaff">' + T('Save') + '</button></div>', T('Staff group settings'));
+      '<div class="dlg-foot"><button class="btn primary save" data-act="customgroups:savestaff">' + T('Done') + '</button></div>', T('Staff group settings'));
   }
   H.register({
     id: 'customgroups', name: 'Church groups', show: function () { return false; }, render: function () { return ''; },
@@ -108,13 +119,8 @@
         S.remove('customGroups', g.id, 'Deleted the church group ' + g.name); H.render(); H.toast(T('Deleted'));
       },
       staffsettings: function () { if (admin()) settingDialog(); },
-      savestaff: function () {
-        if (!admin()) return;
-        var name = document.getElementById('cg-staff-name').value.trim().slice(0, 80), description = document.getElementById('cg-staff-description').value.trim().slice(0, 500);
-        if (!name) { H.toast(T('Give the group a name'), true); return; }
-        S.setSettings({ staffGroup: { name: name, description: description } }, 'Changed the built-in Staff group settings');
-        H.closeModal(); H.render(); H.toast(T('Saved'));
-      }
+      autostaff: function () { saveStaff(true); },
+      savestaff: function () { saveStaff(false); }
     }
   });
   window.CustomGroupsUI = { section: section, show: function () {

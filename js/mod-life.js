@@ -101,13 +101,32 @@
     if (!bits.length && !where) return '';
     return '<p class="lg-meets small" style="margin:4px 0 0">' + (bits.length ? H.icon('M12 7v5l3 2M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z', 14) + ' ' + bits.join(' · ') : '') + (bits.length && where ? '<br>' : '') + (where ? H.icon('M12 21s-7-6.3-7-11a7 7 0 0 1 14 0c0 4.7-7 11-7 11zM12 12.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5z', 14) + ' ' + where : '') + '</p>';
   }
+  /** When and where a Midweek Group meets. quiet = saving as you go: the window stays open. */
+  function saveDetails(el, quiet) {
+    var g = S.get('lifeGroups', el.dataset.id); if (!g || !(manager() || leaderOf(g.id))) return;
+    var val = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, x = JSON.parse(JSON.stringify(g));
+    var day = val('lgd-day'), time = val('lgd-time'), freq = val('lgd-freq'), host = val('lgd-host'), atHost = (document.querySelector('input[name="lgd-where"]:checked') || {}).value === 'host';
+    if (atHost && !host) { H.toast(T('Choose the host first, or choose Somewhere else.'), true); return; }
+    if (day !== '' || time || freq) x.when = { day: day === '' ? '' : +day, time: time, freq: freq }; else delete x.when;
+    var place = val('lgd-place').slice(0, 80), addr = val('lgd-addr').slice(0, 200);
+    if (atHost) x.venue = { atHost: true }; else if (place || addr) x.venue = { place: place, address: addr }; else delete x.venue;
+    var roles = {};
+    Array.prototype.forEach.call(document.querySelectorAll('.lgd-co:checked'), function (c) { roles[c.value] = 'coleader'; });
+    if (host) roles[host] = 'host';
+    if (Object.keys(roles).length) x.roles = roles; else delete x.roles;
+    S.put('lifeGroups', x, 'Changed when and where the midweek group ' + g.name + ' meets');
+    if (quiet) { H.render(); H.toast(T('Saved')); return; }   // saving as you go: the window stays open
+    H.closeModal(); H.render(); H.toast(T('Saved'));
+  
+  }
   /** Set when and where the group meets, its co-leaders and host (Administrators, Pastors, the group's leaders). */
   function detailsDialog(gid) {
     var g = S.get('lifeGroups', gid); if (!g || !(manager() || leaderOf(gid))) return;
     var w = g.when || {}, v = g.venue || {}, ms = (g.memberIds || []).slice().sort(function (a, b) { return String((g.names || {})[a] || '').localeCompare(String((g.names || {})[b] || '')); });
     var nm = function (id) { var p = S.get('people', id); return p ? H.name(p) : (g.names || {})[id] || T('Someone'); };
     var others = ms.filter(function (id) { return !Care.isLeader(g, id); });
-    H.modal(H.dialogHead(T('When and where'), g.name) + '<div class="dlg-body" id="lgd-body">' +
+    // Saved as you go (data-autoscope + the hidden data-autosave button); Done closes
+    H.modal(H.dialogHead(T('When and where'), g.name + ' · ' + T('Changes are saved as you go.')) + '<div class="dlg-body" id="lgd-body" data-autoscope><button type="button" data-autosave data-act="life:autodetails" data-id="' + esc(g.id) + '" tabindex="-1">' + T('Save') + '</button>' +
       '<div class="two"><label class="field">' + T('Day') + '<select id="lgd-day"><option value="">–</option>' + DAYS.map(function (d, i) { return '<option value="' + i + '"' + (String(w.day) === String(i) ? ' selected' : '') + '>' + esc(T(d)) + '</option>'; }).join('') + '</select></label>' +
       '<label class="field">' + T('Time') + '<input id="lgd-time" type="time" value="' + esc(w.time || '') + '"></label></div>' +
       '<label class="field">' + T('How often') + '<select id="lgd-freq"><option value="">–</option>' + Object.keys(FREQ).map(function (k) { return '<option value="' + k + '"' + (w.freq === k ? ' selected' : '') + '>' + esc(T(FREQ[k])) + '</option>'; }).join('') + '</select></label>' +
@@ -117,7 +136,7 @@
       '<div id="lgd-other"' + (v.atHost ? ' hidden' : '') + '><label class="field">' + T('Place') + '<input id="lgd-place" maxlength="80" value="' + esc(v.place || '') + '" placeholder="' + esc(T('e.g. Church hall, or a coffee shop')) + '"></label>' +
         '<label class="field">' + T('Address') + '<input id="lgd-addr" maxlength="200" value="' + esc(v.address || '') + '"><small>' + T('A map link is shown next to it, so people can find their way.') + '</small></label></div>' +
       (others.length ? '<fieldset class="field"><legend class="field-l">' + T('Co-leaders') + '</legend>' + others.map(function (id) { return '<label class="check"><input type="checkbox" class="lgd-co" value="' + esc(id) + '"' + (roleOf(g, id) === 'coleader' ? ' checked' : '') + '><span>' + esc(nm(id)) + '</span></label>'; }).join('') + '<small>' + T('They help the leaders. Only leaders can add and remove people.') + '</small></fieldset>' : '') +
-      '</div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="life:savedetails" data-id="' + esc(g.id) + '">' + T('Save') + '</button></div>', T('When and where'));
+      '</div><div class="dlg-foot"><button class="btn primary save" data-act="life:savedetails" data-id="' + esc(g.id) + '">' + T('Done') + '</button></div>', T('When and where'));
     document.getElementById('lgd-body').addEventListener('change', function (ev) { if (ev.target.name === 'lgd-where') document.getElementById('lgd-other').hidden = ev.target.value !== 'other'; });
   }
   function tools(g, canName, canDelete) {
@@ -367,20 +386,8 @@
         saveChanges(p, Care.takeOut(S.list('lifeGroups'), p.id, el.dataset.g)); H.render(); H.toast(T('Taken out of the group'));
       },
       details: function (el) { detailsDialog(el.dataset.id); },
-      savedetails: function (el) {
-        var g = S.get('lifeGroups', el.dataset.id); if (!g || !(manager() || leaderOf(g.id))) return;
-        var val = function (id) { var e = document.getElementById(id); return e ? e.value.trim() : ''; }, x = JSON.parse(JSON.stringify(g));
-        var day = val('lgd-day'), time = val('lgd-time'), freq = val('lgd-freq'), host = val('lgd-host'), atHost = (document.querySelector('input[name="lgd-where"]:checked') || {}).value === 'host';
-        if (atHost && !host) { H.toast(T('Choose the host first, or choose Somewhere else.'), true); return; }
-        if (day !== '' || time || freq) x.when = { day: day === '' ? '' : +day, time: time, freq: freq }; else delete x.when;
-        var place = val('lgd-place').slice(0, 80), addr = val('lgd-addr').slice(0, 200);
-        if (atHost) x.venue = { atHost: true }; else if (place || addr) x.venue = { place: place, address: addr }; else delete x.venue;
-        var roles = {};
-        Array.prototype.forEach.call(document.querySelectorAll('.lgd-co:checked'), function (c) { roles[c.value] = 'coleader'; });
-        if (host) roles[host] = 'host';
-        if (Object.keys(roles).length) x.roles = roles; else delete x.roles;
-        S.put('lifeGroups', x, 'Changed when and where the midweek group ' + g.name + ' meets'); H.closeModal(); H.render(); H.toast(T('Saved'));
-      },
+      autodetails: function (el) { saveDetails(el, true); },
+      savedetails: function (el) { saveDetails(el, false); },
       /* a group's leader */
       mineadd: function (el) { mineAddDialog(el.dataset.g); },
       mineaddsave: function (el) {

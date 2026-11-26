@@ -94,14 +94,28 @@
   /** Which groups someone is in, all kinds together, ticked on one list – the same as adding them from a group's page. */
   function groupsDialog(p) {
     var kinds = groupKinds(p); if (!kinds.length) return;
-    H.modal(H.dialogHead(T('Groups'), H.name(p)) + '<div class="dlg-body">' + kinds.map(function (kd) {
+    // Saved as you go (data-autoscope + the hidden data-autosave button, like Edit details); Done closes
+    H.modal(H.dialogHead(T('Groups'), H.name(p) + ' · ' + T('Changes are saved as you go.')) + '<div class="dlg-body" data-autoscope><button type="button" data-autosave data-act="people:autogroups" data-id="' + p.id + '" tabindex="-1">' + T('Save') + '</button>' + kinds.map(function (kd) {
       var gs = S.list(kd.coll).slice().sort(function (a, b) { return String(a.name || '').localeCompare(String(b.name || '')); });
       return '<h3 style="margin:10px 0 6px">' + esc(kd.title) + '</h3>' + (gs.length ? '<div class="list">' + gs.map(function (g) {
         var inIt = (g.memberIds || []).indexOf(p.id) >= 0, isL = (g.leaderIds || []).indexOf(p.id) >= 0;
         return '<div class="item" style="gap:12px;flex-wrap:wrap"><label class="check grow" style="margin:0"><input type="checkbox" class="pg-in" data-k="' + kd.k + '" value="' + esc(g.id) + '"' + (inIt ? ' checked' : '') + '><span data-own-words>' + esc(g.name) + '</span></label>' +
           '<label class="check" style="margin:0"><input type="checkbox" class="pg-lead" data-k="' + kd.k + '" data-g="' + esc(g.id) + '"' + (isL ? ' checked' : '') + '><span class="small">' + esc(kd.lead) + '</span></label></div>';
       }).join('') + '</div>' : '<p class="muted small">' + T('None yet.') + ' <a href="#/' + kd.k + '">' + esc(kd.title) + '</a></p>');
-    }).join('') + '</div><div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button><button class="btn primary" data-act="people:groupssave" data-id="' + p.id + '">' + T('Save') + '</button></div>', T('Groups'));
+    }).join('') + '</div><div class="dlg-foot"><button class="btn primary save" data-act="people:groupssave" data-id="' + p.id + '">' + T('Done') + '</button></div>', T('Groups'));
+  }
+  /** Which groups someone is in (the Groups window). quiet = saving as you go: the window stays open. */
+  function saveGroups(el, quiet) {
+    var p = S.get('people', el.dataset.id); if (!p || !groupKinds(p).length) return;
+    var want = { care: {}, life: {} };
+    Array.prototype.forEach.call(document.querySelectorAll('.pg-lead:checked'), function (c) { var b = document.querySelector('.pg-in[data-k="' + c.dataset.k + '"][value="' + c.dataset.g + '"]'); if (b) b.checked = true; });   // a leader is in the group
+    Array.prototype.forEach.call(document.querySelectorAll('.pg-in:checked'), function (c) { var l = document.querySelector('.pg-lead[data-k="' + c.dataset.k + '"][data-g="' + c.value + '"]'); want[c.dataset.k][c.value] = !!(l && l.checked); });
+    groupKinds(p).forEach(function (kd) {
+      if (kd.k === 'care') CareUI.setFrom(p, { want: want.care });
+      else LifeUI.setGroups(p, want.life, 'From their page: ');
+    });
+    if (quiet) { H.render(); H.toast(T('Saved')); return; }   // saving as you go: the window stays open
+    H.closeModal(); H.render(); H.toast(T('Saved'));
   }
   function canPhoto(p) {
     if (!p || p.mergedInto) return false;
@@ -308,10 +322,43 @@
         }).join('') +
         '<label class="field" style="margin-top:8px">' + T('How often (for new positions)') + '<select id="vol-freq"><option value="weekly">' + T('weekly') + '</option><option value="fortnightly" selected>' + T('fortnightly') + '</option><option value="monthly">' + T('monthly') + '</option><option value="occasional">' + T('occasional') + '</option></select></label></div>' +
       '<p id="vol-err" class="note bad" hidden></p>';
-    H.modal(H.dialogHead(T('Volunteering: {name}', { name: H.name(p) }), T('Which services they serve at, and in which departments and positions. Rostering uses this.')) + '<div class="dlg-body">' + body + '</div>' +
-      '<div class="dlg-foot"><button class="btn" data-act="hub:close">' + T('Cancel') + '</button>' + (teams.length ? '<button class="btn save" data-act="people:savevolunteer" data-id="' + p.id + '">' + T('Save') + '</button>' : '') + '</div>', T('Volunteering'));
+    // Saved as you go (data-autoscope + the hidden data-autosave button, like Edit details); Done saves what is waiting and closes
+    H.modal(H.dialogHead(T('Volunteering: {name}', { name: H.name(p) }), T('Which services they serve at, and in which departments and positions. Rostering uses this.') + (teams.length ? ' ' + T('Changes are saved as you go.') : '')) +
+      '<div class="dlg-body"' + (teams.length ? ' data-autoscope' : '') + '>' + (teams.length ? '<button type="button" data-autosave data-act="people:autovolunteer" data-id="' + p.id + '" tabindex="-1">' + T('Save') + '</button>' : '') + body + '</div>' +
+      '<div class="dlg-foot">' + (teams.length ? '<button class="btn primary save" data-act="people:savevolunteer" data-id="' + p.id + '">' + T('Done') + '</button>' : '<button class="btn" data-act="hub:close">' + T('Close') + '</button>') + '</div>', T('Volunteering'));
     document.querySelectorAll('input[name="vol"]').forEach(function (r) { r.addEventListener('change', function () { document.getElementById('vol-f').hidden = r.value !== 'yes' || !r.checked; }); });
     document.querySelectorAll('.vol-d').forEach(function (d) { d.addEventListener('change', function () { document.querySelector('.vol-ps[data-t="' + d.dataset.t + '"]').hidden = !d.checked; }); });
+  }
+
+  /** Volunteering window. quiet = saving as you go: the window stays open; a half-finished choice (a service but no position yet)
+   *  waits quietly, with a note, until it is complete. Done (not quiet) asks for it to be complete, saves and closes. */
+  function saveVolunteer(el, quiet) {
+    var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err'); if (!p || !err) return;
+    var yes = (document.querySelector('input[name="vol"]:checked') || {}).value === 'yes';
+    var times = [].map.call(document.querySelectorAll('.vol-t:checked'), function (x) { return x.value; });
+    var want = [].filter.call(document.querySelectorAll('.vol-p:checked'), function (x) { return !x.closest('.vol-ps').hidden; }).map(function (x) { return x.value; });
+    var missing = yes && !times.length ? T('Tick at least one service they serve at.') : yes && !want.length ? T('Tick at least one department and position.') : '';
+    if (missing) { err.textContent = missing; err.className = 'note ' + (quiet ? 'warn' : 'bad'); err.hidden = false; return; }
+    err.hidden = true;
+    if (!yes) want = [];
+    var sk = S.find('skills', function (k) { return k.personId === p.id; }), freq = document.getElementById('vol-freq') ? document.getElementById('vol-freq').value : 'fortnightly';
+    var allTimes = times.length === slotIds().length ? [] : times;   // every service: no restriction
+    var sig = function (a) { return a.map(function (k) { return k.positionId + ':' + (k.times || []).join('+'); }).sort().join('|'); };
+    var before = sig(sk);
+    sk.forEach(function (k) { if (want.indexOf(k.positionId) < 0) S.remove('skills', k.id); });
+    var after = [];
+    want.forEach(function (pid) {
+      var k = sk.filter(function (x) { return x.positionId === pid; })[0];
+      k = k ? JSON.parse(JSON.stringify(k)) : { personId: p.id, positionId: pid, frequency: freq };
+      k.times = allTimes; after.push(k);
+      if (!sk.some(function (x) { return x.positionId === pid && sig([x]) === sig([k]); })) S.put('skills', k);
+    });
+    if (before !== sig(after)) {   // only a real change goes in the audit log, so saving as you go doesn't fill it
+      var names = want.map(function (id) { return (S.get('positions', id) || {}).name; });
+      S.audit(yes ? 'Volunteering for ' + H.name(p) + ': ' + times.map(slotName).join(', ') + ' – ' + names.join(', ') : 'Not volunteering: ' + H.name(p), 'people/' + p.id);
+    }
+    if (quiet) { H.render(); H.toast(T('Saved')); return; }   // the page behind shows the change; the window stays open
+    H.closeModal(); H.render(); H.toast(T('Saved'));
   }
 
   /* ---------- parents, guardians and collection (children) ---------- */
@@ -442,17 +489,8 @@
   }
   Object.assign(P.actions, {
     groups: function (el) { groupsDialog(S.get('people', el.dataset.id)); },
-    groupssave: function (el) {
-      var p = S.get('people', el.dataset.id); if (!p || !groupKinds(p).length) return;
-      var want = { care: {}, life: {} };
-      Array.prototype.forEach.call(document.querySelectorAll('.pg-lead:checked'), function (c) { var b = document.querySelector('.pg-in[data-k="' + c.dataset.k + '"][value="' + c.dataset.g + '"]'); if (b) b.checked = true; });   // a leader is in the group
-      Array.prototype.forEach.call(document.querySelectorAll('.pg-in:checked'), function (c) { var l = document.querySelector('.pg-lead[data-k="' + c.dataset.k + '"][data-g="' + c.value + '"]'); want[c.dataset.k][c.value] = !!(l && l.checked); });
-      groupKinds(p).forEach(function (kd) {
-        if (kd.k === 'care') CareUI.setFrom(p, { want: want.care });
-        else LifeUI.setGroups(p, want.life, 'From their page: ');
-      });
-      H.closeModal(); H.render(); H.toast(T('Saved'));
-    },
+    groupssave: function (el) { saveGroups(el, false); },
+    autogroups: function (el) { saveGroups(el, true); },
     copyaddress: function (el) {
       var p = S.get('people', el.dataset.id), o = S.get('people', el.dataset.from);
       if (!p || !o || !o.address || !(H.can('*') || H.can('people.edit'))) return;
@@ -628,26 +666,8 @@
         H.render(); H.toast(T('Note saved'));
       },
     volunteer: function (el) { volunteerDialog(S.get('people', el.dataset.id)); },
-    savevolunteer: function (el) {
-        var p = S.get('people', el.dataset.id), err = document.getElementById('vol-err');
-        var yes = (document.querySelector('input[name="vol"]:checked') || {}).value === 'yes';
-        var times = [].map.call(document.querySelectorAll('.vol-t:checked'), function (x) { return x.value; });
-        var want = [].filter.call(document.querySelectorAll('.vol-p:checked'), function (x) { return !x.closest('.vol-ps').hidden; }).map(function (x) { return x.value; });
-        if (yes && !times.length) { err.textContent = T('Tick at least one service they serve at.'); err.hidden = false; return; }
-        if (yes && !want.length) { err.textContent = T('Tick at least one department and position.'); err.hidden = false; return; }
-        if (!yes) want = [];
-        var sk = S.find('skills', function (k) { return k.personId === p.id; }), freq = document.getElementById('vol-freq') ? document.getElementById('vol-freq').value : 'fortnightly';
-        var allTimes = times.length === slotIds().length ? [] : times;   // every service: no restriction
-        sk.forEach(function (k) { if (want.indexOf(k.positionId) < 0) S.remove('skills', k.id); });
-        want.forEach(function (pid) {
-          var k = sk.filter(function (x) { return x.positionId === pid; })[0];
-          k = k ? JSON.parse(JSON.stringify(k)) : { personId: p.id, positionId: pid, frequency: freq };
-          k.times = allTimes; S.put('skills', k);
-        });
-        var names = want.map(function (id) { return (S.get('positions', id) || {}).name; });
-        S.audit(yes ? 'Volunteering for ' + H.name(p) + ': ' + times.map(slotName).join(', ') + ' – ' + names.join(', ') : 'Not volunteering: ' + H.name(p), 'people/' + p.id);
-        H.closeModal(); H.render(); H.toast(T('Saved'));
-      }
+    savevolunteer: function (el) { saveVolunteer(el, false); },
+    autovolunteer: function (el) { saveVolunteer(el, true); }
   });
 
   Object.assign(P, { adultOptions: adultOptions, canPhoto: canPhoto, coupleLine: coupleLine, coupleTodo: coupleTodo, coupleWord: coupleWord, exportPerson: exportPerson, guardiansPanel: guardiansPanel, homeDialog: homeDialog, leaveButton: leaveButton, linkDialog: linkDialog, ncDialog: ncDialog, needsTidy: needsTidy, codeable: codeable, renderPerson: renderPerson, tidyDeath: tidyDeath, volunteerDialog: volunteerDialog, volunteerPanel: volunteerPanel, wedOf: wedOf });

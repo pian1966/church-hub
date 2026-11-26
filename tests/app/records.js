@@ -791,6 +791,8 @@ module.exports = async function (ctx) {
   check(docs['leaderBodies/lbT'].seats.p14.term === 2 && !!docs['leaderBodies/lbT'].seats.p14.termFrom && /Term 2 of 2/.test(await s.text()), 'their next term is started (the second of two)');
   await click(s, '.lb-panel details.cg-fold[data-k="lb-lbT:m"] > summary'); await click(s, '[data-act="leaders:seat"][data-id="p15"]'); await s.page.waitForSelector('#lb-role');
   await click(s, '[data-act="leaders:addrole"][data-r="Secretary"]'); await fill(s, '#lb-role', (await s.page.inputValue('#lb-role')) + ', Youth rep');
+  await s.page.waitForTimeout(1300); docs = await s.docsNow();
+  check((docs['leaderBodies/lbT'].seats.p15.roles || []).join() === 'Secretary,Youth rep', 'a leader’s seat saves as you go: the roles are kept before anyone presses Done');
   await click(s, '[data-act="leaders:saveseat"]'); await s.settle(); docs = await s.docsNow();
   check(docs['leaderBodies/lbT'].seats.p15.roles.join() === 'Secretary,Youth rep' && docs['leaderBodies/lbT'].seats.p15.kind === 'coopted', 'roles are chosen or typed, several at once; co-opted stays');
   await click(s, '[data-act="leaders:seat"][data-id="p15"]'); await s.page.waitForSelector('#lb-kind');

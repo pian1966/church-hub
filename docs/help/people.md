@@ -46,7 +46,9 @@ Tap **Yes, change … address** to give them the same address, or **No, leave it
 **Keep both addresses** when the two should always have their own (for example one is in a care home): Church & Trellis
 never asks about that couple again. The **Google Maps Plus Code** goes across with the address. If both of them have a Plus Code and the two
 don't match, the couple is listed too. Nothing changes unless you say yes. Under **People** → **Households**, **Couples with
-different addresses** lists every couple whose addresses don't match, and your to-do list on People counts them.
+different addresses** lists every couple whose addresses don't match, and your to-do list on People counts them. On that list, only
+the part that differs (the street, the town or the postcode, for example) is shown in **bold**, so you can see at a glance what to fix.
+The **Church health tests** card on your Home counts these couples too, and tapping that line opens the same list.
 
 ## Where do I record a married woman's maiden name?
 For: Administrators, Pastors

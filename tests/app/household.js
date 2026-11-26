@@ -71,6 +71,8 @@ module.exports = async function (ctx) {
   check(addrOf(docs)('p27').street === '1 Main Road', 'No, leave it: her address is not touched');
   await s.go('people/families'); let tt = await s.text();
   check(tt.includes('Couples with different addresses') && tt.includes('2 Oak Street') && tt.includes('1 Main Road'), 'Households lists the couple whose addresses differ');
+  const bold = await s.page.$$eval('#spouse-addresses small b', els => els.map(e => e.textContent));
+  check(bold.length === 2 && bold.includes('2 Oak Street') && bold.includes('1 Main Road'), 'only the part that differs (here the street) is bold, not the whole address');
   await s.page.click('[data-act="people:addrcopy"][data-from="p19"]'); await s.settle(); docs = await s.docsNow();
   check(addrOf(docs)('p27').street === '2 Oak Street' && addrOf(docs)('p19').street === '2 Oak Street', 'one tap makes the couple share one address'); tt = await s.text();
   check(!tt.includes('Couples with different addresses'), '… and they leave the list');

@@ -214,16 +214,36 @@
 
   /** One address as short text for the screen. */
   function addrText(p) { var l = P.addressLines(p); return l.length ? l.join(', ') : T('No address'); }
+  /** The pieces of a home address, in the order shown, as [{ text, key, join }]: "Howick" and "3290" are separate pieces, so a different town or postcode alone is picked out. */
+  function addrBits(p) {
+    var a = (p && p.address) || {}, c = a.country && Countries.find(a.country), home = Countries.church(S.settings());
+    var bit = function (v, join) { v = String(v == null ? '' : v).trim(); return v ? { text: v, key: v.toLowerCase().replace(/[^a-z0-9]+/g, ''), join: join } : null; };
+    return [bit(a.street, ', '), bit(a.street2, ', '), bit(a.city, ' '), bit(a.postcode, ', '), bit(a.province, ', '), bit(a.country && !(c && c.code === home.code) ? a.country : '', ', ')].filter(Boolean);
+  }
+  /** Two couples' addresses as safe HTML with only the parts that differ in bold (not the whole address). Matching ignores capitals, spaces and punctuation, like the check itself. */
+  function addrDiff(a, b) {
+    var ba = addrBits(a), bb = addrBits(b);
+    if (!ba.length || !bb.length) return [esc(addrText(a)), esc(addrText(b))];
+    var show = function (mine, other) {
+      var theirs = other.map(function (x) { return x.key; }), out = '';
+      mine.forEach(function (x, i) {
+        var same = theirs.indexOf(x.key) >= 0;
+        out += (i ? mine[i - 1].join : '') + (same ? esc(x.text) : '<b>' + esc(x.text) + '</b>');
+      });
+      return out;
+    };
+    return [show(ba, bb), show(bb, ba)];
+  }
   /** Households page: couples (married or partners) whose home addresses differ, or where only one has an address. Nothing changes until you choose. */
   function addressPanel(only) {
     var list = addressMismatches().filter(function (c) { return !only || only.indexOf(c.familyId) >= 0; }); if (!list.length) return '';
     return '<section class="panel" id="spouse-addresses" style="margin-bottom:16px"><h2 style="margin:0 0 4px">' + T('Couples with different addresses') + '</h2>' +
       '<p class="hint" style="margin:0 0 10px">' + T('Married couples and partners normally share one home address. Choose which address is right, or choose “Keep both addresses” if they should be different (for example, one is in a care home). Nothing changes until you choose.') + '</p>' +
       '<div class="list">' + list.map(function (c) {
-        var a = S.get('people', c.a), b = S.get('people', c.b);
+        var a = S.get('people', c.a), b = S.get('people', c.b), d = addrDiff(a, b);
         var btn = function (from, to) { return '<button class="btn small" data-act="people:addrcopy" data-from="' + from.id + '" data-to="' + to.id + '">' + esc(T('Use {name}’s address for both', { name: H.name(from) })) + '</button>'; };
         return '<div class="item" style="align-items:flex-start;flex-wrap:wrap;gap:8px"><span class="grow" style="min-width:220px"><b><a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a> & <a href="#/people/p/' + b.id + '">' + esc(H.name(b)) + '</a></b>' +
-          '<small>' + esc(H.name(a)) + ': ' + esc(addrText(a)) + '<br>' + esc(H.name(b)) + ': ' + esc(addrText(b)) + '</small></span>' +
+          '<small>' + esc(H.name(a)) + ': ' + d[0] + '<br>' + esc(H.name(b)) + ': ' + d[1] + '</small></span>' +
           '<span class="btns">' + (c.from ? btn(S.get('people', c.from), S.get('people', c.to)) : btn(a, b) + btn(b, a)) +
           '<button class="btn small" data-act="people:addrapart" data-a="' + c.a + '" data-b="' + c.b + '">' + T('Keep both addresses') + '</button></span></div>';
       }).join('') + '</div></section>';

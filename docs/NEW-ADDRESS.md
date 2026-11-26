@@ -38,7 +38,7 @@ Google sometimes moves buttons around; if something isn't where this guide says,
 2. Under **Custom domain**, type `app.churchandtrellis.com` and click **Save**.
 3. GitHub checks the address (a minute or two; it may say "DNS check in progress"). When the check goes green, tick
    **Enforce HTTPS**. If that box is grey, wait up to an hour and look again.
-4. GitHub adds a file called `CNAME` to the repository by itself. Leave it.
+4. GitHub tries to add a file called `CNAME` to the repository, but main is protected, so it says "Unable to commit CNAME because the Pages branch is protected". That is expected: Claude adds the file through a pull request (it contains just `app.churchandtrellis.com`). Merge it, then check the Pages settings again.
 
 From now on, `pian1966.github.io/church-hub` forwards to the new address.
 

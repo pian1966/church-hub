@@ -225,13 +225,21 @@ var Households = (function () {
   function hasAddress(x) { var a = x && x.address; return !!(a && (String(a.street || '').trim() || String(a.street2 || '').trim() || String(a.city || '').trim())); }
   /** An address as one comparable text: capitals, spaces and punctuation don't count ("1 Main Rd." = "1 main rd"). */
   function streetKey(a) { a = a || {}; return ['street', 'street2', 'city', 'postcode'].map(function (k) { return String(a[k] || '').toLowerCase().replace(/[^a-z0-9]+/g, ''); }).join('|'); }
-  /** The Google Maps Plus Code of an address as comparable text: only the code itself, in capitals ("g7j3+q4q Howick" = "G7J3+Q4Q"), or ''. */
-  function plusKey(a) { return String((a && a.plusCode) || '').trim().split(/\s+/)[0].toUpperCase(); }
-  /** Street, town, postcode and Plus Code together: changes when any of them changes (used to notice that an address was edited). */
-  function addressKey(a) { return streetKey(a) + '|' + plusKey(a); }
-  /** Two addresses are the same home when the street, town and postcode match and, if both have a Plus Code, those are identical too.
-   *  A Plus Code kept on only one of them is not a difference (the other just hasn't got one yet). */
-  function sameAddress(a, b) { var pa = plusKey(a), pb = plusKey(b); return streetKey(a) === streetKey(b) && (!pa || !pb || pa === pb); }
+  /** The latitude and longitude of an address as { lat, lng }, or null when it has none. */
+  function gpsOf(a) { return a && typeof a.lat === 'number' && typeof a.lng === 'number' ? { lat: a.lat, lng: a.lng } : null; }
+  /** The same spot to about 10 metres, as comparable text, or ''. */
+  function gpsKey(a) { var g = gpsOf(a); return g ? g.lat.toFixed(4) + ',' + g.lng.toFixed(4) : ''; }
+  /** Metres between two spots in a straight line. */
+  function metresApart(x, y) {
+    var R = 6371000, r = Math.PI / 180, dLat = (y.lat - x.lat) * r, dLng = (y.lng - x.lng) * r;
+    var h = Math.sin(dLat / 2) * Math.sin(dLat / 2) + Math.cos(x.lat * r) * Math.cos(y.lat * r) * Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return 2 * R * Math.asin(Math.sqrt(h));
+  }
+  /** Street, town, postcode and latitude/longitude together: changes when any of them changes (used to notice that an address was edited). */
+  function addressKey(a) { return streetKey(a) + '|' + gpsKey(a); }
+  /** Two addresses are the same home when the street, town and postcode match and, if both have a latitude and longitude, the two spots are within 100 metres
+   *  (a few extra digits or a pin dropped on the other side of the house don't count). A spot kept on only one of them is not a difference (the other just hasn't got one yet). */
+  function sameAddress(a, b) { var pa = gpsOf(a), pb = gpsOf(b); return streetKey(a) === streetKey(b) && (!pa || !pb || metresApart(pa, pb) <= 100); }
   /** A couple an Administrator chose to keep with two addresses (liveApart: [otherId] on either of them): not asked about their address again. */
   function liveApart(a, b) { return (a.liveApart || []).indexOf(b.id) >= 0 || (b.liveApart || []).indexOf(a.id) >= 0; }
   /**
@@ -260,7 +268,7 @@ var Households = (function () {
     var c = couples(people, families).filter(function (x) { return x.a === person.id || x.b === person.id; })[0];
     if (!c || !hasAddress(person)) return null;
     var other = (people || []).filter(function (x) { return x.id === (c.a === person.id ? c.b : c.a); })[0];
-    if (!other || liveApart(person, other) || (hasAddress(other) && sameAddress(person.address, other.address) && !(plusKey(person.address) && !plusKey(other.address)))) return null;   // a Plus Code only the changed person has is still offered
+    if (!other || liveApart(person, other) || (hasAddress(other) && sameAddress(person.address, other.address) && !(gpsKey(person.address) && !gpsKey(other.address)))) return null;   // a latitude and longitude only the changed person has is still offered
     return other;
   }
 

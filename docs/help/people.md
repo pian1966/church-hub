@@ -28,13 +28,14 @@ Open the person and tap **Edit details**. Save when you're done. Boxes that don'
 for example **Wedding anniversary** when the marital status is Single, Engaged, Partner or Divorced. Whatever was saved in a
 greyed-out box is kept. **Edit details** is the first button in the row under the person's name.
 
-## How do I add a Google Maps Plus Code to someone's address?
+## How do I add a latitude and longitude to someone's address?
 For: Administrators, Pastors
-Also asked: Plus Code. What is a Plus Code. No street address. Township, informal settlement, farm or rural address. Map code. Google Maps code. Link to the address on the map. Go straight to someone's home.
+Also asked: GPS. Coordinates. Latitude. Longitude. Plus Code. Pin. What are latitude and longitude. No street address. Township, informal settlement, farm or rural address. Map link. Google Maps. Apple Maps. iPhone. Go straight to someone's home. Minus sign. South Africa is negative.
 
-Open the person, tap **Edit details**, and type or paste the code into **Google Maps Plus Code** under **Home address** (for example
-G7J3+Q4Q Howick). To find it, press and hold the spot in Google Maps and copy the code shown. Tap the little **i** beside **Google Maps Plus Code** for a short explanation. A Plus Code is especially useful in townships, informal settlements and rural or farming areas, where there may be no street name or house number: it takes a visitor, a carer or a driver straight to the door or gate. Save. On the person's page the code
-shows under their address, and anyone who can see the address can tap it to open that exact spot in Google Maps.
+Open the person, tap **Edit details**, and type or paste the two numbers into **Latitude and longitude** under **Home address** (for example
+-29.4833, 30.2333). To find them in Google Maps, press and hold the spot and tap the numbers shown to copy them. In Apple Maps, press and hold to drop a pin, swipe up and tap **Copy Coordinates**. Tap the little **i** beside **Latitude and longitude** for a short explanation. They are especially useful in townships, informal settlements and rural or farming areas, where there may be no street name or house number: they take a visitor, a carer or a driver straight to the door or gate. Save. On the person's page the numbers show under their address with a **Google Maps** and an **Apple Maps** link, and anyone who can see the address can tap one to open that exact spot.
+
+Church & Trellis checks the numbers when you save. It needs two decimal numbers (not degrees and minutes), latitude between -90 and 90 and longitude between -180 and 180. It also checks them against the person's country: **south of the equator the first number has a minus sign, and west of Greenwich the second one does**. In South Africa, for example, the first number starts with a minus (-29.4833) and the second does not (30.2333). If the spot isn't in the person's country, Church & Trellis says so and, when a missing minus sign or two numbers the wrong way round would put it there, suggests the fix. Tap **Save** again to keep what you typed.
 
 ## What if a husband and wife (or partners) have different addresses?
 For: Administrators, Pastors
@@ -44,8 +45,8 @@ Married couples and partners normally share one home address. When you change so
 **Save**, and their spouse or partner has a different address (or none), Church & Trellis asks **Change … address too?**
 Tap **Yes, change … address** to give them the same address, or **No, leave it** to keep them different this time. Tap
 **Keep both addresses** when the two should always have their own (for example one is in a care home): Church & Trellis
-never asks about that couple again. The **Google Maps Plus Code** goes across with the address. If both of them have a Plus Code and the two
-don't match, the couple is listed too. Nothing changes unless you say yes. Under **People** → **Households**, **Couples with
+never asks about that couple again. The **Latitude and longitude** go across with the address. If both of them have them and the two spots
+are more than 100 metres apart, the couple is listed too. Nothing changes unless you say yes. Under **People** → **Households**, **Couples with
 different addresses** lists every couple whose addresses don't match, and your to-do list on People counts them. On that list, only
 the part that differs (the street, the town or the postcode, for example) is shown in **bold**, so you can see at a glance what to fix.
 The **Church health tests** card on your Home counts these couples too, and tapping that line opens the same list.

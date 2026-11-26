@@ -2,6 +2,8 @@
  * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part and <b>…</b> as it is.
  * Text used by one part of the app goes in that part's file; text used by several goes in common.js. Test: node tests/i18n.test.js */
 I18n.rows([
+    ["Google Maps", "Google Maps", "Google Maps", "Google Maps"],
+    ["Apple Maps", "Apple Maps", "Apple Maps", "Apple Maps"],
     ["Carer (leader)", "Versorger (leier)", "Umnakekeli (umholi)", "Umkhathaleli (inkokeli)"],
     ["Probably the same as {name}:", "Waarskynlik dieselfde as {name} s’n:", "Kungenzeka lifana nelika-{name}:", "Kusenokwenzeka ifana neka-{name}:"],
     ["Use this address", "Gebruik hierdie adres", "Sebenzisa leli kheli", "Sebenzisa le dilesi"],

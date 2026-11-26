@@ -27,5 +27,31 @@ ok(C.birthFromId('0505055009086', 'ZA', '2026-11-10') === '2005-05-05', '… bor
 ok(C.birthFromId('8001015009086', 'ZA', '2026-11-10') === '' && C.birthFromId('8002305009087', 'ZA', '2026-11-10') === '' && C.birthFromId('80010150090', 'ZA') === '', 'not when the check digit is wrong, the date doesn’t exist, or it is too short');
 ok(C.birthFromId('8001015009087', 'GB', '2026-11-10') === '', 'other countries: not from the number (ask for the birthday)');
 
+
+console.log('Latitude and longitude');
+{
+  const g = t => C.parseGps(t);
+  ok(g('-29.4833, 30.2333').lat === -29.4833 && g('-29.4833, 30.2333').lng === 30.2333, 'two decimal numbers are read (as copied from Google Maps or Apple Maps)');
+  ok(g('-29.4833 30.2333').lat === -29.4833 && g('\u221229.4833,30.2333').lat === -29.4833, 'a space, or a typographic minus sign, works too');
+  ok(g('29.4833\u00b0 S, 30.2333\u00b0 E').lat === -29.4833 && g('29.4833 S 30.2333 E').lng === 30.2333, 'S and W make a number negative');
+  ok(g('30.2333E 29.4833S').lat === -29.4833 && g('30.2333E 29.4833S').lng === 30.2333, 'longitude first is understood when the letters say so');
+  ok(g('-29,4833; 30,2333').lng === 30.2333, 'a comma as the decimal point is understood');
+  ok(g('hello').error === 'empty-pair' && g('-29.4833').error === 'empty-pair' && g('1, 2, 3').error === 'empty-pair', 'anything but two numbers is refused');
+  ok(g('-29\u00b029\u2032 30\u00b014\u2032').error === 'minutes', 'degrees and minutes are refused with their own message');
+  ok(g('95, 30').error === 'swapped' && g('-29, 190').error === 'range' && g('91, 200').error === 'range', 'beyond 90 / 180 is refused (the other way round is named)');
+  ok(g('-29.4833, 30.2333').decimals === 4 && g('-29, 30').decimals === 0, 'the number of decimals is counted (too few means only roughly there)');
+  ok(C.gpsCheck(-29.4833, 30.2333, 'ZA') === null, 'Howick is in South Africa');
+  const f = C.gpsCheck(29.4833, 30.2333, 'ZA');
+  ok(f && f.kind === 'flip' && f.lat === -29.4833 && f.lng === 30.2333, 'a missing minus (northern hemisphere) is spotted, with the fix');
+  const f2 = C.gpsCheck(30.2333, -29.4833, 'ZA');
+  ok(f2 && f2.kind === 'flip' && f2.lat === -29.4833 && f2.lng === 30.2333, 'the two numbers the wrong way round are spotted, with the fix');
+  const f3 = C.gpsCheck(-29.4833, -30.2333, 'ZA');
+  ok(f3 && f3.kind === 'flip' && f3.lng === 30.2333, 'a minus on the longitude (west) is spotted');
+  ok(C.gpsCheck(51.5, -0.12, 'ZA').kind === 'outside' && C.gpsCheck(51.5, -0.12, 'GB') === null, 'London is not in South Africa but is in the United Kingdom');
+  ok(C.gpsCheck(-33.87, 151.2, 'AU') === null && C.gpsCheck(33.87, 151.2, 'AU').kind === 'flip' && C.gpsCheck(40.7, -74, 'US') === null && C.gpsCheck(-40.7, -74, 'US').kind === 'flip', 'Sydney needs its minus, New York its minus on the longitude');
+  ok(C.all().every(c => C.gpsCheck(0, 0, c.code) !== undefined) && C.all().every(c => { const x = C.gpsCheck(-89, 179.9, c.code); return x === null || x.kind; }), 'every country has a place on the map to check against');
+  ok(Math.round(C.metres({ lat: -29.4833, lng: 30.2333 }, { lat: -29.4933, lng: 30.2333 })) > 1000, 'metres between two spots');
+}
+
 if (fails) { console.log('\n' + fails + ' country test(s) FAILED'); process.exit(1); }
 console.log('\nAll country tests passed');

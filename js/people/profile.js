@@ -13,13 +13,14 @@
     calendar: 'M8 3v4M16 3v4M3 9h18M5 5h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2z',
     candle: 'M12 2c1.4 1.8 1.6 2.8 0 4-1.6-1.2-1.4-2.2 0-4zM9 10h6v11H9z'
   };
-  /** The Google Maps Plus Code kept with the home address (e.g. "G7J3+Q4Q Howick"), or ''. */
-  function plusCode(p) { return p && p.address && p.address.plusCode ? String(p.address.plusCode).trim() : ''; }
-  /** A tappable Plus Code that opens that exact spot in Google Maps (a new tab; Google is only contacted when it is tapped). */
-  function plusCodeLink(p, afterLines) {
-    var c = plusCode(p); if (!c) return '';
-    return (afterLines ? '<br>' : '') + '<a class="plus-code" href="https://www.google.com/maps/search/?api=1&amp;query=' + esc(encodeURIComponent(c)) + '" target="_blank" rel="noopener noreferrer" title="' + esc(T('Open in Google Maps')) + '">' +
-      H.icon('M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z', 14) + ' ' + esc(c) + '</a>';
+  /** The latitude and longitude kept with the home address, as { lat, lng }, or null. */
+  function gps(p) { var a = p && p.address; return a && typeof a.lat === 'number' && typeof a.lng === 'number' ? { lat: a.lat, lng: a.lng } : null; }
+  /** The spot as "-29.4833, 30.2333" with two small links that open it in Google Maps and in Apple Maps (new tabs; the map company is only contacted when one is tapped). */
+  function gpsLink(p, afterLines) {
+    var g = gps(p); if (!g) return '';
+    var q = g.lat + ',' + g.lng, pin = H.icon('M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21zM12 7a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5z', 14);
+    return (afterLines ? '<br>' : '') + '<span class="gps">' + pin + ' ' + esc(Countries.gpsText(g.lat, g.lng)) + ' <a class="plus-code" href="https://www.google.com/maps/search/?api=1&amp;query=' + esc(encodeURIComponent(q)) + '" target="_blank" rel="noopener noreferrer">' + esc(T('Google Maps')) + '</a> · ' +
+      '<a class="plus-code" href="https://maps.apple.com/?ll=' + esc(encodeURIComponent(q)) + '&amp;q=' + esc(encodeURIComponent(T('Home'))) + '" target="_blank" rel="noopener noreferrer">' + esc(T('Apple Maps')) + '</a></span>';
   }
   function age() { return P.age.apply(this, arguments); }
   function canBasic() { return P.canBasic.apply(this, arguments); }
@@ -179,7 +180,7 @@
       (p.preferredName ? '<dt>' + F('Known as') + '</dt><dd>' + esc(p.preferredName) + '</dd>' : '') +
       (full && p.middleName ? '<dt>' + F('Middle name') + '</dt><dd>' + esc(p.middleName) + '</dd>' : '') +
       (full && p.maidenName ? '<dt>' + F('Maiden name') + '</dt><dd>' + esc(p.maidenName) + '</dd>' : '') +
-      (full && (addressLines(p).length || plusCode(p)) ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + (addressLines(p).length && !plusCode(p) ? ' ' + H.mapLink(addressLines(p).join(', ')) : '') + plusCodeLink(p, addressLines(p).length) + '</dd>' :
+      (full && (addressLines(p).length || gps(p)) ? '<dt>' + F('Home address') + '</dt><dd>' + addressLines(p).map(esc).join('<br>') + (addressLines(p).length && !gps(p) ? ' ' + H.mapLink(addressLines(p).join(', ')) : '') + gpsLink(p, addressLines(p).length) + '</dd>' :
         !full && P.contactHtml(p, 'address') ? '<dt>' + F('Home address') + '</dt><dd>' + P.contactHtml(p, 'address') + '</dd>' : sameAddress(p)) +
       (!child && (canSeeAll() || me) ? '<dt>' + F('Email') + '</dt><dd>' + (p.email ? P.contactHtml(p, 'email') : '<span class="muted">' + (p.emailUnknown ? T('Not known') : '—') + '</span>') + '</dd>' +
         '<dt>' + F('Mobile') + '</dt><dd>' + (p.mobile ? P.contactHtml(p, 'mobile') : '<span class="muted">' + (p.mobileUnknown ? T('Not known') : '—') + '</span>') + '</dd>' : '') +

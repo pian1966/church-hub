@@ -4,16 +4,28 @@
 module.exports = async function (ctx) {
   const { check, fillHome, finish, seedDocs, session } = ctx;
   let docs, s, t;
-  console.log('Edit details at the top, and a Plus Code on the address:');
+  console.log('Edit details at the top, and latitude and longitude on the address:');
   s = await session('linda.pillay@example.com', seedDocs()); await s.go('people/p/p15');
   check(await s.page.$eval('.profile-btns > [data-act="people:edit"]:first-child', b => !b.classList.contains('primary')) && await s.page.$$eval('[data-act="people:edit"].btn', l => l.length) === 1, 'a person’s page has Edit details once, as the first button');
-  await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-pluscode', 'nonsense'); await s.page.click('[data-act="people:save"]'); await s.settle();
-  check(/Plus Code doesn’t look right/.test(await s.page.textContent('#pf-err')), 'a Plus Code that is not one is refused');
-  const pcTip = await s.page.getAttribute('label:has(#pf-pluscode) .tip', 'data-tip');
-  check(/Plus Code/.test(pcTip || '') && /townships/.test(pcTip) && /informal settlements/.test(pcTip) && /rural or farming/.test(pcTip) && /Google Maps/.test(pcTip), 'an “i” beside Google Maps Plus Code explains what it is, how to find one, and why it helps in townships, informal settlements and rural or farming areas');
-  await s.page.fill('#pf-pluscode', 'g7j3+q4q Howick'); await s.page.click('[data-act="people:save"]'); await s.settle();
-  const pcHref = await s.page.$eval('a.plus-code', a => a.href + '|' + a.textContent.trim());
-  check(pcHref.includes('google.com/maps/search') && pcHref.includes(encodeURIComponent('G7J3+Q4Q Howick')) && pcHref.endsWith('G7J3+Q4Q Howick'), 'the Plus Code shows on the address and opens Google Maps');
+  const save = async () => { await s.page.click('[data-act="people:save"]'); await s.settle(); };
+  const errText = async () => (await s.page.textContent('#pf-err')) || '';
+  await s.page.click('[data-act="people:edit"]'); await fillHome(s); await s.page.fill('#pf-gps', 'nonsense'); await save();
+  check(/two numbers/.test(await errText()), 'something that is not a latitude and longitude is refused');
+  await s.page.fill('#pf-gps', '29°29′ S, 30°14′ E'); await save();
+  check(/decimal numbers/.test(await errText()), 'degrees and minutes are refused with a hint to copy the decimal numbers');
+  await s.page.fill('#pf-gps', '-129.4833, 130.2333'); await save();
+  check(/between -90 and 90/.test(await errText()), 'a latitude beyond 90 is refused');
+  await s.page.fill('#pf-gps', '30.2333, -29.4833'); await save();
+  check(/isn’t in South Africa/.test(await errText()) && /-29\.4833, 30\.2333/.test(await errText()), 'numbers the wrong way round for the church’s country are queried, suggesting the fix');
+  await save();
+  check(await s.page.$('a.plus-code') !== null, 'tapping Save again keeps it as typed');
+  await s.page.click('[data-act="people:edit"]'); await s.page.fill('#pf-gps', '29.4833, 30.2333'); await save();
+  check(/minus sign/.test(await errText()), 'a missing minus sign (northern hemisphere) is queried');
+  const pcTip = await s.page.getAttribute('label:has(#pf-gps) .tip', 'data-tip');
+  check(/latitude and longitude/i.test(pcTip || '') && /Apple Maps/.test(pcTip) && /Google Maps/.test(pcTip) && /townships/.test(pcTip) && /informal settlements/.test(pcTip) && /rural or farming/.test(pcTip) && /minus/.test(pcTip), 'an “i” beside Latitude and longitude explains what they are, how to find them on Google Maps and Apple Maps, the minus signs, and why they help in townships, informal settlements and rural or farming areas');
+  await s.page.fill('#pf-gps', '-29.4833, 30.2333'); await save();
+  const links = await s.page.$$eval('a.plus-code', l => l.map(a => a.href + '|' + a.textContent.trim()));
+  check(links.length === 2 && links[0].includes('google.com/maps/search') && links[0].includes(encodeURIComponent('-29.4833,30.2333')) && links[1].includes('maps.apple.com') && links[1].includes('ll=' + encodeURIComponent('-29.4833,30.2333')), 'the numbers show on the address and open in Google Maps and in Apple Maps');
   await finish(s);
 
   console.log('Email and mobile: “Not known” button and panel:');

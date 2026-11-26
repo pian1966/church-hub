@@ -230,7 +230,7 @@ I18n.rows([
     ["Signed in", "Aangemeld", "Ungenile", "Ungenile"],
     ["Invited, not signed in yet", "Genooi, nog nie aangemeld nie", "Umenyiwe, akakangeni", "Umenyiwe, akakangeni"],
     ["Not invited yet", "Nog nie genooi nie", "Akakamenywa", "Akakamenywa"],
-    ["Invited to Church & Trellis", "Genooi na Church & Trellis", "Umenyiwe ku-Church & Trellis", "Umenyiwe kwi-Church & Trellis"],
+    ["Date invited", "Datum genooi", "Usuku lokumenywa", "Umhla wokumenywa"],
     ["First signed in", "Eerste keer aangemeld", "Ungene okokuqala", "Ungene okokuqala"],
     ["Has been invited", "Is genooi", "Umenyiwe", "Umenyiwe"],
     ["How much they use it", "Hoeveel hulle dit gebruik", "Ukuthi bayisebenzisa kangakanani", "Ukuba bayisebenzisa kangakanani"],

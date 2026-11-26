@@ -92,7 +92,7 @@
     var lvl = function (p) { var l = usageInfo && usageInfo.levels[p.id]; return l && l.on ? (l.n === null ? 'On the app' : Usage.LEVELS[l.n][1]) : l ? Usage.LEVELS[0][1] : ''; };
     add(usage, TX('Usage'), 'appUse', TX('Using Church & Trellis'), 'choice', appUse, [TX('Signed in'), TX('Invited, not signed in yet'), TX('Not invited yet')]);
     add(usage, TX('Usage'), 'appInvitedYes', TX('Has been invited'), 'yesno', function (p) { return !!p.appInvited; });
-    add(usage, TX('Usage'), 'appInvited', TX('Invited to Church & Trellis'), 'date', function (p) { return p.appInvited || ''; });
+    add(usage, TX('Usage'), 'appInvited', TX('Date invited'), 'date', function (p) { return p.appInvited || ''; });
     add(usage, TX('Usage'), 'appFirstSeen', TX('First signed in'), 'date', function (p) { return p.appFirstSeen || ''; });
     add(usage && window.UsageUI, TX('Usage'), 'usageLevel', TX('How much they use it'), 'choice', lvl, Usage.LEVELS.map(function (l) { return l[1]; }));
     add(usage && window.UsageUI, TX('Usage'), 'usageSlipping', TX('Slipping away'), 'yesno', function (p) { var l = usageInfo && usageInfo.levels[p.id]; return !!(l && l.slipping); });

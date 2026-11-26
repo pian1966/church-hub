@@ -116,7 +116,7 @@ The link opens a welcome on the sign-in screen and, on an Android phone, **Get t
 how to **Add to Home Screen**. **People → Invitations** lists who was invited but hasn't signed in yet (with **Remind** and
 **Remind all**) and who has started; Home reminds you a week after an invitation. Advanced search has a **Usage** group
 (Administrators and Pastors): **Using Church & Trellis** (Signed in, Invited – not signed in yet, or Not invited yet),
-**Has been invited**, **Invited to Church & Trellis** and **First signed in** (dates), **How much they use it** (Not on the app
+**Has been invited**, **Date invited** and **First signed in**, **How much they use it** (Not on the app
 yet … Power user), **Slipping away** and **Last opened the app**.
 
 ## How do I add a child's parents, guardians, and who may collect them?

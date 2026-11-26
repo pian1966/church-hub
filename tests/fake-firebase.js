@@ -232,6 +232,21 @@
           && /^\d{1,4}\.\d{1,4}\.\d{1,4}$/.test(d.version) && ['android', 'app', 'browser'].indexOf(d.platform) >= 0
           && !!d.days && typeof d.days === 'object' && !Array.isArray(d.days) && Object.keys(d.days).length <= 35;
       } },
+    // Version history (firestore.rules okHist): written by whoever made the change, for records they may change; Administrators and Pastors read
+    history: { read: function (c) { return is(c, ['admin', 'pastor']); },
+      write: function (c, op, id, b, a) {
+        if (op === 'delete') return is(c, ['admin']);
+        var d = a || {}, ROS = ['services', 'positions', 'teams'], STF = ['people', 'families', 'careGroups', 'groups', 'customGroups', 'leaderBodies', 'events', 'books', 'studies'];
+        var priv = ['medical', 'photo', 'idNumber', 'pin', 'pinHash'], clean = function (v) { return v == null || (typeof v === 'object' && !Array.isArray(v) && !priv.some(function (k) { return k in v; })); };
+        var ok = is(c, ANY) && onlyKeys(d, ['id', 'c', 'rid', 'at', 'by', 'byName', 'kind', 'before', 'after', 'fields'])
+          && ['id', 'c', 'rid', 'at', 'by', 'kind', 'fields'].every(function (k) { return k in d; }) && d.id === id
+          && (STF.indexOf(d.c) >= 0 || ROS.indexOf(d.c) >= 0) && typeof d.rid === 'string' && d.rid.length > 0 && d.rid.length <= 100
+          && /^20\d\d-[01]\d-[0-3]\d [0-2]\d:[0-5]\d$/.test(d.at) && ['edit', 'add', 'remove', 'restore'].indexOf(d.kind) >= 0
+          && Array.isArray(d.fields) && d.fields.length <= 200 && String(d.byName || '').length <= 120 && clean(d.before) && clean(d.after) && isMe(c, d.by)
+          && (is(c, ['admin', 'pastor']) || (ROS.indexOf(d.c) >= 0 && rosterer(c)) || (d.c === 'people' && mine(c, d.rid)));
+        if (!ok) return false;
+        return op === 'create' || (!!b && b.by === d.by && b.c === d.c && b.rid === d.rid);
+      } },
     elvantoFound: { read: function (c) { return may(c, 'import'); }, write: function (c, op) { return op === 'delete' ? may(c, 'import') : c.robot; } },
     guardians: { read: function (c, id, d) { return is(c, ['admin', 'pastor', 'kids']) || (!!d && mine(c, d.adultId)); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },
     noCollect: { read: function (c) { return is(c, ['admin', 'pastor', 'kids']); }, write: function (c) { return is(c, ['admin', 'pastor', 'kids']); } },
@@ -588,7 +603,7 @@
   Query.prototype.get = function () { try { return Promise.resolve(run(this)); } catch (e) { return Promise.reject(e); } };
   Query.prototype.onSnapshot = function (cb, errCb) { return listen({ query: this, cb: cb, err: errCb }); };
   function matches(q, d) {
-    return q.filters.every(function (f) { var v = d[f[0]]; return f[1] === '==' ? v === f[2] : f[1] === 'array-contains' ? Array.isArray(v) && v.indexOf(f[2]) >= 0 : false; });
+    return q.filters.every(function (f) { var v = d[f[0]]; return f[1] === '==' ? v === f[2] : f[1] === '<' ? v !== undefined && v < f[2] : f[1] === 'array-contains' ? Array.isArray(v) && v.indexOf(f[2]) >= 0 : false; });
   }
   function run(q) {
     var out = Object.keys(docs).filter(function (k) { return parentOf(k) === q.coll && matches(q, docs[k]); });

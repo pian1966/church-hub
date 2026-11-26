@@ -1,0 +1,32 @@
+/* Church & Trellis – words for Undo and Version history (js/history-ui.js).
+ * One line per text: [English, Afrikaans, isiZulu, isiXhosa]. Keep every {…} part as it is. Test: node tests/i18n.test.js */
+I18n.rows([
+    ['Undo and Version history', 'Ontdoen en weergawegeskiedenis', 'Hlehlisa noMlando wezinguqulo', 'Buyisela neMbali yeenguqulelo'],
+    ['Deleted: {what}.', 'Uitgevee: {what}.', 'Kususiwe: {what}.', 'Kususiwe: {what}.'],
+    ['Added: {what}.', 'Bygevoeg: {what}.', 'Kwengeziwe: {what}.', 'Kongeziwe: {what}.'],
+    ['Changes saved.', 'Veranderinge gestoor.', 'Izinguquko zigciniwe.', 'Utshintsho lugcinwe.'],
+    ['Someone has changed this since. Undo anyway?', 'Iemand het dit sedertdien verander. Tog ontdoen?', 'Omunye uyishintshile kusukela lapho. Buyisa noma kunjalo?', 'Umntu uyitshintshile emva koko. Buyisela nokuba kunjalo?'],
+    ['Undone.', 'Ontdoen.', 'Kubuyisiwe.', 'Kubuyisiwe.'],
+    ['Put back', 'Teruggesit', 'Kubuyiselwe', 'Kubuyiselwe'],
+    ['Put back.', 'Teruggesit.', 'Kubuyiselwe.', 'Kubuyiselwe.'],
+    ['Changed {what}', 'Het {what} verander', 'Kushintshe {what}', 'Kutshintshe {what}'],
+    ['Put this back', 'Sit hierdie terug', 'Buyisela lokhu', 'Buyisela oku'],
+    ['Go back to before this', 'Gaan terug na voor hierdie', 'Buyela kwangaphambi kwalokhu', 'Buyela phambi koku'],
+    ['What changed', 'Wat verander het', 'Okushintshile', 'Okutshintshileyo'],
+    ['Version history', 'Weergawegeskiedenis', 'Umlando wezinguqulo', 'Imbali yeenguqulelo'],
+    ['Church & Trellis keeps each earlier version for 90 days.', 'Church & Trellis hou elke vorige weergawe 90 dae lank.', 'I-Church & Trellis igcina yonke inguqulo yangaphambilini izinsuku ezingama-90.', 'I-Church & Trellis igcina yonke inguqulelo yangaphambili iintsuku ezingama-90.'],
+    ['No earlier versions yet. They appear here after the next change.', 'Nog geen vorige weergawes nie. Hulle verskyn hier ná die volgende verandering.', 'Azikho izinguqulo zangaphambilini okwamanje. Zivela lapha ngemva koshintsho olulandelayo.', 'Azikho iinguqulelo zangaphambili okwangoku. Ziza kubonakala apha emva kotshintsho olulandelayo.'],
+    ['The history can’t be shown right now.', 'Die geskiedenis kan nie nou gewys word nie.', 'Umlando awukwazi ukuboniswa okwamanje.', 'Imbali ayinakubonakaliswa okwangoku.'],
+    ['Nothing to put back.', 'Niks om terug te sit nie.', 'Akukho okufanele kubuyiselwe.', 'Akukho kufanele kubuyiselwe.'],
+    ['person', 'persoon', 'umuntu', 'umntu'],
+    ['household', 'huishouding', 'umkhaya', 'usapho'],
+    ['group', 'groep', 'iqembu', 'iqela'],
+    ['service', 'diens', 'inkonzo', 'inkonzo'],
+    ['position', 'posisie', 'isikhundla', 'isikhundla'],
+    ['team', 'span', 'ithimba', 'iqela'],
+    ['leadership group', 'leierskapgroep', 'iqembu lobuholi', 'iqela lobunkokeli'],
+    ['event', 'geleentheid', 'umcimbi', 'isiganeko'],
+    ['book', 'boek', 'incwadi', 'incwadi'],
+    ['study', 'studie', 'isifundo', 'isifundo'],
+    ['record', 'rekord', 'irekhodi', 'irekhodi']
+]);

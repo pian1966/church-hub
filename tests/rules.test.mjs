@@ -1412,6 +1412,38 @@ await t('how the app is used (appUse): your own record only; Administrators and 
   await cannot(read(stranger, 'appUse/p14')); await cannot(read(nobody, 'appUse/p05'));
 });
 
+await t('version history (history): written by whoever made the change; Administrators and Pastors read it', async () => {
+  const v = (id, extra) => Object.assign({ id, c: 'people', rid: 'p15', at: '2026-11-26 08:00', by: 'p01', byName: 'Linda', kind: 'edit',
+    before: { id: 'p15', firstName: 'Clare' }, after: { id: 'p15', firstName: 'Clara' }, fields: ['firstName'] }, extra);
+  await can(db.admin.doc('history/h1').set(v('h1')));
+  await can(db.pastor.doc('history/h2').set(v('h2', { by: 'p02', c: 'families', rid: 'f1' })));
+  await can(db.admin.doc('history/h1').set(v('h1', { at: '2026-11-26 08:05', after: { id: 'p15', firstName: 'Clarice' } })));   // widening your own version
+  await cannot(db.pastor.doc('history/h1').set(v('h1', { by: 'p02' })));                         // not someone else's
+  await cannot(db.admin.doc('history/h3').set(v('h3', { by: 'p02' })));                          // only as yourself
+  // Only for records you may change: a member their own person record; roster coordinators services, positions and teams
+  await can(db.member.doc('history/h4').set(v('h4', { by: 'p14', rid: 'p14' })));
+  await cannot(db.member.doc('history/h5').set(v('h5', { by: 'p14', rid: 'p15' })));
+  await cannot(db.member.doc('history/h6').set(v('h6', { by: 'p14', c: 'services', rid: 's1' })));
+  await can(db.rosters.doc('history/h7').set(v('h7', { by: 'p05', c: 'services', rid: 's1' })));
+  await cannot(db.rosters.doc('history/h8').set(v('h8', { by: 'p05', c: 'families', rid: 'f1' })));
+  // Never the private parts, only the shapes Church & Trellis writes
+  await cannot(db.admin.doc('history/h9').set(v('h9', { before: { id: 'p12', medical: { allergies: 'Nuts' } } })));
+  await cannot(db.admin.doc('history/h9').set(v('h9', { after: { id: 'p15', photo: 'data:x' } })));
+  await cannot(db.admin.doc('history/h9').set(v('h9', { c: 'notes' })));
+  await cannot(db.admin.doc('history/h9').set(v('h9', { kind: 'other' })));
+  await cannot(db.admin.doc('history/h9').set(v('h9', { at: 'yesterday' })));
+  await cannot(db.admin.doc('history/h9').set(v('h9', { id: 'h10' })));
+  await cannot(db.admin.doc('history/h9').set(v('h9', { note: 'x' })));
+  await can(db.admin.doc('history/h9').set(v('h9', { kind: 'add', before: null })));
+  // Reading: Administrators and Pastors only
+  await can(list(db.admin.collection('history'))); await can(list(db.pastor.collection('history')));
+  await can(list(db.pastor.collection('history').where('c', '==', 'people').where('rid', '==', 'p15')));
+  await cannot(list(db.member.collection('history'))); await cannot(read(db.member, 'history/h4'));
+  await cannot(list(db.rosters.collection('history'))); await cannot(list(db.kids.collection('history')));
+  // Deleting: Administrators only
+  await cannot(db.pastor.doc('history/h2').delete()); await can(db.admin.doc('history/h2').delete());
+  await cannot(read(stranger, 'history/h1')); await cannot(read(nobody, 'history/h1'));
+});
 await t('the parts not built yet (Subscription records) are closed to everyone', async () => {
   for (const c of ['subscription/church']) {
     await cannot(db.admin.doc(c).set({ a: 1 })); await cannot(read(db.admin, c)); await cannot(read(db.member, c));

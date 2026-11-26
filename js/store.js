@@ -19,7 +19,7 @@ var Store = (function () {
   'use strict';
   var KEY = 'church_hub_demo_v1';
   var COLLECTIONS = ['people', 'families', 'consents', 'notes', 'teams', 'positions', 'skills', 'services', 'assignments',
-    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'serveSwaps', 'awayAsks', 'crews', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos', 'studies', 'events', 'eventSignups', 'appUse'];
+    'groups', 'customGroups', 'applicationDocuments', 'blockouts', 'dsr', 'breaches', 'audit', 'elvantoSync', 'robotStatus', 'guardians', 'noCollect', 'serveOffers', 'serveSwaps', 'awayAsks', 'crews', 'officeNotes', 'elvantoFound', 'careGroups', 'careShare', 'words', 'wordIdeas', 'detailChanges', 'emailPrompts', 'messages', 'msgGroups', 'partnerApps', 'leaderBodies', 'archive', 'books', 'loans', 'libraryDuplicateIgnores', 'board', 'market', 'marketPhotos', 'studies', 'events', 'eventSignups', 'appUse', 'history'];
   var listeners = [], remoteListeners = [], errorListeners = [], leaveHooks = [], user = null, demoFiles = {};
   var leaveSnap = {};   // each leave request as last saved, to tell what changed
   /** "View as": an Administrator looking at Church & Trellis as another role would see it. Nothing is saved while it is on. */
@@ -63,10 +63,10 @@ var Store = (function () {
     db.brochures = db.brochures || (db.settings && db.settings.brochures) || {};
     if (db.settings) delete db.settings.brochures;
     snapLeave(); rev++;
-    save();
+    save(); rememberAll();
     return db;
   }
-  function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; }); snapLeave(); save(); changed(); }
+  function reset(sampleFactory) { if (LIVE) return; db = sampleFactory(); COLLECTIONS.forEach(function (c) { if (!db[c]) db[c] = []; }); snapLeave(); rememberAll(); save(); changed(); }
   function snapLeave() { leaveSnap = {}; ((db && db.leave && db.leave.requests) || []).forEach(function (r) { if (!r.synthetic) leaveSnap[r.id] = JSON.stringify(r); }); }
 
   function all(c) { return (db && db[c]) || []; }
@@ -121,10 +121,12 @@ var Store = (function () {
     if (c === 'lifeGroups') obj.type = 'life';
     c = real(c);
     var arr = all(c), i = arr.findIndex(function (x) { return x.id === obj.id; }), prev = i >= 0 ? copy(arr[i]) : null;
+    var was = keepsHistory(c) ? lastSaved(c, obj.id, prev) : null;   // before Live.put, which changes what "the database holds"
     obj.updatedAt = now();
     if (i >= 0) arr[i] = obj; else { obj.createdAt = obj.createdAt || now(); arr.push(obj); }
     if (LIVE) Live.put(c, obj, prev);
     if (auditText) audit(auditText, c + '/' + obj.id);
+    if (keepsHistory(c)) { versioned(c, was, obj); remember(c, obj); }
     save(); changed();
     return obj;
   }
@@ -132,7 +134,9 @@ var Store = (function () {
     if (blocked()) return;
     if (c === 'archive' && !archiveCanManage()) { tell('Only Administrators and Council members can manage Archive records.'); return; }
     var prev = get(c, id); c = real(c);
+    var was = prev && keepsHistory(c) ? lastSaved(c, id, prev) : null;
     db[c] = all(c).filter(function (x) { return x.id !== id; });
+    if (was) { versioned(c, was, null); delete shadow[c + '/' + id]; }
     if (LIVE && prev) Live.remove(c, prev);
     if (c === 'archive') delete demoFiles[id];
     if (auditText) audit(auditText, c + '/' + id);
@@ -146,9 +150,61 @@ var Store = (function () {
     db.officeNotes = list('officeNotes').filter(function (n) { return n.personId !== personId; });
     if (db.idNumbers) db.idNumbers = db.idNumbers.filter(function (x) { return x.id !== personId; });
     var p = get('people', personId); if (p) delete p.medical;
+    if (db.history) db.history = db.history.filter(function (e) { return !(e.c === 'people' && e.rid === personId); });   // their earlier versions too
     if (LIVE) Live.purge(personId);
     save();
   }
+  /* ---------- Version history and Undo (rules: js/history.js; screens: js/history-ui.js; POPIA "Version history") ----------
+   * Every put / remove of a record in History.COVER, made on this device, becomes a version: kept in `history` (live: history/{id},
+   * written only by people the rules let write it, quietly; demo: db.history) and passed to Store.onVersion listeners (the Undo bar).
+   * Changes that arrive from other devices are not versions here – their own device wrote them. Nothing while viewing as another
+   * role or offline (put/remove stop first). "Before" is what was last saved, not the screen's copy: screens often change a record in place. */
+  var versionListeners = [], lastVersion = {}, shadow = {}, restoring = false;
+  function keepsHistory(c) { return typeof History !== 'undefined' && History.covered(c); }
+  /** The demo: each covered record as last saved (a string, so changing the record in place doesn't change this). */
+  function remember(c, rec) { if (!LIVE && rec && rec.id) shadow[c + '/' + rec.id] = JSON.stringify(rec); }
+  function rememberAll() {
+    shadow = {}; lastVersion = {};
+    if (LIVE || typeof History === 'undefined' || !db) return;
+    Object.keys(History.COVER).forEach(function (c) { all(c).forEach(function (r) { remember(c, r); }); });
+  }
+  function lastSaved(c, id, prev) {
+    if (LIVE) return Live.saved(c, id) || prev;
+    var s = shadow[c + '/' + id]; return s ? JSON.parse(s) : prev;
+  }
+  function versioned(c, before, after) {
+    if (previewRole || !user) return;
+    var e = History.entry(c, before, after, { id: user.id, name: ((user.preferredName || user.firstName || '') + ' ' + (user.lastName || '')).trim() }, now(), uid('hv'));
+    if (!e) return;
+    if (restoring && e.kind === 'edit') e.kind = 'restore';
+    var k = c + '/' + e.rid, kept = (e.kind === 'edit' && History.merge(lastVersion[k], e)) || e;   // saving as you type: one version
+    lastVersion[k] = kept;
+    if (LIVE) Live.historySave(kept);
+    else {
+      var h = db.history = db.history || [], i = h.findIndex(function (x) { return x.id === kept.id; });
+      if (i >= 0) h[i] = kept; else h.push(kept);
+      var gone = History.prune(h, now()); if (gone.length) db.history = h.filter(function (x) { return gone.indexOf(x.id) < 0; });
+    }
+    versionListeners.forEach(function (fn) { try { fn(kept); } catch (x) { console.error(x); } });
+  }
+  /** Who may see earlier versions: Administrators and Pastors (as firestore.rules). */
+  function historyCan() { return !!user && (isAdmin() || isPastor()); }
+  function versions(c, id) {
+    if (!historyCan()) return Promise.resolve([]);
+    if (!LIVE) return Promise.resolve(History.forRecord(db.history || [], c, id));
+    if (offline()) return Promise.reject(new Error('offline'));
+    return Live.historyFor(c, id);
+  }
+  /** Changes made inside fn are marked "Put back" in the history (Undo, Version history). */
+  function asRestore(fn) { restoring = true; try { return fn(); } finally { restoring = false; } }
+  /** Clearing out versions older than 90 days: once a day, by an Administrator's app (live), quietly. */
+  function historyTidy() {
+    if (!LIVE || !isAdmin() || previewRole || offline() || typeof History === 'undefined') return Promise.resolve(0);
+    var day = now().slice(0, 10), k = 'church_hub_pref_historyTidy';
+    try { if (localStorage.getItem(k) === day) return Promise.resolve(0); localStorage.setItem(k, day); } catch (e) { /* private window */ }
+    return Live.historyTidy(History.cutoff(now()));
+  }
+
   /** POPIA accountability: who did what to whose information, and when. */
   function audit(action, target) {
     if (previewRole) action = '(viewing as ' + previewRole + ') ' + action;
@@ -1580,7 +1636,40 @@ var Store = (function () {
       return doc(path).update({ deliveredBy: fb.firestore.FieldValue.arrayUnion(session.personId) }).catch(function (e) { console.error('markDelivered', e); });
     }
     function unshare(gid, pid) { return del('careGroups/' + gid + '/share/' + pid); }
-    function purge(pid) { ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers', 'appUse'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); }); }
+    /** Version history (history/{id}; firestore.rules okHist). saved(): a record as the database holds it (a person: their card and
+     *  details together, never medical notes) – the "before" of a change, whatever the screen did to its copy. */
+    function saved(c, id) {
+      var o;
+      if (c === 'people') { var card = known('people/' + id), det = known('details/' + id); if (!card && !det) return null; o = Object.assign({}, copy(det || {}), copy(card || {})); }
+      else { var k = known(c + '/' + id); if (!k) return null; o = copy(k); }
+      o.id = id; return o;
+    }
+    /** Only records the rules let this person keep versions of (Administrators and Pastors; roster coordinators services, positions and
+     *  teams; anyone their own person record). Quiet: a version that can't be kept never stops the change itself or shows an error. */
+    function historyMay(c, rid) {
+      if (!session || previewRole) return false;
+      if (is('admin', 'pastor')) return true;
+      if (['services', 'positions', 'teams'].indexOf(c) >= 0) return is('rosters') || may('rosters');
+      return c === 'people' && !!rid && rid === session.personId;
+    }
+    function historySave(e) {
+      if (!historyMay(e.c, e.rid)) return Promise.resolve();
+      lastWrite = Date.now(); stats.writes++;
+      return doc('history/' + e.id).set(copy(e)).catch(function (x) { console.warn('history', x && (x.code || x.message)); });
+    }
+    function historyFor(c, rid) {
+      return fs.collection('history').where('c', '==', c).where('rid', '==', rid).get()
+        .then(function (snap) { return snap.docs.map(function (d) { var o = d.data() || {}; o.id = d.id; return o; }); });
+    }
+    function historyTidy(cut) {
+      return fs.collection('history').where('at', '<', cut).limit(300).get().then(function (snap) {
+        snap.docs.forEach(function (d) { doc('history/' + d.id).delete().catch(function () {}); }); return snap.docs.length;
+      }, function (x) { console.warn('history tidy', x && (x.code || x.message)); return 0; });
+    }
+    function purge(pid) {
+      ['medical', 'notes', 'directory', 'photos', 'officeNotes', 'idNumbers', 'appUse'].forEach(function (x) { if (is('admin') || ['medical', 'notes'].indexOf(x) >= 0) del(x + '/' + pid); });
+      if (is('admin')) historyFor('people', pid).then(function (l) { l.forEach(function (e) { doc('history/' + e.id).delete().catch(function () {}); }); }, function () {});   // their earlier versions
+    }
     /** How Church & Trellis is used (appUse/{personId}; js/usage.js, js/usage-record.js; POPIA "Usage").
      *  useAll: everyone's records, for the Usage page – Administrators and Pastors only, fetched when the page asks (never kept
      *  listening, so a busy Sunday doesn't redraw their screens, and nobody else downloads them).
@@ -1715,7 +1804,7 @@ var Store = (function () {
       choose: choose, household: household, boot: boot, google: google, emailLink: emailLink, finishEmailLink: finishEmailLink, isEmailLink: isEmailLink, pendingEmail: pendingEmail, signOut: signOut, setup: setup, setRobot: setRobot,
       stats: function () { return JSON.parse(JSON.stringify(stats)); },
       aiAsk: aiAsk,
-      put: put, remove: remove, purge: purge, useAll: useAll, useSave: useSave, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, picsGet: picsGet, picsSet: picsSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
+      put: put, remove: remove, purge: purge, saved: saved, historySave: historySave, historyFor: historyFor, historyTidy: historyTidy, useAll: useAll, useSave: useSave, unshare: unshare, markRead: markRead, markDelivered: markDelivered, resyncDirectory: resyncDirectory, syncPastors: syncPastors, setStandIn: setStandIn, audit: auditEntry, saveLeave: saveLeave, write: write, patch: patch, migrateBrochure: migrateBrochure, clearLegacyBrochure: clearLegacyBrochure, photoGet: photoGet, coverGet: coverGet, coverSet: coverSet, picsGet: picsGet, picsSet: picsSet, policyGet: policyGet, reqGet: reqGet, reqSet: reqSet, policySet: policySet, fileSave: fileSave, fileLoad: fileLoad, filePreviewLoad: filePreviewLoad, applicationDocumentSave: applicationDocumentSave, applicationDocumentRemove: applicationDocumentRemove, applicationDocumentFile: applicationDocumentFile, idAll: idAll, photoSet: photoSet, idGet: idGet, idSet: idSet,
       requestLibraryLoan: requestLibraryLoan, verifyLibraryLoan: verifyLibraryLoan,
       /** Resolves once everything written so far has reached the database (at most `ms` milliseconds, e.g. when offline). */
       /** "View as": load what that role would see (an Administrator only; '' = back to normal). */
@@ -1747,6 +1836,7 @@ var Store = (function () {
     isLive: function () { return LIVE; }, defaultRole: defaultRole, version: version,
     /** Usage (js/usage-record.js, js/mod-usage.js): everyone's records (live: Administrators and Pastors only; demo: none) and
      *  the signed-in person's own record. Both resolve quietly – null / false when they can't. */
+    onVersion: function (fn) { versionListeners.push(fn); }, versions: versions, historyCan: historyCan, asRestore: asRestore, historyTidy: historyTidy,
     usageAll: function () { return LIVE && !offline() ? Live.useAll().catch(function () { return null; }) : Promise.resolve(null); },
     usageSave: function (pid, build) { return LIVE && !offline() ? Live.useSave(pid, build) : Promise.resolve(false); },
     /** No internet (live mode only): Church & Trellis is view-only, showing the copy kept on this device. */

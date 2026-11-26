@@ -19,7 +19,7 @@ Also asked: How many people are on the app. Who is using the app. Who hasn't sig
   the person opened the app and how many different parts they use (a part used by only one person doesn't make a Power user). Someone who was
   using the app but hasn't opened it for 3 weeks or more is marked **Slipping away** and listed under **Might need a nudge**. The same
   dots appear on a person's page, beside **Using Church & Trellis since**. Until Church & Trellis has recorded some usage, it shows only **On the app**.
-- **Church Partners not on the app yet** – with an **Invite them** button that opens **People → Invitations**.
+- **Church Partners not on the app yet** – with a search box (type part of a name to find someone, even if they are not among the first few shown) and an **Invite them** button that opens **People → Invitations**.
 
 Every chart has **See the numbers** under it, which shows the same figures as a table.
 

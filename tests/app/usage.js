@@ -17,6 +17,15 @@ module.exports = async function (ctx) {
   check(text.includes('How often it is used') && text.includes('Which version people have'), 'the records are fetched and the cards fill in');
   check(text.includes('Church Partners not on the app yet') && text.includes('Invite them'), '… and lists the Church Partners not on yet, with a way to invite them');
   check(!!(await s.page.$('.u-nums')), 'each chart has its numbers as a table');
+  if (await s.page.$('#u-notq')) {   // searching the Church Partners not on the app yet: partial typing, the whole list is searched
+    const listed = await s.page.$$eval('#u-notlist li .grow', els => els.map(e => e.textContent)), part = listed[0].split(' ').pop().slice(0, 3).toLowerCase();
+    await s.page.fill('#u-notq', part); await s.page.waitForFunction(() => document.querySelectorAll('#u-notlist li').length > 0, null, { timeout: 4000 }).catch(() => {});
+    const found = await s.page.$$eval('#u-notlist li', els => els.map(e => e.textContent));
+    check(found.length > 0 && found.some(t => t.toLowerCase().includes(part)), 'typing part of a name narrows the list of Church Partners not on the app yet');
+    await s.page.fill('#u-notq', 'zzzqqq'); await s.page.waitForTimeout(500);
+    check((await s.page.textContent('#u-notlist')).includes('No one matches'), '… and says so when no one matches');
+    await s.page.fill('#u-notq', ''); await s.page.waitForTimeout(500);
+  }
   check(!/@example\.com/.test(text), 'no email addresses are shown');
   check(text.includes('How much people use it') && text.includes('Not on the app yet'), 'the "How much people use it" card shows the levels');
   const pid = partners[0].split('/')[1];

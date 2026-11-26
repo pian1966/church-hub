@@ -140,14 +140,27 @@
     var name = { android: T('Android app'), app: T('Added to the home screen'), browser: T('In a web browser') };
     return card(T('How people open it'), '', bars(s.platforms.map(function (p) { return { label: name[p.id], n: p.n }; })) + table([T('How'), T('People')], s.platforms.map(function (p) { return [name[p.id], p.n]; })));
   }
+  var notQ = '';   // what is typed in the "not on the app yet" search box
+  /** The rows of the "not on the app yet" list that match what was typed (all of them are searched; 12 are shown until then). */
+  function notOnRows(list, by) {
+    var q = String(notQ || '').trim(), shown = q ? list.filter(function (x) { return H.matches(H.names(by[x.id]).join(' | '), q); }) : list;
+    var cut = q ? shown : shown.slice(0, 12);
+    return '<ul class="todo u-notOn">' + cut.map(function (x) {
+      return '<li><a href="#/people/p/' + esc(x.id) + '"><span class="grow">' + esc(H.name(by[x.id])) + '</span><span class="tag ' + (x.state === 'invited' ? 'warn' : 'grey') + '">' + esc(x.state === 'invited' ? T('Invited, not on yet') : T('Not invited yet')) + '</span></a></li>'; }).join('') + '</ul>' +
+      (!shown.length ? '<p class="empty">' + esc(T('No one matches. Try another name, or clear the search.')) + '</p>' : '') +
+      (!q && list.length > 12 ? '<p class="hint">' + esc(T('and {n} more', { n: list.length - 12 })) + ' ' + esc(T('Type a name above to find them.')) + '</p>' : '');
+  }
+  function notOnList() {
+    var by = peopleById(), s = data().sum;
+    return notOnRows(s.notOn.filter(function (x) { return x.partner && by[x.id]; }), by);
+  }
   function notOnCard(s) {
-    var by = {}; S.list('people').forEach(function (p) { by[p.id] = p; });
+    var by = peopleById();
     var list = s.notOn.filter(function (x) { return x.partner && by[x.id]; });
     if (!list.length) return '';
     return card(T('Church Partners not on the app yet'), T('Only Administrators and Pastors see these names.'),
-      '<ul class="todo u-notOn">' + list.slice(0, 12).map(function (x) {
-        return '<li><a href="#/people/p/' + esc(x.id) + '"><span class="grow">' + esc(H.name(by[x.id])) + '</span><span class="tag ' + (x.state === 'invited' ? 'warn' : 'grey') + '">' + esc(x.state === 'invited' ? T('Invited, not on yet') : T('Not invited yet')) + '</span></a></li>'; }).join('') + '</ul>' +
-      (list.length > 12 ? '<p class="hint">' + esc(T('and {n} more', { n: list.length - 12 })) + '</p>' : '') +
+      (list.length > 5 ? '<div class="row" style="margin-bottom:12px"><label class="search">' + H.icon(H.ICON.search, 18) + '<span class="sr">' + T('Search these names') + '</span><input id="u-notq" type="search" placeholder="' + esc(T('Type part of their name')) + '" value="' + esc(notQ) + '">' + (window.Voice ? Voice.button('#u-notq') : '') + '</label></div>' : '') +
+      '<div id="u-notlist">' + notOnRows(list, by) + '</div>' +
       '<p><a class="btn primary" href="#/people/welcome">' + T('Invite them') + '</a></p>');
   }
 
@@ -195,6 +208,11 @@
     id: 'usage', name: 'Usage', desc: 'Who uses Church & Trellis, how often and what for', icon: ICON, tint: '#0F766E', roles: ['admin', 'pastor'],
     stat: function () { var a = data().sum.adoption.partners; return a.total ? T('{n}% of Church Partners are on the app', { n: a.pct }) : T(this.desc); },
     render: render,
+    // Searching the list redraws only the list, so the box keeps its place while typing
+    after: function () {
+      var q = document.getElementById('u-notq'); if (!q) return;
+      q.addEventListener('input', H.pause(function () { var n = document.getElementById('u-notq'), l = document.getElementById('u-notlist'); if (!n || !l) return; notQ = n.value; l.innerHTML = notOnList(); }, 250));
+    },
     // Each person's own app notes which parts they open (js/usage-record.js) – everyone, not only those who may see this page
     signedIn: function (u) { if (window.UsageRecord) UsageRecord.start(u); },
     actions: { refresh: function () { memo = { v: null, out: null }; if (S.isLive()) fetch(true); else H.render(); } }

@@ -31,6 +31,15 @@ module.exports = async function (ctx) {
   const pid = partners[0].split('/')[1];
   await s.go('people/p/' + pid); await s.page.waitForSelector('.badge-line .u-lv'); text = await s.text();
   check(text.includes('Using Church & Trellis since') && !!(await s.page.$('.badge-line .u-lv')), 'on a person’s page an Administrator sees how much they use the app');
+  // Advanced search: a Usage group (invited, signed in, how much they use it)
+  await s.go('people/search'); await s.page.waitForSelector('#adv');
+  const grp = await s.page.$$eval('.adv-field[data-i="0"] optgroup', gs => gs.map(g => g.label + ': ' + [...g.querySelectorAll('option')].map(o => o.textContent).join('|')));
+  const usageGroup = grp.find(g => g.startsWith('Usage:')) || '';
+  check(/Using Church & Trellis/.test(usageGroup) && /Has been invited/.test(usageGroup) && /How much they use it/.test(usageGroup), 'Advanced search has a Usage group with invited, signed in and how much they use it');
+  await s.page.selectOption('.adv-field[data-i="0"]', 'usageLevel'); await s.page.selectOption('.adv-v[data-i="0"]', 'Not on the app yet');
+  await s.page.click('[data-act="people:advrun"]'); await s.page.waitForSelector('#adv-result');
+  text = await s.page.textContent('#adv-result');
+  check(!/Press Search to look up/.test(text) && !/Linda Pillay/.test(text) && /Pike|Tim|Thandi|Amy|\w+ \w+/.test(text), '… and searching on how much they use it finds people who are not on the app yet (not the Administrator, who is)');
   await finish(s);
 
   const seed2 = seedDocs(); seed2[partners[0]].appFirstSeen = '2026-11-02';

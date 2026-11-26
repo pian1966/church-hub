@@ -230,6 +230,11 @@ I18n.rows([
     ["Signed in", "Aangemeld", "Ungenile", "Ungenile"],
     ["Invited, not signed in yet", "Genooi, nog nie aangemeld nie", "Umenyiwe, akakangeni", "Umenyiwe, akakangeni"],
     ["Not invited yet", "Nog nie genooi nie", "Akakamenywa", "Akakamenywa"],
-    ["Invited to Church & Trellis", "Genooi na Church & Trellis", "Umenyiwe ku-Church & Trellis", "Umenyiwe kwi-Church & Trellis"],
-    ["First signed in", "Eerste keer aangemeld", "Ungene okokuqala", "Ungene okokuqala"]
+    ["Date invited", "Datum genooi", "Usuku lokumenywa", "Umhla wokumenywa"],
+    ["First signed in", "Eerste keer aangemeld", "Ungene okokuqala", "Ungene okokuqala"],
+    ["Has been invited", "Is genooi", "Umenyiwe", "Umenyiwe"],
+    ["How much they use it", "Hoeveel hulle dit gebruik", "Ukuthi bayisebenzisa kangakanani", "Ukuba bayisebenzisa kangakanani"],
+    ["Last opened the app", "Laaste keer die app oopgemaak", "Okokugcina bavule uhlelo", "Okokugqibela bavule i-app"],
+    ["Press Search to look up how much people use the app.", "Druk Soek om na te gaan hoeveel mense die app gebruik.", "Cindezela u-Sesha ukuze ubone ukuthi abantu bawusebenzisa kangakanani uhlelo.", "Cofa u-Khangela ukuze ubone ukuba abantu bayisebenzisa kangakanani i-app."],
+    ["Couldn’t load how much people use the app", "Kon nie laai hoeveel mense die app gebruik nie", "Ayikwazanga ukulayisha ukuthi abantu bawusebenzisa kangakanani uhlelo", "Ayikwazanga ukulayisha ukuba abantu bayisebenzisa kangakanani i-app"]
 ]);

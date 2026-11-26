@@ -243,7 +243,7 @@
         var a = S.get('people', c.a), b = S.get('people', c.b), d = addrDiff(a, b);
         var btn = function (from, to) { return '<button class="btn small" data-act="people:addrcopy" data-from="' + from.id + '" data-to="' + to.id + '">' + esc(T('Use {name}’s address for both', { name: H.name(from) })) + '</button>'; };
         return '<div class="item" style="align-items:flex-start;flex-wrap:wrap;gap:8px"><span class="grow" style="min-width:220px"><b><a href="#/people/p/' + a.id + '">' + esc(H.name(a)) + '</a> & <a href="#/people/p/' + b.id + '">' + esc(H.name(b)) + '</a></b>' +
-          '<small>' + esc(H.name(a)) + ': ' + d[0] + '<br>' + esc(H.name(b)) + ': ' + d[1] + '</small></span>' +
+          '<small class="addr-pair"><span class="addr-row"><span class="addr-who">' + esc(H.name(a)) + '</span><span class="addr-text">' + d[0] + '</span></span><span class="addr-row"><span class="addr-who">' + esc(H.name(b)) + '</span><span class="addr-text">' + d[1] + '</span></span></small></span>' +
           '<span class="btns">' + (c.from ? btn(S.get('people', c.from), S.get('people', c.to)) : btn(a, b) + btn(b, a)) +
           '<button class="btn small" data-act="people:addrapart" data-a="' + c.a + '" data-b="' + c.b + '">' + T('Keep both addresses') + '</button></span></div>';
       }).join('') + '</div></section>';

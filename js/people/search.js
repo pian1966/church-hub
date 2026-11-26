@@ -87,11 +87,16 @@
     add(all, TX('Privacy'), 'receive', TX('Would like to receive'), 'list', function (p) { return RECEIVE_P.filter(function (x) { return hasConsent(p.id, x); }); }, RECEIVE_P);
     add(all, TX('Privacy'), 'directory', TX('Shares contact details'), 'yesno', function (p) { return hasConsent(p.id, 'Church directory'); });
     add(H.can('access.manage'), TX('Privacy'), 'access', TX('App access'), 'choice', function (p) { return (H.ROLES[p.appRole || 'member'] || {}).label; }, Object.keys(H.ROLES).map(function (r) { return H.ROLES[r].label; }));
-    // Church & Trellis itself: invited, and signed in at least once (People → Invitations)
-    var appUse = function (p) { return p.appFirstSeen ? 'Signed in' : p.appInvited ? 'Invited, not signed in yet' : 'Not invited yet'; };
-    add(H.can('*') || H.can('people.edit'), TX('Privacy'), 'appUse', TX('Using Church & Trellis'), 'choice', appUse, [TX('Signed in'), TX('Invited, not signed in yet'), TX('Not invited yet')]);
-    add(H.can('*') || H.can('people.edit'), TX('Privacy'), 'appInvited', TX('Invited to Church & Trellis'), 'date', function (p) { return p.appInvited || ''; });
-    add(H.can('*') || H.can('people.edit'), TX('Privacy'), 'appFirstSeen', TX('First signed in'), 'date', function (p) { return p.appFirstSeen || ''; });
+    // Usage: who has been invited to Church & Trellis, who has signed in, and how much they use it (Administrators and Pastors; the same people who see Usage and People → Invitations)
+    var usage = H.can('*') || H.can('people.edit'), appUse = function (p) { return p.appFirstSeen ? 'Signed in' : p.appInvited ? 'Invited, not signed in yet' : 'Not invited yet'; };
+    var lvl = function (p) { var l = usageInfo && usageInfo.levels[p.id]; return l && l.on ? (l.n === null ? 'On the app' : Usage.LEVELS[l.n][1]) : l ? Usage.LEVELS[0][1] : ''; };
+    add(usage, TX('Usage'), 'appUse', TX('Using Church & Trellis'), 'choice', appUse, [TX('Signed in'), TX('Invited, not signed in yet'), TX('Not invited yet')]);
+    add(usage, TX('Usage'), 'appInvitedYes', TX('Has been invited'), 'yesno', function (p) { return !!p.appInvited; });
+    add(usage, TX('Usage'), 'appInvited', TX('Date invited'), 'date', function (p) { return p.appInvited || ''; });
+    add(usage, TX('Usage'), 'appFirstSeen', TX('First signed in'), 'date', function (p) { return p.appFirstSeen || ''; });
+    add(usage && window.UsageUI, TX('Usage'), 'usageLevel', TX('How much they use it'), 'choice', lvl, Usage.LEVELS.map(function (l) { return l[1]; }));
+    add(usage && window.UsageUI, TX('Usage'), 'usageSlipping', TX('Slipping away'), 'yesno', function (p) { var l = usageInfo && usageInfo.levels[p.id]; return !!(l && l.slipping); });
+    add(usage && window.UsageUI, TX('Usage'), 'usageLast', TX('Last opened the app'), 'date', function (p) { return (usageInfo && usageInfo.last[p.id]) || ''; });
     add(all, TX('Staff'), 'staff', TX('Church staff member'), 'yesno', function (p) { return !!p.staff; });
     add(all, TX('Staff'), 'staffCategory', TX('Staff category'), 'text', function (p) { return p.staff ? p.staff.category : ''; });
     add(all, TX('Staff'), 'staffStart', TX('Started working'), 'date', function (p) { return p.staff ? p.staff.start : ''; });
@@ -147,6 +152,9 @@
   }
   /** ID numbers fetched for an advanced search on them ({ personId: value }); only in memory, dropped on Start again. */
   var idNums = null;
+  /** How much each person uses the app ({ levels, last }), read when a search or column uses it; only in memory, dropped on Start again. */
+  var usageInfo = null, USAGE_KEYS = ['usageLevel', 'usageSlipping', 'usageLast'];
+  function usesUsage() { return state.adv.filters.some(function (f) { return USAGE_KEYS.indexOf(f.field) >= 0; }) || (state.adv.cols || []).some(function (k) { return USAGE_KEYS.indexOf(k) >= 0; }); }
   function idFilters() { return state.adv.filters.filter(function (f) { return f.field === 'idNumber'; }); }
   function idTooShort() { return idFilters().some(function (f) { return ['eq', 'ne', 'has', 'nhas', 'starts'].indexOf(f.op) >= 0 && String(f.value || '').replace(/\s+/g, '').length < 4; }); }
   function advRun(F) {
@@ -155,6 +163,7 @@
       if (idTooShort()) return { error: T('Type at least 4 digits of the ID number.') };
       if (!idNums) return { error: T('Press Search to look up ID numbers.') };
     }
+    if (usesUsage() && !usageInfo) return { error: T('Press Search to look up how much people use the app.') };
     var usesStatus = A.filters.some(function (f) { return f.field === 'status' || f.field === 'died' || f.field === 'diedYear'; });
     var people = canSeeAll() ? S.find('people', function (p) { return !p.deletedAt && p.firstName !== 'Deleted' && !p.binnedAt; }) : visiblePeople();
     if (!usesStatus) people = people.filter(function (p) { return p.active !== false; });
@@ -576,6 +585,10 @@
     advrun: function () {
       var go = function () { state.adv.ran = true; H.render(); var r = document.getElementById('adv-result'); if (r) r.scrollIntoView({ block: 'start', behavior: 'smooth' }); };
       var idf = idFilters(); idf.forEach(function (f) { f.value = String(f.value || '').replace(/\s+/g, ''); });
+      if (usesUsage() && window.UsageUI && UsageUI.forSearch) {   // fresh each time Search is pressed
+        UsageUI.forSearch().then(function (u) { usageInfo = u; go(); }, function () { H.toast(T('Couldn’t load how much people use the app'), true); });
+        return;
+      }
       if (!idf.length || !H.can('idnumbers') || idTooShort()) return go();
       Store.idNumbers().then(function (all) {   // fresh each time Search is pressed, and logged with who was found
         idNums = all; go();
@@ -584,7 +597,7 @@
         S.audit('Searched by ID number (advanced search): ' + (names.length ? names.length + ' found – ' + names.slice(0, 10).join(', ') + (names.length > 10 ? ', …' : '') : 'nobody found'), 'people');
       }, function () { H.toast(T('Couldn’t load the ID numbers'), true); });
     },
-    advreset: function () { state.adv = emptyAdv(); state.ask = null; idNums = null; H.render(); },
+    advreset: function () { state.adv = emptyAdv(); state.ask = null; idNums = null; usageInfo = null; H.render(); },
     advsort: function (el) { var A = state.adv; if (A.sort === el.dataset.k) A.dir = -A.dir; else { A.sort = el.dataset.k; A.dir = 1; } H.render(); },
     /** Advanced search → Name badges / Invite: the ticked people, or everyone found. */
     advbadges: function () {

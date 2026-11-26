@@ -77,7 +77,7 @@ var Health = (function () {
       out.push({ id: id, cadence: cadence, count: n, first: typeof list === 'number' ? '' : person(list), href: href });
     };
     put('rosterGone', 'weekly', rosterGone(d), '#/rosters');
-    put('addresses', 'weekly', +d.addressMismatches || 0, '#/people/families');
+    put('addresses', 'weekly', +d.addressMismatches || 0, '#/people/families/spouse-addresses');
     put('marriage', 'fortnightly', marriage(d), '#/people');
     put('unreachable', 'fortnightly', unreachable(d), '#/people');
     put('noLeader', 'fortnightly', noLeader(d), '#/groups');

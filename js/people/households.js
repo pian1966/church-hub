@@ -21,7 +21,10 @@
   function notDup() { return P.notDup.apply(this, arguments); }
 
   /* ---------- families ---------- */
-  function renderFamilies() {
+  var scrolledTo = '';   // the section already scrolled to, so a later change on the page doesn't pull you back up
+  function renderFamilies(at) {
+    if (at && scrolledTo !== at) { scrolledTo = at; setTimeout(function () { var e = document.getElementById(at); if (e && e.scrollIntoView) e.scrollIntoView({ block: 'start', behavior: 'smooth' }); }, 80); }
+    if (!at) scrolledTo = '';
     var surname = function (f) { var n = H.familyName(f).split(' '); return n[n.length - 1] + ' ' + n.join(' '); };
     var fq = state.fq.trim().toLowerCase(), cps = allCouples();
     var fams = S.list('families').filter(function (f) {

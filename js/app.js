@@ -64,6 +64,8 @@ var Hub = (function () {
   /** Who may use "View as", and the role they come back to: Administrators, and the Rector. */
   function viewHome() { return realAdmin() ? 'admin' : realRector() ? 'pastor' : ''; }
   function canViewAs() { return !!viewHome(); }
+  /** "View as" is offered online (and while already viewing, so the way back stays): it needs the internet to load the other role's information. */
+  function viewAsOffered() { return canViewAs() && (!!Store.preview() || !Store.offline()); }
   function viewChoices() { return viewHome() === 'admin' ? VIEW_AS : VIEW_AS.filter(function (r) { return r !== 'pastor'; }); }
   /** "Back to Administrator", or for the Rector "Back to Senior Pastor" (the church's own word, e.g. Rector). */
   function backLabel() {
@@ -359,7 +361,9 @@ var Hub = (function () {
   }
   /** A placeholder for a part not built yet (js/access.js PARTS, soon: true): its menu entry is ready but nobody sees it. */
   function built(m) { return !(Access.part(m.id) || {}).soon; }
-  function opens(m) { return built(m) && isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm)) || (m.also && m.also())) && (!m.show || m.show()); }
+  /** Parts that can only work with the internet (their pages fetch, pay or count live): no menu entry, Home card or All apps tile while offline. */
+  var ONLINE_ONLY = ['usage', 'import', 'support'];
+  function opens(m) { return built(m) && !(ONLINE_ONLY.indexOf(m.id) >= 0 && Store.offline()) && isOn(m.id) && (!m.roles || m.roles.indexOf(myRole()) >= 0 || can('*') || (m.perm && can(m.perm)) || (m.also && m.also())) && (!m.show || m.show()); }
   function enabled() { return modules.filter(opens); }
   function moduleById(id) { return modules.filter(function (m) { return m.id === id; })[0]; }
   /** What the menu, Home and All apps list: the kinds of group sit under Groups instead. */
@@ -560,13 +564,13 @@ var Hub = (function () {
     return '<div class="app">' +
       '<aside class="side" aria-label="' + T('Main menu') + '"><div class="brand"><span class="mark">' + icon('M12 3v18M6 9h12', 18) + '</span><span><b>Church <span class="amp">&amp;</span> Trellis</b><small>' + esc(s.churchName) + '</small></span></div>' +
       '<nav>' + navItems(active) + '</nav>' + '<div class="side-lang">' + I18n.picker() + '<div class="side-mode">' + modePicker() + '</div>' +
-      (canViewAs() && !Store.preview() ? '<button class="side-viewas" data-act="hub:viewaspick" title="' + esc(T('See Church & Trellis as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button>' : '') + '</div>' +
+      (viewAsOffered() && !Store.preview() ? '<button class="side-viewas" data-act="hub:viewaspick" title="' + esc(T('See Church & Trellis as another role would')) + '">' + icon(ICON.eye, 16) + T('View as…') + '</button>' : '') + '</div>' +
       '<div class="who">' + avatar(user) + '<span><b>' + esc(name(user)) + '</b><small>' + esc(myLabel()) + '</small></span>' +
       (shared() ? '<button class="icon-btn ghost" data-act="hub:switchwho" aria-label="' + T('Switch person') + '" title="' + T('Switch person') + '">' + icon(ICON.people) + '</button>' : '') +
       '<button class="icon-btn ghost" data-act="hub:signout" aria-label="' + T('Sign out') + '" title="' + T('Sign out') + '">' + icon(ICON.out) + '</button></div></aside>' +
       '<div class="main-col">' +
       '<header class="top"><a href="#/home" class="brand small"><span class="mark">' + icon('M12 3v18M6 9h12', 16) + '</span><b>Church <span class="amp">&amp;</span> Trellis</b></a>' +
-      '<span class="top-r">' + (canViewAs() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
+      '<span class="top-r">' + (viewAsOffered() ? '<button class="icon-btn" data-act="hub:viewaspick" aria-label="' + esc(T('View as another role')) + '" title="' + esc(T('View as another role')) + '">' + icon(ICON.eye) + '</button>' : '') +
       '<button class="icon-btn" data-act="hub:menu" aria-label="' + T('All apps') + '">' + icon(ICON.menu) + '</button></span></header>' +
       (s.demo ? '<div class="demo">' + T('Demo with made-up people. Changes stay in this browser.') + ' <button class="link" data-act="hub:reset">' + T('Reset demo') + '</button> · <button class="link" data-act="hub:signout">' + T('Switch person') + '</button></div>' : '') +
       (Store.offline() ? '<div class="offline-bar" role="status">' + icon(ICON.eye, 18) + '<span>' + T('You’re offline – Church & Trellis is view-only until you’re back online.') + '</span></div>' : '') +
@@ -1295,7 +1299,7 @@ var Hub = (function () {
       modal(dialogHead(T('All apps')) + '<div class="cards in-dialog">' + [{ id: 'home', name: 'Home', icon: ICON.home, tint: '#6B625A', desc: 'Your to-do list' }].concat(listed()).map(function (m) {
         return '<a class="appcard" href="#/' + m.id + '" data-act="hub:close"><span class="ic" style="--c:' + m.tint + '">' + icon(m.icon, 22) + '</span><b>' + esc(T(m.name)) + '</b><span>' + esc(T(m.desc)) + '</span></a>';
       }).join('') + '</div>' +
-        (canViewAs() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + esc(backLabel()) + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
+        (viewAsOffered() ? '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + (Store.preview() ? '<button class="btn" data-act="hub:viewas" data-r="admin">' + icon(ICON.eye, 18) + esc(backLabel()) + '</button>' : '<button class="btn" data-act="hub:viewaspick">' + icon(ICON.eye, 18) + T('View as another role…') + '</button>') + '</div>' : '') +
         '<div class="dlg-foot" style="justify-content:flex-start;border-top:0;padding-top:0">' + modePicker() + '</div>' +
         '<div class="dlg-foot" style="justify-content:space-between">' + I18n.picker('lang-menu') + '<span>' + (shared() ? '<button class="btn" data-act="hub:switchwho">' + icon(ICON.people, 18) + T('Switch person') + '</button> ' : '') +
         '<button class="btn" data-act="hub:signout">' + icon(ICON.out, 18) + T('Sign out') + '</button></span></div>', T('All apps'));
@@ -1451,6 +1455,8 @@ var Hub = (function () {
       var urls = [location.href.split('#')[0]].concat(performance.getEntriesByType('resource').filter(function (r) {
         return /^(script|link|css|img|other)$/.test(r.initiatorType);
       }).map(function (r) { return r.name; }));
+      // The help pages too (docs/help/*.md, about 55 KB once), so Help answers without a signal – not only after Help was opened online
+      if (window.Help && Help.PAGES) urls = urls.concat(Help.PAGES.map(function (p) { return new URL('docs/help/' + p[0] + '.md', location.href).href; }));
       sw.postMessage({ keep: urls });
     }).catch(function () {});
   }

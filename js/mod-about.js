@@ -53,6 +53,7 @@
   }
 
   function updatePanel() {
+    if (Store.offline()) return '';   // checking needs the internet: nothing to offer until it is back
     var out = '', app = appVersion();
     if (check.state === 'checking') out = '<p class="muted">' + T('Checking…') + '</p>';
     else if (check.state === 'failed') out = '<p class="note bad">' + T('Couldn’t check for updates. Check your internet connection and try again.') + '</p>';
@@ -301,7 +302,7 @@
         return;
       }
       bro.edit = false;
-      if (!check.state) runCheck();   // check as soon as the page opens
+      if (!check.state && !Store.offline()) runCheck();   // check as soon as the page opens
     },
     actions: {
       check: function () { runCheck(); },

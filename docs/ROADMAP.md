@@ -171,6 +171,11 @@ Church Center-style member app (first part done: Me + Android app, Oct 2026), di
   pay can show as one total. Decided (19 Nov 2026): the Treasurer is the *Treasurer* role on the Council in Leadership; **only
   the Council** sees Finances to begin with (a setting to widen later); financial year a setting – May–April at Christ Church
   Howick. Steps 5.1–5.5
+- ⬜ **Petty cash** (plan: `docs/PETTY-CASH-PLAN.md`; handover for Opus: `docs/architecture/handover/petty-cash-opus.md`, for Sonnet:
+  `petty-cash-sonnet.md`): several tins (shared or personal), a Keeper (the church secretary to start), spends with a compulsory slip
+  photo (an Administrator may approve a lost slip with a reason), over R500 needs a second approver, the Administrator decides
+  whether people may approve their own spends, both "I took cash" and "I paid and need reimbursing", month close, summaries for the
+  Treasurer and Council. Decided 27 Nov 2026
 - ⬜ Keepers for the board and the marketplace (decided 19 Nov 2026): the pastors, the Administrators and the church secretary
 - ⬜ Decide (Community and Finances): may attendees see and post on the community board? Do Thank-you notes need approval? Is
   30 days right? The overspend thresholds; should staff pay show as one total even to the Council?

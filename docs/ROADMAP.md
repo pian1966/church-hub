@@ -80,6 +80,11 @@ Members see their own family (and give consent for their children), smart lists 
     person's card in date order, the latest visit's date updates "last visited", and the same people who were told about the
     person (their Care Group leaders, the church secretary, the pastors) can read them. A new need can be flagged so the
     pastors and secretary get a message about it. Same POPIA care as above: only what helps, nothing more
+  - ⬜ **Pastoral visits** (plan: `docs/PASTORAL-VISITS-PLAN.md`; handover for Opus: `docs/architecture/handover/visits-opus.md`, for Sonnet:
+    `visits-sonnet.md`; decided 27 Nov 2026) – the visit notes above grow into one visits system: Care Group leaders, staff, Council members
+    and appointed **pastoral care workers** record who was visited, when and where, with a note at one of three levels; the pastors see a
+    **map** (OpenStreetMap), **graphs** (visits per month, coverage ring, load by visitor, care timeline) and each person's **Care tab**;
+    Care Group leaders see **My group**; Council sees totals only; a Care Group leader never reads a pastor's note
 
 ## Phase 3 – Rostering and services (built; follow-ups below)
 Accept/decline by email, swap requests, automatic reminders before a turn, sign-up sheets, run sheets / order of service, matrix across several services, Leave Manager switch-over (import sheet data).

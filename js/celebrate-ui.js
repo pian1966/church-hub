@@ -64,7 +64,13 @@ var CelebrateUI = (function () {
   /** The people whose dates this person may see, as { person, spouse, lateSpouse } – never more than they already see. */
   function mine() {
     if (seesEveryone()) {
-      return S.find('people', live).map(function (p) { return { person: p, spouse: spouseOf(p), lateSpouse: lateSpouseOf(p) }; });
+      // A couple nobody has linked yet (same household, both married) still shows as one line: use the pairs Households works out.
+      var guess = {}, all = S.list('people');
+      if (typeof Households !== 'undefined') {
+        var byId = {}; all.forEach(function (x) { byId[x.id] = x; });
+        Households.couples(all, S.list('families')).forEach(function (c) { if (c.kind === 'spouse') { guess[c.a] = byId[c.b]; guess[c.b] = byId[c.a]; } });
+      }
+      return S.find('people', live).map(function (p) { return { person: p, spouse: spouseOf(p) || guess[p.id] || null, lateSpouse: lateSpouseOf(p) }; });
     }
     // Carers and Midweek Group leaders: the cards of the groups they lead (day and month, only with Care group consent)
     var me = (H.user() || {}).id, out = {}, led = {};

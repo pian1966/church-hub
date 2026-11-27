@@ -109,6 +109,10 @@ Yes, to look at things. Church & Trellis keeps a copy on your device, so you can
 so on without a signal. While you're offline it is **view-only**: you can't make changes until you're back online. When
 the connection returns it says **Back online – you can make changes again.**
 
+Parts that need the internet (such as **Usage**, **Import**, **Subscription** and **Check for updates**) are hidden while you're
+offline and come back when you are. **Help** keeps working: it shows the help pages saved on your device (the AI's written
+answer needs the internet). The first time, open Church & Trellis once with a connection so the pages can be saved.
+
 ## How do I change the language?
 For: Everyone
 Also asked: Can I use Church & Trellis in Afrikaans / isiZulu / isiXhosa / another language?

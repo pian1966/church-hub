@@ -32,6 +32,21 @@ module.exports = async function (ctx) {
   check(await s.page.evaluate(() => window.__fake.wiped >= 1 && !localStorage.getItem('church_hub_offline_owner')), 'signing out wipes the copy on this device');
   await finish(s);
 
+  console.log('Offline: the parts that need the internet step aside (Linda – administrator):');
+  s = await session('linda.pillay@example.com', seedDocs());
+  const nav = id => s.page.evaluate(i => !!document.querySelector('.side a.nav[href="#/' + i + '"]'), id);
+  check((await nav('usage')) && (await nav('import')) && (await nav('support')), 'online: Usage, Import and Subscription are in the menu');
+  await s.page.context().setOffline(true);
+  await shows(() => !!document.querySelector('.offline-bar'));
+  check(!(await nav('usage')) && !(await nav('import')) && !(await nav('support')) && (await nav('people')), 'offline: they are gone from the menu, the rest stays');
+  check(await s.page.evaluate(() => !document.querySelector('[data-act="hub:viewaspick"]')), 'offline: "View as" is not offered');
+  await s.page.evaluate(() => { location.hash = '#/usage'; });
+  check(await shows(() => /^#\/home/.test(location.hash)), 'offline: a typed Usage address goes Home');
+  await s.page.context().setOffline(false);
+  await shows(() => !document.querySelector('.offline-bar'));
+  check((await nav('usage')) && (await nav('import')), 'back online: they return');
+  await finish(s);
+
   console.log('Someone else signs in on the same device:');
   s = await session('tim.jacobs@example.com', seedDocs());
   check(await s.page.evaluate(() => localStorage.getItem('church_hub_offline_owner') === 'tim.jacobs@example.com' && window.__fake.wiped === 0), 'the copy belongs to the person signed in');
@@ -59,6 +74,9 @@ module.exports = async function (ctx) {
   let kept = false;
   for (const end = Date.now() + 30000; !kept && Date.now() < end;) { kept = await allKept(); if (!kept) await page.waitForTimeout(200); }
   check(kept, 'keeps Church & Trellis’s files from the first visit');
+  let helpKept = false;
+  for (const end = Date.now() + 15000; !helpKept && Date.now() < end;) { helpKept = await page.evaluate(async () => (await (await caches.open('church-hub-files')).keys()).some(r => /\/docs\/help\/getting-started\.md$/.test(r.url))); if (!helpKept) await page.waitForTimeout(200); }
+  check(helpKept, 'keeps the help pages from the first visit, so Help answers offline');
   await new Promise(r => { own.close(r); own.closeAllConnections(); });   // the internet is gone: every download now fails at once
   await page.goto(DEMO).catch(() => {});
   const ok = await page.waitForSelector('#si-any', { timeout: 15000 }).then(() => true, () => false);

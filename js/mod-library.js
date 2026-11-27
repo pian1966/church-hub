@@ -142,7 +142,7 @@
       (gone ? '<small class="muted">' + esc(H.fmt(b.removed, true)) + (b.whyNote ? ' · <span data-own-words>' + esc(b.whyNote) + '</span>' : '') + '</small>' : '') +
       (edit && !gone && (b.how || b.from || b.acquired) ? '<small class="muted">' + esc([b.acquired ? T('Added {date}', { date: H.fmt(b.acquired, true) }) : '', b.how ? T(b.how) : '', b.from].filter(Boolean).join(' · ')) + '</small>' : '') +
       (b.note ? '<small data-own-words>' + esc(b.note) + '</small>' : '') + '</span><span class="rec-acts">' +
-      '<button class="btn small" data-act="library:bookinfo" data-id="' + esc(b.id) + '">' + T('View / Info') + '</button>' + acts + '</span>' +
+      (S.offline() ? '' : '<button class="btn small" data-act="library:bookinfo" data-id="' + esc(b.id) + '">' + T('View / Info') + '</button>') + acts + '</span>' +
       (out.length ? '<span class="lib-loans">' + out.map(loanLine).join('') + '</span>' : '') + '</div>';
   }
   function who(l) {   // the borrower, with the mobile number for the librarians to trace the item

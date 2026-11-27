@@ -372,7 +372,7 @@ var Hub = (function () {
    * (a new one) goes at the end of Church life until it is given a place. */
   var APP_BANDS = [
     { id: 'yours', name: TX('Yours'), apps: ['me', 'messages'] },
-    { id: 'life', name: TX('Church life'), apps: ['events', 'groups', 'rosters', 'board', 'market', 'library'] },
+    { id: 'life', name: TX('Church life'), apps: ['events', 'groups', 'rosters', 'board', 'market', 'prayer', 'library'] },
     { id: 'care', name: TX('Caring for people'), apps: ['people', 'leave'] },
     { id: 'run', name: TX('Running the church'), apps: ['usage', 'privacy', 'support', 'import', 'settings'] },
     { id: 'help', name: TX('Help and about'), apps: ['words', 'help', 'about'] }

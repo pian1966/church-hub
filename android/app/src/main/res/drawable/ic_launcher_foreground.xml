@@ -1,9 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The Church & Trellis mark, as in the app: a thin cross with round ends (M12 3v18 M6 9h12, stroke 2, on a 24 grid),
-     drawn half as wide as the visible part of the adaptive icon (launchers show about the middle 72dp of 108dp) -->
+<!-- The Church & Trellis mark: a cross with round ends, and a faint cup of coffee behind it.
+     Launchers show about the middle 72dp of this 108dp picture, so everything sits inside it. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp" android:height="108dp"
     android:viewportWidth="108" android:viewportHeight="108">
-    <path android:strokeColor="@color/icon_on" android:strokeWidth="3" android:strokeLineCap="round"
-        android:pathData="M54,40.5 V67.5 M45,49.5 H63" />
+    <!-- the cup (body and handle), faint -->
+    <path android:strokeColor="@color/icon_on" android:strokeAlpha="0.4" android:strokeWidth="4.2"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M36,50 H72 V60 Q72,76 56,76 H52 Q36,76 36,60 Z M72,54 H75 Q82,54 82,61 Q82,68 75,68 H70" />
+    <!-- the cross -->
+    <path android:strokeColor="@color/icon_on" android:strokeWidth="6.5" android:strokeLineCap="round"
+        android:pathData="M54,27 V73 M38,40 H70" />
 </vector>

@@ -4,7 +4,7 @@
     <color name="brand">#231E1A</color>
     <color name="brand_on">#E8590C</color>
     <color name="page">#F6F4F1</color>
-    <!-- App icon: the Church & Trellis cross, white on orange -->
+    <!-- App icon: the Church & Trellis cross with a cup of coffee behind it, white on orange -->
     <color name="icon_bg">#E8590C</color>
     <color name="icon_on">#FFFFFF</color>
 </resources>

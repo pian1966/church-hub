@@ -7,10 +7,12 @@
 <meta name="description" content="People, rosters, groups, messages, staff leave and a library in one friendly app. In more than 20 languages, opens offline so you can still look things up, and costs one coffee a month, or nothing at all if your church prays instead.">
 <meta property="og:title" content="Church & Trellis">
 <meta property="og:description" content="Every church, however small, deserves great church software. A coffee a month, or a prayer.">
-<meta property="og:image" content="https://pian1966.github.io/church-hub/assets/icons/icon-512.png">
+<meta property="og:image" content="https://churchandtrellis.com/brand/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
 <meta name="theme-color" content="#16212E">
-<link rel="icon" href="../assets/icons/favicon-48.png" sizes="48x48">
-<link rel="apple-touch-icon" href="../assets/icons/apple-touch-icon.png">
+<link rel="icon" href="brand/favicon-48.png" sizes="48x48">
+<link rel="apple-touch-icon" href="brand/apple-touch-icon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
@@ -60,7 +62,8 @@ p { margin: 0; }
 .top .wrap { display: flex; align-items: center; gap: 28px; height: 68px; }
 .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); font: 800 1.2rem var(--display); letter-spacing: -0.02em; }
 .amp { color: var(--orange); }
-.brand .mark { width: 34px; height: 34px; border-radius: 10px; background: var(--ink); display: grid; place-items: center; }
+.brand .mark { width: 34px; height: 34px; border-radius: 10px; display: block; }
+.brand .mark img { width: 34px; height: 34px; display: block; }
 .top nav { display: flex; gap: 22px; margin-left: auto; }
 .top nav a { color: var(--ink-2); text-decoration: none; font-weight: 700; font-size: .95rem; }
 .top nav a:hover { color: var(--ink); }
@@ -347,7 +350,7 @@ footer a { color: var(--ink-2); }
 <header class="top" id="top">
   <div class="wrap">
     <a class="brand" href="#top" aria-label="Church & Trellis, back to the top">
-      <span class="mark"><svg width="22" height="22" viewBox="0 0 48 48" aria-hidden="true"><path d="M24 8v32M13 19h22" fill="none" stroke="#E8590C" stroke-width="6" stroke-linecap="round"/></svg></span>
+      <span class="mark"><img src="brand/mark-72.png" width="34" height="34" alt="" aria-hidden="true"></span>
       <span>Church <span class="amp">&amp;</span> Trellis</span>
     </a>
     <nav aria-label="On this page">

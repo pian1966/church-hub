@@ -413,12 +413,13 @@ matches names with `ElvantoImport.matchFound` (tested: known-as names, "Surname,
 ## Offline (view only)
 - **Files** (`sw.js`): every file Church & Trellis uses (its own, the Firebase library, the font) is fetched fresh when online and a
   copy kept; offline – or after 7 seconds on a weak signal – the copy is used. One copy per file (without `?v=`). Each file's `?v=` is a fingerprint of its contents (`tools/stamp-files.js`; language files' in `js/file-versions.js`), so a release downloads only the files that changed. `keepFiles()`
-  in `js/app.js` tells it what the page loaded, so the first visit is already kept. Not intercepted: the database, sign-in, and
+  in `js/app.js` tells it what the page loaded, and every help page (`docs/help/*.md`, about 55 KB once), so the first visit is already kept and Help answers offline (matching pages as they are; the AI needs the internet). Not intercepted: the database, sign-in, and
   anything fetched with `cache: 'no-store'` (About → Check for updates).
 - **Data** (live mode, `js/store.js`): Firestore's offline copy (`enablePersistence`, shared between tabs). Offline, the
   sign-in comes from Firebase Auth's own storage and the access list from the copy, so Church & Trellis loads as usual. Wiped
   (`wipe()`: terminate, `clearPersistence`, open again) at sign-out, when the access list says they have no access, and when
   another email address's copy is still there (`church_hub_offline_owner`).
+- **Hidden offline** (`js/app.js`): `ONLINE_ONLY` (Usage, Import, Subscription) leaves the menu, Home and All apps while offline (`opens()`), and the router sends a typed address home; "View as" (`viewAsOffered`), About → Updates, Archive previews and the Library's View / Info button are not drawn offline; the microphone and the AI already were.
 - **View-only**: `Store.offline()` (live mode and `navigator.onLine === false`); `blocked()` refuses every save as it does
   for "View as", with one message every few seconds. Audit entries and "read" marks are still queued and sent later.
   `js/app.js` shows the notice (`.offline-bar`) and redraws when the connection changes.

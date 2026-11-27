@@ -122,7 +122,7 @@ Administrators and Roster coordinators always do. To add others, such as the chu
 **Who hears about roster replies** type part of their name under **Add someone**.
 
 ## Church & Trellis feels slow. What can I do?
-For: Administrators
+For: Administrators, Pastors
 Also asked: It takes ages to load. Pages are slow.
 
 Straight after it was slow, open **About** and look at **Speed check**: how long opening took, how long each recent page took

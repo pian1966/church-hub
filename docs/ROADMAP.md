@@ -251,6 +251,7 @@ locked or deleted for being late. Still to do:
   Claude sets `PAY_URL` in `js/coffee.js` and `PAY` in `site/index.html` to https://churchandtrellis.com/pay (one line each).
 - ⬜ Match PayFast payments to churches' references (custom_str1; the office robot, task 063/067) – today the return from PayFast is
   taken on trust. Later, PayFast's payment notifications (ITN) to the doorway could confirm each payment.
+- ⬜ Pray for the nations (0.121.0, preview on branch `prayer-for-the-nations`): ask Operation World (info@operationworld.org) whether the web widget may be shown inside an app, whether it is free for a paid product, and whether it shows the daily country; then Bible reading plans (M'Cheyne and others, opt-in), and joining groups such as the church's prayer group.
 - ⬜ Share prayer cards between churches through the office, so the prayer circle works outside the demo.
   The weekly card, the monthly reminder and the on/off switch are built (0.95.0); the office still has to collect each church's
   card (only the public card, `Coffee.publicCard`), let Church & Trellis's owner check new cards before they go out, and give every

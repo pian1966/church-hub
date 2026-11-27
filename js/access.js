@@ -154,6 +154,12 @@ var Access = (function () {
         'events.add': { kinds: STAFF_ROLES.slice(), job: 'organisers' }
       },
       settings: ['organisers.events'] },
+    { id: 'prayer', name: TX('Pray for the nations'), desc: TX('A country to pray for each day, from Operation World'), optIn: true,
+      perms: {
+        // Everyone who signs in, attendees too: it only shows Operation World's own page, and nothing about anyone is kept
+        'prayer.view': { kinds: EVERYONE }
+      },
+      settings: [] },
     { id: 'support', name: TX('Subscription'), desc: TX('A coffee a month keeps Church & Trellis going'),
       perms: {
         // As before: Administrators, and Pastors with the "settings" tick

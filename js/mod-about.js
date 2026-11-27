@@ -92,7 +92,7 @@
   /** Administrators: how fast Church & Trellis is on this computer or phone – to send to whoever looks after Church & Trellis when it
    *  feels slow. In English, like the other Administrator-only screens. Nothing here is personal information. */
   function speedPanel() {
-    if (!H.can('*') || !H.speed) return '';
+    if (!(H.can('*') || Store.isPastor()) || !H.speed) return '';
     var sp = H.speed(), st = Store.stats ? Store.stats() : {}, sec = function (ms) { return (Math.round(ms / 100) / 10) + ' s'; };
     var rows = [];
     var began = (window.performance && performance.timeOrigin) || sp.opened;

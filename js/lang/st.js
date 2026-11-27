@@ -4630,6 +4630,7 @@ I18n.add('st', {
     "You are using your own theme.": "O sebedisa theme ea hao.",
     "You are using the church’s theme.": "O sebedisa theme ea kereke.",
     "Use the church’s theme": "Sebedisa theme ea kereke",
+    "Church & Trellis has a new icon – a cross with a cup of coffee behind it. It shows on your phone as the app is updated.": "Church & Trellis e na le icon e ncha – sefapano se nang le senoelo sa kofi ka morao ho sona. E tla hlaha ho founu ea hau ha app e ntlafatsoa.",
     "New: Pray for the nations. Once your Administrator switches it on, you can pray each day for a different country with Operation World.": "Se secha: Rapella lichaba. Hang ha Motsamaisi oa hau a se bulela, u ka rapella naha e ncha letsatsi le letsatsi le Operation World.",
     "Pray for the nations": "Rapella lichaba",
     "A country to pray for each day, from Operation World": "Naha eo u ka e rapellang letsatsi le letsatsi, e tsoang ho Operation World",

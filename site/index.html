@@ -65,7 +65,10 @@ p { margin: 0; }
 .top nav a { color: var(--ink-2); text-decoration: none; font-weight: 700; font-size: .95rem; }
 .top nav a:hover { color: var(--ink); }
 .top .btn { padding: 11px 18px; font-size: .95rem; }
-@media (max-width: 760px) { .top nav { display: none; } .top .btn { margin-left: auto; } }
+.top .goto { margin-left: -6px; }
+.top .goto .short { display: none; }
+@media (max-width: 760px) { .top nav { display: none; } .top .goto { margin-left: auto; } .top .wrap { gap: 10px; } .top .btn { padding: 10px 14px; } .top .goto .long { display: none; } .top .goto .short { display: inline; } }
+@media (max-width: 400px) { .brand > span:last-child { display: none; } }
 
 /* Hero */
 .hero { padding: 64px 0 88px; overflow: hidden; }
@@ -353,6 +356,7 @@ footer a { color: var(--ink-2); }
       <a href="#pricing">Price</a>
       <a href="#questions">Questions</a>
     </nav>
+    <a class="btn quiet goto" href="../" aria-label="Go to Church &amp; Trellis: open the app and sign in"><span class="long">Go to Church &amp; Trellis</span><span class="short">Sign in</span></a>
     <a class="btn primary" href="../?demo">Try the demo</a>
   </div>
 </header>
@@ -789,7 +793,7 @@ footer a { color: var(--ink-2); }
 
 <footer>
   <div class="wrap">
-    <span>Church & Trellis · Every church, however small, deserves great church software.</span>
+    <span>Church & Trellis · Every church, however small, deserves great church software. <a href="../">Go to Church & Trellis</a></span>
     <span>Suggested cup prices: examples from November 2026; each church gives what is honest where it lives.</span>
     <span class="updated" id="updated" data-file="site/index.html"></span>
   </div>

@@ -570,3 +570,10 @@ attendees see names, can read which person is on which position at which service
 contact details, away dates, reasons or leave are in it: those stay with the person and the roster team. Someone who said no is not printed. Printing or
 downloading is written to the audit log (dates only).
 
+
+
+## Pray for the nations (`js/mod-prayer.js`)
+- **What:** a page that shows Operation World's own web widget (a country to pray for each day). Church & Trellis keeps and copies none of their words.
+- **Third party:** the widget is loaded from `widget.operationworld.org`, so Operation World's website can see the internet address and browser of the device that opens it. Church & Trellis sends them nothing about the person (no name, email or church data).
+- **Consent:** nothing loads until the person taps *Show today's prayer* (the page says plainly who shows it); the choice is kept only on their own device, and *Stop showing* undoes it. It never loads while offline.
+- **Access:** off until an Administrator switches it on under Settings → Apps; then everyone who signs in may open it. No audit logging is needed: nothing about anyone is stored.

@@ -17,8 +17,10 @@
 
   // Every release that changes what people see adds its news here, and NEWS_FOR follows the version's first two numbers
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
-  var NEWS_FOR = '0.120';
+  var NEWS_FOR = '0.121';
   var NEWS = [
+    { date: '2026-11-27', who: ['everyone'], app: 'home', btn: ['Home'], text: TX('Church & Trellis has a new icon – a cross with a cup of coffee behind it. It shows on your phone as the app is updated.') },
+    { date: '2026-11-27', who: ['everyone'], app: 'prayer', btn: ['Pray for the nations'], text: TX('New: Pray for the nations. Once your Administrator switches it on, you can pray each day for a different country with Operation World.') },
     { date: '2026-11-27', who: ['everyone'], app: 'help', btn: ['Help'], text: TX('No internet? The parts that need it now step aside while you’re offline, and Help still answers from the pages saved on your device.') },
     { date: '2026-11-26', who: ['admin', 'senior'], app: 'about', btn: ['About'], text: TX('There is a new brochure under About, for administrators and the technically curious, and the other two now tell more of the story.') },
     { date: '2026-11-26', who: ['admin', 'pastor'], app: 'people', btn: ['People'], text: TX('On someone’s address you can now type latitude and longitude (like -29.4833, 30.2333) instead of a Plus Code, so the spot opens in Google Maps and Apple Maps. A small “i” explains how to find the numbers, and Church & Trellis checks they look right – handy for townships, informal settlements and rural or farming areas with no street address.') },

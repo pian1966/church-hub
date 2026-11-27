@@ -1,0 +1,10 @@
+/* Church & Trellis – Pray for the nations (js/mod-prayer.js): the ask before Operation World's widget is shown, and the page around it. */
+.pray-panel { padding: 20px; }
+.pray-ask { max-width: 460px; margin: 18px auto; text-align: center; }
+.pray-ask h2 { margin: 10px 0 6px; }
+.pray-ask p { color: var(--muted); }
+.pray-ask .btn { margin: 14px 0 4px; }
+.pray-globe { width: 84px; height: 84px; margin: 0 auto; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+  color: #2F6FB0; background: radial-gradient(circle at 30% 25%, #fff, #DCEBF8 70%); box-shadow: 0 8px 24px -12px rgba(47,111,176,.6); }
+.pray-credit { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 12px; }
+.ow-web-widget { width: 100%; max-width: 100%; border-radius: 12px; overflow: hidden; }

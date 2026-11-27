@@ -4630,6 +4630,18 @@ I18n.add('st', {
     "You are using your own theme.": "O sebedisa theme ea hao.",
     "You are using the church’s theme.": "O sebedisa theme ea kereke.",
     "Use the church’s theme": "Sebedisa theme ea kereke",
+    "Church & Trellis has a new icon – a cross with a cup of coffee behind it. It shows on your phone as the app is updated.": "Church & Trellis e na le icon e ncha – sefapano se nang le senoelo sa kofi ka morao ho sona. E tla hlaha ho founu ea hau ha app e ntlafatsoa.",
+    "New: Pray for the nations. Once your Administrator switches it on, you can pray each day for a different country with Operation World.": "Se secha: Rapella lichaba. Hang ha Motsamaisi oa hau a se bulela, u ka rapella naha e ncha letsatsi le letsatsi le Operation World.",
+    "Pray for the nations": "Rapella lichaba",
+    "A country to pray for each day, from Operation World": "Naha eo u ka e rapellang letsatsi le letsatsi, e tsoang ho Operation World",
+    "Pray each day for a different country, with Operation World.": "Rapella naha e ncha letsatsi le letsatsi, le Operation World.",
+    "This needs the internet. Come back when you are online and the day’s prayer will be here.": "Sena se hloka inthanete. Khutla ha u le inthaneteng mme thapelo ea kajeno e tla ba mona.",
+    "Prayer content from {name}.": "Litaba tsa thapelo ho tsoa ho {name}.",
+    "Stop showing": "Tlohela ho bontša",
+    "Today’s prayer for the nations": "Thapelo ea kajeno bakeng sa lichaba",
+    "Operation World gives a country to pray for every day, with what to thank God for and what to ask Him for.": "Operation World e fana ka naha eo u ka e rapellang letsatsi le leng le le leng, hammoho le seo u ka leboha Molimo ka sona le seo u ka mo kopang sona.",
+    "Show today’s prayer": "Bontša thapelo ea kajeno",
+    "It is shown by Operation World’s own website, so they will see that your device opened it. Church & Trellis sends them nothing about you.": "E bontšoa ke webosaete ea Operation World ka boeona, kahoo ba tla bona hore sesebelisoa sa hau se e butsitse. Church & Trellis ha e ba romelle letho ka uena.",
 },
 
 });

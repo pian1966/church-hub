@@ -334,7 +334,7 @@ var SetupKit = (function () {
           'Wait two minutes after the last step, then ' + open(c.app(), 'Open Church & Trellis') + '. You should see ' + ui('Sign in') + '.',
           'Click ' + ui('Sign in with Google') + ' and choose ' + (c.adminEmail ? ui(c.adminEmail) : 'the email from “first Administrator”') + ' (or use ' + ui('Email me a link') + ').',
           'Church & Trellis says ' + ui('Set up Church & Trellis') + ': check the church’s name, type your name and click ' + ui('Set up') + '.'
-        ]) + note('Seeing the demo instead? The browser kept the old page – wait a minute and refresh. Seeing “No access yet”? Check the email in the first-Administrator step matches exactly.');
+        ]) + note('Bookmark this page – it is your church’s own Church & Trellis. When you invite people from inside Church & Trellis, the invitation carries this address for you, so there is nothing to copy.') + note('Seeing the demo instead? The browser kept the old page – wait a minute and refresh. Seeing “No access yet”? Check the email in the first-Administrator step matches exactly.');
       } },
 
     { id: 'privacy', chapter: 'first', title: 'Privacy first', mins: 10, mods: ['privacy'],

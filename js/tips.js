@@ -19,6 +19,7 @@
   // (node tests/versions.test.js checks it), so What's new on Home never falls behind.
   var NEWS_FOR = '0.121';
   var NEWS = [
+    { date: '2026-11-28', who: ['everyone'], app: 'groups', btn: ['Groups'], text: TX('Groups now shows My Care Groups with your care group underneath, like My Midweek Groups, and church groups have their own switch in Settings → Apps.') },
     { date: '2026-11-28', who: ['everyone'], app: 'help', btn: ['Help', 'Pray for the nations'], text: TX('The little button-style names in What’s new and in Help answers, like Help or Pray for the nations, can now be tapped to open that page.') },
     { date: '2026-11-28', who: ['everyone'], app: 'home', btn: ['Home'], text: TX('No signal? Pages that need the internet, like the brochures, now say so kindly and try again when you’re back, instead of showing a confusing error.') },
     { date: '2026-11-27', who: ['everyone'], app: 'home', btn: ['Home'], text: TX('Church & Trellis has a new icon – a cross with a cup of coffee behind it. It shows on your phone as the app is updated.') },

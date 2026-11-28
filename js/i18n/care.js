@@ -13,6 +13,7 @@ I18n.rows([
     ["Suggest again", "Stel weer voor", "Phakamisa futhi", "Phakamisa kwakhona"],
     ["Church Partners not in a Care Group", "Kerkvennote wat nie in ’n selgroep is nie", "Abalingani beBandla abangekho eqenjini lokunakekelana", "Amaqabane eCawa angekho kwiqela lokukhathalelana"],
     ['My Care Group', 'My selgroep', 'Iqembu lami lokunakekelana', 'Iqela lam lokukhathalelana'],
+    ['My Care Groups', 'My selgroepe', 'Amaqembu ami okunakekelana', 'Amaqela am okukhathalelana'],
     ['People in your Care Group see your details only if you agreed (under Consent).', 'Mense in jou selgroep sien jou besonderhede net as jy ingestem het (onder Toestemming).', 'Abantu abaseqenjini lakho lokunakekelana babona imininingwane yakho kuphela uma uvumile (ngaphansi kwemvume).', 'Abantu abakwiqela lakho lokukhathalelana babona iinkcukacha zakho kuphela ukuba uvumile (phantsi kwemvume).'],
     ['A new member', '’n Nuwe lid', 'Ilungu elisha', 'Ilungu elitsha'],
     ['Details not shared', 'Besonderhede nie gedeel nie', 'Imininingwane ayabelwanga', 'Iinkcukacha azabelwanga'],

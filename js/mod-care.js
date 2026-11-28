@@ -104,7 +104,11 @@
   function mePanel() {
     var u = me(); if (!u || !H.isOn('care')) return '';
     var pc = S.previewCare(), gs = pc ? [S.get('careGroups', pc)].filter(Boolean) : Care.groupsOf(S.list('careGroups'), u.id); if (!gs.length) return '';
-    return '<div id="my-care">' + gs.map(function (g) { return oneGroup(g, u, !!pc); }).join('') + '</div>';
+    return mineHtml(gs, u, !!pc);
+  }
+  /** "My Care Group(s)" heading with the person's groups under it, laid out like My Midweek Groups. */
+  function mineHtml(gs, u, asCarer) {
+    return '<h2 class="sect-h">' + T(gs.length > 1 ? 'My Care Groups' : 'My Care Group') + '</h2><div id="my-care" class="grid2">' + gs.map(function (g) { return oneGroup(g, u, asCarer); }).join('') + '</div>';
   }
   function oneGroup(g, u, asCarer) {
     var lead = asCarer || Care.isLeader(g, u.id), cards = {};   // "View as" a carer: an Administrator sees the group as its carer does
@@ -114,7 +118,7 @@
       var la = Care.isLeader(g, a) ? 0 : 1, lb = Care.isLeader(g, b) ? 0 : 1; if (la !== lb) return la - lb;
       return String((g.names || {})[a] || '').localeCompare(String((g.names || {})[b] || ''));
     });
-    return '<section class="panel my-care" data-g="' + esc(g.id) + '"><div class="row"><h2 class="grow" style="margin:0">' + T('My Care Group') + ': ' + esc(g.name) + '</h2>' + H.icon(HEART, 18) + '</div>' +
+    return '<section class="panel my-care" data-g="' + esc(g.id) + '"><div class="row"><h2 class="grow" style="margin:0">' + esc(g.name) + '</h2>' + H.icon(HEART, 18) + '</div>' +
       '<p class="hint" style="margin:4px 0 10px">' + T('People in your Care Group see your details only if you agreed (under Consent).') + (all ? '' : ' ' + T('The church shows you your carers here; they can see everyone in the group.')) + '</p>' +
       fold('me-' + g.id, ids.map(function (pid) { return Care.isLeader(g, pid); }), ids.map(function (pid) {
         var c = cards[pid] || { firstName: ((g.names || {})[pid] || '').split(' ')[0], lastName: ((g.names || {})[pid] || '').split(' ').slice(1).join(' ') }, isL = Care.isLeader(g, pid), you = pid === u.id;
@@ -319,7 +323,7 @@
   function partnerOnly() {
     var u = me(), mine = u ? Care.groupsOf(S.list('careGroups'), u.id) : [], all = seeAllGroups(), gs = all ? partnerGroups() : [];
     // Their own group(s) first, as on the Me page; then every group when Settings allows it
-    var own = mine.length ? '<div id="my-care">' + mine.map(function (g) { return oneGroup(g, u, false); }).join('') + '</div>'
+    var own = mine.length ? mineHtml(mine, u, false)
       : '<p class="empty">' + T('You’re not in a Care Group yet.') + '</p>';
     return '<div class="page-head"><div><h1>' + T('Care Groups') + '</h1>' + (all ? '<p class="lead">' + T('Which Care Group each person in the church directory is in, and who the carers are.') + '</p>' : '') + '</div></div>' +
       own + (!all ? '' : '<h2 style="margin:22px 0 10px">' + T('All Care Groups') + '</h2>') +

@@ -39,6 +39,7 @@
       }).join('') + '</div>' : '') + '</section>';
   }
   function section() {
+    if (!H.isOn('customgroups')) return '';   // Settings → Apps: church groups switched off
     var list = G.forPerson(S.list('customGroups'), personId(), admin()), html = list.map(card).join('');
     if (!html && !admin()) return '';
     // One heading, with its button beside it (not a second card repeating the title)
@@ -124,9 +125,10 @@
     }
   });
   window.CustomGroupsUI = { section: section, show: function () {
+    if (!H.isOn('customgroups')) return false;
     var p = S.get('people', personId());
     return admin() || S.list('customGroups').length > 0 || !!(p && G.staff([p]).length);
-  }, staffVisible: function () { var p = S.get('people', personId()); return admin() || !!(p && G.staff([p]).length); },
+  }, staffVisible: function () { var p = S.get('people', personId()); return H.isOn('customgroups') && (admin() || !!(p && G.staff([p]).length)); },
     staffPage: staffPage };
   H.register({
     id: 'staffgroup', name: 'Staff Group', desc: 'This built-in group updates automatically from People staff details.', icon: 'M8 11a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM16.5 11a2.6 2.6 0 1 0 0-5.2M2.5 19c.5-3 2.6-5 5.5-5s5 2 5.5 5M15.5 14.2c2.6.2 4.4 2 4.9 4.8',

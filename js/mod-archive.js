@@ -248,9 +248,10 @@
   function linkedPreviewDialog(r) {
     var embed = A.embedUrl(r.link); if (!embed) return;
     H.modal(H.dialogHead(T('Preview'), r.title) + '<div class="dlg-body ar-preview-body"><p class="ar-preview-meta">' + esc(catName(r.cat) + ' · ' + H.fmt(r.date, true)) + '</p>' +
-      '<p id="ar-doc-loading" class="note" role="status" aria-live="polite">' + T('Loading preview…') + '</p>' +
-      '<p id="ar-doc-fallback" class="note warn" role="status" hidden>' + T('The preview did not load. Check the document’s sharing settings, or open it in Google Docs.') + '</p>' +
-      '<iframe id="ar-doc-preview" class="ar-preview-frame" src="' + esc(embed) + '" title="' + esc(r.title) + '" loading="eager" referrerpolicy="no-referrer"></iframe>' +
+      (S.offline() ? H.noConnection('') :   // no internet: a warm message, never the phone's own error in the frame
+        '<p id="ar-doc-loading" class="note" role="status" aria-live="polite">' + T('Loading preview…') + '</p>' +
+        '<p id="ar-doc-fallback" class="note warn" role="status" hidden>' + T('The preview did not load. Check the document’s sharing settings, or open it in Google Docs.') + '</p>' +
+        '<iframe id="ar-doc-preview" class="ar-preview-frame" src="' + esc(embed) + '" title="' + esc(r.title) + '" loading="eager" referrerpolicy="no-referrer"></iframe>') +
       '<p class="hint">' + T('If you cannot see the document, check its sharing settings or open it in Google Docs.') + '</p></div>' +
       '<div class="dlg-foot"><a class="btn" href="' + esc(A.link(r.link)) + '" target="_blank" rel="noopener noreferrer" data-act="archive:link" data-id="' + esc(r.id) + '">' + T('Open in Google Docs') + '</a>' +
       '<button class="btn primary" data-act="hub:close">' + T('Close') + '</button></div>', T('Preview'), true);

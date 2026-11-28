@@ -73,6 +73,8 @@ I18n.rows([
     ['Getting the latest church records…', 'Kry die nuutste kerkinligting…', 'Kutholwa amarekhodi amasha ebandla…', 'Kufunyanwa iirekhodi ezintsha zecawa…'],
     ['Something went wrong', 'Iets het skeefgeloop', 'Kukhona okungahambanga kahle', 'Kukho into engahambanga kakuhle'],
     ['Try again', 'Probeer weer', 'Zama futhi', 'Zama kwakhona'],
+    ['We can’t reach the internet just now', 'Ons kan nie nou by die internet uitkom nie', 'Asikwazi ukufinyelela i-inthanethi njengamanje', 'Asikwazi ukufikelela kwi-intanethi okwangoku'],
+    ['No worries – this will be here as soon as your connection is back.', 'Moenie bekommerd wees nie – dit sal hier wees sodra jou verbinding terug is.', 'Ungakhathazeki – lokhu kuzobe kukhona uma uxhumeko lubuya.', 'Musa ukukhathazeka – oku kuya kuba lapha ngokukhawuleza xa uqhagamshelo lubuya.'],
     ['Back to the top', 'Terug na bo', 'Buyela phezulu', 'Buyela phezulu'],
     ["Go to the bottom", "Gaan na onder", "Iya phansi", "Yiya ezantsi"],
     ['Appearance', 'Voorkoms', 'Ukubukeka', 'Inkangeleko'],

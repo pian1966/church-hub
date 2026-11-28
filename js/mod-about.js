@@ -160,6 +160,16 @@
     var st = Store.settings() || {}, link = location.origin + location.pathname.replace(/index\.html$/, '');
     return 'brochure.html?for=' + who + '&embed=1&v=' + encodeURIComponent(V.version) + (st.churchName ? '&church=' + encodeURIComponent(st.churchName) : '') + '&link=' + encodeURIComponent(link);
   }
+  /** Can the brochure page be reached (the internet, or the copy this device kept)? If not, the frame would show the phone's own
+   *  error ("Web page not available"): put a warm message there instead, and try again by itself when the connection returns. */
+  function broReach(who) {
+    var lost = function () {
+      var w = document.querySelector('.bro-wrap'); if (!w || !document.getElementById('bro-frame')) return;
+      w.innerHTML = H.noConnection('about:broretry');
+      window.addEventListener('online', function () { if (/^#\/about\/brochure/.test(location.hash)) H.render(); }, { once: true });
+    };
+    try { fetch(broSrc(who)).then(function (r) { if (!r.ok) lost(); }, lost); } catch (e) { lost(); }
+  }
   function renderBrochure(who) {
     who = broWho(who);
     var admin = Store.isAdmin(), b = broSaved(), d = b.design, st = Store.settings() || {}, lang = I18n.get(), own = st.theme && st.theme.id === 'custom' && st.theme.color ? String(st.theme.color).toUpperCase() : '';
@@ -299,6 +309,7 @@
       if (parts && parts[0] === 'brochure') {
         var fr = document.getElementById('bro-frame'), who = broWho(parts[1]);
         if (fr) fr.addEventListener('load', function () { broLoad(who); });
+        broReach(who);
         return;
       }
       bro.edit = false;
@@ -309,6 +320,7 @@
       // Back to where About was opened from (or Home), so About never leaves anyone stuck – on the Android app there is no browser Back button
       close: function () { if (back) history.back(); else location.hash = '#/home'; },
       broedit: function () { if (!Store.isAdmin()) return; bro.edit = !bro.edit; if (!bro.edit) Store.audit('Changed the brochures (wording, colour or font)', 'brochures/church'); H.render(); },
+      broretry: function () { H.render(); },
       broprint: function () { var fr = document.getElementById('bro-frame'); if (fr && fr.contentWindow) { fr.contentWindow.focus(); fr.contentWindow.print(); } },
       brocolour: function (el) { broSetDesign({ accent: el.dataset.c }); },
       brodesign: function () { broSetDesign({ accent: BrochureKit.DEFAULT.accent, font: BrochureKit.DEFAULT.font }); H.render(); },

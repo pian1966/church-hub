@@ -47,6 +47,19 @@ module.exports = async function (ctx) {
   check((await nav('usage')) && (await nav('import')), 'back online: they return');
   await finish(s);
 
+  console.log('Offline: a brochure that can’t be reached shows a kind message, not the phone’s error (Linda – administrator):');
+  s = await session('linda.pillay@example.com', seedDocs());
+  await s.page.route('**/brochure.html*', route => route.abort());
+  await s.go('about/brochure/tech');
+  check(await shows(() => !!document.querySelector('.bro-wrap .no-connection')), 'brochure unreachable: a kind message takes the frame’s place');
+  t = await s.page.textContent('.bro-wrap').catch(() => '');
+  check(t.includes('We can’t reach the internet just now') && t.includes('No worries') && !/ERR_|not available/i.test(t), 'brochure unreachable: warm words, no error code');
+  check(!(await s.page.$('#bro-frame')), 'brochure unreachable: no broken frame is left on the page');
+  await s.page.unroute('**/brochure.html*');
+  await s.page.click('.bro-wrap [data-act="about:broretry"]');
+  check(await shows(() => !!document.querySelector('#bro-frame') && !document.querySelector('.bro-wrap .no-connection')), 'Try again: the brochure comes back once it can be reached');
+  await finish(s);
+
   console.log('Someone else signs in on the same device:');
   s = await session('tim.jacobs@example.com', seedDocs());
   check(await s.page.evaluate(() => localStorage.getItem('church_hub_offline_owner') === 'tim.jacobs@example.com' && window.__fake.wiped === 0), 'the copy belongs to the person signed in');

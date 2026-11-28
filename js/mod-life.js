@@ -244,7 +244,7 @@
       if (c.email) bits.push('<a href="mailto:' + esc(c.email) + '">' + esc(c.email) + '</a>');
       if (c.address) { var at = [c.address.street, c.address.street2, [c.address.city, c.address.postcode].filter(Boolean).join(' ')].filter(Boolean).join(', '); bits.push(esc(at) + ' ' + H.mapLink([at, c.address.province, c.address.country].filter(Boolean).join(', '))); }
       if (c.birthday) bits.push(T('Birthday') + ' ' + esc(birthday(c.birthday)));
-      return '<div class="item" style="align-items:flex-start">' + pic(c, 44) + '<span class="grow"><b>' + esc(name) + (window.CelebrateUI ? CelebrateUI.cake(c.birthday, c.quiet) : '') + (you ? ' <span class="muted">(' + T('you') + ')</span>' : '') + (isL ? leaderTag() : roleTag(g, pid)) + '</b>' +
+      return '<div class="item" style="align-items:flex-start">' + pic(c, 44) + '<span class="grow"><b>' + esc(name) + (window.CelebrateUI ? CelebrateUI.cake(c.birthday) : '') + (you ? ' <span class="muted">(' + T('you') + ')</span>' : '') + (isL ? leaderTag() : roleTag(g, pid)) + '</b>' +
         '<small>' + (bits.length ? bits.join(' · ') : (cards[pid] ? T('Details not shared') : T('Details appear when they next sign in'))) + '</small></span>' +
         (lead && !you && !isL ? '<button class="icon-btn ghost" data-act="life:mineout" data-g="' + esc(g.id) + '" data-id="' + esc(pid) + '" aria-label="' + esc(T('Take {name} out of the group', { name: name })) + '" title="' + esc(T('Take {name} out of the group', { name: name })) + '">' + H.icon(H.ICON.x, 16) + '</button>' : '') + '</div>';
     });

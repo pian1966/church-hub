@@ -69,7 +69,6 @@ var Care = (function () {
       if (person.email) c.email = person.email;
       if (person.address && (person.address.street || person.address.city)) c.address = copy(person.address);
       if (person.birthDate) c.birthday = String(person.birthDate).slice(5, 10);   // day and month only, not the year
-      if (person.noCelebrate) c.quiet = true;   // they turned celebrations off: no 🎂 on their day
       if (thumb) c.photo = thumb;
     }
     return c;

@@ -86,4 +86,4 @@ Also asked: Is my birthday private? Can people see my age? Birthday in the direc
 The church office, Pastors and Administrators keep your full date of birth. If you agreed to be in the **Church directory**, other
 Church Partners can see **🎂 Birthday today** beside your name on the day – the directory keeps only the day and month, never the year,
 so nobody can work out your age. Your Care Group sees your birthday (day and month) only if you agreed to share with your group.
-To stop it, untick **Celebrate my birthday and anniversary** on **Me → My details**.
+To stop it, change your **Church directory** choice under **Me → Consent**.

@@ -2,10 +2,9 @@
  *  - card(person): a warm card with a few falling petals, on the person's own Home and Me page.
  *  - tag(person): a small "🎂 Birthday today" / "💍 Wedding anniversary today" beside a name – only where the screen already
  *    shows that person's birthday or anniversary (the caller decides: a person's page, a Care Group or Midweek Group card).
- *  - cake(mmdd, quiet): a 🎂 for a Care Group card, where the carer already sees the birthday.
+ *  - cake(mmdd): a 🎂 for a Care Group card, where the carer already sees the birthday.
  *  - weekCard(): "Birthdays this week" on Home – Pastors and Administrators: everyone; carers and Midweek Group leaders:
  *    the people in the groups they lead, from the cards they already see; Pastors also "May be a hard day" (a late spouse).
- *  - optOut(p): the switch on Me → My details ("Celebrate my birthday and anniversary").
  * Nothing here decides who may see a date, and nothing is stored. The petals are drawn with CSS (css/celebrate.css): no pictures.
  */
 var CelebrateUI = (function () {
@@ -54,8 +53,8 @@ var CelebrateUI = (function () {
   }
 
   /** A 🎂 for a Care Group or Midweek Group card (mmdd = the 'MM-DD' the carer already sees), only on the day. */
-  function cake(mmdd, quiet) {
-    return mmdd && !quiet && C.isOn(mmdd, H.today()) ? ' <span class="cel-cake" title="' + esc(T('Birthday today')) + '" role="img" aria-label="' + esc(T('Birthday today')) + '">🎂</span>' : '';
+  function cake(mmdd) {
+    return mmdd && C.isOn(mmdd, H.today()) ? ' <span class="cel-cake" title="' + esc(T('Birthday today')) + '" role="img" aria-label="' + esc(T('Birthday today')) + '">🎂</span>' : '';
   }
 
   /* ---------- Birthdays this week (Home) ---------- */
@@ -78,7 +77,7 @@ var CelebrateUI = (function () {
     S.list('careGroups').concat(S.list('lifeGroups')).forEach(function (g) { if (Care.isLeader(g, me)) led[g.id] = 1; });
     S.list('careShare').concat(S.list('lifeShare')).forEach(function (c) {
       if (!led[c.groupId] || !c.ok || !c.birthday || out[c.personId] || c.personId === me) return;
-      out[c.personId] = { person: { id: c.personId, firstName: c.firstName, lastName: c.lastName, preferredName: c.preferredName, birthDay: c.birthday, noCelebrate: !!c.quiet } };
+      out[c.personId] = { person: { id: c.personId, firstName: c.firstName, lastName: c.lastName, preferredName: c.preferredName, birthDay: c.birthday,  } };
     });
     return Object.keys(out).map(function (k) { return out[k]; });
   }
@@ -117,14 +116,5 @@ var CelebrateUI = (function () {
     return '<section class="panel cel-week-card"><h2>' + T('Birthdays and anniversaries this week') + '</h2>' + (rows ? '<ul class="cel-week">' + rows + '</ul>' : '') + hard + '</section>';
   }
 
-  /* ---------- Me → My details: turning celebrations off ---------- */
-  function optOut(p) {
-    if (!p || p.familyRole === 'child') return '';
-    var on = !p.noCelebrate;
-    return '<section class="panel"><h2>' + T('Birthdays and anniversaries') + '</h2>' +
-      '<label class="cel-switch"><input type="checkbox" id="me-celebrate" data-act="me:celebrate"' + (on ? ' checked' : '') + '> ' + T('Celebrate my birthday and anniversary') + '</label>' +
-      '<p class="hint">' + T(on ? 'On your day you get a card here and on Home, and people who can see the church directory see 🎂 or 💍 beside your name – the day only, never the year.' : 'Nobody sees 🎂 or 💍 beside your name, and your birthday isn’t in the church directory.') + '</p></section>';
-  }
-
-  return { card: card, tag: tag, cake: cake, special: special, weekCard: weekCard, optOut: optOut };
+  return { card: card, tag: tag, cake: cake, special: special, weekCard: weekCard };
 })();

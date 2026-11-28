@@ -3,9 +3,9 @@
  * where it is shown (the Me page and Home: the person's own; a person's page and Care Groups: wherever their birthday is
  * already shown). They follow js/emails.js: no celebration for someone who has died, left or been merged, and a wedding
  * anniversary is never celebrated for someone who is widowed, separated, divorced or single, or whose spouse has died.
- * Nobody is celebrated who turned it off (noCelebrate: Me → My details → "Celebrate my birthday and anniversary").
+ * There is no opt-out (removed 28 Nov 2026): the Church directory consent decides who is shown. An old noCelebrate on a record is ignored.
  * People seen through the church directory carry only the day and month: birthDay and weddingDay ('MM-DD'), written to
- * the directory only for adults who agreed to it, who are married (for weddingDay) and who haven't turned it off (js/store.js).
+ * the directory only for adults who agreed to it and who are married (for weddingDay) (js/store.js).
  */
 var Celebrate = (function () {
   'use strict';
@@ -41,7 +41,7 @@ var Celebrate = (function () {
 
   /** { years } if today is this person's birthday (years is 0 when only the day and month are known), otherwise null. */
   function birthday(p, today) {
-    if (gone(p) || p.noCelebrate) return null;
+    if (gone(p)) return null;
     var d = p.birthDate || p.birthDay;
     if (!isOn(d, today)) return null;
     return { years: years(p.birthDate, today) };
@@ -52,7 +52,7 @@ var Celebrate = (function () {
    * spouse: the person they are married to (or null); lateSpouse: a spouse who has died (or null).
    */
   function anniversary(p, spouse, today, lateSpouse) {
-    if (gone(p) || p.noCelebrate || p.familyRole === 'child' || lateSpouse) return null;
+    if (gone(p) || p.familyRole === 'child' || lateSpouse) return null;
     if (NOT_MARRIED.test(p.maritalStatus || '')) return null;
     if (spouse) {
       if (gone(spouse) || NOT_MARRIED.test(spouse.maritalStatus || '')) return null;
@@ -72,7 +72,7 @@ var Celebrate = (function () {
    *  lateSpouse: a spouse who has died (or null). Never a year: a birthday kept here can't give away an age. */
   function forDirectory(p, lateSpouse) {
     var out = {};
-    if (gone(p) || p.noCelebrate || p.familyRole === 'child') return out;
+    if (gone(p) || p.familyRole === 'child') return out;
     var b = monthDay(p.birthDate || p.birthDay);
     if (b) out.birthDay = b;
     var w = p.maritalStatus === 'Married' && !lateSpouse ? monthDay(keyDate(p, WEDDING)) : '';

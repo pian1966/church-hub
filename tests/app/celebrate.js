@@ -18,13 +18,8 @@ module.exports = async function (ctx) {
   check(!!(await s.page.$('.cel-card')) && /Happy birthday, Tim!/.test(await s.text()), 'on your birthday Home has a card');
   await s.go('me'); await s.page.waitForSelector('main h1');
   check(!!(await s.page.$('.cel-card')), '…and so does Me');
-  // turning it off on Me
-  await s.page.click('#me-celebrate'); await s.settle();
-  check((await s.docsNow())['people/p14'].noCelebrate === true, 'unticking "Celebrate my birthday and anniversary" saves it on your own record');
-  check(!(await s.page.$('.cel-card')), '…and the card goes');
-  check(!((await s.docsNow())['directory/p14'] || {}).birthDay, '…and your birthday is not in the church directory');
-  await s.page.click('#me-celebrate'); await s.settle();
-  check(!(await s.docsNow())['people/p14'].noCelebrate && !!(await s.page.$('.cel-card')), 'ticking it again brings the card back');
+  // no switch to turn it off any more
+  check(!(await s.page.$('#me-celebrate')) && !/Celebrate my birthday and anniversary/.test(await s.text()), 'Me has no switch to turn celebrations off');
   await finish(s);
 
   s = await session('tim.jacobs@example.com', docs(d => { d['details/p14'].birthDate = day(1980, other); }));

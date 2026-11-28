@@ -180,11 +180,10 @@ your birthday, marital status and **Wedding anniversary** must be filled in – 
 
 ## How do I stop my birthday being shown?
 For: Everyone
-Also asked: Hide my birthday. Don't celebrate my birthday. I don't want people to know it's my birthday. Turn off the cake.
+Also asked: Hide my birthday. Don't celebrate my birthday. I don't want people to know it's my birthday. Turn off the cake. Celebrate my birthday switch.
 
-Open **Me → My details** and, under **Birthdays and anniversaries**, untick **Celebrate my birthday and anniversary**. Nobody sees
-🎂 or 💍 beside your name any more, your birthday is taken out of the church directory, and you get no card. Tick it again to turn it back on.
-To be taken out of the church directory altogether, change your **Church directory** choice under **Me → Consent**.
+There is no separate switch for birthdays and anniversaries. Church & Trellis shows 🎂 or 💍 (the day only, never the year) beside the
+name of people who agreed to the **Church directory**. To be left out, change your **Church directory** choice under **Me → Consent**.
 
 ## What is "Birthdays and anniversaries this week" on Home?
 For: Pastors, Administrators, Carers, Group leaders

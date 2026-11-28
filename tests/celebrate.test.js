@@ -35,26 +35,26 @@ const both = C.today(Object.assign({ birthDate: '1975-11-24' }, wed), null, TODA
 check(both.any && both.birthday.years === 51 && both.anniversary.years === 25, 'a birthday and an anniversary on the same day');
 check(!C.today({ birthDate: '1975-01-01' }, null, TODAY).any, 'nothing special: any is false');
 
-console.log('Turned off');
-check(C.birthday({ birthDate: '1980-11-24', noCelebrate: true }, TODAY) === null, 'no birthday for someone who turned celebrations off');
-check(C.anniversary(Object.assign({ noCelebrate: true }, wed), null, TODAY) === null, '…and no anniversary');
+console.log('No opt-out any more (removed 28 Nov 2026)');
+check(C.birthday({ birthDate: '1980-11-24', noCelebrate: true }, TODAY) !== null, 'an old noCelebrate on a record is ignored: the birthday is celebrated');
+check(C.anniversary(Object.assign({ noCelebrate: true }, wed), null, TODAY) !== null, '…and so is the anniversary');
 
 console.log('The church directory (day and month only)');
 check(JSON.stringify(C.forDirectory(Object.assign({ birthDate: '1975-03-09' }, wed))) === '{"birthDay":"03-09","weddingDay":"11-24"}', 'a married adult: birthday and wedding day, without the years');
 check(JSON.stringify(C.forDirectory({ birthDay: '03-09' })) === '{"birthDay":"03-09"}', 'a birthday kept without its year');
 check(JSON.stringify(C.forDirectory(Object.assign({ birthDate: '1975-03-09' }, wed, { maritalStatus: 'Widowed' }))) === '{"birthDay":"03-09"}', 'widowed: no wedding day');
 check(JSON.stringify(C.forDirectory(Object.assign({ birthDate: '1975-03-09' }, wed), { id: 'late' })) === '{"birthDay":"03-09"}', 'a late spouse on record: no wedding day');
-check(JSON.stringify(C.forDirectory({ birthDate: '1975-03-09', noCelebrate: true })) === '{}', 'turned off: nothing');
+check(JSON.stringify(C.forDirectory({ birthDate: '1975-03-09', noCelebrate: true })) === '{"birthDay":"03-09"}', 'an old noCelebrate is ignored in the directory too');
 check(JSON.stringify(C.forDirectory({ birthDate: '2015-03-09', familyRole: 'child' })) === '{}', 'a child: nothing');
 check(JSON.stringify(C.forDirectory({ birthDate: '1975-03-09', deceasedAt: '2026-01-01' })) === '{}', 'died: nothing');
 check(C.birthday({ birthDay: '11-24' }, TODAY) && C.anniversary({ weddingDay: '11-24' }, null, TODAY), 'what the directory carries is enough to celebrate on the day');
 
 console.log('This week');
 check(C.days('2026-12-29', 7).join() === '2026-12-29,2026-12-30,2026-12-31,2027-01-01,2027-01-02,2027-01-03,2027-01-04', 'seven days, over the new year');
-const a = { id: 'a', birthDate: '1980-11-26' }, b = { id: 'b', birthDay: '11-24' }, c = { id: 'c', birthDate: '1980-12-25' }, q = { id: 'q', birthDate: '1980-11-25', noCelebrate: true };
+const a = { id: 'a', birthDate: '1980-11-26' }, b = { id: 'b', birthDay: '11-24' }, c = { id: 'c', birthDate: '1980-12-25' };
 const h1 = Object.assign({ id: 'h1' }, wed), h2 = { id: 'h2', maritalStatus: 'Married' };
-const wk = C.week([{ person: a }, { person: b }, { person: c }, { person: q }, { person: h1, spouse: h2 }, { person: h2, spouse: h1 }], TODAY, 7);
-check(wk.map(x => x.id + ':' + x.kind + ':' + x.inDays).join() === 'b:birthday:0,h1:anniversary:0,a:birthday:2', 'soonest first, nobody who turned it off, a couple once: ' + wk.map(x => x.id + ':' + x.kind + ':' + x.inDays).join());
+const wk = C.week([{ person: a }, { person: b }, { person: c }, { person: h1, spouse: h2 }, { person: h2, spouse: h1 }], TODAY, 7);
+check(wk.map(x => x.id + ':' + x.kind + ':' + x.inDays).join() === 'b:birthday:0,h1:anniversary:0,a:birthday:2', 'soonest first, a couple once: ' + wk.map(x => x.id + ':' + x.kind + ':' + x.inDays).join());
 check(wk[2].years === 46, '…with the age turning');
 
 console.log('A hard day (Pastors only)');

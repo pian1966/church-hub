@@ -1460,6 +1460,14 @@ var Hub = (function () {
       sw.postMessage({ keep: urls });
     }).catch(function () {});
   }
+  /** A warm stand-in for a part of a page that needs the internet (an embedded page, a preview…) when it can't be reached, so
+   *  nobody ever sees the phone's own error ("Web page not available", net::ERR_FAILED…). `act` is the button that tries again. */
+  function noConnection(act, extra) {
+    return '<div class="no-connection" role="status">' + icon('M2 8.8a15 15 0 0 1 4.2-2.4M22 8.8a15 15 0 0 0-8.4-3.7M5 12.9a10 10 0 0 1 5.2-2.8M19 12.9a10 10 0 0 0-2-1.6M8.5 16.4a5 5 0 0 1 7 0M12 20h.01M2 2l20 20', 28) +
+      '<p><b>' + T('We can’t reach the internet just now') + '</b></p>' +
+      '<p>' + T('No worries – this will be here as soon as your connection is back.') + '</p>' +
+      (extra || '') + (act ? '<button type="button" class="btn" data-act="' + act + '">' + T('Try again') + '</button>' : '') + '</div>';
+  }
   function onlineChanged() {
     if (!Store.isLive() || !user) return;
     if (!Store.offline()) toast(T('Back online – you can make changes again.'));
@@ -1545,5 +1553,5 @@ var Hub = (function () {
   return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     menu: menu, esc: esc, fmt: fmt, today: today, name: name, byName: byName, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal, autoForget: autoForget,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, themeFor: themeFor, myColor: myColor, myLook: myLook, applyTheme: applyTheme,
-    dialogHead: dialogHead, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, tags: function () { return user ? homeTags() : ['everyone']; }, myLabel: myLabel, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, canViewAs: function () { return canViewAs() && !Store.preview(); }, viewChoices: function () { return canViewAs() ? viewChoices() : []; }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
+    dialogHead: dialogHead, noConnection: noConnection, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, tags: function () { return user ? homeTags() : ['everyone']; }, myLabel: myLabel, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, canViewAs: function () { return canViewAs() && !Store.preview(); }, viewChoices: function () { return canViewAs() ? viewChoices() : []; }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };
 })();

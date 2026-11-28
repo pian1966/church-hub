@@ -603,6 +603,11 @@ body.is-busy { cursor: progress; }
 .viewas span { flex: 1 1 220px; }
 .viewas .btn { margin-left: auto; }
 /* No internet: view only (js/app.js shell) */
+.no-connection { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 36px 20px; color: var(--muted, #5b6470); }
+.no-connection svg { color: var(--muted, #5b6470); margin-bottom: 4px; }
+.no-connection p { margin: 0; max-width: 34ch; }
+.no-connection b { color: var(--ink, inherit); font-size: 1.05em; }
+.no-connection .btn { margin-top: 12px; }
 .offline-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; background: #E8EEF6; color: #1F3A5C; border-bottom: 1px solid #C3D2E6; font-size: 14px; }
 .viewas-pick { display: grid; gap: 8px; }
 /* Care groups: finding a group or a person (js/mod-care.js) */

@@ -20,6 +20,7 @@ module.exports = async function (ctx) {
   await ask(s, 'how do I change my phone number');
   check(/How do I change my phone number/.test(await s.page.textContent('.help-answer')) && await s.page.$eval('.help-answer details.help-q', d => d.open), 'without AI the matching help page is shown, open');
   check(/Change my details/.test(await s.page.textContent('.help-answer .help-a')) && !!(await s.page.$('.help-answer .help-a .ui-name')), '… with the button names shown as little buttons');
+  check(await s.page.$$eval('.help-answer .help-a a.ui-name', e => e.some(x => /#\/me$/.test(x.getAttribute('href')))) && !(await s.page.$('.help-answer .help-a span.ui-name:text-is("Me → My details")')) && !!(await s.page.$('.help-answer .help-a span.ui-name:text-is("Change my details")')), '… and a name that starts at a page of the app (Me → My details) is a link that opens it, while a button inside a page stays plain (Change my details) is a link that opens that page');
   await ask(s, 'how do I tell the church I am away on holiday');
   const names = await s.page.$$eval('.help-answer .help-a .ui-name', e => e.map(x => x.textContent));
   check(names.includes('Remove away dates') && !/\*\*/.test(await s.page.textContent('.help-answer')), 'a button name that runs over two lines in the help page is still shown as one button, with no ** left over: ' + names.join(' | '));

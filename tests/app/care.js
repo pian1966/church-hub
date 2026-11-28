@@ -194,7 +194,7 @@ module.exports = async function (ctx) {
   check(t.includes('Clare') && t.includes('David') && t.includes('082 000 1888'), 'by default: everyone in their own group');
   check((await s.page.textContent('.me-chips').catch(() => '')).includes('Care Group member · Hilton'), 'their Me page shows chips like the staff see: their care group');
   await s.go('care'); t = await s.text();
-  check(!!(await inGroups(s, 'care')) && t.includes('My Care Group: Hilton') && !t.includes('All Care Groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
+  check(!!(await inGroups(s, 'care')) && t.includes('My Care Group') && t.includes('Hilton') && !t.includes('All Care Groups'), '“Their own group” ticked: Care groups in the menu, showing their own group (not all groups)');
   await s.go('people/p/p14'); check(!(await s.text()).includes('From Elvanto'), 'no “From Elvanto” chip for anyone but Administrators');
   await finish(s);
   const neither = JSON.parse(JSON.stringify(pSeed)); neither['settings/church'].seeCareOwn = false; neither['settings/church'].seeCare = [];

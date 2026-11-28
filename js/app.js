@@ -602,11 +602,23 @@ var Hub = (function () {
    * what to look for. The names are found in the line as it is shown, in the person's language, through T(); a name that
    * is worded differently in a translation is simply left plain. */
   function withButtons(item, text) {
-    var out = esc(text), names = (item.btn || []).map(function (b) { return esc(T(b)); }).filter(Boolean);
+    var out = esc(text), byShown = {}, names = (item.btn || []).map(function (b) { var shown = esc(T(b)); if (shown) byShown[shown] = b; return shown; }).filter(Boolean);
     if (!names.length) return out;
     names.sort(function (a, b) { return b.length - a.length; });
     var re = new RegExp('(?<![\\p{L}\\p{N}])(' + names.map(function (n) { return n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'); }).join('|') + ')(?![\\p{L}\\p{N}])', 'gu');
-    return out.replace(re, '<span class="ui-name">$1</span>');
+    return out.replace(re, function (m) { return nameChip(m, byShown[m]); });
+  }
+  /** The page a button name stands for (a page of the app the person can open, by its English name), or '' if it is a button or menu inside a page. */
+  function pageOf(english) {
+    english = String(english).split(' → ')[0];   // "Me → My details" opens Me
+    if (english === 'Home') return '#/home';
+    var m = modules.filter(function (x) { return String(x.name) === english; })[0];
+    return m && opens(m) ? '#/' + m.id : '';
+  }
+  /** A button's name as a little button; where the name is a page of the app it is a link to that page. */
+  function nameChip(shown, english) {
+    var href = english ? pageOf(english) : '';
+    return href ? '<a class="ui-name" href="' + href + '">' + shown + '</a>' : '<span class="ui-name">' + shown + '</span>';
   }
   function tipCtx() { return { tags: homeTags(), on: function (id) { var m = moduleById(id); return !!m && opens(m); } }; }
   function tipsCard() {
@@ -1550,7 +1562,7 @@ var Hub = (function () {
     render();
   }
 
-  return { groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
+  return { nameChip: nameChip, groupMods: groupMods, tip: tip, speed: function () { return speed; }, register: register, isOn: isOn, start: start, render: render, go: go, can: can, user: function () { return user; }, ROLES: ROLES,
     menu: menu, esc: esc, fmt: fmt, today: today, name: name, byName: byName, names: names, familyName: familyName, avatar: avatar, shrinkPhoto: shrinkPhoto, cropPhoto: cropPhoto, icon: icon, ICON: ICON, mapLink: mapLink, pause: pause, modal: modal, closeModal: closeModal, autoForget: autoForget,
     THEMES: THEMES, themeOf: themeOf, themeFrom: themeFrom, themeFor: themeFor, myColor: myColor, myLook: myLook, applyTheme: applyTheme,
     dialogHead: dialogHead, noConnection: noConnection, toast: toast, busy: busy, matches: matches, markRequired: markRequired, reqKey: reqKey, download: download, confirmBtn: confirmBtn, MON: MON, DOW: DOW, roleLabel: roleLabel, personRole: personRole, tags: function () { return user ? homeTags() : ['everyone']; }, myLabel: myLabel, attendee: attendee, attendeeCan: attendeeCan, partnerAccess: partnerAccess, isRector: function () { return realRector() && !Store.preview(); }, canViewAs: function () { return canViewAs() && !Store.preview(); }, viewChoices: function () { return canViewAs() ? viewChoices() : []; }, isSenior: isSenior, PASTOR_CAN: PASTOR_CAN, T: T, mon: function () { return I18n.mon(); } };

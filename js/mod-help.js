@@ -38,11 +38,11 @@
   }
 
   /* ---------- showing answers ---------- */
-  /** **A button** → shown as a little button, in the person's language where the app knows it; [link](file.md) → just its words; *like this* → slanted. */
+  /** **A button** → shown as a little button, in the person's language where the app knows it (a tap opens that page when the name is one); [link](file.md) → just its words; *like this* → slanted. */
   function inline(s) {
     s = String(s).replace(/\[([^\]]+)\]\([^)]*\)/g, '$1');
     return s.split(/(\*\*[^*]+\*\*|\*[^*\s][^*]*\*)/).map(function (p) {
-      if (/^\*\*.+\*\*$/.test(p)) return '<span class="ui-name">' + esc(T(p.slice(2, -2))) + '</span>';
+      if (/^\*\*.+\*\*$/.test(p)) return Hub.nameChip(esc(T(p.slice(2, -2))), p.slice(2, -2));
       if (/^\*[^*].*\*$/.test(p)) return '<em>' + esc(p.slice(1, -1)) + '</em>';
       return esc(p);
     }).join('');

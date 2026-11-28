@@ -1276,6 +1276,9 @@ html[data-mode=dark] .msg-chat .msg.out { background: color-mix(in srgb, #25D366
 .tips-card .tip-text { margin: 0; }
 /* Names of buttons and menu items inside a tip or news line: look like the buttons they point to */
 .ui-name { display: inline-block; padding: 0 .5em; margin: 0 .05em; border: 1px solid var(--accent, #E8590C); border-radius: 7px; background: var(--surface, #fff); color: var(--accent-ink, inherit); font-weight: 700; line-height: 1.5; white-space: nowrap; }
+a.ui-name { text-decoration: none; cursor: pointer; }
+a.ui-name:hover, a.ui-name:focus-visible { background: var(--accent-soft, #FFF1E6); }
+a.ui-name:active { transform: translateY(1px); box-shadow: inset 0 1px 3px rgba(0,0,0,.18); }
 .tips-card .btns { margin-top: 12px; flex-wrap: wrap; }
 .tips-all { list-style: none; margin: 0; padding: 0; }
 .tips-all li { display: flex; gap: 10px; align-items: center; padding: 10px 0; }
